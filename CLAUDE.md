@@ -119,22 +119,20 @@ The framework uses a **two-layer design**:
 - `discover()`: Basic protocol discovery
 - `run_scan()`: Main scanning logic
 
-### Supported Protocols (11 Total)
+### Supported protocols (25 total)
 
-**Network Protocols:**
-- **Modbus**: TCP/RTU industrial protocol (port 502)
-- **OPC UA**: Unified Architecture (port 4840)
-- **IEC 104**: IEC 60870-5-104 telecontrol (port 2404)
-- **Beckhoff ADS**: Automation Device Specification (port 48898)
-- **KNX/EIB**: Building automation (port 3671)
-- **EtherNet/IP**: Industrial Ethernet CIP (port 44818)
-- **MMS**: IEC 61850 Manufacturing Message Specification (port 102)
-- **Siemens S7**: Snap7 protocol (port 102)
+Current registered set (run `oida` with no args for the live list, or
+`python -c "from oida.loader import ProtocolLoader; print(sorted(ProtocolLoader('src/oida/protocols').get_protocols()))"`):
 
-**Serial/Broadcast Protocols:**
-- **EtherCAT**: Ethernet Control Automation Technology (requires raw socket)
-- **PROFINET DCP**: Discovery and Configuration Protocol (requires raw socket)
-- **LLDP**: Link Layer Discovery Protocol (requires raw socket)
+- **OT / industrial:** modbus, opcua, snap7 (s7), iec104, ads, ethernetip, dnp3,
+  mms, tase2, goose, ethercat, profinet, hart, knx, bacnet, can
+- **IoT / application:** mqtt, coap, ocpp, snmp
+- **Healthcare:** hl7, fhir, dicom, astm
+- **Discovery / passive:** discovery, pcap (passive listener pipeline,
+  109 listeners)
+
+LLDP, CDP, BBMD, mDNS, SSDP, CODESYS etc. live as sub-features under
+`discovery` and `pcap`, not as top-level protocols.
 
 ### Key Utilities
 - **src/oida/utils/base_scanner.py**: Base scanner class with NetworkScanner/SerialScanner variants
@@ -168,18 +166,21 @@ Key test files:
 
 ## Important Development Notes
 
-### Protocol Dependencies
-Each protocol has optional dependencies that must be installed separately:
-- Modbus: `pymodbus>=3.8.0`
-- OPC UA: `asyncua>=1.1.0`
-- EtherCAT: `pysoem>=1.1.0`, `pyradamsa>=0.1.0`
-- IEC 104: `c104>=2.2.0`
-- ADS: `pyads>=3.4.0`
-- KNX: `xknx>=2.8.0`, `xknxproject>=2.1.0`
-- MMS: `pyiec61850`
-- EtherNet/IP: `cpppo>=5.2.0`
-- Snap7: `python-snap7>=2.0.0`
-- DCP/LLDP: `scapy>=2.6.0` (core dependency)
+### Protocol dependencies
+
+Optional extras are declared in `pyproject.toml`. `pyproject.toml` is the
+source of truth — do not edit version pins in this file. Install with:
+
+```bash
+pip install -e .[<extra>]    # one extra (e.g. modbus)
+pip install -e .[all]        # every protocol
+pip install -e .[dev,all]    # protocols + dev tooling
+```
+
+Notable extras: `modbus`, `opcua`, `iec104`, `snap7`, `ads`, `ethernetip`,
+`dnp3`, `mms`, `tase2`, `goose`, `ethercat`, `profinet`, `hart`, `knx`,
+`bacnet`, `can`, `mqtt`, `coap`, `ocpp`, `snmp`, `hl7`, `fhir`, `dicom`,
+`discovery`, `pcap`, `fuzz`.
 
 ### Security Considerations
 - This is a **defensive security tool** - all protocols default to read-only mode
@@ -187,13 +188,14 @@ Each protocol has optional dependencies that must be installed separately:
 - Comprehensive logging and audit trails are maintained
 - Built-in safety mechanisms prevent accidental system disruption
 
-### Code Standards
-- Python 3.10+ compatibility required
-- Type hints enforced via mypy
-- Ruff formatting and linting (100 character line length)
-- All scanners must inherit from `BaseScanner` (Layer 1) or `connection` (Layer 2)
-- Protocol CLI arguments defined in `src/oida/protocols/{name}/proto_args.py`
-- See `STYLE_GUIDE.md` for detailed Python coding standards
+### Code standards
+- Python 3.10+
+- Type hints where practical; mypy runs informationally (not a CI gate).
+- Ruff formatting and linting (100 character line length).
+- All scanners inherit from `BaseScanner` (Layer 1) and/or `NetworkConnection`/
+  `SerialConnection` (Layer 2). See `docs/ARCHITECTURE.md` for the facade pattern.
+- Protocol CLI arguments live in `src/oida/protocols/{name}/proto_args.py`.
+- See `STYLE_GUIDE.md` for detailed coding standards.
 
 ### Pre-commit Hooks
 - **pre-commit**: `ruff check --fix` (lint) + `ruff format` (format)

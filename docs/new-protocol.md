@@ -118,7 +118,8 @@ class myproto(NetworkConnection):
         super().__init__(args, db, host)  # triggers proto_flow()
 
     def proto_flow(self):
-        self.proto_logger()  # must be first
+        # proto_logger() is called automatically by NetworkConnection.__init__
+        # before this method runs — do not call it here.
         self.create_conn_obj()
         if not self.conn:
             self.results["success"] = False
@@ -151,7 +152,8 @@ class myproto(NetworkConnection):
 
 **Key rules:**
 - Class name is **lowercase**, matching the directory name -- the CLI loader uses it for lookup.
-- `proto_flow()` must call `self.proto_logger()` first.
+- `proto_logger()` is auto-called by `NetworkConnection.__init__` before
+  `proto_flow()` runs. Do **not** call it manually.
 - Logging: `self.logger.display/success/fail/warning/debug()` -- never `print()`.
 - Wrap work in `try/finally` with `self.cleanup()`.
 
@@ -259,7 +261,7 @@ oida --help  # should list "myproto"
 - [ ] Scanner class is PascalCase with `Scanner` suffix
 - [ ] Dependencies use `lazy_import()`, never `try/except ImportError`
 - [ ] Logging via `self.logger`, never `print()`
-- [ ] `proto_flow()` calls `self.proto_logger()` first
+- [ ] `proto_flow()` does NOT call `self.proto_logger()` (it's auto-called)
 - [ ] `@register_protocol` on scanner class; `create_protocol_module()` at bottom
 - [ ] `proto_args()` signature: `def proto_args(parser, parents)`
 - [ ] Operations default to read-only; dangerous ops require `--confirm`
