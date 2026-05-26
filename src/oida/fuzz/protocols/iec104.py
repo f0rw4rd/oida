@@ -1089,6 +1089,17 @@ class IEC104Fuzzer(StatefulFuzzer):
         # For backward compatibility, also expose as state_machine property
         self.state_machine = self._iec104_state_machine
 
+        # Transition the state machine to DATA_TRANSFER. The IEC104SocketConnection
+        # performs the STARTDT_ACT / STARTDT_CON handshake before any boofuzz Request
+        # is sent — so by the time the fuzzer runs its sequence, the protocol is
+        # already in DATA_TRANSFER. Without this transition, every Request tagged
+        # ``requires_state="DATA_TRANSFER"`` would be incorrectly blocked.
+        # (Audit finding B8, fixed 1.0.)
+        try:
+            self._iec104_state_machine.start_data_transfer()
+        except Exception as exc:
+            self.log.debug(f"[IEC104] Could not pre-transition to DATA_TRANSFER: {exc}")
+
         # Log context initialization
         self.log.debug(f"[IEC104] StateContext initialized: {self._state_context}")
         self.log.debug(
