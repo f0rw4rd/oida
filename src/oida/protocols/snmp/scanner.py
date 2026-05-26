@@ -61,10 +61,21 @@ protocol_options = {
 }
 
 
-def _pad_snmp_key(key: str, min_len: int = 8) -> str:
-    """Pad an SNMPv3 auth/priv key to the minimum length required by pysnmp."""
+def _validate_snmp_key(key: str, key_label: str, min_len: int = 8) -> str:
+    """Validate an SNMPv3 auth/priv key meets the RFC 3414 minimum length.
+
+    The previous implementation NUL-padded short keys so pysnmp would accept
+    them locally — but the localized key would never match the device's own
+    computed key (which can't see those NULs), causing every authenticated
+    request to fail with a misleading "no response" diagnostic. RFC 3414
+    section 11.2 mandates passphrases of at least 8 octets — refuse early
+    with a clear error rather than silently padding to nonsense.
+    """
     if key and len(key) < min_len:
-        return key.ljust(min_len, "\x00")
+        raise ValueError(
+            f"SNMPv3 {key_label} must be at least {min_len} characters per RFC 3414; "
+            f"got {len(key)}."
+        )
     return key
 
 
@@ -611,20 +622,24 @@ class SNMPScanner(
             )
             if self.security_level == "noAuthNoPriv":
                 return UsmUserData(self.username)
-            elif self.security_level == "authNoPriv":
-                return UsmUserData(
-                    self.username,
-                    authKey=_pad_snmp_key(self.auth_pass),
-                    authProtocol=auth_proto,
-                )
-            else:  # authPriv
-                return UsmUserData(
-                    self.username,
-                    authKey=_pad_snmp_key(self.auth_pass),
-                    privKey=_pad_snmp_key(self.priv_pass),
-                    authProtocol=auth_proto,
-                    privProtocol=priv_proto,
-                )
+            try:
+                if self.security_level == "authNoPriv":
+                    return UsmUserData(
+                        self.username,
+                        authKey=_validate_snmp_key(self.auth_pass, "auth password"),
+                        authProtocol=auth_proto,
+                    )
+                else:  # authPriv
+                    return UsmUserData(
+                        self.username,
+                        authKey=_validate_snmp_key(self.auth_pass, "auth password"),
+                        privKey=_validate_snmp_key(self.priv_pass, "priv password"),
+                        authProtocol=auth_proto,
+                        privProtocol=priv_proto,
+                    )
+            except ValueError as e:
+                self.logger.fail(str(e))
+                return None
         else:
             # v1/v2c: mpModel 0 = SNMPv1, 1 = SNMPv2c
             mp_model = 1 if self.version == "2c" else 0

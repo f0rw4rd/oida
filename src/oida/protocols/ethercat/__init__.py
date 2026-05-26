@@ -240,8 +240,16 @@ class EtherCATScanner(
 
             self.logger.display(f"Found {slave_count} EtherCAT slaves")
 
-            # If boot state requested, transition to Bootstrap (for FoE firmware ops)
+            # If boot state requested, transition to Bootstrap (for FoE firmware ops).
+            # Bootstrap state lets the master flash slave firmware — strictly a
+            # write/state-change operation, so gate it behind --confirm.
             if self.boot_state:
+                if not self.confirm:
+                    self.logger.fail(
+                        "--boot-state requires --confirm (transitions slaves into "
+                        "Bootstrap firmware-update state, disrupting operation)"
+                    )
+                    return master
                 self._transition_to_boot(master, pysoem)
                 return master
 
@@ -275,9 +283,16 @@ class EtherCATScanner(
                     master.state_check(pysoem.SAFEOP_STATE, 50000)
                     self.logger.display("EtherCAT network reached SAFE-OP state")
 
-                    # If OP state requested, transition to OP
+                    # If OP state requested, transition to OP. OP energises
+                    # process outputs on real slaves, so gate it behind --confirm.
                     if self.op_state:
-                        self._transition_to_op(master, pysoem)
+                        if not self.confirm:
+                            self.logger.fail(
+                                "--op-state requires --confirm (transitions slaves "
+                                "into OPERATIONAL, energising process outputs)"
+                            )
+                        else:
+                            self._transition_to_op(master, pysoem)
                 else:
                     self.logger.warning("expected_wkc is 0, skipping state transition")
 

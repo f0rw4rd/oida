@@ -590,6 +590,17 @@ def validate_args(args) -> None:
             protocol="DNP3",
         )
 
+    # All control ops also require --confirm. Help text on every dangerous flag
+    # already says "(requires --confirm)" — enforce it here so users can't drive
+    # a live outstation by accident.
+    if control_ops and not getattr(args, "confirm", False):
+        ops_str = ", ".join(control_ops)
+        raise ConfigurationError(
+            f"--confirm is required for control operations ({ops_str}). "
+            "These flags can disrupt physical processes; re-run with --confirm to acknowledge.",
+            protocol="DNP3",
+        )
+
     # Validate analog output operations require --ao-value
     ao_direct = getattr(args, "ao_direct", None)
     ao_sbo = getattr(args, "ao_sbo", None)

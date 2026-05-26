@@ -10,6 +10,9 @@ test_fuzz_session.db
 # Fuzzer crash dumps
 /crashes/
 
+# KNX hash-extraction inner-zip outputs (extract_knxproj_hash fallback path)
+/P-*.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
