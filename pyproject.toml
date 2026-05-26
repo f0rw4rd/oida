@@ -249,6 +249,7 @@ markers = [
     "containers: marks tests requiring specific Docker containers",
     "binary: PyInstaller binary smoke tests (requires dist/oida)",
     "integration_fuzzers: integration tests for fuzz protocol definitions",
+    "coverage: nightly real-coverage suite (tests/coverage/), needs docker mocks",
 ]
 
 [tool.coverage.run]
