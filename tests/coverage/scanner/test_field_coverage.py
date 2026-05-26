@@ -306,3 +306,293 @@ def test_ads_coverage(coverage_results_dir):
         },
     )
     assert semantic_hit
+
+
+# --------------------------------------------------------------------------- #
+# IoT / messaging / web
+# --------------------------------------------------------------------------- #
+
+
+def _run_and_record(
+    protocol: str,
+    fuzzer_cls,
+    host: str,
+    port: int,
+    target_name: str,
+    results_dir: str,
+    **scanner_args,
+):
+    """Common helper: instantiate scanner, measure coverage, append record.
+
+    If the scanner reports failure (``results["success"] is False``), the
+    test is skipped — typically the target is unreachable over UDP (we
+    can't pre-probe UDP without a protocol-aware frame) or the container
+    is up but the protocol service isn't ready yet.
+    """
+    args = make_args(port=port, rhost=host, **scanner_args)
+    scanner = fuzzer_cls(args, None, host)
+    if scanner.results.get("success") is False:
+        pytest.skip(
+            f"{protocol}: scanner could not connect to {target_name} at "
+            f"{host}:{port} (results['success'] is False); "
+            f"error={scanner.results.get('error')}"
+        )
+    populated = flatten_surface(scanner.results.get("data", {}))
+    expected = expected_for(protocol)
+    semantic_hit = populated & expected
+    semantic_pct = 100.0 * len(semantic_hit) / max(len(expected), 1) if expected else 0.0
+
+    _write_run_record(
+        results_dir,
+        {
+            "protocol": protocol,
+            "target": f"{host}:{port}",
+            "target_name": target_name,
+            "semantic_coverage_pct": round(semantic_pct, 1),
+            "semantic_populated": sorted(semantic_hit),
+            "semantic_missing": sorted(expected - populated),
+        },
+    )
+    return semantic_hit, expected
+
+
+@pytest.mark.coverage
+def test_opcua_coverage(coverage_results_dir):
+    """OPC UA scanner coverage against opcua-mock (port 4840)."""
+    ensure_protocol_dep("asyncua")
+    host, port, target_name = container_target(
+        ("opcua-mock", 4840),
+        ("opcua-insecure", 4842),
+    )
+
+    from oida.protocols.opcua.nxc_connection import opcua
+
+    # OPC UA accepts opc.tcp://host:port; the scanner normalises bare host:port too.
+    url = f"opc.tcp://{host}:{port}"
+    args = make_args(port=port, browse=True, max_depth=2, rhost=url)
+    scanner = opcua(args, None, url)
+    populated = flatten_surface(scanner.results.get("data", {}))
+    expected = expected_for("opcua")
+    semantic_hit = populated & expected
+    semantic_pct = 100.0 * len(semantic_hit) / max(len(expected), 1)
+
+    _write_run_record(
+        coverage_results_dir,
+        {
+            "protocol": "opcua",
+            "target": url,
+            "target_name": target_name,
+            "semantic_coverage_pct": round(semantic_pct, 1),
+            "semantic_populated": sorted(semantic_hit),
+            "semantic_missing": sorted(expected - populated),
+        },
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_snmp_coverage(coverage_results_dir):
+    """SNMP scanner coverage against snmp-mock (UDP 10161)."""
+    ensure_protocol_dep("pysnmp")
+    host, port, target_name = container_target(
+        ("snmp-mock", 10161),
+        udp=True,
+    )
+
+    from oida.protocols.snmp.nxc_connection import snmp
+
+    semantic_hit, _ = _run_and_record(
+        "snmp",
+        snmp,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        community="public",
+        version="2c",
+        walk=False,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_mqtt_coverage(coverage_results_dir):
+    """MQTT scanner coverage against mqtt-insecure (port 1883)."""
+    ensure_protocol_dep("paho.mqtt")
+    host, port, target_name = container_target(
+        ("mqtt-insecure", 1883),
+        ("mqtt-auth", 1884),
+    )
+
+    from oida.protocols.mqtt.nxc_connection import mqtt
+
+    semantic_hit, _ = _run_and_record(
+        "mqtt",
+        mqtt,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        discover_topics=True,
+        listen_time=2,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_coap_coverage(coverage_results_dir):
+    """CoAP scanner coverage against coap-mock (UDP 5683)."""
+    ensure_protocol_dep("aiocoap")
+    host, port, target_name = container_target(
+        ("coap-mock", 5683),
+        ("coap-libcoap", 5685),
+        udp=True,
+    )
+
+    from oida.protocols.coap.nxc_connection import coap
+
+    semantic_hit, _ = _run_and_record(
+        "coap",
+        coap,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        discover=True,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_hl7_coverage(coverage_results_dir):
+    """HL7 scanner coverage against hl7-mock (port 2575)."""
+    ensure_protocol_dep("hl7apy")
+    host, port, target_name = container_target(("hl7-mock", 2575))
+
+    from oida.protocols.hl7 import hl7
+
+    semantic_hit, _ = _run_and_record(
+        "hl7",
+        hl7,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_fhir_coverage(coverage_results_dir):
+    """FHIR scanner coverage against fhir-mock (port 8081)."""
+    ensure_protocol_dep("fhirclient")
+    host, port, target_name = container_target(("fhir-mock", 8081))
+
+    from oida.protocols.fhir.nxc_connection import fhir
+
+    semantic_hit, _ = _run_and_record(
+        "fhir",
+        fhir,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        capability_statement=True,
+        list_resources=True,
+        use_https=False,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_dicom_coverage(coverage_results_dir):
+    """DICOM scanner coverage against dicom-mock (port 11112)."""
+    ensure_protocol_dep("pynetdicom")
+    host, port, target_name = container_target(
+        ("dicom-mock", 11112),
+        ("dicom-strict", 11113),
+    )
+
+    from oida.protocols.dicom.nxc_connection import dicom
+
+    semantic_hit, _ = _run_and_record(
+        "dicom",
+        dicom,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        echo=True,
+        called_ae="MOCK_PACS",
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_snap7_coverage(coverage_results_dir):
+    """Siemens S7 (snap7) scanner coverage against s7comm-snap7 (port 10102)."""
+    ensure_protocol_dep("snap7")
+    host, port, target_name = container_target(
+        ("s7comm-snap7", 10102),
+        ("s7comm-conpot", 10109),
+    )
+
+    from oida.protocols.snap7.nxc_connection import s7
+
+    semantic_hit, _ = _run_and_record(
+        "snap7",
+        s7,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        info=True,
+        rack=0,
+        slot=1,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_mms_coverage(coverage_results_dir):
+    """MMS scanner coverage against mms-libiec61850 (port 102)."""
+    ensure_protocol_dep("pyiec61850_ng")
+    host, port, target_name = container_target(
+        ("mms-libiec61850", 102),
+        ("mms-control", 10107),
+    )
+
+    from oida.protocols.mms.nxc_connection import mms
+
+    semantic_hit, _ = _run_and_record(
+        "mms",
+        mms,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        enum=True,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_hart_coverage(coverage_results_dir):
+    """HART-IP scanner coverage against hart-mock (port 5094)."""
+    ensure_protocol_dep("hartip")
+    host, port, target_name = container_target(
+        ("hart-mock", 5094),
+    )
+
+    from oida.protocols.hart.nxc_connection import hart
+
+    semantic_hit, _ = _run_and_record(
+        "hart",
+        hart,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        identify=True,
+    )
+    assert semantic_hit
