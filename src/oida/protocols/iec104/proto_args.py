@@ -26,15 +26,15 @@ def proto_args(parser, parents):
         parents=parents,
         epilog="""
 Examples:
-  oida iec104 192.168.1.100                  # Basic discovery (TESTFR only)
-  oida iec104 192.168.1.100 --interrogate    # General interrogation
-  oida iec104 192.168.1.100 --probe-files     # Probe file transfer capability
-  oida iec104 192.168.1.100 --listen -T 120  # Listen for 2 minutes
-  oida iec104 192.168.1.100 --list-files     # Probe file transfer
-  oida iec104 192.168.1.100 -S                    # Station scan (CA 1-254)
-  oida iec104 192.168.1.100 -S 1-10               # Station scan (CA 1-10)
-  oida iec104 192.168.1.100 -W 100:on --confirm
-  oida iec104 --iec101 /dev/ttyUSB0:9600:E:1 # IEC 101 serial mode
+  oida iec104 192.168.1.100                       # Basic discovery (TESTFR only)
+  oida iec104 192.168.1.100 --interrogate         # General interrogation
+  oida iec104 192.168.1.100 --probe-files         # Probe file-transfer capability
+  oida iec104 192.168.1.100 --list-files          # List remote files
+  oida iec104 192.168.1.100 --listen -T 120       # Passive listen for 2 minutes
+  oida iec104 192.168.1.100 -S                    # Station scan (common address 1-254)
+  oida iec104 192.168.1.100 -S 1-10               # Station scan (range)
+  oida iec104 192.168.1.100 -W 100:on --confirm   # Write single command (requires --confirm)
+  oida iec104 --iec101 /dev/ttyUSB0:9600:E:1      # IEC 101 serial mode
 """,
     )
 

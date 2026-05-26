@@ -1,6 +1,6 @@
-# MSF-ICS Python Style Guide v1.0
+# OIDA Python Style Guide
 
-This document establishes coding standards for the MSF-ICS framework.
+This document establishes coding standards for the OIDA framework.
 
 ## Table of Contents
 1. [Formatting Rules](#formatting-rules)
@@ -17,12 +17,13 @@ This document establishes coding standards for the MSF-ICS framework.
 
 ## Formatting Rules
 
-- **Line length**: 100 characters (Black formatter default)
-- **Indentation**: 4 spaces (no tabs)
-- **String quotes**: Double quotes for user-visible strings, single for internal
-- **Formatter**: Black (`black src/oida/ tests/`)
-- **Type checking**: mypy (`mypy src/oida/`)
-- **Linting**: flake8 (`flake8 src/oida/`)
+- **Line length**: 100 characters.
+- **Indentation**: 4 spaces (no tabs).
+- **String quotes**: Double quotes preferred (ruff default).
+- **Formatter & linter**: `ruff format src/oida/ tests/` and `ruff check src/oida/ tests/`.
+- **Type checking**: `mypy src/oida/` (informational, not a CI gate yet).
+- **Dead-code detection**: `vulture src/oida/ .vulture_whitelist.py --min-confidence 80`.
+- **Security lint**: `bandit -r src/oida/ -c pyproject.toml`.
 
 ### Import Order (isort)
 
@@ -157,8 +158,11 @@ class ads(NetworkConnection):
         super().__init__(args, db, host)
 
     def proto_flow(self):
-        """Main protocol workflow."""
-        self.proto_logger()
+        """Main protocol workflow.
+
+        ``proto_logger()`` is called automatically by ``NetworkConnection.__init__``
+        before this method runs — do not call it here.
+        """
         self.create_conn_obj()
         self.enum_host_info()
         self.print_host_info()
@@ -181,7 +185,6 @@ Use ICS-prefixed exceptions to avoid shadowing Python builtins:
 from ..utils.exceptions import (
     ICSConnectionError,    # Not ConnectionError
     ICSTimeoutError,       # Not TimeoutError
-    ICSPermissionError,    # Not PermissionError
     DependencyError,
     ProtocolError,
 )

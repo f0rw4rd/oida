@@ -1,279 +1,180 @@
-# OIDA: Industrial Control Systems Security Testing Framework
+# OIDA — ICS Security Testing Framework
 
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![PyPI version](https://badge.fury.io/py/oida.svg)](https://badge.fury.io/py/oida)
 
-A comprehensive security testing framework for Industrial Control Systems (ICS), SCADA, and healthcare protocols. OIDA provides standalone utilities for penetration testing and security assessment of industrial and critical infrastructure networks.
+OIDA is a CLI security-testing framework for industrial control systems, SCADA,
+building automation, and healthcare protocols. It packages standalone scanners
+for 25 protocols behind one `oida <protocol> <target>` interface, with
+consistent flag conventions, export formats, and safety guards on write
+operations.
 
-> **⚠️ LEGAL NOTICE**: This is a **defensive security tool** for **AUTHORIZED TESTING ONLY**.
-> - You **MUST** have explicit written permission before testing any system
-> - Unauthorized use is **illegal** and may result in criminal prosecution
-> - See [DISCLAIMER.md](DISCLAIMER.md) for full legal terms and jurisdiction-specific information
-> - By using this software, you accept all terms in the [LICENSE](LICENSE)
+> **⚠️ Legal notice.** This is a defensive tool for **authorized testing only**.
+> Get explicit written permission before scanning any system you do not own.
+> Unauthorized use may constitute a criminal offence in your jurisdiction.
+> See [DISCLAIMER.md](DISCLAIMER.md) and [LICENSE](LICENSE).
 
-## What does "OIDA" mean?
+The name "OIDA" (pronounced *oy-da*) is Viennese German slang — an exclamation
+that fits most ICS findings: *"Oida!"* on an unauthenticated PLC, *"Oida..."*
+on a Modbus register dump.
 
-**OIDA** (pronounced "oy-da") is Viennese/Austrian German slang - an incredibly versatile exclamation that can express surprise, frustration, acknowledgment, or simply serve as a conversation filler. Think of it as the Austrian equivalent of "dude", "man", or "whoa". When you discover an unauthenticated PLC on the network: *"Oida!"* When Modbus returns all registers readable without auth: *"Oida..."* It captures the mix of excitement and disbelief that comes with ICS security testing.
+## Supported protocols
 
-## 🔧 Supported Protocols
+### Industrial / OT
 
-### Industrial Protocols
+| Protocol     | Port      | Notes |
+| ------------ | --------- | ----- |
+| Modbus       | 502       | TCP, RTU, RTU-over-TCP |
+| OPC UA       | 4840      | with TLS / userauth / certificate analysis |
+| Siemens S7   | 102       | Snap7 |
+| IEC 60870-5-104 | 2404   | telecontrol |
+| Beckhoff ADS | 48898     | TwinCAT |
+| EtherNet/IP  | 44818     | CIP |
+| DNP3         | 20000     | SCADA |
+| MMS          | 102       | IEC 61850 |
+| TASE.2 / ICCP | 102      | IEC 60870-6 |
+| GOOSE        | L2        | IEC 61850, raw socket |
+| EtherCAT     | L2        | raw socket |
+| PROFINET DCP | L2        | raw socket |
+| HART-IP      | 5094      | field devices |
+| KNX / EIB    | 3671      | building automation |
+| BACnet       | 47808     | building automation |
+| CAN          | n/a       | SocketCAN / CANopen / UDS / XCP |
 
-| Protocol | Description | Default Port | Type |
-|----------|-------------|--------------|------|
-| **Modbus** | Modbus TCP/RTU industrial protocol | 502 | Network/Serial |
-| **OPC UA** | OPC Unified Architecture | 4840 | Network |
-| **Siemens S7** | Siemens S7 communication (Snap7) | 102 | Network |
-| **IEC 104** | IEC 60870-5-104 telecontrol | 2404 | Network |
-| **Beckhoff ADS** | Automation Device Specification | 48898 | Network |
-| **CODESYS** | CODESYS PLC runtime | 1217/2455 | Network |
-| **EtherNet/IP** | Industrial Ethernet CIP protocol | 44818 | Network |
-| **MMS** | IEC 61850 Manufacturing Message Spec | 102 | Network |
-| **DNP3** | Distributed Network Protocol | 20000 | Network |
-| **TASE.2** | ICCP/TASE.2 energy protocol | 102 | Network |
-| **EtherCAT** | Ethernet Control Automation Technology | - | Raw Socket |
-| **PROFINET** | PROFINET DCP discovery | - | Raw Socket |
-| **HART-IP** | Highway Addressable Remote Transducer | 5094 | Network |
-| **BACnet** | Building Automation and Control | 47808 | Network |
-| **KNX/EIB** | Building automation protocol | 3671 | Network |
-| **MQTT** | Message Queuing Telemetry Transport | 1883 | Network |
+### IoT / Application
 
-### Healthcare Protocols
+| Protocol | Port | Notes |
+| -------- | ---- | ----- |
+| MQTT     | 1883 | with Sparkplug B |
+| CoAP     | 5683 | RFC 7252 |
+| OCPP     | 9000 | EV charging stations (WebSocket) |
+| SNMP     | 161  | v1/v2c/v3 |
 
-| Protocol | Description | Default Port | Type |
-|----------|-------------|--------------|------|
-| **HL7** | Health Level 7 messaging | 2575 | Network |
-| **DICOM** | Medical imaging protocol | 104 | Network |
-| **ASTM** | Clinical laboratory protocol | 1234 | Network |
+### Healthcare
 
-### Discovery
+| Protocol | Port  | Notes |
+| -------- | ----- | ----- |
+| HL7 v2   | 2575  | MLLP |
+| FHIR     | 443   | REST API |
+| DICOM    | 104   | (11112 common alternative) |
+| ASTM     | varies| lab analyzers |
 
-| Protocol | Description | Type |
-|----------|-------------|------|
-| **Discovery** | Multi-protocol network discovery | Broadcast |
+### Discovery / passive
 
-## 🚀 Quick Start
+- `oida discovery <target>` — multi-protocol active and passive discovery
+  (mDNS, SSDP, LLDP, CDP, BACnet, BBMD, CODESYS, ARP).
+- `oida pcap <file.pcap>` — passive listener pipeline over a saved capture
+  (109 listeners across ICS, IT, and credential-bearing protocols).
 
-### Installation
+## Quick start
 
 ```bash
-# Install core framework
-pip install oida
-
-# Install with all protocol dependencies
+# Install with all protocol extras
 pip install oida[all]
 
-# Install specific protocols
-pip install oida[modbus,opcua,ethercat]
+# Or pick the protocols you need
+pip install oida[modbus,opcua,iec104]
 
-# Development installation
+# Development install (with test deps)
 pip install -e .[dev,all]
 ```
 
-### Basic Usage
+### Basic syntax
 
 ```bash
-# Simple syntax: oida <protocol> <target> [options]
-oida modbus 192.168.1.100                        # Single target
-oida opcua opc.tcp://192.168.1.100:4840          # OPC UA server
-oida s7 192.168.1.10 --rack 0 --slot 2           # Siemens S7
+oida <protocol> <target> [options]
+```
 
-# Multiple targets with threading
-oida modbus 192.168.1.0/24 -t 20                 # CIDR notation
-oida modbus 192.168.1.1-254 -t 10                # IP range
-oida modbus targets.txt                          # From file
+Targets accept a single IP, hostname, CIDR (`192.168.1.0/24`), range
+(`192.168.1.1-254`), or a file with one target per line. Use `-t N` to
+control concurrent worker threads.
 
-# Output options
+```bash
+oida modbus 192.168.1.100                          # single host
+oida modbus 192.168.1.0/24 -t 20                   # subnet
+oida modbus targets.txt                            # from file
+oida opcua opc.tcp://192.168.1.100:4840            # OPC UA URL
+oida s7 192.168.1.10 --rack 0 --slot 2             # Siemens S7-300
+```
+
+### Output
+
+```bash
 oida modbus 192.168.1.100 -o results --format json
-oida modbus 192.168.1.100 -o results --format all  # json, csv, xml
+oida modbus 192.168.1.100 -o results --format csv,json   # comma-separated
+```
 
-# Verbosity and debugging
-oida modbus 192.168.1.100 -v                     # Verbose
-oida modbus 192.168.1.100 -vvv --debug           # Maximum debug
+Output formats: `console` (default), `json`, `csv`. XML is recognised by the
+flag parser but not yet implemented per-protocol — use JSON.
 
-# Protocol-specific options
-oida modbus 192.168.1.100 --unit-id 1 --scan-range 0-100
-oida opcua opc.tcp://host:4840 --browse --max-depth 3
-oida ads 192.168.1.100 --target-ams 5.80.192.37.1.1
+### Verbosity
+
+```bash
+oida modbus 192.168.1.100 -v       # verbose
+oida modbus 192.168.1.100 -vv      # more verbose
+oida modbus 192.168.1.100 --debug  # full debug
+```
+
+## Per-protocol examples
+
+```bash
+# Modbus — register scan + identification
+oida modbus 192.168.1.100 --unit-id 1 --scan-range 0-1000 -o modbus_scan --format json
+
+# OPC UA — anonymous browse with depth limit
+oida opcua opc.tcp://192.168.1.100:4840 --browse --max-depth 5
+
+# Siemens S7 — discovery + SZL enumeration
+oida s7 192.168.1.10 --rack 0 --slot 2 -i -L -E
+
+# IEC 104 — common address scan
 oida iec104 192.168.1.100 --common-address 1
-oida bacnet 192.168.1.255 --broadcast
-```
 
-## 📋 Core Features
+# Beckhoff ADS — symbol enumeration with explicit target AMS Net ID
+oida ads 192.168.1.100 --target-ams 5.80.192.37.1.1
 
-### Security Testing Capabilities
+# BACnet — local-broadcast device discovery
+oida bacnet 192.168.1.255
 
-- **Protocol Discovery**: Enumerate available services and endpoints
-- **Authentication Testing**: Test for weak credentials and authentication bypass
-- **Access Control Analysis**: Identify readable/writable registers and nodes
-- **Vulnerability Assessment**: Built-in security analysis and reporting
-- **Certificate Analysis**: SSL/TLS and OPC UA certificate validation
-- **Configuration Analysis**: Deep inspection of device configurations
+# KNX — gateway discovery (multicast)
+oida knx 224.0.23.12
 
-### Scanning Modes
-
-- **Discovery**: Enumerate devices, endpoints, and basic information
-- **Security**: Focus on security vulnerabilities and misconfigurations
-- **Interactive**: Interactive command-line mode for manual testing
-- **Comprehensive**: Deep analysis combining discovery and security assessment
-
-### Export Formats
-
-- **Console**: Human-readable colored output
-- **JSON**: Structured data for programmatic analysis
-- **CSV**: Tabular data for spreadsheet analysis
-- **XML**: Hierarchical data representation
-
-## 🛠️ Protocol-Specific Features
-
-### Modbus
-- Unit ID discovery and enumeration
-- Register scanning (coils, discrete inputs, holding registers, input registers)
-- Function code testing and validation
-- Read/write access testing with safety controls
-- Serial (RTU) and TCP support
-- Device identification and fingerprinting
-
-### OPC UA
-- Endpoint discovery and security policy analysis
-- Authentication method testing (Anonymous, Username, Certificate)
-- Address space exploration and mapping
-- Node attribute reading and monitoring
-- Subscription capabilities testing
-- Certificate-based security assessment
-- Server capability enumeration
-
-### EtherCAT
-- Slave device discovery and enumeration
-- EEPROM data extraction and analysis
-- SDO (Service Data Object) information gathering
-- Process data analysis and monitoring
-- Network topology mapping
-- Vendor-specific extensions support
-
-### IEC 104
-- Information Object Address (IOA) discovery
-- ASDU address enumeration
-- General interrogation capabilities
-- Command execution testing (with safety controls)
-- Data point analysis and monitoring
-- Protocol conformance testing
-
-### Beckhoff ADS
-- Symbol table enumeration and analysis
-- Variable read/write testing
-- AMS routing analysis
-- Memory access testing (read-only by default)
-- Device information gathering
-- TwinCAT integration testing
-
-### KNX/EIB
-- Group address discovery
-- Device scanning and enumeration
-- Bus topology analysis
-- Communication testing
-- Security policy assessment
-
-### EtherNet/IP
-- Device discovery via Common Industrial Protocol (CIP)
-- Assembly object analysis
-- Connection manager testing
-- Identity object enumeration
-- Explicit messaging capabilities
-
-### MMS (IEC 61850)
-- Logical device enumeration
-- Data object discovery
-- Report control block analysis
-- GOOSE message monitoring
-- Server capability assessment
-
-## 🔒 Security & Safety Features
-
-### Built-in Security Analysis
-- Protocol-specific vulnerability checks
-- Default credential detection
-- Encryption capability assessment
-- Access control evaluation
-- Security policy analysis
-- Certificate validation
-
-### Safety Mechanisms
-- **Read-only mode by default** - Prevents accidental writes
-- Confirmation prompts for potentially dangerous operations
-- Comprehensive logging and audit trails
-- Error handling and graceful recovery
-- Connection timeouts and rate limiting
-
-## 📚 Usage Examples
-
-### Modbus Scanning
-```bash
-# Basic scan
-oida modbus 192.168.1.100
-
-# Full register enumeration with output
-oida modbus 192.168.1.100 \
-  --unit-id 1 \
-  --scan-range 0-1000 \
-  -o modbus_results --format json
-
-# Scan network range
-oida modbus 192.168.1.0/24 -t 20 -o network_scan
-```
-
-### OPC UA Security Assessment
-```bash
-# Browse server anonymously
-oida opcua opc.tcp://192.168.1.100:4840 --browse
-
-# Deep node enumeration
-oida opcua opc.tcp://192.168.1.100:4840 \
-  --browse --max-depth 5 \
-  -o opcua_results --format json
-```
-
-### Siemens S7 Scanning
-```bash
-# Scan S7-300/400
-oida s7 192.168.1.10 --rack 0 --slot 2
-
-# Scan S7-1200/1500
-oida s7 192.168.1.10 --rack 0 --slot 1
-```
-
-### Healthcare Protocols
-```bash
-# HL7 server enumeration
+# HL7 — connection + version fingerprint
 oida hl7 192.168.1.50 --port 2575
 
-# DICOM service discovery
-oida dicom 192.168.1.51 --port 104
+# DICOM — service discovery
+oida dicom 192.168.1.51
+
+# Passive pcap analysis (all 109 listeners)
+oida pcap capture.pcap
 ```
 
-### Building Automation
-```bash
-# BACnet device discovery
-oida bacnet 192.168.1.255 --broadcast
+Each protocol has `--help` with its full flag set, examples, and which
+operations require `--confirm` (any write or state-change action).
 
-# KNX network scan
-oida knx 192.168.1.100
-```
+## Safety
 
-## 🐍 Python API
+Write operations and state-change operations across all ICS protocols are
+gated behind an explicit `--confirm` flag. The defaults are read-only.
+Examples that require `--confirm`:
 
-## Funding
+- `oida modbus … --write-coil …`
+- `oida dnp3 … --bo-direct 0 --confirm`
+- `oida ethercat … --op-state --confirm`
+- `oida iec104 … --write-single …`
 
-This research received no external funding.
+See [DISCLAIMER.md](DISCLAIMER.md) for the full safety statement.
 
-## Conflicts of Interest
+## Documentation
 
-The authors declare no conflict of interest.
-
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — class layering and refactor roadmap.
+- [docs/new-protocol.md](docs/new-protocol.md) — how to add a new protocol scanner.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — contribution policy (incl. AI usage policy).
+- [STYLE_GUIDE.md](STYLE_GUIDE.md) — Python style and naming.
+- [RELEASE_READINESS.md](RELEASE_READINESS.md) — known issues snapshot for 1.0.
 
 ## Support
 
-If you find this project useful, consider supporting development:
-
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/f0rw4rd)
+If you find this useful, you can support development at
+[ko-fi.com/f0rw4rd](https://ko-fi.com/f0rw4rd).

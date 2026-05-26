@@ -4,10 +4,11 @@ Contributions are welcome! By contributing, you agree to the terms below.
 
 ## How to Contribute
 
-1. **Fork** the repository and create a feature branch from `main`
-2. **Write** your code following the existing style (Black, 100-char lines)
-3. **Test** your changes: `python run_tests.py`
-4. **Submit** a Pull Request with a clear description of your changes
+1. **Fork** the repository and create a feature branch from `main`.
+2. **Write** your code following the existing style (`ruff format`, 100-char lines).
+3. **Test** your changes: `pytest tests/unit`. For integration tests with mock
+   services, see [tests/integration/README.md](tests/integration/README.md).
+4. **Submit** a pull request with a clear description of your changes.
 
 ### What We Accept
 
@@ -23,13 +24,17 @@ Contributions are welcome! By contributing, you agree to the terms below.
 - Features that enable unauthorized access or attacks beyond the tool's scope
 - Dependencies with licenses incompatible with AGPL-3.0
 
-## Code Standards
+## Code standards
 
-- Python 3.8+ compatibility
-- Type hints where practical
-- All scanners inherit from `BaseScanner` (Layer 1) or `NetworkConnection` (Layer 2)
-- Protocol CLI arguments in `protocols/{name}/proto_args.py`
-- Unit tests for new functionality
+- Python 3.10+ (see `pyproject.toml` for the supported matrix).
+- Type hints where practical (`mypy` runs informationally — not a CI gate yet).
+- New scanners follow the facade pattern documented in
+  [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): a Layer-1 `XxxScanner(NetworkScanner)`
+  for the library API, plus a Layer-2 `xxx(NetworkConnection)` NXC class that
+  delegates to it. Modbus is the reference.
+- Protocol CLI arguments live in `protocols/{name}/proto_args.py`.
+- Unit tests for new functionality; integration tests against mock services
+  where applicable.
 
 ## AI-assisted contributions
 
@@ -119,9 +124,10 @@ is required. If you do not agree to these terms, do not submit contributions.
 If you discover a security vulnerability in OIDA itself (not in targets being
 tested), please report it responsibly:
 
-1. **Do not** open a public issue
-2. Email the maintainers directly (see SECURITY.md if available)
-3. Allow reasonable time for a fix before public disclosure
+1. **Do not** open a public issue.
+2. Email the maintainers directly via the project contact listed on
+   [github.com/f0rw4rd/oida](https://github.com/f0rw4rd/oida).
+3. Allow reasonable time for a fix before public disclosure.
 
 ## Questions?
 
