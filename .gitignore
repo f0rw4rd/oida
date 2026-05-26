@@ -13,6 +13,10 @@ test_fuzz_session.db
 # KNX hash-extraction inner-zip outputs (extract_knxproj_hash fallback path)
 /P-*.zip
 
+# Real-coverage suite per-run output (Axis 1: scanner field-coverage).
+# Manifest files are run artefacts, not source.
+tests/coverage/results/*.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
