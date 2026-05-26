@@ -152,8 +152,12 @@ class can(SerialConnection):
         self.results["data"]["fd_enabled"] = self.fd
 
     def print_host_info(self) -> None:
-        """Display CAN bus connection information."""
-        self.logger.success(f"CAN Bus: {self.channel}")
+        """Display CAN bus connection information.
+
+        ``create_conn_obj`` already emitted the connection-success banner;
+        use ``display()`` here so the banner appears exactly once.
+        """
+        self.logger.display(f"CAN Bus: {self.channel}")
         self.logger.display(f"    Interface type: {self.bus_type}")
         self.logger.display(f"    Bitrate: {self.baudrate} bps")
         if self.fd:

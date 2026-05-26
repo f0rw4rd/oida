@@ -69,7 +69,9 @@ class mms(NetworkConnection):
         port = getattr(self.args, "port", 102)
 
         if info.get("vendor") or info.get("model"):
-            self.logger.success(f"MMS/IEC 61850: {self.host}:{port}")
+            # create_conn_obj() already emitted the connection-success banner;
+            # use display() to avoid a redundant success line.
+            self.logger.display(f"MMS/IEC 61850: {self.host}:{port}")
             if info.get("vendor"):
                 self.logger.display(f"    Vendor: {info['vendor']}")
             if info.get("model"):

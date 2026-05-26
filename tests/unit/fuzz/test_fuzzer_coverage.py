@@ -158,13 +158,14 @@ ICS_SCADA_TIERS = {
     "mutation": ("N/A", 1),
 }
 
-# Exact ICS request counts from ICS audit (updated 2026-02-14)
+# Exact ICS request counts from ICS audit (updated 2026-05-26: opcua 22→21,
+# removed phantom OPCUA_Query that was advertised but never implemented).
 ICS_AUDIT_REQUEST_COUNTS = {
     "modbus": 15,
     "modbus_rtu": 12,
     "dnp3": 10,
     "iec104": 12,
-    "opcua": 22,
+    "opcua": 21,
     "bacnet": 13,
     "ethernetip": 11,
     "fins": 21,

@@ -164,8 +164,11 @@ class mqtt(NetworkConnection):
         self.results["data"]["broker_info"] = broker_info
 
     def print_host_info(self):
-        """Display MQTT broker information"""
-        self.logger.success("Connection success")
+        """Display MQTT broker information.
+
+        ``create_conn_obj`` already emitted the connection-success banner;
+        skip a redundant ``success()`` here.
+        """
 
         # Warning if no TLS
         if not getattr(self.args, "tls", False):

@@ -525,12 +525,15 @@ def handle_replay_command(args):
         print("Usage: oida fuzz replay <session> [--range N-M]")
         return 1
 
-    # Import database
-    from .fuzz.core.database.sqlite import SQLiteDatabase
+    # Import database. The fuzzer writes via SQLAlchemyDatabase (ORM) — use
+    # the same backend for reads so we never see schema drift. SQLiteDatabase
+    # (raw SQL) is kept for backward compatibility but no longer the default.
+    from .fuzz.core.database.orm import SQLAlchemyDatabase
 
     db_path = f"{session}.db"
     try:
-        db = SQLiteDatabase(db_path)
+        db = SQLAlchemyDatabase(db_path)
+        db.init_schema()
 
         # Check if --range or --case specified
         test_range = getattr(args, "replay_range", None)

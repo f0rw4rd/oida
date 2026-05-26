@@ -200,7 +200,10 @@ class OPCUAFuzzer(BaseFuzzer):
                 "read",
                 requires_state="SESSION_ACTIVE",
             ),
-            RequestInfo("OPCUA_Query", "Query services", "read", requires_state="SESSION_ACTIVE"),
+            # OPCUA_Query removed in 1.0: was advertised by --list-requests but
+            # no corresponding Request("OPCUA_Query") definition existed in the
+            # fuzzer's session graph. Re-add once a real Query implementation
+            # lands.
             RequestInfo(
                 "OPCUA_History_Read",
                 "Historical data read",

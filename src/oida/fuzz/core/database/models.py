@@ -100,9 +100,16 @@ class Crash(Base):
 
     Stores detailed information about crashes detected during fuzzing,
     including the payload that triggered the crash and diagnostic information.
+
+    ``crash_hash`` is a stable signature derived from the crash class + top
+    stack frame, intended for grouping duplicate crashes at triage time. Two
+    crashes with the same hash are *likely* the same underlying defect — but
+    payloads may differ. Use ``crash_hash`` for ``GROUP BY`` queries, not for
+    proving identity.
     """
 
     __tablename__ = "crashes"
+    __table_args__ = (Index("idx_crash_hash", "crash_hash"),)
 
     # Foreign key as primary key (one-to-one relationship)
     test_case_id: Mapped[int] = mapped_column(
@@ -113,12 +120,38 @@ class Crash(Base):
     payload: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     crash_info: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     stack_trace: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    crash_hash: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
 
     # Relationship back to test case
     test_case: Mapped["TestCase"] = relationship("TestCase", back_populates="crash")
 
+    @staticmethod
+    def compute_crash_hash(
+        crash_info: Optional[str], stack_trace: Optional[str]
+    ) -> str:
+        """Compute a stable short hash that groups duplicate crashes.
+
+        The signature uses the first ~120 chars of ``crash_info`` plus the
+        top frame of ``stack_trace`` (everything up to the first newline).
+        Returns the first 16 hex chars of the BLAKE2b digest — enough to
+        keep collisions rare across a single fuzz session without bloating
+        the index.
+        """
+        import hashlib
+
+        info_key = (crash_info or "").strip()[:120]
+        stack_key = (stack_trace or "").strip().split("\n", 1)[0][:120]
+        return hashlib.blake2b(
+            (info_key + "\x00" + stack_key).encode("utf-8", "replace"),
+            digest_size=8,
+        ).hexdigest()
+
     def __repr__(self):
-        return f"<Crash(test_case_id={self.test_case_id}, info='{self.crash_info[:50] if self.crash_info else 'None'}...')>"
+        return (
+            f"<Crash(test_case_id={self.test_case_id}, "
+            f"hash={self.crash_hash}, "
+            f"info='{self.crash_info[:50] if self.crash_info else 'None'}...')>"
+        )
 
     def to_dict(self) -> dict:
         """Convert to dictionary for API responses"""
@@ -127,6 +160,7 @@ class Crash(Base):
             "payload_size": len(self.payload) if self.payload else 0,
             "crash_info": self.crash_info,
             "stack_trace": self.stack_trace,
+            "crash_hash": self.crash_hash,
         }
 
 

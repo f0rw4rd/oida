@@ -32,12 +32,19 @@ class TestCase:
 
 @dataclass
 class Crash:
-    """Full crash information with stored payload"""
+    """Full crash information with stored payload.
+
+    ``crash_hash`` is a stable short signature derived from
+    ``(crash_info, stack_trace top frame)`` used by triage tooling to GROUP
+    duplicate crashes together. Set by the storage layer at write time —
+    callers can leave it unset.
+    """
 
     test_case_id: int
     payload: bytes
     crash_info: Optional[str] = None
     stack_trace: Optional[str] = None
+    crash_hash: Optional[str] = None
 
 
 @dataclass

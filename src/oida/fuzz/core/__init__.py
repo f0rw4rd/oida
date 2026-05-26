@@ -33,13 +33,11 @@ def __getattr__(name):
         from .stateful_fuzzer import StatefulFuzzer
 
         return StatefulFuzzer
-    elif name in ("DatabaseInterface", "SQLiteDatabase", "MockDatabase"):
-        from .database import DatabaseInterface, SQLiteDatabase, MockDatabase
+    elif name in ("DatabaseInterface", "MockDatabase"):
+        from .database import DatabaseInterface, MockDatabase
 
         if name == "DatabaseInterface":
             return DatabaseInterface
-        elif name == "SQLiteDatabase":
-            return SQLiteDatabase
         return MockDatabase
     elif name == "SQLAlchemyDatabase":
         from .database.orm import SQLAlchemyDatabase
@@ -66,7 +64,6 @@ __all__ = [
     "RequestInfo",
     "StatefulFuzzer",
     "DatabaseInterface",
-    "SQLiteDatabase",
     "SQLAlchemyDatabase",
     "MockDatabase",
     "ConnectionFactory",

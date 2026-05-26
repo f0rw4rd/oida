@@ -196,25 +196,6 @@ class TestTestScopeBypass(unittest.TestCase):
         host.logger.security_finding.assert_called()
 
 
-class TestBulkExport(unittest.TestCase):
-    """Test _bulk_export() method"""
-
-    def test_no_confirm_flag(self):
-        """Test bulk export fails without --confirm flag"""
-        host = MockSecurityHost(confirm=False)
-        host._bulk_export()
-        host.logger.fail.assert_called()
-
-    def test_with_confirm_flag(self):
-        """Test bulk export proceeds with --confirm flag"""
-        host = MockSecurityHost(confirm=True)
-        host._bulk_export()
-        host.logger.display.assert_called()
-        display_calls = [str(c) for c in host.logger.display.call_args_list]
-        endpoint_calls = [c for c in display_calls if "$export" in c]
-        self.assertTrue(len(endpoint_calls) > 0)
-
-
 class TestLoadCredentials(unittest.TestCase):
     """Test _load_credentials() method"""
 

@@ -39,7 +39,7 @@ Examples:
     add_target_argument(astm_parser)
 
     # Network Options (--port, --timeout)
-    add_network_options(astm_parser, default_port=1394)
+    add_network_options(astm_parser, default_port=12000)
 
     # TLS Options (--tls, --tls-cert, --tls-key, --tls-ca, --tls-insecure)
     add_tls_options(astm_parser, default_tls_port=1395)

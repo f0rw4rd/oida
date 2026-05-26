@@ -48,9 +48,13 @@ class TestOPCUARequestCount:
         )
 
     def test_actual_request_count_baseline(self):
-        """Baseline: OPC UA should have >= 22 request definitions."""
+        """Baseline: OPC UA should have >= 21 request definitions.
+
+        Baseline was 22 until 2026-05-26 when the phantom OPCUA_Query
+        RequestInfo entry (advertised but never implemented) was removed.
+        """
         defs = _get_opcua_request_definitions()
-        assert len(defs) >= 22, f"OPC UA request count regression: expected >= 22, got {len(defs)}"
+        assert len(defs) >= 21, f"OPC UA request count regression: expected >= 21, got {len(defs)}"
 
 
 # ---------------------------------------------------------------------------

@@ -440,14 +440,16 @@ Examples:
         "-x",
         "--test-cross-patient",
         action="store_true",
-        help="Test cross-patient data access controls (requires --patient-id)",
+        help="Advisory cross-patient access check (prints guidance; requires --patient-id "
+        "and manual verification of the result)",
     )
 
     security_group.add_argument(
         "-S",
         "--test-scope",
         action="store_true",
-        help="Test OAuth2 scope enforcement",
+        help="Advisory OAuth2 scope-enforcement check (detects SMART/OAuth; full "
+        "scope-bypass requires manual verification)",
     )
 
     security_group.add_argument(
@@ -461,19 +463,10 @@ Examples:
     # ============================================================================
     dangerous_group = add_dangerous_options(fhir_parser, include_fuzz=False)
 
-    dangerous_group.add_argument(
-        "--bulk-export",
-        action="store_true",
-        help="Initiate FHIR Bulk Data Export (requires --confirm)",
-    )
-
-    dangerous_group.add_argument(
-        "--bulk-export-type",
-        type=str,
-        default="Patient",
-        choices=["Patient", "Group", "System"],
-        help="Bulk export type (default: Patient)",
-    )
+    # NOTE: --bulk-export / --bulk-export-type removed for 1.0 — the handler
+    # was a placeholder that printed "not implemented" and exited. Use the
+    # FHIR $export operation directly via your HTTP client until a real
+    # bulk-export implementation lands.
 
     # ============================================================================
     # Write Operations (require --confirm)
