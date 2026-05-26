@@ -1,0 +1,81 @@
+{
+  "protocol": "iec104",
+  "spec_refs": [
+    "IEC 60870-5-104:2006 + Amd 1:2016",
+    "IEC 60870-5-101:2003"
+  ],
+  "patterns": [
+    {
+      "id": "iec104-apci-length-mismatch",
+      "cve_refs": [],
+      "summary": "APCI length field (byte 2) lies about actual APDU size; parsers read past end.",
+      "bug_class": "length_confusion",
+      "target_request": "IEC104_APCI_Malformed",
+      "target_field": "APCI.Length",
+      "mutation_strategy": "group_values",
+      "mutation_values": [0, 1, 3, 4, 252, 253, 254, 255],
+      "covered_by_oida_today": true,
+      "fuzzer_notes": "Spec limits length to 4..253. Values 0-3 and 254-255 catch boundary bugs."
+    },
+    {
+      "id": "iec104-uformat-control",
+      "cve_refs": [],
+      "summary": "U-format control byte: STARTDT/STOPDT/TESTFR act+con combinations including reserved patterns.",
+      "bug_class": "state_confusion",
+      "target_request": "IEC104_UFormat_Control",
+      "target_field": "APCI.U_Control",
+      "mutation_strategy": "group_values",
+      "mutation_values": ["0x07", "0x0B", "0x13", "0x23", "0x43", "0x83", "0x00", "0xFF"],
+      "covered_by_oida_today": true,
+      "fuzzer_notes": "Covered."
+    },
+    {
+      "id": "iec104-asdu-type-id-reserved",
+      "cve_refs": [],
+      "summary": "ASDU TypeId in reserved range (128-135) and vendor range (136-255) lacks validation in many stacks.",
+      "bug_class": "parser_oob",
+      "target_request": "IEC104_ASDU_TypeId",
+      "target_field": "ASDU.TypeId",
+      "mutation_strategy": "group_values",
+      "mutation_values": [0, 41, 70, 99, 100, 127, 128, 135, 136, 200, 255],
+      "covered_by_oida_today": true,
+      "fuzzer_notes": "Extend Group with reserved 128-135 and vendor 136-255 — vendors frequently misparse."
+    },
+    {
+      "id": "iec104-ioa-overflow",
+      "cve_refs": [],
+      "summary": "IOA (3-byte information object address) at 0xFFFFFF or 0 triggers off-by-one in lookup tables.",
+      "bug_class": "parser_oob",
+      "target_request": "IEC104_IOA_Overflow",
+      "target_field": "ASDU.IOA",
+      "mutation_strategy": "group_values",
+      "mutation_values": [0, 1, 65535, 65536, 16777214, 16777215],
+      "covered_by_oida_today": true,
+      "fuzzer_notes": "Covered."
+    },
+    {
+      "id": "iec104-file-transfer-segment",
+      "cve_refs": [],
+      "summary": "File transfer ASDU types 120-127: segment number / length inconsistency.",
+      "bug_class": "length_confusion",
+      "target_request": "IEC104_File_Transfer",
+      "target_field": "ASDU.Segment_Length",
+      "mutation_strategy": "boofuzz_default",
+      "mutation_values": [],
+      "covered_by_oida_today": true,
+      "fuzzer_notes": "Covered."
+    },
+    {
+      "id": "iec104-common-address-sweep",
+      "cve_refs": [],
+      "summary": "Common Address (CA, 2-byte) enumeration may reveal undocumented stations or trigger parsers expecting CA=1.",
+      "bug_class": "parser_oob",
+      "target_request": "IEC104_ASDU_TypeId",
+      "target_field": "ASDU.CommonAddress",
+      "mutation_strategy": "group_values",
+      "mutation_values": [0, 1, 65534, 65535, 32767, 32768],
+      "covered_by_oida_today": false,
+      "fuzzer_notes": "Scanner side does sweep; fuzzer should mirror with Group on CA field in IEC104_ASDU_TypeId request."
+    }
+  ]
+}

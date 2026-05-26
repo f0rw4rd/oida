@@ -321,10 +321,14 @@ class MDNSFuzzer(BaseFuzzer):
                         BitField("RA", default_value=0, width=1),
                         BitField("Z", default_value=0, width=3),
                         BitField("Rcode", default_value=0, width=4),
-                        Static("QDCount", b"\x00\x01"),  # 1 question
-                        Static("ANCount", b"\x00\x08"),  # 8 answers (all types)
-                        Static("NSCount", b"\x00\x01"),  # 1 authority
-                        Static("ARCount", b"\x00\x01"),  # 1 additional
+                        # Section counts are now Word (fuzzable) so boofuzz
+                        # mutates them — section-count lies about actual record
+                        # count are a classic DNS parser bug class
+                        # (RDLENGTH confusion); see ref/mdns/cves/README.md.
+                        Word("QDCount", 1, output_format="binary"),  # 1 question
+                        Word("ANCount", 8, output_format="binary"),  # 8 answers
+                        Word("NSCount", 1, output_format="binary"),  # 1 authority
+                        Word("ARCount", 1, output_format="binary"),  # 1 additional
                     ),
                 ),
                 # Question: ANY record for service discovery
