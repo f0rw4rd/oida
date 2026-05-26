@@ -69,7 +69,6 @@ class ads(NetworkConnection):
 
     def proto_flow(self):
         """Main ADS scanning workflow"""
-        self.proto_logger()
 
         # Build scanner args
         args_dict = self._convert_args_to_dict()

@@ -45,7 +45,6 @@ class coap(NetworkConnection):
         """Main CoAP scanning workflow."""
         import time as _time
 
-        self.proto_logger()
         self.logger.debug("proto_flow: host=%s, port=%s", self.host, self.port)
 
         args_dict = self._convert_args_to_dict()

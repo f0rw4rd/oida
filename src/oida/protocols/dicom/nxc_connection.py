@@ -400,7 +400,6 @@ class dicom(
 
     def proto_flow(self):
         """Main DICOM scanning workflow"""
-        self.proto_logger()
 
         # Get calling AE Title
         self.calling_aet = getattr(self.args, "aet", "OIDA")

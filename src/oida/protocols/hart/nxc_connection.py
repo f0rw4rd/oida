@@ -26,7 +26,6 @@ class hart(NetworkConnection):
 
     def proto_flow(self):
         """Main HART scanning workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = HARTScanner(args_dict)
 

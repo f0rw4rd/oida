@@ -35,7 +35,6 @@ class snmp(NetworkConnection):
 
     def proto_flow(self):
         """Main SNMP scanning workflow — standard NXC method sequence."""
-        self.proto_logger()
 
         if not self.create_conn_obj():
             return

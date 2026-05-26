@@ -97,7 +97,6 @@ class bacnet(
 
     def proto_flow(self):
         """Main BACnet scanning workflow"""
-        self.proto_logger()
 
         # Load bacpypes3 types on first use (lazy import for faster CLI startup)
         _ensure_bacpypes3_globals()

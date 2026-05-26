@@ -165,7 +165,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
 
     def proto_flow(self):
         """Execute OCPP scanning workflow (modeled after OPC UA _async_proto_flow)."""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = OCPPScanner(args_dict)
 

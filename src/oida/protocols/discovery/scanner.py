@@ -2545,7 +2545,6 @@ class discovery(SerialConnection):
 
     def proto_flow(self):
         """Main discovery workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = DiscoveryScanner(args_dict)
 

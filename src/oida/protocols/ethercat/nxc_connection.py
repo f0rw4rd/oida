@@ -26,7 +26,6 @@ class ethercat(SerialConnection):
 
     def proto_flow(self) -> None:
         """Main Ethercat scanning workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = EtherCATScanner(args_dict)
 

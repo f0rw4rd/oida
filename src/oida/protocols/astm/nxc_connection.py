@@ -38,7 +38,6 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
     def proto_flow(self):
         """Main ASTM scanning workflow"""
-        self.proto_logger()
 
         # Initialize record builder
         version = getattr(self.args, "astm_version", "E1394")

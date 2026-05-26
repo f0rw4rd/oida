@@ -84,7 +84,6 @@ class can(SerialConnection):
         6. Monitoring mode (if requested, blocking)
         7. Fuzzing (if requested)
         """
-        self.proto_logger()
         self.logger.debug(
             f"Starting CAN workflow on {self.channel} "
             f"(bus_type={self.bus_type}, bitrate={self.baudrate})"

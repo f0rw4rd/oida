@@ -402,7 +402,8 @@ class TestProtoFlow(unittest.TestCase):
         with patch("oida.protocols.iec104.nxc_connection.IEC104Scanner", mock_scanner_cls):
             obj.proto_flow()
 
-        obj.proto_logger.assert_called_once()
+        # proto_logger is now called by connection.__init__, not proto_flow.
+        # Test only the proto_flow contract.
         obj._convert_args_to_dict.assert_called_once()
         mock_scanner_cls.assert_called_once_with({"rhost": "192.168.1.100"})
         # Connection should have been established

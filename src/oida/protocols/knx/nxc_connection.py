@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""KNX NXC-style callable class."""
+"""KNX NXC-style callable class.
+
+ARCHITECTURE TODO: This class does NOT delegate to ``KNXScanner`` (the L1
+class in ``scanner.py``) — both implement parallel protocol logic. See
+``docs/ARCHITECTURE.md`` § Refactor targets P0: extract the protocol work
+into ``KNXScanner`` methods that take an xknx client param and reduce this
+class to a CLI dispatcher that owns one. Modbus is the reference for the
+facade pattern.
+"""
 
 import asyncio
 import socket
@@ -45,7 +53,6 @@ class knx(NetworkConnection):
 
     def proto_flow(self):
         """Main KNX scanning workflow."""
-        self.proto_logger()
         self.logger.debug(f"proto_flow: host={self.host}, port={self.port}")
 
         # Handle .knxproj parsing (doesn't need network connection)

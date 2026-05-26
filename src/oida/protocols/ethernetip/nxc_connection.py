@@ -41,7 +41,6 @@ class ethernetip(NetworkConnection):
 
     def proto_flow(self):
         """Main Ethernetip scanning workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = EtherNetIPScanner(args_dict)
 
