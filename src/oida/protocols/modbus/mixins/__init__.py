@@ -26,9 +26,9 @@ from .writes import WritesMixin
 from .monitor import MonitorMixin
 from .fuzz import FuzzMixin
 from .canopen import CANopenMixin
-from .raw_fc import RawFCMixin
+from .raw_function_codes import RawFCMixin
 from .sunspec import SunSpecMixin
-from .map_rw import MapReadWriteMixin
+from .read_write import MapReadWriteMixin
 
 __all__ = [
     "IdentificationMixin",
