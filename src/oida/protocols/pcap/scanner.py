@@ -1104,7 +1104,6 @@ class pcap(SerialConnection):
 
     def proto_flow(self):
         """Main PCAP analysis workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.logger.debug("pcap.proto_flow: args_dict keys=%s", list(args_dict.keys()))
 

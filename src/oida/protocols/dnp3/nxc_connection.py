@@ -23,7 +23,6 @@ class dnp3(NetworkConnection):
 
     def proto_flow(self):
         """Main DNP3 scanning workflow"""
-        self.proto_logger()
 
         # Validate arguments (control ops require explicit outstation-addr)
         from .proto_args import validate_args

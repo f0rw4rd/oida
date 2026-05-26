@@ -84,7 +84,6 @@ class mqtt(NetworkConnection):
 
     def proto_flow(self):
         """Execute MQTT scanning workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = MQTTScanner(args_dict)
 

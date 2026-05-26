@@ -21,7 +21,6 @@ class goose(SerialConnection):
 
     def proto_flow(self):
         """Main GOOSE scanning workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = GOOSEScanner(args_dict)
         # Determine mode

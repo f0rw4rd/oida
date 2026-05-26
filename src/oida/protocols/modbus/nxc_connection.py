@@ -142,7 +142,6 @@ class modbus(
         from .scanner import ModbusScanner
 
         # Setup logging
-        self.proto_logger()
         self.logger.debug(
             f"Starting Modbus workflow for {self.ip}:{getattr(self.args, 'port', 502)}"
         )

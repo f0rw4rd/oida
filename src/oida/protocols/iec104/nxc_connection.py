@@ -20,7 +20,6 @@ class iec104(NetworkConnection):
 
     def proto_flow(self):
         """Main Iec104 scanning workflow"""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = IEC104Scanner(args_dict)
 

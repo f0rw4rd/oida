@@ -33,7 +33,6 @@ class s7(NetworkConnection):
     def proto_flow(self):
         """Main Snap7 workflow with action support"""
         self.logger.debug("proto_flow: %s:%s", self.host, getattr(self.args, "port", 102))
-        self.proto_logger()
 
         args_dict = self._convert_args_to_dict()
         self.scanner = Snap7Scanner(args_dict)

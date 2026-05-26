@@ -93,6 +93,12 @@ class connection(ABC):
             "data": {},
         }
 
+        # Run proto_logger() to apply the resolved IP / port to the logger
+        # before proto_flow starts. Subclasses do not need to call this
+        # themselves; the call is idempotent so legacy calls in subclass
+        # proto_flow() implementations are harmless.
+        self.proto_logger()
+
         # Trigger protocol execution flow
         # Error handling and cleanup are centralized here so proto_flow()
         # implementations only need the happy-path logic.
@@ -181,24 +187,28 @@ class connection(ABC):
         ``cleanup()``.
 
         Typical implementation:
-        1. proto_logger() - Setup logging
-        2. create_conn_obj() - Establish connection
-        3. enum_host_info() - Gather device information
-        4. print_host_info() - Display discovered info
-        5. Protocol-specific scanning actions
+        1. create_conn_obj() - Establish connection
+        2. enum_host_info() - Gather device information
+        3. print_host_info() - Display discovered info
+        4. Protocol-specific scanning actions
+
+        Logger setup (``proto_logger()``) is called automatically by
+        ``connection.__init__`` before ``proto_flow()`` runs — child classes
+        do not need to call it.
 
         Must be implemented by child class.
         """
 
     def proto_logger(self):
         """
-        Update logger with resolved host information.
+        Apply the resolved IP / hostname / port to the logger.
 
-        The logger is already created in __init__ via get_logger() factory.
-        This method now just ensures the logger has the correct IP and hostname
-        after DNS resolution, if any protocol calls it in proto_flow().
+        Called automatically by ``connection.__init__`` after host resolution
+        and before ``proto_flow()``. Idempotent: calling it again from a
+        subclass ``proto_flow()`` is harmless but unnecessary.
 
-        Can be overridden by child class for custom logging.
+        Can be overridden by a child class to add protocol-specific logger
+        context (e.g. extra fields).
         """
         if self.logger is None:
             # Shouldn't happen, but handle gracefully

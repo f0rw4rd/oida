@@ -320,7 +320,6 @@ class hl7(
 
     def proto_flow(self):
         """Main HL7 scanning workflow"""
-        self.proto_logger()
 
         if not HL7APY_AVAILABLE:
             self.logger.fail(

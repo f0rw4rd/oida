@@ -25,7 +25,6 @@ class tase2(NetworkConnection):
 
     def proto_flow(self) -> None:
         """Main TASE.2 workflow with action support."""
-        self.proto_logger()
         args_dict = self._convert_args_to_dict()
         self.scanner = TASE2Scanner(args_dict)
         self.create_conn_obj()

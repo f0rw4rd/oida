@@ -63,7 +63,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
 
     def proto_flow(self):
         """Main FHIR scanning workflow"""
-        self.proto_logger()
 
         # Check dependencies
         if not is_fhirclient_available():

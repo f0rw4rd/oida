@@ -89,7 +89,6 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
 
     def proto_flow(self):
         """Main protocol execution flow."""
-        self.proto_logger()
 
         if not _profinet.is_available:
             self.logger.fail("profinet-py not installed (pip install profinet-py)")
