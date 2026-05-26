@@ -269,11 +269,9 @@ class bacnet(
         )
 
         local_port = random.randint(47810, 48000)  # nosec B311
-        import socket as sock_module
+        from ...utils.socket_helpers import get_local_ip
 
-        with sock_module.socket(sock_module.AF_INET, sock_module.SOCK_DGRAM) as s:
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
+        local_ip, _err = get_local_ip(target)
 
         local_addr = Address(f"{local_ip}/24:{local_port}")
         app = NormalApplication(device, local_addr)

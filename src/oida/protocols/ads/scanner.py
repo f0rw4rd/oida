@@ -136,32 +136,19 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         # Validate AMS Net ID format (must be exactly 6 dot-separated integers, e.g. 192.168.1.1.1.1)
         _validate_ams_netid(self.ams_netid)
         if not self.local_netid:
-            # Try to get local IP, fallback to default
-            import socket
+            from ...utils.socket_helpers import get_local_ip
 
-            # TODO: Local IP detection via UDP connect trick is duplicated in
-            # discovery/ics.py (_build_discovery_packet). Extract into a shared
-            # utility e.g. utils/network.py get_local_ip().
-            s = None
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect((self.host, 1))
-                local_ip = s.getsockname()[0]
-                self.local_netid = f"{local_ip}.1.1"
-            except Exception as e:
-                # Local IP detection failed (offline, no route, etc.). The hostname
-                # fallback below is intentionally non-routable so it can't collide
-                # with a real device's AMS Net ID (192.168.1.100 is a documentation
-                # example IP commonly assigned in labs — never use it as a default).
+            local_ip, err = get_local_ip(self.host, fallback="127.0.0.1")
+            if err is not None:
+                # Local IP detection failed (offline, no route, etc.). 127.0.0.1
+                # is intentionally non-routable so it can't collide with a real
+                # device's AMS Net ID.
                 self.logger.warning(
                     "ADS: could not detect local IP for AMS Net ID (%s); pass --local-netid "
                     "to set it explicitly (e.g. --local-netid 10.0.0.1.1.1).",
-                    e,
+                    err,
                 )
-                self.local_netid = "127.0.0.1.1.1"
-            finally:
-                if s:
-                    s.close()
+            self.local_netid = f"{local_ip}.1.1"
 
     def get_protocol_name(self) -> str:
         return "ADS"

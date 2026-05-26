@@ -1,12 +1,14 @@
 include README.md
 include LICENSE
-include requirements.txt
-include requirements.in
-include REFACTORING_GUIDE.md
+include DISCLAIMER.md
 include CLAUDE.md
-recursive-include msf_ics/data *.json *.csv
-recursive-include msf_ics/configs *.yml *.yaml
-recursive-include data *.json *.csv *.txt *.md
-recursive-exclude msf_ics *.pyc
-recursive-exclude msf_ics __pycache__
+include CONTRIBUTING.md
+include STYLE_GUIDE.md
+include pyproject.toml
+recursive-include src/oida/data *.json *.csv *.txt *.md *.yaml *.yml
+recursive-include src/oida/configs *.yaml *.yml *.json
+recursive-include src/oida/protocols *.json *.csv *.yaml *.yml
+recursive-exclude src/oida *.pyc
+recursive-exclude src/oida __pycache__
 global-exclude *.py[co]
+global-exclude .DS_Store
