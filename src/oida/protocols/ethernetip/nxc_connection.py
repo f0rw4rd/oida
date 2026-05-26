@@ -110,11 +110,14 @@ class ethernetip(NetworkConnection):
         info = self.results["data"].get("device_info", {})
         port = getattr(self.args, "port", 44818)
 
+        # The "Connected to EtherNet/IP device …" success banner was already
+        # emitted by create_conn_obj(); use display() here so the banner appears
+        # exactly once per scan.
         if not info.get("success"):
             self.logger.display(f"EtherNet/IP: {self.host}:{port}")
             return
 
-        self.logger.success(f"EtherNet/IP: {self.host}:{port}")
+        self.logger.display(f"EtherNet/IP: {self.host}:{port}")
         if info.get("vendor_name"):
             self.logger.display(
                 f"    Vendor: {info['vendor_name']} (ID: {info.get('vendor_id', 0)})"

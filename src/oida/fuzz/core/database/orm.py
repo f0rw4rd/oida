@@ -148,11 +148,14 @@ class SQLAlchemyDatabase(DatabaseInterface):
             # Check if crash already exists for this test case
             existing_crash = session.query(Crash).filter_by(test_case_id=crash.test_case_id).first()
 
+            crash_hash = Crash.compute_crash_hash(crash.crash_info, crash.stack_trace)
+
             if existing_crash:
                 # Update existing crash record
                 existing_crash.payload = crash.payload
                 existing_crash.crash_info = crash.crash_info
                 existing_crash.stack_trace = crash.stack_trace
+                existing_crash.crash_hash = crash_hash
                 ics_logger.debug(f"Updated existing crash for test case {crash.test_case_id}")
             else:
                 # Verify test case exists
@@ -166,9 +169,12 @@ class SQLAlchemyDatabase(DatabaseInterface):
                     payload=crash.payload,
                     crash_info=crash.crash_info,
                     stack_trace=crash.stack_trace,
+                    crash_hash=crash_hash,
                 )
                 session.add(orm_crash)
-                ics_logger.debug(f"Stored crash for test case {crash.test_case_id}")
+                ics_logger.debug(
+                    f"Stored crash for test case {crash.test_case_id} (hash={crash_hash})"
+                )
 
     def store_payload(
         self, test_case_id: int, request: bytes, response: Optional[bytes] = None

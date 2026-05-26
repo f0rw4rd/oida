@@ -26,7 +26,12 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
     name = "ASTM"
     protocol_name = "astm"
-    default_port = 1394
+    # 12000 is the most common ASTM/LIS instrument port (Sysmex/Abbott default).
+    # Other vendors use 5000 (Roche), 6000 (Beckman Coulter), 9100 (Siemens).
+    # The previous default (1394) was a misread of the ASTM "E1394" standard
+    # name — IEEE-1394 is FireWire, not ASTM. Override with --port for the
+    # vendor-specific value when needed.
+    default_port = 12000
 
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.record_builder: Optional[ASTMRecordBuilder] = None

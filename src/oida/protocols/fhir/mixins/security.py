@@ -122,16 +122,6 @@ class SecurityMixin:
                 "Insecure configuration", "No SMART/OAuth detected - scope may not be enforced"
             )
 
-    def _bulk_export(self):
-        """Initiate bulk data export (dangerous operation)"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Bulk export requires --confirm flag")
-            return
-
-        self.logger.display("Initiating bulk data export...")
-        self.logger.warning("  Bulk export not implemented - use API directly")
-        self.logger.display(f"  Endpoint: {self._get_base_url()}/$export")
-
     def _brute_force_credentials(self):
         """Brute force HTTP Basic Auth or OAuth2 credentials"""
         import requests

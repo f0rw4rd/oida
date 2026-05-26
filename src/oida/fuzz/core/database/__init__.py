@@ -1,12 +1,17 @@
 """Database layer for fuzzing session storage.
 
-This module provides session storage for protocol fuzzing:
-- Lightweight metadata storage (default)
-- Full payload storage for crashes
-- SQLAlchemy ORM for advanced queries
+Single canonical backend:
 
-The interface and sqlite modules use only stdlib and are imported eagerly.
-The ORM and models modules require sqlalchemy and are lazy-loaded.
+- ``SQLAlchemyDatabase`` (orm.py) — production read/write path. All fuzzer
+  components write through it. Defined as an :class:`DatabaseInterface`
+  implementation backed by SQLAlchemy 2.x.
+
+- ``MockDatabase`` (mock.py) — in-memory stub for unit tests.
+
+The previous raw-SQL ``SQLiteDatabase`` was removed in 1.0 (it diverged in
+schema from the ORM and was no longer used by the runtime). For replay of
+legacy ``.db`` files from older OIDA versions, ``SQLAlchemyDatabase`` can
+read the same on-disk schema — call ``init_schema()`` once on open.
 """
 
 from .interface import (
@@ -15,10 +20,7 @@ from .interface import (
     Crash,
     SessionMetadata,
 )
-from .sqlite import (
-    SQLiteDatabase,
-    MockDatabase,
-)
+from .mock import MockDatabase
 
 
 def __getattr__(name):
@@ -64,8 +66,7 @@ __all__ = [
     "TestCase",
     "Crash",
     "SessionMetadata",
-    # SQLite implementation
-    "SQLiteDatabase",
+    # In-memory test stub
     "MockDatabase",
     # SQLAlchemy ORM implementation (lazy)
     "SQLAlchemyDatabase",

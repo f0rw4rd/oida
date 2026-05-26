@@ -434,7 +434,7 @@ class TestProtoArgs:
         assert astm_parser is not None
 
     def test_proto_args_default_port(self):
-        """Test default port is 1394"""
+        """Default port is 12000 (most common ASTM/LIS instrument port)."""
         import argparse
         from oida.protocols.astm.proto_args import proto_args
 
@@ -446,7 +446,7 @@ class TestProtoArgs:
 
         # Parse with just target
         args = main_parser.parse_args(["astm", "192.168.1.100"])
-        assert args.port == 1394
+        assert args.port == 12000
 
 
 class TestDataModification:

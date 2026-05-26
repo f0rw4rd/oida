@@ -182,10 +182,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         if getattr(self.args, "test_scope", False):
             self._test_scope_bypass()
 
-        # Bulk data export (dangerous)
-        if getattr(self.args, "bulk_export", False):
-            self._bulk_export()
-
         # Write operations (require --confirm)
         if getattr(self.args, "create_patient", False):
             self._create_patient()
