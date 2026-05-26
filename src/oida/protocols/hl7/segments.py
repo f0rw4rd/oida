@@ -8,16 +8,24 @@ Supports PID, PV1, OBX, OBR, ORC, SCH, TXA segments.
 from datetime import datetime
 from typing import Any, Optional
 
-# Import hl7apy (required)
-from hl7apy.core import Segment
-
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-# Availability flag for testing
-HL7APY_AVAILABLE = True
+# Import hl7apy at module load. The lazy_import wrapper in __init__.py prints
+# a friendly "pip install hl7apy" hint, but the actual usage points are here
+# (Segment-builder methods reference hl7apy.core.Segment directly), so we
+# surface the failure with a clear ImportError instead of letting it propagate
+# from a builder call deep in scan flow.
+try:
+    from hl7apy.core import Segment
+
+    HL7APY_AVAILABLE = True
+except ImportError as _hl7_err:  # pragma: no cover — release-checked dep
+    Segment = None  # type: ignore[assignment]
+    HL7APY_AVAILABLE = False
+    logger.debug("hl7apy not installed; HL7 segment building disabled: %s", _hl7_err)
 
 
 class HL7SegmentBuilder:
