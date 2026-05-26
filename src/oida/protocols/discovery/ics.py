@@ -558,16 +558,20 @@ class CODESYSScanner:
 
     def _build_discovery_packet(self) -> bytes:
         """Build CODESYS V3 UDP discovery packet."""
-        # Get local IP last octet for relative addressing
+        # Get local IP last octet for relative addressing. CODESYS is a LAN
+        # protocol so use the broadcast address (which the discovery socket is
+        # already bound to) as the route target instead of an external IP.
+        from ...utils.socket_helpers import get_local_ip
+
         src_ip_octet = 1
-        try:
-            temp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            temp_sock.connect(("8.8.8.8", 1))
-            local_ip = temp_sock.getsockname()[0]
-            temp_sock.close()
-            src_ip_octet = int(local_ip.split(".")[-1])
-        except (OSError, IndexError) as e:
-            logger.debug(f"CODESYS: Could not determine local IP: {e}")
+        local_ip, err = get_local_ip("255.255.255.255", fallback="0.0.0.0")
+        if err is None:
+            try:
+                src_ip_octet = int(local_ip.split(".")[-1])
+            except (ValueError, IndexError) as e:
+                logger.debug(f"CODESYS: Could not parse local IP {local_ip}: {e}")
+        else:
+            logger.debug(f"CODESYS: Could not determine local IP: {err}")
 
         # PDU header (6 bytes) - fixed values from reference implementation
         hop_info = 0x74  # hop_count=14, header_len=4

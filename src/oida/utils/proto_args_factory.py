@@ -232,6 +232,33 @@ def add_auth_options(
     return auth_group
 
 
+def add_full_width_and_json_log(parser, include_short: bool = True):
+    """Add the iec104-shared `--full-width` and `--json-log` flags.
+
+    Extracted so protocols that can't call ``add_output_options()`` (e.g. iec104
+    where ``-W`` collides with ``--write-single``) can still get the shared
+    declarations.
+
+    Args:
+        parser: argparse parser, subparser, or argument group.
+        include_short: Whether to register ``-W`` as a short alias for
+            ``--full-width``. iec104 sets this False.
+    """
+    fw_args = (["-W", "--full-width"] if include_short else ["--full-width"])
+    parser.add_argument(
+        *fw_args,
+        action="store_true",
+        default=False,
+        help="Show full-width tables without truncating to terminal width",
+    )
+    parser.add_argument(
+        "--json-log",
+        type=str,
+        metavar="FILE",
+        help="Write structured JSON log events to FILE (NDJSON format)",
+    )
+
+
 def add_output_options(
     parser,
     include_format: bool = True,
@@ -290,20 +317,7 @@ def add_output_options(
                 help=f"Output format (default: {default_format})",
             )
 
-    output_group.add_argument(
-        "-W",
-        "--full-width",
-        action="store_true",
-        default=False,
-        help="Show full-width tables without truncating to terminal width",
-    )
-
-    output_group.add_argument(
-        "--json-log",
-        type=str,
-        metavar="FILE",
-        help="Write structured JSON log events to FILE (NDJSON format)",
-    )
+    add_full_width_and_json_log(output_group, include_short=True)
 
     if include_verbose:
         output_group.add_argument(

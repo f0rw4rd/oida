@@ -87,6 +87,12 @@ dev = [
     "ruff>=0.15.1",
     "vulture>=2.14",
     "bandit>=1.9.3",
+    # Test-runtime deps that gate skips in tests/ (without these the matrix
+    # silently shrinks). Keep them in dev rather than per-protocol extras so
+    # CI sees the full skip-free count.
+    "Brotli>=1.1.0",          # tests/unit/fuzz/test_transformers.py
+    "docker>=7.0.0",          # tests/integration/common/test_mock_services_integration.py
+    "defusedxml>=0.7.1",      # SSDP/UPnP — also in discovery extra; here for unit tests
 ]
 docs = [
     "sphinx>=9.1.0",
@@ -110,7 +116,18 @@ where = ["src"]
 "" = "src"
 
 [tool.setuptools.package-data]
-oida = ["data/*.json", "data/*.csv", "data/**/*.txt", "data/**/*.json", "configs/*.yml", "configs/*.yaml", "protocols/modbus/register_maps/*.json", "protocols/modbus/register_maps/**/*.json"]
+oida = [
+    "data/*.json",
+    "data/*.csv",
+    "data/**/*.txt",
+    "data/**/*.json",
+    "configs/*.yml",
+    "configs/*.yaml",
+    "protocols/modbus/register_maps/*.json",
+    "protocols/modbus/register_maps/**/*.json",
+    "protocols/hart/data/*.json",
+    "protocols/opcua/data/*.txt",
+]
 
 [tool.setuptools.dynamic]
 version = {attr = "oida.__version__"}

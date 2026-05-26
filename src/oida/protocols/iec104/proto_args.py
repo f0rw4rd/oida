@@ -12,6 +12,7 @@ from ...utils.proto_args_factory import (
     add_listen_options,
     add_file_transfer_options,
     add_tls_options,
+    add_full_width_and_json_log,
 )
 
 
@@ -331,20 +332,9 @@ Examples:
 
     # Output Options (--full-width, --json-log only — -o/-f/-v/-d come from main parser)
     # Cannot use add_output_options() because -W is already taken by --write-single,
-    # so we add only the iec104-specific extras here.
+    # so we use the lower-level helper that skips the -W short alias.
     output_group = iec104_parser.add_argument_group("Output Options")
-    output_group.add_argument(
-        "--full-width",
-        action="store_true",
-        default=False,
-        help="Show full-width tables without truncating to terminal width",
-    )
-    output_group.add_argument(
-        "--json-log",
-        type=str,
-        metavar="FILE",
-        help="Write structured JSON log events to FILE (NDJSON format)",
-    )
+    add_full_width_and_json_log(output_group, include_short=False)
 
     # Listen Mode (--listen, --listen-time, --listen-output, --listen-filter)
     listen_group = add_listen_options(iec104_parser)

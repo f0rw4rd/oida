@@ -237,8 +237,6 @@ class RMIPassiveListener(PySharkListenerBase):
             dst_ip,
             src_mac,
             dst_mac,
-            "client",
-            "server",
         )
 
     def _process_input_message(
@@ -304,8 +302,6 @@ class RMIPassiveListener(PySharkListenerBase):
             src_ip,
             dst_mac,
             src_mac,
-            "client",
-            "server",
         )
 
     def _process_output_message(
@@ -361,8 +357,6 @@ class RMIPassiveListener(PySharkListenerBase):
             dst_ip,
             src_mac,
             dst_mac,
-            "client",
-            "server",
         )
 
     def _update_devices(
@@ -371,8 +365,6 @@ class RMIPassiveListener(PySharkListenerBase):
         server_ip,
         client_mac,
         server_mac,
-        client_role,
-        server_role,
     ) -> None:
         """Create/update device entries for RMI participants."""
         if is_valid_discovered_ip(server_ip):

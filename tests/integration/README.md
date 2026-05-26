@@ -23,34 +23,22 @@ tests/integration/
 ### 1. Install Dependencies
 
 ```bash
-# Install test dependencies
-pip install -r requirements.txt
-
-# Or use make
-make install
+# Install package with all protocol extras + dev tools
+pip install -e .[dev,all]
 ```
 
 ### 2. Run All Tests
 
 ```bash
-# Using the test runner
-python run_tests.py
-
-# Using make
-make test
-
-# Using pytest
-pytest pytest_tests.py -v
+pytest tests/
 ```
 
-### 3. Run Quick Tests
+### 3. Run Specific Suites
 
 ```bash
-# Just connectivity tests
-python run_tests.py --quick
-
-# Using make
-make test-quick
+pytest tests/unit                  # Unit tests only
+pytest tests/integration           # Integration tests (some need docker mocks)
+pytest tests/integration/pcap      # PCAP listener integration tests
 ```
 
 ## Test Categories

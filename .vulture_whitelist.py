@@ -6,6 +6,10 @@
 # paho-mqtt callback signature requires (client, userdata, ...) params
 userdata  # unused variable (mqtt callback signature)
 
+# pysnmp observer signature requires (engine, execpoint, ctx, cbCtx) params
+execpoint  # unused variable (pysnmp observer signature)
+cbCtx  # unused variable (pysnmp observer signature)
+
 # signal.signal() handler requires (signum, frame) params
 signum  # unused variable (signal handler signature)
 

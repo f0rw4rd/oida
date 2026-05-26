@@ -1,12 +1,48 @@
 """TLS/SSL helper utilities for protocol scanners.
 
-Provides shared TLS context creation and certificate checking used
-across multiple protocol implementations.
+Provides shared TLS context creation, certificate checking, and local-IP
+detection used across multiple protocol implementations.
 """
 
 import socket
 import ssl
-from typing import Optional, Any
+from typing import Optional, Any, Tuple
+
+
+def get_local_ip(target_host: str, fallback: str = "127.0.0.1") -> Tuple[str, Optional[Exception]]:
+    """Detect the local IP that would be used to reach ``target_host``.
+
+    Uses the standard "UDP connect trick" — connecting a UDP socket does not
+    send any packets, but populates the local-address tuple based on the
+    routing table for the target. Avoids guessing or hard-coded fallbacks.
+
+    The previous BACnet helper used ``socket.connect(("8.8.8.8", 80))`` to
+    detect the local IP — that breaks offline, leaks scan activity to Google,
+    and may be inappropriate in air-gapped ICS environments. This helper
+    routes against the actual target instead, so it works on disconnected
+    lab networks.
+
+    Args:
+        target_host: Host the scanner will talk to (used as the routing target).
+        fallback: IP to return when detection fails (e.g. offline, no route).
+
+    Returns:
+        ``(local_ip, error)`` where ``error`` is ``None`` on success and the
+        underlying exception when the fallback was used.
+    """
+    s = None
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((target_host, 1))
+        return s.getsockname()[0], None
+    except OSError as exc:
+        return fallback, exc
+    finally:
+        if s is not None:
+            try:
+                s.close()
+            except OSError:
+                pass
 
 
 def build_tls_context(

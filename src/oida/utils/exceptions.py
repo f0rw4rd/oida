@@ -7,7 +7,6 @@ Provides specific error types for better error handling and debugging.
 Exception naming uses ICS prefix to avoid shadowing Python builtins:
 - ICSConnectionError (not ConnectionError)
 - ICSTimeoutError (not TimeoutError)
-- ICSPermissionError (not PermissionError)
 
 Note: Legacy aliases (ConnectionError, TimeoutError, PermissionError) were
 removed to prevent accidental builtin shadowing on star-import.
@@ -22,7 +21,6 @@ __all__ = [
     "DependencyError",
     "ConfigurationError",
     "ICSTimeoutError",
-    "ICSPermissionError",
     "SecurityError",
     # Protocol-specific exceptions
     "ModbusError",
@@ -92,14 +90,6 @@ class ICSTimeoutError(ICSProtocolError):
 
     def __init__(self, message: str, protocol: str = "", error_code: str = ""):
         """Initialize timeout error"""
-        super().__init__(message, protocol, error_code)
-
-
-class ICSPermissionError(ICSProtocolError):
-    """Raised when insufficient permissions are detected"""
-
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize permission error"""
         super().__init__(message, protocol, error_code)
 
 
