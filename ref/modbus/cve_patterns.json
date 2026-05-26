@@ -10,12 +10,12 @@
       "cve_refs": ["CVE-2024-10918", "CVE-2022-0367"],
       "summary": "MBAP Length field declares larger payload than actually sent; parser reads beyond received bytes.",
       "bug_class": "length_confusion",
-      "target_request": "Standard_Read_Request",
+      "target_request": "Modbus_MBAP_Testing",
       "target_field": "MBAP.Length",
       "mutation_strategy": "group_values",
       "mutation_values": [0, 1, 5, 6, 7, 254, 255, 256, 260, 1024, 65534, 65535],
-      "covered_by_oida_today": false,
-      "fuzzer_notes": "Boofuzz Size() auto-recomputes Length; need a Group() override or static value. Add a dedicated MBAP_Length_Mismatch Request."
+      "covered_by_oida_today": true,
+      "fuzzer_notes": "Already covered by length_overflow, length_too_long, length_too_short, length_boundary requests under Modbus_MBAP_Testing group (see modbus/tcp.py:1226). The audit-gap claim was an oversight."
     },
     {
       "id": "modbus-function-code-undocumented",

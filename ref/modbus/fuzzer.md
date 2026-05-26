@@ -16,7 +16,7 @@ these CVE classes:
 
 | CVE pattern | Modbus fuzzer request | Covered? |
 |---|---|---|
-| MBAP length vs. PDU length mismatch (e.g. CVE-2024-10918, CVE-2022-0367) | `Quick_FC_Coverage` partially; **no dedicated length-mismatch request** | ⚠ partial |
+| MBAP length vs. PDU length mismatch (e.g. CVE-2024-10918, CVE-2022-0367) | `Modbus_MBAP_Testing` group (`length_overflow`, `length_too_long`, `length_too_short`, `length_boundary`) | ✓ |
 | Function code boundaries — undocumented FCs 65-72, 100-110 | `Quick_FC_Coverage` (`Group("Function_Code", values=ALL_FUNCTION_CODES)`) | ✓ |
 | Register/coil quantity overflow (CVE-2015-6490 class) | `Standard_Read_Request`, `read_*` requests with fuzzable quantity | ✓ |
 | Exception response parsing (codes > 0x0B) | `Read_Exception_Status` request | ✓ |
@@ -28,12 +28,6 @@ these CVE classes:
 
 ## Known gaps
 
-- **Length-mismatch as a dedicated request.** CVE-2024-10918 and
-  CVE-2022-0367 both pivot on MBAP `length` lying about the actual PDU
-  size. The current fuzzer mutates `length` via boofuzz `Size`, but a
-  hand-crafted `Length_Mismatch` request that systematically declares
-  large lengths with short / over-long payloads would hit these CVEs
-  faster than random mutation of `Size`.
 - **`Quick_FC_Coverage` PDU.** `Group("Function_Code", values=ALL_FUNCTION_CODES)`
   iterates every FC but the `Params` block is `Bytes(..., fuzzable=False)` —
   so the per-FC sweep only varies the function code, not the body. This
@@ -57,13 +51,12 @@ fuzzers use the same convention.
 
 ## Optimization recommendations
 
-1. **Add `MBAP_Length_Mismatch` request** — pin function code to a
-   single FC (0x03 read holding registers), set `MBAP.length` to a
-   `Group(values=[0, 1, 6, 7, 65535])` while keeping the actual PDU at
-   normal size. Targets CVE-2024-10918 / CVE-2022-0367 directly.
-2. **Add `RTU_Bad_CRC` request** — for RTU mode only. Use a `Static`
-   CRC value instead of `Checksum()`. One-off request, low complexity.
-3. **Cap maximum ADU** in `String`/`Bytes` overflow primitives at 1 MiB
+1. **RTU CRC validation path** — `Word("CRC", 0x0000, endian="<")` in
+   `rtu.py` is boofuzz-default-fuzzable, so the CRC value *will* mutate.
+   Verify the send path doesn't post-process / recompute the CRC after
+   mutation — if it does, the validation path is never exercised. Audit
+   the connection.send pipeline.
+2. **Cap maximum ADU** in `String`/`Bytes` overflow primitives at 1 MiB
    so a single test case can't OOM the target before the slave's TCP
    stack drops the connection.
 
