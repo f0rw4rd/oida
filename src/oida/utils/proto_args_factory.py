@@ -62,6 +62,7 @@ def create_protocol_parser(
     parents: Optional[list] = None,
     epilog: Optional[str] = None,
     formatter_class=None,
+    aliases: Optional[list] = None,
 ):
     """
     Create a protocol subparser with standard setup.
@@ -105,6 +106,9 @@ def create_protocol_parser(
 
     if formatter_class is not None:
         kwargs["formatter_class"] = formatter_class
+
+    if aliases:
+        kwargs["aliases"] = aliases
 
     return subparsers.add_parser(name, **kwargs)
 

@@ -13,7 +13,6 @@ from ...utils.proto_args_factory import (
     add_dangerous_options,
     add_monitor_options,
     add_control_options,
-    add_output_options,
 )
 
 
@@ -21,8 +20,9 @@ def proto_args(parser, parents):
     """Register S7-specific arguments"""
     s7_parser = create_protocol_parser(
         parser,
-        name="s7",
-        help_text="Siemens S7 scanner",
+        name="snap7",
+        aliases=["s7"],
+        help_text="Siemens S7 (Snap7) scanner",
         description="Scan and interact with Siemens S7 PLCs",
         parents=parents,
         epilog="""
@@ -90,7 +90,10 @@ Examples:
     )
 
     # Output Options (--output, --format, -v, -d)
-    add_output_options(s7_parser)
+    # Main parser already provides -o/--output, --format, -v/--verbose, -d/--debug.
+    # Don't re-declare them here (shadows main parser's count-action --verbose).
+    # snap7 has no extra output flags of its own, so the factory call was a no-op
+    # with the side effect of conflicting flags.
 
     # Discovery Options
     discovery_group = s7_parser.add_argument_group("Discovery Options")

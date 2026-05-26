@@ -668,7 +668,9 @@ class hl7(
         try:
             self.conn.sendall(wrap_mllp(message))
 
-            # Receive response
+            # Receive response with a hard cap so a hostile peer can't drive
+            # the scanner to OOM by streaming endless bytes without MLLP_END.
+            MAX_HL7_RESPONSE = 16 * 1024 * 1024  # 16 MiB
             response = b""
             while True:
                 chunk = self.conn.recv(4096)
@@ -677,6 +679,12 @@ class hl7(
                 response += chunk
                 if MLLP_END in response:
                     break
+                if len(response) > MAX_HL7_RESPONSE:
+                    self.logger.warning(
+                        "HL7 response exceeded %d bytes without MLLP_END; aborting",
+                        MAX_HL7_RESPONSE,
+                    )
+                    return None
 
             return strip_mllp(response)
         except TimeoutError:

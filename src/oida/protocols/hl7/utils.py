@@ -308,7 +308,9 @@ def send_probe(
     try:
         sock.send(wrap_mllp(message))
 
-        # Receive response
+        # Receive response with a hard cap so a peer that never sends MLLP_END
+        # can't drive us to OOM.
+        MAX_HL7_RESPONSE = 16 * 1024 * 1024  # 16 MiB
         response = b""
         while True:
             try:
@@ -317,6 +319,8 @@ def send_probe(
                     break
                 response += chunk
                 if MLLP_END in response:
+                    break
+                if len(response) > MAX_HL7_RESPONSE:
                     break
             except TimeoutError:
                 break

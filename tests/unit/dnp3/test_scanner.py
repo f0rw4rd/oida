@@ -485,6 +485,10 @@ def _make_base_args(**overrides):
         "sa": False,
         "sa_key": None,
         "sa_user": 1,
+        # All control ops require --confirm; default to True so positive-path
+        # tests don't have to set it explicitly. Negative-path tests can
+        # override with confirm=False.
+        "confirm": True,
     }
     defaults.update(overrides)
     return Namespace(**defaults)
@@ -499,6 +503,35 @@ class TestArgumentValidation:
 
         args = _make_base_args(bo_direct=0)
         with pytest.raises((SystemExit, ConfigurationError)):
+            validate_args(args)
+
+    def test_control_requires_confirm(self):
+        """Control operations must require --confirm (release blocker safety guard)."""
+        from oida.protocols.dnp3.proto_args import validate_args
+
+        args = _make_base_args(bo_direct=0, outstation_addr=10, confirm=False)
+        with pytest.raises(ConfigurationError, match="--confirm is required"):
+            validate_args(args)
+
+    def test_cold_restart_requires_confirm(self):
+        """--cold-restart must require --confirm."""
+        from oida.protocols.dnp3.proto_args import validate_args
+
+        args = _make_base_args(cold_restart=True, outstation_addr=10, confirm=False)
+        with pytest.raises(ConfigurationError, match="--confirm is required"):
+            validate_args(args)
+
+    def test_write_file_requires_confirm(self):
+        """--write-file must require --confirm."""
+        from oida.protocols.dnp3.proto_args import validate_args
+
+        args = _make_base_args(
+            write_file="/test.bin",
+            write_data="@local.bin",
+            outstation_addr=10,
+            confirm=False,
+        )
+        with pytest.raises(ConfigurationError, match="--confirm is required"):
             validate_args(args)
 
     def test_sbo_requires_outstation_addr(self):
