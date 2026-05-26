@@ -710,7 +710,12 @@ class VNCFuzzer(BaseFuzzer):
         # Use TripleDES with the key repeated to get single-DES behavior,
         # since cryptography library requires 16 or 24 byte keys for DES.
         des_key = reversed_key + reversed_key + reversed_key  # 24 bytes for TripleDES
-        cipher = Cipher(TripleDES(des_key), modes.ECB())
+        # VNC's authentication protocol (RFC 6143 §7.2.2) mandates DES-ECB;
+        # we emit it via TripleDES with a tripled key (TripleDES with the same
+        # key three times == single DES) because the cryptography library
+        # dropped raw DES. The "weak cipher" warning here is intrinsic to the
+        # VNC spec, not a fuzzer flaw.
+        cipher = Cipher(TripleDES(des_key), modes.ECB())  # nosec B304 B305
         encryptor = cipher.encryptor()
         return encryptor.update(challenge[:16]) + encryptor.finalize()
 

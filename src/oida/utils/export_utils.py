@@ -349,7 +349,9 @@ def _write_xml(path: Path, headers: List[str], rows: List[List[Any]], root_name:
                 field.text = str(value) if value is not None else ""
 
         xml_str = ET.tostring(root, encoding="unicode")
-        dom = minidom.parseString(xml_str)
+        # Parsing XML we just generated ourselves via ET.tostring — no external
+        # entities or untrusted input. defusedxml is unnecessary here.
+        dom = minidom.parseString(xml_str)  # nosec B318
         pretty_xml = dom.toprettyxml(indent="  ")
         lines = [line for line in pretty_xml.split("\n") if line.strip()]
 
@@ -694,7 +696,9 @@ def _export_xml(
 
         # Pretty print with minidom
         xml_str = ET.tostring(root, encoding="unicode")
-        dom = minidom.parseString(xml_str)
+        # Parsing XML we just generated ourselves via ET.tostring — no external
+        # entities or untrusted input. defusedxml is unnecessary here.
+        dom = minidom.parseString(xml_str)  # nosec B318
         pretty_xml = dom.toprettyxml(indent="  ")
 
         # Remove extra blank lines from minidom output
