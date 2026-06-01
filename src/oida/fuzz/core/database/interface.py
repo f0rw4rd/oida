@@ -71,6 +71,15 @@ class DatabaseInterface(ABC):
         """Store test case metadata and return the row id, or None"""
 
     @abstractmethod
+    def store_test_cases_bulk(self, test_cases: List[TestCase]) -> None:
+        """Store many test cases in a single transaction.
+
+        Hot-path optimisation: a per-row commit costs an fsync each;
+        bulk-inserting the rolling buffer in one transaction collapses
+        that to a single fsync.
+        """
+
+    @abstractmethod
     def store_crash(self, crash: Crash):
         """Store crash with full payload"""
 
@@ -79,8 +88,22 @@ class DatabaseInterface(ABC):
         """Store session metadata"""
 
     @abstractmethod
-    def get_test_cases(self, result_filter: Optional[str] = None) -> List[TestCase]:
-        """Get all test cases, optionally filtered by result"""
+    def store_metadata_bulk(self, items: Dict[str, str]) -> None:
+        """Store many metadata key/value pairs in a single transaction."""
+
+    @abstractmethod
+    def get_test_cases(
+        self,
+        result_filter: Optional[str] = None,
+        target_ip: Optional[str] = None,
+        protocol: Optional[str] = None,
+        limit: Optional[int] = 10_000,
+    ) -> List[TestCase]:
+        """Get test cases, optionally filtered by result/target/protocol.
+
+        ``limit`` defaults to 10k to prevent OOM on million-case sessions.
+        Pass ``None`` to return everything (replay / forensic paths).
+        """
 
     @abstractmethod
     def get_test_case(self, test_id: int) -> Optional[TestCase]:

@@ -141,7 +141,7 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "opcua": ["opcua-mock", "opcua-advanced", "opcua-gds", "opcua-insecure"],
     "ethernetip": ["ethernetip-mock", "ethernetip-opener"],
     "ads": ["ads-mock"],
-    "bacnet": ["msf-ics-mock"],
+    "bacnet": ["bacnet-mock", "bacnet-conpot"],
     "iec104": ["iec104-lib60870", "iec104-custom-types", "iec104-conpot", "iec104-tls"],
     "mms": ["mms-libiec61850", "mms-goose", "mms-control", "mms-authentication"],
     "s7comm": ["s7comm-snap7"],
@@ -178,7 +178,7 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "http": ["http-mock"],
     "coap": ["coap-mock", "coap-libcoap", "coap-dtls", "coap-dtls-cert"],
     "ethercat": ["ethercat-slave-veth"],
-    "profinet": ["profinet-pnet-device"],
+    "profinet": ["profinet-device"],
     "goose": ["goose-l2-publisher"],
 }
 
@@ -327,7 +327,7 @@ def ensure_mock(protocol_name: str) -> None:
 L2_SERVICES: Set[str] = {
     "ethercat-slave-veth",
     "ethercat-slave",
-    "profinet-pnet-device",
+    "profinet-device",
     "goose-l2-publisher",
 }
 
@@ -700,7 +700,7 @@ def ethercat_mock_available() -> bool:
 @pytest.fixture(scope="session")
 def profinet_mock_available() -> bool:
     """Return True if the PROFINET Docker mock container is healthy."""
-    return check_l2_container_healthy("profinet-pnet-device")
+    return check_l2_container_healthy("profinet-device")
 
 
 @pytest.fixture(scope="session")

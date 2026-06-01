@@ -577,7 +577,7 @@ def handle_replay_command(args):
             ):
                 print()
                 print(colored("[!]", "yellow", attrs=["bold"]) + " Crashes found:")
-                crash_cases = db.get_test_cases(result_filter="crash")
+                crash_cases = db.get_test_cases(result_filter="crash", limit=None)
                 for case in crash_cases[:10]:
                     print(f"    [{case.id}] {case.name}")
                 if len(crash_cases) > 10:

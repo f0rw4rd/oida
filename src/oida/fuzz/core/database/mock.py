@@ -26,6 +26,9 @@ class MockDatabase(DatabaseInterface):
         self.test_cases.append(test_case)
         return test_case.id
 
+    def store_test_cases_bulk(self, test_cases: List[TestCase]) -> None:
+        self.test_cases.extend(test_cases)
+
     def store_crash(self, crash: Crash):
         # Populate crash_hash on store so tests see the same behaviour as the
         # production backend.
@@ -33,9 +36,7 @@ class MockDatabase(DatabaseInterface):
             try:
                 from .models import Crash as ORMCrash
 
-                crash.crash_hash = ORMCrash.compute_crash_hash(
-                    crash.crash_info, crash.stack_trace
-                )
+                crash.crash_hash = ORMCrash.compute_crash_hash(crash.crash_info, crash.stack_trace)
             except ImportError:
                 pass  # sqlalchemy not installed; tests that need hash will fail explicitly
         self.crashes[crash.test_case_id] = crash
@@ -43,10 +44,26 @@ class MockDatabase(DatabaseInterface):
     def store_metadata(self, key: str, value: str):
         self.metadata[key] = value
 
-    def get_test_cases(self, result_filter: Optional[str] = None) -> List[TestCase]:
+    def store_metadata_bulk(self, items: Dict[str, str]) -> None:
+        self.metadata.update(items)
+
+    def get_test_cases(
+        self,
+        result_filter: Optional[str] = None,
+        target_ip: Optional[str] = None,
+        protocol: Optional[str] = None,
+        limit: Optional[int] = 10_000,
+    ) -> List[TestCase]:
+        rows = self.test_cases
         if result_filter:
-            return [tc for tc in self.test_cases if tc.result == result_filter]
-        return self.test_cases.copy()
+            rows = [tc for tc in rows if tc.result == result_filter]
+        if target_ip:
+            rows = [tc for tc in rows if tc.target_ip == target_ip]
+        if protocol:
+            rows = [tc for tc in rows if tc.protocol == protocol]
+        if limit is not None:
+            rows = rows[:limit]
+        return list(rows)
 
     def get_test_case(self, test_id: int) -> Optional[TestCase]:
         for tc in self.test_cases:
