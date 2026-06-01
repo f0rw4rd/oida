@@ -343,31 +343,30 @@ class TestCaseManager:
             self._log.warning(f"No buffer contents to flush for crash {crash_id}")
             return
 
-        # Track crash payload for later storage
+        # Build DTO list once, then bulk-insert in a single transaction.
+        # Was N per-row commits (= N fsyncs on rotating disks).
         crash_payload = None
-
-        # First pass: Store all buffered test cases
+        cases_to_store: list[TestCase] = []
         for tc_id, tc_name, tc_payload, tc_timestamp, tc_crc32 in buffer_contents:
-            # Determine if this is the crash test case itself
             is_crash_case = tc_id == crash_id
-
-            test_case = TestCase(
-                id=tc_id,
-                name=tc_name,
-                timestamp=tc_timestamp,
-                result=result if is_crash_case else "pass",  # Context cases are assumed pass
-                crc32=tc_crc32,
-                target_ip=target_ip,
-                target_port=target_port,
-                protocol=protocol,
-                duration_ms=duration_ms if is_crash_case else None,
-                monitor_status=monitor_status if is_crash_case else None,
+            cases_to_store.append(
+                TestCase(
+                    id=tc_id,
+                    name=tc_name,
+                    timestamp=tc_timestamp,
+                    result=result if is_crash_case else "pass",
+                    crc32=tc_crc32,
+                    target_ip=target_ip,
+                    target_port=target_port,
+                    protocol=protocol,
+                    duration_ms=duration_ms if is_crash_case else None,
+                    monitor_status=monitor_status if is_crash_case else None,
+                )
             )
-            self.database.store_test_case(test_case)
-
-            # Save crash payload for second pass
             if is_crash_case:
                 crash_payload = tc_payload
+
+        self.database.store_test_cases_bulk(cases_to_store)
 
         # Second pass: Store crash record (after test case exists)
         if crash_payload is not None:
@@ -411,11 +410,16 @@ class TestCaseManager:
         """
         try:
             progress = self.get_progress()
-            self.database.store_metadata("last_test_case", str(progress["current_case"]))
-            self.database.store_metadata("total_processed", str(progress["total_processed"]))
-            self.database.store_metadata("actual_sends", str(progress["actual_sends"]))
-            self.database.store_metadata("crash_count", str(progress["crash_count"]))
-            self.database.store_metadata("last_updated", datetime.now().isoformat())
+            # One transaction instead of five — saves four fsyncs per save.
+            self.database.store_metadata_bulk(
+                {
+                    "last_test_case": str(progress["current_case"]),
+                    "total_processed": str(progress["total_processed"]),
+                    "actual_sends": str(progress["actual_sends"]),
+                    "crash_count": str(progress["crash_count"]),
+                    "last_updated": datetime.now().isoformat(),
+                }
+            )
             # Only print on final save (Ctrl+C or end of session)
             if final:
                 self._log.display(

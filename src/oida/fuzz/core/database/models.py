@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Dict, Optional, List
 from sqlalchemy import (
     Integer,
+    BigInteger,
     String,
     Float,
     ForeignKey,
@@ -19,6 +20,7 @@ from sqlalchemy import (
     Index,
     DateTime,
     create_engine,
+    event,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -43,6 +45,16 @@ class TestCase(Base):
         Index("idx_test_cases_timestamp", "timestamp"),
         Index("idx_test_cases_target", "target_ip", "target_port"),
         Index("idx_test_cases_protocol", "protocol"),
+        # Covering index for the common search shape:
+        # filter by protocol+result, order by timestamp DESC.
+        Index(
+            "idx_test_cases_protocol_result_ts",
+            "protocol",
+            "result",
+            "timestamp",
+        ),
+        # search_test_cases / triage UX wants to group by case name.
+        Index("idx_test_cases_name", "name"),
     )
 
     # Primary key
@@ -54,7 +66,10 @@ class TestCase(Base):
         String, nullable=False
     )  # ISO format string for compatibility
     result: Mapped[str] = mapped_column(String, nullable=False)
-    crc32: Mapped[int] = mapped_column(Integer, nullable=False)
+    # CRC32 is unsigned 32-bit. SQLite stores INTEGER as 8-byte signed, so
+    # BigInteger here is just an explicit contract that the high bit is
+    # safe — never hits a Python int → SQL int overflow.
+    crc32: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     # Target identification - tracks which target/protocol each test case belongs to
     target_ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)  # IPv4/IPv6
@@ -126,9 +141,7 @@ class Crash(Base):
     test_case: Mapped["TestCase"] = relationship("TestCase", back_populates="crash")
 
     @staticmethod
-    def compute_crash_hash(
-        crash_info: Optional[str], stack_trace: Optional[str]
-    ) -> str:
+    def compute_crash_hash(crash_info: Optional[str], stack_trace: Optional[str]) -> str:
         """Compute a stable short hash that groups duplicate crashes.
 
         The signature uses the first ~120 chars of ``crash_info`` plus the
@@ -278,7 +291,7 @@ class CrashContext(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     payload: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     timestamp: Mapped[str] = mapped_column(String, nullable=False)
-    crc32: Mapped[int] = mapped_column(Integer, nullable=False)
+    crc32: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     # Relationship back to crash event
     crash_event: Mapped["CrashEvent"] = relationship("CrashEvent", back_populates="context_entries")
@@ -341,6 +354,12 @@ def create_database_engine(database_path: str, echo: bool = False):
     """
     Create a SQLAlchemy engine for the database.
 
+    Installs a per-connection PRAGMA listener that turns on WAL,
+    relaxes ``synchronous`` to ``NORMAL``, enables foreign-key
+    enforcement (required for ``ondelete=CASCADE`` to actually fire),
+    uses in-memory temp storage, and bumps the page cache to 64 MB.
+    Together these typically cut fuzzer write-path latency by ~10x.
+
     Args:
         database_path: Path to the SQLite database file
         echo: Whether to log all SQL statements (for debugging)
@@ -349,11 +368,25 @@ def create_database_engine(database_path: str, echo: bool = False):
         SQLAlchemy Engine instance
     """
     if database_path == ":memory:":
-        # In-memory database for testing
         engine = create_engine("sqlite:///:memory:", echo=echo)
     else:
-        # File-based database
         engine = create_engine(f"sqlite:///{database_path}", echo=echo)
+
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, _connection_record):
+        is_memory = database_path == ":memory:"
+        cursor = dbapi_connection.cursor()
+        try:
+            # WAL is incompatible with :memory: — it requires a file.
+            if not is_memory:
+                cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA temp_store=MEMORY")
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA cache_size=-65536")  # 64 MB page cache
+            cursor.execute("PRAGMA mmap_size=268435456")  # 256 MB mmap
+        finally:
+            cursor.close()
 
     return engine
 

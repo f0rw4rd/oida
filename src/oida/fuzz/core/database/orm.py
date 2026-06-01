@@ -11,7 +11,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, func, insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.engine import Engine
 
@@ -137,6 +138,38 @@ class SQLAlchemyDatabase(DatabaseInterface):
             )
             return test_case_id
 
+    def store_test_cases_bulk(self, test_cases: List[TestCaseDTO]) -> None:
+        """Insert many test cases in a single transaction.
+
+        Uses SQLite ``INSERT OR REPLACE`` so existing rows with the same id
+        are overwritten (same semantics as ``store_test_case``'s ``merge``),
+        but without per-row SELECT/flush round-trips.
+        """
+        if not self._initialized:
+            raise RuntimeError("Database not initialized. Call init_schema() first.")
+        if not test_cases:
+            return
+
+        rows = [
+            {
+                "id": tc.id if tc.id else None,
+                "name": tc.name,
+                "timestamp": tc.timestamp,
+                "result": tc.result,
+                "crc32": tc.crc32,
+                "target_ip": tc.target_ip,
+                "target_port": tc.target_port,
+                "protocol": tc.protocol,
+                "duration_ms": tc.duration_ms,
+                "monitor_status": tc.monitor_status,
+            }
+            for tc in test_cases
+        ]
+
+        with self.get_session() as session:
+            stmt = sqlite_insert(TestCase).prefix_with("OR REPLACE")
+            session.execute(stmt, rows)
+
     def store_crash(self, crash: CrashDTO) -> None:
         """
         Store crash information for a test case (upsert - update if exists).
@@ -248,14 +281,18 @@ class SQLAlchemyDatabase(DatabaseInterface):
         result_filter: Optional[str] = None,
         target_ip: Optional[str] = None,
         protocol: Optional[str] = None,
+        limit: Optional[int] = 10_000,
     ) -> List[TestCaseDTO]:
         """
-        Get all test cases, optionally filtered by result, target, or protocol.
+        Get test cases, optionally filtered by result, target, or protocol.
 
         Args:
             result_filter: Optional filter for test case result
             target_ip: Optional filter for target IP
             protocol: Optional filter for protocol name
+            limit: Cap on number of rows returned. Defaults to 10k to
+                prevent OOM on million-case sessions. Pass ``None`` to
+                disable the cap (slow!).
 
         Returns:
             List of TestCase DTOs
@@ -271,6 +308,8 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 query = query.where(TestCase.protocol == protocol)
 
             query = query.order_by(TestCase.timestamp.desc())
+            if limit is not None:
+                query = query.limit(limit)
 
             test_cases = session.execute(query).scalars().all()
             return [self._to_dto(tc) for tc in test_cases]
@@ -294,6 +333,7 @@ class SQLAlchemyDatabase(DatabaseInterface):
                     payload=crash.payload,
                     crash_info=crash.crash_info,
                     stack_trace=crash.stack_trace,
+                    crash_hash=crash.crash_hash,
                 )
 
         return None
@@ -351,6 +391,15 @@ class SQLAlchemyDatabase(DatabaseInterface):
             metadata = SessionMetadata(key=key, value=value)
             session.merge(metadata)
         ics_logger.debug(f"Stored metadata: {key}={value}")
+
+    def store_metadata_bulk(self, items: Dict[str, str]) -> None:
+        """Upsert many metadata keys in a single transaction."""
+        if not items:
+            return
+        rows = [{"key": k, "value": v} for k, v in items.items()]
+        with self.get_session() as session:
+            stmt = sqlite_insert(SessionMetadata).prefix_with("OR REPLACE")
+            session.execute(stmt, rows)
 
     def get_metadata(self, key: str) -> Optional[str]:
         """
@@ -432,33 +481,36 @@ class SQLAlchemyDatabase(DatabaseInterface):
             Dictionary with statistics about the database
         """
         with self.get_session() as session:
-            # Count test cases by result
-            result_counts = {}
-            for result_type in ["pass", "fail", "crash", "error"]:
-                count = session.execute(
-                    select(func.count(TestCase.id)).where(TestCase.result == result_type)
-                ).scalar()
-                result_counts[result_type] = count
+            # Single aggregate query over test_cases (was 8 round-trips).
+            agg_row = session.execute(
+                select(
+                    func.count(TestCase.id).label("total"),
+                    func.sum(func.iif(TestCase.result == "pass", 1, 0)).label("pass_count"),
+                    func.sum(func.iif(TestCase.result == "fail", 1, 0)).label("fail_count"),
+                    func.sum(func.iif(TestCase.result == "crash", 1, 0)).label("crash_count"),
+                    func.sum(func.iif(TestCase.result == "error", 1, 0)).label("error_count"),
+                    func.avg(TestCase.duration_ms).label("avg_duration"),
+                    func.min(TestCase.timestamp).label("oldest"),
+                    func.max(TestCase.timestamp).label("newest"),
+                )
+            ).one()
 
-            # Get total count
-            total_count = session.execute(select(func.count(TestCase.id))).scalar()
+            total_count = agg_row.total or 0
+            result_counts = {
+                "pass": agg_row.pass_count or 0,
+                "fail": agg_row.fail_count or 0,
+                "crash": agg_row.crash_count or 0,
+                "error": agg_row.error_count or 0,
+            }
+            avg_duration = agg_row.avg_duration
+            oldest = agg_row.oldest
+            newest = agg_row.newest
 
-            # Get average duration
-            avg_duration = session.execute(
-                select(func.avg(TestCase.duration_ms)).where(TestCase.duration_ms.isnot(None))
-            ).scalar()
-
-            # Get crashes with payloads
             crashes_with_payloads = session.execute(select(func.count(Crash.test_case_id))).scalar()
 
-            # Get payload storage info
             total_payloads = 0
             if self._store_all_payloads:
                 total_payloads = session.execute(select(func.count(Payload.test_case_id))).scalar()
-
-            # Get date range
-            oldest = session.execute(select(func.min(TestCase.timestamp))).scalar()
-            newest = session.execute(select(func.max(TestCase.timestamp))).scalar()
 
             # Get metadata for session progress (from rolling buffer saves)
             last_test_case_meta = session.get(SessionMetadata, "last_test_case")
@@ -635,17 +687,22 @@ class SQLAlchemyDatabase(DatabaseInterface):
             session.add(crash_event)
             session.flush()  # Get the ID
 
-            # Store all buffer contents as crash context
-            for tc_id, tc_name, tc_payload, tc_timestamp, tc_crc32 in buffer_contents:
-                context_entry = CrashContext(
-                    crash_event_id=crash_event.id,
-                    test_case_id=tc_id,
-                    name=tc_name,
-                    payload=tc_payload,
-                    timestamp=tc_timestamp,
-                    crc32=tc_crc32,
+            # Bulk-insert all buffer contents (avoids ORM per-row overhead).
+            if buffer_contents:
+                session.execute(
+                    insert(CrashContext),
+                    [
+                        {
+                            "crash_event_id": crash_event.id,
+                            "test_case_id": tc_id,
+                            "name": tc_name,
+                            "payload": tc_payload,
+                            "timestamp": tc_timestamp,
+                            "crc32": tc_crc32,
+                        }
+                        for tc_id, tc_name, tc_payload, tc_timestamp, tc_crc32 in buffer_contents
+                    ],
                 )
-                session.add(context_entry)
 
             ics_logger.display(
                 f"Stored crash event {crash_event.id} with {len(buffer_contents)} context entries"
