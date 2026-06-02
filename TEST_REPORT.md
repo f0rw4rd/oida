@@ -1,23 +1,30 @@
 # OIDA Test Suite Report
 
-**Generated:** 2026-06-02
-**Branch:** main @ d1dbaf4f (after fuzz DB refactor + ghost-service conftest fix)
-**Command:** `python -m pytest tests/<dir>/ --timeout=60 -p no:cacheprovider`
-**Environment:** Linux 6.12.61, Python 3.11.5, pyenv. **Docker mocks NOT pre-started.**
+**Last updated:** 2026-06-02 (v5)
+**Branch:** main @ b6a9f9c3 (after fuzz DB refactor + ghost-service conftest fix + timeout_func_only)
+**Command:** `python -m pytest tests/<dir>/ -p no:cacheprovider` (pytest config in `pyproject.toml`)
+**Environment:** Linux 6.12.61, Python 3.11.5, pyenv. **Docker mocks NOT pre-started locally.**
 
 ---
 
-## Headline numbers
+## Headline numbers (v5 — current)
 
 | Suite | Passed | Failed | Skipped | Errors | XFail | Deselected | Wall time | Exit |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | `tests/unit/` | **10,241** | **1** | 260 | 0 | 11 | 313 | 7m 22s | 1 |
-| `tests/integration/` (with ghost services) | 2,860 | 154 | 1,502 | 376 | — | 92 | 34m 47s | 1 |
-| `tests/integration/` (after profinet fix) | — | — | — | 0 | — | — | killed @ 60s | 1 |
+| `tests/integration/` (v5) | **2,860** | **154** | **1,878** | **0** | — | 92 | 33m 43s | 1 |
 
-**Zero per-test timeouts in `tests/unit/`** at the 60s threshold.
-**Zero per-test timeouts in the integration "before" run** at the 60s threshold (errors were instant, not timed out).
-**One catastrophic fixture-level timeout in the integration "after" run** — see §3.
+**Zero per-test timeouts. Zero fixture-level kills.** Integration suite now completes end-to-end.
+
+### History (showing what the fixes did)
+
+| Run | Failed | Errors | Skipped | Notes |
+|---|---:|---:|---:|---|
+| v3 (pre-fix) | 154 | 376 | 1,502 | 376 errors from one ghost-service cascade |
+| v4 (after `profinet` fix, before timeout fix) | — | — | — | killed by per-test 60s timer during `docker compose up --wait` |
+| **v5 (after `timeout_func_only=true`)** | **154** | **0** | **1,878** | Cascade errors converted to clean skips; suite finishes |
+
+The 376 docker-cascade errors became 376 clean skips (376 = exactly the delta `1,878 − 1,502`). Pass count and real-failure count unchanged.
 
 ---
 
@@ -56,26 +63,64 @@ Unit suite is **release-ready**. The 1 order-dependent failure is a test-isolati
 
 ---
 
-## 2. Integration suite — first run (pre-fix)
+## 2. Integration suite — v5 failure attribution
 
-### The 376 errors — all one cause
+### Exact root-cause counts (154 total)
 
-Every error is the identical exception:
+| Count | Root cause | Severity |
+|---:|---|---|
+| **92** | `AttributeError: module 'oida.protocols.astm' has no attribute 'socket'` — every ASTM test that mock-patches `oida.protocols.astm.socket` fails because the symbol is no longer at module scope after an import refactor | **TEST BUG** — one fix unblocks 92 tests |
+| **45** | `AttributeError: ... 'oida.protocols.can' ... '_python_can'` — same pattern, CAN module symbol removed | **TEST BUG** — one fix unblocks 45 tests |
+| 4 | `PACKET DROP: bacnet/ldap/modbus/pim` on reference pcaps in `pcap/test_packet_coverage.py` | **PRODUCT BUG** — listener extraction regression |
+| 1 | `PROTOCOL_COLUMNS mismatch: missing {'cot'}` in `pcap/test_iec104_passive.py` | TEST STALE — listener gained `cot` column, test expectation not updated |
+| 1 | `Read FC 11 name doesn't contain 'Read': Get Comm Event Counter` | PRODUCT BUG — FC classification table |
+| 1 | `Read/write FC overlap: {23}` | PRODUCT BUG (or test) — FC 23 (Read/Write Multiple) is legitimately both |
+| 1 | `No interactions have state_flags in details` (ADS passive) | PRODUCT BUG — ADS listener missing state_flags extraction |
+| 1 | `No known state flags found` (ADS passive) | same root cause |
+| 1 | `OPC UA service not available on port 4840` | "ASSERT vs SKIP" — should pytest.skip when mock down |
+| 1 | `DTLS CoAP service not responding on 127.0.0.1:5684` | "ASSERT vs SKIP" |
+| 1 | `libcoap CoAP service not available on UDP 127.0.0.1:5685` | "ASSERT vs SKIP" |
+| 1 | `assert 12000 == 1394` (ASTM port) | TEST STALE — port already fixed in source per `19762a17`, test hardcoded to 1394 |
+| 1 | `Unexpected response operation: Multi-message` | PRODUCT or TEST — investigate |
+| 1 | `Control type 100 should be 'write', got read` | PRODUCT or TEST — investigate |
+| 1 | `Control type 58 should have rw='write', got error` | PRODUCT or TEST — investigate |
+| 1 | `assert (1 == 0 or False)` (test_database_passive) | PRODUCT or TEST — investigate |
+
+**137 of 154 failures are 2 trivial test fixes.** The remaining 17 are real signal (12 listener regressions + 4 assert-vs-skip + 1 stale port assertion).
+
+### Failures by file
+
+| File | Count | Type |
+|---|---:|---|
+| `test_astm_integration.py` | 93 | 92 stale-patch + 1 stale port assertion |
+| `test_can_integration.py` | 45 | All 45 stale-patch |
+| `pcap/test_packet_coverage.py` | 4 | PACKET DROPs (listener regression) |
+| `pcap/test_iec104_passive.py` | 3 | PROTOCOL_COLUMNS + control type tests |
+| `test_mock_services.py` | 2 | OPC UA assert-vs-skip |
+| `test_coap_integration.py` | 2 | DTLS + libcoap assert-vs-skip |
+| `pcap/test_modbus_passive.py` | 2 | FC 11/23 classification |
+| `pcap/test_ads_passive.py` | 2 | state_flags missing |
+| `pcap/test_database_passive.py` | 1 | (investigate) |
+
+### Historical context: ghost-service cascade (now fixed)
+
+The pre-fix run had 376 errors all from the identical exception:
 
 ```
 Exception: Command docker compose -f docker/mocks/compose.yml -p oida-test up -d --wait
   <67 services...> returned 1: """no such service: profinet-pnet-device
 ```
 
-A single nonexistent service name in `docker compose up` makes the whole call return 1. Every test that uses the pytest-docker `docker_services` fixture errors at setup with this same exception.
+A single nonexistent service name in `docker compose up` makes the whole call return 1. Every test using the `docker_services` fixture errored at setup with the same exception.
 
-**Root causes (now fixed in HEAD):**
+**Fixed in:**
 
-| Location | Old | New | Status |
+| Location | Old | New | Commit |
 |---|---|---|---|
-| `tests/integration/conftest.py:144` | `"bacnet": ["msf-ics-mock"]` | `"bacnet": ["bacnet-mock", "bacnet-conpot"]` | Fixed in `d1dbaf4f` |
-| `tests/integration/conftest.py:181, 330, 703` | `profinet-pnet-device` | `profinet-device` | Fixed in `d1dbaf4f` |
-| `tests/integration/test_profinet_integration.py` (6 refs incl. `@pytest.mark.containers(...)`) | `profinet-pnet-device` | `profinet-device` | Fixed (this turn, uncommitted) |
+| `tests/integration/conftest.py:144` | `"bacnet": ["msf-ics-mock"]` | `"bacnet": ["bacnet-mock", "bacnet-conpot"]` | `d1dbaf4f` |
+| `tests/integration/conftest.py` (3 refs) | `profinet-pnet-device` | `profinet-device` | `d1dbaf4f` |
+| `tests/integration/test_profinet_integration.py` (6 refs incl. `@pytest.mark.containers(...)`) | `profinet-pnet-device` | `profinet-device` | `713f71d3` |
+| `pyproject.toml` | `timeout=15` (no func_only) | `timeout=60`, `timeout_func_only=true` | `b6a9f9c3` |
 
 ### The 154 failures (after subtracting the docker cascade)
 
@@ -136,28 +181,19 @@ Despite 376 errors, the 60s threshold was never tripped — every error came bac
 
 ---
 
-## 3. Integration suite — second run (post-fix) — catastrophic fixture timeout
+## 3. Fixture timeout — fixed in `b6a9f9c3`
 
-After fixing the ghost-service names, `docker compose up --wait <67 services>` actually attempts a real bring-up. With no images pre-built and the per-test 60s timeout in effect, pytest-timeout kills the `docker_services` session-scoped fixture **mid-bring-up**, taking the whole session with it. Resulting log is 178 lines, no summary.
+Before the fix, `docker compose up --wait <67 services>` hit the per-test 60s timer mid-bring-up; pytest-timeout killed the `docker_services` session fixture and took the whole session with it.
 
-```
-File "pytest_docker/plugin.py", line 212, in get_docker_services
-    docker_compose.execute(command)
-File "subprocess.py", line 1196, in communicate
-    stdout = self.stdout.read()
-+++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
-```
+**Fix:** `pyproject.toml` got `timeout_func_only = true` — pytest-timeout now only counts the test function body, not setup/teardown/fixtures. Default per-test timeout also bumped 15s → 60s for integration headroom.
 
-This is **the actual gating issue** for being able to run the full integration suite end-to-end in CI or locally without `services.py up all` ahead of time.
+**Validation:** v5 run completed in 33m 43s with 0 errors and 0 timeouts. Cascade errors became clean skips.
 
-**Remediation options** (any one works):
+**Still recommended (operational, not blocking):**
 
-1. **Pre-start mocks** in CI: `python services.py up all && pytest tests/integration/`. Operational fix; doesn't touch test code.
-2. **Per-test timeout exemption for the docker fixture**: pytest-timeout supports `@pytest.mark.timeout(0)` on the fixture itself, or `--timeout-disable-debugger-detection --timeout=60 --timeout-method=signal` with a higher value on the docker_services fixture via `@pytest.fixture(name="docker_services")` wrapper.
-3. **Skip-when-no-running-mocks pattern**: detect already-running services and skip the bring-up; if nothing's running, skip the test cleanly instead of waiting on a multi-minute `docker compose up`.
-4. **Speed up bring-up**: pre-pull images, use `compose --pull never`, healthchecks with smaller intervals.
-
-Recommended: **option 1 for now + option 3 for the dev experience.**
+1. **Pre-start mocks** in CI: `python services.py up all && pytest tests/integration/`. Avoids the cold bring-up cost on every CI run.
+2. **Skip-on-fixture-failure wrapper**: when an individual mock fails to start, dependent tests currently error at setup; better UX is to convert to `pytest.skip` for that test. Lower priority — most failures here come from real bring-up problems CI operators want to see.
+3. **Speed up bring-up**: pre-pull images, use `compose --pull never`, smaller healthcheck intervals.
 
 ---
 
@@ -203,27 +239,36 @@ Every skipped test in the integration suite has a clear, reasonable reason (mock
 
 ## 5. Recommended next steps (in priority order)
 
-1. ~~**Commit `tests/integration/test_profinet_integration.py` fix**~~ — **done** in `713f71d3`.
-2. ~~**Raise the docker_services fixture timeout**~~ — **done**: `timeout_func_only = true` in `pyproject.toml` (this turn). Fixtures no longer subject to per-test timer, so the session-scoped docker bring-up can take as long as it needs. Default per-test timeout also bumped 15→60s for integration-test headroom.
-3. **Add `services.py up all` to CI** as a pre-step — even with the fixture timeout fix, a cold bring-up of 67 services adds minutes to every CI run; pre-starting them in a parallel job (or persistent runner) makes the suite much faster.
-4. **Fix the 3 stale tests** (ASTM port, ASTM socket patch, CAN `_python_can` patch) — quick wins, no product change.
-5. **Fix the 4 "assert instead of skip"** tests in `test_mock_services` + `test_coap_integration`.
-6. **Investigate the 12 real pcap listener regressions** — these are the only real product issues surfaced and they were already on the §2 list in `RELEASE_TODO.md`.
-7. **Investigate the 1 order-dependent unit failure** (`test_logger_created_on_init`) — find which earlier test mutates global logger state.
+Done (✓) vs open (·):
+
+- ✓ Commit `tests/integration/test_profinet_integration.py` fix (`713f71d3`)
+- ✓ `timeout_func_only = true` + `timeout = 60` in `pyproject.toml` (`b6a9f9c3`) — integration suite now runs end-to-end
+- · **HIGH-VALUE / LOW-EFFORT**: fix `oida.protocols.astm.socket` mock-patch target in `test_astm_integration.py` — unblocks **92 tests** with one edit
+- · **HIGH-VALUE / LOW-EFFORT**: fix `oida.protocols.can._python_can` mock-patch target in `test_can_integration.py` — unblocks **45 tests** with one edit
+- · Fix 1 stale ASTM port assertion (`assert 12000 == 1394`)
+- · Fix 4 "assert vs skip" patterns (`test_mock_services` OPC UA; `test_coap_integration` DTLS + libcoap)
+- · Investigate 12 real pcap listener regressions (PACKET DROPs, PROTOCOL_COLUMNS, state_flags, FC overlap) — these are the only product issues surfaced
+- · Investigate 1 order-dependent unit failure (`test_logger_created_on_init`)
+- · Add `services.py up all` as a CI pre-step (operational; speeds up runs by avoiding cold bring-up)
+
+After fixing just the two `AttributeError` mock-patch issues, expected v6 numbers: **2,997 passed · 17 failed · 1,878 skipped · 0 errors**.
 
 ---
 
 ## Appendix A. Run commands used
 
 ```bash
-# Unit
+# Unit (v3)
 python -m pytest tests/unit/ --timeout=60 -p no:cacheprovider > /tmp/oida_v3_unit.log 2>&1
 
-# Integration (pre-fix)
+# Integration v3 (with ghost services, before any fix)
 python -m pytest tests/integration/ --timeout=60 -p no:cacheprovider > /tmp/oida_v3_integration.log 2>&1
 
-# Integration (post-fix — killed by fixture timeout)
+# Integration v4 (after ghost-service fix, before timeout fix — killed by per-test timer)
 python -m pytest tests/integration/ --timeout=60 -p no:cacheprovider > /tmp/oida_v4_integration.log 2>&1
+
+# Integration v5 (after both fixes — current baseline)
+python -m pytest tests/integration/ -p no:cacheprovider > /tmp/oida_v5_integration.log 2>&1
 ```
 
 ## Appendix B. Log file locations
@@ -231,7 +276,8 @@ python -m pytest tests/integration/ --timeout=60 -p no:cacheprovider > /tmp/oida
 | File | Lines | Purpose |
 |---|---:|---|
 | `/tmp/oida_v3_unit.log` | ~10.5k | Full unit suite output |
-| `/tmp/oida_v3_integration.log` | ~7.5k | Full integration suite, pre-fix |
-| `/tmp/oida_v4_integration.log` | 178 | Integration suite killed by fixture timeout |
+| `/tmp/oida_v3_integration.log` | ~7.5k | Integration suite — pre-fix (376 errors) |
+| `/tmp/oida_v4_integration.log` | 178 | Integration suite — killed by fixture timeout |
+| `/tmp/oida_v5_integration.log` | (full) | Integration suite — current baseline, 154 failures, 0 errors |
 
 These will be cleared on reboot. If you want to preserve them, copy into `docs/audit/test_runs/`.
