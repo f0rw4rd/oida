@@ -578,11 +578,15 @@ class TestEtherCATIntegration:
         _assert_ethercat_attempted(result)
 
     def test_eeprom_parse_flag(self, cli_runner):
-        """Test -p / --eeprom-parse flag is accepted [Category B]"""
+        """Test --eeprom-parse flag is accepted [Category B]
+
+        Note: the legacy -p short was removed in fa61b286 because -p means
+        --port everywhere else in OIDA; use the long form here.
+        """
         result = cli_runner.run(
             self.protocol_name,
             _TEST_INTERFACE,
-            "-p",
+            "--eeprom-parse",
             json_log=True,
             timeout=15,
         )
@@ -711,7 +715,7 @@ class TestEtherCATIntegration:
             self.protocol_name,
             _TEST_INTERFACE,
             "-e",  # eeprom-dump
-            "-p",  # eeprom-parse
+            "--eeprom-parse",  # -p short was removed in fa61b286 (-p means --port elsewhere)
             "--dc-analysis",
             "--fsoe",
             "--esc-registers",
