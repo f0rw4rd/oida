@@ -1,5 +1,16 @@
 # OIDA 1.0 Release TODO
 
+> **2026-06-02 — RELEASE STATUS: NOT READY.** Multi-agent code review
+> (workflow `wxt77w8kq`, see `CODE_REVIEW.md`) surfaced **6 CRITICAL +
+> 23 HIGH** issues that the test suite missed because they live in
+> CLI-flag-gated code paths that weren't exercised by unit tests.
+> Headline bugs: pymodbus `slave=`/`device_id=` migration left half-done
+> (most modbus paths crash), CoAP `--methods` DELETE without `--confirm`,
+> CoAP DTLS bypassed by hard-coded `coap://`, DICOM/KNX import-depth bugs
+> crash on first use, HL7 `--probe-ops` sends ADT merge/discharge/billing
+> without `--confirm`, BACnet `is None == success` predicate emits
+> false-positive CRITICALs. **Read `CODE_REVIEW.md` before tagging.**
+
 **Release target:** 2026-07-16
 **Created:** 2026-06-01 (T-6.5 weeks)
 **Scope:** every module, every feature, every test, plus release/README/website prep.
@@ -10,6 +21,40 @@ This is the long list. Cross-references:
 - `ref/_FUZZER_OPTIMIZATIONS_TODO.md` — per-protocol fuzzer items
 - `docs/REAL_COVERAGE_PROPOSAL.md` — 3-axis coverage strategy
 - `/tmp/oida_review_*.md` — full audit reports (move into `docs/audit/` first)
+
+---
+
+## −1. CODE REVIEW BLOCKERS (from `CODE_REVIEW.md`, workflow `wxt77w8kq`)
+
+Multi-agent review (46 reviewers + 1 aggregator, 6.6M tokens, 1h) found
+issues the test suite missed. Section ordering: must-fix before tag.
+
+### CRITICAL (6 — block release)
+
+- [ ] **modbus** `pymodbus 3.12 slave=/device_id= migration` — `register_io.py`, NXC mixins, fuzz, writes still pass `slave=`. Every batched-read / monitor / fuzz / test-write / map-read path crashes. Test `test_writable_access_security_finding` already documents the regression (line 1152). See `CODE_REVIEW.md` CRITICAL #7.
+- [ ] **modbus** `send_custom_fc()` signature mismatch — caller drops `unit_id`; `--raw-fc`/`--enumerate-functions`/`--fuzz function-mode` crash. `CODE_REVIEW.md` CRITICAL #8.
+- [ ] **modbus** raw_function_codes + fuzz handlers read keys `send_custom_fc` never returns — exceptions rendered as success; fuzz output inverted. `CODE_REVIEW.md` CRITICAL #9.
+- [ ] **modbus** CANopen MEI handlers call non-existent `_send_mei_canopen` — entire `--canopen-*` flag group raises `AttributeError`. `CODE_REVIEW.md` CRITICAL #10.
+- [ ] **coap** `--methods` fires PUT/POST/DELETE/PATCH/IPATCH on every discovered resource without `--confirm` — DELETE can wipe live actuator state. `CODE_REVIEW.md` CRITICAL #1.
+- [ ] **coap** write helpers + wordlist prober hard-code `coap://`, bypassing DTLS — cleartext PUT over UDP/5683 even when `-D` is active. `CODE_REVIEW.md` CRITICAL #2.
+- [ ] **dicom** `_export_results` broken relative import (3 dots, should be 4) — every `-o results` crashes after a successful scan. `CODE_REVIEW.md` CRITICAL #3.
+- [ ] **hl7** `--probe-ops` sends ADT merge/discharge, pharmacy admin, billing, master-file modifications without `--confirm` — "Probe supported message types" semantically lies. `CODE_REVIEW.md` CRITICAL #4.
+- [ ] **hl7** MFN/BAR/DFT/pharmacy mixins call non-existent SegmentBuilder methods — silently fall back to generic ADT, "billing accepted" findings are false. `CODE_REVIEW.md` CRITICAL #5.
+- [ ] **knx** `--fuzz-property` wrong relative-import depth — entire feature crashes on first use. `CODE_REVIEW.md` CRITICAL #6.
+
+### HIGH (23 — also block tag)
+
+See `CODE_REVIEW.md` HIGH section for the full list. Top 5 by blast radius:
+- [ ] `cli.py:107-121` `merge_config_with_args` discards every config-file value whose argparse default is non-None — `-c/--config` is effectively broken for the common knobs
+- [ ] `cli.py:974` debug-logs the full argparse `Namespace` including `--password`/`--credentials`/`--wordlist`/TLS keys/OCPP tokens into stdout AND the JSON audit log
+- [ ] `login_scanner.py:215` logs every failed `username:password` at INFO — wordlist contents end up in audit logs shared back to clients
+- [ ] `connection.py:149-164,355-376` IPv4-only resolution + test_connection despite IPv6 advertised in targets.py — every AAAA-only / v6 target silently fails
+- [ ] `bacnet/mixins/security.py:63-68` UDP timeout treated as successful auth — DCC brute-force, ReinitializeDevice, TimeSync, OOS-writable, BBMD all emit false-positive CRITICAL findings on any noisy / filtered network
+
+### MEDIUM (35), LOW (53), INFO (4)
+
+Full list in `CODE_REVIEW.md`. Pick what to ship pre-tag vs. defer once
+the CRITICAL/HIGH set is closed.
 
 ---
 
