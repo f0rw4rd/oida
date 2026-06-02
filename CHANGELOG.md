@@ -71,6 +71,17 @@ First stable release.
   matrix doesn't silently skip.
 - **`oida snap7`** now works as the canonical CLI subcommand for Siemens S7;
   `oida s7` is an alias.
+- **`SECURITY.md`**, **`CODE_OF_CONDUCT.md`**, and `.github/ISSUE_TEMPLATE/`
+  + `.github/pull_request_template.md` ship for the 1.0 community-files
+  baseline. Private vulnerability disclosure goes to `fnbriearfz@pm.me`.
+- **`tests/coverage/fuzz/test_cve_replication.py`** + **`tests/coverage/
+  fidelity/test_conpot_diff.py`** — scaffolds for the axis-2 and axis-3
+  real-coverage suites (see `docs/REAL_COVERAGE_PROPOSAL.md`). Per-CVE
+  driver and Conpot diff classification land post-1.0.
+- **`.github/workflows/coverage-nightly.yml`** — nightly cron job that
+  runs all three real-coverage axes against the full mock stack,
+  publishes JUnit + JSON artifacts, and pushes a dashboard.md to the
+  `coverage-dashboard` orphan branch.
 
 ### Changed
 
@@ -141,6 +152,12 @@ First stable release.
   port 2404. On non-standard ports (the repo's own mocks use 2405/2409),
   controlling/controlled labels were silently flipped — write-operation
   alerts pointed at the wrong side.
+- **modbus listener direction logic** gains a "lower port wins" fallback
+  when neither side is on TCP 502 (gateways and security devices commonly
+  relay over non-standard ports). Same fix on the MBAP-only keepalive
+  path so client/server roles stay consistent.
+- **mms listener direction logic** gains the same lower-port fallback
+  for substations running on TCP 10102/10106/10108/etc. instead of 102.
 - **BFD and RIP listeners** now pass `src_port`/`dst_port` to
   `_record_interaction()` (commit `cf7c272a` fixed 10 listeners but missed
   these two).
