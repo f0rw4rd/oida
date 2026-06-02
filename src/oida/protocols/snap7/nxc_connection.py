@@ -67,7 +67,9 @@ class s7(NetworkConnection):
             # Smart -P: if password value is a file path, brute-force with it
             password = getattr(self.args, "password", None)
             if password and os.path.isfile(password):
-                self.logger.display(f"Password file detected: {password}")
+                from ...utils.login_scanner import format_wordlist_source
+
+                self.logger.display(f"Password file detected: {format_wordlist_source(password)}")
                 result = self.scanner.bruteforce_password(self.conn, wordlist_path=password)
                 if result and result.get("success"):
                     self.results["data"]["password_found"] = result.get("password")

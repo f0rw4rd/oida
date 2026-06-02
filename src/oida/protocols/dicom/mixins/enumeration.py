@@ -51,7 +51,11 @@ class EnumerationMixin(_ScannerBase):
             self.logger.display(f"Using {len(aet_list)} common vendor AE Titles")
         elif wordlist_file:
             # Custom wordlist file from --ae-wordlist or --aet-brute FILE
-            self.logger.display(f"Loading AET wordlist from: {wordlist_file}")
+            from ....utils.login_scanner import format_wordlist_source
+
+            self.logger.display(
+                f"Loading AET wordlist from: {format_wordlist_source(wordlist_file)}"
+            )
             try:
                 with open(wordlist_file, "r") as f:
                     aet_list = [

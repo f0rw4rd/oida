@@ -21,6 +21,36 @@ from .ics_logger import log, get_module_logger
 _logger = get_module_logger(__name__)
 
 
+def format_wordlist_source(path: Optional[str], default_label: str = "built-in defaults") -> str:
+    """Return a safe, log-friendly label for a wordlist source.
+
+    Strips the directory component because full paths can leak engagement
+    context to screen output and JSON logs (e.g.
+    ``/home/pentester/clients/acmecorp/internal-creds.txt`` discloses both
+    the operator's filesystem layout and the client name). The basename is
+    still useful for the operator (they recognise the file) but doesn't
+    travel beyond their shell.
+
+    Use this helper for every user-facing message that mentions where a
+    password / wordlist came from. Pass-through for in-process operations
+    (file opens, scanner internals) still uses the full path — only the
+    display label changes.
+
+    Args:
+        path: Full path to a wordlist file, or ``None`` when defaults are used.
+        default_label: Returned when ``path`` is falsy.
+
+    Returns:
+        ``"<basename>"`` when ``path`` is a non-empty string, otherwise
+        ``default_label``.
+    """
+    if not path:
+        return default_label
+    import os
+
+    return os.path.basename(path)
+
+
 def _load_file_lines(filepath: str) -> List[str]:
     """Load non-empty, non-comment lines from a file."""
     lines = []
