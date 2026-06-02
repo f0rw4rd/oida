@@ -412,6 +412,28 @@ class ADSPassiveListener(PySharkListenerBase):
         }
         if invoke_id is not None:
             details["invoke_id"] = invoke_id
+
+        # Decode AMS per-bit state flags. tshark exposes each bit as its own
+        # boolean field (ams.state_noreturn, .state_adscmd, ...). Collect the
+        # names of bits that are set so triage can grep e.g. state_broadcast.
+        state_flag_names = (
+            "state_noreturn",
+            "state_adscmd",
+            "state_syscmd",
+            "state_highprio",
+            "state_timestampadded",
+            "state_udp",
+            "state_initcmd",
+            "state_broadcast",
+        )
+        active_flags = []
+        for flag in state_flag_names:
+            raw = self.get_field(ams_layer, flag, None)
+            if raw is not None and str(raw) in ("True", "1", "true"):
+                active_flags.append(flag)
+        if active_flags:
+            details["state_flags"] = active_flags
+
         if index_group is not None:
             details["index_group"] = f"0x{index_group:04X}"
             details["index_group_name"] = ADS_IDX_GRP_NAMES.get(index_group, "")

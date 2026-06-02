@@ -213,12 +213,15 @@ class TestPgsqlPassiveEK:
                     f"Unexpected request operation: {ix.operation}"
                 )
             elif ix.direction == "response":
-                # Responses: src should be server
+                # Responses: src should be server. "Multi-message" appears when
+                # the listener merges several PG messages from one TCP segment
+                # (frequent in real PG traffic).
                 assert ix.operation.startswith("Auth") or ix.operation in (
                     "Ready",
                     "Error",
                     "Notice",
                     "ParameterStatus",
+                    "Multi-message",
                 ), f"Unexpected response operation: {ix.operation}"
 
     def test_pgsql_session_protocol_version(self):

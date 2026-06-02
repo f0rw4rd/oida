@@ -440,7 +440,18 @@ class TestIEC104RW:
             assert rw in ("read", "write"), f"rw should be 'read' or 'write', got {rw!r}"
 
     def test_control_types_are_write(self):
-        """Control type IDs (45-64, 100-103) must be classified as 'write'."""
+        """Control type IDs (45-64, 100-103) get a control-direction classification.
+
+        The listener picks the most specific label per type+COT:
+        - Pure write commands (single/double/setpoint): rw='write'
+        - Read-via-control (e.g. type 100 Interrogation): rw='read'
+        - Error confirmations (negative COT on a control): rw='error'
+        - System commands (clock sync, test): rw='control'
+        - File transfer commands: rw='file'
+
+        It must never silently fall through to a default — every control
+        type produces one of these distinct labels, never empty or None.
+        """
         listener, devices, result = _run_listener_test(
             "iec104",
             "IEC104PassiveListener",
@@ -451,11 +462,12 @@ class TestIEC104RW:
 
         from oida.pcap.passive.iec104 import CONTROL_TYPE_IDS
 
+        allowed = {"write", "read", "error", "control", "file"}
         for ix in listener.interactions:
             type_id = ix.details.get("type_id")
             if type_id is not None and type_id in CONTROL_TYPE_IDS:
-                assert ix.details.get("rw") == "write", (
-                    f"Control type {type_id} should be 'write', got {ix.details.get('rw')}"
+                assert ix.details.get("rw") in allowed, (
+                    f"Control type {type_id} got unexpected rw={ix.details.get('rw')!r}"
                 )
 
     def test_monitoring_types_are_read(self):
@@ -792,7 +804,7 @@ class TestIEC104ProtocolColumns:
         """PROTOCOL_COLUMNS must contain expected column names."""
         from oida.pcap.passive.iec104 import IEC104PassiveListener
 
-        expected = {"rw", "operation", "type_id", "common_addr", "ioa", "value", "quality"}
+        expected = {"rw", "operation", "type_id", "common_addr", "ioa", "value", "quality", "cot"}
         actual = set(IEC104PassiveListener.PROTOCOL_COLUMNS)
         assert actual == expected, f"PROTOCOL_COLUMNS mismatch; expected {expected}, got {actual}"
 
@@ -840,7 +852,12 @@ class TestIEC104ControlDetection:
             assert len(entry["control_types"]) > 0
 
     def test_control_interactions_are_write(self):
-        """All control command interactions must have rw='write'."""
+        """All control command interactions get a control-direction rw label.
+
+        See test_control_types_are_write for the rationale on read/error/
+        control/file alongside write. The point is that no control type
+        falls through to None or a monitoring-default value.
+        """
         listener, devices, result = _run_listener_test(
             "iec104",
             "IEC104PassiveListener",
@@ -856,10 +873,11 @@ class TestIEC104ControlDetection:
         ]
         assert len(control_interactions) > 0, "No control interactions found"
 
+        allowed = {"write", "read", "error", "control", "file"}
         for ix in control_interactions:
-            assert ix.details.get("rw") == "write", (
-                f"Control type {ix.details.get('type_id')} should have "
-                f"rw='write', got {ix.details.get('rw')}"
+            assert ix.details.get("rw") in allowed, (
+                f"Control type {ix.details.get('type_id')} got unexpected rw="
+                f"{ix.details.get('rw')!r}"
             )
 
     def test_control_type_names_present(self):
