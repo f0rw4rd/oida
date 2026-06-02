@@ -1,5 +1,8 @@
 # SNMP Security Testing Tools — Comparative Report
 
+*Snapshot as of 2026-04. Tool versions / capabilities move; re-verify
+before relying on the comparison table for a current engagement.*
+
 ## 1. Dedicated SNMP Tools
 
 ### Net-SNMP (snmpwalk / snmpget / snmpbulkwalk / snmpset)
