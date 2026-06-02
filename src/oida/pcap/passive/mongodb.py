@@ -216,7 +216,7 @@ class MongoDBPassiveListener(PySharkListenerBase):
         elif opcode_name == "OP_UPDATE":
             op_detail = f"Update {full_collection}"
         elif opcode_name == "OP_DELETE":
-            op_detail = f"Delete from {full_collection}"
+            op_detail = f"Delete from {full_collection}"  # nosec B608 — human-readable log label, not SQL
         elif opcode_name == "OP_GET_MORE":
             op_detail = f"GetMore cursor={cursor_id}"
         elif opcode_name == "OP_REPLY":
