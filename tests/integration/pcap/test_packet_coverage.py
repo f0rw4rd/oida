@@ -29,22 +29,6 @@ pytestmark = [pytest.mark.integration]
 # Each entry is a documented gap, NOT a flaky test. Adding here should
 # always come with a TODO / issue reference in RELEASE_TODO.md §2.
 KNOWN_DROPS: dict[tuple[str, str], str] = {
-    ("bacnet", "wireshark_bacnet_arcnet.cap"): (
-        "ARCNET-encapsulated BACnet — listener can't unwrap ARCNET frames; "
-        "RELEASE_TODO.md §2"
-    ),
-    ("ldap", "wireshark_ldap_krb5.cap"): (
-        "Kerberos-bound LDAP (SASL/GSSAPI) — credential frames missing the "
-        "plaintext-bind path the listener parses; RELEASE_TODO.md §2"
-    ),
-    ("modbus", "zeek_modbus_mixed_p502.pcap"): (
-        "Zeek-rewritten mixed-protocol pcap drops ~30% of frames; listener "
-        "rejects payload variants that real PLCs accept; RELEASE_TODO.md §2"
-    ),
-    ("pim", "wireshark_pim_register.cap"): (
-        "PIM Register messages (unicast-encapsulated multicast) — listener "
-        "only handles top-level PIM; RELEASE_TODO.md §2"
-    ),
 }
 
 

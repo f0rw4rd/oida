@@ -269,12 +269,19 @@ class ModbusPassiveListener(PySharkListenerBase):
         trans_id_str = self.get_field(mbtcp_layer, "trans_id")
         pdu_len_str = self.get_field(mbtcp_layer, "len")
 
-        # Verify Modbus protocol ID (should be 0)
+        # Verify Modbus protocol ID (should be 0). Pyshark's EK output can
+        # misread this byte when tshark emits a "Cannot classify packet type"
+        # warning (the recovery path shifts offsets), so non-zero prot_id is
+        # only a soft signal — log and proceed. The presence of a mbtcp layer
+        # plus a valid func_code in the modbus payload is the real evidence.
         if prot_id_str is not None:
             try:
                 prot_id = int(prot_id_str)
                 if prot_id != 0:
-                    return  # Not Modbus
+                    self.logger.debug(
+                        f"non-zero mbtcp.prot_id={prot_id} from {src_ip} -> {dst_ip}; "
+                        "EK parser quirk on 'Cannot classify' frames — proceeding"
+                    )
             except (ValueError, TypeError) as e:
                 self.logger.debug(f"Failed to get prot_id: {e}")
 

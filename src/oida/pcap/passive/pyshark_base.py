@@ -330,21 +330,59 @@ class PySharkListenerBase(ABC):
             return {}
 
     def get_ip_info(self, packet) -> tuple:
-        """Extract (src_ip, dst_ip) from packet."""
-        try:
-            if hasattr(packet, "ip"):
-                return (
-                    str(self._resolve_value(packet.ip.src, "")),
-                    str(self._resolve_value(packet.ip.dst, "")),
-                )
-            elif hasattr(packet, "ipv6"):
-                return (
-                    str(self._resolve_value(packet.ipv6.src, "")),
-                    str(self._resolve_value(packet.ipv6.dst, "")),
-                )
-        except Exception as e:
-            self.logger.debug(f"if hasattr(packet, ip):: {e}")
+        """Extract (src_ip, dst_ip) from packet.
+
+        Falls back to a raw ``_fields_dict`` lookup when pyshark's EK layer
+        access fails or returns None — happens on packets that encapsulate
+        another IPv6 header (e.g. PIM Register, GRE-in-IPv6) where
+        ``_fields_dict`` becomes a list instead of a single dict and
+        ``EkLayer.__getattr__`` raises AttributeError mid-iteration.
+        """
+        for name in ("ip", "ipv6"):
+            if not hasattr(packet, name):
+                continue
+            layer = getattr(packet, name)
+            src = ""
+            dst = ""
+            try:
+                src = str(self._resolve_value(layer.src, "") or "")
+                dst = str(self._resolve_value(layer.dst, "") or "")
+            except Exception as e:
+                self.logger.debug(f"get_ip_info {name}.src/.dst access failed: {e}")
+            if src or dst:
+                return src, dst
+            raw_src, raw_dst = self._extract_ip_from_raw(layer, name)
+            if raw_src or raw_dst:
+                return raw_src, raw_dst
         return "", ""
+
+    @staticmethod
+    def _extract_ip_from_raw(layer, layer_name: str) -> tuple:
+        """Read src/dst from a layer's raw ``_fields_dict``.
+
+        Pyshark's ``EkLayer._fields_dict`` is normally ``{field: value}`` but
+        becomes ``[{...}, {...}]`` for encapsulated headers (each sub-dict is
+        one IP header in nesting order). For our purposes the OUTER header
+        is the actual sender/receiver of the protocol message we care about.
+        """
+        try:
+            fd = object.__getattribute__(layer, "_fields_dict")
+        except AttributeError:
+            return "", ""
+        # Normalise list-form to a single dict (use the first / outermost).
+        if isinstance(fd, list):
+            fd = fd[0] if fd else {}
+        if not isinstance(fd, dict):
+            return "", ""
+        # tshark EK key format: "<layer>_<layer>_src" / "<layer>_<layer>_dst".
+        prefix = f"{layer_name}_{layer_name}_"
+        src = fd.get(f"{prefix}src", "") or ""
+        dst = fd.get(f"{prefix}dst", "") or ""
+        if isinstance(src, list):
+            src = src[0] if src else ""
+        if isinstance(dst, list):
+            dst = dst[0] if dst else ""
+        return str(src), str(dst)
 
     def get_port_info(self, packet) -> tuple:
         """Extract (src_port, dst_port) from packet.
@@ -376,7 +414,13 @@ class PySharkListenerBase(ABC):
         return 0, 0
 
     def get_mac_info(self, packet) -> tuple:
-        """Extract (src_mac, dst_mac) from packet, normalized to lowercase colon-separated."""
+        """Extract (src_mac, dst_mac) from packet, normalized to lowercase colon-separated.
+
+        Falls back to ARCNET node IDs when no eth layer is present (BACnet/ARCNET
+        traffic encapsulates directly over the ARCNET datalink — each node has an
+        8-bit address, formatted as "AR:NN" so callers can distinguish it from
+        a real MAC).
+        """
         try:
             if hasattr(packet, "eth"):
                 from ...protocols.discovery.core import normalize_mac
@@ -387,8 +431,23 @@ class PySharkListenerBase(ABC):
                     normalize_mac(raw_src) if raw_src else "",
                     normalize_mac(raw_dst) if raw_dst else "",
                 )
+            if hasattr(packet, "arcnet"):
+                try:
+                    fd = object.__getattribute__(packet.arcnet, "_fields_dict")
+                except AttributeError:
+                    fd = None
+                if isinstance(fd, dict):
+                    src = fd.get("arcnet_arcnet_src", "")
+                    dst = fd.get("arcnet_arcnet_dst", "")
+                    if isinstance(src, list):
+                        src = src[0] if src else ""
+                    if isinstance(dst, list):
+                        dst = dst[0] if dst else ""
+                    src = f"AR:{int(src):02x}" if str(src).isdigit() else ""
+                    dst = f"AR:{int(dst):02x}" if str(dst).isdigit() else ""
+                    return src, dst
         except Exception as e:
-            self.logger.debug(f"if hasattr(packet, eth):: {e}")
+            self.logger.debug(f"get_mac_info failed: {e}")
         return "", ""
 
     # -------------------------------------------------------------------------
