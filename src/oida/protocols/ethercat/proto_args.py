@@ -189,7 +189,6 @@ def proto_args(parser, parents):
     )
 
     coe_group.add_argument(
-        "-p",
         "--eeprom-parse",
         action="store_true",
         help="Parse and display EEPROM/ESI structure (strings, SyncM, PDO)",

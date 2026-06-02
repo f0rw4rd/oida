@@ -131,30 +131,32 @@ class mqtt(NetworkConnection):
         """Create MQTT connection"""
         self.logger.info(f"Connecting to {self.ip}:{self.args.port}")
         self.conn = self.scanner.connect()
-        if not self.conn:
-            username = getattr(self.args, "username", "")
-            password = getattr(self.args, "password", "")
-            auth_result = self.scanner.auth_result
+        if self.conn:
+            self.logger.success(f"Connected to MQTT broker at {self.ip}:{self.args.port}")
+            return
 
-            if auth_result:
-                # Check if it's a connection error vs auth error
-                if auth_result.startswith("error:"):
-                    # Connection error (SSL, network, etc.)
-                    error_msg = auth_result[7:]  # Remove "error: " prefix
-                    self.logger.fail(f"Connection failed: {error_msg}")
-                    self._connection_error = True
-                else:
-                    # Server responded - MQTT service detected
-                    self.logger.success("Connected to mqtt service")
-                    if username:
-                        # Credentials were provided but failed
-                        self.logger.fail(f"Authentication failed ({username}:{password})")
-                    else:
-                        # No credentials, auth required
-                        self.logger.fail(f"Auth required ({auth_result})")
-            else:
-                self.logger.fail("Connection failed (no response)")
+        username = getattr(self.args, "username", "")
+        password = getattr(self.args, "password", "")
+        auth_result = self.scanner.auth_result
+
+        if auth_result:
+            if auth_result.startswith("error:"):
+                # Connection error (SSL, network, etc.)
+                error_msg = auth_result[7:]  # Remove "error: " prefix
+                self.logger.fail(f"Connection failed: {error_msg}")
                 self._connection_error = True
+            else:
+                # Server responded but rejected auth — surface as info so the
+                # auth result still shows, but don't emit a green success
+                # banner for a session we never actually opened.
+                self.logger.info(f"MQTT broker responded at {self.ip}:{self.args.port}")
+                if username:
+                    self.logger.fail(f"Authentication failed ({username}:{password})")
+                else:
+                    self.logger.fail(f"Auth required ({auth_result})")
+        else:
+            self.logger.fail("Connection failed (no response)")
+            self._connection_error = True
 
     def enum_host_info(self):
         """Enumerate MQTT broker information"""

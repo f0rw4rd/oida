@@ -476,15 +476,17 @@ class EtherNetIPScanner(
             # Use slot if specified (default 0 = CPU in slot 0)
             slot = self.target_slot if self.target_slot > 0 else None
             if slot:
-                self.logger.display(f"Using slot {slot} for connection")
+                self.logger.debug(f"Using slot {slot} for connection")
             driver = LogixDriver(host, slot=slot, init_tags=False, init_program_tags=False)
             driver.open()
             self._driver_type = "logix"
             self._pycomm3_driver = driver
-            self.logger.display("Connected via pycomm3 LogixDriver")
+            # nxc_connection emits the user-facing 'Connected to EtherNet/IP device'
+            # banner; this is the driver-internal detail.
+            self.logger.debug("Connected via pycomm3 LogixDriver")
             if hasattr(driver, "info") and driver.info:
                 name = driver.info.get("name", driver.info.get("product_name", "Unknown"))
-                self.logger.display(f"  PLC: {name}")
+                self.logger.debug(f"  PLC: {name}")
             return driver
         except Exception as e:
             self.logger.debug(f"LogixDriver failed: {e}, trying CIPDriver...")
