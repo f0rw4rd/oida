@@ -213,7 +213,7 @@ contract:
 | `docs/ARCHITECTURE.md` | Adding a new protocol, touching the Layer-1/Layer-2 facade, or modifying `proto_logger()` |
 | `docs/new-protocol.md` | Step-by-step walkthrough for adding a new protocol scanner |
 | `docs/REAL_COVERAGE_PROPOSAL.md` | The three real-coverage axes (scanner field-%, fuzzer CVE replication, Conpot fidelity) — referenced by `tests/coverage/` scaffolds |
-| `docs/snmp-tools-comparison.md` | SNMP-specific comparison (snapshot, may date) |
+| `f0rw4rd/oida-website` (separate repo, Astro/Starlight) | User-facing docs site: per-protocol scanner pages, install / quickstart, operator guides (SNMP tools comparison, S7-300/400 hardware validation, etc.). Local `docs/` only carries developer/contributor material. |
 | `STYLE_GUIDE.md` | Python style, naming, CLI short-flag conventions table |
 | `RELEASE_READINESS.md` | Snapshot of the 1.0 audit (86 release-blocker fixes shipped + open blockers) |
 | `RELEASE_TODO.md` | Living per-section punch list for 1.0 with status per item |

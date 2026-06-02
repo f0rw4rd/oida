@@ -168,10 +168,19 @@ See [DISCLAIMER.md](DISCLAIMER.md) for the full safety statement.
 
 ## Documentation
 
+User-facing docs (install, per-protocol guides, operator playbooks) live
+in the separate **[`f0rw4rd/oida-website`](https://github.com/f0rw4rd/oida-website)**
+repo (Astro / Starlight). Once deployed it'll move to the project's
+canonical docs URL.
+
+In-repo docs are developer-facing:
+
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — class layering and refactor roadmap.
 - [docs/new-protocol.md](docs/new-protocol.md) — how to add a new protocol scanner.
+- [docs/REAL_COVERAGE_PROPOSAL.md](docs/REAL_COVERAGE_PROPOSAL.md) — the three real-coverage axes (scanner / fuzzer / fidelity).
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution policy (incl. AI usage policy).
-- [STYLE_GUIDE.md](STYLE_GUIDE.md) — Python style and naming.
+- [STYLE_GUIDE.md](STYLE_GUIDE.md) — Python style, naming, CLI short-flag conventions.
+- [SECURITY.md](SECURITY.md) — private vulnerability disclosure.
 - [RELEASE_READINESS.md](RELEASE_READINESS.md) — known issues snapshot for 1.0.
 
 ## Support
