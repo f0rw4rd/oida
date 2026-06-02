@@ -41,7 +41,7 @@ Total defined in file:                                                  40 tests
 
 Docker Tests (TestPROFINETDocker -- Category B with raw socket):
   These tests require:
-    1. profinet-pnet-device Docker container healthy
+    1. profinet-device Docker container healthy
     2. CAP_NET_RAW or root privileges on the host
     3. Docker bridge interface (br-<id>) discoverable
   They run: sudo oida profinet <bridge-iface> against the Docker bridge.
@@ -649,9 +649,9 @@ class TestPROFINETIntegration:
 # ===========================================================================
 # Docker-Based Tests (Category B -- Docker bridge + raw socket)
 #
-# These tests run the scanner against the actual profinet-pnet-device Docker
+# These tests run the scanner against the actual profinet-device Docker
 # container via the Docker bridge interface.  They require:
-#   - profinet-pnet-device container healthy
+#   - profinet-device container healthy
 #   - CAP_NET_RAW (root or setcap) on the test runner
 #   - Docker bridge interface for ics-network discoverable
 #
@@ -684,7 +684,7 @@ def _skip_unless_docker_profinet():
     Returns (bridge_interface, needs_sudo) tuple.
     Delegates to the generic skip_unless_l2_docker() helper.
     """
-    return skip_unless_l2_docker("profinet-pnet-device", profile_hint="profinet")
+    return skip_unless_l2_docker("profinet-device", profile_hint="profinet")
 
 
 def _run_docker_profinet(
@@ -712,12 +712,12 @@ def _assert_docker_scan_attempted(result):
 
 
 @pytest.mark.profinet
-@pytest.mark.containers("profinet-pnet-device")
+@pytest.mark.containers("profinet-device")
 class TestPROFINETDocker:
     """Docker-based integration tests for PROFINET DCP scanner.
 
     Tests run oida profinet against the Docker bridge interface connected
-    to the profinet-pnet-device container.  Due to Docker bridge multicast
+    to the profinet-device container.  Due to Docker bridge multicast
     limitations, DCP discovery may find 0 devices.  Tests verify the scanner
     opens the interface successfully and completes without crashing.
     """
