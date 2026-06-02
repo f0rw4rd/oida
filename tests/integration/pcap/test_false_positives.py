@@ -26,12 +26,25 @@ _ALIEN_PCAPS = {
 # Listeners under test — protocols that have had REQUIRED_LAYERS issues
 # or complex fallback paths.  (module, class, own_protocol_label)
 _LISTENERS = [
+    # Original 6 with known fallback-path risk
     ("smtp", "SMTPPassiveListener", "smtp"),
     ("memcached", "MemcachedPassiveListener", "memcached"),
     ("kerberos", "KerberosPassiveListener", "kerberos"),
     ("pjl", "PJLPassiveListener", "pjl"),
     ("ftp", "FTPPassiveListener", "ftp"),
     ("telnet", "TelnetPassiveListener", "telnet"),
+    # High-traffic OT/IT listeners — false positives here are highest-blast
+    # because they'd contaminate real captures during a live engagement.
+    ("modbus", "ModbusPassiveListener", "modbus"),
+    ("dnp3", "DNP3PassiveListener", "dnp3"),
+    ("s7comm", "S7commPassiveListener", "s7comm"),
+    ("iec104", "IEC104PassiveListener", "iec104"),
+    ("opcua", "OPCUAPassiveListener", "opcua"),
+    ("enip", "EtherNetIPPassiveListener", "enip"),
+    ("bacnet", "BACnetPassiveListener", "bacnet"),
+    ("hl7", "HL7PassiveListener", "hl7"),
+    ("http", "HTTPPassiveListener", "http"),
+    ("tls", "TLSPassiveListener", "tls"),
 ]
 
 # Build parametrized cases: (module, cls, own_label, alien_label, alien_pcap, alien_filter)
