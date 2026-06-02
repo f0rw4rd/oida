@@ -18,6 +18,37 @@ from pathlib import Path
 # ============================================================================
 
 
+_MUTATED_SYS_MODULES = (
+    "oida.utils.lazy_import",
+    "oida.utils.module",
+    "oida.utils.ics_logger",
+    "oida.protocols.knx.constants",
+    "oida.protocols.knx.helpers",
+)
+
+
+def _snapshot_sys_modules():
+    """Capture sys.modules entries we're about to mutate, for later restoration."""
+    return {k: sys.modules.get(k, _MISSING) for k in _MUTATED_SYS_MODULES}
+
+
+def _restore_sys_modules(snapshot):
+    """Restore (or remove) sys.modules entries from a snapshot.
+
+    Critical to avoid leaking Mock-replaced modules into later test files —
+    leaving a MagicMock at sys.modules['oida.utils.ics_logger'] breaks any
+    later isinstance(x, ICSLogger) check across the whole session.
+    """
+    for k, v in snapshot.items():
+        if v is _MISSING:
+            sys.modules.pop(k, None)
+        else:
+            sys.modules[k] = v
+
+
+_MISSING = object()
+
+
 def load_helpers_module():
     """Load helpers module directly without triggering parent __init__.py."""
     # Ensure parent packages are loadable first
@@ -77,6 +108,20 @@ def load_helpers_module():
 
     spec.loader.exec_module(helpers)
     return helpers, mock_msf_module
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _restore_real_modules_after_knx_helpers_tests():
+    """Restore real sys.modules entries after the file's tests run.
+
+    load_helpers_module() replaces oida.utils.ics_logger (and friends) with
+    MagicMocks so the helpers module can be loaded in isolation. Without
+    restoration the Mock sticks for the rest of the pytest session, breaking
+    isinstance(x, ICSLogger) and similar checks in unrelated test files.
+    """
+    snapshot = _snapshot_sys_modules()
+    yield
+    _restore_sys_modules(snapshot)
 
 
 @pytest.fixture(scope="module")
