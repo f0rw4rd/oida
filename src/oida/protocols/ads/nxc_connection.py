@@ -70,6 +70,11 @@ class ads(NetworkConnection):
     def proto_flow(self):
         """Main ADS scanning workflow"""
 
+        # Refuse dangerous ops without --confirm (state-change, writes, fuzz).
+        from .proto_args import validate_args
+
+        validate_args(self.args)
+
         # Build scanner args
         args_dict = self._convert_args_to_dict()
         self.scanner = ADSScanner(args_dict)

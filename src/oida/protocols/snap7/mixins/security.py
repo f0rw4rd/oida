@@ -186,7 +186,7 @@ class SecurityMixin(_ScannerBase):
         """
         import time
 
-        from ....utils.login_scanner import load_passwords
+        from ....utils.login_scanner import format_wordlist_source, load_passwords
         from ....utils import ProgressTracker
         from ..scanner import _suppress_snap7_logging
 
@@ -206,7 +206,7 @@ class SecurityMixin(_ScannerBase):
                 self.logger.fail("No passwords to test (wordlist empty or not found)")
                 return results
 
-            source = wordlist_path if wordlist_path else "built-in defaults"
+            source = format_wordlist_source(wordlist_path)
             self.logger.display(
                 f"Starting brute force with {len(passwords)} passwords from {source}..."
             )

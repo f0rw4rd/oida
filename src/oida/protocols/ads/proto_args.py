@@ -465,3 +465,51 @@ def proto_args(parser, parents):
     )
 
     return ads_parser
+
+
+# Flags whose help text already says "Requires --confirm" or "DANGEROUS".
+# validate_args() refuses any of these without --confirm so the safety
+# annotation is actually enforced (the audit found these were advisory
+# only, mirroring the dnp3 / ethercat bugs).  Map: argparse dest -> CLI form.
+_CONFIRM_REQUIRED_FLAGS = {
+    "scan_coe": "--scan-coe",
+    "write_coe": "--write-coe",
+    "add_route": "--add-route",
+    "foe_write": "--foe-write",
+    "foe_delete": "--foe-delete",
+    "write_symbol": "--write-symbol",
+    "memory_write": "--memory-write",
+    "set_state": "--set-state",
+    "fuzz": "--fuzz",
+    "fuzz_coe": "--fuzz-coe",
+}
+
+
+def validate_args(args) -> None:
+    """Enforce --confirm on dangerous ADS operations.
+
+    Raises:
+        ConfigurationError: if any flag in ``_CONFIRM_REQUIRED_FLAGS`` was
+            passed without ``--confirm``.
+
+    Mirrors the dnp3 / ethercat pattern. All listed flags can disrupt a
+    live PLC (state change, CoE writes, FoE file transfer, memory writes,
+    fuzzing).  The help text on each flag already says "Requires --confirm";
+    this turns that promise into a hard gate.
+    """
+    from ...utils.exceptions import ConfigurationError
+
+    triggered = [
+        cli
+        for dest, cli in _CONFIRM_REQUIRED_FLAGS.items()
+        if getattr(args, dest, None)
+    ]
+    if triggered and not getattr(args, "confirm", False):
+        ops = ", ".join(sorted(triggered))
+        raise ConfigurationError(
+            f"--confirm is required for dangerous ADS operations ({ops}). "
+            "These flags can disrupt a live PLC (state change, CoE/symbol/"
+            "memory writes, FoE file transfer, fuzzing). Re-run with --confirm "
+            "to acknowledge.",
+            protocol="ADS",
+        )

@@ -510,7 +510,9 @@ class hart(NetworkConnection):
         wordlist = getattr(self.args, "bruteforce_lock", None)
         delay = getattr(self.args, "bruteforce_delay", 0.1)
 
-        self.logger.display(f"Bruteforcing lock codes from: {wordlist}")
+        from ...utils.login_scanner import format_wordlist_source
+
+        self.logger.display(f"Bruteforcing lock codes from: {format_wordlist_source(wordlist)}")
 
         result = self.scanner.bruteforce_lock(wordlist=wordlist, delay=delay)
         self.results["data"]["bruteforce"] = result
