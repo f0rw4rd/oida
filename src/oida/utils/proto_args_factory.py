@@ -244,7 +244,7 @@ def add_full_width_and_json_log(parser, include_short: bool = True):
         include_short: Whether to register ``-W`` as a short alias for
             ``--full-width``. iec104 sets this False.
     """
-    fw_args = (["-W", "--full-width"] if include_short else ["--full-width"])
+    fw_args = ["-W", "--full-width"] if include_short else ["--full-width"]
     parser.add_argument(
         *fw_args,
         action="store_true",

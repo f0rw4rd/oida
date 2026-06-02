@@ -20,7 +20,9 @@ class TestNMEA0183PassiveSmoke:
         import oida.pcap.passive.nmea0183 as mod
 
         cls = getattr(mod, "NMEA0183PassiveListener", None)
-        assert cls is not None, "NMEA0183PassiveListener not exported from oida.pcap.passive.nmea0183"
+        assert cls is not None, (
+            "NMEA0183PassiveListener not exported from oida.pcap.passive.nmea0183"
+        )
 
     def test_required_layers_set(self):
         from oida.pcap.passive.nmea0183 import NMEA0183PassiveListener

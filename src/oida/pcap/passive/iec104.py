@@ -408,7 +408,9 @@ class IEC104PassiveListener(PySharkListenerBase):
                             s = str(ft).strip()
                             frame_type_vals.add(int(s, 16) if s.startswith("0x") else int(s))
                         except (ValueError, TypeError) as e:
-                            self.logger.debug(f"IEC104: frame_type int parse from EK PDU failed: {e}")
+                            self.logger.debug(
+                                f"IEC104: frame_type int parse from EK PDU failed: {e}"
+                            )
                 if 0x00 in frame_type_vals:
                     self._process_i_frame(
                         packet, controlling_ip, controlled_ip, src_ip, dst_ip, flow_id

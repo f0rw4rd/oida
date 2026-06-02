@@ -15,9 +15,8 @@ import subprocess
 import sys
 import socket
 import tempfile
-import threading
 from pathlib import Path
-from typing import Tuple, Optional, Callable, Any, Dict, List
+from typing import Tuple, Optional, Dict, List
 
 from oida.utils.ics_logger import get_module_logger
 

@@ -725,7 +725,9 @@ class OCPPScanner(NetworkScanner):
                 try:
                     raw = await asyncio.wait_for(connection.recv(), timeout=max(wait, 0.1))
                 except asyncio.TimeoutError as e:
-                    self.logger.debug(f"OCPP listen-with-heartbeat: recv timed out (poll continues): {e}")
+                    self.logger.debug(
+                        f"OCPP listen-with-heartbeat: recv timed out (poll continues): {e}"
+                    )
                     continue
                 except Exception as e:
                     self.logger.debug(f"Listen recv error: {e}")
@@ -737,7 +739,9 @@ class OCPPScanner(NetworkScanner):
                 try:
                     data = json.loads(raw)
                 except (json.JSONDecodeError, TypeError) as e:
-                    self.logger.debug(f"OCPP listen-with-heartbeat: JSON parse of incoming frame failed: {e}")
+                    self.logger.debug(
+                        f"OCPP listen-with-heartbeat: JSON parse of incoming frame failed: {e}"
+                    )
                     continue
 
                 if isinstance(data, list) and len(data) >= 4 and data[0] == MessageType.CALL:

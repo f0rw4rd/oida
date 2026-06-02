@@ -342,7 +342,9 @@ class HARTIPPassiveListener(PySharkListenerBase):
                 if isinstance(fd, dict) and "hart_ip" in fd:
                     return True
             except (AttributeError, TypeError) as e:
-                self.logger.debug(f"HART-IP: ICMP _fields_dict access for embedded payload check failed: {e}")
+                self.logger.debug(
+                    f"HART-IP: ICMP _fields_dict access for embedded payload check failed: {e}"
+                )
         return False
 
     def process_packet(self, packet) -> None:

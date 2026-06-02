@@ -931,4 +931,3 @@ class hl7(
     def check_dependencies() -> bool:
         """Check if HL7 dependencies are available."""
         return HL7APY_AVAILABLE
-

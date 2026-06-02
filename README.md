@@ -6,9 +6,9 @@
 
 OIDA is a CLI security-testing framework for industrial control systems, SCADA,
 building automation, and healthcare protocols. It packages standalone scanners
-for 25 protocols behind one `oida <protocol> <target>` interface, with
-consistent flag conventions, export formats, and safety guards on write
-operations.
+for 26 protocols (16 industrial / 4 IoT / 4 healthcare / 2 discovery+passive)
+behind one `oida <protocol> <target>` interface, with consistent flag
+conventions, export formats, and safety guards on write operations.
 
 > **⚠️ Legal notice.** This is a defensive tool for **authorized testing only**.
 > Get explicit written permission before scanning any system you do not own.

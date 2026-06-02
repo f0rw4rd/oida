@@ -460,7 +460,7 @@ Examples:
     # ============================================================================
     # Active Testing
     # ============================================================================
-    dangerous_group = add_dangerous_options(fhir_parser, include_fuzz=False)
+    add_dangerous_options(fhir_parser, include_fuzz=False)
 
     # NOTE: --bulk-export / --bulk-export-type removed for 1.0 — the handler
     # was a placeholder that printed "not implemented" and exited. Use the

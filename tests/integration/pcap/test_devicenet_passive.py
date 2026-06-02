@@ -20,7 +20,9 @@ class TestDeviceNetPassiveSmoke:
         import oida.pcap.passive.devicenet as mod
 
         cls = getattr(mod, "DeviceNetPassiveListener", None)
-        assert cls is not None, "DeviceNetPassiveListener not exported from oida.pcap.passive.devicenet"
+        assert cls is not None, (
+            "DeviceNetPassiveListener not exported from oida.pcap.passive.devicenet"
+        )
 
     def test_required_layers_set(self):
         from oida.pcap.passive.devicenet import DeviceNetPassiveListener

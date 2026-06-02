@@ -499,11 +499,7 @@ def validate_args(args) -> None:
     """
     from ...utils.exceptions import ConfigurationError
 
-    triggered = [
-        cli
-        for dest, cli in _CONFIRM_REQUIRED_FLAGS.items()
-        if getattr(args, dest, None)
-    ]
+    triggered = [cli for dest, cli in _CONFIRM_REQUIRED_FLAGS.items() if getattr(args, dest, None)]
     if triggered and not getattr(args, "confirm", False):
         ops = ", ".join(sorted(triggered))
         raise ConfigurationError(

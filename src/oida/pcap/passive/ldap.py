@@ -461,10 +461,7 @@ class LDAPPassiveListener(PySharkListenerBase):
         ``ldap.gssapi_encrypted_payload`` but no ``ldap.protocolOp`` —
         the actual LDAP message is inside the encrypted blob.
         """
-        return (
-            "ldap.sasl_buffer_length" in fields
-            or "ldap.gssapi_encrypted_payload" in fields
-        )
+        return "ldap.sasl_buffer_length" in fields or "ldap.gssapi_encrypted_payload" in fields
 
     # -------------------------------------------------------------------------
     # Message type detection
