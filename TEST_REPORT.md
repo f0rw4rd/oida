@@ -7,14 +7,30 @@
 
 ---
 
-## Headline numbers (v7 — both suites GREEN)
+## Headline numbers (v8 — both suites GREEN, post §1-§9 push)
 
-| Suite | Passed | Failed | Skipped | Errors | XFail | Deselected | Wall time | Exit |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `tests/unit/` | **10,242** | **0** | 260 | 0 | 11 | 313 | 7m 05s | **0** |
-| `tests/integration/` | **3,008** | **0** | 1,884 | **0** | **0** | 92 | 34m 09s | **0** |
+Combined unit + integration run:
 
-**Both suites GREEN with zero xfails.** Total **13,250 passing tests, 0 failures, 0 errors, 0 timeouts, 0 silent gaps.**
+| Metric | Value |
+|---|---:|
+| **Passed** | **13,469** |
+| Failed | **0** |
+| Errors | **0** |
+| Skipped | 2,155 |
+| XFailed | 11 |
+| Deselected | 405 |
+| Wall time | 43m 01s |
+| Exit | **0** |
+
+Per-suite history (deltas show this session's growth):
+
+| Run | Suite | Passed | Failed | Errors | Notes |
+|---|---|---:|---:|---:|---|
+| v7 unit | `tests/unit/` | 10,242 | 0 | 0 | green baseline post test-isolation fix |
+| v7 integration | `tests/integration/` | 3,008 | 0 | 0 | green baseline post 4 listener fixes |
+| **v8 combined** | both | **13,469** | **0** | **0** | +175 tests after §1+§2+§3+§4+§5 push (28 new pcap test files, 6 new proto_args coverage files, 23 ADS confirm regression tests, false-positive matrix expansion, fuzzer workflow output) |
+
+**Zero failures, zero errors, zero timeouts, zero silent gaps.** Suite ready for release-tag verification.
 
 ### History (showing what the fixes did)
 
