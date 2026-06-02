@@ -569,11 +569,14 @@ Extend `tests/coverage/scanner/` to remaining protocols. Skip with documented re
 - [ ] Fresh-venv install test — operator-run; do at tag time on the built wheel
 - [ ] Fresh-venv install with extras — operator-run; do at tag time
 
-### 8.3 Future site (if planned)
+### 8.3 Site decisions — `f0rw4rd/oida-website` (Astro/Starlight)
 
-- [ ] Decide: is there a separate website/landing planned for 1.0? If yes: scope, host, who owns
-- [ ] If yes: feature parity check between site copy and README
-- [ ] If yes: link from README, link back from site
+- [x] Decided: separate docs site lives at `f0rw4rd/oida-website` (Astro + Starlight, per-protocol pages already drafted)
+- [x] Local `docs/` purge planned — see §8.4 below
+- [ ] **Domain purchase** — `oida.dev` is referenced in `pyproject.toml` author emails (`contact@oida.dev`, `forward@oida.dev`) but it's unclear whether the domain is actually owned. **Action: confirm ownership of `oida.dev` OR buy a replacement** (e.g. `oida.io`, `oida.app`, `oida-ics.org`) BEFORE deploying the website — the site's canonical URL needs to be stable from day 1. If `oida.dev` is unavailable, also update the two `pyproject.toml` email addresses to the new domain.
+- [ ] Deploy `oida-website` (GH Pages from `gh-pages` branch, Vercel, or Netlify — Astro supports all three). Set `site:` field in `astro.config.mjs` to the chosen URL.
+- [ ] Wire deployed URL into `pyproject.toml [project.urls] "Documentation"` (currently points at the README on GitHub) and into README's Documentation section.
+- [ ] Add a "Source" link back from the website to `github.com/f0rw4rd/oida`.
 
 ---
 
