@@ -364,6 +364,20 @@ class MQTTFuzzer(StatefulFuzzer):
                 "standard",
                 requires_state=CommonState.AUTHENTICATED,
             ),
+            # Sparkplug B IIoT payload (MQTT PUBLISH wrapping fuzzed protobuf)
+            RequestInfo(
+                "MQTT_Sparkplug_Payload",
+                "Sparkplug B protobuf payload inside MQTT PUBLISH (IIoT)",
+                "protocol",
+                requires_state=CommonState.AUTHENTICATED,
+            ),
+            # MQTT 5.0 reason code sweep — all 256 byte values
+            RequestInfo(
+                "MQTT_Reason_Code_Sweep",
+                "MQTT 5.0 reason code sweep (all 256 byte values)",
+                "protocol",
+                requires_state=CommonState.ANY,
+            ),
         ]
 
     def _define_protocol(self):
@@ -985,6 +999,95 @@ class MQTTFuzzer(StatefulFuzzer):
             ),
         )
 
+        # ==================== SPARKPLUG B PAYLOAD (IIoT) ====================
+        # Sparkplug B wraps a Google protobuf "Payload" message inside MQTT PUBLISH.
+        # Topic format: spBv1.0/<group_id>/<msg_type>/<edge_node>[/<device>]
+        # The protobuf body uses standard wire-format tags:
+        #   field 1 (timestamp) tag=0x08 varint
+        #   field 2 (metrics)   tag=0x12 length-delimited
+        #   field 3 (seq)       tag=0x18 varint
+        # A submessage Metric contains name (tag=0x0a), alias (tag=0x10),
+        # timestamp (tag=0x18), datatype (tag=0x20), and a typed value field.
+        # Fuzzing the inner protobuf framing exercises Sparkplug parsers
+        # (Eclipse Tahu, Cirrus Link, Ignition) for varint / length / tag bugs.
+        mqtt_sparkplug_payload = Request(
+            "MQTT_Sparkplug_Payload",
+            children=(
+                # PUBLISH QoS 0 (Sparkplug NDATA / DDATA are typically QoS 0)
+                Static(name="publish_header", default_value=b"\x30"),
+                Size(name="remaining_length", block_name="sparkplug_publish", length=2, endian=">"),
+                Block(
+                    "sparkplug_publish",
+                    children=(
+                        # Sparkplug B topic — spBv1.0/<group>/NDATA/<edge>
+                        Word("topic_length", 26, endian=">"),
+                        Static(
+                            name="sparkplug_topic",
+                            default_value=b"spBv1.0/grp1/NDATA/node01",
+                        ),
+                        # Protobuf payload — fuzz the inner framing
+                        Group(
+                            "Protobuf_Payload",
+                            values=[
+                                # Minimal valid Sparkplug B payload:
+                                #   timestamp=0x42, seq=0
+                                b"\x08\x42\x18\x00",
+                                # One metric: name="t", alias=1, timestamp=1,
+                                #   datatype=3 (Int32), int_value=0x2a
+                                b"\x08\x01\x12\x10"
+                                b"\x0a\x01t\x10\x01\x18\x01 \x03(\x80\x01R\x04\x2a\x00\x00\x00"
+                                b"\x18\x00",
+                                # Malformed: oversized varint (10 bytes 0xff)
+                                b"\x08" + b"\xff" * 10 + b"\x01",
+                                # Malformed: length-delimited field with length>>actual
+                                b"\x12\xff\x7fAB",
+                                # Unknown wire-type 6 (reserved -> parser error)
+                                b"\x0e\x00",
+                                # Unknown wire-type 7 (reserved -> parser error)
+                                b"\x0f\x00",
+                                # Truncated submessage tag with no length byte
+                                b"\x12",
+                                # Recursive/nested Metric submessages (depth abuse)
+                                b"\x12\x10" + (b"\x12\x02\x08\x01" * 4),
+                                # Metric with datatype=0 (Unknown) — Tahu rejects
+                                b"\x12\x06\x0a\x01x \x00",
+                                # Metric with very large alias (varint 64-bit max)
+                                b"\x12\x0b\x10\xff\xff\xff\xff\xff\xff\xff\xff\x7f",
+                                # All zeros — empty protobuf message
+                                b"",
+                                # Single 0xFF byte — invalid tag
+                                b"\xff",
+                            ],
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # ==================== MQTT 5.0 REASON CODE SWEEP ====================
+        # MQTT 5.0 introduced 1-byte reason codes on CONNACK, PUBACK, PUBREC,
+        # PUBREL, PUBCOMP, SUBACK, UNSUBACK, DISCONNECT, and AUTH. Each packet
+        # type defines a sparse set of legal values; brokers that don't
+        # validate the byte map crash, misroute, or leak state. Sweep all
+        # 256 byte values via Group(). The carrier here is DISCONNECT
+        # (0xE0), which in MQTT 5.0 is "fixed header + reason code + props".
+        mqtt_reason_code_sweep = Request(
+            "MQTT_Reason_Code_Sweep",
+            children=(
+                # DISCONNECT fixed header
+                Static(name="disconnect_header", default_value=b"\xe0"),
+                # Remaining length = 2 (1 byte reason code + 1 byte property len)
+                Static(name="remaining_length", default_value=b"\x02"),
+                # Reason code sweep — all 256 values (0x00..0xFF)
+                Group(
+                    "Reason_Code",
+                    values=[bytes([rc]) for rc in range(256)],
+                ),
+                # Empty property length (MQTT 5.0)
+                Static(name="properties_length", default_value=b"\x00"),
+            ),
+        )
+
         # ==================== OPTIMIZED REQUEST ORDERING ====================
         # Phase 1: Quick Coverage (~30 sec)
         if self.is_request_enabled("MQTT_Quick_Coverage"):
@@ -1039,6 +1142,14 @@ class MQTTFuzzer(StatefulFuzzer):
             self.session.connect(mqtt_pingreq)
             self.session.connect(mqtt_disconnect)
             self.session.connect(mqtt_auth)
+
+        # Sparkplug B IIoT payload — fuzzed protobuf wrapped in PUBLISH
+        if self.is_request_enabled("MQTT_Sparkplug_Payload"):
+            self.session.connect(mqtt_sparkplug_payload)
+
+        # MQTT 5.0 reason code sweep — all 256 byte values
+        if self.is_request_enabled("MQTT_Reason_Code_Sweep"):
+            self.session.connect(mqtt_reason_code_sweep)
 
     def _encode_remaining_length(self, value):
         """Encode MQTT variable length encoding"""

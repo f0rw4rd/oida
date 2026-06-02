@@ -250,6 +250,24 @@ class DNP3Fuzzer(BaseFuzzer):
                 "Malformed packets: Invalid FC, addresses, data",
                 "special",
             ),
+            # Object group/variation sweep (cve_patterns.json#dnp3-object-group-sweep)
+            RequestInfo(
+                "DNP3_Object_Sweep",
+                "Iterate object Group (1-89) x Variation (0-16) against READ FC",
+                "protocol",
+            ),
+            # Master-emulation IIN fuzzing (cve_patterns.json#dnp3-iin-flags-master)
+            RequestInfo(
+                "DNP3_IIN_Master",
+                "Master-emulation Response with fuzzed 16-bit IIN flags field",
+                "protocol",
+            ),
+            # Static invalid DL block CRC (cve_patterns.json#dnp3-dl-crc-bypass)
+            RequestInfo(
+                "DNP3_DL_Bad_CRC",
+                "Data link header CRC replaced with static invalid bytes (validation path)",
+                "protocol",
+            ),
         ]
 
     def setup_custom_monitors(self) -> List:
@@ -1698,6 +1716,96 @@ class DNP3Fuzzer(BaseFuzzer):
             ),
         )
 
+        # ==================== EXTENDED COVERAGE REQUESTS ====================
+        # New requests added per ref/dnp3/cve_patterns.json:
+        #   - dnp3-object-group-sweep   -> DNP3_Object_Sweep
+        #   - dnp3-iin-flags-master     -> DNP3_IIN_Master
+        #   - dnp3-dl-crc-bypass        -> DNP3_DL_Bad_CRC
+
+        # Object Group x Variation Sweep -- iterate (1..89) x (0..16) READ requests.
+        # Each Group value is a single byte; combining them sweeps the (group, variation)
+        # space against the READ function code to surface per-group parser bugs.
+        self.log.debug("[DNP3-Fuzz] Creating Object_Sweep request (Group 1-89 x Variation 0-16)")
+        object_sweep = create_dnp3_request(
+            "Object_Sweep",
+            (
+                Byte("App_Control_OS", 0xC0),
+                Byte("Function_Code_OS", DNP3FunctionCodes.READ),
+                Group(
+                    "Object_Sweep_Group",
+                    values=[bytes([g]) for g in range(1, 90)],
+                ),
+                Group(
+                    "Object_Sweep_Variation",
+                    values=[bytes([v]) for v in range(0, 17)],
+                ),
+                Byte("Object_Sweep_Qualifier", 0x06),  # All objects
+            ),
+        )
+
+        # IIN Master Emulation -- craft a Response (FC 0x81) carrying a fuzzed
+        # 16-bit IIN (Internal Indications) field; targets master-side IIN parsers.
+        # IIN immediately follows the function code in a Response application header.
+        self.log.debug("[DNP3-Fuzz] Creating IIN_Master request (16-bit IIN flag fuzzing)")
+        iin_master = create_dnp3_request(
+            "IIN_Master",
+            (
+                Byte("App_Control_IIN", 0xC0),
+                Byte("Function_Code_IIN", DNP3FunctionCodes.RESPONSE),  # 0x81 master-emulated
+                # 16-bit IIN field (IIN1 + IIN2) -- default boofuzz mutations on a Word
+                Word("IIN_Flags", 0x0000, endian="<", fuzzable=True),
+            ),
+            # Master emulation flips DIR/PRM: 0x44 (master->outstation) becomes
+            # 0x05 (outstation primary->master). Keep frame symmetrical with a
+            # standard outstation control byte so the link layer parses cleanly.
+            control=0x44,
+        )
+
+        # Data-Link Bad CRC -- the auto-Checksum() over Link_Header recomputes a
+        # valid CRC, so we hand-build the frame with a Static invalid CRC in place
+        # to exercise the peer's CRC-validation / drop path (cve_patterns.json
+        # mutation_values: 0x0000, 0xFFFF). Data block CRC stays valid so only the
+        # header CRC is under test.
+        self.log.debug("[DNP3-Fuzz] Creating DL_Bad_CRC request (static invalid header CRC)")
+        dl_bad_crc = Request(
+            "DNP3_DL_Bad_CRC",
+            children=(
+                Bytes("Start_Bytes_BadCRC", b"\x05\x64", fuzzable=False),
+                Block(
+                    "Link_Header_BadCRC",
+                    children=(
+                        Byte("Length_BadCRC", 8),
+                        Byte("Control_BadCRC", 0x44),
+                        Word("Dest_Addr_BadCRC", dest_addr, endian="<"),
+                        Word("Src_Addr_BadCRC", src_addr, endian="<"),
+                    ),
+                ),
+                # Static invalid header CRC -- boofuzz Group fuzzes through the two
+                # known-bad values; using Static (not Checksum) ensures the bytes are
+                # NOT recomputed by the send pipeline.
+                Group(
+                    "Header_CRC_BadCRC",
+                    values=[b"\x00\x00", b"\xff\xff"],
+                ),
+                Block(
+                    "User_Data_BadCRC",
+                    children=(
+                        Byte("Transport_BadCRC", 0xC0),
+                        Byte("App_Control_BadCRC", 0xC0),
+                        Byte("Function_Code_BadCRC", DNP3FunctionCodes.READ),
+                    ),
+                ),
+                Checksum(
+                    name="Data_CRC_BadCRC",
+                    block_name="User_Data_BadCRC",
+                    algorithm=self._dnp3_crc16,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
+            ),
+        )
+
         # ==================== OPTIMIZED REQUEST ORDERING ====================
         # Reordered for fast coverage + early crash detection:
         # - PHASE 1: Quick FC sweep (all 31 FCs in ~30 sec)
@@ -1819,6 +1927,19 @@ class DNP3Fuzzer(BaseFuzzer):
             self.session.connect(malformed_fc)
             self.session.connect(malformed_addr)
             self.session.connect(invalid_start_bytes)
+
+        # ==================== EXTENDED COVERAGE WIRING ====================
+        if self.is_request_enabled("DNP3_Object_Sweep"):
+            self.log.debug("[DNP3-Fuzz] Enabling DNP3_Object_Sweep (Group x Variation)")
+            self.session.connect(object_sweep)
+
+        if self.is_request_enabled("DNP3_IIN_Master"):
+            self.log.debug("[DNP3-Fuzz] Enabling DNP3_IIN_Master (master-emulation IIN fuzz)")
+            self.session.connect(iin_master)
+
+        if self.is_request_enabled("DNP3_DL_Bad_CRC"):
+            self.log.debug("[DNP3-Fuzz] Enabling DNP3_DL_Bad_CRC (static invalid header CRC)")
+            self.session.connect(dl_bad_crc)
 
         self.log.debug("[DNP3-Fuzz] Exiting _define_protocol() - protocol definition complete")
 

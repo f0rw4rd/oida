@@ -281,8 +281,8 @@ class CoAPFuzzer(BaseFuzzer):
         overflow_payload = Request(
             "CoAP_Overflow_Payload",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 4)),
-                Byte(name="code", default_value=self.POST),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 4), fuzzable=True),
+                Byte(name="code", default_value=self.POST, fuzzable=True),
                 Word(name="message_id", default_value=0x2000, endian=">"),
                 DWord(name="token", default_value=0xDEADBEEF, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("overflow")),
@@ -296,8 +296,8 @@ class CoAPFuzzer(BaseFuzzer):
         option_overflow = Request(
             "CoAP_Option_Overflow",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0)),
-                Byte(name="code", default_value=self.GET),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0), fuzzable=True),
+                Byte(name="code", default_value=self.GET, fuzzable=True),
                 Word(name="message_id", default_value=0x2001, endian=">"),
                 # Craft options with overflow-inducing lengths
                 Group(
@@ -385,8 +385,8 @@ class CoAPFuzzer(BaseFuzzer):
         path_traversal = Request(
             "CoAP_Path_Traversal",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0)),
-                Byte(name="code", default_value=self.GET),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0), fuzzable=True),
+                Byte(name="code", default_value=self.GET, fuzzable=True),
                 Word(name="message_id", default_value=0x3001, endian=">"),
                 Group(
                     name="traversal_paths",
@@ -501,8 +501,8 @@ class CoAPFuzzer(BaseFuzzer):
         option_boundary = Request(
             "CoAP_Option_Boundary",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0)),
-                Byte(name="code", default_value=self.GET),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0), fuzzable=True),
+                Byte(name="code", default_value=self.GET, fuzzable=True),
                 Word(name="message_id", default_value=0x4001, endian=">"),
                 Group(
                     name="option_boundaries",
@@ -535,8 +535,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_get = Request(
             "CoAP_GET",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0)),
-                Byte(name="code", default_value=self.GET),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0), fuzzable=True),
+                Byte(name="code", default_value=self.GET, fuzzable=True),
                 Word(name="message_id", default_value=0x5000, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("temperature")),
             ),
@@ -547,8 +547,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_post = Request(
             "CoAP_POST",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 4)),
-                Byte(name="code", default_value=self.POST),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 4), fuzzable=True),
+                Byte(name="code", default_value=self.POST, fuzzable=True),
                 Word(name="message_id", default_value=0x5001, endian=">"),
                 DWord(name="token", default_value=0x12345678, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("echo")),
@@ -562,8 +562,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_put = Request(
             "CoAP_PUT",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2)),
-                Byte(name="code", default_value=self.PUT),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2), fuzzable=True),
+                Byte(name="code", default_value=self.PUT, fuzzable=True),
                 Word(name="message_id", default_value=0x5002, endian=">"),
                 Word(name="token", default_value=0xABCD, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("temperature")),
@@ -577,8 +577,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_delete = Request(
             "CoAP_DELETE",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0)),
-                Byte(name="code", default_value=self.DELETE),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0), fuzzable=True),
+                Byte(name="code", default_value=self.DELETE, fuzzable=True),
                 Word(name="message_id", default_value=0x5003, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("temperature")),
             ),
@@ -589,8 +589,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_observe = Request(
             "CoAP_Observe",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 4)),
-                Byte(name="code", default_value=self.GET),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 4), fuzzable=True),
+                Byte(name="code", default_value=self.GET, fuzzable=True),
                 Word(name="message_id", default_value=0x5004, endian=">"),
                 DWord(name="token", default_value=0xDEADBEEF, endian=">"),
                 Static(name="observe_opt", default_value=b"\x60"),
@@ -606,8 +606,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_block = Request(
             "CoAP_Block_Transfer",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2)),
-                Byte(name="code", default_value=self.POST),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2), fuzzable=True),
+                Byte(name="code", default_value=self.POST, fuzzable=True),
                 Word(name="message_id", default_value=0x5005, endian=">"),
                 Word(name="token", default_value=0x3344, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("upload")),
@@ -622,8 +622,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_content_format = Request(
             "CoAP_Content_Format",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2)),
-                Byte(name="code", default_value=self.POST),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2), fuzzable=True),
+                Byte(name="code", default_value=self.POST, fuzzable=True),
                 Word(name="message_id", default_value=0x5006, endian=">"),
                 Word(name="token", default_value=0x5566, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("data")),
@@ -647,8 +647,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_conditional = Request(
             "CoAP_Conditional",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2)),
-                Byte(name="code", default_value=self.PUT),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2), fuzzable=True),
+                Byte(name="code", default_value=self.PUT, fuzzable=True),
                 Word(name="message_id", default_value=0x5007, endian=">"),
                 Word(name="token", default_value=0x99AA, endian=">"),
                 Group(
@@ -671,8 +671,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_etag = Request(
             "CoAP_ETag",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2)),
-                Byte(name="code", default_value=self.GET),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 2), fuzzable=True),
+                Byte(name="code", default_value=self.GET, fuzzable=True),
                 Word(name="message_id", default_value=0x5008, endian=">"),
                 Word(name="token", default_value=0x7788, endian=">"),
                 Group(
@@ -692,8 +692,8 @@ class CoAPFuzzer(BaseFuzzer):
         coap_cache = Request(
             "CoAP_Cache_Control",
             children=(
-                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0)),
-                Byte(name="code", default_value=self.GET),
+                Byte(name="header", default_value=coap_header_byte(1, self.CON, 0), fuzzable=True),
+                Byte(name="code", default_value=self.GET, fuzzable=True),
                 Word(name="message_id", default_value=0x5009, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("cached")),
                 Group(

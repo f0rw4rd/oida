@@ -282,6 +282,12 @@ class OPCUAFuzzer(BaseFuzzer):
                 "attack",
                 requires_state=CommonState.ANY,
             ),
+            RequestInfo(
+                "OPCUA_ExtensionObject",
+                "ExtensionObject TypeId fuzzing (vendor-reserved 0x6XXX range)",
+                "attack",
+                requires_state="SESSION_ACTIVE",
+            ),
         ]
 
     def _create_socket(self):
@@ -2332,6 +2338,77 @@ class OPCUAFuzzer(BaseFuzzer):
             ),
         )
 
+        # 31b. ExtensionObject TypeId fuzzing - vendor parser bug discovery
+        # Sends a Write whose value is an ExtensionObject whose TypeId is mutated
+        # across common (0x0000/0x0001/0xFFFF) AND vendor-reserved (0x6000-0x6FFF)
+        # ranges. Vendor-specific TypeIds in 0x6XXX trip dispatchers that fall
+        # through to a vendor parser path which is rarely fuzz-tested.
+        # See ref/opcua/cve_patterns.json#opcua-extension-object-typeid
+        extension_object = Request(
+            "OPCUA_ExtensionObject",
+            children=(
+                Block(
+                    "Header",
+                    children=(
+                        Static("MessageType", OPCUAMessageTypes.MESSAGE),
+                        Static("IsFinal", b"F"),
+                        Size(
+                            "MessageSize",
+                            block_name="MSGBody",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            offset=8,
+                            fuzzable=False,
+                        ),
+                    ),
+                ),
+                Block(
+                    "MSGBody",
+                    children=(
+                        *self._create_msg_header(OPCUAServiceIds.WRITE_REQUEST, authenticated=True),
+                        # NodesToWrite array - single WriteValue
+                        DWord("NodesToWrite_Length", 1, endian="<"),
+                        Static("NodeId_Encoding", bytes([OPCUANodeIdTypes.FOUR_BYTE])),
+                        Byte("NodeId_Namespace", 0x00),
+                        Word("NodeId_Identifier", 2253, endian="<"),
+                        DWord("AttributeId", 13, endian="<"),  # Value
+                        DWord("IndexRange_Length", 0xFFFFFFFF, endian="<"),
+                        # DataValue with ExtensionObject variant payload
+                        Byte("DataValue_EncodingMask", 0x01),  # Has value
+                        # Variant type code 22 = ExtensionObject
+                        Byte("Variant_EncodingMask", 0x16),
+                        # ExtensionObject.TypeId - FourByte NodeId
+                        Static(
+                            "ExtensionObject_TypeId_Encoding",
+                            bytes([OPCUANodeIdTypes.FOUR_BYTE]),
+                        ),
+                        Byte("ExtensionObject_TypeId_Namespace", 0x00),
+                        # TypeId identifier mutation: common + vendor-reserved 0x6XXX
+                        # range. 0x6000-0x6FFF is the vendor-reserved band per the
+                        # OPC UA NodeId convention; many stacks route these to
+                        # plugin/extension handlers that lack input validation.
+                        Group(
+                            "ExtensionObject_TypeId_Identifier",
+                            values=[
+                                b"\x00\x00",  # 0x0000 - null
+                                b"\x01\x00",  # 0x0001 - sentinel
+                                b"\x00\x60",  # 0x6000 - vendor-reserved low
+                                b"\x80\x60",  # 0x6080 - vendor-reserved mid
+                                b"\xff\x6f",  # 0x6FFF - vendor-reserved high
+                                b"\xff\xff",  # 0xFFFF - max
+                            ],
+                        ),
+                        # Encoding: 0x01 = has ByteString body
+                        Byte("ExtensionObject_Encoding", 0x01),
+                        # Body length + minimal payload
+                        DWord("ExtensionObject_Body_Length", 4, endian="<"),
+                        DWord("ExtensionObject_Body", 0xDEADBEEF, endian="<"),
+                    ),
+                ),
+            ),
+        )
+
         # 32. Large array size attack
         large_array = Request(
             "OPCUA_LargeArray",
@@ -3619,6 +3696,11 @@ class OPCUAFuzzer(BaseFuzzer):
         # Invalid type bytes cause parser crashes
         if self.is_request_enabled("OPCUA_Malformed"):
             self.session.connect(malformed_nodeid)
+
+        # ExtensionObject TypeId fuzzing - vendor-reserved 0x6XXX range
+        # Targets vendor-specific extension parsers (see cve_patterns.json)
+        if self.is_request_enabled("OPCUA_ExtensionObject"):
+            self.session.connect(extension_object)
 
         # UTF-8 malformed strings - encoding vulnerabilities
         # Invalid UTF-8 sequences crash string handlers

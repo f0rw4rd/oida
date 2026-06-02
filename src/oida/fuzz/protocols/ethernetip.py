@@ -468,7 +468,88 @@ class EtherNetIPFuzzer(BaseFuzzer):
                                 ),
                                 Byte("Request_Path_Size", 0x02, fuzzable=False),
                                 Byte("Class_Segment", 0x20, fuzzable=False),
-                                Byte("Class_ID", 0x01, fuzzable=False),
+                                # Class/instance VALUE bytes are default-fuzzable
+                                # per ref/ethernetip/cve_patterns.json#enip-cip-path-encoding
+                                Byte("Class_ID", 0x01),
+                                Byte("Instance_Segment", 0x24, fuzzable=False),
+                                Byte("Instance_ID", 0x01),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # CIP Class Enumeration - Iterate well-known CIP object classes
+        # See ref/ethernetip/cve_patterns.json#enip-class-enumeration
+        # Uses 16-bit class segment (0x21 0x00) so a single Group can hold
+        # both standard 8-bit class IDs and vendor-reserved 16-bit IDs.
+        cip_class_enumeration = Request(
+            "CIP_Class_Enumeration",
+            children=(
+                Block(
+                    "EIP_Encap_Header_ClassEnum",
+                    children=(
+                        Word("Command", 0x006F, endian="<", fuzzable=False),
+                        Size(
+                            "Length",
+                            block_name="CIP_ClassEnum_Data",
+                            length=2,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        DynamicDWord(
+                            "Session_Handle",
+                            self._session_handle_value,
+                            endian="<",
+                            fuzzable=False,
+                        ),
+                        DWord("Status", 0x00000000, endian="<", fuzzable=False),
+                        QWord("Context", 0x0000000000000000, endian="<", fuzzable=False),
+                        DWord("Options", 0x00000000, endian="<", fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "CIP_ClassEnum_Data",
+                    children=(
+                        DWord("Interface_Handle", 0x00000000, endian="<", fuzzable=False),
+                        Word("Timeout", 0x0000, endian="<", fuzzable=False),
+                        Block(
+                            "CPF_Header",
+                            children=(
+                                Word("Item_Count", 0x0002, endian="<", fuzzable=False),
+                                Word("Address_Type", 0x0000, endian="<", fuzzable=False),
+                                Word("Address_Length", 0x0000, endian="<", fuzzable=False),
+                                Word("Data_Type", 0x00B2, endian="<", fuzzable=False),
+                                Word("Data_Length", 0x0008, endian="<", fuzzable=False),
+                            ),
+                        ),
+                        Block(
+                            "CIP_Request",
+                            children=(
+                                Byte("Service", 0x01, fuzzable=False),  # Get_Attributes_All
+                                Byte("Path_Size", 0x03, fuzzable=False),  # 3 words
+                                Byte(
+                                    "Class_Segment_16bit", 0x21, fuzzable=False
+                                ),  # 16-bit logical class
+                                Byte("Pad", 0x00, fuzzable=False),
+                                Group(
+                                    "ClassID",
+                                    values=[
+                                        b"\x01\x00",  # 0x0001 - Identity
+                                        b"\x02\x00",  # 0x0002 - Message Router
+                                        b"\x04\x00",  # 0x0004 - Assembly
+                                        b"\x06\x00",  # 0x0006 - Connection Manager
+                                        b"\xf4\x00",  # 0x00F4 - Port
+                                        b"\xf5\x00",  # 0x00F5 - TCP/IP Interface
+                                        b"\xf6\x00",  # 0x00F6 - Ethernet Link
+                                        b"\xac\x00",  # 0x00AC - Vendor-defined
+                                        b"\x00\x01",  # 0x0100 - Vendor-reserved
+                                        b"\x01\x01",  # 0x0101 - Vendor-reserved
+                                        b"\x10\x01",  # 0x0110 - Vendor-reserved
+                                    ],
+                                ),
                                 Byte("Instance_Segment", 0x24, fuzzable=False),
                                 Byte("Instance_ID", 0x01, fuzzable=False),
                             ),
@@ -628,10 +709,12 @@ class EtherNetIPFuzzer(BaseFuzzer):
                                 Byte("Service", 0x0E, fuzzable=False),
                                 Byte("Request_Path_Size", 0x02, fuzzable=False),
                                 Byte("Class_Segment", 0x20, fuzzable=False),
-                                Byte("Class_ID", 0x01, fuzzable=False),
+                                # Class/instance/attribute VALUE bytes are default-fuzzable
+                                # per ref/ethernetip/cve_patterns.json#enip-cip-path-encoding
+                                Byte("Class_ID", 0x01),
                                 Byte("Instance_Segment", 0x24, fuzzable=False),
-                                Byte("Instance_ID", 0x01, fuzzable=False),
-                                Word("Attribute_ID", 0x0001, endian="<", fuzzable=False),
+                                Byte("Instance_ID", 0x01),
+                                Word("Attribute_ID", 0x0001, endian="<"),
                             ),
                         ),
                     ),
@@ -879,9 +962,29 @@ class EtherNetIPFuzzer(BaseFuzzer):
                                 Byte("Connection_Timeout_Mult", 0x03),
                                 Byte("Reserved1", 0x00),
                                 Word("Reserved2", 0x0000, endian="<"),
-                                DWord("O_to_T_RPI", 0x00001000, endian="<"),
+                                # OT_RPI / TO_RPI: extreme values hit timer crashes.
+                                # See ref/ethernetip/cve_patterns.json#enip-forward-open-rpi
+                                Group(
+                                    "O_to_T_RPI",
+                                    values=[
+                                        b"\x00\x00\x00\x00",  # 0
+                                        b"\x01\x00\x00\x00",  # 1
+                                        b"\xe8\x03\x00\x00",  # 1000
+                                        b"\x40\x42\x0f\x00",  # 1000000
+                                        b"\xff\xff\xff\xff",  # 0xFFFFFFFF
+                                    ],
+                                ),
                                 Word("O_to_T_Network_Params", 0x43F4, endian="<"),
-                                DWord("T_to_O_RPI", 0x00001000, endian="<"),
+                                Group(
+                                    "T_to_O_RPI",
+                                    values=[
+                                        b"\x00\x00\x00\x00",  # 0
+                                        b"\x01\x00\x00\x00",  # 1
+                                        b"\xe8\x03\x00\x00",  # 1000
+                                        b"\x40\x42\x0f\x00",  # 1000000
+                                        b"\xff\xff\xff\xff",  # 0xFFFFFFFF
+                                    ],
+                                ),
                                 Word("T_to_O_Network_Params", 0x43F4, endian="<"),
                                 Byte("Transport_Type_Trigger", 0xA3),
                                 Byte("Connection_Path_Size", 0x01),
@@ -1057,9 +1160,11 @@ class EtherNetIPFuzzer(BaseFuzzer):
                                 Byte("Service", 0x0E, fuzzable=False),
                                 Byte("Path_Size", 0x02, fuzzable=False),
                                 Byte("Class_Segment", 0x20, fuzzable=False),
-                                Byte("Class_ID", 0x01, fuzzable=False),
+                                # Class/instance VALUE bytes are default-fuzzable
+                                # per ref/ethernetip/cve_patterns.json#enip-cip-path-encoding
+                                Byte("Class_ID", 0x01),
                                 Byte("Instance_Segment", 0x24, fuzzable=False),
-                                Byte("Instance_ID", 0x01, fuzzable=False),
+                                Byte("Instance_ID", 0x01),
                             ),
                         ),
                     ),
@@ -1122,10 +1227,12 @@ class EtherNetIPFuzzer(BaseFuzzer):
                                 Byte("Service", 0x0E, fuzzable=False),
                                 Byte("Path_Size", 0x02, fuzzable=False),
                                 Byte("Class_Segment", 0x20, fuzzable=False),
-                                Byte("Class_ID", 0x01, fuzzable=False),
+                                # Class/instance/attribute VALUE bytes are default-fuzzable
+                                # per ref/ethernetip/cve_patterns.json#enip-cip-path-encoding
+                                Byte("Class_ID", 0x01),
                                 Byte("Instance_Segment", 0x24, fuzzable=False),
-                                Byte("Instance_ID", 0x01, fuzzable=False),
-                                Word("Attribute_ID", 0x0001, endian="<", fuzzable=False),
+                                Byte("Instance_ID", 0x01),
+                                Word("Attribute_ID", 0x0001, endian="<"),
                             ),
                         ),
                     ),
@@ -1966,6 +2073,7 @@ class EtherNetIPFuzzer(BaseFuzzer):
         if self.is_request_enabled("EIP_Baseline"):
             self.session.connect(quick_eip_coverage)  # All 10 EIP commands
             self.session.connect(quick_cip_coverage)  # All 21 CIP services
+            self.session.connect(cip_class_enumeration)  # Well-known CIP object classes
 
         # ==================== PHASE 2: HIGH-CRASH TESTS (~3 min) ====================
         if self.is_request_enabled("EIP_Overflow"):
