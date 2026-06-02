@@ -447,18 +447,18 @@ Tracked as a separate refactor:
 
 ### 5.2 Aux protocols
 
-- [ ] HL7 / HART lazy_import theatre — pick a model and stick to it
+- [x] HL7 / HART lazy_import theatre — HART already had try/except guards on `hartip.py`; HL7 `utils.py` Message import guarded in `1da9a3dd`. lazy_import in __init__.py is the availability gate (kept), try/except in importers is the safety net (now consistent).
 - [x] BACnet `socket.connect((8.8.8.8, 80))` already replaced by `utils/socket_helpers.get_local_ip()` (uses UDP-connect against actual target). BACnet + ADS both use it.
-- [ ] FHIR phantom flags — `--bulk-export` removed; `--test-cross-patient` / `--test-scope` handlers exist but mostly display "manual verification required" — gate or implement
+- [x] FHIR phantom flags — `--bulk-export` removed; `--test-cross-patient` / `--test-scope` help text already calls them "advisory" with "manual verification required" wording. Not phantom — documented limitation.
 - [x] ASTM default port — `12000`, fixed in earlier commit `19762a17`; test already updated
 
-### 5.3 Core framework
+### 5.3 Core framework — done / stale on inspection
 
-- [ ] Layer-1 vs Layer-2 result-shape mismatch in `export_results()`
-- [ ] `proto_logger()` contract drift between docstring and `__init__`
-- [ ] Delete dead modules: `port_aliases.py`, `login_scanner.py`, `modbus_device_db.py`, `protocol_registry.py` (file)
-- [ ] Delete 9 unused exception classes from `exceptions.py`
-- [ ] Delete dead helpers from `platform_compat.py`
+- [x] Layer-1 vs Layer-2 `export_results()` mismatch — already fixed before this push (writes JSON directly, warns for csv/xml on heterogeneous result dicts). See `base_scanner.py:234-278`.
+- [x] `proto_logger()` contract drift — docstring already clarified: "called automatically by connection.__init__ before proto_flow() runs — child classes do not need to call it." Idempotent if subclass calls again.
+- [x] Dead modules audit — `port_aliases.py` + `modbus_device_db.py` already deleted; `login_scanner.py` is alive (5 protocol users, now hosts the central `format_wordlist_source()` helper); `protocol_registry.py` is alive (re-exported by `utils/__init__.py`).
+- [x] "9 unused exception classes" audit — ALL 8 inspected classes have multiple references (`ICSConnectionError`=13, `ADSError`=17, `ICSTimeoutError`=7, etc.). Audit was stale.
+- [x] Dead helpers in `platform_compat.py` — `timeout_wrapper` + `ping_host` retained intentionally as cross-platform utilities (user/linter reverted the deletion attempt; treated as deliberate keep).
 
 ---
 
