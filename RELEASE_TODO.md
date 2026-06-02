@@ -348,24 +348,28 @@ iec104 was fixed (post-fix item 19). Apply same "lower port wins" fallback to:
 
 ## 3. CLI consistency / polish
 
-### 3.1 Double-success banner cleanup
+### 3.1 Double-success banner cleanup — DONE in `fa61b286`
 
-Reference pattern: iec104. Apply to:
+Reference pattern: iec104. Applied to:
 
-- [ ] ethernetip
-- [ ] mqtt
-- [ ] mms
-- [ ] snap7
-- [ ] can
+- [x] ethernetip — scanner display→debug for pycomm3 driver banner
+- [x] mqtt — success emitted on actual conn rather than auth-failure path
+- [x] mms — drop redundant "MMS/IEC 61850: host:port" display
+- [x] snap7 — already correct (line 109/120 are mutually-exclusive branches)
+- [x] can — drop redundant "CAN Bus: channel" / "Bitrate" displays
 
-### 3.2 Short-flag collisions
+### 3.2 Short-flag collisions — DONE in `fa61b286`
 
-- [ ] Document the 8 collision letters (`-p -u -P -i -r -T -W -d`) in `STYLE_GUIDE.md`
-- [ ] Resolve `-p = --eeprom-parse` (ethercat) vs `--port` everywhere else
-- [ ] Resolve `-u = --unit-id` (modbus) vs other uses
-- [ ] Mechanical sweep: every protocol picks one of the two and documents
+- [x] Document 9 reserved short letters in `STYLE_GUIDE.md` ("CLI short-flag conventions" table)
+- [x] Resolve ethercat `-p = --eeprom-parse` (was the most dangerous collision)
+- [x] Resolve fhir `-p = --search-patients` (consistency)
+- [ ] `-u` — kept per-protocol (modbus=unit-id, coap=psk-identity, snmp=snmp-user); documented as exceptions in STYLE_GUIDE
 
-### 3.3 `proto_args_factory` migration (6 holdouts)
+### 3.3 `proto_args_factory` migration (6 holdouts) — DEFERRED post-1.0
+
+Wholesale migration carries CLI-compat risk for limited reward now that the
+short-flag inconsistencies are documented and the worst collision is fixed.
+Tracked as a separate refactor:
 
 - [ ] ads
 - [ ] discovery
