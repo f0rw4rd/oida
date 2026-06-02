@@ -9,7 +9,15 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
-from hl7apy.core import Message
+# hl7apy is gated by HL7APY_AVAILABLE in __init__.py — if the user runs
+# `oida hl7 …` without the optional `hl7` extra installed, that check
+# fails fast with a friendly install hint. The try/except here protects
+# against transitive import paths that pull this file in before the gate
+# has run (e.g. fuzzer modules importing create_test_message directly).
+try:
+    from hl7apy.core import Message
+except ImportError:  # pragma: no cover — release-checked dep
+    Message = None  # type: ignore[assignment]
 
 from .segments import HL7SegmentBuilder
 from ...utils.protocol_helpers import ConnectionHelper
