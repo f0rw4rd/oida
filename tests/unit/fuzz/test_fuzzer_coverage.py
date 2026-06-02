@@ -158,14 +158,17 @@ ICS_SCADA_TIERS = {
     "mutation": ("N/A", 1),
 }
 
-# Exact ICS request counts from ICS audit (updated 2026-05-26: opcua 22→21,
-# removed phantom OPCUA_Query that was advertised but never implemented).
+# Exact ICS request counts. Updated 2026-06-02 after the §4.1 fuzzer
+# optimization workflow: dnp3/iec104/opcua gained new Request objects
+# (10→13, 12→13, 21→22); other §4.1 items modified primitives inside
+# existing Requests (Group expansions, fuzzable= flips, max_len caps,
+# annotation passes) so the *count* of registered Requests is unchanged.
 ICS_AUDIT_REQUEST_COUNTS = {
     "modbus": 15,
     "modbus_rtu": 12,
-    "dnp3": 10,
-    "iec104": 12,
-    "opcua": 21,
+    "dnp3": 13,
+    "iec104": 13,
+    "opcua": 22,
     "bacnet": 13,
     "ethernetip": 11,
     "fins": 21,
@@ -175,6 +178,11 @@ ICS_AUDIT_REQUEST_COUNTS = {
     "industrial_ethernet": 16,
     "hartip": 12,
     "ads": 10,
+    "snmpv2c": 12,
+    "snmpv3": 12,
+    "hl7": 13,
+    "mqtt": 14,
+    "coap": 20,
 }
 
 # Combine for backward compatibility

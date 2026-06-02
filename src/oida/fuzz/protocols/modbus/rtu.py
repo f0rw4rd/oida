@@ -289,7 +289,7 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Word("Starting_Address", 0x0000, endian=">"),
                         Group("Excessive_Quantity", values=create_oversized_quantity_values()),
                         Byte("Byte_Count", 0xFE),
-                        Bytes("Overflow_Data", b"A" * 254, size=254),
+                        Bytes("Overflow_Data", b"A" * 254, size=254, max_len=4096),
                     ),
                 ),
                 Word("CRC", 0x0000, endian="<"),

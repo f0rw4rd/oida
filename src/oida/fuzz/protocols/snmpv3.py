@@ -15,7 +15,7 @@ CVE Coverage:
 - CVE-2022-44792: Net-SNMP NULL dereference in SET to nonexistent OID
 """
 
-from boofuzz import Block, Byte, DWord, QWord, Request, Size, Static, Word
+from boofuzz import Block, Byte, DWord, Group, QWord, Request, Size, Static, Word
 
 from typing import List
 
@@ -110,6 +110,29 @@ class SNMPv3Fuzzer(BaseFuzzer):
                 "SNMPv3_Boundary",
                 "Boundary values for message ID, max-size, flags, security model",
                 "boundary",
+            ),
+            # USM AuthenticationParameters / PrivacyParameters Group-fuzzing
+            # CVE-2018-18066 class: HMAC truncation crashes
+            RequestInfo(
+                "SNMPv3_USMAuthFuzz",
+                "USM AuthenticationParameters / PrivacyParameters explicit mutation",
+                "cve",
+            ),
+            # Missing PDU types (audit S8: SetRequest covered conditionally above)
+            RequestInfo(
+                "SNMPv3_GetBulkRequest",
+                "GetBulkRequest PDU (0xA5) with v3 USM framing",
+                "standard",
+            ),
+            RequestInfo(
+                "SNMPv3_InformRequest",
+                "InformRequest PDU (0xA6) with v3 USM framing",
+                "standard",
+            ),
+            RequestInfo(
+                "SNMPv3_Trap",
+                "SNMPv2-Trap PDU (0xA7) wrapped in v3 USM framing",
+                "trap",
             ),
         ]
 
@@ -1849,6 +1872,1083 @@ class SNMPv3Fuzzer(BaseFuzzer):
             ),
         )
 
+        # SNMPv3 USM Authentication/Privacy Parameter Fuzzing
+        # ref/snmp/cve_patterns.json#snmpv3-usm-auth-params (CVE-2018-18066 class).
+        # The 12-byte AuthenticationParameters and 8-byte PrivacyParameters
+        # fields are normally derived from the user password (treated as static
+        # post key-derivation in the other v3 requests above). This request
+        # mutates them independently as Group() values to exercise HMAC-length
+        # validation paths that crash on wrong-size auth digests.
+        usm_auth_fuzz = Request(
+            "SNMPv3_USMAuthFuzz",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize(
+                            "Message_Length",
+                            "SNMP_Content",
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x03"),
+                                Static("GlobalData_Tag", b"\x30"),
+                                Size(
+                                    "GlobalData_Length",
+                                    "GlobalData_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "GlobalData_Content",
+                                    children=(
+                                        Static("MessageID_Tag", b"\x02\x04"),
+                                        DWord("MessageID", 0x55555555, endian=">", fuzzable=False),
+                                        Static("MaxSize_Tag", b"\x02\x03"),
+                                        Byte("MaxSize_Prefix", 0x00),
+                                        Word("MaxSize", 65535, endian=">", fuzzable=False),
+                                        # authPriv flags (0x07 = auth+priv+reportable)
+                                        Static("MsgFlags_Tag", b"\x04\x01"),
+                                        Byte("MsgFlags", 0x07, fuzzable=False),
+                                        Static("SecurityModel_Tag", b"\x02\x01"),
+                                        Byte("SecurityModel", 3, fuzzable=False),
+                                    ),
+                                ),
+                                # USM Security Parameters - AuthParams/PrivParams
+                                # mutated as Group() values
+                                Static("SecurityParams_Tag", b"\x04"),
+                                Size(
+                                    "SecurityParams_Length",
+                                    "SecurityParams_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "SecurityParams_Content",
+                                    children=(
+                                        Static("USM_Sequence_Tag", b"\x30"),
+                                        Size(
+                                            "USM_Length",
+                                            "USM_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "USM_Content",
+                                            children=(
+                                                Static("EngineID_Tag", b"\x04"),
+                                                Size(
+                                                    "EngineID_Length",
+                                                    "EngineID_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "EngineID_Value",
+                                                    self._hex_to_bytes(engine_id),
+                                                    fuzzable=False,
+                                                ),
+                                                Static("EngineBoots_Tag", b"\x02\x04"),
+                                                DWord("EngineBoots", 1, endian=">", fuzzable=False),
+                                                Static("EngineTime_Tag", b"\x02\x04"),
+                                                DWord(
+                                                    "EngineTime", 12345, endian=">", fuzzable=False
+                                                ),
+                                                Static("UserName_Tag", b"\x04"),
+                                                Size(
+                                                    "UserName_Length",
+                                                    "UserName_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartString(
+                                                    "UserName_Value", username, fuzzable=False
+                                                ),
+                                                # AuthenticationParameters - 12-byte HMAC
+                                                # truncation set per CVE-2018-18066 pattern
+                                                Static("AuthParams_Tag", b"\x04"),
+                                                Size(
+                                                    "AuthParams_Length",
+                                                    "AuthParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                Group(
+                                                    "AuthParams_Value",
+                                                    values=[
+                                                        # Empty (no auth)
+                                                        b"",
+                                                        # Single byte (truncated)
+                                                        b"\x00",
+                                                        # Canonical 12-byte HMAC (zeros)
+                                                        b"\x00" * 12,
+                                                        # 14-byte overlong (per cve_patterns.json)
+                                                        b"\xff" * 14,
+                                                        # 20-byte full HMAC-SHA1 (RFC 3414 limit)
+                                                        b"\xaa" * 20,
+                                                        # Oversized to test bounds
+                                                        b"A" * 64,
+                                                    ],
+                                                ),
+                                                # PrivacyParameters - 8-byte DES/AES IV salt
+                                                Static("PrivParams_Tag", b"\x04"),
+                                                Size(
+                                                    "PrivParams_Length",
+                                                    "PrivParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                Group(
+                                                    "PrivParams_Value",
+                                                    values=[
+                                                        # Empty
+                                                        b"",
+                                                        # Single byte
+                                                        b"\x00",
+                                                        # Canonical 8-byte (zeros)
+                                                        b"\x00" * 8,
+                                                        # 8-byte all-FF
+                                                        b"\xff" * 8,
+                                                        # 16-byte (AES-128 IV)
+                                                        b"\xaa" * 16,
+                                                        # Oversized
+                                                        b"B" * 64,
+                                                    ],
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                                # Minimal Scoped PDU (encrypted in real authPriv,
+                                # but kept plaintext here so the agent reaches USM
+                                # validation before complaining about decryption)
+                                Static("ScopedPDU_Tag", b"\x30"),
+                                Size(
+                                    "ScopedPDU_Length",
+                                    "ScopedPDU_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "ScopedPDU_Content",
+                                    children=(
+                                        Static("ContextEngineID_Tag", b"\x04"),
+                                        Size(
+                                            "ContextEngineID_Length",
+                                            "ContextEngineID_Value",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        SmartBytes(
+                                            "ContextEngineID_Value",
+                                            self._hex_to_bytes(engine_id),
+                                            fuzzable=False,
+                                        ),
+                                        Static("ContextName_Tag", b"\x04\x00"),
+                                        # GetRequest PDU
+                                        Static("PDU_Tag", b"\xa0"),
+                                        Size(
+                                            "PDU_Length",
+                                            "PDU_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "PDU_Content",
+                                            children=(
+                                                Static("RequestID_Tag", b"\x02\x04"),
+                                                DWord("RequestID", 600, endian=">", fuzzable=False),
+                                                Static("ErrorStatus", b"\x02\x01\x00"),
+                                                Static("ErrorIndex", b"\x02\x01\x00"),
+                                                Static("VarBindings", b"\x30\x00"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # SNMPv3 GetBulkRequest - dedicated 0xA5 PDU instance (distinct from
+        # auth_request which embeds GetBulk in the baseline-auth path).
+        # Audit S8: missing PDU type enumeration.
+        get_bulk_request = Request(
+            "SNMPv3_GetBulkRequest",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize(
+                            "Message_Length",
+                            "SNMP_Content",
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x03"),
+                                Static("GlobalData_Tag", b"\x30"),
+                                Size(
+                                    "GlobalData_Length",
+                                    "GlobalData_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "GlobalData_Content",
+                                    children=(
+                                        Static("MessageID_Tag", b"\x02\x04"),
+                                        DWord("MessageID", 0x66666666, endian=">", fuzzable=True),
+                                        Static("MaxSize_Tag", b"\x02\x03"),
+                                        Byte("MaxSize_Prefix", 0x00),
+                                        Word("MaxSize", 65535, endian=">", fuzzable=True),
+                                        Static("MsgFlags_Tag", b"\x04\x01"),
+                                        Byte(
+                                            "MsgFlags",
+                                            0x05 if security_level >= 2 else 0x04,
+                                            fuzzable=True,
+                                        ),
+                                        Static("SecurityModel_Tag", b"\x02\x01"),
+                                        Byte("SecurityModel", security_model, fuzzable=True),
+                                    ),
+                                ),
+                                Static("SecurityParams_Tag", b"\x04"),
+                                Size(
+                                    "SecurityParams_Length",
+                                    "SecurityParams_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "SecurityParams_Content",
+                                    children=(
+                                        Static("USM_Sequence_Tag", b"\x30"),
+                                        Size(
+                                            "USM_Length",
+                                            "USM_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "USM_Content",
+                                            children=(
+                                                Static("EngineID_Tag", b"\x04"),
+                                                Size(
+                                                    "EngineID_Length",
+                                                    "EngineID_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "EngineID_Value",
+                                                    self._hex_to_bytes(engine_id),
+                                                    fuzzable=True,
+                                                ),
+                                                Static("EngineBoots_Tag", b"\x02\x04"),
+                                                DWord("EngineBoots", 1, endian=">", fuzzable=True),
+                                                Static("EngineTime_Tag", b"\x02\x04"),
+                                                DWord(
+                                                    "EngineTime", 12345, endian=">", fuzzable=True
+                                                ),
+                                                Static("UserName_Tag", b"\x04"),
+                                                Size(
+                                                    "UserName_Length",
+                                                    "UserName_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartString(
+                                                    "UserName_Value", username, fuzzable=True
+                                                ),
+                                                Static("AuthParams_Tag", b"\x04"),
+                                                Size(
+                                                    "AuthParams_Length",
+                                                    "AuthParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "AuthParams_Value",
+                                                    b"\x00" * 12,
+                                                    max_len=20,
+                                                    fuzzable=True,
+                                                ),
+                                                Static("PrivParams_Tag", b"\x04"),
+                                                Size(
+                                                    "PrivParams_Length",
+                                                    "PrivParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "PrivParams_Value",
+                                                    b"\x00" * 8,
+                                                    max_len=16,
+                                                    fuzzable=True,
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                                # Scoped PDU with GetBulkRequest
+                                Static("ScopedPDU_Tag", b"\x30"),
+                                Size(
+                                    "ScopedPDU_Length",
+                                    "ScopedPDU_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "ScopedPDU_Content",
+                                    children=(
+                                        Static("ContextEngineID_Tag", b"\x04"),
+                                        Size(
+                                            "ContextEngineID_Length",
+                                            "ContextEngineID_Value",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        SmartBytes(
+                                            "ContextEngineID_Value",
+                                            self._hex_to_bytes(engine_id),
+                                            fuzzable=True,
+                                        ),
+                                        Static("ContextName_Tag", b"\x04"),
+                                        Size(
+                                            "ContextName_Length",
+                                            "ContextName_Value",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        SmartString(
+                                            "ContextName_Value", context_name, fuzzable=True
+                                        ),
+                                        # GetBulkRequest PDU (0xA5)
+                                        Static("PDU_Tag", b"\xa5"),
+                                        Size(
+                                            "PDU_Length",
+                                            "PDU_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "PDU_Content",
+                                            children=(
+                                                Static("RequestID_Tag", b"\x02\x04"),
+                                                DWord("RequestID", 700, endian=">", fuzzable=True),
+                                                # non-repeaters
+                                                Static("NonRepeaters_Tag", b"\x02\x01"),
+                                                Byte("NonRepeaters", 0, fuzzable=True),
+                                                # max-repetitions
+                                                Static("MaxRepetitions_Tag", b"\x02\x01"),
+                                                Byte("MaxRepetitions", 20, fuzzable=True),
+                                                Static("VarBindings_Tag", b"\x30"),
+                                                Size(
+                                                    "VarBindings_Length",
+                                                    "VarBindings_Content",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                Block(
+                                                    "VarBindings_Content",
+                                                    children=(
+                                                        Static("VarBind1_Tag", b"\x30"),
+                                                        Size(
+                                                            "VarBind1_Length",
+                                                            "VarBind1_Content",
+                                                            endian=">",
+                                                            output_format="binary",
+                                                            length=1,
+                                                            fuzzable=False,
+                                                        ),
+                                                        Block(
+                                                            "VarBind1_Content",
+                                                            children=(
+                                                                Static("OID1_Tag", b"\x06"),
+                                                                Size(
+                                                                    "OID1_Length",
+                                                                    "OID1_Value",
+                                                                    endian=">",
+                                                                    output_format="binary",
+                                                                    length=1,
+                                                                    fuzzable=False,
+                                                                ),
+                                                                SmartBytes(
+                                                                    "OID1_Value",
+                                                                    self._encode_oid(
+                                                                        "1.3.6.1.2.1.1"
+                                                                    ),
+                                                                    fuzzable=True,
+                                                                ),
+                                                                Static("Value1", b"\x05\x00"),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # SNMPv3 InformRequest - acknowledged trap variant (PDU tag 0xA6).
+        # Audit S8: missing PDU type enumeration.
+        inform_request = Request(
+            "SNMPv3_InformRequest",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize(
+                            "Message_Length",
+                            "SNMP_Content",
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x03"),
+                                Static("GlobalData_Tag", b"\x30"),
+                                Size(
+                                    "GlobalData_Length",
+                                    "GlobalData_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "GlobalData_Content",
+                                    children=(
+                                        Static("MessageID_Tag", b"\x02\x04"),
+                                        DWord("MessageID", 0x77777777, endian=">", fuzzable=True),
+                                        Static("MaxSize_Tag", b"\x02\x03"),
+                                        Byte("MaxSize_Prefix", 0x00),
+                                        Word("MaxSize", 65535, endian=">", fuzzable=True),
+                                        Static("MsgFlags_Tag", b"\x04\x01"),
+                                        Byte(
+                                            "MsgFlags",
+                                            0x05 if security_level >= 2 else 0x04,
+                                            fuzzable=True,
+                                        ),
+                                        Static("SecurityModel_Tag", b"\x02\x01"),
+                                        Byte("SecurityModel", security_model, fuzzable=True),
+                                    ),
+                                ),
+                                Static("SecurityParams_Tag", b"\x04"),
+                                Size(
+                                    "SecurityParams_Length",
+                                    "SecurityParams_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "SecurityParams_Content",
+                                    children=(
+                                        Static("USM_Sequence_Tag", b"\x30"),
+                                        Size(
+                                            "USM_Length",
+                                            "USM_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "USM_Content",
+                                            children=(
+                                                Static("EngineID_Tag", b"\x04"),
+                                                Size(
+                                                    "EngineID_Length",
+                                                    "EngineID_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "EngineID_Value",
+                                                    self._hex_to_bytes(engine_id),
+                                                    fuzzable=True,
+                                                ),
+                                                Static("EngineBoots_Tag", b"\x02\x04"),
+                                                DWord("EngineBoots", 1, endian=">", fuzzable=True),
+                                                Static("EngineTime_Tag", b"\x02\x04"),
+                                                DWord(
+                                                    "EngineTime", 12345, endian=">", fuzzable=True
+                                                ),
+                                                Static("UserName_Tag", b"\x04"),
+                                                Size(
+                                                    "UserName_Length",
+                                                    "UserName_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartString(
+                                                    "UserName_Value", username, fuzzable=True
+                                                ),
+                                                Static("AuthParams_Tag", b"\x04"),
+                                                Size(
+                                                    "AuthParams_Length",
+                                                    "AuthParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "AuthParams_Value",
+                                                    b"\x00" * 12,
+                                                    max_len=20,
+                                                    fuzzable=True,
+                                                ),
+                                                Static("PrivParams_Tag", b"\x04"),
+                                                Size(
+                                                    "PrivParams_Length",
+                                                    "PrivParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "PrivParams_Value",
+                                                    b"\x00" * 8,
+                                                    max_len=16,
+                                                    fuzzable=True,
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                                Static("ScopedPDU_Tag", b"\x30"),
+                                Size(
+                                    "ScopedPDU_Length",
+                                    "ScopedPDU_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "ScopedPDU_Content",
+                                    children=(
+                                        Static("ContextEngineID_Tag", b"\x04"),
+                                        Size(
+                                            "ContextEngineID_Length",
+                                            "ContextEngineID_Value",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        SmartBytes(
+                                            "ContextEngineID_Value",
+                                            self._hex_to_bytes(engine_id),
+                                            fuzzable=True,
+                                        ),
+                                        Static("ContextName_Tag", b"\x04"),
+                                        Size(
+                                            "ContextName_Length",
+                                            "ContextName_Value",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        SmartString(
+                                            "ContextName_Value", context_name, fuzzable=True
+                                        ),
+                                        # InformRequest PDU (0xA6)
+                                        Static("PDU_Tag", b"\xa6"),
+                                        Size(
+                                            "PDU_Length",
+                                            "PDU_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "PDU_Content",
+                                            children=(
+                                                Static("RequestID_Tag", b"\x02\x04"),
+                                                DWord("RequestID", 800, endian=">", fuzzable=True),
+                                                Static("ErrorStatus", b"\x02\x01\x00"),
+                                                Static("ErrorIndex", b"\x02\x01\x00"),
+                                                Static("VarBindings_Tag", b"\x30"),
+                                                Size(
+                                                    "VarBindings_Length",
+                                                    "VarBindings_Content",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                Block(
+                                                    "VarBindings_Content",
+                                                    children=(
+                                                        # sysUpTime.0 (TimeTicks)
+                                                        Static("VarBind1_Tag", b"\x30"),
+                                                        Size(
+                                                            "VarBind1_Length",
+                                                            "VarBind1_Content",
+                                                            endian=">",
+                                                            output_format="binary",
+                                                            length=1,
+                                                            fuzzable=False,
+                                                        ),
+                                                        Block(
+                                                            "VarBind1_Content",
+                                                            children=(
+                                                                Static("OID1_Tag", b"\x06"),
+                                                                Size(
+                                                                    "OID1_Length",
+                                                                    "OID1_Value",
+                                                                    endian=">",
+                                                                    output_format="binary",
+                                                                    length=1,
+                                                                    fuzzable=False,
+                                                                ),
+                                                                SmartBytes(
+                                                                    "OID1_Value",
+                                                                    self._encode_oid(
+                                                                        "1.3.6.1.2.1.1.3.0"
+                                                                    ),
+                                                                    fuzzable=True,
+                                                                ),
+                                                                Static("Value1_Tag", b"\x43\x04"),
+                                                                DWord(
+                                                                    "Value1_Data",
+                                                                    12345,
+                                                                    endian=">",
+                                                                    fuzzable=True,
+                                                                ),
+                                                            ),
+                                                        ),
+                                                        # snmpTrapOID.0
+                                                        Static("VarBind2_Tag", b"\x30"),
+                                                        Size(
+                                                            "VarBind2_Length",
+                                                            "VarBind2_Content",
+                                                            endian=">",
+                                                            output_format="binary",
+                                                            length=1,
+                                                            fuzzable=False,
+                                                        ),
+                                                        Block(
+                                                            "VarBind2_Content",
+                                                            children=(
+                                                                Static("OID2_Tag", b"\x06"),
+                                                                Size(
+                                                                    "OID2_Length",
+                                                                    "OID2_Value",
+                                                                    endian=">",
+                                                                    output_format="binary",
+                                                                    length=1,
+                                                                    fuzzable=False,
+                                                                ),
+                                                                SmartBytes(
+                                                                    "OID2_Value",
+                                                                    self._encode_oid(
+                                                                        "1.3.6.1.6.3.1.1.4.1.0"
+                                                                    ),
+                                                                    fuzzable=True,
+                                                                ),
+                                                                Static("Value2_Tag", b"\x06"),
+                                                                Size(
+                                                                    "Value2_Length",
+                                                                    "Value2_Data",
+                                                                    endian=">",
+                                                                    output_format="binary",
+                                                                    length=1,
+                                                                    fuzzable=False,
+                                                                ),
+                                                                SmartBytes(
+                                                                    "Value2_Data",
+                                                                    self._encode_oid(
+                                                                        "1.3.6.1.4.1.0.1"
+                                                                    ),
+                                                                    fuzzable=True,
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # SNMPv3 Trap - SNMPv2-Trap PDU (0xA7) wrapped in v3 USM framing.
+        # Audit S8: missing PDU type enumeration. Traps are unsolicited and
+        # commonly exercise different parser paths than request PDUs.
+        trap_v3 = Request(
+            "SNMPv3_Trap",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize(
+                            "Message_Length",
+                            "SNMP_Content",
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x03"),
+                                Static("GlobalData_Tag", b"\x30"),
+                                Size(
+                                    "GlobalData_Length",
+                                    "GlobalData_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "GlobalData_Content",
+                                    children=(
+                                        Static("MessageID_Tag", b"\x02\x04"),
+                                        DWord("MessageID", 0x88888888, endian=">", fuzzable=True),
+                                        Static("MaxSize_Tag", b"\x02\x03"),
+                                        Byte("MaxSize_Prefix", 0x00),
+                                        Word("MaxSize", 65535, endian=">", fuzzable=True),
+                                        # Traps are not reportable
+                                        Static("MsgFlags_Tag", b"\x04\x01"),
+                                        Byte(
+                                            "MsgFlags",
+                                            0x01 if security_level >= 2 else 0x00,
+                                            fuzzable=True,
+                                        ),
+                                        Static("SecurityModel_Tag", b"\x02\x01"),
+                                        Byte("SecurityModel", security_model, fuzzable=True),
+                                    ),
+                                ),
+                                Static("SecurityParams_Tag", b"\x04"),
+                                Size(
+                                    "SecurityParams_Length",
+                                    "SecurityParams_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "SecurityParams_Content",
+                                    children=(
+                                        Static("USM_Sequence_Tag", b"\x30"),
+                                        Size(
+                                            "USM_Length",
+                                            "USM_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "USM_Content",
+                                            children=(
+                                                Static("EngineID_Tag", b"\x04"),
+                                                Size(
+                                                    "EngineID_Length",
+                                                    "EngineID_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "EngineID_Value",
+                                                    self._hex_to_bytes(engine_id),
+                                                    fuzzable=True,
+                                                ),
+                                                Static("EngineBoots_Tag", b"\x02\x04"),
+                                                DWord("EngineBoots", 1, endian=">", fuzzable=True),
+                                                Static("EngineTime_Tag", b"\x02\x04"),
+                                                DWord(
+                                                    "EngineTime", 12345, endian=">", fuzzable=True
+                                                ),
+                                                Static("UserName_Tag", b"\x04"),
+                                                Size(
+                                                    "UserName_Length",
+                                                    "UserName_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartString(
+                                                    "UserName_Value", username, fuzzable=True
+                                                ),
+                                                Static("AuthParams_Tag", b"\x04"),
+                                                Size(
+                                                    "AuthParams_Length",
+                                                    "AuthParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "AuthParams_Value",
+                                                    b"\x00" * 12,
+                                                    max_len=20,
+                                                    fuzzable=True,
+                                                ),
+                                                Static("PrivParams_Tag", b"\x04"),
+                                                Size(
+                                                    "PrivParams_Length",
+                                                    "PrivParams_Value",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                SmartBytes(
+                                                    "PrivParams_Value",
+                                                    b"\x00" * 8,
+                                                    max_len=16,
+                                                    fuzzable=True,
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                                Static("ScopedPDU_Tag", b"\x30"),
+                                Size(
+                                    "ScopedPDU_Length",
+                                    "ScopedPDU_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "ScopedPDU_Content",
+                                    children=(
+                                        Static("ContextEngineID_Tag", b"\x04"),
+                                        Size(
+                                            "ContextEngineID_Length",
+                                            "ContextEngineID_Value",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        SmartBytes(
+                                            "ContextEngineID_Value",
+                                            self._hex_to_bytes(engine_id),
+                                            fuzzable=True,
+                                        ),
+                                        Static("ContextName_Tag", b"\x04"),
+                                        Size(
+                                            "ContextName_Length",
+                                            "ContextName_Value",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        SmartString(
+                                            "ContextName_Value", context_name, fuzzable=True
+                                        ),
+                                        # SNMPv2-Trap PDU (0xA7)
+                                        Static("PDU_Tag", b"\xa7"),
+                                        Size(
+                                            "PDU_Length",
+                                            "PDU_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "PDU_Content",
+                                            children=(
+                                                Static("RequestID_Tag", b"\x02\x04"),
+                                                DWord("RequestID", 900, endian=">", fuzzable=True),
+                                                Static("ErrorStatus", b"\x02\x01\x00"),
+                                                Static("ErrorIndex", b"\x02\x01\x00"),
+                                                Static("VarBindings_Tag", b"\x30"),
+                                                Size(
+                                                    "VarBindings_Length",
+                                                    "VarBindings_Content",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                Block(
+                                                    "VarBindings_Content",
+                                                    children=(
+                                                        # sysUpTime.0 (TimeTicks)
+                                                        Static("VarBind1_Tag", b"\x30"),
+                                                        Size(
+                                                            "VarBind1_Length",
+                                                            "VarBind1_Content",
+                                                            endian=">",
+                                                            output_format="binary",
+                                                            length=1,
+                                                            fuzzable=False,
+                                                        ),
+                                                        Block(
+                                                            "VarBind1_Content",
+                                                            children=(
+                                                                Static("OID1_Tag", b"\x06"),
+                                                                Size(
+                                                                    "OID1_Length",
+                                                                    "OID1_Value",
+                                                                    endian=">",
+                                                                    output_format="binary",
+                                                                    length=1,
+                                                                    fuzzable=False,
+                                                                ),
+                                                                SmartBytes(
+                                                                    "OID1_Value",
+                                                                    self._encode_oid(
+                                                                        "1.3.6.1.2.1.1.3.0"
+                                                                    ),
+                                                                    fuzzable=True,
+                                                                ),
+                                                                Static("Value1_Tag", b"\x43\x04"),
+                                                                DWord(
+                                                                    "Value1_Data",
+                                                                    54321,
+                                                                    endian=">",
+                                                                    fuzzable=True,
+                                                                ),
+                                                            ),
+                                                        ),
+                                                        # snmpTrapOID.0
+                                                        Static("VarBind2_Tag", b"\x30"),
+                                                        Size(
+                                                            "VarBind2_Length",
+                                                            "VarBind2_Content",
+                                                            endian=">",
+                                                            output_format="binary",
+                                                            length=1,
+                                                            fuzzable=False,
+                                                        ),
+                                                        Block(
+                                                            "VarBind2_Content",
+                                                            children=(
+                                                                Static("OID2_Tag", b"\x06"),
+                                                                Size(
+                                                                    "OID2_Length",
+                                                                    "OID2_Value",
+                                                                    endian=">",
+                                                                    output_format="binary",
+                                                                    length=1,
+                                                                    fuzzable=False,
+                                                                ),
+                                                                SmartBytes(
+                                                                    "OID2_Value",
+                                                                    self._encode_oid(
+                                                                        "1.3.6.1.6.3.1.1.4.1.0"
+                                                                    ),
+                                                                    fuzzable=True,
+                                                                ),
+                                                                Static("Value2_Tag", b"\x06"),
+                                                                Size(
+                                                                    "Value2_Length",
+                                                                    "Value2_Data",
+                                                                    endian=">",
+                                                                    output_format="binary",
+                                                                    length=1,
+                                                                    fuzzable=False,
+                                                                ),
+                                                                SmartBytes(
+                                                                    "Value2_Data",
+                                                                    self._encode_oid(
+                                                                        "1.3.6.1.4.1.0.2"
+                                                                    ),
+                                                                    fuzzable=True,
+                                                                ),
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         # ==================== PHASE 1: BASELINE ====================
         # Engine discovery and authenticated operations for baseline coverage
         if self.is_request_enabled("SNMPv3_Baseline"):
@@ -1856,9 +2956,11 @@ class SNMPv3Fuzzer(BaseFuzzer):
             self.session.connect(auth_request)
 
         # ==================== PHASE 2: STANDARD OPERATIONS ====================
-        # Additional PDU types (GetNext, Set)
+        # Additional PDU types (GetNext, GetBulk, Inform, Set)
         if self.is_request_enabled("SNMPv3_Standard"):
             self.session.connect(get_next_request)
+            self.session.connect(get_bulk_request)
+            self.session.connect(inform_request)
             if enable_set:
                 self.session.connect(set_request)
 
@@ -1869,14 +2971,21 @@ class SNMPv3Fuzzer(BaseFuzzer):
             self.session.connect(report_request)
 
         # ==================== PHASE 4: USM TIMING/REPLAY ====================
-        # Engine boots/time manipulation to test replay protection
+        # Engine boots/time manipulation to test replay protection;
+        # explicit USM AuthParams/PrivParams Group mutation (CVE-2018-18066).
         if self.is_request_enabled("SNMPv3_CVE"):
             self.session.connect(timing_attack)
+            self.session.connect(usm_auth_fuzz)
 
         # ==================== PHASE 5: BOUNDARY ====================
         # Boundary value testing for all header fields
         if self.is_request_enabled("SNMPv3_Boundary"):
             self.session.connect(boundary_request)
+
+        # ==================== PHASE 5: TRAP ====================
+        # SNMPv2-Trap PDU wrapped in v3 USM framing
+        if self.is_request_enabled("SNMPv3_Trap"):
+            self.session.connect(trap_v3)
 
 
 __all__ = ["SNMPv3Fuzzer"]

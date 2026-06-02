@@ -342,6 +342,16 @@ class HL7Fuzzer(BaseFuzzer):
             ),
             # Phase 4: Boundary attacks (5m-10m)
             RequestInfo("HL7_Segment_Fuzzing", "Unknown/malformed segment types", "boundary"),
+            RequestInfo(
+                "HL7_Version_Sweep",
+                "MSH-12 HL7 v2.x version sweep (2.3/2.4/2.5/2.6/2.7/2.8)",
+                "boundary",
+            ),
+            RequestInfo(
+                "HL7_Z_Segment_Injection",
+                "Vendor-specific Z-segment injection mid-message",
+                "injection",
+            ),
             RequestInfo("HL7_Baseline", "Simple ACK message for connectivity test", "baseline"),
             # Phase 5: Deep fuzzing (10m+) - Full message type mutations
             RequestInfo("HL7_ADT_Messages", "ADT messages (admit, discharge, transfer)", "adt"),
@@ -956,6 +966,105 @@ class HL7Fuzzer(BaseFuzzer):
         )
 
         # =====================================================================
+        # ATTACK: HL7 v2.x Version Sweep (MSH-12)
+        # Different HL7 v2.x parsers (2.3 through 2.8) take different code
+        # paths based on the declared version in MSH-12. Sweeping the version
+        # field exercises per-version parsing logic in a single request.
+        # See ref/hl7/fuzzer.md recommendation 1.
+        # =====================================================================
+        version_sweep = Request(
+            "HL7_Version_Sweep",
+            children=(
+                Bytes("MLLP_Start", MLLP_START, fuzzable=False),
+                Block(
+                    "HL7_Message",
+                    children=(
+                        Static(
+                            "MSH_Start",
+                            f"MSH|^~\\&|{self.sending_app}|{self.sending_facility}|"
+                            f"{self.receiving_app}|{self.receiving_facility}|{timestamp}||"
+                            f"ADT^A01|{msg_ctrl_id}|{self.processing_id}|",
+                        ),
+                        # Sweep MSH-12 version across all v2.x revisions
+                        Group(
+                            "HL7_Version",
+                            values=[
+                                b"2.3",
+                                b"2.3.1",
+                                b"2.4",
+                                b"2.5",
+                                b"2.5.1",
+                                b"2.6",
+                                b"2.7",
+                                b"2.7.1",
+                                b"2.8",
+                                b"2.8.1",
+                                b"2.8.2",
+                            ],
+                        ),
+                        Static("Segment_Term", "\r"),
+                        Static("EVN", f"EVN|A01|{timestamp}\r"),
+                        Static("PID", "PID|1||12345^^^MRN||DOE^JOHN||19800101|M\r"),
+                    ),
+                ),
+                Bytes("MLLP_End", MLLP_END, fuzzable=False),
+            ),
+        )
+
+        # =====================================================================
+        # ATTACK: Z-Segment Injection (Vendor-Specific Segments)
+        # Z-segments (segment IDs starting with 'Z') are vendor-specific and
+        # most parsers must skip them gracefully. Injecting a malformed
+        # Z-segment mid-message catches parsers that don't handle unknown
+        # vendor segments cleanly. See ref/hl7/fuzzer.md recommendation 3.
+        # =====================================================================
+        z_segment_injection = Request(
+            "HL7_Z_Segment_Injection",
+            children=(
+                Bytes("MLLP_Start", MLLP_START, fuzzable=False),
+                Block(
+                    "HL7_Message",
+                    children=(
+                        # Valid MSH header
+                        Static(
+                            "MSH",
+                            f"MSH|^~\\&|{self.sending_app}|{self.sending_facility}|"
+                            f"{self.receiving_app}|{self.receiving_facility}|{timestamp}||"
+                            f"ADT^A01|{msg_ctrl_id}|{self.processing_id}|{self.hl7_version}\r",
+                        ),
+                        Static("EVN", f"EVN|A01|{timestamp}\r"),
+                        Static("PID", "PID|1||12345^^^MRN||DOE^JOHN||19800101|M\r"),
+                        # Inject a malformed Z-segment between PID and PV1
+                        Group(
+                            "Z_Segment",
+                            values=[
+                                # Well-formed Z-segments (parsers should skip)
+                                b"ZPI|1|VENDOR|DATA\r",
+                                b"ZPD|Patient|Custom|Data\r",
+                                b"ZVN|VendorName|1.0\r",
+                                # Malformed Z-segments (parser stress)
+                                b"Z\r",  # Single char ID
+                                b"ZZ\r",  # Two char ID
+                                b"ZZZZ|TooLong|ID\r",  # 4-char ID
+                                b"Z01|Numeric|Suffix\r",  # Numeric suffix
+                                b"ZPI\r",  # No fields
+                                b"ZPI|\r",  # Trailing separator only
+                                b"ZPI|" + b"A" * 5000 + b"\r",  # Oversized Z-segment
+                                b"ZPI|" + b"|".join([b"FIELD"] * 50) + b"\r",  # Many fields
+                                b"ZPI|\x00\x01\x02|BINARY\r",  # Binary data
+                                b"ZPI|MSH|^~\\&|NESTED\r",  # Nested MSH-like content
+                                b"ZPI|VENDOR\rPID|FAKE\r",  # Embedded segment terminator
+                                b"ZPI|VAL\r\r",  # Double terminator
+                            ],
+                        ),
+                        Static("PV1", "PV1|1|I|WEST^101^A^1^^^S|E\r"),
+                    ),
+                ),
+                Bytes("MLLP_End", MLLP_END, fuzzable=False),
+            ),
+        )
+
+        # =====================================================================
         # ATTACK: MLLP Frame Corruption
         # =====================================================================
         mllp_corruption = Request(
@@ -1135,10 +1244,18 @@ class HL7Fuzzer(BaseFuzzer):
         if self.is_request_enabled("HL7_Encoding_Chars"):
             self.session.connect(encoding_chars)
 
+        # Z-segment injection: vendor-specific segment handling stress test
+        if self.is_request_enabled("HL7_Z_Segment_Injection"):
+            self.session.connect(z_segment_injection)
+
         # ==================== PHASE 4: BOUNDARY ATTACKS (5m-10m) ====================
         # Malformed segments and field boundary testing
         if self.is_request_enabled("HL7_Segment_Fuzzing"):
             self.session.connect(segment_fuzzing)
+
+        # HL7 v2.x version sweep: exercises per-version parser code paths
+        if self.is_request_enabled("HL7_Version_Sweep"):
+            self.session.connect(version_sweep)
 
         # Baseline connectivity test (useful for validating target is still alive)
         if self.is_request_enabled("HL7_Baseline"):

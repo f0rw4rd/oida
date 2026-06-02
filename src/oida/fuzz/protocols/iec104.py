@@ -41,7 +41,7 @@ import time
 from enum import IntEnum
 from typing import List, Optional
 
-from boofuzz import Block, Byte, Bytes, DWord, Request, Size, Static, Word
+from boofuzz import Block, Byte, Bytes, DWord, Group, Request, Size, Static, Word
 
 from ..core.base_fuzzer import CommonState, RequestInfo
 from ..core.config import FuzzerConfig, ProtocolType
@@ -2026,6 +2026,41 @@ class IEC104Fuzzer(StatefulFuzzer):
                                     ),
                                 ),
                             ),
+                        ),
+                    ),
+                ),
+            )
+        )
+
+        # ASDU TypeId sweep: valid (1-127), reserved (128-135), vendor (136-255).
+        # Pair with a Common Address sweep across boundary values (0, 1, 0x7FFF,
+        # 0x8000, 0xFFFE, 0xFFFF) to catch parsers that hard-code CA==1 or
+        # mis-handle the reserved CA=0/broadcast CA=0xFFFF.
+        # Refs: cve_patterns.json#iec104-asdu-type-id-reserved,
+        #       cve_patterns.json#iec104-common-address-sweep.
+        self.session.connect(
+            Request(
+                "IEC104_ASDU_TypeId",
+                children=(
+                    create_apci_i_format_header("apci"),
+                    Block(
+                        "asdu_block",
+                        children=(
+                            Group(
+                                "ASDU.TypeId",
+                                values=[
+                                    bytes([n]) for n in list(range(1, 128)) + list(range(128, 256))
+                                ],
+                            ),
+                            Byte("vsq", 0x01, fuzzable=True),
+                            Word("cot", CauseOfTransmission.SPONTANEOUS, endian="<", fuzzable=True),
+                            Group(
+                                "ASDU.CommonAddress",
+                                values=[
+                                    struct.pack("<H", v) for v in (0, 1, 65534, 65535, 32767, 32768)
+                                ],
+                            ),
+                            create_info_object_single_point(0x000001, 0x01),
                         ),
                     ),
                 ),

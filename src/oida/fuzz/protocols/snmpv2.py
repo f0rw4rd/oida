@@ -7,7 +7,24 @@ Phase 2 (Standard): GetRequest, GetNextRequest, SetRequest, InformRequest
 Phase 3 (Boundary): MaxRepExtreme, ZeroVarBinds, integer/community boundary tests
 Phase 4 (Overflow): Malformed BER encoding, invalid tags
 Phase 5 (Trap): v2c Trap PDU
+
+Walk recursion cap
+==================
+GetNext-driven walks must be bounded. WALK_MAX_DEPTH (100) caps both:
+  - any future runtime GetNext loop (avoids unbounded recursion when an
+    agent returns a varbind cycle - see ref/snmp/cve_patterns.json
+    pattern id "snmpv2c-walk-recursion"), and
+  - the boofuzz Request.walk() tree traversal used by the benchmark
+    suite. Empty Block(children=()) nodes were the structural cause of
+    the original WALK_XFAIL recursion; the ZeroVarBinds request below
+    now encodes the empty VarBindings SEQUENCE as a single Static
+    (0x30 0x00) rather than a Block with no children.
 """
+
+# Maximum walk depth (GetNext chain length and Request.walk() tree depth).
+# Bounds GetNext-driven recursion per ref/snmp/cve_patterns.json
+# pattern "snmpv2c-walk-recursion".
+WALK_MAX_DEPTH = 100
 
 from boofuzz import Block, Byte, DWord, Request, Size, Static, Word
 
@@ -727,10 +744,11 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                         Byte("NonRepeaters", 0, fuzzable=True),
                                         Static("MaxRepetitions_Tag", b"\x02\x01"),
                                         Byte("MaxRepetitions", 10, fuzzable=True),
-                                        # Empty VarBindings (length = 0)
-                                        Static("VarBindings_Tag", b"\x30"),
-                                        Static("VarBindings_Length", b"\x00"),
-                                        Block("VarBindings_Content", children=()),
+                                        # Empty VarBindings SEQUENCE (tag 0x30, length 0).
+                                        # Encoded as a single Static rather than
+                                        # Block(children=()) — the latter triggers
+                                        # Request.walk() recursion (WALK_MAX_DEPTH guard).
+                                        Static("VarBindings", b"\x30\x00"),
                                     ),
                                 ),
                             ),

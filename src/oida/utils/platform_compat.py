@@ -51,53 +51,6 @@ IS_POSIX = os.name == "posix"
 
 
 # =============================================================================
-# Function Timeout
-# =============================================================================
-
-
-def timeout_wrapper(func: Callable, timeout: int, *args, **kwargs) -> Any:
-    """
-    Execute a function with a timeout.
-
-    Cross-platform implementation using threading instead of Unix signals.
-
-    Args:
-        func: Function to execute
-        timeout: Timeout in seconds
-        *args: Positional arguments for func
-        **kwargs: Keyword arguments for func
-
-    Returns:
-        Function result
-
-    Raises:
-        TimeoutError: If function doesn't complete within timeout
-    """
-    result = [None]
-    exception = [None]
-    completed = threading.Event()
-
-    def target():
-        try:
-            result[0] = func(*args, **kwargs)
-        except Exception as e:
-            exception[0] = e
-        finally:
-            completed.set()
-
-    thread = threading.Thread(target=target, daemon=True)
-    thread.start()
-
-    if not completed.wait(timeout):
-        raise TimeoutError(f"Function timed out after {timeout} seconds")
-
-    if exception[0] is not None:
-        raise exception[0]
-
-    return result[0]
-
-
-# =============================================================================
 # Temporary Directories
 # =============================================================================
 
@@ -404,27 +357,6 @@ def check_interface_exists(interface: str) -> bool:
 # =============================================================================
 # Cross-Platform Ping
 # =============================================================================
-
-
-def ping_host(host: str, count: int = 1, timeout: int = 1, ipv6: bool = False) -> bool:
-    """Ping a host using platform-appropriate flags.
-
-    Args:
-        host: IP address or hostname to ping
-        count: Number of ping packets
-        timeout: Timeout in seconds
-        ipv6: Use IPv6 ping
-
-    Returns:
-        True if host responded, False otherwise.
-    """
-    cmd = _build_ping_command(host, count, timeout, ipv6)
-    try:
-        result = subprocess.run(cmd, capture_output=True, timeout=timeout + 2)
-        return result.returncode == 0
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
-        logger.debug(f"Failed to get result: {e}")
-        return False
 
 
 def build_ping_command(

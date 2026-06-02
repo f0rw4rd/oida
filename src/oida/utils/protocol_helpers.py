@@ -409,6 +409,3 @@ def safe_int_conversion(value: Any, default: int = 0) -> int:
     except (ValueError, TypeError) as e:
         _logger.debug(f"Return value computation failed: {e}")
         return default
-
-
-from oida.utils.platform_compat import timeout_wrapper as timeout_wrapper  # noqa: F401

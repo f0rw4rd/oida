@@ -80,6 +80,9 @@ class ADSIndexGroups:
     IOIMAGE_RWOB = 0x0000F030  # Output image byte (%QB)
     PLCADS_IGRP_SYM_IDXO = 0x0000F014  # Symbol index offset
     AMS_ROUTER = 0x00000001  # AMS Router (CVE target)
+    SUMUP_READ = 0x0000F080  # Beckhoff SumUp Read (batch)
+    SUMUP_WRITE = 0x0000F081  # Beckhoff SumUp Write (batch)
+    SUMUP_READWRITE = 0x0000F082  # Beckhoff SumUp ReadWrite (batch)
 
 
 # ADS State values for WRITE_CONTROL
@@ -111,6 +114,128 @@ def _netid_to_bytes(netid_str: str) -> bytes:
     if len(parts) != 6:
         return b"\x7f\x00\x00\x01\x01\x01"
     return bytes(int(p) for p in parts)
+
+
+class ADSMonitor:
+    """ADS health monitor — sends READ_STATE and promotes ADS error codes to crash events.
+
+    Lazy-loaded subclass of ProtocolMonitor so we don't pull boofuzz/monitors at
+    module import time. Sends ADS READ_STATE (cmd 0x0004) and inspects the
+    AMS error_code field. Any non-zero AMS error (e.g. 0x70A = device port not
+    found, 0x6 = target port not found) is treated as a failed health check and
+    routed through the standard crash-tracker. Audit S6.
+    """
+
+    def __new__(
+        cls,
+        host: str,
+        target_netid: bytes,
+        source_netid: bytes,
+        target_ams_port: int = 851,
+        source_ams_port: int = 32768,
+        port: int = 48898,
+        timeout: float = 2.0,
+        check_interval: int = 10,
+        retry_count: int = 2,
+        failure_threshold: int = 2,
+    ):
+        # Lazy-build the real class so boofuzz/monitor deps stay deferred.
+        from ..monitors import ProtocolMonitor
+
+        class _ADSMonitor(ProtocolMonitor):
+            def __init__(
+                self,
+                host: str,
+                port: int,
+                target_netid: bytes,
+                source_netid: bytes,
+                target_ams_port: int,
+                source_ams_port: int,
+                timeout: float,
+                check_interval: int,
+                retry_count: int,
+                failure_threshold: int,
+            ):
+                super().__init__(
+                    host=host,
+                    port=port,
+                    timeout=timeout,
+                    check_interval=check_interval,
+                    retry_count=retry_count,
+                    failure_threshold=failure_threshold,
+                )
+                self._target_netid = target_netid
+                self._source_netid = source_netid
+                self._target_ams_port = target_ams_port
+                self._source_ams_port = source_ams_port
+
+            def _build_read_state(self) -> bytes:
+                ams_header = (
+                    self._target_netid
+                    + struct.pack("<H", self._target_ams_port)
+                    + self._source_netid
+                    + struct.pack("<H", self._source_ams_port)
+                    + struct.pack("<H", ADSCommandIDs.READ_STATE)
+                    + struct.pack("<H", 0x0004)
+                    + struct.pack("<I", 0)
+                    + struct.pack("<I", 0)
+                    + struct.pack("<I", 1)
+                )
+                tcp_header = struct.pack("<HI", 0, len(ams_header))
+                return tcp_header + ams_header
+
+            def _check_alive_once(self, fuzz_data_logger=None) -> bool:
+                import socket as _socket
+
+                sock = None
+                try:
+                    sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+                    sock.settimeout(self.timeout)
+                    sock.connect((self.host, self.port))
+                    sock.send(self._build_read_state())
+                    response = sock.recv(1024)
+                    if len(response) < 6 + 32:
+                        if fuzz_data_logger:
+                            fuzz_data_logger.log_fail(
+                                f"ADSMonitor: short response ({len(response)} bytes)"
+                            )
+                        return False
+                    # AMS error_code at offset 6 (TCP header) + 24 (within AMS header)
+                    error_code = struct.unpack_from("<I", response, 6 + 24)[0]
+                    if error_code != 0:
+                        # 0x70A = ROUTERERR_NOLOCKEDMEMORY, 0x06 = target port unknown, etc.
+                        if fuzz_data_logger:
+                            fuzz_data_logger.log_fail(
+                                f"ADSMonitor: ADS error code 0x{error_code:X}"
+                            )
+                        return False
+                    if not self.baseline_established:
+                        self.baseline_response = response
+                        self.baseline_established = True
+                    return True
+                except (TimeoutError, OSError) as e:
+                    if fuzz_data_logger:
+                        fuzz_data_logger.log_info(f"ADSMonitor: {e}")
+                    return False
+                finally:
+                    if sock is not None:
+                        try:
+                            sock.close()
+                        except OSError:
+                            pass
+
+        return _ADSMonitor(
+            host=host,
+            port=port,
+            target_netid=target_netid,
+            source_netid=source_netid,
+            target_ams_port=target_ams_port,
+            source_ams_port=source_ams_port,
+            timeout=timeout,
+            check_interval=check_interval,
+            retry_count=retry_count,
+            failure_threshold=failure_threshold,
+        )
 
 
 class ADSFuzzer(BaseFuzzer):
@@ -393,14 +518,18 @@ class ADSFuzzer(BaseFuzzer):
     def setup_custom_monitors(self) -> List:
         """Setup ADS-specific monitors.
 
-        TODO: Implement ADSMonitor that periodically sends ADS ReadState
-        (command_id=0x0004) to verify the target device is still responsive
-        and hasn't entered an error/shutdown state during fuzzing. This would
-        detect crashes that leave TCP alive but kill the ADS runtime.
+        Pairs the generic SocketHealthMonitor with an ADS-aware ADSMonitor that
+        sends READ_STATE and promotes AMS-level error codes (e.g. 0x70A) to
+        crash events. Catches crashes that leave TCP alive but kill the ADS
+        runtime. Audit S6.
         """
         from ..monitors import SocketHealthMonitor
 
         port = self.config.target_port or 48898
+        target_netid = _netid_to_bytes(self.config.get_option("target_ams_netid", "127.0.0.1.1.1"))
+        source_netid = _netid_to_bytes(self.config.get_option("source_ams_netid", "127.0.0.1.1.2"))
+        target_ams_port = self.config.get_option("target_ams_port", 851)
+        source_ams_port = self.config.get_option("source_ams_port", 32768)
         return [
             SocketHealthMonitor(
                 host=self.config.target_ip,
@@ -408,7 +537,19 @@ class ADSFuzzer(BaseFuzzer):
                 retry_count=3,
                 timeout=2,
                 failure_threshold=2,
-            )
+            ),
+            ADSMonitor(
+                host=self.config.target_ip,
+                port=port,
+                target_netid=target_netid,
+                source_netid=source_netid,
+                target_ams_port=target_ams_port,
+                source_ams_port=source_ams_port,
+                timeout=2.0,
+                check_interval=10,
+                retry_count=2,
+                failure_threshold=2,
+            ),
         ]
 
     def _define_protocol(self) -> None:
@@ -1361,6 +1502,127 @@ class ADSFuzzer(BaseFuzzer):
         )
 
         # ============================================================
+        # PHASE 5b: PORT ENUMERATION & BULK OPS (ref/ads/cve_patterns.json)
+        # ============================================================
+
+        # ADS_Port_Enumeration — cycle Beckhoff logical AMS ports on the READ
+        # command. Per-port parsers differ (851 PLC vs. 350 SystemService etc.)
+        # so this catches parser_oob bugs that only fire on specific ports.
+        # ref/ads/cve_patterns.json#ads-port-enumeration
+        ads_port_enumeration = Request(
+            "ADS_Port_Enumeration",
+            children=(
+                _create_tcp_header("AMS_Packet_PortEnum"),
+                Block(
+                    "AMS_Packet_PortEnum",
+                    children=(
+                        Static("Target_NetId", target_netid),
+                        Group(
+                            "AMS.TargetPort",
+                            values=[
+                                struct.pack("<H", 100),
+                                struct.pack("<H", 110),
+                                struct.pack("<H", 200),
+                                struct.pack("<H", 350),
+                                struct.pack("<H", 400),
+                                struct.pack("<H", 500),
+                                struct.pack("<H", 851),
+                                struct.pack("<H", 852),
+                                struct.pack("<H", 853),
+                                struct.pack("<H", 900),
+                            ],
+                        ),
+                        Static("Source_NetId", source_netid),
+                        Word("Source_Port", 32768, endian="<"),
+                        Word("Command_ID", ADSCommandIDs.READ, endian="<"),
+                        Word("StateFlags", 0x0004, endian="<", fuzzable=False),
+                        Size(
+                            "Data_Length",
+                            block_name="PortEnumReadData",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        DWord("Error_Code", 0, endian="<", fuzzable=False),
+                        DynamicDWord("Invoke_ID", lambda: self._next_invoke_id(), endian="<"),
+                        Block(
+                            "PortEnumReadData",
+                            children=(
+                                DWord(
+                                    "IndexGroup",
+                                    ADSIndexGroups.MEMORYBYTE,
+                                    endian="<",
+                                    fuzzable=False,
+                                ),
+                                DWord("IndexOffset", 0, endian="<", fuzzable=False),
+                                DWord("ReadLength", 4, endian="<", fuzzable=False),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # ADS_SumReadWrite — Beckhoff bulk-op. Wraps a SumUp ReadWrite over the
+        # READ_WRITE command with a fuzzable SubCommandCount field. Targets
+        # parsers that trust the count and walk the sub-request array.
+        # ref/ads/cve_patterns.json#ads-sumcommand
+        ads_sum_readwrite = Request(
+            "ADS_SumReadWrite",
+            children=(
+                _create_tcp_header("AMS_Packet_SumRW"),
+                Block(
+                    "AMS_Packet_SumRW",
+                    children=(
+                        _create_ams_header(ADSCommandIDs.READ_WRITE, "SumRWData"),
+                        Block(
+                            "SumRWData",
+                            children=(
+                                DWord(
+                                    "IndexGroup",
+                                    ADSIndexGroups.SUMUP_READWRITE,
+                                    endian="<",
+                                    fuzzable=False,
+                                ),
+                                # SubCommandCount goes in IndexOffset for SumUp ops
+                                Group(
+                                    "SumCommand.SubCommandCount",
+                                    values=[
+                                        struct.pack("<I", 0),
+                                        struct.pack("<I", 1),
+                                        struct.pack("<I", 100),
+                                        struct.pack("<I", 1000),
+                                        struct.pack("<I", 65535),
+                                    ],
+                                ),
+                                DWord("ReadLength", 16, endian="<", fuzzable=False),
+                                DWord("WriteLength", 16, endian="<", fuzzable=False),
+                                # Two sub-requests: each (IndexGroup, IndexOffset, Length) = 12B
+                                DWord(
+                                    "Sub1_IndexGroup",
+                                    ADSIndexGroups.MEMORYBYTE,
+                                    endian="<",
+                                    fuzzable=False,
+                                ),
+                                DWord("Sub1_IndexOffset", 0, endian="<", fuzzable=False),
+                                DWord("Sub1_Length", 4, endian="<", fuzzable=False),
+                                DWord(
+                                    "Sub2_IndexGroup",
+                                    ADSIndexGroups.DATA,
+                                    endian="<",
+                                    fuzzable=False,
+                                ),
+                                DWord("Sub2_IndexOffset", 0, endian="<", fuzzable=False),
+                                DWord("Sub2_Length", 4, endian="<", fuzzable=False),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # ============================================================
         # ADS/AMS AUTHENTICATION REQUESTS
         # ADS doesn't have built-in authentication, but route manipulation
         # and some operations can be protected at the PLC level
@@ -1648,6 +1910,8 @@ class ADSFuzzer(BaseFuzzer):
             self.session.connect(ads_read)
             self.session.connect(ads_read_memory)
             self.session.connect(ads_read_io)
+            self.session.connect(ads_port_enumeration)
+            self.session.connect(ads_sum_readwrite)
 
         if self.is_request_enabled("ADS_Notification"):
             self.session.connect(ads_add_notification)

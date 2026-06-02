@@ -1190,6 +1190,36 @@ class MMSFuzzer(BaseFuzzer):
             ),
         )
 
+        # BER outer-tag confusion - swap SEQUENCE (0x30) for SET / context-specific tags.
+        # High-yield ASN.1 parser bug class: decoders that assume SEQUENCE often
+        # mis-dispatch on SET (0x31), primitive context tags (0x80), or
+        # constructed context tags (0xA0/0xA1) and over/under-read the body.
+        # See ref/mms/cve_patterns.json#mms-asn1-tag-confusion.
+        ber_tag_confusion_template = self._create_read_request()
+        ber_tag_confusion_body = (
+            encode_ber_length(len(ber_tag_confusion_template)) + ber_tag_confusion_template
+        )
+        ber_tag_confusion_req = Request(
+            name="ber_tag_confusion",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x10"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Group(
+                    name="outer_sequence_tag",
+                    values=[
+                        b"\x30",  # SEQUENCE (baseline, valid)
+                        b"\x31",  # SET (constructed)
+                        b"\x80",  # [0] primitive context-specific
+                        b"\xa0",  # [0] constructed context-specific
+                        b"\xa1",  # [1] constructed context-specific
+                        b"\xc0",  # [0] primitive private
+                        b"\xe0",  # [0] constructed private
+                    ],
+                ),
+                Static(name="ber_tag_confusion_body", default_value=ber_tag_confusion_body),
+            ),
+        )
+
         # OSI layer attacks are defined in _add_osi_layer_tests()
         # They will be added inline for proper ordering
 
@@ -1557,6 +1587,7 @@ class MMSFuzzer(BaseFuzzer):
         if self.is_request_enabled("MMS_ASN1_Attacks"):
             self.session.connect(asn1_req)
             self.session.connect(nested_depth_attack)
+            self.session.connect(ber_tag_confusion_req)
 
         # OSI layer attacks (COTP, Session, Presentation, ACSE)
         if self.is_request_enabled("MMS_OSI_Layer"):
