@@ -348,8 +348,12 @@ class ModbusPassiveListener(PySharkListenerBase):
             )
             return
 
-        # Determine direction: request (to port 502) or response (from port 502)
-        if dst_port == 502:
+        # Determine direction. Modbus-TCP defaults to port 502 but the spec
+        # allows any TCP port — gateways and security devices commonly relay
+        # over non-standard ports. Use the canonical port if either side has
+        # it; otherwise fall back to "lower port wins" (server side has the
+        # smaller fixed port; client side has an ephemeral high port).
+        if dst_port == 502 or (dst_port != 502 and src_port != 502 and dst_port < src_port):
             # Request: src is client, dst is server
             client_ip = src_ip
             server_ip = dst_ip
@@ -492,7 +496,11 @@ class ModbusPassiveListener(PySharkListenerBase):
         silently dropped.
         """
         now = datetime.now().isoformat()
-        direction = "request" if dst_port == 502 else "response"
+        # Direction: same lower-port-wins fallback as the main path.
+        is_request_dir = dst_port == 502 or (
+            dst_port != 502 and src_port != 502 and dst_port < src_port
+        )
+        direction = "request" if is_request_dir else "response"
         details: Dict[str, Any] = {
             "unit_id": unit_id,
             "function_code": "?",
@@ -519,7 +527,7 @@ class ModbusPassiveListener(PySharkListenerBase):
         )
 
         # Still update session and devices for visibility
-        if dst_port == 502:
+        if is_request_dir:
             client_ip, server_ip = src_ip, dst_ip
             client_mac, server_mac = src_mac, dst_mac
         else:

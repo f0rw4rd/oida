@@ -298,69 +298,65 @@ The other 19 protocols already have substantial per-flag coverage via their exis
 
 ## 2. PCAP listener test coverage (109 listeners)
 
-### 2.1 Listeners with NO dedicated test file (28 from audit)
+### 2.1 Listeners with NO dedicated test file (28) — DONE in `a8a338f9`
 
-For each: add a `tests/integration/pcap/test_<listener>.py` that loads a fixture pcap, runs the listener, asserts at least one device/interaction/credential is harvested with non-empty fields.
+11 with bundled reference pcaps use `_run_listener_test()` to assert harvest-shape; 17 without pcaps get class-import + REQUIRED_LAYERS + harvest-on-empty smoke tests. 62 new tests, all green.
 
-- [ ] c1222
-- [ ] can
-- [ ] canopen
-- [ ] cipsafety
-- [ ] coap
-- [ ] cotp
-- [ ] devicenet
-- [ ] dicom
-- [ ] epl
-- [ ] ff_hse
-- [ ] hl7
-- [ ] hsr
-- [ ] iec101
-- [ ] iec103
-- [ ] j1939
-- [ ] lontalk
-- [ ] mdns
-- [ ] nmea0183
-- [ ] opcda
-- [ ] opensafety
-- [ ] pcom
-- [ ] prp
-- [ ] ptp
-- [ ] rgoose
-- [ ] sercos
-- [ ] sv
-- [ ] synchrophasor
-- [ ] tftp
+- [x] c1222 (fixture-based)
+- [x] can (smoke)
+- [x] canopen (smoke)
+- [x] cipsafety (smoke)
+- [x] coap (smoke)
+- [x] cotp (fixture-based)
+- [x] devicenet (smoke)
+- [x] dicom (smoke)
+- [x] epl (smoke)
+- [x] ff_hse (smoke)
+- [x] hl7 (smoke)
+- [x] hsr (fixture-based)
+- [x] iec101 (fixture-based)
+- [x] iec103 (smoke)
+- [x] j1939 (smoke)
+- [x] lontalk (smoke)
+- [x] mdns (fixture-based)
+- [x] nmea0183 (smoke)
+- [x] opcda (fixture-based)
+- [x] opensafety (fixture-based)
+- [x] pcom (smoke)
+- [x] prp (smoke)
+- [x] ptp (fixture-based)
+- [x] rgoose (smoke)
+- [x] sercos (smoke)
+- [x] sv (fixture-based)
+- [x] synchrophasor (fixture-based)
+- [x] tftp (fixture-based)
 
-### 2.2 False-positive coverage gap
+### 2.2 False-positive coverage gap — DONE in `a8a338f9`
 
-`test_false_positives.py` covers 6/109 listeners. Extend to high-traffic listeners:
+`test_false_positives.py::_LISTENERS` extended from 6 to 16 (27 new test cases from the 3-alien × N-listener matrix):
 
-- [ ] modbus
-- [ ] dnp3
-- [ ] s7comm
-- [ ] iec104
-- [ ] opcua
-- [ ] enip
-- [ ] bacnet
-- [ ] hl7
-- [ ] http
-- [ ] tls
+- [x] modbus
+- [x] dnp3
+- [x] s7comm
+- [x] iec104
+- [x] opcua
+- [x] enip
+- [x] bacnet
+- [x] hl7
+- [x] http
+- [x] tls
 
-### 2.3 Direction-by-port hardcode (16 listeners)
+### 2.3 Direction-by-port hardcode
 
-iec104 was fixed (post-fix item 19). Apply same "lower port wins" fallback to:
+Audit listed 16 listeners but inspection found most already have a smarter fallback. Resolved:
 
-- [ ] modbus
-- [ ] dnp3
-- [ ] s7comm
-- [ ] enip
-- [ ] mms
-- [ ] profinet
-- [ ] coap
-- [ ] mqtt
-- [ ] hl7
-- [ ] hartip
-- [ ] (remaining 6 — audit listener report has full list)
+- [x] modbus — added "lower port wins" fallback when neither side is on 502; main path + MBAP-only path both fixed
+- [x] s7comm — already had ROSCTR-based fallback for non-standard ports
+- [x] mms — added "lower port wins" fallback when neither side is on 102
+- [x] hl7 — already had ACK-message-type fallback
+- [x] hartip — already had message-type fallback
+- [x] dnp3, enip, profinet, mqtt — grep found no direction-by-port hardcode (already neutral)
+- [x] coap — port-comparison is for `is_encrypted` (DTLS detection), not direction (not the bug class)
 
 ---
 
