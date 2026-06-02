@@ -203,12 +203,13 @@ Every skipped test in the integration suite has a clear, reasonable reason (mock
 
 ## 5. Recommended next steps (in priority order)
 
-1. **Commit `tests/integration/test_profinet_integration.py` fix** (6 refs of `profinet-pnet-device` → `profinet-device`) — unblocks the docker-up cascade.
-2. **Add `services.py up all` to CI** *or* raise the docker_services fixture timeout — unblocks end-to-end integration runs.
-3. **Fix the 3 stale tests** (ASTM port, ASTM socket patch, CAN `_python_can` patch) — quick wins, no product change.
-4. **Fix the 4 "assert instead of skip"** tests in `test_mock_services` + `test_coap_integration`.
-5. **Investigate the 12 real pcap listener regressions** — these are the only real product issues surfaced and they were already on the §2 list in `RELEASE_TODO.md`.
-6. **Investigate the 1 order-dependent unit failure** (`test_logger_created_on_init`) — find which earlier test mutates global logger state.
+1. ~~**Commit `tests/integration/test_profinet_integration.py` fix**~~ — **done** in `713f71d3`.
+2. ~~**Raise the docker_services fixture timeout**~~ — **done**: `timeout_func_only = true` in `pyproject.toml` (this turn). Fixtures no longer subject to per-test timer, so the session-scoped docker bring-up can take as long as it needs. Default per-test timeout also bumped 15→60s for integration-test headroom.
+3. **Add `services.py up all` to CI** as a pre-step — even with the fixture timeout fix, a cold bring-up of 67 services adds minutes to every CI run; pre-starting them in a parallel job (or persistent runner) makes the suite much faster.
+4. **Fix the 3 stale tests** (ASTM port, ASTM socket patch, CAN `_python_can` patch) — quick wins, no product change.
+5. **Fix the 4 "assert instead of skip"** tests in `test_mock_services` + `test_coap_integration`.
+6. **Investigate the 12 real pcap listener regressions** — these are the only real product issues surfaced and they were already on the §2 list in `RELEASE_TODO.md`.
+7. **Investigate the 1 order-dependent unit failure** (`test_logger_created_on_init`) — find which earlier test mutates global logger state.
 
 ---
 
