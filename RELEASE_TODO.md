@@ -43,7 +43,7 @@ This is the long list. Cross-references:
 
 ### Still open (orthogonal to pcap)
 
-- [ ] **Full unit suite: 0 timeouts at 60s**, 1 order-dependent failure (`test_logger_created_on_init` — passes in isolation, fails when integration conftest loads first)
+- [x] `test_logger_created_on_init` test pollution — fixed in `13da0e1e` (`tests/unit/knx/test_helpers.py` now snapshots+restores `sys.modules` to avoid leaking a Mock-replaced `ics_logger` into later test files)
 
 ---
 
@@ -377,7 +377,7 @@ Reference pattern: iec104. Applied to:
 - [x] Document 9 reserved short letters in `STYLE_GUIDE.md` ("CLI short-flag conventions" table)
 - [x] Resolve ethercat `-p = --eeprom-parse` (was the most dangerous collision)
 - [x] Resolve fhir `-p = --search-patients` (consistency)
-- [ ] `-u` — kept per-protocol (modbus=unit-id, coap=psk-identity, snmp=snmp-user); documented as exceptions in STYLE_GUIDE
+- [x] `-u` — kept per-protocol (modbus=unit-id, coap=psk-identity, snmp=snmp-user); documented as exceptions in STYLE_GUIDE.md ("CLI short-flag conventions" table) — closed: documentation IS the resolution
 
 ### 3.3 `proto_args_factory` migration (6 holdouts) — DEFERRED post-1.0
 
@@ -531,6 +531,7 @@ Tracked as a separate refactor:
 - [x] `ARCHITECTURE.md`: post-`0b4dd4c4` proto_logger contract reflected in `connection.py` docstrings (verified)
 - [ ] `new-protocol.md` walkthrough — operator-decision item; defer to a dedicated audit
 - [ ] `snmp-tools-comparison.md` — operator-decision item; defer
+- [x] `docs/snmp-tools-comparison.md` migrated to `f0rw4rd/oida-website/src/content/docs/operator-guides/` with Starlight frontmatter; local copy deleted
 - [x] `/tmp/oida_review_*.md` audit files — files don't exist in current environment (lost since the audit pass); the content lives in `RELEASE_READINESS.md`
 - [x] `STYLE_GUIDE.md` — CLI short-flag conventions table added in `fa61b286`
 
