@@ -383,6 +383,26 @@ class ADSScanner(NetworkScanner):
 | Lazy imports | _name | `_pyads`, `_asyncua` |
 | Lazy getters | _get_name | `_get_pyads()`, `_get_c104()` |
 
+### CLI short-flag conventions
+
+Short flags collide across protocols. Reserve these short letters for the listed
+meanings *only* and use the long form for everything else:
+
+| Short | Reserved meaning | Notes |
+|-------|------------------|-------|
+| `-p`  | `--port` (network) | Never use `-p` for anything else. `pcap --protocols` is OK only because pcap is a discovery/analysis tool with no port concept. |
+| `-u`  | `--unit-id` (modbus only) | Protocols with no unit/slave concept must not use `-u`. snmp uses `-u` for `--snmp-user` for SNMPv3 USM compatibility; coap uses `-u` for `--psk-identity` because the RFC term is "PSK identity". These are documented exceptions, not models. |
+| `-P`  | `--password` | Lowercase `-p` is always port; uppercase `-P` is always password. |
+| `-U`  | `--user` / `--username` | |
+| `-i`  | iteration / index when protocol-meaningful | not for `--interface` (use `--iface`/`--interface` long form to avoid ambiguity with iteration/index counters). |
+| `-r`  | range (port range, register range, etc.) | Never `--read`. |
+| `-T`  | `--timeout` | Lowercase `-t` is free for threads/targets. |
+| `-W`  | `--wordlist` | If a protocol has both a wordlist and a workers count, only the wordlist gets `-W`; workers uses `--workers` long form. |
+| `-d`  | `--debug` (verbosity) | Never `--device`. |
+
+When in doubt, **omit the short flag** — long form is always available and avoids
+training users on conflicting muscle memory across protocols.
+
 ---
 
 ## File Organization

@@ -66,22 +66,18 @@ class mms(NetworkConnection):
             return
 
         info = self.results["data"].get("device_info", {})
-        port = getattr(self.args, "port", 102)
 
-        if info.get("vendor") or info.get("model"):
-            # create_conn_obj() already emitted the connection-success banner;
-            # use display() to avoid a redundant success line.
-            self.logger.display(f"MMS/IEC 61850: {self.host}:{port}")
-            if info.get("vendor"):
-                self.logger.display(f"    Vendor: {info['vendor']}")
-            if info.get("model"):
-                self.logger.display(f"    Model: {info['model']}")
-            if info.get("revision"):
-                self.logger.display(f"    Revision: {info['revision']}")
-            if info.get("logical_device_count"):
-                self.logger.display(f"    Logical Devices: {info['logical_device_count']}")
-        else:
-            self.logger.display(f"MMS/IEC 61850: {self.host}:{port}")
+        # create_conn_obj() already emitted "Connected to MMS device at host:port";
+        # skip the redundant "MMS/IEC 61850: host:port" repeat and just print the
+        # additional vendor/model/revision details.
+        if info.get("vendor"):
+            self.logger.display(f"    Vendor: {info['vendor']}")
+        if info.get("model"):
+            self.logger.display(f"    Model: {info['model']}")
+        if info.get("revision"):
+            self.logger.display(f"    Revision: {info['revision']}")
+        if info.get("logical_device_count"):
+            self.logger.display(f"    Logical Devices: {info['logical_device_count']}")
 
     def _execute_scan(self):
         """Execute MMS scanning"""
