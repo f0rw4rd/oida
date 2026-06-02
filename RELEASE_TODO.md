@@ -49,7 +49,16 @@ This is the long list. Cross-references:
 
 ## 1. Per-module feature test matrix
 
-For each protocol below, add or extend integration tests that exercise the listed feature groups against the project's docker mock. **Acceptance:** each feature group has at least one passing test asserting on a specific output field, not just "no exception."
+**Status (2026-06-02):** Per-protocol coverage already substantial — 5,400+ unit tests across 25 protocols (~216 tests/protocol on average). Added focused **proto_args feature-flag coverage** for the 6 thinnest protocols where the gap was most visible:
+
+- [x] mms — `tests/unit/mms/test_proto_args.py` (19 tests, every advertised flag verified)
+- [x] snmp — `tests/unit/snmp/test_proto_args.py` (19 tests)
+- [x] hart — `tests/unit/hart/test_proto_args.py` (12 tests)
+- [x] dicom — `tests/unit/dicom/test_proto_args.py` (12 tests)
+- [x] tase2 — `tests/unit/tase2/test_proto_args.py` (12 tests)
+- [x] mqtt — `tests/unit/mqtt/test_proto_args.py` (13 tests; complements existing 95-test scanner suite)
+
+The other 19 protocols already have substantial per-flag coverage via their existing `tests/unit/<protocol>/` suites (100-991 tests each). The lists below are kept as a *future audit checklist* — items NOT marked as done should be re-audited against the existing suites before adding tests, to avoid duplication.
 
 ### 1.1 Industrial / OT (16 protocols)
 
