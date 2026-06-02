@@ -20,7 +20,9 @@ class TestCIPSafetyPassiveSmoke:
         import oida.pcap.passive.cipsafety as mod
 
         cls = getattr(mod, "CIPSafetyPassiveListener", None)
-        assert cls is not None, "CIPSafetyPassiveListener not exported from oida.pcap.passive.cipsafety"
+        assert cls is not None, (
+            "CIPSafetyPassiveListener not exported from oida.pcap.passive.cipsafety"
+        )
 
     def test_required_layers_set(self):
         from oida.pcap.passive.cipsafety import CIPSafetyPassiveListener

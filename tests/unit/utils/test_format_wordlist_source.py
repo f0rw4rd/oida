@@ -5,8 +5,6 @@ path to logs would fail this test immediately, rather than silently leak
 operator filesystem layout / client context to every JSON log line.
 """
 
-import pytest
-
 from oida.utils.login_scanner import format_wordlist_source
 
 
@@ -42,10 +40,7 @@ class TestFormatWordlistSource:
         assert format_wordlist_source(None, default_label="vendor defaults") == "vendor defaults"
 
     def test_basename_with_spaces_preserved(self):
-        assert (
-            format_wordlist_source("/tmp/Client Engagement/test list.txt")
-            == "test list.txt"
-        )
+        assert format_wordlist_source("/tmp/Client Engagement/test list.txt") == "test list.txt"
 
     def test_basename_with_extension_chain_preserved(self):
         assert format_wordlist_source("/tmp/list.txt.gz") == "list.txt.gz"

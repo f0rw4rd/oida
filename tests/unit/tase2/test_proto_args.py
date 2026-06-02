@@ -2,7 +2,6 @@
 
 import argparse
 
-import pytest
 
 from oida.protocols.tase2.proto_args import proto_args
 

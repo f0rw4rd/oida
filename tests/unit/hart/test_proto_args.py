@@ -2,7 +2,6 @@
 
 import argparse
 
-import pytest
 
 from oida.protocols.hart.proto_args import proto_args
 

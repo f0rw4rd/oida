@@ -144,7 +144,9 @@ class CoeOpsMixin(_ScannerBase):
                         data = slave.sdo_read(idx, 0)
                         read_ok = True
                     except Exception as e:
-                        self.logger.debug(f"EtherCAT CoE: sdo_read failed for index 0x{idx:04X}: {e}")
+                        self.logger.debug(
+                            f"EtherCAT CoE: sdo_read failed for index 0x{idx:04X}: {e}"
+                        )
 
                     if read_ok and data is not None:
                         # Readable - test write access by writing same value back

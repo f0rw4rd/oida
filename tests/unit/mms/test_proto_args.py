@@ -7,7 +7,6 @@ the expected name and default value.  Mirrors the pattern in
 
 import argparse
 
-import pytest
 
 from oida.protocols.mms.proto_args import proto_args
 

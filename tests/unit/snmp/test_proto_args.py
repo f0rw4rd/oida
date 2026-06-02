@@ -2,7 +2,6 @@
 
 import argparse
 
-import pytest
 
 from oida.protocols.snmp.proto_args import proto_args
 

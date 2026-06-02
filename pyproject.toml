@@ -16,11 +16,12 @@ maintainers = [
 ]
 keywords = ["ics", "scada", "industrial", "security", "pentesting", "modbus", "opcua", "ethercat"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
     "Topic :: Security",
-    "Topic :: System :: Networking", 
+    "Topic :: System :: Networking",
+    "Topic :: System :: Networking :: Monitoring",
     "Topic :: Software Development :: Testing",
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3",
@@ -105,6 +106,8 @@ docs = [
 "Bug Reports" = "https://github.com/f0rw4rd/oida/issues"
 "Source" = "https://github.com/f0rw4rd/oida"
 "Documentation" = "https://github.com/f0rw4rd/oida/blob/main/README.md"
+"Changelog" = "https://github.com/f0rw4rd/oida/blob/main/CHANGELOG.md"
+"Security" = "https://github.com/f0rw4rd/oida/blob/main/SECURITY.md"
 
 [project.scripts]
 oida = "oida.cli:main"
@@ -255,6 +258,9 @@ markers = [
     "binary: PyInstaller binary smoke tests (requires dist/oida)",
     "integration_fuzzers: integration tests for fuzz protocol definitions",
     "coverage: nightly real-coverage suite (tests/coverage/), needs docker mocks",
+    "cve_replication: axis-2 CVE-replication tests (run against compose.cve.yml)",
+    "fidelity: axis-3 Conpot-vs-Python-mock fidelity diff",
+    "mock_services: tests that need a docker mock running on a specific port",
 ]
 
 [tool.coverage.run]

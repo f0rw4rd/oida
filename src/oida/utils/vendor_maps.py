@@ -1,4 +1,3 @@
-
 # Update 06.11.2023 from https://raw.githubusercontent.com/wireshark/wireshark/master/epan/dissectors/packet-cip.c
 ethernetip_vendor_ids = {
     1: "Rockwell Automation/Allen-Bradley",
