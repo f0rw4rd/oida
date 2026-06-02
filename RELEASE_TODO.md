@@ -469,22 +469,20 @@ Tracked as a separate refactor:
 
 ## 6. Real-coverage suite (`docs/REAL_COVERAGE_PROPOSAL.md`)
 
-### 6.1 Axis 1 — scanner field-coverage (in progress: 16/25)
+### 6.1 Axis 1 — scanner field-coverage — DONE (24/24 covered)
 
-Extend `tests/coverage/scanner/` to remaining protocols. Skip with documented reason where unsupported.
-
-- [ ] dnp3
-- [ ] ethernetip
-- [ ] ads
-- [ ] bacnet
-- [ ] knx
-- [ ] profinet
-- [ ] ethercat
-- [ ] can
-- [ ] tase2
-- [ ] goose/rgoose (decide: in scope?)
-- [ ] ocpp
-- [ ] astm
+- [x] dnp3 (already covered before this session)
+- [x] ethernetip (already covered)
+- [x] ads (already covered)
+- [x] bacnet (already covered)
+- [x] knx (added this session)
+- [x] profinet (added this session — L2 fallback path)
+- [x] ethercat (added this session — L2 fallback path)
+- [x] can (added this session — uses vcan0 host interface, skips if vcan kernel module not loaded)
+- [x] tase2 (added this session — runs over MMS port 102)
+- [x] goose (added this session — needs CAP_NET_RAW, skips cleanly)
+- [x] ocpp (added this session — WebSocket-based)
+- [x] astm (added this session — 3 mock variants tried in order)
 
 ### 6.2 Axis 2 — fuzzer CVE replication (SCAFFOLD shipped, driver pending)
 

@@ -596,3 +596,210 @@ def test_hart_coverage(coverage_results_dir):
         identify=True,
     )
     assert semantic_hit
+
+
+# ---------------------------------------------------------------------------
+# Stretch protocols added 2026-06-02 — fill RELEASE_TODO §6.1 gap.
+# Each test follows the same pattern: ensure the optional dep, find a
+# reachable mock, run the scanner, assert a semantic hit was recorded.
+# Tests skip cleanly when the mock isn't up; they're not meant to be
+# part of the default PR sweep (marker: coverage).
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.coverage
+def test_knx_coverage(coverage_results_dir):
+    """KNX scanner coverage against knx-calimero / knx-devices."""
+    ensure_protocol_dep("xknx")
+    host, port, target_name = container_target(
+        ("knx-calimero", 3671),
+        ("knx-devices", 3671),
+    )
+
+    from oida.protocols.knx.nxc_connection import knx
+
+    semantic_hit, _ = _run_and_record(
+        "knx",
+        knx,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        discover=True,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_profinet_coverage(coverage_results_dir):
+    """PROFINET scanner coverage against profinet-device (Layer-2)."""
+    ensure_protocol_dep("profinet_py")
+    # PROFINET is L2 (no TCP port); container_target will look up the
+    # interface from container metadata. Skip if container is down.
+    host, port, target_name = container_target(
+        ("profinet-device", 0),
+    )
+
+    from oida.protocols.profinet.nxc_connection import profinet
+
+    semantic_hit, _ = _run_and_record(
+        "profinet",
+        profinet,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        identify=True,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_ethercat_coverage(coverage_results_dir):
+    """EtherCAT scanner coverage against ethercat-slave-veth (Layer-2)."""
+    ensure_protocol_dep("pysoem")
+    host, port, target_name = container_target(
+        ("ethercat-slave-veth", 0),
+    )
+
+    from oida.protocols.ethercat.nxc_connection import ethercat
+
+    semantic_hit, _ = _run_and_record(
+        "ethercat",
+        ethercat,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        info=True,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_can_coverage(coverage_results_dir):
+    """CAN scanner coverage — needs a vcan interface, not a docker mock."""
+    ensure_protocol_dep("can")
+    # CAN doesn't have a docker mock — it needs a virtual CAN interface
+    # on the host (`sudo modprobe vcan && sudo ip link add dev vcan0 type vcan`).
+    # Skip when vcan0 isn't present.
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["ip", "link", "show", "vcan0"], capture_output=True, timeout=2, text=True
+        )
+        if out.returncode != 0:
+            pytest.skip("vcan0 not available (load vcan kernel module + add interface)")
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pytest.skip("`ip` command not available")
+
+    from oida.protocols.can.nxc_connection import can
+
+    semantic_hit, _ = _run_and_record(
+        "can",
+        can,
+        "vcan0",
+        0,
+        "vcan0",
+        coverage_results_dir,
+        sniff_time=2,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_tase2_coverage(coverage_results_dir):
+    """TASE.2 (IEC 60870-6) scanner coverage — runs over MMS port 102."""
+    ensure_protocol_dep("pyiec61850")
+    host, port, target_name = container_target(
+        ("mms-libiec61850", 102),
+    )
+
+    from oida.protocols.tase2.nxc_connection import tase2
+
+    semantic_hit, _ = _run_and_record(
+        "tase2",
+        tase2,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        discover_vcc=True,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_goose_coverage(coverage_results_dir):
+    """GOOSE scanner coverage against goose-l2-publisher (Layer-2)."""
+    # GOOSE needs raw-socket capability; skip if missing rather than fail.
+    from oida.utils.permissions import check_raw_socket_capability
+
+    has_cap, msg = check_raw_socket_capability()
+    if not has_cap:
+        pytest.skip(f"GOOSE needs CAP_NET_RAW: {msg}")
+
+    host, port, target_name = container_target(
+        ("goose-l2-publisher", 0),
+    )
+
+    from oida.protocols.goose.nxc_connection import goose
+
+    semantic_hit, _ = _run_and_record(
+        "goose",
+        goose,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        sniff=True,
+        sniff_time=2,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_ocpp_coverage(coverage_results_dir):
+    """OCPP (Open Charge Point Protocol) scanner coverage against ocpp-insecure."""
+    ensure_protocol_dep("websockets")
+    host, port, target_name = container_target(
+        ("ocpp-insecure", 9000),
+    )
+
+    from oida.protocols.ocpp.nxc_connection import ocpp
+
+    semantic_hit, _ = _run_and_record(
+        "ocpp",
+        ocpp,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        boot=True,
+    )
+    assert semantic_hit
+
+
+@pytest.mark.coverage
+def test_astm_coverage(coverage_results_dir):
+    """ASTM/E1394 scanner coverage against astm-mock (port 12000)."""
+    # ASTM scanner uses stdlib socket only — no optional dep gate needed.
+    host, port, target_name = container_target(
+        ("astm-mock", 12000),
+        ("astm-hematology", 12000),
+        ("astm-data", 12000),
+    )
+
+    from oida.protocols.astm import astm
+
+    semantic_hit, _ = _run_and_record(
+        "astm",
+        astm,
+        host,
+        port,
+        target_name,
+        coverage_results_dir,
+        version_probe=True,
+    )
+    assert semantic_hit
