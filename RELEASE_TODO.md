@@ -34,14 +34,12 @@ This is the long list. Cross-references:
 - [x] `can` AttributeError — patch `can.nxc_connection._python_can` (separate from `can.scanner._python_can`); drop dead `can._python_can` patch target
 - [x] 4 PACKET DROPs flagged as `pytest.xfail` via new `KNOWN_DROPS` map in `test_packet_coverage.py` — see "Real listener gaps" below
 
-### Real listener gaps (documented as KNOWN_DROPS / xfails)
+### Real listener gaps — FIXED in `67f4f1f2`
 
-These are real product bugs but each needs a per-listener fix that's bigger than a one-liner. Tracked in `tests/integration/pcap/test_packet_coverage.py::KNOWN_DROPS`:
-
-- [ ] **bacnet ARCNET unwrap** — `wireshark_bacnet_arcnet.cap` 100% drop. Listener can't unwrap ARCNET-encapsulated BACnet frames.
-- [ ] **ldap SASL/GSSAPI (Kerberos-bound) parse** — `wireshark_ldap_krb5.cap` 100% drop. Listener only handles plaintext bind; Kerberos-wrapped credential frames are not parsed.
-- [ ] **modbus payload variants** — `zeek_modbus_mixed_p502.pcap` 29% drop. Listener rejects some payload variants that real PLCs accept (likely diagnostic FCs in the mixed traffic).
-- [ ] **pim Register messages** — `wireshark_pim_register.cap` 85% drop. Listener only handles top-level PIM, not unicast-encapsulated multicast Register frames.
+- [x] **bacnet ARCNET unwrap** — `wireshark_bacnet_arcnet.cap` 0/564 → 564/564. `get_mac_info` got an ARCNET fallback synthesising `AR:NN` identifiers from the 8-bit node IDs.
+- [x] **ldap SASL/GSSAPI (Kerberos-bound)** — `wireshark_ldap_krb5.cap` 5/24 → 25/24. Listener got an `_is_sasl_encrypted` branch recording opaque-but-framed encrypted LDAP traffic.
+- [x] **modbus payload variants** — `zeek_modbus_mixed_p502.pcap` 12/17 → 17/17. Listener stops hard-rejecting on non-zero `mbtcp.prot_id` (pyshark EK quirk on "Cannot classify" frames).
+- [x] **pim Register messages** — `wireshark_pim_register.cap` 3/20 → 20/20. `get_ip_info` falls back to raw `_fields_dict` when pyshark `EkLayer.__getattr__` raises on encapsulated headers (PIM Register, GRE-in-IPv6, etc.).
 
 ### Still open (orthogonal to pcap)
 
