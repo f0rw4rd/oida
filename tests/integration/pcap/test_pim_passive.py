@@ -338,8 +338,15 @@ class TestPIMRegisterIPVersion:
             "register_flag_null_register extraction missing from process_packet"
         )
 
-    def test_pim_register_skipped_when_no_ip(self):
-        """Register packets without extractable IP are correctly skipped."""
+    def test_pim_register_processed_via_raw_ip_fallback(self):
+        """Register packets with encapsulated headers are now processed.
+
+        Previously pyshark's EkLayer crashed on the nested IPv6 headers and
+        ``get_ip_info`` returned empty, silently dropping every Register.
+        The base ``get_ip_info`` now falls back to the raw ``_fields_dict``
+        and extracts the outer IPv6 src/dst, so Register packets appear in
+        interactions with valid IPs.
+        """
         _skip_unless_pyshark()
         pcap = _pcap_path("pim/wireshark_pim_register.cap")
         packets = _load_packets(pcap, display_filter="pim")
@@ -351,11 +358,12 @@ class TestPIMRegisterIPVersion:
         listener._x509 = True
         listener.feed_packets(iter(packets))
 
-        # Register packets should NOT appear in interactions (IPs not extractable)
         register_ixs = [ix for ix in listener.interactions if ix.details.get("msg_type") == 1]
-        assert len(register_ixs) == 0, (
-            f"Expected 0 Register interactions (IPs not extractable), got {len(register_ixs)}"
-        )
+        assert len(register_ixs) > 0, "Expected Register interactions after fallback fix"
+        # Every recorded Register must have non-empty src_ip and dst_ip.
+        for ix in register_ixs:
+            assert ix.src_ip, f"Register interaction missing src_ip: {ix}"
+            assert ix.dst_ip, f"Register interaction missing dst_ip: {ix}"
 
 
 # ===========================================================================
