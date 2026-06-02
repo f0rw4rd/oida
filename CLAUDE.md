@@ -119,7 +119,7 @@ The framework uses a **two-layer design**:
 - `discover()`: Basic protocol discovery
 - `run_scan()`: Main scanning logic
 
-### Supported protocols (25 total)
+### Supported protocols (26 total)
 
 Current registered set (run `oida` with no args for the live list, or
 `python -c "from oida.loader import ProtocolLoader; print(sorted(ProtocolLoader('src/oida/protocols').get_protocols()))"`):
@@ -201,3 +201,26 @@ Notable extras: `modbus`, `opcua`, `iec104`, `snap7`, `ads`, `ethernetip`,
 - **pre-commit**: `ruff check --fix` (lint) + `ruff format` (format)
 - **pre-push**: `vulture` (dead code detection, min-confidence 80) + `mypy` (type check, informational — prints summary but does not block)
 - **commit-msg**: blocks `Co-Authored-By` lines mentioning Claude/Anthropic — do NOT add AI co-author trailers to commit messages
+
+## Documentation Map
+
+Read before starting any non-trivial change — saves re-discovering the
+contract:
+
+| Doc | Use when |
+|---|---|
+| `README.md` | First impression / install / 1-liner per-protocol examples |
+| `docs/ARCHITECTURE.md` | Adding a new protocol, touching the Layer-1/Layer-2 facade, or modifying `proto_logger()` |
+| `docs/new-protocol.md` | Step-by-step walkthrough for adding a new protocol scanner |
+| `docs/REAL_COVERAGE_PROPOSAL.md` | The three real-coverage axes (scanner field-%, fuzzer CVE replication, Conpot fidelity) — referenced by `tests/coverage/` scaffolds |
+| `docs/snmp-tools-comparison.md` | SNMP-specific comparison (snapshot, may date) |
+| `STYLE_GUIDE.md` | Python style, naming, CLI short-flag conventions table |
+| `RELEASE_READINESS.md` | Snapshot of the 1.0 audit (86 release-blocker fixes shipped + open blockers) |
+| `RELEASE_TODO.md` | Living per-section punch list for 1.0 with status per item |
+| `TEST_REPORT.md` | Latest baseline test-suite numbers (per run) |
+| `CHANGELOG.md` | What landed when, grouped by Added/Changed/Fixed/Removed |
+| `SECURITY.md` | Private vulnerability disclosure email + scope of "what counts" |
+| `CODE_OF_CONDUCT.md` | Contributor rules (single-maintainer project) |
+| `DISCLAIMER.md` | Authorized-testing-only legal statement |
+| `ref/<proto>/` | Per-protocol research material (cve_patterns.json, fuzzer.md, tshark_fields.json) — single source of truth for protocol-level decisions |
+| `ref/_FUZZER_OPTIMIZATIONS_TODO.md` | Line-targeted fuzzer-feature backlog |

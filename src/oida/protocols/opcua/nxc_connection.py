@@ -186,11 +186,26 @@ class opcua(
             sec_policies = _asyncua_sec_policies()
             validator_mod = _asyncua_validator()
 
+            # Map ALL policies the CLI advertises (`--policy` choices in
+            # proto_args.py) to their asyncua classes. Previously the map only
+            # covered Basic256Sha256 + the two Aes variants, so a user passing
+            # `--policy Basic128Rsa15` or `--policy Basic256` silently got
+            # Basic256Sha256 instead — masking a deliberate test of the weaker
+            # legacy policies. A defensive-security tool must NOT swap the
+            # requested policy under the user's feet.
             policy_map = {
+                "Basic128Rsa15": sec_policies.SecurityPolicyBasic128Rsa15,
+                "Basic256": sec_policies.SecurityPolicyBasic256,
                 "Basic256Sha256": sec_policies.SecurityPolicyBasic256Sha256,
                 "Aes128_Sha256_RsaOaep": sec_policies.SecurityPolicyAes128Sha256RsaOaep,
                 "Aes256_Sha256_RsaPss": sec_policies.SecurityPolicyAes256Sha256RsaPss,
             }
+            if requested_policy not in policy_map:
+                self.logger.warning(
+                    f"Unknown OPC UA security policy {requested_policy!r}; "
+                    f"falling back to Basic256Sha256. Pass one of: "
+                    f"{', '.join(policy_map.keys())}"
+                )
             policy_class = policy_map.get(
                 requested_policy, sec_policies.SecurityPolicyBasic256Sha256
             )
