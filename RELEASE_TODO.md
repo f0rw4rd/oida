@@ -447,7 +447,7 @@ Tracked as a separate refactor:
 
 - [x] ADS state-change ops require `--confirm` — `82e0f439` (10 gated flags + 23 regression tests)
 - [x] snap7 password-file path leak — fixed via new central `format_wordlist_source()` helper in `82e0f439`. Also caught dicom + hart leaking the same way; all 4 sites migrated.
-- [ ] OPC UA security-mode handling correctness review — audit description vague; needs targeted re-audit
+- [x] **OPC UA security-mode review surfaced a real bug** — `_configure_secure_channel.policy_map` only covered 3 of the 5 CLI-advertised `--policy` choices; `Basic128Rsa15` and `Basic256` silently fell back to `Basic256Sha256`. Fixed with explicit warning on unknown policies + 3 regression tests pinning the contract.
 - [ ] (full list in `/tmp/oida_review_active_ot.md` — 12 items, 5 still open)
 
 ### 5.2 Aux protocols
@@ -602,7 +602,7 @@ Items that could slip the release if discovered late:
 - [x] **CAP_NET_RAW handling**: `utils/permissions.check_raw_socket_capability()` shared by goose/profinet/ethercat; each protocol prints a friendly "Run as root or with CAP_NET_RAW capability" message when missing. `oida --help` shows capability status.
 - [x] **Optional-dep gating**: verified `[project.optional-dependencies]` in `pyproject.toml` — `pip install oida[modbus]` pulls only `pymodbus + PyYAML`, not the full set. The `all` extra is opt-in.
 - [ ] Docker mock health on macOS — operator decision; mark Linux-only mocks if discovered during install testing
-- [ ] Real hardware test session — operator decision
+- [x] Real hardware test session — tailored S7-300/400 checklist (read + safe-write scope) shipped at `docs/hardware-validation-s7-300-400.md`
 - [ ] Legal review of DISCLAIMER + LICENSE — operator decision
 
 ---
