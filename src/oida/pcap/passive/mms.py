@@ -239,8 +239,11 @@ class MMSPassiveListener(PySharkListenerBase):
 
         now = datetime.now().isoformat()
 
-        # Determine direction
-        if dst_port == 102:
+        # Determine direction. MMS/IEC 61850 defaults to TCP 102 but the spec
+        # allows any port; substations sometimes run on 10102/10106/10108 etc.
+        # Use the canonical port if either side has it; otherwise fall back
+        # to "lower port wins" (server-side listening port < ephemeral).
+        if dst_port == 102 or (dst_port != 102 and src_port != 102 and dst_port < src_port):
             client_ip, server_ip = src_ip, dst_ip
             client_mac, server_mac = src_mac, dst_mac
             is_request = True
