@@ -363,6 +363,19 @@ class ADSFuzzer(BaseFuzzer):
                 "auth",
                 requires_state="CONNECTED",
             ),
+            # ADS Port enumeration + bulk-op coverage
+            RequestInfo(
+                "ADS_Port_Enumeration",
+                "Cycle Beckhoff AMS logical ports (851 PLC, 350 SysSvc, ...)",
+                "enumeration",
+                requires_state="CONNECTED",
+            ),
+            RequestInfo(
+                "ADS_SumReadWrite",
+                "SumUp bulk-op with fuzzable sub-request count",
+                "protocol",
+                requires_state="CONNECTED",
+            ),
         ]
 
     def __init__(self, config: FuzzerConfig, connection_factory=None):
@@ -1924,3 +1937,9 @@ class ADSFuzzer(BaseFuzzer):
             self.session.connect(ads_password_brute)
             self.session.connect(ads_symbol_auth)
             self.session.connect(ads_password_malformed)
+
+        # ==================== ADS PORT ENUMERATION & BULK OPS ====================
+        if self.is_request_enabled("ADS_Port_Enumeration"):
+            self.session.connect(ads_port_enumeration)
+        if self.is_request_enabled("ADS_SumReadWrite"):
+            self.session.connect(ads_sum_readwrite)

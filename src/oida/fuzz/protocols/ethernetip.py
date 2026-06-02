@@ -207,6 +207,12 @@ class EtherNetIPFuzzer(BaseFuzzer):
                 "auth",
                 requires_state="SESSION_REGISTERED",
             ),
+            RequestInfo(
+                "CIP_Class_Enumeration",
+                "Well-known + vendor-reserved CIP class IDs (0x01..0x110)",
+                "enumeration",
+                requires_state="SESSION_REGISTERED",
+            ),
         ]
 
     def _create_socket(self):
