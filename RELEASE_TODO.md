@@ -440,17 +440,17 @@ Tracked as a separate refactor:
 
 ### 5.1 Safety (active OT)
 
-- [ ] ADS state-change ops require `--confirm`
-- [ ] snap7 password-file path leak (don't echo full path to logs)
-- [ ] OPC UA security-mode handling correctness review
-- [ ] (full list in `/tmp/oida_review_active_ot.md` — 12 items, 7 still open)
+- [x] ADS state-change ops require `--confirm` — `82e0f439` (10 gated flags + 23 regression tests)
+- [x] snap7 password-file path leak — fixed via new central `format_wordlist_source()` helper in `82e0f439`. Also caught dicom + hart leaking the same way; all 4 sites migrated.
+- [ ] OPC UA security-mode handling correctness review — audit description vague; needs targeted re-audit
+- [ ] (full list in `/tmp/oida_review_active_ot.md` — 12 items, 5 still open)
 
 ### 5.2 Aux protocols
 
 - [ ] HL7 / HART lazy_import theatre — pick a model and stick to it
-- [ ] BACnet replace `socket.connect((8.8.8.8, 80))` own-IP detection
-- [ ] FHIR phantom flags — implement or gate behind `--experimental`
-- [ ] ASTM default port correction (1394 → real ASTM port)
+- [x] BACnet `socket.connect((8.8.8.8, 80))` already replaced by `utils/socket_helpers.get_local_ip()` (uses UDP-connect against actual target). BACnet + ADS both use it.
+- [ ] FHIR phantom flags — `--bulk-export` removed; `--test-cross-patient` / `--test-scope` handlers exist but mostly display "manual verification required" — gate or implement
+- [x] ASTM default port — `12000`, fixed in earlier commit `19762a17`; test already updated
 
 ### 5.3 Core framework
 
