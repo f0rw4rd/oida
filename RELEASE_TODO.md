@@ -586,9 +586,9 @@ Extend `tests/coverage/scanner/` to remaining protocols. Skip with documented re
 - [x] `ruff check src/oida/ tests/`: **clean** (was 16 errors, 15 auto-fixed + 1 unused var dropped)
 - [x] `ruff format --check src/oida/ tests/`: **clean** (16 files reformatted)
 - [x] `bandit -lll src/oida/`: **0 HIGH** (matches audit target)
-- [ ] `bandit -r src/oida/`: 65 Medium remaining (target ≤5) — needs `# nosec` annotations on the ~60 `xml.dom.minidom` + `B104` false positives; mechanical pass, separate commit
+- [x] `bandit -c pyproject.toml -r src/oida/`: **0 High / 0 Medium / 0 Low** (with the project-level `[tool.bandit] skips` config honoured + 1 nosec B608 for the false-positive MongoDB log label). The previous "65 Medium" was bandit run WITHOUT the config file.
 - [x] CI matrix: existing `ci.yml` covers Python 3.10/3.11/3.12 × ubuntu (macos optional follow-up)
-- [ ] `vulture --min-confidence 80`: 776 findings, mostly callback-signature false positives (`userdata`, `cbCtx`); needs allowlist file
+- [x] `vulture --min-confidence 80 src/oida/ .vulture_whitelist.py`: **0 findings** (existing whitelist already covered all 11 callback-signature false positives — paho-mqtt userdata, pysnmp cbCtx/execpoint, signal signum, argparse option_string, dnp3 task_id/task_type, tase2 originator/max_messages, etc.)
 - [ ] `mypy src/oida/` wired in CI informational-only — operator follow-up; current pre-push hook runs mypy informational already
 - [x] Pre-commit hooks pass on a clean clone (per CLAUDE.md: `ruff check --fix` + `ruff format` + pre-push `vulture` + `mypy`)
 - [ ] Tag `v1.0.0` — operator action at release time
