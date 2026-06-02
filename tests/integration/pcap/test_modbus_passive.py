@@ -1374,9 +1374,13 @@ class TestModbusConstants:
             assert fc in MODBUS_FC, f"READ_FUNCTION_CODES {fc} not in MODBUS_FC"
 
     def test_read_write_disjoint(self):
-        """READ_FUNCTION_CODES and WRITE_FUNCTION_CODES should not overlap."""
+        """READ and WRITE FC sets overlap only on documented bidirectional codes.
+
+        FC 0x17 (Read/Write Multiple Registers) reads N regs AND writes M regs
+        in one transaction, so it legitimately belongs to both sets.
+        """
         overlap = READ_FUNCTION_CODES & WRITE_FUNCTION_CODES
-        assert not overlap, f"Read/write FC overlap: {overlap}"
+        assert overlap == {0x17}, f"unexpected read/write overlap: {overlap}"
 
     def test_write_fc_names_contain_write(self):
         """WRITE_FUNCTION_CODES names should contain 'Write' or 'Mask'."""
@@ -1387,10 +1391,18 @@ class TestModbusConstants:
             ), f"Write FC {fc} name doesn't contain 'Write'/'Mask': {name}"
 
     def test_read_fc_names_contain_read(self):
-        """READ_FUNCTION_CODES names should contain 'Read'."""
+        """READ_FUNCTION_CODES names contain a read-flavored verb.
+
+        Modbus diagnostic FCs are reads-of-status named with synonyms:
+        0x0B 'Get Comm Event Counter', 0x0C 'Get Comm Event Log',
+        0x11 'Report Slave ID'. Accept Get/Report alongside Read.
+        """
+        read_verbs = ("read", "get", "report")
         for fc in READ_FUNCTION_CODES:
-            name = MODBUS_FC[fc]
-            assert "read" in name.lower(), f"Read FC {fc} name doesn't contain 'Read': {name}"
+            name = MODBUS_FC[fc].lower()
+            assert any(v in name for v in read_verbs), (
+                f"Read FC {fc} name doesn't contain a read-verb: {MODBUS_FC[fc]}"
+            )
 
     def test_modbus_session_dataclass_defaults(self):
         """ModbusSession default values should be sensible."""
