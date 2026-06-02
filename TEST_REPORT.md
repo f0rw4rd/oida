@@ -7,14 +7,14 @@
 
 ---
 
-## Headline numbers (v7 — current GREEN baseline)
+## Headline numbers (v7 — both suites GREEN)
 
 | Suite | Passed | Failed | Skipped | Errors | XFail | Deselected | Wall time | Exit |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `tests/unit/` | **10,241** | **1** | 260 | 0 | 11 | 313 | 7m 22s | 1 |
-| `tests/integration/` | **3,008** | **0** | **1,884** | **0** | **0** | 92 | 34m 09s | **0** |
+| `tests/unit/` | **10,242** | **0** | 260 | 0 | 11 | 313 | 7m 05s | **0** |
+| `tests/integration/` | **3,008** | **0** | 1,884 | **0** | **0** | 92 | 34m 09s | **0** |
 
-**Integration suite is GREEN with zero xfails.** The 4 previously-xfailed listener gaps are now real product fixes. The 1 unit failure is order-dependent test pollution (passes in isolation).
+**Both suites GREEN with zero xfails.** Total **13,250 passing tests, 0 failures, 0 errors, 0 timeouts, 0 silent gaps.**
 
 ### History (showing what the fixes did)
 
@@ -36,11 +36,11 @@
 
 ## 1. Unit suite — clean baseline
 
-### The 1 failure
+### Previously: 1 order-dependent failure (FIXED in `13da0e1e`)
 
-| Test | Diagnosis |
-|---|---|
-| `tests/unit/pcap/test_scanner.py::TestLoggerIntegration::test_logger_created_on_init` | **Order-dependent / test pollution.** Passes in isolation (`pytest <file>::<test>`). Some earlier-running test mutates global logger state. Not a real product bug — a test-isolation bug. |
+Was `tests/unit/pcap/test_scanner.py::TestLoggerIntegration::test_logger_created_on_init` — failed only when running the full unit suite, passed in isolation. **Root cause:** `tests/unit/knx/test_helpers.py::load_helpers_module()` replaced `sys.modules['oida.utils.ics_logger']` with a `MagicMock` and never restored it. Every subsequent `isinstance(x, ICSLogger)` then raised `TypeError: isinstance() arg 2 must be a type` because `ICSLogger` was now a Mock instance instead of a class.
+
+**Fix:** added an autouse module-scoped fixture that snapshots the original `sys.modules` entries we're about to mutate (`oida.utils.ics_logger`, `oida.utils.module`, etc.) and restores them in teardown.
 
 ### The 260 skips (top reasons)
 
@@ -263,10 +263,10 @@ Done (✓) vs open (·):
   - ldap SASL/GSSAPI: new `_is_sasl_encrypted` branch records opaque-but-framed encrypted traffic
   - modbus payload variants: drop hard `prot_id != 0` rejection (pyshark EK quirk on "Cannot classify" frames)
   - pim Register messages: `get_ip_info` falls back to raw `_fields_dict` when `EkLayer.__getattr__` raises on encapsulated headers
-- · Investigate 1 order-dependent unit failure (`test_logger_created_on_init`)
+- ✓ Unit-suite test pollution fixed (`13da0e1e`) — `knx/test_helpers.py` now restores `sys.modules` after mocking `ics_logger`
 - · Add `services.py up all` as a CI pre-step (operational; speeds up runs by avoiding cold bring-up)
 
-**v7 = green baseline with zero known product bugs from the test surface.** The one remaining item is a test-isolation issue, not a product bug.
+**v7 = green baseline.** Both suites have zero failures, zero errors, zero timeouts, zero xfails. The only remaining open item is operational (pre-warming docker for CI).
 
 ---
 
