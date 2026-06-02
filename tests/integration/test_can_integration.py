@@ -244,8 +244,8 @@ def _instantiate_can_nxc(args, mock_bus):
     mock_python_can.__call__ = MagicMock(return_value=mock_can_lib)
 
     with (
-        patch("oida.protocols.can._python_can", mock_python_can),
         patch("oida.protocols.can.scanner._python_can", mock_python_can),
+        patch("oida.protocols.can.nxc_connection._python_can", mock_python_can),
         patch("oida.protocols.can.mixins.traffic._get_python_can", return_value=mock_python_can),
         patch("oida.protocols.can.mixins.xcp._get_python_can", return_value=mock_python_can),
         patch("oida.protocols.can.mixins.uds._get_python_can", return_value=mock_python_can),
@@ -336,8 +336,8 @@ class TestCANConnection:
 
         # The scanner's connect() will be called by create_conn_obj
         with (
-            patch("oida.protocols.can._python_can", mock_python_can),
             patch("oida.protocols.can.scanner._python_can", mock_python_can),
+            patch("oida.protocols.can.nxc_connection._python_can", mock_python_can),
             patch(
                 "oida.protocols.can.mixins.traffic._get_python_can", return_value=mock_python_can
             ),

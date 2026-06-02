@@ -383,6 +383,11 @@ class TestModbusMockService:
 class TestOPCUAMockService:
     """Tests for OPC UA mock server."""
 
+    @pytest.fixture(autouse=True)
+    def _require_opcua_service(self, opcua_port):
+        if not check_port_open(MOCK_HOST, opcua_port, timeout=3):
+            pytest.skip(f"OPC UA service not available on port {opcua_port}")
+
     @pytest.fixture
     def opcua_port(self):
         return MOCK_PORTS.get("opcua", 4840)

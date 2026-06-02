@@ -203,7 +203,6 @@ def _instantiate_astm_nxc(args, mock_sock=None):
     if mock_sock is None:
         mock_sock = _make_mock_socket()
 
-    mock_socket_class = MagicMock()
     mock_socket_instance = MagicMock()
     mock_socket_instance.connect = MagicMock()
     mock_socket_instance.settimeout = MagicMock()
@@ -211,9 +210,11 @@ def _instantiate_astm_nxc(args, mock_sock=None):
     mock_socket_instance.sendall = mock_sock.sendall
     mock_socket_instance.recv = mock_sock.recv
     mock_socket_instance.getpeercert = MagicMock(return_value=None)
-    mock_socket_class.return_value = mock_socket_instance
 
-    with patch("oida.protocols.astm.socket.socket", mock_socket_class):
+    with patch(
+        "oida.utils.protocol_helpers.ConnectionHelper.create_tls_tcp_connection",
+        return_value=mock_socket_instance,
+    ):
         instance = ASTMConnection(args, None, args.target)
 
     return instance
@@ -305,15 +306,12 @@ class TestASTMConnection:
         """Verify connection refused is handled gracefully [Category C]"""
         from oida.protocols.astm import astm as ASTMConnection
 
-        mock_socket_class = MagicMock()
-        mock_socket_instance = MagicMock()
-        mock_socket_instance.connect = MagicMock(side_effect=ConnectionRefusedError("refused"))
-        mock_socket_instance.close = MagicMock()
-        mock_socket_class.return_value = mock_socket_instance
-
         args = _make_args()
 
-        with patch("oida.protocols.astm.socket.socket", mock_socket_class):
+        with patch(
+            "oida.utils.protocol_helpers.ConnectionHelper.create_tls_tcp_connection",
+            side_effect=ConnectionRefusedError("refused"),
+        ):
             instance = ASTMConnection(args, None, "127.0.0.1")
 
         assert instance.results["success"] is True
@@ -323,15 +321,12 @@ class TestASTMConnection:
         """Verify connection timeout is handled gracefully [Category C]"""
         from oida.protocols.astm import astm as ASTMConnection
 
-        mock_socket_class = MagicMock()
-        mock_socket_instance = MagicMock()
-        mock_socket_instance.connect = MagicMock(side_effect=socket.timeout("timed out"))
-        mock_socket_instance.close = MagicMock()
-        mock_socket_class.return_value = mock_socket_instance
-
         args = _make_args(timeout=1)
 
-        with patch("oida.protocols.astm.socket.socket", mock_socket_class):
+        with patch(
+            "oida.utils.protocol_helpers.ConnectionHelper.create_tls_tcp_connection",
+            side_effect=TimeoutError("timed out"),
+        ):
             instance = ASTMConnection(args, None, "127.0.0.1")
 
         assert instance.results["success"] is True
@@ -341,15 +336,12 @@ class TestASTMConnection:
         """Verify generic connection errors are handled [Category C]"""
         from oida.protocols.astm import astm as ASTMConnection
 
-        mock_socket_class = MagicMock()
-        mock_socket_instance = MagicMock()
-        mock_socket_instance.connect = MagicMock(side_effect=OSError("network error"))
-        mock_socket_instance.close = MagicMock()
-        mock_socket_class.return_value = mock_socket_instance
-
         args = _make_args()
 
-        with patch("oida.protocols.astm.socket.socket", mock_socket_class):
+        with patch(
+            "oida.utils.protocol_helpers.ConnectionHelper.create_tls_tcp_connection",
+            side_effect=OSError("network error"),
+        ):
             instance = ASTMConnection(args, None, "127.0.0.1")
 
         assert instance.results["success"] is True
@@ -2150,7 +2142,12 @@ class TestProtoArgs:
         assert astm_parser is not None
 
     def test_proto_args_default_port(self):
-        """Verify default port is 1394 [Category A]"""
+        """Verify default port matches the real ASTM/E1394 LIS port (12000).
+
+        The legacy default of 1394 was IEEE-1394 (FireWire), not a network
+        port; commit 19762a17 corrected this to 12000 (the most common
+        real-world ASTM analyzer listen port).
+        """
         import argparse
         from oida.protocols.astm.proto_args import proto_args
 
@@ -2160,7 +2157,7 @@ class TestProtoArgs:
         proto_args(subparsers, [parent])
 
         args = main_parser.parse_args(["astm", "192.168.1.100"])
-        assert args.port == 1394
+        assert args.port == 12000
 
     def test_proto_args_astm_version_choices(self):
         """Verify --astm-version accepts valid choices [Category A]"""
