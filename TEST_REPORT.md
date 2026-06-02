@@ -1,20 +1,20 @@
 # OIDA Test Suite Report
 
-**Last updated:** 2026-06-02 (v6 — green baseline)
-**Branch:** main @ e22db66a (after fuzz DB refactor + ghost-service fix + timeout_func_only + 137 stale-test fixes + 4 KNOWN_DROPS xfails)
+**Last updated:** 2026-06-02 (v7 — green baseline + 4 real listener fixes)
+**Branch:** main @ 5fefb3c3 (fuzz DB refactor + ghost-service fix + timeout_func_only + 137 stale-test fixes + 4 real listener bug fixes)
 **Command:** `python -m pytest tests/<dir>/ -p no:cacheprovider` (pytest config in `pyproject.toml`)
 **Environment:** Linux 6.12.61, Python 3.11.5, pyenv. **Docker mocks NOT pre-started locally.**
 
 ---
 
-## Headline numbers (v6 — current GREEN baseline)
+## Headline numbers (v7 — current GREEN baseline)
 
 | Suite | Passed | Failed | Skipped | Errors | XFail | Deselected | Wall time | Exit |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | `tests/unit/` | **10,241** | **1** | 260 | 0 | 11 | 313 | 7m 22s | 1 |
-| `tests/integration/` | **3,004** | **0** | **1,884** | **0** | **4** | 92 | 34m 43s | **0** |
+| `tests/integration/` | **3,008** | **0** | **1,884** | **0** | **0** | 92 | 34m 09s | **0** |
 
-**Integration suite is GREEN.** Zero failures, zero errors, zero timeouts. The 1 unit failure is order-dependent test pollution (passes in isolation).
+**Integration suite is GREEN with zero xfails.** The 4 previously-xfailed listener gaps are now real product fixes. The 1 unit failure is order-dependent test pollution (passes in isolation).
 
 ### History (showing what the fixes did)
 
@@ -23,13 +23,14 @@
 | v3 (pre-fix) | 2,860 | 154 | 376 | 1,502 | — | 1 | 376 errors from one ghost-service cascade |
 | v4 (after profinet fix) | — | — | — | — | — | 1 | killed by per-test 60s timer during docker bring-up |
 | v5 (after `timeout_func_only=true`) | 2,860 | 154 | **0** | 1,878 | — | 1 | Cascade errors became clean skips |
-| **v6 (after stale-test fixes + xfails)** | **3,004** | **0** | **0** | **1,884** | **4** | **0** | **GREEN** |
+| v6 (after stale-test fixes + xfails) | 3,004 | **0** | 0 | 1,884 | 4 | **0** | GREEN with documented xfails |
+| **v7 (after 4 real listener fixes)** | **3,008** | **0** | **0** | **1,884** | **0** | **0** | **GREEN, zero known gaps** |
 
-**Total deltas v3→v6:**
-- Passed: 2,860 → 3,004 (+144 — formerly hidden passes after ASTM/CAN mock-patch fixes)
-- Failed: 154 → 0 (137 stale tests fixed + 12 product or test fixes + 4 xfails + 1 stale ASTM port)
+**Total deltas v3→v7:**
+- Passed: 2,860 → 3,008 (+148)
+- Failed: 154 → 0 (137 stale tests fixed + 12 product/test fixes + 1 stale ASTM port + 4 real listener bugs)
 - Errors: 376 → 0 (ghost-service fix + timeout_func_only)
-- XFailed: 0 → 4 (documented listener gaps now flagged, not silently failing)
+- XFailed: 4 → 0 (all 4 documented listener gaps converted to real fixes)
 
 ---
 
@@ -257,15 +258,15 @@ Done (✓) vs open (·):
 - ✓ modbus test: FC 0x17 accepted as legitimate Read/Write overlap; Get/Report names accepted for diagnostic FCs (`e22db66a`)
 - ✓ pgsql test: "Multi-message" accepted as valid response operation (`e22db66a`)
 - ✓ 4 real listener gaps flagged via `KNOWN_DROPS` xfail map in `test_packet_coverage.py` (`e22db66a`)
-- · Real listener bugs (xfailed, not fixed) — see `RELEASE_TODO.md` "Real listener gaps":
-  - bacnet ARCNET-encapsulated frame unwrap
-  - ldap SASL/GSSAPI (Kerberos-bound) credential parse
-  - modbus payload variants rejected in Zeek-rewritten mixed traffic
-  - pim Register message (unicast-encapsulated multicast) parse
+- ✓ **All 4 listener gaps fixed for real (`67f4f1f2`):**
+  - bacnet ARCNET unwrap: `get_mac_info` gained ARCNET node-ID fallback (`AR:NN` identifiers)
+  - ldap SASL/GSSAPI: new `_is_sasl_encrypted` branch records opaque-but-framed encrypted traffic
+  - modbus payload variants: drop hard `prot_id != 0` rejection (pyshark EK quirk on "Cannot classify" frames)
+  - pim Register messages: `get_ip_info` falls back to raw `_fields_dict` when `EkLayer.__getattr__` raises on encapsulated headers
 - · Investigate 1 order-dependent unit failure (`test_logger_created_on_init`)
 - · Add `services.py up all` as a CI pre-step (operational; speeds up runs by avoiding cold bring-up)
 
-**v6 = green baseline.** All remaining items are either documented xfails or pre-existing test isolation issues; none block release tagging.
+**v7 = green baseline with zero known product bugs from the test surface.** The one remaining item is a test-isolation issue, not a product bug.
 
 ---
 
@@ -284,8 +285,11 @@ python -m pytest tests/integration/ --timeout=60 -p no:cacheprovider > /tmp/oida
 # Integration v5 (after both ghost-service + timeout fixes)
 python -m pytest tests/integration/ -p no:cacheprovider > /tmp/oida_v5_integration.log 2>&1
 
-# Integration v6 (current GREEN baseline)
+# Integration v6 (GREEN baseline with 4 documented xfails)
 python -m pytest tests/integration/ -p no:cacheprovider > /tmp/oida_v6_integration.log 2>&1
+
+# Integration v7 (current GREEN baseline — zero xfails, 4 real listener fixes)
+python -m pytest tests/integration/ -p no:cacheprovider > /tmp/oida_v7_integration.log 2>&1
 ```
 
 ## Appendix B. Log file locations
@@ -296,6 +300,7 @@ python -m pytest tests/integration/ -p no:cacheprovider > /tmp/oida_v6_integrati
 | `/tmp/oida_v3_integration.log` | Integration suite — pre-fix (376 errors) |
 | `/tmp/oida_v4_integration.log` | Integration suite — killed by fixture timeout |
 | `/tmp/oida_v5_integration.log` | Integration suite — 154 failures, 0 errors (after timeout fix) |
-| `/tmp/oida_v6_integration.log` | Integration suite — **GREEN** baseline, 3004 passed, 0 failed |
+| `/tmp/oida_v6_integration.log` | Integration suite — 3004 passed, 4 xfailed (documented gaps) |
+| `/tmp/oida_v7_integration.log` | Integration suite — **GREEN** baseline, 3008 passed, 0 xfailed |
 
 These will be cleared on reboot. If you want to preserve them, copy into `docs/audit/test_runs/`.
