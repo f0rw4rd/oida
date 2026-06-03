@@ -897,6 +897,57 @@ class TestDICOMCStoreHandler(unittest.TestCase):
             self.assertEqual(result, 0x0000)  # Success
             self.assertEqual(len(scanner._cget_received_files), 1)
 
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    def test_cstore_handler_blocks_path_traversal(self):
+        """Hostile responder cannot escape _cget_output_path via UIDs."""
+        from oida.protocols.dicom import dicom
+        from pathlib import Path
+        import tempfile
+
+        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner.logger = Mock()
+
+        # All three traversal-attempt UID combos in one sweep — sub-dirs path
+        # walks both PatientID and StudyInstanceUID before filename, so each
+        # is a separate attack surface.
+        for patient, study, sop in [
+            ("..", "..", "1.2.3"),
+            ("../../etc", "passwd", "1.2.3"),
+            ("normal", "normal", "../../../../../tmp/oida_evil"),
+        ]:
+            mock_event = Mock()
+            mock_ds = Mock()
+            mock_ds.PatientID = patient
+            mock_ds.StudyInstanceUID = study
+            mock_ds.SOPInstanceUID = sop
+            mock_event.dataset = mock_ds
+            mock_event.file_meta = Mock()
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                base = Path(tmpdir).resolve()
+                scanner._cget_output_path = base
+                scanner._cget_received_files = []
+                scanner._cget_use_subdirs = True
+
+                saved_paths = []
+                mock_ds.save_as = lambda p, **_: saved_paths.append(Path(p).resolve())
+
+                result = scanner._handle_store_for_cget(mock_event)
+
+                # Either the sanitizer rendered them inert (write inside
+                # tmpdir) or PermissionError was caught by the handler's
+                # outer try/except returning 0xC211.
+                if saved_paths:
+                    self.assertTrue(
+                        str(saved_paths[0]).startswith(str(base)),
+                        f"Escape: {saved_paths[0]} not under {base}",
+                    )
+                else:
+                    self.assertEqual(
+                        result, 0xC211,
+                        f"Blocked traversal must report failure status, got {hex(result)}",
+                    )
+
 
 class TestDICOMRejectInfo(unittest.TestCase):
     """Test DICOM association rejection info extraction"""
