@@ -223,5 +223,11 @@ class RIPPassiveListener(PassiveListenerBase):
                         existing_routes.append(route)
                         existing_networks.add(route["network"])
                 self.routes[src_ip] = existing_routes
-                self.discovered_devices[device_key].rip_data["routes"] = existing_routes
-                self.discovered_devices[device_key].rip_data["route_count"] = len(existing_routes)
+                # Cross-listener merge: if CDP/LLDP/etc. registered the
+                # device first, rip_data is None; lazy-init before
+                # writing so we don't crash with TypeError.
+                dev = self.discovered_devices[device_key]
+                if dev.rip_data is None:
+                    dev.rip_data = {}
+                dev.rip_data["routes"] = existing_routes
+                dev.rip_data["route_count"] = len(existing_routes)
