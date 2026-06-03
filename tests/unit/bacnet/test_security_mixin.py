@@ -37,7 +37,8 @@ class TestSecurityAssessment(unittest.TestCase):
     """Test _handle_security_assessment."""
 
     def test_assessment_reports_anonymous_access(self):
-        scanner = _create_instance()
+        # --assess now requires --confirm (CODE_REVIEW HIGH gate).
+        scanner = _create_instance(confirm=True)
         scanner.bacnet.read = Mock(return_value=42)
         scanner.bacnet.write = Mock(return_value=True)
         scanner._handle_security_assessment()
@@ -45,10 +46,16 @@ class TestSecurityAssessment(unittest.TestCase):
         scanner.logger.security_finding.assert_called()
 
     def test_assessment_with_no_devices(self):
-        scanner = _create_instance()
+        scanner = _create_instance(confirm=True)
         scanner.devices = {}
         scanner._handle_security_assessment()
         scanner.logger.display.assert_called()
+
+    def test_assessment_refuses_without_confirm(self):
+        """Verify the gate added in CODE_REVIEW HIGH batch."""
+        scanner = _create_instance(confirm=False)
+        scanner._handle_security_assessment()
+        scanner.logger.fail.assert_called()
 
 
 class TestTestWrite(unittest.TestCase):
@@ -61,17 +68,24 @@ class TestTestWrite(unittest.TestCase):
         # Should return early without error
 
     def test_write_test_finds_writable(self):
-        scanner = _create_instance()
+        # --test-write now requires --confirm.
+        scanner = _create_instance(confirm=True)
         scanner.bacnet.read = Mock(return_value=42.0)
         scanner.bacnet.write = Mock(return_value=True)
         scanner._handle_test_write()
         scanner.logger.security_finding.assert_called()
 
     def test_write_test_no_writable(self):
-        scanner = _create_instance()
+        scanner = _create_instance(confirm=True)
         scanner.bacnet.read = Mock(return_value=None)
         scanner._handle_test_write()
         scanner.logger.display.assert_called()
+
+    def test_write_test_refuses_without_confirm(self):
+        scanner = _create_instance(confirm=False)
+        scanner.bacnet.read = Mock(return_value=42.0)
+        scanner._handle_test_write()
+        scanner.logger.fail.assert_called()
 
 
 class TestEnumerateWritable(unittest.TestCase):
@@ -83,11 +97,17 @@ class TestEnumerateWritable(unittest.TestCase):
         scanner._handle_enumerate_writable()
 
     def test_enumerate_writable_finds_some(self):
-        scanner = _create_instance()
+        # --enumerate-writable now requires --confirm.
+        scanner = _create_instance(confirm=True)
         scanner.bacnet.read = Mock(return_value=42.0)
         scanner.bacnet.write = Mock(return_value=True)
         scanner._handle_enumerate_writable()
         scanner.logger.security_finding.assert_called()
+
+    def test_enumerate_writable_refuses_without_confirm(self):
+        scanner = _create_instance(confirm=False)
+        scanner._handle_enumerate_writable()
+        scanner.logger.fail.assert_called()
 
 
 class TestCheckOOS(unittest.TestCase):

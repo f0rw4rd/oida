@@ -104,41 +104,28 @@ class bacnet(
         # Handle convenience shortcuts
         self._apply_shortcuts()
 
-        # TODO: Eliminate BAC0 vs bacpypes3 fallback split. This duplicates the
-        # same logic in bacnet/__init__.py. Unify on bacpypes3 for all modes
-        # (local broadcast + remote unicast) and drop the BAC0 dependency.
-        # Check if we should use raw UDP mode.
+        # Routing decision: bacpypes3 (raw UDP, fully asyncio-native) is
+        # the default for all targets. BAC0 stays available as an
+        # explicit opt-in via --use-bac0 because some operators have
+        # device-discovery presets configured against BAC0's broadcast
+        # behaviour and we don't want to silently change their workflow.
         #
-        # Previously this used `self.host.startswith(('192.168.', '10.',
-        # '172.'))` to detect "local" — but the '172.' prefix matches the
-        # ENTIRE 172.0.0.0/8 space including 172.0-172.15 and 172.32-172.255
-        # which are PUBLIC. RFC 1918 defines only 172.16.0.0/12
-        # (172.16-172.31) as private. Use the proper ipaddress check so
-        # public hosts in 172.0.0.0/8 don't get misrouted to the BAC0
-        # broadcast path and silently fail to discover.
-        device_id = getattr(self.args, "device_id", None)
-        local_hosts = ("255.255.255.255", "127.0.0.1", "localhost")
-        is_local = self.host in local_hosts
-        if not is_local:
-            try:
-                import ipaddress as _ip
+        # The old heuristic dispatched bacpypes3 only when the target
+        # was 'remote' or no device_id was given, with a buggy local-
+        # detection based on `host.startswith('172.')` that misrouted
+        # PUBLIC hosts in 172.0-172.15 / 172.32-172.255 (only 172.16/12
+        # is RFC 1918 private). Unifying eliminates the routing bug
+        # and gives every code path the same feature surface.
+        use_bac0 = (
+            getattr(self.args, "use_bac0", False)
+            and _is_bac0_available()
+        )
 
-                addr = _ip.ip_address(self.host)
-                # is_private covers RFC 1918 (10/8, 172.16/12, 192.168/16)
-                # plus loopback and link-local — exactly the BAC0 broadcast
-                # target set.
-                is_local = addr.is_private or addr.is_loopback or addr.is_link_local
-            except ValueError:
-                # Hostname, not an IP — assume remote (use bacpypes3 unicast).
-                is_local = False
-        is_remote = not is_local
-
-        use_raw = not _is_bac0_available() or device_id is not None or is_remote
-
-        if use_raw:
-            self._raw_scan()
-        else:
+        if use_bac0:
+            self.logger.debug("BACnet: using BAC0 (operator opted in via --use-bac0)")
             asyncio.run(self._async_proto_flow())
+        else:
+            self._raw_scan()
 
     async def _async_proto_flow(self):
         """Async BACnet scanning workflow"""

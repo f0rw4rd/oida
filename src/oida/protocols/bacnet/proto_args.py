@@ -185,7 +185,7 @@ Examples:
     p.add_argument("--control-points", action="store_true", help=SUPPRESS)
     p.add_argument("--values-only", action="store_true", help=SUPPRESS)
     p.add_argument("--full-properties", action="store_true", help=SUPPRESS)
-    # Five dispatcher-read flags were absent from proto_args, so passing
+    # Six dispatcher-read flags were absent from proto_args, so passing
     # them on the CLI raised 'unrecognized arguments' and the only way to
     # exercise the code paths was to monkey-patch args in tests.
     p.add_argument("--file-access-method", choices=["stream", "record"], default="stream",
@@ -194,6 +194,16 @@ Examples:
     p.add_argument("--cov-lifetime", type=int, default=300, help=SUPPRESS)
     p.add_argument("--cov-duration", type=int, default=30, help=SUPPRESS)
     p.add_argument("--read-range-count", type=int, default=50, help=SUPPRESS)
+    # --output / --format are declared on the MAIN parser (cli.py); the
+    # state.py mixin reads them via the shared Namespace. We don't
+    # re-declare them here — the test_no_duplicate_output_verbose_flags
+    # contract enforces single-source-of-truth.
+    # --use-bac0: opt-in back-compat for the BAC0 broadcast path. The
+    # default is now bacpypes3 for every target (see CODE_REVIEW.md HIGH:
+    # the BAC0/bacpypes3 dispatch had a 172.0.0.0/8 routing bug and
+    # asymmetric feature coverage). Operators with BAC0-tuned workflows
+    # opt back in here; new users get the consistent bacpypes3 path.
+    p.add_argument("--use-bac0", action="store_true", help=SUPPRESS)
     p.add_argument("--object-types", type=str, help=SUPPRESS)
     p.add_argument("--object-type", type=str, help=SUPPRESS)
     p.add_argument("--max-objects", type=int, default=1000, help=SUPPRESS)
