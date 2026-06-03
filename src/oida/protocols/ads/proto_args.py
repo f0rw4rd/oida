@@ -1,9 +1,17 @@
 """
-Argument parser definition for Beckhoff ADS protocol
+Argument parser definition for Beckhoff ADS protocol.
 
-This module registers ADS-specific command-line arguments
-following the NXC pattern.
+Migrated to proto_args_factory in §3 sync. ADS has 23+ argument groups
+beyond network/target so the bulk of the file stays local; the factory
+handles only the parser construction + standard target + standard
+--port (48898 ADS-default).
 """
+
+from ...utils.proto_args_factory import (
+    create_protocol_parser,
+    add_target_argument,
+    add_network_options,
+)
 
 
 def proto_args(parser, parents):
@@ -17,23 +25,21 @@ def proto_args(parser, parents):
     Returns:
         argparse.ArgumentParser: ADS protocol subparser
     """
-    ads_parser = parser.add_parser(
-        "ads",
-        help="Beckhoff ADS scanner",
+    ads_parser = create_protocol_parser(
+        parser,
+        name="ads",
+        help_text="Beckhoff ADS scanner",
         description="Scan and interact with Beckhoff TwinCAT/ADS devices",
         parents=parents,
     )
 
     # Target specification (positional)
-    ads_parser.add_argument(
-        "target",
-        help="Target IP address, CIDR range, IP range, or file",
-    )
+    add_target_argument(ads_parser)
 
-    # Network options
-    network_group = ads_parser.add_argument_group("Network Options")
-    network_group.add_argument(
-        "--port", type=int, default=48898, help="ADS TCP port (default: 48898)"
+    # Network options — port 48898 is the ADS TCP listener.
+    add_network_options(
+        ads_parser, default_port=48898, include_timeout=False,
+        port_help="ADS TCP port (default: 48898)",
     )
 
     # AMS/ADS Configuration

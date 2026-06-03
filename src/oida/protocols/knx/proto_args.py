@@ -1,15 +1,23 @@
 """
-Argument parser definition for KNX/EIB protocol
+Argument parser definition for KNX/EIB protocol.
 
-This module registers KNX-specific command-line arguments.
+Migrated to proto_args_factory in §3 sync. KNX keeps a custom `target`
+(nargs='?' with the KNX multicast address as default) so we set up
+that argument by hand after `create_protocol_parser`. The
+`add_network_options` helper would add --port + --timeout but KNX wants
+a custom default port (3671) and timeout type (float), so we keep the
+network group local.
 """
+
+from ...utils.proto_args_factory import create_protocol_parser
 
 
 def proto_args(parser, parents):
     """Register KNX-specific arguments"""
-    knx_parser = parser.add_parser(
-        "knx",
-        help="KNX/EIB building automation scanner",
+    knx_parser = create_protocol_parser(
+        parser,
+        name="knx",
+        help_text="KNX/EIB building automation scanner",
         description="Scan and interact with KNX building automation systems",
         parents=parents,
     )
