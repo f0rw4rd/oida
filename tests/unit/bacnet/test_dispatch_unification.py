@@ -17,13 +17,14 @@ def _read(rel):
 class TestDispatchUnification(unittest.TestCase):
     def test_default_path_is_bacpypes3(self):
         src = _read("src/oida/protocols/bacnet/nxc_connection.py")
-        # The patched proto_flow checks use_bac0 flag, with bacpypes3
-        # as the default (else branch).
-        self.assertIn("use_bac0 = (", src)
+        # The patched proto_flow assigns `use_bac0 = ...` based on the
+        # --use-bac0 flag. Whitespace-tolerant — ruff format may flow
+        # the assignment as a single line or wrap to multiple.
+        self.assertIn("use_bac0", src)
         self.assertIn('getattr(self.args, "use_bac0", False)', src)
-        # The else branch dispatches _raw_scan (bacpypes3).
-        # Find the dispatch block and verify default is _raw_scan.
-        idx = src.find("use_bac0 = (")
+        # The else branch dispatches _raw_scan (bacpypes3 = default).
+        idx = src.find("use_bac0 =")
+        self.assertGreater(idx, 0)
         end = src.find("def ", idx + 1)
         block = src[idx:end] if end > 0 else src[idx:]
         self.assertIn("self._raw_scan()", block)

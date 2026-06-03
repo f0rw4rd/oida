@@ -28,7 +28,8 @@ class TestDurationArgNameFix(unittest.TestCase):
         src = _read("src/oida/protocols/opcua/mixins/subscriptions.py")
         # Patched to read args.duration (argparse dest) with
         # subscribe_duration as back-compat fallback.
-        self.assertIn('getattr(\n            self.args, "duration", None\n        )', src)
+        # Whitespace-tolerant check — ruff format may flow this differently.
+        self.assertIn('getattr(self.args, "duration", None)', src.replace("\n", " ").replace("  ", " ").replace("  ", " ").replace("  ", " "))
         self.assertIn('"subscribe_duration"', src)
 
 

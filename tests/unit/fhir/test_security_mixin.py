@@ -477,7 +477,7 @@ class TestBruteForceCredentials(unittest.TestCase):
     @patch("requests.get")
     def test_successful_basic_auth(self, mock_get):
         """Test successful basic auth credential found"""
-        host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0)
+        host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0, confirm=True)
         host.results["data"]["server_info"] = {"security": {"oauth_endpoints": {}}}
 
         mock_response = Mock()
@@ -493,7 +493,7 @@ class TestBruteForceCredentials(unittest.TestCase):
     @patch("requests.get")
     def test_failed_basic_auth(self, mock_get):
         """Test no valid credentials found"""
-        host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0)
+        host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0, confirm=True)
 
         mock_response = Mock()
         mock_response.status_code = 401
@@ -506,7 +506,7 @@ class TestBruteForceCredentials(unittest.TestCase):
 
     def test_no_credentials_to_test(self):
         """Test fails when no credentials loaded"""
-        host = MockSecurityHost(brute=True)
+        host = MockSecurityHost(brute=True, confirm=True)
 
         with patch.object(host, "_load_credentials", return_value=([], [])):
             host._brute_force_credentials()
@@ -517,7 +517,8 @@ class TestBruteForceCredentials(unittest.TestCase):
     def test_stop_on_success(self, mock_get):
         """Test brute force stops on first valid credential when flag set"""
         host = MockSecurityHost(
-            brute=True, brute_method="basic", brute_rate=0, stop_on_success=True
+            brute=True, brute_method="basic", brute_rate=0, stop_on_success=True,
+            confirm=True,  # commit 9ae2a6c5 added a --confirm gate
         )
 
         mock_response = Mock()
@@ -537,7 +538,7 @@ class TestBruteForceCredentials(unittest.TestCase):
         """Test timeout during brute force is handled"""
         import requests as req
 
-        host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0)
+        host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0, confirm=True)
         mock_get.side_effect = req.exceptions.Timeout("timed out")
 
         with patch.object(host, "_load_credentials", return_value=(["admin"], ["pass"])):
