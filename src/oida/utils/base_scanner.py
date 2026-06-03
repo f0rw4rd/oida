@@ -91,8 +91,7 @@ class BaseScanner(ABC):
         # method and these lookups raised AttributeError on every CLI
         # invocation that hit BaseScanner directly.
         self.debug = (
-            parse_bool(self.args.get("debug", False))
-            or (self.args.get("verbose", 0) or 0) >= 1
+            parse_bool(self.args.get("debug", False)) or (self.args.get("verbose", 0) or 0) >= 1
         )
         self.read_only = parse_bool(self.args.get("read-only", True))
         self.timeout = int(self.args.get("timeout", 2))

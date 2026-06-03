@@ -150,9 +150,7 @@ class AttacksMixin(_ScannerBase):
             result["success"] = False
             result["inconclusive"] = True
             result["error"] = "Timeout (inconclusive — could be filter, slow PLC, or crash)"
-            self.logger.warning(
-                f"[{attack_name}] Timeout — INCONCLUSIVE (not asserting crash)"
-            )
+            self.logger.warning(f"[{attack_name}] Timeout — INCONCLUSIVE (not asserting crash)")
         except Exception as e:
             self.logger.debug(f"send attack command failed: {e}")
             result["error"] = str(e)

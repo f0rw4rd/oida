@@ -310,17 +310,14 @@ async def coap_get_blockwise(
 
         if len(assembled) > max_payload:
             logger.warning(
-                "Block2 GET aborted: assembled payload exceeded %d bytes "
-                "(cap=%d, latest block=%d)",
+                "Block2 GET aborted: assembled payload exceeded %d bytes (cap=%d, latest block=%d)",
                 len(assembled),
                 max_payload,
                 block_num,
             )
             return "aborted:payload-too-large", bytes(assembled[:max_payload])
         if block_num >= MAX_BLOCKWISE_BLOCKS:
-            logger.warning(
-                "Block2 GET aborted: block count exceeded %d", MAX_BLOCKWISE_BLOCKS
-            )
+            logger.warning("Block2 GET aborted: block count exceeded %d", MAX_BLOCKWISE_BLOCKS)
             return "aborted:too-many-blocks", bytes(assembled)
 
         block2 = response.opt.block2

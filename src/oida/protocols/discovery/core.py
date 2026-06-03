@@ -1374,9 +1374,7 @@ def get_all_broadcast_addresses(interface: str, subnet: Optional[str] = None) ->
             network = ipaddress.IPv4Network(net_cidr, strict=False)
             broadcasts.add(str(network.broadcast_address))
         except (ValueError, TypeError) as e:
-            logger.debug(
-                f"core: interface-network CIDR parse failed ({net_cidr!r}): {e}"
-            )
+            logger.debug(f"core: interface-network CIDR parse failed ({net_cidr!r}): {e}")
 
     return list(broadcasts)
 

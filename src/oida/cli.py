@@ -165,9 +165,7 @@ def merge_config_with_args(
         attr_name = key.replace("-", "_")
 
         if valid_dests is not None and attr_name not in valid_dests:
-            logger.warning(
-                "Config key %r does not match any CLI argument — ignoring", key
-            )
+            logger.warning("Config key %r does not match any CLI argument — ignoring", key)
             continue
 
         if not hasattr(args, attr_name):
