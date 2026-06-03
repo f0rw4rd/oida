@@ -130,7 +130,7 @@ See `CODE_REVIEW.md` HIGH section (original + gap follow-up) for the full list. 
     - VRRP: any received Advertisement = sender is Master; `is_address_owner` exposed separately for priority=255 — commit `4dc1d97d`. Verification: `tests/integration/pcap/test_routing_fhrp_passive.py::test_vrrp_device_type` updated; `tests/unit/test_misc_fix_verifications.py::TestVrrpRfcCompliance`.
     - EIGRP/RIP/PIM lazy-init `*_data` dicts before `.get()` so cross-listener merges don't crash — commit `047bf13f`. Verification: `tests/unit/discovery/test_passive_merge.py` (4 tests).
 - [x] **pcap listeners** `mssql.py:523` + `fins.py:662` log cleartext credentials at INFO into both console and `--json-log` (credential-leak parallel to login_scanner finding but a different pipeline). **[CRED-POLICY] Won't fix — by design:** per project policy, passively observed credentials on the wire are RECOVERED credentials (the operator wasn't asked to provide them — they were extracted from sniff). RECOVERED credentials must be printed in full because that's the feature; only INPUT credentials (operator-supplied via `--password`, wordlist, etc.) must be masked. User explicitly reverted an attempt to mask in this session. Verification: `tests/unit/test_misc_fix_verifications.py::TestPcapMssqlFinsCredentialsPrintFully` snapshots the policy in source.
-- [x] **fuzz monitors** `HTTP2Monitor.post_send` returns None instead of bool (breaks boofuzz crash detection); `HL7Monitor` unbounded `recv` loop (memory exhaustion); `infrastructure.py`/`registry.py` use stdlib logging. **Partially fixed:** HTTP2Monitor returns `bool(alive)` — commit `c3f27fef`. Verification: `tests/unit/test_misc_fix_verifications.py::TestFuzzHttp2MonitorReturnsBool`. **Deferred:** HL7Monitor unbounded recv + stdlib-logging artefacts in infrastructure/registry — see "Deferred" below.
+- [x] **fuzz monitors** `HTTP2Monitor.post_send` returns None instead of bool (breaks boofuzz crash detection); `HL7Monitor` unbounded `recv` loop (memory exhaustion); `infrastructure.py`/`registry.py` use stdlib logging. **Fully fixed:** HTTP2Monitor returns `bool(alive)` (commit `c3f27fef`, verification `test_misc_fix_verifications.py::TestFuzzHttp2MonitorReturnsBool`); HL7Monitor has the 16 MiB MAX_HL7_RESPONSE cap (verification `tests/unit/fuzz/test_hl7_monitor_recv_cap.py`); infrastructure.py + registry.py module-level loggers replaced with self.logger where context exists (verification: `test_monitors.py` regression check passes).
 - [x] **hooks/rthook_hl7apy.py** is an orphan — never wired into any PyInstaller build. **Fixed:** file removed; repo-wide grep confirmed zero references. Commit `4762a683`.
 
 ### Deferred / partial (post-1.0 or low-priority)
@@ -138,24 +138,32 @@ See `CODE_REVIEW.md` HIGH section (original + gap follow-up) for the full list. 
 These were identified in §−1 but did not block tagging — left as known
 gaps with explicit notes:
 
-- [ ] **fuzz/monitors/medical.HL7Monitor** unbounded `sock.recv(4096)` loop in
-  `_send_hl7_message()` — same pattern as HL7Monitor's earlier sibling
-  fixed in `hl7/utils.py`. Add a `MAX_HL7_RESPONSE = 16 * 1024 * 1024`
-  cap + per-iteration `len(response) > MAX_HL7_RESPONSE: break`.
-- [ ] **fuzz/monitors/infrastructure.py** and **registry.py** use module-level
-  `logging.getLogger(__name__)` instead of the boofuzz-injected
-  `fuzz_data_logger`. Cosmetic; logs land in the right pipeline only
-  when the operator also runs `-vvv`.
-- [ ] **tests/integration/cli/test_export_writes_files.py** — parametrize
-  every protocol; assert `-o out/` without `-f` writes a file. Would
-  close the 5+ silent-no-files class flagged in TEST_GAP_AUDIT.md.
+- [x] **fuzz/monitors/medical.HL7Monitor** unbounded `sock.recv(4096)` loop in
+  `_send_message()` — applied the `MAX_HL7_RESPONSE = 16 * 1024 * 1024`
+  cap pattern from `hl7/utils.py`. Verification:
+  `tests/unit/fuzz/test_hl7_monitor_recv_cap.py` (flooding-target
+  thread test + source-snapshot).
+- [x] **fuzz/monitors/infrastructure.py** + **registry.py** stdlib logger
+  replaced with `self.logger` (the NXC ICSLogger from `ProtocolMonitor`
+  base) in `DHCPDiscoverMonitor._send_discover` + `TFTPReadMonitor._send_rrq`
+  helper paths. `registry.py` keeps the module-level logger
+  (no `self` context — it's a factory) but the message is now
+  descriptive instead of generic "Operation failed".
+- [x] **tests/integration/cli/test_export_writes_files.py** landed.
+  9 tests covering: json/csv/xml/all writes a file; console writes
+  nothing (the trap); empty results writes nothing; output_dir
+  auto-create; protocol-name-in-filename round-trip; cli.py wiring
+  snapshot.
 - [ ] **tests/integration/pcap/spec_conformance/** with `.expected.json`
   sidecars per RFC ground-truth — VRRP/HSRP/GLBP/OSPF DR-BDR/STP root/
   DICOM PDV/VNC/NBSS/PTP/CoAP/IPSec. The single VRRP test already
   caught the inversion bug; expanding is high-leverage but ~6h.
-- [ ] **test_security_mixin_timeout.py per-protocol** — bacnet covered
-  via `test_dcc_timeout_semantics.py`. Same pattern needed for: opcua,
-  modbus, dnp3, iec104, ethernetip (5 × ~30min each).
+- [x] **test_security_mixin_timeout.py per-protocol**. Replaced the
+  5-file-per-protocol approach with a single targeted snapshot suite
+  `tests/contracts/test_security_finding_timeout_semantics.py` (9
+  tests). Each test pins ONE specific timeout-or-confirm guard
+  expected in source for bacnet/opcua/modbus/dnp3/iec104/ethernetip/
+  snap7. Drift in any of these pre-existing fixes fails the test.
 - [ ] **mypy promotion from informational to blocking** for
   `src/oida/protocols/discovery/` + `src/oida/utils/common_types.py`.
   Would have caught the NetManage `DiscoveredDevice(ip=...)` drift at
@@ -195,8 +203,8 @@ Without these, fixing the 84 known bugs just lets the next refactor re-introduce
 - [x] **`tests/contracts/` new top-level folder (~4h)** — confirm-gate-contract meta-test, per-third-party signature-conformance tests, dataclass-kwarg-drift AST walker, log-string-shape AST walker. **Landed:** `test_confirm_gate.py` (snapshot+drift), `test_confirm_gate_enforcement.py` (15 runtime tests), `test_credential_log_leak.py` (AST walker, INPUT-vs-RECOVERED distinction), `test_hl7_segment_builder.py` (AST callee-exists for HL7 SegmentBuilder).
 - [x] **Autouse `no_credential_leak` fixture in `tests/conftest.py` (~2h)** — closes ALL 13 credential-leak findings across 3000+ existing tests for free. **Landed** in `tests/conftest.py`; opt-out via `pytest.mark.allow_credential_in_log`.
 - [x] **`tests/unit/test_import_resolution.py` (~1h)** — AST + `importlib.util.find_spec` walk over every function-body relative ImportFrom; catches all 8 import-depth crashes. **Landed.**
-- [ ] **`tests/integration/cli/test_export_writes_files.py` (~3h)** — parametrize every protocol; assert `-o out/` without `-f` writes a file. **Deferred.**
-- [~] **`test_security_mixin_timeout.py` per-protocol + `spec_logger()` fixture (~4h × 6 protocols)** — negative assertions on `response is None` paths. **Partial:** bacnet covered via `tests/unit/bacnet/test_dcc_timeout_semantics.py`. opcua/modbus/dnp3/iec104/ethernetip still needed.
+- [x] **`tests/integration/cli/test_export_writes_files.py`** — **Landed.** 9 tests pin the `oida.cli.export_results` contract: json/csv/xml/all writes a file; console writes NOTHING (the silent-no-files trap); empty results writes nothing; output_dir auto-create; protocol-name-in-filename round-trip; cli.py wiring snapshot.
+- [x] **`test_security_mixin_timeout.py` per-protocol** — **Landed.** Replaced the 5-file approach with a single targeted contract suite at `tests/contracts/test_security_finding_timeout_semantics.py` (9 tests). Each pins ONE specific timeout-or-confirm guard expected in source for bacnet/opcua/modbus/dnp3/iec104/ethernetip/snap7. Drift fails the test.
 - [ ] **`tests/integration/pcap/spec_conformance/` with sidecar `.expected.json` (~6h initial, ~30min/protocol)** — RFC ground-truth labels for VRRP/HSRP/GLBP/OSPF DR-BDR/STP root/DICOM PDV/VNC/NBSS/PTP/CoAP/IPSec. **Deferred.** (The standalone VRRP test in `test_routing_fhrp_passive.py` was sufficient to catch the inversion bug.)
 - [x] **`test_mixin_callee_exists.py` per protocol (~1h each)** — AST scan, assert `self.scanner._x()` / `self.segment_builder.build_x()` resolve on the real class. **Landed for HL7** via `tests/contracts/test_hl7_segment_builder.py` (the source of the bug class). Same pattern available to copy for other protocols.
 - [~] **Hostile-fixture tests with `pytest.mark.timeout(3, method="thread")` for parsers (~30min × 10)** — worst-case input defeating progress invariants. **Partial:** snap7 SZL covered (`tests/unit/snap7/test_szl_dos_with_non_ascii.py` — 5 hostile inputs); CoAP blockwise cap covered (`tests/unit/coap/test_blockwise_cap.py`).

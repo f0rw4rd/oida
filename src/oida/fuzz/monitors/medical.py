@@ -74,7 +74,12 @@ class HL7Monitor(ProtocolMonitor):
             message = self._create_hl7_ack()
             sock.send(message)
 
-            # Read response (with MLLP framing)
+            # Read response (with MLLP framing).
+            # Same OOM guard as hl7/utils.py:send_probe — a peer that
+            # never sends MLLP_END can't drive us to OOM. Pin the
+            # buffer at 16 MiB; fuzz targets that ignore framing
+            # (the whole point of this monitor) hit this all the time.
+            MAX_HL7_RESPONSE = 16 * 1024 * 1024
             response = b""
             while True:
                 chunk = sock.recv(1024)
@@ -83,6 +88,12 @@ class HL7Monitor(ProtocolMonitor):
                 response += chunk
                 # Check for MLLP end marker
                 if self.MLLP_END in response:
+                    break
+                if len(response) > MAX_HL7_RESPONSE:
+                    self.logger.debug(
+                        f"HL7Monitor: response capped at {MAX_HL7_RESPONSE} bytes "
+                        f"(target never sent MLLP_END)"
+                    )
                     break
 
             return response
