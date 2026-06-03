@@ -443,16 +443,24 @@ class HTTP2Monitor(ProtocolMonitor):
         return self._check_alive()
 
     def post_send(self, target=None, fuzz_data_logger=None, session=None):
-        """Called after each fuzz iteration (boofuzz interface)."""
+        """Called after each fuzz iteration (boofuzz interface).
+
+        Boofuzz's IFuzzLogger contract requires post_send to return a
+        bool — True means target is alive, False means it crashed. The
+        previous implementation returned None on every call, which
+        boofuzz interprets as falsy → falsely flagging every iteration
+        as a crash. Return True when alive, False when crash detected.
+        """
         self.test_case_count += 1
 
-        # Only check at intervals
+        # Only check at intervals — assume alive on uncheck cycles.
         if self.test_case_count % self.check_interval != 0:
-            return
+            return True
 
-        if not self._check_alive(fuzz_data_logger):
-            if session:
-                session.add_fail()
+        alive = self._check_alive(fuzz_data_logger)
+        if not alive and session:
+            session.add_fail()
+        return bool(alive)
 
     def pre_send(self, target=None, fuzz_data_logger=None, session=None):
         """Called before each fuzz iteration (boofuzz interface)."""

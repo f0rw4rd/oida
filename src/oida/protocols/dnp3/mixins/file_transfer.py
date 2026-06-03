@@ -563,6 +563,12 @@ class FileTransferMixin(_ScannerBase):
                 octet_data = []
                 if hasattr(self._handler, "octet_strings"):
                     for os_item in self._handler.octet_strings:
+                        # ScanAllObjects() returns everything in the group;
+                        # filter to the user-requested range here.
+                        # Previously the user's start/end were parsed,
+                        # echoed in the log, and silently ignored.
+                        if not (start_idx <= os_item.index <= end_idx):
+                            continue
                         val_obj = os_item.value
                         raw_value = getattr(val_obj, "value", b"")
                         if isinstance(raw_value, (bytes, bytearray)):

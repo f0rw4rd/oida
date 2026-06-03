@@ -614,6 +614,20 @@ class CommandMixin:
             else:
                 base_cmd = struct.pack("<H", self.fuzz_ioa)
 
+            # The c104 library does NOT expose a raw send interface
+            # (conn.send_raw / conn.command don't exist), so the
+            # previous code silently incremented counters without
+            # transmitting anything. Bail loudly the first time we
+            # discover that — counters used to lie about coverage.
+            if not (hasattr(conn, "send_raw") or hasattr(conn, "command")):
+                self.logger.warning(
+                    "iec104 --fuzz-commands requires a raw-send interface on "
+                    "the c104 connection (send_raw/command) which the current "
+                    "c104 build does not expose. Skipping fuzzing for "
+                    f"Type {type_id} ({type_name})."
+                )
+                break
+
             # Generate fuzzed payloads
             for i, payload in enumerate(fuzz(base_cmd, count=self.fuzz_iterations, max_len=16)):
                 try:

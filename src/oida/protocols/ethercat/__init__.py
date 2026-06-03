@@ -480,11 +480,17 @@ class EtherCATScanner(
                 connection.close()
                 self.logger.debug("EtherCAT master closed")
             except Exception as e:
-                # Try to close anyway even if state transition failed
+                # Try to close anyway even if state transition failed.
+                # NOTE: previously the inner `except Exception as e:`
+                # shadowed the outer 'e' and Python 3's except-variable
+                # scoping deleted it after the inner suite, so line 488
+                # raised UnboundLocalError when the inner close failed
+                # — losing the original cleanup error completely. Rename
+                # the inner variable.
                 try:
                     connection.close()
-                except Exception as e:
-                    self.logger.debug(f"connection.close(): {e}")
+                except Exception as close_err:
+                    self.logger.debug(f"connection.close(): {close_err}")
                 self.logger.debug(f"Error during EtherCAT cleanup: {e}")
 
     def discover(self, connection: Any) -> Dict[str, Any]:

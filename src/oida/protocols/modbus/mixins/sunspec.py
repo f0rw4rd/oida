@@ -734,10 +734,14 @@ class SunSpecMixin(_ScannerBase):
                 reg_info = registers.get(reg_name)
                 if reg_info is None:
                     continue
-                # Check if register is writable (from map) and has a value
+                # Use the actual access level from the register map.
+                # Previously we overrode 'r' with the spec's 'rw' which
+                # produced a false-positive 'writable control' finding for
+                # every device whose vendor map correctly marks the
+                # register read-only (the spec says 'rw' for the field
+                # class, but a given device may restrict it). Trust the
+                # map; the spec value is informational only.
                 access = reg_info.get("access", "r")
-                if access != "rw" and expected_access == "rw":
-                    access = expected_access  # trust the spec
                 if access == "rw":
                     value = reg_info.get("value")
                     not_impl = reg_info.get("not_implemented", False)
