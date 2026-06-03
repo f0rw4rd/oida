@@ -148,7 +148,7 @@ class connection(ABC):
 
     def _resolve_host(self, host: str) -> str:
         """
-        Resolve hostname to IP address
+        Resolve hostname to IP address (IPv4 or IPv6).
 
         Args:
             host: Hostname or IP address
@@ -157,7 +157,15 @@ class connection(ABC):
             str: IP address (returns original if resolution fails)
         """
         try:
-            return socket.gethostbyname(host)
+            # gethostbyname is IPv4-only. Use getaddrinfo so IPv6
+            # hostnames (and AAAA-only records) resolve correctly.
+            # Prefer the first result, whatever family it is — the
+            # caller's downstream socket code is now also IPv6-aware
+            # (see test_connection above).
+            results = socket.getaddrinfo(host, None)
+            if results:
+                return results[0][4][0]
+            return host
         except socket.gaierror as e:
             # If resolution fails, return original (might be IP already)
             self.logger.debug(f"resolve host failed: {e}")
@@ -346,8 +354,14 @@ class NetworkConnection(connection):
         share a single argparse Namespace; writing to ``args.port`` here would
         leak the previous protocol's port to the next.
         """
+        # Always copy when we touch args. The old code only copied when
+        # port was unset, so a user-supplied -p value persisted on the
+        # shared Namespace and bled into every subsequent protocol
+        # invocation in the same process (CLI uses a process-wide
+        # Namespace). Copying unconditionally is cheap (Namespace is
+        # shallow) and prevents that leak entirely.
+        args = copy.copy(args)
         if hasattr(self, "default_port") and not getattr(args, "port", None):
-            args = copy.copy(args)
             args.port = self.default_port
 
         super().__init__(args, db, host)
@@ -361,10 +375,34 @@ class NetworkConnection(connection):
         """
         sock = None
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(getattr(self.args, "timeout", 2))
-            result = sock.connect_ex((self.ip, self.args.port))
-            return result == 0
+            # Use getaddrinfo so we honor both IPv4 and IPv6 — the old
+            # AF_INET-only socket() refused every IPv6 target despite
+            # the framework documenting IPv6 support. Try each result
+            # in order; first reachable wins.
+            timeout = getattr(self.args, "timeout", 2)
+            try:
+                addrinfo = socket.getaddrinfo(
+                    self.ip, self.args.port, type=socket.SOCK_STREAM
+                )
+            except socket.gaierror as e:
+                self.logger.debug(f"test connection: getaddrinfo failed: {e}")
+                return False
+            for family, socktype, proto, _, sockaddr in addrinfo:
+                try:
+                    sock = socket.socket(family, socktype, proto)
+                    sock.settimeout(timeout)
+                    if sock.connect_ex(sockaddr) == 0:
+                        return True
+                except OSError:
+                    continue
+                finally:
+                    if sock is not None:
+                        try:
+                            sock.close()
+                        except OSError:
+                            pass
+                        sock = None
+            return False
         except Exception as e:
             self.logger.debug(f"test connection failed: {e}")
             return False

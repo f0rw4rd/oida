@@ -293,7 +293,12 @@ class SecurityMixin:
                                 usernames.append(u)
                             if p not in passwords:
                                 passwords.append(p)
-                self.logger.display(f"Loaded credentials from wordlist: {wordlist}")
+                # Use basename only — full wordlist path can leak
+                # engagement context (client name, operator filesystem).
+                from ....utils.login_scanner import format_wordlist_source
+                self.logger.display(
+                    f"Loaded credentials from wordlist: {format_wordlist_source(wordlist)}"
+                )
             except ValueError as e:
                 self.logger.fail(str(e))
             except Exception as e:

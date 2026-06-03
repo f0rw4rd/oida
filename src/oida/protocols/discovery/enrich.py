@@ -116,12 +116,12 @@ class PingEnrichScanner:
                             time_part = line.split("time=")[1].split()[0]
                             return float(time_part)
                         except (IndexError, ValueError) as e:
-                            logger.debug(f"Failed to get time_part: {e}")
+                            logger.debug(f"NTP enrich: timestamp parse failed: {e}")
                             return 0.0
                 return 0.0
             return None
         except Exception as e:
-            logger.debug(f"Failed to get is_ipv6: {e}")
+            logger.debug(f"NTP enrich: IPv6-detection branch failed: {e}")
             return None
 
 
