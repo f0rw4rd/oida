@@ -96,9 +96,15 @@ dev = [
     "defusedxml>=0.7.1",      # SSDP/UPnP — also in discovery extra; here for unit tests
 ]
 docs = [
-    "sphinx>=9.1.0",
-    "sphinx-rtd-theme>=3.1.0",
-    "myst-parser>=5.0.0",
+    # Note: docs site lives in the separate oida-website repo
+    # (Astro/Starlight). These pins are kept for the legacy
+    # sphinx-style API-reference build that some tools still expect.
+    # sphinx 9.x requires Python 3.12+ which is above our project's
+    # requires-python = ">=3.10"; myst-parser also constrains sphinx<9,
+    # so pin both to the 8.x line.
+    "sphinx>=8.0.0,<9",
+    "sphinx-rtd-theme>=3.0.0",
+    "myst-parser>=4.0.0,<5",
 ]
 
 [project.urls]
@@ -298,3 +304,55 @@ skips = [
     "B404", "B405", "B408",
     "B603", "B607",
 ]
+
+# ──────────────────────────────────────────────────────────────────────
+# uv configuration
+#
+# uv is the supported package manager from 1.0 onward. pip still works
+# (the build remains PEP 517 / setuptools-backend), but `uv sync` is the
+# documented reproducible-install path and `uv.lock` is the source of
+# truth for transitive versions in CI / release pipelines.
+#
+# To install:
+#   curl -LsSf https://astral.sh/uv/install.sh | sh   # or `pip install uv`
+#
+# To create the dev environment from the lockfile:
+#   uv sync --all-extras                              # everything
+#   uv sync --extra dev --extra modbus --extra opcua  # subset
+#
+# To regenerate the lockfile after changing dependencies:
+#   uv lock                                           # update lockfile
+#   uv sync --all-extras                              # apply to .venv
+# ──────────────────────────────────────────────────────────────────────
+[tool.uv]
+# Pin the build backend resolution to the one declared in [build-system]
+# above (setuptools) — uv otherwise auto-picks per the PEP 517 hint.
+package = true
+
+# Compile bytecode after install for faster cold-start on first import.
+# CI doesn't need this, but it's cheap for local dev.
+compile-bytecode = true
+
+# Cache strategy: 'copy' to support filesystems that can't hardlink
+# (overlayfs, some NFS). 'auto' is the default which tries hardlinks
+# first and silently falls back; explicit 'copy' is more predictable.
+link-mode = "copy"
+
+# Pre-1.0 protocol extras frequently break their own version pins;
+# allow uv to consider pre-releases when an extra explicitly requires
+# one (does not apply to direct deps, only transitive).
+prerelease = "if-necessary"
+
+# Index resolution stays on PyPI for everything except the pyshark
+# git+https URL pinned in the `pcap` extra (uv handles VCS sources
+# natively, no [tool.uv.sources] entry needed unless we want to
+# remap it).
+
+[tool.uv.pip]
+# Mirror the same resolution behaviour for the legacy `uv pip install`
+# pip-compat path so a `uv pip install -e .[dev,all]` command produces
+# the same environment as `uv sync --all-extras`.
+prerelease = "if-necessary"
+
+# Constrain to the Python versions actually supported.
+python-version = "3.10"
