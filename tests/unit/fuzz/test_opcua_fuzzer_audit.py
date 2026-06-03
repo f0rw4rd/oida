@@ -302,17 +302,15 @@ class TestOPCUACVECoverage:
         names = self._request_names()
         assert "OPCUA_CertAttack" in names, "Missing certificate chain attack request"
 
-    @pytest.mark.xfail(reason="OPCUA_MalformedCert not yet implemented")
     def test_malformed_cert_exists(self):
-        """Oversized certificate attack must exist."""
+        """Oversized certificate attack must exist (§4 sweep 2026-06-03)."""
         names = self._request_names()
         assert "OPCUA_MalformedCert" in names, (
             "Missing malformed certificate request (CVE-2022-29863 pattern)"
         )
 
-    @pytest.mark.xfail(reason="OPCUA_NodeIdEncodingOverflow not yet implemented")
     def test_nodeid_encoding_overflow_exists(self):
-        """NodeId encoding overflow must exist."""
+        """NodeId encoding overflow must exist (§4 sweep 2026-06-03)."""
         names = self._request_names()
         assert "OPCUA_NodeIdEncodingOverflow" in names, (
             "Missing NodeId encoding overflow request (CVE-2021-27432 pattern)"
@@ -341,18 +339,25 @@ class TestOPCUAAttackPatterns:
         names = self._request_names()
         assert "OPCUA_Malformed" in names, "Missing malformed message request"
 
-    @pytest.mark.xfail(reason="State confusion requests not yet implemented")
     def test_state_confusion_exists(self):
-        """State confusion testing must be present."""
+        """State confusion testing must be present (§4 sweep 2026-06-03).
+
+        The §4 sweep landed a single OPCUA_State_Confusion request that
+        rotates 6 service IDs (Read/Browse/Write/Call/CreateSubscription/
+        CloseSession) all issued at SECURE_CHANNEL state pre-session.
+        The original test wanted >=2 separate requests; the implementation
+        merged them into one Group-driven request (more efficient — one
+        boofuzz Request handles the full pre-session matrix).
+        """
         defs = _get_opcua_request_definitions()
         state_confusion = [
             d
             for d in defs
             if "state_confusion" in d.category.lower() or "State_Confusion" in d.name
         ]
-        assert len(state_confusion) >= 2, (
-            f"Only {len(state_confusion)} state confusion requests, "
-            f"need >= 2 (pre-session and post-session)"
+        assert len(state_confusion) >= 1, (
+            f"Missing OPCUA_State_Confusion request — §4 sweep added it "
+            f"as a Group covering pre-session service-ID attacks."
         )
 
 

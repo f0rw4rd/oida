@@ -658,15 +658,47 @@ and full per-protocol regression suites.
 - [x] mqtt: MQTT 5.0 reason code sweep
 - [x] coap: explicit `fuzzable=` annotations on Ver/T/TKL/Code bits
 
-### 4.2 Medium (1-3 days each) — deferred post-1.0
+### 4.2 Medium (1-3 days each)
 
-- [ ] Migrate SMTP to `StatefulFuzzer`
-- [ ] Migrate HTTP to `StatefulFuzzer`
-- [ ] Migrate OPC UA to `StatefulFuzzer`
-- [ ] Implement `OPCUA_NodeIdEncodingOverflow`
-- [ ] Implement `OPCUA_MalformedCert`
-- [ ] Implement `OPCUA_State_Confusion`
-- [ ] Resolve dead test scaffolding for tase2, hartip, fins, dicom, industrial_ethernet, profinet_dcp (implement or delete tests)
+OPCUA payload implementations + dead-test cleanup landed in the §3+§4
+sweep (2026-06-03). StatefulFuzzer migrations remain deferred — they
+are structural refactors with no behaviour change since each protocol
+already has an inline state machine.
+
+- [~] Migrate SMTP to `StatefulFuzzer`. **Deferred post-1.0.** SMTP
+  has an inline `_define_state_machine` + STARTTLS/AUTH state machines
+  at `src/oida/fuzz/protocols/smtp.py:1083+`. Migration is purely
+  structural (subclass `StatefulFuzzer`, extract `CONNECTION_CLASS` +
+  `AUTHENTICATOR_CLASS`).
+- [~] Migrate HTTP to `StatefulFuzzer`. **Deferred post-1.0.** Same
+  shape: `src/oida/fuzz/protocols/http_protocol.py` has its own state
+  machine (22 hits).
+- [~] Migrate OPC UA to `StatefulFuzzer`. **Deferred post-1.0.**
+  `_define_state_machine` already wired at `opcua.py:528`. The three
+  §4.1 OPCUA requests added in this sweep honour `requires_state` on
+  `RequestInfo` so the migration is reachability-validation
+  housekeeping only.
+- [x] Implement `OPCUA_NodeIdEncodingOverflow`. Source:
+  `src/oida/fuzz/protocols/opcua.py:3573+` (Group of 7 reserved/
+  extended-flag encoding bytes + oversized identifier length).
+  Verification: `tests/unit/fuzz/test_opcua_fuzzer_audit.py::TestOPCUACVECoverage::test_nodeid_encoding_overflow_exists`
+  (was xfail, now real pass).
+- [x] Implement `OPCUA_MalformedCert`. Source: `opcua.py:3650+`
+  (Group of 4 cert-length × 4 cert-body attacks targeting the
+  OpenSecureChannel cert validator). Verification:
+  `test_malformed_cert_exists` (un-xfailed).
+- [x] Implement `OPCUA_State_Confusion`. Source: `opcua.py:3745+`
+  (Group of 6 session-required service IDs rotated at SECURE_CHANNEL
+  state pre-session). Verification: `test_state_confusion_exists`
+  (un-xfailed).
+- [x] Resolve dead test scaffolding for tase2, hartip, fins,
+  industrial_ethernet, profinet_dcp. **Resolved by deletion** — no
+  source modules exist for those fuzzers; tests unconditionally
+  skipped. Entries removed from `ICS_AUDIT_REQUEST_COUNTS` in
+  `tests/unit/fuzz/test_fuzzer_coverage.py` and from
+  `CRITICAL_FEATURE_REQUIREMENTS` in `test_critical_features.py`.
+  Re-add when the underlying fuzzer modules land. dicom: not in any
+  list — never had a fuzz scaffold to begin with.
 
 ### 4.3 Coverage regression test — DONE
 

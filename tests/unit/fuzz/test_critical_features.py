@@ -141,20 +141,12 @@ CRITICAL_FEATURE_REQUIREMENTS = {
             ["CIP_Boundary", "Path"],
         ),
     ],
-    "fins": [
-        (
-            "All MRC codes covered",
-            ["Quick_Coverage", "Coverage"],
-        ),
-        (
-            "Buffer overflow attacks",
-            ["Buffer_Overflow", "Overflow"],
-        ),
-        (
-            "Memory area operations",
-            ["Memory"],
-        ),
-    ],
+    # fins / tase2 / hartip / profinet_dcp / industrial_ethernet entries
+    # removed in §4 cleanup (2026-06-03): no corresponding fuzzer source
+    # exists in src/oida/fuzz/protocols/; tests unconditionally skipped.
+    # Re-add when the underlying fuzzer modules land — see §4.2 in
+    # RELEASE_TODO.md (currently "deferred post-1.0"). MMS coverage moved
+    # below since it IS implemented.
     "mms": [
         (
             "ASN.1 BER attacks (CVE-2022-2971)",
@@ -167,58 +159,6 @@ CRITICAL_FEATURE_REQUIREMENTS = {
         (
             "OSI layer attacks",
             ["OSI"],
-        ),
-    ],
-    "tase2": [
-        (
-            "CVE-targeted attacks (CVE-2022-2970/2972)",
-            ["CVE_Critical", "CVE"],
-        ),
-        (
-            "TASE.2 block coverage",
-            ["Block1", "Block2"],
-        ),
-        (
-            "Malformed ASN.1/BER",
-            ["Malformed"],
-        ),
-    ],
-    "hartip": [
-        (
-            "Buffer overflow (CVE-2020-16209)",
-            ["Buffer_Overflow", "Overflow"],
-        ),
-        (
-            "Malformed header testing",
-            ["Malformed", "Header"],
-        ),
-        (
-            "Boundary value testing",
-            ["Boundary"],
-        ),
-    ],
-    "profinet_dcp": [
-        (
-            "DCP length overflow",
-            ["Length_Overflow", "Overflow"],
-        ),
-        (
-            "Malformed DCP packets (CVE-2017-2680/2681)",
-            ["Malformed"],
-        ),
-        (
-            "Option boundary testing",
-            ["Option_Boundary", "Boundary"],
-        ),
-    ],
-    "industrial_ethernet": [
-        (
-            "Multi-protocol coverage",
-            ["Quick_Coverage", "Coverage"],
-        ),
-        (
-            "Length overflow attacks",
-            ["Overflow"],
         ),
     ],
     # === P0 ICS (from earlier audit) ===
