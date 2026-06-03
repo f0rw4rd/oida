@@ -32,10 +32,28 @@ from .nxc_connection import (
     DICOM_VENDOR_MAP,
 )
 
+
+# Module-level symbols for unit-test patchability. Tests use
+# @patch("oida.protocols.dicom.AE") and friends. unittest.mock.patch's
+# get_original() walks __dict__, not __getattr__, so we have to bind
+# real attributes here. Use placeholders when pynetdicom isn't
+# installed so the patch decorator's lookup succeeds in dev environments
+# without the optional dep.
+try:
+    from pynetdicom import AE, evt  # type: ignore  # noqa: F401
+    from pydicom.dataset import Dataset  # type: ignore  # noqa: F401
+except ImportError:  # pragma: no cover — optional dep
+    AE = None  # type: ignore
+    evt = None  # type: ignore
+    Dataset = None  # type: ignore
+
+
 __all__ = [
     "dicom",
     "PYNETDICOM_AVAILABLE",
     "PHI_TAGS",
     "DEFAULT_AET_WORDLIST",
     "DICOM_VENDOR_MAP",
+    "AE",
+    "Dataset",
 ]

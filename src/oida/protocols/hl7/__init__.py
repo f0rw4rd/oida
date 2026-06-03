@@ -28,7 +28,23 @@ from .utils import MLLP_END, MLLP_START, extract_ack_code, strip_mllp, wrap_mllp
 
 _hl7apy = lazy_import("hl7apy", "HL7", install_hint="pip install hl7apy")
 
-__all__ = ["HL7SegmentBuilder", "HL7SegmentParser", "hl7"]
+
+# Module-level symbols for unit-test patchability. Tests use
+# @patch("oida.protocols.hl7.Message") and @patch(".parse_message").
+# unittest.mock.patch's get_original() walks __dict__, not __getattr__,
+# so bind real attributes here (or placeholders when hl7apy is missing).
+try:
+    from hl7apy.core import Message  # type: ignore  # noqa: F401
+    from hl7apy.parser import parse_message  # type: ignore  # noqa: F401
+
+    HL7APY_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    Message = None  # type: ignore
+    parse_message = None  # type: ignore
+    HL7APY_AVAILABLE = False
+
+
+__all__ = ["HL7SegmentBuilder", "HL7SegmentParser", "hl7", "HL7APY_AVAILABLE"]
 
 # HL7 Sending Application to Vendor/Product mapping
 # Used to identify healthcare IT systems from MSH-3 field
