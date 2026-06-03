@@ -162,6 +162,36 @@ class TestSZLParse0x001C(unittest.TestCase):
         self.assertEqual(result["record_len"], 34)
         self.assertEqual(result["partial_list_len"], 1)
 
+    def test_zero_record_len_does_not_hang(self):
+        """SZL 0x001C with record_len=0 must not infinite-loop (DoS).
+
+        Original code: `while offset + record_len <= len(data)` plus
+        `offset += record_len` => offset never advances => CPU pegged.
+        Malicious or corrupt SZL response from the PLC could weaponize.
+        """
+        import threading
+        import time
+        from oida.protocols.snap7.szl_parser import SZLParser
+
+        # Build header with record_len=0 and non-zero first index so
+        # the loop cannot exit via the index==0 break.
+        header = struct.pack("<HH", 0, 1)
+        body = struct.pack(">H", 7) + b"AAAA" + b"\x00" * 26
+        data = header + body
+
+        holder = {}
+
+        def run():
+            holder["t0"] = time.time()
+            holder["result"] = SZLParser._parse_0x001c(data, 0)
+            holder["t1"] = time.time()
+
+        t = threading.Thread(target=run, daemon=True)
+        t.start()
+        t.join(timeout=2.0)
+        self.assertFalse(t.is_alive(), "SZL 0x001C parser hung on record_len=0")
+        self.assertIsInstance(holder.get("result"), dict)
+
 
 class TestSZLParse0x0011(unittest.TestCase):
     """Test SZLParser._parse_0x0011() - CPU characteristics."""
@@ -242,6 +272,26 @@ class TestSZLParse0x0011(unittest.TestCase):
         result = SZLParser._parse_0x0011(data, 0)
         self.assertEqual(result["record_len"], 28)
         self.assertEqual(result["partial_list_len"], 1)
+
+    def test_zero_record_len_does_not_hang(self):
+        """SZL 0x0011 with record_len=0 must not infinite-loop (DoS)."""
+        import threading
+        from oida.protocols.snap7.szl_parser import SZLParser
+
+        header = struct.pack("<HH", 0, 1)
+        body = struct.pack(">H", 1) + b"AAAA" + b"\x00" * 26
+        data = header + body
+
+        holder = {}
+
+        def run():
+            holder["result"] = SZLParser._parse_0x0011(data, 0)
+
+        t = threading.Thread(target=run, daemon=True)
+        t.start()
+        t.join(timeout=2.0)
+        self.assertFalse(t.is_alive(), "SZL 0x0011 parser hung on record_len=0")
+        self.assertIsInstance(holder.get("result"), dict)
 
 
 class TestSZLParse0x0132(unittest.TestCase):

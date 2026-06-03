@@ -57,6 +57,15 @@ class SZLParser:
             result["record_len"] = record_len
             result["partial_list_len"] = partial_list_len
 
+            # Guard against malformed SZL: a record must be at least 3 bytes
+            # (2-byte index + ≥1 byte payload). record_len=0 from a hostile
+            # or buggy PLC would otherwise infinite-loop on `offset +=
+            # record_len` below (DoS).
+            if record_len < 3:
+                result["parsed"] = False
+                result["error"] = f"invalid record_len={record_len}"
+                return result
+
             # String length per record = record_len - 2 (for index)
             str_len = record_len - 2 if record_len > 2 else 32
 
@@ -130,6 +139,13 @@ class SZLParser:
             partial_list_len = int.from_bytes(data[2:4], "little")
             result["record_len"] = record_len
             result["partial_list_len"] = partial_list_len
+
+            # Guard against malformed SZL: see _parse_0x001c — record_len=0
+            # would infinite-loop on the `offset += record_len` advance (DoS).
+            if record_len < 3:
+                result["parsed"] = False
+                result["error"] = f"invalid record_len={record_len}"
+                return result
 
             # SZL 0x0011 format: 2-byte index + 20-byte string + 6-byte metadata
             # The string field is fixed at 20 bytes, not record_len - 2
