@@ -164,7 +164,7 @@ class ethernetip(NetworkConnection):
         """Close EtherNet/IP connection"""
         if self.conn:
             try:
-                self.scanner.disconnect()
+                self.scanner.disconnect(self.conn)
             except Exception as e:
                 self.logger.debug(f"Error disconnecting: {e}")
 
