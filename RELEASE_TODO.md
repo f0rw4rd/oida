@@ -606,18 +606,24 @@ Reference pattern: iec104. Applied to:
 - [x] Resolve fhir `-p = --search-patients` (consistency)
 - [x] `-u` — kept per-protocol (modbus=unit-id, coap=psk-identity, snmp=snmp-user); documented as exceptions in STYLE_GUIDE.md ("CLI short-flag conventions" table) — closed: documentation IS the resolution
 
-### 3.3 `proto_args_factory` migration (6 holdouts) — DEFERRED post-1.0
+### 3.3 `proto_args_factory` migration (6 holdouts) — DONE in §3/§4 sweep (2026-06-03)
 
-Wholesale migration carries CLI-compat risk for limited reward now that the
-short-flag inconsistencies are documented and the worst collision is fixed.
-Tracked as a separate refactor:
+Each migrated protocol now imports from `oida.utils.proto_args_factory`
+and uses `create_protocol_parser` + `add_target_argument` for the
+construction boilerplate. Protocol-specific arg groups (CIP options for
+ethernetip, CoE options for ethercat, KNX-multicast target for knx,
+ADS-AMS options for ads, DCP/RPC options for profinet, passive-listener
+filters for discovery) stay local because the factory helpers don't
+have a clean fit for those shapes. CLI surface unchanged — verified
+by `tests/unit/test_cli_args.py::test_no_duplicate_output_verbose_flags`
+and full per-protocol regression suites.
 
-- [ ] ads
-- [ ] discovery
-- [ ] ethercat
-- [ ] ethernetip
-- [ ] knx
-- [ ] profinet
+- [x] ads — uses `create_protocol_parser` + `add_target_argument` + `add_network_options(default_port=48898, include_timeout=False)`
+- [x] discovery — uses `create_protocol_parser`; target stays local (nargs='?' interface)
+- [x] ethercat — uses `create_protocol_parser` + `add_target_argument(help_text=...)`; `-F/--fuzz` nargs='?' + `-y` confirm alias stay local
+- [x] ethernetip — uses `create_protocol_parser` + `add_target_argument` + `add_network_options(default_port=44818)` + `add_dangerous_options(include_fuzz=True, group_name="Attack Options (DANGEROUS)")`
+- [x] knx — uses `create_protocol_parser`; KNX multicast target (224.0.23.12 default) + custom network group stay local
+- [x] profinet — uses `create_protocol_parser` + `add_target_argument(help_text=...)`; local `--fuzz` nargs='?' choices=['basic','full']
 
 ---
 

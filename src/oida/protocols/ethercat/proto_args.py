@@ -1,10 +1,19 @@
 """
-Argument parser definition for EtherCAT protocol
+Argument parser definition for EtherCAT protocol.
 
-This module registers EtherCAT-specific command-line arguments.
+Migrated to proto_args_factory in §3 sync — uses create_protocol_parser
++ add_target_argument for the boilerplate. EtherCAT keeps its local
+`-F/--fuzz` (nargs='?' with choices), its `-y` short alias for
+`--confirm`, and its target=interface help override; the factory's
+add_dangerous_options would clobber both, so they stay local.
 """
 
 import argparse
+
+from ...utils.proto_args_factory import (
+    create_protocol_parser,
+    add_target_argument,
+)
 
 EXAMPLES = r"""
 Examples:
@@ -30,16 +39,20 @@ Security Testing:
 
 def proto_args(parser, parents):
     """Register EtherCAT-specific arguments"""
-    ethercat_parser = parser.add_parser(
-        "ethercat",
-        help="EtherCAT scanner",
+    ethercat_parser = create_protocol_parser(
+        parser,
+        name="ethercat",
+        help_text="EtherCAT scanner",
         description="Scan and interact with EtherCAT devices",
         parents=parents,
         epilog=EXAMPLES,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    ethercat_parser.add_argument("target", help="Network interface for EtherCAT communication")
+    add_target_argument(
+        ethercat_parser,
+        help_text="Network interface for EtherCAT communication",
+    )
 
     ethercat_group = ethercat_parser.add_argument_group("EtherCAT Options")
     ethercat_group.add_argument(

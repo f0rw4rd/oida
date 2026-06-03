@@ -1,29 +1,34 @@
 """
-Argument parser definition for EtherNet/IP protocol
+Argument parser definition for EtherNet/IP protocol.
 
-This module registers EtherNet/IP-specific command-line arguments.
+Migrated to proto_args_factory in §3 sync — common groups
+(create_protocol_parser, add_target_argument, add_network_options,
+add_dangerous_options) come from the shared factory; protocol-specific
+groups (Discovery, CIP, File Operations) stay local.
 """
+
+from ...utils.proto_args_factory import (
+    create_protocol_parser,
+    add_target_argument,
+    add_network_options,
+    add_dangerous_options,
+)
 
 
 def proto_args(parser, parents):
     """Register EtherNet/IP-specific arguments"""
-    enip_parser = parser.add_parser(
-        "ethernetip",
-        help="EtherNet/IP scanner",
+    enip_parser = create_protocol_parser(
+        parser,
+        name="ethernetip",
+        help_text="EtherNet/IP scanner",
         description="Scan and interact with EtherNet/IP devices",
         parents=parents,
     )
 
-    enip_parser.add_argument(
-        "target",
-        help="Target IP address, CIDR range, IP range, or file",
-    )
+    add_target_argument(enip_parser)
 
-    # Network Options
-    network_group = enip_parser.add_argument_group("Network Options")
-    network_group.add_argument(
-        "--port", type=int, default=44818, help="EtherNet/IP port (default: 44818)"
-    )
+    # Network Options — port 44818 is the EtherNet/IP TCP register.
+    add_network_options(enip_parser, default_port=44818)
     # EtherNet/IP Discovery Options
     enip_group = enip_parser.add_argument_group("EtherNet/IP Discovery")
     enip_group.add_argument(
@@ -155,11 +160,6 @@ def proto_args(parser, parents):
         help="Test write access to attributes (use with caution)",
     )
     security_group.add_argument(
-        "--fuzz",
-        action="store_true",
-        help="Fuzz writable attributes (requires --write, may cause DoS)",
-    )
-    security_group.add_argument(
         "--dump-security",
         action="store_true",
         default=True,
@@ -193,8 +193,13 @@ def proto_args(parser, parents):
         help="Maximum file size to download in bytes (default: 65536)",
     )
 
-    # Attack Options (DANGEROUS - require explicit confirmation)
-    attack_group = enip_parser.add_argument_group("Attack Options (DANGEROUS)")
+    # Dangerous attack options + --confirm + --fuzz via factory.
+    # include_fuzz=True keeps --fuzz/--fuzz-iterations/--fuzz-max-targets
+    # consistent across all migrated protocols; the three protocol-specific
+    # attack flags below are kept local since they're EtherNet/IP-only.
+    attack_group = add_dangerous_options(
+        enip_parser, include_fuzz=True, group_name="Attack Options (DANGEROUS)"
+    )
     attack_group.add_argument(
         "--cpu-stop",
         action="store_true",
@@ -209,11 +214,6 @@ def proto_args(parser, parents):
         "--reset-ethernet",
         action="store_true",
         help="Reset Ethernet interface (may briefly disconnect device)",
-    )
-    attack_group.add_argument(
-        "--confirm",
-        action="store_true",
-        help="Confirm dangerous attack operations (required for --cpu-stop, --crash-ethernet)",
     )
 
     return enip_parser
