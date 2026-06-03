@@ -151,7 +151,7 @@ class FINSScanner:
                     logger.debug(f"FINS: Ignoring response from {ip_addr} (not in {self.subnet})")
                     return
             except ValueError as e:
-                logger.debug(f"Failed to get network: {e}")
+                logger.debug(f"FINS: subnet parse failed ({self.subnet!r}): {e}")
 
         try:
             # Parse FINS header (minimum 10 bytes)

@@ -498,13 +498,19 @@ class coap(NetworkConnection):
     def _probe_paths_wordlist(self, wordlist_path):
         """Probe paths loaded from a wordlist file."""
         from ...utils.default_credentials import parse_credential_input
+        from ...utils.login_scanner import format_wordlist_source
 
         paths, is_file = parse_credential_input(wordlist_path)
+        # Use the basename for log output so an engagement-sensitive path
+        # like /home/pentester/clients/acme/coap-paths.txt doesn't end up
+        # in --json-log or copy-pasted screenshots. Full path stays
+        # internal for the actual file open above.
+        safe_label = format_wordlist_source(wordlist_path)
         if not is_file:
-            self.logger.warning("Wordlist file not found: %s", wordlist_path)
+            self.logger.warning("Wordlist file not found: %s", safe_label)
             return []
 
-        self.logger.info("Loaded %d paths from wordlist: %s", len(paths), wordlist_path)
+        self.logger.info("Loaded %d paths from wordlist: %s", len(paths), safe_label)
 
         host, port = self.scanner.get_target_info()
         found = []

@@ -514,7 +514,7 @@ class BJNPScanner:
                     bjnp_data["device_id"] = id_str
                     device.bjnp_data = bjnp_data
                 except Exception as e:
-                    logger.debug(f"Failed to get id_str: {e}")
+                    logger.debug(f"BJNP: device_id parse/store failed: {e}")
         except OSError as e:
             logger.debug(f"BJNP identity query failed: {e}")
         finally:
@@ -1369,7 +1369,7 @@ class PCAnywhereScanner:
                 clean = name_data.rstrip(b"\x00").decode("ascii", errors="replace")
                 server_name = "".join(c for c in clean if 32 <= ord(c) < 127).strip()
             except Exception as e:
-                logger.debug(f"Failed to get clean: {e}")
+                logger.debug(f"pcAnywhere: server-name decode failed: {e}")
 
         if server_name:
             pcanywhere_data["server_name"] = server_name

@@ -378,7 +378,7 @@ class DHCPPassiveListener:
                     if decoded.isprintable() and len(decoded) > 0:
                         return (decoded, f"type{hw_type}")
                 except Exception as e:
-                    logger.debug(f"Failed to get decoded: {e}")
+                    logger.debug(f"DHCP: client_id UTF-8 decode failed: {e}")
                 return (data[1:].hex(), f"type{hw_type}")
 
         except Exception as e:
