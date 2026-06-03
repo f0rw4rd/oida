@@ -281,15 +281,29 @@ class coap(NetworkConnection):
                 lwm2m = self.scanner._fingerprint_lwm2m(self.conn)
                 self.results["data"]["lwm2m"] = lwm2m
 
-        # Method testing
+        # Method testing — safe-by-default. GET/FETCH always; write methods
+        # (PUT/POST/DELETE/PATCH/IPATCH) require --confirm because DELETE on
+        # a live actuator can wipe physical state.
         if getattr(self.args, "methods", False):
             resources = self.scanner._resources
             if resources:
-                self.logger.display("Testing CoAP methods...")
-                matrix = self.scanner._test_methods(self.conn, resources)
+                _confirm = getattr(self.args, "confirm", False)
+                if _confirm:
+                    self.logger.display(
+                        "Testing CoAP methods (read + write, --confirm passed)..."
+                    )
+                else:
+                    self.logger.display(
+                        "Testing CoAP read methods (GET/FETCH). "
+                        "Pass --confirm to also probe PUT/POST/DELETE/PATCH/IPATCH."
+                    )
+                matrix = self.scanner._test_methods(self.conn, resources, confirm=_confirm)
                 self.results["data"]["method_matrix"] = matrix
                 for path, methods in matrix.items():
-                    allowed = [m for m, c in methods.items() if c.startswith("2.")]
+                    allowed = [
+                        m for m, c in methods.items()
+                        if isinstance(c, str) and c.startswith("2.")
+                    ]
                     if allowed:
                         self.logger.display("  %s: %s", path, ", ".join(allowed))
 
