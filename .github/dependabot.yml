@@ -1,0 +1,44 @@
+# Dependabot config for OIDA
+#
+# - PyPI: weekly check for CVE/version bumps. Dependabot understands
+#   pyproject.toml + uv.lock and opens PRs that re-resolve the lock
+#   in-place. Grouped to keep PR noise down.
+# - GitHub Actions: weekly check; ensures the SHA-pinned actions in
+#   .github/workflows/*.yml get bumped when upstream cuts a new release.
+#
+# Reviewers/assignees default to the repo owner; tweak if maintainership
+# changes.
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      # Group runtime security patches so a CVE sweep is one PR, not ten.
+      security-runtime:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      # Group routine dev-tool minor/patch bumps.
+      dev-tools:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "python"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
