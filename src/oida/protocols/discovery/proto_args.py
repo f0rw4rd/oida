@@ -1,13 +1,20 @@
 """
-Argument parser definition for unified network discovery protocol
+Argument parser definition for unified network discovery protocol.
+
+Migrated to proto_args_factory in §3 sync — uses create_protocol_parser
+for the boilerplate. Discovery has an optional `target` (nargs='?') so
+we can't use the standard add_target_argument helper.
 """
+
+from ...utils.proto_args_factory import create_protocol_parser
 
 
 def proto_args(parser, parents):
     """Register discovery-specific arguments"""
-    discovery_parser = parser.add_parser(
-        "discovery",
-        help="Unified network discovery (passive + active)",
+    discovery_parser = create_protocol_parser(
+        parser,
+        name="discovery",
+        help_text="Unified network discovery (passive + active)",
         description="Discover devices on a network interface using passive listening and active probing.",
         parents=parents,
     )

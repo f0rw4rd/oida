@@ -1,4 +1,18 @@
-"""PROFINET protocol CLI arguments."""
+"""PROFINET protocol CLI arguments.
+
+Migrated to proto_args_factory in §3 sync. Profinet keeps its local
+``--fuzz`` (nargs='?' choices=['basic','full']) and its custom target
+help (target = interface OR IP) — neither maps cleanly onto the factory
+helpers, so we use the factory only for the parser-construction
+boilerplate.
+"""
+
+import argparse
+
+from ...utils.proto_args_factory import (
+    create_protocol_parser,
+    add_target_argument,
+)
 
 
 def proto_args(parser, parents):
@@ -39,18 +53,19 @@ Security Testing:
   oida profinet eth0 --fuzz --fuzz-indices 0xAFF1 --confirm  # Fuzz specific
 """
 
-    profinet_parser = parser.add_parser(
-        "profinet",
-        help="PROFINET DCP/RPC scanner",
+    profinet_parser = create_protocol_parser(
+        parser,
+        name="profinet",
+        help_text="PROFINET DCP/RPC scanner",
         description="Discover and interact with PROFINET IO devices",
         parents=parents,
         epilog=examples_epilog,
-        formatter_class=__import__("argparse").RawDescriptionHelpFormatter,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    profinet_parser.add_argument(
-        "target",
-        help="Network interface for DCP discovery, or IP address with --rpc-only",
+    add_target_argument(
+        profinet_parser,
+        help_text="Network interface for DCP discovery, or IP address with --rpc-only",
     )
 
     # Discovery options
