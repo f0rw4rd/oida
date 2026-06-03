@@ -1,15 +1,23 @@
 # OIDA 1.0 Release TODO
 
-> **2026-06-02 — RELEASE STATUS: NOT READY.** Multi-agent code review
-> (workflow `wxt77w8kq`, see `CODE_REVIEW.md`) surfaced **6 CRITICAL +
-> 23 HIGH** issues that the test suite missed because they live in
-> CLI-flag-gated code paths that weren't exercised by unit tests.
-> Headline bugs: pymodbus `slave=`/`device_id=` migration left half-done
-> (most modbus paths crash), CoAP `--methods` DELETE without `--confirm`,
-> CoAP DTLS bypassed by hard-coded `coap://`, DICOM/KNX import-depth bugs
-> crash on first use, HL7 `--probe-ops` sends ADT merge/discharge/billing
-> without `--confirm`, BACnet `is None == success` predicate emits
-> false-positive CRITICALs. **Read `CODE_REVIEW.md` before tagging.**
+> **2026-06-03 — RELEASE STATUS: NOT READY.** Two-pass multi-agent code
+> review (workflows `wxt77w8kq` + `wjcqf1hvp`, see `CODE_REVIEW.md` —
+> 1379 lines) surfaced **12 CRITICAL + 48 HIGH** issues the test suite
+> missed because they live in CLI-flag-gated paths that aren't exercised
+> by unit tests. Most-severe of the gap pass: (a) **`oida hl7 <ip>`
+> sends a real ADT^A01 admission write on every invocation** — you
+> cannot scan an HL7 server defensively today; (b) Schneider PLC
+> discovery is **non-functional** (TypeError on every result) despite
+> being marketed in CHANGELOG; (c) OPC UA L1 is broken end-to-end
+> (`await set_user` TypeError, every credential test silently fails);
+> (d) snap7 `--audit` writes + brute-forces without `--confirm` and
+> the SZL parser hangs forever on attacker-supplied `record_len=0`.
+> Plus everything from the original report: modbus pymodbus migration
+> half-done, CoAP `--methods` DELETE without `--confirm`, CoAP DTLS
+> bypassed, DICOM/KNX import-depth crashes, HL7 `--probe-ops` sends
+> ADT merge/discharge/billing without `--confirm`, BACnet
+> `is None == success` false-positives. **Read `CODE_REVIEW.md` and
+> §−1 of this file before tagging.**
 
 **Release target:** 2026-07-16
 **Created:** 2026-06-01 (T-6.5 weeks)
@@ -29,7 +37,14 @@ This is the long list. Cross-references:
 Multi-agent review (46 reviewers + 1 aggregator, 6.6M tokens, 1h) found
 issues the test suite missed. Section ordering: must-fix before tag.
 
-### CRITICAL (6 — block release)
+### CRITICAL (12 total — 10 original + 2 from gap follow-up)
+
+**New from gap workflow `wjcqf1hvp`** (the worst two found in the whole project):
+
+- [ ] **discovery** `NetManageDevice.to_discovered_device()` (`netmanage.py:442-463`) passes kwargs (`ip`, `mac`, `hostname`, `vendor`, `protocol`, `metadata`, raw `datetime`) that don't exist on `DiscoveredDevice` — every Schneider PLC discovery raises `TypeError`; the dict comprehension at line 676 collapses the whole scan. `NetManagePassiveListener.process_packet` swallows the same error silently. **CHANGELOG advertises working Schneider PLC discovery; the feature is non-functional.** See `CODE_REVIEW.md` gap-CRITICAL #1.
+- [ ] **hl7** `enum_host_info()` sends a real ADT^A01 admission write on **every** `oida hl7 <ip>` invocation (populated PID `PROBE^^^MRN` + PV1 location `PROBE^101^A`). Standalone `utils.probe_server_capabilities()` helper iterates ADT^A01 / ORU^R01 / ORM^O01 writes from any external caller. No `--confirm` gate. **You cannot run an HL7 scan today without creating fake patient admissions on the target.** `CODE_REVIEW.md` gap-CRITICAL #2.
+
+**Original 10:**
 
 - [ ] **modbus** `pymodbus 3.12 slave=/device_id= migration` — `register_io.py`, NXC mixins, fuzz, writes still pass `slave=`. Every batched-read / monitor / fuzz / test-write / map-read path crashes. Test `test_writable_access_security_finding` already documents the regression (line 1152). See `CODE_REVIEW.md` CRITICAL #7.
 - [ ] **modbus** `send_custom_fc()` signature mismatch — caller drops `unit_id`; `--raw-fc`/`--enumerate-functions`/`--fuzz function-mode` crash. `CODE_REVIEW.md` CRITICAL #8.
@@ -42,19 +57,31 @@ issues the test suite missed. Section ordering: must-fix before tag.
 - [ ] **hl7** MFN/BAR/DFT/pharmacy mixins call non-existent SegmentBuilder methods — silently fall back to generic ADT, "billing accepted" findings are false. `CODE_REVIEW.md` CRITICAL #5.
 - [ ] **knx** `--fuzz-property` wrong relative-import depth — entire feature crashes on first use. `CODE_REVIEW.md` CRITICAL #6.
 
-### HIGH (23 — also block tag)
+### HIGH (48 total — 23 original + 25 from gap follow-up)
 
-See `CODE_REVIEW.md` HIGH section for the full list. Top 5 by blast radius:
+See `CODE_REVIEW.md` HIGH section (original + gap follow-up) for the full list. Top 10 by blast radius:
+
+**Original:**
 - [ ] `cli.py:107-121` `merge_config_with_args` discards every config-file value whose argparse default is non-None — `-c/--config` is effectively broken for the common knobs
 - [ ] `cli.py:974` debug-logs the full argparse `Namespace` including `--password`/`--credentials`/`--wordlist`/TLS keys/OCPP tokens into stdout AND the JSON audit log
 - [ ] `login_scanner.py:215` logs every failed `username:password` at INFO — wordlist contents end up in audit logs shared back to clients
 - [ ] `connection.py:149-164,355-376` IPv4-only resolution + test_connection despite IPv6 advertised in targets.py — every AAAA-only / v6 target silently fails
 - [ ] `bacnet/mixins/security.py:63-68` UDP timeout treated as successful auth — DCC brute-force, ReinitializeDevice, TimeSync, OOS-writable, BBMD all emit false-positive CRITICAL findings on any noisy / filtered network
 
-### MEDIUM (35), LOW (53), INFO (4)
+**Gap follow-up:**
+- [ ] **opcua L1 is fundamentally broken** — `await client.set_user(...)` raises `TypeError` (set_user is a sync setter returning None); every credential test silently fails; `--fuzz` dead from bool-vs-string dispatch; `--call-method` and `--test-subscription-limits` execute methods / DoS-ramp 100 subscriptions without `--confirm`; `--policy None` silent downgrade
+- [ ] **snap7 `--audit` runs unauthenticated write probes + brute-force without `--confirm`**; SZL parser hangs forever on attacker-supplied `record_len=0` (DoS); `_check_protection_level` false-positives every device where `get_protection()` returns a zeroed struct as "level 1 - full access"
+- [ ] **modbus** `--register-map` accepts arbitrary file paths (arbitrary file read); SunSpec security override forces `'r' → 'rw'` *before* the check; `_test_write_access_safe` returns guaranteed-true false positives by comparing readback to the just-written value
+- [ ] **bacnet BAC0 path** — fourth `--confirm` bypass (`--assess` / `--test-write` / `--enumerate-writable` issue real writes); six dispatcher-read CLI flags missing from proto_args; outOfService Boolean parsing `bool(uval)` false-positives every OOS check on bacpypes3
+- [ ] **discovery** VRRP master/backup classification **inverted** on every advertisement (only masters transmit per RFC 5798); EIGRP/RIP/PIM passive listeners crash on cross-listener device merges
+- [ ] **pcap listeners** `mssql.py:523` + `fins.py:662` log cleartext credentials at INFO into both console and `--json-log` (credential-leak parallel to login_scanner finding but a different pipeline)
+- [ ] **fuzz monitors** `HTTP2Monitor.post_send` returns None instead of bool (breaks boofuzz crash detection); `HL7Monitor` unbounded `recv` loop (memory exhaustion); `infrastructure.py`/`registry.py` use stdlib logging
+- [ ] **hooks/rthook_hl7apy.py** is an orphan — never wired into any PyInstaller build
 
-Full list in `CODE_REVIEW.md`. Pick what to ship pre-tag vs. defer once
-the CRITICAL/HIGH set is closed.
+### MEDIUM (85), LOW (111), INFO (6)
+
+Full list in `CODE_REVIEW.md` (original + gap sections). Pick what to ship
+pre-tag vs. defer once the CRITICAL/HIGH set is closed.
 
 ---
 
