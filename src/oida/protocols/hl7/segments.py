@@ -597,6 +597,7 @@ class HL7SegmentBuilder:
         expiration_date: str = "",
         manufacturer: str = "",
         set_id: int = 1,
+        completion_status: str = "CP",
     ) -> Optional[Any]:
         """
         Build RXA (Pharmacy/Treatment Administration) segment
@@ -672,8 +673,9 @@ class HL7SegmentBuilder:
                 # RXA-17: Substance Manufacturer Name (CE type)
                 rxa.rxa_17 = manufacturer
 
-            # RXA-20: Completion Status
-            rxa.rxa_20 = "CP"  # Complete
+            # RXA-20: Completion Status (CP=Complete, RE=Refused, PA=Partially
+            # Administered, NA=Not Administered)
+            rxa.rxa_20 = completion_status or "CP"
 
             return rxa
 
@@ -694,6 +696,14 @@ class HL7SegmentBuilder:
         dispensing_provider: str = "",
         lot_number: str = "",
         expiration_date: str = "",
+        # Caller-name aliases used by mixins/pharmacy.py — keep these
+        # accepting both spellings so the mixin's dispense_code= /
+        # actual_amount= / actual_units= / refills_remaining= calls
+        # don't TypeError into a silent fallback to generic stubs.
+        dispense_code: str = "",
+        actual_amount: str = "",
+        actual_units: str = "",
+        refills_remaining: str = "",
     ) -> Optional[Any]:
         """
         Build RXD (Pharmacy/Treatment Dispense) segment
@@ -717,6 +727,11 @@ class HL7SegmentBuilder:
             RXD segment or None
         """
         try:
+            # Resolve alias kwargs (caller-friendly names from mixins/pharmacy.py).
+            drug_code = drug_code or dispense_code
+            actual_dispense_amount = actual_dispense_amount or actual_amount
+            actual_dispense_units = actual_dispense_units or actual_units
+
             rxd = Segment("RXD", version=self.version)
 
             # RXD-1: Dispense Sub-ID Counter
@@ -760,6 +775,13 @@ class HL7SegmentBuilder:
                 # RXD-19: Substance Expiration Date
                 rxd.rxd_19 = expiration_date
 
+            if refills_remaining:
+                # RXD-8: Refills Remaining
+                try:
+                    rxd.rxd_8 = refills_remaining
+                except Exception as e:
+                    logger.debug(f"HL7: RXD-8 not in schema, skipping refills: {e}")
+
             return rxd
 
         except Exception as e:
@@ -779,6 +801,8 @@ class HL7SegmentBuilder:
         give_strength: str = "",
         give_strength_units: str = "",
         dispense_sub_id: str = "1",
+        # Caller-name alias used by mixins/pharmacy.py.
+        give_code: str = "",
     ) -> Optional[Any]:
         """
         Build RXG (Pharmacy/Treatment Give) segment
@@ -802,6 +826,9 @@ class HL7SegmentBuilder:
             RXG segment or None
         """
         try:
+            # Resolve alias (caller-friendly name from mixins/pharmacy.py).
+            drug_code = drug_code or give_code
+
             rxg = Segment("RXG", version=self.version)
 
             # RXG-1: Give Sub-ID Counter
@@ -1309,10 +1336,22 @@ class HL7SegmentParser:
         """Parse full HL7 message using hl7apy"""
         from hl7apy.parser import parse_message
 
-        result = {"patients": [], "observations": [], "medications": [], "segments": {}}
+        # 'orders' was missing from this dict — response.py:_extract_order_status
+        # read parsed["orders"] and crashed with KeyError, silently swallowed
+        # by its outer try/except. Now we collect ORC + the most recent OBR
+        # under "orders" so OSR^Q06 response handling actually surfaces
+        # something to the operator.
+        result = {
+            "patients": [],
+            "observations": [],
+            "medications": [],
+            "orders": [],
+            "segments": {},
+        }
         normalized = HL7SegmentParser._normalize_message(message)
         msg = parse_message(normalized)
         current_patient = {}
+        current_order: dict = {}
 
         for child in msg.children:
             seg_name = child.name
@@ -1345,6 +1384,33 @@ class HL7SegmentParser:
                 if current_patient:
                     med["PatientID"] = current_patient.get("PatientID", "")
                 result["medications"].append(med)
+
+            elif seg_name == "ORC":
+                try:
+                    orc = HL7SegmentParser.parse_orc(child)
+                except Exception:  # noqa: BLE001 — best-effort tolerant parse
+                    orc = {}
+                current_order = dict(orc)
+                if current_patient:
+                    current_order["PatientID"] = current_patient.get("PatientID", "")
+                result["orders"].append(current_order)
+
+            elif seg_name == "OBR":
+                try:
+                    obr = HL7SegmentParser.parse_obr(child)
+                except Exception:  # noqa: BLE001
+                    obr = {}
+                if current_order:
+                    # OBR follows the ORC for the same order — fold its
+                    # fields into the in-flight order dict so the order
+                    # row carries OrderCode/OrderName/Priority/etc.
+                    for k, v in obr.items():
+                        current_order.setdefault(k, v)
+                else:
+                    standalone = dict(obr)
+                    if current_patient:
+                        standalone["PatientID"] = current_patient.get("PatientID", "")
+                    result["orders"].append(standalone)
 
         return result
 

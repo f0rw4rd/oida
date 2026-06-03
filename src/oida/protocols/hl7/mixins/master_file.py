@@ -198,7 +198,10 @@ class MasterFileMixin:
 
                 elif segment.startswith("STF|"):
                     stf = HL7SegmentParser.parse_stf(segment)
-                    if stf.get("StaffIDCode") or stf.get("StaffName"):
+                    # parse_stf returns 'StaffID', not 'StaffIDCode' — the
+                    # old key matched nothing so accepted staff segments
+                    # were silently dropped.
+                    if stf.get("StaffID") or stf.get("StaffName"):
                         staff_entries.append(stf)
 
                 elif segment.startswith("PRC|"):
@@ -214,11 +217,11 @@ class MasterFileMixin:
 
             if staff_entries:
                 column_defs = [
-                    ("StaffIDCode", "Staff ID"),
+                    ("StaffID", "Staff ID"),
                     ("StaffName", "Name"),
                     ("StaffType", "Type"),
                     ("Department", "Dept"),
-                    ("ActiveInactive", "Status"),
+                    ("ActiveStatus", "Status"),
                 ]
                 self._display_results_table(
                     items=staff_entries,
@@ -235,12 +238,15 @@ class MasterFileMixin:
                 )
 
             if charge_entries:
+                # 'ActiveInactiveFlag' was never in parse_prc's return —
+                # the column rendered blank every run. PRC doesn't carry a
+                # status flag in v2.5; dropped the column.
                 column_defs = [
                     ("PrimaryKeyValue", "Charge Code"),
                     ("Price", "Price"),
                     ("Department", "Dept"),
                     ("EffectiveStartDate", "Effective"),
-                    ("ActiveInactiveFlag", "Status"),
+                    ("EffectiveEndDate", "Expires"),
                 ]
                 self._display_results_table(
                     items=charge_entries,

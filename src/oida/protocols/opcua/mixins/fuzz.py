@@ -23,7 +23,16 @@ class FuzzMixin:
             self.logger.display("Use: oida opcua <target> --fuzz [nodes|methods|all] --confirm")
             return
 
-        fuzz_mode = getattr(self.args, "fuzz", "nodes")
+        # --fuzz is declared as action='store_true' so args.fuzz is a bool,
+        # not a string. The old code did fuzz_mode = getattr(args, 'fuzz',
+        # 'nodes') and then tested `fuzz_mode in ('nodes', 'all')` — True
+        # is never in that tuple so the whole module did nothing. Fall
+        # back to an explicit --fuzz-mode if present, else 'nodes'.
+        raw = getattr(self.args, "fuzz", False)
+        if isinstance(raw, str) and raw:
+            fuzz_mode = raw
+        else:
+            fuzz_mode = getattr(self.args, "fuzz_mode", "nodes") or "nodes"
         iterations = getattr(self.args, "fuzz_iterations", 10)
         specific_node = getattr(self.args, "fuzz_node", None)
         specific_method = getattr(self.args, "fuzz_method", None)

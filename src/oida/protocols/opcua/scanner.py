@@ -150,12 +150,16 @@ class OPCUAScanner(NetworkScanner):
 
         # Handle OPC UA URLs
         if host.startswith("opc.tcp://"):
-            # Parse URL to extract host and port
-            url_parts = host.replace("opc.tcp://", "").split(":")
-            if len(url_parts) == 2:
-                return host, int(url_parts[1])  # Return full URL and port
-            else:
-                return host, self.get_default_port()  # Return full URL and default port
+            # The old quick-and-dirty parser did
+            # host.replace("opc.tcp://","").split(":") then int(parts[1]).
+            # That crashed with ValueError on:
+            #   - opc.tcp://host:4840/path  (parts[1] = '4840/path')
+            #   - opc.tcp://[::1]:4840      (extra colons inside IPv6)
+            # Delegate to helpers._parse_opcua_url which handles both.
+            from .helpers import _parse_opcua_url
+
+            _, port, _ = _parse_opcua_url(host)
+            return host, port
         else:
             # Regular host:port handling
             port = int(self.args.get("rport", self.get_default_port()))

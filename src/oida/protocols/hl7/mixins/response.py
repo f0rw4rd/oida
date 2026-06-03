@@ -207,17 +207,18 @@ class ResponseMixin:
         """Extract order status from OSR^Q06 response"""
         try:
             parsed = HL7SegmentParser.parse_message(response)
-            orders = parsed["orders"]
+            # parse_message now returns 'orders' (added alongside the OBR/ORC
+            # collection fix). Keys come from parse_orc + parse_obr.
+            orders = parsed.get("orders", [])
 
             column_defs = [
                 ("PatientID", "Patient"),
-                ("PlacerOrder", "Placer Order"),
-                ("FillerOrder", "Filler Order"),
-                ("OrderCode", "Code"),
-                ("OrderName", "Order Name"),
-                ("Status", "Status"),
+                ("PlacerOrderNumber", "Placer Order"),
+                ("FillerOrderNumber", "Filler Order"),
+                ("UniversalServiceID", "Service ID"),
+                ("OrderStatus", "Status"),
                 ("Priority", "Priority"),
-                ("RequestedDate", "Requested"),
+                ("RequestedDateTime", "Requested"),
                 ("OrderingProvider", "Provider"),
                 ("ResultStatus", "Result"),
             ]
