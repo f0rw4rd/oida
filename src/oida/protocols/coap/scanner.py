@@ -313,13 +313,30 @@ class CoAPScanner(NetworkScanner):
     # Method testing
     # ------------------------------------------------------------------
 
-    def _test_methods(self, ctx, resources: List[Dict[str, Any]]) -> Dict[str, Dict[str, str]]:
-        """Try GET/PUT/POST/DELETE/FETCH/PATCH/iPATCH on each resource and build an access matrix."""
+    def _test_methods(
+        self, ctx, resources: List[Dict[str, Any]], confirm: bool = False
+    ) -> Dict[str, Dict[str, str]]:
+        """Build an access matrix by probing CoAP methods per resource.
+
+        Always tests the read-only methods (GET / FETCH / OBSERVE).
+        Tests the write methods (PUT / POST / DELETE / PATCH / IPATCH)
+        only when ``confirm`` is True — DELETE on a live actuator can
+        wipe physical state, so unattended scans must stop at reads.
+
+        When ``confirm`` is False the matrix entries for write methods
+        carry the string "not-tested-without-confirm" so the operator
+        can see what was skipped.
+        """
         host, port = self.get_target_info()
         matrix: Dict[str, Dict[str, str]] = {}
-        methods = ["GET", "PUT", "POST", "DELETE", "FETCH", "PATCH", "IPATCH"]
+        read_methods = ["GET", "FETCH"]
+        write_methods = ["PUT", "POST", "DELETE", "PATCH", "IPATCH"]
+        active_methods = read_methods + (write_methods if confirm else [])
 
-        self.logger.debug("Testing %d methods on %d resources", len(methods), len(resources))
+        self.logger.debug(
+            "Testing %d methods on %d resources (confirm=%s)",
+            len(active_methods), len(resources), confirm,
+        )
         for res in resources:
             path = res.get("path", "")
             if not path:
@@ -327,15 +344,19 @@ class CoAPScanner(NetworkScanner):
             uri = f"{self._scheme}://{host}:{port}{path}"
             path_results: Dict[str, str] = {}
 
-            for method in methods:
+            for method in active_methods:
                 if method in WRITE_METHODS:
-                    # Use an empty payload for write probes
+                    # Empty payload for write probes
                     result = run_async(
                         coap_request(ctx, method, uri, payload=b"", timeout=self.timeout)
                     )
                 else:
                     result = run_async(coap_request(ctx, method, uri, timeout=self.timeout))
                 path_results[method] = result["code"]
+
+            if not confirm:
+                for m in write_methods:
+                    path_results[m] = "not-tested-without-confirm"
 
             matrix[path] = path_results
             self.logger.debug("Method test %s: %s", path, path_results)

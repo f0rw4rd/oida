@@ -422,12 +422,12 @@ class TestMethodTesting:
 
     @patch("oida.protocols.coap.scanner.run_async")
     def test_methods_all_successful(self, mock_run):
-        """All methods return 2.05 for a resource."""
+        """All methods return 2.05 for a resource (when --confirm passed)."""
         mock_run.return_value = {"code": "2.05", "success": True, "payload": b"ok"}
 
         scanner = _make_scanner()
         resources = [{"path": "/test"}]
-        matrix = scanner._test_methods(MagicMock(), resources)
+        matrix = scanner._test_methods(MagicMock(), resources, confirm=True)
 
         assert "/test" in matrix
         assert set(matrix["/test"].keys()) == {
@@ -443,8 +443,22 @@ class TestMethodTesting:
             assert code == "2.05"
 
     @patch("oida.protocols.coap.scanner.run_async")
+    def test_methods_default_safe_skips_writes(self, mock_run):
+        """Without --confirm: GET/FETCH only; write methods carry sentinel string."""
+        mock_run.return_value = {"code": "2.05", "success": True, "payload": b"ok"}
+
+        scanner = _make_scanner()
+        resources = [{"path": "/test"}]
+        matrix = scanner._test_methods(MagicMock(), resources)  # default confirm=False
+
+        assert matrix["/test"]["GET"] == "2.05"
+        assert matrix["/test"]["FETCH"] == "2.05"
+        for write_m in ("PUT", "POST", "DELETE", "PATCH", "IPATCH"):
+            assert matrix["/test"][write_m] == "not-tested-without-confirm"
+
+    @patch("oida.protocols.coap.scanner.run_async")
     def test_methods_mixed_results(self, mock_run):
-        """GET succeeds, writes return 4.05."""
+        """GET succeeds, writes return 4.05 (when --confirm passed)."""
         call_count = 0
 
         def side_effect(coro):
@@ -458,7 +472,7 @@ class TestMethodTesting:
 
         scanner = _make_scanner()
         resources = [{"path": "/sensor/temp"}]
-        matrix = scanner._test_methods(MagicMock(), resources)
+        matrix = scanner._test_methods(MagicMock(), resources, confirm=True)
 
         assert matrix["/sensor/temp"]["GET"] == "2.05"
         assert matrix["/sensor/temp"]["PUT"] == "4.05"
