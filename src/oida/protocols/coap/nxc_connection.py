@@ -501,7 +501,10 @@ class coap(NetworkConnection):
                 path = "/" + path
 
             self.logger.debug("Probing path %d/%d: %s", idx, len(paths), path)
-            uri = "coap://%s:%s%s" % (host, port, path)
+            # Use the scheme established in create_conn_obj — coap:// vs
+            # coaps:// — so DTLS-negotiated sessions don't silently downgrade
+            # to cleartext UDP/5683 when the wordlist prober ships requests.
+            uri = "%s://%s:%s%s" % (self.scanner._scheme, host, port, path)
             result = run_async(coap_request(self.conn, "GET", uri, timeout=self.scanner.timeout))
 
             code_str = result.get("code", "")
@@ -568,7 +571,10 @@ class coap(NetworkConnection):
     def _do_write(self, method: str, path: str, value: str):
         """Execute a write/read operation (PUT/POST/DELETE/FETCH/PATCH/IPATCH)."""
         host, port = self.scanner.get_target_info()
-        uri = "coap://%s:%s%s" % (host, port, path)
+        # Use the scheme established in create_conn_obj — coap:// vs coaps:// —
+        # so writes against a DTLS-negotiated session don't ship the payload
+        # in cleartext over UDP/5683.
+        uri = "%s://%s:%s%s" % (self.scanner._scheme, host, port, path)
         payload = self._resolve_payload(value)
         if value and value.startswith("@"):
             self.logger.display("Loaded %d bytes from %s", len(payload), value[1:])
