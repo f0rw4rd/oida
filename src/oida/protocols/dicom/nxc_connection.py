@@ -373,22 +373,55 @@ class dicom(
             if self._cget_output_path:
                 sop_uid = getattr(ds, "SOPInstanceUID", "unknown")
 
-                # Sanitize UIDs for safe filesystem paths — strip traversal components
+                # Sanitize UIDs for safe filesystem paths. A hostile DICOM
+                # responder controls every UID returned in a C-STORE
+                # sub-operation; setting PatientID='..' and
+                # StudyInstanceUID='..' makes the handler write a .dcm two
+                # directories ABOVE _cget_output_path. The old sanitizer
+                # only replaced '/' and '\\' but Path('..').name == '..'
+                # left the traversal intact.
                 def _safe_name(raw: str) -> str:
-                    return Path(raw.replace("/", "_").replace("\\", "_")).name or "unknown"
+                    # Drop separators, NUL, control chars, leading dots.
+                    cleaned = (
+                        str(raw)
+                        .replace("/", "_")
+                        .replace("\\", "_")
+                        .replace("\x00", "_")
+                    )
+                    cleaned = "".join(c if c.isprintable() else "_" for c in cleaned)
+                    cleaned = cleaned.lstrip(".")  # kills '..', '.', '....', etc.
+                    cleaned = Path(cleaned).name
+                    return cleaned or "unknown"
+
+                # Resolve filenames and assert they stay inside the
+                # configured output directory (belt-and-braces against
+                # any sanitizer regression).
+                base = self._cget_output_path.resolve()
+
+                def _resolve_inside(p: Path) -> Path:
+                    resolved = p.resolve()
+                    try:
+                        resolved.relative_to(base)
+                    except ValueError:
+                        raise PermissionError(
+                            f"C-STORE write outside output dir blocked: {resolved}"
+                        )
+                    return resolved
 
                 # Check if we're doing bulk export with subdirectory structure
                 if getattr(self, "_cget_use_subdirs", False):
                     # Create patient/study subdirectory structure
                     patient_id = _safe_name(str(getattr(ds, "PatientID", "unknown")))
                     study_uid = _safe_name(str(getattr(ds, "StudyInstanceUID", "unknown"))[-20:])
-                    patient_dir = self._cget_output_path / patient_id
-                    study_dir = patient_dir / study_uid
+                    patient_dir = _resolve_inside(self._cget_output_path / patient_id)
+                    study_dir = _resolve_inside(patient_dir / study_uid)
                     study_dir.mkdir(parents=True, exist_ok=True)
-                    filename = study_dir / f"{_safe_name(str(sop_uid))}.dcm"
+                    filename = _resolve_inside(study_dir / f"{_safe_name(str(sop_uid))}.dcm")
                 else:
                     # Simple flat directory structure
-                    filename = self._cget_output_path / f"{_safe_name(str(sop_uid))}.dcm"
+                    filename = _resolve_inside(
+                        self._cget_output_path / f"{_safe_name(str(sop_uid))}.dcm"
+                    )
 
                 ds.save_as(filename, write_like_original=False)
                 self._cget_received_files.append(str(filename))
