@@ -280,6 +280,12 @@ class OperationsMixin(_ScannerBase):
 
     def _cstore_send(self):
         """Upload DICOM files using C-STORE"""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--store performs C-STORE upload (writes DICOM files into the PACS) "
+                "— requires --confirm"
+            )
+            return
         if not self.assoc or not self.assoc.is_established:
             self.logger.fail("No active association for C-STORE")
             return
@@ -349,6 +355,12 @@ class OperationsMixin(_ScannerBase):
 
     def _cmove_request(self):
         """Request image transfer using C-MOVE"""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--move issues C-MOVE to --dest-aet (PHI exfiltration primitive) "
+                "— requires --confirm"
+            )
+            return
         if not self.assoc or not self.assoc.is_established:
             self.logger.fail("No active association for C-MOVE")
             return

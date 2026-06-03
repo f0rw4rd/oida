@@ -446,6 +446,16 @@ class hart(NetworkConnection):
         if command is None:
             return
 
+        # --raw-command can issue HART writes (6/17/18/19/41/42/53, etc.) —
+        # named-write siblings in this file all gate on --confirm; the raw
+        # path was wired around. Re-gated per safety-default policy.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--raw-command can issue arbitrary HART writes "
+                "(6/17/18/19/41/42/53 etc.) — requires --confirm"
+            )
+            return
+
         data = b""
         raw_data = getattr(self.args, "raw_data", None)
         if raw_data:

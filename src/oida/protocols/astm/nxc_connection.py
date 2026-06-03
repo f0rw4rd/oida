@@ -69,7 +69,13 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self._send_query_record()
 
         if getattr(self.args, "send_patient", False):
-            self._send_patient_record()
+            if not getattr(self.args, "confirm", False):
+                self.logger.fail(
+                    "--send-patient injects forged Patient demographics into the LIS — "
+                    "requires --confirm"
+                )
+            else:
+                self._send_patient_record()
 
         if getattr(self.args, "send_order", False):
             if not getattr(self.args, "confirm", False):
