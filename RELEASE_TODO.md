@@ -1,10 +1,14 @@
 # OIDA 1.0 Release TODO
 
-> **2026-06-03 — RELEASE STATUS: NOT READY.** Two-pass multi-agent code
-> review (workflows `wxt77w8kq` + `wjcqf1hvp`, see `CODE_REVIEW.md` —
-> 1379 lines) surfaced **12 CRITICAL + 48 HIGH** issues the test suite
-> missed because they live in CLI-flag-gated paths that aren't exercised
-> by unit tests. Most-severe of the gap pass: (a) **`oida hl7 <ip>`
+> **2026-06-03 — RELEASE STATUS: NOT READY.** Three multi-agent passes:
+> `wxt77w8kq` (full review, 6.6M tokens, 1h) + `wjcqf1hvp` (gap follow-up,
+> 2.0M tokens, 26m) + `wgfizpuz7` (test-gap audit + latent-bug hunt,
+> 2.0M tokens, 37m). Combined: **12 CRITICAL + 72 HIGH + ~115 MEDIUM +
+> ~120 LOW** distinct findings across `CODE_REVIEW.md` (1379 lines) and
+> `TEST_GAP_AUDIT.md` (786 lines). The test suite missed these because
+> of 5 systemic anti-patterns documented in TEST_GAP_AUDIT.md — fix the
+> test infrastructure BEFORE fixing the bugs, or the next refactor
+> re-opens the same classes. Most-severe of the gap pass: (a) **`oida hl7 <ip>`
 > sends a real ADT^A01 admission write on every invocation** — you
 > cannot scan an HL7 server defensively today; (b) Schneider PLC
 > discovery is **non-functional** (TypeError on every result) despite
@@ -82,6 +86,37 @@ See `CODE_REVIEW.md` HIGH section (original + gap follow-up) for the full list. 
 
 Full list in `CODE_REVIEW.md` (original + gap sections). Pick what to ship
 pre-tag vs. defer once the CRITICAL/HIGH set is closed.
+
+### Why the test suite missed all of this (`TEST_GAP_AUDIT.md`, workflow `wgfizpuz7`)
+
+A third workflow (25 agents, 2.0M tokens, 37m) clustered the 60 CRITICAL+HIGH findings into 12 gap classes, identified WHY tests didn't catch each class, and grep-hunted for **82 more latent bugs of the same shape** (24 HIGH + ~14 MEDIUM + ~10 LOW + 55 garbled-log-string sites — see `TEST_GAP_AUDIT.md` for the full table).
+
+**5 systemic test-suite anti-patterns** (ranked by blast radius):
+
+1. **Mock-shape over real-shape** — bare `MagicMock()` / `AsyncMock()` accept any kwargs; pymodbus rename, asyncua `await set_user`, ethernetip `cleanup()` arity all pass green. Zero use of `create_autospec(real_class, instance=True)` anywhere.
+2. **Output-shape over ground-truth** — classifiers tested against the implementation, not RFC. VRRP master/backup, DICOM Command/Data PDV, VNC SecurityResult all inverted; latent inversions fall out of this gap.
+3. **Self-consistent silent fallbacks** — HL7 mixin `try/except → _create_test_message()`, modbus raw-fc `except`, ethernetip cleanup `except`, OCPP TLS check `ModuleNotFoundError → "TLS disabled"`. Tests assert "function returned something" not "intended branch ran."
+4. **No log-content assertions** — `grep -rn caplog tests/` returns nothing across 3000+ tests. Single root cause for 15 credential-leak findings + 55 garbled-debug-string artefacts.
+5. **Argparse defaults declared in two places** — `add_common_args --format=csv,json` vs `cli.py --format=console`. Five+ modules silently write zero files on `-o out/` without `-f`.
+
+**Headline gap-audit finding:** the `confirm-gate-missing` class is the most operationally dangerous. 10 NEW HIGH unguarded write/brute paths across IEC 104 (`--clock-read` writes clock!), DNP3 (`--time-sync` writes clock), DICOM (`--store`/`--move`/`--aet-brute`), MQTT (`--brute`), FHIR (`--default-creds`), Snap7 (`--brute`/`--default-creds`), HART (`--raw-command` incl. master reset), Modbus (`--raw-fc`, `--test-write`), ASTM (`--send-patient`). A meta-test walking every parser's "requires --confirm" help text would have caught every one at commit.
+
+### Test infrastructure to add BEFORE fixing bugs (from `TEST_GAP_AUDIT.md`)
+
+Without these, fixing the 84 known bugs just lets the next refactor re-introduce the same classes:
+
+- [ ] **`tests/contracts/` new top-level folder (~4h)** — confirm-gate-contract meta-test, per-third-party signature-conformance tests, dataclass-kwarg-drift AST walker, log-string-shape AST walker
+- [ ] **Autouse `no_credential_leak` fixture in `tests/conftest.py` (~2h)** — closes ALL 13 credential-leak findings across 3000+ existing tests for free
+- [ ] **`tests/unit/test_import_resolution.py` (~1h)** — AST + `importlib.util.find_spec` walk over every function-body relative ImportFrom; catches all 8 import-depth crashes
+- [ ] **`tests/integration/cli/test_export_writes_files.py` (~3h)** — parametrize every protocol; assert `-o out/` without `-f` writes a file
+- [ ] **`test_security_mixin_timeout.py` per-protocol + `spec_logger()` fixture (~4h × 6 protocols)** — negative assertions on `response is None` paths
+- [ ] **`tests/integration/pcap/spec_conformance/` with sidecar `.expected.json` (~6h initial, ~30min/protocol)** — RFC ground-truth labels for VRRP/HSRP/GLBP/OSPF DR-BDR/STP root/DICOM PDV/VNC/NBSS/PTP/CoAP/IPSec
+- [ ] **`test_mixin_callee_exists.py` per protocol (~1h each)** — AST scan, assert `self.scanner._x()` / `self.segment_builder.build_x()` resolve on the real class
+- [ ] **Hostile-fixture tests with `pytest.mark.timeout(3, method="thread")` for parsers (~30min × 10)** — worst-case input defeating progress invariants
+- [ ] **Promote `mypy` from informational to blocking for `src/oida/protocols/discovery/` + `src/oida/utils/common_types.py` (~10min)** — would have caught NetManage `DiscoveredDevice(ip=)` drift
+- [ ] **Fix `tests/unit/hl7/conftest.py` blanket `network` mark (~30min)** — root cause hiding 5 existing MFN/BAR/DFT tests from CI
+- [ ] **`scripts/code_review.sh` check #15 (~1h)** — grep `Requires --confirm` in proto_args against `if not confirm` enforcement
+- [ ] **Extend `tests/integration/pcap/conftest.py::_run_listener_test` to return captured log buffer (~1h)** — makes credential-leak assertions ergonomic
 
 ---
 
