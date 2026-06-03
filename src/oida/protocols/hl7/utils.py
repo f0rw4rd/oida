@@ -369,13 +369,18 @@ def probe_server_capabilities(
         "mllp_supported": False,
     }
 
-    # Message types to probe
+    # Message types to probe — READ-ONLY ONLY.
+    # The original list included ADT^A01 (admit patient), ORU^R01 (observation
+    # result), ORM^O01 (order) — all server-side WRITES. A defensive scanner
+    # must never create records on the target by default; if the operator
+    # wants to probe write-message-type acceptance they go through
+    # `--probe-ops --confirm` in the main CLI, not via this importable
+    # helper that takes no args/namespace and offers no opt-out.
     probe_messages = [
         ("ACK", ""),
-        ("ADT", "A01"),
-        ("ORU", "R01"),
-        ("ORM", "O01"),
-        ("QRY", "A19"),
+        ("QRY", "A19"),     # Display-style query (read-only)
+        ("QBP", "Q11"),     # Display-Based Response (read-only fingerprint)
+        ("QBP", "Q40"),     # WhoAmI query (read-only identity)
     ]
 
     for msg_type, trigger in probe_messages:
