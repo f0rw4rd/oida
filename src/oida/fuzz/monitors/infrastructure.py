@@ -6,9 +6,8 @@ from typing import Optional
 
 from .base import ProtocolMonitor
 
-import logging
-
-logger = logging.getLogger(__name__)
+# Module-level stdlib logger removed in §−1 cosmetic sweep; helpers
+# now use self.logger (the NXC-style ICSLogger provided by ProtocolMonitor).
 
 
 class DHCPDiscoverMonitor(ProtocolMonitor):
@@ -114,14 +113,14 @@ class DHCPDiscoverMonitor(ProtocolMonitor):
             return response
 
         except Exception as e:
-            logger.debug(f"DHCP probe socket send/recv failed: {e}")
+            self.logger.debug(f"DHCP probe socket send/recv failed: {e}")
             return None
         finally:
             if sock:
                 try:
                     sock.close()
                 except Exception as e:
-                    logger.debug(f"sock.close(): {e}")
+                    self.logger.debug(f"sock.close(): {e}")
 
     def _check_alive_once(self, fuzz_data_logger=None) -> bool:
         """Single attempt to check if DHCP service is responding correctly"""
@@ -213,14 +212,14 @@ class TFTPReadMonitor(ProtocolMonitor):
             return response
 
         except Exception as e:
-            logger.debug(f"TFTP RRQ probe socket send/recv failed: {e}")
+            self.logger.debug(f"TFTP RRQ probe socket send/recv failed: {e}")
             return None
         finally:
             if sock:
                 try:
                     sock.close()
                 except Exception as e:
-                    logger.debug(f"sock.close(): {e}")
+                    self.logger.debug(f"sock.close(): {e}")
 
     def _check_alive_once(self, fuzz_data_logger=None) -> bool:
         """Single attempt to check if TFTP service is responding correctly"""
