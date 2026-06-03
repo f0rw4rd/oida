@@ -631,7 +631,7 @@ class SonicWallScanner:
             netmask = socket.inet_ntoa(data[44:48])
             sonicwall_data["netmask"] = netmask
         except Exception as e:
-            logger.debug(f"Failed to get netmask: {e}")
+            logger.debug(f"SonicWall: netmask inet_ntoa failed: {e}")
 
         # Extract serial number
         serial = data[48:54].hex()

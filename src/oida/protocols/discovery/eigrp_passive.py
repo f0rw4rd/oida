@@ -339,12 +339,19 @@ class EIGRPPassiveListener(PassiveListenerBase):
 
                 logger.debug(f"EIGRP: {src_ip} AS={as_number} {opcode_name} hold={hold_time}s")
             else:
-                self.discovered_devices[device_key].last_seen = datetime.now().isoformat()
+                dev = self.discovered_devices[device_key]
+                dev.last_seen = datetime.now().isoformat()
+                # Cross-listener merge: the device may have been first
+                # registered by CDP/LLDP/ARP where eigrp_data is the
+                # default None. Lazy-init the dict here instead of
+                # crashing on None.get(...).
+                if dev.eigrp_data is None:
+                    dev.eigrp_data = {}
                 # Update routes if new ones found
-                existing_routes = self.discovered_devices[device_key].eigrp_data.get("routes", [])
+                existing_routes = dev.eigrp_data.get("routes", [])
                 existing_networks = {r.get("network") for r in existing_routes}
                 for route in routes:
                     if route.get("network") not in existing_networks:
                         existing_routes.append(route)
-                self.discovered_devices[device_key].eigrp_data["routes"] = existing_routes
-                self.discovered_devices[device_key].eigrp_data["route_count"] = len(existing_routes)
+                dev.eigrp_data["routes"] = existing_routes
+                dev.eigrp_data["route_count"] = len(existing_routes)

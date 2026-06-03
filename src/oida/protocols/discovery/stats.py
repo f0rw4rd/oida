@@ -410,7 +410,7 @@ class PassiveStatistics:
                             ts_str = f"{base}.{frac[:6]}"
                         now = datetime.fromisoformat(ts_str)
                     except (ValueError, TypeError) as e:
-                        self.logger.debug(f"Failed to get ts_str: {e}")
+                        self.logger.debug(f"stats: packet timestamp parse failed: {e}")
 
             if self.start_time is None:
                 self.start_time = now
@@ -716,14 +716,14 @@ class PassiveStatistics:
                 dst_port = _int(packet.tcp.dstport)
                 transport = "tcp"
             except (ValueError, AttributeError, TypeError) as e:
-                self.logger.debug(f"Failed to get src_port: {e}")
+                self.logger.debug(f"stats: TCP src/dst port parse failed: {e}")
         elif hasattr(packet, "udp"):
             try:
                 src_port = _int(packet.udp.srcport)
                 dst_port = _int(packet.udp.dstport)
                 transport = "udp"
             except (ValueError, AttributeError, TypeError) as e:
-                self.logger.debug(f"Failed to get src_port: {e}")
+                self.logger.debug(f"stats: UDP src/dst port parse failed: {e}")
 
         # Create conversation key (normalized for bidirectional)
         # Determine client vs server: the server has the well-known / service port.
@@ -864,7 +864,7 @@ class PassiveStatistics:
                         is_syn = (flags_val & 0x02) != 0 and (flags_val & 0x10) == 0
                         is_syn_ack = (flags_val & 0x12) == 0x12
                     except (ValueError, TypeError) as e:
-                        self.logger.debug(f"Failed to get flags_val: {e}")
+                        self.logger.debug(f"stats: TCP flags hex parse failed: {e}")
                 elif flags_str:
                     # Parse string flags like "0x0012" or "SYN,ACK"
                     if flags_str.startswith("0x"):
@@ -873,7 +873,7 @@ class PassiveStatistics:
                             is_syn = (flags_val & 0x02) != 0 and (flags_val & 0x10) == 0
                             is_syn_ack = (flags_val & 0x12) == 0x12
                         except (ValueError, TypeError) as e:
-                            self.logger.debug(f"Failed to get flags_val: {e}")
+                            self.logger.debug(f"stats: TCP flags hex parse failed: {e}")
                     else:
                         is_syn = "SYN" in flags_str.upper() and "ACK" not in flags_str.upper()
                         is_syn_ack = "SYN" in flags_str.upper() and "ACK" in flags_str.upper()

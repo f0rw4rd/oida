@@ -185,6 +185,15 @@ Examples:
     p.add_argument("--control-points", action="store_true", help=SUPPRESS)
     p.add_argument("--values-only", action="store_true", help=SUPPRESS)
     p.add_argument("--full-properties", action="store_true", help=SUPPRESS)
+    # Five dispatcher-read flags were absent from proto_args, so passing
+    # them on the CLI raised 'unrecognized arguments' and the only way to
+    # exercise the code paths was to monkey-patch args in tests.
+    p.add_argument("--file-access-method", choices=["stream", "record"], default="stream",
+                   help=SUPPRESS)
+    p.add_argument("--file-chunk-size", type=int, default=1024, help=SUPPRESS)
+    p.add_argument("--cov-lifetime", type=int, default=300, help=SUPPRESS)
+    p.add_argument("--cov-duration", type=int, default=30, help=SUPPRESS)
+    p.add_argument("--read-range-count", type=int, default=50, help=SUPPRESS)
     p.add_argument("--object-types", type=str, help=SUPPRESS)
     p.add_argument("--object-type", type=str, help=SUPPRESS)
     p.add_argument("--max-objects", type=int, default=1000, help=SUPPRESS)

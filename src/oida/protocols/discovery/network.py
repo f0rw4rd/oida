@@ -106,9 +106,10 @@ class LLMNRScanner:
                     mreq = socket.inet_aton(self.LLMNR_MULTICAST_ADDR) + socket.inet_aton(iface_ip)
                     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
                 except OSError as e:
+                    # Multicast join may fail on some interfaces
                     logger.debug(
-                        f"Failed to get mreq: {e}"
-                    )  # Multicast join may fail on some interfaces
+                        f"LLMNR: IP_ADD_MEMBERSHIP join failed: {e}"
+                    )
 
                 start_time = time.time()
                 while time.time() - start_time < min(self.timeout, 5):

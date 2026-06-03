@@ -107,11 +107,30 @@ class bacnet(
         # TODO: Eliminate BAC0 vs bacpypes3 fallback split. This duplicates the
         # same logic in bacnet/__init__.py. Unify on bacpypes3 for all modes
         # (local broadcast + remote unicast) and drop the BAC0 dependency.
-        # Check if we should use raw UDP mode
+        # Check if we should use raw UDP mode.
+        #
+        # Previously this used `self.host.startswith(('192.168.', '10.',
+        # '172.'))` to detect "local" — but the '172.' prefix matches the
+        # ENTIRE 172.0.0.0/8 space including 172.0-172.15 and 172.32-172.255
+        # which are PUBLIC. RFC 1918 defines only 172.16.0.0/12
+        # (172.16-172.31) as private. Use the proper ipaddress check so
+        # public hosts in 172.0.0.0/8 don't get misrouted to the BAC0
+        # broadcast path and silently fail to discover.
         device_id = getattr(self.args, "device_id", None)
-        local_prefixes = ("192.168.", "10.", "172.")
         local_hosts = ("255.255.255.255", "127.0.0.1", "localhost")
-        is_local = any(self.host.startswith(p) for p in local_prefixes) or self.host in local_hosts
+        is_local = self.host in local_hosts
+        if not is_local:
+            try:
+                import ipaddress as _ip
+
+                addr = _ip.ip_address(self.host)
+                # is_private covers RFC 1918 (10/8, 172.16/12, 192.168/16)
+                # plus loopback and link-local — exactly the BAC0 broadcast
+                # target set.
+                is_local = addr.is_private or addr.is_loopback or addr.is_link_local
+            except ValueError:
+                # Hostname, not an IP — assume remote (use bacpypes3 unicast).
+                is_local = False
         is_remote = not is_local
 
         use_raw = not _is_bac0_available() or device_id is not None or is_remote

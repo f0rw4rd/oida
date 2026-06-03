@@ -282,20 +282,23 @@ class PIMPassiveListener(PassiveListenerBase):
 
                 logger.debug(f"PIM: {src_ip} {msg_type_name} pri={dr_priority} hold={hold_time}s")
             else:
-                self.discovered_devices[device_key].last_seen = datetime.now().isoformat()
+                dev = self.discovered_devices[device_key]
+                dev.last_seen = datetime.now().isoformat()
+                # Cross-listener merge: pim_data is None when the device
+                # was first observed by another listener (CDP, LLDP, OSPF
+                # etc.). Lazy-init before .get()/__setitem__ to avoid
+                # AttributeError / TypeError.
+                if dev.pim_data is None:
+                    dev.pim_data = {}
                 # Update neighbors if new ones found
-                existing_neighbors = self.discovered_devices[device_key].pim_data.get(
-                    "neighbors", []
-                )
+                existing_neighbors = dev.pim_data.get("neighbors", [])
                 for n in neighbors:
                     if n not in existing_neighbors:
                         existing_neighbors.append(n)
-                self.discovered_devices[device_key].pim_data["neighbors"] = existing_neighbors
+                dev.pim_data["neighbors"] = existing_neighbors
 
                 # Update multicast groups
-                existing_groups = self.discovered_devices[device_key].pim_data.get(
-                    "multicast_groups", []
-                )
+                existing_groups = dev.pim_data.get("multicast_groups", [])
                 for g in multicast_groups:
                     if g not in existing_groups:
                         existing_groups.append(g)
@@ -303,4 +306,4 @@ class PIMPassiveListener(PassiveListenerBase):
                             self.multicast_groups[g] = []
                         if src_ip not in self.multicast_groups[g]:
                             self.multicast_groups[g].append(src_ip)
-                self.discovered_devices[device_key].pim_data["multicast_groups"] = existing_groups
+                dev.pim_data["multicast_groups"] = existing_groups
