@@ -614,11 +614,11 @@ class modbus(
             try:
                 if reg_type == "input":
                     result = self.conn.read_input_registers(
-                        address, count=regs_needed, slave=unit_id
+                        address, count=regs_needed, device_id=unit_id
                     )
                 else:
                     result = self.conn.read_holding_registers(
-                        address, count=regs_needed, slave=unit_id
+                        address, count=regs_needed, device_id=unit_id
                     )
 
                 if result.isError():
@@ -785,7 +785,7 @@ class modbus(
             else:
                 # Batch missed this address -- try individual read for exception code info.
                 try:
-                    result = read_func(address, count=1, slave=unit_id)
+                    result = read_func(address, count=1, device_id=unit_id)
                     if result.isError():
                         stats["errors"] += 1
                         exc_code = getattr(result, "exception_code", None)
