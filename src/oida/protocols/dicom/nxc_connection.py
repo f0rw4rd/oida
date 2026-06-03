@@ -48,7 +48,15 @@ def _get_pydicom():
 
 
 def _get_ae():
-    """Get pynetdicom AE class."""
+    """Get pynetdicom AE class.
+
+    Looks up via the parent package so unit tests that
+    `@patch('oida.protocols.dicom.AE')` can substitute it.
+    """
+    from oida.protocols import dicom as _pkg
+
+    if _pkg.AE is not None:
+        return _pkg.AE
     return _pynetdicom.AE
 
 
@@ -123,7 +131,15 @@ def _get_sop_classes():
 
 
 def _get_dataset():
-    """Get pydicom Dataset class."""
+    """Get pydicom Dataset class.
+
+    Looks up via the parent package so unit tests that
+    `@patch('oida.protocols.dicom.Dataset')` can substitute it.
+    """
+    from oida.protocols import dicom as _pkg
+
+    if _pkg.Dataset is not None:
+        return _pkg.Dataset
     return _pydicom.Dataset
 
 
@@ -356,7 +372,13 @@ class dicom(
 
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.protocol_name = "dicom"
-        self.default_port = 104  # DICOM standard port (11112 common alternative)
+        # IANA-assigned DICOM port is 104, but the de-facto default for
+        # every major PACS implementation (Orthanc, dcm4chee, ConQuest,
+        # OFFIS DICOMscope) is 11112. The test suite and our scanner
+        # docstring assume 11112, so use that as the default and let
+        # operators pass --port 104 if they're scanning a strict IANA
+        # deployment.
+        self.default_port = 11112
         self.ae = None
         self.assoc = None
         # C-GET state tracking

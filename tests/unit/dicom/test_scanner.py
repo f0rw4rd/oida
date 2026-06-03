@@ -17,8 +17,20 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+try:
+    import pynetdicom  # noqa: F401
+    _PYNETDICOM_AVAILABLE = True
+except ImportError:
+    _PYNETDICOM_AVAILABLE = False
+
 # Most test classes instantiate dicom(...) which triggers proto_flow and real TCP connections
-pytestmark = pytest.mark.network
+pytestmark = [
+    pytest.mark.network,
+    pytest.mark.skipif(
+        not _PYNETDICOM_AVAILABLE,
+        reason="pynetdicom not installed; install via `pip install -e .[dicom]`",
+    ),
+]
 
 
 class MockAssociation:
