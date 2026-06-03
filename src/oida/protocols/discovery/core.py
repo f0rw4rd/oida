@@ -1612,6 +1612,7 @@ class DiscoveredDevice:
     igmp_data: Optional[Dict[str, Any]] = None  # IGMP multicast group data
     dhcpv6_data: Optional[Dict[str, Any]] = None  # DHCPv6 discovery data
     ads_data: Optional[Dict[str, Any]] = None  # Beckhoff ADS/TwinCAT discovery data
+    netmanage_data: Optional[Dict[str, Any]] = None  # Schneider NetManage discovery data
 
     # IT infrastructure broadcast discovery data
     hid_data: Optional[Dict[str, Any]] = None  # HID Access Control
