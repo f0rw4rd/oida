@@ -288,6 +288,25 @@ class OPCUAFuzzer(BaseFuzzer):
                 "attack",
                 requires_state="SESSION_ACTIVE",
             ),
+            # Three new in §4 sweep (2026-06-03):
+            RequestInfo(
+                "OPCUA_NodeIdEncodingOverflow",
+                "NodeId encoding byte out of spec range (reserved 6-15, ext flags)",
+                "attack",
+                requires_state="SESSION_ACTIVE",
+            ),
+            RequestInfo(
+                "OPCUA_MalformedCert",
+                "OpenSecureChannel with truncated/oversized/wrong-tag certificate",
+                "attack",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "OPCUA_State_Confusion",
+                "Session-required services issued pre-session (state-machine attack)",
+                "attack",
+                requires_state="SECURE_CHANNEL",
+            ),
         ]
 
     def _create_socket(self):
@@ -3571,6 +3590,253 @@ class OPCUAFuzzer(BaseFuzzer):
         )
 
         # ============================================================
+        # NodeId encoding overflow: an OPC UA NodeId starts with a single
+        # encoding byte that selects TwoByte/FourByte/Numeric/String/
+        # Guid/ByteString (0-5 in spec). Sending the reserved values 6-15
+        # (Group) and 16-31 (extended ServerIndex bit) historically
+        # crashed asyncua / open62541 / S2OPC stacks because the decoder
+        # used a switch with no default. Pair with oversized identifier
+        # lengths to exercise the length-prefix path.
+        # ============================================================
+        nodeid_encoding_overflow = Request(
+            "OPCUA_NodeIdEncodingOverflow",
+            children=(
+                Block(
+                    "Header",
+                    children=(
+                        Static("MessageType", OPCUAMessageTypes.MESSAGE),
+                        Static("IsFinal", b"F"),
+                        Size(
+                            "MessageSize",
+                            block_name="MSGBody",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            offset=8,
+                            fuzzable=False,
+                        ),
+                    ),
+                ),
+                Block(
+                    "MSGBody",
+                    children=(
+                        *self._create_msg_header(
+                            OPCUAServiceIds.READ_REQUEST,
+                            authenticated=True,
+                        ),
+                        # ReadRequest body — MaxAge, TimestampsToReturn
+                        QWord("MaxAge", 0, endian="<"),
+                        DWord(
+                            "TimestampsToReturn",
+                            OPCUATimestampsToReturn.NEITHER,
+                            endian="<",
+                        ),
+                        # NodesToRead array (1 element)
+                        DWord("NodesToRead_Length", 1, endian="<"),
+                        # Reserved / extended encoding bytes — should be
+                        # rejected; many stacks index a jump table without
+                        # range-checking.
+                        Group(
+                            "NodeId_Encoding",
+                            values=[
+                                bytes([0x06]),  # reserved
+                                bytes([0x07]),
+                                bytes([0x0F]),  # high nibble = ServerIndex flag set
+                                bytes([0x40]),  # NamespaceUri flag with no NodeId tag
+                                bytes([0x80]),  # ServerIndex flag alone
+                                bytes([0xC0]),  # Both flags, no encoding tag
+                                bytes([0xFF]),
+                            ],
+                        ),
+                        # Oversized identifier length to test bound checks.
+                        DWord("NodeId_Identifier_Length", 0xFFFFFFFF, endian="<"),
+                        # Payload bytes (limited size; the length field is the attack).
+                        RandomData(
+                            "NodeId_Identifier",
+                            default_value=b"\x00" * 16,
+                            min_length=0,
+                            max_length=64,
+                        ),
+                        DWord("AttributeId", 13, endian="<"),  # Value
+                        # IndexRange (null string)
+                        DWord("IndexRange_Length", 0xFFFFFFFF, endian="<"),
+                        # DataEncoding QualifiedName (null)
+                        Word("DataEncoding_Namespace", 0, endian="<"),
+                        DWord("DataEncoding_Name_Length", 0xFFFFFFFF, endian="<"),
+                    ),
+                ),
+            ),
+        )
+
+        # ============================================================
+        # Malformed certificate body: OPCUA_CertChainLoop covers the
+        # self-referencing-issuer path; this request goes after the other
+        # cert-parse failure modes — truncated DER, oversized cert length
+        # mismatched against payload, wrong outer tag, embedded null
+        # within the BIT STRING. Targets pyasn1 / cryptography errors
+        # surfaced through asyncua's certificate validator.
+        # ============================================================
+        malformed_cert = Request(
+            "OPCUA_MalformedCert",
+            children=(
+                Block(
+                    "Header",
+                    children=(
+                        Static("MessageType", OPCUAMessageTypes.OPEN_SECURE_CHANNEL),
+                        Static("IsFinal", b"F"),
+                        Size(
+                            "MessageSize",
+                            block_name="OPNBody",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            offset=8,
+                            fuzzable=False,
+                        ),
+                    ),
+                ),
+                Block(
+                    "OPNBody",
+                    children=(
+                        DWord("SecureChannelId", 0, endian="<"),
+                        Size(
+                            "SecurityPolicyUri_Length",
+                            block_name="SecurityPolicyUri_Data",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "SecurityPolicyUri_Data",
+                            children=(
+                                Static(
+                                    "SecurityPolicyUri",
+                                    OPCUASecurityPolicies.BASIC256SHA256.encode("utf-8"),
+                                ),
+                            ),
+                        ),
+                        # SenderCertificate length is the FIRST attack
+                        # surface: declare 64 KiB but supply nothing,
+                        # supply 4 bytes that look like a DER tag but
+                        # truncate, or set length to -1 (0xFFFFFFFF).
+                        Group(
+                            "SenderCertificate_Length",
+                            values=[
+                                # Declared 65535 bytes, supply 0 — read-past-end
+                                bytes([0xFF, 0xFF, 0x00, 0x00]),
+                                # Declared INT_MAX — integer overflow path
+                                bytes([0xFF, 0xFF, 0xFF, 0x7F]),
+                                # Declared -1 (UINT max) — null-cert sentinel ambiguity
+                                bytes([0xFF, 0xFF, 0xFF, 0xFF]),
+                                # Declared 4 — supply garbage 4-byte DER prefix
+                                bytes([0x04, 0x00, 0x00, 0x00]),
+                            ],
+                        ),
+                        Group(
+                            "SenderCertificate_Body",
+                            values=[
+                                b"",  # absent (matches length=0xFFFF/FFFFFFFF cases)
+                                bytes([0x30, 0x82, 0xFF, 0xFF]),  # SEQUENCE with bogus length
+                                bytes([0xFF, 0xFF, 0xFF, 0xFF]),  # wrong outer tag
+                                bytes([0x30, 0x00]),  # empty SEQUENCE
+                            ],
+                        ),
+                        # ReceiverCertificateThumbprint — null sentinel
+                        DWord("ReceiverCertThumbprint_Length", 0xFFFFFFFF, endian="<"),
+                        # SequenceHeader
+                        DWord("SequenceNumber", self._next_sequence_number(), endian="<"),
+                        DWord("RequestId", self._next_request_id(), endian="<"),
+                        # Body — minimal OpenSecureChannelRequest with
+                        # default fuzz fields so the cert-parse failure
+                        # is reached BEFORE the body processor.
+                        Static("TypeId_Encoding", bytes([OPCUANodeIdTypes.FOUR_BYTE])),
+                        Byte("TypeId_Namespace", 0x00),
+                        Word("TypeId_Identifier", 446, endian="<"),
+                    ),
+                ),
+            ),
+        )
+
+        # ============================================================
+        # State confusion: send Read before OpenSecureChannel completes,
+        # send CloseSession with an inactive token, send ActivateSession
+        # before CreateSession. The boofuzz session graph below explicitly
+        # wires this Request to fire at state SECURE_CHANNEL (post-OPN,
+        # pre-session) so the target receives a session-required service
+        # without a session — exposing state-machine assumptions.
+        # ============================================================
+        state_confusion_read = Request(
+            "OPCUA_State_Confusion",
+            children=(
+                Block(
+                    "Header",
+                    children=(
+                        Static("MessageType", OPCUAMessageTypes.MESSAGE),
+                        Static("IsFinal", b"F"),
+                        Size(
+                            "MessageSize",
+                            block_name="MSGBody",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            offset=8,
+                            fuzzable=False,
+                        ),
+                    ),
+                ),
+                Block(
+                    "MSGBody",
+                    children=(
+                        # Service ID rotated through the
+                        # session-required catalog. Each one issued
+                        # WITHOUT an authenticated session in the boofuzz
+                        # session graph below.
+                        Group(
+                            "Service_Id",
+                            values=[
+                                # 631 = ReadRequest (needs session)
+                                bytes([OPCUANodeIdTypes.FOUR_BYTE, 0x00, 0x77, 0x02]),
+                                # 525 = BrowseRequest
+                                bytes([OPCUANodeIdTypes.FOUR_BYTE, 0x00, 0x0D, 0x02]),
+                                # 671 = WriteRequest
+                                bytes([OPCUANodeIdTypes.FOUR_BYTE, 0x00, 0x9F, 0x02]),
+                                # 712 = CallRequest
+                                bytes([OPCUANodeIdTypes.FOUR_BYTE, 0x00, 0xC8, 0x02]),
+                                # 793 = CreateSubscriptionRequest
+                                bytes([OPCUANodeIdTypes.FOUR_BYTE, 0x00, 0x19, 0x03]),
+                                # 473 = CloseSessionRequest (with no session)
+                                bytes([OPCUANodeIdTypes.FOUR_BYTE, 0x00, 0xD9, 0x01]),
+                            ],
+                        ),
+                        # Request header with null AuthenticationToken
+                        # (proves the no-session attack vs auth-token-fuzz)
+                        Static("AuthenticationToken", bytes([OPCUANodeIdTypes.TWO_BYTE, 0])),
+                        QWord("Timestamp", 0, endian="<"),
+                        DWord("RequestHandle", 1, endian="<"),
+                        DWord("ReturnDiagnostics", 0, endian="<"),
+                        Size(
+                            "AuditEntryId_Length",
+                            block_name="AuditEntryId_Data",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        Block("AuditEntryId_Data", children=(Static("AuditEntryId", b""),)),
+                        DWord("TimeoutHint", 1000, endian="<"),
+                        # AdditionalHeader null ExtensionObject
+                        Static("AdditionalHeader_TypeId", bytes([OPCUANodeIdTypes.TWO_BYTE, 0])),
+                        Byte("AdditionalHeader_Encoding", 0x00),
+                        # Minimal payload — empty arrays
+                        DWord("Empty_Array_1", 0xFFFFFFFF, endian="<"),
+                        DWord("Empty_Array_2", 0xFFFFFFFF, endian="<"),
+                    ),
+                ),
+            ),
+        )
+
+        # ============================================================
         # 35. QUICK COVERAGE REQUEST
         # Touches all major OPC UA service categories in a single sweep
         # Non-fuzzable fields for fast execution (~30 seconds total)
@@ -3804,5 +4070,13 @@ class OPCUAFuzzer(BaseFuzzer):
         # Channel cleanup
         if self.is_request_enabled("OPCUA_SecureChannel"):
             self.session.connect(close_channel)
+
+        # Three new request groups from §4 sweep (2026-06-03):
+        if self.is_request_enabled("OPCUA_NodeIdEncodingOverflow"):
+            self.session.connect(nodeid_encoding_overflow)
+        if self.is_request_enabled("OPCUA_MalformedCert"):
+            self.session.connect(malformed_cert)
+        if self.is_request_enabled("OPCUA_State_Confusion"):
+            self.session.connect(state_confusion_read)
 
         return self.session
