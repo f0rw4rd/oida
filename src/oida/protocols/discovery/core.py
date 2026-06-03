@@ -1366,7 +1366,7 @@ def get_all_broadcast_addresses(interface: str, subnet: Optional[str] = None) ->
             network = ipaddress.IPv4Network(subnet, strict=False)
             broadcasts.add(str(network.broadcast_address))
         except (ValueError, TypeError) as e:
-            logger.debug(f"Failed to get network: {e}")
+            logger.debug(f"core: subnet parse failed ({subnet!r}): {e}")
 
     # Add broadcasts for all networks configured on the interface
     for _, net_cidr in get_interface_networks(interface):
@@ -1374,7 +1374,9 @@ def get_all_broadcast_addresses(interface: str, subnet: Optional[str] = None) ->
             network = ipaddress.IPv4Network(net_cidr, strict=False)
             broadcasts.add(str(network.broadcast_address))
         except (ValueError, TypeError) as e:
-            logger.debug(f"Failed to get network: {e}")
+            logger.debug(
+                f"core: interface-network CIDR parse failed ({net_cidr!r}): {e}"
+            )
 
     return list(broadcasts)
 

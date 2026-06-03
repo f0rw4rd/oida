@@ -71,7 +71,7 @@ class PingEnrichScanner:
                     if latency is not None:
                         alive_ips[ip] = latency
                 except Exception as e:
-                    logger.debug(f"Failed to get latency: {e}")
+                    logger.debug(f"enrich: ping latency probe failed: {e}")
 
         # Update devices with ping results
         for ip, latency in alive_ips.items():
@@ -176,7 +176,7 @@ class ReverseDNSEnrichScanner:
                     if hostname:
                         resolved[ip] = hostname
                 except Exception as e:
-                    logger.debug(f"Failed to get hostname: {e}")
+                    logger.debug(f"enrich: reverse-DNS lookup failed: {e}")
 
         # Update devices with DNS results
         for ip, hostname in resolved.items():
