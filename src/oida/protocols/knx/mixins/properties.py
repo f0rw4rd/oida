@@ -127,7 +127,7 @@ class PropertiesMixin:
     ) -> Dict[str, Any]:
         """Fuzz a writable property"""
         import asyncio
-        from ...utils.fuzzer import fuzz
+        from ....utils.fuzzer import fuzz
 
         self.logger.debug(f"Fuzzing property: {address} arg={prop_arg}, iterations={iterations}")
         result = {
