@@ -124,33 +124,70 @@ def load_config_file(config_path: str) -> Dict[str, Any]:
         raise ValueError(f"Failed to parse config file: {e}")
 
 
-def merge_config_with_args(args: argparse.Namespace, config: Dict[str, Any]) -> argparse.Namespace:
+def merge_config_with_args(
+    args: argparse.Namespace,
+    config: Dict[str, Any],
+    parser: Optional[argparse.ArgumentParser] = None,
+) -> argparse.Namespace:
     """
     Merge config file values into parsed arguments.
 
     Command-line arguments take precedence over config file values.
-    Only values that weren't explicitly set on command line are overridden.
+    A config value is applied when the matching attribute is still at
+    the argparse default (i.e. the operator did not set it on the
+    command line). When `parser` is provided we compute per-dest defaults
+    from the parser so booleans / ints / lists are honored — without a
+    parser the function falls back to "apply only when value is None",
+    which silently drops every typed default and is the historic bug.
 
-    Args:
-        args: Parsed command-line arguments
-        config: Configuration dictionary from file
-
-    Returns:
-        Updated argparse.Namespace with merged values
+    Unknown keys (no matching dest, no matching subcommand action) are
+    surfaced via a warning instead of being silently set — typos like
+    `tiemout: 5` would otherwise create args.tiemout=5 that nothing reads.
     """
-    # Get defaults from parser for comparison
-    # Values explicitly set on command line won't match defaults
+    valid_dests: Optional[set[str]] = None
+    defaults: Dict[str, Any] = {}
+    if parser is not None:
+        # Walk the parser + every subparser so dests like 'unit_id' that
+        # live under `oida modbus` are recognized when the operator runs
+        # `oida modbus -c file.yaml`.
+        for act in parser._actions:
+            if act.dest != argparse.SUPPRESS:
+                defaults[act.dest] = act.default
+        for act in parser._actions:
+            if isinstance(act, argparse._SubParsersAction):
+                for sub in act.choices.values():
+                    for sub_act in sub._actions:
+                        if sub_act.dest != argparse.SUPPRESS:
+                            defaults.setdefault(sub_act.dest, sub_act.default)
+        valid_dests = set(defaults.keys()) | {"config"}
 
     for key, value in config.items():
-        # Convert dashes to underscores (CLI uses dashes, argparse uses underscores)
         attr_name = key.replace("-", "_")
 
-        # Only set if attribute doesn't exist or is at default
+        if valid_dests is not None and attr_name not in valid_dests:
+            logger.warning(
+                "Config key %r does not match any CLI argument — ignoring", key
+            )
+            continue
+
         if not hasattr(args, attr_name):
             setattr(args, attr_name, value)
-        elif getattr(args, attr_name) is None:
-            # None typically means not set on command line
-            setattr(args, attr_name, value)
+            continue
+
+        current = getattr(args, attr_name)
+        if parser is not None:
+            # Apply config value when the operator left the flag at its
+            # argparse default. Identity-or-equality avoids weird edge
+            # cases with mutable defaults (default=[] would compare True
+            # for any empty list — fine here, the operator didn't set it).
+            if current == defaults.get(attr_name):
+                setattr(args, attr_name, value)
+        else:
+            # Backwards-compatible fallback: only override when explicitly
+            # None. Boolean/int defaults silently drop the config value
+            # here — pass `parser=` to the call site to fix that class.
+            if current is None:
+                setattr(args, attr_name, value)
 
     return args
 
@@ -995,7 +1032,7 @@ def main(argv: Optional[List[str]] = None):
     if args.config:
         try:
             config = load_config_file(args.config)
-            args = merge_config_with_args(args, config)
+            args = merge_config_with_args(args, config, parser=parser)
             logger.info(f"Loaded configuration from {args.config}")
         except ValueError as e:
             logger.error(f"Config error: {e}")

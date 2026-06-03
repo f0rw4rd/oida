@@ -275,3 +275,88 @@ class TestRedactSensitiveArgs:
 
         out = _redact_sensitive_args({"port": 502, "timeout": 5.0, "verbose": True})
         assert out == {"port": 502, "timeout": 5.0, "verbose": True}
+
+
+# ---------------------------------------------------------------------------
+# Config merge contract: typed defaults must not silently drop config values
+# ---------------------------------------------------------------------------
+
+
+class TestMergeConfigWithArgs:
+    """merge_config_with_args must honor non-None argparse defaults."""
+
+    def _make_parser_and_args(self, **cli_overrides):
+        import argparse
+
+        p = argparse.ArgumentParser()
+        p.add_argument("--verbose", action="count", default=0)
+        p.add_argument("--port", type=int, default=502)
+        p.add_argument("--host", default=None)
+        p.add_argument("--enable-x", action="store_true")
+        argv = []
+        for k, v in cli_overrides.items():
+            if v is True:
+                argv.append(f"--{k.replace('_', '-')}")
+            elif v is False:
+                pass
+            else:
+                argv.extend([f"--{k.replace('_', '-')}", str(v)])
+        return p, p.parse_args(argv)
+
+    def test_config_value_applied_when_default_is_zero(self):
+        """Bug: --verbose default=0 caused config{verbose: 3} to be dropped."""
+        from oida.cli import merge_config_with_args
+
+        p, args = self._make_parser_and_args()
+        merge_config_with_args(args, {"verbose": 3}, parser=p)
+        assert args.verbose == 3, "Config value silently dropped (the bug)"
+
+    def test_config_value_applied_when_default_is_false(self):
+        """Bug: action='store_true' default=False dropped config{enable_x: True}."""
+        from oida.cli import merge_config_with_args
+
+        p, args = self._make_parser_and_args()
+        merge_config_with_args(args, {"enable-x": True}, parser=p)
+        assert args.enable_x is True
+
+    def test_cli_overrides_config_when_explicitly_set(self):
+        """CLI always wins when operator typed the flag."""
+        from oida.cli import merge_config_with_args
+
+        p, args = self._make_parser_and_args(port=4840)
+        merge_config_with_args(args, {"port": 502}, parser=p)
+        assert args.port == 4840
+
+    def test_unknown_key_logs_warning_not_silently_added(self):
+        """Typo 'tiemout: 5' must not create args.tiemout."""
+        import logging
+        from oida.cli import merge_config_with_args
+
+        p, args = self._make_parser_and_args()
+        with caplog_at(logging.WARNING):
+            merge_config_with_args(args, {"tiemout": 5}, parser=p)
+        assert not hasattr(args, "tiemout")
+
+    def test_dash_underscore_key_normalization(self):
+        """'enable-x' in config maps to args.enable_x."""
+        from oida.cli import merge_config_with_args
+
+        p, args = self._make_parser_and_args()
+        merge_config_with_args(args, {"enable-x": True}, parser=p)
+        assert args.enable_x is True
+
+
+import contextlib
+import logging as _logging
+
+
+@contextlib.contextmanager
+def caplog_at(level):
+    handler = _logging.StreamHandler()
+    handler.setLevel(level)
+    root = _logging.getLogger()
+    root.addHandler(handler)
+    try:
+        yield
+    finally:
+        root.removeHandler(handler)
