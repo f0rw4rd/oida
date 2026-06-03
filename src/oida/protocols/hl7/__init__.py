@@ -505,9 +505,18 @@ class hl7(
             return False
 
     def enum_host_info(self):
-        """Test MLLP connection with a simple message"""
-        # Create a minimal ADT^A01 message to test connection
-        test_msg = self._create_test_message("ADT", "A01")
+        """Test MLLP connection with a read-only query.
+
+        Sends QBP^Q11 (Display-Based Response, read-only) rather than
+        the legacy ADT^A01 admission write. ADT^A01 created a fake
+        patient admission on the target on every scan — every operator
+        running ``oida hl7 <ip>`` was silently writing to the target's
+        EMR / clinical interface. Use a read query for fingerprinting.
+
+        QBP^Q11 still surfaces vendor / sending-app / HL7 version in
+        the MSA/MSH echo without any server-side data change.
+        """
+        test_msg = self._create_test_message("QBP", "Q11")
 
         if test_msg:
             response = self._send_mllp_message(test_msg)
