@@ -140,12 +140,22 @@ def _normalize_opcua_url(target: str, default_port: int = 4840) -> str:
         return target
 
     # No scheme - add opc.tcp://
-    if ":" in target and not target.startswith("["):
+    # Bracketed IPv6 needs special handling: `[::1]:4840` already has a
+    # port, `[::1]` does not. The old check `target.startswith("[")`
+    # treated EVERY bracketed form as "no port" and appended :4840 even
+    # when one was already there, producing `[::1]:4840:4840`.
+    if target.startswith("["):
+        # Bracketed IPv6 — port iff a ':' appears AFTER the closing ']'
+        close = target.find("]")
+        has_port = close != -1 and ":" in target[close + 1 :].split("/", 1)[0]
+        if has_port:
+            return f"{OPCUA_SCHEME}{target}"
+        return f"{OPCUA_SCHEME}{target}:{default_port}"
+    if ":" in target:
         # Has port: host:port or host:port/path
         return f"{OPCUA_SCHEME}{target}"
-    else:
-        # Just host, add default port
-        return f"{OPCUA_SCHEME}{target}:{default_port}"
+    # Just host, add default port
+    return f"{OPCUA_SCHEME}{target}:{default_port}"
 
 
 def _parse_opcua_url(url: str) -> tuple:
@@ -159,6 +169,29 @@ def _parse_opcua_url(url: str) -> tuple:
 
     # Remove scheme
     remainder = url[len(OPCUA_SCHEME) :]
+
+    # Bracketed IPv6 — split path AFTER the closing ']' so the colons
+    # inside the address don't break path or port detection.
+    if remainder.startswith("["):
+        close = remainder.find("]")
+        if close == -1:
+            # Malformed — return what we can.
+            return remainder, 4840, ""
+        ipv6_host = remainder[: close + 1]
+        tail = remainder[close + 1 :]
+        if "/" in tail:
+            port_part, path = tail.split("/", 1)
+            path = "/" + path
+        else:
+            port_part = tail
+            path = ""
+        port = 4840
+        if port_part.startswith(":"):
+            try:
+                port = int(port_part[1:])
+            except ValueError:
+                port = 4840
+        return ipv6_host, port, path
 
     # Split path
     if "/" in remainder:
