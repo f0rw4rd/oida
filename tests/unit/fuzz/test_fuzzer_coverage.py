@@ -168,21 +168,24 @@ ICS_AUDIT_REQUEST_COUNTS = {
     "modbus_rtu": 12,
     "dnp3": 13,
     "iec104": 13,
-    "opcua": 22,
+    # OPCUA: 22 + 3 (§4 sweep 2026-06-03: NodeIdEncodingOverflow,
+    # MalformedCert, State_Confusion).
+    "opcua": 25,
     "bacnet": 13,
     "ethernetip": 12,
-    "fins": 21,
     "mms": 14,
-    "tase2": 12,
-    "profinet_dcp": 16,
-    "industrial_ethernet": 16,
-    "hartip": 12,
     "ads": 12,
     "snmpv2c": 12,
     "snmpv3": 12,
     "hl7": 13,
     "mqtt": 14,
     "coap": 20,
+    # The following entries were removed in §4 cleanup (2026-06-03):
+    # fins, tase2, profinet_dcp, industrial_ethernet, hartip — no
+    # corresponding fuzzer source exists in src/oida/fuzz/protocols/;
+    # the tests were unconditionally skipping. §4.2 lists these as
+    # "implement-or-delete"; deleted here, can be re-added once the
+    # underlying fuzzer modules land. See RELEASE_TODO.md §4.2.
 }
 
 # Combine for backward compatibility
