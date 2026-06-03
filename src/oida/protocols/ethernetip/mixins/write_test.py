@@ -154,8 +154,13 @@ class WriteTestMixin(_ScannerBase):
         """Determine attribute permission using best available method.
 
         Strategy:
-        1. If Parameter Object available, try to get permission from descriptor
-        2. Otherwise, use write-test approach and interpret error codes
+        1. If Parameter Object available AND a (class,inst,attr) ->
+           param-instance map has been built, get permission from the
+           Parameter Object descriptor. Callers in class_explorer.py
+           currently never build that map (TODO: walk class 0x0F at
+           connect time and populate the link-path back-references),
+           so in practice the write-test path below is the active one.
+        2. Otherwise, use write-test approach and interpret error codes.
 
         Args:
             conn: pycomm3 connection
@@ -171,7 +176,10 @@ class WriteTestMixin(_ScannerBase):
         """
         from ..cip_definitions import interpret_write_error
 
-        # Method 1: Try Parameter Object if available
+        # Method 1: Try Parameter Object if available AND the caller
+        # actually built the lookup map. Currently unreachable —
+        # class_explorer.py calls _determine_permission without the map.
+        # Left intact for the eventual map-builder implementation.
         if use_param_obj and param_instance_map:
             key = (class_id, instance, attr_id)
             if key in param_instance_map:
@@ -179,7 +187,10 @@ class WriteTestMixin(_ScannerBase):
                 if perm:
                     return perm
 
-        # Method 2: Write-test with error interpretation (only if --write flag set)
+        # Method 2: Write-test with error interpretation. Requires --write
+        # AND a non-empty value to write back. WITHOUT --write we have no
+        # signal at all — return "R?" to surface that to the operator
+        # rather than the silent "?" which looked like a real verdict.
         if self.test_write and value:
             success, status, _ = self._test_write_with_status(
                 conn, class_id, instance, attr_id, value
@@ -189,9 +200,11 @@ class WriteTestMixin(_ScannerBase):
             elif status >= 0:
                 perm, _ = interpret_write_error(status)
                 return perm
+            return "R?"
 
-        # No permission info available
-        return "?"
+        # No permission info available — be honest: we never tried to
+        # detect writability, don't pretend the attribute is read-only.
+        return "R?"
 
     def _test_attribute_write(
         self,

@@ -39,10 +39,25 @@ class SecurityMixin(_ScannerBase):
                 "anl_sch": protection.anl_sch,  # Analog protection
             }
 
-            # Determine overall protection level
+            # Determine overall protection level.
+            #
+            # IMPORTANT: an all-zero S7Protection struct (every field == 0)
+            # is NOT a valid "no protection" verdict — python-snap7's
+            # get_protection() commonly returns a zeroed struct on
+            # S7-1200/1500 firmware that does not expose this SZL, or when
+            # the read fails silently. Reporting level=1 / "Full access"
+            # in that case produced a false-positive CRITICAL finding on
+            # every modern CPU. Treat all-zero as INDETERMINATE instead.
             has_protection = any(protection_info.values())
+            all_zero = all(v == 0 for v in protection_info.values())
 
-            if not has_protection:
+            if all_zero:
+                level = 0
+                desc = "Indeterminate (CPU did not expose protection SZL)"
+            elif not has_protection:
+                # Shouldn't be reachable now that all_zero short-circuits,
+                # but kept for symmetry if individual fields ever become
+                # negative/False sentinel values.
                 level = 1
                 desc = "No protection - Full access"
             elif protection_info["sch_schal"] == 0:
@@ -61,6 +76,7 @@ class SecurityMixin(_ScannerBase):
                 "level": level,
                 "description": desc,
                 "has_protection": has_protection,
+                "indeterminate": all_zero,
                 "fields": protection_info,
             }
 
@@ -321,6 +337,10 @@ class SecurityMixin(_ScannerBase):
         # Add S7 specific concerns
         analysis["concerns"] = []
 
+        # protection_level == 0 == indeterminate (see _check_protection_level
+        # comment). Do NOT emit a finding when the CPU didn't expose the
+        # SZL — we can't tell the difference between "no protection" and
+        # "we couldn't read it".
         if protection_level == 1:
             analysis["concerns"].append("No protection - Full read/write access")
             self.logger.security_finding("Insecure configuration", detail="protection_level=1")

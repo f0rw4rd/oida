@@ -613,10 +613,10 @@ class EtherNetIPScanner(
                 "extended_status": list_id_response.get("extended_status"),
                 "device_ip": list_id_response.get("device_ip"),
             }
-            self.logger.security_finding(
-                "Anonymous access allowed",
-                detail="Device identity accessible without authentication via ListIdentity",
-            )
+            # ListIdentity is a UDP discovery command defined by ODVA
+            # CIP Volume 2 to be unauthenticated — every EtherNet/IP device
+            # MUST respond to it on port 44818. Treating that as a security
+            # finding produced one bogus CRITICAL per scanned device.
 
         if self.list_services:
             results["list_services"] = self._list_services(host, port)
@@ -824,7 +824,13 @@ class EtherNetIPScanner(
             )
 
         if self.fuzz and not self.read_only:
-            if results.get("write_test_results"):
+            # --fuzz writes random/edge-case values to writable attributes
+            # discovered by --write — destructive on a live device.
+            if not getattr(self, "confirm", False):
+                self.logger.error(
+                    "--fuzz writes mutating values to PLC attributes — requires --confirm"
+                )
+            elif results.get("write_test_results"):
                 results["fuzz_results"] = self._fuzz_attributes(
                     connection, results["attributes"], results["write_test_results"]
                 )
@@ -866,8 +872,19 @@ class EtherNetIPScanner(
                 results["attacks"]["crash_ethernet"] = self._crash_ethernet(host, port)
 
         if self.reset_ethernet:
-            self.logger.display("[*] Executing Ethernet Reset...")
-            results["attacks"]["reset_ethernet"] = self._reset_ethernet(host, port)
+            # Ethernet/IP CIP service 0x05 (Reset) on the TCP/IP Object —
+            # at minimum drops the comms link, may factory-default. Same
+            # destructive class as cpu_stop / crash_ethernet above; gate
+            # consistently on --confirm.
+            if not self.confirm:
+                self.logger.error("RESET ETHERNET requires --confirm flag")
+                self.logger.warning(
+                    "This will reset the device communications stack — use with extreme caution!"
+                )
+                results["attacks"]["reset_ethernet"] = {"error": "Missing --confirm"}
+            else:
+                self.logger.display("[*] Executing Ethernet Reset...")
+                results["attacks"]["reset_ethernet"] = self._reset_ethernet(host, port)
 
     def discover(self, connection: Any) -> Dict[str, Any]:
         """Perform EtherNet/IP discovery and scanning"""

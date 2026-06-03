@@ -112,6 +112,15 @@ class SubscriptionsMixin:
 
     async def _test_subscription_limits(self):
         """Test for subscription-based DoS vulnerabilities"""
+        # This is a DoS ramp against the live server — opens subscriptions
+        # until it hits the limit, then more until the server falls over.
+        # Gated on --confirm.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--test-subscription-limits performs a DoS ramp against the live "
+                "server (opens subscriptions until rejection) — requires --confirm"
+            )
+            return
         self.logger.display("Testing subscription limits...")
 
         # Create a simple handler for testing

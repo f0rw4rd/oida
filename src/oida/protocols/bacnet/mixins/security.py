@@ -95,6 +95,16 @@ class SecurityMixin:
 
     def _handle_security_assessment(self):
         """Full security assessment"""
+        # The "assessment" calls _handle_test_write (writes back the value it
+        # just read — still a real BACnet WriteProperty), _handle_enumerate_writable
+        # (writes to every discovered property), and ReinitializeDevice / OOS
+        # probes. All are mutating; require --confirm.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--assess issues real BACnet WriteProperty + ReinitializeDevice "
+                "probes (anonymous-write check, OOS check) — requires --confirm"
+            )
+            return
         self.logger.display("\n[Security Assessment]")
 
         vulns = []
@@ -128,8 +138,20 @@ class SecurityMixin:
                 self.logger.vuln(vuln, "high")
 
     def _handle_test_write(self):
-        """Test write access (non-destructive)"""
+        """Test write access (non-destructive)
+
+        Despite the docstring this DOES issue a real BACnet WriteProperty —
+        it just writes the same value back. Many controllers reject same-
+        value writes silently; some log the write. Gated on --confirm to
+        prevent accidental SOE pollution.
+        """
         if not self.objects:
+            return
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--test-write issues real BACnet WriteProperty (writes current value back) "
+                "— requires --confirm"
+            )
             return
 
         for device_id, objects_by_type in self.objects.items():
@@ -164,6 +186,12 @@ class SecurityMixin:
     def _handle_enumerate_writable(self):
         """Find all writable properties"""
         if not self.objects:
+            return
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--enumerate-writable issues a WriteProperty against every discovered "
+                "object (pollutes SOE / change-of-value log) — requires --confirm"
+            )
             return
 
         writable_count = 0

@@ -20,6 +20,28 @@ else:
     _ScannerBase = object
 
 
+def _count_writable_attrs(write_test_results: Dict[str, Any]) -> int:
+    """Count attributes with `writable=True` in a write_test_results dict.
+
+    Shape: {class_id: {"class_attributes": {attr_id: {"writable": bool}},
+                       "instances": {inst_id: {attr_id: {"writable": bool}}}}}.
+    """
+    total = 0
+    for write_info in write_test_results.values():
+        if not isinstance(write_info, dict):
+            continue
+        for attr_data in (write_info.get("class_attributes") or {}).values():
+            if isinstance(attr_data, dict) and attr_data.get("writable"):
+                total += 1
+        for inst_attrs in (write_info.get("instances") or {}).values():
+            if not isinstance(inst_attrs, dict):
+                continue
+            for attr_data in inst_attrs.values():
+                if isinstance(attr_data, dict) and attr_data.get("writable"):
+                    total += 1
+    return total
+
+
 class SecurityAnalysisMixin(_ScannerBase):
     """Mixin providing security analysis and reporting for EtherNet/IP."""
 
@@ -48,13 +70,24 @@ class SecurityAnalysisMixin(_ScannerBase):
 
         host, port = self.get_target_info()
 
+        # access_control: we can only assert this when --write actually ran
+        # AND found zero writable attributes. Without --write the dict is
+        # empty for an entirely different reason (test wasn't run), so the
+        # old `len(...) == 0` gave us a false 'access controlled' verdict
+        # whenever the operator didn't pass --write. None means 'unknown'.
+        write_test_results = results.get("write_test_results") or {}
+        if not write_test_results:
+            access_control = None
+        else:
+            access_control = _count_writable_attrs(write_test_results) == 0
+
         analysis = SecurityAnalyzer.assess_protocol_security(
             {
                 "authentication": len(auth_methods) > 0,
                 "authorization": False,  # No built-in authorization
                 "encryption": has_tls,
                 "integrity_check": has_cip_security,
-                "access_control": len(results.get("write_test_results", {})) == 0,
+                "access_control": access_control,
             }
         )
 
@@ -124,9 +157,13 @@ class SecurityAnalysisMixin(_ScannerBase):
                     f"Device has active fault (status: 0x{identity.get('status', 0):04X})"
                 )
 
-        # Writable attributes
+        # Writable attributes. The old code did
+        # sum(len(attrs) for attrs in write_test_results.values()) which
+        # measured "number of keys in each class dict" (always 2 —
+        # 'class_attributes' + 'instances'), not "number of writable
+        # attributes". So every scan reported `2 × num_classes` writables.
         if results.get("write_test_results"):
-            writable_count = sum(len(attrs) for attrs in results["write_test_results"].values())
+            writable_count = _count_writable_attrs(results["write_test_results"])
             if writable_count > 0:
                 analysis["concerns"].append(f"{writable_count} writable attributes found")
                 self.logger.security_finding(
