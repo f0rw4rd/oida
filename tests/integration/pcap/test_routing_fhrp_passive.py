@@ -904,8 +904,12 @@ class TestVRRPPassiveEK:
         )
         dev = next(iter(devices.values()))
         assert "VRRP" in dev.device_type, f"Expected VRRP in device_type, got {dev.device_type}"
-        # The fixture router has priority 100 (not 255), so it's Backup
-        assert "Backup" in dev.device_type, f"Expected Backup in device_type, got {dev.device_type}"
+        # Per RFC 5798 §6.4.3, only the Master transmits VRRP Advertisements
+        # — so any captured packet means the sender is Master regardless of
+        # the priority value. Address-ownership (priority 255) is a separate
+        # concept exposed via vrrp_data['is_address_owner'].
+        assert "Master" in dev.device_type, f"Expected Master in device_type, got {dev.device_type}"
+        assert dev.vrrp_data.get("is_address_owner") is False, "Fixture has priority 100, not 255"
 
 
 class TestRoutingFHRPPassiveEK:
