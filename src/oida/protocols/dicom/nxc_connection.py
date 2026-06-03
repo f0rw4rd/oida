@@ -404,12 +404,7 @@ class dicom(
                 # left the traversal intact.
                 def _safe_name(raw: str) -> str:
                     # Drop separators, NUL, control chars, leading dots.
-                    cleaned = (
-                        str(raw)
-                        .replace("/", "_")
-                        .replace("\\", "_")
-                        .replace("\x00", "_")
-                    )
+                    cleaned = str(raw).replace("/", "_").replace("\\", "_").replace("\x00", "_")
                     cleaned = "".join(c if c.isprintable() else "_" for c in cleaned)
                     cleaned = cleaned.lstrip(".")  # kills '..', '.', '....', etc.
                     cleaned = Path(cleaned).name

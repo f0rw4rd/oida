@@ -108,7 +108,9 @@ class FuzzMixin(_ScannerBase):
                             addr, payload, device_id=self.scanner.unit_id
                         )
                     else:
-                        result = self.conn.write_register(addr, payload, device_id=self.scanner.unit_id)
+                        result = self.conn.write_register(
+                            addr, payload, device_id=self.scanner.unit_id
+                        )
 
                     if not result.isError():
                         stats["writes"] += 1
@@ -150,9 +152,7 @@ class FuzzMixin(_ScannerBase):
             payload = bytes([self.scanner.unit_id, fc, 0x00, 0x00, 0x00, 0x01])
 
             try:
-                response = self.scanner.send_custom_fc(
-                    self.conn, fc, payload, self.scanner.unit_id
-                )
+                response = self.scanner.send_custom_fc(self.conn, fc, payload, self.scanner.unit_id)
 
                 if response:
                     if not response.get("is_exception"):

@@ -296,6 +296,7 @@ class SecurityMixin:
                 # Use basename only — full wordlist path can leak
                 # engagement context (client name, operator filesystem).
                 from ....utils.login_scanner import format_wordlist_source
+
                 self.logger.display(
                     f"Loaded credentials from wordlist: {format_wordlist_source(wordlist)}"
                 )

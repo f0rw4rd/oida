@@ -188,8 +188,9 @@ Examples:
     # Six dispatcher-read flags were absent from proto_args, so passing
     # them on the CLI raised 'unrecognized arguments' and the only way to
     # exercise the code paths was to monkey-patch args in tests.
-    p.add_argument("--file-access-method", choices=["stream", "record"], default="stream",
-                   help=SUPPRESS)
+    p.add_argument(
+        "--file-access-method", choices=["stream", "record"], default="stream", help=SUPPRESS
+    )
     p.add_argument("--file-chunk-size", type=int, default=1024, help=SUPPRESS)
     p.add_argument("--cov-lifetime", type=int, default=300, help=SUPPRESS)
     p.add_argument("--cov-duration", type=int, default=30, help=SUPPRESS)

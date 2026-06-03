@@ -378,9 +378,9 @@ def probe_server_capabilities(
     # helper that takes no args/namespace and offers no opt-out.
     probe_messages = [
         ("ACK", ""),
-        ("QRY", "A19"),     # Display-style query (read-only)
-        ("QBP", "Q11"),     # Display-Based Response (read-only fingerprint)
-        ("QBP", "Q40"),     # WhoAmI query (read-only identity)
+        ("QRY", "A19"),  # Display-style query (read-only)
+        ("QBP", "Q11"),  # Display-Based Response (read-only fingerprint)
+        ("QBP", "Q40"),  # WhoAmI query (read-only identity)
     ]
 
     for msg_type, trigger in probe_messages:

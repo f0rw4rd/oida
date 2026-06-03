@@ -198,9 +198,13 @@ class MapReadWriteMixin(_ScannerBase):
             elif fc == 2:
                 result = self.conn.read_discrete_inputs(address, count=1, device_id=unit_id)
             elif fc == 4:
-                result = self.conn.read_input_registers(address, count=regs_needed, device_id=unit_id)
+                result = self.conn.read_input_registers(
+                    address, count=regs_needed, device_id=unit_id
+                )
             else:
-                result = self.conn.read_holding_registers(address, count=regs_needed, device_id=unit_id)
+                result = self.conn.read_holding_registers(
+                    address, count=regs_needed, device_id=unit_id
+                )
 
             if result.isError():
                 exc_code = getattr(result, "exception_code", None)

@@ -811,9 +811,7 @@ def load_register_map(map_name: str) -> Optional[Dict[str, Any]]:
     # parsing garbage.
     if os.path.exists(map_name):
         if not map_name.lower().endswith(".json"):
-            raise ValueError(
-                f"--register-map direct path must end in .json: {map_name!r}"
-            )
+            raise ValueError(f"--register-map direct path must end in .json: {map_name!r}")
         with open(map_name, "r") as f:
             return json.load(f)
 

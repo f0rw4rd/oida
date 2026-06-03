@@ -289,9 +289,7 @@ class coap(NetworkConnection):
             if resources:
                 _confirm = getattr(self.args, "confirm", False)
                 if _confirm:
-                    self.logger.display(
-                        "Testing CoAP methods (read + write, --confirm passed)..."
-                    )
+                    self.logger.display("Testing CoAP methods (read + write, --confirm passed)...")
                 else:
                     self.logger.display(
                         "Testing CoAP read methods (GET/FETCH). "
@@ -301,8 +299,7 @@ class coap(NetworkConnection):
                 self.results["data"]["method_matrix"] = matrix
                 for path, methods in matrix.items():
                     allowed = [
-                        m for m, c in methods.items()
-                        if isinstance(c, str) and c.startswith("2.")
+                        m for m, c in methods.items() if isinstance(c, str) and c.startswith("2.")
                     ]
                     if allowed:
                         self.logger.display("  %s: %s", path, ", ".join(allowed))

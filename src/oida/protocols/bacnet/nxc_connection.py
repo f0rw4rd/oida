@@ -116,10 +116,7 @@ class bacnet(
         # PUBLIC hosts in 172.0-172.15 / 172.32-172.255 (only 172.16/12
         # is RFC 1918 private). Unifying eliminates the routing bug
         # and gives every code path the same feature surface.
-        use_bac0 = (
-            getattr(self.args, "use_bac0", False)
-            and _is_bac0_available()
-        )
+        use_bac0 = getattr(self.args, "use_bac0", False) and _is_bac0_available()
 
         if use_bac0:
             self.logger.debug("BACnet: using BAC0 (operator opted in via --use-bac0)")

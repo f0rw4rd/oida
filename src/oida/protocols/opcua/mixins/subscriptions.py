@@ -20,9 +20,9 @@ class SubscriptionsMixin:
         # and every subscription ran the hard-coded 10s. Keep
         # 'subscribe_duration' as a back-compat fallback in case
         # somebody added an alias downstream.
-        duration = getattr(
-            self.args, "duration", None
-        ) or getattr(self.args, "subscribe_duration", 10)
+        duration = getattr(self.args, "duration", None) or getattr(
+            self.args, "subscribe_duration", 10
+        )
         interval = getattr(self.args, "subscription_interval", 500)
 
         self.logger.display(f"Subscribing for {duration}s (interval: {interval}ms)...")
@@ -73,9 +73,9 @@ class SubscriptionsMixin:
         # and every subscription ran the hard-coded 10s. Keep
         # 'subscribe_duration' as a back-compat fallback in case
         # somebody added an alias downstream.
-        duration = getattr(
-            self.args, "duration", None
-        ) or getattr(self.args, "subscribe_duration", 10)
+        duration = getattr(self.args, "duration", None) or getattr(
+            self.args, "subscribe_duration", 10
+        )
 
         self.logger.display(f"Subscribing to events for {duration}s...")
 
