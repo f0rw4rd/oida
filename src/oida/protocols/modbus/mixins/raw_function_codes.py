@@ -39,17 +39,17 @@ class RawFCMixin(_ScannerBase):
         if payload:
             self.logger.display(f"  Payload ({len(payload)} bytes): {payload.hex()}")
 
-        result = self.scanner.send_custom_fc(self.conn, fc, payload)
+        result = self.scanner.send_custom_fc(self.conn, fc, payload, self.scanner.unit_id)
 
         if result:
             self.results["data"]["raw_fc"] = result
 
-            if result.get("exception"):
+            if result.get("is_exception"):
                 exc_code = result.get("exception_code", 0)
                 exc_name = result.get("exception_name", "Unknown")
                 self.logger.warning(f"  Exception: {exc_code} ({exc_name})")
             else:
-                response_data = result.get("data", b"")
+                response_data = result.get("response_payload", b"")
                 self.logger.success(f"  Response ({len(response_data)} bytes):")
 
                 if response_format == "hexdump":
@@ -129,10 +129,10 @@ class RawFCMixin(_ScannerBase):
         exceptions = []
 
         for fc in fc_list:
-            result = self.scanner.send_custom_fc(self.conn, fc, bytes())
+            result = self.scanner.send_custom_fc(self.conn, fc, bytes(), self.scanner.unit_id)
 
             if result:
-                if result.get("exception"):
+                if result.get("is_exception"):
                     exc_code = result.get("exception_code", 0)
                     # Exception 1 (Illegal Function) means not supported
                     # Other exceptions may indicate partial support

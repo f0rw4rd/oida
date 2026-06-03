@@ -150,13 +150,15 @@ class FuzzMixin(_ScannerBase):
             payload = bytes([self.scanner.unit_id, fc, 0x00, 0x00, 0x00, 0x01])
 
             try:
-                response = self.scanner.send_custom_fc(self.conn, fc, payload)
+                response = self.scanner.send_custom_fc(
+                    self.conn, fc, payload, self.scanner.unit_id
+                )
 
                 if response:
-                    if not response.get("exception"):
+                    if not response.get("is_exception"):
                         stats["responses"] += 1
                         stats["supported"].append(
-                            {"fc": fc, "response": response.get("data", "")[:20]}
+                            {"fc": fc, "response": response.get("response_payload", b"")[:20]}
                         )
                         self.logger.display(f"  FC {fc}: Supported!")
                     else:
