@@ -107,7 +107,7 @@ class TestDiagnosticEchoTest:
         create_mock_scanner(scanner_args)
 
         # Send echo request with test data 0x1234
-        result = mock_client.diag_query_data(0x1234, slave=1)
+        result = mock_client.diag_query_data(0x1234, device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 0x1234
@@ -122,7 +122,7 @@ class TestDiagnosticEchoTest:
         create_mock_scanner(scanner_args)
 
         sent_data = 0x1234
-        result = mock_client.diag_query_data(sent_data, slave=1)
+        result = mock_client.diag_query_data(sent_data, device_id=1)
 
         assert result.message[0] != sent_data
 
@@ -135,7 +135,7 @@ class TestDiagnosticEchoTest:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_query_data(0x1234, slave=1)
+        result = mock_client.diag_query_data(0x1234, device_id=1)
 
         assert result.isError()
 
@@ -156,7 +156,7 @@ class TestDiagnosticRestartComm:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_restart_communication(slave=1)
+        result = mock_client.diag_restart_communication(device_id=1)
 
         assert not result.isError()
 
@@ -169,7 +169,7 @@ class TestDiagnosticRestartComm:
         create_mock_scanner(scanner_args)
 
         # 0xFF00 = Clear log and continue in Listen Only Mode
-        result = mock_client.diag_restart_communication(0xFF00, slave=1)
+        result = mock_client.diag_restart_communication(0xFF00, device_id=1)
 
         assert not result.isError()
 
@@ -191,7 +191,7 @@ class TestDiagnosticRegister:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_read_diagnostic_register(slave=1)
+        result = mock_client.diag_read_diagnostic_register(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 0x0000
@@ -205,7 +205,7 @@ class TestDiagnosticRegister:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_read_diagnostic_register(slave=1)
+        result = mock_client.diag_read_diagnostic_register(device_id=1)
 
         reg_value = result.message[0]
         # Check individual bits
@@ -235,7 +235,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_bus_message_count(slave=1)
+        result = mock_client.diag_get_bus_message_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 1234
@@ -249,7 +249,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_bus_com_error_count(slave=1)
+        result = mock_client.diag_get_bus_com_error_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 5
@@ -263,7 +263,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_bus_exception_error_count(slave=1)
+        result = mock_client.diag_get_bus_exception_error_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 10
@@ -277,7 +277,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_slave_message_count(slave=1)
+        result = mock_client.diag_get_slave_message_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 500
@@ -291,7 +291,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_slave_no_response_count(slave=1)
+        result = mock_client.diag_get_slave_no_response_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 3
@@ -305,7 +305,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_slave_nak_count(slave=1)
+        result = mock_client.diag_get_slave_nak_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 0
@@ -319,7 +319,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_slave_busy_count(slave=1)
+        result = mock_client.diag_get_slave_busy_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 2
@@ -333,7 +333,7 @@ class TestDiagnosticCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_get_bus_char_overrun_count(slave=1)
+        result = mock_client.diag_get_bus_char_overrun_count(device_id=1)
 
         assert not result.isError()
         assert result.message[0] == 1
@@ -355,7 +355,7 @@ class TestDiagnosticClearCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_clear_counters(slave=1)
+        result = mock_client.diag_clear_counters(device_id=1)
 
         assert not result.isError()
 
@@ -367,7 +367,7 @@ class TestDiagnosticClearCounters:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.diag_clear_overrun_counter(slave=1)
+        result = mock_client.diag_clear_overrun_counter(device_id=1)
 
         assert not result.isError()
 
@@ -384,7 +384,7 @@ class TestCommunicationEventCounter:
         """Test successful event counter read."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.get_com_event_counter(slave=1)
+        result = mock_client.get_com_event_counter(device_id=1)
 
         assert not result.isError()
         assert result.status is True
@@ -400,7 +400,7 @@ class TestCommunicationEventCounter:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.get_com_event_counter(slave=1)
+        result = mock_client.get_com_event_counter(device_id=1)
 
         assert result.status is False
 
@@ -413,7 +413,7 @@ class TestCommunicationEventCounter:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.get_com_event_counter(slave=1)
+        result = mock_client.get_com_event_counter(device_id=1)
 
         assert result.isError()
 
@@ -430,7 +430,7 @@ class TestCommunicationEventLog:
         """Test successful event log read."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.get_com_event_log(slave=1)
+        result = mock_client.get_com_event_log(device_id=1)
 
         assert not result.isError()
         assert result.status is True
@@ -448,7 +448,7 @@ class TestCommunicationEventLog:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.get_com_event_log(slave=1)
+        result = mock_client.get_com_event_log(device_id=1)
 
         assert result.message_count == 0
         assert len(result.events) == 0
@@ -462,7 +462,7 @@ class TestCommunicationEventLog:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.get_com_event_log(slave=1)
+        result = mock_client.get_com_event_log(device_id=1)
 
         assert result.isError()
 
@@ -485,7 +485,7 @@ class TestCommunicationEventLog:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.get_com_event_log(slave=1)
+        result = mock_client.get_com_event_log(device_id=1)
 
         # Parse events
         for event in result.events:

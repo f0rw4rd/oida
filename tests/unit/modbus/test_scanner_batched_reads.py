@@ -196,7 +196,7 @@ class TestBatchedHoldingRegisterReads:
         # Should have been called once with count=10, not 10 times with count=1
         assert client.read_holding_registers.call_count == 1
         call_args = client.read_holding_registers.call_args
-        assert call_args == call(0, count=10, slave=1)
+        assert call_args == call(0, count=10, device_id=1)
 
         # All 10 addresses should have results
         assert len(results) == 10
@@ -210,7 +210,7 @@ class TestBatchedHoldingRegisterReads:
         scanner = _create_scanner()
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_register_response(list(range(start, start + count)))
 
         client.read_holding_registers.side_effect = side_effect
@@ -226,7 +226,7 @@ class TestBatchedHoldingRegisterReads:
         scanner = _create_scanner({"max-registers": 10})
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_register_response([0] * count)
 
         client.read_holding_registers.side_effect = side_effect
@@ -238,16 +238,16 @@ class TestBatchedHoldingRegisterReads:
 
         # Verify batch sizes: 10, 10, 5
         calls = client.read_holding_registers.call_args_list
-        assert calls[0] == call(0, count=10, slave=1)
-        assert calls[1] == call(10, count=10, slave=1)
-        assert calls[2] == call(20, count=5, slave=1)
+        assert calls[0] == call(0, count=10, device_id=1)
+        assert calls[1] == call(10, count=10, device_id=1)
+        assert calls[2] == call(20, count=5, device_id=1)
 
     def test_partial_batch_at_end(self):
         """Partial batch at the end of a range returns correct results."""
         scanner = _create_scanner({"max-registers": 4})
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_register_response([100 + i for i in range(count)])
 
         client.read_holding_registers.side_effect = side_effect
@@ -265,7 +265,7 @@ class TestBatchedHoldingRegisterReads:
 
         values = [100, 200, 300, 400, 500, 600, 700]
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_register_response(values[start : start + count])
 
         client.read_holding_registers.side_effect = side_effect
@@ -292,7 +292,7 @@ class TestBatchedInputRegisterReads:
 
         assert client.read_input_registers.call_count == 1
         call_args = client.read_input_registers.call_args
-        assert call_args == call(0, count=5, slave=1)
+        assert call_args == call(0, count=5, device_id=1)
         assert len(results) == 5
 
 
@@ -311,7 +311,7 @@ class TestBatchedCoilReads:
 
         assert client.read_coils.call_count == 1
         call_args = client.read_coils.call_args
-        assert call_args == call(0, count=5, slave=1)
+        assert call_args == call(0, count=5, device_id=1)
         assert len(results) == 5
         assert results[0]["value"] is True
         assert results[1]["value"] is False
@@ -364,7 +364,7 @@ class TestBatchFallback:
         # First batch fails, individual reads succeed
         call_count = {"n": 0}
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             call_count["n"] += 1
             if count > 1:
                 return _make_error_response()
@@ -385,7 +385,7 @@ class TestBatchFallback:
         scanner = _create_scanner({"max-registers": 10})
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             if count > 1:
                 raise ConnectionError("Connection reset")
             return _make_register_response([99])
@@ -403,7 +403,7 @@ class TestBatchFallback:
         scanner = _create_scanner({"max-registers": 5})
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             if count > 1:
                 return _make_error_response()
             # Only even addresses succeed
@@ -428,7 +428,7 @@ class TestBatchFallback:
         scanner = _create_scanner({"max-registers": 5})
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             if count > 1:
                 return _make_error_response()
             if start == 2:
@@ -452,7 +452,7 @@ class TestBatchFallback:
 
         call_num = {"n": 0}
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             call_num["n"] += 1
             if call_num["n"] == 1:
                 # First call: batch returns too few registers
@@ -482,7 +482,7 @@ class TestNonContiguousRanges:
         scanner = _create_scanner()
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_register_response([start + i for i in range(count)])
 
         client.read_holding_registers.side_effect = side_effect
@@ -505,7 +505,7 @@ class TestNonContiguousRanges:
         scanner = _create_scanner()
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_register_response([start] * count)
 
         client.read_holding_registers.side_effect = side_effect
@@ -589,7 +589,7 @@ class TestEdgeCases:
         results = scanner._scan_register_type(client, "holding_registers", [100])
 
         assert client.read_holding_registers.call_count == 1
-        assert client.read_holding_registers.call_args == call(100, count=1, slave=1)
+        assert client.read_holding_registers.call_args == call(100, count=1, device_id=1)
         assert results[100]["value"] == 42
 
     def test_max_registers_capped_at_125_for_registers(self):
@@ -597,7 +597,7 @@ class TestEdgeCases:
         scanner = _create_scanner({"max-registers": 500})
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_register_response([0] * count)
 
         client.read_holding_registers.side_effect = side_effect
@@ -607,14 +607,14 @@ class TestEdgeCases:
         # Should cap at 125, so 200 / 125 = 2 calls
         assert client.read_holding_registers.call_count == 2
         first_call = client.read_holding_registers.call_args_list[0]
-        assert first_call == call(0, count=125, slave=1)
+        assert first_call == call(0, count=125, device_id=1)
 
     def test_max_registers_capped_at_2000_for_coils(self):
         """max-registers larger than 2000 is capped for coils."""
         scanner = _create_scanner({"max-registers": 5000})
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _make_bits_response([True] * count)
 
         client.read_coils.side_effect = side_effect
@@ -624,7 +624,7 @@ class TestEdgeCases:
         # Should cap at 2000, so 3000 / 2000 = 2 calls
         assert client.read_coils.call_count == 2
         first_call = client.read_coils.call_args_list[0]
-        assert first_call == call(0, count=2000, slave=1)
+        assert first_call == call(0, count=2000, device_id=1)
 
     def test_unknown_register_type(self):
         """Unknown register type returns empty results."""

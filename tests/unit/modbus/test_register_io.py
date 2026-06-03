@@ -136,7 +136,7 @@ class TestReadRegisteredBatched:
 
         result = read_registers_batched(client, "holding_registers", [0, 1, 2])
         assert result == {0: 10, 1: 20, 2: 30}
-        client.read_holding_registers.assert_called_once_with(0, count=3, slave=1)
+        client.read_holding_registers.assert_called_once_with(0, count=3, device_id=1)
 
     def test_short_name_alias(self):
         client = MagicMock()
@@ -179,12 +179,12 @@ class TestReadRegisteredBatched:
         client.read_holding_registers.return_value = _reg_response([1])
 
         read_registers_batched(client, "holding", [0], unit_id=5)
-        client.read_holding_registers.assert_called_once_with(0, count=1, slave=5)
+        client.read_holding_registers.assert_called_once_with(0, count=1, device_id=5)
 
     def test_custom_max_batch(self):
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _reg_response(list(range(count)))
 
         client.read_holding_registers.side_effect = side_effect
@@ -196,7 +196,7 @@ class TestReadRegisteredBatched:
     def test_non_contiguous_multiple_batches(self):
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             return _reg_response([start + i for i in range(count)])
 
         client.read_holding_registers.side_effect = side_effect
@@ -208,7 +208,7 @@ class TestReadRegisteredBatched:
     def test_fallback_on_error(self):
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             if count > 1:
                 return _error_response()
             return _reg_response([start * 10])
@@ -232,7 +232,7 @@ class TestReadRegisteredBatched:
     def test_fallback_on_exception(self):
         client = MagicMock()
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             if count > 1:
                 raise ConnectionError("reset")
             return _reg_response([99])
@@ -247,7 +247,7 @@ class TestReadRegisteredBatched:
         client = MagicMock()
         call_n = {"n": 0}
 
-        def side_effect(start, count, slave):
+        def side_effect(start, count, device_id):
             call_n["n"] += 1
             if call_n["n"] == 1:
                 return _reg_response([1])  # short -- expected 3

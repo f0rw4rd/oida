@@ -105,10 +105,10 @@ class FuzzMixin(_ScannerBase):
                 try:
                     if isinstance(payload, list):
                         result = self.conn.write_registers(
-                            addr, payload, slave=self.scanner.unit_id
+                            addr, payload, device_id=self.scanner.unit_id
                         )
                     else:
-                        result = self.conn.write_register(addr, payload, slave=self.scanner.unit_id)
+                        result = self.conn.write_register(addr, payload, device_id=self.scanner.unit_id)
 
                     if not result.isError():
                         stats["writes"] += 1
@@ -131,7 +131,7 @@ class FuzzMixin(_ScannerBase):
             # Restore original value
             if original_value is not None:
                 try:
-                    self.conn.write_register(addr, original_value, slave=self.scanner.unit_id)
+                    self.conn.write_register(addr, original_value, device_id=self.scanner.unit_id)
                 except Exception as e:
                     self.logger.debug(f"self.conn.write_register(addr, origin...: {e}")
 
@@ -219,11 +219,11 @@ class FuzzMixin(_ScannerBase):
                 try:
                     if isinstance(payload, list):
                         result = self.conn.write_registers(
-                            addr, payload, slave=self.scanner.unit_id
+                            addr, payload, device_id=self.scanner.unit_id
                         )
                     else:
                         result = self.conn.write_register(
-                            addr, int(payload) & 0xFFFF, slave=self.scanner.unit_id
+                            addr, int(payload) & 0xFFFF, device_id=self.scanner.unit_id
                         )
 
                     if not result.isError():

@@ -114,10 +114,10 @@ class TestWriteSingleCoil:
         """Test writing coil to ON state."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_coil(0, True, slave=1)
+        result = mock_client.write_coil(0, True, device_id=1)
 
         assert not result.isError()
-        mock_client.write_coil.assert_called_with(0, True, slave=1)
+        mock_client.write_coil.assert_called_with(0, True, device_id=1)
 
     def test_write_coil_off(self, mock_client, scanner_args):
         """Test writing coil to OFF state."""
@@ -127,10 +127,10 @@ class TestWriteSingleCoil:
         mock_client.write_coil.return_value = write_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_coil(0, False, slave=1)
+        result = mock_client.write_coil(0, False, device_id=1)
 
         assert not result.isError()
-        mock_client.write_coil.assert_called_with(0, False, slave=1)
+        mock_client.write_coil.assert_called_with(0, False, device_id=1)
 
     def test_write_coil_error(self, mock_client, scanner_args):
         """Test handling write coil error."""
@@ -140,7 +140,7 @@ class TestWriteSingleCoil:
         mock_client.write_coil.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_coil(65535, True, slave=1)
+        result = mock_client.write_coil(65535, True, device_id=1)
 
         assert result.isError()
 
@@ -148,8 +148,8 @@ class TestWriteSingleCoil:
         """Test writing coil at specific address."""
         create_mock_scanner(scanner_args)
 
-        mock_client.write_coil(100, True, slave=1)
-        mock_client.write_coil.assert_called_with(100, True, slave=1)
+        mock_client.write_coil(100, True, device_id=1)
+        mock_client.write_coil.assert_called_with(100, True, device_id=1)
 
 
 # =============================================================================
@@ -164,10 +164,10 @@ class TestWriteSingleRegister:
         """Test writing a value to a register."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_register(0, 1234, slave=1)
+        result = mock_client.write_register(0, 1234, device_id=1)
 
         assert not result.isError()
-        mock_client.write_register.assert_called_with(0, 1234, slave=1)
+        mock_client.write_register.assert_called_with(0, 1234, device_id=1)
 
     def test_write_register_zero(self, mock_client, scanner_args):
         """Test writing zero to a register."""
@@ -177,7 +177,7 @@ class TestWriteSingleRegister:
         mock_client.write_register.return_value = write_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 0, slave=1)
+        result = mock_client.write_register(0, 0, device_id=1)
 
         assert not result.isError()
 
@@ -189,7 +189,7 @@ class TestWriteSingleRegister:
         mock_client.write_register.return_value = write_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 65535, slave=1)
+        result = mock_client.write_register(0, 65535, device_id=1)
 
         assert not result.isError()
 
@@ -201,7 +201,7 @@ class TestWriteSingleRegister:
         mock_client.write_register.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 100000, slave=1)
+        result = mock_client.write_register(0, 100000, device_id=1)
 
         assert result.isError()
 
@@ -210,8 +210,8 @@ class TestWriteSingleRegister:
         create_mock_scanner(scanner_args)
 
         # Address near max
-        mock_client.write_register(65535, 1234, slave=1)
-        mock_client.write_register.assert_called_with(65535, 1234, slave=1)
+        mock_client.write_register(65535, 1234, device_id=1)
+        mock_client.write_register.assert_called_with(65535, 1234, device_id=1)
 
 
 # =============================================================================
@@ -227,18 +227,18 @@ class TestWriteMultipleCoils:
         values = [True, False, True, True, False]
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_coils(0, values, slave=1)
+        result = mock_client.write_coils(0, values, device_id=1)
 
         assert not result.isError()
         assert result.count == 5
-        mock_client.write_coils.assert_called_with(0, values, slave=1)
+        mock_client.write_coils.assert_called_with(0, values, device_id=1)
 
     def test_write_coils_all_on(self, mock_client, scanner_args):
         """Test writing all coils to ON."""
         values = [True] * 10
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_coils(0, values, slave=1)
+        result = mock_client.write_coils(0, values, device_id=1)
 
         assert not result.isError()
 
@@ -247,7 +247,7 @@ class TestWriteMultipleCoils:
         values = [False] * 10
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_coils(0, values, slave=1)
+        result = mock_client.write_coils(0, values, device_id=1)
 
         assert not result.isError()
 
@@ -258,7 +258,7 @@ class TestWriteMultipleCoils:
         mock_client.write_coils.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_coils(0, [True] * 5, slave=1)
+        result = mock_client.write_coils(0, [True] * 5, device_id=1)
 
         assert result.isError()
 
@@ -271,7 +271,7 @@ class TestWriteMultipleCoils:
 
         values = [True] * 1968
         create_mock_scanner(scanner_args)
-        result = mock_client.write_coils(0, values, slave=1)
+        result = mock_client.write_coils(0, values, device_id=1)
 
         assert not result.isError()
 
@@ -289,18 +289,18 @@ class TestWriteMultipleRegisters:
         values = [100, 200, 300, 400, 500]
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_registers(0, values, slave=1)
+        result = mock_client.write_registers(0, values, device_id=1)
 
         assert not result.isError()
         assert result.count == 5
-        mock_client.write_registers.assert_called_with(0, values, slave=1)
+        mock_client.write_registers.assert_called_with(0, values, device_id=1)
 
     def test_write_registers_zeros(self, mock_client, scanner_args):
         """Test writing zeros to multiple registers."""
         values = [0] * 10
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_registers(0, values, slave=1)
+        result = mock_client.write_registers(0, values, device_id=1)
 
         assert not result.isError()
 
@@ -309,7 +309,7 @@ class TestWriteMultipleRegisters:
         values = [65535] * 5
         create_mock_scanner(scanner_args)
 
-        result = mock_client.write_registers(0, values, slave=1)
+        result = mock_client.write_registers(0, values, device_id=1)
 
         assert not result.isError()
 
@@ -321,7 +321,7 @@ class TestWriteMultipleRegisters:
         mock_client.write_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_registers(0, [100] * 5, slave=1)
+        result = mock_client.write_registers(0, [100] * 5, device_id=1)
 
         assert result.isError()
 
@@ -334,7 +334,7 @@ class TestWriteMultipleRegisters:
 
         values = list(range(123))
         create_mock_scanner(scanner_args)
-        result = mock_client.write_registers(0, values, slave=1)
+        result = mock_client.write_registers(0, values, device_id=1)
 
         assert not result.isError()
 
@@ -363,12 +363,12 @@ class TestSafeWriteTesting:
         create_mock_scanner(scanner_args)
 
         # Read
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         assert not result.isError()
         original_value = result.registers[0]
 
         # Write same value
-        result = mock_client.write_register(0, original_value, slave=1)
+        result = mock_client.write_register(0, original_value, device_id=1)
         assert not result.isError()
 
     def test_safe_write_detection(self, mock_client, scanner_args):
@@ -379,7 +379,7 @@ class TestSafeWriteTesting:
         mock_client.write_register.return_value = write_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 0, slave=1)
+        result = mock_client.write_register(0, 0, device_id=1)
 
         is_writable = not result.isError()
         assert is_writable is True
@@ -393,7 +393,7 @@ class TestSafeWriteTesting:
         mock_client.write_register.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 0, slave=1)
+        result = mock_client.write_register(0, 0, device_id=1)
 
         is_writable = not result.isError()
         assert is_writable is False
@@ -422,16 +422,16 @@ class TestDestructiveWriteRestore:
         create_mock_scanner(scanner_args)
 
         # 1. Read original value
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         original = result.registers[0]
         assert original == 1000
 
         # 2. Write test value (different from original)
         test_value = original + 1 if original < 65535 else original - 1
-        mock_client.write_register(0, test_value, slave=1)
+        mock_client.write_register(0, test_value, device_id=1)
 
         # 3. Restore original value
-        result = mock_client.write_register(0, original, slave=1)
+        result = mock_client.write_register(0, original, device_id=1)
         assert not result.isError()
 
     def test_restore_failure_handling(self, mock_client, scanner_args):
@@ -456,15 +456,15 @@ class TestDestructiveWriteRestore:
         create_mock_scanner(scanner_args)
 
         # Read original
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         original = result.registers[0]
 
         # Write test value
-        result = mock_client.write_register(0, 1001, slave=1)
+        result = mock_client.write_register(0, 1001, device_id=1)
         assert not result.isError()
 
         # Restore fails
-        result = mock_client.write_register(0, original, slave=1)
+        result = mock_client.write_register(0, original, device_id=1)
         assert result.isError()
 
 
@@ -490,10 +490,10 @@ class TestWriteVerification:
         create_mock_scanner(scanner_args)
 
         # Write
-        mock_client.write_register(0, 5678, slave=1)
+        mock_client.write_register(0, 5678, device_id=1)
 
         # Read back
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         assert result.registers[0] == 5678
 
     def test_write_verify_mismatch(self, mock_client, scanner_args):
@@ -511,9 +511,9 @@ class TestWriteVerification:
         create_mock_scanner(scanner_args)
 
         written_value = 5678
-        mock_client.write_register(0, written_value, slave=1)
+        mock_client.write_register(0, written_value, device_id=1)
 
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         read_value = result.registers[0]
 
         # Values don't match - possible issue
@@ -613,7 +613,7 @@ class TestWriteErrorCodes:
         mock_client.write_register.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 1234, slave=1)
+        result = mock_client.write_register(0, 1234, device_id=1)
 
         assert result.exception_code == 1
 
@@ -625,7 +625,7 @@ class TestWriteErrorCodes:
         mock_client.write_register.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(99999, 1234, slave=1)
+        result = mock_client.write_register(99999, 1234, device_id=1)
 
         assert result.exception_code == 2
 
@@ -637,7 +637,7 @@ class TestWriteErrorCodes:
         mock_client.write_register.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 99999999, slave=1)
+        result = mock_client.write_register(0, 99999999, device_id=1)
 
         assert result.exception_code == 3
 
@@ -649,7 +649,7 @@ class TestWriteErrorCodes:
         mock_client.write_register.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 1234, slave=1)
+        result = mock_client.write_register(0, 1234, device_id=1)
 
         assert result.exception_code == 6
 
