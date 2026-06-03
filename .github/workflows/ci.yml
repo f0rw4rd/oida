@@ -26,26 +26,26 @@ jobs:
           version: "0.11.18"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
 
-      - name: Install lint tools
-        # `uv tool install` would also work but for one-shot CI runs
-        # `uv pip install --system` is faster and avoids the tool cache.
-        # Pin minor versions to match the dev extra.
-        run: |
-          uv python install 3.12
-          uv pip install --system ruff vulture bandit
+      - name: Sync dev tools from lockfile
+        # `uv sync --extra dev --frozen` installs ruff/vulture/bandit at
+        # the EXACT versions pinned in uv.lock. Don't `uv pip install
+        # ruff vulture bandit` — that bypasses the lockfile and fetches
+        # latest from PyPI, breaking reproducibility.
+        run: uv sync --extra dev --frozen
 
       - name: Ruff lint
-        run: ruff check src/oida/
+        run: uv run ruff check src/oida/
 
       - name: Ruff format check
-        run: ruff format --check src/oida/
+        run: uv run ruff format --check src/oida/
 
       - name: Vulture dead code
-        run: vulture src/oida/ .vulture_whitelist.py --min-confidence 80
+        run: uv run vulture src/oida/ .vulture_whitelist.py --min-confidence 80
 
       - name: Bandit security lint
-        run: bandit -r src/oida/ -c pyproject.toml -q
+        run: uv run bandit -r src/oida/ -c pyproject.toml -q
 
   test:
     name: Tests (Python ${{ matrix.python-version }})

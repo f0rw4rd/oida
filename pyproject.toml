@@ -60,7 +60,9 @@ mms = ["pyiec61850-ng>=1.6.1.1"]
 modbus = ["pymodbus>=3.12.0", "PyYAML>=6.0.3"]
 mqtt = ["paho-mqtt>=2.1.0"]
 opcua = ["asyncua>=1.1.8"]
-pcap = ["pyshark @ git+https://github.com/f0rw4rd/pyshark.git@ek-fixes#subdirectory=src"]
+# pyshark: pinned to immutable commit (not branch) so a future `uv lock`
+# can't silently pick up the next push to ek-fixes. Bump intentionally.
+pcap = ["pyshark @ git+https://github.com/f0rw4rd/pyshark.git@789993f3f3bab284ae2c8ba5628b721f61f9eb99#subdirectory=src"]
 profinet = ["profinet-py>=0.6.1"]
 snap7 = ["python-snap7>=2.0.2"]
 snmp = ["pysnmp>=7.1.22"]
