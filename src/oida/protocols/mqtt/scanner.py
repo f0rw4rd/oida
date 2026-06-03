@@ -757,7 +757,13 @@ class MQTTScanner(
             if not results["auth"].get("anonymous_allowed"):
                 # Try brute-force if enabled
                 if self.brute_enabled:
-                    results["auth"]["brute_results"] = self._brute_force_credentials()
+                    if not self.args.get("confirm", False):
+                        self.logger.fail(
+                            "--brute / --default-creds runs credential brute-force "
+                            "(trips broker lockout / IDS) — requires --confirm"
+                        )
+                    else:
+                        results["auth"]["brute_results"] = self._brute_force_credentials()
                 return results
 
             # Reconnect for enumeration
@@ -770,7 +776,13 @@ class MQTTScanner(
 
         # Run brute-force if enabled (even when anonymous works, to find additional creds)
         if self.brute_enabled:
-            results["auth"]["brute_results"] = self._brute_force_credentials()
+            if not self.args.get("confirm", False):
+                self.logger.fail(
+                    "--brute / --default-creds runs credential brute-force "
+                    "(trips broker lockout / IDS) — requires --confirm"
+                )
+            else:
+                results["auth"]["brute_results"] = self._brute_force_credentials()
 
         # Enumerate broker info via $SYS (requires -e)
         if self.enumerate_sys:

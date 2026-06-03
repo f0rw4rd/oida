@@ -28,6 +28,16 @@ class RawFCMixin(_ScannerBase):
         if fc is None:
             return
 
+        # --raw-fc can send any function code including writes (5/6/15/16),
+        # restart (FC 8), FC 23 (read-write multiple), and vendor codes
+        # 65-72 — all of which can modify PLC state.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--raw-fc sends arbitrary function codes (incl. writes 5/6/15/16, "
+                "restart FC 8, vendor 65-72) — requires --confirm"
+            )
+            return
+
         payload_str = getattr(self.args, "payload", None)
         response_format = getattr(self.args, "response_format", "hex")
         save_file = getattr(self.args, "save_response", None)

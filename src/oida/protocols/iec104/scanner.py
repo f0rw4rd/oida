@@ -823,9 +823,17 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
         if self.counter_interrogation:
             results["counter_interrogation"] = self._counter_interrogation(client, conn)
 
-        # Clock read (--clock-read)
+        # Clock read (--clock-read) -- despite the name this issues a
+        # C_CS_NA_1 (Type 103) which OVERWRITES the outstation clock and
+        # pollutes the SOE log. Gated on --confirm per safety-default
+        # policy.
         if self.clock_read:
-            results["clock"] = self._read_clock(client, conn)
+            if not self.args.get("confirm", False):
+                self.logger.fail(
+                    "--clock-read issues a clock-sync write (C_CS_NA_1) — requires --confirm"
+                )
+            else:
+                results["clock"] = self._read_clock(client, conn)
 
         # File transfer probing
         if (

@@ -215,6 +215,13 @@ class s7(NetworkConnection):
             "db_fill",
             "set_datetime",
             "sync_datetime",
+            # Brute-force probes trip Siemens account-lockout / SCALANCE SIEM.
+            "brute",
+            "default_creds",
+            # --audit issues a sequence of writes against the PLC. Operator
+            # opted into a confirm-gated audit on 2026-06-03.
+            "audit",
+            "audit_quick",
         }
     )
 
@@ -387,14 +394,22 @@ class s7(NetworkConnection):
             return result
 
         if getattr(self.args, "default_creds", False):
+            if not self._require_confirm("default_creds"):
+                return None
             return self._action_default_creds()
 
         if getattr(self.args, "brute", False):
+            if not self._require_confirm("brute"):
+                return None
             return self._action_brute()
 
-        # Audit mode
+        # Audit mode -- issues a sequence of unauthenticated writes against
+        # the PLC; require --confirm (DESIGN call 2026-06-03).
         if getattr(self.args, "audit", False) or getattr(self.args, "audit_quick", False):
             quick = getattr(self.args, "audit_quick", False)
+            action = "audit_quick" if quick else "audit"
+            if not self._require_confirm(action):
+                return None
             return self.scanner.audit(self.conn, quick=quick)
 
         # Monitor mode
