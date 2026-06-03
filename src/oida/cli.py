@@ -51,6 +51,40 @@ for noisy_logger in ["c104", "asyncua", "pymodbus", "pyads", "xknx", "paho"]:
     logging.getLogger(noisy_logger).setLevel(logging.CRITICAL)
 
 
+# Substring patterns matched against argparse dest names. Any dest containing
+# one of these (case-insensitive) has its value replaced with '***' before
+# args are logged, exported, or otherwise echoed back to the operator.
+# Tested against vars(argparse.Namespace) which is shallow str→value.
+_SENSITIVE_ARG_PATTERNS = (
+    "password",
+    "passwd",
+    "secret",
+    "token",
+    "psk",
+    "pre_shared_key",
+    "private_key",
+    "privkey",
+    "auth_string",
+    "auth_pass",
+    "community",  # SNMPv1/v2c community string is effectively a password
+    "api_key",
+    "apikey",
+    "credential",
+)
+
+
+def _redact_sensitive_args(args_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a shallow copy of args_dict with credential-like values masked."""
+    redacted: Dict[str, Any] = {}
+    for k, v in args_dict.items():
+        kl = str(k).lower()
+        if v is not None and any(p in kl for p in _SENSITIVE_ARG_PATTERNS):
+            redacted[k] = "***"
+        else:
+            redacted[k] = v
+    return redacted
+
+
 def load_config_file(config_path: str) -> Dict[str, Any]:
     """
     Load configuration from a YAML or JSON file.
@@ -971,7 +1005,7 @@ def main(argv: Optional[List[str]] = None):
     setup_logging(args)
     configure_from_args(args)
 
-    logger.debug("CLI args: %s", vars(args))
+    logger.debug("CLI args: %s", _redact_sensitive_args(vars(args)))
 
     # Enable structured JSON logging if requested
     json_log_path = getattr(args, "json_log", None)

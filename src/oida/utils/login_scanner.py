@@ -135,6 +135,7 @@ def make_password_scanner(
 
             try:
                 if login_function(host, port, password):
+                    # RECOVERED credential — surface to operator (the feature).
                     log(f"[+] Password found: '{password}'", level="good")
                     _logger.info("Valid password found: %s:%d", host, port)
                     results["success"] = True
@@ -144,11 +145,13 @@ def make_password_scanner(
                     if stop_on_success:
                         return results
                 else:
-                    log(f"[-] Failed: '{password}'", level="debug")
+                    # INPUT credential — never echo the candidate value back.
+                    log("[-] Failed (candidate masked)", level="debug")
                     _logger.debug("Password attempt failed: %s:%d", host, port)
 
             except Exception as e:
-                log(f"Error testing '{password}': {e}", level="debug")
+                # INPUT credential — exception text only; don't include candidate.
+                log(f"Error testing candidate (masked): {e}", level="debug")
 
             if custom_rate > 0:
                 time.sleep(custom_rate)
@@ -209,10 +212,15 @@ def make_scanner(login_function):
         for username, password in credentials:
             try:
                 if login_function(host, port, username, password):
+                    # RECOVERED credential — surface to operator (the feature).
                     log(f"Success: {username}:{password}", level="good")
                     _logger.info("Valid credential: %s@%s:%s", username, host, port)
                 else:
-                    log(f"Failed: {username}:{password}", level="info")
+                    # INPUT credential — log the username for progress, but
+                    # never the candidate password value (operator already
+                    # has the wordlist; failed attempts in the log are a
+                    # leak vector). Demote info → debug.
+                    log(f"Failed: {username}:***", level="debug")
                     _logger.debug("Credential failed: %s@%s:%s", username, host, port)
 
                 # Sleep if interval specified
@@ -220,6 +228,6 @@ def make_scanner(login_function):
                     time.sleep(sleep_interval)
 
             except Exception as e:
-                log(f"Error testing {username}:{password} - {str(e)}", level="error")
+                log(f"Error testing {username}:*** - {str(e)}", level="error")
 
     return scanner
