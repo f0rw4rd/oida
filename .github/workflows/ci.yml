@@ -18,12 +18,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+      # uv handles both the toolchain (Python 3.12 via uv python install)
+      # and the lint tools (ruff/vulture/bandit are in the dev extra).
+      # No separate actions/setup-python step needed.
+      - uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba  # v6.3.1
         with:
-          python-version: "3.12"
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-      - name: Install dependencies
-        run: pip install ruff vulture bandit
+      - name: Install lint tools
+        # `uv tool install` would also work but for one-shot CI runs
+        # `uv pip install --system` is faster and avoids the tool cache.
+        # Pin minor versions to match the dev extra.
+        run: |
+          uv python install 3.12
+          uv pip install --system ruff vulture bandit
 
       - name: Ruff lint
         run: ruff check src/oida/
@@ -49,12 +59,21 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+      - uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba  # v6.3.1
         with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          # python-version influences which interpreter `uv sync` picks
+          # when no .python-version file matches the matrix.
           python-version: ${{ matrix.python-version }}
 
-      - name: Install package (with all protocol extras so tests don't silently skip)
-        run: pip install -e .[dev,all]
+      - name: Sync environment from lockfile
+        # `uv sync --all-extras` materializes EXACT versions from uv.lock —
+        # the same set every CI run, every dev box. --frozen errors if
+        # uv.lock is out of date vs pyproject.toml (caught by the
+        # lockfile-drift contract test, but belt-and-braces here too).
+        run: uv sync --all-extras --frozen
 
       - name: Unit tests
-        run: pytest tests/unit/ -x -q --timeout=15
+        run: uv run pytest tests/unit/ -x -q --timeout=15

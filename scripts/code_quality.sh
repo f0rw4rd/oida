@@ -81,7 +81,8 @@ done
 if [ $TOOLS_MISSING -eq 1 ]; then
     echo ""
     echo -e "${YELLOW}Install missing tools with:${NC}"
-    echo "  pip install flake8 black mypy bandit autoflake isort pylint"
+    echo "  uv pip install flake8 black mypy bandit autoflake isort pylint"
+    echo "  # (or 'pip install ...' if you haven't switched to uv yet)"
     echo ""
 fi
 

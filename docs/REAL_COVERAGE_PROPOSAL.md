@@ -138,12 +138,12 @@ absolute correctness.
       timeout: 30 min
       steps:
         - checkout
-        - pip install -e .[dev,all]
-        - python services.py up all
-        - python services.py status (wait for all healthy)
-        - pytest tests/coverage/ -v -q --junitxml=results.xml
+        - uv sync --all-extras --frozen
+        - uv run python services.py up all
+        - uv run python services.py status (wait for all healthy)
+        - uv run pytest tests/coverage/ -v -q --junitxml=results.xml
         - publish results/scanner_<date>.json + fidelity_<date>.json
-        - python services.py down
+        - uv run python services.py down
 ```
 
 PR runs do **not** include `tests/coverage/`. They stay fast.
