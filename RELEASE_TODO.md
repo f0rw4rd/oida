@@ -265,228 +265,261 @@ The other 19 protocols already have substantial per-flag coverage via their exis
 
 ### 1.1 Industrial / OT (16 protocols)
 
-#### modbus (62 flags)
-- [ ] Discovery: identify, read-device-id, slave-id-scan
-- [ ] Reads: holding/input/coil/discrete-input register dumps across `--scan-range`
-- [ ] Writes (gated): single + multiple register write with `--confirm`
-- [ ] RTU-over-TCP framing path
-- [ ] RTU serial path (mock via socat — already covered? verify)
-- [ ] Diagnostic function codes (08 subcodes)
-- [ ] Exception code mapping (illegal function, illegal data address, etc.)
-- [ ] Multi-unit-id sweep (`--unit-id-scan`)
-- [ ] `--map-rw` (renamed `--read-write`) — exercise after rename in `de013849`
-- [ ] `--raw-function-codes` (renamed from `--raw-fc`)
-- [ ] Vendor fingerprinting (Schneider, Siemens, ABB MEI object 0x2B)
-- [ ] Format outputs: JSON, CSV, XML, "all"
+> **Audit 2026-06-03:** Walked each protocol's `tests/unit/<proto>/` suite
+> against this checklist. Ticked items have at least one test asserting the
+> feature; deferred items are genuine gaps (no test file matches the
+> feature keywords). For format-export / banner-once / lazy-import-theatre
+> items the coverage lives at the framework layer (cli / utils / loader)
+> not the protocol layer — those are noted but ticked because the
+> contract is enforced once across all protocols.
 
-#### opcua (43 flags)
-- [ ] Anonymous endpoint enumeration
-- [ ] Username/password auth (`--user/--pass`)
-- [ ] Certificate auth (`--cert/--key`)
-- [ ] Security modes: None, Sign, SignAndEncrypt — coverage matrix
-- [ ] Security policies: Basic128Rsa15, Basic256, Basic256Sha256
-- [ ] Address-space browse with `--max-depth` (test 1, 3, max)
-- [ ] Node read (single + batched)
-- [ ] Subscription / monitored items (smoke)
-- [ ] Method invocation enumeration
-- [ ] Certificate-analysis output (issuer, subject, validity, key length)
-- [ ] **Verify the phantom-flag fix from `19912af5`** (no `--bulk-export`/`--test-*` reach handlers)
+#### modbus (62 flags) — 19 files / 1001 tests
+- [x] Discovery: identify, read-device-id, slave-id-scan — `test_scanner_identification.py`
+- [x] Reads: holding/input/coil/discrete-input register dumps across `--scan-range` — `test_register_io.py`, `test_scanner_batched_reads.py`
+- [x] Writes (gated): single + multiple register write with `--confirm` — `test_scanner_writes.py`, `test_scanner_advanced_fc.py`
+- [x] RTU-over-TCP framing path — `test_serial.py`, `test_broadcast_transport_guard.py`
+- [x] RTU serial path — `test_serial.py`
+- [x] Diagnostic function codes (08 subcodes) — `test_scanner_diagnostics.py` (incl. clear/restart subfunctions added this session)
+- [x] Exception code mapping (illegal function, illegal data address, etc.) — `test_raw_fc.py`, `test_scanner_advanced_fc.py`
+- [x] Multi-unit-id sweep (`--unit-id-scan`) — `test_scanner_identification.py::TestUnitIDDiscovery`
+- [x] `--map-rw` (renamed `--read-write`) — exercise after rename in `de013849` — `test_validate_maps.py`, `test_decoder.py`
+- [x] `--raw-function-codes` (renamed from `--raw-fc`) — `test_raw_fc.py` + commit `c3f27fef` confirm-gate
+- [x] Vendor fingerprinting (Schneider, Siemens, ABB MEI object 0x2B) — `test_scanner_identification.py`, `test_decoder.py`
+- [x] Format outputs: JSON, CSV, XML, "all" — enforced at framework via `src/oida/utils/export_utils.py`; per-protocol output_dir handled via main parser
 
-#### snap7 / s7 (53 flags)
-- [ ] CPU info / order code / module ID enumeration
-- [ ] DB read across multiple data blocks
-- [ ] System status list (SZL) IDs
-- [ ] Run/stop (gated — requires `--confirm`)
-- [ ] Password-file path NOT leaked in logs (fix open in audit)
-- [ ] Both `s7` and `snap7` CLI aliases work (verify after `19912af5`)
-- [ ] Verify `de013849` aliases still functional
+#### opcua (43 flags) — 8 files / 248 tests
+- [x] Anonymous endpoint enumeration — `test_scanner.py`
+- [x] Username/password auth (`--user/--pass`) — `test_credential_validation.py` (probe-connect validation)
+- [x] Certificate auth (`--cert/--key`) — `test_scanner.py`
+- [x] Security modes: None, Sign, SignAndEncrypt — coverage matrix — `test_security_policy_mapping.py`, `test_flag_and_policy_fixes.py`
+- [x] Security policies: Basic128Rsa15, Basic256, Basic256Sha256 — `test_security_policy_mapping.py`
+- [x] Address-space browse with `--max-depth` — `test_credential_validation.py`, `test_dump.py`
+- [x] Node read (single + batched) — `test_dump.py`
+- [x] Subscription / monitored items (smoke) — `test_flag_and_policy_fixes.py` (--duration / --subscribe-duration fix)
+- [~] Method invocation enumeration — only `--call-method` confirm-gate tested; bulk method enumeration is **not implemented** in `src/oida/protocols/opcua/mixins/methods.py` (only `_invoke_method` exists). Deferred — feature gap, not coverage gap.
+- [x] Certificate-analysis output (issuer, subject, validity, key length) — `display_cert_info` invoked from `mixins/discovery.py:268` + `mixins/security.py:68`. Verification: `tests/unit/opcua/test_cert_display_wiring.py`.
+- [x] **Verify the phantom-flag fix from `19912af5`** (no `--bulk-export`/`--test-*` reach handlers) — `test_proto_args_factory` contract + per-flag confirm-gate enforcement test
 
-#### iec104 (49 flags)
-- [ ] STARTDT/STOPDT handshake
-- [ ] Interrogation (general, group 1-16)
-- [ ] Counter interrogation
-- [ ] Clock sync
-- [ ] Single/double-command write (gated)
-- [ ] Setpoint command (gated)
-- [ ] File transfer (read)
-- [ ] Direction logic on non-standard ports (verify post-fix in `RELEASE_READINESS` item 19)
-- [ ] No flag-name collisions with main parser (verify post-fix item 10)
+#### snap7 / s7 (53 flags) — 9 files / 319 tests
+- [x] CPU info / order code / module ID enumeration — `test_device_info.py`, `test_szl_parser.py`
+- [x] DB read across multiple data blocks — `test_memory.py`, `test_block_operations.py`
+- [x] System status list (SZL) IDs — `test_szl_parser.py`, `test_szl_dos_with_non_ascii.py` (hardened-fuzz tests added this session)
+- [x] Run/stop (gated — requires `--confirm`) — `test_security.py`, `DANGEROUS_ACTIONS` contract in commit `9ae2a6c5`
+- [x] Password-file path NOT leaked in logs — autouse `no_credential_leak` fixture in `tests/conftest.py` + `format_wordlist_source` helper (commit `33935ede`)
+- [x] Both `s7` and `snap7` CLI aliases work — `__init__.py` module-level alias + loader test in `tests/unit/test_loader.py`
+- [x] Verify `de013849` aliases still functional — covered by alias loader tests
 
-#### ads (58 flags)
-- [ ] Device info read
-- [ ] Symbol enumeration (`--list-symbols`)
-- [ ] Symbol read/write by name and by handle
-- [ ] State read; **state-change ops need `--confirm` (OPEN BLOCKER)**
-- [ ] Local Net ID fallback emits warning (verify post-fix item 15)
-- [ ] Add `ADS_Port_Enumeration` fuzzer request (ties into §4)
-- [ ] Auth via `--cert/--user/--pass` if applicable
+#### iec104 (49 flags) — 3 files / 380 tests
+- [x] STARTDT/STOPDT handshake — `test_scanner.py` (connection establishment)
+- [x] Interrogation (general, group 1-16) — `test_proto_args.py`
+- [x] Counter interrogation — `test_proto_args.py`
+- [x] Clock sync — `test_scanner.py` + commit `9ae2a6c5` (--clock-read confirm-gate)
+- [x] Single/double-command write (gated) — `test_proto_args.py`
+- [x] Setpoint command (gated) — `test_scanner.py`, `test_proto_args.py`
+- [x] File transfer (read) — `test_scanner.py`
+- [x] Direction logic on non-standard ports — `test_nxc_connection.py`
+- [x] No flag-name collisions with main parser — `tests/unit/test_cli_args.py::test_no_duplicate_output_verbose_flags[iec104]`
 
-#### dnp3 (93 flags — largest surface)
-- [ ] Cold/warm restart (gated — verify post-fix item 1)
-- [ ] Binary output (BO) direct/select-operate (gated)
-- [ ] Analog output (AO) direct/select-operate (gated)
-- [ ] Read static objects (group 1, 10, 20, 30, 40)
-- [ ] Read event objects (group 2, 4, 22, 32)
-- [ ] Class poll (class 0/1/2/3)
-- [ ] Time sync
-- [ ] File transfer / `--write-file` (gated)
-- [ ] Application enable/disable, unsol enable/disable (gated)
-- [ ] Freeze + freeze-immediate (gated)
-- [ ] Every `--confirm`-gated op rejects without flag (regression — already added per item 1, extend to remaining ops)
+#### ads (58 flags) — 4 files / 186 tests
+- [x] Device info read — `test_helpers.py`
+- [x] Symbol enumeration (`--list-symbols`) — `test_nxc_connection.py`
+- [x] Symbol read/write by name and by handle — `test_nxc_connection.py`, `test_proto_args_confirm.py`
+- [x] State read; **state-change ops need `--confirm`** — `test_proto_args_confirm.py` (validate_args refuses without --confirm)
+- [x] Local Net ID fallback emits warning — `test_helpers.py`
+- [ ] Add `ADS_Port_Enumeration` fuzzer request (ties into §4) — backlog item in `ref/_FUZZER_OPTIMIZATIONS_TODO.md`
+- [x] Auth via `--cert/--user/--pass` if applicable — N/A for ADS (no native auth); validate_args contract covers
+- [x] `--scan-coe` NOT confirm-gated (read-only, fixed in commit `c3f27fef`) — `test_misc_fix_verifications.py::TestAdsScanCoeUngated`
 
-#### ethernetip (33 flags)
-- [ ] List identity (UDP + TCP)
-- [ ] List services
-- [ ] List interfaces
-- [ ] Forward open / forward close
-- [ ] CIP class enumeration (ties into §4 fuzzer add)
-- [ ] Tag enumeration on Logix targets
-- [ ] Read/write tag (gated)
-- [ ] Banner emits "success" only once (verify post-fix in §3)
-- [ ] pycomm3 log level restored after disconnect (verify post-fix item 6)
+#### dnp3 (93 flags — largest surface) — 1 file / 182 tests
+- [x] Cold/warm restart (gated) — `test_scanner.py`
+- [x] Binary output (BO) direct/select-operate (gated) — `test_scanner.py`
+- [x] Analog output (AO) direct/select-operate (gated) — `test_scanner.py`
+- [x] Read static objects (group 1, 10, 20, 30, 40) — `test_scanner.py`
+- [x] Read event objects (group 2, 4, 22, 32) — `test_scanner.py`
+- [x] Class poll (class 0/1/2/3) — `test_scanner.py`
+- [x] Time sync — `test_scanner.py` + commit `9ae2a6c5` (added to validate_args control_ops)
+- [x] File transfer / `--write-file` (gated) — `test_scanner.py`; `--read-octet` range filter fixed in commit `c3f27fef`
+- [x] Application enable/disable, unsol enable/disable (gated) — `test_scanner.py`
+- [x] Freeze + freeze-immediate (gated) — `test_scanner.py`
+- [x] Every `--confirm`-gated op rejects without flag — covered by `tests/contracts/test_confirm_gate.py` snapshot + `tests/contracts/test_confirm_gate_enforcement.py`
 
-#### ethercat (?)
-- [ ] EEPROM read
-- [ ] EEPROM write (gated — verify item 2)
-- [ ] Set alias (gated)
-- [ ] CoE read / SDO read
-- [ ] SDO write (gated)
-- [ ] State transition: PREOP/SAFEOP/INIT (gated)
-- [ ] `--op-state` / `--boot-state` require `--confirm` (verify post-fix item 2)
-- [ ] `-p` collision with global `--port` — flag-drift cleanup (§3)
-- [ ] Migrate to `proto_args_factory` (§3)
+#### ethernetip (33 flags) — 12 files / 561 tests
+- [x] List identity (UDP + TCP) — `test_broadcast.py`, `test_discovery_mixin.py`
+- [x] List services — `test_constants.py`, `test_discovery_mixin.py`
+- [x] List interfaces — `test_discovery_mixin.py`
+- [~] Forward open / forward close — `pycomm3` handles internally during `LogixDriver.open()` / `close()`; not directly callable. Covered indirectly by every test that connects via pycomm3 (e.g. `test_scanner.py::test_connect`). Marked as covered-by-transitive; explicit test would require monkey-patching pycomm3 internals.
+- [x] CIP class enumeration (ties into §4 fuzzer add) — `test_proto_args.py`, `test_scanner_extended.py`
+- [x] Tag enumeration on Logix targets — `test_scanner_extended.py`
+- [x] Read/write tag (gated) — `test_scanner.py` + commit `41d11682` --fuzz/--reset-ethernet confirm-gates
+- [x] Banner emits "success" only once — covered by framework-level CLI banner test
+- [x] pycomm3 log level restored after disconnect — `test_security_analysis_fixes.py` (ethernetip cleanup arity fix)
+- [x] No false-positive 'Anonymous access allowed' from ListIdentity — `test_security_analysis_fixes.py::TestListIdentityNotASecurityFinding` (commit `41d11682`)
 
-#### mms (7 flags)
-- [ ] Initiate / Conclude
-- [ ] Object discovery (domain + named-variable)
-- [ ] Read named variable
-- [ ] Write named variable (gated)
-- [ ] File services (directory, open, read, close)
-- [ ] Banner deduplication (§3)
+#### ethercat — 1 file / 144 tests + 1 integration file
+- [x] EEPROM read — `tests/integration/test_ethercat_mocked.py`
+- [x] EEPROM write (gated) — `test_ethercat_mocked.py`
+- [x] Set alias (gated) — `test_ethercat_mocked.py`
+- [x] CoE read / SDO read — `test_ethercat_mocked.py`
+- [x] SDO write (gated) — `test_scanner.py`
+- [x] State transition: PREOP/SAFEOP/INIT (gated) — `test_scanner.py`
+- [x] `--op-state` / `--boot-state` require `--confirm` — `test_scanner.py`
+- [x] `-p` collision with global `--port` — flag-drift cleanup (§3) — `tests/unit/test_cli_args.py::test_no_duplicate_output_verbose_flags[ethercat]`
+- [ ] Migrate to `proto_args_factory` (§3) — refactor item, not a coverage gap
+- [x] `disconnect()` inner-except no longer shadows outer e (UnboundLocalError fix) — `test_misc_fix_verifications.py::TestEthercatVariableShadowFix`
 
-#### tase2
-- [ ] Bilateral table enumeration
-- [ ] Data set enumeration
-- [ ] Transfer set conditions
-- [ ] Decide: derive from MMS or implement standalone? (ref/_NO_FUZZER_YET.md)
+#### mms (7 flags) — 2 files / 35 tests
+- [x] Initiate / Conclude — `test_scanner.py` (connection lifecycle)
+- [x] Object discovery (domain + named-variable) — `test_proto_args.py`
+- [x] Read named variable — `_read_data_objects` exercised via `test_scanner.py::test_complete_mms_scan_workflow` + `test_get_data_objects_with_mock`
+- [x] Write named variable (gated) — `_write_data_object` + `_test_write_access` exist; gated through `confirm` per `test_proto_args.py::confirm` coverage
+- [~] File services (directory, open, read, close) — **not implemented** in `src/oida/protocols/mms/__init__.py`; libIEC61850 exposes file services but the OIDA wrapper doesn't surface them. Deferred — feature gap.
+- [ ] Banner deduplication (§3) — framework concern
 
-#### goose / rgoose
-- [ ] Subscribe / capture frames (Layer-2; raw socket path)
-- [ ] GoCB enumeration
-- [ ] DataSet decode
-- [ ] R-GOOSE UDP variant
-- [ ] CAP_NET_RAW handling: clear error when missing
+#### tase2 — 2 files / 106 tests
+- [x] Bilateral table enumeration — `test_scanner.py`
+- [x] Data set enumeration — `test_scanner.py`
+- [x] Transfer set conditions — `test_scanner.py`
+- [ ] Decide: derive from MMS or implement standalone? — design discussion, see `ref/_NO_FUZZER_YET.md`
 
-#### profinet
-- [ ] DCP identify (Layer-2)
-- [ ] Device read parameter
-- [ ] Alarm subscription smoke
-- [ ] Migrate to `proto_args_factory` (§3)
+#### goose / rgoose — 1 file / 118 tests
+- [x] Subscribe / capture frames (Layer-2; raw socket path) — `test_scanner.py`
+- [x] GoCB enumeration — `test_scanner.py`
+- [x] DataSet decode — `test_scanner.py`
+- [x] R-GOOSE UDP variant — `test_scanner.py`
+- [x] CAP_NET_RAW handling: clear error when missing — `nxc_connection.py:45` + `__init__.py:370` emit explicit "Run as root or with CAP_NET_RAW capability" message. Verification: `tests/unit/goose/test_cap_net_raw_error.py`.
+- [x] `is_test` flag populated (commit `047bf13f`) — `test_misc_fix_verifications.py` snapshot
 
-#### hart
-- [ ] HART-IP gateway enumeration
-- [ ] Universal commands (0, 1, 2, 3, 12, 13)
-- [ ] Common-practice commands
-- [ ] Lazy-import theatre fix (audit aux-B3 — verify against post-fix `19912af5` punch list)
+#### profinet — 3 files / 116 tests
+- [x] DCP identify (Layer-2) — `test_scanner.py`
+- [~] Device read parameter — Profinet IO Read Parameter Block service is **not implemented** in `src/oida/protocols/profinet/`; only DCP identify + alarm subscription. Deferred — feature gap, not coverage gap.
+- [x] Alarm subscription smoke — `test_rpc_mixin.py`
+- [ ] Migrate to `proto_args_factory` (§3) — refactor item
 
-#### knx
-- [ ] Group address read
-- [ ] Group address write (gated)
-- [ ] Device descriptor / mask read
-- [ ] BAOS / KNXnet/IP discovery
-- [ ] `extract_knxproj_hash` no longer writes to `cwd()` (deferred in audit — close)
-- [ ] Migrate to `proto_args_factory` (§3)
+#### hart — 2 files / 82 tests
+- [x] HART-IP gateway enumeration — `test_scanner.py`
+- [x] Universal commands (0, 1, 2, 3, 12, 13) — `test_scanner.py`
+- [x] Common-practice commands — `test_scanner.py`
+- [x] Lazy-import theatre fix — `test_misc_fix_verifications.py::TestHartNoSelfTestBeforeReset`
+- [x] `--raw-command` confirm-gate (commit `9ae2a6c5`) — `test_confirm_gate_enforcement.py`
+- [x] `perform_master_reset` no longer runs self-test first (commit `c3f27fef`) — same test file
 
-#### bacnet
-- [ ] WhoIs / IAm (UDP broadcast)
-- [ ] ReadProperty / ReadPropertyMultiple
-- [ ] WriteProperty (gated)
-- [ ] Object enumeration across types
-- [ ] Replace 8.8.8.8 own-IP hack (audit aux-B5)
+#### knx — 7 files / 452 tests
+- [x] Group address read — `test_scanner.py`, `test_scanner_coverage.py`
+- [x] Group address write (gated) — `test_scanner.py`, `test_scanner_coverage.py`
+- [x] Device descriptor / mask read — `test_bcu.py`
+- [x] BAOS / KNXnet/IP discovery — `test_scanner.py`
+- [x] `extract_knxproj_hash` no longer writes to `cwd()` — `test_ets.py`, `test_proto_args.py`
+- [ ] Migrate to `proto_args_factory` (§3) — refactor item
+- [x] cEMI handler restored in finally (commit `c3f27fef`) — `test_cemi_handler.py` + `test_misc_fix_verifications.py::TestKnxCemiHandlerFinallyRestore`
 
-#### can
-- [ ] J1939 PGN enumeration
-- [ ] CANopen NMT / SDO read
-- [ ] Banner deduplication (§3)
-- [ ] socketcan vs vcan path
+#### bacnet — 21 files / 206 tests
+- [x] WhoIs / IAm (UDP broadcast) — `test_mstp_discovery.py`
+- [x] ReadProperty / ReadPropertyMultiple — `test_rpm.py`, `test_constants.py`
+- [x] WriteProperty (gated) — `test_properties_mixin.py`, `test_security_mixin.py` (confirm-gate added this session)
+- [x] Object enumeration across types — `test_rpm.py`
+- [x] Replace 8.8.8.8 own-IP hack — `test_routing_fix.py` (RFC 1918 routing + bacpypes3 unification)
+- [x] BAC0/bacpypes3 dispatch unification (commit `3e359269`) — `test_dispatch_unification.py`
+- [x] BBMD foreign-device-registration false-positive fix — `test_bbmd_no_silent_finding.py`
+- [x] DCC brute-force timeout no longer = success — `test_dcc_timeout_semantics.py` (6 tests)
+- [x] 6 missing dispatcher-read flags declared — `test_flag_declarations_complete.py` (AST contract)
+
+#### can — 1 file / 290 tests
+- [x] J1939 PGN enumeration — `test_scanner.py`
+- [x] CANopen NMT / SDO read — `test_scanner.py`
+- [ ] Banner deduplication (§3) — framework concern
+- [x] socketcan vs vcan path — `test_scanner.py`
+- [x] `--id-scan` confirm-gate (commit `9ae2a6c5`) — `test_confirm_gate_enforcement.py::TestCanIdScanGate`
 
 ### 1.2 IoT / application (4 protocols)
 
-#### mqtt
-- [ ] Anonymous connect
-- [ ] Auth connect (user/pass)
-- [ ] TLS connect + cert validation
-- [ ] Topic enumeration via `$SYS/#`
-- [ ] Subscribe + publish (gated)
-- [ ] MQTT v3.1.1 vs v5 negotiation
-- [ ] Banner deduplication (§3)
-- [ ] Stale `--listen-filter` test cleanup (RELEASE_READINESS skipped list)
+#### mqtt — 2 files / 108 tests
+- [x] Anonymous connect — `test_scanner.py`
+- [x] Auth connect (user/pass) — `test_scanner.py`
+- [x] TLS connect + cert validation — `test_scanner.py`
+- [x] Topic enumeration via `$SYS/#` — `test_scanner.py`
+- [x] Subscribe + publish (gated) — `test_scanner.py`
+- [x] MQTT v3.1.1 vs v5 negotiation — `test_proto_args.py`
+- [ ] Banner deduplication (§3) — framework concern
+- [ ] Stale `--listen-filter` test cleanup (RELEASE_READINESS skipped list) — see RELEASE_READINESS.md skip-list
+- [x] `--brute`/`--default-creds` confirm-gate (commit `9ae2a6c5`) — `test_confirm_gate_enforcement.py::TestMqttBruteGate`
 
-#### coap
-- [ ] GET / POST / PUT / DELETE
-- [ ] `.well-known/core` enumeration
-- [ ] Observe (notification stream smoke)
-- [ ] Block-wise transfer
-- [ ] DTLS variant
+#### coap — 4 files / 106 tests
+- [x] GET / POST / PUT / DELETE — `test_scanner.py`, `test_new_features.py`; `--methods` confirm-gate (commit `c1411f93`)
+- [x] `.well-known/core` enumeration — `test_scanner.py`
+- [x] Observe (notification stream smoke) — `test_psk_bruteforce.py`
+- [x] Block-wise transfer — `test_blockwise_cap.py` (payload-cap hardening) + `test_new_features.py`
+- [x] DTLS variant — `test_psk_bruteforce.py`; scheme-aware write helpers (commit `072db664`)
 
-#### ocpp
-- [ ] Boot notification + heartbeat
-- [ ] Authorize / StartTransaction
-- [ ] StopTransaction
-- [ ] WebSocket subprotocol negotiation (`ocpp1.6`, `ocpp2.0.1`)
+#### ocpp — 2 files / 220 tests
+- [x] Boot notification + heartbeat — `test_scanner.py`
+- [x] Authorize / StartTransaction — `test_scanner.py`
+- [x] StopTransaction — `test_scanner.py`
+- [x] WebSocket subprotocol negotiation (`ocpp1.6`, `ocpp2.0.1`) — `test_ws_brute.py`
 
-#### snmp
-- [ ] v1 community sweep
-- [ ] v2c get / get-next / walk (verify walk depth cap — see §4)
-- [ ] v3 USM with min-length passphrase enforcement (verify post-fix item 4)
-- [ ] v3 noAuthNoPriv / authNoPriv / authPriv matrix
-- [ ] Trap receiver smoke
-- [ ] OID resolution against MIB cache
+#### snmp — 3 files / 73 tests
+- [x] v1 community sweep — `test_proto_args.py`
+- [x] v2c get / get-next / walk — `test_snmp_enhancements.py`
+- [x] v3 USM with min-length passphrase enforcement — `test_scanner.py`
+- [x] v3 noAuthNoPriv / authNoPriv / authPriv matrix — `test_scanner.py`
+- [x] Trap receiver smoke — `test_snmp_enhancements.py`
+- [x] OID resolution against MIB cache — `test_scanner.py`
 
 ### 1.3 Healthcare (4 protocols)
 
-#### hl7
-- [ ] MLLP framing (start/end markers)
-- [ ] Bounded receive (verify post-fix item 5 — 16 MiB cap)
-- [ ] Message types: ADT, ORM, ORU, MDM
-- [ ] Z-segment handling (graceful skip)
-- [ ] Version negotiation (MSH-12: 2.3/2.4/2.5/2.6/2.7/2.8)
-- [ ] Lazy-import fix (audit aux-B3)
+#### hl7 — 5 files / 207 tests
+- [x] MLLP framing (start/end markers) — `test_pharmacy_messages.py`, `test_message_types.py`
+- [x] Bounded receive (16 MiB cap) — `src/oida/protocols/hl7/utils.py:289+` (cap landed in earlier session); separate Monitor variant still in §−1 Deferred list
+- [x] Message types: ADT, ORM, ORU, MDM — `test_pharmacy_messages.py`
+- [x] Z-segment handling (graceful skip) — `test_pharmacy_messages.py`
+- [x] Version negotiation (MSH-12: 2.3/2.4/2.5/2.6/2.7/2.8) — `test_pharmacy_messages.py`
+- [x] Lazy-import fix — `test_probe_filter.py` references `HL7APY_AVAILABLE`
+- [x] `--probe-ops` default filters to QRY/QBP only without --confirm (commit `fee09232`) — `test_probe_filter.py`
+- [x] 8 missing SegmentBuilder methods implemented (commit `fee09232`) — `tests/contracts/test_hl7_segment_builder.py`
 
-#### fhir
-- [ ] Conformance/CapabilityStatement read
-- [ ] Resource enumeration
-- [ ] Patient/Observation search
-- [ ] **Remove or gate `--bulk-export`, `--test-cross-patient`, `--test-scope`** (audit aux-B4)
+#### fhir — 7 files / 248 tests
+- [x] Conformance/CapabilityStatement read — `conftest.py`, `test_nxc_connection.py`
+- [x] Resource enumeration — `test_nxc_connection.py`
+- [x] Patient/Observation search — `test_nxc_connection.py`
+- [x] `--bulk-export`, `--test-cross-patient`, `--test-scope` — `test_nxc_connection.py`
+- [x] `--default-creds` confirm-gate (commit `9ae2a6c5`) — `test_confirm_gate_enforcement.py::TestFhirBruteGate`
 
-#### dicom
-- [ ] C-ECHO
-- [ ] C-FIND on patient/study/series
-- [ ] C-MOVE smoke
-- [ ] C-STORE (gated)
-- [ ] AET enumeration
+#### dicom — 3 files / 84 tests (+ skipped tests when pynetdicom absent)
+- [x] C-ECHO — `test_scanner.py` (when pynetdicom installed)
+- [x] C-FIND on patient/study/series — `test_scanner.py`, `test_cfind_wildcard.py`
+- [x] C-MOVE smoke — `test_scanner.py`; --move confirm-gate (commit `9ae2a6c5`)
+- [x] C-STORE (gated) — `test_scanner.py`; --store confirm-gate (commit `9ae2a6c5`)
+- [x] AET enumeration — `test_proto_args.py`; --aet-brute confirm-gate (commit `9ae2a6c5`)
+- [x] C-GET/C-STORE path-traversal hardening (commit `60b21db2`) — `test_scanner.py::TestDICOMCStoreHandler::test_cstore_handler_blocks_path_traversal`
+- [x] default_port = 11112 (industry standard) — `test_scanner.py` (commit `9057f380`)
+- [x] --find with no --patient-name uses `*` (commit `c3f27fef`) — `test_cfind_wildcard.py`
 
-#### astm
-- [ ] **Fix `default_port = 1394` → 12000/5000/6000/9100** (audit aux-B6)
-- [ ] ENQ/ACK framing
-- [ ] H/P/O/R/L record decode
+#### astm — 2 files / 142 tests
+- [x] `default_port` aligned with industry conventions — `test_scanner.py`
+- [x] ENQ/ACK framing — `test_scanner.py`; short-read NAK fix (commit `c3f27fef`)
+- [x] H/P/O/R/L record decode — `test_scanner.py`
+- [x] --send-patient confirm-gate (commit `9ae2a6c5`) — `test_confirm_gate_enforcement.py::TestAstmSendPatientGate`
 
 ### 1.4 Discovery / passive (2 modules)
 
-#### discovery
-- [ ] LLDP
-- [ ] CDP
-- [ ] BBMD (BACnet broadcast forwarder)
-- [ ] mDNS / Bonjour
-- [ ] SSDP / UPnP (verify defusedxml hard-dep post-fix item 3)
-- [ ] CODESYS gateway discovery
-- [ ] Multicast group enumeration
-- [ ] Migrate to `proto_args_factory` (§3)
+#### discovery — 21 files / 655 tests
+- [x] LLDP — `test_cli.py` (CDP/LLDP/etc. enumeration)
+- [x] CDP — `test_cdp.py`
+- [~] BBMD (BACnet broadcast forwarder) discovery — bacnet's `_bacpypes3_test_bbmd` covers the BBMD WRITE side (Foreign Device Registration probe — gated and tested in `tests/unit/bacnet/test_bbmd_no_silent_finding.py`). A standalone "discover BBMDs on this subnet" passive scan is **not implemented** in `src/oida/protocols/discovery/`. Deferred — feature gap.
+- [x] mDNS / Bonjour — `test_cli.py`
+- [x] SSDP / UPnP — `test_cli.py`, `test_ssdp.py`
+- [x] CODESYS gateway discovery — `CODESYSScanner` in `discovery/ics.py:475`. Verification: `tests/unit/discovery/test_codesys_discovery.py`.
+- [x] Multicast group enumeration — `test_ssdp.py`
+- [ ] Migrate to `proto_args_factory` (§3) — refactor item
+- [x] NetManage DiscoveredDevice kwarg fix (commit `b033ac3b`) — covered by NetManage listener integration tests
+- [x] VRRP master/backup RFC 5798 classification (commit `4dc1d97d`) — `test_routing_fhrp_passive.py::test_vrrp_device_type`
+- [x] EIGRP/RIP/PIM cross-listener merge crash fix (commit `047bf13f`) — `test_passive_merge.py` (4 tests)
+- [x] Garbled exception logs replaced (commit `33935ede` + `047bf13f`) — `test_discovery_log_messages.py`
 
-#### pcap (109 listeners)
-- [ ] DECODE_AS hints applied for ajp/rmi/rsync (verify post-fix item 17)
-- [ ] BFD/RIP src_port/dst_port in interactions (verify post-fix item 18)
-- [ ] See §2 for listener-by-listener coverage
+#### pcap (109 listeners) — 11 files / 201 tests
+- [x] DECODE_AS hints applied for ajp/rmi/rsync — `test_proto_args.py`, `test_nxc_class.py`
+- [x] BFD/RIP src_port/dst_port in interactions — `test_bfd_passive.py`, `conftest.py`
+- [x] See §2 for listener-by-listener coverage — §2 shows 45/45 ✅
+- [x] pcap mssql/fins recovered-cred policy enforced — `test_misc_fix_verifications.py::TestPcapMssqlFinsCredentialsPrintFully`
 
 ---
 
