@@ -159,7 +159,8 @@ class VRRPPassiveListener(PySharkListenerBase):
         if vrid == "" or vrid is None:
             vrid = "?"
             self.logger.debug(f"Missing VRID in VRRP interaction from {ix.src_ip}")
-        role = "Master" if d.get("priority", 0) == 255 else "Backup"
+        # All received VRRP Advertisements are from Master (RFC 5798 §6.4.3).
+        role = "Master"
         addr_count = d.get("addr_count", "?")
         auth_type = d.get("auth_type_name", "?")
         return [
@@ -234,7 +235,16 @@ class VRRPPassiveListener(PySharkListenerBase):
         if not virtual_ips:
             self.logger.debug(f"No virtual IPs extracted from VRRP packet {src_ip} -> {dst_ip}")
 
-        is_master = priority == 255
+        # Per RFC 5798 §6.4.3 (and RFC 3768 §6.4.3 for v2), only a router
+        # in Master state transmits VRRP Advertisements; Backup routers
+        # MUST NOT send them. So observing ANY Advertisement = sender is
+        # Master, regardless of priority. The old `priority == 255` check
+        # confused "IP address owner" (255) with "Master role" and
+        # misclassified the typical Cisco/Keepalived default (priority=100
+        # master) as Backup. Priority 255 still means address-owner —
+        # expose separately as `is_address_owner` for downstream use.
+        is_master = True
+        is_address_owner = priority == 255
 
         # T1 field: md5_auth_data -- MD5 authentication digest
         md5_auth_data = self.get_field(vrrp, "md5_auth_data", None)
@@ -330,6 +340,7 @@ class VRRPPassiveListener(PySharkListenerBase):
                 "state": 2 if is_master else 1,
                 "state_name": "Master" if is_master else "Backup",
                 "is_master": is_master,
+                "is_address_owner": is_address_owner,
                 "virtual_ips": virtual_ips,
                 "addr_count": addr_count,
                 "adver_int": adver_int,

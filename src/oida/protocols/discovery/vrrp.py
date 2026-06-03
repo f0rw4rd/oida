@@ -147,13 +147,22 @@ class VRRPPassiveListener:
             vrid = vrrp.vrid
             priority = vrrp.priority
             vrrp.ipcount if hasattr(vrrp, "ipcount") else 0
+            # Only the Master sends VRRP Advertisements (RFC 5798 §6.4.3 +
+            # RFC 3768 §6.4.3 for v2); Backup routers MUST NOT transmit
+            # them. So observing ANY Advertisement = sender is Master,
+            # regardless of priority. Previous heuristic 'priority == 255'
+            # confused "IP address owner" (255) with "Master role" and
+            # misclassified every default-config master (Cisco/Keepalived
+            # default priority = 100) as Backup.
+            vrrp_type = getattr(vrrp, "type", 1)
+            is_address_owner = priority == 255
 
             # Extract virtual IPs
             virtual_ips = []
             if hasattr(vrrp, "addrlist") and vrrp.addrlist:
                 virtual_ips = list(vrrp.addrlist)
 
-            is_master = priority == 255
+            is_master = vrrp_type == 1
 
             with self._lock:
                 # Use MAC as key if available, otherwise fall back to IP-based key
@@ -182,6 +191,7 @@ class VRRPPassiveListener:
                         "state": 2 if is_master else 1,
                         "state_name": "Master" if is_master else "Backup",
                         "is_master": is_master,
+                        "is_address_owner": is_address_owner,
                         "virtual_ips": virtual_ips,
                         "adver_int": adver_int,
                         "protocol": "VRRP",
