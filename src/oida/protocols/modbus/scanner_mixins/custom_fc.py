@@ -176,3 +176,35 @@ class ScannerCustomFCMixin(_ScannerBase):
             11: "GATEWAY TARGET DEVICE FAILED TO RESPOND",
         }
         return exception_names.get(code, "UNKNOWN")
+
+    def _send_mei_canopen(self, client: Any, request_data: bytes) -> Dict[str, Any] | None:
+        """Send a CANopen request encapsulated in a Modbus MEI frame (FC 43/13).
+
+        CiA 309-2 tunnels CANopen SDOs through Modbus/TCP by wrapping the
+        request inside FC 43 with MEI Type 13 (0x0D). This helper builds
+        that envelope on top of send_custom_fc and returns the unwrapped
+        payload (with the MEI type byte stripped) plus the raw bytes so
+        callers in canopen.py can decode SDO/upload/download responses.
+
+        Returns None when the target rejects the FC entirely (so callers
+        get the same 'unsupported / failed' branch they already have), or
+        a dict {data, raw, error?} on any other outcome.
+        """
+        from ..constants import MEIType
+
+        payload = bytes([int(MEIType.CANOPEN)]) + bytes(request_data)
+        result = self.send_custom_fc(client, 43, payload, self.unit_id)
+
+        if not result or not result.get("success"):
+            return None
+        if result.get("is_exception"):
+            # FC 43 with unknown MEI type returns ILLEGAL FUNCTION or
+            # ILLEGAL DATA VALUE -- treat as 'unsupported'.
+            return None
+
+        raw = result.get("response_payload", b"") or b""
+        # Per FC 43 response format: first byte echoes MEI Type. Strip it
+        # so canopen.py sees just the SDO payload.
+        if raw and raw[0] == int(MEIType.CANOPEN):
+            return {"data": raw[1:], "raw": raw}
+        return {"data": raw, "raw": raw, "error": "Unexpected MEI type in response"}
