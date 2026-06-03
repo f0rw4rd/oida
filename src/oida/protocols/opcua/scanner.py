@@ -399,27 +399,46 @@ class OPCUAScanner(NetworkScanner):
         self.logger.display(f"Testing {len(credentials)} credential combinations")
 
         valid_count = 0
+        # asyncua.Client.set_user() is a sync setter that only configures
+        # the credentials for the NEXT outgoing request — it does NOT
+        # validate them. Marking the credential "VALID" just because
+        # set_user didn't raise produces false positives on every
+        # invocation. To actually verify a credential we have to either
+        # call client.connect() (heavy: full session re-establishment)
+        # or send a probe request (lightweight). We use the probe via
+        # client.get_root_node().read_browse_name() which exercises
+        # authentication via Read service.
+        client_class = _get_client_class()
+        host, port = self.get_target_info()
+        url = host if host.startswith("opc.tcp://") else f"opc.tcp://{host}:{port}"
+        timeout = self.timeout
+
         for username, password in credentials:
+            probe_client = client_class(url=url)
+            probe_client.timeout = timeout
             try:
-                # set_user() is a SYNC setter on the asyncua Client —
-                # see _test_authentication's comment. Dropping the await
-                # so the call doesn't TypeError-and-get-swallowed.
-                # TODO(security): set_user only configures the next
-                # request; to truly verify the credential we should also
-                # attempt client.connect() with these creds inside the
-                # loop. Without that step, "VALID" really means
-                # "set_user() didn't raise BadUserAccessDenied".
-                client.set_user(username, password)
-                results["username_password"][username] = "valid"
-                results["tested_credentials"].append(f"{username}:{password}")
-                self.logger.debug(f"Tested {username}:{password} -> OK")
-                self.logger.display(f"VALID: {username}:{password}")
-                valid_count += 1
+                probe_client.set_user(username, password)
+                await probe_client.connect()
+                try:
+                    # Read service requires an authenticated session.
+                    await probe_client.get_root_node().read_browse_name()
+                    results["username_password"][username] = "valid"
+                    results["tested_credentials"].append(f"{username}:{password}")
+                    self.logger.display(f"VALID: {username}:{password}")
+                    valid_count += 1
+                finally:
+                    try:
+                        await probe_client.disconnect()
+                    except Exception as e:
+                        self.logger.debug(f"probe disconnect: {e}")
             except BadUserAccessDenied:
                 results["username_password"][username] = "invalid"
-                self.logger.debug(f"Tested {username}:{password} -> BadUserAccessDenied")
+                self.logger.debug(f"Tested {username}:*** -> BadUserAccessDenied")
             except Exception as e:
-                self.logger.debug(f"Tested {username}:{password} -> {e}")
+                # Connection failures, certificate errors etc. - record
+                # as inconclusive (NOT valid) so we don't falsely report.
+                results["username_password"][username] = "error"
+                self.logger.debug(f"Tested {username}:*** -> {type(e).__name__}: {e}")
 
             progress.update()
 
