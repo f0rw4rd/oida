@@ -1031,6 +1031,211 @@ class HL7SegmentBuilder:
             logger.debug(f"HL7: build_mrg segment construction failed: {e}")
             return None
 
+    # ------------------------------------------------------------------
+    # Master File segments (MFI, MFE, STF, PRA, PRC)
+    # Called by mixins/master_file.py — without these, MFN^M01/M02/M04
+    # silently fall back to generic test messages (CRITICAL).
+    # ------------------------------------------------------------------
+
+    def build_mfi(
+        self,
+        master_file_id: str = "ZZZ^General",
+        file_level_event_code: str = "UPD",
+        response_level_code: str = "AL",
+    ) -> Optional[Any]:
+        """Build MFI (Master File Identification) segment."""
+        try:
+            mfi = Segment("MFI", version=self.version)
+            mfi.mfi_1 = master_file_id
+            mfi.mfi_3 = file_level_event_code
+            mfi.mfi_6 = response_level_code
+            return mfi
+        except Exception as e:
+            logger.debug(f"HL7: build_mfi segment construction failed: {e}")
+            return None
+
+    def build_mfe(
+        self,
+        record_level_event_code: str = "MAD",
+        mfn_control_id: str = "",
+        primary_key_value: str = "",
+    ) -> Optional[Any]:
+        """Build MFE (Master File Entry) segment."""
+        try:
+            mfe = Segment("MFE", version=self.version)
+            mfe.mfe_1 = record_level_event_code
+            if mfn_control_id:
+                mfe.mfe_2 = mfn_control_id
+            if primary_key_value:
+                mfe.mfe_4 = primary_key_value
+            return mfe
+        except Exception as e:
+            logger.debug(f"HL7: build_mfe segment construction failed: {e}")
+            return None
+
+    def build_stf(
+        self,
+        staff_id: str = "",
+        staff_name: str = "",
+        staff_type: str = "",
+        department: str = "",
+        active_inactive: str = "A",
+    ) -> Optional[Any]:
+        """Build STF (Staff Identification) segment."""
+        try:
+            stf = Segment("STF", version=self.version)
+            if staff_id:
+                stf.stf_1 = staff_id
+                stf.stf_2 = staff_id
+            if staff_name:
+                stf.stf_3 = staff_name
+            if staff_type:
+                stf.stf_4 = staff_type
+            if department:
+                stf.stf_11 = department
+            stf.stf_7 = active_inactive
+            return stf
+        except Exception as e:
+            logger.debug(f"HL7: build_stf segment construction failed: {e}")
+            return None
+
+    def build_pra(
+        self,
+        practitioner_id: str = "",
+        practitioner_category: str = "",
+    ) -> Optional[Any]:
+        """Build PRA (Practitioner Detail) segment."""
+        try:
+            pra = Segment("PRA", version=self.version)
+            if practitioner_id:
+                pra.pra_1 = practitioner_id
+            if practitioner_category:
+                pra.pra_5 = practitioner_category
+            return pra
+        except Exception as e:
+            logger.debug(f"HL7: build_pra segment construction failed: {e}")
+            return None
+
+    def build_prc(
+        self,
+        charge_code: str = "",
+        price: str = "",
+        active_inactive: str = "A",
+    ) -> Optional[Any]:
+        """Build PRC (Pricing/Charge Description) segment.
+
+        The HL7 v2.5 PRC field count varies between hl7apy schema files;
+        any unsupported field is set defensively so we still emit the
+        primary fields the caller cares about.
+        """
+        try:
+            prc = Segment("PRC", version=self.version)
+            if charge_code:
+                prc.prc_1 = charge_code
+            if price:
+                # PRC-10 = Facility ID in some schemas, Price in others; set
+                # defensively. Drop silently if the field name resolves to
+                # 'None' in the active hl7apy schema rather than blowing
+                # up the whole segment.
+                try:
+                    prc.prc_10 = price
+                except Exception as e:
+                    logger.debug(f"HL7: PRC-10 not in schema, skipping price field: {e}")
+            try:
+                prc.prc_19 = active_inactive
+            except Exception as e:
+                logger.debug(f"HL7: PRC-19 not in schema, skipping active flag: {e}")
+            return prc
+        except Exception as e:
+            logger.debug(f"HL7: build_prc segment construction failed: {e}")
+            return None
+
+    # ------------------------------------------------------------------
+    # Financial segments (GT1, IN1, FT1)
+    # Called by mixins/financial.py — without these, BAR^P01 / DFT^P03
+    # silently fall back to generic test messages (CRITICAL).
+    # ------------------------------------------------------------------
+
+    def build_gt1(
+        self,
+        guarantor_number: str = "",
+        guarantor_name: str = "",
+        guarantor_phone: str = "",
+        set_id: int = 1,
+    ) -> Optional[Any]:
+        """Build GT1 (Guarantor) segment."""
+        try:
+            gt1 = Segment("GT1", version=self.version)
+            gt1.gt1_1 = str(set_id)
+            if guarantor_number:
+                gt1.gt1_2 = guarantor_number
+            if guarantor_name:
+                gt1.gt1_3 = guarantor_name
+            if guarantor_phone:
+                gt1.gt1_6 = guarantor_phone
+            return gt1
+        except Exception as e:
+            logger.debug(f"HL7: build_gt1 segment construction failed: {e}")
+            return None
+
+    def build_in1(
+        self,
+        insurance_company_name: str = "",
+        group_number: str = "",
+        policy_number: str = "",
+        set_id: int = 1,
+    ) -> Optional[Any]:
+        """Build IN1 (Insurance) segment."""
+        try:
+            in1 = Segment("IN1", version=self.version)
+            in1.in1_1 = str(set_id)
+            if insurance_company_name:
+                in1.in1_4 = insurance_company_name
+            if group_number:
+                in1.in1_8 = group_number
+            if policy_number:
+                in1.in1_36 = policy_number
+            return in1
+        except Exception as e:
+            logger.debug(f"HL7: build_in1 segment construction failed: {e}")
+            return None
+
+    def build_ft1(
+        self,
+        transaction_id: str = "",
+        transaction_type: str = "CG",
+        transaction_code: str = "",
+        transaction_description: str = "",
+        transaction_amount: str = "",
+        patient_id: str = "",
+        diagnosis_code: str = "",
+        procedure_code: str = "",
+        set_id: int = 1,
+    ) -> Optional[Any]:
+        """Build FT1 (Financial Transaction) segment."""
+        try:
+            ft1 = Segment("FT1", version=self.version)
+            ft1.ft1_1 = str(set_id)
+            if transaction_id:
+                ft1.ft1_2 = transaction_id
+            ft1.ft1_6 = transaction_type
+            if transaction_code:
+                ft1.ft1_7 = transaction_code
+            if transaction_description:
+                ft1.ft1_8 = transaction_description
+            if transaction_amount:
+                ft1.ft1_10 = transaction_amount
+            if patient_id:
+                ft1.ft1_13 = patient_id
+            if diagnosis_code:
+                ft1.ft1_19 = diagnosis_code
+            if procedure_code:
+                ft1.ft1_25 = procedure_code
+            return ft1
+        except Exception as e:
+            logger.debug(f"HL7: build_ft1 segment construction failed: {e}")
+            return None
+
 
 class HL7SegmentParser:
     """Parse HL7 v2 message segments using hl7apy library"""

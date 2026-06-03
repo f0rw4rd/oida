@@ -13,11 +13,33 @@ class ProbeMixin:
     """Mixin providing HL7 operation probing."""
 
     def _probe_operations(self):
-        """Probe which HL7 message types the server accepts"""
-        self.logger.display("Probing supported message types...")
+        """Probe which HL7 message types the server accepts.
+
+        Default behaviour is restricted to read-only QRY/QBP message types
+        — every other type in _get_fuzz_message_types() is a state-mutating
+        write (ADT admissions, ORM orders, RDE/RAS pharmacy, BAR/DFT
+        financial, MFN master-file updates etc.). With --confirm the
+        operator opts into sending the full dangerous catalogue.
+        """
+        confirm = getattr(self.args, "confirm", False)
 
         # Use shared message types list
         MESSAGE_TYPES = self._get_fuzz_message_types()
+
+        if not confirm:
+            # READ-ONLY filter: only query message types are safe by default.
+            safe_types = {"QRY", "QBP"}
+            filtered = [m for m in MESSAGE_TYPES if m[0] in safe_types]
+            skipped = len(MESSAGE_TYPES) - len(filtered)
+            self.logger.warning(
+                f"Probing read-only message types only ({len(filtered)} of "
+                f"{len(MESSAGE_TYPES)}). The remaining {skipped} types write "
+                "state (ADT admissions, orders, pharmacy, financial, master-files). "
+                "Re-run with --confirm to probe the full set."
+            )
+            MESSAGE_TYPES = filtered
+        else:
+            self.logger.display("Probing supported message types (--confirm: full catalogue)...")
 
         results = {
             "supported": [],
