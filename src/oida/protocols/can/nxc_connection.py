@@ -387,6 +387,15 @@ class can(SerialConnection):
 
     def _handle_id_scan(self) -> None:
         """Handle active arbitration ID scanning."""
+        # --id-scan floods every standard CAN ID with TesterPresent — this
+        # is loud on a live bus and can trigger flood detection / safety
+        # interlocks on a vehicle bench. Gated on --confirm.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--id-scan floods every CAN arbitration ID with TesterPresent "
+                "(disruptive on live bus) — requires --confirm"
+            )
+            return
         can_mod = _python_can()
 
         scan_range_str = getattr(self.args, "id_scan_range", "0x000-0x7FF")

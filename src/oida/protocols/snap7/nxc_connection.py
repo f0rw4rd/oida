@@ -681,7 +681,7 @@ class s7(NetworkConnection):
                     self.conn.db_write(db, s, write_data)
                     return True
                 except Exception as e:
-                    logger.debug(f"Failed to get write_data: {e}")
+                    self.logger.debug(f"db_write failed: {e}")
                     return False
 
             original = read_fn()
@@ -756,7 +756,7 @@ class s7(NetworkConnection):
                     self.conn.write_area(S7MemoryArea.MK, 0, 0, bytearray(write_data))
                     return True
                 except Exception as e:
-                    logger.debug(f"Failed to get write_data: {e}")
+                    self.logger.debug(f"write_area(MK) failed: {e}")
                     return False
 
             original = read_m()
@@ -800,7 +800,7 @@ class s7(NetworkConnection):
                     self.conn.write_area(S7MemoryArea.PA, 0, 0, bytearray(write_data))
                     return True
                 except Exception as e:
-                    logger.debug(f"Failed to get write_data: {e}")
+                    self.logger.debug(f"write_area(PA) failed: {e}")
                     return False
 
             original = read_q()

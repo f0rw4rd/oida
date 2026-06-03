@@ -54,8 +54,11 @@ class TestCheckProtectionLevel(unittest.TestCase):
         self.host = MockSecurityHost()
         self.conn = Mock()
 
-    def test_no_protection(self):
-        """Test protection level 1 - no protection."""
+    def test_all_zero_protection_is_indeterminate(self):
+        """All-zero S7Protection struct is INDETERMINATE — python-snap7 returns
+        a zeroed struct on CPUs that do not expose the SZL or when the read
+        silently fails. Reporting level=1 / 'No protection' would be a false
+        positive on modern S7-1200/1500 firmware."""
         protection = Mock()
         protection.sch_schal = 0
         protection.sch_par = 0
@@ -67,9 +70,10 @@ class TestCheckProtectionLevel(unittest.TestCase):
         result = self.host._check_protection_level(self.conn)
 
         self.assertIsNotNone(result)
-        self.assertEqual(result["level"], 1)
+        self.assertEqual(result["level"], 0, "Must be INDETERMINATE, not 'No protection'")
         self.assertFalse(result["has_protection"])
-        self.assertIn("No protection", result["description"])
+        self.assertTrue(result.get("indeterminate"))
+        self.assertIn("Indeterminate", result["description"])
 
     def test_write_protection(self):
         """Test protection level 2 - write protected, sch_schal is 0."""

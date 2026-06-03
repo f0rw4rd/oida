@@ -520,10 +520,13 @@ class TestDeterminePermission(unittest.TestCase):
     """Test _determine_permission."""
 
     def test_no_write_test_no_param_obj(self):
+        """Without --write and without a Parameter Object map we have no
+        signal — return R? rather than the silent ? which used to render
+        as 'read-only' in downstream reports."""
         scanner = make_scanner()
         conn = MagicMock()
         result = scanner._determine_permission(conn, 0x01, 1, 1, b"\x01", False)
-        self.assertEqual(result, "?")
+        self.assertEqual(result, "R?")
 
     def test_write_test_success(self):
         scanner = make_scanner(write=True)

@@ -100,6 +100,14 @@ class MethodsMixin:
 
     async def _invoke_method(self, method_node_id: str):
         """Invoke an OPC UA method"""
+        # --call-method invokes arbitrary server-defined methods (Restart,
+        # ResetCounters, custom site methods etc.) — gate on --confirm.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                f"--call-method invokes arbitrary OPC UA method '{method_node_id}' "
+                "(server-side side effects unknown) — requires --confirm"
+            )
+            return
         import json
 
         ua_mod = _get_asyncua().ua
