@@ -356,9 +356,15 @@ class OPCUAScanner(NetworkScanner):
         }
 
         try:
-            # Test anonymous access
+            # Test anonymous access — set_user() is a SYNC setter on the
+            # asyncua Client; awaiting it raises TypeError ("None can't be
+            # awaited"). The previous `await` was swallowed by the outer
+            # except and every anonymous test silently reported nothing.
+            # TODO(security): set_user only configures the next request;
+            # to truly verify anonymous access we need to attempt a fresh
+            # client.connect() with no credentials. Separate fix.
             try:
-                await client.set_user(None)
+                client.set_user(None)
                 results["anonymous_access"] = True
                 self.logger.display("Anonymous access: ALLOWED")
             except Exception:
@@ -391,7 +397,15 @@ class OPCUAScanner(NetworkScanner):
         valid_count = 0
         for username, password in credentials:
             try:
-                await client.set_user(username, password)
+                # set_user() is a SYNC setter on the asyncua Client —
+                # see _test_authentication's comment. Dropping the await
+                # so the call doesn't TypeError-and-get-swallowed.
+                # TODO(security): set_user only configures the next
+                # request; to truly verify the credential we should also
+                # attempt client.connect() with these creds inside the
+                # loop. Without that step, "VALID" really means
+                # "set_user() didn't raise BadUserAccessDenied".
+                client.set_user(username, password)
                 results["username_password"][username] = "valid"
                 results["tested_credentials"].append(f"{username}:{password}")
                 self.logger.debug(f"Tested {username}:{password} -> OK")

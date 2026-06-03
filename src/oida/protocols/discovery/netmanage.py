@@ -440,15 +440,35 @@ class NetManageDevice:
     last_seen: datetime = field(default_factory=datetime.now)
 
     def to_discovered_device(self) -> DiscoveredDevice:
-        """Convert to standard DiscoveredDevice."""
+        """Convert to standard DiscoveredDevice.
+
+        Prior to the fix this passed kwargs (`ip`, `mac`, `hostname`,
+        `vendor`, `protocol`, `metadata`, raw `datetime`) that don't
+        exist on DiscoveredDevice — every Schneider PLC discovery
+        raised TypeError; passive listener swallowed it silently;
+        CHANGELOG advertised a non-functional feature. Real fields are
+        `mac_address`, `ip_addresses: List[str]`, `name`, `manufacturer`,
+        `discovered_by: List[str]`, ISO-string `first_seen` / `last_seen`,
+        and `*_data: Optional[Dict]` per-protocol payload buckets.
+        """
         return DiscoveredDevice(
-            ip=self.ip_address,
-            mac=self.mac_address.lower() if self.mac_address else "",
-            hostname=self.device_name or self.netbios_name,
+            mac_address=self.mac_address.lower() if self.mac_address else "",
+            ip_addresses=[self.ip_address] if self.ip_address else [],
+            name=self.device_name or self.netbios_name,
+            manufacturer=self.vendor or "",
             device_type=self.device_type or "PLC",
-            vendor=self.vendor,
-            protocol="netmanage",
-            metadata={
+            discovered_by=["netmanage"],
+            first_seen=(
+                self.first_seen.isoformat()
+                if isinstance(self.first_seen, datetime)
+                else str(self.first_seen)
+            ),
+            last_seen=(
+                self.last_seen.isoformat()
+                if isinstance(self.last_seen, datetime)
+                else str(self.last_seen)
+            ),
+            netmanage_data={
                 "firmware_version": self.firmware_version,
                 "serial_number": self.serial_number,
                 "boot_mode": self.boot_mode,
@@ -458,8 +478,6 @@ class NetManageDevice:
                 "netbios_name": self.netbios_name,
                 "raw_values": self.raw_values,
             },
-            first_seen=self.first_seen,
-            last_seen=self.last_seen,
         )
 
 
