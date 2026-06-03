@@ -142,7 +142,10 @@ def create_monitor(
         return info.cls(**monitor_kwargs)
 
     except Exception as e:
-        logger.debug(f"Operation failed: {e}")
+        # registry.py is a module-level factory with no self context, so
+        # the stdlib logger stays here — but with a descriptive message
+        # so it's useful in debug output instead of just "Operation failed".
+        logger.debug(f"Monitor registry: failed to instantiate {info.cls.__name__}: {e}")
         return None
 
 
