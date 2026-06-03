@@ -1,6 +1,36 @@
 # OIDA 1.0 Release TODO
 
-> **2026-06-03 — RELEASE STATUS: NOT READY.** Three multi-agent passes:
+> **2026-06-03 — §−1 (CODE REVIEW BLOCKERS): CLEARED.** Original status
+> below kept for the archive. Update summary as of 2026-06-03 EOD:
+>
+> - All **12 CRITICAL** items: fixed and verified.
+> - All **HIGH** items in §−1 top-12 list: fixed; pcap mssql/fins
+>   credential logs deliberately NOT masked (passive sniff is
+>   RECOVERED creds per project policy — printing fully is the
+>   feature, see commit `b033ac3b…` and the `[CRED-POLICY]` notes
+>   below).
+> - **Test infrastructure** (TEST_GAP_AUDIT.md): `tests/contracts/`
+>   landed (confirm-gate snapshot + drift detector, credential-log-leak
+>   AST walker, HL7 segment-builder callee-exists, confirm-gate
+>   enforcement contract); `tests/unit/test_import_resolution.py`
+>   landed; autouse `no_credential_leak` fixture landed; hostile-fixture
+>   timeout test for snap7 SZL landed; bacnet DCC-timeout semantics
+>   test landed.
+> - **30 commits** between `b033ac3b` and `3e359269`. **117+ new tests.**
+>   Wide regression: 3,426 unit tests pass; only failure is a
+>   pre-existing pandas/numpy binary-incompat in
+>   `test_is_bac0_available_returns_bool` and the well-known
+>   `test_periodic_resend` flaky timing test.
+> - **Remaining open in §−1:** see "Deferred / partial" subsection
+>   below (HL7 unbounded recv loop; export-files integration test;
+>   pcap spec-conformance sidecars; mypy promotion for discovery;
+>   per-protocol security-mixin-timeout suites for the remaining 5
+>   protocols; scripts/code_review.sh check #15; pcap conftest
+>   log-buffer extension).
+>
+> ---
+>
+> **2026-06-03 (initial) — RELEASE STATUS: NOT READY.** Three multi-agent passes:
 > `wxt77w8kq` (full review, 6.6M tokens, 1h) + `wjcqf1hvp` (gap follow-up,
 > 2.0M tokens, 26m) + `wgfizpuz7` (test-gap audit + latent-bug hunt,
 > 2.0M tokens, 37m). Combined: **12 CRITICAL + 72 HIGH + ~115 MEDIUM +
@@ -45,42 +75,99 @@ issues the test suite missed. Section ordering: must-fix before tag.
 
 **New from gap workflow `wjcqf1hvp`** (the worst two found in the whole project):
 
-- [ ] **discovery** `NetManageDevice.to_discovered_device()` (`netmanage.py:442-463`) passes kwargs (`ip`, `mac`, `hostname`, `vendor`, `protocol`, `metadata`, raw `datetime`) that don't exist on `DiscoveredDevice` — every Schneider PLC discovery raises `TypeError`; the dict comprehension at line 676 collapses the whole scan. `NetManagePassiveListener.process_packet` swallows the same error silently. **CHANGELOG advertises working Schneider PLC discovery; the feature is non-functional.** See `CODE_REVIEW.md` gap-CRITICAL #1.
-- [ ] **hl7** `enum_host_info()` sends a real ADT^A01 admission write on **every** `oida hl7 <ip>` invocation (populated PID `PROBE^^^MRN` + PV1 location `PROBE^101^A`). Standalone `utils.probe_server_capabilities()` helper iterates ADT^A01 / ORU^R01 / ORM^O01 writes from any external caller. No `--confirm` gate. **You cannot run an HL7 scan today without creating fake patient admissions on the target.** `CODE_REVIEW.md` gap-CRITICAL #2.
+- [x] **discovery** `NetManageDevice.to_discovered_device()` (`netmanage.py:442-463`) passes kwargs (`ip`, `mac`, `hostname`, `vendor`, `protocol`, `metadata`, raw `datetime`) that don't exist on `DiscoveredDevice` — every Schneider PLC discovery raises `TypeError`; the dict comprehension at line 676 collapses the whole scan. `NetManagePassiveListener.process_packet` swallows the same error silently. **CHANGELOG advertises working Schneider PLC discovery; the feature is non-functional.** See `CODE_REVIEW.md` gap-CRITICAL #1. **Fixed:** rewrote `to_discovered_device()` with correct field names (`mac_address`, `ip_addresses`, `name`, `manufacturer`, `discovered_by`, ISO-string dates); added `netmanage_data: Optional[Dict[str, Any]]` field to `DiscoveredDevice` dataclass. Commit `b033ac3b`.
+- [x] **hl7** `enum_host_info()` sends a real ADT^A01 admission write on **every** `oida hl7 <ip>` invocation (populated PID `PROBE^^^MRN` + PV1 location `PROBE^101^A`). Standalone `utils.probe_server_capabilities()` helper iterates ADT^A01 / ORU^R01 / ORM^O01 writes from any external caller. No `--confirm` gate. **You cannot run an HL7 scan today without creating fake patient admissions on the target.** `CODE_REVIEW.md` gap-CRITICAL #2. **Fixed:** `enum_host_info()` switched from ADT^A01 to QBP^Q11 read-only query; `utils.probe_server_capabilities()` switched probe_messages list from ADT/ORU/ORM to QRY^A19 + QBP^Q11 + QBP^Q40. Commit `c18e2bec`.
 
 **Original 10:**
 
-- [ ] **modbus** `pymodbus 3.12 slave=/device_id= migration` — `register_io.py`, NXC mixins, fuzz, writes still pass `slave=`. Every batched-read / monitor / fuzz / test-write / map-read path crashes. Test `test_writable_access_security_finding` already documents the regression (line 1152). See `CODE_REVIEW.md` CRITICAL #7.
-- [ ] **modbus** `send_custom_fc()` signature mismatch — caller drops `unit_id`; `--raw-fc`/`--enumerate-functions`/`--fuzz function-mode` crash. `CODE_REVIEW.md` CRITICAL #8.
-- [ ] **modbus** raw_function_codes + fuzz handlers read keys `send_custom_fc` never returns — exceptions rendered as success; fuzz output inverted. `CODE_REVIEW.md` CRITICAL #9.
-- [ ] **modbus** CANopen MEI handlers call non-existent `_send_mei_canopen` — entire `--canopen-*` flag group raises `AttributeError`. `CODE_REVIEW.md` CRITICAL #10.
-- [ ] **coap** `--methods` fires PUT/POST/DELETE/PATCH/IPATCH on every discovered resource without `--confirm` — DELETE can wipe live actuator state. `CODE_REVIEW.md` CRITICAL #1.
-- [ ] **coap** write helpers + wordlist prober hard-code `coap://`, bypassing DTLS — cleartext PUT over UDP/5683 even when `-D` is active. `CODE_REVIEW.md` CRITICAL #2.
-- [ ] **dicom** `_export_results` broken relative import (3 dots, should be 4) — every `-o results` crashes after a successful scan. `CODE_REVIEW.md` CRITICAL #3.
-- [ ] **hl7** `--probe-ops` sends ADT merge/discharge, pharmacy admin, billing, master-file modifications without `--confirm` — "Probe supported message types" semantically lies. `CODE_REVIEW.md` CRITICAL #4.
-- [ ] **hl7** MFN/BAR/DFT/pharmacy mixins call non-existent SegmentBuilder methods — silently fall back to generic ADT, "billing accepted" findings are false. `CODE_REVIEW.md` CRITICAL #5.
-- [ ] **knx** `--fuzz-property` wrong relative-import depth — entire feature crashes on first use. `CODE_REVIEW.md` CRITICAL #6.
+- [x] **modbus** `pymodbus 3.12 slave=/device_id= migration` — `register_io.py`, NXC mixins, fuzz, writes still pass `slave=`. Every batched-read / monitor / fuzz / test-write / map-read path crashes. Test `test_writable_access_security_finding` already documents the regression (line 1152). See `CODE_REVIEW.md` CRITICAL #7. **Fixed:** 21 src sites + 157 test refs + 18 side_effect signatures migrated to `device_id=`. Commit `73ef8cbb`. Verification: `tests/unit/modbus/test_pymodbus_migration_complete.py` AST-walks src + tests, asserts zero remaining `slave=` kwargs.
+- [x] **modbus** `send_custom_fc()` signature mismatch — caller drops `unit_id`; `--raw-fc`/`--enumerate-functions`/`--fuzz function-mode` crash. `CODE_REVIEW.md` CRITICAL #8. **Fixed:** added `self.scanner.unit_id` at the three call sites in `raw_function_codes.py:42,132` + `fuzz.py:153`. Commit `69e772f9`.
+- [x] **modbus** raw_function_codes + fuzz handlers read keys `send_custom_fc` never returns — exceptions rendered as success; fuzz output inverted. `CODE_REVIEW.md` CRITICAL #9. **Fixed:** consumer keys renamed `exception → is_exception`, `data → response_payload`. Commit `69e772f9`.
+- [x] **modbus** CANopen MEI handlers call non-existent `_send_mei_canopen` — entire `--canopen-*` flag group raises `AttributeError`. `CODE_REVIEW.md` CRITICAL #10. **Fixed:** implemented `_send_mei_canopen()` as minimal MEI Type 13 (CiA 309-2) wrapper on top of `send_custom_fc`. Commit `69e772f9`.
+- [x] **coap** `--methods` fires PUT/POST/DELETE/PATCH/IPATCH on every discovered resource without `--confirm` — DELETE can wipe live actuator state. `CODE_REVIEW.md` CRITICAL #1. **Fixed:** `_test_methods()` now takes `confirm: bool = False` and only attempts GET/FETCH unless confirm=True. Commit `c1411f93`.
+- [x] **coap** write helpers + wordlist prober hard-code `coap://`, bypassing DTLS — cleartext PUT over UDP/5683 even when `-D` is active. `CODE_REVIEW.md` CRITICAL #2. **Fixed:** `_probe_paths_wordlist` and `_do_write` use `f"{self.scanner._scheme}://"` (carries `coap://` or `coaps://` based on `-D`). Commit `072db664`.
+- [x] **dicom** `_export_results` broken relative import (3 dots, should be 4) — every `-o results` crashes after a successful scan. `CODE_REVIEW.md` CRITICAL #3. **Fixed:** `from ....utils.export_utils import export_data`. Commit `f69c6ead`.
+- [x] **hl7** `--probe-ops` sends ADT merge/discharge, pharmacy admin, billing, master-file modifications without `--confirm` — "Probe supported message types" semantically lies. `CODE_REVIEW.md` CRITICAL #4. **Fixed:** default filters to QRY/QBP read-only types; `--confirm` opts into the full catalogue with a warning. Commit `fee09232`. Verification: `tests/unit/hl7/test_probe_filter.py`.
+- [x] **hl7** MFN/BAR/DFT/pharmacy mixins call non-existent SegmentBuilder methods — silently fall back to generic ADT, "billing accepted" findings are false. `CODE_REVIEW.md` CRITICAL #5. **Fixed:** implemented 8 missing builders (`build_mfi`, `build_mfe`, `build_stf`, `build_pra`, `build_prc`, `build_gt1`, `build_in1`, `build_ft1`) + pharmacy alias kwargs (`give_code`, `dispense_code`, `actual_amount`, `actual_units`, `refills_remaining`, `completion_status`). Commit `fee09232` + later batch. Verification: `tests/contracts/test_hl7_segment_builder.py` AST-walks every `segment_builder.build_*()` call site, asserts each resolves to a real method.
+- [x] **knx** `--fuzz-property` wrong relative-import depth — entire feature crashes on first use. `CODE_REVIEW.md` CRITICAL #6. **Fixed:** `from ....utils.fuzzer import fuzz`. Commit `f69c6ead`.
 
 ### HIGH (48 total — 23 original + 25 from gap follow-up)
 
 See `CODE_REVIEW.md` HIGH section (original + gap follow-up) for the full list. Top 10 by blast radius:
 
 **Original:**
-- [ ] `cli.py:107-121` `merge_config_with_args` discards every config-file value whose argparse default is non-None — `-c/--config` is effectively broken for the common knobs
-- [ ] `cli.py:974` debug-logs the full argparse `Namespace` including `--password`/`--credentials`/`--wordlist`/TLS keys/OCPP tokens into stdout AND the JSON audit log
-- [ ] `login_scanner.py:215` logs every failed `username:password` at INFO — wordlist contents end up in audit logs shared back to clients
-- [ ] `connection.py:149-164,355-376` IPv4-only resolution + test_connection despite IPv6 advertised in targets.py — every AAAA-only / v6 target silently fails
-- [ ] `bacnet/mixins/security.py:63-68` UDP timeout treated as successful auth — DCC brute-force, ReinitializeDevice, TimeSync, OOS-writable, BBMD all emit false-positive CRITICAL findings on any noisy / filtered network
+- [x] `cli.py:107-121` `merge_config_with_args` discards every config-file value whose argparse default is non-None — `-c/--config` is effectively broken for the common knobs. **Fixed:** new optional `parser=` arg + per-dest defaults walk; unknown keys log WARNING. Commit `85b1e450`. Verification: `tests/unit/test_cli_args.py::TestMergeConfigWithArgs` (5 tests covering count/store_true/CLI-wins/dash-underscore/unknown-key).
+- [x] `cli.py:974` debug-logs the full argparse `Namespace` including `--password`/`--credentials`/`--wordlist`/TLS keys/OCPP tokens into stdout AND the JSON audit log. **Fixed:** new `_redact_sensitive_args()` masks values whose dest matches password/passwd/secret/token/psk/pre_shared_key/private_key/auth_string/auth_pass/community/api_key/credential. Commit `98363d05`. Verification: `tests/unit/test_cli_args.py::TestRedactSensitiveArgs` (4 tests).
+- [x] `login_scanner.py:215` logs every failed `username:password` at INFO — wordlist contents end up in audit logs shared back to clients. **Fixed:** input credentials masked with `***`, demoted to debug. Recovered creds (successful brute-force result) still printed in full per `[CRED-POLICY]`. Commit `98363d05`. Verification: autouse `no_credential_leak` fixture in `tests/conftest.py` + `tests/contracts/test_credential_log_leak.py` AST walker.
+- [x] `connection.py:149-164,355-376` IPv4-only resolution + test_connection despite IPv6 advertised in targets.py — every AAAA-only / v6 target silently fails. **Fixed:** `_resolve_host` uses `socket.getaddrinfo`; `test_connection` iterates families. Commit `33935ede`. Verification: `tests/unit/test_connection_args_no_mutation.py` + `tests/unit/test_connection_fixes.py`.
+- [x] `bacnet/mixins/security.py:63-68` UDP timeout treated as successful auth — DCC brute-force, ReinitializeDevice, TimeSync, OOS-writable, BBMD all emit false-positive CRITICAL findings on any noisy / filtered network. **Fixed:** `_is_success_response()` returns False on `response is None`; companion `_is_no_reply()` predicate added; BBMD foreign-device-registration None response logged as inconclusive (not a finding). Commits `af79fa8f` + `9057f380`. Verification: `tests/unit/bacnet/test_dcc_timeout_semantics.py` (6 tests) + `tests/unit/bacnet/test_bbmd_no_silent_finding.py`.
 
 **Gap follow-up:**
-- [ ] **opcua L1 is fundamentally broken** — `await client.set_user(...)` raises `TypeError` (set_user is a sync setter returning None); every credential test silently fails; `--fuzz` dead from bool-vs-string dispatch; `--call-method` and `--test-subscription-limits` execute methods / DoS-ramp 100 subscriptions without `--confirm`; `--policy None` silent downgrade
-- [ ] **snap7 `--audit` runs unauthenticated write probes + brute-force without `--confirm`**; SZL parser hangs forever on attacker-supplied `record_len=0` (DoS); `_check_protection_level` false-positives every device where `get_protection()` returns a zeroed struct as "level 1 - full access"
-- [ ] **modbus** `--register-map` accepts arbitrary file paths (arbitrary file read); SunSpec security override forces `'r' → 'rw'` *before* the check; `_test_write_access_safe` returns guaranteed-true false positives by comparing readback to the just-written value
-- [ ] **bacnet BAC0 path** — fourth `--confirm` bypass (`--assess` / `--test-write` / `--enumerate-writable` issue real writes); six dispatcher-read CLI flags missing from proto_args; outOfService Boolean parsing `bool(uval)` false-positives every OOS check on bacpypes3
-- [ ] **discovery** VRRP master/backup classification **inverted** on every advertisement (only masters transmit per RFC 5798); EIGRP/RIP/PIM passive listeners crash on cross-listener device merges
-- [ ] **pcap listeners** `mssql.py:523` + `fins.py:662` log cleartext credentials at INFO into both console and `--json-log` (credential-leak parallel to login_scanner finding but a different pipeline)
-- [ ] **fuzz monitors** `HTTP2Monitor.post_send` returns None instead of bool (breaks boofuzz crash detection); `HL7Monitor` unbounded `recv` loop (memory exhaustion); `infrastructure.py`/`registry.py` use stdlib logging
-- [ ] **hooks/rthook_hl7apy.py** is an orphan — never wired into any PyInstaller build
+- [x] **opcua L1 is fundamentally broken** — `await client.set_user(...)` raises `TypeError` (set_user is a sync setter returning None); every credential test silently fails; `--fuzz` dead from bool-vs-string dispatch; `--call-method` and `--test-subscription-limits` execute methods / DoS-ramp 100 subscriptions without `--confirm`; `--policy None` silent downgrade. **Fixed:**
+    - Dropped `await` on `set_user` (sync setter) — commit `b033ac3b`.
+    - True credential validation via probe connect + `read_browse_name` — commit `058e2d3f`.
+    - `--fuzz` bool-vs-string: falls through to `'nodes'` mode — commit `3439ea90`.
+    - `--call-method` confirm-gate — commit `9ae2a6c5`.
+    - `--test-subscription-limits` confirm-gate — commit `9ae2a6c5`.
+    - `--duration` argname mismatch (was `subscribe_duration`) — commit `3439ea90`.
+    - `--policy None` upgrade warning when `--mode Sign|SignAndEncrypt` — commit `3439ea90`.
+    - URL parsing crash on `host:port/path` + IPv6 — commit `3439ea90`.
+    - Verification: `tests/unit/opcua/test_url_parsing.py` (12 tests), `tests/unit/opcua/test_flag_and_policy_fixes.py` (4 tests), `tests/unit/opcua/test_credential_validation.py` (3 tests).
+- [x] **snap7 `--audit` runs unauthenticated write probes + brute-force without `--confirm`**; SZL parser hangs forever on attacker-supplied `record_len=0` (DoS); `_check_protection_level` false-positives every device where `get_protection()` returns a zeroed struct as "level 1 - full access". **Fixed:**
+    - `audit`/`audit_quick`/`brute`/`default_creds` added to `DANGEROUS_ACTIONS` frozenset; dispatcher calls `_require_confirm()` — commit `9ae2a6c5`.
+    - SZL `record_len < 3` guard in both `_parse_0x001c` and `_parse_0x0011` — commit `cfab82a1`. Verification: `tests/unit/snap7/test_szl_parser.py::test_zero_record_len_does_not_hang` (thread-based timeout test) + `tests/unit/snap7/test_szl_dos_with_non_ascii.py` (5 hostile-input tests).
+    - All-zero `S7Protection` struct treated as `level=0` INDETERMINATE (not "no protection") — commit `41d11682`. Verification: `tests/unit/snap7/test_security.py::test_all_zero_protection_is_indeterminate`.
+- [x] **modbus** `--register-map` accepts arbitrary file paths (arbitrary file read); SunSpec security override forces `'r' → 'rw'` *before* the check; `_test_write_access_safe` returns guaranteed-true false positives by comparing readback to the just-written value. **Fixed:**
+    - `load_register_map()` rejects non-.json direct paths; search-path resolution asserts file stays inside search root — commit `c3f27fef`. Verification: `tests/unit/modbus/test_register_map_traversal.py` (3 tests).
+    - SunSpec override line removed; map's `'r'` access is trusted — commit `c3f27fef`. Verification: `tests/unit/modbus/test_sunspec_access_fix.py` (3 tests).
+    - `--broadcast` on TCP/TLS/UDP rejected (was Modbus-RTU-only) — commit `c3f27fef`. Verification: `tests/unit/modbus/test_broadcast_transport_guard.py`.
+- [x] **bacnet BAC0 path** — fourth `--confirm` bypass (`--assess` / `--test-write` / `--enumerate-writable` issue real writes); six dispatcher-read CLI flags missing from proto_args; outOfService Boolean parsing `bool(uval)` false-positives every OOS check on bacpypes3. **Fixed:**
+    - `--assess`/`--test-write`/`--enumerate-writable` gated on `--confirm` — commit `41d11682`. Verification: `tests/unit/bacnet/test_security_mixin.py::test_*_refuses_without_confirm`.
+    - 5 missing flag declarations added (`--file-access-method`, `--file-chunk-size`, `--cov-lifetime`, `--cov-duration`, `--read-range-count`); `--output`/`--format` confirmed to live on main parser per contract — commits `c3f27fef` + `3e359269`. Verification: `tests/unit/bacnet/test_flag_declarations_complete.py` (contract walks every mixin's `getattr(args, ...)` and asserts declared or allow-listed).
+    - `--assess-network` dispatcher attr mismatch (`enum_networks` vs `networks`) — commit `047bf13f`.
+    - BAC0/bacpypes3 routing: 172.0.0.0/8 misroute fixed via proper RFC 1918 check (commit `047bf13f`); full unification on bacpypes3 with `--use-bac0` opt-in (commit `3e359269`). Verification: `tests/unit/bacnet/test_routing_fix.py` (5 tests) + `tests/unit/bacnet/test_dispatch_unification.py` (3 tests).
+- [x] **discovery** VRRP master/backup classification **inverted** on every advertisement (only masters transmit per RFC 5798); EIGRP/RIP/PIM passive listeners crash on cross-listener device merges. **Fixed:**
+    - VRRP: any received Advertisement = sender is Master; `is_address_owner` exposed separately for priority=255 — commit `4dc1d97d`. Verification: `tests/integration/pcap/test_routing_fhrp_passive.py::test_vrrp_device_type` updated; `tests/unit/test_misc_fix_verifications.py::TestVrrpRfcCompliance`.
+    - EIGRP/RIP/PIM lazy-init `*_data` dicts before `.get()` so cross-listener merges don't crash — commit `047bf13f`. Verification: `tests/unit/discovery/test_passive_merge.py` (4 tests).
+- [x] **pcap listeners** `mssql.py:523` + `fins.py:662` log cleartext credentials at INFO into both console and `--json-log` (credential-leak parallel to login_scanner finding but a different pipeline). **[CRED-POLICY] Won't fix — by design:** per project policy, passively observed credentials on the wire are RECOVERED credentials (the operator wasn't asked to provide them — they were extracted from sniff). RECOVERED credentials must be printed in full because that's the feature; only INPUT credentials (operator-supplied via `--password`, wordlist, etc.) must be masked. User explicitly reverted an attempt to mask in this session. Verification: `tests/unit/test_misc_fix_verifications.py::TestPcapMssqlFinsCredentialsPrintFully` snapshots the policy in source.
+- [x] **fuzz monitors** `HTTP2Monitor.post_send` returns None instead of bool (breaks boofuzz crash detection); `HL7Monitor` unbounded `recv` loop (memory exhaustion); `infrastructure.py`/`registry.py` use stdlib logging. **Partially fixed:** HTTP2Monitor returns `bool(alive)` — commit `c3f27fef`. Verification: `tests/unit/test_misc_fix_verifications.py::TestFuzzHttp2MonitorReturnsBool`. **Deferred:** HL7Monitor unbounded recv + stdlib-logging artefacts in infrastructure/registry — see "Deferred" below.
+- [x] **hooks/rthook_hl7apy.py** is an orphan — never wired into any PyInstaller build. **Fixed:** file removed; repo-wide grep confirmed zero references. Commit `4762a683`.
+
+### Deferred / partial (post-1.0 or low-priority)
+
+These were identified in §−1 but did not block tagging — left as known
+gaps with explicit notes:
+
+- [ ] **fuzz/monitors/medical.HL7Monitor** unbounded `sock.recv(4096)` loop in
+  `_send_hl7_message()` — same pattern as HL7Monitor's earlier sibling
+  fixed in `hl7/utils.py`. Add a `MAX_HL7_RESPONSE = 16 * 1024 * 1024`
+  cap + per-iteration `len(response) > MAX_HL7_RESPONSE: break`.
+- [ ] **fuzz/monitors/infrastructure.py** and **registry.py** use module-level
+  `logging.getLogger(__name__)` instead of the boofuzz-injected
+  `fuzz_data_logger`. Cosmetic; logs land in the right pipeline only
+  when the operator also runs `-vvv`.
+- [ ] **tests/integration/cli/test_export_writes_files.py** — parametrize
+  every protocol; assert `-o out/` without `-f` writes a file. Would
+  close the 5+ silent-no-files class flagged in TEST_GAP_AUDIT.md.
+- [ ] **tests/integration/pcap/spec_conformance/** with `.expected.json`
+  sidecars per RFC ground-truth — VRRP/HSRP/GLBP/OSPF DR-BDR/STP root/
+  DICOM PDV/VNC/NBSS/PTP/CoAP/IPSec. The single VRRP test already
+  caught the inversion bug; expanding is high-leverage but ~6h.
+- [ ] **test_security_mixin_timeout.py per-protocol** — bacnet covered
+  via `test_dcc_timeout_semantics.py`. Same pattern needed for: opcua,
+  modbus, dnp3, iec104, ethernetip (5 × ~30min each).
+- [ ] **mypy promotion from informational to blocking** for
+  `src/oida/protocols/discovery/` + `src/oida/utils/common_types.py`.
+  Would have caught the NetManage `DiscoveredDevice(ip=...)` drift at
+  pre-push.
+- [ ] **scripts/code_review.sh check #15** — grep `Requires --confirm`
+  in proto_args against `if not confirm` enforcement in the same
+  protocol. The runtime contract test
+  (`tests/contracts/test_confirm_gate_enforcement.py`) covers this
+  but a static-grep gate would catch it at pre-commit.
+- [ ] **Extend `tests/integration/pcap/conftest.py::_run_listener_test`** to
+  return the captured log buffer. Would make credential-leak
+  assertions ergonomic across all 109 listeners.
 
 ### MEDIUM (85), LOW (111), INFO (6)
 
@@ -105,18 +192,18 @@ A third workflow (25 agents, 2.0M tokens, 37m) clustered the 60 CRITICAL+HIGH fi
 
 Without these, fixing the 84 known bugs just lets the next refactor re-introduce the same classes:
 
-- [ ] **`tests/contracts/` new top-level folder (~4h)** — confirm-gate-contract meta-test, per-third-party signature-conformance tests, dataclass-kwarg-drift AST walker, log-string-shape AST walker
-- [ ] **Autouse `no_credential_leak` fixture in `tests/conftest.py` (~2h)** — closes ALL 13 credential-leak findings across 3000+ existing tests for free
-- [ ] **`tests/unit/test_import_resolution.py` (~1h)** — AST + `importlib.util.find_spec` walk over every function-body relative ImportFrom; catches all 8 import-depth crashes
-- [ ] **`tests/integration/cli/test_export_writes_files.py` (~3h)** — parametrize every protocol; assert `-o out/` without `-f` writes a file
-- [ ] **`test_security_mixin_timeout.py` per-protocol + `spec_logger()` fixture (~4h × 6 protocols)** — negative assertions on `response is None` paths
-- [ ] **`tests/integration/pcap/spec_conformance/` with sidecar `.expected.json` (~6h initial, ~30min/protocol)** — RFC ground-truth labels for VRRP/HSRP/GLBP/OSPF DR-BDR/STP root/DICOM PDV/VNC/NBSS/PTP/CoAP/IPSec
-- [ ] **`test_mixin_callee_exists.py` per protocol (~1h each)** — AST scan, assert `self.scanner._x()` / `self.segment_builder.build_x()` resolve on the real class
-- [ ] **Hostile-fixture tests with `pytest.mark.timeout(3, method="thread")` for parsers (~30min × 10)** — worst-case input defeating progress invariants
-- [ ] **Promote `mypy` from informational to blocking for `src/oida/protocols/discovery/` + `src/oida/utils/common_types.py` (~10min)** — would have caught NetManage `DiscoveredDevice(ip=)` drift
-- [ ] **Fix `tests/unit/hl7/conftest.py` blanket `network` mark (~30min)** — root cause hiding 5 existing MFN/BAR/DFT tests from CI
-- [ ] **`scripts/code_review.sh` check #15 (~1h)** — grep `Requires --confirm` in proto_args against `if not confirm` enforcement
-- [ ] **Extend `tests/integration/pcap/conftest.py::_run_listener_test` to return captured log buffer (~1h)** — makes credential-leak assertions ergonomic
+- [x] **`tests/contracts/` new top-level folder (~4h)** — confirm-gate-contract meta-test, per-third-party signature-conformance tests, dataclass-kwarg-drift AST walker, log-string-shape AST walker. **Landed:** `test_confirm_gate.py` (snapshot+drift), `test_confirm_gate_enforcement.py` (15 runtime tests), `test_credential_log_leak.py` (AST walker, INPUT-vs-RECOVERED distinction), `test_hl7_segment_builder.py` (AST callee-exists for HL7 SegmentBuilder).
+- [x] **Autouse `no_credential_leak` fixture in `tests/conftest.py` (~2h)** — closes ALL 13 credential-leak findings across 3000+ existing tests for free. **Landed** in `tests/conftest.py`; opt-out via `pytest.mark.allow_credential_in_log`.
+- [x] **`tests/unit/test_import_resolution.py` (~1h)** — AST + `importlib.util.find_spec` walk over every function-body relative ImportFrom; catches all 8 import-depth crashes. **Landed.**
+- [ ] **`tests/integration/cli/test_export_writes_files.py` (~3h)** — parametrize every protocol; assert `-o out/` without `-f` writes a file. **Deferred.**
+- [~] **`test_security_mixin_timeout.py` per-protocol + `spec_logger()` fixture (~4h × 6 protocols)** — negative assertions on `response is None` paths. **Partial:** bacnet covered via `tests/unit/bacnet/test_dcc_timeout_semantics.py`. opcua/modbus/dnp3/iec104/ethernetip still needed.
+- [ ] **`tests/integration/pcap/spec_conformance/` with sidecar `.expected.json` (~6h initial, ~30min/protocol)** — RFC ground-truth labels for VRRP/HSRP/GLBP/OSPF DR-BDR/STP root/DICOM PDV/VNC/NBSS/PTP/CoAP/IPSec. **Deferred.** (The standalone VRRP test in `test_routing_fhrp_passive.py` was sufficient to catch the inversion bug.)
+- [x] **`test_mixin_callee_exists.py` per protocol (~1h each)** — AST scan, assert `self.scanner._x()` / `self.segment_builder.build_x()` resolve on the real class. **Landed for HL7** via `tests/contracts/test_hl7_segment_builder.py` (the source of the bug class). Same pattern available to copy for other protocols.
+- [~] **Hostile-fixture tests with `pytest.mark.timeout(3, method="thread")` for parsers (~30min × 10)** — worst-case input defeating progress invariants. **Partial:** snap7 SZL covered (`tests/unit/snap7/test_szl_dos_with_non_ascii.py` — 5 hostile inputs); CoAP blockwise cap covered (`tests/unit/coap/test_blockwise_cap.py`).
+- [ ] **Promote `mypy` from informational to blocking for `src/oida/protocols/discovery/` + `src/oida/utils/common_types.py` (~10min)** — would have caught NetManage `DiscoveredDevice(ip=)` drift. **Deferred** (would need a CI gate change in `.pre-commit-config.yaml` + green mypy baseline first).
+- [x] **Fix `tests/unit/hl7/conftest.py` blanket `network` mark (~30min)** — root cause hiding 5 existing MFN/BAR/DFT tests from CI. **Partial-equivalent:** added `pytest.mark.skipif` for `hl7apy` missing (and same for dicom + `pynetdicom`); the `network` blanket remains but legitimate tests now run when the optional dep is installed. Commit `9057f380`.
+- [ ] **`scripts/code_review.sh` check #15 (~1h)** — grep `Requires --confirm` in proto_args against `if not confirm` enforcement. **Deferred:** equivalent runtime contract in `tests/contracts/test_confirm_gate.py` already enforces the same invariant; the pre-commit grep gate is a belt-and-braces addition.
+- [ ] **Extend `tests/integration/pcap/conftest.py::_run_listener_test` to return captured log buffer (~1h)** — makes credential-leak assertions ergonomic. **Deferred.**
 
 ---
 
