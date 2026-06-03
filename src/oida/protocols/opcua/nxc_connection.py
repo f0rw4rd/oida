@@ -456,6 +456,20 @@ class opcua(
             requested_policy = getattr(self.args, "policy", "None")
             needs_secure_channel = requested_mode in ("Sign", "SignAndEncrypt")
 
+            # Honest reporting of mode/policy mismatch: previously the code
+            # accepted requested_policy='None' alongside mode=Sign|SignAndEncrypt
+            # and the downstream policy_map silently substituted Basic256Sha256.
+            # Operators who deliberately asked for 'None' (e.g. probing
+            # legacy-config endpoints) got a different policy than they
+            # requested. Make the upgrade explicit.
+            if needs_secure_channel and requested_policy == "None":
+                self.logger.warning(
+                    f"--mode {requested_mode} requires a non-None security policy. "
+                    "Upgrading to Basic256Sha256 — pass --policy explicitly to "
+                    "select a different policy."
+                )
+                requested_policy = "Basic256Sha256"
+
             auto_cert_path = None
             auto_key_path = None
             if needs_secure_channel and not (cert_path and key_path):

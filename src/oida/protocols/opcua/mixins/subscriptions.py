@@ -15,7 +15,14 @@ class SubscriptionsMixin:
 
     async def _subscribe_data_changes(self):
         """Subscribe to variable data changes"""
-        duration = getattr(self.args, "subscribe_duration", 10)
+        # argparse dest for --duration is 'duration', not 'subscribe_duration';
+        # the old name was a silent miss so --duration was effectively ignored
+        # and every subscription ran the hard-coded 10s. Keep
+        # 'subscribe_duration' as a back-compat fallback in case
+        # somebody added an alias downstream.
+        duration = getattr(
+            self.args, "duration", None
+        ) or getattr(self.args, "subscribe_duration", 10)
         interval = getattr(self.args, "subscription_interval", 500)
 
         self.logger.display(f"Subscribing for {duration}s (interval: {interval}ms)...")
@@ -61,7 +68,14 @@ class SubscriptionsMixin:
 
     async def _subscribe_events(self):
         """Subscribe to server events with EventNotifier permission check"""
-        duration = getattr(self.args, "subscribe_duration", 10)
+        # argparse dest for --duration is 'duration', not 'subscribe_duration';
+        # the old name was a silent miss so --duration was effectively ignored
+        # and every subscription ran the hard-coded 10s. Keep
+        # 'subscribe_duration' as a back-compat fallback in case
+        # somebody added an alias downstream.
+        duration = getattr(
+            self.args, "duration", None
+        ) or getattr(self.args, "subscribe_duration", 10)
 
         self.logger.display(f"Subscribing to events for {duration}s...")
 
