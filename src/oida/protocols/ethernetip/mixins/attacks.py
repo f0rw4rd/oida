@@ -133,16 +133,26 @@ class AttacksMixin(_ScannerBase):
                                 f"[{attack_name}] CIP error 0x{status_code:02X}: {status_text}"
                             )
             else:
-                # No response might mean the device crashed (success for crash attacks)
-                result["success"] = True
-                result["error"] = "No response (device may have crashed)"
-                self.logger.warning(f"[{attack_name}] No response - device may have crashed")
+                # No response is INCONCLUSIVE — could be a filter, slow PLC,
+                # or a crash. Don't lie to the caller about "success" — every
+                # blocked-by-firewall run otherwise emitted a CRITICAL
+                # finding "command executed". Mark inconclusive and let the
+                # caller decide.
+                result["success"] = False
+                result["inconclusive"] = True
+                result["error"] = "No response (inconclusive — could be filter, slow PLC, or crash)"
+                self.logger.warning(
+                    f"[{attack_name}] No response — INCONCLUSIVE (not asserting crash)"
+                )
 
         except TimeoutError:
-            # Timeout might mean the device crashed
-            result["success"] = True
-            result["error"] = "Timeout (device may have crashed)"
-            self.logger.warning(f"[{attack_name}] Timeout - device may have crashed")
+            # Same as above: timeout means we don't know.
+            result["success"] = False
+            result["inconclusive"] = True
+            result["error"] = "Timeout (inconclusive — could be filter, slow PLC, or crash)"
+            self.logger.warning(
+                f"[{attack_name}] Timeout — INCONCLUSIVE (not asserting crash)"
+            )
         except Exception as e:
             self.logger.debug(f"send attack command failed: {e}")
             result["error"] = str(e)

@@ -78,14 +78,57 @@ class ScannerDiagnosticsMixin(_ScannerBase):
                 results["counters"] = counters
                 results["supported_subfunctions"].extend(counters.keys())
 
-        # Clear counters (subfunction 0x0A) - only if explicitly requested
+        # Clear counters (subfunction 0x0A) - mutates device state.
         if "clear" in test_list:
-            clear_result = self._diagnostic_clear_counters(client)
-            if clear_result:
-                results["clear_counters"] = clear_result
-                results["supported_subfunctions"].append(0x0A)
+            if not self._args_get("confirm", False):
+                self.logger.fail(
+                    "--diag clear runs subfunction 0x0A (Clear Counters and Diagnostic "
+                    "Register) which mutates device state — requires --confirm"
+                )
+            else:
+                clear_result = self._diagnostic_clear_counters(client)
+                if clear_result:
+                    results["clear_counters"] = clear_result
+                    results["supported_subfunctions"].append(0x0A)
+
+        # Restart communications (subfunction 0x01) - resets the listen-only
+        # mode and clears communications event counters. Disruptive.
+        if "restart" in test_list:
+            if not self._args_get("confirm", False):
+                self.logger.fail(
+                    "--diag restart runs subfunction 0x01 (Restart Communications) "
+                    "which resets device state — requires --confirm"
+                )
+            else:
+                restart_result = self._diagnostic_restart(client)
+                if restart_result:
+                    results["restart"] = restart_result
+                    results["supported_subfunctions"].append(0x01)
 
         return results
+
+    def _args_get(self, key: str, default=None):
+        """Pull a value from the scanner's args dict (which may be a dict-or-Namespace)."""
+        args = getattr(self, "args", None)
+        if args is None:
+            return default
+        if isinstance(args, dict):
+            return args.get(key, default)
+        return getattr(args, key, default)
+
+    def _diagnostic_restart(self, client: Any) -> bool:
+        """Restart Communications Option (subfunction 0x01)."""
+        try:
+            method = getattr(client, "diag_restart_communications_option", None)
+            if not method:
+                # Older pymodbus may not expose this directly; bail visibly.
+                self.logger.debug("pymodbus client has no diag_restart_communications_option")
+                return False
+            result = method(device_id=self.unit_id)
+            return not result.isError()
+        except Exception as e:
+            self.logger.debug(f"Restart communications failed: {e}")
+            return False
 
     def _diagnostic_echo_test(
         self, client: Any, test_data: int = 0x1234
