@@ -223,3 +223,55 @@ def test_proto_args_importable(proto):
         pytest.skip(f"{proto}: loader returned None (optional dep not installed)")
 
     assert hasattr(mod, "proto_args"), f"{proto}: proto_args.py missing proto_args() function"
+
+
+# ---------------------------------------------------------------------------
+# Credential-redaction contract
+# ---------------------------------------------------------------------------
+
+
+class TestRedactSensitiveArgs:
+    """_redact_sensitive_args must mask credential-like dest names."""
+
+    def test_masks_password(self):
+        from oida.cli import _redact_sensitive_args
+
+        out = _redact_sensitive_args({"password": "hunter2", "host": "1.2.3.4"})
+        assert out["password"] == "***"
+        assert out["host"] == "1.2.3.4"
+
+    def test_masks_all_known_patterns(self):
+        from oida.cli import _redact_sensitive_args
+
+        sensitive = {
+            "password": "x",
+            "ssh_passwd": "y",
+            "client_secret": "z",
+            "api_token": "t",
+            "psk": "p",
+            "pre_shared_key": "k",
+            "private_key": "key",
+            "auth_string": "a",
+            "auth_pass": "b",
+            "snmp_community": "public",
+            "api_key": "k1",
+            "apikey": "k2",
+            "stored_credential": "c",
+        }
+        out = _redact_sensitive_args(sensitive)
+        for k in sensitive:
+            assert out[k] == "***", f"{k} not redacted"
+
+    def test_preserves_none_values(self):
+        from oida.cli import _redact_sensitive_args
+
+        out = _redact_sensitive_args({"password": None, "host": "x"})
+        # None means user didn't supply the flag — keep as None for legibility
+        assert out["password"] is None
+        assert out["host"] == "x"
+
+    def test_does_not_mask_non_sensitive(self):
+        from oida.cli import _redact_sensitive_args
+
+        out = _redact_sensitive_args({"port": 502, "timeout": 5.0, "verbose": True})
+        assert out == {"port": 502, "timeout": 5.0, "verbose": True}
