@@ -37,7 +37,7 @@ class FuzzMixin(_ScannerBase):
 
     def _fuzz_cfind_queries(self, iterations: int):
         """Fuzz C-FIND query parameters"""
-        from ...utils.fuzzer import fuzz
+        from ....utils.fuzzer import fuzz
 
         fuzz_results = {
             "tested": 0,

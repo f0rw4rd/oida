@@ -309,7 +309,7 @@ class ReportingMixin(_ScannerBase):
 
     def _export_results(self):
         """Export query results using central export_data() utility"""
-        from ...utils.export_utils import export_data
+        from ....utils.export_utils import export_data
 
         output_dir = getattr(self.args, "output", None)
         if not output_dir:
