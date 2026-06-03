@@ -38,7 +38,9 @@ def proto_args(parser, parents):
 
     # Network options — port 48898 is the ADS TCP listener.
     add_network_options(
-        ads_parser, default_port=48898, include_timeout=False,
+        ads_parser,
+        default_port=48898,
+        include_timeout=False,
         port_help="ADS TCP port (default: 48898)",
     )
 

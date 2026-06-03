@@ -335,7 +335,9 @@ class CoAPScanner(NetworkScanner):
 
         self.logger.debug(
             "Testing %d methods on %d resources (confirm=%s)",
-            len(active_methods), len(resources), confirm,
+            len(active_methods),
+            len(resources),
+            confirm,
         )
         for res in resources:
             path = res.get("path", "")

@@ -381,9 +381,7 @@ class NetworkConnection(connection):
             # in order; first reachable wins.
             timeout = getattr(self.args, "timeout", 2)
             try:
-                addrinfo = socket.getaddrinfo(
-                    self.ip, self.args.port, type=socket.SOCK_STREAM
-                )
+                addrinfo = socket.getaddrinfo(self.ip, self.args.port, type=socket.SOCK_STREAM)
             except socket.gaierror as e:
                 self.logger.debug(f"test connection: getaddrinfo failed: {e}")
                 return False
