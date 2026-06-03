@@ -552,6 +552,10 @@ def validate_args(args) -> None:
         control_ops.append("--disable-unsol")
     if getattr(args, "write_deadband", None):
         control_ops.append("--write-deadband")
+    if getattr(args, "time_sync", False):
+        # Type 50 time-sync writes the outstation clock — same blast
+        # radius as the other control ops; was missing from this list.
+        control_ops.append("--time-sync")
     # Freeze operations
     if getattr(args, "freeze_immediate", False):
         control_ops.append("--freeze-immediate")

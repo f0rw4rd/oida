@@ -129,11 +129,18 @@ def _enforced_dests_per_protocol() -> dict[str, set[str]]:
                 continue
             if "confirm" not in body_src:
                 continue
-            # Extract every args.<name> / self.args.<name> / getattr(args,"<name>")
-            referenced = set(
-                re.findall(r"args\.([a-z_][a-z0-9_]*)", body_src)
-            ) | set(
-                re.findall(r"getattr\(\s*(?:self\.)?args\s*,\s*['\"]([a-z_][a-z0-9_]*)", body_src)
+            # Extract every args.<name> / self.args.<name> / getattr(args,"<name>"),
+            # plus self.<name> (covers protocols like iec104/dnp3 that copy CLI
+            # args into self.<flag> attributes in __init__ and dispatch on those).
+            referenced = (
+                set(re.findall(r"args\.([a-z_][a-z0-9_]*)", body_src))
+                | set(
+                    re.findall(
+                        r"getattr\(\s*(?:self\.)?args\s*,\s*['\"]([a-z_][a-z0-9_]*)",
+                        body_src,
+                    )
+                )
+                | set(re.findall(r"\bself\.([a-z_][a-z0-9_]*)\b", body_src))
             )
             out.setdefault(protocol, set()).update(referenced)
     return out

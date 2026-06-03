@@ -124,6 +124,12 @@ class SecurityMixin:
 
     def _brute_force_credentials(self):
         """Brute force HTTP Basic Auth or OAuth2 credentials"""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--brute / --default-creds runs OAuth2/Basic credential brute-force "
+                "(56+ token-endpoint requests per host) — requires --confirm"
+            )
+            return
         import requests
         from requests.auth import HTTPBasicAuth
 
