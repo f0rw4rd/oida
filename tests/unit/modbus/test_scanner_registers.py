@@ -113,7 +113,7 @@ class TestReadCoils:
         create_mock_scanner(scanner_args)
 
         # Call read_coils on mock
-        result = mock_client.read_coils(0, 1, slave=1)
+        result = mock_client.read_coils(0, 1, device_id=1)
 
         assert not result.isError()
         assert len(result.bits) >= 1
@@ -123,7 +123,7 @@ class TestReadCoils:
         """Test reading a range of coils."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_coils(0, 5, slave=1)
+        result = mock_client.read_coils(0, 5, device_id=1)
 
         assert not result.isError()
         assert len(result.bits) >= 5
@@ -136,7 +136,7 @@ class TestReadCoils:
         mock_client.read_coils.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_coils(0, 1, slave=1)
+        result = mock_client.read_coils(0, 1, device_id=1)
 
         assert result.isError()
 
@@ -147,7 +147,7 @@ class TestReadCoils:
         create_mock_scanner(scanner_args)
 
         with pytest.raises(Exception, match="Connection lost"):
-            mock_client.read_coils(0, 1, slave=1)
+            mock_client.read_coils(0, 1, device_id=1)
 
 
 # =============================================================================
@@ -162,7 +162,7 @@ class TestReadDiscreteInputs:
         """Test reading a single discrete input."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_discrete_inputs(0, 1, slave=1)
+        result = mock_client.read_discrete_inputs(0, 1, device_id=1)
 
         assert not result.isError()
         assert len(result.bits) >= 1
@@ -172,7 +172,7 @@ class TestReadDiscreteInputs:
         """Test reading a range of discrete inputs."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_discrete_inputs(0, 5, slave=1)
+        result = mock_client.read_discrete_inputs(0, 5, device_id=1)
 
         assert not result.isError()
         assert len(result.bits) >= 5
@@ -184,7 +184,7 @@ class TestReadDiscreteInputs:
         mock_client.read_discrete_inputs.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_discrete_inputs(0, 1, slave=1)
+        result = mock_client.read_discrete_inputs(0, 1, device_id=1)
 
         assert result.isError()
 
@@ -201,7 +201,7 @@ class TestReadHoldingRegisters:
         """Test reading a single holding register."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
 
         assert not result.isError()
         assert len(result.registers) >= 1
@@ -211,7 +211,7 @@ class TestReadHoldingRegisters:
         """Test reading a range of holding registers."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_holding_registers(0, 5, slave=1)
+        result = mock_client.read_holding_registers(0, 5, device_id=1)
 
         assert not result.isError()
         assert len(result.registers) == 5
@@ -225,7 +225,7 @@ class TestReadHoldingRegisters:
         mock_client.read_holding_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
 
         assert result.isError()
 
@@ -238,7 +238,7 @@ class TestReadHoldingRegisters:
         mock_client.read_holding_registers.return_value = large_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 125, slave=1)
+        result = mock_client.read_holding_registers(0, 125, device_id=1)
 
         assert not result.isError()
         assert len(result.registers) == 125
@@ -256,7 +256,7 @@ class TestReadInputRegisters:
         """Test reading a single input register."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_input_registers(0, 1, slave=1)
+        result = mock_client.read_input_registers(0, 1, device_id=1)
 
         assert not result.isError()
         assert len(result.registers) >= 1
@@ -266,7 +266,7 @@ class TestReadInputRegisters:
         """Test reading a range of input registers."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_input_registers(0, 5, slave=1)
+        result = mock_client.read_input_registers(0, 5, device_id=1)
 
         assert not result.isError()
         assert len(result.registers) == 5
@@ -279,7 +279,7 @@ class TestReadInputRegisters:
         mock_client.read_input_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_input_registers(0, 1, slave=1)
+        result = mock_client.read_input_registers(0, 1, device_id=1)
 
         assert result.isError()
 
@@ -384,7 +384,7 @@ class TestResponseErrorHandling:
         mock_client.read_holding_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
 
         assert result.isError()
         assert result.exception_code == 1
@@ -397,7 +397,7 @@ class TestResponseErrorHandling:
         mock_client.read_holding_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(65535, 1, slave=1)
+        result = mock_client.read_holding_registers(65535, 1, device_id=1)
 
         assert result.isError()
         assert result.exception_code == 2
@@ -410,7 +410,7 @@ class TestResponseErrorHandling:
         mock_client.read_holding_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 200, slave=1)
+        result = mock_client.read_holding_registers(0, 200, device_id=1)
 
         assert result.isError()
         assert result.exception_code == 3
@@ -423,7 +423,7 @@ class TestResponseErrorHandling:
         mock_client.read_holding_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
 
         assert result.isError()
         assert result.exception_code == 4
@@ -436,7 +436,7 @@ class TestResponseErrorHandling:
         mock_client.read_holding_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=100)
+        result = mock_client.read_holding_registers(0, 1, device_id=100)
 
         assert result.isError()
         assert result.exception_code == 10
@@ -449,7 +449,7 @@ class TestResponseErrorHandling:
         mock_client.read_holding_registers.return_value = error_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=200)
+        result = mock_client.read_holding_registers(0, 1, device_id=200)
 
         assert result.isError()
         assert result.exception_code == 11
@@ -576,21 +576,21 @@ class TestRegisterAddressBoundaries:
     def test_address_zero(self, mock_client, scanner_args):
         """Test reading at address 0."""
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         assert not result.isError()
 
     def test_address_max(self, mock_client, scanner_args):
         """Test reading at maximum address."""
         create_mock_scanner(scanner_args)
         # Max Modbus address is 65535
-        mock_client.read_holding_registers(65535, 1, slave=1)
+        mock_client.read_holding_registers(65535, 1, device_id=1)
         # This may succeed or fail depending on device
         # The test verifies no crash occurs
 
     def test_count_one(self, mock_client, scanner_args):
         """Test reading count of 1."""
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         assert not result.isError()
 
     def test_count_max_holding(self, mock_client, scanner_args):
@@ -602,7 +602,7 @@ class TestRegisterAddressBoundaries:
         mock_client.read_holding_registers.return_value = large_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 125, slave=1)
+        result = mock_client.read_holding_registers(0, 125, device_id=1)
 
         assert not result.isError()
         assert len(result.registers) == 125
@@ -615,7 +615,7 @@ class TestRegisterAddressBoundaries:
         mock_client.read_coils.return_value = large_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_coils(0, 2000, slave=1)
+        result = mock_client.read_coils(0, 2000, device_id=1)
 
         assert not result.isError()
         assert len(result.bits) == 2000
@@ -634,7 +634,7 @@ class TestTimeoutHandling:
         mock_client.read_holding_registers.return_value = None
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
 
         assert result is None
 

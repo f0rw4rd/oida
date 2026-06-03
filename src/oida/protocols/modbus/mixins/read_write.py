@@ -194,13 +194,13 @@ class MapReadWriteMixin(_ScannerBase):
         try:
             # Read registers using the correct function code
             if fc == 1:
-                result = self.conn.read_coils(address, count=1, slave=unit_id)
+                result = self.conn.read_coils(address, count=1, device_id=unit_id)
             elif fc == 2:
-                result = self.conn.read_discrete_inputs(address, count=1, slave=unit_id)
+                result = self.conn.read_discrete_inputs(address, count=1, device_id=unit_id)
             elif fc == 4:
-                result = self.conn.read_input_registers(address, count=regs_needed, slave=unit_id)
+                result = self.conn.read_input_registers(address, count=regs_needed, device_id=unit_id)
             else:
-                result = self.conn.read_holding_registers(address, count=regs_needed, slave=unit_id)
+                result = self.conn.read_holding_registers(address, count=regs_needed, device_id=unit_id)
 
             if result.isError():
                 exc_code = getattr(result, "exception_code", None)
@@ -355,7 +355,7 @@ class MapReadWriteMixin(_ScannerBase):
                 f"{'ON' if coil_value else 'OFF'}"
             )
             try:
-                result = self.conn.write_coil(address, coil_value, slave=unit_id)
+                result = self.conn.write_coil(address, coil_value, device_id=unit_id)
                 if result.isError():
                     self.logger.fail(f"  Coil write failed: {result}")
                 else:
@@ -410,9 +410,9 @@ class MapReadWriteMixin(_ScannerBase):
 
         try:
             if reg_count == 1:
-                result = self.conn.write_register(address, registers[0], slave=unit_id)
+                result = self.conn.write_register(address, registers[0], device_id=unit_id)
             else:
-                result = self.conn.write_registers(address, registers, slave=unit_id)
+                result = self.conn.write_registers(address, registers, device_id=unit_id)
 
             if result.isError():
                 exc_code = getattr(result, "exception_code", None)

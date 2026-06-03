@@ -111,7 +111,7 @@ class TestReadFileRecord:
         # Request format: file_number, record_number, record_length
         result = mock_client.read_file_record(
             [(0x0001, 0x0000, 5)],  # File 1, record 0, 5 registers
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -135,7 +135,7 @@ class TestReadFileRecord:
                 (0x0001, 0x0000, 2),  # File 1, record 0
                 (0x0001, 0x0001, 2),  # File 1, record 1
             ],
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -150,7 +150,7 @@ class TestReadFileRecord:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_file_record([(0x0001, 0x0000, 5)], slave=1)
+        result = mock_client.read_file_record([(0x0001, 0x0000, 5)], device_id=1)
 
         assert result.isError()
 
@@ -163,7 +163,7 @@ class TestReadFileRecord:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_file_record([(0xFFFF, 0x0000, 5)], slave=1)
+        result = mock_client.read_file_record([(0xFFFF, 0x0000, 5)], device_id=1)
 
         assert result.isError()
         assert result.exception_code == 2
@@ -184,7 +184,7 @@ class TestWriteFileRecord:
         # Write to file 1, record 0
         result = mock_client.write_file_record(
             [(0x0001, 0x0000, [100, 200, 300])],
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -198,7 +198,7 @@ class TestWriteFileRecord:
                 (0x0001, 0x0000, [100, 200]),
                 (0x0001, 0x0001, [300, 400]),
             ],
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -214,7 +214,7 @@ class TestWriteFileRecord:
 
         result = mock_client.write_file_record(
             [(0x0001, 0x0000, [100])],
-            slave=1,
+            device_id=1,
         )
 
         assert result.isError()
@@ -230,7 +230,7 @@ class TestWriteFileRecord:
 
         result = mock_client.write_file_record(
             [(0x0001, 0x0000, [100])],
-            slave=1,
+            device_id=1,
         )
 
         assert result.isError()
@@ -253,7 +253,7 @@ class TestMaskWriteRegister:
             address=0,
             and_mask=0xFF00,  # Clear low byte
             or_mask=0x00FF,  # Set low byte to 0xFF
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -275,7 +275,7 @@ class TestMaskWriteRegister:
             address=0,
             and_mask=0xFFFF,  # Keep all bits
             or_mask=0x0008,  # Set bit 3
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -295,7 +295,7 @@ class TestMaskWriteRegister:
             address=0,
             and_mask=0xFFF7,  # Clear bit 3
             or_mask=0x0000,  # No bits to set
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -313,7 +313,7 @@ class TestMaskWriteRegister:
             address=0,
             and_mask=0xFFFF,
             or_mask=0x0000,
-            slave=1,
+            device_id=1,
         )
 
         assert result.isError()
@@ -331,7 +331,7 @@ class TestMaskWriteRegister:
             address=99999,
             and_mask=0xFFFF,
             or_mask=0x0000,
-            slave=1,
+            device_id=1,
         )
 
         assert result.isError()
@@ -354,7 +354,7 @@ class TestAtomicReadWrite:
             read_count=3,
             write_address=10,
             write_registers=[100, 200, 300],
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -371,7 +371,7 @@ class TestAtomicReadWrite:
             read_count=5,
             write_address=0,
             write_registers=[],
-            slave=1,
+            device_id=1,
         )
 
         # Result depends on implementation
@@ -390,7 +390,7 @@ class TestAtomicReadWrite:
             read_count=3,
             write_address=10,
             write_registers=[100],
-            slave=1,
+            device_id=1,
         )
 
         assert result.isError()
@@ -410,7 +410,7 @@ class TestAtomicReadWrite:
             read_count=125,
             write_address=0,
             write_registers=list(range(121)),
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -430,7 +430,7 @@ class TestReadFIFOQueue:
 
         result = mock_client.read_fifo_queue(
             address=0,  # FIFO pointer address
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -446,7 +446,7 @@ class TestReadFIFOQueue:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_fifo_queue(address=0, slave=1)
+        result = mock_client.read_fifo_queue(address=0, device_id=1)
 
         assert not result.isError()
         assert len(result.values) == 0
@@ -460,7 +460,7 @@ class TestReadFIFOQueue:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_fifo_queue(address=0, slave=1)
+        result = mock_client.read_fifo_queue(address=0, device_id=1)
 
         assert not result.isError()
         assert len(result.values) == 31
@@ -474,7 +474,7 @@ class TestReadFIFOQueue:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_fifo_queue(address=0, slave=1)
+        result = mock_client.read_fifo_queue(address=0, device_id=1)
 
         assert result.isError()
 
@@ -487,7 +487,7 @@ class TestReadFIFOQueue:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_fifo_queue(address=99999, slave=1)
+        result = mock_client.read_fifo_queue(address=99999, device_id=1)
 
         assert result.isError()
 
@@ -587,7 +587,7 @@ class TestFunctionCodeSupportDetection:
         """Test detecting FC 20 support."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_file_record([(1, 0, 1)], slave=1)
+        result = mock_client.read_file_record([(1, 0, 1)], device_id=1)
         fc20_supported = not result.isError()
 
         assert fc20_supported is True
@@ -601,7 +601,7 @@ class TestFunctionCodeSupportDetection:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_file_record([(1, 0, 1)], slave=1)
+        result = mock_client.read_file_record([(1, 0, 1)], device_id=1)
         fc20_supported = not result.isError()
 
         assert fc20_supported is False
@@ -611,7 +611,7 @@ class TestFunctionCodeSupportDetection:
         create_mock_scanner(scanner_args)
 
         result = mock_client.mask_write_register(
-            address=0, and_mask=0xFFFF, or_mask=0x0000, slave=1
+            address=0, and_mask=0xFFFF, or_mask=0x0000, device_id=1
         )
         fc22_supported = not result.isError()
 
@@ -621,7 +621,7 @@ class TestFunctionCodeSupportDetection:
         """Test detecting FC 24 support."""
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_fifo_queue(address=0, slave=1)
+        result = mock_client.read_fifo_queue(address=0, device_id=1)
         fc24_supported = not result.isError()
 
         assert fc24_supported is True

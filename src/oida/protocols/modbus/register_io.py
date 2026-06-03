@@ -114,7 +114,7 @@ def read_registers_batched(
 
     for batch_start, batch_count, batch_addrs in batches:
         try:
-            result = read_fn(batch_start, count=batch_count, slave=unit_id)
+            result = read_fn(batch_start, count=batch_count, device_id=unit_id)
 
             if result is not None and not result.isError():
                 data = getattr(result, attr_name, None)
@@ -151,7 +151,7 @@ def _read_individual(
     """Read addresses one at a time, storing successes in *out*."""
     for addr in addrs:
         try:
-            result = read_fn(addr, count=1, slave=unit_id)
+            result = read_fn(addr, count=1, device_id=unit_id)
             if result is not None and not result.isError():
                 data = getattr(result, attr_name, None)
                 if data:

@@ -130,12 +130,12 @@ class WritesMixin(_ScannerBase):
         try:
             if len(registers) == 1:
                 self.logger.display(f"[Broadcast] Writing {display_value} to register {address}...")
-                self.conn.write_register(address, registers[0], slave=unit_id)
+                self.conn.write_register(address, registers[0], device_id=unit_id)
             else:
                 self.logger.display(
                     f"[Broadcast] Writing {display_value} to registers {address}-{address + len(registers) - 1}..."
                 )
-                self.conn.write_registers(address, registers, slave=unit_id)
+                self.conn.write_registers(address, registers, device_id=unit_id)
 
             # In broadcast mode we don't get a response, so we assume success
             self.logger.success("[Broadcast] Write sent (no confirmation possible)")
@@ -160,7 +160,7 @@ class WritesMixin(_ScannerBase):
             self.logger.display(
                 f"[Broadcast] Writing {'ON' if value else 'OFF'} to coil {address}..."
             )
-            self.conn.write_coil(address, value, slave=unit_id)
+            self.conn.write_coil(address, value, device_id=unit_id)
             self.logger.success("[Broadcast] Coil write sent (no confirmation possible)")
             self.results["data"]["broadcast_write_coil"] = {
                 "address": address,
@@ -180,7 +180,7 @@ class WritesMixin(_ScannerBase):
         unit_id = 0  # Broadcast address
         try:
             self.logger.display(f"[Broadcast] Writing {len(values)} coils starting at {address}...")
-            self.conn.write_coils(address, values, slave=unit_id)
+            self.conn.write_coils(address, values, device_id=unit_id)
             self.logger.success("[Broadcast] Multiple coils write sent (no confirmation possible)")
             self.results["data"]["broadcast_write_multiple_coils"] = {
                 "address": address,

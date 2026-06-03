@@ -107,7 +107,7 @@ class TestMEIDeviceIdentification:
         result = mock_client.read_device_information(
             read_code=MEIReadDeviceIdCode.BASIC,
             object_id=0x00,
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -134,7 +134,7 @@ class TestMEIDeviceIdentification:
         result = mock_client.read_device_information(
             read_code=MEIReadDeviceIdCode.REGULAR,
             object_id=0x00,
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -159,7 +159,7 @@ class TestMEIDeviceIdentification:
         result = mock_client.read_device_information(
             read_code=MEIReadDeviceIdCode.EXTENDED,
             object_id=0x00,
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -180,7 +180,7 @@ class TestMEIDeviceIdentification:
         result = mock_client.read_device_information(
             read_code=MEIReadDeviceIdCode.SPECIFIC,
             object_id=0x02,
-            slave=1,
+            device_id=1,
         )
 
         assert not result.isError()
@@ -199,7 +199,7 @@ class TestMEIDeviceIdentification:
         result = mock_client.read_device_information(
             read_code=MEIReadDeviceIdCode.BASIC,
             object_id=0x00,
-            slave=1,
+            device_id=1,
         )
 
         assert result.isError()
@@ -219,7 +219,7 @@ class TestMEIResponseParsing:
         mock_client.read_device_information.return_value = mei_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_device_information(read_code=1, object_id=0x00, slave=1)
+        result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
 
         objects = {}
         for obj_id, value in result.information.items():
@@ -238,7 +238,7 @@ class TestMEIResponseParsing:
         mock_client.read_device_information.return_value = mei_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_device_information(read_code=1, object_id=0x00, slave=1)
+        result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
 
         objects = {}
         for obj_id, value in result.information.items():
@@ -257,7 +257,7 @@ class TestMEIResponseParsing:
         mock_client.read_device_information.return_value = mei_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_device_information(read_code=1, object_id=0x00, slave=1)
+        result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
 
         objects = {}
         for obj_id, value in result.information.items():
@@ -276,7 +276,7 @@ class TestMEIResponseParsing:
         mock_client.read_device_information.return_value = mei_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_device_information(read_code=1, object_id=0x00, slave=1)
+        result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
 
         objects = {}
         for obj_id, value in result.information.items():
@@ -299,7 +299,7 @@ class TestMEIResponseParsing:
         mock_client.read_device_information.return_value = mei_response
 
         create_mock_scanner(scanner_args)
-        result = mock_client.read_device_information(read_code=1, object_id=0x00, slave=1)
+        result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
 
         value = result.information[0x00].decode("utf-8").strip("\x00")
         assert value == "Test Vendor"
@@ -332,12 +332,12 @@ class TestMEIPagination:
         create_mock_scanner(scanner_args)
 
         # First call
-        result1 = mock_client.read_device_information(read_code=1, object_id=0x00, slave=1)
+        result1 = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
         assert result1.more_follows is True
         assert result1.next_object_id == 0x01
 
         # Second call
-        result2 = mock_client.read_device_information(read_code=1, object_id=0x01, slave=1)
+        result2 = mock_client.read_device_information(read_code=1, object_id=0x01, device_id=1)
         assert result2.more_follows is False
 
     def test_mei_empty_response(self, mock_client, scanner_args):
@@ -350,7 +350,7 @@ class TestMEIPagination:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_device_information(read_code=1, object_id=0x00, slave=1)
+        result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
 
         assert not result.isError()
         assert len(result.information) == 0
@@ -374,7 +374,7 @@ class TestServerID:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(slave=1)
+        result = mock_client.report_slave_id(device_id=1)
 
         assert not result.isError()
         assert result.status is True
@@ -389,7 +389,7 @@ class TestServerID:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(slave=1)
+        result = mock_client.report_slave_id(device_id=1)
 
         assert result.isError()
 
@@ -404,7 +404,7 @@ class TestServerID:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(slave=1)
+        result = mock_client.report_slave_id(device_id=1)
 
         assert result.status is True
         identifier = result.identifier.decode("utf-8", errors="replace")
@@ -420,7 +420,7 @@ class TestServerID:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(slave=1)
+        result = mock_client.report_slave_id(device_id=1)
 
         assert result.status is False
 
@@ -438,7 +438,7 @@ class TestUnitIDDiscovery:
 
         # Only unit 1 responds
         def read_side_effect(*args, **kwargs):
-            unit = kwargs.get("slave", 1)
+            unit = kwargs.get("device_id", 1)
             if unit == 1:
                 response = MagicMock()
                 response.isError.return_value = False
@@ -455,11 +455,11 @@ class TestUnitIDDiscovery:
         scanner.discover_units = True
 
         # Test unit 1
-        result = mock_client.read_holding_registers(0, 1, slave=1)
+        result = mock_client.read_holding_registers(0, 1, device_id=1)
         assert not result.isError()
 
         # Test unit 2
-        result = mock_client.read_holding_registers(0, 1, slave=2)
+        result = mock_client.read_holding_registers(0, 1, device_id=2)
         assert result.isError()
 
     def test_discover_multiple_units(self, mock_client, scanner_args):
@@ -467,7 +467,7 @@ class TestUnitIDDiscovery:
         active_units = {1, 5, 10}
 
         def read_side_effect(*args, **kwargs):
-            unit = kwargs.get("slave", 1)
+            unit = kwargs.get("device_id", 1)
             response = MagicMock()
             if unit in active_units:
                 response.isError.return_value = False
@@ -483,7 +483,7 @@ class TestUnitIDDiscovery:
         # Discover units
         found_units = []
         for unit in range(1, 15):
-            result = mock_client.read_holding_registers(0, 1, slave=unit)
+            result = mock_client.read_holding_registers(0, 1, device_id=unit)
             if not result.isError():
                 found_units.append(unit)
 
@@ -503,7 +503,7 @@ class TestUnitIDDiscovery:
 
         found_units = []
         for unit in range(1, 5):
-            result = mock_client.read_holding_registers(0, 1, slave=unit)
+            result = mock_client.read_holding_registers(0, 1, device_id=unit)
             if not result.isError():
                 found_units.append(unit)
 
@@ -539,7 +539,7 @@ class TestGatewayDetection:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_holding_registers(0, 1, slave=100)
+        result = mock_client.read_holding_registers(0, 1, device_id=100)
 
         assert result.isError()
         assert result.exception_code == 10
@@ -553,7 +553,7 @@ class TestGatewayDetection:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_holding_registers(0, 1, slave=200)
+        result = mock_client.read_holding_registers(0, 1, device_id=200)
 
         assert result.isError()
         assert result.exception_code == 11
@@ -566,11 +566,11 @@ class TestGatewayDetection:
             10: {"vendor": b"Vendor C"},
         }
 
-        def mei_side_effect(read_code, object_id, slave):
+        def mei_side_effect(read_code, object_id, device_id):
             response = MagicMock()
-            if slave in devices:
+            if device_id in devices:
                 response.isError.return_value = False
-                response.information = {0x00: devices[slave]["vendor"]}
+                response.information = {0x00: devices[device_id]["vendor"]}
             else:
                 response.isError.return_value = True
                 response.exception_code = 11
@@ -583,7 +583,7 @@ class TestGatewayDetection:
         # Query different units
         results = {}
         for unit in [1, 5, 10, 15]:
-            result = mock_client.read_device_information(read_code=1, object_id=0x00, slave=unit)
+            result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=unit)
             if not result.isError():
                 results[unit] = result.information[0x00].decode()
 
@@ -610,7 +610,7 @@ class TestExceptionStatus:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_exception_status(slave=1)
+        result = mock_client.read_exception_status(device_id=1)
 
         assert not result.isError()
         assert result.status == 0b00001111
@@ -624,7 +624,7 @@ class TestExceptionStatus:
 
         create_mock_scanner(scanner_args)
 
-        result = mock_client.read_exception_status(slave=1)
+        result = mock_client.read_exception_status(device_id=1)
 
         assert result.isError()
 
