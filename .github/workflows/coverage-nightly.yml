@@ -40,29 +40,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv (handles Python toolchain + lockfile-based install)
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba  # v6.3.1
         with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
 
-      - name: Install OIDA + dev + all extras
+      - name: Install OIDA + dev + all extras from lockfile
+        # --frozen errors if uv.lock is out of date; ensures the nightly
+        # tests the same exact dep set committed to the repo. The
+        # pytest-json-report extra is dev-only and lives in the dev extra.
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev,all]
-          pip install pytest-json-report
+          uv sync --all-extras --frozen
+          uv pip install pytest-json-report
 
       - name: Bring up mock stack
         run: |
-          python services.py up all
+          uv run python services.py up all
           # Give containers a beat to settle; per-test fixture also waits.
           sleep 20
-          python services.py status
+          uv run python services.py status
 
       - name: Axis 1 — scanner field-coverage
         if: contains(env.AXES, 'scanner') || env.AXES == 'all'
         run: |
-          pytest tests/coverage/scanner/ -q \
+          uv run pytest tests/coverage/scanner/ -q \
             --json-report --json-report-file=scanner.json \
             -o junit_family=xunit2 --junitxml=scanner-junit.xml \
           || true
@@ -73,7 +77,7 @@ jobs:
           # Also start the CVE mock stack
           docker compose -f docker/mocks/compose.cve.yml up -d || true
           sleep 15
-          pytest tests/coverage/fuzz/ -q -m cve_replication \
+          uv run pytest tests/coverage/fuzz/ -q -m cve_replication \
             --json-report --json-report-file=fuzz.json \
             -o junit_family=xunit2 --junitxml=fuzz-junit.xml \
           || true
@@ -81,7 +85,7 @@ jobs:
       - name: Axis 3 — Conpot fidelity diff
         if: contains(env.AXES, 'fidelity') || env.AXES == 'all'
         run: |
-          pytest tests/coverage/fidelity/ -q -m fidelity \
+          uv run pytest tests/coverage/fidelity/ -q -m fidelity \
             --json-report --json-report-file=fidelity.json \
             -o junit_family=xunit2 --junitxml=fidelity-junit.xml \
           || true
@@ -89,7 +93,7 @@ jobs:
       - name: Generate dashboard.md
         if: always()
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
@@ -149,4 +153,4 @@ jobs:
 
       - name: Bring down mock stack
         if: always()
-        run: python services.py down || true
+        run: uv run python services.py down || true

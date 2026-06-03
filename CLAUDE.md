@@ -22,16 +22,36 @@ pytest tests/unit/test_modbus_scanner.py                   # Specific test modul
 ```
 
 ### Development Setup
+
+OIDA uses **uv** (https://docs.astral.sh/uv/) for reproducible
+lockfile-pinned installs. uv.lock IS checked in. pip still works
+but loses the version-pinning guarantee.
+
 ```bash
-# Install in development mode with all dependencies
+# One-time uv install:
+curl -LsSf https://astral.sh/uv/install.sh | sh   # or: pip install uv
+
+# Sync from the lockfile (uses uv.lock for exact transitive versions):
+uv sync --all-extras                                            # dev + every protocol
+uv sync --extra dev --extra modbus --extra opcua --extra ethercat --extra iec104 --extra ads --extra knx  # subset
+uv sync --extra dev                                             # dev tooling only
+
+# Then either source .venv/bin/activate, or prefix:
+uv run pytest tests/
+uv run oida modbus 192.168.1.100
+
+# Legacy pip path (no lockfile pinning):
 pip install -e .[dev,all]
-
-# Install specific protocol dependencies
 pip install -e .[modbus,opcua,ethercat,iec104,ads,knx]
-
-# Install development tools only
 pip install -e .[dev]
+
+# Regenerate uv.lock after editing dependencies in pyproject.toml:
+uv lock
+uv sync --all-extras   # re-apply to .venv
 ```
+
+The `tests/contracts/test_uv_lockfile_drift.py` contract fails CI if
+`pyproject.toml` is touched without `uv lock` being re-run.
 
 ### Code Quality
 ```bash
@@ -169,12 +189,19 @@ Key test files:
 ### Protocol dependencies
 
 Optional extras are declared in `pyproject.toml`. `pyproject.toml` is the
-source of truth — do not edit version pins in this file. Install with:
+source of truth — do not edit version pins by hand; let uv resolve them.
+Install with:
 
 ```bash
-pip install -e .[<extra>]    # one extra (e.g. modbus)
-pip install -e .[all]        # every protocol
-pip install -e .[dev,all]    # protocols + dev tooling
+# uv (preferred — uses uv.lock for reproducibility):
+uv sync --extra <extra>                     # one extra (e.g. modbus)
+uv sync --all-extras                        # every protocol + dev
+uv sync --extra dev --extra modbus          # subset
+
+# pip (legacy, no lockfile pinning):
+pip install -e .[<extra>]
+pip install -e .[all]
+pip install -e .[dev,all]
 ```
 
 Notable extras: `modbus`, `opcua`, `iec104`, `snap7`, `ads`, `ethernetip`,

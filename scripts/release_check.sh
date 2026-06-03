@@ -123,23 +123,37 @@ fi
 step 6 "Wheel install + CLI smoke test"
 if [[ -n "${WHEEL:-}" ]]; then
     VENV_DIR=$(mktemp -d)
-    python -m venv "$VENV_DIR"
+    # Prefer uv (10x faster venv create + install) when available; fall
+    # back to stdlib venv + pip for environments where uv isn't installed.
+    if command -v uv >/dev/null 2>&1; then
+        INSTALLER="uv"
+        uv venv "$VENV_DIR" >/dev/null 2>&1
+    else
+        INSTALLER="pip"
+        python -m venv "$VENV_DIR"
+    fi
     # shellcheck disable=SC1091
     source "$VENV_DIR/bin/activate"
 
-    if pip install "$WHEEL" --quiet 2>/dev/null; then
+    if [[ "$INSTALLER" == "uv" ]]; then
+        INSTALL_CMD=(uv pip install "$WHEEL" --quiet)
+    else
+        INSTALL_CMD=(pip install "$WHEEL" --quiet)
+    fi
+
+    if "${INSTALL_CMD[@]}" 2>/dev/null; then
         OK=true
         oida --version >/dev/null 2>&1   || OK=false
         oida modbus --help >/dev/null 2>&1 || OK=false
         if $OK; then
-            echo -e "${GREEN}OK${RESET} — oida --version and oida modbus --help work"
+            echo -e "${GREEN}OK${RESET} — wheel installs (${INSTALLER}); oida --version and oida modbus --help work"
             record "Wheel install + CLI" "pass"
         else
             echo -e "${RED}CLI commands failed${RESET}"
             record "Wheel install + CLI" "fail"
         fi
     else
-        echo -e "${RED}pip install of wheel failed${RESET}"
+        echo -e "${RED}${INSTALLER} install of wheel failed${RESET}"
         record "Wheel install + CLI" "fail"
     fi
 

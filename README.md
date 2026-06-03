@@ -69,16 +69,34 @@ on a Modbus register dump.
 
 ## Quick start
 
+OIDA uses [**uv**](https://docs.astral.sh/uv/) for reproducible
+installs (faster + lockfile-pinned). pip still works for ad-hoc
+installs from PyPI.
+
 ```bash
-# Install with all protocol extras
-pip install oida[all]
+# 1. Install uv (one-time):
+curl -LsSf https://astral.sh/uv/install.sh | sh   # or: pip install uv
 
-# Or pick the protocols you need
-pip install oida[modbus,opcua,iec104]
+# 2. From a clone (recommended for development) — uses uv.lock:
+git clone https://github.com/f0rw4rd/oida.git && cd oida
+uv sync --all-extras           # everything (dev + every protocol extra)
+uv run oida modbus 192.168.1.100
 
-# Development install (with test deps)
-pip install -e .[dev,all]
+# 2b. Subset for the protocols you need:
+uv sync --extra dev --extra modbus --extra opcua
+
+# 3. From PyPI (release install, no lockfile):
+uv pip install oida[all]
+# or:
+uv pip install oida[modbus,opcua,iec104]
+
+# Legacy pip path (still supported):
+pip install oida[all]                # release from PyPI
+pip install -e .[dev,all]            # development, no lockfile pinning
 ```
+
+After `uv sync`, activate the venv with `source .venv/bin/activate` or
+prefix commands with `uv run`.
 
 ### Basic syntax
 
