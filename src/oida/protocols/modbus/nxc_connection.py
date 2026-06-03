@@ -199,6 +199,24 @@ class modbus(
 
         # Log broadcast mode status if enabled
         if self.broadcast_mode:
+            # --broadcast is a Modbus-RTU-only concept (Unit ID 0 = no
+            # response expected from any slave on the serial bus). It
+            # has no meaning on Modbus/TCP, /TLS, or /UDP — pymodbus
+            # will happily send the frame but every server will either
+            # ignore it or send an exception, neither of which the
+            # caller treats as 'broadcast'. Refuse explicitly on
+            # non-RTU transports.
+            on_serial = bool(
+                getattr(self.args, "serial_port", None)
+                or getattr(self.args, "rtu_over_tcp", False)
+                or getattr(self.args, "ascii_over_tcp", False)
+            )
+            if not on_serial:
+                self.logger.fail(
+                    "--broadcast is Modbus-RTU only (Unit ID 0, no response). "
+                    "Use --serial-port, --rtu-over-tcp, or --ascii-over-tcp."
+                )
+                return
             self.logger.warning(
                 "[Broadcast Mode] Unit ID 0 - writes sent to ALL slaves, NO response expected"
             )

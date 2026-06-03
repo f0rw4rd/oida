@@ -804,8 +804,16 @@ def load_register_map(map_name: str) -> Optional[Dict[str, Any]]:
     Returns:
         Register map dictionary or None if not found
     """
-    # Check if it's a direct path
+    # Check if it's a direct path. Direct-path is an explicit operator
+    # choice (same trust model as --config <file>) so we honor it as-is,
+    # but require a .json extension so an accidental --register-map
+    # /etc/passwd at least fails fast on json.load rather than silently
+    # parsing garbage.
     if os.path.exists(map_name):
+        if not map_name.lower().endswith(".json"):
+            raise ValueError(
+                f"--register-map direct path must end in .json: {map_name!r}"
+            )
         with open(map_name, "r") as f:
             return json.load(f)
 
@@ -819,11 +827,25 @@ def load_register_map(map_name: str) -> Optional[Dict[str, Any]]:
     # Try with and without .json extension
     names_to_try = [map_name, f"{map_name}.json"]
 
+    def _resolve_inside(base: Path, candidate: Path) -> Optional[Path]:
+        """Return candidate.resolve() iff it stays inside base. Else None.
+
+        Stops '--register-map ../../etc/passwd' from escaping a search
+        root via path-component traversal.
+        """
+        try:
+            resolved = candidate.resolve(strict=False)
+            base_resolved = base.resolve(strict=False)
+            resolved.relative_to(base_resolved)
+        except (ValueError, OSError):
+            return None
+        return resolved
+
     for search_path in search_paths:
         for name in names_to_try:
             # Direct path (e.g., 'schneider-m340' or 'solar/solaredge-sunspec')
-            map_path = search_path / name
-            if map_path.exists():
+            map_path = _resolve_inside(search_path, search_path / name)
+            if map_path and map_path.exists():
                 with open(map_path, "r") as f:
                     return json.load(f)
 
@@ -832,7 +854,13 @@ def load_register_map(map_name: str) -> Optional[Dict[str, Any]]:
             for name in names_to_try:
                 for map_path in search_path.glob(f"**/{name}"):
                     if map_path.is_file():
-                        with open(map_path, "r") as f:
+                        # glob results are already inside search_path so
+                        # they're safe by construction — keep the check
+                        # anyway in case search_path itself is a symlink.
+                        safe = _resolve_inside(search_path, map_path)
+                        if safe is None:
+                            continue
+                        with open(safe, "r") as f:
                             return json.load(f)
 
     return None

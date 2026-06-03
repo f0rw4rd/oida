@@ -1307,8 +1307,15 @@ class TestHL7DangerousOperations(unittest.TestCase):
         scanner.logger.fail.assert_called()
 
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
-    def test_adt_a01_does_not_require_confirm(self):
-        """Test ADT^A01 (Admit) does not require --confirm"""
+    def test_adt_a01_requires_confirm(self):
+        """ADT^A01 (Admit Patient) IS a write — it creates a record.
+
+        The earlier inverse test (`test_adt_a01_does_not_require_confirm`)
+        codified the bug noted in CODE_REVIEW.md: ADT admission/discharge
+        messages were treated as read-only probes. The mixin at
+        hl7/mixins/message.py:30 has always emitted a fail() requiring
+        --confirm; the test was wrong, not the code.
+        """
         from oida.protocols.hl7 import hl7
 
         self.mock_args.adt_trigger = "A01"
@@ -1320,11 +1327,13 @@ class TestHL7DangerousOperations(unittest.TestCase):
 
         scanner._send_adt_message()
 
-        # Should not call fail for A01
-        # (may fail for other reasons like no response, but not --confirm)
+        # ADT^A01 must refuse without --confirm.
         fail_calls = scanner.logger.fail.call_args_list
         confirm_fails = [c for c in fail_calls if "--confirm" in str(c)]
-        self.assertEqual(len(confirm_fails), 0)
+        self.assertGreaterEqual(
+            len(confirm_fails), 1,
+            "ADT^A01 is a write operation — must require --confirm",
+        )
 
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_rde_requires_confirm(self):

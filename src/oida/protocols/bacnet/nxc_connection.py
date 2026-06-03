@@ -220,6 +220,12 @@ class bacnet(
             self.args.enum_bbmd = True
             self.args.enum_fdt = True
             self.args.enum_routers = True
+            # Dispatcher at line 443 reads args.networks (NOT
+            # enum_networks); the misnamed assignment meant the remote
+            # network discovery never triggered under the --assess-network
+            # shortcut despite the help text advertising it. Set both so
+            # other code paths reading enum_networks (if any) also work.
+            self.args.networks = True
             self.args.enum_networks = True
 
         if getattr(self.args, "assess_access", False):

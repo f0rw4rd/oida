@@ -19,6 +19,7 @@ Usage:
 
 from typing import Any, Optional, Dict
 import importlib
+import threading
 
 import logging
 
@@ -62,11 +63,39 @@ class LazyModule:
         self._module = None
         self._loaded = False
         self._available = None
+        # _load() is racy without this: thread A sets _loaded=True before
+        # _module is populated; thread B sees _loaded=True with
+        # _module=None and raises DependencyError even though the install
+        # is fine. Lock the load.
+        self._load_lock = threading.Lock()
 
     def _load(self) -> Any:
         """Load the module, raising DependencyError if not available."""
-        if self._loaded:
-            if self._module is None:
+        with self._load_lock:
+            if self._loaded:
+                if self._module is None:
+                    from .exceptions import DependencyError
+
+                    raise DependencyError(
+                        f"{self._module_name} library required for {self._protocol} protocol.\n"
+                        f"Install with: {self._install_hint}",
+                        protocol=self._protocol,
+                    )
+                return self._module
+
+            try:
+                module = importlib.import_module(self._module_name)
+                # Publish module BEFORE flipping _loaded so any other
+                # thread that observes _loaded=True always sees a
+                # populated _module.
+                self._module = module
+                self._available = True
+                self._loaded = True
+                return module
+            except ImportError:
+                self._module = None
+                self._available = False
+                self._loaded = True
                 from .exceptions import DependencyError
 
                 raise DependencyError(
@@ -74,23 +103,6 @@ class LazyModule:
                     f"Install with: {self._install_hint}",
                     protocol=self._protocol,
                 )
-            return self._module
-
-        self._loaded = True
-        try:
-            self._module = importlib.import_module(self._module_name)
-            self._available = True
-            return self._module
-        except ImportError:
-            self._module = None
-            self._available = False
-            from .exceptions import DependencyError
-
-            raise DependencyError(
-                f"{self._module_name} library required for {self._protocol} protocol.\n"
-                f"Install with: {self._install_hint}",
-                protocol=self._protocol,
-            )
 
     def __getattr__(self, name: str) -> Any:
         """Get attribute from loaded module.

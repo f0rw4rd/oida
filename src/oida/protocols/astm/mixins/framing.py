@@ -131,16 +131,27 @@ class FramingMixin:
             # Extract frame content (frame_num + record_data)
             frame_content = data[: end_pos + 1]
 
-            # Validate checksum (2 bytes after ETX/ETB)
-            if len(data) > end_pos + 3:
-                received_checksum = data[end_pos + 1 : end_pos + 3]
-                calculated_checksum = self._calculate_checksum(frame_content)
-                if received_checksum != calculated_checksum:
-                    self.logger.debug(
-                        f"Checksum mismatch: {received_checksum!r} vs {calculated_checksum!r}"
-                    )
-                    self.conn.sendall(NAK)
-                    return None
+            # Validate checksum (2 bytes after ETX/ETB).
+            # If the buffer doesn't contain the full checksum yet, that's
+            # a short read — the old code silently fell through to ACK,
+            # accepting truncated frames as valid. Treat short-read the
+            # same as checksum mismatch: NAK and bail.
+            if len(data) <= end_pos + 3:
+                self.logger.debug(
+                    f"Short read: frame ends at {end_pos} but buffer is only "
+                    f"{len(data)} bytes — checksum truncated"
+                )
+                self.conn.sendall(NAK)
+                return None
+
+            received_checksum = data[end_pos + 1 : end_pos + 3]
+            calculated_checksum = self._calculate_checksum(frame_content)
+            if received_checksum != calculated_checksum:
+                self.logger.debug(
+                    f"Checksum mismatch: {received_checksum!r} vs {calculated_checksum!r}"
+                )
+                self.conn.sendall(NAK)
+                return None
 
             # Send ACK
             self.conn.sendall(ACK)

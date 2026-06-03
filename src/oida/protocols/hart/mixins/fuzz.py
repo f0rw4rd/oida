@@ -258,11 +258,17 @@ class FuzzMixin(_ScannerBase):
             return False
 
         try:
-            self.client.perform_self_test(self.poll_address)
+            # NOTE: previously this method called perform_self_test()
+            # BEFORE the master reset. That's wrong on two counts:
+            # (1) self-test (Cmd 41) takes ~30s on many devices and
+            # delays the reset arbitrarily, (2) running self-test
+            # before a master reset can leave the device in a wedged
+            # state on some Emerson/Siemens transmitters. Master reset
+            # is the only operation expected here.
             response = self.client.send_command(HARTCommand.PERFORM_MASTER_RESET, self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"self.client.perform_self_test(self.po...: {e}")
+            logger.debug(f"perform_master_reset failed: {e}")
             return False
 
     def send_raw_command(self, command: int, data: bytes = b"") -> Dict[str, Any]:
