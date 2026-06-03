@@ -164,10 +164,6 @@ class CustomCEMIHandler:
                 self.logger.display(f"Listening for traffic ({listen_time}s)...")
                 await asyncio.sleep(listen_time)
 
-            # Restore original handler
-            self.xknx.cemi_handler = original_handler
-            self.logger.debug("Restored original cEMI handler")
-
             # Summary
             if captured_traffic:
                 unique_sources = set(t["source"] for t in captured_traffic)
@@ -180,6 +176,17 @@ class CustomCEMIHandler:
         except Exception as e:
             self.logger.fail(f"Error in fast bus discovery: {e}")
         finally:
+            # ALWAYS restore the original cEMI handler — previously the
+            # restoration was inside the try block, so any exception
+            # during the scan (interrupt, network error, parse error)
+            # left xknx permanently hooked into our intercepting
+            # handler. The next protocol invocation in the same process
+            # then crashed on stale callbacks.
+            try:
+                self.xknx.cemi_handler = original_handler
+                self.logger.debug("Restored original cEMI handler")
+            except Exception as restore_err:
+                self.logger.debug(f"cEMI handler restore failed: {restore_err}")
             self.is_in_discovery = False
 
         return {"devices": found_devices, "traffic": captured_traffic}

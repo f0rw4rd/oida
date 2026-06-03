@@ -26,7 +26,13 @@ class CFindMixin(_ScannerBase):
             return
 
         query_level = getattr(self.args, "query_level", "PATIENT")
-        patient_name = getattr(self.args, "patient_name", "*")
+        # --patient-name is declared without default= in proto_args.py, so
+        # argparse sets args.patient_name = None when the operator doesn't
+        # pass it. getattr's default '*' was never used (the attribute
+        # exists, just equals None). Result: queries went out with
+        # PatientName=None instead of the wildcard, every documented
+        # `oida dicom <host> --find` example failed or returned 0 rows.
+        patient_name = getattr(self.args, "patient_name", "*") or "*"
         patient_id = getattr(self.args, "patient_id", "")
         study_date = getattr(self.args, "study_date", "")
         study_uid = getattr(self.args, "study_uid", "")

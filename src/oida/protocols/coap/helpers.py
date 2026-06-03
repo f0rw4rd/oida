@@ -246,11 +246,16 @@ def parse_link_format(payload: str) -> List[Dict[str, Any]]:
     return resources
 
 
+MAX_BLOCKWISE_PAYLOAD = 64 * 1024 * 1024  # 64 MiB OOM ceiling
+MAX_BLOCKWISE_BLOCKS = 65536  # NUM is 23-bit per RFC 7959 but cap before that
+
+
 async def coap_get_blockwise(
     ctx,
     uri: str,
     block_size: int = 512,
     timeout: float = DEFAULT_TIMEOUT,
+    max_payload: int = MAX_BLOCKWISE_PAYLOAD,
 ) -> Tuple[str, bytes]:
     """GET a CoAP resource with Block2 reassembly (RFC 7959).
 
@@ -261,6 +266,10 @@ async def coap_get_blockwise(
     aiocoap may handle block-wise automatically for simple cases,
     but this explicit implementation gives us logging visibility and
     control over the block size.
+
+    Hard caps the assembled payload at `max_payload` bytes
+    (default 64 MiB) so a hostile server that keeps setting M=1
+    indefinitely can't drive the scanner to OOM.
 
     Returns (response_code_string, reassembled_payload_bytes).
     """
@@ -298,6 +307,21 @@ async def coap_get_blockwise(
             len(response.payload),
             len(assembled),
         )
+
+        if len(assembled) > max_payload:
+            logger.warning(
+                "Block2 GET aborted: assembled payload exceeded %d bytes "
+                "(cap=%d, latest block=%d)",
+                len(assembled),
+                max_payload,
+                block_num,
+            )
+            return "aborted:payload-too-large", bytes(assembled[:max_payload])
+        if block_num >= MAX_BLOCKWISE_BLOCKS:
+            logger.warning(
+                "Block2 GET aborted: block count exceeded %d", MAX_BLOCKWISE_BLOCKS
+            )
+            return "aborted:too-many-blocks", bytes(assembled)
 
         block2 = response.opt.block2
         if block2 is None or not block2.more:

@@ -86,13 +86,20 @@ class BaseScanner(ABC):
         self.args = _normalize_args(args)
         self.results = defaultdict(list)
         self.start_time = datetime.now()
-        self.debug = parse_bool(args.get("debug", False)) or (args.get("verbose", 0) or 0) >= 1
-        self.read_only = parse_bool(args.get("read-only", True))
-        self.timeout = int(args.get("timeout", 2))
-        self.export_format = args.get("export-format", "console")
-        self.scan_mode = args.get("scan-mode", "all")
+        # Use self.args (the bridge), NOT the raw 'args' parameter — when
+        # the caller passes a bare argparse.Namespace it has no .get()
+        # method and these lookups raised AttributeError on every CLI
+        # invocation that hit BaseScanner directly.
+        self.debug = (
+            parse_bool(self.args.get("debug", False))
+            or (self.args.get("verbose", 0) or 0) >= 1
+        )
+        self.read_only = parse_bool(self.args.get("read-only", True))
+        self.timeout = int(self.args.get("timeout", 2))
+        self.export_format = self.args.get("export-format", "console")
+        self.scan_mode = self.args.get("scan-mode", "all")
         # Setup debugging
-        _log.setup_debugging(args)
+        _log.setup_debugging(self.args)
 
         # Initialize ICS logger (NXC-style)
         self._init_logger()

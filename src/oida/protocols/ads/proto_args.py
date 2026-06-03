@@ -472,7 +472,10 @@ def proto_args(parser, parents):
 # annotation is actually enforced (the audit found these were advisory
 # only, mirroring the dnp3 / ethercat bugs).  Map: argparse dest -> CLI form.
 _CONFIRM_REQUIRED_FLAGS = {
-    "scan_coe": "--scan-coe",
+    # --scan-coe was here previously but it's purely a read of the CoE
+    # object dictionary — the help text says "Scan" and the code does
+    # SDO uploads only. Gating it as DANGEROUS contradicted that
+    # contract and broke the recon workflow.
     "write_coe": "--write-coe",
     "add_route": "--add-route",
     "foe_write": "--foe-write",

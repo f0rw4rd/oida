@@ -427,6 +427,16 @@ class GOOSEScanner(SerialScanner):
         info["needs_commission"] = msg.needs_commissioning
         info["time_allowed_to_live"] = msg.time_allowed_to_live
         info["dataset_size"] = msg.num_data_set_entries
+        # IEC 61850-8-1 §A.5 GOOSE PDU 'test' boolean flag. Was never
+        # populated, so _display_msg's `if msg.get("is_test"):` warning
+        # and _check_test_simulation_flag's `[m for m in messages if
+        # m.get("is_test")]` block were dead code. Pyiec61850 exposes
+        # the field as either 'is_test' (newer) or 'test' (legacy);
+        # accept both.
+        is_test = getattr(msg, "is_test", None)
+        if is_test is None:
+            is_test = getattr(msg, "test", None)
+        info["is_test"] = bool(is_test) if is_test is not None else False
 
         if msg.values:
             info["dataset_values"] = msg.values
