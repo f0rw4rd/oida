@@ -438,8 +438,14 @@ class NetworkMixin:
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
 
                 if response is None:
-                    self.logger.warning("  [!] CRITICAL: Foreign device registration ACCEPTED")
-                    findings.append("Foreign device registration accepted without authentication")
+                    # No reply on UDP is INDETERMINATE — could be silent accept,
+                    # could be a filter, could be packet loss. Don't emit a
+                    # CRITICAL security_finding on absence of evidence.
+                    self.logger.debug(
+                        "  Foreign device registration: no reply (inconclusive — "
+                        "target may have accepted silently or filtered the BVLL "
+                        "Register-Foreign-Device PDU)"
+                    )
                 elif hasattr(response, "bvlciResultCode"):
                     code = response.bvlciResultCode
                     if code == 0:
@@ -470,10 +476,12 @@ class NetworkMixin:
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
 
                 if response is None:
-                    self.logger.security_finding(
-                        "Writable access", "BBMD BDT write accepted without authentication"
+                    # No reply on UDP is INDETERMINATE. Do not emit a
+                    # security_finding on absence of evidence.
+                    self.logger.debug(
+                        "  BBMD BDT write: no reply (inconclusive — could be "
+                        "silent accept, filter, or packet loss)"
                     )
-                    findings.append("BBMD BDT write accepted without authentication")
                 elif hasattr(response, "bvlciResultCode"):
                     code = response.bvlciResultCode
                     if code == 0:

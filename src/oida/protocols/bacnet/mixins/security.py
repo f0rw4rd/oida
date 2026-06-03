@@ -61,11 +61,37 @@ class SecurityMixin:
         return request
 
     def _is_success_response(self, response, types):
-        """Return True if *response* is not an error/abort/reject PDU."""
-        return response is None or not isinstance(
+        """Return True only on an explicit positive ACK from the target.
+
+        Previously this returned True on ``response is None`` (UDP timeout),
+        which turned every dropped packet on a filtered / noisy network
+        into a false-positive security finding (DCC brute-force success,
+        ReinitializeDevice accepted, TimeSync accepted, BBMD foreign-device
+        registration accepted, OOS-writable). The whole point of a
+        confirmed-service ACK is that absence-of-reply is INDETERMINATE,
+        not success.
+
+        Caller contract change: a None response must be interpreted as
+        "inconclusive" — emit a debug log, do NOT record a security
+        finding. See bacnet/mixins/security.py and bacnet/mixins/network.py
+        callers — they now branch on three states (success / failure / no-reply).
+        """
+        if response is None:
+            return False
+        return not isinstance(
             response,
             (types["ErrorPDU"], types["Error"], types["AbortPDU"], types["RejectPDU"]),
         )
+
+    def _is_no_reply(self, response) -> bool:
+        """Companion predicate: True iff the target did not send a reply.
+
+        Used by callers that need to distinguish 'target said no' (real
+        rejection — fine) from 'we got nothing back' (could be a slow
+        target, a filter, or the target silently accepted — UNKNOWN, so
+        emit no finding either way).
+        """
+        return response is None
 
     def _handle_security_assessment(self):
         """Full security assessment"""
