@@ -307,7 +307,7 @@ class CredentialsMixin:
                         )
 
         # Export RBAC results
-        from ...utils.export_utils import export_data
+        from ....utils.export_utils import export_data
 
         output_dir = getattr(self.args, "output", None)
         fmt = getattr(self.args, "format", "console") if output_dir else "console"

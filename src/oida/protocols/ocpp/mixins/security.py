@@ -51,7 +51,7 @@ class SecurityMixin:
         Uses the central check_tls_certificate helper (same as IEC 104, Modbus, etc.).
         """
         try:
-            from ...utils.socket_helpers import check_tls_certificate
+            from ....utils.socket_helpers import check_tls_certificate
 
             host = self.ip
             port = getattr(self.args, "port", 443)

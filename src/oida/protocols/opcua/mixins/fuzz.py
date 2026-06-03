@@ -91,7 +91,7 @@ class FuzzMixin:
 
     async def _fuzz_node(self, node_id: str, iterations: int) -> Optional[Dict]:
         """Fuzz a single OPC UA variable node"""
-        from ...utils.fuzzer import fuzz
+        from ....utils.fuzzer import fuzz
 
         try:
             node = self._client.get_node(node_id)

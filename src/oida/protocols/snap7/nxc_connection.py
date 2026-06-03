@@ -631,7 +631,7 @@ class s7(NetworkConnection):
     def _fuzz_db(self, iterations: int) -> None:
         """Fuzz data block contents"""
         import time
-        from ....utils.fuzzer import fuzz
+        from ...utils.fuzzer import fuzz
 
         fuzz_db_arg = getattr(self.args, "fuzz_db", None)
 
@@ -724,7 +724,7 @@ class s7(NetworkConnection):
     def _fuzz_memory(self, iterations: int) -> None:
         """Fuzz memory areas (markers, outputs)"""
         import time
-        from ....utils.fuzzer import fuzz
+        from ...utils.fuzzer import fuzz
 
         self.logger.display("Fuzzing memory areas (M, Q)...")
 
