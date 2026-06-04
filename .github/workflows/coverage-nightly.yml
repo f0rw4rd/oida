@@ -59,6 +59,12 @@ jobs:
           uv pip install pytest-json-report
 
       - name: Bring up mock stack
+        # Best-effort: some mock images (e.g. mms-libiec61850) are not
+        # published and a few CVE build-contexts may be absent on a clean
+        # runner. The axis steps below already tolerate missing mocks
+        # (|| true) and the dashboard reports "not run", so a partial/failed
+        # stack must not hard-fail the nightly.
+        continue-on-error: true
         run: |
           uv run python services.py up all
           # Give containers a beat to settle; per-test fixture also waits.
