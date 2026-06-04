@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir pymodbus>=3.5.0
+RUN pip install --no-cache-dir "pymodbus>=3.5.0,<3.11"
 
 COPY modbus_rtu_tcp_server.py /app/
 
