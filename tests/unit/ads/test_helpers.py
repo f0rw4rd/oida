@@ -646,13 +646,25 @@ class TestCaptureStderr(unittest.TestCase):
         """Context manager should capture stderr output."""
         import os
         import sys
+        import tempfile
 
         from oida.protocols.ads.helpers import _capture_pyads_stderr
 
+        # Under pytest's capture, sys.stderr may be a non-fd-backed object
+        # whose .fileno() raises io.UnsupportedOperation. The helper redirects
+        # the real stderr fd, so swap in a genuine fd-backed stream for the
+        # duration of the test to exercise that path deterministically.
         logger = Mock()
-        with _capture_pyads_stderr(logger):
-            # Write directly to stderr fd (simulating C library output)
-            os.write(sys.stderr.fileno(), b"pyads warning line\n")
+        real_stderr = tempfile.TemporaryFile(mode="w+")
+        orig_stderr = sys.stderr
+        sys.stderr = real_stderr
+        try:
+            with _capture_pyads_stderr(logger):
+                # Write directly to stderr fd (simulating C library output)
+                os.write(sys.stderr.fileno(), b"pyads warning line\n")
+        finally:
+            sys.stderr = orig_stderr
+            real_stderr.close()
 
         logger.debug.assert_called()
 
