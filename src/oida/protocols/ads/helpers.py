@@ -14,6 +14,7 @@ ADSScanner (Layer 1) and the ads NXC class (Layer 2):
 """
 
 import ctypes
+import io
 import os
 import re
 import struct
@@ -407,8 +408,17 @@ def _capture_pyads_stderr(logger=None):
     (stderr) with no API to disable them.  This context manager redirects
     the fd to a temp file, then replays any captured lines through the
     oida debug logger so they don't clutter normal output.
+
+    If stderr is not backed by a real file descriptor (e.g. it has been
+    replaced by a capturing stream under pytest, or redirected to an
+    in-memory object), there is no fd-level output to intercept, so the
+    context manager degrades to a no-op instead of raising.
     """
-    stderr_fd = sys.stderr.fileno()
+    try:
+        stderr_fd = sys.stderr.fileno()
+    except (AttributeError, ValueError, OSError, io.UnsupportedOperation):
+        yield
+        return
     old_stderr = os.dup(stderr_fd)
     tmp = tempfile.TemporaryFile(mode="w+")
     try:
