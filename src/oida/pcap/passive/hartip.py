@@ -517,7 +517,9 @@ class HARTIPPassiveListener(PySharkListenerBase):
             details["device_status"] = device_status_raw
 
         # Pass-through frame checksum (HART frame integrity byte)
-        pt_checksum = self._parse_int(self.get_field(hart_layer, "pt_checksum"), default=None, base=16)
+        pt_checksum = self._parse_int(
+            self.get_field(hart_layer, "pt_checksum"), default=None, base=16
+        )
         if pt_checksum is not None:
             details["pt_checksum"] = pt_checksum
 
