@@ -117,23 +117,36 @@ class TestWSDiscoveryProbe:
             sent_data = mock_socket.sendto.call_args[0][0]
             assert b"urn:uuid:" in sent_data
 
-    def test_periodic_resend(self, wsdiscovery_scanner_class):
-        """Test that probe is resent periodically"""
+    def test_single_probe_no_resend(self, wsdiscovery_scanner_class):
+        """Exactly one probe is sent — periodic resend was removed for OT safety.
+
+        scan() goes through create_udp_socket() + the rate-limited sendto()
+        helper, both imported into the ssdp module namespace, so those are the
+        correct patch targets. time.time() is consumed by socket setup and the
+        rate limiter as well as the collection loop, so an unbounded
+        monotonically-increasing clock is used rather than a fixed-length list
+        (which would exhaust and raise StopIteration).
+        """
+        import itertools
+
         scanner = wsdiscovery_scanner_class("eth0", timeout=5)
 
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket = MagicMock()
-            mock_socket_class.return_value = mock_socket
-            mock_socket.recvfrom.side_effect = socket.timeout()
+        mock_sock = MagicMock()
+        mock_sock.recvfrom.side_effect = TimeoutError()
+        clock = itertools.count(0.0, 0.5)
 
-            with patch("time.time") as mock_time:
-                # Simulate time progression
-                mock_time.side_effect = [0, 0.5, 1, 1.5, 2, 2.5, 3, 6]
+        with (
+            patch(
+                "oida.protocols.discovery.ssdp.create_udp_socket",
+                return_value=mock_sock,
+            ),
+            patch("oida.protocols.discovery.ssdp.sendto") as mock_sendto,
+            patch("time.time", side_effect=lambda: next(clock)),
+        ):
+            scanner.scan()
 
-                scanner.scan()
-
-            # Should have been called multiple times
-            assert mock_socket.sendto.call_count >= 1
+        # A single WS-Discovery probe, no periodic resend.
+        assert mock_sendto.call_count == 1
 
 
 class TestWSDiscoveryResponseParsing:
