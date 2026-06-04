@@ -80,20 +80,20 @@ def create_plc_context():
     hr_data[42] = 1  # pump_enabled
 
     return ModbusSlaveContext(
-        di=ModbusSequentialDataBlock(0x00, [1, 0, 1, 0] * 25),
-        co=ModbusSequentialDataBlock(0x00, [0] * 100),
-        hr=ModbusSequentialDataBlock(0x00, hr_data),
-        ir=ModbusSequentialDataBlock(0x00, [0] * 100),
+        di=ModbusSequentialDataBlock(1, [1, 0, 1, 0] * 25),
+        co=ModbusSequentialDataBlock(1, [0] * 100),
+        hr=ModbusSequentialDataBlock(1, hr_data),
+        ir=ModbusSequentialDataBlock(1, [0] * 100),
     )
 
 
 def create_remote_io_context():
     """Unit 2: Remote I/O module - coils and discrete inputs."""
     return ModbusSlaveContext(
-        di=ModbusSequentialDataBlock(0x00, [1, 1, 0, 0, 1, 0, 1, 1] * 8),
-        co=ModbusSequentialDataBlock(0x00, [0, 1, 0, 1, 1, 0, 0, 1] * 8),
-        hr=ModbusSequentialDataBlock(0x00, [0] * 10),
-        ir=ModbusSequentialDataBlock(0x00, [0] * 10),
+        di=ModbusSequentialDataBlock(1, [1, 1, 0, 0, 1, 0, 1, 1] * 8),
+        co=ModbusSequentialDataBlock(1, [0, 1, 0, 1, 1, 0, 0, 1] * 8),
+        hr=ModbusSequentialDataBlock(1, [0] * 10),
+        ir=ModbusSequentialDataBlock(1, [0] * 10),
     )
 
 
@@ -126,10 +126,10 @@ def create_power_meter_context():
     ir_data[50:52] = float32_to_regs(0.987)  # cos(phi)
 
     return ModbusSlaveContext(
-        di=ModbusSequentialDataBlock(0x00, [0] * 10),
-        co=ModbusSequentialDataBlock(0x00, [0] * 10),
-        hr=ModbusSequentialDataBlock(0x00, [0] * 10),
-        ir=ModbusSequentialDataBlock(0x00, ir_data),
+        di=ModbusSequentialDataBlock(1, [0] * 10),
+        co=ModbusSequentialDataBlock(1, [0] * 10),
+        hr=ModbusSequentialDataBlock(1, [0] * 10),
+        ir=ModbusSequentialDataBlock(1, ir_data),
     )
 
 

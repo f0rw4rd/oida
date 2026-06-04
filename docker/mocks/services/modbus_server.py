@@ -375,11 +375,11 @@ def create_modbus_context():
     hr_data[62:64] = float32_to_regs(0.1)  # pid_ki
     hr_data[64:66] = float32_to_regs(0.05)  # pid_kd
 
-    # Create data blocks
-    coils = ModbusSequentialDataBlock(0x00, [0] * 100)
-    discrete_inputs = ModbusSequentialDataBlock(0x00, [1, 0, 1, 0] * 25)
-    input_registers = ModbusSequentialDataBlock(0x00, [0] * 100)
-    holding_registers = ModbusSequentialDataBlock(0x00, hr_data)
+    # Create data blocks (start at address 1 — pymodbus 3.11+ rejects 0)
+    coils = ModbusSequentialDataBlock(1, [0] * 100)
+    discrete_inputs = ModbusSequentialDataBlock(1, [1, 0, 1, 0] * 25)
+    input_registers = ModbusSequentialDataBlock(1, [0] * 100)
+    holding_registers = ModbusSequentialDataBlock(1, hr_data)
 
     # Create slave context
     slave_context = ModbusSlaveContext(
