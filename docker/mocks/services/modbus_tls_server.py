@@ -206,10 +206,10 @@ def create_modbus_context():
     hr_data[42] = 1
 
     slave_context = ModbusSlaveContext(
-        di=ModbusSequentialDataBlock(0x00, [1, 0, 1, 0] * 25),
-        co=ModbusSequentialDataBlock(0x00, [0] * 100),
-        hr=ModbusSequentialDataBlock(0x00, hr_data),
-        ir=ModbusSequentialDataBlock(0x00, [0] * 100),
+        di=ModbusSequentialDataBlock(1, [1, 0, 1, 0] * 25),
+        co=ModbusSequentialDataBlock(1, [0] * 100),
+        hr=ModbusSequentialDataBlock(1, hr_data),
+        ir=ModbusSequentialDataBlock(1, [0] * 100),
     )
     try:
         return ModbusServerContext(slaves=slave_context, single=True)
