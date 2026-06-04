@@ -464,4 +464,28 @@ class IPPPassiveListener(PySharkListenerBase):
                     }
                 )
 
+        # Print jobs table -- surfaces requesting user names and document
+        # titles captured from Print-Job / Create-Job requests.  These were
+        # collected in process_packet() but previously never rendered, so all
+        # job/user attribution was lost from the scanner output.
+        if self.print_jobs:
+            job_rows = []
+            for job in self.print_jobs:
+                job_rows.append(
+                    [
+                        job.get("client_ip", "?"),
+                        job.get("server_ip", "?"),
+                        job.get("user", "") or "?",
+                        job.get("job_name", "") or "?",
+                        job.get("printer_uri", "") or "-",
+                    ]
+                )
+            tables.append(
+                {
+                    "headers": ["Client", "Server", "User", "Job Name", "Printer URI"],
+                    "rows": job_rows,
+                    "title": f"IPP Print Jobs ({len(job_rows)})",
+                }
+            )
+
         return result

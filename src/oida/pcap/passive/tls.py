@@ -21,9 +21,9 @@ from ...protocols.discovery.core import (
     normalize_mac,
 )
 
-import logging
+from ...utils.ics_logger import get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 # Common cipher suites (subset for display)
@@ -335,6 +335,17 @@ class TLSPassiveListener(PySharkListenerBase):
         alpn = self.get_field(tls_layer, "handshake_extensions_alpn_str", None)
         if alpn:
             details["alpn"] = str(alpn)
+        # OCSP status_request extension type (1 = OCSP stapling requested)
+        status_req = self.get_field(
+            tls_layer, "handshake_extensions_status_request_type", None
+        )
+        if status_req is not None:
+            details["ocsp_status_request"] = "ocsp" if str(status_req) == "1" else str(status_req)
+        # Encrypted PreMaster secret length (RSA key exchange = no forward secrecy)
+        epms_len = self.get_field(tls_layer, "handshake_epms_len", None)
+        if epms_len is not None:
+            details["rsa_key_exchange"] = True
+            details["epms_len"] = str(epms_len)
         # JA3/JA3S fingerprint
         ja3 = self.get_field(tls_layer, "handshake_ja3_hash", None) or self.get_field(
             tls_layer, "handshake_ja3", None
@@ -386,6 +397,17 @@ class TLSPassiveListener(PySharkListenerBase):
             )
         if "13" in hs_types:
             self._process_certificate_request(tls_layer, src_ip, dst_ip, src_port, dst_port)
+        if "16" in hs_types:
+            # ClientKeyExchange: epms_len present => RSA key exchange (no PFS)
+            epms_len = self.get_field(tls_layer, "handshake_epms_len", None)
+            if epms_len is not None:
+                # ClientKeyExchange flows client -> server; server port is dst.
+                if dst_port in self._SERVER_PORTS or src_port not in self._SERVER_PORTS:
+                    c_ip, s_ip, s_port = src_ip, dst_ip, dst_port
+                else:
+                    c_ip, s_ip, s_port = dst_ip, src_ip, src_port
+                _, conn = self._ensure_connection(c_ip, s_ip, s_port)
+                conn["rsa_key_exchange"] = True
 
     def _process_client_hello(
         self,
@@ -475,6 +497,11 @@ class TLSPassiveListener(PySharkListenerBase):
             ech_kdf_id = self.get_field(tls_layer, "ech_hpke_keyconfig_cipher_suite_kdf_id", None)
             ech_aead_id = self.get_field(tls_layer, "ech_hpke_keyconfig_cipher_suite_aead_id", None)
 
+            # OCSP status_request extension (client asks server to staple OCSP)
+            status_request_type = self.get_field(
+                tls_layer, "handshake_extensions_status_request_type", None
+            )
+
             # Token Binding parameters
             tb_version_major = self.get_field(tls_layer, "token_binding_version_major", None)
             tb_version_minor = self.get_field(tls_layer, "token_binding_version_minor", None)
@@ -498,6 +525,8 @@ class TLSPassiveListener(PySharkListenerBase):
                 conn["alpn"] = alpn_protocols
             if sig_algorithms:
                 conn["signature_algorithms"] = sig_algorithms
+            if status_request_type is not None:
+                conn["ocsp_status_request"] = str(status_request_type) == "1"
             if ech_config_id is not None:
                 conn["ech"] = {
                     "config_id": str(ech_config_id),
@@ -1010,6 +1039,10 @@ class TLSPassiveListener(PySharkListenerBase):
                 entry["token_binding"] = conn["token_binding"]
             if conn.get("sct"):
                 entry["sct"] = conn["sct"]
+            if conn.get("ocsp_status_request"):
+                entry["ocsp_status_request"] = True
+            if conn.get("rsa_key_exchange"):
+                entry["rsa_key_exchange"] = True
             result.append(entry)
         return result
 
@@ -1121,6 +1154,20 @@ class TLSPassiveListener(PySharkListenerBase):
                         "level": "fail",
                         "category": "tls_cipher",
                         "message": f"TLS: Weak cipher {cipher} {conn['client']} -> {conn['server']}",
+                    }
+                )
+
+        # Security alerts: RSA key exchange (no forward secrecy)
+        for conn in conns:
+            if conn.get("rsa_key_exchange"):
+                alerts.append(
+                    {
+                        "level": "warning",
+                        "category": "tls_no_pfs",
+                        "message": (
+                            f"TLS: RSA key exchange (no forward secrecy)"
+                            f" {conn['client']} -> {conn['server']}"
+                        ),
                     }
                 )
 

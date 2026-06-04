@@ -41,10 +41,6 @@ from ...protocols.discovery.core import (
     lookup_mac_vendor,
 )
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # Standard Memcached port
 MEMCACHED_PORT = 11211
@@ -233,8 +229,7 @@ class MemcachedPassiveListener(PySharkListenerBase):
     # EK multi-PDU helper
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _get_ek_layer_dicts(layer) -> Optional[List[dict]]:
+    def _get_ek_layer_dicts(self, layer) -> Optional[List[dict]]:
         """Return the raw list of dicts when an EK layer wraps multiple PDUs.
 
         In PyShark's EK mode, multi-PDU TCP segments store ``_fields_dict``
@@ -248,7 +243,7 @@ class MemcachedPassiveListener(PySharkListenerBase):
             if isinstance(fd, list):
                 return fd
         except AttributeError as e:
-            logger.debug(f"Memcached EK layer _fields_dict access failed: {e}")
+            self.logger.debug(f"Memcached EK layer _fields_dict access failed: {e}")
         return None
 
     def _process_multi_pdu(

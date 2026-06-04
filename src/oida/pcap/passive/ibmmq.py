@@ -63,10 +63,6 @@ from ...protocols.discovery.core import (
     lookup_mac_vendor,
 )
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # TSH segment type names
 TSH_TYPE_NAMES = {
@@ -266,8 +262,7 @@ class IBMMQPassiveListener(PySharkListenerBase):
     # EK multi-PDU / nested-dict helper
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _get_ek_layer_dicts(layer) -> Optional[List[dict]]:
+    def _get_ek_layer_dicts(self, layer) -> Optional[List[dict]]:
         """Return a list of field dicts when EK mode wraps PDUs non-standardly.
 
         Detects two EK mode variants:
@@ -287,7 +282,7 @@ class IBMMQPassiveListener(PySharkListenerBase):
                 if layer_name and layer_name in fd and isinstance(fd[layer_name], dict):
                     return [fd[layer_name]]
         except AttributeError as e:
-            logger.debug(f"IBM MQ EK layer _fields_dict access failed: {e}")
+            self.logger.debug(f"IBM MQ EK layer _fields_dict access failed: {e}")
         return None
 
     # ------------------------------------------------------------------

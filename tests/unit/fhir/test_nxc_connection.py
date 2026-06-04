@@ -569,29 +569,32 @@ class TestProtoFlow(unittest.TestCase):
 
         args = _make_mock_args(enum_all=True)
 
-        # enum_all processing happens after is_fhirclient_available, so
-        # we need fhirclient available but stop at create_conn_obj
+        # enum_all processing happens after is_fhirclient_available, so we
+        # need fhirclient available but stop at create_conn_obj.
+        # NetworkConnection copies args (copy.copy) so default-port resolution
+        # doesn't mutate the caller's shared Namespace — the enum_all expansion
+        # therefore lands on scanner.args, not the original `args` object.
         with (
             patch("oida.protocols.fhir.nxc_connection.is_fhirclient_available", return_value=True),
             patch.object(fhir, "create_conn_obj", return_value=False),
         ):
-            fhir(args, None, "https://fhir.example.com/r4")
+            scanner = fhir(args, None, "https://fhir.example.com/r4")
 
-        self.assertTrue(args.search_patients)
-        self.assertTrue(args.search_observations)
-        self.assertTrue(args.search_medications)
-        self.assertTrue(args.search_conditions)
-        self.assertTrue(args.search_encounters)
-        self.assertTrue(args.search_procedures)
-        self.assertTrue(args.search_allergies)
-        self.assertTrue(args.search_immunizations)
-        self.assertTrue(args.search_diagnostics)
-        self.assertTrue(args.search_documents)
-        self.assertTrue(args.search_practitioners)
-        self.assertTrue(args.search_organizations)
-        self.assertTrue(args.search_locations)
-        self.assertTrue(args.search_devices)
-        self.assertTrue(args.search_orders)
+        self.assertTrue(scanner.args.search_patients)
+        self.assertTrue(scanner.args.search_observations)
+        self.assertTrue(scanner.args.search_medications)
+        self.assertTrue(scanner.args.search_conditions)
+        self.assertTrue(scanner.args.search_encounters)
+        self.assertTrue(scanner.args.search_procedures)
+        self.assertTrue(scanner.args.search_allergies)
+        self.assertTrue(scanner.args.search_immunizations)
+        self.assertTrue(scanner.args.search_diagnostics)
+        self.assertTrue(scanner.args.search_documents)
+        self.assertTrue(scanner.args.search_practitioners)
+        self.assertTrue(scanner.args.search_organizations)
+        self.assertTrue(scanner.args.search_locations)
+        self.assertTrue(scanner.args.search_devices)
+        self.assertTrue(scanner.args.search_orders)
 
     def test_create_conn_obj_failure_stops_flow(self):
         """Test proto_flow returns when create_conn_obj fails"""

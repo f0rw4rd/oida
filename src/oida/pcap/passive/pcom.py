@@ -225,8 +225,13 @@ class PCOMPassiveListener(PySharkListenerBase):
         elif protocol_mode == 1:
             mode_name = "Binary"
 
-        # Determine direction: requests go to port 20256, responses come from it
-        if dst_port == 20256:
+        # Determine direction. PCOM/TCP defaults to port 20256 but the dissector
+        # binds to any port via decode-as; use the canonical port if either side
+        # has it, otherwise fall back to "lower port wins" (the PLC's listening
+        # port is the smaller fixed port vs the client's ephemeral high port).
+        if dst_port == 20256 or (
+            dst_port != 20256 and src_port != 20256 and dst_port < src_port
+        ):
             is_request = True
             client_ip, plc_ip = src_ip, dst_ip
             client_mac, plc_mac = src_mac, dst_mac

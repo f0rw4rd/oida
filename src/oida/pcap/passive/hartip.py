@@ -516,6 +516,11 @@ class HARTIPPassiveListener(PySharkListenerBase):
         if device_status_raw is not None:
             details["device_status"] = device_status_raw
 
+        # Pass-through frame checksum (HART frame integrity byte)
+        pt_checksum = self._parse_int(self.get_field(hart_layer, "pt_checksum"), default=None, base=16)
+        if pt_checksum is not None:
+            details["pt_checksum"] = pt_checksum
+
         # Embedded command fields (present in both requests and responses)
         poll_addr_top = self.get_field(hart_layer, "pt_rsp_poll_address")
         if poll_addr_top is not None:

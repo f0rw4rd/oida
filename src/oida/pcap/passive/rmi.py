@@ -30,7 +30,7 @@ tshark fields used (requires decode_as tcp.port==1099,rmi):
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ...protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
@@ -102,6 +102,9 @@ class RMIPassiveListener(PySharkListenerBase):
         super().__init__(interface, timeout, nxc_logger)
         self.endpoints: Dict[str, Set[str]] = {}  # server_ip -> set of endpoint hostnames
         self.protocol_versions: Dict[str, int] = {}  # server_ip -> version
+        # Flows where Java serialized data was observed (deserialization attack
+        # surface -- ysoserial / JNDI injection). Keyed (client_ip, server_ip).
+        self.serialization_flows: Set[Tuple[str, str]] = set()
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format RMI interaction as protocol-specific table columns."""
@@ -325,6 +328,8 @@ class RMIPassiveListener(PySharkListenerBase):
         has_serialization = ser_magic.lower() in ("0xaced", "44269", "aced")
         if has_serialization:
             detail_parts.append(f"java-ser-v{ser_version}")
+            # Output messages flow client -> server.
+            self.serialization_flows.add((src_ip, dst_ip))
         detail = " ".join(detail_parts)
 
         details: Dict[str, Any] = {
@@ -402,3 +407,51 @@ class RMIPassiveListener(PySharkListenerBase):
                     "role": "client",
                     "protocol": "RMI/TCP",
                 }
+
+    # -------------------------------------------------------------------------
+    # Harvest
+    # -------------------------------------------------------------------------
+
+    def harvest(self) -> Dict[str, Any]:
+        """Surface discovered RMI endpoints + Java deserialization surface.
+
+        RMI endpoint hostnames (registry-bound objects) and observed Java
+        serialized payloads are key attack-surface signals (ysoserial / JNDI
+        injection) -- emit them as a structured table + alerts rather than
+        leaving them buried in the interaction timeline.
+        """
+        result = super().harvest()
+        if not result:
+            result = {"tables": [], "alerts": []}
+        tables = result.setdefault("tables", [])
+        alerts = result.setdefault("alerts", [])
+
+        if self.endpoints:
+            rows = []
+            for server_ip, eps in sorted(self.endpoints.items()):
+                ep_list = ", ".join(sorted(e for e in eps if e)) or "?"
+                rows.append([server_ip, ep_list])
+            if rows:
+                tables.append(
+                    {
+                        "headers": ["Server", "Endpoints"],
+                        "rows": rows,
+                        "title": f"RMI Endpoints ({len(rows)})",
+                    }
+                )
+
+        for client_ip, server_ip in sorted(self.serialization_flows):
+            alerts.append(
+                {
+                    "level": "warning",
+                    "category": "control_alert",
+                    "message": (
+                        f"RMI JAVA SERIALIZATION: {client_ip} -> {server_ip} "
+                        f"-- deserialization attack surface (ysoserial / JNDI)"
+                    ),
+                }
+            )
+
+        if not tables and not alerts:
+            return {}
+        return result
