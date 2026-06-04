@@ -296,7 +296,7 @@ class TFTPPassiveListener(PySharkListenerBase):
             dst_port=dst_port,
         )
 
-        self._track_devices(src_ip, dst_ip, src_mac, dst_mac)
+        self._track_devices(src_ip, dst_ip, src_mac, dst_mac, server_is_src=True)
         self.logger.debug(f"TFTP: DATA block {block} ({src_ip} -> {dst_ip})")
 
     def _process_ack(
@@ -380,27 +380,46 @@ class TFTPPassiveListener(PySharkListenerBase):
         self._track_devices(src_ip, dst_ip, src_mac, dst_mac)
         self.logger.debug(f"TFTP: ERROR {error_code}: {error_msg} ({src_ip} -> {dst_ip})")
 
-    def _track_devices(self, src_ip: str, dst_ip: str, src_mac: str, dst_mac: str) -> None:
-        """Track both client and server devices."""
-        if is_valid_discovered_ip(dst_ip):
-            dst_vendor = lookup_mac_vendor(dst_mac) if dst_mac else ""
+    def _track_devices(
+        self,
+        src_ip: str,
+        dst_ip: str,
+        src_mac: str,
+        dst_mac: str,
+        server_is_src: bool = False,
+    ) -> None:
+        """Track both client and server devices.
+
+        For requests (RRQ/WRQ/ACK) the destination is the TFTP server. For
+        server-originated traffic (DATA), pass ``server_is_src=True`` so the
+        source is labelled the server.
+        """
+        if server_is_src:
+            server_ip, server_mac = src_ip, src_mac
+            client_ip, client_mac = dst_ip, dst_mac
+        else:
+            server_ip, server_mac = dst_ip, dst_mac
+            client_ip, client_mac = src_ip, src_mac
+
+        if is_valid_discovered_ip(server_ip):
+            server_vendor = lookup_mac_vendor(server_mac) if server_mac else ""
             self._ensure_device(
-                f"tftp-server:{dst_ip}",
-                dst_ip,
-                mac=dst_mac or "",
-                name=f"TFTP Server ({dst_ip})",
+                f"tftp-server:{server_ip}",
+                server_ip,
+                mac=server_mac or "",
+                name=f"TFTP Server ({server_ip})",
                 device_type="TFTP Server",
-                manufacturer=dst_vendor if dst_vendor != "Unknown" else "",
+                manufacturer=server_vendor if server_vendor != "Unknown" else "",
             )
-        if is_valid_discovered_ip(src_ip):
-            src_vendor = lookup_mac_vendor(src_mac) if src_mac else ""
+        if is_valid_discovered_ip(client_ip):
+            client_vendor = lookup_mac_vendor(client_mac) if client_mac else ""
             self._ensure_device(
-                f"tftp-client:{src_ip}",
-                src_ip,
-                mac=src_mac or "",
-                name=f"TFTP Client ({src_ip})",
+                f"tftp-client:{client_ip}",
+                client_ip,
+                mac=client_mac or "",
+                name=f"TFTP Client ({client_ip})",
                 device_type="TFTP Client",
-                manufacturer=src_vendor if src_vendor != "Unknown" else "",
+                manufacturer=client_vendor if client_vendor != "Unknown" else "",
             )
 
     def get_file_operations(self) -> List[Dict[str, str]]:

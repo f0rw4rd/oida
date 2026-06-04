@@ -54,10 +54,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ...protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # EtherNet/IP encapsulation commands
 ENIP_COMMANDS = {
@@ -265,7 +261,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
             else:
                 cmd_code = int(cmd_raw)
         except (ValueError, TypeError) as e:
-            logger.debug(f"if isinstance(cmd_raw, str) and cmd_r...: {e}")
+            self.logger.debug(f"if isinstance(cmd_raw, str) and cmd_r...: {e}")
             return
 
         cmd_name = ENIP_COMMANDS.get(cmd_code, f"Cmd 0x{cmd_code:04x}")
@@ -280,7 +276,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
                 else:
                     status = int(status_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"if isinstance(status_raw, str) and st...: {e}")
+                self.logger.debug(f"if isinstance(status_raw, str) and st...: {e}")
 
         # RegisterSession/UnregisterSession are requests
         # ListIdentity responses contain device info
@@ -499,7 +495,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
             else:
                 svc_code = int(svc_raw)
         except (ValueError, TypeError) as e:
-            logger.debug(f"if isinstance(svc_raw, str) and svc_r...: {e}")
+            self.logger.debug(f"if isinstance(svc_raw, str) and svc_r...: {e}")
             return
 
         svc_name = CIP_SERVICES.get(svc_code, f"CIP Svc 0x{svc_code:02x}")
@@ -516,7 +512,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
                 )
                 is_response = bool(full_svc & 0x80)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get full_svc: {e}")
+                self.logger.debug(f"Failed to get full_svc: {e}")
 
         direction = "response" if is_response else "request"
 
@@ -537,7 +533,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
                     else int(class_raw)
                 )
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get cip_class: {e}")
+                self.logger.debug(f"Failed to get cip_class: {e}")
         if inst_raw is not None:
             try:
                 cip_instance = (
@@ -546,12 +542,12 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
                     else int(inst_raw)
                 )
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get cip_instance: {e}")
+                self.logger.debug(f"Failed to get cip_instance: {e}")
         if attr_raw is not None:
             try:
                 cip_attribute = int(attr_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get cip_attribute: {e}")
+                self.logger.debug(f"Failed to get cip_attribute: {e}")
 
         class_name = (
             CIP_CLASSES.get(cip_class, f"Class 0x{cip_class:02x}") if cip_class is not None else ""
@@ -568,7 +564,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
                     else int(genstat_raw)
                 )
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get genstat: {e}")
+                self.logger.debug(f"Failed to get genstat: {e}")
 
         details: Dict[str, Any] = {
             "service_code": svc_code,

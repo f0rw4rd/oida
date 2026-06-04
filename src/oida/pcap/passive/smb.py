@@ -294,6 +294,39 @@ class SMBPassiveListener(PySharkListenerBase):
         if sesid is not None and sesid != "0":
             details["session_id"] = sesid
 
+        # SMB1 header correlation IDs (consumed per-packet)
+        for key, detail_key in (
+            ("_last_smb_tid", "tid"),
+            ("_last_smb_uid", "uid"),
+            ("_last_smb_pid", "pid"),
+            ("_last_smb_mid", "mid"),
+        ):
+            val = session.pop(key, None)
+            if val is not None:
+                details[detail_key] = val
+
+        # SMB2 correlation IDs (consumed per-packet)
+        msg_id = session.pop("_last_smb2_msg_id", None)
+        if msg_id is not None:
+            details["msg_id"] = msg_id
+        tree_id = session.pop("_last_smb2_tid", None)
+        if tree_id is not None:
+            details["tree_id"] = tree_id
+
+        # SMB1 password length / setup action (credential + logon-type indicators)
+        pw_len = session.pop("_last_password_length", None)
+        if pw_len is not None:
+            details["password_length"] = pw_len
+        setup_action = session.pop("_last_setup_action", None)
+        if setup_action is not None:
+            details["setup_action"] = setup_action
+            if setup_action & 0x1:
+                details["guest_logon"] = True
+
+        # SMB3.1.1 pre-auth integrity hash
+        if session.get("preauth_hash"):
+            details["preauth_hash"] = session["preauth_hash"]
+
         # Server hostname
         if session.get("server_hostname"):
             details["server_hostname"] = session["server_hostname"]
@@ -491,6 +524,40 @@ class SMBPassiveListener(PySharkListenerBase):
             if trans_name:
                 session["_last_trans_name"] = trans_name
 
+        # SMB1 header correlation IDs (TID/UID/PID/MID) for request/response matching
+        for raw_field, key in (
+            ("tid", "smb_tid"),
+            ("uid", "smb_uid"),
+            ("pid", "smb_pid"),
+            ("mid", "smb_mid"),
+        ):
+            val = self.get_field(smb, raw_field)
+            if val is not None:
+                resolved = str(self._resolve_value(val, "")).strip()
+                if resolved:
+                    session[f"_last_{key}"] = resolved
+
+        # SMB1 password length (credential indicator: non-zero => password supplied)
+        pwlen = self.get_field(smb, "pwlen")
+        if pwlen is not None:
+            try:
+                pw_val = int(self._resolve_value(pwlen, 0))
+                if pw_val > 0:
+                    session["_last_password_length"] = pw_val
+            except (ValueError, TypeError) as e:
+                self.logger.debug(f"SMB1: pwlen int parse failed: {e}")
+
+        # SMB1 SessionSetup action flags (bit0 => guest logon)
+        setup_action = self.get_field(smb, "setup.action")
+        if setup_action is None:
+            setup_action = self.get_field(smb, "setup_action")
+        if setup_action is not None:
+            try:
+                act_val = int(str(self._resolve_value(setup_action, "0")), 0)
+                session["_last_setup_action"] = act_val
+            except (ValueError, TypeError) as e:
+                self.logger.debug(f"SMB1: setup.action int parse failed: {e}")
+
         # SMB1 command name for operation tracking
         cmd_name = self._get_smb1_command(smb)
         if cmd_name:
@@ -555,6 +622,27 @@ class SMBPassiveListener(PySharkListenerBase):
         sesid = self.get_field(smb2, "sesid")
         if sesid is not None:
             session["_last_sesid"] = str(self._resolve_value(sesid, ""))
+
+        # SMB2 message ID (request/response correlation)
+        msg_id = self.get_field(smb2, "msg_id")
+        if msg_id is not None:
+            resolved = str(self._resolve_value(msg_id, "")).strip()
+            if resolved:
+                session["_last_smb2_msg_id"] = resolved
+
+        # SMB2 tree ID (share handle for the current request)
+        tid = self.get_field(smb2, "tid")
+        if tid is not None:
+            resolved = str(self._resolve_value(tid, "")).strip()
+            if resolved:
+                session["_last_smb2_tid"] = resolved
+
+        # SMB3.1.1 pre-authentication integrity hash (negotiation security artifact)
+        preauth = self.get_field(smb2, "preauth_hash")
+        if preauth is not None:
+            resolved = str(self._resolve_value(preauth, "")).strip()
+            if resolved:
+                session["preauth_hash"] = resolved
 
         # Server host name from negotiate response
         host = self.get_field(smb2, "host")
@@ -788,6 +876,8 @@ class SMBPassiveListener(PySharkListenerBase):
             smb_data["ciphers"] = session["ciphers"]
         if session.get("server_hostname"):
             smb_data["server_hostname"] = session["server_hostname"]
+        if session.get("preauth_hash"):
+            smb_data["preauth_hash"] = session["preauth_hash"]
 
         # Clean None values
         smb_data = {k: v for k, v in smb_data.items() if v is not None}

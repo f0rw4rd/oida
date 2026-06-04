@@ -52,10 +52,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ...protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # BACnet confirmed service choices
 BACNET_CONFIRMED_SERVICES = {
@@ -299,7 +295,7 @@ class BACnetPassiveListener(PySharkListenerBase):
             try:
                 apdu_type = int(apdu_type_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get apdu_type: {e}")
+                self.logger.debug(f"Failed to get apdu_type: {e}")
 
         if apdu_type is None:
             return
@@ -311,7 +307,7 @@ class BACnetPassiveListener(PySharkListenerBase):
             try:
                 invoke_id = int(invoke_id_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get invoke_id: {e}")
+                self.logger.debug(f"Failed to get invoke_id: {e}")
 
         # Determine service
         svc_name = ""
@@ -324,7 +320,7 @@ class BACnetPassiveListener(PySharkListenerBase):
                     svc_code = int(svc_raw)
                     svc_name = BACNET_CONFIRMED_SERVICES.get(svc_code, f"ConfirmedSvc {svc_code}")
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get svc_code: {e}")
+                    self.logger.debug(f"Failed to get svc_code: {e}")
             direction = "request"
         elif apdu_type == 1:  # Unconfirmed Request
             svc_raw = self.get_field(bacapp, "unconfirmed_service", None)
@@ -335,7 +331,7 @@ class BACnetPassiveListener(PySharkListenerBase):
                         svc_code, f"UnconfirmedSvc {svc_code}"
                     )
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get svc_code: {e}")
+                    self.logger.debug(f"Failed to get svc_code: {e}")
             direction = "request"
         elif apdu_type == 2:  # SimpleAck
             direction = "response"
@@ -347,7 +343,7 @@ class BACnetPassiveListener(PySharkListenerBase):
                     svc_code = int(svc_raw)
                     svc_name = BACNET_CONFIRMED_SERVICES.get(svc_code, f"ConfirmedSvc {svc_code}")
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get svc_code: {e}")
+                    self.logger.debug(f"Failed to get svc_code: {e}")
             direction = "response"
         elif apdu_type == 5:  # Error
             direction = "response"
@@ -357,7 +353,7 @@ class BACnetPassiveListener(PySharkListenerBase):
                 try:
                     svc_code = int(svc_raw)
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get svc_code: {e}")
+                    self.logger.debug(f"Failed to get svc_code: {e}")
             svc_name = "Error"
         elif apdu_type == 6:  # Reject
             direction = "response"
@@ -388,17 +384,17 @@ class BACnetPassiveListener(PySharkListenerBase):
             try:
                 obj_type = int(obj_type_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get obj_type: {e}")
+                self.logger.debug(f"Failed to get obj_type: {e}")
         if inst_raw is not None:
             try:
                 instance = int(inst_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get instance: {e}")
+                self.logger.debug(f"Failed to get instance: {e}")
         if prop_raw is not None:
             try:
                 prop_id = int(prop_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get prop_id: {e}")
+                self.logger.debug(f"Failed to get prop_id: {e}")
 
         obj_type_name = (
             BACNET_OBJECT_TYPES.get(obj_type, f"Type{obj_type}") if obj_type is not None else ""
@@ -434,7 +430,7 @@ class BACnetPassiveListener(PySharkListenerBase):
             try:
                 vendor_id = int(vendor_id_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get vendor_id: {e}")
+                self.logger.debug(f"Failed to get vendor_id: {e}")
 
         # WhoIs limits
         who_is_low = self.get_field(bacapp, "who_is_low_limit", None)
@@ -453,7 +449,7 @@ class BACnetPassiveListener(PySharkListenerBase):
                 val = obj_id_raw if not isinstance(obj_id_raw, list) else obj_id_raw[0]
                 obj_identifier = int(val)
             except (ValueError, TypeError) as e:
-                logger.debug(f"BACnet: objectIdentifier int parse failed: {e}")
+                self.logger.debug(f"BACnet: objectIdentifier int parse failed: {e}")
 
         # Extract error/reject/abort details
         error_class = None
@@ -467,27 +463,27 @@ class BACnetPassiveListener(PySharkListenerBase):
                 try:
                     error_class = int(ec_raw)
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get error_class: {e}")
+                    self.logger.debug(f"Failed to get error_class: {e}")
             ecode_raw = self.get_field(bacapp, "error_code", None)
             if ecode_raw is not None:
                 try:
                     error_code = int(ecode_raw)
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get error_code: {e}")
+                    self.logger.debug(f"Failed to get error_code: {e}")
         elif apdu_type == 6:  # Reject
             rr_raw = self.get_field(bacapp, "reject_reason", None)
             if rr_raw is not None:
                 try:
                     reject_reason = int(rr_raw)
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get reject_reason: {e}")
+                    self.logger.debug(f"Failed to get reject_reason: {e}")
         elif apdu_type == 7:  # Abort
             ar_raw = self.get_field(bacapp, "abort_reason", None)
             if ar_raw is not None:
                 try:
                     abort_reason = int(ar_raw)
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to get abort_reason: {e}")
+                    self.logger.debug(f"Failed to get abort_reason: {e}")
 
         # Extract sequence number (segmented transfers)
         seq_num_raw = self.get_field(bacapp, "sequence_number", None)
@@ -496,7 +492,7 @@ class BACnetPassiveListener(PySharkListenerBase):
             try:
                 seq_num = int(seq_num_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get seq_num: {e}")
+                self.logger.debug(f"Failed to get seq_num: {e}")
 
         # Extract device identifier
         dev_id_raw = self.get_field(bacapp, "deviceIdentifier", None)
@@ -506,7 +502,7 @@ class BACnetPassiveListener(PySharkListenerBase):
                 val = dev_id_raw if not isinstance(dev_id_raw, list) else dev_id_raw[0]
                 device_identifier = int(val)
             except (ValueError, TypeError) as e:
-                logger.debug(f"BACnet: deviceIdentifier int parse failed: {e}")
+                self.logger.debug(f"BACnet: deviceIdentifier int parse failed: {e}")
 
         # Extract process identifier (subscriptions/notifications)
         proc_id_raw = self.get_field(bacapp, "processId", None)
@@ -515,7 +511,7 @@ class BACnetPassiveListener(PySharkListenerBase):
             try:
                 process_id = int(proc_id_raw)
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to get process_id: {e}")
+                self.logger.debug(f"Failed to get process_id: {e}")
 
         # Build details
         details: Dict[str, Any] = {"service": svc_name}

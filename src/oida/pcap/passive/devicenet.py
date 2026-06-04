@@ -269,12 +269,17 @@ class DeviceNetPassiveListener(PySharkListenerBase):
         )
         self._track_node(dst_mac_id, dst_ip, dst_mac, None, None, None, None, now)
 
-        # Update discovered devices
-        for ip, mac in ((src_ip, src_mac), (dst_ip, dst_mac)):
+        # Update discovered devices.  Enrich protocol_data on EVERY packet
+        # (not just creation) so vendor/serial/services tracked per node are
+        # surfaced regardless of which packet was seen first.
+        for ip, mac, mac_id in (
+            (src_ip, src_mac, src_mac_id),
+            (dst_ip, dst_mac, dst_mac_id),
+        ):
             if is_valid_discovered_ip(ip):
                 mac_vendor = lookup_mac_vendor(mac) if mac else ""
                 key = f"devicenet:{ip}"
-                device, is_new = self._ensure_device(
+                device, _is_new = self._ensure_device(
                     key,
                     ip,
                     mac=mac,
@@ -282,13 +287,28 @@ class DeviceNetPassiveListener(PySharkListenerBase):
                     manufacturer=mac_vendor if mac_vendor else "",
                     device_type="DeviceNet Node",
                 )
-                if is_new:
-                    device.devicenet_passive_data = {
-                        "protocol": "DeviceNet/CIP",
-                    }
+                device.devicenet_passive_data = self._build_device_data(mac_id)
 
-    @staticmethod
-    def _determine_msg_group(dn) -> Optional[int]:
+    def _build_device_data(self, mac_id: Optional[int]) -> Dict[str, Any]:
+        """Build devicenet_passive_data from the tracked node (by MAC ID)."""
+        data: Dict[str, Any] = {"protocol": "DeviceNet/CIP"}
+        node = self.nodes.get(mac_id) if mac_id is not None else None
+        if node is None:
+            return data
+        data["mac_id"] = node.mac_id
+        if node.vendor_id is not None:
+            data["vendor_id"] = f"0x{node.vendor_id:04x}"
+        if node.serial_number is not None:
+            data["serial_number"] = f"0x{node.serial_number:08x}"
+        if node.services_seen:
+            data["services_seen"] = sorted(node.services_seen)
+        if node.classes_accessed:
+            data["classes_accessed"] = sorted(
+                DEVICENET_CLASSES.get(c, f"0x{c:02x}") for c in node.classes_accessed
+            )
+        return data
+
+    def _determine_msg_group(self, dn) -> Optional[int]:
         """Determine which DeviceNet message group this packet belongs to."""
         for group_num, field_name in (
             (1, "grp_msg1_id"),
@@ -300,7 +320,8 @@ class DeviceNetPassiveListener(PySharkListenerBase):
             (4, "grp_msg4_id"),
             (4, "grp_msg4.id"),
         ):
-            val = getattr(dn, field_name, None)
+            # Use the safe field-access helper (catches pyshark internal errors)
+            val = self.get_field(dn, field_name, None)
             if val is not None:
                 return group_num
         return None

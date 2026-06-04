@@ -35,11 +35,6 @@ from ...protocols.discovery.core import (
     lookup_mac_vendor,
 )
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
 # Standard Redis port
 REDIS_PORT = 6379
 REDIS_PORTS = {REDIS_PORT, 6380, 16379, 26379}
@@ -395,8 +390,7 @@ class RedisPassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
-    @staticmethod
-    def _get_raw_field(layer, field_name, default=None):
+    def _get_raw_field(self, layer, field_name, default=None):
         """Get a field value without get_field's list-to-string conversion.
 
         For RESP bulk_string_value, EK mode returns a list of bytes objects
@@ -410,7 +404,7 @@ class RedisPassiveListener(PySharkListenerBase):
                 return default
             return val
         except Exception as e:
-            logger.debug(f"Redis: raw getattr on RESP field failed: {e}")
+            self.logger.debug(f"Redis: raw getattr on RESP field failed: {e}")
             return default
 
     def _parse_bulk_values(self, raw) -> List[str]:

@@ -88,6 +88,10 @@ class SmartInstallPassiveListener(PySharkListenerBase):
         nxc_logger: Optional[Any] = None,
     ):
         super().__init__(interface, timeout, nxc_logger)
+        # Switches exposing Smart Install (CVE-2018-0171). Maps switch_ip -> set
+        # of observed SMI operations so harvest() can emit a structured alert
+        # instead of relying on log-only output.
+        self.exposed_switches: Dict[str, set] = {}
 
     def should_process_packet(self, packet) -> bool:
         """Check if packet is Smart Install traffic (TCP port 4786)."""
@@ -295,6 +299,9 @@ class SmartInstallPassiveListener(PySharkListenerBase):
                     f"Smart Install: Cisco switch at {switch_ip}:{SMART_INSTALL_PORT} "
                     f"(CVE-2018-0171 potential)"
                 )
+            # Track exposure for the harvest() alert (covers existing devices too,
+            # so the operation seen on a later packet still gets recorded).
+            self.exposed_switches.setdefault(switch_ip, set()).add(operation)
 
         if is_valid_discovered_ip(director_ip):
             vendor = lookup_mac_vendor(director_mac) if director_mac else ""
@@ -311,3 +318,39 @@ class SmartInstallPassiveListener(PySharkListenerBase):
                     "role": "director",
                     "protocol": "SmartInstall/TCP",
                 }
+
+    def harvest(self) -> Dict[str, Any]:
+        """Surface CVE-2018-0171 exposure as structured alerts + a switch table."""
+        result = super().harvest()
+        if not result:
+            result = {"tables": [], "alerts": []}
+        tables = result.setdefault("tables", [])
+        alerts = result.setdefault("alerts", [])
+
+        if self.exposed_switches:
+            rows = []
+            for switch_ip, ops in sorted(self.exposed_switches.items()):
+                op_list = ", ".join(sorted(o for o in ops if o)) or "?"
+                rows.append([switch_ip, str(SMART_INSTALL_PORT), op_list])
+                alerts.append(
+                    {
+                        "level": "fail",
+                        "category": "control_alert",
+                        "message": (
+                            f"SMARTINSTALL CVE-2018-0171: Cisco switch {switch_ip}:"
+                            f"{SMART_INSTALL_PORT} exposes Smart Install "
+                            f"(ops: {op_list}) -- remote code execution risk"
+                        ),
+                    }
+                )
+            tables.append(
+                {
+                    "headers": ["Switch", "Port", "Operations"],
+                    "rows": rows,
+                    "title": f"Smart Install Exposed Switches ({len(rows)})",
+                }
+            )
+
+        if not tables and not alerts:
+            return {}
+        return result

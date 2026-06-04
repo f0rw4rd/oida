@@ -151,6 +151,56 @@ FINS_TCP_COMMANDS = {
     6: "Connection Confirmation",
 }
 
+# Fatal error flag field tokens (omron.fatal.*) from CPU Unit Status Read.
+_FINS_FATAL_ERROR_FIELDS = (
+    "fatal_fals_error",
+    "fatal_sfc_error",
+    "fatal_program_error",
+    "fatal_io_setting_error",
+    "fatal_cpu_bus_error",
+    "fatal_duplication_error",
+    "fatal_io_bus_error",
+    "fatal_memory_error",
+    "fatal_watch_dog_timer_error",
+)
+
+# Non-fatal error flag field tokens (omron.non_fatal.*).
+_FINS_NON_FATAL_ERROR_FIELDS = (
+    "non_fatal_cpu_bus_unit_setting_error",
+    "non_fatal_batter_error",
+    "non_fatal_sysmac_bus_error",
+    "non_fatal_sysmac_bus2_error",
+    "non_fatal_cpu_bus_unit_error",
+    "non_fatal_io_verification_error",
+    "non_fatal_sfc_error",
+    "non_fatal_indirect_dm_error",
+    "non_fatal_jmp_error",
+    "non_fatal_fal_error",
+)
+
+# Map field token -> human-readable condition name for active-flag reporting.
+_FINS_ERROR_FIELD_NAMES = {
+    "fatal_fals_error": "FALS",
+    "fatal_sfc_error": "SFC",
+    "fatal_program_error": "Program",
+    "fatal_io_setting_error": "I/O Setting",
+    "fatal_cpu_bus_error": "CPU Bus",
+    "fatal_duplication_error": "Duplication",
+    "fatal_io_bus_error": "I/O Bus",
+    "fatal_memory_error": "Memory",
+    "fatal_watch_dog_timer_error": "Watchdog Timer",
+    "non_fatal_cpu_bus_unit_setting_error": "CPU Bus Unit Setting",
+    "non_fatal_batter_error": "Battery",
+    "non_fatal_sysmac_bus_error": "SYSMAC Bus",
+    "non_fatal_sysmac_bus2_error": "SYSMAC Bus 2",
+    "non_fatal_cpu_bus_unit_error": "CPU Bus Unit",
+    "non_fatal_io_verification_error": "I/O Verification",
+    "non_fatal_sfc_error": "SFC",
+    "non_fatal_indirect_dm_error": "Indirect DM",
+    "non_fatal_jmp_error": "JMP",
+    "non_fatal_fal_error": "FAL",
+}
+
 # CPU status codes (omron.status)
 FINS_CPU_STATUS = {
     0x00: "Stop",
@@ -526,6 +576,30 @@ class FINSPassiveListener(PySharkListenerBase):
         if pc_status >= 0:
             details["pc_status"] = pc_status
 
+        # PC status sub-bits (high bit + reserved bits) and rack number.
+        pc_status_hi = self._parse_int(self.get_field(omron, "pc_status_hi", None), -1)
+        if pc_status_hi >= 0:
+            details["pc_status_hi"] = pc_status_hi
+        pc_status_r1 = self._parse_int(self.get_field(omron, "pc_status_r1", None), -1)
+        if pc_status_r1 >= 0:
+            details["pc_status_r1"] = pc_status_r1
+        pc_status_r2 = self._parse_int(self.get_field(omron, "pc_status_r2", None), -1)
+        if pc_status_r2 >= 0:
+            details["pc_status_r2"] = pc_status_r2
+        rack_num = self._parse_int(self.get_field(omron, "pcp_status_rack_num", None), -1)
+        if rack_num >= 0:
+            details["rack_num"] = rack_num
+
+        # Fatal / non-fatal error breakdown (CPU Unit Status Read response).
+        # Each is a per-condition flag; collect the active ones into a list
+        # so a fault on the PLC is surfaced as named conditions.
+        fatal_errors = self._collect_active_flags(omron, _FINS_FATAL_ERROR_FIELDS)
+        if fatal_errors:
+            details["fatal_errors"] = fatal_errors
+        non_fatal_errors = self._collect_active_flags(omron, _FINS_NON_FATAL_ERROR_FIELDS)
+        if non_fatal_errors:
+            details["non_fatal_errors"] = non_fatal_errors
+
         # Program number
         prog_num = self._parse_int(self.get_field(omron, "program_number", None), -1)
         if prog_num >= 0:
@@ -595,6 +669,20 @@ class FINSPassiveListener(PySharkListenerBase):
         error_msg = str(self.get_field(omron, "error_message", "") or "").strip()
         if error_msg:
             details["error_message"] = error_msg
+
+    def _collect_active_flags(self, omron, field_tokens: Tuple[str, ...]) -> List[str]:
+        """Return the human-readable names of error flags that are set.
+
+        ``field_tokens`` is a tuple of pyshark field tokens. A field counts
+        as active when its dissected value parses to a non-zero integer; its
+        condition name comes from ``_FINS_ERROR_FIELD_NAMES``.
+        """
+        active: List[str] = []
+        for field_token in field_tokens:
+            val = self._parse_int(self.get_field(omron, field_token, None), -1)
+            if val > 0:
+                active.append(_FINS_ERROR_FIELD_NAMES.get(field_token, field_token))
+        return active
 
     @staticmethod
     def _build_summary(

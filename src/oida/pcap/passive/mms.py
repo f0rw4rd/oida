@@ -1129,13 +1129,18 @@ class MMSPassiveListener(PySharkListenerBase):
         # EK mode stores element containers as null-valued EkMultiField objects,
         # so get_field() returns None.  Use has_field() for presence detection.
         if self._has_layer_field(acse, "aarq_element"):
+            aarq_details: Dict[str, Any] = {"has_auth": bool(auth_value)}
+            # ACSE protocol version advertised by the calling AE (FT_BYTES bitstring)
+            aarq_ver = str(self.get_field(acse, "aARQ_protocol_version", "") or "").strip()
+            if aarq_ver:
+                aarq_details["acse_protocol_version"] = aarq_ver
             self._record_interaction(
                 now,
                 src_ip,
                 dst_ip,
                 "request",
                 "ACSE Associate",
-                {"has_auth": bool(auth_value)},
+                aarq_details,
                 "ACSE AARQ" + (" (authenticated)" if auth_value else ""),
                 flow_id=flow_id,
                 src_port=src_port,
@@ -1144,6 +1149,10 @@ class MMSPassiveListener(PySharkListenerBase):
             )
         elif self._has_layer_field(acse, "aare_element"):
             aare_details: Dict[str, Any] = {"has_auth": bool(auth_value)}
+            # ACSE protocol version advertised by the responding AE (FT_BYTES bitstring)
+            aare_ver = str(self.get_field(acse, "aARE_protocol_version", "") or "").strip()
+            if aare_ver:
+                aare_details["acse_protocol_version"] = aare_ver
             # Extract association result code
             result_raw = self.get_field(acse, "result", None)
             if result_raw is not None:
