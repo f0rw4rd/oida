@@ -99,6 +99,51 @@ SENSITIVE_TABLES = {
 
 
 @dataclass
+class C1222Credential:
+    """A credential observed in an ANSI C12.22 LOGON service.
+
+    Exposes the canonical field names the scanner credential loop and the
+    base-class ``_collect_credentials()`` builder consume directly, so no
+    ``getattr`` fallback chains are needed.
+    """
+
+    source_ip: str
+    dest_ip: str
+    user: str = ""
+    user_id_value: Optional[int] = None
+    password_value: str = ""
+
+    @property
+    def client_ip(self) -> str:
+        return self.source_ip
+
+    @property
+    def server_ip(self) -> str:
+        return self.dest_ip
+
+    @property
+    def username(self) -> str:
+        # Prefer the username string; fall back to the numeric user ID.
+        if self.user:
+            return self.user
+        if self.user_id_value is not None:
+            return f"uid={self.user_id_value}"
+        return "?"
+
+    @property
+    def password(self) -> str:
+        return self.password_value
+
+    @property
+    def auth_method(self) -> str:
+        return "LOGON"
+
+    @property
+    def credential_type(self) -> str:
+        return "plaintext"
+
+
+@dataclass
 class C1222Session:
     """Track an ANSI C12.22 communication session."""
 
@@ -160,6 +205,9 @@ class C1222PassiveListener(PySharkListenerBase):
         super().__init__(interface, timeout, nxc_logger)
         self.sessions: Dict[Tuple[str, str], C1222Session] = {}
         self._alerts: List[Dict[str, str]] = []
+        # Credentials extracted from LOGON services, surfaced to the scanner.
+        self.credentials: List[C1222Credential] = []
+        self._seen_creds: Set[Tuple[str, str, str, str]] = set()
 
     def process_packet(self, packet) -> None:
         """Process an ANSI C12.22 packet using PyShark dissection."""
@@ -301,6 +349,32 @@ class C1222PassiveListener(PySharkListenerBase):
             user_id,
             is_response,
         )
+
+        # Surface LOGON credentials to the scanner credential table.
+        # Only requests carry credentials; dedup per (client, server, user, pw).
+        if cmd_code == 0x50 and not is_response and (username or user_id is not None or password):
+            cred_key = (
+                client_ip,
+                server_ip,
+                username or (f"uid={user_id}" if user_id is not None else "?"),
+                password,
+            )
+            if cred_key not in self._seen_creds:
+                self._seen_creds.add(cred_key)
+                self.credentials.append(
+                    C1222Credential(
+                        source_ip=client_ip,
+                        dest_ip=server_ip,
+                        user=username,
+                        user_id_value=user_id,
+                        password_value=password,
+                    )
+                )
+                if not username and user_id is None and password:
+                    self.logger.debug(
+                        f"C12.22 LOGON credential with password but no user "
+                        f"from {client_ip} -> {server_ip}"
+                    )
 
         # Update devices
         self._update_devices(client_ip, server_ip, session_key)
@@ -611,6 +685,25 @@ class C1222PassiveListener(PySharkListenerBase):
         if self._alerts:
             result.setdefault("alerts", []).extend(self._alerts)
         return result
+
+    def get_credentials_summary(self) -> List[Dict[str, Any]]:
+        """Return LOGON credentials in scanner-compatible dict form.
+
+        Keys match the base-class ``_collect_credentials()`` builder so the
+        data lands in the correct columns without fallback chains.
+        """
+        return [
+            {
+                "credential_type": c.credential_type,
+                "auth_method": c.auth_method,
+                "username": c.username,
+                "password": c.password,
+                "server_ip": c.server_ip,
+                "client_ip": c.client_ip,
+                "protocol": self.PROTOCOL_NAME.upper(),
+            }
+            for c in self.credentials
+        ]
 
     def get_sessions_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all observed C12.22 sessions."""

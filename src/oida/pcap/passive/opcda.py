@@ -671,21 +671,11 @@ class OPCDAPassiveListener(PySharkListenerBase):
             )
 
         # --- Security alerts ---
+        # NOTE: write alerts are generated centrally by super().harvest() from
+        # get_write_operations() (category "write_alert"); do not re-emit them
+        # here or each write session produces two identical alerts.
 
         for session in self.sessions.values():
-            # Detect OPC DA Write operations
-            if session.write_count > 0:
-                alerts.append(
-                    {
-                        "level": "fail",
-                        "category": "write_alert",
-                        "message": (
-                            f"OPC DA WRITE: {session.client_ip} -> {session.server_ip}"
-                            f" ({session.write_count} writes)"
-                        ),
-                    }
-                )
-
             # Detect Browse operations (reconnaissance)
             if session.browse_count > 0:
                 alerts.append(

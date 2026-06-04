@@ -191,6 +191,13 @@ class DNSPassiveListener(PySharkListenerBase):
         if cd is not None:
             fields["check_disabled"] = str(cd).lower() in ("1", "true")
 
+        # Number of authoritative (NS) records in the packet header. A
+        # non-zero count on a response marks an authoritative delegation /
+        # zone transfer, useful for spotting authoritative servers.
+        auth_rr = self.get_field(dns, "count_auth_rr")
+        if auth_rr is not None:
+            fields["count_auth_rr"] = str(auth_rr)
+
         return fields
 
     def process_packet(self, packet) -> None:
@@ -688,6 +695,11 @@ class DNSPassiveListener(PySharkListenerBase):
                 rec["mname"] = self._clean_name(str(soa_mname))
             if soa_rname:
                 rec["rname"] = self._clean_name(str(soa_rname))
+            # Email-form of the responsible-party name (first label becomes
+            # the local part) -- the zone admin contact.
+            soa_rname_email = self.get_field(dns, "soa_rname_name")
+            if soa_rname_email:
+                rec["rname_email"] = self._clean_name(str(soa_rname_email))
             ttl = self._get_ttl(dns)
             if ttl is not None:
                 rec["ttl"] = ttl
@@ -713,6 +725,11 @@ class DNSPassiveListener(PySharkListenerBase):
                 rec["algorithm"] = self._clean_name(str(tsig_algo))
             if tsig_error is not None:
                 rec["error"] = str(tsig_error)
+            # Original transaction ID the TSIG signs over (dynamic update /
+            # TKEY correlation key).
+            tsig_orig_id = self.get_field(dns, "tsig_original_id")
+            if tsig_orig_id is not None:
+                rec["original_id"] = str(tsig_orig_id)
             responses.append(rec)
             self.logger.debug(f"DNS: TSIG algo={tsig_algo} error={tsig_error}")
 

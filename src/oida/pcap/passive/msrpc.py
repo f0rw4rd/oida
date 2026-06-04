@@ -46,10 +46,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ...protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # PDU type mapping
 PDU_TYPES = {
@@ -581,8 +577,7 @@ class MSRPCPassiveListener(PySharkListenerBase):
     # Sub-dissector handlers
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _normalize_hex(value) -> str:
+    def _normalize_hex(self, value) -> str:
         """Normalize hex value from PyShark to plain lowercase hex string.
 
         Handles colon-separated, space-separated, and plain hex formats.
@@ -594,7 +589,7 @@ class MSRPCPassiveListener(PySharkListenerBase):
             int(val_str, 16)
             return val_str
         except ValueError as e:
-            logger.debug(f"MSRPC: hex validation of normalized value failed: {e}")
+            self.logger.debug(f"MSRPC: hex validation of normalized value failed: {e}")
             return ""
 
     def _process_winreg(

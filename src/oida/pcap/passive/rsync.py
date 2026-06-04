@@ -33,10 +33,6 @@ from typing import Any, Dict, List, Optional, Set
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ...protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 class RsyncPassiveListener(PySharkListenerBase):
     """Passive Rsync traffic listener.
@@ -328,6 +324,11 @@ class RsyncPassiveListener(PySharkListenerBase):
         """Process raw rsync data (module list, responses, binary transfer data)."""
         # Try to decode hex data
         decoded = self._try_decode_hex_data(raw_data)
+        if decoded is None and raw_data:
+            self.logger.debug(
+                f"Rsync: undecodable raw data frame from {src_ip} -> {dst_ip} "
+                f"({len(raw_data)} chars)"
+            )
 
         recorded = False
 
@@ -445,8 +446,7 @@ class RsyncPassiveListener(PySharkListenerBase):
                 stream_id=self.get_stream_id(packet),
             )
 
-    @staticmethod
-    def _try_decode_hex_data(hex_str: str) -> Optional[str]:
+    def _try_decode_hex_data(self, hex_str: str) -> Optional[str]:
         """Try to decode hex string (colon-separated or continuous) to UTF-8."""
         try:
             if ":" in hex_str:
@@ -457,8 +457,44 @@ class RsyncPassiveListener(PySharkListenerBase):
             if decoded and any(c.isalpha() for c in decoded):
                 return decoded
         except (ValueError, UnicodeDecodeError) as e:
-            logger.debug(f"if : in hex_str:: {e}")
+            self.logger.debug(f"Rsync: hex data decode failed: {e}")
         return None
+
+    def harvest(self) -> Dict[str, Any]:
+        """Surface discovered rsync modules (exposed shares) as a table + alert."""
+        result = super().harvest()
+        if not result:
+            result = {"tables": [], "alerts": []}
+        tables = result.setdefault("tables", [])
+        alerts = result.setdefault("alerts", [])
+
+        if self.modules:
+            rows = []
+            for server_ip, mods in sorted(self.modules.items()):
+                mod_list = ", ".join(sorted(m for m in mods if m)) or "?"
+                version = self.server_versions.get(server_ip, "")
+                rows.append([server_ip, version or "?", mod_list])
+                alerts.append(
+                    {
+                        "level": "warning",
+                        "category": "exposure_alert",
+                        "message": (
+                            f"RSYNC MODULES: {server_ip} exposes module(s): {mod_list} "
+                            f"-- potential unauthenticated data access"
+                        ),
+                    }
+                )
+            tables.append(
+                {
+                    "headers": ["Server", "Version", "Modules"],
+                    "rows": rows,
+                    "title": f"Rsync Modules ({len(rows)})",
+                }
+            )
+
+        if not tables and not alerts:
+            return {}
+        return result
 
     def _ensure_server(self, ip: str, mac: str = "", version: str = "") -> None:
         """Create/update rsync server device."""

@@ -41,9 +41,9 @@ from ...protocols.discovery.core import (
     lookup_mac_vendor,
 )
 
-import logging
+from ...utils.ics_logger import get_module_logger
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 # Well-known OIDs for system info (MIB-II system group)
@@ -206,6 +206,9 @@ class SNMPPassiveListener(PySharkListenerBase):
         self._seen_creds: set = set()
         # Track system info extracted from OID responses
         self.system_info: Dict[str, Dict[str, str]] = {}  # agent_ip -> {sysDescr, sysName, ...}
+        # Track SET (write) operations for structured harvest alerts. SET is a
+        # config change -- security-relevant, must not be log-only.
+        self._set_ops: List[Dict[str, str]] = []
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format SNMP interaction as protocol-specific table columns."""
@@ -433,8 +436,16 @@ class SNMPPassiveListener(PySharkListenerBase):
             self.system_info[src_ip][field_name] = value_str
             self.logger.debug(f"SNMP {src_ip} {field_name}={value_str}")
 
-        # Flag SET operations as warnings
+        # Flag SET operations as warnings + record for structured harvest alert
         if operation == "SET":
+            self._set_ops.append(
+                {
+                    "client": src_ip,
+                    "server": dst_ip,
+                    "oid": oid_friendly or oid or "?",
+                    "value": value_str or "?",
+                }
+            )
             self.logger.warning(
                 f"SNMP SET detected: {src_ip} -> {dst_ip} "
                 f"OID={oid_friendly or oid} value={value_str}"
@@ -651,6 +662,53 @@ class SNMPPassiveListener(PySharkListenerBase):
             # Attach system info if available
             if sys_info:
                 device.snmp_passive_data["system_info"] = sys_info
+
+    def harvest(self) -> Dict[str, Any]:
+        """Surface SNMP SET (write) alerts and a system-info fingerprint table."""
+        result = super().harvest()
+        if not result:
+            result = {"tables": [], "alerts": []}
+        tables = result.setdefault("tables", [])
+        alerts = result.setdefault("alerts", [])
+
+        # SET operations are config writes -- emit a fail-level alert each.
+        for op in self._set_ops:
+            alerts.append(
+                {
+                    "level": "fail",
+                    "category": "write_alert",
+                    "message": (
+                        f"SNMP SET: {op['client']} -> {op['server']} "
+                        f"OID={op['oid']} value={op['value']}"
+                    ),
+                }
+            )
+
+        # System-info fingerprint table (sysDescr / sysName / sysLocation ...).
+        if self.system_info:
+            rows = []
+            for ip, info in sorted(self.system_info.items()):
+                rows.append(
+                    [
+                        ip,
+                        info.get("sysName", ""),
+                        info.get("sysDescr", ""),
+                        info.get("sysLocation", ""),
+                        info.get("sysContact", ""),
+                    ]
+                )
+            if rows:
+                tables.append(
+                    {
+                        "headers": ["Agent", "sysName", "sysDescr", "sysLocation", "sysContact"],
+                        "rows": rows,
+                        "title": f"SNMP System Info ({len(rows)})",
+                    }
+                )
+
+        if not tables and not alerts:
+            return {}
+        return result
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all extracted credentials."""

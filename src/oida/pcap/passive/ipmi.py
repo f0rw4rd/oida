@@ -95,6 +95,21 @@ class IPMICredential:
         """Client is the source."""
         return self.source_ip
 
+    @property
+    def auth_method(self) -> str:
+        """Scanner credential loop compatibility (scanner.py getattr chain).
+
+        The scanner reads ``cred.auth_method`` directly off the credential
+        object; expose the descriptive auth type string here so the method
+        column is populated without a fallback chain.
+        """
+        return self.auth_type or self.credential_type
+
+    @property
+    def server_port(self) -> int:
+        """Scanner credential loop compatibility (server port for display)."""
+        return self.dest_port
+
 
 class IPMIPassiveListener(PySharkListenerBase):
     """Passive IPMI traffic listener for BMC discovery and credential extraction.

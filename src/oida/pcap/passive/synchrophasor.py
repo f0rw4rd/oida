@@ -498,6 +498,12 @@ class SynchrophasorPassiveListener(PySharkListenerBase):
         cmd_raw = self.get_field(syn, "command", None)
         cmd_val = self._parse_int(cmd_raw, 0, base=16)
 
+        # Track command-frame count on the targeted PMU (commands are addressed
+        # to a PMU/PDC by IDCODE). Without this, ptp_data.command_frames stays 0.
+        if idcode:
+            pmu = self._ensure_pmu(idcode, dst_ip)
+            pmu.command_frames_seen += 1
+
         cmd_name = COMMAND_WORDS.get(cmd_val, f"Command 0x{cmd_val:04x}")
         is_dangerous = cmd_val in _DANGEROUS_COMMANDS
 
