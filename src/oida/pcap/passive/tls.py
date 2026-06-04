@@ -336,9 +336,7 @@ class TLSPassiveListener(PySharkListenerBase):
         if alpn:
             details["alpn"] = str(alpn)
         # OCSP status_request extension type (1 = OCSP stapling requested)
-        status_req = self.get_field(
-            tls_layer, "handshake_extensions_status_request_type", None
-        )
+        status_req = self.get_field(tls_layer, "handshake_extensions_status_request_type", None)
         if status_req is not None:
             details["ocsp_status_request"] = "ocsp" if str(status_req) == "1" else str(status_req)
         # Encrypted PreMaster secret length (RSA key exchange = no forward secrecy)
