@@ -1003,6 +1003,16 @@ def main(argv: Optional[List[str]] = None):
     Returns:
         int: Exit code (0 for success, non-zero for error)
     """
+    # Windows consoles default to a legacy code page (e.g. cp1252) that can't
+    # encode the Unicode in help/output text, which crashes a frozen binary
+    # with "charmap codec can't encode character". Force UTF-8 on the standard
+    # streams so output is encoding-safe on every platform.
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
     args_to_parse = argv if argv is not None else sys.argv[1:]
 
     # Handle --bug before argparse (no protocol subcommand required)
