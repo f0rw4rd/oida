@@ -84,6 +84,26 @@ print(f"[oida.spec] collected {len(_collected)} dep packages: {sorted(_collected
 if _skipped:
     print(f"[oida.spec] skipped (not installed in this build env): {sorted(_skipped)}")
 
+# ── root-level native libs shipped beside (not inside) their package ─────────
+# pyads installs adslib.so at the site-packages ROOT, not under pyads/, and its
+# loader scans each sys.path entry for "adslib.so". collect_all('pyads') misses
+# it (it's a sibling, not package content), so place such root-level shared libs
+# at the bundle root — which is on sys.path when frozen — so ctypes can load
+# them. (Linux: adslib.so. Windows ads uses TcAdsDll.dll from a TwinCAT install,
+# which isn't ours to bundle.)
+from importlib.metadata import files as _dist_files
+
+_ROOT_LIB_NAMES = {"adslib.so", "libTcAdsDll.so"}
+for _dist in ("pyads",):
+    try:
+        for _f in _dist_files(_dist) or []:
+            # Root-level = no parent directory in the dist layout.
+            if _f.name in _ROOT_LIB_NAMES and _f.parent.name in ("", "."):
+                binaries.append((str(_f.locate()), "."))
+                print(f"[oida.spec] bundled root native lib: {_f.name} (from {_dist})")
+    except Exception as _exc:
+        print(f"[oida.spec] root-lib scan for {_dist} failed: {type(_exc).__name__}")
+
 hiddenimports = sorted(set(hiddenimports))
 
 a = Analysis(
