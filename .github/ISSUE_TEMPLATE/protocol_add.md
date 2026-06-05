@@ -39,5 +39,4 @@ assignees: ''
 
 (yes / partial / no — looking for someone to take it)
 
-See [docs/new-protocol.md](../../docs/new-protocol.md) for the layout
-of a protocol module.
+See <https://getoida.dev> for the layout of a protocol module.
