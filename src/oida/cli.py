@@ -945,6 +945,13 @@ def print_bug_report() -> None:
                 lines.append(f"  {display_name:<20s}{ver:<12s}({proto})")
             except ImportError:
                 lines.append(f"  {display_name:<20s}{'--':<12s}({proto}) NOT INSTALLED")
+            except Exception as e:
+                # Installed but failed to load — e.g. a native lib (adslib.so,
+                # libsnap7) missing from a frozen build. A diagnostic probe must
+                # never crash on this; report it and move on.
+                lines.append(
+                    f"  {display_name:<20s}{'--':<12s}({proto}) UNAVAILABLE ({type(e).__name__})"
+                )
 
         # Protocol load test
         lines.append("")

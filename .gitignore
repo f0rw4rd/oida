@@ -47,6 +47,8 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+# ...but the committed build recipe is tracked.
+!oida.spec
 
 # Unit test / coverage reports
 htmlcov/
