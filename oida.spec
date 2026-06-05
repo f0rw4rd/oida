@@ -28,56 +28,61 @@ hiddenimports = []
 hiddenimports += collect_submodules("oida")
 datas += collect_data_files("oida", include_py_files=True)
 
-# ── protocol dependency packages ─────────────────────────────────────────────
-# Bundle whatever optional deps are installed in the build environment. The
-# try/except means a build with only a subset of extras (e.g. the wheels that
-# exist for Windows) still succeeds; a missing dep only makes that protocol's
-# live scan unavailable — ``oida <proto> --help`` still works because deps are
-# lazy-imported (see oida.utils.lazy_import).
-_OPTIONAL_PKGS = [
-    # pure-python / cross-platform
-    "scapy",
-    "asyncua",
-    "pymodbus",
-    "paho",
-    "pysnmp",
-    "bacpypes3",
-    "BAC0",
-    "hl7apy",
-    "pydicom",
-    "can",
-    "aiocoap",
-    "ocpp",
-    "fhirclient",
-    "xknx",
-    "xknxproject",
-    "asn1tools",
-    "construct",
-    "cryptography",
-    "websockets",
-    "aiohttp",
-    "defusedxml",
-    "yaml",
-    "pyshark",
-    "bitstring",
-    "ecdsa",
-    # native-extension deps (collect_all grabs their bundled .so/.pyd/.dll)
-    "pyads",
-    "snap7",
-    "opendnp3",
-    "pyiec61850",
-    "profinet",
-    "hartip",
-]
-for _pkg in _OPTIONAL_PKGS:
+# ── protocol + fuzzer dependency packages ────────────────────────────────────
+# Derived programmatically from oida's own package metadata — the SAME source of
+# truth as oida.utils.lazy_import — so the bundle can never silently drift from
+# pyproject's [project.optional-dependencies]. We read every requirement gated
+# by an `extra ==` marker (each protocol extra + the `fuzz` extra), map each pip
+# distribution name to the import package(s) it actually installs via
+# importlib.metadata, and collect_all() those. A build with only a subset of
+# extras installed (e.g. the wheels that exist on Windows) just skips the absent
+# ones — those protocols still expose `--help` because deps are lazy-imported.
+import re as _re
+from importlib.metadata import packages_distributions, requires
+
+# dist-name (lowercased) -> set of import package names it provides
+_dist_to_imports: dict = {}
+for _imp, _dists in packages_distributions().items():
+    for _d in _dists:
+        _dist_to_imports.setdefault(_d.lower().replace("-", "_"), set()).add(_imp)
+
+# Runtime extras only — never bundle test/doc tooling.
+_SKIP_EXTRAS = {"dev", "docs", "all"}
+_extra_re = _re.compile(r'extra\s*==\s*["\']([^"\']+)["\']')
+
+_wanted_dists: set = set()
+for _line in requires("oida") or []:
+    _m = _extra_re.search(_line)
+    if not _m or _m.group(1) in _SKIP_EXTRAS:
+        continue
+    _pip = _line.split(";")[0].split("[")[0]
+    for _op in (">", "<", "=", "!", "~", " ", "@"):
+        _pip = _pip.split(_op)[0]
+    _pip = _pip.strip().lower().replace("-", "_")
+    if _pip:
+        _wanted_dists.add(_pip)
+
+# Resolve each wanted distribution to its import package(s). Fall back to the
+# dist name itself if metadata can't map it (covers same-name pip/import pkgs).
+_pkgs_to_collect: set = set()
+for _dist in _wanted_dists:
+    _pkgs_to_collect |= _dist_to_imports.get(_dist, {_dist})
+
+_collected, _skipped = [], []
+for _pkg in sorted(_pkgs_to_collect):
     try:
         _d, _b, _h = collect_all(_pkg)
         datas += _d
         binaries += _b
         hiddenimports += _h
-    except Exception:
-        # Not installed in this build env — skip; protocol degrades gracefully.
-        pass
+        _collected.append(_pkg)
+    except Exception as _exc:
+        _skipped.append(f"{_pkg} ({type(_exc).__name__})")
+
+# Surface coverage in the build log so a missing dep is visible, not silent.
+print(f"[oida.spec] collected {len(_collected)} dep packages: {sorted(_collected)}")
+if _skipped:
+    print(f"[oida.spec] skipped (not installed in this build env): {sorted(_skipped)}")
 
 hiddenimports = sorted(set(hiddenimports))
 
@@ -90,8 +95,9 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    # boofuzz (the fuzzer) and test tooling are not part of the shipped CLI.
-    excludes=["boofuzz", "pytest", "_pytest", "IPython", "tkinter", "matplotlib"],
+    # Test tooling and GUI/plotting libs are not part of the shipped CLI.
+    # (boofuzz IS shipped — it backs the `oida fuzz` subcommand.)
+    excludes=["pytest", "_pytest", "IPython", "tkinter", "matplotlib"],
     noarchive=False,
 )
 

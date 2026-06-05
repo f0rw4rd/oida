@@ -38,7 +38,7 @@ jobs:
               --extra fhir --extra goose --extra hart --extra hl7 --extra iec104
               --extra knx --extra mms --extra modbus --extra mqtt --extra opcua
               --extra pcap --extra profinet --extra snap7 --extra snmp
-              --extra tase2 --extra astm --extra ocpp
+              --extra tase2 --extra astm --extra ocpp --extra fuzz
           - os: windows-latest
             label: windows-x86_64
             artifact: oida-windows-x86_64
@@ -51,7 +51,7 @@ jobs:
               --extra discovery --extra ethercat --extra ethernetip --extra fhir
               --extra hart --extra hl7 --extra iec104 --extra knx --extra modbus
               --extra mqtt --extra opcua --extra pcap --extra profinet
-              --extra snap7 --extra snmp --extra astm --extra ocpp
+              --extra snap7 --extra snmp --extra astm --extra ocpp --extra fuzz
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
