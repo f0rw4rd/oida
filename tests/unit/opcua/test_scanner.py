@@ -647,11 +647,6 @@ class TestOPCUAAuthenticationHandling(unittest.TestCase):
         self.assertEqual(scanner.username, "admin")
         self.assertEqual(scanner.password, "secret123")
 
-    @unittest.skip("wordlist-path option removed; credentials loaded via load_credentials utility")
-    def test_wordlist_authentication_setup(self):
-        """Test wordlist-based authentication setup"""
-        pass
-
     def test_authentication_result_parsing(self):
         """Test parsing authentication test results"""
         auth_result = {
