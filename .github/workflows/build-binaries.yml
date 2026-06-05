@@ -159,8 +159,10 @@ jobs:
       - name: Attest build provenance
         # Sigstore-backed SLSA provenance: proves the archive came from this
         # repo's CI. Verify with: gh attestation verify <archive> --repo f0rw4rd/oida
-        # Skipped on PRs (no need; and forked-PR id-tokens are restricted).
-        if: github.event_name != 'pull_request'
+        # Skipped on PRs (forked-PR id-tokens are restricted) and while the repo
+        # is private — GitHub Artifact Attestations require a public repo (or an
+        # org repo with Advanced Security). Auto-enables when made public.
+        if: github.event_name != 'pull_request' && github.event.repository.private == false
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4
         with:
           subject-path: ${{ env.ARCHIVE }}
