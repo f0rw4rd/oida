@@ -43,69 +43,8 @@ class TestMDNSScannerInit:
         assert isinstance(scanner._lock, type(threading.Lock()))
 
 
-class TestMDNSScannerCheckZeroconf:
-    """Test zeroconf availability check"""
-
-    @pytest.mark.skip(
-        reason="_check_zeroconf method no longer exists; zeroconf check is done inline in scan()"
-    )
-    def test_zeroconf_available(self, mdns_scanner_class):
-        """Test when zeroconf is available - SKIPPED: _check_zeroconf removed"""
-        scanner = mdns_scanner_class("eth0")
-
-        with patch.dict("sys.modules", {"zeroconf": MagicMock()}):
-            result = scanner._check_zeroconf()
-            assert result is True
-
-    @pytest.mark.skip(
-        reason="_check_zeroconf method no longer exists; zeroconf check is done inline in scan()"
-    )
-    def test_zeroconf_not_available(self, mdns_scanner_class):
-        """Test when zeroconf is not available - SKIPPED: _check_zeroconf removed"""
-        scanner = mdns_scanner_class("eth0")
-
-        with patch.dict("sys.modules", {"zeroconf": None}):
-            # Force ImportError
-            with patch.object(scanner, "_check_zeroconf", side_effect=lambda: False):
-                result = scanner._check_zeroconf()
-                assert result is False
-
-
 class TestMDNSScannerScan:
     """Test MDNSScanner scan method"""
-
-    @pytest.mark.skip(
-        reason="_check_zeroconf method no longer exists; zeroconf check is done inline in scan()"
-    )
-    def test_zeroconf_not_available_returns_empty(self, mdns_scanner_class):
-        """Test that scan returns empty when zeroconf not available - SKIPPED: _check_zeroconf removed"""
-        scanner = mdns_scanner_class("eth0", timeout=1)
-
-        with patch.object(scanner, "_check_zeroconf", return_value=False):
-            devices = scanner.scan()
-            assert devices == {}
-
-    @pytest.mark.skip(
-        reason="_check_zeroconf method no longer exists; zeroconf check is done inline in scan()"
-    )
-    def test_browse_all_service_types(self, mdns_scanner_class):
-        """Test that all service types are browsed - SKIPPED: _check_zeroconf removed"""
-        scanner = mdns_scanner_class("eth0", timeout=1)
-
-        mock_zeroconf = MagicMock()
-        mock_browser = MagicMock()
-
-        with patch.object(scanner, "_check_zeroconf", return_value=True):
-            with patch("zeroconf.Zeroconf", return_value=mock_zeroconf):
-                with patch(
-                    "zeroconf.ServiceBrowser", return_value=mock_browser
-                ) as mock_browser_class:
-                    with patch("zeroconf.InterfaceChoice"):
-                        with patch("time.sleep"):
-                            scanner.scan()
-
-                            # Should browse multiple service types
-                            assert mock_browser_class.call_count > 0
 
     def test_service_with_addresses(self, mdns_scanner_class):
         """Test handling service with addresses"""

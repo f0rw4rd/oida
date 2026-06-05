@@ -24,12 +24,6 @@ def bacnet_scanner_class():
     return BACnetScanner
 
 
-@pytest.fixture
-def opcua_scanner_class():
-    """Get OPCUAScanner class - not implemented, using OPCUAPassiveListener instead"""
-    pytest.skip("OPCUAScanner not implemented - use OPCUAPassiveListener for passive monitoring")
-
-
 # KNX SearchResponse sample
 def build_knx_search_response(
     individual_addr: tuple = (1, 1, 1),
@@ -244,98 +238,6 @@ class TestBACnetVendorName:
         scanner = bacnet_scanner_class("eth0")
         result = scanner._get_vendor_name(9999)
         assert "Vendor 9999" in result
-
-
-class TestOPCUAScannerInit:
-    """Test OPCUAScanner initialization"""
-
-    def test_default_parameters(self, opcua_scanner_class):
-        """Test scanner with default parameters"""
-        scanner = opcua_scanner_class("eth0")
-
-        assert scanner.interface == "eth0"
-        assert scanner.timeout == 10
-        assert scanner.discovered_devices == {}
-
-    def test_opcua_port(self, opcua_scanner_class):
-        """Test OPC UA port constant"""
-        scanner = opcua_scanner_class("eth0")
-        assert scanner.OPCUA_PORT == 4840
-
-    def test_custom_subnet(self, opcua_scanner_class):
-        """Test custom subnet"""
-        scanner = opcua_scanner_class("eth0", subnet="10.0.0.0/24")
-        assert scanner.subnet == "10.0.0.0/24"
-
-
-class TestOPCUAScannerProbe:
-    """Test OPCUAScanner probe method"""
-
-    def test_probe_open_port(self, opcua_scanner_class):
-        """Test probing open OPC UA port"""
-        scanner = opcua_scanner_class("eth0")
-
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket = MagicMock()
-            mock_socket_class.return_value = mock_socket
-            mock_socket.connect_ex.return_value = 0  # Port open
-
-            with patch.object(scanner, "_get_server_info", return_value=None):
-                scanner._probe_opcua_server("192.168.1.100", 4840)
-
-            # Device should be recorded even without detailed info
-            assert len(scanner.discovered_devices) == 1 or len(scanner.discovered_devices) == 0
-
-    def test_probe_closed_port(self, opcua_scanner_class):
-        """Test probing closed port"""
-        scanner = opcua_scanner_class("eth0")
-
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket = MagicMock()
-            mock_socket_class.return_value = mock_socket
-            mock_socket.connect_ex.return_value = 111  # Connection refused
-
-            scanner._probe_opcua_server("192.168.1.100", 4840)
-
-            assert len(scanner.discovered_devices) == 0
-
-    def test_probe_exception_handling(self, opcua_scanner_class):
-        """Test probe exception handling"""
-        scanner = opcua_scanner_class("eth0")
-
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket_class.side_effect = OSError("Socket error")
-
-            # Should not raise exception
-            scanner._probe_opcua_server("192.168.1.100", 4840)
-
-            assert len(scanner.discovered_devices) == 0
-
-
-class TestOPCUAScannerScan:
-    """Test OPCUAScanner scan method"""
-
-    def test_scan_with_subnet(self, opcua_scanner_class):
-        """Test scanning with subnet"""
-        scanner = opcua_scanner_class("eth0", subnet="192.168.1.0/30", timeout=1)
-
-        with patch.object(scanner, "_probe_opcua_server") as mock_probe:
-            scanner.scan()
-
-            # Should probe hosts in subnet
-            assert mock_probe.call_count >= 1
-
-    def test_scan_without_subnet(self, opcua_scanner_class):
-        """Test scanning without subnet"""
-        scanner = opcua_scanner_class("eth0", timeout=1)
-
-        with patch("oida.protocols.discovery.get_interface_network") as mock_get_net:
-            mock_get_net.return_value = None
-
-            devices = scanner.scan()
-
-            # Should return empty without subnet
-            assert devices == {}
 
 
 class TestDiscoveryScannerNewProtocols:
