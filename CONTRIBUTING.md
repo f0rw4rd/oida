@@ -27,7 +27,7 @@ Contributions are welcome! By contributing, you agree to the terms below.
 ## Code standards
 
 - Python 3.10+ (see `pyproject.toml` for the supported matrix).
-- Type hints where practical (`mypy` runs informationally — not a CI gate yet).
+- Type hints where practical (`mypy` runs informationally, not a CI gate yet).
 - New scanners follow the facade pattern (documented at <https://getoida.dev>):
   a Layer-1 `XxxScanner(NetworkScanner)` for the library API, plus a Layer-2
   `xxx(NetworkConnection)` NXC class that delegates to it. Modbus is the reference.
@@ -39,7 +39,7 @@ Contributions are welcome! By contributing, you agree to the terms below.
 
 AI-assisted contributions (e.g. code written with Copilot, Claude, ChatGPT) are
 welcome. However, AI co-author lines (`Co-Authored-By`) are not permitted in
-commit messages — a pre-commit hook enforces this. You are the author of your
+commit messages, and a pre-commit hook enforces this. You are the author of your
 contribution; the tooling you used does not need attribution in the git history.
 
 ---

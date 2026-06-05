@@ -203,6 +203,23 @@ class TestHARTIPPassiveEK:
             f"data_strs: {[ix.details.get('data_str') for ix in publish_cmd9]}"
         )
 
+    def test_hartip_extracts_pt_checksum(self):
+        """Verify pass-through frame checksum (hart_ip.pt.checksum) is extracted."""
+        listener, devices, result = _run_listener_test(
+            "hartip",
+            "HARTIPPassiveListener",
+            "hart_ip",
+            "hart/iti_hart_ip.pcap",
+            expect_details=["command"],
+        )
+
+        # Every pass-through HART frame carries a checksum byte
+        found = any(ix.details.get("pt_checksum") is not None for ix in listener.interactions)
+        assert found, (
+            "No interaction has pt_checksum in details; "
+            f"sample details: {listener.interactions[0].details if listener.interactions else 'no interactions'}"
+        )
+
     def test_hartip_poll_address(self):
         """Verify poll_address is extracted from embedded command messages."""
         listener, devices, result = _run_listener_test(

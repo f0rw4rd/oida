@@ -166,6 +166,14 @@ class CDPPassiveListener(PySharkListenerBase):
                     mgmt_addrs.append(addr)
         mgmt_addr = ", ".join(mgmt_addrs) if mgmt_addrs else ""
 
+        # Address TLV metadata (standard management-address advertisement).
+        # The NRGYZ fields above only cover the Cisco energy-wise TLV; the
+        # Address TLV reports how many management addresses the device
+        # advertises and how they are encoded (protocol id / address length).
+        number_of_addresses = str(self.get_field(cdp, "number_of_addresses", "") or "")
+        address_protocol_id = str(self.get_field(cdp, "protocol_id", "") or "")
+        address_length = str(self.get_field(cdp, "address_length", "") or "")
+
         # Duplex
         duplex = str(self.get_field(cdp, "duplex", "") or "")
 
@@ -221,6 +229,12 @@ class CDPPassiveListener(PySharkListenerBase):
             details["spare_poe"] = spare_poe
         if cluster:
             details["cluster"] = cluster
+        if number_of_addresses:
+            details["number_of_addresses"] = number_of_addresses
+        if address_protocol_id:
+            details["address_protocol_id"] = address_protocol_id
+        if address_length:
+            details["address_length"] = address_length
 
         # Record interaction
         now = datetime.now().isoformat()
@@ -277,6 +291,12 @@ class CDPPassiveListener(PySharkListenerBase):
                 cdp_data["spare_poe"] = spare_poe
             if cluster:
                 cdp_data["cluster"] = cluster
+            if number_of_addresses:
+                cdp_data["number_of_addresses"] = number_of_addresses
+            if address_protocol_id:
+                cdp_data["address_protocol_id"] = address_protocol_id
+            if address_length:
+                cdp_data["address_length"] = address_length
             device.cdp_data = cdp_data
             self.logger.debug(
                 f"CDP: {src_mac} device={device_id} platform={platform} "

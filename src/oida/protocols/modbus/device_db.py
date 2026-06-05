@@ -48,21 +48,16 @@ def load_database() -> Dict:
 
     db_path = get_database_path()
 
-    # Try alternate path if first doesn't exist
     if not db_path.exists():
-        # Try relative to project root (src/../data/)
-        alt_path = (
-            Path(__file__).parent.parent.parent.parent / "data" / "modbus" / "device_database.json"
-        )
-        if alt_path.exists():
-            db_path = alt_path
-        else:
-            return {
-                "vendors": {},
-                "function_codes": {},
-                "mei_object_ids": {},
-                "exception_codes": {},
-            }
+        # Packaged data is missing (shouldn't happen in a normal install or the
+        # frozen binary — it ships via package-data / collect_data_files). Degrade
+        # gracefully to an empty database rather than crash a scan.
+        return {
+            "vendors": {},
+            "function_codes": {},
+            "mei_object_ids": {},
+            "exception_codes": {},
+        }
 
     with open(db_path, "r", encoding="utf-8") as f:
         _device_db = json.load(f)

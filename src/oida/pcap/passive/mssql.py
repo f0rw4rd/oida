@@ -713,6 +713,12 @@ class MSSQLPassiveListener(PySharkListenerBase):
             tds_layer, "rpc_parameter_status", ""
         )
 
+        # Collation LCID on the parameter type_info identifies the locale
+        # (e.g. 1033 / 0x409 == en-US). It is a stable server-side attribute.
+        collation_lcid = fields.get("tds.type_info.collation.lcid", "") or self.get_field(
+            tds_layer, "type_info_collation_lcid", ""
+        )
+
         # Extract parameter string values (contains SQL for sp_executesql/sp_prepexec).
         # get_all_fields / get_field join lists with ",", which destroys SQL
         # containing commas.  Read the raw EK attribute to preserve list structure.
@@ -763,6 +769,12 @@ class MSSQLPassiveListener(PySharkListenerBase):
             details["parameter_name"] = param_name
         if param_status:
             details["parameter_status"] = param_status
+        if collation_lcid:
+            details["collation_lcid"] = collation_lcid
+            # First LCID seen is a stable server locale attribute.
+            server_info = self._get_server_info(dst_ip)
+            if not server_info.get("collation_lcid"):
+                server_info["collation_lcid"] = str(collation_lcid).split(",")[0].strip()
         if embedded_sql:
             details["embedded_sql"] = embedded_sql
 
@@ -1039,13 +1051,29 @@ class MSSQLPassiveListener(PySharkListenerBase):
             tds_layer, "colmetadata_colname", ""
         )
         if col_names:
+            col_details: Dict[str, Any] = {"column_names": col_names}
+
+            # User-defined type tag per column (nonzero => UDT in use).
+            usertype = fields.get("tds.colmetadata.usertype", "") or self.get_field(
+                tds_layer, "colmetadata_usertype", ""
+            )
+            if usertype:
+                col_details["usertype"] = usertype
+
+            # Collation charset id on the column metadata (Windows/SQL collation byte).
+            charset_id = fields.get("tds.colmetadata.collate_charset_id", "") or self.get_field(
+                tds_layer, "colmetadata_collate_charset_id", ""
+            )
+            if charset_id:
+                col_details["collate_charset_id"] = charset_id
+
             self._record_interaction(
                 now,
                 src_ip,
                 dst_ip,
                 "response",
                 "ColMetadata",
-                {"column_names": col_names},
+                col_details,
                 f"ColMetadata columns={col_names}",
                 flow_id=flow_id,
                 src_port=src_port,
@@ -1511,6 +1539,8 @@ class MSSQLPassiveListener(PySharkListenerBase):
             protocol_data["server_name"] = info["server_name"]
         if info.get("current_database"):
             protocol_data["current_database"] = info["current_database"]
+        if info.get("collation_lcid"):
+            protocol_data["collation_lcid"] = info["collation_lcid"]
         if version:
             protocol_data["program_version"] = version
 

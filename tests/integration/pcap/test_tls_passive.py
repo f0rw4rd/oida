@@ -404,3 +404,77 @@ class TestTLSHarvestIntegrity:
             min_interactions=1,
         )
         assert isinstance(result, dict)
+
+
+class TestTLSOCSPStatusRequest:
+    """OCSP status_request extension (tls.handshake.extensions_status_request_type)."""
+
+    def test_status_request_in_details(self):
+        """ClientHello with status_request should expose ocsp_status_request detail."""
+        listener, _, _ = _run_listener_test(
+            _MOD,
+            _CLS,
+            _FILTER,
+            "tls/wireshark_tls.pcap",
+            min_devices=0,
+            min_interactions=1,
+        )
+        found = any(ix.details.get("ocsp_status_request") for ix in listener.interactions)
+        assert found, (
+            "Expected ocsp_status_request in interaction details; "
+            f"sample: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_status_request_in_connection(self):
+        """OCSP stapling request should be tracked on the connection."""
+        listener, _, _ = _run_listener_test(
+            _MOD,
+            _CLS,
+            _FILTER,
+            "tls/wireshark_tls.pcap",
+            min_devices=0,
+            min_interactions=1,
+        )
+        conns = listener.get_connections()
+        assert any(c.get("ocsp_status_request") for c in conns), (
+            "Expected ocsp_status_request flag on at least one connection"
+        )
+
+
+class TestTLSRSAKeyExchange:
+    """Encrypted PreMaster secret length (tls.handshake.epms_len) => RSA key exchange."""
+
+    def test_epms_len_in_details(self):
+        """ClientKeyExchange with epms_len should expose rsa_key_exchange/epms_len detail."""
+        listener, _, _ = _run_listener_test(
+            _MOD,
+            _CLS,
+            _FILTER,
+            "tls/wireshark_tls_sni.pcap",
+            min_devices=0,
+            min_interactions=1,
+        )
+        found = any(ix.details.get("epms_len") for ix in listener.interactions)
+        assert found, (
+            "Expected epms_len in interaction details; "
+            f"sample: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_rsa_key_exchange_connection_and_alert(self):
+        """RSA key exchange should be flagged on the connection and raise a no-PFS alert."""
+        listener, _, result = _run_listener_test(
+            _MOD,
+            _CLS,
+            _FILTER,
+            "tls/wireshark_tls_sni.pcap",
+            min_devices=0,
+            min_interactions=1,
+        )
+        conns = listener.get_connections()
+        assert any(c.get("rsa_key_exchange") for c in conns), (
+            "Expected rsa_key_exchange flag on at least one connection"
+        )
+        alerts = result.get("alerts", [])
+        assert any(a.get("category") == "tls_no_pfs" for a in alerts), (
+            "Expected a tls_no_pfs (no forward secrecy) security alert"
+        )
