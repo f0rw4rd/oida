@@ -416,11 +416,11 @@ class TestAuthenticationGroup:
         args = parser.parse_args(["knx", "--brute-delay", "50"])
         assert args.brute_delay == 50
 
-    def test_stop_on_success_default(self, parser_setup):
-        """Test --stop-on-success is default True."""
+    def test_continue_on_success_default(self, parser_setup):
+        """Test --continue-on-success is default False (stop on first success)."""
         parser, _ = parser_setup
         args = parser.parse_args(["knx"])
-        assert args.stop_on_success is True
+        assert args.continue_on_success is False
 
     def test_continue_on_success_flag(self, parser_setup):
         """Test --continue-on-success flag."""

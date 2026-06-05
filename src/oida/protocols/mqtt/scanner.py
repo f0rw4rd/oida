@@ -506,11 +506,11 @@ protocol_options = {
         "required": False,
         "default": 0,
     },
-    "stop-on-success": {
+    "continue-on-success": {
         "type": "bool",
-        "description": "Stop after finding valid credentials",
+        "description": "Keep testing credentials after the first valid hit (default: stop on first success)",
         "required": False,
-        "default": True,
+        "default": False,
     },
     "listen": {
         "type": "bool",
@@ -596,7 +596,7 @@ class MQTTScanner(
         self.wordlist_path = args.get("wordlist", "")
         self.credentials_path = args.get("credentials", "")
         self.brute_rate = float(args.get("brute-rate", 0))
-        self.stop_on_success = parse_bool(args.get("stop-on-success", True))
+        self.continue_on_success = parse_bool(args.get("continue-on-success", False))
 
         # Listen mode
         self.listen_mode = parse_bool(args.get("listen", False))
