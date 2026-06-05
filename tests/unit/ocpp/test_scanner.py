@@ -2344,7 +2344,7 @@ class TestBruteForceHTTPAuth(unittest.TestCase):
         obj.scanner = Mock()
         obj.args = Mock()
         obj.args.brute_rate = 0
-        obj.args.stop_on_success = True
+        obj.args.continue_on_success = False
         return obj
 
     def test_valid_credential_generates_critical_finding(self):
@@ -2360,7 +2360,7 @@ class TestBruteForceHTTPAuth(unittest.TestCase):
 
     def test_stop_on_success_stops_after_first_valid(self):
         obj = self._make_instance()
-        obj.args.stop_on_success = True
+        obj.args.continue_on_success = False
         obj.scanner._connect_with_auth.return_value = Mock()
 
         obj._brute_force_http_auth(["u1", "u2"], ["p1"])
@@ -2369,7 +2369,7 @@ class TestBruteForceHTTPAuth(unittest.TestCase):
 
     def test_no_stop_on_success_tests_all(self):
         obj = self._make_instance()
-        obj.args.stop_on_success = False
+        obj.args.continue_on_success = True
         obj.scanner._connect_with_auth.return_value = Mock()
 
         obj._brute_force_http_auth(["u1", "u2"], ["p1"])
@@ -2404,7 +2404,7 @@ class TestBruteForceIdTags(unittest.TestCase):
         obj.scanner = Mock()
         obj.args = Mock()
         obj.args.brute_rate = 0
-        obj.args.stop_on_success = True
+        obj.args.continue_on_success = False
         return obj
 
     def test_accepted_tag_generates_high_finding(self):

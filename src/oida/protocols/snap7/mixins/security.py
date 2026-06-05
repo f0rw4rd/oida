@@ -190,7 +190,7 @@ class SecurityMixin(_ScannerBase):
         connection: Any,
         wordlist_path: Optional[str] = None,
         rate_limit: float = 0.5,
-        stop_on_success: bool = True,
+        continue_on_success: bool = False,
     ) -> Dict[str, Any]:
         """Brute force password using wordlist or defaults
 
@@ -198,7 +198,7 @@ class SecurityMixin(_ScannerBase):
             connection: S7 connection object
             wordlist_path: Path to password file, or None to use defaults
             rate_limit: Delay between attempts in seconds (default 0.5)
-            stop_on_success: Stop after finding first valid password
+            continue_on_success: Keep testing after the first valid password (default: stop)
         """
         import time
 
@@ -251,7 +251,7 @@ class SecurityMixin(_ScannerBase):
                     host, port = self.get_target_info()
                     self.report_credential("", test_password, host=host, port=port)
 
-                    if stop_on_success:
+                    if not continue_on_success:
                         break
 
                 except Exception:

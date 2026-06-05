@@ -152,7 +152,7 @@ class SecurityMixin(_ScannerBase):
                 "rhost": self.host,
                 "rport": self.port,
                 "wordlist": f"file:{wordlist}",
-                "stop_on_success": True,
+                "continue_on_success": False,
                 "rate_limit": delay,
             }
         )

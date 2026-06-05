@@ -425,7 +425,7 @@ class KNXScanner(
             if auth_test_arg or key_file_arg or key_range_arg:
                 individual_addr = self.args.get("individual-address", "1.1.1")
                 delay_ms = self.args.get("brute-delay", 100)
-                stop_on_success = not self.args.get("continue-on-success", False)
+                continue_on_success = self.args.get("continue-on-success", False)
 
                 # Determine key source
                 keys = []
@@ -453,7 +453,7 @@ class KNXScanner(
 
                     if keys:
                         results["auth_brute"] = await self._brute_bcu_auth(
-                            knx, individual_addr, keys, delay_ms, stop_on_success
+                            knx, individual_addr, keys, delay_ms, continue_on_success
                         )
                     else:
                         self.logger.fail("No keys to test")

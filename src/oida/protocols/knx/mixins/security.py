@@ -73,7 +73,7 @@ class SecurityMixin:
         address: str,
         keys: List[str],
         delay_ms: int = 100,
-        stop_on_success: bool = True,
+        continue_on_success: bool = False,
     ) -> Dict[str, Any]:
         """
         Test multiple BCU keys against a device.
@@ -83,7 +83,7 @@ class SecurityMixin:
             address: KNX individual address (e.g., "1.1.2")
             keys: List of hex keys to test
             delay_ms: Delay between attempts in milliseconds
-            stop_on_success: Stop after first valid key found
+            continue_on_success: Keep testing after the first valid key (default: stop)
 
         Returns:
             Dict with keys_tested, valid_keys, and errors
@@ -122,8 +122,8 @@ class SecurityMixin:
                                     f"[{i}/{total}] KEY FOUND: 0x{key_hex} -> level {level}"
                                 )
                                 results["valid_keys"].append({"key": key_hex, "level": level})
-                                if stop_on_success:
-                                    self.logger.display("Stopping (--stop-on-success)")
+                                if not continue_on_success:
+                                    self.logger.display("Stopping (first success)")
                                     break
                             else:
                                 self.logger.debug(

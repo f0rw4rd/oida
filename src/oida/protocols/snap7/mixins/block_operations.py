@@ -717,7 +717,7 @@ class BlockOperationsMixin(_ScannerBase):
             else:
                 self.logger.display("[7/7] Default password test")
                 results["checks"]["passwords"] = self.bruteforce_password(
-                    conn, rate_limit=0.5, stop_on_success=True
+                    conn, rate_limit=0.5, continue_on_success=False
                 )
 
         self.logger.display("Audit complete")

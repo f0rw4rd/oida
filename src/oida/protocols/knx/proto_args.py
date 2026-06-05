@@ -259,16 +259,10 @@ def proto_args(parser, parents):
     )
 
     auth_group.add_argument(
-        "--stop-on-success",
-        action="store_true",
-        default=True,
-        help="Stop after first valid key (default)",
-    )
-
-    auth_group.add_argument(
         "--continue-on-success",
         action="store_true",
-        help="Continue testing all keys even after finding valid one",
+        default=False,
+        help="Keep testing keys after the first valid hit (default: stop on first success)",
     )
 
     auth_group.add_argument(
