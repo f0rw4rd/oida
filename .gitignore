@@ -1,5 +1,9 @@
-# Claude Code worktrees
-.claude/worktrees/
+# Claude Code tooling and instructions — kept local, not tracked
+.claude/
+CLAUDE.md
+
+# Per-protocol research material — kept local
+ref/
 
 # Fuzz session / test databases (root-level scratch)
 oida_fuzz_session.db
