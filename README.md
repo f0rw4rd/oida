@@ -1,207 +1,71 @@
-# OIDA — ICS Security Testing Framework
+<div align="center">
 
-[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![PyPI version](https://badge.fury.io/py/oida.svg)](https://badge.fury.io/py/oida)
+<img src="assets/oida.png" alt="OIDA" width="140" />
 
-OIDA is a CLI security-testing framework for industrial control systems, SCADA,
-building automation, and healthcare protocols. It packages standalone scanners
-for 26 protocols (16 industrial / 4 IoT / 4 healthcare / 2 discovery+passive)
-behind one `oida <protocol> <target>` interface, with consistent flag
-conventions, export formats, and safety guards on write operations.
+# OIDA
 
-> **⚠️ Legal notice.** This is a defensive tool for **authorized testing only**.
-> Get explicit written permission before scanning any system you do not own.
-> Unauthorized use may constitute a criminal offence in your jurisdiction.
-> See [DISCLAIMER.md](DISCLAIMER.md) and [LICENSE](LICENSE).
+**Scan. Fuzz. Assess. Responsibly in OT.**
 
-The name "OIDA" (pronounced *oy-da*) is Viennese German slang — an exclamation
-that fits most ICS findings: *"Oida!"* on an unauthenticated PLC, *"Oida..."*
-on a Modbus register dump.
+One CLI to scan, fuzz, and assess OT protocols across industrial, energy,
+building-automation, and healthcare networks. Works air-gapped.
 
-## Supported protocols
+[![Python](https://img.shields.io/badge/python-3.10+-5cc8e8.svg)](https://www.python.org/downloads/)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-ffb000.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![PyPI](https://img.shields.io/pypi/v/oida.svg)](https://pypi.org/project/oida/)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/grM9YYSB)
 
-### Industrial / OT
+📖 **[Documentation & live demo → getoida.dev](https://getoida.dev)**
 
-| Protocol     | Port      | Notes |
-| ------------ | --------- | ----- |
-| Modbus       | 502       | TCP, RTU, RTU-over-TCP |
-| OPC UA       | 4840      | with TLS / userauth / certificate analysis |
-| Siemens S7   | 102       | Snap7 |
-| IEC 60870-5-104 | 2404   | telecontrol |
-| Beckhoff ADS | 48898     | TwinCAT |
-| EtherNet/IP  | 44818     | CIP |
-| DNP3         | 20000     | SCADA |
-| MMS          | 102       | IEC 61850 |
-| TASE.2 / ICCP | 102      | IEC 60870-6 |
-| GOOSE        | L2        | IEC 61850, raw socket |
-| EtherCAT     | L2        | raw socket |
-| PROFINET DCP | L2        | raw socket |
-| HART-IP      | 5094      | field devices |
-| KNX / EIB    | 3671      | building automation |
-| BACnet       | 47808     | building automation |
-| CAN          | n/a       | SocketCAN / CANopen / UDS / XCP |
+</div>
 
-### IoT / Application
+---
 
-| Protocol | Port | Notes |
-| -------- | ---- | ----- |
-| MQTT     | 1883 | with Sparkplug B |
-| CoAP     | 5683 | RFC 7252 |
-| OCPP     | 9000 | EV charging stations (WebSocket) |
-| SNMP     | 161  | v1/v2c/v3 |
+> ⚠️ **Authorized testing only.** OIDA is for systems you own or have explicit
+> written permission to test. Unauthorized use may be a criminal offence. See
+> the [LICENSE](LICENSE) (incl. the Security Tool Disclaimer & Terms of Use).
 
-### Healthcare
+OIDA gives every OT protocol the same `oida <protocol> <target>` syntax — the
+NetExec model for industrial control systems. If you know `nxc smb`, you already
+know `oida modbus`.
 
-| Protocol | Port  | Notes |
-| -------- | ----- | ----- |
-| HL7 v2   | 2575  | MLLP |
-| FHIR     | 443   | REST API |
-| DICOM    | 104   | (11112 common alternative) |
-| ASTM     | varies| lab analyzers |
-
-### Discovery / passive
-
-- `oida discovery <target>` — multi-protocol active and passive discovery
-  (mDNS, SSDP, LLDP, CDP, BACnet, BBMD, CODESYS, ARP).
-- `oida pcap <file.pcap>` — passive listener pipeline over a saved capture
-  (109 listeners across ICS, IT, and credential-bearing protocols).
-
-## Quick start
-
-OIDA uses [**uv**](https://docs.astral.sh/uv/) for reproducible
-installs (faster + lockfile-pinned). pip still works for ad-hoc
-installs from PyPI.
+## Install
 
 ```bash
-# 1. Install uv (one-time):
-curl -LsSf https://astral.sh/uv/install.sh | sh   # or: pip install uv
-
-# 2. From a clone (recommended for development) — uses uv.lock:
-git clone https://github.com/f0rw4rd/oida.git && cd oida
-uv sync --all-extras           # everything (dev + every protocol extra)
-uv run oida modbus 192.168.1.100
-
-# 2b. Subset for the protocols you need:
-uv sync --extra dev --extra modbus --extra opcua
-
-# 3. From PyPI (release install, no lockfile):
-uv pip install oida[all]
-# or:
-uv pip install oida[modbus,opcua,iec104]
-
-# Legacy pip path (still supported):
-pip install oida[all]                # release from PyPI
-pip install -e .[dev,all]            # development, no lockfile pinning
+pip install 'oida[all]'
 ```
 
-After `uv sync`, activate the venv with `source .venv/bin/activate` or
-prefix commands with `uv run`.
+Protocol stacks ship as extras, so you can install only what you need
+(`pip install 'oida[modbus,opcua]'`). A bare `pip install oida` has no protocol
+stacks. Full guide: **[getoida.dev/getting-started/installation](https://getoida.dev/getting-started/installation/)**.
 
-### Basic syntax
+## Usage
 
 ```bash
-oida <protocol> <target> [options]
+oida modbus 10.0.0.5                  # scan a host
+oida modbus 10.0.0.0/24 -t 20         # scan a subnet
+oida opcua opc.tcp://10.0.0.5:4840    # OPC UA
+oida discovery eth0                   # find ICS devices on the wire
 ```
 
-Targets accept a single IP, hostname, CIDR (`192.168.1.0/24`), range
-(`192.168.1.1-254`), or a file with one target per line. Use `-t N` to
-control concurrent worker threads.
+Defaults are read-only; writes and state changes are gated behind `--confirm`.
+Every protocol has `oida <protocol> -h` for its full flag set.
 
-```bash
-oida modbus 192.168.1.100                          # single host
-oida modbus 192.168.1.0/24 -t 20                   # subnet
-oida modbus targets.txt                            # from file
-oida opcua opc.tcp://192.168.1.100:4840            # OPC UA URL
-oida s7 192.168.1.10 --rack 0 --slot 2             # Siemens S7-300
-```
+## Protocols
 
-### Output
+Scanners for Modbus, OPC UA, Siemens S7, DNP3, IEC 60870-5-104, BACnet,
+EtherNet/IP, PROFINET, HL7, DICOM, MQTT, SNMP, and many more across industrial,
+energy, building-automation, and healthcare.
 
-```bash
-oida modbus 192.168.1.100 -o results --format json
-oida modbus 192.168.1.100 -o results --format csv,json   # comma-separated
-```
+**[Full list and per-protocol guides → getoida.dev/protocols](https://getoida.dev/protocols/modbus/)**
 
-Output formats: `console` (default), `json`, `csv`. XML is recognised by the
-flag parser but not yet implemented per-protocol — use JSON.
+## Links
 
-### Verbosity
+- **Docs & demo** — [getoida.dev](https://getoida.dev)
+- **Community** — [Discord](https://discord.gg/grM9YYSB)
+- **Contributing** — [CONTRIBUTING.md](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
+- **Security** — report via [getoida.dev/contact](https://getoida.dev/contact); see [SECURITY.md](SECURITY.md)
+- **Support** — [ko-fi.com/f0rw4rd](https://ko-fi.com/f0rw4rd)
 
-```bash
-oida modbus 192.168.1.100 -v       # verbose
-oida modbus 192.168.1.100 -vv      # more verbose
-oida modbus 192.168.1.100 --debug  # full debug
-```
+## License
 
-## Per-protocol examples
-
-```bash
-# Modbus — register scan + identification
-oida modbus 192.168.1.100 --unit-id 1 --scan-range 0-1000 -o modbus_scan --format json
-
-# OPC UA — anonymous browse with depth limit
-oida opcua opc.tcp://192.168.1.100:4840 --browse --max-depth 5
-
-# Siemens S7 — discovery + SZL enumeration
-oida s7 192.168.1.10 --rack 0 --slot 2 -i -L -E
-
-# IEC 104 — common address scan
-oida iec104 192.168.1.100 --common-address 1
-
-# Beckhoff ADS — symbol enumeration with explicit target AMS Net ID
-oida ads 192.168.1.100 --target-ams 5.80.192.37.1.1
-
-# BACnet — local-broadcast device discovery
-oida bacnet 192.168.1.255
-
-# KNX — gateway discovery (multicast)
-oida knx 224.0.23.12
-
-# HL7 — connection + version fingerprint
-oida hl7 192.168.1.50 --port 2575
-
-# DICOM — service discovery
-oida dicom 192.168.1.51
-
-# Passive pcap analysis (all 109 listeners)
-oida pcap capture.pcap
-```
-
-Each protocol has `--help` with its full flag set, examples, and which
-operations require `--confirm` (any write or state-change action).
-
-## Safety
-
-Write operations and state-change operations across all ICS protocols are
-gated behind an explicit `--confirm` flag. The defaults are read-only.
-Examples that require `--confirm`:
-
-- `oida modbus … --write-coil …`
-- `oida dnp3 … --bo-direct 0 --confirm`
-- `oida ethercat … --op-state --confirm`
-- `oida iec104 … --write-single …`
-
-See [DISCLAIMER.md](DISCLAIMER.md) for the full safety statement.
-
-## Documentation
-
-User-facing docs (install, per-protocol guides, operator playbooks) live
-in the separate **[`f0rw4rd/oida-website`](https://github.com/f0rw4rd/oida-website)**
-repo (Astro / Starlight). Once deployed it'll move to the project's
-canonical docs URL.
-
-In-repo docs are developer-facing:
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — class layering and refactor roadmap.
-- [docs/new-protocol.md](docs/new-protocol.md) — how to add a new protocol scanner.
-- [docs/REAL_COVERAGE_PROPOSAL.md](docs/REAL_COVERAGE_PROPOSAL.md) — the three real-coverage axes (scanner / fuzzer / fidelity).
-- [CONTRIBUTING.md](CONTRIBUTING.md) — contribution policy (incl. AI usage policy).
-- [STYLE_GUIDE.md](STYLE_GUIDE.md) — Python style, naming, CLI short-flag conventions.
-- [SECURITY.md](SECURITY.md) — private vulnerability disclosure.
-- [RELEASE_READINESS.md](RELEASE_READINESS.md) — known issues snapshot for 1.0.
-
-## Support
-
-If you find this useful, you can support development at
-[ko-fi.com/f0rw4rd](https://ko-fi.com/f0rw4rd).
+[AGPL-3.0](LICENSE)
