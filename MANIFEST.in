@@ -1,9 +1,6 @@
 include README.md
 include LICENSE
-include DISCLAIMER.md
-include CLAUDE.md
 include CONTRIBUTING.md
-include STYLE_GUIDE.md
 include pyproject.toml
 recursive-include src/oida/data *.json *.csv *.txt *.md *.yaml *.yml
 recursive-include src/oida/configs *.yaml *.yml *.json
