@@ -107,9 +107,11 @@ class PostgreSQLCredential:
     @property
     def hashcat_format(self) -> str:
         """Hashcat-compatible hash string."""
-        if self.auth_type == "md5" and self.password_or_hash:
-            salt_hex = self.salt or ""
-            return f"{self.username}:{self.password_or_hash}:{salt_hex}"
+        # PostgreSQL MD5 cracking needs the server salt; without it (Type request
+        # not captured) the hash is uncrackable, so return "" rather than a line
+        # with an empty salt field.
+        if self.auth_type == "md5" and self.password_or_hash and self.salt:
+            return f"{self.username}:{self.password_or_hash}:{self.salt}"
         return ""
 
     @property
