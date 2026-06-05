@@ -21,10 +21,6 @@ it works air-gapped.
 
 ---
 
-> ⚠️ **Authorized testing only.** Use OIDA on systems you own or have written
-> permission to test. Unauthorized use can be a crime. See
-> [DISCLAIMER.md](DISCLAIMER.md) and [LICENSE](LICENSE).
-
 Every protocol uses the same `oida <protocol> <target>` syntax. It is the
 NetExec model for industrial control systems: if you know `nxc smb`, you already
 know `oida modbus`.
