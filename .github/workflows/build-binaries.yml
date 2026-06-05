@@ -1,0 +1,80 @@
+name: Build standalone binaries
+
+# Builds the single-file `oida` executable for Linux and Windows (x86_64) with
+# PyInstaller (oida.spec) and validates each with the binary smoke test.
+# Triggered manually or on release tags; artifacts are uploaded per-OS.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+  pull_request:
+    # Re-validate the build whenever the spec or this workflow changes.
+    paths:
+      - "oida.spec"
+      - ".github/workflows/build-binaries.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux-x86_64
+            artifact: oida-linux-x86_64
+            binary: dist/oida
+            # Every extra resolves on Linux.
+            extras: "--all-extras"
+          - os: windows-latest
+            label: windows-x86_64
+            artifact: oida-windows-x86_64
+            binary: dist/oida.exe
+            # goose/mms/tase2 (pyiec61850-ng) and dnp3 (yadnp3) are Linux-only
+            # native libs with no Windows wheels; those protocols still expose
+            # `--help` via lazy imports, they're just not bundled for live scans.
+            extras: >-
+              --extra ads --extra bacnet --extra can --extra coap --extra dicom
+              --extra discovery --extra ethercat --extra ethernetip --extra fhir
+              --extra hart --extra hl7 --extra iec104 --extra knx --extra modbus
+              --extra mqtt --extra opcua --extra pcap --extra profinet
+              --extra snap7 --extra snmp --extra astm --extra ocpp
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Sync runtime deps from lockfile
+        run: uv sync ${{ matrix.extras }} --frozen
+
+      - name: Install PyInstaller
+        # Kept out of pyproject/uv.lock (build-only tool); installed ad-hoc so
+        # the lockfile-drift contract test stays green.
+        run: uv pip install pyinstaller
+
+      - name: Build binary
+        run: uv run pyinstaller oida.spec --clean --noconfirm
+
+      - name: Smoke test the binary
+        run: uv run pytest tests/integration/test_binary_smoke.py -m binary -q
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.binary }}
+          if-no-files-found: error
+          retention-days: 14
