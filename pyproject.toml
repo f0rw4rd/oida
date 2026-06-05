@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "oida"
 dynamic = ["version"]
-description = "OIDA - OT/ICS Dynamic Assessment Framework"
+description = "OIDA - OT/ICS Discovery & Assessment"
 readme = "README.md"
 license = {text = "AGPL-3.0-or-later"}
 authors = [
