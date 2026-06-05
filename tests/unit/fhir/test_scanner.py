@@ -136,7 +136,7 @@ class TestFHIRScannerInit(unittest.TestCase):
         self.mock_args.default_creds = False
         self.mock_args.wordlist = None
         self.mock_args.brute_rate = 0.5
-        self.mock_args.stop_on_success = True
+        self.mock_args.continue_on_success = False
         self.mock_args.user_file = None
         self.mock_args.pass_file = None
         self.mock_args.brute_method = "basic"
@@ -231,7 +231,7 @@ class TestFHIRVendorIdentification(unittest.TestCase):
         self.mock_args.default_creds = False
         self.mock_args.wordlist = None
         self.mock_args.brute_rate = 0.5
-        self.mock_args.stop_on_success = True
+        self.mock_args.continue_on_success = False
         self.mock_args.user_file = None
         self.mock_args.pass_file = None
         self.mock_args.brute_method = "basic"
@@ -395,7 +395,7 @@ class TestFHIRBaseURL(unittest.TestCase):
         self.mock_args.default_creds = False
         self.mock_args.wordlist = None
         self.mock_args.brute_rate = 0.5
-        self.mock_args.stop_on_success = True
+        self.mock_args.continue_on_success = False
         self.mock_args.user_file = None
         self.mock_args.pass_file = None
         self.mock_args.brute_method = "basic"

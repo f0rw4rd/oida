@@ -37,7 +37,7 @@ class MockSecurityHost(SecurityMixin):
             brute=False,
             brute_method="basic",
             brute_rate=0,
-            stop_on_success=True,
+            continue_on_success=False,
             user_file=None,
             pass_file=None,
             wordlist=None,
@@ -515,9 +515,12 @@ class TestBruteForceCredentials(unittest.TestCase):
 
     @patch("requests.get")
     def test_stop_on_success(self, mock_get):
-        """Test brute force stops on first valid credential when flag set"""
+        """Test brute force stops on first valid credential by default"""
         host = MockSecurityHost(
-            brute=True, brute_method="basic", brute_rate=0, stop_on_success=True,
+            brute=True,
+            brute_method="basic",
+            brute_rate=0,
+            continue_on_success=False,
             confirm=True,  # commit 9ae2a6c5 added a --confirm gate
         )
 
