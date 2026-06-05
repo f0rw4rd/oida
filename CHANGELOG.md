@@ -73,7 +73,7 @@ First stable release.
   `oida s7` is an alias.
 - **`SECURITY.md`**, **`CODE_OF_CONDUCT.md`**, and `.github/ISSUE_TEMPLATE/`
   + `.github/pull_request_template.md` ship for the 1.0 community-files
-  baseline. Private vulnerability disclosure goes to `fnbriearfz@pm.me`.
+  baseline. Private vulnerability disclosure goes through https://getoida.dev/contact.
 - **`tests/coverage/fuzz/test_cve_replication.py`** + **`tests/coverage/
   fidelity/test_conpot_diff.py`** — scaffolds for the axis-2 and axis-3
   real-coverage suites (see `docs/REAL_COVERAGE_PROPOSAL.md`). Per-CVE

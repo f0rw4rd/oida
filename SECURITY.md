@@ -4,7 +4,7 @@
 
 If you find a security issue in OIDA, please **do not** open a public issue.
 
-Instead, email **fnbriearfz@pm.me** with:
+Instead, report it through **https://getoida.dev/contact** with:
 
 1. A short description of the issue.
 2. The minimal reproduction (input, command, expected vs. actual behaviour).
