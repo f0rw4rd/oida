@@ -28,7 +28,9 @@ jobs:
           - os: ubuntu-latest
             label: linux-x86_64
             artifact: oida-linux-x86_64
-            binary: dist/oida
+            archive: oida-linux-x86_64.tar.gz
+            # onedir folder -> single named archive with a top-level oida/ dir.
+            pack: tar -C dist -czf oida-linux-x86_64.tar.gz oida
             # Every protocol extra resolves on Linux. Runtime extras only —
             # NOT --all-extras, which would drag dev/docs/fuzz into a release
             # build env.
@@ -42,7 +44,8 @@ jobs:
           - os: windows-latest
             label: windows-x86_64
             artifact: oida-windows-x86_64
-            binary: dist/oida.exe
+            archive: oida-windows-x86_64.zip
+            pack: Compress-Archive -Path dist/oida -DestinationPath oida-windows-x86_64.zip
             # goose/mms/tase2 (pyiec61850-ng) and dnp3 (yadnp3) are Linux-only
             # native libs with no Windows wheels; those protocols still expose
             # `--help` via lazy imports, they're just not bundled for live scans.
@@ -83,10 +86,15 @@ jobs:
       - name: Smoke test the binary
         run: uv run pytest tests/integration/test_binary_smoke.py -m binary -q
 
+      - name: Package onedir folder
+        # Bundle the run-in-place onedir folder into one named archive so the
+        # download is a single file to copy.
+        run: ${{ matrix.pack }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.binary }}
+          path: ${{ matrix.archive }}
           if-no-files-found: error
           retention-days: 14
