@@ -876,7 +876,7 @@ Items that could slip the release if discovered late:
 
 - [x] **CAP_NET_RAW handling**: `utils/permissions.check_raw_socket_capability()` shared by goose/profinet/ethercat; each protocol prints a friendly "Run as root or with CAP_NET_RAW capability" message when missing. `oida --help` shows capability status.
 - [x] **Optional-dep gating**: verified `[project.optional-dependencies]` in `pyproject.toml` — `pip install oida[modbus]` pulls only `pymodbus + PyYAML`, not the full set. The `all` extra is opt-in.
-- [ ] Docker mock health on macOS — operator decision; mark Linux-only mocks if discovered during install testing
+- [x] ~~Docker mock health on macOS~~ — **Won't do for 1.0.** OIDA is a Linux ICS pen-test tool: the mock stack needs raw sockets / multicast / `--network=host` (BACnet/SSDP/mDNS/PROFINET/GOOSE/EtherCAT) which macOS Docker Desktop's VM doesn't expose cleanly. The CLI itself runs on macOS for protocols that don't need raw sockets, but the docker mock matrix is Linux-only. Document if anyone asks.
 - [x] Real hardware test session — tailored S7-300/400 checklist (read + safe-write scope) shipped at `docs/hardware-validation-s7-300-400.md`
 - [ ] Legal review of DISCLAIMER + LICENSE — operator decision
 
