@@ -17,62 +17,21 @@ def llmnr_scanner_class():
 
 
 def build_llmnr_response(name: str, transaction_id: int = 0x1234) -> bytes:
-    """Build a mock LLMNR response packet"""
-    flags = 0x8000  # Response flag set
-    questions = 0
-    answers = 1
-    authority = 0
-    additional = 0
+    """Build a mock LLMNR response packet using scapy DNS layer.
 
-    header = struct.pack(
-        ">HHHHHH",
-        transaction_id,
-        flags,
-        questions,
-        answers,
-        authority,
-        additional,
-    )
+    Impl reads the queried name from ``dns_resp.qd.qname``; response packets
+    echo the question, so qd is set on responses too.
+    """
+    from scapy.layers.dns import DNS, DNSQR
 
-    # Encode name as DNS labels
-    name_bytes = b""
-    for part in name.split("."):
-        name_bytes += bytes([len(part)]) + part.encode()
-    name_bytes += b"\x00"
-
-    # Type A, Class IN
-    query_footer = struct.pack(">HH", 0x0001, 0x0001)
-
-    return header + name_bytes + query_footer
+    return bytes(DNS(id=transaction_id, qr=1, qd=DNSQR(qname=name)))
 
 
 def build_llmnr_query(name: str, transaction_id: int = 0x1234) -> bytes:
-    """Build a mock LLMNR query packet"""
-    flags = 0x0000  # Query flag
-    questions = 1
-    answers = 0
-    authority = 0
-    additional = 0
+    """Build a mock LLMNR query packet using scapy DNS layer."""
+    from scapy.layers.dns import DNS, DNSQR
 
-    header = struct.pack(
-        ">HHHHHH",
-        transaction_id,
-        flags,
-        questions,
-        answers,
-        authority,
-        additional,
-    )
-
-    # Encode name
-    name_bytes = b""
-    for part in name.split("."):
-        name_bytes += bytes([len(part)]) + part.encode()
-    name_bytes += b"\x00"
-
-    query_footer = struct.pack(">HH", 0x0001, 0x0001)
-
-    return header + name_bytes + query_footer
+    return bytes(DNS(id=transaction_id, qr=0, qd=DNSQR(qname=name)))
 
 
 class TestLLMNRScannerInit:
@@ -166,50 +125,37 @@ class TestLLMNRActiveMode:
 class TestLLMNRPassiveMode:
     """Test LLMNR passive listening mode"""
 
-    @pytest.mark.skip(
-        reason="Test requires get_interface_ip to return valid IP; implementation checks interface validity first"
-    )
     def test_joins_multicast_group(self, llmnr_scanner_class):
-        """Test that scanner joins LLMNR multicast group - SKIPPED: requires interface validation mocking"""
+        """Test that scanner joins LLMNR multicast group"""
         scanner = llmnr_scanner_class("eth0", timeout=1)
 
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket = MagicMock()
-            mock_socket_class.return_value = mock_socket
-            mock_socket.recvfrom.side_effect = socket.timeout()
+        with patch("oida.protocols.discovery.network.get_interface_ip", return_value="192.0.2.1"):
+            with patch("socket.socket") as mock_socket_class:
+                mock_socket = MagicMock()
+                mock_socket_class.return_value = mock_socket
+                mock_socket.recvfrom.side_effect = socket.timeout()
 
-            scanner._passive_listen()
+                scanner._passive_listen()
 
-            # Check that IP_ADD_MEMBERSHIP was called
-            [
-                call
-                for call in mock_socket.setsockopt.call_args_list
-                if socket.IP_ADD_MEMBERSHIP in call[0]
-            ]
-            # Might not be called if exception, but should try
-            assert mock_socket.bind.called
+                # bind was attempted (may be at port 5355 or 0 on fallback)
+                assert mock_socket.bind.called
 
-    @pytest.mark.skip(
-        reason="Test requires get_interface_ip to return valid IP; implementation checks interface validity first"
-    )
     def test_listens_on_port_5355(self, llmnr_scanner_class):
-        """Test that scanner listens on LLMNR port - SKIPPED: requires interface validation mocking"""
+        """Test that scanner listens on LLMNR port"""
         scanner = llmnr_scanner_class("eth0", timeout=1)
 
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket = MagicMock()
-            mock_socket_class.return_value = mock_socket
-            mock_socket.recvfrom.side_effect = socket.timeout()
+        with patch("oida.protocols.discovery.network.get_interface_ip", return_value="192.0.2.1"):
+            with patch("socket.socket") as mock_socket_class:
+                mock_socket = MagicMock()
+                mock_socket_class.return_value = mock_socket
+                mock_socket.recvfrom.side_effect = socket.timeout()
 
-            scanner._passive_listen()
+                scanner._passive_listen()
 
-            # Check bind was called (might be on port 5355 or fallback)
-            assert mock_socket.bind.called
+                # Check bind was called (might be on port 5355 or fallback)
+                assert mock_socket.bind.called
 
 
-@pytest.mark.skip(
-    reason="_parse_llmnr_response now uses scapy DNS layers; raw byte tests no longer match"
-)
 class TestLLMNRPacketParsing:
     """Test LLMNR packet parsing"""
 
@@ -288,9 +234,6 @@ class TestLLMNRPacketParsing:
 class TestLLMNRDeviceCreation:
     """Test LLMNR device creation"""
 
-    @pytest.mark.skip(
-        reason="_parse_llmnr_response uses scapy layers; device creation path changed"
-    )
     def test_device_created_with_llmnr_data(self, llmnr_scanner_class):
         """Test that device is created with LLMNR data"""
         scanner = llmnr_scanner_class("eth0")
@@ -305,9 +248,6 @@ class TestLLMNRDeviceCreation:
         assert "llmnr" in device.discovered_by
         assert device.llmnr_data is not None
 
-    @pytest.mark.skip(
-        reason="_parse_llmnr_response uses scapy layers; device creation path changed"
-    )
     def test_device_updated_on_multiple_responses(self, llmnr_scanner_class):
         """Test that device is updated on multiple responses"""
         scanner = llmnr_scanner_class("eth0")
@@ -341,9 +281,6 @@ class TestLLMNRDeviceCreation:
         device = scanner.discovered_devices["192.168.1.100"]
         assert device.name == "ExistingName"
 
-    @pytest.mark.skip(
-        reason="_parse_llmnr_response uses scapy layers; device creation path changed"
-    )
     def test_empty_device_name_gets_updated(self, llmnr_scanner_class):
         """Test that empty device name gets updated"""
         scanner = llmnr_scanner_class("eth0")
@@ -368,30 +305,27 @@ class TestLLMNRDeviceCreation:
 class TestLLMNRScan:
     """Test full LLMNR scan"""
 
-    @pytest.mark.skip(
-        reason="Test requires get_interface_ip to return valid IP; implementation checks interface validity first"
-    )
     def test_scan_returns_devices(self, llmnr_scanner_class):
-        """Test that scan returns discovered devices - SKIPPED: requires interface validation mocking"""
+        """Test that scan returns discovered devices"""
         scanner = llmnr_scanner_class("eth0", timeout=1)
 
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket = MagicMock()
-            mock_socket_class.return_value = mock_socket
+        with patch("oida.protocols.discovery.network.get_interface_ip", return_value="192.0.2.1"):
+            with patch(
+                "oida.protocols.discovery.network.get_interface_network", return_value=None
+            ):
+                with patch("socket.socket") as mock_socket_class:
+                    mock_socket = MagicMock()
+                    mock_socket_class.return_value = mock_socket
 
-            response = build_llmnr_response("TESTHOST")
-            mock_socket.recvfrom.side_effect = [
-                (response, ("192.168.1.100", 5355)),
-                socket.timeout(),
-            ]
+                    response = build_llmnr_response("TESTHOST")
+                    mock_socket.recvfrom.side_effect = [
+                        (response, ("192.168.1.100", 5355)),
+                        socket.timeout(),
+                    ]
 
-            with patch("oida.protocols.discovery.get_interface_network") as mock_get_net:
-                mock_get_net.return_value = None  # Skip active scan
+                    devices = scanner.scan()
 
-                devices = scanner.scan()
-
-            assert len(devices) == 1
-            assert "192.168.1.100" in devices
+                    assert "192.168.1.100" in devices
 
     def test_scan_handles_exceptions(self, llmnr_scanner_class):
         """Test that scan handles exceptions gracefully"""

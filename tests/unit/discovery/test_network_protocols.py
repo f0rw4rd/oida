@@ -139,22 +139,6 @@ class TestEtherNetIPScannerInit:
         assert scanner.timeout == 10
         assert scanner.discovered_devices == {}
 
-    @pytest.mark.skip(
-        reason="EtherNetIPScanner uses broadcast_discovery function, no ETHERNETIP_PORT constant"
-    )
-    def test_ethernetip_port(self, ethernetip_scanner_class):
-        """Test EtherNet/IP port constant - SKIPPED: uses broadcast_discovery function"""
-        scanner = ethernetip_scanner_class("eth0")
-        assert scanner.ETHERNETIP_PORT == 44818
-
-    @pytest.mark.skip(
-        reason="EtherNetIPScanner uses broadcast_discovery function, no ENIP_CMD_LIST_IDENTITY constant"
-    )
-    def test_list_identity_command(self, ethernetip_scanner_class):
-        """Test List Identity command constant - SKIPPED: uses broadcast_discovery function"""
-        scanner = ethernetip_scanner_class("eth0")
-        assert scanner.ENIP_CMD_LIST_IDENTITY == 0x0063
-
     def test_custom_timeout(self, ethernetip_scanner_class):
         """Test custom timeout"""
         scanner = ethernetip_scanner_class("eth0", timeout=30)
@@ -168,25 +152,6 @@ class TestEtherNetIPScannerInit:
 
 class TestEtherNetIPScannerScan:
     """Test EtherNetIPScanner scan method"""
-
-    @pytest.mark.skip(
-        reason="EtherNetIPScanner uses broadcast_discovery function from ethernetip module"
-    )
-    def test_scan_sends_list_identity(self, ethernetip_scanner_class):
-        """Test that scan sends List Identity broadcast - SKIPPED: uses broadcast_discovery function"""
-        scanner = ethernetip_scanner_class("eth0", timeout=1)
-
-        with patch("socket.socket") as mock_socket_class:
-            mock_socket = MagicMock()
-            mock_socket_class.return_value = mock_socket
-            mock_socket.recvfrom.side_effect = socket.timeout()
-
-            scanner.scan()
-
-            assert mock_socket.sendto.called
-            call_args = mock_socket.sendto.call_args
-            # Should be sent to broadcast port 44818
-            assert call_args[0][1][1] == 44818
 
     def test_scan_parses_response(self, ethernetip_scanner_class):
         """Test that scan parses List Identity response"""
@@ -220,28 +185,6 @@ class TestEtherNetIPScannerScan:
             devices = scanner.scan()
 
             assert devices == {}
-
-
-@pytest.mark.skip(
-    reason="EtherNetIPScanner uses broadcast_discovery function, no VENDOR_IDS constant"
-)
-class TestEtherNetIPVendorLookup:
-    """Test EtherNet/IP vendor lookup - SKIPPED: uses broadcast_discovery function"""
-
-    def test_vendor_rockwell(self, ethernetip_scanner_class):
-        """Test Rockwell vendor ID"""
-        scanner = ethernetip_scanner_class("eth0")
-        assert scanner.VENDOR_IDS.get(1) == "Rockwell Automation"
-
-    def test_vendor_siemens(self, ethernetip_scanner_class):
-        """Test Siemens vendor ID"""
-        scanner = ethernetip_scanner_class("eth0")
-        assert scanner.VENDOR_IDS.get(61) == "Siemens"
-
-    def test_vendor_beckhoff(self, ethernetip_scanner_class):
-        """Test Beckhoff vendor ID"""
-        scanner = ethernetip_scanner_class("eth0")
-        assert scanner.VENDOR_IDS.get(287) == "Beckhoff"
 
 
 class TestNetBIOSScannerInit:

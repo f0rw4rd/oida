@@ -1083,7 +1083,6 @@ class TestCANDependencyCheck(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="CAN not yet registered in loader/_KNOWN_PROTOCOLS")
 class TestCANInLoader(unittest.TestCase):
     """Test CAN protocol is registered in the loader."""
 
