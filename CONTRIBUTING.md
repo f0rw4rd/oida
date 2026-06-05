@@ -117,17 +117,6 @@ constitutes your acceptance of these terms.** No separate signature or CLA form
 is required. If you do not agree to these terms, do not submit contributions.
 
 ---
-
-## Security Vulnerability Reporting
-
-If you discover a security vulnerability in OIDA itself (not in targets being
-tested), please report it responsibly:
-
-1. **Do not** open a public issue.
-2. Email the maintainers directly via the project contact listed on
-   [github.com/f0rw4rd/oida](https://github.com/f0rw4rd/oida).
-3. Allow reasonable time for a fix before public disclosure.
-
 ## Questions?
 
-Open a GitHub Discussion or Issue for questions about contributing.
+Open a GitHub Discussion or Discord for questions about contributing.
