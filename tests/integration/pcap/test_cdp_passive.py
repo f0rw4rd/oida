@@ -234,6 +234,71 @@ class TestCDPPassiveEK:
         has_s2 = any("S2" in did for did in device_ids)
         assert has_s1 and has_s2, f"Expected both S1 and S2, got {device_ids}"
 
+    def test_cdp_extracts_number_of_addresses(self):
+        """Verify Address TLV number_of_addresses extraction (T1 gap fix)."""
+        listener, _, _ = _run_listener_test(
+            "cdp",
+            "CDPPassiveListener",
+            "cdp",
+            "cdp/filtered_cdp.pcap",
+        )
+        found = any(ix.details.get("number_of_addresses") for ix in listener.interactions)
+        assert found, (
+            "Expected number_of_addresses in interaction details; "
+            f"sample: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+        # S1's standard Address TLV advertises 3 management addresses.
+        # EK mode joins the per-TLV counts (e.g. "3,1"); check for the token.
+        has_multi = any(
+            "3" in ix.details.get("number_of_addresses", "").split(",")
+            for ix in listener.interactions
+        )
+        assert has_multi, "Expected at least one device advertising 3 addresses (S1)"
+
+    def test_cdp_extracts_address_length(self):
+        """Verify Address TLV address_length extraction (T1 gap fix)."""
+        listener, _, _ = _run_listener_test(
+            "cdp",
+            "CDPPassiveListener",
+            "cdp",
+            "cdp/filtered_cdp.pcap",
+        )
+        found = any(ix.details.get("address_length") for ix in listener.interactions)
+        assert found, (
+            "Expected address_length in interaction details; "
+            f"sample: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_cdp_extracts_address_protocol_id(self):
+        """Verify Address TLV protocol_id extraction (T1 gap fix)."""
+        listener, _, _ = _run_listener_test(
+            "cdp",
+            "CDPPassiveListener",
+            "cdp",
+            "cdp/filtered_cdp.pcap",
+        )
+        found = any(ix.details.get("address_protocol_id") for ix in listener.interactions)
+        assert found, (
+            "Expected address_protocol_id in interaction details; "
+            f"sample: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_cdp_device_address_tlv_fields(self):
+        """Verify Address TLV fields propagate into device cdp_data."""
+        _, devices, _ = _run_listener_test(
+            "cdp",
+            "CDPPassiveListener",
+            "cdp",
+            "cdp/filtered_cdp.pcap",
+        )
+        has_field = any(
+            hasattr(d, "cdp_data")
+            and d.cdp_data
+            and "number_of_addresses" in d.cdp_data
+            for d in devices.values()
+        )
+        assert has_field, "No device has number_of_addresses in cdp_data"
+
     def test_cdp_harvest_table_no_raw_objects(self):
         """Verify harvest table cells contain no raw dicts or sets."""
         _, _, result = _run_listener_test(
