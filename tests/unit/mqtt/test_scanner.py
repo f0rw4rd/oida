@@ -1171,11 +1171,6 @@ class TestMQTTMessageParsing(unittest.TestCase):
         payload_str = msg.payload_str()
         self.assertEqual(payload_str, "00010203fffe")
 
-    @unittest.skip("listen-filter option removed in refactor; filtering now uses unique-only mode")
-    def test_listen_filter_regex(self):
-        """Test listen mode regex filtering"""
-        pass
-
 
 class TestMQTTFuzzPublishPayloads(unittest.TestCase):
     """Test MQTT publish payload fuzzing"""
@@ -1573,11 +1568,6 @@ class TestMQTTEdgeCases(unittest.TestCase):
 
         self.assertEqual(result["tested"], 0)
         self.assertEqual(result["published"], 0)
-
-    @unittest.skip("listen-filter option removed in refactor; filtering now uses unique-only mode")
-    def test_listen_filter_invalid_regex(self):
-        """Test invalid regex in listen filter"""
-        pass
 
     def test_message_payload_none(self):
         """Test handling of None payload"""
