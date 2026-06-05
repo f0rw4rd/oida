@@ -38,5 +38,5 @@ Disagreement is fine; bad-faith behaviour is not.
 
 ## Reporting concerns
 
-Email **fnbriearfz@pm.me** with anything that doesn't belong in a public
+Report via **https://getoida.dev/contact** anything that doesn't belong in a public
 issue thread. Security issues go via `SECURITY.md`, not here.
