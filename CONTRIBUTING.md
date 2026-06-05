@@ -28,10 +28,9 @@ Contributions are welcome! By contributing, you agree to the terms below.
 
 - Python 3.10+ (see `pyproject.toml` for the supported matrix).
 - Type hints where practical (`mypy` runs informationally — not a CI gate yet).
-- New scanners follow the facade pattern documented in
-  [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): a Layer-1 `XxxScanner(NetworkScanner)`
-  for the library API, plus a Layer-2 `xxx(NetworkConnection)` NXC class that
-  delegates to it. Modbus is the reference.
+- New scanners follow the facade pattern (documented at <https://getoida.dev>):
+  a Layer-1 `XxxScanner(NetworkScanner)` for the library API, plus a Layer-2
+  `xxx(NetworkConnection)` NXC class that delegates to it. Modbus is the reference.
 - Protocol CLI arguments live in `protocols/{name}/proto_args.py`.
 - Unit tests for new functionality; integration tests against mock services
   where applicable.
