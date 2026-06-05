@@ -51,13 +51,17 @@ def build_tls_context(
 ) -> ssl.SSLContext:
     """Build an SSL context for security testing from standard TLS args.
 
-    Central function for all protocols to create TLS contexts. Never validates
-    certificates (ICS devices rarely have proper PKI). Supports optional client
+    Central function for all protocols to create TLS contexts. By default it
+    does not validate certificates (ICS devices rarely have proper PKI), but a
+    caller-supplied CA via ``tls-ca`` enables proper server verification — as
+    required for IEC 62351-style mTLS deployments. Supports an optional client
     certificate for mutual TLS.
 
     Reads standard args from ``add_tls_options()``:
         - ``tls-cert``: Client certificate file path
         - ``tls-key``: Client private key file path
+        - ``tls-ca``: CA certificate file path (enables server verification)
+        - ``tls-insecure``: Skip server verification even if a CA is given
 
     Args:
         args: Protocol args dict (hyphenated keys from ``add_tls_options``)
@@ -72,6 +76,21 @@ def build_tls_context(
 
     tls_cert = args.get("tls-cert")
     tls_key = args.get("tls-key")
+    tls_ca = args.get("tls-ca")
+    tls_insecure = args.get("tls-insecure")
+
+    # A CA bundle enables real server-certificate verification (mTLS). Skip it
+    # when --tls-insecure is set so operators can still probe broken/self-signed
+    # endpoints without removing the CA flag.
+    if tls_ca and not tls_insecure:
+        try:
+            context.load_verify_locations(cafile=tls_ca)
+            context.verify_mode = ssl.CERT_REQUIRED
+            if logger:
+                logger.display(f"Verifying server certificate against CA: {tls_ca}")
+        except Exception as e:
+            if logger:
+                logger.fail(f"Failed to load CA certificate: {e}")
 
     if tls_cert:
         try:
