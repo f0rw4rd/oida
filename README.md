@@ -2,8 +2,6 @@
 
 <img src="assets/oida.png" alt="OIDA" width="140" />
 
-# OIDA
-
 **Scan. Fuzz. Assess. Responsibly in OT.**
 
 One CLI to scan, fuzz, and assess OT protocols on industrial, energy,
