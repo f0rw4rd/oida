@@ -8,6 +8,9 @@ ref/
 # Per-developer pyenv pin — uv/CI manage the interpreter; don't force a version
 .python-version
 
+# direnv local env — kept local
+.envrc
+
 # Fuzz session / test databases (root-level scratch)
 oida_fuzz_session.db
 fuzzer_session.db
