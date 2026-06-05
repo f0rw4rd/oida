@@ -40,7 +40,7 @@ jobs:
     steps:
       # persist-credentials: true (default) — needed by the
       # "Publish dashboard" step's git push.
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
 
       - name: Set up uv (handles Python toolchain + lockfile-based install)
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
