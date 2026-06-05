@@ -686,14 +686,27 @@ class PcapScanner:
                         f"{name} credential ({method}): {username}:{password} @ {server_str}",
                     )
                 elif cred_type == "hash" and username:
-                    hash_val = (
-                        getattr(cred, "hashcat_format", "")
-                        or getattr(cred, "hash_value", "")
-                        or getattr(cred, "password_hash", "")
-                    )
-                    self.logger.success(
-                        f"{name} hash ({method}): {username} @ {server_str} [{hash_val}]",
-                    )
+                    hashcat = getattr(cred, "hashcat_format", None)
+                    if hashcat is not None:
+                        # Modern decoder: hashcat_format is the source of truth.
+                        # An empty string means the captured material is not
+                        # crackable (e.g. NTLM without the Type 2 challenge, or a
+                        # pgsql md5 with no salt). It is already surfaced as
+                        # INCOMPLETE in the summary, so skip the line rather than
+                        # printing a bare value that looks like a deliverable hash.
+                        if hashcat:
+                            self.logger.success(
+                                f"{name} hash ({method}): {username} @ {server_str} [{hashcat}]",
+                            )
+                    else:
+                        # Legacy cred without a hashcat_format property.
+                        hash_val = getattr(cred, "hash_value", "") or getattr(
+                            cred, "password_hash", ""
+                        )
+                        if hash_val:
+                            self.logger.success(
+                                f"{name} hash ({method}): {username} @ {server_str} [{hash_val}]",
+                            )
                 elif username and cred_type:
                     hash_val = getattr(cred, "hashcat_format", "") or getattr(
                         cred, "hash_value", ""

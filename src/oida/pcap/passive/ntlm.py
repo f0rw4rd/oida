@@ -63,16 +63,22 @@ class NTLMHash:
 
     @property
     def hashcat_format(self) -> str:
-        """Hashcat-compatible hash string (mode 5500/5600)."""
+        """Hashcat-compatible hash string (mode 5500/5600).
+
+        Returns "" when the hash has no crackable hashcat representation. A
+        NetNTLM hash needs the server challenge (NTLM Type 2): without it the
+        bare NT response cannot be cracked, so we return "" rather than a value
+        that looks like a deliverable hash.
+        """
         if not self.challenge:
-            return self.nt_hash
+            return ""
         if self.hash_type == "NTLMv1":
             return f"{self.username}::{self.domain}:{self.lm_hash}:{self.nt_hash}:{self.challenge}"
         elif self.hash_type == "NTLMv2" and len(self.nt_hash) >= 32:
             nt_proof = self.nt_hash[:32]
             blob = self.nt_hash[32:]
             return f"{self.username}::{self.domain}:{self.challenge}:{nt_proof}:{blob}"
-        return self.nt_hash
+        return ""
 
 
 @dataclass

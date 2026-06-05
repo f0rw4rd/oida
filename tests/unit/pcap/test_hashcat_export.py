@@ -94,3 +94,60 @@ class TestHashcatExport:
             hashcat_file = Path(tmpdir) / "hashcat.txt"
             # FTP has no get_hashcat_hashes(), so no file should be written
             assert not hashcat_file.exists(), "hashcat.txt should not exist for plaintext-only pcap"
+
+
+class TestNTLMHashcatFormatProperty:
+    """NTLMHash.hashcat_format must not fabricate a hash when the challenge is missing.
+
+    Pure-dataclass tests (no pyshark): a NetNTLM response captured without the
+    Type 2 server challenge is uncrackable, so the property must return "" rather
+    than the bare NT response (which used to leak out looking like a real hash).
+    """
+
+    def test_complete_ntlmv1_yields_mode5500_line(self):
+        from oida.pcap.passive.ntlm import NTLMHash
+
+        h = NTLMHash(
+            hash_type="NTLMv1",
+            username="administrator",
+            domain="VNET3",
+            workstation="",
+            challenge="1122334455667788",
+            lm_hash="ab" * 24,
+            nt_hash="cd" * 24,
+        )
+        assert h.hashcat_format == f"administrator::VNET3:{'ab' * 24}:{'cd' * 24}:1122334455667788"
+
+    def test_missing_challenge_yields_empty_not_bare_response(self):
+        from oida.pcap.passive.ntlm import NTLMHash
+
+        bare = "aa58dd5b9b655c207fac3d27e685c99d7a163a54b4b6f8cc"
+        h = NTLMHash(
+            hash_type="NTLMv1",
+            username="administrator",
+            domain="EXAMPLE",
+            workstation="",
+            challenge="",  # NTLM Type 2 not captured
+            lm_hash="",
+            nt_hash=bare,
+        )
+        # The bug: this used to return the bare NT response and get printed as a hash.
+        assert h.hashcat_format == ""
+        # hash_value still exposes the raw response for reference; it just is not
+        # presented as a crackable hashcat hash.
+        assert h.hash_value == bare
+
+    def test_complete_ntlmv2_yields_mode5600_line(self):
+        from oida.pcap.passive.ntlm import NTLMHash
+
+        nt = "0" * 32 + "deadbeef"
+        h = NTLMHash(
+            hash_type="NTLMv2",
+            username="u",
+            domain="D",
+            workstation="",
+            challenge="1122334455667788",
+            lm_hash="",
+            nt_hash=nt,
+        )
+        assert h.hashcat_format == f"u::D:1122334455667788:{'0' * 32}:deadbeef"
