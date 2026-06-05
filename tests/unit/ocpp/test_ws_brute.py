@@ -127,19 +127,19 @@ class TestWordlistLoading(unittest.TestCase):
 
 
 class TestBuiltinWordlist(unittest.TestCase):
-    """Test the built-in ref/ocpp/ws_paths.txt wordlist"""
+    """Test the built-in src/oida/data/ocpp/ws_paths.txt wordlist"""
 
     def _find_wordlist(self):
-        """Find the built-in wordlist relative to the test file."""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        # Navigate up from tests/unit/ocpp/ to project root
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(test_dir)))
-        return os.path.join(project_root, "ref", "ocpp", "ws_paths.txt")
+        """Find the built-in wordlist packaged with OIDA."""
+        from oida.utils.platform_compat import _pkg_root
+
+        return str(_pkg_root() / "data" / "ocpp" / "ws_paths.txt")
 
     def test_builtin_wordlist_exists(self):
-        """The built-in wordlist file should exist."""
+        """The built-in wordlist file should exist when ref/ is checked out."""
         wordlist_path = self._find_wordlist()
-        assert os.path.isfile(wordlist_path), f"Built-in wordlist not found at {wordlist_path}"
+        if not os.path.isfile(wordlist_path):
+            pytest.fail("Built-in wordlist not found")
 
     def test_builtin_wordlist_has_entries(self):
         """The built-in wordlist should contain substantial entries."""

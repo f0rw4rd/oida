@@ -1,0 +1,362 @@
+# OCPP WebSocket Path Wordlist
+#
+# Comprehensive wordlist of known OCPP WebSocket paths from real-world
+# deployments, open-source CSMS implementations, and charging network
+# configurations. Used by `oida ocpp --ws-brute` for endpoint discovery.
+#
+# Format: one path per line, without the charge point ID suffix.
+# The scanner appends /<chargePointId> to each path automatically.
+#
+# Sources:
+#   - SteVe (github.com/steve-community/steve)
+#   - CitrineOS (github.com/citrineos/citrineos-core)
+#   - MaEVe (github.com/thoughtworks/maeve-csms)
+#   - EVerest (github.com/EVerest/ocpp-csms)
+#   - Home Assistant OCPP (github.com/lbbrhzn/ocpp)
+#   - EMQX OCPP Gateway (docs.emqx.com)
+#   - ocpp-go (github.com/lorenzodonini/ocpp-go)
+#   - open-ocpp (github.com/c-jimenez/open-ocpp)
+#   - ocpp-csms-server (github.com/flowionab/ocpp-csms-server)
+#   - ocpp-csms (github.com/gregszalay/ocpp-csms)
+#   - Shell/NewMotion OCPP (github.com/ShellRechargeSolutionsEU/ocpp)
+#   - evcc (github.com/evcc-io/evcc)
+#   - has-to-be / be.ENERGISED (chargepoint.com)
+#   - AWS OCPP Gateway (github.com/aws-samples/aws-ocpp-gateway)
+#   - Zephyr RTOS OCPP (docs.zephyrproject.org)
+#   - OCPP-J specification (Open Charge Alliance)
+#   - Various commercial CSMS deployments
+#
+# Last updated: 2026-02-15
+
+# ============================================================
+# Root paths (charge point ID appended directly after /)
+# ============================================================
+/
+
+# ============================================================
+# SteVe CSMS (most widely deployed open-source CSMS)
+# Default: /steve/websocket/CentralSystemService/<cpId>
+# ============================================================
+/steve/websocket/CentralSystemService
+/steve/websocket/CentralSystemService/
+/steve/websocket
+/steve/websocket/
+
+# ============================================================
+# Generic /ocpp paths (most common convention)
+# Used by: open-ocpp, flowionab/ocpp-csms-server, EMQX, many others
+# ============================================================
+/ocpp
+/ocpp/
+/OCPP
+/OCPP/
+
+# ============================================================
+# Version-specific /ocpp paths
+# ============================================================
+/ocpp/v16
+/ocpp/v201
+/ocpp/v21
+/ocpp/1.6
+/ocpp/2.0.1
+/ocpp/2.1
+/ocpp16
+/ocpp201
+/ocpp21
+
+# ============================================================
+# MaEVe CSMS (Thoughtworks)
+# Default: /ws/<cpId>
+# ============================================================
+/ws
+/ws/
+/WS
+/WS/
+
+# ============================================================
+# WebSocket generic paths
+# ============================================================
+/websocket
+/websocket/
+/WebSocket
+/WebSocket/
+
+# ============================================================
+# OCPP + WebSocket compound paths
+# ============================================================
+/ocpp/ws
+/ocpp/ws/
+/ocpp/websocket
+/ocpp/websocket/
+/ws/ocpp
+/ws/ocpp/
+/websocket/ocpp
+/websocket/ocpp/
+
+# ============================================================
+# has-to-be / be.ENERGISED (ChargePoint commercial CSMS)
+# Format: /ocpp/cp/socket/<version>/<cpId>
+# ============================================================
+/ocpp/cp
+/ocpp/cp/
+/ocpp/cp/socket
+/ocpp/cp/socket/15
+/ocpp/cp/socket/16
+/ocpp/cp/socket/20
+/ocpp/cp/socket/201
+
+# ============================================================
+# SOAP-style paths (OCPP 1.2/1.5/1.6-S legacy, sometimes
+# co-located on same server as WebSocket endpoints)
+# ============================================================
+/webServices/ocpp
+/webServices/ocpp/
+/services/CentralSystemService
+/services/CentralSystemService/
+/CentralSystemService
+/CentralSystemService/
+/services/ocpp
+/services/ocpp/
+
+# ============================================================
+# API-style paths
+# ============================================================
+/api/ocpp
+/api/ocpp/
+/api/ws
+/api/ws/
+/api/v1/ocpp
+/api/v1/ocpp/
+/api/v1/ws
+/api/v2/ocpp
+/api/v2/ws
+
+# ============================================================
+# Version-prefixed paths
+# ============================================================
+/v16
+/v16/
+/v201
+/v201/
+/v21
+/v21/
+/1.6
+/1.6/
+/2.0.1
+/2.0.1/
+/2.1
+/2.1/
+
+# ============================================================
+# Charge Point / CSMS specific paths
+# ============================================================
+/cp
+/cp/
+/csms
+/csms/
+/chargepoint
+/chargepoint/
+/charge-point
+/charge-point/
+/charging
+/charging/
+/ev
+/ev/
+/evse
+/evse/
+/station
+/station/
+
+# ============================================================
+# OCPP + Charge Point compound paths
+# ============================================================
+/ocpp/chargepoint
+/ocpp/chargepoint/
+/ocpp/station
+/ocpp/station/
+/ocpp/evse
+/ocpp/evse/
+
+# ============================================================
+# Cloud/platform-style paths
+# ============================================================
+/connect
+/connect/
+/gateway
+/gateway/
+/gateway/ocpp
+/gateway/ocpp/
+/proxy
+/proxy/
+/proxy/ocpp
+/proxy/ocpp/
+
+# ============================================================
+# Management / Admin paths (may expose CSMS control)
+# ============================================================
+/manager
+/manager/
+/admin
+/admin/
+/backend
+/backend/
+/management
+/management/
+
+# ============================================================
+# Vendor-specific paths
+# ============================================================
+/steve
+/steve/
+/citrineos
+/citrineos/
+/maeve
+/maeve/
+/everest
+/everest/
+
+# ============================================================
+# Common development/testing paths
+# ============================================================
+/test
+/test/
+/debug
+/debug/
+/dev
+/dev/
+/demo
+/demo/
+/sandbox
+/sandbox/
+/test/ocpp
+/dev/ocpp
+
+# ============================================================
+# Reverse proxy / load balancer paths
+# ============================================================
+/ocpp-ws
+/ocpp-ws/
+/ocpp-wss
+/ocpp-wss/
+/ws-ocpp
+/ws-ocpp/
+/ocpp-j
+/ocpp-j/
+/ocppj
+/ocppj/
+/json
+/json/
+/json/ocpp
+/json/ocpp/
+
+# ============================================================
+# Paths with explicit port in path (sometimes seen in
+# reverse proxy configurations)
+# ============================================================
+/9000
+/9000/
+/8080
+/8080/
+/8180
+/8180/
+/33033
+/33033/
+
+# ============================================================
+# Commonly seen full paths with version qualifiers
+# ============================================================
+/ocpp/v1.6/cs
+/ocpp/v1.6/cs/
+/ocpp/v2.0.1/cs
+/ocpp/v2.0.1/cs/
+/ocpp16/cs
+/ocpp201/cs
+/cs
+/cs/
+/central-system
+/central-system/
+/centralsystem
+/centralsystem/
+
+# ============================================================
+# Common charge point ID patterns to try as paths
+# (When no base path is known, try connecting with just
+# the charge point ID as the full path)
+# ============================================================
+/CP_001
+/CP_002
+/CP001
+/CP002
+/CP0001
+/CHARGER_001
+/CHARGER001
+/CHARGER-001
+/charger01
+/charger-01
+/charge-point-01
+/station01
+/EVSE001
+/EVSE_001
+/EVB-P00001
+/STEVE_01
+
+# ============================================================
+# Vendor-prefix charge point IDs (seen in real deployments)
+# ============================================================
+/VT_0001
+/ABB_001
+/ABL_001
+/WB_001
+/OE_001
+/AUT_001
+/SC_001
+/SE_001
+/KEBA_001
+/ALFEN_001
+/WEBASTO_001
+/VESTEL_001
+/DELTA_001
+/BENDER_001
+/JUICE_001
+/EASEE_001
+/ZAPPI_001
+/GOE_001
+/GRIZZLE_001
+/ZAPTEC_001
+
+# ============================================================
+# SaaS / Commercial CSMS endpoint paths (from real deployments)
+# ============================================================
+/api/Ocpp16
+/api/Ocpp16/
+/ocpp/cp/socket/21
+
+# ============================================================
+# ABL charger local paths
+# ============================================================
+/Chargepoint
+/Chargepoint/
+
+# ============================================================
+# Version-qualified central system paths
+# ============================================================
+
+# ============================================================
+# Additional ports as paths (seen in reverse proxy configs)
+# ============================================================
+/4712
+/4712/
+/7890
+/7890/
+/8010
+/8010/
+/8081
+/8081/
+/8082
+/8082/
+/8083
+/8083/
+/8887
+/8887/
+/19520
+/19520/

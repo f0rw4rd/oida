@@ -11,6 +11,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from ....utils.lazy_import import lazy_import
+from ....utils.platform_compat import _pkg_root
 from ..constants import (
     MessageType,
     SUBPROTOCOL_TO_VERSION,
@@ -852,8 +853,8 @@ class DiscoveryMixin:
 
         ``--ws-brute`` accepts an optional file path.  When a path is given
         it is read as the wordlist; otherwise the built-in
-        ``ref/ocpp/ws_paths.txt`` is tried first, falling back to a hardcoded
-        list.
+        ``src/oida/data/ocpp/ws_paths.txt`` (shipped with the package) is
+        tried, falling back to a hardcoded list.
 
         Returns:
             List of path strings to test
@@ -865,18 +866,14 @@ class DiscoveryMixin:
             self.logger.debug(f"Loading WS paths from user file: {ws_brute}")
             return self._read_wordlist_file(ws_brute)
 
-        # Try built-in wordlist shipped with OIDA
+        # Try built-in wordlist shipped with OIDA (packaged under oida/data/)
         try:
-            module_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(module_dir))))
-            )
-            builtin_path = os.path.join(project_root, "ref", "ocpp", "ws_paths.txt")
-            if os.path.isfile(builtin_path):
+            builtin_path = _pkg_root() / "data" / "ocpp" / "ws_paths.txt"
+            if builtin_path.is_file():
                 self.logger.debug(f"Loading WS paths from built-in file: {builtin_path}")
-                return self._read_wordlist_file(builtin_path)
+                return self._read_wordlist_file(str(builtin_path))
         except Exception as e:
-            self.logger.debug(f"Failed to get module_dir: {e}")
+            self.logger.debug(f"Failed to locate built-in wordlist: {e}")
 
         self.logger.debug("Using default hardcoded WS paths")
         return self._get_default_ws_paths()
