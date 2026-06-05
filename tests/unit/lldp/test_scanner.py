@@ -433,55 +433,5 @@ class TestLLDPErrorHandling(unittest.TestCase):
         self.assertIn("Permission denied", results["error"])
 
 
-@unittest.skip("LLDP moved to discovery module - metadata/run not exposed")
-class TestLLDPIntegration(unittest.TestCase):
-    """Test LLDP scanner integration with framework"""
-
-    def setUp(self):
-        from oida.protocols.discovery.lldp import LLDPScanner
-
-        self.LLDPScanner = LLDPScanner
-
-    def test_metadata_structure(self):
-        """Test module metadata structure"""
-        self.assertIn("name", self.metadata)
-        self.assertIn("description", self.metadata)
-        self.assertIn("authors", self.metadata)
-        self.assertIn("references", self.metadata)
-        self.assertIn("options", self.metadata)
-
-        # LLDP doesn't have a port
-        self.assertNotIn("rport", self.metadata["options"])
-
-    def test_protocol_options(self):
-        """Test protocol-specific options"""
-        options = self.metadata["options"]
-
-        self.assertIn("interface", options)
-        self.assertIn("capture-time", options)
-        self.assertIn("passive-only", options)
-        self.assertIn("filter-industrial", options)
-
-        # Check interface is required
-        self.assertTrue(options["interface"]["required"])
-
-        # Check defaults
-        self.assertEqual(options["capture-time"]["default"], 60)
-        self.assertTrue(options["passive-only"]["default"])
-        self.assertTrue(options["filter-industrial"]["default"])
-
-    @patch("oida.protocols.discovery.lldp._scapy")
-    def test_missing_dependencies(self, mock_scapy):
-        """Test behavior with missing dependencies"""
-        from oida.protocols.discovery.lldp import run
-
-        # Mock scapy as not available
-        mock_scapy.is_available = False
-
-        result = run({"interface": "eth0"})
-
-        self.assertIn("error", result)
-
-
 if __name__ == "__main__":
     unittest.main()
