@@ -10,8 +10,8 @@ open-source projects.
 The standalone binaries published by the **Build standalone binaries** GitHub
 Actions workflow (`.github/workflows/build-binaries.yml`):
 
-- `oida-<version>-linux-x86_64.tar.gz` — Linux x86_64 (onedir)
-- `oida-<version>-windows-x86_64.zip` — Windows x86_64 (onedir)
+- `oida-<version>-linux-x86_64.tar.gz`: Linux x86_64 (onedir)
+- `oida-<version>-windows-x86_64.zip`: Windows x86_64 (onedir)
 
 The Windows archive contains a Portable Executable, `oida/oida.exe`, which is
 the artifact that receives an Authenticode signature.
@@ -29,7 +29,7 @@ the artifact that receives an Authenticode signature.
 
 | Platform | Mechanism | What |
 |---|---|---|
-| Windows | **Authenticode** via SignPath (OV certificate) | `oida/oida.exe` inside the release `.zip`, signed in place via the `signpath.xml` artifact configuration (deep/nested signing — SignPath extracts, signs the PE, and re-zips). |
+| Windows | **Authenticode** via SignPath (OV certificate) | `oida/oida.exe` inside the release `.zip`, signed in place via the `signpath.xml` artifact configuration (deep/nested signing, SignPath extracts, signs the PE, and re-zips). |
 | Linux | SHA-256 checksum + GitHub build-provenance attestation | The release `.tar.gz` (ELF has no Authenticode equivalent). |
 | Both | **`SHA256SUMS`** (`<archive>.sha256`) and **[GitHub Artifact Attestations](https://docs.github.com/en/actions/concepts/security/artifact-attestations)** (Sigstore-backed SLSA build provenance) | Every published archive. |
 

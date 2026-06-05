@@ -290,3 +290,48 @@ class TestDNP3PassiveEK:
             if ix.details.get("function_name")
         }
         assert "Cold Restart" in func_names, f"Missing 'Cold Restart' name; got {func_names}"
+
+    def test_dnp3_extracts_hdr_crc_status(self):
+        """Verify data-link header CRC status extraction (T1 gap fix)."""
+        listener, _, _ = _run_listener_test(
+            "dnp3",
+            "DNP3PassiveListener",
+            "dnp3",
+            "dnp3/cisagov_dnp3_example.pcap",
+        )
+        found = any(ix.details.get("hdr_crc_status") for ix in listener.interactions)
+        assert found, (
+            "Expected hdr_crc_status in interaction details; "
+            f"sample: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_dnp3_extracts_data_chunk_crc_status(self):
+        """Verify per-data-chunk CRC status extraction (T1 gap fix)."""
+        listener, _, _ = _run_listener_test(
+            "dnp3",
+            "DNP3PassiveListener",
+            "dnp3",
+            "dnp3/iti_full_exchange.pcap",
+        )
+        found = any(ix.details.get("data_chunk_crc_status") for ix in listener.interactions)
+        assert found, (
+            "Expected data_chunk_crc_status in interaction details; "
+            f"sample: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_dnp3_crc_status_good_when_valid(self):
+        """Valid captures should report CRC status 'Good' (1) and no crc_bad flag."""
+        listener, _, _ = _run_listener_test(
+            "dnp3",
+            "DNP3PassiveListener",
+            "dnp3",
+            "dnp3/cisagov_dnp3_example.pcap",
+        )
+        crc_ix = [ix for ix in listener.interactions if ix.details.get("hdr_crc_status")]
+        assert crc_ix, "Expected at least one interaction with hdr_crc_status"
+        # All CRC status tokens should be "1" (Good) for a clean capture
+        for ix in crc_ix:
+            tokens = set(ix.details["hdr_crc_status"].split(","))
+            assert tokens <= {"1"}, f"Unexpected CRC status tokens: {tokens}"
+        # No frame should be flagged as bad in a clean capture
+        assert not any(ix.details.get("crc_bad") for ix in listener.interactions)

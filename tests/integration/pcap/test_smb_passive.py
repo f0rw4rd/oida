@@ -356,6 +356,79 @@ class TestSMBFieldCoverage:
             f"Expected pipe/mailslot paths in trans_name, got: {trans_names[:5]}"
         )
 
+    def test_smb2_msg_id_extracted(self):
+        """smb2.msg_id should produce msg_id correlation IDs in details."""
+        listener, devices, result = _run_listener_test(
+            "smb",
+            "SMBPassiveListener",
+            "smb or smb2",
+            "smb/bruteshark_ntlm_smb.pcap",
+            expect_details=["msg_id"],
+        )
+
+    def test_smb2_tree_id_extracted(self):
+        """smb2.tid should produce tree_id in details."""
+        listener, devices, result = _run_listener_test(
+            "smb",
+            "SMBPassiveListener",
+            "smb or smb2",
+            "smb/bruteshark_ntlm_smb.pcap",
+            expect_details=["tree_id"],
+        )
+
+    def test_smb1_correlation_ids_extracted(self):
+        """smb.tid/uid/pid/mid should produce SMB1 header correlation IDs."""
+        listener, devices, result = _run_listener_test(
+            "smb",
+            "SMBPassiveListener",
+            "smb or smb2",
+            "smb/bruteshark_ntlm_smb.pcap",
+            expect_details=["tid", "uid", "pid", "mid"],
+        )
+
+    def test_smb1_password_length_extracted(self):
+        """smb.pwlen should produce password_length when a password is supplied."""
+        listener, devices, result = _run_listener_test(
+            "smb",
+            "SMBPassiveListener",
+            "smb or smb2",
+            "smb/bruteshark_ntlm_smb.pcap",
+            expect_details=["password_length"],
+        )
+        lengths = [
+            ix.details["password_length"]
+            for ix in listener.interactions
+            if ix.details.get("password_length") is not None
+        ]
+        assert all(v > 0 for v in lengths), f"Expected positive password_length, got {lengths[:5]}"
+
+    def test_smb1_setup_action_extracted(self):
+        """smb.setup.action should produce setup_action logon flag in details."""
+        listener, devices, result = _run_listener_test(
+            "smb",
+            "SMBPassiveListener",
+            "smb or smb2",
+            "smb/bruteshark_ntlm_smb.pcap",
+            expect_details=["setup_action"],
+        )
+
+    def test_smb3_preauth_hash_extracted(self):
+        """smb2.preauth_hash should appear in details and device data."""
+        listener, devices, result = _run_listener_test(
+            "smb",
+            "SMBPassiveListener",
+            "smb or smb2",
+            "smb/bruteshark_ntlm_smb.pcap",
+            min_devices=0,
+            expect_details=["preauth_hash"],
+        )
+        has_device_hash = any(
+            dev.smb_passive_data.get("preauth_hash")
+            for dev in devices.values()
+            if dev.smb_passive_data
+        )
+        assert has_device_hash, "Expected preauth_hash in at least one device"
+
     def test_device_security_posture_fields(self):
         """Device smb_passive_data should include security posture fields."""
         listener, devices, result = _run_listener_test(

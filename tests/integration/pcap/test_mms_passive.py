@@ -456,3 +456,49 @@ class TestMMSExtendedObjectClass:
         assert with_ext, (
             f"No getNameList request has extended_object_class. Sample details: {getnl[0].details}"
         )
+
+
+class TestACSEProtocolVersion:
+    """acse.aARQ_protocol_version / acse.aARE_protocol_version — ACSE version bitstring."""
+
+    def test_aarq_protocol_version_extracted(self):
+        """AARQ interactions should carry the calling-AE ACSE protocol version."""
+        listener, _, _ = _run_listener_test(
+            "mms",
+            "MMSPassiveListener",
+            "acse or mms",
+            "mms/iti_iec61850_session.pcap",
+        )
+
+        aarq_ixs = [
+            ix
+            for ix in listener.interactions
+            if ix.operation == "ACSE Associate" and ix.direction == "request"
+        ]
+        assert aarq_ixs, "No ACSE AARQ interactions found"
+
+        with_ver = [ix for ix in aarq_ixs if ix.details.get("acse_protocol_version")]
+        assert with_ver, (
+            f"No AARQ has acse_protocol_version; sample details: {aarq_ixs[0].details}"
+        )
+
+    def test_aare_protocol_version_extracted(self):
+        """AARE interactions should carry the responding-AE ACSE protocol version."""
+        listener, _, _ = _run_listener_test(
+            "mms",
+            "MMSPassiveListener",
+            "acse or mms",
+            "mms/iti_iec61850_session.pcap",
+        )
+
+        aare_ixs = [
+            ix
+            for ix in listener.interactions
+            if ix.operation == "ACSE Associate" and ix.direction == "response"
+        ]
+        assert aare_ixs, "No ACSE AARE interactions found"
+
+        with_ver = [ix for ix in aare_ixs if ix.details.get("acse_protocol_version")]
+        assert with_ver, (
+            f"No AARE has acse_protocol_version; sample details: {aare_ixs[0].details}"
+        )

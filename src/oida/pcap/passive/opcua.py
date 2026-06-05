@@ -708,6 +708,125 @@ class OPCUAPassiveListener(PySharkListenerBase):
             or ""
         )
 
+        # Transport-layer sequence/request correlation IDs
+        # (opcua.sequence.seq / opcua.sequence.rqid -- request/response matching)
+        sequence_seq = (
+            self._get_opcua_field(all_fields, "sequence.seq")
+            or self.get_field(opcua_layer, "sequence.seq", "")
+            or ""
+        )
+        sequence_rqid = (
+            self._get_opcua_field(all_fields, "sequence.rqid")
+            or self.get_field(opcua_layer, "sequence.rqid", "")
+            or ""
+        )
+        # Namespace index of the service NodeId (opcua.servicenodeid.nsid)
+        service_nsid = (
+            self._get_opcua_field(all_fields, "servicenodeid.nsid")
+            or self.get_field(opcua_layer, "servicenodeid.nsid", "")
+            or ""
+        )
+        # Audit trail identifier (opcua.AuditEntryId)
+        audit_entry_id = (
+            self._get_opcua_field(all_fields, "AuditEntryId")
+            or self.get_field(opcua_layer, "AuditEntryId", "")
+            or ""
+        )
+        # QualifiedName (browse name) of nodes (opcua.qualname.Name / opcua.qualname.Id)
+        qualname_name = (
+            self._get_opcua_field(all_fields, "qualname.Name")
+            or self.get_field(opcua_layer, "qualname.Name", "")
+            or ""
+        )
+        qualname_id = (
+            self._get_opcua_field(all_fields, "qualname.Id")
+            or self.get_field(opcua_layer, "qualname.Id", "")
+            or ""
+        )
+        # Browse view version (opcua.ViewVersion)
+        view_version = (
+            self._get_opcua_field(all_fields, "ViewVersion")
+            or self.get_field(opcua_layer, "ViewVersion", "")
+            or ""
+        )
+        # Node access-control attributes (opcua.UserAccessLevel / opcua.UserWriteMask)
+        user_access_level = (
+            self._get_opcua_field(all_fields, "UserAccessLevel")
+            or self.get_field(opcua_layer, "UserAccessLevel", "")
+            or ""
+        )
+        user_write_mask = (
+            self._get_opcua_field(all_fields, "UserWriteMask")
+            or self.get_field(opcua_layer, "UserWriteMask", "")
+            or ""
+        )
+        # Browse/operation result masks and result arrays
+        # (opcua.resultmask / opcua.resultmask.all / opcua.Results)
+        result_mask = (
+            self._get_opcua_field(all_fields, "resultmask.all")
+            or self._get_opcua_field(all_fields, "resultmask")
+            or self.get_field(opcua_layer, "resultmask.all", "")
+            or self.get_field(opcua_layer, "resultmask", "")
+            or ""
+        )
+        results = (
+            self._get_opcua_field(all_fields, "Results")
+            or self.get_field(opcua_layer, "Results", "")
+            or ""
+        )
+        # Subscription/publish sequence numbers
+        # (opcua.SequenceNumber / opcua.AvailableSequenceNumbers)
+        msg_sequence_number = (
+            self._get_opcua_field(all_fields, "SequenceNumber")
+            or self.get_field(opcua_layer, "SequenceNumber", "")
+            or ""
+        )
+        available_seq_numbers = (
+            self._get_opcua_field(all_fields, "AvailableSequenceNumbers")
+            or self.get_field(opcua_layer, "AvailableSequenceNumbers", "")
+            or ""
+        )
+        # Diagnostic symbolic id (opcua.diag.SymbolicId)
+        diag_symbolic_id = (
+            self._get_opcua_field(all_fields, "diag.SymbolicId")
+            or self.get_field(opcua_layer, "diag.SymbolicId", "")
+            or ""
+        )
+        # History record IDs (opcua.RecordId / opcua.StartingRecordId)
+        record_id = (
+            self._get_opcua_field(all_fields, "RecordId")
+            or self.get_field(opcua_layer, "RecordId", "")
+            or ""
+        )
+        starting_record_id = (
+            self._get_opcua_field(all_fields, "StartingRecordId")
+            or self.get_field(opcua_layer, "StartingRecordId", "")
+            or ""
+        )
+        # Register-server semaphore file path (opcua.SemaphoreFilePath)
+        semaphore_file_path = (
+            self._get_opcua_field(all_fields, "SemaphoreFilePath")
+            or self.get_field(opcua_layer, "SemaphoreFilePath", "")
+            or ""
+        )
+        # Endpoint/event filter operation results
+        # (opcua.ConfigurationResults / opcua.OperandStatusCodes / opcua.SelectClauseResults)
+        configuration_results = (
+            self._get_opcua_field(all_fields, "ConfigurationResults")
+            or self.get_field(opcua_layer, "ConfigurationResults", "")
+            or ""
+        )
+        operand_status_codes = (
+            self._get_opcua_field(all_fields, "OperandStatusCodes")
+            or self.get_field(opcua_layer, "OperandStatusCodes", "")
+            or ""
+        )
+        select_clause_results = (
+            self._get_opcua_field(all_fields, "SelectClauseResults")
+            or self.get_field(opcua_layer, "SelectClauseResults", "")
+            or ""
+        )
+
         # Build user auth info if we have authentication data
         user_auth = None
         if user_token or username or policy_id:
@@ -826,6 +945,46 @@ class OPCUAPassiveListener(PySharkListenerBase):
             details["publishing_enabled"] = publishing_enabled
         if delete_subscriptions:
             details["delete_subscriptions"] = delete_subscriptions
+        if sequence_seq:
+            details["sequence_number"] = sequence_seq
+        if sequence_rqid:
+            details["request_id"] = sequence_rqid
+        if service_nsid:
+            details["service_namespace_index"] = service_nsid
+        if audit_entry_id and audit_entry_id.strip(", "):
+            details["audit_entry_id"] = audit_entry_id
+        if qualname_name and qualname_name.strip(", "):
+            details["qualified_name"] = qualname_name
+        if qualname_id and qualname_id.strip(", "):
+            details["qualified_name_ns"] = qualname_id
+        if view_version:
+            details["view_version"] = view_version
+        if user_access_level:
+            details["user_access_level"] = user_access_level
+        if user_write_mask:
+            details["user_write_mask"] = user_write_mask
+        if result_mask:
+            details["result_mask"] = result_mask
+        if results:
+            details["results"] = results
+        if msg_sequence_number:
+            details["publish_sequence_number"] = msg_sequence_number
+        if available_seq_numbers:
+            details["available_sequence_numbers"] = available_seq_numbers
+        if diag_symbolic_id:
+            details["diag_symbolic_id"] = diag_symbolic_id
+        if record_id:
+            details["record_id"] = record_id
+        if starting_record_id:
+            details["starting_record_id"] = starting_record_id
+        if semaphore_file_path and semaphore_file_path.strip(", "):
+            details["semaphore_file_path"] = semaphore_file_path
+        if configuration_results:
+            details["configuration_results"] = configuration_results
+        if operand_status_codes:
+            details["operand_status_codes"] = operand_status_codes
+        if select_clause_results:
+            details["select_clause_results"] = select_clause_results
         summary_parts = [op]
         if username:
             summary_parts.append(f"user={username}")
