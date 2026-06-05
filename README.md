@@ -20,10 +20,6 @@ building-automation, and healthcare networks. Works air-gapped.
 
 ---
 
-> ⚠️ **Authorized testing only.** OIDA is for systems you own or have explicit
-> written permission to test. Unauthorized use may be a criminal offence. See
-> the [LICENSE](LICENSE) (incl. the Security Tool Disclaimer & Terms of Use).
-
 OIDA gives every OT protocol the same `oida <protocol> <target>` syntax — the
 NetExec model for industrial control systems. If you know `nxc smb`, you already
 know `oida modbus`.
