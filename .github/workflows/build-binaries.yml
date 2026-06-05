@@ -38,7 +38,10 @@ jobs:
             # goose/mms/tase2 (pyiec61850-ng) and dnp3 (yadnp3) are Linux-only
             # native libs with no Windows wheels; those protocols still expose
             # `--help` via lazy imports, they're just not bundled for live scans.
+            # --extra dev provides pytest for the smoke-test step (Linux gets
+            # it via --all-extras).
             extras: >-
+              --extra dev
               --extra ads --extra bacnet --extra can --extra coap --extra dicom
               --extra discovery --extra ethercat --extra ethernetip --extra fhir
               --extra hart --extra hl7 --extra iec104 --extra knx --extra modbus
