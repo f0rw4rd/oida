@@ -6,7 +6,6 @@ enumeration, and WebSocket path brute-forcing for the NXC-style
 OCPP connection class.
 """
 
-import os
 import time
 from typing import Any, Dict, List, Optional
 
