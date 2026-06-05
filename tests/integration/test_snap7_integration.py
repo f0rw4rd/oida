@@ -85,7 +85,7 @@ Flag Coverage Matrix (proto_args.py):
   --brute                   [B] test_brute_with_default_wordlist
   --wordlist                [B] test_brute_with_wordlist
   --brute-rate              [B] test_brute_with_default_wordlist (implicit)
-  --stop-on-success         [B] test_brute_stop_on_success
+  --continue-on-success     [B] test_brute_stop_on_success (default stop tested)
   --audit                   [B] test_audit_full
   --audit-quick             [B] test_audit_quick
   --test-write              [B] test_test_write_flag
@@ -1218,14 +1218,13 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
 
     @pytest.mark.auth
     def test_brute_stop_on_success(self, cli_runner, target, port, docker_services):
-        """Test --brute --stop-on-success stops after first valid password [Category B]"""
+        """Test --brute stops after first valid password by default [Category B]"""
         result = cli_runner.run(
             self.protocol_name,
             target,
             "--port",
             str(port),
             "--brute",
-            "--stop-on-success",
             format="json",
             json_log=True,
             timeout=90,
@@ -1245,7 +1244,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
                 "failed",
                 "error",
             ]
-        ), f"Expected brute force stop-on-success terms in output: {text[:500]}"
+        ), f"Expected brute force stop-on-first-success terms in output: {text[:500]}"
 
     @pytest.mark.auth
     @pytest.mark.slow

@@ -873,10 +873,10 @@ def add_brute_options(
         )
 
     brute_group.add_argument(
-        "--stop-on-success",
+        "--continue-on-success",
         action="store_true",
-        default=True,
-        help="Stop after finding valid credentials (default: true)",
+        default=False,
+        help="Keep testing credentials after the first valid hit (default: stop on first success)",
     )
 
     return brute_group

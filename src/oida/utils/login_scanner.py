@@ -111,7 +111,7 @@ def make_password_scanner(
         host = args.get("rhost", args.get("host", ""))
         port = args.get("rport", args.get("port", 102))
         password_source = args.get("passwords", args.get("wordlist"))
-        stop_on_success = args.get("stop_on_success", True)
+        continue_on_success = args.get("continue_on_success", False)
         custom_rate = args.get("rate_limit", rate_limit)
 
         # Load passwords - falls back to defaults if None
@@ -142,7 +142,7 @@ def make_password_scanner(
                     results["password"] = password
                     results["found"].append(password)
 
-                    if stop_on_success:
+                    if not continue_on_success:
                         return results
                 else:
                     # INPUT credential — never echo the candidate value back.
