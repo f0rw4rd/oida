@@ -1,8 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec for the standalone ``oida`` binary (Linux + Windows, x86_64).
 
-Produces a single-file executable bundling the oida CLI plus every protocol
-module. Protocols are imported dynamically by name in
+Produces an onedir (run-in-place, no runtime extraction) executable folder
+bundling the oida CLI plus every protocol module, shipped as one per-OS archive.
+Protocols are imported dynamically by name in
 ``loader.ProtocolLoader._discover_frozen`` (filesystem scanning is impossible
 inside a frozen bundle), so their submodules must be *force-collected* —
 PyInstaller's static analysis cannot see dynamic ``importlib.import_module``
@@ -123,6 +124,63 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
+# ── Windows version resource (right-click .exe → Properties → Details) ────────
+# Built from the installed oida version so it never drifts; PyInstaller stamps
+# it into the PE. Guarded to win32: the versioninfo module imports `pefile`
+# (a Windows-only dep absent on the Linux runner), and the resource only applies
+# to a PE anyway — so on Linux this stays None and is ignored.
+import sys as _sys
+
+_version_info = None
+if _sys.platform == "win32":
+    from importlib.metadata import version as _pkg_version
+    from PyInstaller.utils.win32.versioninfo import (
+        FixedFileInfo,
+        StringFileInfo,
+        StringStruct,
+        StringTable,
+        VarFileInfo,
+        VarStruct,
+        VSVersionInfo,
+    )
+
+    _ver = _pkg_version("oida")
+    _parts = _ver.split("+")[0].replace("-", ".").split(".") + ["0", "0", "0", "0"]
+    _vnum = tuple(int(x) if x.isdigit() else 0 for x in _parts[:4])
+    _version_info = VSVersionInfo(
+        ffi=FixedFileInfo(
+            filevers=_vnum,
+            prodvers=_vnum,
+            mask=0x3F,
+            flags=0x0,
+            OS=0x40004,
+            fileType=0x1,
+            subtype=0x0,
+            date=(0, 0),
+        ),
+        kids=[
+            StringFileInfo(
+                [
+                    StringTable(
+                        "040904B0",
+                        [
+                            StringStruct("CompanyName", "OIDA"),
+                            StringStruct(
+                                "FileDescription", "OIDA — ICS/OT security testing framework"
+                            ),
+                            StringStruct("FileVersion", _ver),
+                            StringStruct("InternalName", "oida"),
+                            StringStruct("OriginalFilename", "oida.exe"),
+                            StringStruct("ProductName", "OIDA"),
+                            StringStruct("ProductVersion", _ver),
+                        ],
+                    )
+                ]
+            ),
+            VarFileInfo([VarStruct("Translation", [0x0409, 1200])]),
+        ],
+    )
+
 # onedir (COLLECT), NOT onefile: the executable and its libraries live in a
 # directory and run in place with ZERO runtime extraction. onefile would unpack
 # ~100 MB into $TMPDIR/_MEIxxxx on every run — invasive (temp writes/AV noise)
@@ -135,6 +193,7 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name="oida",
+    version=_version_info if _sys.platform == "win32" else None,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
