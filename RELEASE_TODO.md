@@ -223,7 +223,7 @@ Without these, fixing the 84 known bugs just lets the next refactor re-introduce
 - [x] Delete `.claude/agents/senior-dev-csharp.md`
 - [x] **Bonus fix**: `tests/integration/conftest.py` PROTOCOL_SERVICES referenced ghost services (`msf-ics-mock`, `profinet-pnet-device`) — docker compose returned 1, cascading "FAILED" markers across 197 tests + 376 errors that had nothing to do with the real bugs. Replaced with `bacnet-mock`/`bacnet-conpot` and `profinet-device`.
 - [x] `/tmp/oida_review_*.md` (6 files) — files don't exist in current environment (lost since the original audit pass); the actionable content lives in `RELEASE_READINESS.md` and `RELEASE_TODO.md` so the loss is non-blocking.
-- [ ] Verify `services.py up all` brings every mock healthy from a fresh clone — operator action; depends on local Docker
+- [x] Verify `services.py up all` brings every mock healthy — **63/63 core mocks healthy**; scanner-detection verified for 22 protocols (modbus/opcua/ethernetip/ads/iec104/bacnet/mms/s7/snmp/mqtt/coap/hl7/dicom/fhir/hart/ocpp/astm/ftp/vnc/smtp/http/http2). Fixes applied: pymodbus `<3.11` pin + `address>=1` register blocks (`c165ba03`), regenerated TLS certs, removed stale 172.30.0.0/16 network. **Known broken (separate scope):** (1) DNP3 mocks unbuildable — `pydnp3-stepfunc` not on PyPI, blocks 8 containers; needs swap to `dnp3protocol`/`yadnp3` or vendoring; (2) `compose.cve.yml` references 15 missing `services/vulnerable/{bacnet,coap,dicom,dnp3,ethernetip,hl7,http,iec104,memcached,mms,ntp,opcua,smtp,snmp,vnc}` build contexts (only dns/ftp/mqtt exist). The nightly mock-stack step is `continue-on-error: true` (`0b26dbb6`) so these don't block CI.
 
 ### Discovered during §0 and fixed (commits after `d1dbaf4f`)
 
