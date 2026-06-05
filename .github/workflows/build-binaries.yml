@@ -29,8 +29,16 @@ jobs:
             label: linux-x86_64
             artifact: oida-linux-x86_64
             binary: dist/oida
-            # Every extra resolves on Linux.
-            extras: "--all-extras"
+            # Every protocol extra resolves on Linux. Runtime extras only —
+            # NOT --all-extras, which would drag dev/docs/fuzz into a release
+            # build env.
+            extras: >-
+              --extra ads --extra bacnet --extra can --extra coap --extra dicom
+              --extra discovery --extra dnp3 --extra ethercat --extra ethernetip
+              --extra fhir --extra goose --extra hart --extra hl7 --extra iec104
+              --extra knx --extra mms --extra modbus --extra mqtt --extra opcua
+              --extra pcap --extra profinet --extra snap7 --extra snmp
+              --extra tase2 --extra astm --extra ocpp
           - os: windows-latest
             label: windows-x86_64
             artifact: oida-windows-x86_64
@@ -38,10 +46,7 @@ jobs:
             # goose/mms/tase2 (pyiec61850-ng) and dnp3 (yadnp3) are Linux-only
             # native libs with no Windows wheels; those protocols still expose
             # `--help` via lazy imports, they're just not bundled for live scans.
-            # --extra dev provides pytest for the smoke-test step (Linux gets
-            # it via --all-extras).
             extras: >-
-              --extra dev
               --extra ads --extra bacnet --extra can --extra coap --extra dicom
               --extra discovery --extra ethercat --extra ethernetip --extra fhir
               --extra hart --extra hl7 --extra iec104 --extra knx --extra modbus
@@ -61,12 +66,16 @@ jobs:
           python-version: "3.12"
 
       - name: Sync runtime deps from lockfile
+        # Runtime protocol extras only — the binary bundles exactly these, no
+        # dev/test tooling.
         run: uv sync ${{ matrix.extras }} --frozen
 
-      - name: Install PyInstaller
-        # Kept out of pyproject/uv.lock (build-only tool); installed ad-hoc so
-        # the lockfile-drift contract test stays green.
-        run: uv pip install pyinstaller
+      - name: Install build + test tools
+        # pyinstaller (build) and pytest (smoke harness) are NOT runtime deps
+        # and are NOT bundled into the binary (the spec excludes pytest). They
+        # live outside pyproject/uv.lock so the lockfile-drift contract test
+        # stays green and the release env carries no dev extra.
+        run: uv pip install pyinstaller pytest pytest-timeout
 
       - name: Build binary
         run: uv run pyinstaller oida.spec --clean --noconfirm
