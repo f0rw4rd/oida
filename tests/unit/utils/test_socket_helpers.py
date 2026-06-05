@@ -55,6 +55,54 @@ class TestBuildTLSContext:
         assert isinstance(ctx, ssl.SSLContext)
         mock_logger.fail.assert_not_called()
 
+    def test_ca_insecure_skips_verification(self, mock_logger):
+        """--tls-insecure overrides --tls-ca: verification stays disabled."""
+        ctx = build_tls_context(
+            {"tls-ca": "/nonexistent/ca.pem", "tls-insecure": True},
+            logger=mock_logger,
+        )
+
+        assert ctx.verify_mode == ssl.CERT_NONE
+        # CA load is skipped entirely, so no failure is logged for the bad path.
+        mock_logger.fail.assert_not_called()
+
+    def test_ca_missing_file_logs_failure(self, mock_logger):
+        """A --tls-ca pointing at a missing file logs a failure and stays insecure."""
+        ctx = build_tls_context({"tls-ca": "/nonexistent/ca.pem"}, logger=mock_logger)
+
+        assert ctx.verify_mode == ssl.CERT_NONE
+        mock_logger.fail.assert_called_once()
+
+    def test_ca_enables_server_verification(self, tmp_path, mock_logger):
+        """A valid --tls-ca bundle switches the context to CERT_REQUIRED (mTLS server check)."""
+        pytest.importorskip("cryptography")
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+        import datetime
+
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "oida-test-ca")])
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(name)
+            .issuer_name(name)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.datetime(2020, 1, 1))
+            .not_valid_after(datetime.datetime(2040, 1, 1))
+            .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+            .sign(key, hashes.SHA256())
+        )
+        ca_file = tmp_path / "ca.pem"
+        ca_file.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+
+        ctx = build_tls_context({"tls-ca": str(ca_file)}, logger=mock_logger)
+
+        assert ctx.verify_mode == ssl.CERT_REQUIRED
+        mock_logger.fail.assert_not_called()
+
 
 class TestCheckTLSCertificate:
     """Test check_tls_certificate helper."""
