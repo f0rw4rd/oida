@@ -16,11 +16,18 @@ on:
 
 permissions:
   contents: read
+  id-token: write      # for Sigstore-backed build-provenance attestations
+  attestations: write  # to write the attestation to the repo
 
 jobs:
   build:
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
+    # Expose whether SignPath is configured, so the Windows signing steps can be
+    # gated without referencing secrets in `if:` directly. Stays "false" (steps
+    # skipped, build green) until SIGNPATH_API_TOKEN is added.
+    env:
+      HAS_SIGNPATH: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -108,10 +115,62 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path dist/oida -DestinationPath "$env:ARCHIVE"
 
+      # ── Authenticode-sign the Windows .exe via SignPath (gated, no-op until
+      #    enrolled) ───────────────────────────────────────────────────────────
+      # SignPath signs oida/oida.exe inside the zip (see signpath.xml — deep
+      # signing) and returns the re-zipped, signed archive. Runs only when
+      # SIGNPATH_API_TOKEN is set, so the build stays green before enrollment.
+      - name: Upload unsigned archive for SignPath
+        if: runner.os == 'Windows' && env.HAS_SIGNPATH == 'true'
+        id: unsigned
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: unsigned-${{ matrix.artifact }}
+          path: ${{ env.ARCHIVE }}
+          retention-days: 1
+
+      - name: Sign Windows .exe (SignPath)
+        if: runner.os == 'Windows' && env.HAS_SIGNPATH == 'true'
+        uses: signpath/github-action-submit-signing-request@v1  # TODO: pin to a commit SHA
+        with:
+          connector-url: https://app.signpath.io
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: oida                       # TODO: your SignPath project slug
+          signing-policy-slug: release-signing      # TODO: your signing policy slug
+          artifact-configuration-slug: windows-zip  # TODO: slug of the uploaded signpath.xml
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+          skip-decompress: true                     # keep it a single .zip file
+
+      - name: Swap in the signed archive
+        if: runner.os == 'Windows' && env.HAS_SIGNPATH == 'true'
+        shell: bash
+        # skip-decompress keeps a single file in signed/; move it over the
+        # unsigned one so checksum/attestation/upload all cover the signed zip.
+        run: mv signed/* "$ARCHIVE"
+
+      # ── Integrity + provenance (after signing, so they cover the signed file) ─
+      - name: Generate SHA-256 checksum
+        shell: bash
+        run: sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+
+      - name: Attest build provenance
+        # Sigstore-backed SLSA provenance: proves the archive came from this
+        # repo's CI. Verify with: gh attestation verify <archive> --repo f0rw4rd/oida
+        # Skipped on PRs (no need; and forked-PR id-tokens are restricted).
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4
+        with:
+          subject-path: ${{ env.ARCHIVE }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ env.ARCHIVE }}
+          path: |
+            ${{ env.ARCHIVE }}
+            ${{ env.ARCHIVE }}.sha256
           if-no-files-found: error
           retention-days: 14
