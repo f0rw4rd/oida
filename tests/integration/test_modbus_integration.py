@@ -128,6 +128,8 @@ Flag Coverage Matrix (proto_args.py):
   --help (global)           [A] test_help_output
 """
 
+import re
+
 import pytest
 from typing import Optional
 
@@ -198,6 +200,39 @@ def _combined_text(result, log=None) -> str:
     if log is not None:
         parts.append(_all_messages(log))
     return " ".join(parts)
+
+
+# Matches the fuzz summary line emitted by FuzzMixin._handle_fuzz, e.g.:
+#   "Tests: 32, Writes: 32, Errors: 0, Crashes: 0"
+_FUZZ_SUMMARY_RE = re.compile(
+    r"tests:\s*(\d+),\s*writes:\s*(\d+),\s*errors:\s*(\d+),\s*crashes:\s*(\d+)"
+)
+
+
+def _parse_fuzz_summary(text: str) -> Optional[dict]:
+    """Parse the 'Tests: N, Writes: N, Errors: N, Crashes: N' summary line.
+
+    Returns a dict with int keys tests/writes/errors/crashes, or None if the
+    summary line is absent (e.g. the connection never came up).
+    """
+    m = _FUZZ_SUMMARY_RE.search(text.lower())
+    if not m:
+        return None
+    return {
+        "tests": int(m.group(1)),
+        "writes": int(m.group(2)),
+        "errors": int(m.group(3)),
+        "crashes": int(m.group(4)),
+    }
+
+
+def _count_fuzzed_registers(result) -> int:
+    """Count the distinct per-register 'Fuzzing register N...' progress lines.
+
+    The same display line is echoed to both stdout and the JSON log, so counting
+    over the combined text would double every match. We count over stdout only.
+    """
+    return len(re.findall(r"fuzzing register\s+\d+", result.combined_output.lower()))
 
 
 @pytest.mark.modbus
@@ -1510,7 +1545,12 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
     @pytest.mark.fuzz
     @pytest.mark.slow
     def test_basic_fuzz(self, cli_runner, target, port, docker_services):
-        """Test basic register fuzzing with --confirm [Category C]"""
+        """Test basic register fuzzing actually writes and reports a summary [Category A]
+
+        Mock holding registers accept FC6/FC16 writes, so against a healthy mock
+        the fuzzer should run tests, record writes, and report zero crashes.
+        Range 0-3 (4 registers) x 8 boundary payloads = 32 tests.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1529,18 +1569,36 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=60,
         )
 
-        # Fuzzing should complete (may fail on mock server)
         assert result.returncode != -1
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
-        if result.success:
-            _assert_log_has_events(result)
+
+        output = _combined_text(result, result.scan_log)
+        summary = _parse_fuzz_summary(output)
+        assert summary is not None, f"No fuzz summary line found in output: {output[:600]}"
+        # Something actually ran, and the mock never went down.
+        assert summary["tests"] > 0, f"Fuzzer ran zero tests: {summary}"
+        assert summary["crashes"] == 0, f"Mock crashed during fuzzing: {summary}"
+        # 4 registers x 8 boundary payloads.
+        assert summary["tests"] == 32, f"Expected 32 tests (4 regs x 8 payloads): {summary}"
+        # Writable mock => writes should land, not error out.
+        assert summary["writes"] == summary["tests"], (
+            f"Expected every write to succeed against writable mock: {summary}"
+        )
+        assert _count_fuzzed_registers(result) == 4, (
+            f"Expected 4 'Fuzzing register' lines: {output[:600]}"
+        )
+
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
     @pytest.mark.fuzz
     @pytest.mark.slow
     def test_function_fuzz(self, cli_runner, target, port, docker_services):
-        """Test function code fuzzing with --confirm [Category C]"""
+        """Test function code fuzzing probes every vendor FC 65-127 [Category A]
+
+        _fuzz_function_codes walks FCs 65..127 inclusive = 63 tests, regardless
+        of --fuzz-iterations. No register writes happen in this mode.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1557,18 +1615,33 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=60,
         )
 
-        # Fuzzing should complete
         assert result.returncode != -1
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
-        if result.success:
-            _assert_log_has_events(result)
+
+        output = _combined_text(result, result.scan_log)
+        assert "fuzzing function codes 65-127" in output, (
+            f"Expected function-code fuzzing banner: {output[:600]}"
+        )
+        summary = _parse_fuzz_summary(output)
+        assert summary is not None, f"No fuzz summary line found in output: {output[:600]}"
+        # FCs 65..127 inclusive = 63 probes.
+        assert summary["tests"] == 63, f"Expected 63 function-code tests: {summary}"
+        # Function-code fuzzing performs no register writes.
+        assert summary["writes"] == 0, f"Function fuzzing should not write registers: {summary}"
+        assert summary["crashes"] == 0, f"Mock crashed during function fuzzing: {summary}"
+
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
     @pytest.mark.fuzz
     @pytest.mark.slow
     def test_fuzz_all_access(self, cli_runner, target, port, docker_services):
-        """Test --fuzz-all-access includes read-only registers [Category B]"""
+        """Test --fuzz-all-access is accepted and fuzzing still runs [Category A]
+
+        --fuzz-all-access only changes register selection for register-map
+        fuzzing; in plain 'basic' mode it is a no-op, but the flag must still be
+        accepted and the fuzzer must run normally (4 regs x 8 payloads = 32).
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1588,16 +1661,30 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=60,
         )
 
-        assert result.returncode in [0, 1, -1]
-        if result.success:
-            _assert_log_has_events(result)
+        assert result.returncode != -1
+        assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
+
+        output = _combined_text(result, result.scan_log)
+        summary = _parse_fuzz_summary(output)
+        assert summary is not None, f"No fuzz summary line found in output: {output[:600]}"
+        assert summary["tests"] == 32, f"Expected 32 tests (4 regs x 8 payloads): {summary}"
+        assert summary["crashes"] == 0, f"Mock crashed during fuzzing: {summary}"
+        assert _count_fuzzed_registers(result) == 4, (
+            f"Expected 4 'Fuzzing register' lines: {output[:600]}"
+        )
+
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
     @pytest.mark.fuzz
     @pytest.mark.slow
     def test_fuzz_max_addresses(self, cli_runner, target, port, docker_services):
-        """Test --fuzz-max-addresses limits fuzz target count [Category B]"""
+        """Test --fuzz-max-addresses actually caps the fuzzed register count [Category A]
+
+        Scan range 0-50 = 51 registers, capped to 3. The fuzzer must report
+        "Fuzzing 3 of 51", emit exactly 3 per-register lines, and run
+        3 regs x 8 boundary payloads = 24 tests.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1618,9 +1705,22 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=60,
         )
 
-        assert result.returncode in [0, 1, -1]
-        if result.success:
-            _assert_log_has_events(result)
+        assert result.returncode != -1
+        assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
+
+        output = _combined_text(result, result.scan_log)
+        assert "fuzzing 3 of 51" in output, (
+            f"Expected scope-limit line 'Fuzzing 3 of 51': {output[:600]}"
+        )
+        # The cap is real: exactly 3 registers get fuzzed, not 51.
+        assert _count_fuzzed_registers(result) == 3, (
+            f"Expected exactly 3 'Fuzzing register' lines, scope was not capped: {output[:600]}"
+        )
+        summary = _parse_fuzz_summary(output)
+        assert summary is not None, f"No fuzz summary line found in output: {output[:600]}"
+        assert summary["tests"] == 24, f"Expected 24 tests (3 regs x 8 payloads): {summary}"
+        assert summary["crashes"] == 0, f"Mock crashed during fuzzing: {summary}"
+
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 

@@ -73,7 +73,7 @@ class CredentialsMixin:
                 valid_creds.append({"username": username, "password": password})
 
                 # Stop on first valid credential (default behavior)
-                if getattr(self.args, "stop_on_success", True):
+                if not getattr(self.args, "continue_on_success", False):
                     break
 
             except Exception as e:

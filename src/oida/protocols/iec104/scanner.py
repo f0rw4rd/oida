@@ -17,6 +17,7 @@ from ...utils import (
     NetworkScanner,
     SecurityAnalyzer,
 )
+from ...utils.protocol_helpers import ConnectionHelper
 from ...utils.cli import run as cli_run
 
 from .constants import (
@@ -640,9 +641,19 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
             client.on_new_point(on_new_point)
             client.on_station_initialized(on_station_initialized)
 
+            # c104 (lib60870) requires a dotted IP for add_connection() and
+            # rejects hostnames with "IP <host> is invalid!". Resolve first.
+            try:
+                ip = ConnectionHelper.resolve_hostname(self.host)
+            except OSError as e:
+                self.logger.fail(f"Could not resolve {self.host}: {e}")
+                return None
+            if ip != self.host:
+                self.logger.debug("Resolved %s -> %s", self.host, ip)
+
             # Add connection - don't auto-interrogate, we'll do it manually
             connection = client.add_connection(
-                ip=self.host,
+                ip=ip,
                 port=self.port,
                 init=c104.Init.NONE,  # Manual control
             )

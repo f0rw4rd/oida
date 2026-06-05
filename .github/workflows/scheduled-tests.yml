@@ -1,0 +1,58 @@
+name: Scheduled Dependency Check
+
+# Catches upstream dependency breakage early. We pin minimum versions (`>=`)
+# but not maximums, so a new release of pymodbus / asyncua / hartip-py / etc.
+# can silently break us until someone runs the suite by hand. This job
+# RE-RESOLVES the lockfile to the newest versions allowed by pyproject.toml
+# (`uv lock --upgrade`) before running, so it tests against current upstream
+# rather than the pinned uv.lock that PR CI uses.
+
+on:
+  schedule:
+    # 04:00 UTC every Monday — weekly is enough to surface breakage early
+    # without spamming. Off-peak slot for shared runners.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-tests
+  cancel-in-progress: false
+
+jobs:
+  upstream:
+    name: Upstream deps (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          # No lockfile cache here — we deliberately want fresh resolution.
+          python-version: ${{ matrix.python-version }}
+
+      - name: Re-resolve to newest allowed versions
+        # `--upgrade` bumps every dependency to the newest version permitted by
+        # the `>=` constraints in pyproject.toml. This is the whole point of the
+        # job: if a new upstream release breaks us, resolution + tests fail here.
+        run: uv lock --upgrade
+
+      - name: Sync upgraded environment
+        run: uv sync --all-extras
+
+      - name: Show resolved versions
+        run: uv pip list
+
+      - name: Unit tests
+        # Mirror ci.yml's fast unit lane: skip tshark-sensitive pcap tests.
+        run: uv run pytest tests/unit/ --ignore=tests/unit/pcap -x -q --timeout=15
