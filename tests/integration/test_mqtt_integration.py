@@ -1231,7 +1231,6 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--default-creds",
-            "--stop-on-success",
             format="json",
             json_log=True,
             timeout=60,

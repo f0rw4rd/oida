@@ -1186,12 +1186,13 @@ class SecurityMixin:
         import base64
 
         delay = getattr(self.args, "brute_rate", 0.5)
-        stop_on_success = getattr(self.args, "stop_on_success", True)
+        continue_on_success = getattr(self.args, "continue_on_success", False)
         target_url = self.results["data"].get("target_url", "")
 
         credentials = [(u, p) for u in usernames for p in passwords]
         self.logger.debug(
-            f"HTTP auth brute: {len(credentials)} pairs, delay={delay}s, stop_on_success={stop_on_success}"
+            f"HTTP auth brute: {len(credentials)} pairs, delay={delay}s, "
+            f"continue_on_success={continue_on_success}"
         )
         self.logger.display(
             f"[Brute] HTTP Basic Auth: {len(credentials)} pairs "
@@ -1223,7 +1224,7 @@ class SecurityMixin:
                     except Exception as e:
                         self.logger.debug(f"self.scanner.disconnect(conn): {e}")
 
-                    if stop_on_success:
+                    if not continue_on_success:
                         break
                 else:
                     self.logger.debug(f"[Brute] Failed: {username}:{password}")
@@ -1266,7 +1267,7 @@ class SecurityMixin:
             return
 
         delay = getattr(self.args, "brute_rate", 0.5)
-        stop_on_success = getattr(self.args, "stop_on_success", True)
+        continue_on_success = getattr(self.args, "continue_on_success", False)
 
         version = self.results["data"].get("ocpp_version", "1.6") or "1.6"
         self.logger.debug(f"IdTag brute: {len(id_tags)} tokens, delay={delay}s")
@@ -1298,7 +1299,7 @@ class SecurityMixin:
                                 "Default credentials", f"Valid IdTag accepted: {tag}"
                             )
                             valid_tags.append({"id_tag": tag, "status": status})
-                            if stop_on_success:
+                            if not continue_on_success:
                                 break
                         else:
                             self.logger.debug(f"[Brute] {tag}: {status}")

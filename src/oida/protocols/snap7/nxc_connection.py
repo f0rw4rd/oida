@@ -590,9 +590,9 @@ class s7(NetworkConnection):
     def _action_default_creds(self):
         """Handle --default-creds action (tests built-in default passwords)"""
         rate_limit = getattr(self.args, "brute_rate", 0.5)
-        stop_on_success = getattr(self.args, "stop_on_success", True)
+        continue_on_success = getattr(self.args, "continue_on_success", False)
         result = self.scanner.bruteforce_password(
-            self.conn, rate_limit=rate_limit, stop_on_success=stop_on_success
+            self.conn, rate_limit=rate_limit, continue_on_success=continue_on_success
         )
         if result and result.get("success"):
             self.results["data"]["password_found"] = result.get("password")
@@ -601,13 +601,13 @@ class s7(NetworkConnection):
     def _action_brute(self):
         """Handle --brute action"""
         wordlist = getattr(self.args, "wordlist", None)
-        stop_on_success = getattr(self.args, "stop_on_success", True)
+        continue_on_success = getattr(self.args, "continue_on_success", False)
         rate_limit = getattr(self.args, "brute_rate", 0.5)
         result = self.scanner.bruteforce_password(
             self.conn,
             wordlist_path=wordlist,
             rate_limit=rate_limit,
-            stop_on_success=stop_on_success,
+            continue_on_success=continue_on_success,
         )
         if result and result.get("success"):
             self.results["data"]["password_found"] = result.get("password")

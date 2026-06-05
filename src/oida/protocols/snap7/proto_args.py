@@ -361,7 +361,7 @@ Examples:
         help="Show individual bit changes",
     )
 
-    # Credential Testing (--brute, --default-creds, --wordlist, --brute-rate, --stop-on-success)
+    # Credential Testing (--brute, --default-creds, --wordlist, --brute-rate, --continue-on-success)
     brute_group = add_brute_options(s7_parser, default_rate=0.5)
     brute_group.add_argument(
         "-n",
