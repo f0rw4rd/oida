@@ -5,6 +5,9 @@ CLAUDE.md
 # Per-protocol research material — kept local
 ref/
 
+# Per-developer pyenv pin — uv/CI manage the interpreter; don't force a version
+.python-version
+
 # Fuzz session / test databases (root-level scratch)
 oida_fuzz_session.db
 fuzzer_session.db
