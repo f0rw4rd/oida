@@ -402,3 +402,65 @@ class TestDNSPassiveEK:
 
         has_ttl = any(r.get("ttl") is not None for r in all_responses)
         assert has_ttl, "Expected ttl field in response records"
+
+    # ------------------------------------------------------------------
+    # T1 gap fixes: count_auth_rr, tsig.original_id, soa.rname.name
+    # ------------------------------------------------------------------
+
+    def test_count_auth_rr_in_details(self):
+        """Verify count_auth_rr header field is extracted (T1 gap)."""
+        listener, devices, result = _run_listener_test(
+            "dns",
+            "DNSPassiveListener",
+            "dns",
+            "dns/zeek_sshfp-trunc.pcap",
+            expect_details=["query"],
+        )
+        # sshfp-trunc has responses with 6 authoritative records
+        has_auth_count = any(
+            ix.details.get("count_auth_rr") not in (None, "0") for ix in listener.interactions
+        )
+        assert has_auth_count, (
+            "Expected non-zero count_auth_rr in zeek_sshfp-trunc.pcap; "
+            f"sample details: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_tsig_original_id(self):
+        """Verify TSIG original_id is extracted (T1 gap)."""
+        listener, devices, result = _run_listener_test(
+            "dns",
+            "DNSPassiveListener",
+            "dns",
+            "dns/zeek_tkey.pcap",
+            expect_details=["query"],
+        )
+        all_responses = []
+        for dev in devices.values():
+            if hasattr(dev, "dns_passive_data") and dev.dns_passive_data:
+                all_responses.extend(dev.dns_passive_data.get("responses", []))
+
+        tsig_records = [r for r in all_responses if r.get("type") == "TSIG"]
+        assert len(tsig_records) >= 1, "Expected TSIG records in zeek_tkey.pcap"
+        assert any(r.get("original_id") for r in tsig_records), (
+            "TSIG record should have original_id field"
+        )
+
+    def test_soa_rname_email(self):
+        """Verify SOA rname email-form is extracted (T1 gap)."""
+        listener, devices, result = _run_listener_test(
+            "dns",
+            "DNSPassiveListener",
+            "dns",
+            "dns/zeek_sshfp-trunc.pcap",
+            expect_details=["query"],
+        )
+        all_responses = []
+        for dev in devices.values():
+            if hasattr(dev, "dns_passive_data") and dev.dns_passive_data:
+                all_responses.extend(dev.dns_passive_data.get("responses", []))
+
+        soa_records = [r for r in all_responses if r.get("type") == "SOA"]
+        assert len(soa_records) >= 1, "Expected SOA records in zeek_sshfp-trunc.pcap"
+        assert any("@" in str(r.get("rname_email", "")) for r in soa_records), (
+            "SOA record should have email-form rname_email (with @)"
+        )

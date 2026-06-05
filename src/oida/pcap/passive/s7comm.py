@@ -265,6 +265,13 @@ class S7commPassiveListener(PySharkListenerBase):
             except (ValueError, TypeError) as e:
                 self.logger.debug(f"Failed to get rosctr: {e}")
 
+        # Redundancy ID (header.redid): reserved, should always be 0x0000.
+        # A non-zero value is anomalous; capture it for visibility/alerting.
+        redid_raw = self.get_field(s7comm, "header_redid", None)
+        if redid_raw is None:
+            redid_raw = self.get_field(s7comm, "header.redid", None)
+        redid_str = str(redid_raw) if redid_raw is not None else ""
+
         # Determine client/PLC roles using port 102 (PLC always listens
         # on 102).  ROSCTR-only detection fails for Download/Upload where
         # the PLC sends Job (ROSCTR=1) to request block data from the
@@ -404,13 +411,16 @@ class S7commPassiveListener(PySharkListenerBase):
                     pdu_len = int(pdu_len_raw)
                 except (ValueError, TypeError) as e:
                     self.logger.debug(f"Failed to get pdu_len: {e}")
+            setup_details: Dict[str, Any] = {"pdu_length": pdu_len}
+            if redid_str:
+                setup_details["redundancy_id"] = redid_str
             self._record_interaction(
                 now,
                 src_ip,
                 dst_ip,
                 direction,
                 "Setup Communication",
-                {"pdu_length": pdu_len},
+                setup_details,
                 f"Setup Communication (PDU={pdu_len})" if pdu_len else "Setup Communication",
                 flow_id=flow_id,
                 src_port=src_port,
@@ -428,13 +438,19 @@ class S7commPassiveListener(PySharkListenerBase):
                 op_label = f"{rosctr_name}: {func_name}"
             else:
                 op_label = rosctr_name
+            catchall_details: Dict[str, Any] = {
+                "rosctr": rosctr,
+                "function_code": func_code,
+            }
+            if redid_str:
+                catchall_details["redundancy_id"] = redid_str
             self._record_interaction(
                 now,
                 src_ip,
                 dst_ip,
                 direction,
                 op_label,
-                {"rosctr": rosctr, "function_code": func_code},
+                catchall_details,
                 op_label,
                 flow_id=flow_id,
                 src_port=src_port,
@@ -507,6 +523,15 @@ class S7commPassiveListener(PySharkListenerBase):
             details["length"] = length
             if item_count > 1:
                 details["item_count"] = item_count
+
+            # Syntax ID: format type of the address specification
+            # (0x10 = S7-Any, 0x12 = DB-block read, 0xb0 = NCK, etc.).
+            # Identifies how the following address bytes are encoded.
+            syntaxid_raw = self.get_field(s7comm, "param_item_syntaxid", None)
+            if syntaxid_raw is None:
+                syntaxid_raw = self.get_field(s7comm, "param.item.syntaxid", None)
+            if syntaxid_raw is not None:
+                details["syntax_id"] = str(syntaxid_raw)
 
         # Extract data values
         data_str = self._extract_data_values(s7comm)
@@ -980,6 +1005,28 @@ class S7commPassiveListener(PySharkListenerBase):
         }
         if ud_type:
             details["userdata_type"] = ud_type
+
+        # Userdata sequence number: correlates a request with its response
+        # and identifies multi-frame (fragmented) userdata transfers.
+        seq_num_raw = self.get_field(s7comm, "param_userdata_seq_num", None)
+        if seq_num_raw is None:
+            seq_num_raw = self.get_field(s7comm, "param.userdata.seq_num", None)
+        if seq_num_raw is not None:
+            details["seq_num"] = str(seq_num_raw)
+
+        # Data unit reference: nonzero when the userdata PDU is fragmented.
+        dataunitref_raw = self.get_field(s7comm, "param_userdata_dataunitref", None)
+        if dataunitref_raw is None:
+            dataunitref_raw = self.get_field(s7comm, "param.userdata.dataunitref", None)
+        if dataunitref_raw is not None:
+            details["data_unit_ref"] = str(dataunitref_raw)
+
+        # Last data unit flag: 0x00 = more fragments follow, else final unit.
+        lastdataunit_raw = self.get_field(s7comm, "param_userdata_lastdataunit", None)
+        if lastdataunit_raw is None:
+            lastdataunit_raw = self.get_field(s7comm, "param.userdata.lastdataunit", None)
+        if lastdataunit_raw is not None:
+            details["last_data_unit"] = str(lastdataunit_raw)
 
         # Extract SZL data (s7comm.data.userdata.szl.id in EK mode)
         if funcgroup == 0x04 and subfunc == 0x01:

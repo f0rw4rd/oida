@@ -561,6 +561,9 @@ class DNP3PassiveListener(PySharkListenerBase):
         if values:
             details["values"] = values
 
+        # CRC integrity status (data-link header + data chunks)
+        details.update(self._crc_status_info(dnp3))
+
         # Classify rw based on function code and IIN error bits
         if is_response and iin_raw is not None:
             iin2 = (iin_raw >> 8) & 0xFF
@@ -729,6 +732,7 @@ class DNP3PassiveListener(PySharkListenerBase):
             details["dl_secfunc_name"] = DNP3_DL_SECONDARY_FUNCTIONS.get(
                 secfunc, f"DL Sec Func {secfunc}"
             )
+        details.update(self._crc_status_info(dnp3))
 
         summary = f"{operation} addr {dnp3_src}->{dnp3_dst}"
 
@@ -877,6 +881,7 @@ class DNP3PassiveListener(PySharkListenerBase):
         if peeked_func_code is not None:
             details["function_code"] = peeked_func_code
             details["function_name"] = peeked_func_name
+        details.update(self._crc_status_info(dnp3))
 
         seq_str = f" seq={tr_seq}" if tr_seq is not None else ""
         func_str = f" {peeked_func_name}" if peeked_func_name else ""
@@ -928,6 +933,38 @@ class DNP3PassiveListener(PySharkListenerBase):
                 except (ValueError, TypeError) as e:
                     logger.debug(f"Return value computation failed: {e}")
         return None
+
+    def _crc_status_info(self, dnp3) -> Dict[str, Any]:
+        """Extract DNP3 CRC validation status (header + data chunks).
+
+        tshark validates each DNP3 block CRC and exposes the result as
+        ``dnp.hdr.CRC.status`` (data-link header CRC) and
+        ``dnp.data_chunk.CRC.status`` (per-data-chunk CRC).  Status values:
+        ``1`` = Good, ``2`` = Bad, ``0`` = not present/unverified.  A bad CRC
+        on passively observed traffic is a genuine integrity anomaly
+        (corruption, truncation, or a malformed/injected frame), so we
+        surface ``crc_bad`` for downstream alerting.
+
+        Returns a dict suitable for ``details.update()``; empty if no CRC
+        status fields are present.
+        """
+        info: Dict[str, Any] = {}
+        bad = False
+        hdr_raw = self.get_field(dnp3, "dnp_hdr_CRC_status", None)
+        chunk_raw = self.get_field(dnp3, "dnp_data_chunk_CRC_status", None)
+        for raw, key in ((hdr_raw, "hdr_crc_status"), (chunk_raw, "data_chunk_crc_status")):
+            if raw is None:
+                continue
+            statuses = [s.strip() for s in str(raw).split(",") if s.strip()]
+            if not statuses:
+                continue
+            info[key] = ",".join(statuses)
+            # Status 2 = Bad CRC per tshark PROTO_CHECKSUM_E_BAD
+            if any(s == "2" for s in statuses):
+                bad = True
+        if bad:
+            info["crc_bad"] = True
+        return info
 
     def _extract_point_values(self, dnp3, group: int) -> List[str]:
         """Extract data point values from DNP3 application layer.

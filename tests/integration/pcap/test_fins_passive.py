@@ -285,3 +285,65 @@ class TestFINSFieldCoverage:
                     f"PLC device should have model info in fins_passive_data; "
                     f"got keys: {sorted(pdata_keys)}"
                 )
+
+    # ------------------------------------------------------------------
+    # T1 gap fixes: pc_status sub-bits, rack_num, fatal/non_fatal errors
+    # ------------------------------------------------------------------
+
+    def test_pc_status_subfields_extracted(self):
+        """pc_status hi/r1/r2 sub-bits and rack_num should be extracted."""
+        listener, devices, result = _run_listener_test(
+            "fins",
+            "FINSPassiveListener",
+            "omron",
+            "fins/cisagov_omron.pcap",
+            expect_details=["command_code"],
+        )
+        all_keys = set()
+        for ix in listener.interactions:
+            all_keys.update(ix.details.keys())
+        subfields = {"pc_status_hi", "pc_status_r1", "pc_status_r2", "rack_num"}
+        found = subfields & all_keys
+        assert len(found) >= 1, (
+            f"Expected at least one of {subfields}; got keys: {sorted(all_keys)}"
+        )
+
+    def test_fatal_errors_extracted(self):
+        """Active fatal error conditions should be collected from status read."""
+        listener, devices, result = _run_listener_test(
+            "fins",
+            "FINSPassiveListener",
+            "omron",
+            "fins/cisagov_omron.pcap",
+            expect_details=["command_code"],
+        )
+        fatal_lists = [
+            ix.details.get("fatal_errors")
+            for ix in listener.interactions
+            if ix.details.get("fatal_errors")
+        ]
+        assert fatal_lists, (
+            "Expected at least one interaction with active fatal_errors list "
+            "from CPU Unit Status Read response"
+        )
+        # Each entry should be a list of named conditions
+        assert all(isinstance(fl, list) and fl for fl in fatal_lists)
+
+    def test_non_fatal_errors_extracted(self):
+        """Active non-fatal error conditions should be collected."""
+        listener, devices, result = _run_listener_test(
+            "fins",
+            "FINSPassiveListener",
+            "omron",
+            "fins/cisagov_omron.pcap",
+            expect_details=["command_code"],
+        )
+        non_fatal_lists = [
+            ix.details.get("non_fatal_errors")
+            for ix in listener.interactions
+            if ix.details.get("non_fatal_errors")
+        ]
+        assert non_fatal_lists, (
+            "Expected at least one interaction with active non_fatal_errors list"
+        )
+        assert all(isinstance(nfl, list) and nfl for nfl in non_fatal_lists)

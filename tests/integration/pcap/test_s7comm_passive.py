@@ -392,3 +392,51 @@ class TestS7commFieldCoverage:
             f"Setup Communication ops found but none have pdu_length. "
             f"Sample details: {setup_ops[0].details}"
         )
+
+    def test_read_var_syntax_id(self):
+        """Verify s7comm.param.item.syntaxid extraction on Read Var requests."""
+        listener, devices, result = _run_listener_test(
+            "s7comm",
+            "S7commPassiveListener",
+            "s7comm",
+            "s7comm/iti_snap7_s300_readVar.pcapng",
+            expect_details=["function_code"],
+        )
+        found = any(ix.details.get("syntax_id") for ix in listener.interactions)
+        assert found, (
+            "Expected syntax_id in a read/write interaction's details; "
+            f"sample details: {listener.interactions[0].details if listener.interactions else 'none'}"
+        )
+
+    def test_userdata_seq_num_and_fragmentation(self):
+        """Verify userdata seq_num / data_unit_ref / last_data_unit extraction."""
+        listener, devices, result = _run_listener_test(
+            "s7comm",
+            "S7commPassiveListener",
+            "s7comm",
+            "s7comm/iti_s7comm_reading_plc_status.pcap",
+            expect_details=["function_group"],
+        )
+        has_seq = any(ix.details.get("seq_num") for ix in listener.interactions)
+        has_ref = any(ix.details.get("data_unit_ref") is not None for ix in listener.interactions)
+        has_last = any(
+            ix.details.get("last_data_unit") is not None for ix in listener.interactions
+        )
+        assert has_seq, "Expected seq_num in at least one userdata interaction"
+        assert has_ref, "Expected data_unit_ref in at least one userdata interaction"
+        assert has_last, "Expected last_data_unit in at least one userdata interaction"
+
+    def test_header_redundancy_id(self):
+        """Verify s7comm.header.redid (redundancy_id) extraction."""
+        listener, devices, result = _run_listener_test(
+            "s7comm",
+            "S7commPassiveListener",
+            "s7comm",
+            "s7comm/iti_s7comm_reading_plc_status.pcap",
+            expect_details=["function_group"],
+        )
+        found = any(ix.details.get("redundancy_id") for ix in listener.interactions)
+        assert found, (
+            "Expected redundancy_id in a Setup/catch-all interaction's details; "
+            f"operations seen: {sorted({ix.operation for ix in listener.interactions})[:15]}"
+        )

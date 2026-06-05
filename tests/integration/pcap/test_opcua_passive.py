@@ -317,3 +317,171 @@ class TestOPCUAFieldCoverage:
             for ix in listener.interactions
         )
         assert has_name, "No interaction has server_name or mdns_server_name"
+
+    # ------------------------------------------------------------------
+    # T1 gap closures (audit batch): sequence/request IDs, qualified names,
+    # access masks, result arrays, history record IDs, filter results.
+    # ------------------------------------------------------------------
+
+    def test_sequence_and_request_id(self):
+        """opcua.sequence.seq / opcua.sequence.rqid: transport correlation IDs."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
+            expect_details=["service"],
+        )
+        has_seq = any(ix.details.get("sequence_number") for ix in listener.interactions)
+        has_rqid = any(ix.details.get("request_id") for ix in listener.interactions)
+        assert has_seq, "No interaction has sequence_number (opcua.sequence.seq)"
+        assert has_rqid, "No interaction has request_id (opcua.sequence.rqid)"
+
+    def test_service_namespace_index(self):
+        """opcua.servicenodeid.nsid: namespace index of the service NodeId."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
+            expect_details=["service"],
+        )
+        found = any(
+            ix.details.get("service_namespace_index") for ix in listener.interactions
+        )
+        assert found, "No interaction has service_namespace_index (opcua.servicenodeid.nsid)"
+
+    def test_qualified_name_extracted(self):
+        """opcua.qualname.Name: browse name of nodes in Browse responses."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_open62541_browse_has_server_idx.pcap",
+            expect_details=["service"],
+        )
+        found = any(ix.details.get("qualified_name") for ix in listener.interactions)
+        assert found, "No interaction has qualified_name (opcua.qualname.Name)"
+
+    def test_view_version_extracted(self):
+        """opcua.ViewVersion: browse view version."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
+            expect_details=["service"],
+        )
+        found = any(ix.details.get("view_version") for ix in listener.interactions)
+        assert found, "No interaction has view_version (opcua.ViewVersion)"
+
+    def test_user_access_level_and_write_mask(self):
+        """opcua.UserAccessLevel / opcua.UserWriteMask: node access attributes."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
+            expect_details=["service"],
+        )
+        has_access = any(
+            ix.details.get("user_access_level") for ix in listener.interactions
+        )
+        has_mask = any(ix.details.get("user_write_mask") for ix in listener.interactions)
+        assert has_access or has_mask, (
+            "No interaction has user_access_level or user_write_mask"
+        )
+
+    def test_result_mask_extracted(self):
+        """opcua.resultmask.all: browse result mask."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_open62541_browse_has_server_idx.pcap",
+            expect_details=["service"],
+        )
+        found = any(ix.details.get("result_mask") for ix in listener.interactions)
+        assert found, "No interaction has result_mask (opcua.resultmask.all)"
+
+    def test_results_array_extracted(self):
+        """opcua.Results: operation result status array."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
+            expect_details=["service"],
+        )
+        found = any(ix.details.get("results") for ix in listener.interactions)
+        assert found, "No interaction has results (opcua.Results)"
+
+    def test_publish_sequence_numbers(self):
+        """opcua.SequenceNumber / opcua.AvailableSequenceNumbers in Publish."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
+            expect_details=["service"],
+        )
+        has_seq = any(
+            ix.details.get("publish_sequence_number") for ix in listener.interactions
+        )
+        has_avail = any(
+            ix.details.get("available_sequence_numbers") for ix in listener.interactions
+        )
+        assert has_seq or has_avail, (
+            "No interaction has publish_sequence_number or available_sequence_numbers"
+        )
+
+    def test_diag_symbolic_id(self):
+        """opcua.diag.SymbolicId: diagnostic symbolic identifier."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_open62541_client-server_mainloop-withStringTable.pcap",
+            min_devices=0,
+            expect_details=["service"],
+        )
+        found = any(ix.details.get("diag_symbolic_id") for ix in listener.interactions)
+        assert found, "No interaction has diag_symbolic_id (opcua.diag.SymbolicId)"
+
+    def test_history_record_ids(self):
+        """opcua.RecordId / opcua.StartingRecordId / opcua.ConfigurationResults."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_open62541_discover_getendpoints_discover_urls.pcap",
+            expect_details=["service"],
+        )
+        found = any(
+            ix.details.get("record_id")
+            or ix.details.get("starting_record_id")
+            or ix.details.get("configuration_results")
+            for ix in listener.interactions
+        )
+        assert found, (
+            "No interaction has record_id / starting_record_id / configuration_results"
+        )
+
+    def test_event_filter_results(self):
+        """opcua.OperandStatusCodes / opcua.SelectClauseResults in monitored items."""
+        listener, devices, result = _run_listener_test(
+            "opcua",
+            "OPCUAPassiveListener",
+            "opcua",
+            "opcua/cisagov_open62541_create_monitored_items.pcap",
+            min_devices=0,
+            expect_details=["service"],
+        )
+        found = any(
+            ix.details.get("operand_status_codes")
+            or ix.details.get("select_clause_results")
+            for ix in listener.interactions
+        )
+        assert found, (
+            "No interaction has operand_status_codes or select_clause_results"
+        )
