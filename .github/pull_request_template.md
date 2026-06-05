@@ -53,5 +53,4 @@ pytest tests/unit/<area>/
 
 ## Related
 
-<!-- Links to issues, RELEASE_TODO.md sections, audit reports, CVE
-     references, upstream tracker issues. -->
+<!-- Links to issues, CVE references, upstream tracker issues. -->
