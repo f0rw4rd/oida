@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-OIDA: OT/ICS Dynamic Assessment Framework
+OIDA: OT/ICS Discovery & Assessment
 
 A comprehensive framework for security testing of Industrial Control Systems (ICS),
 OT networks, and SCADA protocols including Modbus, OPC UA, EtherCAT, IEC 104, KNX, and more.
