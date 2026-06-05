@@ -377,29 +377,6 @@ class TestIGMPQueryScanner:
         assert igmp_scanner.timeout == 1.0
         assert igmp_scanner.discovered_devices == {}
 
-    @pytest.mark.skip(reason="_build_igmp_query removed; IGMP now uses scapy packet construction")
-    def test_build_igmp_query(self, igmp_scanner):
-        """Test building IGMP query packet."""
-        query = igmp_scanner._build_igmp_query()
-
-        # Should be 8 bytes for IGMPv2 query
-        assert len(query) == 8
-        assert query[0] == 0x11  # Query type
-        assert query[1] == 100  # Max response time
-        assert query[4:8] == b"\x00\x00\x00\x00"  # General query
-
-    @pytest.mark.skip(reason="_calculate_checksum removed; IGMP now uses scapy packet construction")
-    def test_calculate_checksum(self, igmp_scanner):
-        """Test checksum calculation."""
-        # Known data for checksum verification
-        data = bytes([0x11, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        checksum = igmp_scanner._calculate_checksum(data)
-
-        # Checksum should be non-zero for non-zero data
-        assert checksum > 0
-        assert checksum <= 0xFFFF
-
-
 # ============================================================================
 # DHCPv6 Tests
 # ============================================================================
@@ -421,79 +398,6 @@ class TestDHCPv6PassiveListener:
         assert dhcpv6_listener.timeout == 1
         assert dhcpv6_listener.discovered_devices == {}
         assert dhcpv6_listener.dhcpv6_servers == {}
-
-    @pytest.mark.skip(reason="Raw byte parsing API removed - uses scapy packet parsing")
-    def test_dhcpv6_parse_solicit(self, dhcpv6_listener):
-        """Test parsing DHCPv6 Solicit message."""
-        # Solicit: type=1, transaction_id=0x123456
-        msg = bytes([0x01, 0x12, 0x34, 0x56])
-        # Add Client ID option
-        client_id = struct.pack(">HH", 1, 14)  # Option 1, length 14
-        client_id += struct.pack(">H", 1)  # DUID-LLT
-        client_id += struct.pack(">H", 1)  # Hardware type
-        client_id += struct.pack(">I", 12345)  # Time
-        client_id += bytes([0x00, 0x11, 0x22, 0x33, 0x44, 0x55])  # MAC
-
-        packet = msg + client_id
-
-        result = dhcpv6_listener._parse_dhcpv6(packet)
-
-        assert result is not None
-        assert result["msg_type"] == 1
-        assert result["msg_type_name"] == "Solicit"
-        assert result["transaction_id"] == 0x123456
-
-    @pytest.mark.skip(reason="Raw byte parsing API removed - uses scapy packet parsing")
-    def test_dhcpv6_parse_advertise(self, dhcpv6_listener):
-        """Test parsing DHCPv6 Advertise message."""
-        msg = bytes([0x02, 0xAB, 0xCD, 0xEF])  # Advertise
-
-        result = dhcpv6_listener._parse_dhcpv6(msg)
-
-        assert result["msg_type"] == 2
-        assert result["msg_type_name"] == "Advertise"
-
-    @pytest.mark.skip(reason="Raw byte parsing API removed - uses scapy packet parsing")
-    def test_dhcpv6_parse_reply(self, dhcpv6_listener):
-        """Test parsing DHCPv6 Reply message."""
-        msg = bytes([0x07, 0x00, 0x00, 0x01])  # Reply
-
-        result = dhcpv6_listener._parse_dhcpv6(msg)
-
-        assert result["msg_type"] == 7
-        assert result["msg_type_name"] == "Reply"
-
-    @pytest.mark.skip(reason="Raw byte parsing API removed - uses scapy packet parsing")
-    def test_dhcpv6_parse_duid(self, dhcpv6_listener):
-        """Test DUID parsing."""
-        # DUID-LLT
-        duid_data = struct.pack(">H", 1)  # Type 1
-        duid_data += struct.pack(">H", 1)  # Hardware type
-        duid_data += struct.pack(">I", 12345)  # Time
-        duid_data += bytes([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF])  # MAC
-
-        result = dhcpv6_listener._parse_duid(duid_data)
-
-        assert result is not None
-        assert result["type"] == 1
-        assert result["type_name"] == "DUID-LLT"
-
-    @pytest.mark.skip(reason="Raw byte parsing API removed - uses scapy packet parsing")
-    def test_dhcpv6_parse_dns_name(self, dhcpv6_listener):
-        """Test DNS wire format name parsing."""
-        # "host.example.com" in DNS wire format
-        dns_name = bytes([4]) + b"host" + bytes([7]) + b"example" + bytes([3]) + b"com" + bytes([0])
-
-        result = dhcpv6_listener._parse_dns_name(dns_name)
-
-        assert result == "host.example.com"
-
-    @pytest.mark.skip(reason="Raw byte parsing API removed - uses scapy packet parsing")
-    def test_dhcpv6_parse_short_packet(self, dhcpv6_listener):
-        """Test handling short DHCPv6 packet."""
-        packet = bytes([0x01, 0x00])  # Too short
-        result = dhcpv6_listener._parse_dhcpv6(packet)
-        assert result is None
 
     def test_dhcpv6_message_types(self):
         """Test DHCPv6 message type mapping."""
@@ -521,32 +425,6 @@ class TestDHCPv6ServerScanner:
         assert dhcpv6_scanner.interface == "eth0"
         assert dhcpv6_scanner.timeout == 1.0
         assert dhcpv6_scanner.discovered_devices == {}
-
-    @pytest.mark.skip(reason="_build_solicit now returns scapy DHCP6_Solicit packet, not raw bytes")
-    def test_build_solicit(self, dhcpv6_scanner):
-        """Test building DHCPv6 Solicit message."""
-        solicit = dhcpv6_scanner._build_solicit()
-
-        # Should start with message type 1 (Solicit)
-        assert solicit[0] == 1
-
-        # Should have 3-byte transaction ID after message type
-        assert len(solicit) > 4
-
-        # Should contain Client ID option (code 1)
-        # Find option 1 in the packet
-        found_client_id = False
-        offset = 4  # Skip msg_type + transaction_id
-        while offset + 4 <= len(solicit):
-            opt_code = struct.unpack(">H", solicit[offset : offset + 2])[0]
-            if opt_code == 1:
-                found_client_id = True
-                break
-            opt_len = struct.unpack(">H", solicit[offset + 2 : offset + 4])[0]
-            offset += 4 + opt_len
-
-        assert found_client_id
-
 
 # ============================================================================
 # DHCP Tests

@@ -18,59 +18,6 @@ def discovery_callable():
 class TestDiscoveryCallable:
     """Test discovery NXC-style callable class"""
 
-    @pytest.mark.skip(reason="Complex mock test - proto_flow involves interface validation")
-    def test_proto_flow_sequence(self, discovery_callable):
-        """Test that proto_flow executes in correct sequence"""
-        mock_args = Namespace(
-            target="eth0",
-            timeout=10,
-            no_passive=False,
-            active=False,
-            arp=False,
-            arp_scan=True,
-            subnet=None,
-            arp_timeout=2.0,
-            no_lldp=False,
-            no_dcp=False,
-            no_mdns=False,
-            no_ssdp=False,
-            no_cdp=False,
-            no_dns_sd=False,
-            no_ws_discovery=False,
-            no_llmnr=False,
-            ics_only=False,
-            resolve_mac=True,
-            format="console",
-            read_only=True,
-            interface=None,
-        )
-
-        with patch.object(discovery_callable, "__init__", return_value=None):
-            instance = discovery_callable.__new__(discovery_callable)
-            instance.args = mock_args
-            instance.interface = "eth0"
-            instance._scan_results = None
-            instance.logger = MagicMock()
-
-            with patch.object(instance, "proto_logger"):
-                with patch.object(instance, "_convert_args_to_dict") as mock_args_method:
-                    mock_args_method.return_value = {"target": "eth0"}
-
-                    with patch("oida.protocols.discovery.DiscoveryScanner") as mock_scanner:
-                        mock_scanner_instance = MagicMock()
-                        mock_scanner.return_value = mock_scanner_instance
-
-                        with patch.object(instance, "create_conn_obj"):
-                            with patch.object(instance, "enum_host_info"):
-                                with patch.object(instance, "print_host_info"):
-                                    with patch.object(instance, "_execute_scan"):
-                                        with patch.object(instance, "cleanup"):
-                                            instance.proto_flow()
-
-                                            # Verify sequence
-                                            mock_args_method.assert_called_once()
-                                            mock_scanner.assert_called_once()
-
     def test_convert_args_to_dict(self, discovery_callable):
         """Test conversion of args to scanner dict"""
         mock_args = Namespace(
@@ -112,15 +59,14 @@ class TestDiscoveryCallable:
             # Verify discovery-specific interface fallback
             assert args_dict["interface"] == "eth0"
 
-    @pytest.mark.skip(
-        reason="create_conn_obj requires self.logger set up by __init__; partial mock doesn't initialise it"
-    )
     def test_create_conn_obj(self, discovery_callable):
         """Test create_conn_obj method"""
         with patch.object(discovery_callable, "__init__", return_value=None):
             instance = discovery_callable.__new__(discovery_callable)
             instance.scanner = MagicMock()
             instance.scanner.connect.return_value = "eth0"
+            instance.logger = MagicMock()
+            instance.interface = "eth0"
 
             result = instance.create_conn_obj()
 
