@@ -222,6 +222,7 @@ _IMPORT_OVERRIDES: Dict[str, str] = {
     "hartip-py": "hartip",
     "pyiec61850-ng": "pyiec61850",
     "python-can": "can",
+    "pyyaml": "yaml",
 }
 
 # Extras that are NOT protocol directories

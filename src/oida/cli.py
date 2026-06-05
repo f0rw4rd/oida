@@ -905,8 +905,13 @@ def print_bug_report() -> None:
         extra_name = m.group(1)
         if extra_name in _SKIP_EXTRAS:
             continue
-        pip_name = line.split(";")[0].split(">")[0].split("<")[0].split("=")[0].split("!")[0]
-        pip_name = pip_name.split("[")[0].strip()
+        # Strip the PEP 508 URL form first ("pyshark @ git+https://…") so the
+        # display/import name is the bare distribution, then version specifiers
+        # and extras.
+        pip_name = line.split(";")[0].split("@")[0]
+        for _sep in (">", "<", "=", "!", "~", "["):
+            pip_name = pip_name.split(_sep)[0]
+        pip_name = pip_name.strip()
         if pip_name in _seen_pkgs:
             continue
         _seen_pkgs.add(pip_name)
