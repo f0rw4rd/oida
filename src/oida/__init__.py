@@ -21,7 +21,7 @@ os.environ.setdefault("PYTHONUNBUFFERED", "1")
 
 __version__ = "1.0.0"
 __author__ = "OIDA Team"
-__email__ = "contact@oida.dev"
+__email__ = "https://getoida.dev/contact"
 __license__ = "AGPL-3.0-or-later"
 __url__ = "https://github.com/f0rw4rd/oida"
 

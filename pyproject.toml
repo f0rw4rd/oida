@@ -9,10 +9,10 @@ description = "OIDA - OT/ICS Discovery & Assessment"
 readme = "README.md"
 license = {text = "AGPL-3.0-or-later"}
 authors = [
-    {name = "OIDA Team", email = "contact@oida.dev"}
+    {name = "OIDA Team"}
 ]
 maintainers = [
-    {name = "f0rw4rd", email = "forward@oida.dev"}
+    {name = "f0rw4rd"}
 ]
 keywords = ["ics", "scada", "industrial", "security", "pentesting", "modbus", "opcua", "ethercat"]
 classifiers = [
@@ -113,7 +113,8 @@ docs = [
 "Homepage" = "https://github.com/f0rw4rd/oida"
 "Bug Reports" = "https://github.com/f0rw4rd/oida/issues"
 "Source" = "https://github.com/f0rw4rd/oida"
-"Documentation" = "https://github.com/f0rw4rd/oida-website"
+"Documentation" = "https://getoida.dev"
+"Contact" = "https://getoida.dev/contact"
 "Changelog" = "https://github.com/f0rw4rd/oida/blob/main/CHANGELOG.md"
 "Security" = "https://github.com/f0rw4rd/oida/blob/main/SECURITY.md"
 
