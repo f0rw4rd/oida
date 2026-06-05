@@ -4,6 +4,7 @@ Comprehensive test suite for IEC 60870-5-104 protocol scanner
 Tests both mock interactions and real protocol functionality
 """
 
+import socket
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
@@ -157,6 +158,57 @@ class TestIEC104MockOperations(unittest.TestCase):
             connection = self.scanner.connect()
 
         self.assertIsNotNone(connection)
+
+    @patch("oida.protocols.iec104.scanner.ConnectionHelper.resolve_hostname")
+    @patch("oida.protocols.iec104._deps._get_c104")
+    def test_connect_resolves_hostname_for_c104(self, mock_get_c104, mock_resolve):
+        """c104 rejects hostnames, so connect() must pass it a resolved IP.
+
+        The scanner's self.host stays the original hostname (for logging /
+        reporting); only the value handed to c104.add_connection(ip=...) is
+        the resolved dotted IP.
+        """
+        scanner = IEC104Scanner({"rhost": "plc.example.com", "rport": 2404, "timeout": 1})
+        mock_resolve.return_value = "10.20.30.40"
+
+        mock_c104 = MagicMock()
+        mock_get_c104.return_value = mock_c104
+        mock_client = Mock()
+        mock_c104.Client.return_value = mock_client
+        mock_c104.Init.NONE = 0
+        mock_connection = Mock()
+        mock_connection.is_connected = True
+        mock_client.add_connection.return_value = mock_connection
+
+        with patch("oida.protocols.iec104.c104", mock_c104):
+            connection = scanner.connect()
+
+        self.assertIsNotNone(connection)
+        mock_resolve.assert_called_once_with("plc.example.com")
+        # The C library must receive the resolved IP, never the hostname.
+        _, kwargs = mock_client.add_connection.call_args
+        self.assertEqual(kwargs["ip"], "10.20.30.40")
+        # Original hostname is preserved on the scanner for reporting.
+        self.assertEqual(scanner.host, "plc.example.com")
+
+    @patch("oida.protocols.iec104.scanner.ConnectionHelper.resolve_hostname")
+    @patch("oida.protocols.iec104._deps._get_c104")
+    def test_connect_fails_cleanly_on_unresolvable_host(self, mock_get_c104, mock_resolve):
+        """A DNS failure should fail gracefully (return None), not crash."""
+        scanner = IEC104Scanner({"rhost": "nope.invalid", "rport": 2404, "timeout": 1})
+        mock_resolve.side_effect = socket.gaierror("Name or service not known")
+
+        mock_c104 = MagicMock()
+        mock_get_c104.return_value = mock_c104
+        mock_client = Mock()
+        mock_c104.Client.return_value = mock_client
+        mock_c104.Init.NONE = 0
+
+        with patch("oida.protocols.iec104.c104", mock_c104):
+            connection = scanner.connect()
+
+        self.assertIsNone(connection)
+        mock_client.add_connection.assert_not_called()
 
     @patch("oida.protocols.iec104.c104")
     def test_station_interrogation(self, mock_c104):
