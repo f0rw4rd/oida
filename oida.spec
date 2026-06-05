@@ -103,22 +103,36 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
+# onedir (COLLECT), NOT onefile: the executable and its libraries live in a
+# directory and run in place with ZERO runtime extraction. onefile would unpack
+# ~100 MB into $TMPDIR/_MEIxxxx on every run — invasive (temp writes/AV noise)
+# and it outright fails on hardened hosts that mount /tmp noexec, which is
+# common on the kind of systems this tool runs against. The folder is shipped
+# as a per-OS archive (see .github/workflows/build-binaries.yml).
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
+    exclude_binaries=True,
     name="oida",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    runtime_tmpdir=None,
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    name="oida",
 )
