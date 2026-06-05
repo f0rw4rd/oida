@@ -577,7 +577,7 @@ def print_banner():
      ║ ║║ ║║╠═╣
      ╚═╝╩═╩╝╩ ╩  v{__version__}
 
-    OT/ICS Dynamic Assessment Framework
+    OT/ICS Discovery & Assessment
     https://github.com/f0rw4rd/oida
 """)
 
