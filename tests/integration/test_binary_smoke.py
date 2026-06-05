@@ -96,15 +96,20 @@ def _is_frozen_diag_traceback(stderr):
 def oida_bin():
     """Resolve dist/oida binary, skip all tests if it doesn't exist."""
     project_root = Path(__file__).resolve().parent.parent.parent
+    dist = project_root / "dist"
     candidates = [
-        project_root / "dist" / "oida",
-        project_root / "dist" / "oida.exe",
+        # onedir (COLLECT) layout — the shipped, non-invasive build.
+        dist / "oida" / "oida",
+        dist / "oida" / "oida.exe",
+        # onefile layout — fallback if someone builds that way.
+        dist / "oida.exe",
+        dist / "oida",
     ]
     for p in candidates:
         if p.is_file() and os.access(p, os.X_OK):
             return p
 
-    pytest.skip("Binary not found at dist/oida (run: pyinstaller oida.spec --clean)")
+    pytest.skip("Binary not found in dist/ (run: pyinstaller oida.spec --clean)")
 
 
 @pytest.mark.binary
