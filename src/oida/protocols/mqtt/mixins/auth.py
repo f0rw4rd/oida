@@ -120,8 +120,8 @@ class AuthMixin:
                     f"Valid MQTT credentials: {user}:***",
                 )
 
-                # Stop on first success if stop_on_success is set (default: True)
-                if self.stop_on_success:
+                # Stop on first success unless continue_on_success is set (default: stop)
+                if not self.continue_on_success:
                     results["stopped_early"] = True
                     break
 

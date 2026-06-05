@@ -87,8 +87,7 @@ Flag Coverage Matrix (proto_args.py):
   --key-file                   [skip] requires key file on disk
   --key-range                  [B] test_key_range_brute
   --brute-delay                [B] test_key_range_brute
-  --stop-on-success            [B] (default, tested via test_auth_default_key)
-  --continue-on-success        [skip] tested implicitly with auth tests
+  --continue-on-success        [B] (default stop tested via test_auth_default_key)
   --key-write                  [B] test_key_write_with_confirm
   --knxproj                    [C] test_knxproj_nonexistent_file
   --knxproj-password           [skip] requires .knxproj file

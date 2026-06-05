@@ -88,7 +88,7 @@ def _make_mock_args(**overrides):
         default_creds=False,
         wordlist=None,
         brute_rate=0.5,
-        stop_on_success=True,
+        continue_on_success=False,
         user_file=None,
         pass_file=None,
         brute_method="basic",

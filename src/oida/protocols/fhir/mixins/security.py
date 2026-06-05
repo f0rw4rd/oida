@@ -145,7 +145,7 @@ class SecurityMixin:
         base_url = self._get_base_url()
         test_url = f"{base_url}/Patient?_count=1"
         delay = getattr(self.args, "brute_rate", 0.5)
-        stop_on_success = getattr(self.args, "stop_on_success", True)
+        continue_on_success = getattr(self.args, "continue_on_success", False)
         tls_insecure = getattr(self.args, "tls_insecure", False)
 
         valid_creds = []
@@ -180,7 +180,7 @@ class SecurityMixin:
                                 }
                             )
 
-                            if stop_on_success:
+                            if not continue_on_success:
                                 break
                         elif response.status_code in (401, 403):
                             self.logger.display(f"Failed: {username}:{password}")
@@ -189,7 +189,9 @@ class SecurityMixin:
                                 f"Unexpected status {response.status_code} for {username}"
                             )
 
-                    if brute_method in ("oauth2", "both") and not (stop_on_success and valid_creds):
+                    if brute_method in ("oauth2", "both") and (
+                        continue_on_success or not valid_creds
+                    ):
                         oauth_result = self._test_oauth2_credentials(username, password)
                         if oauth_result:
                             valid_creds.append(
@@ -200,7 +202,7 @@ class SecurityMixin:
                                     "token": oauth_result,
                                 }
                             )
-                            if stop_on_success:
+                            if not continue_on_success:
                                 break
 
                 except requests.exceptions.Timeout:
@@ -211,7 +213,7 @@ class SecurityMixin:
                 if delay > 0:
                     time.sleep(delay)
 
-            if stop_on_success and valid_creds:
+            if not continue_on_success and valid_creds:
                 break
 
         self.logger.display(f"Tested {tested} credentials, found {len(valid_creds)} valid")
