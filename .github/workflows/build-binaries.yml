@@ -28,9 +28,7 @@ jobs:
           - os: ubuntu-latest
             label: linux-x86_64
             artifact: oida-linux-x86_64
-            archive: oida-linux-x86_64.tar.gz
-            # onedir folder -> single named archive with a top-level oida/ dir.
-            pack: tar -C dist -czf oida-linux-x86_64.tar.gz oida
+            ext: tar.gz
             # Every protocol extra resolves on Linux. Runtime extras only —
             # NOT --all-extras, which would drag dev/docs/fuzz into a release
             # build env.
@@ -44,8 +42,7 @@ jobs:
           - os: windows-latest
             label: windows-x86_64
             artifact: oida-windows-x86_64
-            archive: oida-windows-x86_64.zip
-            pack: Compress-Archive -Path dist/oida -DestinationPath oida-windows-x86_64.zip
+            ext: zip
             # goose/mms/tase2 (pyiec61850-ng) and dnp3 (yadnp3) are Linux-only
             # native libs with no Windows wheels; those protocols still expose
             # `--help` via lazy imports, they're just not bundled for live scans.
@@ -86,15 +83,35 @@ jobs:
       - name: Smoke test the binary
         run: uv run pytest tests/integration/test_binary_smoke.py -m binary -q
 
-      - name: Package onedir folder
-        # Bundle the run-in-place onedir folder into one named archive so the
-        # download is a single file to copy.
-        run: ${{ matrix.pack }}
+      - name: Determine archive name (with version)
+        # Tag builds (v1.2.3) use the tag; otherwise the packaged oida version
+        # plus a short commit suffix so dev artifacts are distinguishable.
+        # `shell: bash` so the same script runs on the Windows runner too.
+        shell: bash
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            v="${{ github.ref_name }}"; v="${v#v}"; suffix=""
+          else
+            v="$(uv run python -c 'import importlib.metadata as m; print(m.version("oida"))')"
+            suffix="-g${GITHUB_SHA::7}"
+          fi
+          echo "ARCHIVE=oida-${v}${suffix}-${{ matrix.label }}.${{ matrix.ext }}" >> "$GITHUB_ENV"
+          echo "archive -> oida-${v}${suffix}-${{ matrix.label }}.${{ matrix.ext }}"
+
+      - name: Package onedir folder (Linux)
+        if: runner.os == 'Linux'
+        # Single named archive with a top-level oida/ dir.
+        run: tar -C dist -czf "$ARCHIVE" oida
+
+      - name: Package onedir folder (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/oida -DestinationPath "$env:ARCHIVE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.archive }}
+          path: ${{ env.ARCHIVE }}
           if-no-files-found: error
           retention-days: 14
