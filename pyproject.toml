@@ -83,7 +83,6 @@ dev = [
     "pytest-docker>=3.2.5",
     "pytest-xdist>=3.8.0",
     "pytest-timeout>=2.4.0",
-    "black>=26.1.0",
     "flake8>=7.3.0",
     "mypy>=1.19.1",
     "pre-commit>=4.5.1",
@@ -144,28 +143,14 @@ oida = [
 [tool.setuptools.dynamic]
 version = {attr = "oida.__version__"}
 
-[tool.black]
-line-length = 100
-target-version = ['py310', 'py311', 'py312']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
 [tool.ruff]
 line-length = 100
 target-version = "py310"
 extend-exclude = [".vulture_whitelist.py"]
+
+[tool.ruff.format]
+# ruff format replaces black; quote/line-length style matches black defaults.
+docstring-code-format = false
 
 [tool.ruff.lint]
 ignore = [
