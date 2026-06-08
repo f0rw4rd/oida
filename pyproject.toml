@@ -105,7 +105,7 @@ docs = [
     # so pin both to the 8.x line.
     "sphinx>=8.0.0,<9",
     "sphinx-rtd-theme>=3.0.0",
-    "myst-parser>=4.0.0,<5",
+    "myst-parser>=4.0.1,<5",
 ]
 
 [project.urls]
