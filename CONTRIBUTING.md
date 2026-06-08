@@ -119,4 +119,4 @@ is required. If you do not agree to these terms, do not submit contributions.
 ---
 ## Questions?
 
-Open a GitHub Discussion or Discord for questions about contributing.
+Open a GitHub Discussion or email [contact@getoida.dev](mailto:contact@getoida.dev) for questions about contributing.
