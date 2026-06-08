@@ -87,7 +87,7 @@ dev = [
     "mypy>=1.19.1",
     "pre-commit>=4.5.1",
     "ruff>=0.15.1",
-    "vulture>=2.14",
+    "vulture>=2.16",
     "bandit>=1.9.3",
     # Test-runtime deps that gate skips in tests/ (without these the matrix
     # silently shrinks). Keep them in dev rather than per-protocol extras so
