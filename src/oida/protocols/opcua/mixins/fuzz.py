@@ -155,7 +155,7 @@ class FuzzMixin:
             original = await read_value()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload in fuzz(original, count=iterations):
+            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if await write_value(payload):
                         successful += 1

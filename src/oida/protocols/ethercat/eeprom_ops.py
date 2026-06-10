@@ -69,7 +69,11 @@ class EepromOpsMixin(_ScannerBase):
                 "vendor_id": slave.man,
                 "product_code": slave.id,
                 "revision_number": slave.rev,
-                "serial_number": slave.serial,
+                # pysoem CdefSlave has man/id/rev but no `serial`; the bare
+                # slave.serial raised AttributeError and made the whole general
+                # EEPROM read return an error dict. getattr keeps it non-fatal
+                # (serial actually lives in the SII header parser).
+                "serial_number": getattr(slave, "serial", None),
                 "execution_delay": getattr(slave, "delay", 0),
                 "port_descriptor": getattr(slave, "port_des", 0),
                 "fmmu_count": getattr(slave, "FMMUfunc", 0),

@@ -157,6 +157,11 @@ class FuzzerConfig:
     monitor_retry_delay: float = (
         0.1  # Delay between monitor retry attempts in seconds (default=0.1)
     )
+    # Socket timeouts / reconnection (None = use connection/protocol default)
+    recv_timeout: Optional[float] = None  # Data-socket receive timeout (default 5.0)
+    send_timeout: Optional[float] = None  # Data-socket send timeout (default 5.0)
+    reconnect_delay: Optional[float] = None  # ResilientTCPConnection retry delay (default 0.5)
+    max_reconnect_attempts: Optional[int] = None  # Reconnect attempts on RST (default 3)
     # TLS configuration
     tls_enabled: bool = False  # Enable TLS/SSL for connection (no verification)
     # Capability enumeration
@@ -166,6 +171,11 @@ class FuzzerConfig:
     graceful_degradation: bool = (
         False  # Disable failed monitors instead of stopping (continue with remaining)
     )
+    # Timeout auto-calibration (measures latency before fuzzing, sets timeouts from it)
+    calibrate: bool = True  # Run startup calibration (skipped for any user-set timeout)
+    calibration_probes: int = 50  # Probes to send during calibration (min 30 clean)
+    adaptive_timeout: bool = False  # Adapt monitor timeout online (Jacobson/Karels EWMA)
+    detect_drift: bool = False  # Recalibrate on sustained latency drift (implies adaptive)
 
     def __post_init__(self):
         """Initialize protocol_options if not provided"""

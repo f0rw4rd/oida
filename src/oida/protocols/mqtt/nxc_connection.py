@@ -174,12 +174,20 @@ class mqtt(NetworkConnection):
 
         # Warning if no TLS
         if not getattr(self.args, "tls", False):
-            self.logger.security_finding("No encryption", "Plaintext connection (no TLS)")
+            self.logger.security_finding(
+                "No encryption",
+                category="ENCRYPTION",
+                detail="Plaintext connection (no TLS)",
+            )
 
         # Report anonymous auth if connected without credentials
         username = getattr(self.args, "username", "")
         if self.conn and not username:
-            self.logger.security_finding("Anonymous access", "Anonymous authentication allowed")
+            self.logger.security_finding(
+                "Anonymous access",
+                category="ACCESS_CONTROL",
+                detail="Anonymous authentication allowed",
+            )
 
     def _execute_scan(self):
         """Execute MQTT scanning"""

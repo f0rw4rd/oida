@@ -235,10 +235,11 @@ class TestIEC104Integration:
         )
         assert result.success, f"Scan failed: {result.stderr}"
         _assert_log_has_events(result)
-        text = _combined_text(result, result.scan_log)
-        # Should reference discovered points or data
-        assert "discover" in text or "point" in text or "ioa" in text, (
-            f"Expected discovery-related output, got: {text[:500]}"
+        # GI against the lib60870 mock returns all 120 configured points; the
+        # scan-complete summary must report that exact count.
+        summary = _get_scan_summary(result.scan_log)
+        assert f"{MOCK_POINT_COUNT} points" in summary, (
+            f"Expected '{MOCK_POINT_COUNT} points' in scan summary, got: {summary!r}"
         )
 
     def test_discovery_mode(self, cli_runner, target, port):
@@ -570,9 +571,18 @@ class TestIEC104Integration:
         _assert_log_has_events(result)
         security_events = [e for e in result.scan_log.events if e.get("event_type") == "security"]
         assert len(security_events) >= 1, f"Expected security events, got: {security_events}"
-        detail = security_events[0].get("data", {}).get("details", "")
-        assert "120" in detail or "authentication" in detail.lower(), (
-            f"Expected point count or auth detail, got: {detail}"
+        # The 'Anonymous access allowed' finding must carry the exact mock point
+        # count (120) AND the 'without authentication' wording — the scanner's
+        # documented detail string. Locate it among the security events.
+        anon = [
+            e
+            for e in security_events
+            if e.get("data", {}).get("finding") == "Anonymous access allowed"
+        ]
+        assert anon, f"Expected 'Anonymous access allowed' security event, got: {security_events}"
+        detail = anon[0].get("data", {}).get("details", "").lower()
+        assert str(MOCK_POINT_COUNT) in detail and "authentication" in detail, (
+            f"Expected '{MOCK_POINT_COUNT} ... without authentication' detail, got: {detail}"
         )
 
     @pytest.mark.security
@@ -898,9 +908,23 @@ class TestIEC104Integration:
             timeout=15,
         )
         assert result.returncode in [0, 1], f"Listen with output unexpected rc={result.returncode}"
-        # Output file creation is best-effort (depends on whether data was captured)
-        if result.success and output_file.exists():
-            assert output_file.stat().st_size >= 0
+        # Listen mode must at least connect to the mock — verify via the log.
+        _assert_log_has_events(result)
+        text = _combined_text(result, result.scan_log)
+        assert "connect" in text or "listen" in text, (
+            f"Expected connection/listen activity, got: {text[:500]}"
+        )
+        # Output file creation is best-effort (depends on whether spontaneous
+        # data was captured during the 3s window). If it was written, it must
+        # be valid JSONL — non-empty and parseable, not just "exists".
+        if result.success and output_file.exists() and output_file.stat().st_size > 0:
+            import json
+
+            with open(output_file) as fh:
+                for line in fh:
+                    line = line.strip()
+                    if line:
+                        json.loads(line)  # raises if the listener wrote junk
 
     @pytest.mark.slow
     def test_listen_raw(self, cli_runner, target, port):
@@ -1440,8 +1464,14 @@ class TestIEC104CustomTypes:
         assert result.success, f"Probe custom types failed: {result.stderr}"
         _assert_log_has_events(result)
         text = _combined_text(result, result.scan_log)
-        assert "custom" in text or "vendor" in text or "type" in text, (
-            f"Expected custom type references, got: {text[:500]}"
+        # The probe must announce itself and then reach a definite verdict.
+        assert "probing for custom type ids" in text, (
+            f"Expected the custom-type probe to run, got: {text[:500]}"
+        )
+        # Either it discovered vendor types (128-255) or it explicitly reported
+        # none — a vacuous run that does neither is a regression.
+        assert "discovered custom type id" in text or "no custom type ids detected" in text, (
+            f"Expected a definite custom-type verdict, got: {text[:500]}"
         )
 
     @pytest.mark.security
@@ -1622,6 +1652,23 @@ class TestIEC104Conpot:
         )
         text = _combined_text(result, result.scan_log)
         assert "connect" in text, f"Expected connection to Conpot, got: {text[:500]}"
+        # Conpot's Siemens S7-300 IEC104 template serves a stable fingerprint:
+        # 59 points across M_SP/M_DP/M_ME_NB/M_ME_NC type IDs. Assert we
+        # actually parsed the interrogation response, not just connected.
+        summary = _get_scan_summary(result.scan_log)
+        assert "59 points" in summary, (
+            f"Expected Conpot's 59-point fingerprint in scan summary, got: {summary!r}"
+        )
+        assert _count_discovered_ioas(result.scan_log) >= 50, (
+            "Expected ~59 discovered IOAs from Conpot interrogation, "
+            f"got {_count_discovered_ioas(result.scan_log)}"
+        )
+        # The honeypot template exposes single-point, double-point, scaled and
+        # short-float measured types — verify the type-ID mix was decoded.
+        for type_name in ("m_sp_na_1", "m_dp_na_1", "m_me_nb_1", "m_me_nc_1"):
+            assert type_name in text, (
+                f"Expected Conpot type {type_name.upper()} in decoded output, got: {text[:500]}"
+            )
 
     def test_conpot_ioa_range(self, cli_runner, target, port):
         """Test --asdu-address 7720 --ioa-range 1-4000 scans Conpot [Category B]"""

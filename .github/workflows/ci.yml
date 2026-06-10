@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:  # Allow release.yml to reuse this as a pre-publish quality gate
 
 permissions:
   contents: read

@@ -227,9 +227,7 @@ class HTTP2Fuzzer(BaseFuzzer):
         ]
 
     def __init__(self, config=None, connection_factory=None):
-        self.port = getattr(config, "target_port", 443) if config else 443
         self.target = getattr(config, "target_ip", "localhost") if config else "localhost"
-        self.protocol_name = "HTTP2"
         self.use_ssl = True
         self.config = config
         super().__init__(config, connection_factory)

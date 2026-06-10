@@ -11,26 +11,9 @@ logger = logging.getLogger(__name__)
 _profinet = lazy_import("profinet", "PROFINET")
 
 
-def is_profinet_available() -> bool:
-    """Check if profinet-py is installed."""
-    return _profinet.is_available
-
-
 def _get_profinet():
     """Get profinet module, raising DependencyError if not available."""
     return _profinet()
-
-
-def get_dcp_module():
-    """Get profinet.dcp module."""
-    profinet_mod = _get_profinet()
-    return profinet_mod.dcp
-
-
-def get_rpc_con_class():
-    """Get RPCCon class from profinet module."""
-    profinet_mod = _get_profinet()
-    return profinet_mod.RPCCon
 
 
 def get_indices_module():

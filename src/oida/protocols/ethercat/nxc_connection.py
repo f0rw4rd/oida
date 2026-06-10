@@ -19,7 +19,6 @@ class ethercat(SerialConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "Ethercat"
         self.default_port = None
-        self._scan_results = None
         super().__init__(args, db, host)
 
     # Note: proto_logger() inherited from NetworkConnection base class
@@ -87,7 +86,6 @@ class ethercat(SerialConnection):
         self.logger.display("Executing scan...")
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
     def cleanup(self) -> None:
         """Cleanup Ethercat connection"""

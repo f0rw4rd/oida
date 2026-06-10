@@ -124,12 +124,16 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
         assert result.success, f"FHIR connection failed: {result.stderr}"
         _assert_log_has_events(result)
 
-        # Validate server identification in output
+        # Validate server identification in output. The mock always reports a
+        # successful connection AND its FHIR version (4.0.1), so require both
+        # rather than accepting any single fallback term.
         text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in ["oida mock fhir", "fhir version", "connected", "capabilitystatement"]
-        ), f"Expected FHIR server identification in output: {text[:500]}"
+        assert "connected to fhir endpoint" in text, (
+            f"Expected explicit connection confirmation in output: {text[:500]}"
+        )
+        assert "fhir version" in text and "4.0.1" in text, (
+            f"Expected FHIR version 4.0.1 from mock CapabilityStatement: {text[:500]}"
+        )
 
     # ========================================================================
     # CapabilityStatement Tests
@@ -149,9 +153,12 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
         assert result.success, f"CapabilityStatement request failed: {result.stderr}"
         _assert_log_has_events(result)
         text = _combined_text(result, result.scan_log)
-        assert any(
-            x in text for x in ["capabilitystatement", "fhir version", "4.0.1", "resource"]
-        ), f"Expected capability indicators in output: {text[:500]}"
+        # The mock serves a real R4 CapabilityStatement; --caps dumps it, so the
+        # concrete fhirVersion 4.0.1 must appear, not merely a generic keyword.
+        assert "4.0.1" in text, f"Expected fhirVersion 4.0.1 from CapabilityStatement: {text[:500]}"
+        assert "capabilitystatement" in text, (
+            f"Expected CapabilityStatement resource type in --caps output: {text[:500]}"
+        )
 
     # ========================================================================
     # Patient Search Tests
@@ -171,8 +178,13 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
         assert result.success, f"Patient search failed: {result.stderr}"
         _assert_log_has_events(result)
         text = _combined_text(result, result.scan_log)
-        assert any(x in text for x in ["patient", "doe", "smith", "johnson"]), (
-            f"Expected patient data in output: {text[:500]}"
+        # The mock holds 5 named patients (Doe, Smith, Johnson, Williams, Brown).
+        # A real enumeration must surface concrete patient records, so require at
+        # least two distinct mock surnames rather than the generic word "patient".
+        mock_surnames = [s for s in ("doe", "smith", "johnson", "williams", "brown") if s in text]
+        assert len(mock_surnames) >= 2, (
+            f"Expected concrete patient records from the mock, found surnames "
+            f"{mock_surnames} in: {text[:500]}"
         )
 
     def test_search_patients_by_name(self, cli_runner, target, port, mock_service):
@@ -631,11 +643,15 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
 
         # The _analyze_security() method displays findings via self.logger.display()
-        # which includes "[ENCRYPTION] No TLS/HTTPS: Connection is not encrypted"
+        # which includes "[ENCRYPTION] No TLS/HTTPS: Connection is not encrypted".
+        # The mock is plain HTTP, so this exact finding must appear.
         text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text for term in ["no tls", "not encrypted", "encryption", "security findings"]
-        ), f"Expected 'No TLS/HTTPS' finding in output for HTTP target: {text[:500]}"
+        assert "no tls/https" in text, (
+            f"Expected 'No TLS/HTTPS' finding for plain-HTTP target: {text[:500]}"
+        )
+        assert "not encrypted" in text, (
+            f"Expected the 'Connection is not encrypted' detail: {text[:500]}"
+        )
 
     @pytest.mark.security
     def test_finding_cors_enabled(self, cli_runner, target, port, mock_service):
@@ -656,8 +672,11 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
 
         text = _combined_text(result, result.scan_log)
-        assert any(term in text for term in ["cors enabled", "cors: enabled", "cross-origin"]), (
-            f"Expected CORS finding in output: {text[:500]}"
+        # The mock's CapabilityStatement sets cors=true, so the CORS finding and its
+        # cross-origin detail must both be present.
+        assert "cors enabled" in text, f"Expected 'CORS Enabled' finding: {text[:500]}"
+        assert "cross-origin" in text, (
+            f"Expected the cross-origin detail for the CORS finding: {text[:500]}"
         )
 
     @pytest.mark.security
@@ -694,15 +713,18 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             f"{[e.get('data', {}).get('finding') for e in security_events]}"
         )
 
-        # Validate finding payload
+        # Validate finding payload. security_finding(title, detail=...) records the
+        # detail sentence under the structured "details" key (see ics_logger), so the
+        # explanatory text must survive into the JSON event.
         finding_data = anon_findings[0].get("data", {})
         assert finding_data.get("finding") == "Anonymous access"
-        # The category field holds the detail text (positional arg mapping)
-        assert (
-            "anonymous" in finding_data.get("category", "").lower()
-            or "anonymous" in finding_data.get("details", "").lower()
-            or "anonymous" in anon_findings[0].get("message", "").lower()
-        ), f"Finding should mention anonymous access: {finding_data}"
+        details = finding_data.get("details", "")
+        assert "anonymous access allowed" in details.lower(), (
+            f"Finding must carry the anonymous-access detail in 'details': {finding_data}"
+        )
+        assert "returned patient data" in details.lower(), (
+            f"Finding detail should explain patient data was returned: {finding_data}"
+        )
 
     @pytest.mark.security
     def test_finding_invalid_token_accepted_on_test_auth(
@@ -739,18 +761,21 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             f"{[e.get('data', {}).get('finding') for e in security_events]}"
         )
 
-        # Validate the finding mentions invalid token
-        for finding in no_auth_findings:
-            msg = finding.get("message", "").lower()
-            category = finding.get("data", {}).get("category", "").lower()
-            details = finding.get("data", {}).get("details", "").lower()
-            combined = f"{msg} {category} {details}"
-            if "invalid" in combined and "token" in combined:
-                break
-        else:
-            # At least one "No authentication" finding should mention invalid token
-            # But if the mock also triggers it for another reason, that's still valid
-            pass
+        # The invalid-token finding must carry its explanatory detail in the
+        # structured "details" key. security_finding(title, detail=...) routes the
+        # sentence there; a regression that mis-binds it to the category slot would
+        # drop it from the JSON event and fail this assertion.
+        invalid_token_details = [
+            f.get("data", {}).get("details", "").lower()
+            for f in no_auth_findings
+            if "invalid" in f.get("data", {}).get("details", "").lower()
+            and "token" in f.get("data", {}).get("details", "").lower()
+        ]
+        assert invalid_token_details, (
+            "Expected a 'No authentication' finding whose 'details' explains the "
+            f"invalid bearer token was accepted. Got: "
+            f"{[f.get('data', {}) for f in no_auth_findings]}"
+        )
 
     @pytest.mark.security
     def test_finding_security_analysis_runs_on_basic_scan(
@@ -893,7 +918,10 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             e
             for e in security_events
             if e.get("data", {}).get("finding") == "No authentication"
-            and "no security services" in e.get("data", {}).get("category", "").lower()
+            and "no security services"
+            in (
+                e.get("data", {}).get("details", "") + e.get("data", {}).get("category", "")
+            ).lower()
         ]
         assert len(no_auth_from_host_info) == 0, (
             f"Should NOT have 'No authentication' from print_host_info when "

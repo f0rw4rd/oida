@@ -98,9 +98,13 @@ class EchoFuzzer(BaseFuzzer):
                 self.config.target_ip,
                 self.config.target_port or 7,
                 bind=("0.0.0.0", 0),
-                recv_timeout=2.0,
+                **self._timeout_overrides(recv_default=2.0),
             )
-        return TCPSocketConnection(self.config.target_ip, self.config.target_port or 7)
+        return TCPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port or 7,
+            **self._timeout_overrides(),
+        )
 
     def setup_custom_monitors(self) -> List[BaseMonitor]:
         """No special monitoring needed for Echo"""
@@ -385,7 +389,8 @@ class EchoFuzzer(BaseFuzzer):
 
     def _define_udp_protocol(self) -> None:
         """Define UDP-specific echo tests (MTU, amplification, fragmentation)"""
-        self.config.get_option("max_payload_size", 4096)
+        # (max_payload_size was read and discarded here; UDP payload sizes are
+        # hardcoded literals below, so the option steers nothing.)
 
         # IP fragmentation attacks
         fragmentation = Request(

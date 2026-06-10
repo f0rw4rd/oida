@@ -138,7 +138,6 @@ class SecurityMixin(_ScannerBase):
                 )
 
                 # Log security finding
-                host, port = self.get_target_info()
                 self.logger.security_finding("Insecure configuration", detail="put_get_enabled")
 
             except Exception as e:
@@ -329,7 +328,6 @@ class SecurityMixin(_ScannerBase):
         )
 
         # Report no encryption (S7 protocol is never encrypted)
-        host, port = self.get_target_info()
         self.logger.security_finding(
             "No encryption", detail="S7 protocol does not support encryption"
         )

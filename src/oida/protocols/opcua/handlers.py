@@ -10,9 +10,8 @@ This module provides handler classes for OPC UA subscriptions and events.
 class DataChangeHandler:
     """Handler for subscription data changes"""
 
-    def __init__(self, logger, results):
+    def __init__(self, logger):
         self.logger = logger
-        self.results = results
         self.changes = []
 
     def datachange_notification(self, node, val, data):

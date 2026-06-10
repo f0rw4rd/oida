@@ -781,7 +781,6 @@ def decode_with_map(
                     "enum_label": enum_label,
                     "unit": unit,
                     "address": addr,
-                    "raw_registers": reg_values,
                     "type": data_type,
                     "description": description,
                     "access": access,

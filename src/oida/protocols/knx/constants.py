@@ -140,14 +140,6 @@ def _ensure_xknx_classes():
         _xknx_cls.loaded = True
 
 
-def _get_apci_class(name: str):
-    """Get an APCI class by name."""
-    from .helpers import _get_apci_classes
-
-    apci_classes = _get_apci_classes()
-    return apci_classes.get(name)
-
-
 # Protocol options dictionary for scanner registration
 protocol_options: Dict[str, Dict[str, Any]] = {
     "interface": {

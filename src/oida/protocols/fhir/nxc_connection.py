@@ -36,10 +36,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         self.protocol_name = "fhir"
         self.default_port = 443  # FHIR servers typically use HTTPS
         self.smart_client = None
-        self.capability_statement = None
-        self.all_results = []
-        self.detected_version = None
-        self.server_software = None
         self.conn = None  # Initialize early for cleanup
 
         super().__init__(args, db, host)
@@ -295,7 +291,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             cap_stmt = capabilitystatement.CapabilityStatement.read_from(
                 "metadata", self.smart_client.server
             )
-            self.capability_statement = cap_stmt
 
             try:
                 self.results["data"]["capability_statement"] = cap_stmt.as_json()
@@ -316,7 +311,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             if hasattr(cap_stmt, "software") and cap_stmt.software:
                 server_info["software_name"] = cap_stmt.software.name
                 server_info["software_version"] = cap_stmt.software.version
-                self.server_software = cap_stmt.software.name
 
             if hasattr(cap_stmt, "implementation") and cap_stmt.implementation:
                 server_info["implementation_description"] = cap_stmt.implementation.description
@@ -355,7 +349,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             server_info["security"] = security_info
 
             self.results["data"]["server_info"] = server_info
-            self.detected_version = server_info["fhir_version"]
             return True
 
         except FHIRValidationError as e:
@@ -482,7 +475,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             self.logger.display(f"  Security: {', '.join(filter(None, service_names))}")
         else:
             self.logger.security_finding(
-                "No authentication", "No security services configured (anonymous access)"
+                "No authentication", detail="No security services configured (anonymous access)"
             )
 
         if security.get("cors_enabled"):

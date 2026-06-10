@@ -224,7 +224,14 @@ class SecurityMixin:
 
                     for mem_addr in test_addresses:
                         try:
-                            data = await p2p.read_memory(mem_addr, 2)
+                            # xknx has no p2p.read_memory(); send a MemoryRead
+                            # APCI and read MemoryResponse.data (mirrors the
+                            # AuthorizeRequest/Response pattern above).
+                            resp = await p2p.request(
+                                _xknx_cls.MemoryRead(address=mem_addr, count=2),
+                                _xknx_cls.MemoryResponse,
+                            )
+                            data = resp.data if resp else None
                             if data:
                                 device_results["readable_addresses"].append(
                                     {
@@ -275,11 +282,20 @@ class SecurityMixin:
 
                     for mem_addr in test_addresses:
                         try:
-                            # Read original value
-                            original_data = await p2p.read_memory(mem_addr, 1)
+                            # Read original value (non-destructive write-back test).
+                            resp = await p2p.request(
+                                _xknx_cls.MemoryRead(address=mem_addr, count=1),
+                                _xknx_cls.MemoryResponse,
+                            )
+                            original_data = resp.data if resp else None
                             if original_data:
-                                # Write the same value back
-                                await p2p.write_memory(mem_addr, original_data)
+                                # Write the same value back via MemoryWrite APCI.
+                                await p2p.request(
+                                    _xknx_cls.MemoryWrite(
+                                        address=mem_addr, data=original_data
+                                    ),
+                                    _xknx_cls.MemoryResponse,
+                                )
                                 device_results["writable_addresses"].append(
                                     {
                                         "address": hex(mem_addr),

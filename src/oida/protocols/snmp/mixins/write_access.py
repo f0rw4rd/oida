@@ -190,7 +190,37 @@ class WriteAccessMixin(_ScannerBase):
         current_value = var_binds[0][1]
         display_val = current_value.prettyPrint()
 
-        # 2. SET sysContact.0 to the same value (idempotent)
+        # Refuse to write unless we read back a genuine OctetString. pysnmp v7
+        # returns NoSuchObject/NoSuchInstance/EndOfMibView inline (not as
+        # error_status); writing OctetString("") over those would CLEAR a
+        # populated sysContact instead of restoring it.
+        from pysnmp.proto import rfc1905
+
+        if isinstance(
+            current_value, (rfc1905.NoSuchObject, rfc1905.NoSuchInstance, rfc1905.EndOfMibView)
+        ):
+            self.logger.info("  SET probe: sysContact.0 absent (skipped, cannot probe safely)")
+            return {
+                "conclusive": False,
+                "method": "set_probe",
+                "writable": False,
+                "detail": "sysContact.0 absent",
+            }
+        if not isinstance(current_value, OctetString):
+            self.logger.info(
+                f"  SET probe: sysContact.0 is {type(current_value).__name__}, not OctetString (skipped)"
+            )
+            return {
+                "conclusive": False,
+                "method": "set_probe",
+                "writable": False,
+                "detail": f"unexpected type {type(current_value).__name__}",
+            }
+        original_octets = current_value.asOctets()
+
+        # 2. SET sysContact.0 back to its current value. Preserve the original
+        # ASN.1 object so the write is a true identity (re-wrapping a non-string
+        # type as OctetString would corrupt the value on permissive agents).
         try:
             error_indication, error_status, error_index, _ = await set_cmd(
                 engine,
@@ -199,7 +229,7 @@ class WriteAccessMixin(_ScannerBase):
                 context,
                 ObjectType(
                     ObjectIdentity(sys_contact_oid),
-                    OctetString(current_value.asOctets()),
+                    OctetString(original_octets),
                 ),
             )
         except Exception as e:
@@ -222,13 +252,15 @@ class WriteAccessMixin(_ScannerBase):
 
         if error_status:
             status_val = int(error_status)
-            # SNMPv1: noSuchName(2), badValue(3); v2c/v3: readOnly(4),
-            # noAccess(6), authorizationError(16), notWritable(17)
-            read_only_codes = {2, 3, 4, 6, 16, 17}
+            # noSuchName(2), readOnly(4), noAccess(6), authorizationError(16),
+            # notWritable(17) all mean "not writable" definitively. badValue(3) is
+            # NOT in this set: it means the value/type was rejected, not that the
+            # OID is read-only -- treat it as inconclusive so a type round-trip
+            # problem surfaces instead of being mislabelled read-only.
+            read_only_codes = {2, 4, 6, 16, 17}
             if status_val in read_only_codes:
                 status_name = {
                     2: "noSuchName",
-                    3: "badValue",
                     4: "readOnly",
                     6: "noAccess",
                     16: "authorizationError",
@@ -241,7 +273,7 @@ class WriteAccessMixin(_ScannerBase):
                     "writable": False,
                     "detail": f"error_status={status_name}",
                 }
-            # Other error -- inconclusive
+            # Other error (incl. badValue) -- inconclusive
             self.logger.info(f"  SET probe: error_status={error_status}")
             return {
                 "conclusive": False,
@@ -250,7 +282,38 @@ class WriteAccessMixin(_ScannerBase):
                 "detail": f"error_status={error_status}",
             }
 
-        # Success -- write access confirmed
+        # 3. Read back and verify the value is unchanged. If the agent coerced or
+        # altered it, restore the original and report the anomaly rather than
+        # leaving the device in a modified state.
+        try:
+            rb_ind, rb_status, _, rb_binds = await get_cmd(
+                engine,
+                auth_data,
+                transport,
+                context,
+                ObjectType(ObjectIdentity(sys_contact_oid)),
+            )
+            if not (rb_ind or rb_status) and rb_binds:
+                rb_val = rb_binds[0][1]
+                if isinstance(rb_val, OctetString) and rb_val.asOctets() != original_octets:
+                    self.logger.warning("  SET probe: read-back differs from original -- restoring")
+                    await set_cmd(
+                        engine,
+                        auth_data,
+                        transport,
+                        context,
+                        ObjectType(ObjectIdentity(sys_contact_oid), OctetString(original_octets)),
+                    )
+                    return {
+                        "conclusive": True,
+                        "method": "set_probe",
+                        "writable": True,
+                        "detail": "writable but value changed on write-back (restored)",
+                    }
+        except Exception as e:
+            self.logger.debug(f"SET probe read-back failed: {e}")
+
+        # Success -- write access confirmed, value verified unchanged
         self.logger.info(f'  SET probe: sysContact.0 = "{display_val}" -> success')
         self.logger.info("WRITE ACCESS: confirmed via SET probe on sysContact.0")
         return {
@@ -347,19 +410,34 @@ class WriteAccessMixin(_ScannerBase):
 
         _, auth_data, _, context = connection
 
-        # Build typed value
-        if type_char == "i":
-            typed_value = Integer32(int(value))
-        elif type_char == "s":
-            typed_value = OctetString(value.encode("utf-8"))
-        elif type_char == "x":
-            typed_value = OctetString(hexValue=value)
-        elif type_char == "o":
-            typed_value = OIDType(value)
-        elif type_char == "a":
-            typed_value = IpAddress(value)
-        else:
-            typed_value = OctetString(value.encode("utf-8"))
+        # Build typed value. Coercion (int(), hexValue=, IpAddress()) can raise on
+        # malformed user input -- catch it here rather than letting it abort the
+        # whole scan (the try around _do_set below does not cover this block).
+        try:
+            if type_char == "i":
+                typed_value = Integer32(int(value))
+            elif type_char == "s":
+                typed_value = OctetString(value.encode("utf-8"))
+            elif type_char == "x":
+                hex_str = value[2:] if value.lower().startswith("0x") else value
+                if len(hex_str) % 2 != 0 or not all(c in "0123456789abcdefABCDEF" for c in hex_str):
+                    raise ValueError(f"invalid hex value '{value}'")
+                typed_value = OctetString(hexValue=hex_str)
+            elif type_char == "o":
+                typed_value = OIDType(value)
+            elif type_char == "a":
+                typed_value = IpAddress(value)
+            else:
+                typed_value = OctetString(value.encode("utf-8"))
+        except Exception as e:
+            self.logger.fail(f"SET {oid}: invalid value for type '{type_char}': {e}")
+            return {
+                "oid": oid,
+                "type": type_char,
+                "value": value,
+                "success": False,
+                "error": f"invalid value: {e}",
+            }
 
         async def _do_set():
             engine = SnmpEngine()
@@ -426,12 +504,12 @@ class WriteAccessMixin(_ScannerBase):
         from pysnmp.hlapi.asyncio import (
             ObjectIdentity,
             ObjectType,
-            OctetString,
             SnmpEngine,
             UdpTransportTarget,
             get_cmd,
             set_cmd,
         )
+        from pysnmp.proto import rfc1905
 
         from ....utils.export_utils import export_table
 
@@ -494,12 +572,18 @@ class WriteAccessMixin(_ScannerBase):
                 set_transport = await UdpTransportTarget.create(
                     (self.host, self.port), timeout=self.timeout, retries=1
                 )
-                # Use OctetString raw bytes to preserve the original type
-                set_value = (
-                    OctetString(current_value.asOctets())
-                    if hasattr(current_value, "asOctets")
-                    else current_value
-                )
+                # Reuse the exact ASN.1 object read back from the GET so the SET is
+                # a true identity write. Re-wrapping as OctetString would coerce
+                # INTEGER/Counter/Gauge/IpAddress scalars and silently corrupt them
+                # on permissive agents.
+                if isinstance(
+                    current_value,
+                    (rfc1905.NoSuchObject, rfc1905.NoSuchInstance, rfc1905.EndOfMibView),
+                ):
+                    errors += 1
+                    self.logger.progress(current, total, writable, errors)
+                    continue
+                set_value = current_value
                 err_ind, err_st, _, _ = await set_cmd(
                     set_engine,
                     auth_data,

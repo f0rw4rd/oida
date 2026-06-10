@@ -4,7 +4,10 @@ Argument parser definition for PCAP analysis protocol.
 Uses the framework factory pattern for consistent CLI flags.
 """
 
-from ...utils.proto_args_factory import create_protocol_parser
+from ...utils.proto_args_factory import (
+    add_full_width_and_json_log,
+    create_protocol_parser,
+)
 
 
 def proto_args(parser, parents):
@@ -157,5 +160,11 @@ Listener categories:
             "Example: 'tcp.port==13600,mqtt;tcp.port==12001,opcua'"
         ),
     )
+
+    # Output Options (--full-width / -W and --json-log; -o/-f/-v/-d come from
+    # the main parser). Without this, -W/--full-width is only accepted *before*
+    # the subcommand and the assets table always truncates to terminal width.
+    output_group = pcap_parser.add_argument_group("Output Options")
+    add_full_width_and_json_log(output_group, include_short=True)
 
     return pcap_parser

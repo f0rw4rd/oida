@@ -23,7 +23,6 @@ from ...connection import NetworkConnection
 
 from .constants import (
     _is_bac0_available,
-    _ensure_bacpypes3_globals,
     _load_bacpypes3,
 )
 from .mixins import (
@@ -98,8 +97,10 @@ class bacnet(
     def proto_flow(self):
         """Main BACnet scanning workflow"""
 
-        # Load bacpypes3 types on first use (lazy import for faster CLI startup)
-        _ensure_bacpypes3_globals()
+        # Warm up the bacpypes3 lazy import on first use (faster CLI startup).
+        # Mixins read types via _load_bacpypes3()[...] locals, so no global
+        # injection is needed.
+        _load_bacpypes3()
 
         # Handle convenience shortcuts
         self._apply_shortcuts()

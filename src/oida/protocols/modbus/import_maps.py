@@ -488,6 +488,10 @@ Examples:
             fmt = "mbmd"
         elif list(args.source.rglob("*-registers.json")):
             fmt = "nymea"
+        elif (args.source / "custom_components" / "solarman" / "inverter_definitions").exists() or (
+            list(args.source.glob("*.yaml"))
+        ):
+            fmt = "solarman"
         else:
             logger.error("Could not auto-detect source format")
             sys.exit(1)
@@ -496,17 +500,25 @@ Examples:
     logger.info("Format: %s", fmt)
     logger.info("Output: %s", output_dir)
 
-    if args.dry_run:
-        logger.info("DRY RUN - no files will be written")
-
-    # Import based on format
-    if fmt == "nymea":
-        imported = import_nymea_directory(args.source, output_dir)
-    elif fmt == "mbmd":
-        imported = import_mbmd_directory(args.source, output_dir)
-    else:
+    # Import based on format. (Solarman was advertised in --format choices and
+    # the docstring but never dispatched, so --format solarman used to exit 1.)
+    importers = {
+        "nymea": import_nymea_directory,
+        "mbmd": import_mbmd_directory,
+        "solarman": import_solarman_directory,
+    }
+    importer = importers.get(fmt)
+    if importer is None:
         logger.error("Unknown format: %s", fmt)
         sys.exit(1)
+
+    if args.dry_run:
+        # The importers write unconditionally, so honour --dry-run by skipping
+        # the call entirely rather than letting the flag silently lie.
+        logger.info("DRY RUN - no files will be written (%s import skipped)", fmt)
+        imported = 0
+    else:
+        imported = importer(args.source, output_dir)
 
     logger.info("Imported %d register maps to %s", imported, output_dir)
 

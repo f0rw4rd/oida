@@ -33,79 +33,6 @@ if TYPE_CHECKING:
 class SecurityMixin:
     """Mixin providing OPC UA security analysis functionality."""
 
-    async def _analyze_security(self):
-        """Perform enhanced security analysis"""
-        self.logger.display("Analyzing security configuration...")
-
-        # Get and analyze endpoints
-        endpoints = await self._client.get_endpoints()
-
-        insecure_count = 0
-        deprecated_count = 0
-
-        for ep in endpoints:
-            policy = ep.SecurityPolicyUri or ""
-            mode = (
-                ep.SecurityMode.name if hasattr(ep.SecurityMode, "name") else str(ep.SecurityMode)
-            )
-
-            # Check for no security
-            if mode == "None_" or "None" in mode:
-                insecure_count += 1
-                self.logger.security_finding("Insecure configuration", f"Insecure endpoint: {mode}")
-
-            # Check for deprecated policies
-            if ("Basic128Rsa15" in policy) or ("Basic256" in policy and "Sha256" not in policy):
-                deprecated_count += 1
-                self.logger.security_finding(
-                    "Outdated protocol version",
-                    f"Deprecated security policy: {policy.split('#')[-1]}",
-                )
-
-            # Analyze certificate if present
-            if ep.ServerCertificate:
-                try:
-                    from oida.utils.security_findings import display_cert_info
-
-                    # Use central display function for certificate info and security checks
-                    target = f"{self.host}:{getattr(self.args, 'port', 4840)}"
-                    display_cert_info(
-                        logger=self.logger,
-                        cert=ep.ServerCertificate,
-                        protocol="opcua",
-                        target=target,
-                        verbose=getattr(self, "debug", False),
-                    )
-
-                except Exception as e:
-                    self.logger.debug(f"Certificate analysis error: {e}")
-
-        if insecure_count > 0:
-            self.logger.security_finding(
-                "No encryption", f"{insecure_count} insecure endpoint(s) exposed (no security)"
-            )
-
-        if deprecated_count > 0:
-            self.logger.security_finding(
-                "Outdated protocol version",
-                f"{deprecated_count} deprecated security policy/policies",
-            )
-
-        # Check server auditing status (OpalOPC plugin 10002)
-        auditing_result = await self._check_auditing()
-
-        # Test if server accepts self-signed certificates (OpalOPC plugin 10016)
-        url = self._original_url or f"opc.tcp://{self.host}:{getattr(self.args, 'port', 4840)}"
-        self_signed_result = await self._test_self_signed_cert_acceptance(url)
-
-        self.results["data"]["security_analysis"] = {
-            "insecure_endpoints": insecure_count,
-            "deprecated_policies": deprecated_count,
-            "total_endpoints": len(endpoints),
-            "auditing": auditing_result,
-            "self_signed_cert_test": self_signed_result,
-        }
-
     async def _check_server_security(self):
         """Check server security configuration by reading namespace 0 nodes.
 
@@ -128,7 +55,7 @@ class SecurityMixin:
             security_info["auditing"] = auditing_enabled
             if not auditing_enabled:
                 self.logger.security_finding(
-                    "Insecure configuration", "Auditing disabled - no activity logging"
+                    "Insecure configuration", detail="Auditing disabled - no activity logging"
                 )
             else:
                 self.logger.display("  Auditing: enabled")
@@ -390,22 +317,6 @@ class SecurityMixin:
         except Exception as e:
             self.logger.debug(f"Error generating client cert: {e}")
             return None, None
-
-    async def _check_auditing(self):
-        """Check if server auditing is enabled (OpalOPC plugin 10002)
-
-        Auditing tracks activities on the server for security monitoring.
-        If disabled, attackers can operate without being logged.
-        """
-        # Now handled by _check_server_security, keep for backwards compatibility
-        try:
-            auditing_node = self._client.get_node("ns=0;i=2994")
-            auditing_enabled = await auditing_node.read_value()
-            self.results["data"]["auditing"] = auditing_enabled
-            return auditing_enabled
-        except Exception as e:
-            self.logger.debug(f"Could not read auditing status: {e}")
-            return None
 
     async def _test_self_signed_cert_acceptance(self, url: str) -> dict:
         """Test if server accepts untrusted self-signed client certificates.

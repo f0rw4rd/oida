@@ -203,7 +203,10 @@ Examples:
         action="store_true",
         default=False,
         dest="confirm_brute",
-        help="Confirm brute-force intent (required for --default-creds and -E)",
+        help=(
+            "Confirm active/write intent (required for --default-creds, -E, "
+            "--enum-users, --set, --walk-write)"
+        ),
     )
 
     # SNMPv3 overrides — flag letters match Net-SNMP (snmpget/snmpwalk)

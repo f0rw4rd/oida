@@ -10,9 +10,9 @@ Handles CANopen MEI operations (FC 43/13 - CiA 309-2):
 from __future__ import annotations
 
 import struct
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
-from ..constants import CANopenMEICommand, CANOPEN_DATA_TYPES, CANOPEN_COMMON_OBJECTS
+from ..constants import CANopenMEICommand, CANOPEN_COMMON_OBJECTS
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -159,38 +159,3 @@ class CANopenMixin(_ScannerBase):
         except ValueError as e:
             self.logger.debug(f"Failed to get node_id: {e}")
             return None, 0, 0
-
-    def _decode_canopen_value(self, data: bytes, data_type: int) -> Any:
-        """Decode CANopen value based on data type."""
-        if not data:
-            return None
-
-        type_info = CANOPEN_DATA_TYPES.get(data_type)
-        if not type_info:
-            return data.hex()
-
-        type_name, size = type_info
-
-        try:
-            if type_name == "BOOLEAN":
-                return bool(data[0])
-            elif type_name in ("INTEGER8", "UNSIGNED8"):
-                return data[0]
-            elif type_name == "INTEGER16":
-                return struct.unpack("<h", data[:2])[0]
-            elif type_name == "UNSIGNED16":
-                return struct.unpack("<H", data[:2])[0]
-            elif type_name == "INTEGER32":
-                return struct.unpack("<i", data[:4])[0]
-            elif type_name == "UNSIGNED32":
-                return struct.unpack("<I", data[:4])[0]
-            elif type_name == "REAL32":
-                return struct.unpack("<f", data[:4])[0]
-            elif type_name == "REAL64":
-                return struct.unpack("<d", data[:8])[0]
-            elif type_name in ("VISIBLE_STRING", "OCTET_STRING"):
-                return data.decode("utf-8", errors="replace").rstrip("\x00")
-            else:
-                return data.hex()
-        except Exception:
-            return data.hex()

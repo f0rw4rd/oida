@@ -571,13 +571,16 @@ def setup_logging(args):
 
 
 def print_banner():
-    """Print OIDA banner (NXC style)"""
+    """Print OIDA banner"""
     print(f"""
-     ╔═╗╦╔╦╗╔═╗
-     ║ ║║ ║║╠═╣
-     ╚═╝╩═╩╝╩ ╩  v{__version__}
+     ██████╗ ██╗██████╗  █████╗
+    ██╔═══██╗██║██╔══██╗██╔══██╗
+    ██║   ██║██║██║  ██║███████║
+    ██║   ██║██║██║  ██║██╔══██║
+    ╚██████╔╝██║██████╔╝██║  ██║
+     ╚═════╝ ╚═╝╚═════╝ ╚═╝  ╚═╝  v{__version__}
 
-    OT/ICS Discovery & Assessment
+    Scan. Fuzz. Assess. Responsible in OT.
     https://github.com/f0rw4rd/oida
 """)
 
@@ -886,6 +889,16 @@ def print_bug_report() -> None:
     lines.append("")
     lines.append("Protocol Dependencies:")
 
+    def _fmt_exc(e: BaseException, limit: int = 140) -> str:
+        # Surface the real cause: "ValueError" alone is useless, but
+        # "ValueError: numpy.dtype size changed ..." points straight at an
+        # ABI mismatch. Keep it to the first line and cap the length so the
+        # report stays readable.
+        msg = str(e).strip().splitlines()[0] if str(e).strip() else ""
+        if len(msg) > limit:
+            msg = msg[: limit - 1] + "…"
+        return f"{type(e).__name__}: {msg}" if msg else type(e).__name__
+
     import re
 
     try:
@@ -952,10 +965,13 @@ def print_bug_report() -> None:
                 lines.append(f"  {display_name:<20s}{'--':<12s}({proto}) NOT INSTALLED")
             except Exception as e:
                 # Installed but failed to load — e.g. a native lib (adslib.so,
-                # libsnap7) missing from a frozen build. A diagnostic probe must
-                # never crash on this; report it and move on.
+                # libsnap7) missing from a frozen build, or a transitive ABI
+                # mismatch (numpy/pandas). A diagnostic probe must never crash
+                # on this; report it with the message and move on. The message
+                # is the whole point of the probe — a bare type name like
+                # "ValueError" hides the actual cause.
                 lines.append(
-                    f"  {display_name:<20s}{'--':<12s}({proto}) UNAVAILABLE ({type(e).__name__})"
+                    f"  {display_name:<20s}{'--':<12s}({proto}) UNAVAILABLE ({_fmt_exc(e)})"
                 )
 
         # Protocol load test
@@ -970,8 +986,7 @@ def print_bug_report() -> None:
                     importlib.import_module(f"oida.protocols.{name}")
                     lines.append(f"  {name:<20s}OK")
                 except Exception as e:
-                    err = type(e).__name__
-                    lines.append(f"  {name:<20s}FAIL ({err})")
+                    lines.append(f"  {name:<20s}FAIL ({_fmt_exc(e)})")
         except Exception:
             lines.append("  (could not enumerate protocols)")
         # All installed packages

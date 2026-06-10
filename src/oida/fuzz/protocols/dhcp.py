@@ -111,7 +111,10 @@ class DHCPFuzzer(BaseFuzzer):
         # Using port 0 lets the OS assign an ephemeral port, or use port 68 (standard DHCP client port)
         # Also set recv_timeout to ensure we wait for responses
         return UDPSocketConnection(
-            self.config.target_ip, self.config.target_port, bind=("0.0.0.0", 0), recv_timeout=5.0
+            self.config.target_ip,
+            self.config.target_port,
+            bind=("0.0.0.0", 0),
+            **self._timeout_overrides(recv_default=5.0),
         )
 
     def setup_custom_monitors(self) -> list:
@@ -1004,104 +1007,6 @@ class DHCPFuzzer(BaseFuzzer):
         if self.is_request_enabled("DHCP_DoS"):
             self.session.connect(dhcp_exhaustion)
 
-    def get_fuzzing_targets(self) -> list:
-        """Return list of DHCP fuzzing targets and their purposes.
-
-        Targets are organized by optimization phase:
-        - Phase 1: Quick coverage (message types)
-        - Phase 2: High-crash tests (overflow)
-        - Phase 3: CVE-targeted (injection, refcount)
-        - Phase 4: Boundary attacks
-        - Phase 5: Standard operations
-        """
-        return [
-            # Phase 1: Quick Coverage
-            {
-                "name": "DHCP_Quick_Coverage",
-                "description": "Quick sweep of all 8 message types (DISCOVER, OFFER, REQUEST, DECLINE, ACK, NAK, RELEASE, INFORM)",
-                "phase": 1,
-            },
-            {
-                "name": "DHCP_DISCOVER",
-                "description": "DHCP discovery requests - tests server response handling",
-                "phase": 1,
-            },
-            # Phase 2: High-Crash Tests
-            {
-                "name": "DHCP_MALFORMED_OPTIONS",
-                "description": "Malformed DHCP options - buffer overflow (CVE-2004-0460 pattern)",
-                "phase": 2,
-            },
-            {
-                "name": "DHCP_OPTION_CHAIN",
-                "description": "Option chain parser overflow - 100+ options stress test",
-                "phase": 2,
-            },
-            {
-                "name": "DHCP_MALFORMED_EXTENDED",
-                "description": "Malformed extended options - CVE-2022-2928 pattern",
-                "phase": 2,
-            },
-            {
-                "name": "DHCP_Hostname_Overflow",
-                "description": "Hostname option buffer overflow attacks",
-                "phase": 2,
-            },
-            # Phase 3: CVE-Targeted
-            {
-                "name": "DHCP_OPTION_INJECTION",
-                "description": "Option value injection - tests input validation",
-                "phase": 3,
-            },
-            {
-                "name": "DHCP_INVALID_MESSAGE_TYPE",
-                "description": "Invalid message types - tests protocol state machine",
-                "phase": 3,
-            },
-            {
-                "name": "DHCP_Option_Refcount",
-                "description": "Option refcount overflow (CVE-2022-2928)",
-                "phase": 3,
-            },
-            # Phase 4: Boundary Attacks
-            {
-                "name": "DHCP_Length_Boundary",
-                "description": "Option length boundary testing (0, 254, 255)",
-                "phase": 4,
-            },
-            {
-                "name": "DHCP_Field_Boundary",
-                "description": "Header field boundary values (op, htype, hlen, magic cookie)",
-                "phase": 4,
-            },
-            # Phase 5: Standard Operations
-            {
-                "name": "DHCP_REQUEST",
-                "description": "DHCP configuration requests - tests lease assignment logic",
-                "phase": 5,
-            },
-            {
-                "name": "DHCP_RELEASE",
-                "description": "DHCP IP release messages - tests lease termination handling",
-                "phase": 5,
-            },
-            {
-                "name": "DHCP_VENDOR_SPECIFIC",
-                "description": "Vendor-specific information fuzzing - tests vendor option handling",
-                "phase": 5,
-            },
-            {
-                "name": "DHCP_EXTENDED_OPTIONS",
-                "description": "Extended option fuzzing (RFC 3046, 4702, 3118)",
-                "phase": 5,
-            },
-            {
-                "name": "DHCP_RESOURCE_EXHAUSTION",
-                "description": "Resource exhaustion attacks - tests server resource management",
-                "phase": 5,
-            },
-        ]
-
 
 class DHCPv6Fuzzer(BaseFuzzer):
     """DHCPv6 Protocol Fuzzer for IPv6 network configuration security testing
@@ -1206,7 +1111,10 @@ class DHCPv6Fuzzer(BaseFuzzer):
         # DHCPv6 clients need to bind to a local port to receive responses
         # Using port 0 lets the OS assign an ephemeral port
         return UDPSocketConnection(
-            self.config.target_ip, self.config.target_port, bind=("0.0.0.0", 0), recv_timeout=5.0
+            self.config.target_ip,
+            self.config.target_port,
+            bind=("0.0.0.0", 0),
+            **self._timeout_overrides(recv_default=5.0),
         )
 
     def setup_custom_monitors(self) -> list:
@@ -2032,104 +1940,6 @@ class DHCPv6Fuzzer(BaseFuzzer):
         if self.is_request_enabled("DHCPv6_Relay"):
             self.session.connect(dhcpv6_relay_forward)
             self.session.connect(dhcpv6_relay_reply)
-
-    def get_fuzzing_targets(self) -> list:
-        """Return list of DHCPv6 fuzzing targets and their purposes.
-
-        Targets are organized by optimization phase:
-        - Phase 1: Baseline (SOLICIT)
-        - Phase 2: Standard message types
-        - Phase 3: Overflow and buffer attacks
-        - Phase 4: Boundary value attacks
-        - Phase 5: Relay message fuzzing
-        """
-        return [
-            # Phase 1: Baseline
-            {
-                "name": "DHCPv6_SOLICIT",
-                "description": "DHCPv6 SOLICIT - initial address/prefix solicitation",
-                "phase": 1,
-            },
-            # Phase 2: Standard Message Types
-            {
-                "name": "DHCPv6_REQUEST",
-                "description": "DHCPv6 REQUEST - client requesting specific configuration",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_RELEASE",
-                "description": "DHCPv6 RELEASE - client releasing IPv6 addresses",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_RENEW",
-                "description": "DHCPv6 RENEW (msg_type=5) - renew existing address lease",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_REBIND",
-                "description": "DHCPv6 REBIND (msg_type=6) - rebind after server unreachable",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_CONFIRM",
-                "description": "DHCPv6 CONFIRM (msg_type=4) - confirm address after link change",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_DECLINE",
-                "description": "DHCPv6 DECLINE (msg_type=9) - decline offered address (DAD failure)",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_INFORMATION_REQUEST",
-                "description": "DHCPv6 INFORMATION-REQUEST (msg_type=11) - stateless config only",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_Rapid_Commit",
-                "description": "DHCPv6 SOLICIT with Rapid Commit (option 14) for 2-message exchange",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_ADVANCED_OPTIONS",
-                "description": "Advanced option nesting (DNS, FQDN, auth, remote ID)",
-                "phase": 2,
-            },
-            {
-                "name": "DHCPv6_PREFIX_DELEGATION",
-                "description": "Prefix delegation via IA_PD (option 25) and IA Prefix (option 26)",
-                "phase": 2,
-            },
-            # Phase 3: Overflow and Buffer Attacks
-            {
-                "name": "DHCPv6_MALFORMED_OPTIONS",
-                "description": "Malformed options with oversized FQDN and invalid option codes",
-                "phase": 3,
-            },
-            {
-                "name": "DHCPv6_DNS_Overflow",
-                "description": "DNS option heap overflow (CVE-2020-25681 dnsmasq pattern)",
-                "phase": 3,
-            },
-            # Phase 4: Boundary Value Attacks
-            {
-                "name": "DHCPv6_Boundary",
-                "description": "Boundary tests: option lengths (0, 65535), msg types (0, 255), txid edges",
-                "phase": 4,
-            },
-            # Phase 5: Relay Message Fuzzing
-            {
-                "name": "DHCPv6_RELAY_FORWARD",
-                "description": "Relay-forward (msg_type=12) with encapsulated client SOLICIT",
-                "phase": 5,
-            },
-            {
-                "name": "DHCPv6_RELAY_REPLY",
-                "description": "Relay-reply (msg_type=13) with encapsulated server ADVERTISE",
-                "phase": 5,
-            },
-        ]
 
 
 # For backward compatibility and explicit exports

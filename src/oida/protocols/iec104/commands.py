@@ -119,18 +119,20 @@ class CommandMixin:
             ioa = self.write_float_ioa
             type_name = "C_SE_NC_1 (Float setpoint)"
         elif self.write_type_id is not None and self.write_ioa is not None:
-            # Custom type ID - try to get from c104.Type enum
+            # Custom type ID - try to get from c104.Type enum. c104.Type(bad)
+            # does NOT raise; it returns a <Type.???: N> pseudo-member, so
+            # detect that by name rather than catching ValueError (never raised).
             ioa = self.write_ioa
-            try:
-                write_type = c104.Type(self.write_type_id)
-                type_name = f"Type {self.write_type_id} ({write_type.name})"
-            except ValueError:
-                # Custom/vendor type not in enum - still try to use it
+            write_type = c104.Type(self.write_type_id)
+            if write_type.name == "???":
+                # Custom/vendor type not in enum - still try to use it raw
                 self.logger.warning(
                     f"Type ID {self.write_type_id} not in c104.Type enum, attempting raw"
                 )
                 write_type = self.write_type_id  # Use raw int
                 type_name = f"Custom Type {self.write_type_id}"
+            else:
+                type_name = f"Type {self.write_type_id} ({write_type.name})"
 
         if write_type is None or ioa is None:
             self.logger.fail("No write operation specified")

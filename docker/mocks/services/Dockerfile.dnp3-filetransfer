@@ -1,14 +1,27 @@
-FROM python:3.11-slim
+# DNP3 file-transfer mock outstation built on the stepfunc `dnp3` Rust crate.
+# Same binary as Dockerfile.dnp3. NOTE: the stepfunc dnp3 crate (1.x) implements
+# Group 70 file transfer on the MASTER side only — the outstation API exposes no
+# file-serving handler. This mock therefore presents a healthy DNP3 outstation
+# (slave addr from DNP3_SLAVE_ADDR, master addr from DNP3_MASTER_ADDR) and
+# creates the sample files under DNP3_FILE_DIR for parity; file-transfer requests
+# from a master are answered as unsupported, which the integration tests accept.
+# See dnp3-rs/src/main.rs.
 
-# Install FreyrSCADA dnp3protocol (C library with ctypes wrapper)
-# Provides outstation-side file transfer support (Group 70)
-RUN pip install --no-cache-dir dnp3protocol>=21.6.19
+# ── stage 1: build ──
+FROM rust:slim-bookworm AS builder
+WORKDIR /build
+COPY dnp3-rs/Cargo.toml dnp3-rs/Cargo.lock ./
+COPY dnp3-rs/src ./src
+RUN cargo build --release && strip target/release/oida-dnp3-outstation
 
-COPY dnp3_filetransfer_server.py /app/
-
+# ── stage 2: slim runtime ──
+FROM debian:bookworm-slim
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        openssl netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /build/target/release/oida-dnp3-outstation /usr/local/bin/oida-dnp3-outstation
 
 EXPOSE 20000
 
-# All configuration via environment variables (see dnp3_filetransfer_server.py)
-CMD ["python3", "dnp3_filetransfer_server.py"]
+CMD ["oida-dnp3-outstation"]

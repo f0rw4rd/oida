@@ -244,17 +244,24 @@ def add_full_width_and_json_log(parser, include_short: bool = True):
         include_short: Whether to register ``-W`` as a short alias for
             ``--full-width``. iec104 sets this False.
     """
+    # NOTE: both flags are also declared on the main parser (cli.py), so they
+    # may already be set in the namespace from the global (pre-protocol)
+    # position. Use argparse.SUPPRESS as the default here so that *not* passing
+    # them at the subparser level leaves the global value intact instead of
+    # clobbering it back to the subparser default (None / False). Without this,
+    # `oida --json-log FILE iec104 ...` silently disabled structured logging.
     fw_args = ["-W", "--full-width"] if include_short else ["--full-width"]
     parser.add_argument(
         *fw_args,
         action="store_true",
-        default=False,
+        default=argparse.SUPPRESS,
         help="Show full-width tables without truncating to terminal width",
     )
     parser.add_argument(
         "--json-log",
         type=str,
         metavar="FILE",
+        default=argparse.SUPPRESS,
         help="Write structured JSON log events to FILE (NDJSON format)",
     )
 

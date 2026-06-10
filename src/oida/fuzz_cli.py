@@ -200,7 +200,19 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         help="Enable boofuzz-results database (disabled by default)",
     )
 
-    # Output control inherited from main parser's -v/--verbose (action=count)
+    # Output control. Also accept -v/--verbose on the subparser (not just the
+    # global parser) so `oida fuzz <proto> <target> -v` works as the help
+    # advertises; the dispatcher reads args.verbose either way.
+    fuzz_parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        # SUPPRESS so a subparser-level non-occurrence doesn't clobber a global
+        # `-v` given before the subcommand (the global parser supplies default=0).
+        default=argparse.SUPPRESS,
+        dest="verbose",
+        help="Increase verbosity (-v, -vv, -vvv)",
+    )
 
     # Fuzzing control
     fuzz_parser.add_argument("--seed", "-S", type=int, help="Random seed for reproducible fuzzing")
@@ -289,6 +301,59 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         default=0.1,
         metavar="SECONDS",
         help="Delay between monitor retry attempts (default: 0.1s)",
+    )
+    fuzz_parser.add_argument(
+        "--recv-timeout",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="Socket receive timeout for fuzz responses (default: per-protocol, usually 5.0s)",
+    )
+    fuzz_parser.add_argument(
+        "--send-timeout",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="Socket send timeout (default: per-protocol, usually 5.0s)",
+    )
+    fuzz_parser.add_argument(
+        "--reconnect-delay",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="Delay between reconnection attempts on connection reset (default: 0.5s)",
+    )
+    fuzz_parser.add_argument(
+        "--max-reconnect-attempts",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Maximum reconnection attempts on connection reset (default: 3)",
+    )
+    fuzz_parser.add_argument(
+        "--no-calibrate",
+        action="store_true",
+        default=False,
+        help="Disable automatic timeout calibration (keep per-protocol defaults)",
+    )
+    fuzz_parser.add_argument(
+        "--calibration-probes",
+        type=int,
+        default=50,
+        metavar="N",
+        help="Probes sent during timeout calibration (default: 50, min 30 clean)",
+    )
+    fuzz_parser.add_argument(
+        "--adaptive-timeout",
+        action="store_true",
+        default=False,
+        help="Adapt the monitor timeout online from observed latency (default: off)",
+    )
+    fuzz_parser.add_argument(
+        "--detect-drift",
+        action="store_true",
+        default=False,
+        help="Recalibrate when sustained latency drift is detected (implies --adaptive-timeout)",
     )
 
     # Protocol-specific options
@@ -525,12 +590,26 @@ def handle_replay_command(args):
         print("Usage: oida fuzz replay <session> [--range N-M]")
         return 1
 
+    # Replay reads a session file (no live target); set a logging context so the
+    # global ICSLogger helpers used by the DB layer have one.
+    from oida.utils.ics_logger import set_context
+
+    set_context("FUZZ-REPLAY", session, 0)
+
     # Import database. The fuzzer writes via SQLAlchemyDatabase (ORM) — use
     # the same backend for reads so we never see schema drift. SQLiteDatabase
     # (raw SQL) is kept for backward compatibility but no longer the default.
     from .fuzz.core.database.orm import SQLAlchemyDatabase
 
+    import os
+
     db_path = f"{session}.db"
+    # SQLAlchemyDatabase(...).init_schema() creates the file if missing, which
+    # would make a replay of a non-existent session silently "succeed" with 0
+    # cases. Detect the missing file up front instead.
+    if not os.path.exists(db_path):
+        logger.error(f"Session database not found: {db_path}")
+        return 1
     try:
         db = SQLAlchemyDatabase(db_path)
         db.init_schema()
@@ -982,6 +1061,16 @@ def run_fuzzing(args, protocol, target):
         wrapped.receive_data_after_each_request = wrapped.receive_data_after_fuzz
     wrapped.sleep_time = getattr(args, "sleep_time", 0.0)
     wrapped.monitor_retry_delay = getattr(args, "monitor_retry_delay", 0.1)
+    wrapped.recv_timeout = getattr(args, "recv_timeout", None)
+    wrapped.send_timeout = getattr(args, "send_timeout", None)
+    wrapped.reconnect_delay = getattr(args, "reconnect_delay", None)
+    wrapped.max_reconnect_attempts = getattr(args, "max_reconnect_attempts", None)
+    # Timeout calibration
+    wrapped.calibrate = not getattr(args, "no_calibrate", False)
+    wrapped.calibration_probes = getattr(args, "calibration_probes", 50)
+    wrapped.detect_drift = getattr(args, "detect_drift", False)
+    # Drift recalibration only makes sense with online adaptation enabled
+    wrapped.adaptive_timeout = getattr(args, "adaptive_timeout", False) or wrapped.detect_drift
     wrapped.node = getattr(args, "node", None)
     wrapped.command = "fuzz"
     # Resume from last test case if session exists
@@ -1012,13 +1101,26 @@ def run_fuzzing(args, protocol, target):
             db.init_schema()
             stats = db.get_stats()
 
-            # Use last_test_case from metadata (rolling buffer) if available
-            final_tc = stats.get("last_test_case", 0) or stats.get("total_test_cases", 0)
+            # boofuzz position = resume_base + sent + skipped:
+            #   sent        = cases transmitted/recorded this run
+            #   skipped     = mutations boofuzz jumped this run (crash-threshold fast-forward)
+            #   resume_base = cases already covered by earlier sessions (resume offset)
+            #   total       = boofuzz's mutation-space position (matches its UI "Total")
+            sent = stats.get("total_processed", 0) or stats.get("total_test_cases", 0)
+            total = stats.get("final_mutant_index", sent)
+            resume_base = stats.get("resume_base", 0)
+            skipped = max(0, total - sent - resume_base)
             final_crashes = stats.get("total_crashes", 0)
             db_size = stats.get("db_size_mb", 0)
 
-            fuzz_logger.display(f"Last test case: {final_tc:,}")
-            fuzz_logger.display(f"Total crashes: {final_crashes}")
+            fuzz_logger.display(
+                f"Test cases - sent: {sent:,} | skipped: {skipped:,} | total: {total:,}"
+            )
+            if resume_base:
+                fuzz_logger.display(
+                    f"Resumed past {resume_base:,} cases fuzzed in earlier sessions"
+                )
+            fuzz_logger.display(f"Total crashes: {final_crashes:,}")
             fuzz_logger.display(f"Database size: {db_size:.2f} MB")
     except Exception as e:
         logger.debug(f"Could not read final stats: {e}")

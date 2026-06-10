@@ -1,6 +1,6 @@
 """TCP Protocol Fuzzer"""
 
-from enum import Enum, IntFlag
+from enum import Enum
 from typing import List, Optional
 
 from boofuzz import (
@@ -23,19 +23,6 @@ from ..core.connections import TCPSocketConnection
 from ..monitors import BaseMonitor
 from ..primitives.dynamic import SmartString
 from .tcp_state_integration import StatefulTCPFuzzerMixin
-
-
-class TCPFlags(IntFlag):
-    """TCP header flags with support for combinations"""
-
-    FIN = 0x01
-    SYN = 0x02
-    RST = 0x04
-    PSH = 0x08
-    ACK = 0x10
-    URG = 0x20
-    ECE = 0x40
-    CWR = 0x80
 
 
 class TCPOptions(Enum):
@@ -130,40 +117,6 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         help_text += "Note: OS handles IP headers automatically in raw socket mode.\n\n"
 
         return help_text
-
-    # THC-IPv6 inspired TCP fuzzing pattern
-    # WWWWWWXXWWWXXWXXXXXXWWWWXX maps to TCP header structure
-    THC_TCP_PATTERN = "WWWWWWXXWWWXXWXXXXXXWWWWXX"
-
-    # Extended TCP flag combinations for stress testing
-    EXTENDED_FLAG_COMBOS = [
-        # Standard combinations
-        0x02,  # SYN
-        0x12,  # SYN+ACK
-        0x10,  # ACK
-        0x01,  # FIN
-        0x11,  # FIN+ACK
-        0x04,  # RST
-        0x14,  # RST+ACK
-        # Extended ECN combinations
-        0x42,  # SYN+ECE
-        0x82,  # SYN+CWR
-        0xC2,  # SYN+ECE+CWR
-        0x52,  # SYN+ACK+ECE
-        0x92,  # SYN+ACK+CWR
-        # Invalid/Reserved combinations (THC-IPv6 style)
-        0xFF,  # All flags set
-        0x00,  # No flags (invalid)
-        0x07,  # FIN+SYN+RST (invalid)
-        0x06,  # SYN+RST (invalid)
-        0x03,  # FIN+SYN (invalid)
-        0x05,  # FIN+RST (invalid)
-        # Reserved bit manipulation
-        0x102,  # SYN + Reserved bit 8
-        0x202,  # SYN + Reserved bit 9
-        0x402,  # SYN + Reserved bit 10
-        0x802,  # SYN + Reserved bit 11
-    ]
 
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:
@@ -329,7 +282,6 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
 
         # Initialize extension blocks before parent constructor
         self.mptcp_block = None
-        self.encryption_block = None
         self._setup_extension_blocks()
         super().__init__(config, connection_factory)
         self.protocol_name = "TCP" if not use_raw_socket else "TCP-RAW"
@@ -364,8 +316,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             return TCPSocketConnection(
                 self.config.target_ip,
                 self.config.target_port,
-                send_timeout=2.0,
-                recv_timeout=2.0,
+                **self._timeout_overrides(recv_default=2.0, send_default=2.0),
             )
 
     def _create_tcp_header(
@@ -486,16 +437,6 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
                     ),
                 )
 
-    def _create_sack_block(self, name="SACK_Block"):
-        """Helper method to create a new SACK block with unique name"""
-        return Block(
-            name,
-            children=(
-                DWord(f"{name}_Left_Edge", 0, output_format="binary"),
-                DWord(f"{name}_Right_Edge", 0, output_format="binary"),
-            ),
-        )
-
     def _setup_extension_blocks(self):
         """Define reusable TCP extension blocks"""
         # MPTCP and encryption blocks only
@@ -517,20 +458,12 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             ),
         )
 
-        self.encryption_block = Block(
-            "TCP_Encryption",
-            children=(
-                Static("Encryption_Kind", bytes([TCPOptions.ENCRYPTION.value])),
-                Byte("Encryption_Length", 0),
-                Byte("Encryption_KeyID", 0),
-                RandomData("Encryption_Data", min_length=0, max_length=32),
-            ),
-        )
-
     def _define_tcp_options(self) -> Block:
         """Define comprehensive TCP options block"""
-        if not all([self.mptcp_block, self.encryption_block]):
-            raise RuntimeError("MPTCP and Encryption blocks not properly initialized")
+        # (encryption_block was built here but never embedded in a Request —
+        # the live kind=69 TCP-ENO fuzzing is the separate tcp_eno request.)
+        if self.mptcp_block is None:
+            raise RuntimeError("MPTCP block not properly initialized")
 
         # Create all TCP options individually so they can be tested separately
         return Block(
@@ -2005,87 +1938,3 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         self.log.debug(
             f"TCP state machine has {len(graph)} states with {sum(len(v) for v in graph.values())} transitions"
         )
-
-    def handle_syn(self):
-        """Handle SYN packet - transition from CLOSED to SYN_SENT"""
-        if self.state_machine and self.state_machine.get_current_state_name() == "CLOSED":
-            self.state_machine.transition_to("SYN_SENT")
-            self.log.display("TCP: Sent SYN packet")
-
-    def handle_syn_ack(self):
-        """Handle SYN-ACK packet - transition from SYN_SENT to ESTABLISHED"""
-        if self.state_machine and self.state_machine.get_current_state_name() == "SYN_SENT":
-            self.state_machine.transition_to("ESTABLISHED")
-            self.log.display("TCP: Connection established")
-
-    def handle_fin(self):
-        """Handle FIN packet - initiate connection close"""
-        if self.state_machine:
-            current = self.state_machine.get_current_state_name()
-            if current == "ESTABLISHED":
-                self.state_machine.transition_to("FIN_WAIT_1")
-                self.log.display("TCP: Initiated connection close (FIN sent)")
-            elif current == "CLOSE_WAIT":
-                self.state_machine.transition_to("LAST_ACK")
-                self.log.display("TCP: Sent final FIN")
-
-    def handle_rst(self):
-        """Handle RST packet - immediate close"""
-        if self.state_machine:
-            self.state_machine.transition_to("CLOSED", force=True)
-            self.log.display("TCP: Connection reset (RST received)")
-
-    def test_invalid_state_transitions(self):
-        """
-        Test TCP state confusion vulnerabilities
-
-        Tests various invalid state transitions:
-        - Data in SYN_SENT (before established)
-        - FIN before SYN-ACK
-        - ACK before SYN
-        - Multiple SYNs
-
-        Forces the central StateMachine to invalid states and sends packets
-        to test target robustness against state confusion attacks.
-        """
-        if not self.state_machine:
-            self.log.warning("No state machine defined, skipping invalid state tests")
-            return
-
-        from .tcp_state_integration import TCPState
-
-        self.log.display("Testing TCP state confusion attacks...")
-
-        # Enable attack mode on the central state machine
-        self.state_machine.enable_invalid_state_testing()
-
-        # Define attack patterns: (description, forced_state, request_to_send)
-        attack_patterns = [
-            ("Data before handshake", TCPState.CLOSED, "TCP_Data"),
-            ("FIN before established", TCPState.SYN_SENT, "TCP_FIN"),
-            ("SACK before connection", TCPState.CLOSED, "TCP_SACK"),
-            ("SYN during established", TCPState.ESTABLISHED, "TCP_SYN"),
-            ("Data in TIME_WAIT", TCPState.TIME_WAIT, "TCP_Data"),
-        ]
-
-        for test_name, forced_state, request_name in attack_patterns:
-            self.log.display(f"Attack: {test_name}")
-            try:
-                # Force the central state machine to the invalid starting state
-                self.state_machine.transition_to(forced_state.name, force=True)
-                self.log.display(f"  Forced state to: {forced_state.name}")
-
-                # Try to fuzz the request from this invalid state
-                self.fuzz_node(request_name)
-                self.log.display(f"  Sent {request_name} from {forced_state.name}")
-            except Exception as e:
-                self.log.display(f"  Result: {e}")
-
-        # Report statistics from the central state machine
-        transition_log = self.state_machine.get_transition_log()
-        forced_count = sum(1 for t in transition_log if t.get("forced"))
-        self.log.display(f"Forced transitions: {forced_count}")
-
-        # Restore normal validation
-        self.state_machine.disable_invalid_state_testing()
-        self.log.display("Invalid state testing complete, validation re-enabled")

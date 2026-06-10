@@ -26,6 +26,13 @@ class BruteForceMixin(_ScannerBase):
         """Test built-in ICS community strings, return first valid."""
         from ....utils.login_scanner import load_passwords
 
+        # Fail-closed: brute-force is an active operation. The orchestrator gates
+        # this on --confirm, but enforce it here too so no other caller can
+        # brute-force without confirmation.
+        if not getattr(self, "confirm_brute", False):
+            self.logger.fail("Community brute-force requires --confirm")
+            return []
+
         communities = load_passwords(None, "snmp")
 
         self.logger.info(f"SNMP: testing {len(communities)} community strings against {self.host}")
@@ -51,6 +58,8 @@ class BruteForceMixin(_ScannerBase):
         for community in candidates:
             if self._test_community(community):
                 valid.append(community)
+            if self.brute_rate > 0:
+                time.sleep(self.brute_rate)
         return valid
 
     def _test_community(self, community: str) -> bool:
@@ -72,7 +81,7 @@ class BruteForceMixin(_ScannerBase):
             mp_model = 1 if self.version == "2c" else 0
             auth_data = CommunityData(community, mpModel=mp_model)
             transport = await UdpTransportTarget.create(
-                (self.host, self.port), timeout=self.timeout, retries=0
+                (self.host, self.port), timeout=self.timeout, retries=1
             )
             context = ContextData()
 

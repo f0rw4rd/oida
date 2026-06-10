@@ -13,6 +13,7 @@ from boofuzz.monitors import BaseMonitor
 
 from ..core.session.commands import CommandRunner, RealCommandRunner
 from ..core.config import FuzzerConfig
+from ..core.calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
 from ...utils.ics_logger import get_logger, ICSLogger
 
 # Disable SSL warnings for fuzzing contexts
@@ -31,12 +32,14 @@ class ProtocolBaseline:
         parsed_fields: Protocol-specific parsed data (function codes, status codes, etc.)
         timestamp: Unix timestamp when baseline was established
         response_length: Length of the baseline response
+        rtt: Most recent measured round-trip time of a health probe, in seconds
     """
 
     raw_response: bytes
     parsed_fields: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     response_length: int = field(default=0)
+    rtt: Optional[float] = None
 
     def __post_init__(self):
         """Set response_length from raw_response if not provided."""
@@ -271,6 +274,12 @@ class ProtocolMonitor(BaseMonitor):
         self.consecutive_failures = 0
         self.last_check_time: Optional[float] = None
 
+        # Online timeout adaptation (armed by the calibration phase when enabled).
+        # Stay None for the static default behavior.
+        self.last_rtt: Optional[float] = None
+        self.rto_estimator: Optional[RtoEstimator] = None
+        self.drift_detector: Optional[DriftDetector] = None
+
         # Crash state (binary)
         self.crashed = False
         self.crash_info: Optional[Dict[str, Any]] = None
@@ -356,6 +365,7 @@ class ProtocolMonitor(BaseMonitor):
 
         # Retry loop
         for attempt in range(self.retry_count):
+            probe_start = time.perf_counter()
             result = self._check_alive_once(fuzz_data_logger)
 
             if result:
@@ -366,6 +376,7 @@ class ProtocolMonitor(BaseMonitor):
                     )
                 self.consecutive_failures = 0
                 self.last_check_time = time.time()
+                self._record_rtt(time.perf_counter() - probe_start)
                 return True
 
             # Log retry attempt
@@ -376,6 +387,7 @@ class ProtocolMonitor(BaseMonitor):
         # All retries failed - increment and check threshold
         self.consecutive_failures += 1
         self.last_check_time = time.time()
+        self._on_probe_timeout()
 
         if self.consecutive_failures >= self.failure_threshold:
             self._on_crash_detected(fuzz_data_logger)
@@ -390,6 +402,34 @@ class ProtocolMonitor(BaseMonitor):
         # Not yet at threshold - report failure but continue fuzzing
         self.logger.warning(f"Check failed ({self.consecutive_failures}/{self.failure_threshold})")
         return True
+
+    def _record_rtt(self, rtt: float) -> None:
+        """Store a clean probe RTT and, if armed, adapt the timeout / watch for drift."""
+        self.last_rtt = rtt
+        if self.baseline is not None:
+            self.baseline.rtt = rtt
+        if self.rto_estimator is not None:
+            self.timeout = self.rto_estimator.update(rtt)
+        if self.drift_detector is not None and self.drift_detector.add(rtt):
+            self._recalibrate_after_drift()
+
+    def _on_probe_timeout(self) -> None:
+        """A probe failed: back the adaptive timeout off (Karn's rule — don't learn)."""
+        if self.rto_estimator is not None:
+            self.timeout = self.rto_estimator.on_timeout()
+
+    def _recalibrate_after_drift(self) -> None:
+        """Sustained latency drift detected: re-probe and re-seed the estimators."""
+        self.logger.warning("Latency drift detected; recalibrating monitor timeout")
+        result = TimeoutCalibrator(self, probes=30, warmup=1).run()
+        if result is None:
+            self.logger.warning("Drift recalibration: too few clean probes; keeping timeout")
+            return
+        self.timeout = result.monitor_timeout
+        self.rto_estimator = RtoEstimator.from_stats(result.stats)
+        if self.drift_detector is not None:
+            self.drift_detector.recenter(result.stats.median, result.stats.mad_scaled)
+        self.logger.success(f"Recalibrated monitor timeout to {self.timeout:.2f}s")
 
     def _on_crash_detected(self, fuzz_data_logger=None) -> None:
         """Log detailed crash information when target becomes unresponsive.
@@ -462,23 +502,25 @@ class ProtocolMonitor(BaseMonitor):
         # This also handles re-entry after BoofuzzFailure was already raised
         if self.recovery_attempts >= self.max_recovery_attempts:
             # Already at/past limit - re-raise without logging (was already logged)
+            tc = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
             raise BoofuzzFailure(
                 f"Target {self.host}:{self.port} unresponsive after {self.max_recovery_attempts} "
-                f"recovery attempts (crashed at test case {self.crash_info['test_case'] if self.crash_info else '?'})"
+                f"recovery attempts (crashed at test case {tc})"
             )
 
         self.recovery_attempts += 1
 
+        tc = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
         self.logger.display(
             f"Recovery attempt {self.recovery_attempts}/{self.max_recovery_attempts} "
-            f"(crashed at test case {self.crash_info['test_case'] if self.crash_info else '?'})"
+            f"(crashed at test case {tc})"
         )
 
         # Try single check
         if self._check_alive_once(fuzz_data_logger):
             # Recovered!
             down_since = self.crash_info["timestamp"] if self.crash_info else "unknown"
-            test_case = self.crash_info["test_case"] if self.crash_info else "?"
+            test_case = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
 
             # Log recovery with prominent banner (like crash detection)
             self.logger.success("=" * 50)
@@ -536,9 +578,10 @@ class ProtocolMonitor(BaseMonitor):
                     )
                 except Exception as e:
                     self.logger.warning(f"Failed to persist crash data to session DB: {e}")
+            tc = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
             raise BoofuzzFailure(
                 f"Target {self.host}:{self.port} unresponsive after {self.max_recovery_attempts} "
-                f"recovery attempts (crashed at test case {self.crash_info['test_case'] if self.crash_info else '?'})"
+                f"recovery attempts (crashed at test case {tc})"
             )
 
         return False

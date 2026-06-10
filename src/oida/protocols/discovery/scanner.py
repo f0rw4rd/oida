@@ -770,9 +770,6 @@ class DiscoveryScanner(SerialScanner):
             self.passive_mode = True
 
         # Create output directory in temp (needed for pcap)
-        import os
-        import tempfile
-
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self._output_dir = os.path.join(
             tempfile.gettempdir(), f"discovery_{self.interface}_{timestamp}"
@@ -2438,24 +2435,24 @@ class DiscoveryScanner(SerialScanner):
         return build_device_description(device, verbose=self.debug)
 
     def _write_output_files(self, results: Dict[str, Any]) -> None:
-        """Write discovery results to files: CSV table, IPv4 list, IPv6 list."""
+        """Write discovery results to files: CSV table, IPv4 list, IPv6 list.
+
+        Files are written only when ``-o`` is given (mirrors the rest of the
+        framework). Without ``-o`` the results stay console-only; the temp
+        ``_output_dir`` is reserved for pcap capture, which needs a real path.
+        """
         devices = results.get("devices", [])
         if not devices:
             return
 
-        # Use existing output directory or create one
-        if hasattr(self, "_output_dir") and self._output_dir:
-            output_dir = self._output_dir
-        else:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_dir = os.path.join(
-                tempfile.gettempdir(), f"discovery_{self.interface}_{timestamp}"
-            )
-            try:
-                os.makedirs(output_dir, exist_ok=True)
-            except Exception as e:
-                logger.debug(f"Could not create output directory: {e}")
-                return
+        # Gate file output on -o, like the rest of the framework. No -o ->
+        # console only, don't litter /tmp with CSV/IP lists.
+        from ...utils.export_utils import get_config
+
+        output_dir = get_config().get("output_dir")
+        if not output_dir:
+            return
+        output_dir = str(output_dir)
 
         # Collect all IPs (filter out invalid ones)
         ipv4_list = []
@@ -2506,11 +2503,8 @@ class DiscoveryScanner(SerialScanner):
         # Write IPv4 list
         if ipv4_list:
             from pathlib import Path
-            from ...utils.export_utils import get_export_path
 
-            ipv4_path = get_export_path("ipv4", "txt")
-            if not ipv4_path:
-                ipv4_path = Path(output_dir) / "ipv4.txt"
+            ipv4_path = Path(output_dir) / "ipv4.txt"
             try:
                 unique_ips = sorted(set(ipv4_list))
                 ipv4_path.write_text("\n".join(unique_ips) + "\n", encoding="utf-8")
@@ -2521,11 +2515,8 @@ class DiscoveryScanner(SerialScanner):
         # Write IPv6 list
         if ipv6_list:
             from pathlib import Path
-            from ...utils.export_utils import get_export_path
 
-            ipv6_path = get_export_path("ipv6", "txt")
-            if not ipv6_path:
-                ipv6_path = Path(output_dir) / "ipv6.txt"
+            ipv6_path = Path(output_dir) / "ipv6.txt"
             try:
                 unique_ips = sorted(set(ipv6_list))
                 ipv6_path.write_text("\n".join(unique_ips) + "\n", encoding="utf-8")
