@@ -39,6 +39,9 @@ class StateReachabilityResult:
 class StatefulFuzzer(BaseFuzzer):
     """Base class for fuzzers with stateful connections and authentication.
 
+    Stateful protocols must consume each reply to advance, so they get a more
+    generous calibrated receive timeout.
+
     Provides state-aware request execution where requests can declare their
     required state (PRE_AUTH, AUTHENTICATED, custom states) and the fuzzer
     will automatically handle state transitions.
@@ -72,6 +75,9 @@ class StatefulFuzzer(BaseFuzzer):
                     RequestInfo("FTP_Critical_Path", "...", requires_state=CommonState.AUTHENTICATED),
                 ]
     """
+
+    # Stateful protocols need the reply to advance: use the generous recv-timeout basis.
+    STATEFUL = True
 
     # Override these in subclasses
     PROTOCOL_NAME: str = "proto"

@@ -112,14 +112,6 @@ def _get_framer_type():
         return None
 
 
-def _get_modbus_pdu():
-    """Get ModbusPDU class lazily."""
-    _get_pymodbus()
-    from pymodbus.pdu import ModbusPDU
-
-    return ModbusPDU
-
-
 def _get_file_record_classes():
     """Get FileRecord and ReadFileRecordRequest classes lazily."""
     _get_pymodbus()
@@ -303,14 +295,26 @@ class ModbusScanner(
                 else:
                     client_kwargs["framer"] = "ascii"
 
-            # Add flow control if specified
-            if self.args.get("rtscts", False):
-                client_kwargs["rtscts"] = True
-            if self.args.get("dsrdtr", False):
-                client_kwargs["dsrdtr"] = True
+            # Flow control: pymodbus 3.x ModbusSerialClient has no rtscts/dsrdtr
+            # constructor params (and no **kwargs), so passing them raised
+            # TypeError and broke serial connection entirely. Apply them to the
+            # underlying pyserial object after construction instead.
+            want_rtscts = bool(self.args.get("rtscts", False))
+            want_dsrdtr = bool(self.args.get("dsrdtr", False))
 
             try:
                 client = ModbusSerialClient(**client_kwargs)
+                if want_rtscts or want_dsrdtr:
+                    serial_obj = getattr(client, "socket", None) or getattr(client, "comm", None)
+                    if serial_obj is not None:
+                        if want_rtscts:
+                            serial_obj.rtscts = True
+                        if want_dsrdtr:
+                            serial_obj.dsrdtr = True
+                    else:
+                        self.logger.debug(
+                            "rtscts/dsrdtr requested but pyserial object not exposed yet"
+                        )
             except Exception as e:
                 self.logger.debug("connect failed: %s", e)
                 self.logger.fail(f"Failed to create serial client: {e}")

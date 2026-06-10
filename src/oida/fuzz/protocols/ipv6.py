@@ -96,17 +96,6 @@ class IPv6Fuzzer(BaseFuzzer):
             "example": "true",
         },
     }
-    """
-    IPv6 (Internet Protocol version 6) Fuzzer
-    
-    Fuzzes IPv6 packet headers and extension headers including:
-    - Basic IPv6 header fields
-    - Extension headers (Hop-by-Hop, Routing, Fragment, etc.)
-    - Various next header protocols (TCP, UDP, ICMPv6, etc.)
-    - IPv6 addresses (unicast, multicast, link-local, etc.)
-    
-    Note: Requires root/admin privileges for raw socket access
-    """
 
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:
@@ -906,19 +895,19 @@ class IPv6Fuzzer(BaseFuzzer):
                         Group(
                             "Payload_Length_Mismatch",
                             values=[
-                                0xFFFF,
-                                0xFFFE,
-                                0xFFFD,  # Max values
-                                0x8000,
-                                0x7FFF,
-                                0x4000,  # Sign boundary
-                                0x0001,
-                                0x0000,  # Minimal values
-                                65535,
-                                65534,
-                                32768,
-                                1,
-                                0,  # Boundary testing
+                                b"\xff\xff",
+                                b"\xff\xfe",
+                                b"\xff\xfd",  # Max values
+                                b"\x80\x00",
+                                b"\x7f\xff",
+                                b"\x40\x00",  # Sign boundary
+                                b"\x00\x01",
+                                b"\x00\x00",  # Minimal values
+                                b"\xff\xff",
+                                b"\xff\xfe",
+                                b"\x80\x00",
+                                b"\x00\x01",
+                                b"\x00\x00",  # Boundary testing
                             ],
                         ),
                         Byte("Next_Header", 6, fuzzable=False),  # TCP
@@ -1021,23 +1010,35 @@ class IPv6Fuzzer(BaseFuzzer):
                         Group(
                             "Hdr_Ext_Len_Overflow",
                             values=[
-                                255,
-                                254,
-                                253,
-                                252,  # Max 8-bit values
-                                0x7F,
-                                0x80,
-                                0x81,  # Sign bit boundary
-                                0xFF,
-                                0xFE,
-                                0xFD,  # Overflow conditions
+                                b"\xff",
+                                b"\xfe",
+                                b"\xfd",
+                                b"\xfc",  # Max 8-bit values
+                                b"\x7f",
+                                b"\x80",
+                                b"\x81",  # Sign bit boundary
+                                b"\xff",
+                                b"\xfe",
+                                b"\xfd",  # Overflow conditions
                             ],
                         ),
                         # Option that could cause parsing overflow
                         Byte("Option_Type", 0x01, fuzzable=True),  # PadN
                         Group(
                             "Option_Length_Overflow",
-                            values=[255, 254, 253, 252, 200, 100, 50, 0x7F, 0x80, 0xFF, 0xFE],
+                            values=[
+                                b"\xff",
+                                b"\xfe",
+                                b"\xfd",
+                                b"\xfc",
+                                b"\xc8",
+                                b"\x64",
+                                b"\x32",
+                                b"\x7f",
+                                b"\x80",
+                                b"\xff",
+                                b"\xfe",
+                            ],
                         ),
                         SmartString(
                             "Option_Data_Overflow", "option-data", max_len=2048, fuzzable=True
@@ -1080,15 +1081,15 @@ class IPv6Fuzzer(BaseFuzzer):
                         Group(
                             "Fragment_Offset_Overflow",
                             values=[
-                                0xFFFF,
-                                0xFFFE,
-                                0xFFF8,  # Max offset values
-                                0x7FFF,
-                                0x8000,
-                                0x8001,  # Sign boundary
-                                0x0001,
-                                0x0008,
-                                0x0010,  # Minimal values
+                                b"\xff\xff",
+                                b"\xff\xfe",
+                                b"\xff\xf8",  # Max offset values
+                                b"\x7f\xff",
+                                b"\x80\x00",
+                                b"\x80\x01",  # Sign boundary
+                                b"\x00\x01",
+                                b"\x00\x08",
+                                b"\x00\x10",  # Minimal values
                             ],
                         ),
                         DWord("Identification", 0x12345678, endian=">", fuzzable=True),
@@ -1146,13 +1147,13 @@ class IPv6Fuzzer(BaseFuzzer):
                         Group(
                             "Hdr_Ext_Len_Underflow",
                             values=[
-                                0,
-                                1,
-                                2,
-                                3,  # Very small values
-                                255,
-                                254,
-                                253,  # Values that wrap when subtracted
+                                b"\x00",
+                                b"\x01",
+                                b"\x02",
+                                b"\x03",  # Very small values
+                                b"\xff",
+                                b"\xfe",
+                                b"\xfd",  # Values that wrap when subtracted
                             ],
                         ),
                         # Multiple options that trigger removal logic
@@ -1232,18 +1233,18 @@ class IPv6Fuzzer(BaseFuzzer):
                         Group(
                             "Quick_Next_Headers",
                             values=[
-                                6,  # TCP
-                                17,  # UDP
-                                58,  # ICMPv6
-                                0,  # Hop-by-Hop
-                                43,  # Routing
-                                44,  # Fragment
-                                50,  # ESP
-                                51,  # AH
-                                59,  # No Next Header
-                                60,  # Destination Options
-                                41,  # IPv6 encapsulation
-                                255,  # Reserved (malformed)
+                                b"\x06",  # TCP
+                                b"\x11",  # UDP
+                                b"\x3a",  # ICMPv6
+                                b"\x00",  # Hop-by-Hop
+                                b"\x2b",  # Routing
+                                b"\x2c",  # Fragment
+                                b"\x32",  # ESP
+                                b"\x33",  # AH
+                                b"\x3b",  # No Next Header
+                                b"\x3c",  # Destination Options
+                                b"\x29",  # IPv6 encapsulation
+                                b"\xff",  # Reserved (malformed)
                             ],
                         ),
                         Byte("Hop_Limit", hop_limit, fuzzable=False),
@@ -1288,21 +1289,21 @@ class IPv6Fuzzer(BaseFuzzer):
                         Group(
                             "Quick_ICMPv6_Type",
                             values=[
-                                128,  # Echo Request
-                                129,  # Echo Reply
-                                133,  # Router Solicitation
-                                134,  # Router Advertisement
-                                135,  # Neighbor Solicitation
-                                136,  # Neighbor Advertisement
-                                137,  # Redirect
-                                143,  # MLDv2 Report
-                                130,  # MLD Query
-                                131,  # MLD Report
-                                132,  # MLD Done
-                                1,  # Destination Unreachable
-                                2,  # Packet Too Big
-                                3,  # Time Exceeded
-                                4,  # Parameter Problem
+                                b"\x80",  # Echo Request
+                                b"\x81",  # Echo Reply
+                                b"\x85",  # Router Solicitation
+                                b"\x86",  # Router Advertisement
+                                b"\x87",  # Neighbor Solicitation
+                                b"\x88",  # Neighbor Advertisement
+                                b"\x89",  # Redirect
+                                b"\x8f",  # MLDv2 Report
+                                b"\x82",  # MLD Query
+                                b"\x83",  # MLD Report
+                                b"\x84",  # MLD Done
+                                b"\x01",  # Destination Unreachable
+                                b"\x02",  # Packet Too Big
+                                b"\x03",  # Time Exceeded
+                                b"\x04",  # Parameter Problem
                             ],
                         ),
                         Byte("Code", 0, fuzzable=False),

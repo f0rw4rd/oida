@@ -292,7 +292,11 @@ class DNP3Fuzzer(BaseFuzzer):
         self.log.debug(
             f"[DNP3-Fuzz] Creating TCP socket: {self.config.target_ip}:{self.config.target_port}"
         )
-        return TCPSocketConnection(self.config.target_ip, self.config.target_port)
+        return TCPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port,
+            **self._timeout_overrides(),
+        )
 
     # DNP3 CRC-16 calculator (poly=0x3D65, init=0x0000, xorout=0xFFFF)
     _crc_calculator = Calculator(Crc16.DNP)

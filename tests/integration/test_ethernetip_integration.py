@@ -24,8 +24,9 @@ Mock Server Data (from docker/mocks/services/ethernetip_server.py):
     Strings: DeviceName=SSTRING, Location=SSTRING, FirmwareVersion=SSTRING
 
   The mock responds to ListIdentity (UCMM), ListServices, ListInterfaces,
-  RegisterSession, and CIP tag read/write via cpppo. It does NOT implement
-  CIP Security objects, so security scans will report "not supported".
+  RegisterSession, and CIP tag read/write via cpppo. Its CIP Security object
+  reports a Factory Default (unconfigured) state, so security scans yield
+  "No authentication" findings describing an unauthenticated device.
 
   Note: pycomm3 LogixDriver connects to a cpppo mock that is NOT a real
   Rockwell PLC, so LogixDriver may fail and fall back to CIPDriver.
@@ -215,8 +216,14 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             ]
         ), f"Expected identity info in output, got: {text[:500]}"
 
-    def test_list_identity_produces_security_finding(self, cli_runner, target, port):
-        """Test that ListIdentity triggers 'Anonymous access allowed' finding [Category A]"""
+    def test_list_identity_does_not_flag_anonymous_access(self, cli_runner, target, port):
+        """Test that ListIdentity does NOT emit 'Anonymous access allowed' [Category A]
+
+        ListIdentity is an ODVA-mandated unauthenticated query. Flagging a successful
+        ListIdentity as 'Anonymous access allowed' was a false positive (one bogus
+        CRITICAL per device) removed in commit 41d11682. This test guards against the
+        regression while confirming the default security analysis still fires.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -232,13 +239,19 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
         log = result.scan_log
 
-        # The scanner calls self.logger.security_finding("Anonymous access allowed")
-        # when ListIdentity succeeds
         findings = log.get_security_findings()
-        text = _combined_text(result, log)
-        assert len(findings) > 0 or "anonymous" in text or "security" in text, (
-            f"Expected security findings from ListIdentity. "
-            f"Findings: {findings}, text excerpt: {text[:300]}"
+        finding_names = [f.get("data", {}).get("finding", "") for f in findings]
+
+        # Regression guard: ListIdentity must not be reported as anonymous access.
+        assert "Anonymous access allowed" not in finding_names, (
+            f"'Anonymous access allowed' is a removed false positive and must not "
+            f"reappear. Findings: {finding_names}"
+        )
+
+        # The default security analysis still runs and flags the unauthenticated mock.
+        assert "No authentication" in finding_names, (
+            f"Expected 'No authentication' from the default security analysis. "
+            f"Findings: {finding_names}"
         )
 
     def test_list_services(self, cli_runner, target, port):
@@ -1028,12 +1041,13 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.security
     def test_security_finding_cip_not_supported(self, cli_runner, target, port):
-        """Test 'No authentication' finding when CIP Security is not supported [Category A]
+        """Test 'No authentication' finding when CIP Security is unauthenticated [Category A]
 
-        The cpppo mock does NOT implement CIP Security Object (0x5D), so
-        _report_security_status (scanner:2548) emits 'No authentication' with
-        detail 'CIP Security: NOT SUPPORTED' and _analyze_security (scanner:5620)
-        emits detail 'CIP Security not supported'.
+        The mock exposes a CIP Security Object in Factory Default state (no
+        authentication/encryption configured), so _report_security_status emits
+        'No authentication' with a 'NOT CONFIGURED (Factory Default)' detail and
+        _analyze_security emits 'No authentication' with a 'Factory Default state'
+        detail. Both indicate the device accepts unauthenticated access.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1052,29 +1066,34 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
 
         findings = log.get_security_findings()
-        text = _combined_text(result, log)
 
-        # The scanner should fire "No authentication" with CIP Security NOT SUPPORTED
-        # This is the primary finding for devices lacking CIP Security objects entirely.
-        has_not_supported = any("not supported" in str(f.get("data", {})).lower() for f in findings)
-        has_no_auth_finding = any(
-            f.get("data", {}).get("finding") == "No authentication" for f in findings
+        # The scanner must fire "No authentication" with a CIP Security detail
+        # describing the unauthenticated state (not configured / factory default,
+        # or not supported on devices lacking the object entirely).
+        no_auth_findings = [
+            f for f in findings if f.get("data", {}).get("finding") == "No authentication"
+        ]
+        assert no_auth_findings, (
+            f"Expected a 'No authentication' finding. Findings: {[f.get('data') for f in findings]}"
         )
-        has_text = "not supported" in text or "no authentication" in text
-
-        assert has_not_supported or has_no_auth_finding or has_text, (
-            f"Expected 'No authentication' with 'CIP Security: NOT SUPPORTED'. "
-            f"Findings: {[f.get('data') for f in findings]}, "
-            f"text excerpt: {text[:500]}"
+        assert any(
+            "cip security" in str(f.get("data", {}).get("details", "")).lower()
+            for f in no_auth_findings
+        ), (
+            f"Expected a 'No authentication' finding with a CIP Security detail. "
+            f"Finding details: {[f.get('data', {}).get('details') for f in no_auth_findings]}"
         )
 
     @pytest.mark.security
     def test_security_finding_cip_not_supported_via_analyze(self, cli_runner, target, port):
-        """Test _analyze_security emits 'CIP Security not supported' concern [Category A]
+        """Test _analyze_security emits an unauthenticated-CIP-Security concern [Category A]
 
-        When CIP Security objects are not accessible (cip_sec.accessible=False),
-        _analyze_security (scanner:5616-5622) reports 'CIP Security not supported'
-        and logs a security_finding('No authentication', detail='CIP Security not supported').
+        _analyze_security inspects the CIP Security object. When it is unsupported it
+        logs security_finding('No authentication', detail='CIP Security not supported');
+        when it is accessible but in Factory Default state it logs
+        security_finding('No authentication', detail='CIP Security in Factory Default
+        state'). Either way a 'No authentication' finding referencing CIP Security must
+        be present.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1092,7 +1111,6 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
 
         findings = log.get_security_findings()
-        text = _combined_text(result, log)
 
         # Count distinct "No authentication" findings - there may be multiple
         # (one from _report_security_status, one from _analyze_security)
@@ -1100,23 +1118,22 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             f for f in findings if f.get("data", {}).get("finding") == "No authentication"
         ]
 
-        # At least one "No authentication" finding should exist
-        assert len(no_auth_findings) > 0 or "no authentication" in text, (
+        # At least one "No authentication" finding must exist (structured event).
+        assert len(no_auth_findings) > 0, (
             f"Expected at least one 'No authentication' finding from CIP Security analysis. "
-            f"All findings: {[f.get('data') for f in findings]}, "
-            f"text excerpt: {text[:300]}"
+            f"All findings: {[f.get('data') for f in findings]}"
         )
 
-        # Verify the detail mentions "not supported" (distinguishing from "not configured")
-        not_supported_detail = any(
-            "not supported" in str(f.get("data", {}).get("detail", "")).lower()
+        # Verify at least one finding carries a CIP Security detail describing the
+        # unauthenticated state. security_finding() stores the detail under
+        # data["details"]. Accept "not supported" or the Factory Default wording.
+        cip_security_detail = any(
+            "cip security" in str(f.get("data", {}).get("details", "")).lower()
             for f in no_auth_findings
         )
-        not_supported_text = "not supported" in text or "cip security" in text
-        assert not_supported_detail or not_supported_text, (
-            f"Expected 'CIP Security not supported' detail. "
-            f"Finding details: {[f.get('data', {}).get('detail') for f in no_auth_findings]}, "
-            f"text excerpt: {text[:300]}"
+        assert cip_security_detail, (
+            f"Expected a CIP Security detail on a 'No authentication' finding. "
+            f"Finding details: {[f.get('data', {}).get('details') for f in no_auth_findings]}"
         )
 
     @pytest.mark.security
@@ -1434,18 +1451,16 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
 
         findings = log.get_security_findings()
 
-        # Against cpppo mock: should have at least "No authentication" and "No encryption"
+        # Against cpppo mock (no CIP Security, no TLS): _analyze_security always runs
+        # and must emit both structured findings.
         finding_names = [f.get("data", {}).get("finding", "") for f in findings]
         text = _combined_text(result, log)
 
-        has_auth = "No authentication" in finding_names or "authentication" in text
-        has_encrypt = "No encryption" in finding_names or "encrypt" in text
-
-        assert has_auth, (
+        assert "No authentication" in finding_names, (
             f"Expected 'No authentication' finding from security analysis. "
             f"Findings: {finding_names}, text excerpt: {text[:300]}"
         )
-        assert has_encrypt or "tls" in text or "dtls" in text, (
+        assert "No encryption" in finding_names, (
             f"Expected 'No encryption' finding from security analysis. "
             f"Findings: {finding_names}, text excerpt: {text[:300]}"
         )
@@ -1455,8 +1470,13 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         """Test that default scan produces expected security findings [Category A]
 
         A default scan (no flags) runs ListIdentity + security dump (enabled by default).
-        Against cpppo, this should produce: 'Anonymous access allowed', 'No authentication',
-        and 'No encryption' at minimum.
+        Against cpppo (no CIP Security, no TLS), the security analysis must produce
+        'No authentication' and 'No encryption'.
+
+        Note: ListIdentity must NOT produce an 'Anonymous access allowed' finding.
+        ListIdentity is an ODVA-mandated unauthenticated query, so flagging it as
+        anonymous access was a false positive removed in commit 41d11682. This test
+        guards against that regression returning.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1476,17 +1496,20 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         finding_names = [f.get("data", {}).get("finding", "") for f in findings]
         text = _combined_text(result, log)
 
-        # Expect at least "Anonymous access allowed" from ListIdentity
-        has_anonymous = "Anonymous access allowed" in finding_names or "anonymous" in text
-        assert has_anonymous, (
-            f"Expected 'Anonymous access allowed' from default scan. "
-            f"Findings: {finding_names}, text excerpt: {text[:300]}"
+        # Regression guard: ListIdentity must NOT be flagged as anonymous access.
+        assert "Anonymous access allowed" not in finding_names, (
+            f"'Anonymous access allowed' is a removed false positive and must not "
+            f"reappear. Findings: {finding_names}"
         )
 
-        # _analyze_security always runs - check for "No authentication" from CIP Security
-        has_no_auth = "No authentication" in finding_names or "no authentication" in text
-        assert has_no_auth, (
-            f"Expected 'No authentication' from _analyze_security. "
+        # _analyze_security always runs - it must produce "No authentication" from CIP
+        # Security (NOT SUPPORTED on cpppo) and "No encryption" (no TLS/DTLS).
+        assert "No authentication" in finding_names, (
+            f"Expected 'No authentication' finding from _analyze_security. "
+            f"Findings: {finding_names}, text excerpt: {text[:300]}"
+        )
+        assert "No encryption" in finding_names, (
+            f"Expected 'No encryption' finding from _analyze_security. "
             f"Findings: {finding_names}, text excerpt: {text[:300]}"
         )
 
@@ -1514,16 +1537,14 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
 
         findings = log.get_security_findings()
-        text = _combined_text(result, log)
 
-        # _analyze_security still runs and produces "No authentication" finding
+        # _analyze_security still runs even with --no-check-security and produces the
+        # structured "No authentication" finding against the cpppo mock.
         has_no_auth = any(f.get("data", {}).get("finding") == "No authentication" for f in findings)
-        has_text = "no authentication" in text or "not supported" in text
 
-        assert has_no_auth or has_text, (
+        assert has_no_auth, (
             f"Expected 'No authentication' from _analyze_security even with --no-check-security. "
-            f"Findings: {[f.get('data') for f in findings]}, "
-            f"text excerpt: {text[:300]}"
+            f"Findings: {[f.get('data') for f in findings]}"
         )
 
     # ========================================================================

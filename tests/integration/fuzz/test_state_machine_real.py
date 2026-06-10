@@ -422,12 +422,17 @@ class TestIEC104Real:
         state_names = {s.name for s in sm.states.values()}
         assert state_names == {"DISCONNECTED", "CONNECTED", "DATA_TRANSFER"}
 
-    def test_iec104_initial_state_disconnected(self, tmp_path):
-        """IEC 104 state machine should start in DISCONNECTED."""
-        fuzzer = self._make_fuzzer(tmp_path)
-        sm = _get_inner_state_machine(fuzzer)
-        if sm is None:
-            pytest.skip("IEC 104 state machine not created")
+    def test_iec104_initial_state_disconnected(self):
+        """A freshly-constructed IEC 104 state machine starts in DISCONNECTED.
+
+        The fully-initialized *fuzzer's* machine is intentionally advanced to
+        DATA_TRANSFER so it can fuzz I-format frames (which are only valid in
+        data-transfer state), so the initial-state contract is asserted on a bare
+        state machine rather than on the ready-to-fuzz fuzzer.
+        """
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
+
+        sm = IEC104StateMachine()
         assert sm.current_state.name == "DISCONNECTED"
 
     def test_iec104_sequences_configured(self, tmp_path):

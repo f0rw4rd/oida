@@ -9,7 +9,6 @@ Handles passive traffic sniffing and raw CAN operations:
 - Arbitration ID filter parsing
 """
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from ....utils.export_utils import export_table
@@ -22,7 +21,6 @@ from ..constants import (
     COMMON_UDS_PAIRS,
     OBD2_REQUEST_ID,
     OBD2_RESPONSE_RANGE,
-    CANDevice,
     CANMessage,
     CANTrafficStats,
 )
@@ -72,8 +70,13 @@ class TrafficMixin:
             if msg is None:
                 continue
 
-            msg_count += 1
             arb_id = msg.arbitration_id
+
+            # Apply ID filter if set — restrict the capture to matching IDs.
+            if self.id_filter and arb_id not in self.id_filter:
+                continue
+
+            msg_count += 1
             ts = msg.timestamp if msg.timestamp else time.time()
 
             # Update ID counts
@@ -93,27 +96,6 @@ class TrafficMixin:
             if msg.is_remote_frame:
                 stats.remote_frames += 1
 
-            # Apply filter if set
-            if self.id_filter and arb_id not in self.id_filter:
-                continue
-
-            # Store sample data for device classification
-            device = self.discovered_devices.get(arb_id)
-            if device is None:
-                device = CANDevice(
-                    arbitration_id=arb_id,
-                    first_seen=datetime.fromtimestamp(ts).isoformat(),
-                    last_seen=datetime.fromtimestamp(ts).isoformat(),
-                )
-                self.discovered_devices[arb_id] = device
-
-            device.message_count += 1
-            device.last_seen = datetime.fromtimestamp(ts).isoformat()
-
-            # Keep up to 5 data samples per ID
-            if len(device.data_samples) < 5:
-                device.data_samples.append(bytes(msg.data))
-
         actual_duration = time.time() - start_time
         stats.total_messages = msg_count
         stats.unique_ids = len(stats.id_counts)
@@ -122,7 +104,6 @@ class TrafficMixin:
             round(msg_count / actual_duration, 1) if actual_duration > 0 else 0
         )
 
-        self.traffic_stats = stats
         return stats
 
     def _print_traffic_stats(self, stats: CANTrafficStats) -> None:

@@ -546,6 +546,18 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
                 )
                 return
 
+            # UNKNOWN_IOA is the expected outcome of a discovery interrogation:
+            # the server returns points we never pre-registered in c104's local
+            # station model, so c104 flags each ASDU's first IOA as unexpected.
+            # The scanner's own on_receive_raw parser discovers these points
+            # correctly, so this is noise, not a failure. Record it (already done
+            # above) but keep it at debug level instead of a misleading [-] line.
+            if cause == c104.Umc.UNKNOWN_IOA:
+                self.logger.debug(
+                    f"UNKNOWN_IOA: Type={type_str} CA={message.common_address} IOA={message.io_address}"
+                )
+                return
+
             self.logger.fail(
                 f"Unexpected message: {cause_str} Type={type_str} CA={message.common_address} IOA={message.io_address}"
             )

@@ -471,45 +471,6 @@ class FileTransferMixin(_ScannerBase):
                 "error": str(e),
             }
 
-    def _abort_file_transfer(self, file_handle: int, results: Dict[str, Any]) -> None:
-        """Abort an in-progress file transfer.
-
-        Uses IMaster.AbortFile with the file handle from a previous
-        open operation.
-        """
-        dnp3 = self._dnp3
-
-        try:
-            result = self._sync_callback(
-                lambda master, cb, config: master.AbortFile(file_handle, cb, config),
-            )
-
-            if result is None:
-                self.logger.warning("Abort file transfer timed out")
-                results["operations"]["abort_file"] = {
-                    "success": False,
-                    "file_handle": file_handle,
-                    "error": "Timeout waiting for response",
-                }
-                return
-
-            status = result.statusCode
-            success = status == dnp3.FileStatus.SUCCESS
-            result_str = "SUCCESS" if success else status.name
-            self.logger.display(f"Abort file transfer (handle={file_handle}): {result_str}")
-            results["operations"]["abort_file"] = {
-                "success": success,
-                "file_handle": file_handle,
-            }
-
-        except Exception as e:
-            self.logger.fail(f"Abort file error: {type(e).__name__}: {e}")
-            results["operations"]["abort_file"] = {
-                "success": False,
-                "file_handle": file_handle,
-                "error": str(e),
-            }
-
     def _read_octet_string(self, results: Dict[str, Any]) -> None:
         """Read octet string data points (Groups 110-111).
 

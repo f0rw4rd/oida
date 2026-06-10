@@ -113,7 +113,9 @@ class SecurityMixin:
         self.logger.display("  Checking anonymous read access...")
         if self.devices:
             self.logger.security_finding(
-                "Anonymous access", "Anonymous read access enabled - no authentication required"
+                "Anonymous access",
+                category="ACCESS_CONTROL",
+                detail="Anonymous read access enabled - no authentication required",
             )
             vulns.append("Anonymous read access - no authentication required")
 
@@ -173,7 +175,8 @@ class SecurityMixin:
                         if success:
                             self.logger.security_finding(
                                 "Writable access",
-                                f"Anonymous write access on {obj_type}:{instance}",
+                                category="ACCESS_CONTROL",
+                                detail=f"Anonymous write access on {obj_type}:{instance}",
                             )
                             return
                     except Exception as e:
@@ -211,7 +214,9 @@ class SecurityMixin:
 
         if writable_count > 0:
             self.logger.security_finding(
-                "Writable access", f"Found {writable_count} writable control points"
+                "Writable access",
+                category="ACCESS_CONTROL",
+                detail=f"Found {writable_count} writable control points",
             )
 
     def _handle_check_reinit(self):
@@ -396,7 +401,11 @@ class SecurityMixin:
         try:
             response = await asyncio.wait_for(app.request(request), timeout=timeout)
             if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
-                self.logger.security_finding("Anonymous access", "Anonymous READ access allowed")
+                self.logger.security_finding(
+                    "Anonymous access",
+                    category="ACCESS_CONTROL",
+                    detail="Anonymous READ access allowed",
+                )
                 findings.append("Anonymous read access enabled - no authentication required")
             else:
                 self.logger.success("  [+] Anonymous READ access: DENIED")
@@ -417,7 +426,9 @@ class SecurityMixin:
                 response = await asyncio.wait_for(app.request(request), timeout=2.0)
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                     self.logger.security_finding(
-                        "Insecure configuration", f"Password property '{prop}' is readable"
+                        "Insecure configuration",
+                        category="ACCESS_CONTROL",
+                        detail=f"Password property '{prop}' is readable",
                     )
                     findings.append(f"Password property '{prop}' is readable")
             except BaseException as e:
@@ -480,7 +491,9 @@ class SecurityMixin:
                     if self._is_success_response(response, types):
                         display_pass = password if password else "(empty)"
                         self.logger.security_finding(
-                            "Weak password", f"DCC Password found: '{display_pass}'"
+                            "Weak password",
+                            category="AUTHENTICATION",
+                            detail=f"DCC Password found: '{display_pass}'",
                         )
                         found_passwords.append(("DeviceCommunicationControl", password))
                         break
@@ -532,7 +545,8 @@ class SecurityMixin:
                         display_pass = password if password else "(empty)"
                         self.logger.security_finding(
                             "Weak password",
-                            f"DCC accepted with password: '{display_pass}' - device can be disabled",
+                            category="AUTHENTICATION",
+                            detail=f"DCC accepted with password: '{display_pass}' - device can be disabled",
                         )
                         return
                     else:
@@ -692,7 +706,8 @@ class SecurityMixin:
             self.logger.display("  [-] No BACnet/SC support detected")
             self.logger.security_finding(
                 "No encryption",
-                "All BACnet/IP traffic is unencrypted - implement BACnet/SC or network segmentation",
+                category="ENCRYPTION",
+                detail="All BACnet/IP traffic is unencrypted - implement BACnet/SC or network segmentation",
             )
 
     async def _bacpypes3_test_priority_writes(
@@ -829,7 +844,8 @@ class SecurityMixin:
             if critical:
                 self.logger.security_finding(
                     "Writable access",
-                    f"Life Safety priorities writable: {critical} - attacker can override life safety controls",
+                    category="ACCESS_CONTROL",
+                    detail=f"Life Safety priorities writable: {critical} - attacker can override life safety controls",
                 )
             operator = [p for p in writable_priorities if p == 8]
             if operator:
@@ -848,6 +864,9 @@ class SecurityMixin:
         """
         types = _load_bacpypes3()
         TimeSynchronizationRequest = types["TimeSynchronizationRequest"]
+        DateTime = types["DateTime"]
+        Date = types["Date"]
+        Time = types["Time"]
         AbortPDU = types["AbortPDU"]
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
@@ -862,9 +881,13 @@ class SecurityMixin:
         now = datetime.now()
 
         try:
+            # TimeSynchronizationRequest has a single 'time' element of type
+            # DateTime (date + time), not separate date=/time= kwargs.
             request = TimeSynchronizationRequest(
-                date=(now.year - 1900, now.month, now.day, now.weekday() + 1),
-                time=(now.hour, now.minute, now.second, 0),
+                time=DateTime(
+                    date=Date((now.year - 1900, now.month, now.day, now.weekday() + 1)),
+                    time=Time((now.hour, now.minute, now.second, 0)),
+                ),
             )
             request.pduDestination = target_addr
 
@@ -993,7 +1016,9 @@ class SecurityMixin:
                 ):
                     writable.append((obj_type, instance))
                     self.logger.security_finding(
-                        "Writable access", f"{obj_type}:{instance} outOfService is writable"
+                        "Writable access",
+                        category="ACCESS_CONTROL",
+                        detail=f"{obj_type}:{instance} outOfService is writable",
                     )
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 test oos failed: {e}")
@@ -1008,7 +1033,8 @@ class SecurityMixin:
         if writable:
             self.logger.security_finding(
                 "Writable access",
-                f"{len(writable)} objects have writable outOfService flag - control loops can be disabled",
+                category="ACCESS_CONTROL",
+                detail=f"{len(writable)} objects have writable outOfService flag - control loops can be disabled",
             )
         elif not getattr(self.args, "confirm", False) and readable:
             self.logger.display("  Write test skipped (use --confirm to test writes)")

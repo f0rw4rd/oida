@@ -137,7 +137,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.protocol_name = "ocpp"
         self.default_port = DEFAULT_WS_PORT
         self.conn = None
-        self._scan_results = {}
         self.scanner = None
 
         # Determine the target URL from args
@@ -219,10 +218,8 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             self.logger.debug("Listen mode requested")
             self._enter_listen_mode()
 
-        # --- Default scan if no specific operations requested ---
-        if not self._has_any_operation_flag():
-            self.logger.debug("No operation flags set, running default scan")
-            self._default_scan()
+        # No specific operation flags → the basic info (version, boot,
+        # heartbeat) already displayed during connect is the default scan.
 
     def _dispatch_discovery(self):
         """Dispatch discovery operations based on CLI flags."""
@@ -366,11 +363,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             self.logger.debug(f"Dispatching TriggerMessage: {getattr(self.args, 'trigger', '')}")
             self._handle_trigger_message()
 
-    def _default_scan(self):
-        """Default scan when no specific flags are given (like OPC UA pattern)."""
-        # Basic info is already displayed (version, boot, heartbeat).
-        # Nothing else to do by default — user picks operations via flags.
-        pass
 
     def _enter_listen_mode(self):
         """Enter persistent listen mode with heartbeat keep-alive."""
@@ -572,7 +564,8 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
                 self.logger.display(f"[Authorize] {auth_id}: {status}")
                 self.results["data"]["authorize"] = {"id_tag": auth_id, "status": status}
             elif msg_type == MessageType.CALLERROR:
-                self.logger.display(f"[Authorize] Error: {payload.get('error_code', 'Unknown')}")
+                # error_code lives on the parsed response, not the request payload.
+                self.logger.display(f"[Authorize] Error: {resp_payload.get('error_code', 'Unknown')}")
         else:
             self.logger.display("[Authorize] No response")
 
@@ -622,7 +615,8 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         if self.conn and not getattr(self.args, "username", None):
             self.logger.success(f"Connected to OCPP endpoint at {self._target_url}")
             self.logger.security_finding(
-                "Anonymous access", "Anonymous connection accepted (no credentials provided)"
+                "Anonymous access",
+                detail="Anonymous connection accepted (no credentials provided)",
             )
         elif self.conn:
             self.logger.success(f"Connected to OCPP endpoint at {self._target_url}")

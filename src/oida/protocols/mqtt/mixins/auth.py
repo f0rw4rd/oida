@@ -39,7 +39,11 @@ class AuthMixin:
             )
 
         if success:
-            self.logger.security_finding("Anonymous access", "Anonymous authentication allowed")
+            self.logger.security_finding(
+                "Anonymous access",
+                category="ACCESS_CONTROL",
+                detail="Anonymous authentication allowed",
+            )
         else:
             self.logger.display(f"Anonymous authentication denied ({reason})")
         return result
@@ -117,7 +121,8 @@ class AuthMixin:
                 self.valid_credentials.append((user, passwd))
                 self.logger.security_finding(
                     "Default credentials",
-                    f"Valid MQTT credentials: {user}:***",
+                    category="ACCESS_CONTROL",
+                    detail=f"Valid MQTT credentials: {user}:***",
                 )
 
                 # Stop on first success unless continue_on_success is set (default: stop)

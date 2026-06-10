@@ -61,12 +61,22 @@ class FuzzerApplication:
                 ),
                 sleep_time=getattr(args, "sleep_time", 0.0),
                 monitor_retry_delay=getattr(args, "monitor_retry_delay", 0.1),
+                # Socket timeouts / reconnection (None = connection/protocol default)
+                recv_timeout=getattr(args, "recv_timeout", None),
+                send_timeout=getattr(args, "send_timeout", None),
+                reconnect_delay=getattr(args, "reconnect_delay", None),
+                max_reconnect_attempts=getattr(args, "max_reconnect_attempts", None),
                 # TLS configuration
                 tls_enabled=getattr(args, "tls_enabled", False),
                 # Capability enumeration
                 enumerate=getattr(args, "enumerate", True),
                 # Crash handling
                 pause_on_crash=getattr(args, "pause_on_crash", False),
+                # Timeout calibration
+                calibrate=getattr(args, "calibrate", True),
+                calibration_probes=getattr(args, "calibration_probes", 50),
+                adaptive_timeout=getattr(args, "adaptive_timeout", False),
+                detect_drift=getattr(args, "detect_drift", False),
             )
 
             # Create fuzzer with optional connection factory injection

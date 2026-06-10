@@ -27,7 +27,7 @@ Usage:
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 import struct
 import logging
 
@@ -181,11 +181,6 @@ class TCPStateTracker:
         self.fuzzer = fuzzer
         self.enforce_states = enforce_states
         self._connection_count = 0
-
-        # Sequence tracking for connection reuse
-        self._local_seq = 0
-        self._remote_seq = 0
-        self._local_ack = 0
 
         # Track invalid transitions that were attempted (for attack reporting)
         self._invalid_transition_count = 0
@@ -360,9 +355,6 @@ class TCPStateTracker:
     def _reset_state(self, reason: str) -> None:
         """Reset state machine to CLOSED state."""
         old_state = self.current_state_name
-        self._local_seq = 0
-        self._remote_seq = 0
-        self._local_ack = 0
 
         if self._sm:
             try:
@@ -530,45 +522,6 @@ class TCPStateTracker:
 
     # Public API
 
-    def force_state(self, state: TCPState, reason: str = "forced") -> None:
-        """
-        Force state machine to a specific state (for attack testing).
-
-        Args:
-            state: Target TCPState to force
-            reason: Reason for forcing (for logging)
-        """
-        self._transition_to(state.name, reason, force=True)
-
-    def get_statistics(self) -> Dict:
-        """
-        Get state tracking statistics from the central StateMachine.
-
-        Returns:
-            Dict with state tracking statistics
-        """
-        if not self._sm:
-            return {
-                "current_state": "CLOSED",
-                "total_transitions": 0,
-                "invalid_transitions": 0,
-                "connection_resets": 0,
-                "states_visited": [],
-            }
-
-        transition_log = self._sm.get_transition_log()
-        state_history = self._sm.get_state_history()
-
-        return {
-            "current_state": self._sm.get_current_state_name(),
-            "total_transitions": len(transition_log),
-            "invalid_transitions": self._invalid_transition_count,
-            "connection_resets": sum(
-                1 for t in transition_log if t.get("to") == "CLOSED" and t.get("forced")
-            ),
-            "states_visited": list(set(state_history)),
-        }
-
     def get_transition_summary(self) -> str:
         """
         Get human-readable transition summary from the central StateMachine.
@@ -682,88 +635,3 @@ class StatefulTCPFuzzerMixin:
         Creates a TCPStateTracker that delegates to self.state_machine.
         """
         self.state_tracker = TCPStateTracker(self, enforce_states=enforce_states)
-
-    def fuzz_with_state_tracking(self) -> None:
-        """
-        Run fuzzing with active state tracking.
-
-        Alternative to fuzz_all() that enables state tracking.
-        """
-        if not hasattr(self, "state_tracker"):
-            self._init_state_tracking()
-
-        self.state_tracker.register_callbacks()
-        self.fuzz_all()
-
-        # Log summary at end
-        self.log.display(self.state_tracker.get_transition_summary())
-
-    def fuzz_state_confusion(self) -> None:
-        """
-        Run fuzzing specifically targeting state confusion vulnerabilities.
-
-        Sends packets in invalid state sequences to test target robustness.
-        Uses the central StateMachine in attack mode (allow_invalid_transitions).
-        """
-        if not hasattr(self, "state_tracker"):
-            self._init_state_tracking(enforce_states=False)
-        else:
-            self.state_tracker.enforce_states = False
-
-        # Enable attack mode on the central state machine
-        if self.state_machine:
-            self.state_machine.enable_invalid_state_testing()
-
-        self.state_tracker.register_callbacks()
-
-        # Define attack sequences (intentionally invalid)
-        attack_sequences = [
-            # Data before handshake
-            ("TCP_Data", TCPState.CLOSED),
-            # FIN before established
-            ("TCP_FIN", TCPState.SYN_SENT),
-            # Multiple SYNs
-            ("TCP_SYN", TCPState.ESTABLISHED),
-            # ACK in wrong state
-            ("TCP_SACK", TCPState.CLOSED),
-        ]
-
-        self.log.display("Testing state confusion attacks...")
-
-        for request_name, forced_state in attack_sequences:
-            self.log.display(f"Attack: {request_name} from {forced_state.name}")
-            self.state_tracker.force_state(forced_state, f"attack_{request_name}")
-
-            try:
-                self.fuzz_node(request_name)
-            except Exception as e:
-                self.log.display(f"  Result: {e}")
-
-        # Log results
-        stats = self.state_tracker.get_statistics()
-        self.log.display(f"Invalid transitions triggered: {stats['invalid_transitions']}")
-
-        # Restore normal validation
-        if self.state_machine:
-            self.state_machine.disable_invalid_state_testing()
-
-    def get_valid_requests_for_state(self) -> List[str]:
-        """
-        Get list of requests valid for current state.
-
-        Reads current state from the central StateMachine.
-
-        Returns:
-            List of request names that are valid in current state
-        """
-        if not self.state_machine:
-            return list(TCPStateTracker.REQUEST_STATE_MAP.keys())
-
-        current = self.state_machine.get_current_state_name()
-        valid = []
-
-        for req_name, (expected, _) in TCPStateTracker.REQUEST_STATE_MAP.items():
-            if expected is None or expected == current:
-                valid.append(req_name)
-
-        return valid

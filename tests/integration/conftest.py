@@ -534,7 +534,30 @@ def docker_setup():
             # Starting new services would likely fail with a Docker network
             # overlap error.  Let per-test skip guards handle missing services.
             return []
-        return ["up -d --wait " + " ".join(sorted(to_start))]
+        # Bring the services up ourselves (rather than delegating the command to
+        # pytest-docker) so a build/start failure -- e.g. an upstream package that
+        # has vanished from its index -- degrades to per-test skips via
+        # _check_required_containers instead of erroring the entire session.
+        cmd = [
+            "docker",
+            "compose",
+            "-f",
+            str(DOCKER_COMPOSE_PATH),
+            "-p",
+            "oida-test",
+            "up",
+            "-d",
+            "--wait",
+            *sorted(to_start),
+        ]
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, timeout=600)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            print(
+                f"[docker_setup] could not start {sorted(to_start)}: {e}; "
+                "per-test guards will skip unavailable services"
+            )
+        return []
     return []  # Everything already running — no Docker commands
 
 

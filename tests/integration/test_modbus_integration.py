@@ -1182,14 +1182,12 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
         succeed, the safe write-back test (read value, write same value)
         should find writable registers and emit:
           logger.security_finding("Writable access", "Found N writable holding_registers")
-        which appears as event_type="security" with data.finding="Writable access".
+        which appears as event_type="security" with data.finding="Writable access"
+        and data.details="Found N writable holding_registers".
 
-        NOTE: pymodbus 3.12+ removed the ``slave`` keyword from read/write
-        calls, causing register reads to fail in some configurations.  When
-        reads fail the finding cannot be triggered, so the security-finding
-        assertion is conditional on reads actually succeeding.  The test
-        still unconditionally validates that the scanner attempted the
-        test-write operation.
+        The mock accepts writes to its holding registers, so against this
+        target the finding MUST fire; the assertions below are therefore
+        unconditional.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1221,26 +1219,28 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             f"Expected '[Results]' summary in log output, got: {messages[:500]}"
         )
 
-        # --- CONDITIONAL: validate security finding when reads succeed ---
-        # Check whether any writable registers were found (reads may fail
-        # due to pymodbus version incompatibility with slave= kwarg)
+        # --- The mock accepts writes, so the finding MUST fire ---
         security_events = log.get_security_findings()
         writable_findings = [
             e for e in security_events if e.get("data", {}).get("finding") == "Writable access"
         ]
-        if writable_findings:
-            # Full Category-A validation of the finding payload
-            finding_data = writable_findings[0].get("data", {})
-            details = finding_data.get("details", "")
-            assert "writable" in details.lower(), (
-                f"Finding details should mention 'writable', got: {details}"
-            )
-            assert "holding_registers" in details.lower(), (
-                f"Finding details should mention 'holding_registers', got: {details}"
-            )
-            assert "writable:" in messages and "writable: 0" not in messages, (
-                "When the finding fires, at least one register must be writable"
-            )
+        assert writable_findings, (
+            "Expected a 'Writable access' security finding against the writable "
+            f"mock, got security events: {security_events}"
+        )
+
+        # Full Category-A validation of the finding payload.
+        finding_data = writable_findings[0].get("data", {})
+        details = finding_data.get("details", "")
+        assert "writable" in details.lower(), (
+            f"Finding details should mention 'writable', got: {details!r}"
+        )
+        assert "holding_registers" in details.lower(), (
+            f"Finding details should mention 'holding_registers', got: {details!r}"
+        )
+        assert "writable:" in messages and "writable: 0" not in messages, (
+            "When the finding fires, at least one register must be writable"
+        )
 
     @pytest.mark.security
     def test_test_write_thorough(self, cli_runner, target, port, docker_services):
@@ -1291,7 +1291,12 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.containers("modbus-sunspec")
     def test_sunspec_discovery(self, cli_runner, target, docker_services):
-        """Test SunSpec model discovery (--sunspec / -S) [Category B]"""
+        """Test SunSpec model discovery (--sunspec / -S) [Category A]
+
+        Runs against the dedicated SunSpec mock (port 5502), which always
+        exposes a valid model chain. The scanner must locate the SunSpec
+        marker at base 40000 and walk the full 7-model chain.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1303,12 +1308,15 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=30,
         )
 
-        # SunSpec may not be supported by the base mock (needs sunspec variant)
-        assert result.returncode in [0, 1]
-        if result.success:
-            _assert_log_has_events(result)
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
+        assert result.success, f"SunSpec discovery failed: {result.stderr}"
+        assert result.returncode == 0, f"Expected return code 0, got {result.returncode}"
+        _assert_log_has_events(result)
+        _assert_log_event_structure(result.scan_log)
+
+        output = result.combined_output.lower()
+        assert "marker found" in output, "Should locate the SunSpec marker"
+        assert "40000" in output, "SunSpec marker should be at base address 40000"
+        assert "7 model" in output, "Should walk the full 7-model SunSpec chain"
 
     # ========================================================================
     # Unit ID Tests
@@ -2162,7 +2170,12 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.containers("modbus-rtu-tcp")
     def test_rtu_over_tcp_multi_unit(self, cli_runner, target, docker_services):
-        """Test RTU-over-TCP with specific unit ID (power meter) [Category B]"""
+        """Test RTU-over-TCP with specific unit ID (gateway) [Category A]
+
+        The RTU gateway mock responds on unit ID 3 with correct RTU framing
+        and returns its Server ID. Connecting and reading the Server ID only
+        works when the RTU-over-TCP framing is applied correctly.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -2178,11 +2191,16 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=20,
         )
 
-        assert result.returncode in [0, 1]
-        if result.success:
-            _assert_log_has_events(result)
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
+        assert result.success, f"RTU-over-TCP unit-3 scan failed: {result.stderr}"
+        assert result.returncode == 0, f"Expected return code 0, got {result.returncode}"
+        _assert_log_has_events(result)
+        _assert_log_event_structure(result.scan_log)
+        output = result.combined_output.lower()
+        assert "rtu-over-tcp" in output, "Should confirm RTU-over-TCP framing"
+        assert "unit id: 3" in output, "Should scan the requested unit ID 3"
+        assert "oida-rtu-gw" in output, (
+            "Should retrieve RTU gateway Server ID (only readable with correct RTU framing)"
+        )
 
     def test_ascii_over_tcp(self, cli_runner, target, port, docker_services):
         """Test ASCII-over-TCP framing [Category B]"""
@@ -2250,7 +2268,13 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
     @pytest.mark.security
     @pytest.mark.containers("modbus-tls")
     def test_tls_transport(self, cli_runner, target, docker_services):
-        """Test TLS transport (port 802) [Category B]"""
+        """Test TLS transport (port 802) [Category A]
+
+        The TLS mock completes the TLS handshake without a client cert (data
+        reads require mTLS, but the transport-layer handshake always succeeds).
+        Assert the TLS session established and the server certificate was
+        inspected, proving the --tls transport is wired up end to end.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -2266,10 +2290,11 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
         )
 
         assert result.returncode in [0, 1]
-        if result.success:
-            _assert_log_has_events(result)
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
+        _assert_log_has_events(result)
+        _assert_log_event_structure(result.scan_log)
+        output = result.combined_output.lower()
+        assert "connected via tls" in output, "Should establish the TLS transport"
+        assert "x509 certificate" in output, "Should inspect the server X509 certificate"
 
     @pytest.mark.security
     @pytest.mark.containers("modbus-tls")
@@ -2333,11 +2358,17 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=20,
         )
 
+        # The mock's pymodbus ModbusTlsServer does not enforce mTLS client
+        # cert verification at the handshake, so register reads may succeed
+        # or fail -- accept either outcome.
         assert result.returncode in [0, 1]
-        if result.success:
-            _assert_log_has_events(result)
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
+        _assert_log_has_events(result)
+        _assert_log_event_structure(result.scan_log)
+        output = result.combined_output.lower()
+        # Regardless of the (unenforced) mTLS outcome, the TLS handshake itself
+        # always completes and the bogus client cert is offered to the server.
+        assert "connected via tls" in output, "TLS handshake should complete"
+        assert "bogus.pem" in output, "Should offer the supplied (bogus) client certificate"
 
     @pytest.mark.security
     def test_tls_wrong_port(self, cli_runner, target, docker_services):
@@ -3008,7 +3039,16 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             _assert_log_event_structure(result.scan_log)
 
     def test_raw_fc_unsupported_code(self, cli_runner, target, port, docker_services):
-        """Send to unsupported FC 99, expect exception or error response [Category C]"""
+        """Send to unsupported FC 99, expect no usable response [Category C]
+
+        --raw-fc can mutate PLC state, so the scanner gates it behind
+        --confirm; without the flag the request is never sent and the test
+        would be vacuous.  With --confirm the FC 99 request is actually
+        transmitted to the mock, which does not implement FC 99 and so
+        returns no valid PDU.  The mock-grounded outcome is therefore an
+        *empty* (0-byte) response (and an internal decode error), in clear
+        contrast to a supported FC such as 3 which returns register bytes.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -3018,19 +3058,27 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "99",
             "--payload",
             "00",
+            "--confirm",
             expect_json=False,
             json_log=True,
         )
-        # Should show exception code 01 (ILLEGAL FUNCTION) or error
-        output = result.combined_output.lower()
         assert result.returncode in [0, 1]
-        # Exception, error, or failure response is expected
-        assert (
-            any(term in output for term in ["exception", "error", "failed", "illegal"])
-            or not result.success
-        ), f"Expected error/exception for unsupported FC 99. Got: {output[:300]}"
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
+
+        # The FC must actually be sent (proves --confirm gate was passed).
+        log = result.scan_log
+        assert log is not None and len(log) > 0, "scan_log should be populated"
+        _assert_log_event_structure(log)
+        messages = _all_messages(log)
+        assert "raw function code 99" in messages, (
+            f"FC 99 should be transmitted, got: {messages[:400]}"
+        )
+
+        # Unsupported FC -> no usable response: the mock returns an empty
+        # PDU (0-byte response) and/or the decode fails.  Either way there
+        # is no non-empty response payload like a supported FC would yield.
+        assert "response (0 bytes)" in messages or "decode failed" in messages, (
+            f"Unsupported FC 99 should yield an empty/failed response, got: {messages[:400]}"
+        )
 
     def test_raw_fc_vendor_range(self, cli_runner, target, port, docker_services):
         """Send to vendor FC range (65-72) [Category C]"""

@@ -405,8 +405,8 @@ class DiscoveryMixin(_ScannerBase):
                             f"  Found: {ip_addr} - {device.get('vendor_name', 'Unknown')} {device.get('product_name', '')}"
                         )
 
-                except TimeoutError as e:
-                    self.logger.debug(f"broadcast discovery failed: {e}")
+                except TimeoutError:
+                    # Normal: poll window elapsed with no more responses.
                     continue
                 except Exception as e:
                     self.logger.debug(f"Error receiving broadcast response: {e}")
@@ -419,8 +419,7 @@ class DiscoveryMixin(_ScannerBase):
                 try:
                     sock.close()
                 except Exception as e:
-                    self.logger.debug(f"broadcast discovery failed: {e}")
-                    pass  # Ignore socket close errors
+                    self.logger.debug(f"broadcast socket close failed: {e}")
 
         self.logger.display(f"Discovered {len(devices)} device(s)")
         return devices

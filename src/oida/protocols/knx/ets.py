@@ -48,7 +48,7 @@ def _test_knxproj_password_mp(args: tuple) -> Optional[str]:
         XKNXProj = _get_xknxproject()
         if XKNXProj is None:
             return None
-        proj = XKNXProj(Path(file_path), archive_password=password)
+        proj = XKNXProj(Path(file_path), password=password)
         proj.parse()
         return password
     except Exception as e:
@@ -219,7 +219,7 @@ def parse_knxproj(file_path: str, password: Optional[str] = None) -> Dict[str, A
     if XKNXProj is None:
         raise ImportError("xknxproject not installed (pip install xknxproject)")
 
-    proj = XKNXProj(Path(file_path), archive_password=password)
+    proj = XKNXProj(Path(file_path), password=password)
     data = proj.parse()
 
     # Convert TypedDict to regular dict for JSON serialization
@@ -256,7 +256,7 @@ def test_knxproj_password(file_path: str, password: str) -> bool:
         return False
 
     try:
-        proj = XKNXProj(Path(file_path), archive_password=password)
+        proj = XKNXProj(Path(file_path), password=password)
         proj.parse()
         return True
     except InvalidPasswordException as e:

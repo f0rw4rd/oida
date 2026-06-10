@@ -67,7 +67,9 @@ class FuzzMixin(_ScannerBase):
             base_payloads = [b"", b"\x00" * 10, b"\xff" * 10, b"\x00\x01\x02\x03\x04"]
 
             for base_payload in base_payloads:
-                for i, payload in enumerate(
+                # fuzz() yields (payload_bytes, description) tuples; unpack so
+                # payload.hex() / send_command(payload) get bytes, not a tuple.
+                for i, (payload, _desc) in enumerate(
                     fuzz(base_payload, count=iterations // len(base_payloads))
                 ):
                     try:

@@ -318,7 +318,7 @@ class TestParseKnxproj:
             mock_xknxproj.assert_called_once()
             # Verify password was passed
             call_args = mock_xknxproj.call_args
-            assert call_args[1]["archive_password"] == "secret123"
+            assert call_args[1]["password"] == "secret123"
 
     def test_parse_xknxproject_not_installed(self, ets, mock_knxproj_ets5):
         """Test ImportError when xknxproject is not installed."""
@@ -885,7 +885,7 @@ class TestErrorHandling:
         """Test handling of corrupted XML in project file."""
 
         class XKNXProjMock:
-            def __init__(self, path, archive_password=None):
+            def __init__(self, path, password=None):
                 pass
 
             def parse(self):

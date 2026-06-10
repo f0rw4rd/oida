@@ -1569,6 +1569,7 @@ all = [
     { name = "hartip-py" },
     { name = "hl7apy" },
     { name = "netifaces" },
+    { name = "oida-pyshark" },
     { name = "paho-mqtt" },
     { name = "profinet-py" },
     { name = "pyads" },
@@ -1578,7 +1579,6 @@ all = [
     { name = "pyiec61850-ng" },
     { name = "pymodbus" },
     { name = "pynetdicom" },
-    { name = "pyshark" },
     { name = "pysnmp" },
     { name = "pysoem", marker = "sys_platform != 'win32'" },
     { name = "python-can" },
@@ -1693,7 +1693,7 @@ opcua = [
     { name = "asyncua" },
 ]
 pcap = [
-    { name = "pyshark" },
+    { name = "oida-pyshark" },
 ]
 profinet = [
     { name = "profinet-py" },
@@ -1715,13 +1715,13 @@ requires-dist = [
     { name = "bac0", marker = "extra == 'bacnet'", specifier = ">=2025.9.15" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.9.3" },
     { name = "boofuzz", marker = "extra == 'fuzz'", specifier = ">=0.4.0" },
-    { name = "brotli", marker = "extra == 'dev'", specifier = ">=1.1.0" },
+    { name = "brotli", marker = "extra == 'dev'", specifier = ">=1.2.0" },
     { name = "c104", marker = "extra == 'iec104'", specifier = ">=2.2.1" },
     { name = "cbor2", marker = "extra == 'coap'", specifier = ">=5.4" },
     { name = "crc", marker = "extra == 'fuzz'", specifier = ">=7.1.0" },
     { name = "defusedxml", marker = "extra == 'dev'", specifier = ">=0.7.1" },
     { name = "defusedxml", marker = "extra == 'discovery'", specifier = ">=0.7.1" },
-    { name = "docker", marker = "extra == 'dev'", specifier = ">=7.0.0" },
+    { name = "docker", marker = "extra == 'dev'", specifier = ">=7.1.0" },
     { name = "dtlssocket", marker = "sys_platform != 'win32' and extra == 'coap'", specifier = ">=0.2.3" },
     { name = "fhirclient", marker = "extra == 'fhir'", specifier = ">=4.4.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
@@ -1730,30 +1730,30 @@ requires-dist = [
     { name = "hl7apy", marker = "extra == 'hl7'", specifier = ">=1.3.5" },
     { name = "manuf2", specifier = ">=2.0.2" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
-    { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.0,<5" },
+    { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.1,<5" },
     { name = "netifaces", marker = "extra == 'discovery'", specifier = ">=0.11.0" },
     { name = "oida", extras = ["ads", "astm", "bacnet", "can", "coap", "dicom", "discovery", "dnp3", "ethercat"], marker = "extra == 'all'" },
     { name = "oida", extras = ["ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms"], marker = "extra == 'all'" },
     { name = "oida", extras = ["fuzz", "modbus", "mqtt", "ocpp", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2"], marker = "extra == 'all'" },
+    { name = "oida-pyshark", marker = "extra == 'pcap'", specifier = ">=0.6.1.post1" },
     { name = "paho-mqtt", marker = "extra == 'mqtt'", specifier = ">=2.1.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
-    { name = "profinet-py", marker = "extra == 'discovery'", specifier = ">=0.6.1" },
-    { name = "profinet-py", marker = "extra == 'profinet'", specifier = ">=0.6.1" },
+    { name = "profinet-py", marker = "extra == 'discovery'", specifier = ">=0.6.2" },
+    { name = "profinet-py", marker = "extra == 'profinet'", specifier = ">=0.6.2" },
     { name = "pyads", marker = "extra == 'ads'", specifier = ">=3.5.2" },
     { name = "pyasn1", marker = "extra == 'fuzz'", specifier = ">=0.6.2" },
     { name = "pycomm3", marker = "extra == 'ethernetip'", specifier = ">=1.2.16" },
-    { name = "pydicom", marker = "extra == 'dicom'", specifier = ">=3.0.1" },
-    { name = "pyiec61850-ng", marker = "extra == 'goose'", specifier = ">=1.6.1.1" },
-    { name = "pyiec61850-ng", marker = "extra == 'mms'", specifier = ">=1.6.1.1" },
-    { name = "pyiec61850-ng", marker = "extra == 'tase2'", specifier = ">=1.6.1.1" },
+    { name = "pydicom", marker = "extra == 'dicom'", specifier = ">=3.0.2" },
+    { name = "pyiec61850-ng", marker = "extra == 'goose'", specifier = ">=1.6.1.3" },
+    { name = "pyiec61850-ng", marker = "extra == 'mms'", specifier = ">=1.6.1.3" },
+    { name = "pyiec61850-ng", marker = "extra == 'tase2'", specifier = ">=1.6.1.3" },
     { name = "pymodbus", marker = "extra == 'modbus'", specifier = ">=3.12.0" },
     { name = "pynetdicom", marker = "extra == 'dicom'", specifier = ">=3.0.4" },
     { name = "pyserial", specifier = ">=3.5" },
-    { name = "pyshark", marker = "extra == 'pcap'", git = "https://github.com/f0rw4rd/pyshark.git?subdirectory=src&rev=789993f3f3bab284ae2c8ba5628b721f61f9eb99" },
     { name = "pysnmp", marker = "extra == 'snmp'", specifier = ">=7.1.22" },
     { name = "pysoem", marker = "sys_platform != 'win32' and extra == 'ethercat'", specifier = ">=1.1.13" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.3.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.4.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-docker", marker = "extra == 'dev'", specifier = ">=3.2.5" },
     { name = "pytest-timeout", marker = "extra == 'dev'", specifier = ">=2.4.0" },
@@ -1771,14 +1771,29 @@ requires-dist = [
     { name = "sqlalchemy", marker = "extra == 'fuzz'", specifier = ">=2.0.0" },
     { name = "termcolor", specifier = ">=3.3.0" },
     { name = "tqdm", specifier = ">=4.67.3" },
-    { name = "vulture", marker = "extra == 'dev'", specifier = ">=2.14" },
+    { name = "vulture", marker = "extra == 'dev'", specifier = ">=2.16" },
     { name = "websockets", marker = "extra == 'ocpp'", specifier = ">=16.0" },
     { name = "xknx", marker = "extra == 'knx'", specifier = ">=3.15.0" },
-    { name = "xknxproject", marker = "extra == 'knx'", specifier = ">=3.8.2" },
+    { name = "xknxproject", marker = "extra == 'knx'", specifier = ">=3.9.0" },
     { name = "yadnp3", marker = "extra == 'dnp3'", specifier = ">=3.2.1.1" },
     { name = "zeroconf", marker = "extra == 'discovery'", specifier = ">=0.148.0" },
 ]
 provides-extras = ["ads", "bacnet", "can", "coap", "dicom", "discovery", "dnp3", "ethercat", "ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms", "modbus", "mqtt", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2", "astm", "ocpp", "fuzz", "all", "dev", "docs"]
+
+[[package]]
+name = "oida-pyshark"
+version = "0.6.1.post1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "appdirs" },
+    { name = "lxml" },
+    { name = "packaging" },
+    { name = "termcolor" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/38/24/1aa836eafde1f3288ff9cdc12a11fd6a7e8f3a764c30f643d6a47aaec071/oida_pyshark-0.6.1.post1.tar.gz", hash = "sha256:9c2de6f00a7f91893f1bdd7593a2acb0ebb936b260d7db2f4403008e4bc3bec7", size = 29486, upload-time = "2026-06-10T08:10:36.322Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/b9/e7563f9a88ed77bd17c426df78d1cce2470ef8558abe3137cb0279d15be5/oida_pyshark-0.6.1.post1-py3-none-any.whl", hash = "sha256:3d8a080cf4a809ebb5a71540aea369ad154d9184c4792f6de2473da42f53cefd", size = 43087, upload-time = "2026-06-10T08:10:34.787Z" },
+]
 
 [[package]]
 name = "packaging"
@@ -2008,15 +2023,19 @@ wheels = [
 
 [[package]]
 name = "pyiec61850-ng"
-version = "1.6.1.2"
+version = "1.6.1.3"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/67/0652aed7f15ef6831b0657eef5fe7b827aac2f99fbe0d032c04d960f01c6/pyiec61850_ng-1.6.1.2-cp310-cp310-win_amd64.whl", hash = "sha256:a8805ba74d95b527f186433c43047a7a17cd02a6f57e30e9b7854856678e33d8", size = 1105179, upload-time = "2026-04-19T19:01:00.85Z" },
-    { url = "https://files.pythonhosted.org/packages/0c/43/a437c1dbdef8a0e73ea5efbfd99cde393f7cc528a8d1b6c9806a26bcc8ba/pyiec61850_ng-1.6.1.2-cp311-cp311-win_amd64.whl", hash = "sha256:f20c8279027b46ae0b8cb2ff015f7790749ceaeddbfc364b0382065bedbd3696", size = 1105114, upload-time = "2026-04-19T19:01:03.123Z" },
-    { url = "https://files.pythonhosted.org/packages/ff/29/809ca0ab06b7534ea35ab7eade25e5954adb6808dc3c494293b94c99582c/pyiec61850_ng-1.6.1.2-cp312-cp312-win_amd64.whl", hash = "sha256:bb5590526a5fc2c2be338a1b5a63caf37d90b8fa0128c1e8948fb76e9ede42b3", size = 1107635, upload-time = "2026-04-19T19:01:04.593Z" },
-    { url = "https://files.pythonhosted.org/packages/6f/81/497589869193402195bd5a7156905eef5ca43760ce3e86e97d132b450e05/pyiec61850_ng-1.6.1.2-cp313-cp313-win_amd64.whl", hash = "sha256:6e96c6494ea99f6df27dbd207a9489a7580e8a531db7949e3187854afdbab123", size = 1107489, upload-time = "2026-04-19T19:01:06.294Z" },
-    { url = "https://files.pythonhosted.org/packages/68/0f/1381e172973f9d90729c536d434eb670f4c465f9f8aa4a026f01c261de78/pyiec61850_ng-1.6.1.2-cp314-cp314-win_amd64.whl", hash = "sha256:71e7c896ccc8d09144f16dcbcfccf4bbcff9dedbb6ece459d43c0afed95b7104", size = 1133672, upload-time = "2026-04-19T19:01:07.764Z" },
-    { url = "https://files.pythonhosted.org/packages/6c/66/877a86a198f7a445ac48d555b37d5f3d6c6bff22a857e22915d6df878a80/pyiec61850_ng-1.6.1.2-py3-none-manylinux1_x86_64.whl", hash = "sha256:96751efbf94f14085612eb9e7f00b445b1a87ee94560c96ae9a42696c9699045", size = 2027990, upload-time = "2026-04-19T19:01:10.869Z" },
+    { url = "https://files.pythonhosted.org/packages/92/e5/3ba16b6d248c71d1d9bd922cdeaa5c59208881a1715c773689476500fdcb/pyiec61850_ng-1.6.1.3-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5563210f8c4287cedacb680240f9de680a1e43bb842002d8c926af941b0931f6", size = 1325613, upload-time = "2026-06-05T21:20:04.222Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/1d/d6550bbb6c55f17371a2e8e4505b4b0fd54ddb7653478014b4d466a0ed96/pyiec61850_ng-1.6.1.3-cp310-cp310-win_amd64.whl", hash = "sha256:8e5c6df64ee99e9b508ea151114ccf5182cb43e71588fe9c2e15c6799671a2b5", size = 1107591, upload-time = "2026-06-05T21:20:05.676Z" },
+    { url = "https://files.pythonhosted.org/packages/65/2c/ff96fc14a669b92e06b2dee2834ae5fa49bc84985600b6dec7a0be23da0b/pyiec61850_ng-1.6.1.3-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9d6f8d1f7702c99134d0f089344cbd40981684ab7877a69c4358e8b76c8b2850", size = 1325591, upload-time = "2026-06-05T21:20:07.491Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/8c/dd261a46a328f18c0fc91371c05dd549fba2d50f3661934c83a95cbcfa91/pyiec61850_ng-1.6.1.3-cp311-cp311-win_amd64.whl", hash = "sha256:dd4ffbe67dde394648263c42df6c4252a147d82348cb5aedce2d8f486f22a9f4", size = 1107529, upload-time = "2026-06-05T21:20:08.748Z" },
+    { url = "https://files.pythonhosted.org/packages/14/61/f43db77683864981046559275dc6b2442dc3939ee0fc7547f4ece74e616c/pyiec61850_ng-1.6.1.3-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6901d7f0e9a6054061d22634551ffd18933042ab5c68737fa67ca011beb0b2ab", size = 1325836, upload-time = "2026-06-05T21:20:09.907Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/6a/bcc6345e3c5651f286a79179b06c5cbd7686a9b35089d60748e9bdfa2ef8/pyiec61850_ng-1.6.1.3-cp312-cp312-win_amd64.whl", hash = "sha256:2cd8f04cdf62c1e02ef2ae5e256410161d9f2b8cf50a014c7d2be39da317af14", size = 1110051, upload-time = "2026-06-05T21:20:11.216Z" },
+    { url = "https://files.pythonhosted.org/packages/68/65/666218a657d9249ce48c97ce3f1349e4e0626e7824b93f6c2dca1cf44f40/pyiec61850_ng-1.6.1.3-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ca0867292bbecb5aba2897eae606684144bd813083e68c728796f5f2b0e5b1cd", size = 1322947, upload-time = "2026-06-05T21:20:12.318Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/59/0a6b8bb2928483f5527d169becc94f2b9f9bb54f48ac2cb2db1fa017c0d7/pyiec61850_ng-1.6.1.3-cp313-cp313-win_amd64.whl", hash = "sha256:b2fc7ce033b8d1aad4ad449f0507fda5ec62dba09003028838e78bfc240a4e9e", size = 1109908, upload-time = "2026-06-05T21:20:13.342Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/6e/7a847070bb9155cb862e90c5543954dffed76fb0d877f43d0c6d12169b90/pyiec61850_ng-1.6.1.3-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:440c69a978c7575956683f3df85b28fc7df8912a0a1cac7ec4371af76affaf0d", size = 1323233, upload-time = "2026-06-05T21:20:14.503Z" },
+    { url = "https://files.pythonhosted.org/packages/72/82/8eb21bb83d22b04cae4b3efb8ffd8710d9ce9ba59badbd206c8ec0010a4f/pyiec61850_ng-1.6.1.3-cp314-cp314-win_amd64.whl", hash = "sha256:a39ac906ec29929f420903797e4ec2324cac96fa3191dff6da52e8b376a75ef5", size = 1136090, upload-time = "2026-06-05T21:20:15.716Z" },
 ]
 
 [[package]]
@@ -2069,17 +2088,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1e/7d/ae3f0a63f41e4d2f6cb66a5b57197850f919f59e558159a4dd3a818f5082/pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb", size = 159125, upload-time = "2020-11-23T03:59:15.045Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0", size = 90585, upload-time = "2020-11-23T03:59:13.41Z" },
-]
-
-[[package]]
-name = "pyshark"
-version = "0.6.1"
-source = { git = "https://github.com/f0rw4rd/pyshark.git?subdirectory=src&rev=789993f3f3bab284ae2c8ba5628b721f61f9eb99#789993f3f3bab284ae2c8ba5628b721f61f9eb99" }
-dependencies = [
-    { name = "appdirs" },
-    { name = "lxml" },
-    { name = "packaging" },
-    { name = "termcolor" },
 ]
 
 [[package]]

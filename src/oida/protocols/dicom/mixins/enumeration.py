@@ -103,6 +103,7 @@ class EnumerationMixin(_ScannerBase):
                 ae = AE(ae_title=aet)
                 ae.network_timeout = timeout
                 ae.acse_timeout = timeout
+                ae.connection_timeout = timeout
                 ae.add_requested_context(sop["Verification"])
 
                 assoc = ae.associate(self.ip, port, ae_title=self.called_aet)
@@ -139,7 +140,8 @@ class EnumerationMixin(_ScannerBase):
         # Security check
         if len(valid_aets) > 5 or "ANY" in valid_aets or "*" in valid_aets:
             self.logger.security_finding(
-                "No authentication", "Server accepts many AE Titles - weak AET whitelist"
+                "No authentication",
+                detail="Server accepts many AE Titles - weak AET whitelist",
             )
 
         self.results["data"]["aet_brute"] = {

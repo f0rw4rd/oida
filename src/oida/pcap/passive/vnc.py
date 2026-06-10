@@ -88,6 +88,11 @@ class VNCCredential:
     @property
     def hashcat_format(self) -> str:
         """Hashcat-compatible hash string (mode 5600)."""
+        # Both halves are required to crack; the listener already skips
+        # challenge-less responses, but guard here too so an incomplete pair is
+        # never emitted as a deliverable hash.
+        if not (self.challenge and self.response):
+            return ""
         return f"$vnc$*{self.challenge}*{self.response}"
 
     @property

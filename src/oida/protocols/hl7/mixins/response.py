@@ -102,13 +102,9 @@ class ResponseMixin:
             ]
             column_defs = core_columns + (ext_columns if extract_all else [])
 
-            # Store with specific key for export compatibility
-            if patients_found:
-                self.results["data"]["query_results"] = {
-                    "count": len(patients_found),
-                    "patients": patients_found,
-                }
-
+            # _display_results_table is the single writer of query_results
+            # below; the previous direct write here was immediately clobbered
+            # by it (and used a different item key), so it is removed.
             self._display_results_table(
                 items=patients_found,
                 column_defs=column_defs,
@@ -125,10 +121,6 @@ class ResponseMixin:
 
         except Exception as e:
             self.logger.debug(f"Failed to extract query results: {e}")
-
-    def _format_address(self, addr_field: str) -> str:
-        """Format HL7 address field - delegates to parser"""
-        return HL7SegmentParser.format_address(addr_field)
 
     def _extract_observation_results(self, response: bytes):
         """Extract observation/lab results from ORF^R04 response"""
