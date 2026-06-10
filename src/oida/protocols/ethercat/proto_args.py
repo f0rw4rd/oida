@@ -23,7 +23,7 @@ Examples:
   oida ethercat eth0 -C                            # Scan CoE dictionary (all slaves)
   oida ethercat eth0 -S 2 -C                       # Scan CoE on slave 2 only
   oida ethercat eth0 -r '1:0x1008:0'              # Read SDO object
-  oida ethercat eth0 -e -p                         # Dump & parse EEPROM
+  oida ethercat eth0 -e --eeprom-parse             # Dump & parse EEPROM
   oida ethercat eth0 -S 3 -e                       # Dump EEPROM for slave 3
   oida ethercat eth0 -f '1:firmware.bin'           # Read file via FoE
   oida ethercat eth0 --fsoe                        # Scan FSoE safety objects
@@ -114,7 +114,7 @@ def proto_args(parser, parents):
         "-e",
         "--eeprom-dump",
         action="store_true",
-        help="Dump full EEPROM contents (addresses 0x00-0x7E)",
+        help="Dump full EEPROM contents (addresses 0x00-0x7F)",
     )
 
     advanced_group.add_argument(

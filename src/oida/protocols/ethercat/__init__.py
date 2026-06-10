@@ -107,7 +107,7 @@ protocol_options = {
     },
     "eeprom-dump": {
         "type": "bool",
-        "description": "Dump full EEPROM contents (0x00-0x7E)",
+        "description": "Dump full EEPROM contents (0x00-0x7F)",
         "required": False,
         "default": False,
     },
