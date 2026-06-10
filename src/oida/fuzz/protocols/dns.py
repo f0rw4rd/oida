@@ -23,7 +23,7 @@ class DNSFuzzer(BaseFuzzer):
             self.config.target_ip,
             self.config.target_port,
             bind=("0.0.0.0", 0),  # Bind to any interface, ephemeral port for receiving responses
-            recv_timeout=2.0,  # Wait up to 2 seconds for DNS response
+            **self._timeout_overrides(recv_default=2.0),  # Wait up to 2 seconds for DNS response
         )
 
     def setup_custom_monitors(self) -> list:

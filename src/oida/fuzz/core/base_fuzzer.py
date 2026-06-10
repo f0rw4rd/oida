@@ -131,6 +131,10 @@ class BaseFuzzer(ABC):
     # Examples: "socket" or "modbus:10"
     DEFAULT_MONITORS = "socket"
 
+    # Stateful protocols must consume each reply to advance their state machine, so they
+    # get a more generous calibrated recv timeout. Override to True in such fuzzers.
+    STATEFUL = False
+
     def __init__(
         self,
         config: FuzzerConfig,
@@ -473,6 +477,16 @@ class BaseFuzzer(ABC):
             self.log.debug("Receive data: DISABLED (all requests)")
         if self.config.sleep_time > 0:
             self.log.debug(f"Sleep time: {self.config.sleep_time}s")
+        if self.config.recv_timeout is not None:
+            self.log.debug(f"Recv timeout: {self.config.recv_timeout}s (override)")
+        if self.config.send_timeout is not None:
+            self.log.debug(f"Send timeout: {self.config.send_timeout}s (override)")
+        if self.config.reconnect_delay is not None:
+            self.log.debug(f"Reconnect delay: {self.config.reconnect_delay}s (override)")
+        if self.config.max_reconnect_attempts is not None:
+            self.log.debug(
+                f"Max reconnect attempts: {self.config.max_reconnect_attempts} (override)"
+            )
 
     def get_monitor_info(self) -> dict:
         """Get monitor configuration info for external logging."""
@@ -720,6 +734,17 @@ class BaseFuzzer(ABC):
     def _create_socket(self) -> TCPSocketConnection:
         """Create appropriate socket connection using the injected factory"""
         return self.connection_factory.create_connection(self.config)
+
+    def _timeout_overrides(self, recv_default: float = 5.0, send_default: float = 5.0) -> dict:
+        """Socket timeout kwargs for protocols that build their own connection.
+
+        Prefers the CLI overrides (--recv-timeout / --send-timeout, surfaced as
+        config.recv_timeout / config.send_timeout) and falls back to the protocol's
+        own default when unset. boofuzz TCP/UDP/SSL connections all accept both kwargs.
+        """
+        recv = self.config.recv_timeout if self.config.recv_timeout is not None else recv_default
+        send = self.config.send_timeout if self.config.send_timeout is not None else send_default
+        return {"send_timeout": send, "recv_timeout": recv}
 
     def _create_session(self) -> Session:
         """Create and configure fuzzing session"""
@@ -1192,6 +1217,96 @@ class BaseFuzzer(ABC):
             self.log.fail(f"Preflight check error: {e}")
             return False, str(e)
 
+    def _monitors_to_calibrate(self) -> list:
+        """Live monitors exposing a probe we can time (flattens CombinedMonitor)."""
+        if not self.monitor:
+            return []
+        if hasattr(self.monitor, "get_active_monitors"):
+            candidates = self.monitor.get_active_monitors()
+        elif getattr(self.monitor, "monitors", None):
+            candidates = list(self.monitor.monitors)
+        else:
+            candidates = [self.monitor]
+        return [m for m in candidates if hasattr(m, "_check_alive_once")]
+
+    @staticmethod
+    def _select_probe_monitor(monitors: list):
+        """Prefer a data-plane monitor over connect-only ones (which understate latency)."""
+        connect_only = {"SocketHealthMonitor", "PingMonitor"}
+        for monitor in monitors:
+            if type(monitor).__name__ not in connect_only:
+                return monitor
+        return monitors[0] if monitors else None
+
+    def _calibrate_timeouts(self, fuzz_log) -> None:
+        """Measure latency via the monitor probe and set recv/monitor timeouts from it.
+
+        Transparent (logs what it measured and set) and override-safe: a user-set
+        --recv-timeout is never touched. Falls back to defaults on too few clean probes.
+        """
+        if not getattr(self.config, "calibrate", True):
+            fuzz_log.display("Timeout calibration disabled (--no-calibrate)")
+            return
+
+        monitors = self._monitors_to_calibrate()
+        probe = self._select_probe_monitor(monitors)
+        if probe is None:
+            self.log.debug("No probe-capable monitor; skipping calibration")
+            return
+
+        from .calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
+
+        stateful = bool(getattr(self, "STATEFUL", False))
+        probe_name = type(probe).__name__
+        n = max(1, getattr(self.config, "calibration_probes", 50))
+        fuzz_log.display(f"Calibrating timeouts ({n} probes against {probe_name})...")
+
+        result = TimeoutCalibrator(probe, probes=n, stateful=stateful).run()
+        if result is None:
+            fuzz_log.warning(
+                f"Calibration: too few clean probes against {probe_name}; keeping defaults"
+            )
+            return
+
+        s = result.stats
+        fuzz_log.display(
+            f"  Latency: median={s.median * 1000:.1f}ms p95={s.p95 * 1000:.1f}ms "
+            f"p99={s.p99 * 1000:.1f}ms max={s.max * 1000:.1f}ms "
+            f"(n={result.clean_count}/{result.probe_count} clean)"
+        )
+
+        # Data channel: only when the user did NOT hard-set --recv-timeout.
+        if self.config.recv_timeout is None:
+            self.config.recv_timeout = result.recv_timeout
+            basis = "p99x2" if stateful else "p95x1.5"
+            fuzz_log.success(f"  recv_timeout: set to {result.recv_timeout:.2f}s ({basis})")
+        else:
+            fuzz_log.display(
+                f"  recv_timeout: kept user value {self.config.recv_timeout:.2f}s "
+                "(hard-set, calibration skipped)"
+            )
+
+        # Monitor channel (the crash oracle): no CLI hard-set exists, so always applied.
+        for monitor in monitors:
+            if hasattr(monitor, "timeout"):
+                monitor.timeout = result.monitor_timeout
+        fuzz_log.success(
+            f"  monitor timeout: set to {result.monitor_timeout:.2f}s (max(p99x2, median+6*MAD))"
+        )
+
+        # Phase 2/3: arm online adaptation / drift detection on each monitor.
+        if getattr(self.config, "adaptive_timeout", False):
+            detect_drift = bool(getattr(self.config, "detect_drift", False))
+            for monitor in monitors:
+                if not hasattr(monitor, "timeout"):
+                    continue
+                monitor.rto_estimator = RtoEstimator.from_stats(s)
+                monitor.drift_detector = (
+                    DriftDetector(s.median, s.mad_scaled) if detect_drift else None
+                )
+            modes = "adaptive monitor timeout" + (" + drift detection" if detect_drift else "")
+            fuzz_log.display(f"  online: {modes} enabled")
+
     def fuzz_all(self) -> None:
         """Fuzz entire protocol"""
         # Pre-flight connectivity check
@@ -1202,6 +1317,10 @@ class BaseFuzzer(ABC):
         # Log successful preflight check
         fuzz_log = self._get_fuzz_logger()
         fuzz_log.success("Preflight check passed")
+
+        # Measure response latency and set timeouts from it (before the data socket is
+        # built lazily on first self.session access below). Honors user-set timeouts.
+        self._calibrate_timeouts(fuzz_log)
 
         # Apply multi-machine distribution filtering if configured
         if self.config.distribution_total and self.config.distribution_id:
@@ -1594,15 +1713,33 @@ class BaseFuzzer(ABC):
                             getattr(self.monitor, "actual_check_count", 0) if self.monitor else 0
                         )
 
-                        # Calculate actual send rate (real network activity)
-                        send_rate = actual_sends / elapsed if elapsed > 0 else 0
+                        # boofuzz position = resume_base + sent + skipped.
+                        #   sent        = cases transmitted this run (num_cases_actually_fuzzed)
+                        #   total       = boofuzz mutation-space position (matches its UI "Total")
+                        #   resume_base = cases already fuzzed in earlier sessions (resume offset)
+                        #   skipped     = within-run jumps (crash-threshold fast-forward)
+                        sent = actual_sends
+                        total = actual_sends
+                        resume_base = max(0, getattr(self.config, "index_start", 1) - 1)
+                        if self._session is not None:
+                            sent = getattr(
+                                self._session, "num_cases_actually_fuzzed", actual_sends
+                            )
+                            total = getattr(self._session, "total_mutant_index", sent)
+                        skipped = max(0, total - sent - resume_base)
 
-                        # Print progress directly to stdout (always visible)
-                        # Show actual sends (real) vs test case attempts (inflated by boofuzz)
+                        # Calculate actual send rate (real network activity)
+                        send_rate = sent / elapsed if elapsed > 0 else 0
+
+                        # Print progress directly to stdout (always visible).
+                        # Show the resume offset only when actually resuming, so a fresh run
+                        # stays terse and a resumed run explains its large Total.
+                        resume_str = f" | Resumed: {resume_base:,}" if resume_base else ""
                         target_str = f" | \033[93m{fuzz_target}\033[0m" if fuzz_target else ""
                         print(
                             f"\r\033[K[\033[94m*\033[0m] Progress: {elapsed_str} | "
-                            f"Sends: {actual_sends:,} ({send_rate:.0f}/s) | "
+                            f"Sent: {sent:,} ({send_rate:.0f}/s) | "
+                            f"Skipped: {skipped:,}{resume_str} | Total: {total:,} | "
                             f"Crashes: {crash_str} | "
                             f"Checks: {monitor_checks}{target_str}",
                             end="",

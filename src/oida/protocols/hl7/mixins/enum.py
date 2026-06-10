@@ -166,11 +166,9 @@ class EnumMixin:
 
                 # OBR segment - Observation Request (ordering provider at OBR-16)
                 elif segment.startswith("OBR|"):
-                    HL7SegmentParser.parse_obr(segment)
-                    # OBR doesn't have OrderingProvider in the parser, extract directly
-                    fields = segment.split("|")
-                    if len(fields) > 16 and fields[16]:
-                        ordering.add(HL7SegmentParser.get_field(fields, 16))
+                    obr = HL7SegmentParser.parse_obr(segment)
+                    if obr.get("OrderingProvider"):
+                        ordering.add(obr["OrderingProvider"])
 
                 # ORC segment - Common Order
                 elif segment.startswith("ORC|"):
@@ -180,8 +178,7 @@ class EnumMixin:
 
                 # RXE segment - Pharmacy/Treatment Encoded Order
                 elif segment.startswith("RXE|"):
-                    HL7SegmentParser.parse_rxe(segment)
-                    # RXE-13 is ordering provider DEA - extract directly
+                    # parse_rxe doesn't expose RXE-13, so extract it directly.
                     fields = segment.split("|")
                     if len(fields) > 13 and fields[13]:
                         pharmacy.add(HL7SegmentParser.get_field(fields, 13))

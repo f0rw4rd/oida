@@ -119,8 +119,6 @@ class MMSScanner(NetworkScanner):
         self.wordlist_path = args.get("wordlist-path", "")
 
         # Internal state
-        self.discovered_objects = []
-        self.object_values = {}
 
     def get_protocol_name(self) -> str:
         return "IEC 61850 MMS"

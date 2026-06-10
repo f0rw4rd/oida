@@ -82,7 +82,6 @@ class opcua(
     def __init__(self, args, db, host):
         self.protocol_name = "opcua"
         self.default_port = 4840
-        self._scan_results = None
         self._client = None
         self._original_url = None
 
@@ -118,6 +117,7 @@ class opcua(
         "find_servers",
         "find_servers_on_network",
         "test_subscription_limits",
+        "scan_writable",
         "fuzz",
         "fuzz_node",
         "fuzz_method",
@@ -161,8 +161,13 @@ class opcua(
         """Restore asyncua logging to original levels"""
         import logging
 
+        # Restore the exact captured level. For child loggers this is NOTSET (0),
+        # which makes them inherit the parent "asyncua" logger again (set to
+        # CRITICAL in cli.py). Coercing 0 -> WARNING here would give each child an
+        # explicit WARNING level that overrides the parent, leaking teardown noise
+        # such as "close_secure_channel was called but connection is closed".
         for name, level in orig_levels.items():
-            logging.getLogger(name).setLevel(level if level else logging.WARNING)
+            logging.getLogger(name).setLevel(level)
 
     async def _pre_auth_discovery(self, url: str) -> bool:
         """Perform pre-auth endpoint discovery. Returns True if successful."""
@@ -265,8 +270,21 @@ class opcua(
             )
             self.logger.display(f"Authenticating: Certificate ({cert_path})")
 
-    def _store_security_info(self, usernames: list, passwords: list, cert_path: str, key_path: str):
-        """Store authentication and security info in results"""
+    def _store_security_info(
+        self,
+        usernames: list,
+        passwords: list,
+        cert_path: str,
+        key_path: str,
+        security_mode: str = "None",
+    ):
+        """Store authentication and security info in results.
+
+        ``security_mode`` is the mode that was actually negotiated for this
+        session (passed in by the caller). asyncua's SecurityPolicy objects
+        expose ``URI`` but no ``Mode`` attribute, so the mode can only come
+        from the requested/applied value, not from introspecting the policy.
+        """
         auth_type = "Anonymous"
         if usernames and passwords:
             auth_type = f"Username ({usernames[0]})"
@@ -274,15 +292,10 @@ class opcua(
             auth_type = "Certificate"
 
         security_policy = "None"
-        security_mode = "None"
         try:
-            if hasattr(self._client, "security_policy") and self._client.security_policy:
-                policy = self._client.security_policy
-                if hasattr(policy, "URI"):
-                    security_policy = policy.URI.split("#")[-1] if policy.URI else "None"
-                if hasattr(policy, "Mode"):
-                    mode_map = {1: "None", 2: "Sign", 3: "SignAndEncrypt"}
-                    security_mode = mode_map.get(policy.Mode, str(policy.Mode))
+            policy = getattr(self._client, "security_policy", None)
+            if policy is not None and getattr(policy, "URI", None):
+                security_policy = policy.URI.split("#")[-1]
         except Exception as e:
             self.logger.debug(f"Failed to get security info: {e}")
 
@@ -311,6 +324,9 @@ class opcua(
 
         if getattr(self.args, "test_subscription_limits", False):
             await self._test_subscription_limits()
+
+        if getattr(self.args, "scan_writable", False):
+            await self._test_write_access_scan()
 
         # Fuzzing operations
         if any([getattr(self.args, f, None) for f in ("fuzz", "fuzz_node", "fuzz_method")]):
@@ -407,10 +423,13 @@ class opcua(
                 self.results["success"] = True
                 return
 
-            # Setup client and suppress logging
+            # Setup client and suppress logging. asyncua reads `timeout` only
+            # from the constructor (no settable descriptor), so it must be
+            # passed here — assigning self._client.timeout afterwards was a
+            # silent no-op that left the library 4s default in place.
             Client = _get_client_class()
-            self._client = Client(url=url)
-            self._client.timeout = getattr(self.args, "timeout", 5)
+            timeout = getattr(self.args, "timeout", 5)
+            self._client = Client(url=url, timeout=timeout)
             _orig_levels = self._suppress_asyncua_logging()
 
             # Pre-auth endpoint discovery
@@ -448,8 +467,7 @@ class opcua(
                 return
 
             # Recreate client for auth
-            self._client = Client(url=url)
-            self._client.timeout = getattr(self.args, "timeout", 5)
+            self._client = Client(url=url, timeout=timeout)
 
             # Setup secure channel if needed
             requested_mode = getattr(self.args, "mode", "None")
@@ -500,22 +518,28 @@ class opcua(
             self._restore_asyncua_logging(_orig_levels)
             self.logger.success("Connected")
 
-            # Store security info
-            self._store_security_info(usernames, passwords, cert_path, key_path)
+            # Store security info. A secure channel is only in effect when a
+            # Sign/SignAndEncrypt mode was requested AND a certificate was
+            # available (auto-generated or user-supplied); otherwise the
+            # session is unencrypted regardless of the requested mode.
+            applied_secure_channel = bool(
+                (needs_secure_channel and auto_cert_path) or (cert_path and key_path)
+            )
+            effective_mode = requested_mode if applied_secure_channel else "None"
+            self._store_security_info(
+                usernames, passwords, cert_path, key_path, security_mode=effective_mode
+            )
 
             # Post-auth operations
             await self._get_server_info()
             await self._check_server_security()
+            await self._check_certificate()
 
             endpoints = await self._client.get_endpoints()
             self.results["data"]["endpoints"] = len(endpoints)
 
             # Dispatch flag-based operations
             await self._dispatch_operations()
-
-            # Default scan if no specific operations requested
-            if not self._has_any_operation_flag():
-                await self._default_scan()
 
             self.results["success"] = True
 

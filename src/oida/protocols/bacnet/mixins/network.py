@@ -16,6 +16,7 @@ class NetworkMixin:
         types = _load_bacpypes3()
         WhoHasRequest = types["WhoHasRequest"]
         CharacterString = types["CharacterString"]
+        WhoHasObject = types["WhoHasObject"]
         AbortPDU = types["AbortPDU"]
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
@@ -24,8 +25,10 @@ class NetworkMixin:
         self.logger.display(f"\n[Who-Has Search: '{object_name}']")
 
         try:
+            # WhoHasRequest carries the search criteria in its 'object' element
+            # (a WhoHasObject choice); there is no top-level objectName kwarg.
             request = WhoHasRequest(
-                objectName=CharacterString(object_name),
+                object=WhoHasObject(objectName=CharacterString(object_name)),
             )
             request.pduDestination = target_addr
 
@@ -431,7 +434,7 @@ class NetworkMixin:
         # Test 2: Foreign device registration
         self.logger.display("  Testing foreign device registration...")
         try:
-            request = RegisterForeignDevice(bvlciTimeToLive=60)
+            request = RegisterForeignDevice(ttl=60)
             request.pduDestination = target_addr
 
             try:
@@ -469,7 +472,7 @@ class NetworkMixin:
         self.logger.display("  Testing BDT write access...")
         try:
             # Send empty BDT write to test if writes are accepted
-            request = WriteBroadcastDistributionTable(bvlciBDT=[])
+            request = WriteBroadcastDistributionTable(bdt=[])
             request.pduDestination = target_addr
 
             try:
@@ -486,7 +489,9 @@ class NetworkMixin:
                     code = response.bvlciResultCode
                     if code == 0:
                         self.logger.security_finding(
-                            "Writable access", "BBMD BDT write accepted (result=success)"
+                            "Writable access",
+                            category="ACCESS_CONTROL",
+                            detail="BBMD BDT write accepted (result=success)",
                         )
                         findings.append("BBMD BDT write accepted (result=success)")
                     else:

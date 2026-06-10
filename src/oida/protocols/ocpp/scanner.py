@@ -337,8 +337,10 @@ class OCPPScanner(NetworkScanner):
 
             result = loop.run_until_complete(_try_connect())
             if result is not None:
-                # Store this loop for disconnect to use later
-                self._brute_loop = loop
+                # Store this loop under the name disconnect() actually reads
+                # (_event_loop). The old _brute_loop name had no reader, so the
+                # per-probe loop was never closed (resource leak).
+                self._event_loop = loop
                 return result
             loop.close()
             return None

@@ -86,44 +86,9 @@ def _get_xknx_classes() -> Tuple:
     )
 
 
-def _get_XKNX():
-    """Get XKNX class."""
-    return _get_xknx_classes()[0]
-
-
-def _get_connection_config():
-    """Get ConnectionConfig class."""
-    return _get_xknx_classes()[1]
-
-
-def _get_connection_type():
-    """Get ConnectionType enum."""
-    return _get_xknx_classes()[2]
-
-
-def _get_gateway_scanner():
-    """Get GatewayScanner class."""
-    return _get_xknx_classes()[3]
-
-
 def _get_individual_address():
     """Get IndividualAddress class."""
     return _get_xknx_classes()[4]
-
-
-def _get_telegram():
-    """Get Telegram class."""
-    return _get_xknx_classes()[5]
-
-
-def _get_group_address():
-    """Get GroupAddress class."""
-    return _get_xknx_classes()[6]
-
-
-def _get_tpci():
-    """Get tpci module."""
-    return _get_xknx_classes()[7]
 
 
 def _get_p2p_connection():
@@ -221,38 +186,6 @@ def _get_memory_extended() -> Tuple[Optional[Any], Optional[Any]]:
     MemoryExtendedRead = getattr(apci, "MemoryExtendedRead", None)
     MemoryExtendedReadResponse = getattr(apci, "MemoryExtendedReadResponse", None)
     return MemoryExtendedRead, MemoryExtendedReadResponse
-
-
-def _get_knxip_classes() -> Tuple:
-    """Get KNX/IP protocol classes for gateway discovery.
-
-    Returns:
-        Tuple of (HPAI, KNXIPFrame, DescriptionRequest, DescriptionResponse)
-    """
-    _get_xknx()
-    from xknx.knxip import HPAI, KNXIPFrame, DescriptionRequest, DescriptionResponse
-
-    return HPAI, KNXIPFrame, DescriptionRequest, DescriptionResponse
-
-
-def _get_knxip_dib() -> Tuple:
-    """Get KNX/IP DIB classes for device info parsing.
-
-    Returns:
-        Tuple of (DIBDeviceInformation, DIBSuppSVCFamilies, DIBServiceFamily)
-    """
-    _get_xknx()
-    from xknx.knxip.dib import DIBDeviceInformation, DIBSuppSVCFamilies, DIBServiceFamily
-
-    return DIBDeviceInformation, DIBSuppSVCFamilies, DIBServiceFamily
-
-
-def _get_sensor_device():
-    """Get Sensor device class."""
-    _get_xknx()
-    from xknx.devices import Sensor
-
-    return Sensor
 
 
 def _get_xknxproject():

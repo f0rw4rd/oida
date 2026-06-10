@@ -383,5 +383,7 @@ class WritesMixin(_ScannerBase):
         # Security finding
         if writable:
             self.logger.security_finding(
-                "Writable access", f"Found {len(writable)} writable {reg_type}"
+                "Writable access",
+                category="ACCESS_CONTROL",
+                detail=f"Found {len(writable)} writable {reg_type}",
             )

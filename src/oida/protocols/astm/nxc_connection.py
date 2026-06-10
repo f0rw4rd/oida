@@ -368,7 +368,9 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self.logger.display("  Encryption: TLS enabled")
         else:
             self.logger.security_finding(
-                "No encryption", "ASTM communication is unencrypted (plaintext)"
+                "No encryption",
+                category="ENCRYPTION",
+                detail="ASTM communication is unencrypted (plaintext)",
             )
 
     def _export_results(self):

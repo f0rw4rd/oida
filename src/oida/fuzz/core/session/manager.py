@@ -302,13 +302,10 @@ class TestCaseManager:
             )
             self.database.store_test_case(test_case)
 
-            crash = Crash(
-                test_case_id=test_id,
-                payload=payload,
-                crash_info=crash_info,
-                stack_trace=None,
-            )
-            self.database.store_crash(crash)
+            # A passing test case is not a crash -- persist its payload to the
+            # dedicated payloads table (what --store-all-payloads is for), not
+            # the crashes table.
+            self.database.store_payload(test_id, payload)
 
     def _flush_crash_context(
         self,
@@ -410,22 +407,89 @@ class TestCaseManager:
         """
         try:
             progress = self.get_progress()
-            # One transaction instead of five — saves four fsyncs per save.
-            self.database.store_metadata_bulk(
-                {
-                    "last_test_case": str(progress["current_case"]),
-                    "total_processed": str(progress["total_processed"]),
-                    "actual_sends": str(progress["actual_sends"]),
-                    "crash_count": str(progress["crash_count"]),
-                    "last_updated": datetime.now().isoformat(),
-                }
+
+            # boofuzz's own counters. total_mutant_index is the mutation-space POSITION;
+            # it decomposes as resume_base + sent + skipped:
+            #   resume_base = mutations covered by EARLIER sessions, fast-forwarded on resume
+            #                 (index_start-1) — already fuzzed, not skipped now.
+            #   sent        = num_cases_actually_fuzzed — transmitted THIS run.
+            #   skipped     = within-run jumps (boofuzz crash-threshold fast-forward).
+            # None of these is a recording loss.
+            bf_session = getattr(self.fuzzer, "session", None)
+            total_mutant_index = getattr(bf_session, "total_mutant_index", None)
+            num_actually_fuzzed = getattr(bf_session, "num_cases_actually_fuzzed", None)
+
+            cfg = getattr(self.fuzzer, "config", None)
+            index_start = getattr(cfg, "index_start", 1) or 1
+            resume_base = max(0, index_start - 1)
+
+            # `total` (boofuzz position) — fall back to the last sent index if the session
+            # object is gone, so it never reads below the sent count.
+            total = (
+                total_mutant_index
+                if total_mutant_index is not None
+                else progress["current_case"]
             )
+            sent = progress["total_processed"]
+            skipped = max(0, total - sent - resume_base)
+
+            metadata = {
+                "last_test_case": str(progress["current_case"]),
+                "total_processed": str(progress["total_processed"]),
+                "actual_sends": str(progress["actual_sends"]),
+                "crash_count": str(progress["crash_count"]),
+                "final_mutant_index": str(total),
+                "resume_base": str(resume_base),
+                "last_updated": datetime.now().isoformat(),
+            }
+            # One transaction instead of five — saves four fsyncs per save.
+            self.database.store_metadata_bulk(metadata)
+
+            # Verification: boofuzz's executed-case counter should match what we recorded.
+            # If these ever diverge, recording IS dropping cases (a real bug) rather than
+            # boofuzz merely skipping/resuming.
+            if num_actually_fuzzed is not None:
+                self._log.debug(
+                    f"counter check: boofuzz_fuzzed={num_actually_fuzzed} "
+                    f"recorded={sent} total_mutant_index={total_mutant_index} "
+                    f"resume_base={resume_base} skipped={skipped}"
+                )
+
+            # At session end, flush the buffered (non-crash) test-case metadata to
+            # the DB in one bulk transaction. Per-case writes stay zero-cost during
+            # fuzzing (crash-only persistence); this just makes a completed session
+            # DB reflect the cases that ran, without storing full payloads.
+            if final and not self.store_all_payloads:
+                buffered = self._buffer.get_all()
+                if buffered:
+                    cfg = getattr(self.fuzzer, "config", None)
+                    target_ip = getattr(cfg, "target_ip", None)
+                    target_port = getattr(cfg, "target_port", None)
+                    protocol = getattr(cfg, "protocol", None)
+                    self.database.store_test_cases_bulk(
+                        [
+                            TestCase(
+                                id=tc_id,
+                                name=name,
+                                timestamp=ts,
+                                result="pass",
+                                crc32=crc,
+                                target_ip=target_ip,
+                                target_port=target_port,
+                                protocol=protocol,
+                            )
+                            for (tc_id, name, _payload, ts, crc) in buffered
+                        ]
+                    )
             # Only print on final save (Ctrl+C or end of session)
             if final:
-                self._log.display(
-                    f"Session saved: sends={progress['actual_sends']}, "
-                    f"cases={progress['total_processed']}, crashes={progress['crash_count']}"
+                line = (
+                    f"Session saved: sent={sent:,}, skipped={skipped:,}, "
+                    f"total={total:,}, crashes={progress['crash_count']:,}"
                 )
+                if resume_base:
+                    line += f" (resumed past {resume_base:,} earlier cases)"
+                self._log.display(line)
             self._log.debug("Session progress saved to database")
         except Exception as e:
             self._log.fail(f"Failed to save session progress: {e}")

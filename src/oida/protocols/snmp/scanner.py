@@ -126,11 +126,9 @@ class SNMPScanner(
 
         # Unified -C/--auth parsing: colon-separated = v3, plain = community
         auth_value = args.get("auth") or args.get("community", "public")
-        self._v3_explicit = False
         if ":" in auth_value:
             # v3 format: user:authpass[:privpass]
             parts = auth_value.split(":", 2)
-            self._v3_explicit = True
             self._version_auto = False
             self.version = "3"
             self.username = parts[0]
@@ -163,7 +161,6 @@ class SNMPScanner(
         # Fine-grained -u/-a/-x override the unified -C value
         if args.get("snmp_user"):
             self.username = args["snmp_user"]
-            self._v3_explicit = True
             self._version_auto = False
             self.version = "3"
             # Infer security level from provided credentials
@@ -399,6 +396,11 @@ class SNMPScanner(
 
             # Phase 0a: SNMPv3 user enumeration only (--enum-users)
             if self.enum_users:
+                # --enum-users implies SNMPv3. With -V auto (the default) version is
+                # still "2c" here, so force v3 before the guard -- otherwise the
+                # default invocation wrongly fails "requires SNMPv3".
+                if self._version_auto:
+                    self.version = "3"
                 if self.version in ("1", "2c"):
                     self.logger.fail("--enum-users requires SNMPv3 (use -V 3 or -V auto)")
                     return results
@@ -431,6 +433,11 @@ class SNMPScanner(
 
             # Phase 0b: SNMPv3 enumeration (if requested)
             if self.enum_v3:
+                # -E/--enum-v3 implies SNMPv3. With -V auto (the default) the version
+                # is still "2c" here because Phase 0a auto-detect is skipped for
+                # enum_v3, so force v3 (mirrors --enum-users at the branch above).
+                if self._version_auto:
+                    self.version = "3"
                 if self.version in ("1", "2c"):
                     self.logger.fail("-E/--enum-v3 requires SNMPv3 (use -V 3 or -V auto)")
                     return results

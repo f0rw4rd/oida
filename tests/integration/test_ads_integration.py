@@ -221,8 +221,10 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         _assert_log_event_structure(log)
 
         text = _combined_text(result, log)
-        assert any(term in text for term in ["mock", "twincat", "device", "ads"]), (
-            f"Expected ADS device info in output, got: {text[:400]}"
+        # Mock reports "Mock TwinCAT 3  v3.1.4024" on the default TC3PLC1 port.
+        assert "twincat" in text, f"Expected TwinCAT device identity, got: {text[:400]}"
+        assert "v3.1.4024" in text or "mock" in text, (
+            f"Expected mock device version/name in device info, got: {text[:400]}"
         )
 
     def test_state(self, cli_runner, target, port, docker_services):
@@ -243,8 +245,10 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         _assert_log_event_structure(log)
 
         text = _combined_text(result, log)
-        assert any(term in text for term in ["run", "state", "ads"]), (
-            f"Expected state info in output, got: {text[:400]}"
+        # Mock reports a concrete ADS state line ("State: RUN" / "State: STOP").
+        assert "state:" in text, f"Expected a 'State:' line, got: {text[:400]}"
+        assert any(s in text for s in ["run", "stop", "config", "idle"]), (
+            f"Expected a concrete ADS state value, got: {text[:400]}"
         )
 
     def test_basic_connection_lifecycle(self, cli_runner, target, port, docker_services):
@@ -473,9 +477,15 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
         _assert_log_event_structure(log)
 
+        import re
+
         text = _combined_text(result, log)
-        assert any(term in text for term in ["memory", "read", "0x4020", "byte"]), (
-            f"Expected memory read output, got: {text[:400]}"
+        # Mock M-Area (0x4020) returns 4 real bytes; require the read to report
+        # the target group AND the byte count, plus a hex data field.
+        assert "0x4020" in text, f"Expected M-Area group 0x4020 in output, got: {text[:400]}"
+        assert "read 4 bytes" in text, f"Expected '4 bytes' read confirmation, got: {text[:400]}"
+        assert re.search(r"\bdata:\s*[0-9a-f]{8}\b", text), (
+            f"Expected 4 hex bytes of memory data, got: {text[:400]}"
         )
 
     def test_memory_write_with_confirm(self, cli_runner, target, port, docker_services):
@@ -535,9 +545,14 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         _assert_log_event_structure(log)
 
         text = _combined_text(result, log)
-        assert any(term in text for term in ["memory", "area", "access", "byte"]), (
-            f"Expected memory test output, got: {text[:400]}"
+        # Mock exposes M-Area (0x4020) as accessible and denies the Data Area
+        # (0x4040). Require the memory-access report to name M-Area and show
+        # at least one accessible (ok) result.
+        assert "memory access" in text, f"Expected memory access report, got: {text[:400]}"
+        assert "m-area" in text or "0x4020" in text, (
+            f"Expected M-Area in memory test, got: {text[:400]}"
         )
+        assert "ok" in text, f"Expected at least one accessible (OK) memory area, got: {text[:400]}"
 
     # ========================================================================
     # Route and Port Discovery Tests
@@ -555,14 +570,20 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             json_log=True,
         )
 
-        assert result.returncode in [0, 1]
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
-            if result.success:
-                text = _combined_text(result, result.scan_log)
-                assert any(term in text for term in ["route", "ams", "netid", "local"]), (
-                    f"Expected route info, got: {text[:300]}"
-                )
+        assert result.success, f"Route scan failed: {result.stderr}"
+        _assert_log_has_events(result)
+        _assert_log_event_structure(result.scan_log)
+        text = _combined_text(result, result.scan_log)
+        # The mock's Net ID probe discovers active runtimes on the local base
+        # (127.0.0.1.1.2, 127.0.0.1.2.1, ... -- see ads_server.py).  Require
+        # both the route/probe framing and at least one concrete discovered
+        # Net ID extension off 127.0.0.1.
+        assert any(term in text for term in ["route", "net id", "netid", "probe"]), (
+            f"Expected route/Net ID probe framing, got: {text[:400]}"
+        )
+        assert "127.0.0.1.1.2" in text or "127.0.0.1.2.1" in text, (
+            f"Expected a concrete discovered AMS Net ID from the probe, got: {text[:400]}"
+        )
 
     @pytest.mark.slow
     def test_scan_ports(self, cli_runner, target, port, docker_services):
@@ -626,8 +647,13 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         _assert_log_event_structure(log)
 
         text = _combined_text(result, log)
-        assert any(term in text for term in ["device", "twincat", "mock", "ads"]), (
-            f"Expected device info with AMS Net ID, got: {text[:300]}"
+        # Connecting via the explicit local AMS Net ID 127.0.0.1.1.1 must still
+        # reach the mock TwinCAT 3 runtime and report its identity.
+        assert "twincat" in text, (
+            f"Expected TwinCAT device identity via AMS Net ID, got: {text[:400]}"
+        )
+        assert "127.0.0.1.1.1" in text, (
+            f"Expected the supplied AMS Net ID 127.0.0.1.1.1 in output, got: {text[:400]}"
         )
 
     def test_netid_ext(self, cli_runner, target, port, docker_services):
@@ -855,46 +881,54 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
                 )
 
     @pytest.mark.security
-    def test_security_findings_no_auth(self, cli_runner, target, port, docker_services):
-        """Test that ADS no-auth finding is reported [Category A]"""
-        # NOTE: --test-write now requires --confirm, so use --device-info + --confirm
-        # to trigger the security analysis that includes auth findings
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--device-info",
-            "--test-write",
-            "--confirm",
-            format="json",
-            json_log=True,
+    def test_security_findings_no_auth(self, target, port, docker_services):
+        """Test that the ADS no-auth finding is emitted by _analyze_security.
+
+        ADS has no authentication mechanism by design, so _analyze_security
+        unconditionally emits a 'No authentication' finding whose detail names
+        the protocol limitation.  Like the sibling test_finding_* tests, this
+        exercises the Layer 1 API directly: the NXC CLI proto_flow() never
+        calls _analyze_security(), so a CLI-driven assertion here would be
+        vacuous.
+        [Category A]
+        """
+        from oida.protocols.ads import ADSScanner
+
+        scanner = ADSScanner(
+            {
+                "rhost": target,
+                "rport": port,
+                "port_type": "TC3PLC1",
+                "ads_timeout": 5000,
+                "max_symbols": 10,
+            }
         )
+        conn = scanner.connect()
+        assert conn is not None, "Failed to connect to ADS mock"
+        try:
+            device_info = scanner._get_device_info(conn)
 
-        assert result.success, f"Security scan failed: {result.stderr}"
-        _assert_log_has_events(result)
-        log = result.scan_log
+            results = {
+                "device_info": device_info,
+                "symbols": {"symbols": {}},
+                "memory_access": {"accessible": []},
+            }
+            baseline = len(scanner.logger.findings)
+            scanner._analyze_security(results)
+            new_findings = scanner.logger.findings[baseline:]
 
-        # ADS always reports "No authentication"
-        security_events = log.get_security_findings()
-        if security_events:
-            finding_texts = " ".join(
-                str(e.get("data", {}).get("finding", ""))
-                + " "
-                + str(e.get("data", {}).get("detail", ""))
-                + " "
-                + e.get("message", "")
-                for e in security_events
-            ).lower()
-            assert any(
-                term in finding_texts for term in ["authentication", "no auth", "security"]
-            ), f"Expected auth-related security finding, got: {finding_texts[:300]}"
-        else:
-            # Security findings may appear in regular messages
-            text = _combined_text(result, log)
-            assert any(term in text for term in ["authentication", "security", "no auth"]), (
-                f"Expected security analysis in output, got: {text[:400]}"
+            titles = [f["title"] for f in new_findings]
+            assert "No authentication" in titles, (
+                f"Expected 'No authentication' finding, got titles: {titles}"
             )
+
+            no_auth = next(f for f in new_findings if f["title"] == "No authentication")
+            detail = no_auth.get("detail", "").lower()
+            assert "no authentication" in detail, (
+                f"Expected no-auth detail to describe the missing auth mechanism, got: {detail}"
+            )
+        finally:
+            scanner.disconnect(conn)
 
     @pytest.mark.security
     def test_check_secure(self, cli_runner, target, port, docker_services):

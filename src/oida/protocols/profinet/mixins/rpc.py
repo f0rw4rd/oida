@@ -227,7 +227,10 @@ class RPCMixin(_ScannerBase):
                 device.diagnosis = [
                     {
                         "channel": e.channel_number,
-                        "error_type": e.channel_error_type,
+                        # profinet DiagnosisEntry field is error_type, not
+                        # channel_error_type (the old name raised AttributeError
+                        # whenever a device returned diagnosis entries).
+                        "error_type": e.error_type,
                     }
                     for e in diag_data.entries
                 ]
@@ -341,12 +344,15 @@ class RPCMixin(_ScannerBase):
                                 "alarm_type_name",
                                 str(alarm.alarm_type),
                             ),
-                            "slot": alarm.slot,
-                            "subslot": alarm.subslot,
+                            # AlarmNotification fields are slot_number /
+                            # subslot_number (not slot / subslot).
+                            "slot": alarm.slot_number,
+                            "subslot": alarm.subslot_number,
                         }
                         device.alarms.append(alarm_dict)
                         self.logger.display(
-                            f"  Alarm: {alarm_dict['type']} at slot {alarm.slot}/{alarm.subslot}"
+                            f"  Alarm: {alarm_dict['type']} at "
+                            f"slot {alarm.slot_number}/{alarm.subslot_number}"
                         )
                 else:
                     self.logger.display(f"  Alarm data: {len(result.payload)} bytes (raw)")

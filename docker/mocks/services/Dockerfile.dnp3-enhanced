@@ -1,13 +1,26 @@
-FROM python:3.11-slim
+# DNP3 enhanced mock outstation built on the stepfunc `dnp3` Rust crate.
+# Same binary as Dockerfile.dnp3; the enhanced feature handlers (cold/warm
+# restart with delays, counter freeze, analog dead-bands, octet strings G110)
+# are always compiled in and triggered by the master's requests. The "enhanced"
+# behavior is selected purely by the environment variables compose.yml passes
+# (DNP3_COLD_RESTART_DELAY, DNP3_WARM_RESTART_DELAY, DNP3_OCTET_COUNT, ...).
+# See dnp3-rs/src/main.rs.
 
-# Install pydnp3-stepfunc (Rust-based DNP3 stack) and cryptography (for TLS cert generation)
-RUN pip install --no-cache-dir pydnp3-stepfunc>=1.6.0.4 cryptography>=42.0.0
+# ── stage 1: build ──
+FROM rust:slim-bookworm AS builder
+WORKDIR /build
+COPY dnp3-rs/Cargo.toml dnp3-rs/Cargo.lock ./
+COPY dnp3-rs/src ./src
+RUN cargo build --release && strip target/release/oida-dnp3-outstation
 
-COPY dnp3_enhanced_server.py /app/
-
+# ── stage 2: slim runtime ──
+FROM debian:bookworm-slim
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        openssl netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /build/target/release/oida-dnp3-outstation /usr/local/bin/oida-dnp3-outstation
 
 EXPOSE 20000
 
-# All configuration via environment variables (see dnp3_enhanced_server.py)
-CMD ["python3", "dnp3_enhanced_server.py"]
+CMD ["oida-dnp3-outstation"]

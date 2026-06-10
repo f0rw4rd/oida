@@ -21,11 +21,6 @@ GetNext-driven walks must be bounded. WALK_MAX_DEPTH (100) caps both:
     (0x30 0x00) rather than a Block with no children.
 """
 
-# Maximum walk depth (GetNext chain length and Request.walk() tree depth).
-# Bounds GetNext-driven recursion per ref/snmp/cve_patterns.json
-# pattern "snmpv2c-walk-recursion".
-WALK_MAX_DEPTH = 100
-
 from boofuzz import Block, Byte, DWord, Request, Size, Static, Word
 
 from typing import List

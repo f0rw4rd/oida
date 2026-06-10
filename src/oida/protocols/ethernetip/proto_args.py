@@ -215,5 +215,10 @@ def proto_args(parser, parents):
         action="store_true",
         help="Reset Ethernet interface (may briefly disconnect device)",
     )
+    attack_group.add_argument(
+        "--crash-cpu",
+        action="store_true",
+        help="Send malformed CIP message to crash PLC CPU (MAY NEED POWER CYCLE - requires --confirm)",
+    )
 
     return enip_parser

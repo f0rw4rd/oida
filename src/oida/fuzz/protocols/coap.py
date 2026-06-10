@@ -118,7 +118,7 @@ class CoAPFuzzer(BaseFuzzer):
             self.config.target_ip,
             self.config.target_port,
             bind=("0.0.0.0", 0),  # Bind to any interface, ephemeral port
-            recv_timeout=2.0,  # Wait up to 2 seconds for CoAP response
+            **self._timeout_overrides(recv_default=2.0),  # Wait up to 2 seconds for CoAP response
         )
 
     def _build_uri_path_option(self, path: str) -> bytes:

@@ -274,6 +274,11 @@ Examples:
         help="Test for subscription-based DoS vulnerabilities",
     )
     sec_analysis_group.add_argument(
+        "--scan-writable",
+        action="store_true",
+        help="Scan for writable nodes via AccessLevel + AccessRestrictions (read-only check)",
+    )
+    sec_analysis_group.add_argument(
         "--test-rbac",
         action="store_true",
         help="Test RBAC by comparing access across auth methods",
@@ -286,6 +291,12 @@ Examples:
 
     # Fuzzing (--confirm, --fuzz, --fuzz-iterations)
     fuzz_group = add_dangerous_options(opcua_parser, include_fuzz=True)
+    fuzz_group.add_argument(
+        "--fuzz-mode",
+        choices=["nodes", "methods", "all"],
+        default="nodes",
+        help="What to fuzz: writable nodes, callable methods, or both (default: nodes)",
+    )
     fuzz_group.add_argument(
         "--fuzz-node",
         type=str,

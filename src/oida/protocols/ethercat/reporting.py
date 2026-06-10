@@ -57,18 +57,22 @@ class ReportingMixin(_ScannerBase):
                 f"Fuzzing caused {fuzzing_results['crashes_detected']} crashes"
             )
 
-        # Overall security assessment (EtherCAT is inherently insecure)
-        analysis.update(
-            SecurityAnalyzer.assess_protocol_security(
-                {
-                    "authentication": False,
-                    "authorization": False,
-                    "encryption": False,
-                    "integrity_check": False,
-                    "access_control": False,
-                }
-            )
+        # Overall security assessment (EtherCAT is inherently insecure).
+        # assess_protocol_security() returns its own "issues" key; updating
+        # blindly used to clobber all the EtherCAT-specific findings above, so
+        # merge the generic issues onto our list instead of replacing it.
+        assessment = SecurityAnalyzer.assess_protocol_security(
+            {
+                "authentication": False,
+                "authorization": False,
+                "encryption": False,
+                "integrity_check": False,
+                "access_control": False,
+            }
         )
+        generic_issues = assessment.pop("issues", [])
+        analysis.update(assessment)
+        analysis["issues"].extend(generic_issues)
 
         return analysis
 

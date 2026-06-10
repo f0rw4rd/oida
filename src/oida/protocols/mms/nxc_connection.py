@@ -20,7 +20,6 @@ class mms(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "MMS"
         self.default_port = 102
-        self._scan_results = None
         super().__init__(args, db, host)
 
     def proto_flow(self):
@@ -87,7 +86,6 @@ class mms(NetworkConnection):
         server_info = self.results["data"].get("device_info")
         scan_results = self.scanner.discover(self.conn, server_info=server_info)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
         if getattr(self.args, "fuzz", None):
             self._handle_fuzz(scan_results)
@@ -188,7 +186,7 @@ class mms(NetworkConnection):
         original = read_value()
         successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-        for payload in fuzz(original, count=iterations):
+        for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
             try:
                 if write_value(payload):
                     successful += 1

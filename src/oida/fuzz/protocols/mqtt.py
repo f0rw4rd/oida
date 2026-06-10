@@ -57,6 +57,7 @@ from ..core.auth import MQTTAuthenticator, ProtocolAuthenticator
 from ..core.config import FuzzerConfig
 from ..core.session import StateContext, ResponseData
 from ..core.session.sequence import SequenceConfig, SequenceDirection
+from ..core.session.state_machine import StateTransitionError
 from ..monitors import MQTTMonitor
 from ..primitives.dynamic import DynamicWord, SmartString
 from ..primitives.smart_string import StringContext
@@ -1273,46 +1274,59 @@ class MQTTFuzzer(StatefulFuzzer):
                 logger.debug(f"self._auth_sock.close(): {e}")
             self._auth_sock = None
 
+    class _SocketWrapper:
+        """Adapt a raw socket to the authenticator's send/recv interface
+        while capturing the CONNACK bytes returned by recv()."""
+
+        def __init__(self, s):
+            self._sock = s
+            self.last_recv = b""
+
+        def send(self, data):
+            return self._sock.send(data)
+
+        def recv(self, n):
+            data = self._sock.recv(n)
+            self.last_recv = data
+            return data
+
     def _send_mqtt_connect(self) -> bool:
-        """Send MQTT CONNECT packet (for state machine use)."""
-        if self.authenticator:
-            # Delegate to authenticator
-            sock = self._get_auth_socket()
+        """Send MQTT CONNECT and read CONNACK (CONNECT_SENT setup callback).
 
-            # Create a simple wrapper that provides send/recv
-            class SocketWrapper:
-                def __init__(self, s):
-                    self._sock = s
+        Performs the real CONNECT/CONNACK handshake on the auth socket via
+        MQTTAuthenticator and stores the raw CONNACK in the StateContext so
+        later states (and tests) can access it via ctx.get_response("CONNACK").
+        """
+        if not self.authenticator:
+            return False
 
-                def send(self, data):
-                    return self._sock.send(data)
+        sock = self._get_auth_socket()
+        wrapper = self._SocketWrapper(sock)
+        accepted = self.authenticator.authenticate(wrapper)
 
-                def recv(self, n):
-                    return self._sock.recv(n)
-
-            return self.authenticator.authenticate(SocketWrapper(sock))
-        return False
+        # Persist the CONNACK so it propagates through the state machine.
+        connack = wrapper.last_recv or b""
+        if len(connack) >= 4:
+            return_code = connack[3]
+            self.store_connack_response(connack, return_code)
+        return accepted
 
     def _receive_connack(self) -> bool:
-        """Receive CONNACK (handled by authenticator now)."""
-        return True  # Handled in _send_mqtt_connect via authenticator
+        """CONNACK_RECEIVED setup callback.
+
+        The CONNACK was already read and stored during _send_mqtt_connect();
+        confirm it was accepted (return code 0) before advancing.
+        """
+        connack = self._state_context.get_response("CONNACK")
+        if connack is None:
+            return False
+        return bool(connack.parsed.get("accepted", False))
 
     def _validate_mqtt_connection(self) -> bool:
         """Validate MQTT connection (for state machine use)."""
         if self.authenticator:
             sock = self._get_auth_socket()
-
-            class SocketWrapper:
-                def __init__(self, s):
-                    self._sock = s
-
-                def send(self, data):
-                    return self._sock.send(data)
-
-                def recv(self, n):
-                    return self._sock.recv(n)
-
-            return self.authenticator.validate(SocketWrapper(sock))
+            return self.authenticator.validate(self._SocketWrapper(sock))
         return True
 
     def _get_monitors(self) -> List[BaseMonitor]:
@@ -1336,6 +1350,34 @@ class MQTTFuzzer(StatefulFuzzer):
         """Setup MQTT-specific monitors"""
         return self._get_monitors()
 
+    def _drive_state_machine(self) -> None:
+        """Walk the MQTT state machine through its real connection sequence.
+
+        DISCONNECTED -> CONNECTED -> CONNECT_SENT -> CONNACK_RECEIVED -> READY
+
+        Each transition runs the corresponding setup callback, which performs
+        the real CONNECT/CONNACK handshake on the auth socket (see
+        _send_mqtt_connect). This mirrors how the MMS/VNC fuzzers drive their
+        state machines during connection setup so that state_history and the
+        StateContext reflect the handshake the fuzzer actually performed.
+
+        The handshake runs on a dedicated preflight socket; boofuzz manages
+        its own fuzzing connections separately, so we close the socket after.
+        """
+        if not (self.use_auth and self.state_machine):
+            return
+
+        try:
+            self.state_machine.traverse_to_state("READY")
+            self.log.display(
+                f"MQTT state machine advanced to {self.state_machine.get_current_state_name()}"
+            )
+        except StateTransitionError as e:
+            self.log.fail(f"MQTT state machine could not reach READY: {e}")
+            raise
+        finally:
+            self._close_auth_socket()
+
     def fuzz_all(self) -> None:
         """
         Override fuzz_all to use StatefulFuzzer's authentication framework.
@@ -1347,8 +1389,14 @@ class MQTTFuzzer(StatefulFuzzer):
         Note: For MQTT, "authentication" means the CONNECT/CONNACK handshake,
         which may or may not include username/password credentials.
         """
+        # Access session to trigger lazy state-machine initialization.
+        _ = self.session
+
         if self.use_auth:
             self.log.display("MQTT fuzzing with CONNECT/CONNACK handshake enabled")
+            # Drive the state machine through the real handshake before fuzzing
+            # so DISCONNECTED -> ... -> READY is reflected in state_history.
+            self._drive_state_machine()
 
         # Use StatefulFuzzer's authentication framework
         # The MQTTAuthenticator will send CONNECT and validate CONNACK

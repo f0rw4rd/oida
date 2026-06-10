@@ -1210,10 +1210,16 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         # Should fail gracefully with file-not-found
         assert result.returncode in [0, 1, 2]
         text = _combined_text(result, result.scan_log if result.scan_log else None)
-        # Should mention file not found or error
+        # Must specifically signal the missing file -- _handle_knxproj() emits
+        # "File not found: <path>" via logger.fail(). Require a real
+        # file-not-found phrasing, not just an incidental "knxproj" token.
         assert any(
-            term in text for term in ["not found", "error", "failed", "no such", "knxproj"]
-        ), f"Expected error message about missing file, got: {text[:300]}"
+            term in text for term in ["not found", "no such", "does not exist", "file not found"]
+        ), f"Expected file-not-found error for missing knxproj, got: {text[:300]}"
+        # And the offending path should be surfaced to the operator.
+        assert "project.knxproj" in text, (
+            f"Expected the missing knxproj path in output, got: {text[:300]}"
+        )
 
     def test_knxproj_info_nonexistent(self, cli_runner):
         """Test --knxproj-info with nonexistent file [Category C]"""
@@ -1379,13 +1385,15 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     @pytest.mark.containers("knx-calimero")
     @pytest.mark.security
     def test_security_finding_no_encryption(self, cli_runner, target, port):
-        """Test that scanner reports 'No encryption' finding for KNX protocol [Category B]
+        """Test that scanner reports 'No encryption' finding for KNX protocol [Category A]
 
         KNX protocol does not use encryption by design. The 'No encryption'
-        finding is emitted unconditionally in _analyze_security() which runs
-        after discover() completes via a tunnel connection. We use --device-info
-        to trigger the tunnel path. Since Calimero may or may not complete the
-        tunnel fully, this is Category B -- but we MUST assert content.
+        finding is emitted UNCONDITIONALLY in _analyze_security() (security.py)
+        which runs in discover() at scanner.py:204 regardless of whether the
+        xknx tunnel actually completes -- _async_discover() returns a results
+        dict (never raises), so the finding always fires once the tunnel path
+        is entered via --device-info. This is therefore Category A: we assert
+        the exact structured finding is present, not merely a text mention.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1401,33 +1409,32 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         )
 
         assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        findings = result.scan_log.get_security_findings() if result.scan_log is not None else []
+        assert result.scan_log is not None, "scan_log should be populated when json_log=True"
+        findings = result.scan_log.get_security_findings()
 
-        # Check structured finding OR text mention of encryption
-        has_encryption_finding = any("encrypt" in str(f.get("data", {})).lower() for f in findings)
-        has_encryption_text = any(
-            term in text for term in ["no encryption", "encrypt", "cleartext", "clear text"]
+        # Require the exact structured 'No encryption' finding emitted by
+        # _analyze_security(). All security findings carry event_type=security
+        # and data.finding set to the finding name.
+        finding_names = [f.get("data", {}).get("finding") for f in findings]
+        assert "No encryption" in finding_names, (
+            f"Expected structured 'No encryption' security finding. Got findings: {finding_names}"
         )
-        # If tunnel failed entirely, the scanner should still produce output
-        tunnel_failed = any(
-            term in text for term in ["connection failed", "connection timeout", "tunnel"]
-        )
-        assert has_encryption_finding or has_encryption_text or tunnel_failed, (
-            f"Expected 'No encryption' finding, encryption mention, or tunnel failure. "
-            f"Findings: {[f.get('data', {}).get('finding') for f in findings]}, "
-            f"text excerpt: {text[:500]}"
-        )
+        # The finding event must carry the explanatory detail and be a security event.
+        enc = next(f for f in findings if f.get("data", {}).get("finding") == "No encryption")
+        assert enc.get("event_type") == "security"
+        assert "encryption" in str(enc.get("data", {}).get("details", "")).lower()
 
     @pytest.mark.containers("knx-calimero")
     @pytest.mark.security
     def test_security_finding_no_authentication(self, cli_runner, target, port):
-        """Test that scanner reports 'No authentication' finding for KNX protocol [Category B]
+        """Test that scanner reports 'No authentication' finding for KNX protocol [Category A]
 
         KNX protocol does not require authentication by design. The
-        'No authentication' finding is emitted unconditionally in
-        _analyze_security() which runs after discover() completes via
-        a tunnel connection. We use --device-info to trigger the tunnel path.
+        'No authentication' finding is emitted UNCONDITIONALLY in
+        _analyze_security() (security.py), which runs in discover() regardless
+        of tunnel completion (see test_security_finding_no_encryption). We use
+        --device-info to enter the tunnel path and assert the exact structured
+        finding rather than a vacuous text mention. Category A.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1443,23 +1450,16 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         )
 
         assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        findings = result.scan_log.get_security_findings() if result.scan_log is not None else []
+        assert result.scan_log is not None, "scan_log should be populated when json_log=True"
+        findings = result.scan_log.get_security_findings()
 
-        # Check structured finding OR text mention of authentication
-        has_auth_finding = any("authenticat" in str(f.get("data", {})).lower() for f in findings)
-        has_auth_text = any(
-            term in text for term in ["no authentication", "authenticat", "unauthenticat"]
+        finding_names = [f.get("data", {}).get("finding") for f in findings]
+        assert "No authentication" in finding_names, (
+            f"Expected structured 'No authentication' security finding. Got findings: {finding_names}"
         )
-        # If tunnel failed entirely, the scanner should still produce output
-        tunnel_failed = any(
-            term in text for term in ["connection failed", "connection timeout", "tunnel"]
-        )
-        assert has_auth_finding or has_auth_text or tunnel_failed, (
-            f"Expected 'No authentication' finding, auth mention, or tunnel failure. "
-            f"Findings: {[f.get('data', {}).get('finding') for f in findings]}, "
-            f"text excerpt: {text[:500]}"
-        )
+        auth = next(f for f in findings if f.get("data", {}).get("finding") == "No authentication")
+        assert auth.get("event_type") == "security"
+        assert "authentication" in str(auth.get("data", {}).get("details", "")).lower()
 
     @pytest.mark.containers("knx-calimero")
     @pytest.mark.security

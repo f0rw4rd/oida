@@ -42,9 +42,14 @@ class MemoryMixin(_ScannerBase):
                 db_info = connection.get_block_info(Block.DB, db_number)
 
                 if db_info:
+                    # python-snap7 TS7BlockInfo has no BlkLen; the block size is
+                    # MC7Size (falling back to LoadSize). The old .BlkLen raised
+                    # AttributeError that the except below miscounted as "DB not
+                    # accessible", so DB enumeration never returned a block.
+                    size = getattr(db_info, "MC7Size", None) or getattr(db_info, "LoadSize", 0)
                     db_data = {
                         "number": db_number,
-                        "size": db_info.BlkLen,
+                        "size": size,
                         "type": "DB",
                         "accessible": True,
                     }
@@ -52,7 +57,7 @@ class MemoryMixin(_ScannerBase):
                     # Try to read first few bytes
                     if self.read_values and not self.read_only:
                         try:
-                            data = connection.db_read(db_number, 0, min(10, db_info.BlkLen))
+                            data = connection.db_read(db_number, 0, min(10, size))
                             db_data["readable"] = True
                             db_data["sample_data"] = data.hex()[:20] + "..."
                         except Exception as e:
@@ -60,7 +65,7 @@ class MemoryMixin(_ScannerBase):
                             db_data["readable"] = False
 
                     data_blocks.append(db_data)
-                    self.logger.debug(f"Found DB{db_number}: {db_info.BlkLen} bytes")
+                    self.logger.debug(f"Found DB{db_number}: {size} bytes")
 
             except Exception as e:
                 # DB doesn't exist or not accessible - just count errors

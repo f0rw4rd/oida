@@ -1053,6 +1053,13 @@ class NetBIOSPassiveListener:
 
         suffix_desc = self.SUFFIX_TYPES.get(suffix, f"Unknown (0x{suffix:02X})")
 
+        # The NBNS answer record (ADDR_ENTRY.NB_ADDRESS) can advertise an IP
+        # that differs from the packet source — e.g. a WINS server answering on
+        # behalf of another host — so track both.
+        ip_addresses = [src_ip]
+        if ip_from_response and ip_from_response not in ip_addresses:
+            ip_addresses.append(ip_from_response)
+
         with self._lock:
             # Use MAC as key if available, otherwise fall back to IP
             device_key = src_mac if src_mac else f"netbios:{src_ip}"
@@ -1060,7 +1067,7 @@ class NetBIOSPassiveListener:
             if device_key not in self.discovered_devices:
                 device = DiscoveredDevice(
                     mac_address=src_mac,
-                    ip_addresses=[src_ip],
+                    ip_addresses=ip_addresses,
                     name=name,
                     manufacturer="",
                     model="",
@@ -1084,6 +1091,10 @@ class NetBIOSPassiveListener:
             else:
                 device = self.discovered_devices[device_key]
                 device.last_seen = datetime.now().isoformat()
+                # Merge any newly observed IPs (e.g. the answer-record address)
+                for ip in ip_addresses:
+                    if ip and ip not in device.ip_addresses:
+                        device.ip_addresses.append(ip)
                 # Add new name if not already present
                 name_entry = {"name": name, "suffix": suffix, "suffix_desc": suffix_desc}
                 if name_entry not in device.netbios_data.get("names", []):

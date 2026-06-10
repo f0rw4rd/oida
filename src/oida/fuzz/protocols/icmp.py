@@ -165,7 +165,8 @@ class ICMPFuzzer(BaseFuzzer):
         """
         # Get protocol options
         icmp_type = self.config.get_option("icmp_type", 8)  # Echo Request
-        self.config.get_option("icmp_code", 0)
+        # (icmp_code was read and discarded here — Request Code fields are
+        # hardcoded, so the icmp_code option isn't threaded into them.)
         include_data = self.config.get_option("include_data", True)
         data_size = self.config.get_option("data_size", 56)
         identifier = self.config.get_option("identifier", 1)

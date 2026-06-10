@@ -82,7 +82,6 @@ class modbus(
         """
         self.protocol_name = "modbus"
         self.default_port = 502
-        self._scan_results = None
 
         # Extract decode/encode settings from args for typed operations
         self.decode_type = getattr(args, "decode", None) or getattr(args, "d", None)
@@ -194,7 +193,6 @@ class modbus(
 
         # Workflow shortcut modes
         full_mode = getattr(self.args, "full", False)
-        getattr(self.args, "quick", False)
         discover_mode = getattr(self.args, "discover", False)
 
         # Log broadcast mode status if enabled
@@ -376,43 +374,6 @@ class modbus(
         # Fuzzing mode (--fuzz) - requires --confirm
         if getattr(self.args, "fuzz", None):
             self._handle_fuzz()
-
-    def _has_specific_action(self) -> bool:
-        """Check if a specific action was requested (vs default scan)"""
-        actions = [
-            "identify",
-            "server_id",
-            "diag",
-            "events",
-            "file_read",
-            "file_write",
-            "mask_write",
-            "atomic_rw",
-            "fifo",
-            "write",
-            "write_coil",
-            "write_multiple",
-            "write_multiple_coils",
-            "test_write",
-            "test_write_thorough",
-            "raw_fc",
-            "monitor",
-            "fuzz",
-            "full",
-            "quick",
-            "discover",
-            "sunspec",
-            "sunspec_assess",
-            "canopen_info",
-            "canopen_read",
-            "canopen_write",
-            "list_names",
-            "search_name",
-            "read_name",
-            "write_name",
-            "enumerate_functions",
-        ]
-        return any(getattr(self.args, action, None) for action in actions)
 
     def _handle_discover_units(self):
         """Handle unit ID discovery (--discover-units)"""
@@ -956,7 +917,6 @@ class modbus(
 
         # Store results
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
     def cleanup(self):
         """Cleanup Modbus connection"""

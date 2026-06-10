@@ -115,7 +115,6 @@ class UDSMixin:
         if not results:
             self.logger.display("  No UDS-capable ECUs found")
 
-        self.uds_results = results
         return results
 
     def _recv_uds_response(

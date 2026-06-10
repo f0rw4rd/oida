@@ -17,7 +17,6 @@ class dnp3(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "DNP3"
         self.default_port = 20000
-        self._scan_results = None
         self.scanner = None
         super().__init__(args, db, host)
 
@@ -178,7 +177,6 @@ class dnp3(NetworkConnection):
             return
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
     def _execute_range_scan(self, scan_range: str):
         """Execute address range scan"""

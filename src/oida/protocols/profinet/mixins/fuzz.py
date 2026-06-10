@@ -182,7 +182,9 @@ class FuzzMixin(_ScannerBase):
                     self.logger.error(f"    Connection lost during fuzz write ({desc}): {e}")
                     # Attempt single reconnect
                     try:
-                        con.connect(src_mac=con._src_mac)
+                        # RPCCon stores the source MAC as src_mac (no underscore);
+                        # con._src_mac raised AttributeError so reconnect never worked.
+                        con.connect(src_mac=con.src_mac)
                         self.logger.display("    Reconnected after connection loss")
                     except Exception:
                         self.logger.error("    Reconnect failed. Aborting fuzz run.")

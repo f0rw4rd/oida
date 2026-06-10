@@ -276,10 +276,7 @@ class ICMPv6Fuzzer(BaseFuzzer):
         Wrapper for boofuzz Checksum primitive
         Captures source/dest IPv6 from config and calculates ICMPv6 checksum
         """
-        if isinstance(data, (list, tuple)):
-            data = bytes(data)
-        elif not isinstance(data, bytes):
-            data = bytes(data)
+        data = bytes(data)  # coerces list/tuple/bytearray/bytes uniformly
 
         source_ip = self._ipv6_to_bytes(self.config.get_option("source_ip", "fe80::1"))
         dest_ip = self._ipv6_to_bytes(self.config.get_option("dest_ip", "fe80::2"))
@@ -291,11 +288,6 @@ class ICMPv6Fuzzer(BaseFuzzer):
         """Convert MAC address string to bytes"""
         parts = mac_string.replace(":", "").replace("-", "")
         return bytes.fromhex(parts)
-
-    def _get_multicast_mac(self, ipv6_addr):
-        """Generate IPv6 multicast MAC from IPv6 address"""
-        ipv6_bytes = self._ipv6_to_bytes(ipv6_addr)
-        return b"\x33\x33" + ipv6_bytes[-4:]
 
     def _define_protocol(self):
         """Define ICMPv6 protocol structure with optimized test ordering
@@ -310,11 +302,8 @@ class ICMPv6Fuzzer(BaseFuzzer):
         # Get protocol options
         source_ip = self.config.get_option("source_ip", "fe80::1")
         dest_ip = self.config.get_option("dest_ip", "fe80::2")
-        self.config.get_option("hop_limit", 255)
         include_options = self.config.get_option("include_options", True)
-        self.config.get_option("ndp_options", "source_link")
         mld_version = self.config.get_option("mld_version", 2)
-        self.config.get_option("router_preference", "medium")
         attack_mode = self.config.get_option("attack_mode", "normal")
         target_mac = self.config.get_option("target_mac", "00:11:22:33:44:55")
         enable_cve_tests = self.config.get_option("enable_cve_tests", True)
