@@ -34,9 +34,6 @@ from .reporting import ReportingMixin
 # Lazy imports - only load when actually used
 _pysoem = lazy_import("pysoem", "EtherCAT")
 
-# Native radamsa-style mutator (no external dependency)
-from ...fuzz.core.mutation import NativeRadamsaMutator
-
 # Module-level exports for test compatibility
 pysoem = None
 
@@ -44,11 +41,6 @@ pysoem = None
 def _get_pysoem():
     """Get pysoem module, raising DependencyError if not available."""
     return _pysoem()
-
-
-def _get_radamsa():
-    """Get native radamsa-style mutator instance."""
-    return NativeRadamsaMutator()
 
 
 protocol_options = {
@@ -198,11 +190,6 @@ class EtherCATScanner(
         self._pd_thread: Optional[threading.Thread] = None
         self._pd_thread_stop = threading.Event()
         self._actual_wkc = 0
-
-        # Fuzzing setup - use native radamsa-style mutator
-        self.radamsa = None
-        if self.fuzz_sdo or self.fuzz_pdo:
-            self.radamsa = _get_radamsa()
 
     def get_protocol_name(self) -> str:
         return "EtherCAT"

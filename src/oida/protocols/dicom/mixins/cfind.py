@@ -131,7 +131,7 @@ class CFindMixin(_ScannerBase):
             if patient_name == "*" and len(results) > 0:
                 self.logger.security_finding(
                     "Unrestricted query access",
-                    f"Wildcard query returned {len(results)} patient records - PHI exposure",
+                    detail=f"Wildcard query returned {len(results)} patient records - PHI exposure",
                 )
 
         except Exception as e:

@@ -360,9 +360,10 @@ class ControlMixin(_ScannerBase):
                 f"Sending FREEZE_AT_TIME: {self.freeze_at_time} (epoch ms: {freeze_time_ms})"
             )
 
-            # Write TimeAndInterval object, then send freeze-at-time function
+            # Write TimeAndInterval object, then send freeze-at-time function.
+            # tai.time requires an opendnp3.DNPTime, not a raw epoch-ms int.
             tai = dnp3.TimeAndInterval()
-            tai.time = freeze_time_ms
+            tai.time = dnp3.DNPTime(freeze_time_ms)
             tai.interval = interval_ms
             tai.units = dnp3.IntervalUnits.NoRepeat
 

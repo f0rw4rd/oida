@@ -25,77 +25,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class HTTPMethods:
-    """HTTP method constants"""
-
-    # Standard methods (RFC 7231)
-    GET = "GET"
-    POST = "POST"
-    PUT = "PUT"
-    DELETE = "DELETE"
-    HEAD = "HEAD"
-    OPTIONS = "OPTIONS"
-    PATCH = "PATCH"
-
-    # Special methods
-    CONNECT = "CONNECT"
-    TRACE = "TRACE"
-    SEARCH = "SEARCH"
-
-    # WebDAV methods (RFC 4918)
-    PROPFIND = "PROPFIND"
-    PROPPATCH = "PROPPATCH"
-    MKCOL = "MKCOL"
-    COPY = "COPY"
-    MOVE = "MOVE"
-    LOCK = "LOCK"
-    UNLOCK = "UNLOCK"
-
-    # Method groups for fuzzing
-    STANDARD = [GET, POST, PUT, DELETE, HEAD, PATCH, OPTIONS]
-    SPECIAL = [CONNECT, TRACE, SEARCH]
-    WEBDAV = [PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK]
-    ALL = STANDARD + SPECIAL + WEBDAV
-
-
-class HTTPStatusCodes:
-    """HTTP status code constants"""
-
-    # 1xx Informational
-    CONTINUE = 100
-    SWITCHING_PROTOCOLS = 101
-
-    # 2xx Success
-    OK = 200
-    CREATED = 201
-    ACCEPTED = 202
-    NO_CONTENT = 204
-
-    # 3xx Redirection
-    MOVED_PERMANENTLY = 301
-    FOUND = 302
-    NOT_MODIFIED = 304
-    TEMPORARY_REDIRECT = 307
-    PERMANENT_REDIRECT = 308
-
-    # 4xx Client Error
-    BAD_REQUEST = 400
-    UNAUTHORIZED = 401
-    FORBIDDEN = 403
-    NOT_FOUND = 404
-    METHOD_NOT_ALLOWED = 405
-    REQUEST_TIMEOUT = 408
-    PAYLOAD_TOO_LARGE = 413
-    URI_TOO_LONG = 414
-
-    # 5xx Server Error
-    INTERNAL_SERVER_ERROR = 500
-    NOT_IMPLEMENTED = 501
-    BAD_GATEWAY = 502
-    SERVICE_UNAVAILABLE = 503
-    GATEWAY_TIMEOUT = 504
-
-
 class HTTPFuzzer(BaseFuzzer):
     """HTTP/HTTPS Protocol Fuzzer for web server security testing"""
 
@@ -622,8 +551,8 @@ class HTTPFuzzer(BaseFuzzer):
                 "UNLOCK",
             }
 
-            methods & all_standard
-            methods & all_special
+            # (methods & all_standard / & all_special were dead bare expressions
+            # here — only the webdav set is actually consumed below.)
             detected_webdav = methods & all_webdav
 
             skipped_standard = all_standard - methods
@@ -779,6 +708,7 @@ class HTTPFuzzer(BaseFuzzer):
         return TCPSocketConnection(
             self.config.target_ip,
             self.config.target_port,
+            **self._timeout_overrides(),
         )
 
     def _define_protocol(self) -> None:

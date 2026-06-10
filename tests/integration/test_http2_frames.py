@@ -619,10 +619,19 @@ class TestHTTP2HPACKPrimitives:
             encoded = encoder.encode(headers)
             assert len(encoded) > 0, "Should encode headers"
 
-            # Verify roundtrip
+            # Verify roundtrip. hpack 4.x decodes header names/values to str;
+            # older versions returned bytes. Normalise both sides to bytes so the
+            # check is version-independent.
             decoder = hpack.Decoder()
             decoded = decoder.decode(encoded)
-            assert decoded == headers, "Roundtrip should preserve headers"
+            normalized = [
+                (
+                    k.encode() if isinstance(k, str) else k,
+                    v.encode() if isinstance(v, str) else v,
+                )
+                for k, v in decoded
+            ]
+            assert normalized == headers, "Roundtrip should preserve headers"
 
         except ImportError as e:
             pytest.skip(f"hpack library not available: {e}")

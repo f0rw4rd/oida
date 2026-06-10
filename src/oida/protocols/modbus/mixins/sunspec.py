@@ -18,6 +18,7 @@ SunSpec Protocol Overview:
 from __future__ import annotations
 
 import json
+import math
 import struct
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -91,12 +92,11 @@ def _is_not_implemented(value: Any, dtype: str) -> bool:
         return False
 
     if dtype == "f32":
+        # math.isnan raises TypeError on a non-numeric value; treat that as
+        # "not the NaN sentinel".
         try:
-            import math
-
             return math.isnan(value)
-        except (TypeError, ValueError) as e:
-            logger.debug(f"Optional import math not available: {e}")
+        except TypeError:
             return False
 
     # For signed types, check both the unsigned sentinel and the signed equivalent

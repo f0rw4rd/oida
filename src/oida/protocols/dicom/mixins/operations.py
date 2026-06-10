@@ -204,7 +204,7 @@ class OperationsMixin(_ScannerBase):
         if total_stats["images"] > 0:
             self.logger.security_finding(
                 "Mass data exfiltration",
-                f"Exported {total_stats['images']} images from {total_stats['patients']} patients",
+                detail=f"Exported {total_stats['images']} images from {total_stats['patients']} patients",
             )
 
     def _cget_retrieve(self):
@@ -271,7 +271,7 @@ class OperationsMixin(_ScannerBase):
             if len(self._cget_received_files) > 0:
                 self.logger.security_finding(
                     "Bulk image retrieval",
-                    f"Retrieved {len(self._cget_received_files)} images without additional auth",
+                    detail=f"Retrieved {len(self._cget_received_files)} images without additional auth",
                 )
 
         except Exception as e:
@@ -350,7 +350,7 @@ class OperationsMixin(_ScannerBase):
         if success_count > 0:
             self.logger.security_finding(
                 "Unrestricted upload",
-                f"Server accepted {success_count} file uploads from unknown source",
+                detail=f"Server accepted {success_count} file uploads from unknown source",
             )
 
     def _cmove_request(self):
@@ -432,7 +432,7 @@ class OperationsMixin(_ScannerBase):
             if completed > 0:
                 self.logger.security_finding(
                     "Open transfer",
-                    f"Server transferred {completed} images to external AET '{dest_aet}'",
+                    detail=f"Server transferred {completed} images to external AET '{dest_aet}'",
                 )
 
         except Exception as e:

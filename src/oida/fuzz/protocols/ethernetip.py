@@ -217,7 +217,11 @@ class EtherNetIPFuzzer(BaseFuzzer):
 
     def _create_socket(self):
         """Create TCP socket for EtherNet/IP communication (typically port 44818)"""
-        return TCPSocketConnection(self.config.target_ip, self.config.target_port or 44818)
+        return TCPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port or 44818,
+            **self._timeout_overrides(),
+        )
 
     def _define_state_machine(self) -> None:
         """Perform RegisterSession handshake and build state machine.

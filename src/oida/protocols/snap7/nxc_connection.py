@@ -24,8 +24,6 @@ class s7(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "S7"
         self.default_port = 102
-        self._scan_results = None
-        self._slot_scanned = False  # Track if slot scan was done
         super().__init__(args, db, host)
 
     # Note: proto_logger() inherited from NetworkConnection base class
@@ -47,8 +45,12 @@ class s7(NetworkConnection):
         # Check for action commands vs regular scan
         if self._has_action():
             self._execute_action()
-        elif not self._slot_scanned:
-            # Only run discovery scan if slot scan wasn't done
+        else:
+            # Always run discovery on a basic scan. Slot auto-detection only
+            # enumerates rack/slot order codes + firmware; it does NOT perform
+            # the security analysis (protection level, PUT/GET, encryption, ...)
+            # that lives in scanner.discover(), so discover() runs
+            # unconditionally regardless of whether the slot was auto-detected.
             self._execute_scan()
 
     def create_conn_obj(self):
@@ -57,9 +59,6 @@ class s7(NetworkConnection):
 
         self.logger.info(f"Connecting via ISO-TSAP (TCP/{self.args.port})")
         self.conn = self.scanner.connect()
-        # Check if slot scanning was performed
-        if self.scanner.slot is not None and getattr(self.args, "slot", None) is None:
-            self._slot_scanned = True
         if self.conn:
             self.logger.debug(f"Connected to Siemens S7 device at {self.ip}:{self.args.port}")
             self.results["data"]["device_info"] = {"connected": True}
@@ -122,13 +121,12 @@ class s7(NetworkConnection):
             self.logger.display(f"Siemens S7: {self.host}:{port}")
 
     def _execute_scan(self):
-        """Execute Snap7 scanning (only when slot scan wasn't done)"""
+        """Execute Snap7 scanning (security analysis + discovery)."""
         self.logger.debug("Executing scan")
         if not self.conn:
             return
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
     def _has_action(self) -> bool:
         """Check if an action command was requested"""
@@ -687,7 +685,7 @@ class s7(NetworkConnection):
             original = read_fn()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload in fuzz(original, count=iterations):
+            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if write_fn(payload):
                         successful += 1
@@ -762,7 +760,7 @@ class s7(NetworkConnection):
             original = read_m()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload in fuzz(original, count=iterations):
+            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if write_m(payload):
                         successful += 1
@@ -806,7 +804,7 @@ class s7(NetworkConnection):
             original = read_q()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload in fuzz(original, count=iterations):
+            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if write_q(payload):
                         successful += 1

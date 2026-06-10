@@ -1,0 +1,3 @@
+# Rust build artifacts (huge; rebuilt inside the builder stage)
+dnp3-rs/target/
+**/target/

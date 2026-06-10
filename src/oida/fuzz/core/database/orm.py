@@ -516,12 +516,26 @@ class SQLAlchemyDatabase(DatabaseInterface):
             last_test_case_meta = session.get(SessionMetadata, "last_test_case")
             total_processed_meta = session.get(SessionMetadata, "total_processed")
             crash_count_meta = session.get(SessionMetadata, "crash_count")
+            final_mutant_index_meta = session.get(SessionMetadata, "final_mutant_index")
+            resume_base_meta = session.get(SessionMetadata, "resume_base")
 
             # Use metadata values if DB has no test cases (rolling buffer mode)
             last_test_case = int(last_test_case_meta.value) if last_test_case_meta else total_count
             total_processed = (
                 int(total_processed_meta.value) if total_processed_meta else total_count
             )
+            # boofuzz's total_mutant_index at session end (mutation-space position; counts
+            # cases that were sent PLUS mutations skipped by crash-threshold/resume). Falls
+            # back to total_processed when absent so callers never see a value below the
+            # sent count.
+            final_mutant_index = (
+                int(final_mutant_index_meta.value)
+                if final_mutant_index_meta
+                else total_processed
+            )
+            # Mutations covered by earlier sessions and fast-forwarded on resume
+            # (index_start-1). Lets callers exclude resumed cases from "skipped".
+            resume_base = int(resume_base_meta.value) if resume_base_meta else 0
             total_crashes = (
                 int(crash_count_meta.value) if crash_count_meta else crashes_with_payloads
             )
@@ -538,6 +552,8 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 "total_test_cases": total_count,
                 "last_test_case": last_test_case,  # From metadata (rolling buffer)
                 "total_processed": total_processed,  # From metadata (rolling buffer)
+                "final_mutant_index": final_mutant_index,  # boofuzz position = resume_base + sent + skipped
+                "resume_base": resume_base,  # cases fast-forwarded from earlier sessions
                 "total_crashes": total_crashes,  # From metadata (rolling buffer)
                 "results": result_counts,
                 "pass_count": result_counts.get("pass", 0),  # Alias for backward compatibility

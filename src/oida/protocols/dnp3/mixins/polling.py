@@ -532,7 +532,9 @@ class PollingMixin(_ScannerBase):
         self.logger.display("Probing supported DNP3 groups (0-122)...")
 
         group_variations = {}
-        for member in dnp3.GroupVariation:
+        # opendnp3.GroupVariation is a pybind11 enum and is not directly
+        # iterable (raises TypeError); iterate its __members__ instead.
+        for member in dnp3.GroupVariation.__members__.values():
             match = _re.match(r"Group(\d+)Var(\d+)$", member.name)
             if not match:
                 continue

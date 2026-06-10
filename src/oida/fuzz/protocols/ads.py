@@ -412,7 +412,9 @@ class ADSFuzzer(BaseFuzzer):
 
     def _create_socket(self):
         return TCPSocketConnection(
-            self.config.target_ip, self.config.target_port, send_timeout=2.0, recv_timeout=2.0
+            self.config.target_ip,
+            self.config.target_port,
+            **self._timeout_overrides(recv_default=2.0, send_default=2.0),
         )
 
     def _define_state_machine(self) -> None:

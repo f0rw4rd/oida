@@ -112,6 +112,9 @@ class SMTPResponseCodes:
 class SMTPFuzzer(BaseFuzzer):
     """SMTP Protocol Fuzzer for email server security testing"""
 
+    # Conversational protocol: the reply gates the next command.
+    STATEFUL = True
+
     # Protocol-specific monitor: SMTP EHLO check every 50 tests
     DEFAULT_MONITORS = "smtp:50"
 
@@ -341,7 +344,11 @@ class SMTPFuzzer(BaseFuzzer):
         ]
 
     def _create_socket(self):
-        return TCPSocketConnection(self.config.target_ip, self.config.target_port)
+        return TCPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port,
+            **self._timeout_overrides(),
+        )
 
     def setup_custom_monitors(self) -> list:
         """Setup SMTP-specific monitoring with EHLO command comparison"""

@@ -62,10 +62,6 @@ class CoAPScanner(NetworkScanner):
     def __init__(self, args: Dict[str, Any]):
         self._ctx = None
         self._resources: List[Dict[str, Any]] = []
-        self._lwm2m_info: Dict[str, Any] = {}
-        self._security: Dict[str, Any] = {}
-        self._access_matrix: Dict[str, Dict[str, str]] = {}
-        self._observations: List[Dict[str, Any]] = []
         self._block_size: int = args.get("block_size", 512)
         self._scheme: str = "coaps" if args.get("dtls") else "coap"
         super().__init__(args)
@@ -161,7 +157,6 @@ class CoAPScanner(NetworkScanner):
         t1 = _time.monotonic()
         self.logger.debug("Phase 2: LwM2M fingerprinting")
         lwm2m = self._fingerprint_lwm2m(connection)
-        self._lwm2m_info = lwm2m
         if lwm2m:
             results["lwm2m"] = lwm2m
         self.logger.debug(
@@ -172,7 +167,6 @@ class CoAPScanner(NetworkScanner):
         t2 = _time.monotonic()
         self.logger.debug("Phase 3: Security assessment (confirm=%s)", confirm)
         security = self._check_security(connection, resources, confirm=confirm)
-        self._security = security
         if security:
             results["security"] = security
         self.logger.debug("Security check took %.2fs", _time.monotonic() - t2)
@@ -363,7 +357,6 @@ class CoAPScanner(NetworkScanner):
             matrix[path] = path_results
             self.logger.debug("Method test %s: %s", path, path_results)
 
-        self._access_matrix = matrix
         return matrix
 
     # ------------------------------------------------------------------
@@ -505,7 +498,6 @@ class CoAPScanner(NetworkScanner):
                 observations.extend(notifs)
                 self.logger.info("Observed %d notifications from %s", len(notifs), path)
 
-        self._observations = observations
         return observations
 
 

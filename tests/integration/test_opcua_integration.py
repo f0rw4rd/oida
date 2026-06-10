@@ -247,6 +247,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category A: Discovery Tests (port 4842 insecure -- anonymous access)
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_get_endpoints(self, cli_runner, mock_host, mock_ports):
         """Test getting server endpoints lists security policies [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -269,6 +270,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected endpoint/policy info. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_basic_server_info(self, cli_runner, mock_host, mock_ports):
         """Test default scan returns server product info [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -291,6 +293,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected server info in output. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_basic_server_info_connection_lifecycle(self, cli_runner, mock_host, mock_ports):
         """Test that basic discovery produces proper connection lifecycle events [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -311,6 +314,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if conn_events:
             assert len(conn_events) >= 1, "Expected at least one connection event"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_custom_timeout(self, cli_runner, mock_host, mock_ports):
         """Test --timeout flag is respected [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -332,6 +336,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category A: Address Space Browsing
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_browse_address_space(self, cli_runner, mock_host, mock_ports):
         """Test -d dumps address space with node names [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -358,6 +363,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected address space folder names. Found: {found}. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_browse_max_depth(self, cli_runner, mock_host, mock_ports):
         """Test dump with shallow depth limit [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -376,6 +382,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
         _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_max_nodes_limit(self, cli_runner, mock_host, mock_ports):
         """Test --max-nodes caps the number of browsed nodes [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -425,6 +432,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"than max-nodes=200 ({len(text_large)} chars)"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_all_with_access_levels(self, cli_runner, mock_host, mock_ports):
         """Test -D shows access levels (R/W/H) on nodes [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -452,6 +460,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "variable" in text and any(x in text for x in MOCK_SENSOR_NAMES + MOCK_ACTUATOR_NAMES)
         ), f"Expected access level info in dump-all. Got: {text[:500]}"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_all_with_values(self, cli_runner, mock_host, mock_ports):
         """Test -D --dump-values includes current values [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -488,6 +497,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected actual data values in dump-all --dump-values. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_methods(self, cli_runner, mock_host, mock_ports):
         """Test --dump-methods lists callable methods [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -513,6 +523,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected method names in output. Found: {found_methods}. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_writable_nodes(self, cli_runner, mock_host, mock_ports):
         """Test --dump-write shows writable variables [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -536,6 +547,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         found = [n for n in MOCK_WRITABLE_NAMES if n in text]
         assert len(found) >= 1, f"Expected writable node names. Found: {found}. Got: {text[:500]}"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_namespaces(self, cli_runner, mock_host, mock_ports):
         """Test --dump-namespaces shows the namespace table [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -559,6 +571,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected namespace info. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_history(self, cli_runner, mock_host, mock_ports):
         """Test --dump-history finds historizing nodes [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -582,6 +595,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected historizing info. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_files(self, cli_runner, mock_host, mock_ports):
         """Test --dump-files finds FileType nodes [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -609,6 +623,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category A: Security Findings
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_security_findings_insecure(self, cli_runner, mock_host, mock_ports):
         """Test security analysis detects insecure configuration [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -632,6 +647,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             x in text for x in ["nosecurity", "no security", "insecure", "securitypolicy#none"]
         ), f"Expected insecure configuration findings. Got: {text[:500]}"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_security_findings_anonymous_access(self, cli_runner, mock_host, mock_ports):
         """Test that anonymous access is detected as a security finding [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -651,6 +667,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         # Anonymous access on insecure server should be reported specifically
         assert "anonymous" in text, f"Expected anonymous access finding. Got: {text[:500]}"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_security_findings_no_encryption(self, cli_runner, mock_host, mock_ports):
         """Test that lack of encryption is detected on insecure server [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -689,6 +706,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category A: Security Findings -- Auditing & Writable Access
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     def test_security_finding_auditing_disabled(self, cli_runner, mock_host, mock_ports):
         """Test that auditing disabled is detected as Insecure configuration finding [Category A]
@@ -723,6 +741,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             for phrase in ["auditing disabled", "no activity logging", "auditing: false"]
         ), f"Expected auditing-disabled finding detail. Got: {text[:500]}"
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     def test_security_finding_writable_access_full_browse(self, cli_runner, mock_host, mock_ports):
         """Test that -D full browse triggers 'Writable access' security finding [Category A]
@@ -781,6 +800,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Looked for: {MOCK_WRITABLE_NAMES[:5]}. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     def test_security_finding_writable_access_node_count(self, cli_runner, mock_host, mock_ports):
         """Test that the writable access finding reports a plausible count [Category A]
@@ -818,6 +838,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         # The mock has at least 10 writable nodes
         assert writable_count >= 5, f"Expected at least 5 writable nodes, found {writable_count}"
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     def test_security_finding_insecure_config_via_structured_log(
         self, cli_runner, mock_host, mock_ports
@@ -846,17 +867,34 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         security_events = log.get_security_findings()
         text = _combined_text(result, log)
 
-        # The insecure server should generate at least one security event
-        # (auditing disabled, or insecure configuration)
-        has_security_event = (
-            len(security_events) > 0
-            or "insecure" in text
-            or "auditing" in text
-            or "no security" in text
+        # The insecure server MUST emit structured security events (not just console text).
+        assert len(security_events) > 0, (
+            f"Expected structured security events from insecure server scan, got none. "
+            f"Output: {text[:500]}"
         )
-        assert has_security_event, (
-            f"Expected security events from insecure server scan. "
-            f"Security events: {len(security_events)}. Output: {text[:500]}"
+
+        # The "Insecure configuration" finding (auditing disabled) must carry its
+        # human-readable text in the `details` field of security_finding(), NOT
+        # mis-slotted into `category`. This guards against the security_finding(
+        # title, "detail") positional-arg bug where the detail lands in `category`.
+        structured_findings = [
+            e.get("data", {}) for e in security_events if isinstance(e.get("data"), dict)
+        ]
+        insecure_findings = [
+            d for d in structured_findings if d.get("finding") == "Insecure configuration"
+        ]
+        assert insecure_findings, (
+            f"Expected an 'Insecure configuration' structured finding. "
+            f"Structured findings: {structured_findings}"
+        )
+        assert any("details" in d and d["details"] for d in insecure_findings), (
+            f"'Insecure configuration' finding must populate the `details` field "
+            f"(detail text must not be mis-slotted into `category`). "
+            f"Findings: {insecure_findings}"
+        )
+        assert any("auditing" in d.get("details", "").lower() for d in insecure_findings), (
+            f"Expected the auditing-disabled detail in the finding `details`. "
+            f"Findings: {insecure_findings}"
         )
 
     # ========================================================================
@@ -920,6 +958,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
                     f"Expected credential finding to mention 'admin'. Got: {finding_text[:300]}"
                 )
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     @pytest.mark.auth
     @pytest.mark.slow
@@ -1104,6 +1143,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
                     f"Deprecated finding should mention policy name. Got: {finding_text[:300]}"
                 )
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     def test_security_finding_no_encryption_insecure_server(
         self, cli_runner, mock_host, mock_ports
@@ -1271,6 +1311,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category A: Specific Node Read
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_read_specific_node_known(self, cli_runner, mock_host, mock_ports):
         """Test reading a known mock node (DeviceName ns=2;i=90) [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1295,6 +1336,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected DeviceName value. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_read_firmware_version_node(self, cli_runner, mock_host, mock_ports):
         """Test reading FirmwareVersion node (ns=2;i=91) returns v1.2.3 [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1318,6 +1360,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected firmware version '{MOCK_FIRMWARE}'. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_read_serial_number_node(self, cli_runner, mock_host, mock_ports):
         """Test reading SerialNumber node (ns=2;i=92) returns OIDA-001 [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1345,6 +1388,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Discovery Variants
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_find_servers(self, cli_runner, mock_host, mock_ports):
         """Test FindServers discovery [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1401,6 +1445,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_discover_mode(self, cli_runner, mock_host, mock_ports):
         """Test --discover scan mode [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1417,6 +1462,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_quick_mode(self, cli_runner, mock_host, mock_ports):
         """Test --quick scan mode [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1433,6 +1479,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_full_mode(self, cli_runner, mock_host, mock_ports):
         """Test --full scan mode [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1450,6 +1497,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_deep_scan_mode(self, cli_runner, mock_host, mock_ports):
         """Test --deep-scan mode for thorough address space exploration [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1473,6 +1521,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Address Space Browsing Variants
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_namespace_filter(self, cli_runner, mock_host, mock_ports):
         """Test --ns namespace filter restricts browsing to specific namespace [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1499,6 +1548,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
                     x in text for x in ["ns=2", "industrialdevice", "sensors", "actuators"]
                 ), f"Expected ns=2 nodes in filtered output. Got: {text[:500]}"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_start_node(self, cli_runner, mock_host, mock_ports):
         """Test --start-node browses from a specific node [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1525,6 +1575,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
                     f"Expected sensor nodes from start-node. Got: {text[:500]}"
                 )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_dump_methods_with_examples(self, cli_runner, mock_host, mock_ports):
         """Test --dump-methods --dump-examples shows CLI usage [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1554,6 +1605,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Node Operations
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_read_specific_node(self, cli_runner, mock_host, mock_ports):
         """Test reading specific node by ID (Server object) [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1571,6 +1623,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_read_attributes(self, cli_runner, mock_host, mock_ports):
         """Test reading all node attributes [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1598,6 +1651,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Method Operations
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_call_method(self, cli_runner, mock_host, mock_ports):
         """Test calling a method by NodeId [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1617,6 +1671,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_call_method_with_args(self, cli_runner, mock_host, mock_ports):
         """Test calling a method with arguments [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1641,6 +1696,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Subscription and Monitoring
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.slow
     def test_subscribe_values(self, cli_runner, mock_host, mock_ports):
         """Test subscribing to node value changes [Category B]"""
@@ -1661,6 +1717,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.slow
     def test_subscribe_events(self, cli_runner, mock_host, mock_ports):
         """Test subscribing to server events [Category B]"""
@@ -1681,6 +1738,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.slow
     def test_subscription_interval(self, cli_runner, mock_host, mock_ports):
         """Test custom subscription interval [Category B]"""
@@ -1703,6 +1761,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.slow
     def test_monitor_mode(self, cli_runner, mock_host, mock_ports):
         """Test --monitor flag for continuous polling [Category B]"""
@@ -1729,6 +1788,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Historical Data Access
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_history_read(self, cli_runner, mock_host, mock_ports):
         """Test reading historical data from a node [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1748,6 +1808,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_history_read_with_time_range(self, cli_runner, mock_host, mock_ports):
         """Test reading historical data with custom time range [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1773,6 +1834,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     def test_history_raw(self, cli_runner, mock_host, mock_ports):
         """Test --history-raw for raw historical data [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -1797,6 +1859,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Security Tests
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     def test_security_modes(self, cli_runner, mock_host, mock_ports):
         """Test different security modes [Category B]"""
@@ -1858,6 +1921,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     def test_cert_trust(self, cli_runner, mock_host, mock_ports):
         """Test --test-cert-trust checks if server accepts untrusted certs [Category B]"""
@@ -1925,6 +1989,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.security
     @pytest.mark.slow
     def test_subscription_limits(self, cli_runner, mock_host, mock_ports):
@@ -2050,6 +2115,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Output Format Tests
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_csv_output(self, cli_runner, mock_host, mock_ports):
         """Test CSV output format [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2067,6 +2133,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.success:
             assert result.stdout, "CSV output should produce stdout on success"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_xml_output(self, cli_runner, mock_host, mock_ports):
         """Test XML output format [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2084,6 +2151,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         if result.success:
             assert result.stdout, "XML output should produce stdout on success"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_verbose_output(self, cli_runner, mock_host, mock_ports):
         """Test verbose output [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2097,6 +2165,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         assert result.returncode in [0, 1]
         assert result.stdout or result.stderr, "Verbose mode should produce output"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_debug_output(self, cli_runner, mock_host, mock_ports):
         """Test --debug output [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2115,6 +2184,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category B: Write Operations
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_write_value_with_confirm(self, cli_runner, mock_host, mock_ports):
         """Test writing a value to a writable node with --confirm [Category B]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2258,6 +2328,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             or "error" in result.combined_output.lower()
         ), "Missing certificate files should not succeed without error indication"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_write_value_no_confirm(self, cli_runner, mock_host, mock_ports):
         """Test that write-value without --confirm is rejected [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2279,6 +2350,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Write without --confirm should show 'requires --confirm' message. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_read_file_invalid_node(self, cli_runner, mock_host, mock_ports):
         """Test reading from invalid file node [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2300,6 +2372,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected error indication for invalid file node. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_write_file_requires_confirm(self, cli_runner, mock_host, mock_ports):
         """Test that write-file requires --confirm flag [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2321,6 +2394,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "Write without --confirm should either warn about confirm or fail"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_read_nonexistent_node(self, cli_runner, mock_host, mock_ports):
         """Test reading a nonexistent node ID [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2345,6 +2419,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category C: Fuzzing Tests
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.fuzz
     @pytest.mark.slow
     def test_node_fuzzing(self, cli_runner, mock_host, mock_ports):
@@ -2370,6 +2445,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Node fuzzing unexpected returncode: {result.returncode}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.fuzz
     def test_fuzz_specific_node(self, cli_runner, mock_host, mock_ports):
         """Test fuzzing a specific node [Category C]"""
@@ -2394,6 +2470,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Specific node fuzzing unexpected returncode: {result.returncode}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.fuzz
     def test_method_fuzzing(self, cli_runner, mock_host, mock_ports):
         """Test fuzzing methods (SetTemperature method on insecure server) [Category C]"""
@@ -2418,6 +2495,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         text = result.combined_output.lower()
         assert "fuzz" in text or "tests" in text or not result.success
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.fuzz
     @pytest.mark.slow
     def test_fuzz_all_methods(self, cli_runner, mock_host, mock_ports):
@@ -2449,6 +2527,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category A: Comparative Tests (verify flags actually limit output)
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_max_nodes_actually_limits(self, cli_runner, mock_host, mock_ports):
         """Test that --max-nodes=5 produces less output than --max-nodes=100 [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2487,17 +2566,21 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"than --max-nodes=100 ({len(text_large)} chars)"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_max_depth_actually_limits(self, cli_runner, mock_host, mock_ports):
         """Test that --max-depth=1 lacks deep nodes that --max-depth=5 has [Category A]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
 
+        # NOTE: console (default) output format is required here. With --format json
+        # the per-node address-space table is routed to the JSON document (which only
+        # carries node counts, not names) and is NOT emitted as log events, so the
+        # json-log would never contain the deep node names regardless of depth.
         result_shallow = cli_runner.run(
             self.protocol_name,
             target,
             "-d",
             "--max-depth",
             "1",
-            format="json",
             json_log=True,
         )
         assert result_shallow.success, f"Shallow run failed: {result_shallow.stderr}"
@@ -2508,7 +2591,6 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "-d",
             "--max-depth",
             "5",
-            format="json",
             json_log=True,
         )
         assert result_deep.success, f"Deep run failed: {result_deep.stderr}"
@@ -2521,12 +2603,11 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         deep_found_shallow = [n for n in deep_node_names if n in text_shallow]
         deep_found_deep = [n for n in deep_node_names if n in text_deep]
 
-        if not deep_found_deep and not deep_found_shallow:
-            pytest.skip(
-                "Mock OPC UA server did not return expected deep node names; "
-                "cannot verify depth limiting"
-            )
-
+        assert deep_found_deep, (
+            "--max-depth=5 should reveal deep sensor/actuator nodes "
+            f"(expected any of {deep_node_names}), but found none. "
+            f"Deep output sample: {text_deep[:500]}"
+        )
         assert len(deep_found_deep) > len(deep_found_shallow), (
             f"--max-depth=5 should reveal more deep nodes than --max-depth=1. "
             f"Shallow found: {deep_found_shallow}, Deep found: {deep_found_deep}"
@@ -2536,6 +2617,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category C: Confirm-Gate Tests
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     @pytest.mark.fuzz
     def test_fuzz_without_confirm_is_rejected(self, cli_runner, mock_host, mock_ports):
         """Test that --fuzz without --confirm is rejected [Category C]"""
@@ -2565,6 +2647,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Category C: Malformed Input Tests
     # ========================================================================
 
+    @pytest.mark.containers("opcua-insecure")
     def test_method_args_malformed_json(self, cli_runner, mock_host, mock_ports):
         """Test --method-args with invalid JSON doesn't crash [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2584,6 +2667,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         assert result.returncode != -1, "Should not hang on malformed JSON"
         assert result.stdout or result.stderr, "Should produce output"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_history_invalid_datetime(self, cli_runner, mock_host, mock_ports):
         """Test --history-start with invalid datetime doesn't crash [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2604,6 +2688,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         assert result.returncode != -1, "Should not hang on invalid datetime"
         assert result.stdout or result.stderr, "Should produce output"
 
+    @pytest.mark.containers("opcua-insecure")
     def test_namespace_filter_invalid(self, cli_runner, mock_host, mock_ports):
         """Test --ns with non-numeric value doesn't crash [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
@@ -2629,6 +2714,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             f"Expected error indication for invalid namespace. Got: {text[:500]}"
         )
 
+    @pytest.mark.containers("opcua-insecure")
     def test_start_node_invalid(self, cli_runner, mock_host, mock_ports):
         """Test --start-node with garbage value doesn't crash [Category C]"""
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])

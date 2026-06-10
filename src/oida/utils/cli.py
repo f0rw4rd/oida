@@ -356,46 +356,6 @@ class MockCLI:
                     choices=choices,
                 )
 
-    def _prompt_for_missing_values(self, args, meta, max_attempts=20):
-        """Prompt for missing required values with a maximum retry limit."""
-        attempts = 0
-        while attempts < max_attempts:
-            attempts += 1
-            retry = False
-            for opt, props in meta.get("options", {}).items():
-                if props.get("required", False) and args.get(opt) is None:
-                    prompt = f"{props.get('description', opt)}: "
-                    default = props.get("default", None)
-                    if default is not None:
-                        prompt += f"[{default}] "
-
-                    value = input(prompt)
-
-                    if not value and default is not None:
-                        value = default
-
-                    if value:
-                        opt_type = props.get("type", "str")
-                        try:
-                            if opt_type == "bool":
-                                args[opt] = self.parse_bool(value)
-                            elif opt_type == "int" or opt_type == "port":
-                                args[opt] = int(value)
-                            elif opt_type == "float":
-                                args[opt] = float(value)
-                            else:
-                                args[opt] = value
-                        except ValueError:
-                            logger.warning(f"Invalid value for {opt}: {value}")
-                            retry = True
-                            break
-            if not retry:
-                break
-        else:
-            logger.warning(f"Exceeded maximum prompt attempts ({max_attempts})")
-
-        return args
-
     @staticmethod
     def choose_type(t):
         """Choose type conversion function based on string."""

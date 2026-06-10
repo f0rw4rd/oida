@@ -15,12 +15,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ...connection import SerialConnection
+from ...utils.export_utils import configure as configure_export
+from ...utils.export_utils import export_data, get_export_path
 from ...utils.ics_logger import get_logger, get_module_logger, set_progress_active
 from ...utils.lazy_import import lazy_import
 
 logger = get_module_logger(__name__)
 
-_pyshark = lazy_import("pyshark", "pcap", install_hint="pip install pyshark")
+_pyshark = lazy_import("pyshark", "pcap", install_hint="pip install oida-pyshark")
 _file_extraction = lazy_import(
     "oida.protocols.discovery.file_extraction", "pcap", install_hint="pip install oida[pcap]"
 )
@@ -99,6 +101,15 @@ class PcapScanner:
         if not os.path.isfile(self.pcap_file):
             self.logger.fail(f"PCAP file not found: {self.pcap_file}")
             return self.results
+
+        # Honor -W/--full-width when rendering console tables (e.g. the
+        # Discovered Assets table). pcap writes file exports directly in cli.py
+        # and never relies on the export_utils global config for output_dir/fmt,
+        # so configuring it here only affects console truncation.
+        configure_export(
+            logger=self.logger,
+            full_width=bool(self.args.get("full_width", False)),
+        )
 
         file_size = os.path.getsize(self.pcap_file)
         self.logger.debug("run_scan: file=%s size=%d bytes", self.pcap_file, file_size)
@@ -369,7 +380,8 @@ class PcapScanner:
                 asyncio.set_event_loop(asyncio.new_event_loop())
 
             # EK mode: ~18x faster NDJSON parsing vs XML/PDML.
-            # Requires f0rw4rd/pyshark@ek-fixes fork (PRs #744, #743, EkMultiField).
+            # Needs tshark 4.6+ EK fixes (upstream PRs #744/#743), shipped via the
+            # oida-pyshark PyPI package. EK multifields are resolved in stats.py.
             capture = None
             try:
                 capture = _pyshark.FileCapture(self.pcap_file, use_ek=True, **capture_kw)
@@ -494,7 +506,6 @@ class PcapScanner:
 
         # Harvest protocol-specific data from all listeners via generic interface
         from ...pcap.passive.pyshark_base import PySharkListenerBase
-        from ...utils.export_utils import export_data
 
         all_tables: List[Dict[str, Any]] = []
         all_interactions = []
@@ -756,8 +767,6 @@ class PcapScanner:
 
         output_dir = self.args.get("output_dir")
         if output_dir:
-            from ...utils.export_utils import get_export_path
-
             os.makedirs(output_dir, exist_ok=True)
             hashcat_path = get_export_path("hashcat", "txt")
             if not hashcat_path:
@@ -901,7 +910,6 @@ class PcapScanner:
         2. Endpoint tracker (IP→MAC from every packet)
         3. Stats open ports (per-IP service detection)
         """
-        from ...utils.export_utils import export_data
         from ..discovery.core import DiscoveredDevice, build_device_description, lookup_mac_vendor
 
         # ── Merge stats IP→MAC into endpoint tracker ──
@@ -1010,7 +1018,6 @@ class PcapScanner:
         Reuses the same format as the discovery scanner for consistency.
         """
         from ..discovery.core import build_device_description, lookup_mac_vendor
-        from ...utils.export_utils import export_data, get_export_path
 
         output_dir = self.args.get("output") or self.args.get("output_dir")
         if not output_dir:
@@ -1169,11 +1176,11 @@ class pcap(SerialConnection):
         return True
 
     def enum_host_info(self) -> None:
-        """Set host info"""
-        self.device_info = {
-            "pcap_file": self.host,
-            "protocol": "pcap",
-        }
+        """No-op framework hook — run_scan owns enumeration/output for pcap.
+
+        (The previous self.device_info dict had no reader: print_host_info is a
+        no-op and get_results returns self._scan_results.)
+        """
 
     def print_host_info(self) -> None:
         """Print host info — no-op, run_scan prints the analysis header."""

@@ -127,6 +127,18 @@ class hart(NetworkConnection):
             self.logger.success(
                 f"Connected to HART device at {self.host}:{port} ({protocol.upper()})"
             )
+            # Record transport encryption state of the live connection. HART-IP
+            # only carries TLS/DTLS when PSK credentials negotiated a v2 session;
+            # a plaintext UDP/TCP session is unencrypted and must be flagged.
+            tls_active = bool(getattr(self.scanner, "psk_identity", None)) and bool(
+                getattr(self.scanner, "psk_key", None)
+            )
+            self.results["data"]["encryption_status"] = {
+                "tls_supported": tls_active,
+                "dtls_supported": False,
+                "version": "HART-IP v2" if tls_active else "HART-IP v1",
+                "cipher": getattr(self.scanner, "cipher_suite", None) if tls_active else "",
+            }
         else:
             self.logger.fail(f"Connection failed to {self.host}:{port}")
 

@@ -167,7 +167,8 @@ class TestReportSecurityStatus(unittest.TestCase):
         self.host._report_security_status(security)
         self.host.logger.security_finding.assert_called_once()
         call_args = self.host.logger.security_finding.call_args
-        self.assertIn("NOT SUPPORTED", call_args[0][1])
+        # Detail is passed via the detail= kwarg (not the positional category slot).
+        self.assertIn("NOT SUPPORTED", call_args.kwargs["detail"])
 
     def test_not_supported_accessible_false(self):
         """CIP Security with accessible=False => NOT SUPPORTED."""
@@ -193,7 +194,8 @@ class TestReportSecurityStatus(unittest.TestCase):
         self.host._report_security_status(security)
         self.host.logger.security_finding.assert_called_once()
         call_args = self.host.logger.security_finding.call_args
-        self.assertIn("NOT CONFIGURED", call_args[0][1])
+        # Detail is passed via the detail= kwarg (not the positional category slot).
+        self.assertIn("NOT CONFIGURED", call_args.kwargs["detail"])
 
     def test_enabled_state_configured(self):
         """State raw > 0 => ENABLED."""

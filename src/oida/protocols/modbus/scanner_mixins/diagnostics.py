@@ -119,12 +119,14 @@ class ScannerDiagnosticsMixin(_ScannerBase):
     def _diagnostic_restart(self, client: Any) -> bool:
         """Restart Communications Option (subfunction 0x01)."""
         try:
-            method = getattr(client, "diag_restart_communications_option", None)
+            method = getattr(client, "diag_restart_communication", None)
             if not method:
                 # Older pymodbus may not expose this directly; bail visibly.
-                self.logger.debug("pymodbus client has no diag_restart_communications_option")
+                self.logger.debug("pymodbus client has no diag_restart_communication")
                 return False
-            result = method(device_id=self.unit_id)
+            # pymodbus 3.x: diag_restart_communication(toggle, *, device_id).
+            # toggle=False clears no event log / leaves the comms event log intact.
+            result = method(False, device_id=self.unit_id)
             return not result.isError()
         except Exception as e:
             self.logger.debug(f"Restart communications failed: {e}")
@@ -177,10 +179,10 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             (0x0B, "bus_message_count", "diag_read_bus_message_count"),
             (0x0C, "bus_comm_error_count", "diag_read_bus_comm_error_count"),
             (0x0D, "bus_exception_error_count", "diag_read_bus_exception_error_count"),
-            (0x0E, "server_message_count", "diag_read_slave_message_count"),
-            (0x0F, "server_no_response_count", "diag_read_slave_no_response_count"),
-            (0x10, "server_nak_count", "diag_read_slave_nak_count"),
-            (0x11, "server_busy_count", "diag_read_slave_busy_count"),
+            (0x0E, "server_message_count", "diag_read_device_message_count"),
+            (0x0F, "server_no_response_count", "diag_read_device_no_response_count"),
+            (0x10, "server_nak_count", "diag_read_device_nak_count"),
+            (0x11, "server_busy_count", "diag_read_device_busy_count"),
             (0x12, "bus_character_overrun_count", "diag_read_bus_char_overrun_count"),
         ]
 

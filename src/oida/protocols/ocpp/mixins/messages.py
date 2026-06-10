@@ -760,28 +760,6 @@ class MessagesMixin:
         }
         return self._build_call("DeleteCertificate", payload)
 
-    def _build_certificate_signed(
-        self,
-        certificate_chain: str = "",
-        certificate_type: Optional[str] = None,
-    ) -> str:
-        """
-        Build a CertificateSigned CALL message (CS -> CP, OCPP 2.0.1).
-
-        Args:
-            certificate_chain: PEM-encoded certificate chain
-            certificate_type: Optional type ("ChargingStationCertificate" or "V2GCertificate")
-
-        Returns:
-            JSON-encoded CertificateSigned CALL message
-        """
-        payload = {
-            "certificateChain": certificate_chain,
-        }
-        if certificate_type is not None:
-            payload["certificateType"] = certificate_type
-        return self._build_call("CertificateSigned", payload)
-
     def _build_get_customer_information(
         self,
         request_id: int = 1,

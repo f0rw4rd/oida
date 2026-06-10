@@ -145,7 +145,19 @@ class DiscoveryMixin:
 
         common_ids = [1, 10, 100, 1000, 10000, 100000, 1234, 12345]
 
+        # The probe walks several candidate device IDs serially. On a dead /
+        # firewalled host every probe times out, so without an overall budget
+        # the loop would run len(common_ids) * per_probe seconds and blow past
+        # the user-supplied --timeout. Bound the whole sequence to ~timeout and
+        # size each probe so the budget is shared across the candidates.
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout
+        per_probe = max(0.5, min(2.0, timeout / len(common_ids)))
+
         for test_id in common_ids:
+            if loop.time() >= deadline:
+                self.logger.debug("bacpypes3 discover device: timeout budget exhausted")
+                break
             try:
                 request = ReadPropertyRequest(
                     objectIdentifier=ObjectIdentifier(("device", test_id)),
@@ -153,9 +165,12 @@ class DiscoveryMixin:
                 )
                 request.pduDestination = target_addr
 
+                remaining = deadline - loop.time()
+                if remaining <= 0:
+                    break
                 try:
                     response = await asyncio.wait_for(
-                        app.request(request), timeout=min(timeout, 2.0)
+                        app.request(request), timeout=min(per_probe, remaining)
                     )
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 discover device failed: {e}")

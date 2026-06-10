@@ -8,10 +8,6 @@ from typing import Dict, List
 
 from ..helpers import _get_asyncua, ua, DANGEROUS_KEYWORDS
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 class MethodsMixin:
     """Mixin providing OPC UA method operations."""
@@ -51,7 +47,7 @@ class MethodsMixin:
                                 method_info["executable"] = can_anyone
                                 method_info["user_executable"] = can_user
                             except Exception as e:
-                                logger.debug(
+                                self.logger.debug(
                                     f"Failed to get executable: {e}"
                                 )  # Some servers don't support these attributes
 
@@ -206,64 +202,53 @@ class MethodsMixin:
             "user_executable": False,
         }
 
+        # Read Executable and UserExecutable attributes
         try:
-            # Read Executable and UserExecutable attributes
-            try:
-                exec_attr = await method_node.read_attribute(ua_mod.AttributeIds.Executable)
-                details["executable"] = bool(exec_attr.Value.Value)
-            except Exception as e:
-                self.logger.debug("get method details failed: %s", e)
-                pass
-            try:
-                user_exec_attr = await method_node.read_attribute(
-                    ua_mod.AttributeIds.UserExecutable
-                )
-                details["user_executable"] = bool(user_exec_attr.Value.Value)
-            except Exception as e:
-                self.logger.debug("get method details failed: %s", e)
-                pass
-
-            # Read method description
-            try:
-                desc_attr = await method_node.read_attribute(ua_mod.AttributeIds.Description)
-                if desc_attr.Value.Value:
-                    desc_text = desc_attr.Value.Value
-                    # LocalizedText has Text attribute
-                    if hasattr(desc_text, "Text"):
-                        details["description"] = desc_text.Text or ""
-                    else:
-                        details["description"] = str(desc_text)
-            except Exception as e:
-                self.logger.debug("get method details failed: %s", e)
-                pass
-
-            # Get InputArguments and OutputArguments from properties
-            try:
-                children = await method_node.get_children()
-                for child in children:
-                    try:
-                        name = await child.read_browse_name()
-                        if name.Name == "InputArguments":
-                            args = await child.read_value()
-                            if args:
-                                for arg in args:
-                                    arg_info = self._parse_argument(arg)
-                                    details["input_args"].append(arg_info)
-                        elif name.Name == "OutputArguments":
-                            args = await child.read_value()
-                            if args:
-                                for arg in args:
-                                    arg_info = self._parse_argument(arg)
-                                    details["output_args"].append(arg_info)
-                    except Exception as e:
-                        self.logger.debug("get method details failed: %s", e)
-                        pass
-            except Exception as e:
-                self.logger.debug("get method details failed: %s", e)
-                pass
-
+            exec_attr = await method_node.read_attribute(ua_mod.AttributeIds.Executable)
+            details["executable"] = bool(exec_attr.Value.Value)
         except Exception as e:
-            self.logger.debug(f"Error getting method details: {e}")
+            self.logger.debug("get method details failed: %s", e)
+        try:
+            user_exec_attr = await method_node.read_attribute(ua_mod.AttributeIds.UserExecutable)
+            details["user_executable"] = bool(user_exec_attr.Value.Value)
+        except Exception as e:
+            self.logger.debug("get method details failed: %s", e)
+
+        # Read method description
+        try:
+            desc_attr = await method_node.read_attribute(ua_mod.AttributeIds.Description)
+            if desc_attr.Value.Value:
+                desc_text = desc_attr.Value.Value
+                # LocalizedText has Text attribute
+                if hasattr(desc_text, "Text"):
+                    details["description"] = desc_text.Text or ""
+                else:
+                    details["description"] = str(desc_text)
+        except Exception as e:
+            self.logger.debug("get method details failed: %s", e)
+
+        # Get InputArguments and OutputArguments from properties
+        try:
+            children = await method_node.get_children()
+            for child in children:
+                try:
+                    name = await child.read_browse_name()
+                    if name.Name == "InputArguments":
+                        args = await child.read_value()
+                        if args:
+                            for arg in args:
+                                arg_info = self._parse_argument(arg)
+                                details["input_args"].append(arg_info)
+                    elif name.Name == "OutputArguments":
+                        args = await child.read_value()
+                        if args:
+                            for arg in args:
+                                arg_info = self._parse_argument(arg)
+                                details["output_args"].append(arg_info)
+                except Exception as e:
+                    self.logger.debug("get method details failed: %s", e)
+        except Exception as e:
+            self.logger.debug("get method details failed: %s", e)
 
         return details
 

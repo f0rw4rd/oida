@@ -6,6 +6,7 @@ Unit tests for ADS (Beckhoff Automation Device Specification) scanner functional
 Updated for the refactored NXC-style ADS module.
 """
 
+import ctypes
 import unittest
 from unittest.mock import Mock, patch
 import pytest
@@ -37,13 +38,12 @@ class MockADSConnection:
         if not self.connected:
             raise Exception("Not connected")
 
-        info = Mock()
-        info.name = "TC3PLC1"
-        info.version = Mock()
-        info.version.version = 3
-        info.version.revision = 1
-        info.version.build = 4024
-        return info
+        # Real pyads read_device_info() returns a (name, AdsVersion) tuple.
+        version = Mock()
+        version.version = 3
+        version.revision = 1
+        version.build = 4024
+        return "TC3PLC1", version
 
     def get_all_symbols(self):
         if not self.connected:
@@ -54,7 +54,9 @@ class MockADSConnection:
             symbol = Mock()
             symbol.name = f"MAIN.Variable{i}"
             symbol.symbol_type = "INT"
-            symbol.size = 2
+            # Real pyads AdsSymbol exposes a ctypes plc_type (sizeof -> size),
+            # not a .size attribute; c_int16 matches INT (2 bytes).
+            symbol.plc_type = ctypes.c_int16
             symbol.offset = i * 2
             symbols.append(symbol)
         return symbols

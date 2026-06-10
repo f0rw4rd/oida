@@ -111,7 +111,7 @@ class WorklistMixin(_ScannerBase):
                 if not modality_filter and not date_filter and not station_filter:
                     self.logger.security_finding(
                         "Unrestricted worklist access",
-                        f"Worklist query returned {count} scheduled procedures without filters",
+                        detail=f"Worklist query returned {count} scheduled procedures without filters",
                     )
 
             # Store results

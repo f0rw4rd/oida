@@ -150,10 +150,8 @@ class GOOSEScanner(SerialScanner):
         self.mms_port = safe_int_conversion(args.get("mms-port"), 102)
 
         # Discovered GOOSE messages
-        self.discovered_messages = []
         self.goose_sources = {}  # MAC -> list of messages
         self.gocb_info = []  # GoCB enumeration results
-        self.security_findings = []
 
         # Active GooseSubscriber for cleanup
         self._goose_subscriber = None
@@ -474,7 +472,6 @@ class GOOSEScanner(SerialScanner):
             self.logger.fail(f"GoCB enumeration error: {e}")
 
         self.logger.display(f"Discovered {len(gocb_list)} GOOSE Control Blocks")
-        self.gocb_info = gocb_list
         return gocb_list
 
     def _gocb_info_to_dict(self, info) -> Dict[str, Any]:

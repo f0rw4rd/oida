@@ -17,7 +17,13 @@ from ._helpers import populate_msh
 
 
 class ContinuationMixin:
-    """Mixin providing HL7 continuation/fragmentation handling."""
+    """Mixin providing HL7 continuation/fragmentation handling.
+
+    TODO(continuation): the reassembly helpers (_check_continuation /
+    _reassemble_fragments) are tested, but the public entry
+    _send_mllp_message_with_continuation is not yet wired into the query/scan
+    path — DSC/MSH-14 continuation is therefore not exercised end-to-end.
+    """
 
     def _send_mllp_message_with_continuation(self, message: str) -> Optional[bytes]:
         """Send message and handle continuation (DSC) responses"""
