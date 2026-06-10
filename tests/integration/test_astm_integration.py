@@ -707,7 +707,7 @@ class TestPatientRecord:
         """Verify --send-patient sends P record and reports acceptance [Category A]"""
         recv_seq = _ack_sequence(20) + [socket.timeout("done")]
         mock_sock = _make_mock_socket(recv_seq)
-        args = _make_args(send_patient=True)
+        args = _make_args(send_patient=True, confirm=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
         assert instance.results["success"] is True
@@ -717,7 +717,7 @@ class TestPatientRecord:
         """Verify --patient-id is used in patient record [Category A]"""
         recv_seq = _ack_sequence(20) + [socket.timeout("done")]
         mock_sock = _make_mock_socket(recv_seq)
-        args = _make_args(send_patient=True, patient_id="PAT-999")
+        args = _make_args(send_patient=True, patient_id="PAT-999", confirm=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
         assert instance.results["success"] is True
@@ -728,11 +728,12 @@ class TestPatientRecord:
         """Verify --patient-name is used in patient record [Category A]"""
         recv_seq = _ack_sequence(20) + [socket.timeout("done")]
         mock_sock = _make_mock_socket(recv_seq)
-        args = _make_args(send_patient=True, patient_name="SMITH^JANE^M")
+        args = _make_args(send_patient=True, patient_name="SMITH^JANE^M", confirm=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
         assert instance.results["success"] is True
         assert instance.args.patient_name == "SMITH^JANE^M"
+        assert instance.results["data"].get("patient_accepted") is True
 
 
 # ============================================================================

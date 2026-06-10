@@ -38,56 +38,6 @@ from ...protocols.hl7.utils import (
 )
 
 
-# HL7 segment terminator
-SEGMENT_TERM = "\r"
-
-
-class HL7MessageTypes:
-    """Common HL7 v2.x message types and trigger events"""
-
-    # ADT - Admit/Discharge/Transfer
-    ADT_A01 = "ADT^A01"  # Admit/Visit Notification
-    ADT_A02 = "ADT^A02"  # Transfer a Patient
-    ADT_A03 = "ADT^A03"  # Discharge/End Visit
-    ADT_A04 = "ADT^A04"  # Register a Patient
-    ADT_A08 = "ADT^A08"  # Update Patient Information
-    ADT_A11 = "ADT^A11"  # Cancel Admit
-    ADT_A13 = "ADT^A13"  # Cancel Discharge
-
-    # ORM - Order Messages
-    ORM_O01 = "ORM^O01"  # Order Message
-
-    # ORU - Observation Results
-    ORU_R01 = "ORU^R01"  # Unsolicited Observation Result
-
-    # MDM - Medical Document Management
-    MDM_T01 = "MDM^T01"  # Original Document Notification
-    MDM_T02 = "MDM^T02"  # Original Document with Content
-
-    # ACK - Acknowledgement
-    ACK = "ACK"
-
-    # QRY - Query
-    QRY_A19 = "QRY^A19"  # Patient Query
-
-
-class HL7Segments:
-    """HL7 segment type identifiers"""
-
-    MSH = "MSH"  # Message Header
-    EVN = "EVN"  # Event Type
-    PID = "PID"  # Patient Identification
-    PV1 = "PV1"  # Patient Visit
-    ORC = "ORC"  # Common Order
-    OBR = "OBR"  # Observation Request
-    OBX = "OBX"  # Observation/Result
-    NK1 = "NK1"  # Next of Kin
-    MSA = "MSA"  # Message Acknowledgement
-    ERR = "ERR"  # Error
-    QRD = "QRD"  # Query Definition
-    TXA = "TXA"  # Transcription Document Header
-
-
 class HL7Fuzzer(BaseFuzzer):
     """HL7 v2.x Protocol Fuzzer for healthcare system security testing
 
@@ -192,11 +142,12 @@ class HL7Fuzzer(BaseFuzzer):
 
         super().__init__(config, connection_factory)
 
-    def enumerate_protocol(self) -> Dict[str, Any]:
+    def _enumerate_capabilities(self) -> Dict[str, Any]:
         """Enumerate server capabilities by probing for supported message types.
 
-        Uses the generic enumeration framework from BaseFuzzer.
-        Called automatically when config.enumerate=True.
+        Overrides BaseFuzzer._enumerate_capabilities (the hook actually invoked
+        when config.enumerate=True). The old name `enumerate_protocol` matched
+        nothing in the base class, so capability detection never ran.
 
         Returns:
             Dictionary with detected capabilities (message_types, version, server_app)
@@ -361,7 +312,11 @@ class HL7Fuzzer(BaseFuzzer):
         ]
 
     def _create_socket(self):
-        return TCPSocketConnection(self.config.target_ip, self.config.target_port or 2575)
+        return TCPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port or 2575,
+            **self._timeout_overrides(),
+        )
 
     def setup_custom_monitors(self) -> list:
         """Setup HL7-specific monitoring"""

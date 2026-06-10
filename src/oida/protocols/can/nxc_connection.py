@@ -52,9 +52,6 @@ class can(SerialConnection):
     default_port = 0  # Not applicable for CAN bus
 
     def __init__(self, args: Any, db: Any, host: str) -> None:
-        self.protocol_name = "CAN"
-        self.default_port = 0
-
         # CAN-specific options from args
         self.baudrate = int(getattr(args, "baudrate", DEFAULT_BAUDRATE))
         self.bus_type = getattr(args, "bus_type", "socketcan") or "socketcan"
@@ -66,7 +63,6 @@ class can(SerialConnection):
 
         # Scanner instance (Layer 1)
         self.scanner = None
-        self._traffic_stats = None
 
         # Trigger proto_flow via parent
         super().__init__(args, db, host)
@@ -267,7 +263,6 @@ class can(SerialConnection):
         """Handle passive CAN traffic sniffing."""
         self.logger.display(f"[Sniff] Listening on {self.channel} for {self.sniff_time}s...")
         stats = self.scanner._sniff_traffic(self.conn, duration=self.sniff_time)
-        self._traffic_stats = stats
         self.scanner._print_traffic_stats(stats)
 
         self.results["data"]["traffic_stats"] = {

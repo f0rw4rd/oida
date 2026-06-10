@@ -243,7 +243,12 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     @pytest.mark.auth
     @pytest.mark.slow
     def test_brute_force(self, cli_runner, mock_host, mock_ports, mock_service):
-        """Test credential brute-force [Category B]"""
+        """Test credential brute-force [Category B]
+
+        --default-creds is gated behind --confirm (it runs an active credential
+        attack). With --confirm the scanner MUST actually iterate the default
+        credential list and log a brute-force-complete summary.
+        """
         port = mock_ports.get("mqtt", 1883)
         result = cli_runner.run(
             self.protocol_name,
@@ -251,6 +256,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--default-creds",
+            "--confirm",
             "--username",
             "admin",
             "--brute-rate",
@@ -263,9 +269,11 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
         # Brute-force should complete
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text for term in ["brute", "credential", "default", "tested", "complete"]
-        ), f"Expected brute-force related output: {text[:500]}"
+        # The brute-force loop logs "Brute-force: testing N credentials" and
+        # "Brute-force complete: ..." — assert it actually ran, not just gated.
+        assert "brute-force" in text and "complete" in text, (
+            f"Expected brute-force to run to completion, got: {text[:500]}"
+        )
 
     # ========================================================================
     # Topic Enumeration Tests
@@ -599,8 +607,15 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     # ========================================================================
 
     @pytest.mark.auth
-    def test_credentials_file(self, cli_runner, mock_host, mock_ports, mock_service):
-        """Test credentials file option [Category B]"""
+    def test_credentials_file_missing_falls_back(
+        self, cli_runner, mock_host, mock_ports, mock_service
+    ):
+        """A missing credentials wordlist must fall back to built-in defaults [Category B].
+
+        (Was test_credentials_file using a non-existent --credentials flag, which
+        argparse rejected with rc=2 so the test passed vacuously on the usage banner.
+        --wordlist is the real file-based credential input.)
+        """
         port = mock_ports.get("mqtt", 1883)
         result = cli_runner.run(
             self.protocol_name,
@@ -608,23 +623,32 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--default-creds",
-            "--credentials",
+            "--confirm",
+            "--wordlist",
             "/nonexistent/creds.txt",
+            "--brute-rate",
+            "0",
             format="json",
             json_log=True,
-            timeout=15,
+            timeout=20,
         )
 
-        # Should fail gracefully (file not found) or use fallback creds
-        assert result.returncode in [0, 1, 2]
+        # Missing file must not crash; scanner falls back to built-in defaults.
+        assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text for term in ["credential", "brute", "default", "tested", "connect"]
-        ), f"Expected brute-force related output: {text[:500]}"
+        # Fallback path runs the brute loop to completion against built-in creds.
+        assert "brute-force" in text and "complete" in text, (
+            f"Expected fallback brute-force to run to completion: {text[:500]}"
+        )
 
     @pytest.mark.auth
     def test_wordlist_option(self, cli_runner, mock_host, mock_ports, mock_service):
-        """Test password wordlist option [Category B]"""
+        """Test password wordlist option [Category B].
+
+        --default-creds is gated behind --confirm; with it the brute loop must
+        run to completion even when the wordlist file is missing (fallback to
+        built-in defaults).
+        """
         port = mock_ports.get("mqtt", 1883)
         result = cli_runner.run(
             self.protocol_name,
@@ -632,21 +656,24 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--default-creds",
+            "--confirm",
             "--username",
             "admin",
             "--wordlist",
             "/nonexistent/wordlist.txt",
+            "--brute-rate",
+            "0",
             format="json",
             json_log=True,
-            timeout=15,
+            timeout=20,
         )
 
-        # Should fail gracefully (file not found) or use fallback
-        assert result.returncode in [0, 1, 2]
+        # Should not crash; missing wordlist falls back to built-in defaults.
+        assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text for term in ["credential", "brute", "default", "tested", "connect"]
-        ), f"Expected brute-force related output: {text[:500]}"
+        assert "brute-force" in text and "complete" in text, (
+            f"Expected brute-force to run to completion: {text[:500]}"
+        )
 
     # ========================================================================
     # Topic Options Tests
@@ -881,6 +908,29 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             f"Available findings: {[f.get('data', {}).get('finding') for f in security_events]}"
         )
 
+        # The print_host_info() finding MUST carry the detail sentence in its own
+        # slot (regression guard: it was previously mis-passed into `category`,
+        # so `data.details` was empty). Find the finding titled exactly
+        # "No encryption" and assert it has a non-empty details field.
+        titled = [
+            f
+            for f in security_events
+            if f.get("data", {}).get("finding", "").lower() == "no encryption"
+        ]
+        assert titled, (
+            "Expected a finding titled exactly 'No encryption'. "
+            f"Got: {[f.get('data', {}).get('finding') for f in security_events]}"
+        )
+        detailed = [f for f in titled if (f.get("data", {}).get("details") or "").strip()]
+        assert detailed, (
+            "'No encryption' finding must populate data.details (not stuff the "
+            f"detail sentence into category). Got data blocks: {[f.get('data') for f in titled]}"
+        )
+        plaintext_detail = " ".join(f.get("data", {}).get("details", "") for f in detailed).lower()
+        assert "tls" in plaintext_detail or "plaintext" in plaintext_detail, (
+            f"Expected plaintext/TLS wording in details, got: {plaintext_detail!r}"
+        )
+
     @pytest.mark.security
     def test_finding_anonymous_access_on_insecure_broker(
         self, cli_runner, mock_host, mock_ports, mock_service
@@ -922,6 +972,27 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
         assert len(anon_findings) > 0, (
             f"Expected structured 'Anonymous access' security finding. "
             f"Available findings: {[f.get('data', {}).get('finding') for f in security_events]}"
+        )
+
+        # Regression guard: the print_host_info() "Anonymous access" finding must
+        # carry its detail sentence in data.details, not in category.
+        titled = [
+            f
+            for f in security_events
+            if f.get("data", {}).get("finding", "").lower() == "anonymous access"
+        ]
+        assert titled, (
+            "Expected a finding titled exactly 'Anonymous access'. "
+            f"Got: {[f.get('data', {}).get('finding') for f in security_events]}"
+        )
+        detailed = [f for f in titled if (f.get("data", {}).get("details") or "").strip()]
+        assert detailed, (
+            "'Anonymous access' finding must populate data.details, not stuff the "
+            f"detail sentence into category. Got data blocks: {[f.get('data') for f in titled]}"
+        )
+        anon_detail = " ".join(f.get("data", {}).get("details", "") for f in detailed).lower()
+        assert "anonymous" in anon_detail or "credential" in anon_detail, (
+            f"Expected anonymous/credential wording in details, got: {anon_detail!r}"
         )
 
     @pytest.mark.security

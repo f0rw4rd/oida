@@ -539,6 +539,10 @@ class dicom(
             self.ae.network_timeout = timeout
             self.ae.acse_timeout = timeout
             self.ae.dimse_timeout = timeout
+            # Bound the underlying TCP connect: network/acse/dimse timeouts only
+            # apply AFTER the socket connects, so without this an unroutable host
+            # hangs for the OS SYN-retry window (~minutes), ignoring --timeout.
+            self.ae.connection_timeout = timeout
 
             # Add presentation contexts - C-ECHO
             self.ae.add_requested_context(sop["Verification"])

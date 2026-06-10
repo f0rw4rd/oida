@@ -83,9 +83,13 @@ class DaytimeFuzzer(BaseFuzzer):
                 self.config.target_ip,
                 self.config.target_port or 13,
                 bind=("0.0.0.0", 0),
-                recv_timeout=2.0,
+                **self._timeout_overrides(recv_default=2.0),
             )
-        return TCPSocketConnection(self.config.target_ip, self.config.target_port or 13)
+        return TCPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port or 13,
+            **self._timeout_overrides(),
+        )
 
     def setup_custom_monitors(self) -> List[BaseMonitor]:
         """No special monitoring needed for Daytime"""

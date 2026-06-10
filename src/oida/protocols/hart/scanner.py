@@ -354,8 +354,16 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
                 result.security_findings.extend(wireless_info.get("security_findings", []))
 
             if device_info:
+                # Only treat the device as "unlocked" when we definitively read
+                # UNLOCKED — otherwise (LOCKED / PERMANENTLY_LOCKED / UNKNOWN)
+                # don't emit the HART-SEC-003 "lock not enabled" finding, which
+                # previously fired for every HART 6+ device because device_locked
+                # was never passed.
+                device_locked = device_info.lock_state != LockState.UNLOCKED
                 protocol_findings = analyze_protocol_security(
-                    device_info.protocol_revision, device_info.write_protected
+                    device_info.protocol_revision,
+                    device_info.write_protected,
+                    device_locked=device_locked,
                 )
                 result.security_findings.extend(protocol_findings)
 

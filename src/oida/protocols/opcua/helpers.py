@@ -64,8 +64,9 @@ class _SecurityPoliciesCache:
         return cls._policies
 
 
-# Module-level export for test compatibility (tests patch oida.protocols.opcua.asyncua)
-# This is populated lazily when _get_asyncua() is first called
+# Patch target for tests, which patch oida.protocols.opcua.asyncua. Kept as a
+# module-level name so the attribute exists for mock.patch; no production code
+# reads it (callers go through _get_asyncua()/_AsyncuaCache).
 asyncua = None
 
 
@@ -74,42 +75,26 @@ def _get_asyncua():
 
     Thread-safe: uses singleton cache pattern.
     """
-    # Use module-level asyncua for backwards compatibility with tests
-    import sys
-
-    result = _AsyncuaCache.get()
-    # Update module-level export for test compatibility
-    current_module = sys.modules[__name__]
-    current_module.asyncua = result
-    return result
+    return _AsyncuaCache.get()
 
 
 def _get_security_policies():
     """Get OPC UA security policies lazily.
 
-    Includes backward compatibility for older asyncua versions that may not
-    have the newer AES-based security policies (added in asyncua >= 0.9.90).
+    All listed policies (including the AES-based ones) ship in every asyncua
+    release we support — pyproject pins ``asyncua>=1.1.8``.
     """
     _get_asyncua()
     from asyncua.crypto import security_policies
 
-    policies = {
+    return {
         "none": None,  # No security - use None, not a security policy class
         "basic128rsa15": security_policies.SecurityPolicyBasic128Rsa15,
         "basic256": security_policies.SecurityPolicyBasic256,
         "basic256sha256": security_policies.SecurityPolicyBasic256Sha256,
+        "aes128_sha256_rsaoaep": security_policies.SecurityPolicyAes128Sha256RsaOaep,
+        "aes256_sha256_rsapss": security_policies.SecurityPolicyAes256Sha256RsaPss,
     }
-
-    # Newer policies added in asyncua >= 0.9.90 - graceful fallback for older versions
-    aes128 = getattr(security_policies, "SecurityPolicyAes128Sha256RsaOaep", None)
-    if aes128 is not None:
-        policies["aes128_sha256_rsaoaep"] = aes128
-
-    aes256 = getattr(security_policies, "SecurityPolicyAes256Sha256RsaPss", None)
-    if aes256 is not None:
-        policies["aes256_sha256_rsapss"] = aes256
-
-    return policies
 
 
 def _get_security_policies_cached():

@@ -74,7 +74,9 @@ class KerberosHash:
             return f"$krb5asrep${self.etype}${self.username}@{self.domain}:{self.hash_value}"
         elif self.hash_type == "TGS-REP":
             return f"$krb5tgs${self.etype}$*{self.username}${self.domain}${self.service_name}*${self.hash_value}"
-        return self.hash_value
+        # Unrecognized type / unsupported etype: no valid $krb5 hashcat line, so
+        # return "" rather than a bare value that looks like a deliverable hash.
+        return ""
 
 
 # Kerberos message types

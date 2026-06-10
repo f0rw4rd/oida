@@ -278,9 +278,14 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
         assert result.success
         _assert_log_has_events(result)
         text = _combined_text(result, result.scan_log)
-        # Identify should produce some MMS-related output
-        assert any(
-            x in text for x in ["identify", "vendor", "model", "mms", "iec61850", "iec 61850"]
+        # The identify path queries server identity and enumerates the logical
+        # device list; the mock reports "IEC 61850 Server has 1 logical devices"
+        # and exposes the simpleIOGenericIO device.
+        assert "iec 61850 server has" in text or "logical device" in text, (
+            f"Expected MMS server-identity enumeration. Got: {text[:400]}"
+        )
+        assert "simpleio" in text, (
+            f"Expected simpleIOGenericIO device after identify. Got: {text[:400]}"
         )
 
     def test_identify_output_structure(self, cli_runner, target, port):
@@ -470,6 +475,13 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             timeout=30,
         )
         assert result.success
+        # Reading a variable still connects and discovers the data model;
+        # the targeted logical node and its parent device must be reachable.
+        text = _combined_text(result, result.scan_log)
+        assert "simpleio" in text, (
+            f"Expected simpleIOGenericIO device while reading GGIO1. Got: {text[:400]}"
+        )
+        assert "ggio1" in text, f"Expected GGIO1 node in output. Got: {text[:400]}"
 
     def test_read_variable_lln0(self, cli_runner, target, port):
         """Test reading variable LLN0 [Category B]"""
@@ -484,7 +496,13 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             json_log=True,
             timeout=30,
         )
-        assert result.returncode in [0, 1]
+        # LLN0 is a real logical node on the mock; the scan connects and
+        # discovers the data model successfully.
+        assert result.success, f"LLN0 read failed (rc={result.returncode}): {result.stderr}"
+        text = _combined_text(result, result.scan_log)
+        assert "simpleio" in text and "lln0" in text, (
+            f"Expected simpleIOGenericIO/LLN0 discovery. Got: {text[:400]}"
+        )
 
     def test_read_variable_lphd1(self, cli_runner, target, port):
         """Test reading variable LPHD1 [Category B]"""
@@ -499,7 +517,13 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             json_log=True,
             timeout=30,
         )
-        assert result.returncode in [0, 1]
+        # LPHD1 is a real logical node on the mock; the scan connects and
+        # discovers the data model successfully.
+        assert result.success, f"LPHD1 read failed (rc={result.returncode}): {result.stderr}"
+        text = _combined_text(result, result.scan_log)
+        assert "simpleio" in text and "lphd1" in text, (
+            f"Expected simpleIOGenericIO/LPHD1 discovery. Got: {text[:400]}"
+        )
 
     def test_read_values_all_readable(self, cli_runner, target, port):
         """Test --read-values reads all 23 data objects successfully [Category A]"""
@@ -1548,6 +1572,9 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             timeout=30,
         )
         assert result.success
+        # The scan still discovers the device regardless of export format.
+        text = _combined_text(result, result.scan_log)
+        assert "simpleio" in text, f"Expected device discovery with CSV format. Got: {text[:400]}"
 
     def test_xml_output(self, cli_runner, target, port):
         """Test XML output format [Category A]"""
@@ -1561,6 +1588,8 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             timeout=30,
         )
         assert result.success
+        text = _combined_text(result, result.scan_log)
+        assert "simpleio" in text, f"Expected device discovery with XML format. Got: {text[:400]}"
 
     def test_json_output(self, cli_runner, target, port):
         """Test JSON output format [Category A]"""
@@ -1574,6 +1603,8 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             timeout=30,
         )
         assert result.success
+        text = _combined_text(result, result.scan_log)
+        assert "simpleio" in text, f"Expected device discovery with JSON format. Got: {text[:400]}"
 
     # ========================================================================
     # Verbosity and Debug Tests
@@ -1592,6 +1623,9 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             timeout=30,
         )
         assert result.success
+        _assert_log_has_events(result)
+        text = _combined_text(result, result.scan_log)
+        assert "simpleio" in text, f"Expected device discovery in verbose output. Got: {text[:400]}"
 
     def test_debug_output(self, cli_runner, target, port):
         """Test --debug reveals per-object discovery [Category A]"""

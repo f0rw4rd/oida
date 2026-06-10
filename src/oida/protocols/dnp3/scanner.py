@@ -686,8 +686,12 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         settings.deviceName = self.serial_device
         settings.baud = self.baud
         settings.dataBits = self.data_bits
-        parity_map = {"none": dnp3.Parity.None_, "even": dnp3.Parity.Even, "odd": dnp3.Parity.Odd}
-        settings.parity = parity_map.get(self.parity, dnp3.Parity.None_)
+        # opendnp3's "None" parity member collides with the Python keyword, so
+        # it's only reachable via getattr — dnp3.Parity.None_ does not exist and
+        # crashed every serial scan regardless of --parity.
+        none_parity = getattr(dnp3.Parity, "None")
+        parity_map = {"none": none_parity, "even": dnp3.Parity.Even, "odd": dnp3.Parity.Odd}
+        settings.parity = parity_map.get(self.parity, none_parity)
         stop_map = {1: dnp3.StopBits.One, 2: dnp3.StopBits.Two}
         settings.stopBits = stop_map.get(self.stop_bits, dnp3.StopBits.One)
         return self._manager.AddSerial(

@@ -117,15 +117,20 @@ class ControllerInfoMixin(_ScannerBase):
         try:
             import datetime
 
-            # Get current system time
-            system_time = datetime.datetime.now()
+            # Get current system time (UTC-aware to match pycomm3's UTC PLC time)
+            system_time = datetime.datetime.now(datetime.timezone.utc)
             result["system_time"] = system_time.isoformat()
 
             # Get PLC time using pycomm3
             if hasattr(conn, "get_plc_time"):
                 plc_time_result = conn.get_plc_time()
                 if plc_time_result and not plc_time_result.error:
-                    plc_time = plc_time_result.value
+                    # pycomm3 returns .value as a dict: {'datetime', 'microseconds',
+                    # 'string'} — NOT a bare datetime. The old code called
+                    # .isoformat() on the dict, which raised AttributeError that the
+                    # except below swallowed, so controller_time was always None.
+                    value = plc_time_result.value
+                    plc_time = value.get("datetime") if isinstance(value, dict) else value
                     result["controller_time"] = plc_time.isoformat() if plc_time else None
 
                     # Calculate clock drift
@@ -528,11 +533,14 @@ class ControllerInfoMixin(_ScannerBase):
             tags = conn.get_tag_list()
             tag_list = []
             for t in tags:
+                # pycomm3 get_tag_list() returns List[dict], not objects — the
+                # old attribute access (t.tag_name) raised AttributeError on the
+                # first entry, swallowed below, so this always returned [].
                 tag_info = {
-                    "name": t.tag_name,
-                    "type": t.data_type_name,
-                    "dim": t.dimensions if hasattr(t, "dimensions") else None,
-                    "instance_id": t.instance_id if hasattr(t, "instance_id") else None,
+                    "name": t.get("tag_name"),
+                    "type": t.get("data_type_name"),
+                    "dim": t.get("dimensions"),
+                    "instance_id": t.get("instance_id"),
                 }
                 tag_list.append(tag_info)
             self.logger.display(f"Found {len(tag_list)} tags")
@@ -540,38 +548,6 @@ class ControllerInfoMixin(_ScannerBase):
         except Exception as e:
             self.logger.debug(f"Failed to get tag list: {e}")
             return []
-
-    def _read_tags_pycomm3(self, conn: Any, tags: List[str]) -> Dict[str, Any]:
-        """
-        Read multiple tags using pycomm3 LogixDriver.
-
-        pycomm3 handles fragmentation and batching automatically.
-        Returns dict of {tag_name: {value, type, error}}.
-        """
-        if self._driver_type != "logix":
-            return {}
-
-        results = {}
-        try:
-            # pycomm3 can read multiple tags in one call
-            responses = conn.read(*tags)
-            if not isinstance(responses, list):
-                responses = [responses]
-
-            for resp in responses:
-                tag_result = {
-                    "value": resp.value,
-                    "type": str(resp.type) if resp.type else None,
-                    "error": resp.error,
-                }
-                results[resp.tag] = tag_result
-                if resp.error:
-                    self.logger.debug(f"Tag {resp.tag} read error: {resp.error}")
-
-        except Exception as e:
-            self.logger.debug(f"Tag read failed: {e}")
-
-        return results
 
     def _read_tag(self, conn: Any, tag: str) -> Optional[Any]:
         """

@@ -199,11 +199,12 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
         messages = _all_messages(log=result.scan_log)
 
-        # Mock randomly picks from MOCK_APPS -- we should see at least one known app
-        found_app = any(app.lower() in messages for app in KNOWN_MOCK_APPS)
-        found_facility = any(fac.lower() in messages for fac in KNOWN_MOCK_FACILITIES)
-        assert found_app or found_facility or "server" in messages, (
-            f"Expected known mock app/facility in output, got: {messages[:500]}"
+        # The scanner parses MSH-3/MSH-4 from the mock's response and logs a
+        # "Server: <app>@<facility>" identity line. Require that the server
+        # identity was actually extracted (an app@facility token after the
+        # label), not merely that the substring "server" appears somewhere.
+        assert "server:" in messages and "@" in messages, (
+            f"Expected parsed 'Server: <app>@<facility>' identity, got: {messages[:500]}"
         )
 
     def test_ack_code_aa(self, cli_runner, target, port):
@@ -220,8 +221,10 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
 
         assert result.success, f"ACK test failed: {result.stderr}"
         messages = _all_messages(result.scan_log)
-        assert "aa" in messages or "accept" in messages or "ack" in messages, (
-            f"Expected ACK AA in output, got: {messages[:500]}"
+        # Mock always returns AA; scanner logs "ACK: Application Accept (AA)".
+        # Require the decoded acknowledgment, not a loose "aa" substring.
+        assert "application accept" in messages or "ack: application accept (aa)" in messages, (
+            f"Expected decoded ACK 'Application Accept (AA)' in output, got: {messages[:500]}"
         )
 
     def test_client_identity_display(self, cli_runner, target, port):

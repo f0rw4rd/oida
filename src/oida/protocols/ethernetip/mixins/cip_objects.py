@@ -497,8 +497,6 @@ class CipObjectsMixin(_ScannerBase):
         """
         io_data = {
             "slot": slot,
-            "inputs": None,
-            "outputs": None,
             "assemblies": {},
         }
 

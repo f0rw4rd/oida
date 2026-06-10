@@ -1579,7 +1579,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             target,
             "--port",
             str(port),
-            "-v",
+            verbose=True,
             format="json",
             json_log=True,
         )
@@ -1599,7 +1599,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             target,
             "--port",
             str(port),
-            "--debug",
+            debug=True,
             format="json",
             json_log=True,
             timeout=20,
@@ -1966,12 +1966,19 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
 
     @pytest.mark.security
     def test_security_finding_put_get_enabled(self, cli_runner, target, port, docker_services):
-        """Test 'Insecure configuration' finding for PUT/GET enabled.
+        """Test the PUT/GET detection path runs during a basic scan.
 
-        The mock is configured as S7-1200 (SNAP7_CPU_TYPE=1200). During
-        discover(), _detect_put_get_access() attempts to read 1 byte from
-        Markers area. If read succeeds (mock allows it), emits:
-          security_finding("Insecure configuration", detail="put_get_enabled")
+        During discover(), _detect_put_get_access() is GATED on the CPU series
+        resolving to S7-1200/1500 (scanner.py: `if series in (...)`). The series
+        is derived from the CPU order code, which python-snap7's Server backing
+        this mock cannot serve (order-code/SZL reads fail with "Object does not
+        exist"). The mock therefore reports an "Unknown Series", so the PUT/GET
+        probe is correctly skipped and no "put_get_enabled" finding is emitted.
+
+        What IS deterministic on every successful basic scan is the
+        "No encryption" finding from _analyze_security(). We assert that the
+        discovery / security-analysis path ran and produced that finding, which
+        is the real contract reachable against this mock.
 
         [Category B]
         """
@@ -1991,28 +1998,37 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             term in text for term in ["s7", "siemens", "connect", "put", "get", "configuration"]
         ), f"Expected S7 scan output: {text[:500]}"
 
-        # Check structured log for the PUT/GET finding
-        if result.scan_log and result.success:
-            findings = result.scan_log.get_security_findings()
-            finding_details = [f.get("data", {}).get("details", "") for f in findings]
-            finding_titles = [f.get("data", {}).get("finding", "") for f in findings]
-            # PUT/GET should be detected on S7-1200 mock (memory read succeeds)
-            assert (
-                "put_get_enabled" in finding_details or "Insecure configuration" in finding_titles
-            ), (
-                f"Expected PUT/GET 'Insecure configuration' finding. "
-                f"Found titles: {finding_titles}, details: {finding_details}"
-            )
+        # discover() -> _analyze_security() always emits "No encryption".
+        assert result.scan_log is not None, "Expected structured scan log to be captured"
+        findings = result.scan_log.get_security_findings()
+        finding_titles = [f.get("data", {}).get("finding", "") for f in findings]
+        assert "No encryption" in finding_titles, (
+            f"Expected discover()/security-analysis to run and emit 'No encryption'. "
+            f"Found findings: {finding_titles}"
+        )
+        # The PUT/GET probe must NOT mis-fire when the series is undetectable on
+        # this mock (would be a false positive). Guard against regression.
+        finding_details = [f.get("data", {}).get("details", "") for f in findings]
+        assert "put_get_enabled" not in finding_details, (
+            "PUT/GET finding fired despite undetectable CPU series -- "
+            f"unexpected on this mock. Findings: {finding_details}"
+        )
 
     @pytest.mark.security
     def test_security_finding_protection_level(self, cli_runner, target, port, docker_services):
-        """Test 'Insecure configuration' finding for protection_level=1 or 2.
+        """Test the protection-level check runs and handles an indeterminate CPU.
 
-        During discover(), _check_protection_level() reads the S7Protection
-        structure from the PLC. The snap7 Server mock returns all zeros for
-        protection fields, which maps to protection_level=1 (no protection).
-        Then _analyze_security() emits:
-          security_finding("Insecure configuration", detail="protection_level=1")
+        During discover(), _check_protection_level() reads the S7Protection SZL
+        from the PLC. python-snap7's Server (backing this mock) does NOT serve
+        that SZL -- the read fails with "Object does not exist (0x0a)", so the
+        protection level is indeterminate. _analyze_security() deliberately
+        treats an indeterminate level as the most-restrictive value (3) and
+        emits NO "protection_level=N" finding, to avoid a false positive when
+        the CPU simply didn't expose the SZL (see security.py comment).
+
+        So the correct contract on this mock is: the protection check is
+        attempted, the indeterminate result is handled WITHOUT a false-positive
+        finding, and the deterministic "No encryption" finding still fires.
 
         [Category B]
         """
@@ -2021,6 +2037,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             target,
             "--port",
             str(port),
+            debug=True,
             format="json",
             json_log=True,
             timeout=30,
@@ -2033,18 +2050,27 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             for term in ["s7", "siemens", "connect", "protection", "configuration", "security"]
         ), f"Expected S7 scan output: {text[:500]}"
 
-        # Check for protection level finding in structured log
-        if result.scan_log and result.success:
-            findings = result.scan_log.get_security_findings()
-            finding_details = [f.get("data", {}).get("details", "") for f in findings]
-            # Mock returns all-zero protection -> level=1 -> "protection_level=1"
-            # Accept either level=1 or level=2 as valid findings
-            assert any(
-                d in ("protection_level=1", "protection_level=2") for d in finding_details
-            ), (
-                f"Expected protection_level=1 or =2 in security findings. "
-                f"Found details: {finding_details}"
-            )
+        assert result.scan_log is not None, "Expected structured scan log to be captured"
+        # The protection-level check must actually run during discovery.
+        messages = _all_messages(result.scan_log)
+        assert "protection level" in messages, (
+            f"Expected the protection-level check to run during discovery. "
+            f"Log messages: {messages[:500]}"
+        )
+
+        findings = result.scan_log.get_security_findings()
+        finding_titles = [f.get("data", {}).get("finding", "") for f in findings]
+        finding_details = [f.get("data", {}).get("details", "") for f in findings]
+        # Security analysis ran -> "No encryption" is deterministic.
+        assert "No encryption" in finding_titles, (
+            f"Expected security analysis to run and emit 'No encryption'. "
+            f"Found findings: {finding_titles}"
+        )
+        # Indeterminate protection must NOT yield a protection_level finding.
+        assert not any(d.startswith("protection_level=") for d in finding_details), (
+            "Protection-level finding fired despite an indeterminate (unreadable) "
+            f"protection SZL -- false positive. Found details: {finding_details}"
+        )
 
     @pytest.mark.security
     @pytest.mark.auth
@@ -2104,6 +2130,10 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
         tested always succeeds, triggering:
           security_finding("Weak password", f"S7 password found: {password}")
 
+        --default-creds is a confirm-gated DANGEROUS action (brute-force trips
+        Siemens account-lockout / SCALANCE SIEM), so --confirm is required for
+        the brute-force to actually run.
+
         [Category B]
         """
         result = cli_runner.run(
@@ -2112,6 +2142,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--default-creds",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=90,
@@ -2134,14 +2165,16 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             ]
         ), f"Expected credential testing output: {text[:500]}"
 
-        # Check structured log for the finding
-        if result.scan_log and result.success:
-            findings = result.scan_log.get_security_findings()
-            finding_titles = [f.get("data", {}).get("finding", "") for f in findings]
-            # snap7 Server doesn't enforce passwords -> first attempt succeeds
-            assert "Weak password" in finding_titles, (
-                f"Expected 'Weak password' security finding. Found findings: {finding_titles}"
-            )
+        # Check structured log for the finding. The snap7 Server never enforces
+        # passwords, so the first default credential always "succeeds" and the
+        # finding fires deterministically -- assert it unconditionally once the
+        # structured log is available (no success-guard escape hatch).
+        assert result.scan_log is not None, "Expected structured scan log to be captured"
+        findings = result.scan_log.get_security_findings()
+        finding_titles = [f.get("data", {}).get("finding", "") for f in findings]
+        assert "Weak password" in finding_titles, (
+            f"Expected 'Weak password' security finding. Found findings: {finding_titles}"
+        )
 
     @pytest.mark.security
     def test_security_finding_writable_access_via_audit(
@@ -2204,16 +2237,19 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
     def test_security_findings_combined_in_basic_scan(
         self, cli_runner, target, port, docker_services
     ):
-        """Test that a basic scan produces multiple security findings.
+        """Test that a basic scan runs security analysis and emits findings.
 
-        A successful basic scan against the mock should trigger discover()
-        which calls both _detect_put_get_access() and _analyze_security(),
-        producing at minimum:
-          - "No encryption" (always, S7 has no encryption)
-          - "Insecure configuration" (put_get_enabled and/or protection_level)
+        A basic scan (no action flags) must trigger discover() ->
+        _analyze_security(), which structures findings as JSON security events.
+        Against this mock the deterministic finding is "No encryption" (S7 is
+        never encrypted). The "Insecure configuration" findings (put_get /
+        protection_level) require CPU order-code and S7Protection SZL data that
+        python-snap7's Server does NOT serve, so they correctly do not fire
+        here (see test_security_finding_put_get_enabled /
+        _protection_level for the per-path reasoning).
 
-        This test validates that security findings accumulate correctly and
-        the structured log contains multiple finding events.
+        This test validates that the security-analysis path runs on a plain
+        scan and that each finding is recorded as a well-formed security event.
 
         [Category B]
         """
@@ -2233,22 +2269,21 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             f"Expected S7 scan output: {text[:500]}"
         )
 
-        # On a successful scan, expect at least 2 security findings:
-        # "No encryption" + at least one "Insecure configuration"
-        if result.scan_log and result.success:
-            findings = result.scan_log.get_security_findings()
-            assert len(findings) >= 2, (
-                f"Expected at least 2 security findings from basic scan "
-                f"(No encryption + Insecure configuration). "
-                f"Found {len(findings)}: "
-                f"{[f.get('data', {}).get('finding', '') for f in findings]}"
-            )
+        # discover() -> _analyze_security() runs on a basic scan (no action
+        # flags) and emits at least the deterministic "No encryption" finding.
+        assert result.scan_log is not None, "Expected structured scan log to be captured"
+        findings = result.scan_log.get_security_findings()
+        finding_titles = [f.get("data", {}).get("finding", "") for f in findings]
+        assert "No encryption" in finding_titles, (
+            f"Expected basic scan to run security analysis and emit "
+            f"'No encryption'. Found findings: {finding_titles}"
+        )
 
-            # Verify finding diversity (not all the same title)
-            unique_titles = set(f.get("data", {}).get("finding", "") for f in findings)
-            assert len(unique_titles) >= 1, (
-                f"Expected diverse security findings. Unique titles: {unique_titles}"
-            )
+        # Every security finding must be a well-formed event (security event_type
+        # with a non-empty finding title in its data payload).
+        for f in findings:
+            assert f.get("event_type") == "security", f"Malformed security event: {f}"
+            assert f.get("data", {}).get("finding"), f"Security event missing finding title: {f}"
 
     # ========================================================================
     # Dead Flag Tests (skip with reason)

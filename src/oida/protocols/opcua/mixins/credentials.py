@@ -68,7 +68,8 @@ class CredentialsMixin:
 
                 # Success
                 self.logger.security_finding(
-                    "Default credentials", f"Valid OPC UA credentials: {username}:{password}"
+                    "Default credentials",
+                    detail=f"Valid OPC UA credentials: {username}:{password}",
                 )
                 valid_creds.append({"username": username, "password": password})
 
@@ -287,7 +288,7 @@ class CredentialsMixin:
             if all_same_read and all_same_write:
                 self.logger.security_finding(
                     "No authentication",
-                    "NO RBAC DETECTED - All auth methods have same access (may indicate missing access control)",
+                    detail="NO RBAC DETECTED - All auth methods have same access (may indicate missing access control)",
                 )
             else:
                 self.logger.success("[+] RBAC appears to be configured:")
@@ -303,7 +304,8 @@ class CredentialsMixin:
                     user_read = len(access["readable_nodes"])
                     if anon_read >= user_read:
                         self.logger.security_finding(
-                            "Anonymous access", f"Anonymous has same/more access than {name}"
+                            "Anonymous access",
+                            detail=f"Anonymous has same/more access than {name}",
                         )
 
         # Export RBAC results

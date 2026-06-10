@@ -99,7 +99,7 @@ class CipSecurityMixin(_ScannerBase):
 
         # Check if CIP Security object is accessible
         if not cip_sec.get("accessible"):
-            self.logger.security_finding("No authentication", "CIP Security: NOT SUPPORTED")
+            self.logger.security_finding("No authentication", detail="CIP Security: NOT SUPPORTED")
             return
 
         # Check security state
@@ -109,7 +109,7 @@ class CipSecurityMixin(_ScannerBase):
         if state_raw == 0:
             # Factory Default - security exists but not configured
             self.logger.security_finding(
-                "No authentication", f"CIP Security: NOT CONFIGURED ({state_name})"
+                "No authentication", detail=f"CIP Security: NOT CONFIGURED ({state_name})"
             )
         else:
             # Security is configured

@@ -16,7 +16,6 @@ CVE Coverage:
 - CVE-2017-3881: Jumbo frame handling DoS (oversized MTU)
 """
 
-import os
 import socket
 import struct
 from typing import List, Optional
@@ -167,7 +166,6 @@ class EthernetFuzzer(BaseFuzzer):
         if config:
             config.protocol_type = ProtocolType.RAW
         super().__init__(config, connection_factory)
-        self.protocol_name = "Ethernet"
 
         # Get options
         self.interface = config.get_option("interface", "eth0") if config else "eth0"
@@ -832,19 +830,6 @@ class EthernetFuzzer(BaseFuzzer):
             self.session.connect(ipv6_frame)
             self.session.connect(mpls_frame)
 
-    def _create_raw_socket(self):
-        """Create a raw socket for sending Ethernet frames"""
-        try:
-            # Create raw socket (requires root/admin privileges)
-            if os.name == "posix":  # Linux/Unix
-                # AF_PACKET for raw Ethernet frames
-                sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))
-                sock.bind((self.interface, 0))
-            else:
-                raise NotImplementedError("Raw sockets not supported on this platform")
-            return sock
-        except PermissionError:
-            raise PermissionError("Raw socket creation requires root/administrator privileges")
 
     def _get_monitors(self) -> List[BaseMonitor]:
         """Return list of monitors for Ethernet fuzzing"""

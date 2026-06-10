@@ -695,6 +695,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--aet-brute",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=60,
@@ -707,6 +708,13 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
         text = _combined_text(result, log)
         assert "brute force" in text or "valid ae" in text or "valid:" in text, (
             f"Expected AET brute force results summary: {text[:500]}"
+        )
+        # Open mock (MOCK_PACS) accepts any AET. The brute-force tests >5 AE
+        # Titles and accepts all of them, so the weak-whitelist finding must
+        # fire (only emitted when len(valid_aets) > 5).
+        log.assert_security_finding("No authentication")
+        assert "valid:" in text, (
+            f"Open PACS brute-force should report valid AE Titles: {text[:500]}"
         )
 
     def test_c_find_max_results(self, cli_runner, target, port):
@@ -973,6 +981,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "MOCK_PACS",
             "--study-uid",
             MOCK_STUDY_UID,
+            "--confirm",
             format="json",
             json_log=True,
             timeout=30,
@@ -980,8 +989,13 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
 
         assert result.returncode in [0, 1], f"C-MOVE crashed: rc={result.returncode}"
         text = _combined_text(result, result.scan_log if result.scan_log else None)
-        assert any(x in text for x in ["transfer", "c-move", "mock_pacs", "requesting"]), (
-            f"Expected transfer/C-MOVE output: {text[:500]}"
+        # With --confirm the gate is cleared; the scanner must actually issue the
+        # C-MOVE (not just print the confirm-required notice).
+        assert "c-move" in text or "transfer" in text, (
+            f"Expected C-MOVE transfer output: {text[:500]}"
+        )
+        assert "requires --confirm" not in text, (
+            f"C-MOVE should run with --confirm, not bail on the gate: {text[:500]}"
         )
 
     def test_c_store_missing_file(self, cli_runner, target, port):
@@ -994,6 +1008,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--store",
             "--store-file",
             "/nonexistent/file.dcm",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=15,
@@ -1001,8 +1016,13 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
 
         assert result.returncode in [0, 1, 2], "C-STORE should handle missing file gracefully"
         text = _combined_text(result, result.scan_log if result.scan_log else None)
+        # With --confirm the gate is cleared, so the scanner reaches the file
+        # loading step and must report the missing file (not the confirm notice).
+        assert "requires --confirm" not in text, (
+            f"C-STORE should run with --confirm, not bail on the gate: {text[:500]}"
+        )
         assert any(
-            x in text for x in ["no dicom files", "error", "fail", "not found", "c-store"]
+            x in text for x in ["no dicom files", "not found", "no such file", "error", "fail"]
         ), f"Expected error message about missing file: {text[:500]}"
 
     def test_brute_ae_strict_server(self, cli_runner, mock_host, mock_ports):
@@ -1018,6 +1038,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(strict_port),
             "--aet-brute",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=60,
@@ -1027,8 +1048,17 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             f"AET brute force (strict) crashed: rc={result.returncode}"
         )
         text = _combined_text(result, result.scan_log if result.scan_log else None)
-        assert any(x in text for x in ["brute force", "rejected", "valid", "testing"]), (
-            f"Expected brute force results from strict server: {text[:500]}"
+        # With --confirm the gate is cleared; the brute-force must actually run
+        # and emit its per-target testing/results banner (not the confirm notice).
+        assert "requires --confirm" not in text, (
+            f"Strict brute should run with --confirm, not bail on the gate: {text[:500]}"
+        )
+        assert "testing" in text and "ae titles" in text, (
+            f"Expected brute-force to test the AE Title wordlist: {text[:500]}"
+        )
+        # The scanner must report a structured tally of valid vs rejected AETs.
+        assert "valid ae titles:" in text and "rejected:" in text, (
+            f"Expected brute-force valid/rejected tally: {text[:500]}"
         )
 
     @pytest.mark.security
@@ -1290,6 +1320,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--common-ae",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=60,
@@ -1300,8 +1331,13 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
 
         text = _combined_text(result, log)
-        assert "brute force" in text or "valid" in text or "common" in text, (
+        assert "brute force" in text or "valid" in text, (
             f"Expected brute force results from --common-ae: {text[:500]}"
+        )
+        # --common-ae uses the built-in vendor AE Title list; the scanner
+        # announces how many common AETs it is testing.
+        assert "common vendor ae titles" in text or "ae titles against" in text, (
+            f"--common-ae should test the built-in vendor AE Title list: {text[:500]}"
         )
 
     def test_ae_wordlist_custom_file(self, cli_runner, target, port, tmp_path):
@@ -1318,6 +1354,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--aet-brute",
             "--ae-wordlist",
             str(wordlist),
+            "--confirm",
             format="json",
             json_log=True,
             timeout=60,
@@ -1330,6 +1367,11 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
         text = _combined_text(result, log)
         assert "brute force" in text or "valid" in text or "wordlist" in text, (
             f"Expected brute force results from custom wordlist: {text[:500]}"
+        )
+        # The custom wordlist must actually be loaded (not the built-in default):
+        # the scanner echoes the wordlist source path it loaded from.
+        assert str(wordlist).lower() in text or "custom_aets.txt" in text, (
+            f"Scanner should report loading the custom wordlist file: {text[:500]}"
         )
 
     # ========================================================================
@@ -1464,14 +1506,14 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
         # Use assert_security_finding for exact match on data.finding
         log.assert_security_finding("No encryption")
 
-        # Validate the finding category text mentions plaintext/PHI
-        # Note: security_finding(title, category) stores description in data.category
+        # Validate the finding detail text mentions plaintext/PHI.
+        # security_finding(title, detail=...) stores the description in data.details.
         no_enc_findings = [
             f for f in security if f.get("data", {}).get("finding") == "No encryption"
         ]
-        category = no_enc_findings[0].get("data", {}).get("category", "")
-        assert "plaintext" in category.lower() or "phi" in category.lower(), (
-            f"'No encryption' finding category should mention 'plaintext' or 'PHI', got: {category}"
+        detail = no_enc_findings[0].get("data", {}).get("details", "")
+        assert "plaintext" in detail.lower() or "phi" in detail.lower(), (
+            f"'No encryption' finding detail should mention 'plaintext' or 'PHI', got: {detail!r}"
         )
 
     @pytest.mark.security
@@ -1531,16 +1573,16 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
 
         log.assert_security_finding("Weak AET whitelist")
 
-        # Validate category mentions the AE Title "OIDA"
-        # Note: security_finding(title, category) stores description in data.category
+        # Validate detail mentions the AE Title "OIDA".
+        # security_finding(title, detail=...) stores the description in data.details.
         findings = [
             f
             for f in log.get_security_findings()
             if f.get("data", {}).get("finding") == "Weak AET whitelist"
         ]
-        category = findings[0].get("data", {}).get("category", "")
-        assert "oida" in category.lower(), (
-            f"'Weak AET whitelist' finding should mention AET name 'OIDA', got: {category}"
+        detail = findings[0].get("data", {}).get("details", "")
+        assert "oida" in detail.lower(), (
+            f"'Weak AET whitelist' finding should mention AET name 'OIDA', got: {detail!r}"
         )
 
     @pytest.mark.security
@@ -1604,18 +1646,18 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
 
         log.assert_security_finding("Unrestricted query access")
 
-        # Validate category mentions patient records / PHI
-        # Note: security_finding(title, category) stores description in data.category
+        # Validate detail mentions patient records / PHI.
+        # security_finding(title, detail=...) stores the description in data.details.
         findings = [
             f
             for f in log.get_security_findings()
             if f.get("data", {}).get("finding") == "Unrestricted query access"
         ]
         assert len(findings) >= 1, "Expected at least 1 'Unrestricted query access' finding"
-        category = findings[0].get("data", {}).get("category", "")
-        assert "patient" in category.lower() or "record" in category.lower(), (
-            f"'Unrestricted query access' category should mention 'patient' or 'record', "
-            f"got: {category}"
+        detail = findings[0].get("data", {}).get("details", "")
+        assert "patient" in detail.lower() or "record" in detail.lower(), (
+            f"'Unrestricted query access' detail should mention 'patient' or 'record', "
+            f"got: {detail!r}"
         )
 
     @pytest.mark.security
@@ -1665,6 +1707,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--aet-brute",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=60,
@@ -1681,13 +1724,12 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             for f in log.get_security_findings()
             if f.get("data", {}).get("finding") == "No authentication"
         ]
-        # Note: security_finding(title, category) stores description in data.category
-        category = findings[0].get("data", {}).get("category", "")
+        # security_finding(title, detail=...) stores the description in
+        # data.details (the category slot stays empty for this finding).
+        detail = findings[0].get("data", {}).get("details", "")
         assert (
-            "aet" in category.lower()
-            or "ae title" in category.lower()
-            or "whitelist" in category.lower()
-        ), f"'No authentication' category should mention AET/whitelist, got: {category}"
+            "aet" in detail.lower() or "ae title" in detail.lower() or "whitelist" in detail.lower()
+        ), f"'No authentication' detail should mention AET/whitelist, got: {detail!r}"
 
     @pytest.mark.security
     def test_finding_permissive_aet_policy(self, cli_runner, target, port):
@@ -1707,28 +1749,30 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--aet-brute",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=60,
         )
 
         assert result.returncode in [0, 1], f"AET brute force crashed: rc={result.returncode}"
-        # Unconditional: scanner must attempt brute force
+        # Unconditional: scanner must actually run the brute force (with --confirm
+        # the gate is cleared, so the testing/results banner must appear).
         text = _combined_text(result, result.scan_log if result.scan_log else None)
-        assert any(x in text for x in ["brute force", "valid", "testing", "aet"]), (
-            f"Expected brute force attempt output: {text[:500]}"
+        assert "testing" in text or "brute force results" in text, (
+            f"Expected brute force to run and report results: {text[:500]}"
         )
 
-        # Conditional: if _analyze_security ran, check for the finding
+        # Conditional: if _analyze_security ran, check for the finding detail
         if result.scan_log:
             security = result.scan_log.get_security_findings()
             permissive = [
                 f for f in security if f.get("data", {}).get("finding") == "Permissive AET policy"
             ]
             if permissive:
-                category = permissive[0].get("data", {}).get("category", "")
-                assert "ae title" in category.lower() or "accept" in category.lower(), (
-                    f"'Permissive AET policy' category should mention AE Titles, got: {category}"
+                detail = permissive[0].get("data", {}).get("details", "")
+                assert "ae title" in detail.lower() or "accept" in detail.lower(), (
+                    f"'Permissive AET policy' detail should mention AE Titles, got: {detail!r}"
                 )
 
     @pytest.mark.security
@@ -1773,10 +1817,10 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
                 ]
             ]
             if result.success and bulk_findings:
-                # Note: security_finding(title, category) stores description in data.category
-                category = bulk_findings[0].get("data", {}).get("category", "")
-                assert "image" in category.lower() or "retriev" in category.lower(), (
-                    f"Bulk/unrestricted retrieval finding should mention images, got: {category}"
+                # security_finding(title, detail=...) stores description in data.details.
+                detail = bulk_findings[0].get("data", {}).get("details", "")
+                assert "image" in detail.lower() or "retriev" in detail.lower(), (
+                    f"Bulk/unrestricted retrieval finding should mention images, got: {detail!r}"
                 )
 
     @pytest.mark.security
@@ -1796,6 +1840,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "MOCK_PACS",
             "--study-uid",
             MOCK_STUDY_UID,
+            "--confirm",
             format="json",
             json_log=True,
             timeout=30,
@@ -1820,10 +1865,10 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
                 ]
             ]
             if result.success and transfer_findings:
-                # Note: security_finding(title, category) stores description in data.category
-                category = transfer_findings[0].get("data", {}).get("category", "")
-                assert "transfer" in category.lower() or "image" in category.lower(), (
-                    f"Open transfer finding category should mention transfer/images, got: {category}"
+                # security_finding(title, detail=...) stores description in data.details.
+                detail = transfer_findings[0].get("data", {}).get("details", "")
+                assert "transfer" in detail.lower() or "image" in detail.lower(), (
+                    f"Open transfer finding detail should mention transfer/images, got: {detail!r}"
                 )
 
     @pytest.mark.security
@@ -1864,14 +1909,14 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
                 f for f in security if f.get("data", {}).get("finding") == "Mass data exfiltration"
             ]
             if result.success and exfil_findings:
-                # Note: security_finding(title, category) stores description in data.category
-                category = exfil_findings[0].get("data", {}).get("category", "")
+                # security_finding(title, detail=...) stores description in data.details.
+                detail = exfil_findings[0].get("data", {}).get("details", "")
                 assert (
-                    "image" in category.lower()
-                    or "export" in category.lower()
-                    or "patient" in category.lower()
+                    "image" in detail.lower()
+                    or "export" in detail.lower()
+                    or "patient" in detail.lower()
                 ), (
-                    f"'Mass data exfiltration' category should mention images/patients, got: {category}"
+                    f"'Mass data exfiltration' detail should mention images/patients, got: {detail!r}"
                 )
 
     @pytest.mark.security
@@ -1986,12 +2031,12 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             f"All findings: {[f.get('data', {}).get('finding') for f in security]}"
         )
 
-        # Validate that category text mentions the patient count
-        # Note: security_finding(title, category) stores description in data.category
+        # Validate that the detail text mentions the patient count.
+        # security_finding(title, detail=...) stores description in data.details.
         for finding in query_findings:
-            category = finding.get("data", {}).get("category", "")
-            assert "patient" in category.lower() or "record" in category.lower(), (
-                f"Finding category should reference patients/records, got: {category}"
+            detail = finding.get("data", {}).get("details", "")
+            assert "patient" in detail.lower() or "record" in detail.lower(), (
+                f"Finding detail should reference patients/records, got: {detail!r}"
             )
 
     @pytest.mark.security
@@ -2014,6 +2059,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--aet-brute",
+            "--confirm",
             format="json",
             json_log=True,
             timeout=60,
@@ -2068,10 +2114,10 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             assert isinstance(data.get("finding"), str) and data["finding"], (
                 f"Security finding {i} missing data.finding: {data}"
             )
-            # data.category contains the description text
-            # (security_finding(title, category) maps to data.category)
-            assert isinstance(data.get("category"), str) and data["category"], (
-                f"Security finding {i} missing data.category: {data}"
+            # data.details contains the description text
+            # (security_finding(title, detail=...) maps to data.details)
+            assert isinstance(data.get("details"), str) and data["details"], (
+                f"Security finding {i} missing data.details: {data}"
             )
             # Standard event fields
             assert "timestamp" in finding, f"Security finding {i} missing timestamp"

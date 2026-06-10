@@ -339,16 +339,8 @@ class knx(NetworkConnection):
         if hasattr(gw, "supports_routing") and gw.supports_routing:
             self.logger.display("  Routing: supported")
 
-        if hasattr(gw, "serial_number") and gw.serial_number:
-            self.logger.display(f"  Serial: {gw.serial_number.hex().upper()}")
-
-        if hasattr(gw, "mac_address") and gw.mac_address:
-            mac = str(gw.mac_address)
-            vendor = module.mac_lookup(mac, full=True)
-            if vendor:
-                self.logger.display(f"  MAC: {mac} ({vendor})")
-            else:
-                self.logger.display(f"  MAC: {mac}")
+        # Note: xknx GatewayDescriptor exposes no serial_number/mac_address;
+        # those DIB fields are surfaced by the unicast search-response path.
 
     def _display_gateway_info_dict(self, gw: dict):
         """Display gateway information from parsed dict."""
