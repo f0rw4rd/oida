@@ -109,13 +109,18 @@ class HostEnumerationMixin(_ScannerBase):
             {index_suffix: {col_name: value, ...}, ...}
         """
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, walk_cmd
+        from pysnmp.proto import rfc1905
 
-        rows = {}
+        rows: Dict[str, Dict] = {}
+        # enum_limit caps the number of distinct rows (index suffixes) for the
+        # WHOLE table, not per column -- otherwise a wide table multiplies the cap
+        # by the column count and the row dict grows unbounded across columns.
         limit = self.enum_limit if self.enum_limit > 0 else max_entries
+        sentinels = (rfc1905.NoSuchObject, rfc1905.NoSuchInstance, rfc1905.EndOfMibView)
 
         for col_name, base_oid in columns.items():
-            count = 0
             base_norm = base_oid.lstrip(".")
+            scope = base_norm + "."
             try:
                 async for error_indication, error_status, _, var_binds in walk_cmd(
                     engine,
@@ -130,27 +135,28 @@ class HostEnumerationMixin(_ScannerBase):
 
                     for var_bind in var_binds:
                         oid_str = str(var_bind[0])
-                        # Extract index suffix: everything after the base OID
-                        if oid_str.startswith(base_norm + "."):
-                            suffix = oid_str[len(base_norm) + 1 :]
+                        # Extract index suffix: everything strictly under the base
+                        # OID. An OID outside base_norm + "." is a sibling subtree
+                        # (e.g. ...1.2 vs ...1.20) -- skip it rather than invent a
+                        # single-arc index that would merge unrelated rows.
+                        if oid_str.startswith(scope):
+                            suffix = oid_str[len(scope) :]
                         elif oid_str == base_norm:
                             suffix = "0"
                         else:
-                            suffix = oid_str.rsplit(".", 1)[-1]
+                            continue
 
                         val = var_bind[1]
-                        val_str = val.prettyPrint()
+                        if isinstance(val, sentinels):
+                            continue  # sparse cell: no value at this index
 
                         if suffix not in rows:
+                            if len(rows) >= limit:
+                                # Table-wide row cap reached: stop creating new
+                                # rows, but keep filling columns of existing rows.
+                                continue
                             rows[suffix] = {}
-                        rows[suffix][col_name] = val_str
-
-                        count += 1
-                        if count >= limit:
-                            break
-
-                    if count >= limit:
-                        break
+                        rows[suffix][col_name] = val.prettyPrint()
 
             except Exception as e:
                 self.logger.debug(f"Walk {col_name} ({base_oid}) error: {e}")
@@ -500,7 +506,7 @@ class HostEnumerationMixin(_ScannerBase):
 
         if interfaces:
             host_sfx = self.host.replace(".", "_")
-            headers = ["Index", "Name", "Status", "Speed", "MTU", "MAC", "IPs"]
+            headers = ["Index", "Name", "Status", "Speed", "Type", "MAC", "IPs"]
             table_rows = []
             for i in interfaces:
                 ips = ", ".join(a["addr"] for a in i.get("ip_addresses", []))

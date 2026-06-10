@@ -1,0 +1,22 @@
+[package]
+name = "oida-dnp3-outstation"
+version = "1.0.0"
+edition = "2021"
+description = "OIDA DNP3 mock outstation built on the stepfunc dnp3 crate"
+
+[[bin]]
+name = "oida-dnp3-outstation"
+path = "src/main.rs"
+
+[dependencies]
+dnp3 = { version = "1", features = ["tls"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal", "net"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"

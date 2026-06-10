@@ -421,7 +421,8 @@ class MonitoringMixin:
         if findings:
             self.logger.security_finding(
                 "Insecure configuration",
-                f"{len(findings)} life safety object(s) found - control fire/security systems",
+                category="LIFE_SAFETY",
+                detail=f"{len(findings)} life safety object(s) found - control fire/security systems",
             )
             for finding in findings[:10]:
                 self.logger.display(f"      {finding}")
@@ -486,7 +487,8 @@ class MonitoringMixin:
         if findings:
             self.logger.security_finding(
                 "Insecure configuration",
-                f"{len(findings)} life safety properties accessible - could disable fire/security alarms",
+                category="LIFE_SAFETY",
+                detail=f"{len(findings)} life safety properties accessible - could disable fire/security alarms",
             )
             for finding in findings[:5]:
                 self.logger.display(f"      {finding}")
@@ -995,7 +997,8 @@ class MonitoringMixin:
         if security_concerns:
             self.logger.security_finding(
                 "Insecure configuration",
-                f"{len(security_concerns)} PID security concern(s) - parameter manipulation can destabilize control systems",
+                category="PID",
+                detail=f"{len(security_concerns)} PID security concern(s) - parameter manipulation can destabilize control systems",
             )
             for concern in security_concerns:
                 self.logger.display(f"      {concern}")

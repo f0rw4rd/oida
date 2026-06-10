@@ -18,9 +18,8 @@ Functionality is split across mixin classes:
       EMCY/heartbeat monitoring, NMT state, PDO discovery, gateway detection
 """
 
-import struct  # noqa: F401 - used by mixins, patched by tests
 import time  # noqa: F401 - used by mixins, patched by tests
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from ...utils import (
     SerialScanner,
@@ -31,9 +30,6 @@ from ...utils.lazy_import import lazy_import
 from .constants import (
     DEFAULT_BAUDRATE,
     UDS_SERVICES,
-    CANDevice,
-    CANTrafficStats,
-    UDSScanResult,
 )
 from .mixins import CANopenMixin, TrafficMixin, UDSMixin, XCPMixin
 
@@ -111,12 +107,6 @@ class CANScanner(TrafficMixin, UDSMixin, XCPMixin, CANopenMixin, SerialScanner):
         # Arbitration ID filter (optional)
         self.id_filter = self._parse_id_filter(args.get("filter-id", args.get("filter_id", "")))
 
-        # Scan results storage
-        self.discovered_devices: Dict[int, CANDevice] = {}
-        self.traffic_stats = CANTrafficStats()
-        self.uds_results: List[UDSScanResult] = []
-        self._bus = None
-
     def get_protocol_name(self) -> str:
         return "CAN"
 
@@ -148,7 +138,6 @@ class CANScanner(TrafficMixin, UDSMixin, XCPMixin, CANopenMixin, SerialScanner):
                 kwargs["fd"] = True
 
             bus = can.Bus(**kwargs)
-            self._bus = bus
             self.logger.display(
                 f"Connected to CAN interface: {self.channel} "
                 f"(bus_type={self.bus_type}, bitrate={self.baudrate})"
@@ -167,8 +156,6 @@ class CANScanner(TrafficMixin, UDSMixin, XCPMixin, CANopenMixin, SerialScanner):
                 self.logger.debug("CAN bus connection closed")
         except Exception as e:
             self.logger.debug(f"Error closing CAN bus: {e}")
-        finally:
-            self._bus = None
 
     def discover(self, connection: Any) -> Dict[str, Any]:
         """

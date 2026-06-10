@@ -16,7 +16,6 @@ import csv
 import json
 import os
 import shutil
-import tempfile
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Union
 from xml.etree import ElementTree as ET
@@ -409,9 +408,6 @@ def export_data(
     Returns:
         True if at least one export was successful, False otherwise
     """
-    if not output_dir:
-        output_dir = tempfile.gettempdir()
-
     if not data or not headers:
         _log_message(logger, "No data to export", level="warning")
         return False
@@ -426,21 +422,35 @@ def export_data(
 
     # Track export success
     success = False
+    skipped_file_formats = False
     # Handle each output format
     for fmt in formats:
         if fmt == "console":
             success = print_table(data, headers, title, logger=logger) or success
-        elif fmt == "csv" and output_dir:
-            file_path = os.path.join(output_dir, f"{filename_prefix}.csv")
-            success = _export_csv(data, headers, file_path) or success
-        elif fmt == "json" and output_dir:
-            file_path = os.path.join(output_dir, f"{filename_prefix}.json")
-            success = _export_json(data, headers, file_path) or success
-        elif fmt == "xml" and output_dir:
-            file_path = os.path.join(output_dir, f"{filename_prefix}.xml")
-            success = _export_xml(data, headers, file_path, filename_prefix) or success
+        elif fmt in ("csv", "json", "xml"):
+            # File output requires an output dir (-o). Without it, skip the
+            # write rather than dumping deliverables to /tmp.
+            if not output_dir:
+                skipped_file_formats = True
+                continue
+            file_path = os.path.join(output_dir, f"{filename_prefix}.{fmt}")
+            if fmt == "csv":
+                success = _export_csv(data, headers, file_path, logger=logger) or success
+            elif fmt == "json":
+                success = _export_json(data, headers, file_path, logger=logger) or success
+            else:
+                success = (
+                    _export_xml(data, headers, file_path, filename_prefix, logger=logger) or success
+                )
         else:
             error(f"Unknown export format {fmt}")
+
+    if skipped_file_formats and "console" not in formats:
+        _log_message(
+            logger,
+            "No output directory set; skipped file export. Use -o <dir> to save results.",
+            level="info",
+        )
 
     return success
 
@@ -611,10 +621,10 @@ def print_table(
         return False
 
 
-def _export_csv(data: List[List[Any]], headers: List[str], file_path: str) -> bool:
+def _export_csv(data: List[List[Any]], headers: List[str], file_path: str, logger=None) -> bool:
     """Export data to CSV file."""
     if not file_path:
-        log("No file path provided for CSV export", level="error")
+        _log_message(logger, "No file path provided for CSV export", level="error")
         return False
 
     try:
@@ -626,17 +636,17 @@ def _export_csv(data: List[List[Any]], headers: List[str], file_path: str) -> bo
             writer.writerow(headers)
             writer.writerows(data)
 
-        log(f"Data exported to CSV file: {file_path}", level="good")
+        _log_message(logger, f"Data exported to CSV file: {file_path}", level="good")
         return True
     except Exception as e:
-        log(f"Error exporting to CSV: {e}", level="error")
+        _log_message(logger, f"Error exporting to CSV: {e}", level="error")
         return False
 
 
-def _export_json(data: List[List[Any]], headers: List[str], file_path: str) -> bool:
+def _export_json(data: List[List[Any]], headers: List[str], file_path: str, logger=None) -> bool:
     """Export data to JSON file."""
     if not file_path:
-        log("No file path provided for JSON export", level="error")
+        _log_message(logger, "No file path provided for JSON export", level="error")
         return False
 
     try:
@@ -651,15 +661,19 @@ def _export_json(data: List[List[Any]], headers: List[str], file_path: str) -> b
         with open(file_path, "w") as f:
             json.dump(json_data, f, indent=2)
 
-        log(f"Data exported to JSON file: {file_path}", level="good")
+        _log_message(logger, f"Data exported to JSON file: {file_path}", level="good")
         return True
     except Exception as e:
-        log(f"Error exporting to JSON: {e}", level="error")
+        _log_message(logger, f"Error exporting to JSON: {e}", level="error")
         return False
 
 
 def _export_xml(
-    data: List[List[Any]], headers: List[str], file_path: str, root_name: str = "results"
+    data: List[List[Any]],
+    headers: List[str],
+    file_path: str,
+    root_name: str = "results",
+    logger=None,
 ) -> bool:
     """Export data to XML file.
 
@@ -673,7 +687,7 @@ def _export_xml(
         True if export was successful, False otherwise
     """
     if not file_path:
-        log("No file path provided for XML export", level="error")
+        _log_message(logger, "No file path provided for XML export", level="error")
         return False
 
     try:
@@ -708,10 +722,10 @@ def _export_xml(
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(pretty_xml)
 
-        log(f"Data exported to XML file: {file_path}", level="good")
+        _log_message(logger, f"Data exported to XML file: {file_path}", level="good")
         return True
     except Exception as e:
-        log(f"Error exporting to XML: {e}", level="error")
+        _log_message(logger, f"Error exporting to XML: {e}", level="error")
         return False
 
 

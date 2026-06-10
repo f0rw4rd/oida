@@ -190,7 +190,7 @@ class PropertiesMixin:
             original = await read_property()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload in fuzz(original, count=iterations):
+            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if await write_property(payload):
                         successful += 1
@@ -262,7 +262,7 @@ class PropertiesMixin:
 
                 if resp and resp.payload:
                     payload = resp.payload
-                    result["type"] = getattr(payload, "type", None)
+                    result["type"] = getattr(payload, "type_", None)
                     result["max_count"] = getattr(payload, "max_count", None)
                     result["access"] = getattr(payload, "access", None)
 
@@ -553,8 +553,8 @@ class PropertiesMixin:
 
                 consecutive_failures = 0  # Reset on success
                 payload = desc_resp.payload
-                data_type = payload.type & 0x3F  # Extract data type (lower 6 bits)
-                writeable = (payload.type >> 7) & 1  # Writeable flag (bit 7)
+                data_type = payload.type_ & 0x3F  # Extract data type (lower 6 bits)
+                writeable = (payload.type_ >> 7) & 1  # Writeable flag (bit 7)
                 read_access = payload.access >> 4  # Read access level (upper 4 bits)
                 write_access = payload.access & 0x0F  # Write access level (lower 4 bits)
 
@@ -631,7 +631,7 @@ class PropertiesMixin:
                         if resp and resp.payload:
                             # Filter out false positives: type=0 with max_count<=1 and access=0
                             # means the object doesn't really exist
-                            ptype = resp.payload.type
+                            ptype = resp.payload.type_
                             max_count = getattr(resp.payload, "max_count", 0)
                             access = resp.payload.access
 
@@ -874,13 +874,13 @@ class PropertiesMixin:
                                         if OBJECT_TYPES
                                         else f"PID_{prop_id}"
                                     )
-                                    data_type = desc_resp.payload.type & 0x3F
+                                    data_type = desc_resp.payload.type_ & 0x3F
                                     data_type_name = PROP_TYPE_MAP.get(
                                         data_type, f"TYPE_{data_type}"
                                     )
                                     read_lvl = desc_resp.payload.access >> 4
                                     write_lvl = desc_resp.payload.access & 0x0F
-                                    writable = (desc_resp.payload.type >> 7) == 1
+                                    writable = (desc_resp.payload.type_ >> 7) == 1
 
                                     prop_info = {
                                         "property_id": prop_id,

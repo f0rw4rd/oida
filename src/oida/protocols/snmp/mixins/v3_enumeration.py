@@ -52,28 +52,34 @@ class V3EnumerationMixin(_ScannerBase):
         )
 
         from ..constants import SNMP_OIDS
-        from ..scanner import _pad_snmp_key
+        from ..scanner import _validate_snmp_key
 
         auth_protocols, priv_protocols = self._get_usm_protocol_maps()
         auth_proto = auth_protocols.get(auth_proto_name, auth_protocols["SHA"])
         priv_proto = priv_protocols.get(priv_proto_name, priv_protocols["AES128"])
 
-        if sec_level == "noAuthNoPriv":
-            usm_data = UsmUserData(username)
-        elif sec_level == "authNoPriv":
-            usm_data = UsmUserData(
-                username,
-                authKey=_pad_snmp_key(auth_pass),
-                authProtocol=auth_proto,
-            )
-        else:  # authPriv
-            usm_data = UsmUserData(
-                username,
-                authKey=_pad_snmp_key(auth_pass),
-                privKey=_pad_snmp_key(priv_pass),
-                authProtocol=auth_proto,
-                privProtocol=priv_proto,
-            )
+        # RFC 3414 requires auth/priv passphrases >= 8 octets. A shorter wordlist
+        # entry cannot be a valid key, so skip it rather than crash the whole phase.
+        try:
+            if sec_level == "noAuthNoPriv":
+                usm_data = UsmUserData(username)
+            elif sec_level == "authNoPriv":
+                usm_data = UsmUserData(
+                    username,
+                    authKey=_validate_snmp_key(auth_pass, "auth password"),
+                    authProtocol=auth_proto,
+                )
+            else:  # authPriv
+                usm_data = UsmUserData(
+                    username,
+                    authKey=_validate_snmp_key(auth_pass, "auth password"),
+                    privKey=_validate_snmp_key(priv_pass, "priv password"),
+                    authProtocol=auth_proto,
+                    privProtocol=priv_proto,
+                )
+        except ValueError as e:
+            self.logger.debug(f"v3 probe skip (short key) for {username}: {e}")
+            return "SHORT_KEY"
 
         async def _do_probe():
             engine = SnmpEngine()
@@ -134,15 +140,28 @@ class V3EnumerationMixin(_ScannerBase):
 
         self.logger.info(f"SNMP v3 enum: phase 1 -- testing {len(usernames)} usernames")
         p1_total = len(usernames)
+        # Abort only after repeated no-response (dead/filtered host), not on a
+        # single dropped UDP datagram -- and keep any users already discovered.
+        max_consecutive_timeouts = max(3, p1_total // 10)
+        consecutive_timeouts = 0
 
         for p1_idx, username in enumerate(usernames, 1):
             self.logger.progress(p1_idx, p1_total)
             result = self._probe_v3(username, sec_level="noAuthNoPriv")
 
             if result == "TIMEOUT":
-                self.logger.progress(p1_idx, p1_total, end="\n")
-                self.logger.warning("SNMP: no response -- aborting v3 user enumeration")
-                return {"valid_users": [], "credentials": []}
+                consecutive_timeouts += 1
+                if consecutive_timeouts >= max_consecutive_timeouts:
+                    self.logger.progress(p1_idx, p1_total, end="\n")
+                    self.logger.warning(
+                        f"SNMP: {consecutive_timeouts} consecutive no-responses -- "
+                        "aborting v3 user enumeration"
+                    )
+                    return {"valid_users": valid_users, "credentials": credentials}
+                if self.brute_rate > 0:
+                    time.sleep(self.brute_rate)
+                continue
+            consecutive_timeouts = 0
 
             if result == "INVALID_USER":
                 self.logger.debug(f"  {username}: invalid")
@@ -295,7 +314,6 @@ class V3EnumerationMixin(_ScannerBase):
         priv_needed = []  # Users where auth succeeded but priv is required
         p2_total = len(auth_needed) * len(passwords) * len(auth_protos)
         p2_current = 0
-        p2_found = 0
 
         for user_info in auth_needed:
             username = user_info["username"]
@@ -320,7 +338,6 @@ class V3EnumerationMixin(_ScannerBase):
                     )
 
                     if result == "SUCCESS":
-                        p2_found += 1
                         self.logger.progress(p2_current, p2_total, end="\n")
                         self.logger.success(
                             f"{username}: auth found (proto={auth_proto}, pass='{password}')"
@@ -342,7 +359,6 @@ class V3EnumerationMixin(_ScannerBase):
 
                     if result == "WRONG_LEVEL":
                         # Auth succeeded but user requires priv
-                        p2_found += 1
                         self.logger.progress(p2_current, p2_total, end="\n")
                         self.logger.success(
                             f"{username}: auth found, needs priv "
@@ -358,13 +374,15 @@ class V3EnumerationMixin(_ScannerBase):
                         found = True
                         break
 
+                    # Rate-limit every probe (incl. timeouts) -- a slow/filtered
+                    # host is exactly where backing off matters most.
+                    if self.brute_rate > 0:
+                        time.sleep(self.brute_rate)
+
                     if result == "TIMEOUT":
                         self.logger.debug(f"  {username}: timeout with {auth_proto}")
                         continue
-
-                    # WRONG_AUTH -- continue trying
-                    if self.brute_rate > 0:
-                        time.sleep(self.brute_rate)
+                    # WRONG_AUTH / SHORT_KEY -- continue trying
 
         if p2_total > 0:
             self.logger.progress(p2_total, p2_total, end="\n")
@@ -394,7 +412,6 @@ class V3EnumerationMixin(_ScannerBase):
                 priv_pw_count = len(passwords) + 1  # +1 for auth_pass dedup
             p3_total = len(priv_needed) * priv_pw_count * len(priv_protos)
             p3_current = 0
-            p3_found = 0
 
             for user_info in priv_needed:
                 username = user_info["username"]
@@ -429,7 +446,6 @@ class V3EnumerationMixin(_ScannerBase):
                         )
 
                         if result == "SUCCESS":
-                            p3_found += 1
                             self.logger.progress(p3_current, p3_total, end="\n")
                             self.logger.success(
                                 f"{username}: full creds found "
@@ -454,13 +470,14 @@ class V3EnumerationMixin(_ScannerBase):
                             found = True
                             break
 
+                        # Rate-limit every probe, including timeouts.
+                        if self.brute_rate > 0:
+                            time.sleep(self.brute_rate)
+
                         if result == "TIMEOUT":
                             self.logger.debug(f"  {username}: timeout with {priv_proto}")
                             continue
-
-                        # WRONG_PRIV or WRONG_AUTH -- continue
-                        if self.brute_rate > 0:
-                            time.sleep(self.brute_rate)
+                        # WRONG_PRIV / WRONG_AUTH / SHORT_KEY -- continue
 
             if p3_total > 0:
                 self.logger.progress(p3_total, p3_total, end="\n")

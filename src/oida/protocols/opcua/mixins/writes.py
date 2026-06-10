@@ -206,7 +206,7 @@ class WritesMixin:
 
         if writable_nodes:
             self.logger.security_finding(
-                "Writable access", f"Found {len(writable_nodes)} writable nodes"
+                "Writable access", detail=f"Found {len(writable_nodes)} writable nodes"
             )
         else:
             self.logger.display("No writable nodes found")

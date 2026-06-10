@@ -13,7 +13,7 @@ This module keeps only:
   the ``_read_cip_attribute`` primitive, and the high-level scan-flow methods.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, List, Optional
 import struct
 
 from ...utils import (
@@ -44,15 +44,6 @@ from .mixins import (
 # Lazy imports - only load when actually used (pycomm3 only, no cpppo)
 _pycomm3 = lazy_import("pycomm3", "EtherNet/IP")
 
-# Optional lazy imports
-_port_segment_mod = lazy_import(
-    "pycomm3.cip.data_types", "EtherNet/IP", install_hint="pip install pycomm3"
-)
-_cryptography = lazy_import("cryptography", "EtherNet/IP", install_hint="pip install cryptography")
-_radamsa_mod = lazy_import(
-    "oida.fuzz.core.mutation", "EtherNet/IP", install_hint="pip install oida[fuzz]"
-)
-
 # Module-level exports for test compatibility
 dependencies_missing = not _pycomm3.is_available
 
@@ -81,16 +72,6 @@ def _get_cip_driver():
     from pycomm3 import CIPDriver
 
     return CIPDriver
-
-
-def _get_port_segment():
-    """Get PortSegment class from pycomm3."""
-    return _port_segment_mod.PortSegment
-
-
-def _get_radamsa():
-    """Get native radamsa-style mutator instance."""
-    return _radamsa_mod.NativeRadamsaMutator()
 
 
 # ---------------------------------------------------------------------------
@@ -231,6 +212,12 @@ protocol_options = {
         "required": False,
         "default": False,
     },
+    "crash_cpu": {
+        "type": "bool",
+        "description": "Crash PLC CPU via malformed CIP (MAY NEED POWER CYCLE - requires confirm_attack)",
+        "required": False,
+        "default": False,
+    },
     "reset_ethernet": {
         "type": "bool",
         "description": "Reset Ethernet interface (may briefly disconnect)",
@@ -311,9 +298,11 @@ class EtherNetIPScanner(
         self.max_file_size = int(args.get("max_file_size", 65536))
 
         # CIP routing options (for CVE-2024-6242 style testing)
+        # TODO(routing): --route-path is currently only surfaced (warned about
+        # for non-Logix); routed CIP object reads are not yet wired into the
+        # cip_objects enumeration, which builds its own PortSegment route.
         self.route_path_str = args.get("route_path", "")
         self.target_slot = int(args.get("slot", 0))
-        self.route_path = self._parse_route_path(self.route_path_str)
         self.discover_routes = parse_bool(args.get("discover_routes", False))
 
         # Full scan options (tag database analysis, UDT enumeration)
@@ -332,6 +321,7 @@ class EtherNetIPScanner(
         # Attack options (dangerous - require explicit confirmation)
         self.cpu_stop = parse_bool(args.get("cpu_stop", False))
         self.crash_ethernet = parse_bool(args.get("crash_ethernet", False))
+        self.crash_cpu = parse_bool(args.get("crash_cpu", False))
         self.reset_ethernet = parse_bool(args.get("reset_ethernet", False))
         self.confirm = parse_bool(args.get("confirm", False))
 
@@ -870,6 +860,19 @@ class EtherNetIPScanner(
                 self.logger.warning("[!] EXECUTING ETHERNET CRASH - DEVICE WILL DISCONNECT!")
                 self.logger.warning("=" * 60)
                 results["attacks"]["crash_ethernet"] = self._crash_ethernet(host, port)
+
+        if self.crash_cpu:
+            if not self.confirm:
+                self.logger.error("CRASH CPU requires --confirm flag")
+                self.logger.warning(
+                    "This may crash the PLC CPU (power cycle to recover) - use with extreme caution!"
+                )
+                results["attacks"]["crash_cpu"] = {"error": "Missing --confirm"}
+            else:
+                self.logger.warning("=" * 60)
+                self.logger.warning("[!] EXECUTING CPU CRASH - DEVICE MAY NEED A POWER CYCLE!")
+                self.logger.warning("=" * 60)
+                results["attacks"]["crash_cpu"] = self._crash_cpu(host, port)
 
         if self.reset_ethernet:
             # Ethernet/IP CIP service 0x05 (Reset) on the TCP/IP Object —

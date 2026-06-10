@@ -137,13 +137,15 @@ class TestGetResults:
 
 
 class TestEnumHostInfo:
-    """Verify device_info is populated."""
+    """enum_host_info is a no-op framework hook (run_scan owns output)."""
 
-    def test_sets_device_info(self):
+    def test_enum_host_info_is_noop(self):
+        # The old self.device_info dict had no reader (print_host_info is a
+        # no-op, get_results returns _scan_results), so enum_host_info no longer
+        # sets it. The hook must still be callable without error.
         nxc = _build_nxc(host="/tmp/test.pcap")
         nxc.enum_host_info()
-        assert nxc.device_info["pcap_file"] == "/tmp/test.pcap"
-        assert nxc.device_info["protocol"] == "pcap"
+        assert not hasattr(nxc, "device_info")
 
 
 # ---------------------------------------------------------------------------

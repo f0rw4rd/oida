@@ -104,7 +104,7 @@ def _clear_progress_line() -> None:
         print("\r\033[K", end="", flush=True)
 
 
-_SPONSORS: list = []
+_SPONSORS: list = ["@Limes Security"]
 
 
 def print_startup_banner() -> None:
@@ -112,7 +112,7 @@ def print_startup_banner() -> None:
     Print a single startup banner line. Only prints once per process.
 
     Output:
-        [+] OIDA v1.0.0 | powered by f0rw4rd
+        [+] OIDA v1.0.0 | powered by @f0rw4rd | supported by @Limes Security
     """
     global _banner_printed
     with _print_lock:
@@ -123,9 +123,9 @@ def print_startup_banner() -> None:
         from oida import __version__
 
         sigil = colored("[+]", "green", attrs=["bold"])
-        banner = f"{sigil} OIDA v{__version__} | powered by f0rw4rd"
+        banner = f"{sigil} OIDA v{__version__} | powered by @f0rw4rd"
         if _SPONSORS:
-            banner += f" | sponsored by {', '.join(_SPONSORS)}"
+            banner += f" | supported by {', '.join(_SPONSORS)}"
         print(banner)
 
 
@@ -648,10 +648,19 @@ def get_context() -> Optional[ICSLogger]:
 
 
 def _get_logger() -> ICSLogger:
-    """Get logger from context. Raises if no context set."""
-    if not hasattr(_context, "logger") or _context.logger is None:
-        raise RuntimeError("No logging context set. Call set_context() first.")
-    return _context.logger
+    """Get logger from context, falling back to a default if none was set.
+
+    The global helpers are also reached from contexts that never call
+    set_context() -- fuzz session replay, boofuzz worker threads (the
+    thread-local context does not propagate to spawned threads), etc. Crashing
+    those callers with a RuntimeError is worse than logging with a generic
+    context, so lazily create a default logger instead.
+    """
+    logger = getattr(_context, "logger", None)
+    if logger is None:
+        logger = ICSLogger("OIDA", "", 0)
+        _context.logger = logger
+    return logger
 
 
 # Global helper functions that use thread-local context

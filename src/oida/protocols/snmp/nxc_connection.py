@@ -73,7 +73,9 @@ class snmp(NetworkConnection):
 
     def print_host_info(self):
         """Display scan summary — banner already shown by scanner inline."""
-        findings = self.logger.get_findings() if hasattr(self.logger, "get_findings") else []
+        # ICS logger exposes `findings` (property), not get_findings(); the old
+        # hasattr guard was always False so this summary never printed.
+        findings = getattr(self.logger, "findings", [])
         if findings:
             self.logger.display(f"    {len(findings)} security finding(s) collected")
 

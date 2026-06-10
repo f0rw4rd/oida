@@ -17,9 +17,6 @@ class EnumerationMixin:
         """Enumerate available lab tests via query"""
         self.logger.display("Enumerating available lab tests...")
 
-        # Query for test information
-        tests_found = []
-
         if not self._send_enq():
             self.logger.warning("ENQ failed")
             return
@@ -40,7 +37,6 @@ class EnumerationMixin:
         if self._send_frame(query):
             self.logger.success("Test query accepted")
             # In a real implementation, we would receive and parse response frames here
-            tests_found.append({"status": "Query accepted - test enumeration possible"})
             self.results["data"].setdefault("security_findings", []).append(
                 {
                     "severity": "MEDIUM",

@@ -217,10 +217,8 @@ class TestGOOSEScannerInit(unittest.TestCase):
         self.assertEqual(scanner.mms_enum_target, "")
         self.assertEqual(scanner.mms_port, 102)
         self.assertEqual(scanner.interface, "eth0")
-        self.assertEqual(scanner.discovered_messages, [])
         self.assertEqual(scanner.goose_sources, {})
         self.assertEqual(scanner.gocb_info, [])
-        self.assertEqual(scanner.security_findings, [])
         self.assertIsNone(scanner._goose_subscriber)
 
     def test_custom_timeout(self):

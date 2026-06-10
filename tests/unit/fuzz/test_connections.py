@@ -347,6 +347,93 @@ class TestRealConnectionFactoryTCP:
         assert isinstance(conn, TCPSocketConnection)
 
 
+class TestRealConnectionFactoryTimeouts:
+    """Tests for socket timeout / reconnect overrides flowing from FuzzerConfig."""
+
+    def test_overrides_applied_to_resilient_connection(self):
+        """CLI overrides reach the reused (resilient) TCP connection."""
+        from src.oida.fuzz.core.connections.tcp import (
+            RealConnectionFactory,
+            ResilientTCPConnection,
+        )
+        from src.oida.fuzz.core.config import FuzzerConfig
+
+        config = FuzzerConfig(
+            target_ip="127.0.0.1",
+            target_port=502,
+            reuse_target_connection=True,
+            recv_timeout=0.5,
+            send_timeout=0.7,
+            reconnect_delay=0.1,
+            max_reconnect_attempts=5,
+        )
+        conn = RealConnectionFactory().create_connection(config)
+
+        assert isinstance(conn, ResilientTCPConnection)
+        assert conn._recv_timeout == 0.5
+        assert conn._send_timeout == 0.7
+        assert conn.reconnect_delay == 0.1
+        assert conn.max_reconnect_attempts == 5
+
+    def test_defaults_retained_when_unset(self):
+        """With no overrides (all None), the built-in defaults are kept."""
+        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from src.oida.fuzz.core.config import FuzzerConfig
+
+        config = FuzzerConfig(
+            target_ip="127.0.0.1", target_port=502, reuse_target_connection=True
+        )
+        conn = RealConnectionFactory().create_connection(config)
+
+        assert conn._recv_timeout == 5.0
+        assert conn._send_timeout == 5.0
+        assert conn.reconnect_delay == 0.5
+        assert conn.max_reconnect_attempts == 3
+
+    def test_overrides_applied_to_plain_tcp(self):
+        """Overrides reach the non-reused plain TCP connection too."""
+        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from src.oida.fuzz.core.config import FuzzerConfig
+
+        config = FuzzerConfig(
+            target_ip="127.0.0.1",
+            target_port=502,
+            reuse_target_connection=False,
+            recv_timeout=0.5,
+            send_timeout=0.7,
+        )
+        conn = RealConnectionFactory().create_connection(config)
+
+        assert conn._recv_timeout == 0.5
+        assert conn._send_timeout == 0.7
+
+    def test_overrides_forwarded_to_iec104(self):
+        """Regression: IEC104SocketConnection must forward socket timeouts to its base."""
+        from src.oida.fuzz.core.connections.tcp import (
+            RealConnectionFactory,
+            IEC104SocketConnection,
+        )
+        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+
+        config = FuzzerConfig(
+            target_ip="127.0.0.1",
+            target_port=2404,
+            reuse_target_connection=True,
+            protocol_type=ProtocolType.IEC104,
+            recv_timeout=0.5,
+            send_timeout=0.7,
+            reconnect_delay=0.1,
+            max_reconnect_attempts=5,
+        )
+        conn = RealConnectionFactory().create_connection(config)
+
+        assert isinstance(conn, IEC104SocketConnection)
+        assert conn._recv_timeout == 0.5
+        assert conn._send_timeout == 0.7
+        assert conn.reconnect_delay == 0.1
+        assert conn.max_reconnect_attempts == 5
+
+
 class TestRealConnectionFactoryUDP:
     """Tests for RealConnectionFactory UDP connection creation."""
 

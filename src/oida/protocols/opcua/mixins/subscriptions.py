@@ -27,7 +27,7 @@ class SubscriptionsMixin:
 
         self.logger.display(f"Subscribing for {duration}s (interval: {interval}ms)...")
 
-        handler = DataChangeHandler(self.logger, self.results)
+        handler = DataChangeHandler(self.logger)
         sub = await self._client.create_subscription(interval, handler)
 
         # Get all variable nodes up to a limit

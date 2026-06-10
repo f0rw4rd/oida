@@ -539,10 +539,25 @@ class RealConnectionFactory(ConnectionFactory):
         # Original FuzzerConfig mode
         config = host_or_config
 
+        # Socket timeout / reconnection overrides (None = keep boofuzz/Resilient default)
+        sock_kw = {}
+        if getattr(config, "send_timeout", None) is not None:
+            sock_kw["send_timeout"] = config.send_timeout
+        if getattr(config, "recv_timeout", None) is not None:
+            sock_kw["recv_timeout"] = config.recv_timeout
+        resilient_kw = dict(sock_kw)
+        if getattr(config, "reconnect_delay", None) is not None:
+            resilient_kw["reconnect_delay"] = config.reconnect_delay
+        if getattr(config, "max_reconnect_attempts", None) is not None:
+            resilient_kw["max_reconnect_attempts"] = config.max_reconnect_attempts
+
         # Check if TLS is enabled via config flag (takes precedence)
         if getattr(config, "tls_enabled", False):
             return SSLSocketConnection(
-                config.target_ip, config.target_port, sslcontext=_create_permissive_ssl_context()
+                config.target_ip,
+                config.target_port,
+                sslcontext=_create_permissive_ssl_context(),
+                **sock_kw,
             )
 
         if hasattr(config, "protocol_type"):
@@ -551,12 +566,13 @@ class RealConnectionFactory(ConnectionFactory):
                     config.target_ip,
                     config.target_port,
                     sslcontext=_create_permissive_ssl_context(),
+                    **sock_kw,
                 )
             elif config.protocol_type == ProtocolType.UDP:
                 # For UDP, we need to bind to a local port to receive responses
                 # Using bind=('0.0.0.0', 0) lets the OS assign an ephemeral port
                 return UDPSocketConnection(
-                    config.target_ip, config.target_port, bind=("0.0.0.0", 0)
+                    config.target_ip, config.target_port, bind=("0.0.0.0", 0), **sock_kw
                 )
             elif config.protocol_type == ProtocolType.RAW:
                 # RAW sockets require special handling
@@ -601,7 +617,9 @@ class RealConnectionFactory(ConnectionFactory):
                 )
             elif config.protocol_type == ProtocolType.IEC104:
                 # IEC 104 with automatic STARTDT handshake
-                conn = IEC104SocketConnection(config.target_ip, config.target_port or 2404)
+                conn = IEC104SocketConnection(
+                    config.target_ip, config.target_port or 2404, **resilient_kw
+                )
                 # Centrally enable resilient mode when -R flag is set
                 if getattr(config, "reuse_target_connection", False):
                     conn.set_resilient(True)
@@ -610,10 +628,10 @@ class RealConnectionFactory(ConnectionFactory):
         # Use resilient connection when reuse_target_connection is enabled (-R flag)
         # This fixes the bug where server RST doesn't trigger reconnection
         if getattr(config, "reuse_target_connection", False):
-            conn = ResilientTCPConnection(config.target_ip, config.target_port)
+            conn = ResilientTCPConnection(config.target_ip, config.target_port, **resilient_kw)
             conn.set_resilient(True)
             return conn
-        return TCPSocketConnection(config.target_ip, config.target_port)
+        return TCPSocketConnection(config.target_ip, config.target_port, **sock_kw)
 
 
 class IEC104SocketConnection(ResilientTCPConnection):
@@ -640,6 +658,10 @@ class IEC104SocketConnection(ResilientTCPConnection):
         timeout: float = 5.0,
         max_retries: int = 3,
         retry_delay: float = 1.0,
+        send_timeout: float = 5.0,
+        recv_timeout: float = 5.0,
+        reconnect_delay=None,
+        max_reconnect_attempts=None,
     ):
         """
         Initialize IEC 104 socket connection.
@@ -650,11 +672,25 @@ class IEC104SocketConnection(ResilientTCPConnection):
             timeout: Timeout for handshake in seconds (default: 5.0)
             max_retries: Maximum number of connection/handshake retries (default: 3)
             retry_delay: Delay between retries in seconds (default: 1.0)
+            send_timeout: Socket send timeout in seconds (default: 5.0)
+            recv_timeout: Socket receive timeout in seconds (default: 5.0)
+            reconnect_delay: Override for retry_delay (CLI --reconnect-delay); None = use retry_delay
+            max_reconnect_attempts: Override for max_retries (CLI --max-reconnect-attempts)
         """
-        # Pass reconnect params to ResilientTCPConnection base class
+        # CLI reconnect overrides take precedence over the legacy retry params
+        if max_reconnect_attempts is not None:
+            max_retries = max_reconnect_attempts
+        if reconnect_delay is not None:
+            retry_delay = reconnect_delay
+        # Pass socket + reconnect params to ResilientTCPConnection base class
         # Note: resilient flag is set by the factory based on reuse_target_connection
         super().__init__(
-            host, port, max_reconnect_attempts=max_retries, reconnect_delay=retry_delay
+            host,
+            port,
+            send_timeout=send_timeout,
+            recv_timeout=recv_timeout,
+            max_reconnect_attempts=max_retries,
+            reconnect_delay=retry_delay,
         )
         self.handshake_timeout = timeout
         self.max_retries = max_retries

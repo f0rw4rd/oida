@@ -174,6 +174,22 @@ def test_main_verbose_is_count(main_parser):
     pytest.fail("Main parser missing --verbose")
 
 
+def test_global_flags_not_clobbered_by_subparser_defaults(main_parser):
+    """A global flag given before the subcommand must survive subparser parsing.
+
+    Subparsers that re-declare a flag (e.g. fuzz's -v, or --json-log) must use
+    default=argparse.SUPPRESS, otherwise a subparser-level non-occurrence resets
+    the value the main parser already set. Regression guard for the fuzz -v and
+    iec104 --json-log clobbering bugs.
+    """
+    # -v before the subcommand must be preserved (fuzz re-declares -v).
+    ns = main_parser.parse_args(["-vv", "fuzz", "mms", "127.0.0.1"])
+    assert ns.verbose == 2, f"global -vv clobbered to {ns.verbose} by fuzz subparser"
+    # --json-log before the subcommand must be preserved across protocols.
+    ns = main_parser.parse_args(["--json-log", "/tmp/x.jsonl", "iec104", "127.0.0.1"])
+    assert ns.json_log == "/tmp/x.jsonl", "global --json-log clobbered by iec104 subparser"
+
+
 def test_main_debug_is_store_true(main_parser):
     """--debug on the main parser must use action=store_true."""
     for action in main_parser._actions:

@@ -72,6 +72,8 @@ def _load_bacpypes3() -> Dict[str, Any]:
         CharacterString,
         Unsigned,
         Real,
+        Date,
+        Time,
     )
     from bacpypes3.apdu import (
         AbortPDU,
@@ -87,9 +89,11 @@ def _load_bacpypes3() -> Dict[str, Any]:
         DeviceCommunicationControlRequest,
         ReinitializeDeviceRequest,
         WhoHasRequest,
+        WhoHasObject,
         WhoIsRequest,
     )
     from bacpypes3.basetypes import (
+        DateTime,
         DeviceStatus,
         PropertyIdentifier,
         Segmentation,
@@ -126,6 +130,9 @@ def _load_bacpypes3() -> Dict[str, Any]:
             "CharacterString": CharacterString,
             "Unsigned": Unsigned,
             "Real": Real,
+            "Date": Date,
+            "Time": Time,
+            "DateTime": DateTime,
             "AbortPDU": AbortPDU,
             "ErrorPDU": ErrorPDU,
             "RejectPDU": RejectPDU,
@@ -139,6 +146,7 @@ def _load_bacpypes3() -> Dict[str, Any]:
             "DeviceCommunicationControlRequest": DeviceCommunicationControlRequest,
             "ReinitializeDeviceRequest": ReinitializeDeviceRequest,
             "WhoHasRequest": WhoHasRequest,
+            "WhoHasObject": WhoHasObject,
             "WhoIsRequest": WhoIsRequest,
             "ReadBroadcastDistributionTable": ReadBroadcastDistributionTable,
             "ReadForeignDeviceTable": ReadForeignDeviceTable,
@@ -155,19 +163,6 @@ def bp(name: str) -> Any:
     """Get a bacpypes3 type by name. Triggers lazy import on first call."""
     types = _load_bacpypes3()
     return types[name]
-
-
-def _ensure_bacpypes3_globals():
-    """Load bacpypes3 types and make them available as module globals.
-
-    Called once at the start of proto_flow() to ensure all types are
-    available for the scanner methods without changing 100+ lines.
-    """
-    types = _load_bacpypes3()
-    # Inject into module globals for use in class methods
-    g = globals()
-    for name, cls in types.items():
-        g[name] = cls
 
 
 # BACnet Object Type Constants

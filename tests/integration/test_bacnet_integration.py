@@ -641,19 +641,30 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
             ]
         ), f"Expected authentication check attempt in output: {text[:500]}"
 
-        # Conditional: validate finding when scan succeeds
-        if result.scan_log and len(result.scan_log) > 0:
-            security_events = result.scan_log.get_security_findings()
-            anon_findings = [
-                e for e in security_events if e.get("data", {}).get("finding") == "Anonymous access"
-            ]
-            if anon_findings:
-                # security_finding(title, category) puts description in "category" field
-                finding_data = anon_findings[0].get("data", {})
-                category = finding_data.get("category", "")
-                assert "anonymous" in category.lower() or "read" in category.lower(), (
-                    f"Anonymous access finding category should mention anonymous/read: {category}"
-                )
+        # The mock allows unauthenticated reads, so the scanner MUST emit the
+        # Anonymous access finding once it has a structured log.
+        assert result.scan_log is not None and len(result.scan_log) > 0, (
+            "Expected a structured scan_log from the check-anonymous run"
+        )
+        security_events = result.scan_log.get_security_findings()
+        anon_findings = [
+            e for e in security_events if e.get("data", {}).get("finding") == "Anonymous access"
+        ]
+        assert anon_findings, (
+            "Mock allows anonymous reads; expected an 'Anonymous access' security finding"
+        )
+        # security_finding(title, category=..., detail=...) stores the
+        # human-readable description in the "details" field and a short
+        # taxonomy label in "category".
+        finding_data = anon_findings[0].get("data", {})
+        details = finding_data.get("details", "")
+        category = finding_data.get("category", "")
+        assert "anonymous" in details.lower() or "read" in details.lower(), (
+            f"Anonymous access finding details should mention anonymous/read: {details!r}"
+        )
+        assert category == "ACCESS_CONTROL", (
+            f"Anonymous access finding category should be ACCESS_CONTROL: {category!r}"
+        )
 
     @pytest.mark.security
     def test_finding_anonymous_access_via_assess(self, cli_runner, target, port):
@@ -748,11 +759,11 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
             # This is informational -- we don't assert absence since it could
             # appear if the mock changes, but we validate structure if present
             if password_findings:
-                # security_finding(title, category) puts description in "category"
+                # description lives in "details", taxonomy label in "category"
                 finding_data = password_findings[0].get("data", {})
-                category = finding_data.get("category", "")
-                assert "readable" in category.lower() or "password" in category.lower(), (
-                    f"Password finding category should mention 'readable': {category}"
+                details = finding_data.get("details", "")
+                assert "readable" in details.lower() or "password" in details.lower(), (
+                    f"Password finding details should mention 'readable': {details!r}"
                 )
 
     # ========================================================================
@@ -794,19 +805,26 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
             ]
         ), f"Expected BACnet/SC check attempt in output: {text[:500]}"
 
-        # Conditional: validate the "No encryption" finding
-        if result.scan_log and len(result.scan_log) > 0:
-            security_events = result.scan_log.get_security_findings()
-            no_enc_findings = [
-                e for e in security_events if e.get("data", {}).get("finding") == "No encryption"
-            ]
-            if no_enc_findings:
-                # security_finding(title, category) puts description in "category"
-                finding_data = no_enc_findings[0].get("data", {})
-                category = finding_data.get("category", "")
-                assert "unencrypted" in category.lower() or "bacnet/sc" in category.lower(), (
-                    f"No encryption finding category should mention unencrypted: {category}"
-                )
+        # The mock has no BACnet/SC support, so the scanner MUST emit the
+        # "No encryption" finding once it has a structured log.
+        assert result.scan_log is not None and len(result.scan_log) > 0, (
+            "Expected a structured scan_log from the check-bacnet-sc run"
+        )
+        security_events = result.scan_log.get_security_findings()
+        no_enc_findings = [
+            e for e in security_events if e.get("data", {}).get("finding") == "No encryption"
+        ]
+        assert no_enc_findings, "Mock lacks BACnet/SC; expected a 'No encryption' security finding"
+        # description lives in "details", taxonomy label in "category"
+        finding_data = no_enc_findings[0].get("data", {})
+        details = finding_data.get("details", "")
+        category = finding_data.get("category", "")
+        assert "unencrypted" in details.lower() or "bacnet/sc" in details.lower(), (
+            f"No encryption finding details should mention unencrypted: {details!r}"
+        )
+        assert category == "ENCRYPTION", (
+            f"No encryption finding category should be ENCRYPTION: {category!r}"
+        )
 
     @pytest.mark.security
     def test_finding_no_encryption_via_assess(self, cli_runner, target, port):
@@ -891,11 +909,11 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
                 e for e in security_events if e.get("data", {}).get("finding") == "Weak password"
             ]
             if weak_pw_findings:
-                # security_finding(title, category) puts description in "category"
+                # description lives in "details", taxonomy label in "category"
                 finding_data = weak_pw_findings[0].get("data", {})
-                category = finding_data.get("category", "")
-                assert "password" in category.lower() or "dcc" in category.lower(), (
-                    f"Weak password finding category should mention password/DCC: {category}"
+                details = finding_data.get("details", "")
+                assert "password" in details.lower() or "dcc" in details.lower(), (
+                    f"Weak password finding details should mention password/DCC: {details!r}"
                 )
 
     @pytest.mark.security
@@ -1232,6 +1250,28 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
             ]
         ), f"Expected life safety enumeration attempt in output: {text[:500]}"
 
+        # The mock exposes exactly 2 life safety point objects (smoke detector
+        # + e-stop), so the scanner MUST emit the corresponding finding.
+        assert result.scan_log is not None and len(result.scan_log) > 0, (
+            "Expected a structured scan_log from the enum-life-safety run"
+        )
+        ls_findings = [
+            e
+            for e in result.scan_log.get_security_findings()
+            if e.get("data", {}).get("finding") == "Insecure configuration"
+            and "life safety" in e.get("data", {}).get("details", "").lower()
+        ]
+        assert ls_findings, (
+            "Mock has 2 life safety objects; expected a life-safety 'Insecure configuration' finding"
+        )
+        details = ls_findings[0]["data"].get("details", "")
+        assert "2 life safety object" in details.lower(), (
+            f"Life safety finding should report the 2 mock objects: {details!r}"
+        )
+        assert ls_findings[0]["data"].get("category") == "LIFE_SAFETY", (
+            f"Life safety finding category should be LIFE_SAFETY: {ls_findings[0]['data']!r}"
+        )
+
     @pytest.mark.security
     def test_finding_life_safety_properties_accessible(self, cli_runner, target, port):
         """Test 'Insecure configuration' finding via --check-life-safety [Category B]
@@ -1310,6 +1350,24 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
             ]
         ), f"Expected PID/loop enumeration attempt in output: {text[:500]}"
 
+        # The mock has loop objects with aggressive PID tuning, so the scanner
+        # MUST flag the PID security concerns.
+        assert result.scan_log is not None and len(result.scan_log) > 0, (
+            "Expected a structured scan_log from the enum-loops run"
+        )
+        pid_findings = [
+            e
+            for e in result.scan_log.get_security_findings()
+            if e.get("data", {}).get("finding") == "Insecure configuration"
+            and "pid" in e.get("data", {}).get("details", "").lower()
+        ]
+        assert pid_findings, (
+            "Mock has aggressively tuned PID loops; expected a PID 'Insecure configuration' finding"
+        )
+        assert pid_findings[0]["data"].get("category") == "PID", (
+            f"PID finding category should be PID: {pid_findings[0]['data']!r}"
+        )
+
     # ========================================================================
     # Combined Assessment Tests
     # ========================================================================
@@ -1356,18 +1414,29 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
             ]
         ), f"Expected security assessment in output: {text[:500]}"
 
-        # Conditional: if we got structured logs, validate finding structure
-        if result.scan_log and len(result.scan_log) > 0:
-            security_events = result.scan_log.get_security_findings()
-            if security_events:
-                # Filter to only events with data.finding (from security_finding logger)
-                # Other security events may come from warning() calls without data
-                finding_events = [
-                    e for e in security_events if "data" in e and "finding" in e["data"]
-                ]
-                for event in finding_events:
-                    data = event["data"]
-                    assert "finding" in data, f"Security event data missing 'finding': {data}"
+        # --assess against this mock reliably yields at least the
+        # authentication ("Anonymous access") and encryption ("No encryption")
+        # findings, so require both rather than passing vacuously.
+        assert result.scan_log is not None and len(result.scan_log) > 0, (
+            "Expected a structured scan_log from the --assess run"
+        )
+        finding_events = [
+            e
+            for e in result.scan_log.get_security_findings()
+            if "data" in e and "finding" in e["data"]
+        ]
+        finding_titles = {e["data"]["finding"] for e in finding_events}
+        assert "Anonymous access" in finding_titles, (
+            f"--assess should report 'Anonymous access'; got {sorted(finding_titles)}"
+        )
+        assert "No encryption" in finding_titles, (
+            f"--assess should report 'No encryption'; got {sorted(finding_titles)}"
+        )
+        # Every emitted finding must carry a non-empty details payload now that
+        # security_finding(detail=...) is used consistently.
+        for event in finding_events:
+            data = event["data"]
+            assert data.get("details"), f"Security finding missing 'details' payload: {data}"
 
     @pytest.mark.security
     def test_assess_access_shortcut(self, cli_runner, target, port):

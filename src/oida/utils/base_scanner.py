@@ -5,7 +5,6 @@ import json
 import os
 import socket
 import ipaddress
-import tempfile
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple, Any
 from datetime import datetime
@@ -266,7 +265,12 @@ class BaseScanner(ABC):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename_prefix = f"{self.get_protocol_name().lower()}_{timestamp}"
 
-        out_dir = self.args.get("output") or tempfile.gettempdir()
+        out_dir = self.args.get("output")
+        if not out_dir:
+            logger.info(
+                "No output directory set; skipping file export. Use -o <dir> to save results."
+            )
+            return
         formats = {fmt.strip().lower() for fmt in (self.export_format or "json").split(",")}
         if "all" in formats:
             formats = {"json"}  # CSV/XML over a nested dict is not well-defined

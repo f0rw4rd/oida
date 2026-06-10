@@ -80,18 +80,7 @@ class AttacksMixin(_ScannerBase):
 
         full_data = send_rr_header + payload
 
-        # Build packet with session handle
-        packet = struct.pack(
-            "<HHIIQIH",
-            ENIP_CMD_SEND_RR_DATA,  # Command (0x6F)
-            len(full_data),  # Length
-            session_id,  # Session Handle
-            0,  # Status
-            0,  # Sender Context
-            0,  # Options
-            0,  # Pad
-        )
-        # Fix: proper 24-byte header
+        # Build the 24-byte ENIP encapsulation header with the session handle.
         packet = struct.pack(
             "<HH I I Q I",
             ENIP_CMD_SEND_RR_DATA,  # Command (0x6F)

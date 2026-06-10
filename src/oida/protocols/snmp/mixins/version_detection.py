@@ -96,19 +96,24 @@ class VersionDetectionMixin(_ScannerBase):
                     return ("3", True, "noAuthNoPriv accepted")
                 err_str = str(error_indication)
                 err_cls = type(error_indication).__name__
-                # These errors mean v3 IS supported (just needs proper creds)
-                v3_supported_errors = [
+                # An error from the USM engine means v3 IS supported (creds just
+                # wrong). Match the exception CLASS for the ambiguous tokens
+                # (WrongDigest/authenticationFailure could otherwise substring-match
+                # an unrelated message); keep a few specific phrases for the
+                # message-only variants.
+                v3_supported_classes = {
                     "UnknownUserName",
-                    "unknownSecurityName",
-                    "Unknown USM user",
                     "UnsupportedSecurityLevel",
-                    "unsupportedSecurityLevel",
                     "WrongDigest",
-                    "authenticationFailure",
-                ]
-                if any(
-                    indicator in err_cls or indicator in err_str
-                    for indicator in v3_supported_errors
+                    "AuthenticationFailure",
+                }
+                v3_supported_phrases = (
+                    "Unknown USM user",
+                    "unknownSecurityName",
+                    "unsupportedSecurityLevel",
+                )
+                if err_cls in v3_supported_classes or any(
+                    phrase in err_str for phrase in v3_supported_phrases
                 ):
                     return ("3", True, f"v3 engine detected ({err_cls})")
                 # Timeout or other transport error means v3 not supported

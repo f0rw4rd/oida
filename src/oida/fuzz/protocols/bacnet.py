@@ -216,7 +216,7 @@ class BACnetFuzzer(BaseFuzzer):
             self.config.target_ip,
             self.config.target_port,
             bind=("0.0.0.0", 0),  # Bind to any interface, ephemeral port
-            recv_timeout=2.0,  # Wait up to 2 seconds for response
+            **self._timeout_overrides(recv_default=2.0),  # Wait up to 2 seconds for response
         )
 
     def _create_bvlc_header(self, function: int = 0x0A, length: int = 0x000C) -> Block:
@@ -1539,107 +1539,6 @@ class BACnetFuzzer(BaseFuzzer):
             self.session.connect(reinit_with_password)
             self.session.connect(dcc_with_password)
 
-    def get_fuzzing_targets(self) -> list:
-        """Return list of BACnet fuzzing targets and their purposes (optimized order)"""
-        return [
-            # Phase 1: Quick Coverage
-            {
-                "name": "BACnet_Quick_Coverage",
-                "description": "Quick sweep of all 18 service types (~30s)",
-                "phase": 1,
-            },
-            {
-                "name": "BACnet_Quick_Coverage_Unconfirmed",
-                "description": "Unconfirmed service sweep",
-                "phase": 1,
-            },
-            # Phase 2: High-crash tests
-            {
-                "name": "BACnet_Malformed_APDU",
-                "description": "Buffer overflow testing (CVE-2019-9569)",
-                "phase": 2,
-            },
-            {
-                "name": "BACnet_BVLC_Overflow",
-                "description": "BVLC length field overflow",
-                "phase": 2,
-            },
-            {
-                "name": "BACnet_NPDU_Control_Fuzz",
-                "description": "NPDU control byte fuzzing",
-                "phase": 2,
-            },
-            # Phase 3: CVE-targeted writes
-            {
-                "name": "BACnet_Write_Property",
-                "description": "WriteProperty (CVE-2021-32926)",
-                "phase": 3,
-            },
-            {
-                "name": "BACnet_Write_Property_Multiple",
-                "description": "Batch property write",
-                "phase": 3,
-            },
-            {
-                "name": "BACnet_Device_Communication_Control",
-                "description": "DeviceCommControl DoS (CVE-2020-12029)",
-                "phase": 3,
-            },
-            {
-                "name": "BACnet_Reinitialize_Device",
-                "description": "ReinitializeDevice (CVE-2022-4873)",
-                "phase": 3,
-            },
-            # Phase 4: Boundary attacks
-            {
-                "name": "BACnet_Object_ID_Boundary",
-                "description": "Object ID boundary testing",
-                "phase": 4,
-            },
-            {
-                "name": "BACnet_Property_ID_Boundary",
-                "description": "Property ID boundary testing",
-                "phase": 4,
-            },
-            {
-                "name": "BACnet_APDU_Type_Boundary",
-                "description": "APDU type boundary testing",
-                "phase": 4,
-            },
-            # Phase 5: Remaining services
-            {"name": "BACnet_Who_Is", "description": "Device discovery broadcast", "phase": 5},
-            {"name": "BACnet_I_Am", "description": "Device announcement", "phase": 5},
-            {"name": "BACnet_Read_Property", "description": "Single property read", "phase": 5},
-            {
-                "name": "BACnet_Read_Property_Multiple",
-                "description": "Batch property read",
-                "phase": 5,
-            },
-            {
-                "name": "BACnet_Read_Object_List",
-                "description": "Object list enumeration",
-                "phase": 5,
-            },
-            {"name": "BACnet_Get_Alarm_Summary", "description": "Alarm enumeration", "phase": 5},
-            {
-                "name": "BACnet_Get_Event_Information",
-                "description": "Event enumeration",
-                "phase": 5,
-            },
-            {"name": "BACnet_Subscribe_COV", "description": "COV subscription", "phase": 5},
-            {
-                "name": "BACnet_Confirmed_Event_Notification",
-                "description": "Event notification injection",
-                "phase": 5,
-            },
-            {
-                "name": "BACnet_Time_Synchronization",
-                "description": "Time manipulation (CVE-2017-16744)",
-                "phase": 5,
-            },
-            {"name": "BACnet_VT_Open", "description": "Virtual terminal session", "phase": 5},
-            {"name": "BACnet_Create_Object", "description": "Object creation", "phase": 5},
-        ]
 
 
 # For backward compatibility and explicit exports

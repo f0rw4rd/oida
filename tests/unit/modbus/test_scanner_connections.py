@@ -700,7 +700,11 @@ class TestFlowControlOptions:
         scanner.connect()
 
         call_kwargs = MockSerialClient.call_args[1]
-        assert call_kwargs.get("rtscts") is True
+        # pymodbus 3.x ModbusSerialClient has no rtscts constructor kwarg
+        # (passing it raised TypeError and broke serial entirely). Flow control
+        # is applied to the underlying pyserial object instead.
+        assert "rtscts" not in call_kwargs
+        assert mock_serial_client.socket.rtscts is True
 
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
     @patch("oida.protocols.modbus.scanner._get_modbus_serial_client")
@@ -729,7 +733,10 @@ class TestFlowControlOptions:
         scanner.connect()
 
         call_kwargs = MockSerialClient.call_args[1]
-        assert call_kwargs.get("dsrdtr") is True
+        # pymodbus 3.x ModbusSerialClient has no dsrdtr constructor kwarg;
+        # flow control is applied to the underlying pyserial object instead.
+        assert "dsrdtr" not in call_kwargs
+        assert mock_serial_client.socket.dsrdtr is True
 
 
 if __name__ == "__main__":

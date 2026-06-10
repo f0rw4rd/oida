@@ -123,7 +123,7 @@ Examples:
     record_group.add_argument(
         "--send-patient",
         action="store_true",
-        help="Send P (Patient) record",
+        help="Send P (Patient) record (requires --confirm)",
     )
 
     # Patient/Order Data

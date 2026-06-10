@@ -78,7 +78,8 @@ class SecurityMixin:
         username = getattr(self.args, "username", None)
         if not username:
             self.logger.security_finding(
-                "Anonymous access", "Anonymous WebSocket connection allowed (no HTTP Basic Auth)"
+                "Anonymous access",
+                detail="Anonymous WebSocket connection allowed (no HTTP Basic Auth)",
             )
             self._add_finding(
                 "HIGH",
@@ -99,7 +100,8 @@ class SecurityMixin:
 
         if status == "Accepted":
             self.logger.security_finding(
-                "No authentication", "Unknown charge point accepted by CSMS via BootNotification"
+                "No authentication",
+                detail="Unknown charge point accepted by CSMS via BootNotification",
             )
             self._add_finding(
                 "MEDIUM",
@@ -133,7 +135,8 @@ class SecurityMixin:
 
             if key_name == "AuthorizationKey" and key_value:
                 self.logger.security_finding(
-                    "Insecure configuration", "AuthorizationKey exposed in configuration"
+                    "Insecure configuration",
+                    detail="AuthorizationKey exposed in configuration",
                 )
                 self._add_finding(
                     "CRITICAL",
@@ -143,7 +146,8 @@ class SecurityMixin:
 
             if key_name in SECURITY_CONFIG_KEYS and not readonly:
                 self.logger.security_finding(
-                    "Writable access", f"Security config key '{key_name}' is writable"
+                    "Writable access",
+                    detail=f"Security config key '{key_name}' is writable",
                 )
                 self._add_finding(
                     "MEDIUM",
@@ -606,7 +610,7 @@ class SecurityMixin:
                 if status == "Accepted":
                     self.logger.security_finding(
                         "Writable access",
-                        f"ChangeConfiguration({HARMLESS_CONFIG_KEY}) accepted without auth",
+                        detail=f"ChangeConfiguration({HARMLESS_CONFIG_KEY}) accepted without auth",
                     )
                     self._add_finding(
                         "MEDIUM",
@@ -697,7 +701,7 @@ class SecurityMixin:
             if status in ("Accepted", "RebootRequired"):
                 self.logger.security_finding(
                     "Writable access",
-                    f"Security-sensitive key '{sensitive_key}' is writable ({status})",
+                    detail=f"Security-sensitive key '{sensitive_key}' is writable ({status})",
                 )
                 self._add_finding(
                     "CRITICAL" if sensitive_key == "AuthorizationKey" else "HIGH",
@@ -914,7 +918,9 @@ class SecurityMixin:
                     if version.startswith("2."):
                         status = payload.get("status", "Accepted")
                     else:
-                        status = "Accepted" if payload.get("fileName") else "Accepted"
+                        # OCPP 1.6 GetDiagnostics returns {"fileName": ...} on
+                        # accept; presence or absence, the probe succeeded.
+                        status = "Accepted"
 
                     result_data["status"] = status
                     if status == "Accepted":
@@ -1214,7 +1220,8 @@ class SecurityMixin:
 
                 if conn is not None:
                     self.logger.security_finding(
-                        "Default credentials", f"Valid HTTP Basic Auth: {username}:{password}"
+                        "Default credentials",
+                        detail=f"Valid HTTP Basic Auth: {username}:{password}",
                     )
                     valid_creds.append({"username": username, "password": password})
 
@@ -1296,7 +1303,8 @@ class SecurityMixin:
                         )
                         if status == "Accepted":
                             self.logger.security_finding(
-                                "Default credentials", f"Valid IdTag accepted: {tag}"
+                                "Default credentials",
+                                detail=f"Valid IdTag accepted: {tag}",
                             )
                             valid_tags.append({"id_tag": tag, "status": status})
                             if not continue_on_success:

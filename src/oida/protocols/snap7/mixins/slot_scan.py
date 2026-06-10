@@ -112,12 +112,12 @@ class SlotScanMixin(_ScannerBase):
                 self.logger.debug("scan slots order_code failed: %s", e)
 
             if detailed:
-                # Get PLC run status (4=stopped, 8=running)
+                # python-snap7 exposes get_cpu_state() (returns a status string
+                # like "S7CpuStatusRun"), not get_plc_status(); the old call
+                # raised AttributeError so plc_status was always None.
                 plc_status = None
                 try:
-                    status = client.get_plc_status()
-                    status_map = {0: "unknown", 4: "stopped", 8: "running"}
-                    plc_status = status_map.get(status, str(status))
+                    plc_status = client.get_cpu_state()
                 except Exception as e:
                     self.logger.debug("scan slots plc_status failed: %s", e)
 

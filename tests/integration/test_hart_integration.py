@@ -807,8 +807,13 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
         has_encryption_text = (
             "encrypt" in text or "tls" in text or "dtls" in text or "plaintext" in text
         )
-        assert has_encryption_finding or has_encryption_text or "security" in text, (
-            f"Expected encryption-related finding. Findings: {findings}, text excerpt: {text[:300]}"
+        # Plaintext HART-IP (UDP, no PSK/TLS) MUST yield an explicit no-encryption
+        # signal -- either the "No encryption" security finding or the
+        # "NO ENCRYPTION - plaintext HART-IP" log line. A generic "security"
+        # mention is not sufficient evidence the encryption check actually ran.
+        assert has_encryption_finding or has_encryption_text, (
+            f"Expected explicit no-encryption finding for plaintext HART-IP. "
+            f"Findings: {findings}, text excerpt: {text[:300]}"
         )
 
     @pytest.mark.security

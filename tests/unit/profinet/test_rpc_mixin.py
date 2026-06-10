@@ -156,7 +156,8 @@ class MockDiagnosisEntry:
 
     def __init__(self, channel=0, error_type=0):
         self.channel_number = channel
-        self.channel_error_type = error_type
+        # profinet DiagnosisEntry field is error_type (not channel_error_type)
+        self.error_type = error_type
 
 
 class MockDiagnosis:
@@ -423,8 +424,9 @@ class TestReadAlarms:
         alarm_obj = MagicMock()
         alarm_obj.alarm_type = 1
         alarm_obj.alarm_type_name = "Process"
-        alarm_obj.slot = 1
-        alarm_obj.subslot = 1
+        # profinet AlarmNotification fields are slot_number / subslot_number
+        alarm_obj.slot_number = 1
+        alarm_obj.subslot_number = 1
 
         # Create a mock alarms module with parse_alarm_notification
         mock_alarms = MagicMock()

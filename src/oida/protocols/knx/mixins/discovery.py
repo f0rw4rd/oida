@@ -30,18 +30,12 @@ class DiscoveryMixin:
         info = {}
 
         try:
-            # Get connection details
-            if knx.connection_manager and knx.connection_manager.connection:
-                conn = knx.connection_manager.connection
-                info.update(
-                    {
-                        "gateway_ip": getattr(conn, "gateway_ip", ""),
-                        "gateway_port": getattr(conn, "gateway_port", 0),
-                        "connection_type": str(getattr(conn, "connection_type", "")),
-                        "local_ip": getattr(conn, "local_ip", ""),
-                        "local_port": getattr(conn, "local_port", 0),
-                    }
-                )
+            # xknx ConnectionManager exposes connection_type (the previous
+            # `.connection` attribute does not exist on xknx 3.15, so this whole
+            # block used to AttributeError and return Unknown).
+            cm = getattr(knx, "connection_manager", None)
+            if cm is not None:
+                info["connection_type"] = str(getattr(cm, "connection_type", "") or "")
 
             self.logger.display(
                 f"KNX Gateway: {info.get('gateway_ip', 'Unknown')}:{info.get('gateway_port', 0)}"
@@ -528,7 +522,7 @@ class DiscoveryMixin:
             if sensor.sensor_value.value is not None:
                 result["value"] = sensor.sensor_value.value
                 result["raw"] = (
-                    str(sensor.sensor_value.payload) if sensor.sensor_value.payload else None
+                    str(sensor.sensor_value.last_payload) if sensor.sensor_value.last_payload else None
                 )
                 self.logger.success(f"Group {group_addr} value: {result['value']}")
             else:

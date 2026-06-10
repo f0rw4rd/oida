@@ -20,7 +20,6 @@ class tase2(NetworkConnection):
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.protocol_name = "TASE.2"
         self.default_port = 102
-        self._scan_results = None
         super().__init__(args, db, host)
 
     def proto_flow(self) -> None:
@@ -112,7 +111,6 @@ class tase2(NetworkConnection):
         self.logger.display("Executing scan...")
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
     def _has_action(self) -> bool:
         """Check if an action command was requested."""
