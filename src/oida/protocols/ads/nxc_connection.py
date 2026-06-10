@@ -646,7 +646,10 @@ class ads(NetworkConnection):
                     self.logger.debug("enumerate symbols failed: %s", e)
                     value_str = f"<error: {e}>"
 
-                rows.append([sym.name, str(sym.symbol_type), sym.size, value_str])
+                # AdsSymbol has no .size — derive from the ctypes plc_type
+                # (sym.size raised AttributeError and aborted enumeration).
+                size = ctypes.sizeof(sym.plc_type) if sym.plc_type else 0
+                rows.append([sym.name, str(sym.symbol_type), size, value_str])
                 count += 1
 
             headers = ["Name", "Type", "Size", "Value"]
@@ -1093,8 +1096,13 @@ class ads(NetworkConnection):
                 # Get symbol info to determine PLCTYPE
                 info = conn.get_symbol(symbol_name)
 
+                # AdsSymbol has no .size — derive the notification length from
+                # the ctypes plc_type. The old info.size raised AttributeError,
+                # so the device-notification path was dead and --watch always
+                # silently fell through to polling below.
+                length = ctypes.sizeof(info.plc_type) if info.plc_type else 0
                 attr = pyads.NotificationAttrib(
-                    length=info.size,
+                    length=length,
                     trans_mode=pyads.ADSTRANS_SERVERCYCLE,
                     max_delay=0,
                     cycle_time=interval_ms,
@@ -1588,8 +1596,13 @@ class ads(NetworkConnection):
             return
         self.logger.display(f"Scanning FoE support on {len(slave_ports)} slave(s)...")
 
-        # Create temp dir for downloaded files
-        save_dir = tempfile.mkdtemp(prefix="oida_foe_")
+        # Save downloaded files under -o when given, else a temp dir.
+        out = getattr(self.args, "output", None)
+        if out:
+            save_dir = os.path.join(out, "foe_files")
+            os.makedirs(save_dir, exist_ok=True)
+        else:
+            save_dir = tempfile.mkdtemp(prefix="oida_foe_")
         self.logger.debug(f"FoE scan save directory: {save_dir}")
         foe_results = self.scanner._scan_foe_via_ads(slave_ports, save_dir=save_dir)
         self.results["data"]["foe_scan"] = foe_results
@@ -1660,8 +1673,13 @@ class ads(NetworkConnection):
 
         self.logger.display(f"Probing FoE files on port {port}...")
 
-        # Create temp dir for downloaded files
-        save_dir = tempfile.mkdtemp(prefix="oida_foe_")
+        # Save downloaded files under -o when given, else a temp dir.
+        out = getattr(self.args, "output", None)
+        if out:
+            save_dir = os.path.join(out, "foe_files")
+            os.makedirs(save_dir, exist_ok=True)
+        else:
+            save_dir = tempfile.mkdtemp(prefix="oida_foe_")
         self.logger.debug(f"FoE list save directory: {save_dir}")
         result = self.scanner._foe_list_via_ads(port, patterns, save_dir=save_dir)
         self.results["data"]["foe_list"] = result

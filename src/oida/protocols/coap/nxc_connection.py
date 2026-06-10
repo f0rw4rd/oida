@@ -263,7 +263,7 @@ class coap(NetworkConnection):
                     self.scanner._resources.extend(common_results)
 
         # Full LwM2M enumeration
-        if getattr(self.args, "lwm2m_full", False) or getattr(self.args, "lwm2m-full", False):
+        if getattr(self.args, "lwm2m_full", False):
             self.logger.display("Enumerating all LwM2M objects...")
             objects = self.scanner._enumerate_lwm2m_objects(self.conn)
             self.results["data"]["lwm2m_objects"] = {str(k): v for k, v in objects.items()}

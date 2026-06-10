@@ -588,7 +588,7 @@ services:
       start_period: 120s
 
   # ============================================================================
-  # DNP3 Mock Services (pydnp3-stepfunc - Rust DNP3 stack)
+  # DNP3 Mock Services (stepfunc dnp3 Rust crate - pure-Rust outstation)
   # All services use the same Dockerfile.dnp3 with different env var configs.
   # ============================================================================
 
@@ -621,7 +621,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -656,7 +656,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -698,7 +698,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -735,7 +735,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -767,7 +767,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -799,7 +799,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -840,7 +840,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -877,7 +877,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3

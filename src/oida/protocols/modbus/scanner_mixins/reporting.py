@@ -9,9 +9,7 @@ Handles register decoding, monitoring, and result reporting:
 
 from __future__ import annotations
 
-import time
-from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -60,87 +58,6 @@ class ScannerReportingMixin(_ScannerBase):
             item["address"] = base_addr
 
         return decoded
-
-    def _monitor_registers(
-        self,
-        client: Any,
-        addresses: List[int],
-        register_type: str = "holding_registers",
-        interval: float = 1.0,
-        duration: Optional[int] = None,
-        on_change: bool = False,
-        decode_type: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Continuously monitor registers (generator function)
-
-        Args:
-            client: Modbus client
-            addresses: List of register addresses to monitor
-            register_type: Type of registers (holding_registers, input_registers, etc.)
-            interval: Polling interval in seconds
-            duration: Optional max duration in seconds
-            on_change: Only yield when values change
-            decode_type: Optional data type for decoding
-
-        Yields:
-            dict: Current values and any changes detected
-        """
-        from ..register_io import read_registers_batched
-
-        previous_values = {}
-        start_time = time.time()
-
-        while True:
-            # Check duration limit
-            if duration and (time.time() - start_time) > duration:
-                break
-
-            changes = {}
-            timestamp = datetime.now().isoformat()
-
-            # Batch-read all monitored addresses (no individual fallback for speed).
-            current_values = read_registers_batched(
-                client,
-                register_type,
-                addresses,
-                unit_id=self.unit_id,
-                fallback_individual=False,
-                logger=self.logger,
-            )
-
-            # Detect changes.
-            for addr, value in current_values.items():
-                if addr in previous_values and previous_values[addr] != value:
-                    changes[addr] = {"old": previous_values[addr], "new": value}
-                elif addr not in previous_values:
-                    changes[addr] = {"old": None, "new": value}
-
-            # Decode values if requested
-            decoded_values = {}
-            if decode_type:
-                decoded = self._decode_register_values(current_values, decode_type)
-                for item in decoded:
-                    decoded_values[item.get("address", 0)] = item.get("value")
-
-            # Prepare result
-            result = {
-                "timestamp": timestamp,
-                "values": current_values,
-                "decoded": decoded_values if decoded_values else None,
-                "changes": changes,
-                "elapsed_seconds": round(time.time() - start_time, 1),
-            }
-
-            # Yield based on on_change setting
-            if not on_change or changes:
-                yield result
-
-            # Update previous values
-            previous_values = current_values.copy()
-
-            # Wait for next poll
-            time.sleep(interval)
 
     def _report_findings(self, results: Dict[str, Any]):
         """Report scan findings"""

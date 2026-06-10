@@ -47,7 +47,7 @@ class AdvancedOpsMixin(_ScannerBase):
                     if hasattr(slave, "_fprd"):
                         return slave._fprd(addr, size)
                 except Exception as e:
-                    logger.debug(f"if hasattr(slave, _fprd):: {e}")
+                    logger.debug("FPRD read of 0x%04X failed: %s", addr, e)
                 return b""
 
             # AL Status registers
@@ -226,8 +226,18 @@ class AdvancedOpsMixin(_ScannerBase):
                     "slave_position": slave_pos,
                     "timestamp": datetime.now().isoformat(),
                     "error_code": getattr(emergency, "error_code", 0),
-                    "error_register": getattr(emergency, "error_register", 0),
-                    "data": hexlify(getattr(emergency, "data", b"")).decode(),
+                    # pysoem Emergency fields are error_reg + b1/w1/w2 (there is
+                    # no error_register / data attribute), so the old names
+                    # always returned the 0/b"" defaults.
+                    "error_register": getattr(emergency, "error_reg", 0),
+                    "data": hexlify(
+                        struct.pack(
+                            "<BHH",
+                            getattr(emergency, "b1", 0),
+                            getattr(emergency, "w1", 0),
+                            getattr(emergency, "w2", 0),
+                        )
+                    ).decode(),
                 }
                 self.emergency_messages.append(msg)
                 self.logger.warning(

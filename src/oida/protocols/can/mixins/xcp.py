@@ -175,7 +175,6 @@ class XCPMixin:
         Returns:
             XCPScanResult with collected information
         """
-        _get_python_can()()
         result = XCPScanResult(request_id=req_id, response_id=resp_id)
 
         # Step 1: CONNECT
@@ -271,8 +270,6 @@ class XCPMixin:
         Returns:
             Read bytes or None on failure
         """
-        _get_python_can()()
-
         # CONNECT first
         connect_data = bytes(
             [
@@ -480,7 +477,6 @@ class XCPMixin:
         Returns:
             CCPScanResult with collected information
         """
-        _get_python_can()()
         result = CCPScanResult(cro_id=cro_id, dto_id=dto_id, station_address=station_address)
         ctr = 0
 

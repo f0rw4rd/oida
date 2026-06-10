@@ -163,7 +163,7 @@ class FilesMixin:
                 try:
                     if access_method == "stream":
                         request = AtomicReadFileRequest(
-                            objectIdentifier=obj_id,
+                            fileIdentifier=obj_id,
                             accessMethod={
                                 "streamAccess": {
                                     "fileStartPosition": offset,
@@ -173,7 +173,7 @@ class FilesMixin:
                         )
                     else:
                         request = AtomicReadFileRequest(
-                            objectIdentifier=obj_id,
+                            fileIdentifier=obj_id,
                             accessMethod={
                                 "recordAccess": {
                                     "fileStartRecord": offset,

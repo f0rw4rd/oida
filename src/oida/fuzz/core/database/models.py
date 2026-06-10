@@ -370,7 +370,15 @@ def create_database_engine(database_path: str, echo: bool = False):
     if database_path == ":memory:":
         engine = create_engine("sqlite:///:memory:", echo=echo)
     else:
-        engine = create_engine(f"sqlite:///{database_path}", echo=echo)
+        # check_same_thread=False: the fuzzer records test cases from boofuzz's
+        # post-test-case callback, which runs in a worker thread. Without this,
+        # SQLite refuses the cross-thread connection and recording silently fails.
+        # WAL (set in the PRAGMA listener below) keeps concurrent access safe.
+        engine = create_engine(
+            f"sqlite:///{database_path}",
+            echo=echo,
+            connect_args={"check_same_thread": False},
+        )
 
     @event.listens_for(engine, "connect")
     def _set_sqlite_pragma(dbapi_connection, _connection_record):

@@ -828,9 +828,10 @@ class TestOCPPNewFeaturesIntegration:
             obj.probe_meter_values()
             assert obj.results["success"] is True, "MeterValues probe should succeed"
             result = obj.results["data"].get("meter_values", {})
-            # Mock server accepts TriggerMessage for MeterValues
-            assert result.get("trigger_status") in ("Accepted", "direct_response", "error"), (
-                f"Unexpected meter_values result: {result}"
+            # Mock server accepts TriggerMessage for MeterValues and returns
+            # data, so the probe must reach a positive outcome (no "error"/"no_response").
+            assert result.get("trigger_status") in ("Accepted", "direct_response"), (
+                f"Mock accepts MeterValues trigger; expected a positive status, got: {result}"
             )
         finally:
             scanner.disconnect(conn)
@@ -843,6 +844,12 @@ class TestOCPPNewFeaturesIntegration:
             assert obj.results["success"] is True, "Connector enumeration should succeed"
             connectors = obj.results["data"].get("connectors", {})
             assert isinstance(connectors, dict)
+            # Mock advertises NumberOfConnectors=2 and accepts StatusNotification
+            # triggers for connectors 0..2, so enumeration must discover them.
+            found = [c for c in connectors.values() if isinstance(c, dict) and c.get("found")]
+            assert len(found) >= 2, (
+                f"Mock has 2 connectors (+ CP id 0); expected >=2 found, got: {connectors}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -922,9 +929,13 @@ class TestOCPPNewFeaturesIntegration:
             assert result.get("harmless_write") is not None
             # Mock server accepts HeartbeatInterval changes
             assert result["harmless_write"] == "Accepted"
-            # Check sensitive keys
+            # Check sensitive keys: the probe always exercises SecurityProfile,
+            # which the mock reports readonly, so it must appear in the results.
             sensitive = result.get("sensitive_keys", {})
             assert isinstance(sensitive, dict)
+            assert sensitive.get("SecurityProfile") in ("Rejected", "readonly"), (
+                f"Expected SecurityProfile probe result (Rejected/readonly), got: {sensitive}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1768,29 +1779,29 @@ class TestOCPPSecurityFindings:
         """Test meter injection finding: crafted MeterValues accepted. [Category B]
 
         Trigger: _test_meter_injection() when MeterValues returns CALLRESULT.
-        Mock may or may not have a specific MeterValues handler.
-        Expected finding (if accepted): "Meter value injection accepted"
+        Mock validates the MeterValues payload and replies with a
+        FormationViolation CALLERROR, so the injection is rejected and no
+        finding is raised.
         """
         obj, scanner, conn = self._make_test_obj(ocpp_server)
         try:
             obj._test_meter_injection()
 
             result = obj.results["data"].get("meter_injection", {})
-            # MeterValues is in KNOWN_ACTIONS but no specific handler ->
-            # FormationViolation (CALLERROR). So no finding expected.
-            # But validate that the probe ran and recorded a result.
-            assert result.get("status") is not None, (
-                f"Expected meter injection status in result, got: {result}"
-            )
+            status = result.get("status")
+            assert status is not None, f"Expected meter injection status in result, got: {result}"
 
             issues = self._get_finding_issues(obj)
-            # If the mock accepted it, we'd have a finding; if not, no finding
-            if result["status"] == "Accepted":
+            if status == "Accepted":
                 assert any("meter value injection" in i.lower() for i in issues), (
                     f"Expected meter injection finding when accepted, got: {issues}"
                 )
             else:
-                # MeterValues returned error -- no finding expected, but test still valid
+                # Mock rejects the crafted MeterValues (FormationViolation):
+                # no billing-fraud finding should be raised.
+                assert "error" in str(status).lower(), (
+                    f"Expected a rejection status from the mock, got: {result}"
+                )
                 assert not any("meter value injection" in i.lower() for i in issues), (
                     f"Should NOT find meter injection when rejected, got: {issues}"
                 )
@@ -1817,19 +1828,19 @@ class TestOCPPSecurityFindings:
             probes = result.get("probes", [])
             assert len(probes) > 0, "Expected SSRF probe results"
 
-            # At least some probes should have status
+            # The insecure mock accepts every UpdateFirmware request, so the
+            # SSRF vector must land for at least the firmware probes.
             accepted_probes = [p for p in probes if p.get("status") == "Accepted"]
+            assert accepted_probes, (
+                f"Insecure mock accepts UpdateFirmware; expected accepted SSRF probes, got: {probes}"
+            )
 
             issues = self._get_finding_issues(obj)
-            if accepted_probes:
-                ssrf_issues = [i for i in issues if "ssrf" in i.lower()]
-                assert len(ssrf_issues) > 0, (
-                    f"Expected SSRF findings for {len(accepted_probes)} accepted probes, "
-                    f"got issues: {issues}"
-                )
-            else:
-                # All probes rejected -- still valid test
-                assert result is not None, "SSRF probe results should be recorded"
+            ssrf_issues = [i for i in issues if "ssrf" in i.lower()]
+            assert len(ssrf_issues) > 0, (
+                f"Expected SSRF findings for {len(accepted_probes)} accepted probes, "
+                f"got issues: {issues}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1842,7 +1853,8 @@ class TestOCPPSecurityFindings:
         """Test WS hijacking finding: parallel connections accepted. [Category B]
 
         Trigger: test_ws_hijacking() when second connection is accepted.
-        Mock may accept parallel connections (default websockets server does).
+        The mock has no duplicate-CP tracking (default websockets server), so a
+        parallel second connection to the same charger ID is accepted.
         Expected finding: "WebSocket parallel connection hijacking (SaiFlow)"
         or "WebSocket connection displacement (SaiFlow DoS)"
         """
@@ -1853,23 +1865,16 @@ class TestOCPPSecurityFindings:
             result = obj.results["data"].get("ws_hijacking", {})
             assert result is not None, "WS hijacking result should be recorded"
 
+            # The insecure mock accepts a parallel second connection to the same
+            # charger ID, so the hijack probe must register acceptance + a finding.
+            assert result.get("accepted"), (
+                f"Mock accepts parallel connections; expected accepted=True, got: {result}"
+            )
             issues = self._get_finding_issues(obj)
-            if result.get("accepted"):
-                # Second connection was accepted -- should have a finding
-                ws_findings = [
-                    i for i in issues if "websocket" in i.lower() or "saiflow" in i.lower()
-                ]
-                assert len(ws_findings) > 0, (
-                    f"Expected WS hijacking finding when second conn accepted, got: {issues}"
-                )
-            else:
-                # Second connection rejected -- no finding (good behavior)
-                ws_findings = [
-                    i for i in issues if "websocket" in i.lower() and "hijack" in i.lower()
-                ]
-                assert len(ws_findings) == 0, (
-                    f"Should not find hijacking when connection rejected, got: {issues}"
-                )
+            ws_findings = [i for i in issues if "websocket" in i.lower() or "saiflow" in i.lower()]
+            assert len(ws_findings) > 0, (
+                f"Expected WS hijacking finding when second conn accepted, got: {issues}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1930,17 +1935,45 @@ class TestOCPPSecurityFindings:
         pass
 
     @pytest.mark.security
-    @pytest.mark.skip(
-        reason="Brute force requires multi-connection test setup with auth-enabled mock"
-    )
     def test_finding_default_credentials(self, ocpp_server):
-        """Test default credentials finding via brute force. [Category A]
+        """Test default credentials finding via HTTP Basic Auth brute force. [Category A]
 
-        Trigger: _brute_force_http_auth() or _brute_force_id_tags()
-        when valid credentials are found.
-        Requires auth-enabled mock.
+        Trigger: _brute_force_http_auth() when a credential pair yields an
+        accepted WebSocket connection.
+        Mock behavior: the insecure CSMS (port 9000) accepts every connection
+        regardless of credentials, so the first tested pair is reported valid.
+        Expected finding: "Valid HTTP Basic Auth credentials found".
         """
-        pass
+        obj, scanner, conn = self._make_test_obj(ocpp_server)
+        try:
+            obj.args.brute_rate = 0
+            obj.args.continue_on_success = False
+
+            obj._brute_force_http_auth(["admin"], ["admin"])
+
+            brute = obj.results["data"].get("brute_force", {}).get("http_auth", {})
+            assert brute.get("tested", 0) >= 1, f"Expected at least one attempt, got: {brute}"
+            assert len(brute.get("valid", [])) >= 1, (
+                f"Insecure mock accepts any credentials; expected a valid pair, got: {brute}"
+            )
+
+            issues = self._get_finding_issues(obj)
+            assert any("http basic auth credentials found" in i.lower() for i in issues), (
+                f"Expected default-credentials finding, got: {issues}"
+            )
+
+            findings = self._get_findings(obj)
+            cred_findings = [f for f in findings if "credentials found" in f["issue"].lower()]
+            assert cred_findings[0]["severity"] == "CRITICAL"
+
+            # Per-hit finding is emitted via the logger facade.
+            obj.logger.security_finding.assert_called()
+            finding_texts = [str(c).lower() for c in obj.logger.security_finding.call_args_list]
+            assert any("default credentials" in t for t in finding_texts), (
+                f"Expected 'Default credentials' security_finding call, got: {finding_texts}"
+            )
+        finally:
+            scanner.disconnect(conn)
 
     # ========================================================================
     # CLI Integration - Security Finding via Full Scan

@@ -244,6 +244,3 @@ class SecurityAnalysisMixin(_ScannerBase):
         security_analysis = results.get("security_analysis", {})
         for concern in security_analysis.get("concerns", []):
             self.report_vulnerability(host, "enip_security", description=concern)
-
-    def _print_security_findings(self) -> None:
-        """Override to disable end-of-scan security report (findings printed inline)."""

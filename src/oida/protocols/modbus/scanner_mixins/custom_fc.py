@@ -108,15 +108,10 @@ class ScannerCustomFCMixin(_ScannerBase):
             # Create and execute request
             request = CustomFCRequest(payload, dev_id=unit_id)
 
-            # Execute - pymodbus 3.x uses execute(no_response_expected, pdu)
-            # For sync client, it's just execute(pdu) or execute(False, pdu)
-            try:
-                # Try pymodbus 3.x style first
-                response = client.execute(False, request)
-            except TypeError as e:
-                # Fallback for older style
-                self.logger.debug("decode failed: %s", e)
-                response = client.execute(request)
+            # pymodbus >=3.12 (our pin) has a single signature:
+            # execute(no_response_expected, pdu). The old execute(pdu) fallback
+            # could never run, so call the 3.x form directly.
+            response = client.execute(False, request)
 
             if response is None:
                 result["error"] = "No response received (timeout)"

@@ -16,7 +16,6 @@ class goose(SerialConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "GOOSE"
         self.default_port = 0
-        self._scan_results = None
         super().__init__(args, db, host)
 
     def proto_flow(self):
@@ -93,7 +92,6 @@ class goose(SerialConnection):
         self.logger.display("Executing GOOSE scan...")
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
     def cleanup(self):
         """Cleanup GOOSE connection."""

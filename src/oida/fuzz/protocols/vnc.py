@@ -253,7 +253,6 @@ class VNCFuzzer(BaseFuzzer):
 
     def __init__(self, config: FuzzerConfig, connection_factory=None):
         self.port = config.target_port or 5900
-        self.protocol_name = "VNC"
 
         # Get options from config
         self.use_auth = config.get_option("use_auth", True) if config else True
@@ -466,22 +465,6 @@ class VNCFuzzer(BaseFuzzer):
                 self.log.debug(f"Socket close error: {e}")
             self._auth_sock = None
 
-    def _get_session_socket(self):
-        """
-        Get the raw socket from boofuzz's active target connection.
-
-        Used by the pre_send callback to perform the VNC handshake on the
-        same socket that boofuzz will use for sending fuzz payloads.
-
-        Returns:
-            The raw socket object, or None if not available
-        """
-        try:
-            conn = self.session.targets[0]._target_connection
-            # ResilientTCPConnection / TCPSocketConnection stores socket as _sock
-            return getattr(conn, "_sock", None)
-        except (IndexError, AttributeError):
-            return None
 
     def _exchange_version(self) -> bool:
         """
@@ -1153,7 +1136,13 @@ class VNCFuzzer(BaseFuzzer):
                 self.state_machine.reset_to_initial()
 
                 if self._handshake_on_socket(raw_sock):
-                    # Update state machine to reflect authenticated state
+                    # The handshake on raw_sock genuinely walked through version
+                    # exchange, security negotiation, and authentication. Reflect
+                    # each real step in the state machine history (the setup
+                    # callbacks already ran on raw_sock, so use set_state_no_setup
+                    # to record the transitions without re-running them).
+                    self.state_machine.set_state_no_setup("VERSION_EXCHANGED")
+                    self.state_machine.set_state_no_setup("SECURITY_NEGOTIATED")
                     self.state_machine.set_state_no_setup("AUTHENTICATED")
                     self._vnc_authenticated_conn_id = current_identity
                     self.log.debug("VNC handshake successful on boofuzz connection")

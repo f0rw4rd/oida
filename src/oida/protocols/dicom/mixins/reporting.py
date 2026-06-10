@@ -375,7 +375,7 @@ class ReportingMixin(_ScannerBase):
             if self.calling_aet in ["ANY", "*", "ANYSCU", "OIDA"]:
                 self.logger.security_finding(
                     "Weak AET whitelist",
-                    f"Server accepted non-specific AE Title: {self.calling_aet}",
+                    detail=f"Server accepted non-specific AE Title: {self.calling_aet}",
                 )
 
         # Check AET brute force results
@@ -384,7 +384,7 @@ class ReportingMixin(_ScannerBase):
             if len(aet_brute["valid"]) > 5:
                 self.logger.security_finding(
                     "Permissive AET policy",
-                    f"Server accepts {len(aet_brute['valid'])} different AE Titles",
+                    detail=f"Server accepts {len(aet_brute['valid'])} different AE Titles",
                 )
 
         # Check wildcard query results
@@ -392,7 +392,7 @@ class ReportingMixin(_ScannerBase):
         if cfind.get("query", {}).get("PatientName") == "*" and cfind.get("count", 0) > 0:
             self.logger.security_finding(
                 "Unrestricted query access",
-                f"Wildcard query returned {cfind['count']} patient records",
+                detail=f"Wildcard query returned {cfind['count']} patient records",
             )
 
         # Check C-GET results
@@ -400,7 +400,7 @@ class ReportingMixin(_ScannerBase):
         if cget.get("files_retrieved", 0) > 0:
             self.logger.security_finding(
                 "Unrestricted image retrieval",
-                f"Retrieved {cget['files_retrieved']} images via C-GET",
+                detail=f"Retrieved {cget['files_retrieved']} images via C-GET",
             )
 
         # Check C-STORE results
@@ -408,7 +408,7 @@ class ReportingMixin(_ScannerBase):
         if cstore.get("files_uploaded", 0) > 0:
             self.logger.security_finding(
                 "Unrestricted upload",
-                f"Server accepted {cstore['files_uploaded']} file uploads",
+                detail=f"Server accepted {cstore['files_uploaded']} file uploads",
             )
 
         # Check C-MOVE results
@@ -416,12 +416,12 @@ class ReportingMixin(_ScannerBase):
         if cmove.get("completed", 0) > 0:
             self.logger.security_finding(
                 "Open transfer policy",
-                f"Transferred {cmove['completed']} images to external AET '{cmove.get('dest_aet', '')}'",
+                detail=f"Transferred {cmove['completed']} images to external AET '{cmove.get('dest_aet', '')}'",
             )
 
         # No TLS
         if not getattr(self.args, "tls", False):
             self.logger.security_finding(
                 "No encryption",
-                "DICOM traffic transmitted in plaintext (PHI exposure)",
+                detail="DICOM traffic transmitted in plaintext (PHI exposure)",
             )
