@@ -127,7 +127,6 @@ class OPCUAScanner(NetworkScanner):
         self.test_write = parse_bool(args.get("test-write", False))
 
         # Internal state
-        self.endpoints = []
         self.nodes = []
         self.node_values = {}
         self.address_space = {}
@@ -360,19 +359,31 @@ class OPCUAScanner(NetworkScanner):
         }
 
         try:
-            # Test anonymous access — set_user() is a SYNC setter on the
-            # asyncua Client; awaiting it raises TypeError ("None can't be
-            # awaited"). The previous `await` was swallowed by the outer
-            # except and every anonymous test silently reported nothing.
-            # TODO(security): set_user only configures the next request;
-            # to truly verify anonymous access we need to attempt a fresh
-            # client.connect() with no credentials. Separate fix.
+            # Test anonymous access by actually establishing a credential-less
+            # session and exercising the Read service. asyncua's set_user()
+            # only configures the NEXT request and takes a single str arg, so
+            # the old `set_user(None)` raised TypeError and was swallowed — the
+            # anonymous check never ran. A fresh Client with no user/password
+            # and a real connect()+Read is the only honest probe.
+            client_class = _get_client_class()
+            host, port = self.get_target_info()
+            url = host if host.startswith("opc.tcp://") else f"opc.tcp://{host}:{port}"
+            anon_client = client_class(url=url, timeout=self.timeout)
             try:
-                client.set_user(None)
-                results["anonymous_access"] = True
-                self.logger.display("Anonymous access: ALLOWED")
-            except Exception:
+                await anon_client.connect()
+                try:
+                    # Read service requires an (anonymous) session to succeed.
+                    await anon_client.get_root_node().read_browse_name()
+                    results["anonymous_access"] = True
+                    self.logger.display("Anonymous access: ALLOWED")
+                finally:
+                    try:
+                        await anon_client.disconnect()
+                    except Exception as e:
+                        self.logger.debug(f"anon probe disconnect: {e}")
+            except Exception as e:
                 self.logger.display("Anonymous access: DENIED")
+                self.logger.debug(f"anonymous probe -> {type(e).__name__}: {e}")
 
             # Load credentials from args (auto-detects files)
             credentials = load_credentials(
@@ -414,10 +425,12 @@ class OPCUAScanner(NetworkScanner):
         timeout = self.timeout
 
         for username, password in credentials:
-            probe_client = client_class(url=url)
-            probe_client.timeout = timeout
+            probe_client = client_class(url=url, timeout=timeout)
             try:
-                probe_client.set_user(username, password)
+                # asyncua's set_user() takes only the username; the password
+                # is configured via the separate set_password() setter.
+                probe_client.set_user(username)
+                probe_client.set_password(password)
                 await probe_client.connect()
                 try:
                     # Read service requires an authenticated session.
@@ -523,11 +536,11 @@ class OPCUAScanner(NetworkScanner):
             level = access.Value.Value
             result["access_level"] = level
 
-            # Check write bit (bit 1 = 0x02)
+            # Check write bit (bit 1 = 0x02). _explore_node consumes only
+            # "writable"/"access_level"/"error", so we don't compute the
+            # other AccessLevel bits here (the full bitmask breakdown lives
+            # in the --scan-writable path).
             result["writable"] = (level & 0x02) != 0
-            result["can_read"] = (level & 0x01) != 0
-            result["can_history_read"] = (level & 0x04) != 0
-            result["can_history_write"] = (level & 0x08) != 0
 
         except Exception as e:
             error_str = str(e).lower()

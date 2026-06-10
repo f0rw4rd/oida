@@ -33,7 +33,6 @@ from ..ethercat.coe import (
     get_al_state_name,
     COE_SCAN_RANGES,
     get_coe_object_name,
-    coe_category_for,
     parse_coe_ranges,
 )
 from ..ethercat.constants import lookup_vendor, get_al_status_error, ESC_REGISTER_MAP
@@ -854,8 +853,7 @@ class EtherCATOpsMixin:
 
         return result
 
-    # Delegates to shared coe.py — kept as static methods for backward compat
-    _coe_category_for = staticmethod(coe_category_for)
+    # Delegates to shared coe.py — kept as a static method for backward compat
     _parse_coe_ranges = staticmethod(parse_coe_ranges)
 
     def _scan_coe_via_ads(self, slave_ports, test_access=False, scan_ranges=None):

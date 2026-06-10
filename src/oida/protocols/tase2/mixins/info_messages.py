@@ -78,12 +78,17 @@ class InfoMessagesMixin(_ScannerBase):
             scope = TASE2IMScope.VCC if domain.upper().startswith("VCC") else TASE2IMScope.ICC
 
             for buf in buffers:
+                # Key names must match the consumers (_analyze_im_security /
+                # nxc print_host_info), which read max_messages / current_count
+                # / storage_status. The old max_size/entry_count keys had no
+                # reader, so the IM-store security heuristics never fired.
                 stores.append(
                     {
                         "domain": domain,
                         "name": buf.name,
-                        "max_size": buf.max_size,
-                        "entry_count": buf.entry_count,
+                        "max_messages": buf.max_size,
+                        "current_count": buf.entry_count,
+                        "storage_status": getattr(buf, "storage_status", ""),
                         "scope": scope,
                     }
                 )
@@ -219,8 +224,9 @@ class InfoMessagesMixin(_ScannerBase):
             buffers = connection.get_info_buffers(domain)
             for buf in buffers:
                 if buf.name == store:
-                    attributes["max_size"] = buf.max_size
-                    attributes["entry_count"] = buf.entry_count
+                    attributes["max_messages"] = buf.max_size
+                    attributes["current_count"] = buf.entry_count
+                    attributes["storage_status"] = getattr(buf, "storage_status", "")
                     break
 
         except Exception as e:

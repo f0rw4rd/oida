@@ -312,20 +312,6 @@ class ClassExplorerMixin(_ScannerBase):
             return [self._serialize_value(v) for v in value]
         return value
 
-    def _get_attr_info(self, class_id: int, instance: int, attr_id: int, data: bytes) -> tuple:
-        """Get attribute description and data type from CIP definitions"""
-        from ..cip_definitions import parse_attribute, infer_type_from_data
-
-        name, cip_type, _ = parse_attribute(class_id, instance, attr_id, data)
-        if not name and not cip_type:
-            cip_type = infer_type_from_data(data)
-        return (name, cip_type)
-
-    def _get_attr_description(self, class_id: int, instance: int, attr_id: int) -> str:
-        """Get attribute description (wrapper for compatibility)"""
-        desc, _ = self._get_attr_info(class_id, instance, attr_id, b"")
-        return desc
-
     def _print_attr_table(self, rows: list, show_perm: bool = False) -> None:
         """Print attributes as a formatted table with dynamic column widths.
 

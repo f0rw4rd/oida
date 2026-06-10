@@ -125,14 +125,13 @@ def _get_order_code_extended(client) -> Dict[str, Any]:
 
     Returns dict with: code, firmware (V1.V2.V3), bootloader (V4.V5.V6)
     """
-    import ctypes
-
     result = {"code": None, "firmware": None, "bootloader": None}
 
     try:
-        # Try standard method first
+        # Try standard method first. python-snap7 S7OrderCode exposes
+        # OrderCode (there is no "Code" attribute).
         oc = client.get_order_code()
-        code = getattr(oc, "Code", getattr(oc, "OrderCode", None))
+        code = getattr(oc, "OrderCode", None)
         if code:
             if isinstance(code, bytes):
                 code = code.decode("ascii", errors="ignore")
@@ -145,42 +144,12 @@ def _get_order_code_extended(client) -> Dict[str, Any]:
         if v1 != 0 or v2 != 0 or v3 != 0:
             result["firmware"] = f"V{v1}.{v2}.{v3}"
 
-        # Try to get bootloader from extended buffer (27 bytes)
-        # This requires direct access to snap7's C library
-        try:
-            # Access the raw C library and client handle via python-snap7's internal attributes
-            lib = client._lib  # Snap7CliProtocol - loaded C library
-            s7_client = client._s7_client  # S7Object - client handle
-
-            # Create extended buffer (27 bytes instead of 24)
-            class S7OrderCodeExtended(ctypes.Structure):
-                _fields_ = [
-                    ("OrderCode", ctypes.c_char * 21),
-                    ("V1", ctypes.c_byte),
-                    ("V2", ctypes.c_byte),
-                    ("V3", ctypes.c_byte),
-                    ("V4", ctypes.c_byte),  # Bootloader major
-                    ("V5", ctypes.c_byte),  # Bootloader minor
-                    ("V6", ctypes.c_byte),  # Bootloader patch
-                ]
-
-            buffer = S7OrderCodeExtended()
-            # Call raw C function with extended buffer
-            ret = lib.Cli_GetOrderCode(s7_client, ctypes.byref(buffer))
-            if ret == 0:
-                # Check if bootloader bytes are valid (not all zeros)
-                if buffer.V4 != 0 or buffer.V5 != 0 or buffer.V6 != 0:
-                    # Validate it's not garbage (reasonable version numbers)
-                    if buffer.V4 < 100 and buffer.V5 < 100 and buffer.V6 < 100:
-                        result["bootloader"] = f"V{buffer.V4}.{buffer.V5}.{buffer.V6}"
-        except Exception as e:
-            # Bootloader extraction failed, continue without it
-            logger.debug("get order code extended failed: %s", e)
-            pass
+        # Note: the bootloader (V4-V6) lived in a 27-byte extended buffer read
+        # via client._lib / Cli_GetOrderCode — ctypes internals removed in
+        # python-snap7 2.x, so that block always AttributeError'd and is gone.
 
     except Exception as e:
-        logger.debug("get order code extended failed: %s", e)
-        pass  # Order code retrieval failed, return partial/empty result
+        logger.debug("get order code failed: %s", e)
 
     return result
 
@@ -290,11 +259,6 @@ class Snap7Scanner(
         self.read_values = parse_bool(args.get("read-values", False))
         self.max_dbs = safe_int_conversion(args.get("max-dbs"), 100)
 
-        # Internal state
-        self.cpu_info = None
-        self.plc_status = None
-        self.accessible_dbs = []
-        self.memory_areas = {}
 
     def get_protocol_name(self) -> str:
         return "S7"

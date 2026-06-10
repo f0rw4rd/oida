@@ -357,15 +357,6 @@ class FTPFuzzer(StatefulFuzzer):
 
         return FTPAuthenticator(username=self.username, password=self.password, protocol_name="FTP")
 
-    def _create_socket(self):
-        """Create FTP or FTPS connection based on config."""
-        use_tls = self.config.get_option("use_tls", False)
-        if use_tls:
-            return FTPSConnection(
-                self.config.target_ip, self.config.target_port, protocol_name="FTPS"
-            )
-        return FTPConnection(self.config.target_ip, self.config.target_port, protocol_name="FTP")
-
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:
         """Get static request definitions for --list-requests
@@ -570,8 +561,16 @@ class FTPFuzzer(StatefulFuzzer):
         """Create FTP connection (consumes 220 banner on connect)."""
         use_tls = self.config.get_option("use_tls", False)
         if use_tls:
-            return FTPSSocketConnection(self.config.target_ip, self.config.target_port)
-        return FTPSocketConnection(self.config.target_ip, self.config.target_port)
+            return FTPSSocketConnection(
+                self.config.target_ip,
+                self.config.target_port,
+                **self._timeout_overrides(),
+            )
+        return FTPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port,
+            **self._timeout_overrides(),
+        )
 
     def _log_capabilities(self) -> None:
         """Log probed FTP server capabilities."""
@@ -2264,83 +2263,6 @@ class FTPFuzzer(StatefulFuzzer):
         except Exception as e:
             self.log.fail(f"Exception during auth validation: {e}")
             return False
-
-    def _detect_capabilities(self) -> None:
-        """
-        Detect server capabilities using FEAT command (RFC 2389)
-
-        Sends FEAT command and parses response to populate supported_features set.
-        This enables skipping unsupported commands during fuzzing for 30-50% speedup.
-
-        Example FEAT response:
-            211-Features:
-             MLST size*;type*;modify*;
-             MDTM
-             SIZE
-             REST STREAM
-             UTF8
-            211 End
-
-        Populates:
-            self.supported_features: Set of uppercase feature names
-        """
-        try:
-            sock = self.session.targets[0]._target_connection
-
-            # Send FEAT command
-            self.log.display("Detecting FTP server capabilities with FEAT command")
-            sock.send(b"FEAT\r\n")
-
-            # Receive response (may be multiline)
-            response_parts = []
-            while True:
-                chunk = sock.recv(4096).decode("utf-8", errors="ignore")
-                response_parts.append(chunk)
-
-                # Check if we got the end marker (211 End or 500/502 not supported)
-                if "211 " in chunk or "500 " in chunk or "502 " in chunk:
-                    break
-
-                # Safety: limit to 10 chunks
-                if len(response_parts) > 10:
-                    break
-
-            response = "".join(response_parts)
-            self.log.debug(f"FEAT Response:\n{response}")
-
-            # Parse FEAT response
-            if response.startswith("211"):
-                # Success - parse features
-                for line in response.split("\n"):
-                    line = line.strip()
-
-                    # Skip header, footer, and empty lines
-                    if not line or line.startswith("211"):
-                        continue
-
-                    # Extract feature name (first word, uppercase)
-                    parts = line.split()
-                    if parts:
-                        feature = parts[0].upper()
-                        self.supported_features.add(feature)
-
-                self.log.display(
-                    f"Detected {len(self.supported_features)} FTP features: {sorted(self.supported_features)}"
-                )
-
-            elif response.startswith("500") or response.startswith("502"):
-                # FEAT not supported - assume all features available for compatibility
-                self.log.warning("FEAT command not supported, assuming all features available")
-                self.supported_features = set(["*"])  # Wildcard: support all
-
-            else:
-                self.log.warning(f"Unexpected FEAT response: {response[:100]}")
-                self.supported_features = set(["*"])
-
-        except Exception as e:
-            self.log.fail(f"Exception during capability detection: {e}")
-            # On error, assume all features available for safety
-            self.supported_features = set(["*"])
 
     def _supports_feature(self, feature: str) -> bool:
         """

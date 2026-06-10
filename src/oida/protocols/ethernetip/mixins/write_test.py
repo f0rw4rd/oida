@@ -116,26 +116,25 @@ class WriteTestMixin(_ScannerBase):
             if result is None:
                 return (False, -1, [])
 
-            # Extract status from result
-            # pycomm3 stores CIP status in different places depending on version
-            status = getattr(result, "service_status", None)
-            if status is None:
-                # Try to get status from error string
-                error_str = str(getattr(result, "error", ""))
-                if "attribute not settable" in error_str.lower():
-                    status = 0x0E  # Attribute not settable
-                elif "privilege violation" in error_str.lower():
-                    status = 0x0F  # Privilege violation
-                elif "not supported" in error_str.lower():
-                    status = 0x08  # Service not supported
-                elif result.error:
-                    status = 0x0E  # Default to read-only if error with no status
-                else:
-                    status = 0x00  # Success
+            # pycomm3's Tag exposes only tag/value/type/error — there is no
+            # service_status / extended_status field — so derive the CIP status
+            # from the error string. (The old getattr(result, "service_status")
+            # was always None and getattr(..., "extended_status") always [].)
+            error_str = str(getattr(result, "error", "") or "")
+            if "attribute not settable" in error_str.lower():
+                status = 0x0E  # Attribute not settable
+            elif "privilege violation" in error_str.lower():
+                status = 0x0F  # Privilege violation
+            elif "not supported" in error_str.lower():
+                status = 0x08  # Service not supported
+            elif result.error:
+                status = 0x0E  # Default to read-only if error with no status
+            else:
+                status = 0x00  # Success
 
-            extended = getattr(result, "extended_status", []) or []
-
-            return (not result.error, status, extended)
+            # No extended status is recoverable from a pycomm3 Tag; kept as the
+            # third tuple element for call-site compatibility.
+            return (not result.error, status, [])
 
         except Exception as e:
             self.logger.debug(f"Write test 0x{class_id:02X}/{instance}/{attr_id}: {e}")

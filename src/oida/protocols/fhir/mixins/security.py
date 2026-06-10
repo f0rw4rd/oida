@@ -41,7 +41,8 @@ class SecurityMixin:
             if results:
                 auth_results["anonymous_access"] = True
                 self.logger.security_finding(
-                    "Anonymous access", "Anonymous access allowed - returned patient data"
+                    "Anonymous access",
+                    detail="Anonymous access allowed - returned patient data",
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
@@ -75,7 +76,7 @@ class SecurityMixin:
             if results:
                 auth_results["invalid_token_rejected"] = False
                 self.logger.security_finding(
-                    "No authentication", "Invalid bearer token accepted by server"
+                    "No authentication", detail="Invalid bearer token accepted by server"
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
@@ -119,7 +120,8 @@ class SecurityMixin:
             self.logger.display("  Test by accessing resources outside token scope")
         else:
             self.logger.security_finding(
-                "Insecure configuration", "No SMART/OAuth detected - scope may not be enforced"
+                "Insecure configuration",
+                detail="No SMART/OAuth detected - scope may not be enforced",
             )
 
     def _brute_force_credentials(self):
@@ -170,7 +172,8 @@ class SecurityMixin:
 
                         if response.status_code == 200:
                             self.logger.security_finding(
-                                "Default credentials", f"Valid Basic Auth: {username}:{password}"
+                                "Default credentials",
+                                detail=f"Valid Basic Auth: {username}:{password}",
                             )
                             valid_creds.append(
                                 {
@@ -358,7 +361,7 @@ class SecurityMixin:
                 access_token = token_data.get("access_token")
                 if access_token:
                     self.logger.security_finding(
-                        "Default credentials", f"Valid OAuth2: {username}:{password}"
+                        "Default credentials", detail=f"Valid OAuth2: {username}:{password}"
                     )
                     return access_token
 

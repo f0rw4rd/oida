@@ -118,7 +118,6 @@ class GATTApplicationFuzzer(BaseFuzzer):
         self.characteristic_id = config.get_option("characteristic_id") if config else None
         self.connection_timeout = config.get_option("connection_timeout", 10) if config else 10
         self.fuzz_mode = config.get_option("fuzz_mode", "discover") if config else "discover"
-        self.payload_format = config.get_option("payload_format", "auto") if config else "auto"
         self.enable_notifications = (
             config.get_option("enable_notifications", True) if config else True
         )
@@ -128,7 +127,6 @@ class GATTApplicationFuzzer(BaseFuzzer):
         # Runtime state
         self.client = None
         self.discovered_services = {}
-        self.discovered_characteristics = {}
         self.device_profile = None
         self.target_services = []  # List of resolved service UUIDs to target
         self.target_characteristics = []  # List of resolved characteristic UUIDs to target

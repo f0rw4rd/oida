@@ -326,8 +326,3 @@ class DiscoveryMixin:
                 self.results["data"]["untrusted_cert_test"] = cert_result
             else:
                 self.logger.display("No secure endpoints (Sign/SignAndEncrypt) to test cert trust")
-
-    async def _default_scan(self):
-        """Default scan - basic server info after authentication"""
-        # Note: Certificate and endpoint analysis already done in pre-auth phase
-        # This function handles post-auth enumeration only

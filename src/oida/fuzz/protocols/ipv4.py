@@ -180,29 +180,6 @@ class IPv4Fuzzer(BaseFuzzer):
         parts = mac_string.replace(":", "").replace("-", "")
         return bytes.fromhex(parts)
 
-    def _create_ethernet_header(self, dest_mac, source_mac, vlan_id, include_ethernet):
-        """Create Ethernet header block for reuse across requests"""
-        if not include_ethernet:
-            return Static("", "")
-
-        children = [
-            SmartBytes("Dest_MAC", self._mac_to_bytes(dest_mac), size=6, fuzzable=True),
-            SmartBytes("Source_MAC", self._mac_to_bytes(source_mac), size=6, fuzzable=True),
-        ]
-
-        if vlan_id is not None:
-            children.append(
-                Block(
-                    "VLAN_Tag",
-                    children=(
-                        Word("TPID", 0x8100, endian=">", fuzzable=False),
-                        Word("TCI", (vlan_id & 0x0FFF) | 0x2000, endian=">", fuzzable=True),
-                    ),
-                )
-            )
-
-        children.append(Word("EtherType", 0x0800, endian=">", fuzzable=True))
-        return Block("Ethernet_Header", children=tuple(children))
 
     def _create_ip_header_bytes(
         self,

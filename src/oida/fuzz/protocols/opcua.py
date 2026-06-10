@@ -26,6 +26,9 @@ from .opcua_constants import (
 class OPCUAFuzzer(BaseFuzzer):
     """Comprehensive OPC UA protocol fuzzer"""
 
+    # Hello/Acknowledge + session handshake: replies gate progress.
+    STATEFUL = True
+
     # Default monitor for OPC UA protocol
     # Uses Hello/Acknowledge handshake for health checking
     DEFAULT_MONITORS = "opcua"
@@ -105,7 +108,6 @@ class OPCUAFuzzer(BaseFuzzer):
         self.secure_channel_id = 0
         self.token_id = 0
         self.auth_token = None
-        self.session_id = None
 
         # StateContext for carrying state between transitions
         self._state_context = StateContext()
@@ -313,7 +315,11 @@ class OPCUAFuzzer(BaseFuzzer):
         """Create TCP socket for OPC UA"""
         from boofuzz import TCPSocketConnection
 
-        return TCPSocketConnection(self.config.target_ip, self.config.target_port or 4840)
+        return TCPSocketConnection(
+            self.config.target_ip,
+            self.config.target_port or 4840,
+            **self._timeout_overrides(),
+        )
 
     def _get_endpoint_url(self) -> str:
         """Get OPC UA endpoint URL"""
@@ -575,18 +581,21 @@ class OPCUAFuzzer(BaseFuzzer):
                 self.secure_channel_id = conn.security_token.ChannelId
                 self.token_id = conn.security_token.TokenId
                 self.auth_token = protocol.authentication_token
-                self.session_id = None  # Not needed for fuzzing
-
                 # Store state in context for cross-state access
                 ctx = self._state_context
                 ctx.set("secure_channel_id", self.secure_channel_id)
                 ctx.set("token_id", self.token_id)
                 ctx.set("auth_token", self.auth_token)
 
-                # Use CryptoStateManager for nonce tracking
+                # Use CryptoStateManager for nonce tracking. asyncua exposes the
+                # peer nonce as SecureConnection.remote_nonce (the old
+                # "server_nonce" attribute never existed, so the getattr default
+                # silently stored empty bytes). It inits to int 0 before the
+                # handshake completes, hence the isinstance guard.
+                remote_nonce = getattr(conn, "remote_nonce", b"")
                 ctx.crypto.set_nonce(
                     "server_nonce",
-                    getattr(conn, "server_nonce", b"") or b"",
+                    remote_nonce if isinstance(remote_nonce, bytes) else b"",
                 )
 
                 self.log.display(
@@ -1016,26 +1025,6 @@ class OPCUAFuzzer(BaseFuzzer):
         # ============================================================
         # DISCOVERY SERVICES (no session required)
         # ============================================================
-
-        # Helper for MSG message wrapper
-        def create_msg_wrapper(service_id: int, body_block_name: str, fuzzable: bool = True):
-            """Create MSG message wrapper with service TypeId"""
-            return Block(
-                "Header",
-                children=(
-                    Static("MessageType", OPCUAMessageTypes.MESSAGE),
-                    Static("IsFinal", b"F"),
-                    Size(
-                        "MessageSize",
-                        block_name=body_block_name,
-                        length=4,
-                        endian="<",
-                        inclusive=False,
-                        offset=8,
-                        fuzzable=False,
-                    ),
-                ),
-            )
 
         # 7. GetEndpoints Request
         get_endpoints = Request(

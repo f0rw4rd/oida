@@ -82,7 +82,11 @@ class MDNSFuzzer(BaseFuzzer):
         if config.target_port == 0:
             config.target_port = 5353
         super().__init__(config, connection_factory)
-        self.session.max_recv_bytes = 8192  # mDNS responses can be large
+        # max_recv_bytes lives on the boofuzz Target, not the Session — setting
+        # it on self.session was a dead write, leaving the 10000 default so the
+        # 8192 cap for large mDNS responses never applied.
+        if self.session.targets:
+            self.session.targets[0].max_recv_bytes = 8192
 
     def _create_socket(self):
         # mDNS uses UDP multicast - need to bind to receive responses
@@ -90,8 +94,7 @@ class MDNSFuzzer(BaseFuzzer):
             self.config.target_ip,
             self.config.target_port,
             bind=("0.0.0.0", 0),  # Bind to any interface, ephemeral port for receiving responses
-            send_timeout=2.0,
-            recv_timeout=2.0,
+            **self._timeout_overrides(recv_default=2.0, send_default=2.0),
         )
 
     def setup_custom_monitors(self) -> list:

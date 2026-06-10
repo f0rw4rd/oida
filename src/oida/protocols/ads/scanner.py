@@ -10,6 +10,7 @@ EtherCAT bridge operations are provided by EtherCATOpsMixin
 (see ethercat_ops.py).
 """
 
+import ctypes
 import re
 import struct
 from datetime import datetime
@@ -347,7 +348,10 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         info = {
             "name": symbol.name,
             "type": str(symbol.symbol_type),
-            "size": symbol.size,
+            # pyads AdsSymbol has no .size attribute — derive it from the
+            # ctypes plc_type. The old symbol.size raised AttributeError on
+            # the first symbol and aborted the whole enumeration loop.
+            "size": ctypes.sizeof(symbol.plc_type) if symbol.plc_type else None,
             "readable": False,
             "writable": False,
         }
@@ -595,7 +599,6 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             "available": False,
             "port": ADS_TRANSPORT["TLS"],
             "tls_version": None,
-            "certificate": None,
             "issues": [],
         }
 
@@ -619,7 +622,6 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
                 # Get certificate for analysis using central display function
                 cert_der = tls_sock.getpeercert(binary_form=True)
                 if cert_der:
-                    result["certificate"] = cert_der
                     from ...utils.security_findings import display_cert_info
 
                     info = display_cert_info(

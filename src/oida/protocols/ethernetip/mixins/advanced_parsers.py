@@ -620,32 +620,3 @@ class AdvancedParsersMixin(_ScannerBase):
             self.logger.debug(f"  Class 0x{class_id:02X}: No instances found")
 
         return class_info
-
-    def _get_all_attributes(self, conn: Any, class_id: int, instance: int) -> Optional[bytes]:
-        """
-        Use Get_Attributes_All service (0x01) to read all attributes at once.
-
-        More efficient than reading attributes individually.
-        Returns raw attribute data or None if not supported.
-        """
-        if not hasattr(conn, "generic_message"):
-            return None
-
-        try:
-            # Service 0x01 = Get_Attributes_All (no attribute parameter needed)
-            result = conn.generic_message(
-                service=0x01,
-                class_code=class_id,
-                instance=instance,
-                connected=True,
-                unconnected_send=False,
-            )
-            if result and result.value is not None:
-                if isinstance(result.value, (bytes, bytearray)):
-                    return bytes(result.value)
-                elif isinstance(result.value, (list, tuple)):
-                    return bytes(result.value)
-            return None
-        except Exception as e:
-            self.logger.debug(f"Get_Attributes_All failed: {e}")
-            return None

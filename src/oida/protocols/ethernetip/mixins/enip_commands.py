@@ -45,14 +45,16 @@ class EnipCommandsMixin(_ScannerBase):
         if len(data) < 24:
             return None
         try:
-            command, length, session, status, context, options = struct.unpack("<HHIIQH", data[:22])
+            # Only the first 12 bytes (command/length/session/status) are
+            # consumed by callers. The old unpack read sender_context + a
+            # 2-byte "options" (the real ENIP options field is 4 bytes) and no
+            # caller ever read either, so drop them rather than mis-parse.
+            command, length, session, status = struct.unpack("<HHII", data[:12])
             return {
                 "command": command,
                 "length": length,
                 "session": session,
                 "status": status,
-                "context": context,
-                "options": options,
                 "data": data[24 : 24 + length] if len(data) >= 24 + length else b"",
             }
         except struct.error as e:

@@ -38,6 +38,7 @@ def _get_mock_types():
 
     return {
         "WhoHasRequest": Mock(return_value=Mock()),
+        "WhoHasObject": Mock(return_value=Mock()),
         "ReadBroadcastDistributionTable": Mock(return_value=Mock()),
         "ReadForeignDeviceTable": Mock(return_value=Mock()),
         "WriteBroadcastDistributionTable": Mock(return_value=Mock()),

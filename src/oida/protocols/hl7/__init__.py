@@ -29,21 +29,6 @@ from .utils import MLLP_END, MLLP_START, extract_ack_code, strip_mllp, wrap_mllp
 _hl7apy = lazy_import("hl7apy", "HL7", install_hint="pip install hl7apy")
 
 
-# Module-level symbols for unit-test patchability. Tests use
-# @patch("oida.protocols.hl7.Message") and @patch(".parse_message").
-# unittest.mock.patch's get_original() walks __dict__, not __getattr__,
-# so bind real attributes here (or placeholders when hl7apy is missing).
-try:
-    from hl7apy.core import Message  # type: ignore  # noqa: F401
-    from hl7apy.parser import parse_message  # type: ignore  # noqa: F401
-
-    HL7APY_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    Message = None  # type: ignore
-    parse_message = None  # type: ignore
-    HL7APY_AVAILABLE = False
-
-
 __all__ = ["HL7SegmentBuilder", "HL7SegmentParser", "hl7", "HL7APY_AVAILABLE"]
 
 # HL7 Sending Application to Vendor/Product mapping
@@ -249,12 +234,6 @@ PCD_ALARM_TYPES = {
     "generic": MDC_CODES["EVT_ALARM"],
 }
 
-# Infusion pump event types for PCD-10
-PCD_PUMP_EVENTS = {
-    "start": MDC_CODES["EVT_INFUSION_START"],
-    "stop": MDC_CODES["EVT_INFUSION_STOP"],
-    "pause": MDC_CODES["EVT_INFUSION_PAUSE"],
-}
 
 # hl7apy availability check (actual import deferred until use)
 HL7APY_AVAILABLE = _hl7apy.is_available
@@ -735,12 +714,6 @@ class hl7(
             self.logger.debug(f"Field extraction failed for {field_name}: {e}")
             return ""
 
-    def _extract_field_to_set(self, segment, field_name: str, target_set: set) -> None:
-        """Extract a field value and add to set if valid."""
-        value = self._get_field_value(segment, field_name)
-        if value and value not in ("", "None"):
-            target_set.add(value)
-
     def _display_results_table(
         self,
         items: List[Dict],
@@ -857,16 +830,15 @@ class hl7(
                     "product_type": product_type,
                 }
 
-            # Extract MSA (acknowledgment) info
+            # Extract MSA (acknowledgment) info. Only ack_code is surfaced
+            # (print_host_info); msa_3 ack_text had no reader.
             if hasattr(msg, "msa"):
                 msa = msg.msa
                 self.results["data"]["ack_code"] = self._get_field_value(msa, "msa_1")
-                self.results["data"]["ack_text"] = self._get_field_value(msa, "msa_3")
 
         except Exception as e:
             self.logger.debug(f"Failed to parse response: {e}")
-            # Store raw response
-            self.results["data"]["raw_response"] = response.decode("utf-8", errors="ignore")
+            self.logger.debug(f"Raw response: {response.decode('utf-8', errors='ignore')}")
 
     def _extract_ack_code(self, response: Optional[bytes]) -> Optional[str]:
         """Extract ACK code from HL7 response.
@@ -894,7 +866,9 @@ class hl7(
         port = getattr(self.args, "port", self.default_port)
 
         # Export patient query results - dynamically include all extracted fields
-        patients = data.get("query_results", {}).get("patients", [])
+        # _display_results_table stores the list under the singularized label
+        # ("patient(s)" -> "patient"), so read that key.
+        patients = data.get("query_results", {}).get("patient", [])
         if patients:
             # Find all keys that have data across all patients
             all_keys = set()

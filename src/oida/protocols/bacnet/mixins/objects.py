@@ -1068,7 +1068,9 @@ class ObjectsMixin:
         # Security concerns
         if security_concerns:
             self.logger.security_finding(
-                "Insecure configuration", f"{len(security_concerns)} program security concern(s)"
+                "Insecure configuration",
+                category="PROGRAM",
+                detail=f"{len(security_concerns)} program security concern(s)",
             )
             for concern in security_concerns:
                 self.logger.display(f"      {concern}")
@@ -1079,7 +1081,8 @@ class ObjectsMixin:
             if writable_count > 0:
                 self.logger.security_finding(
                     "Writable access",
-                    f"{writable_count} program(s) have accessible programChange property - may allow unauthorized state transitions",
+                    category="ACCESS_CONTROL",
+                    detail=f"{writable_count} program(s) have accessible programChange property - may allow unauthorized state transitions",
                 )
         else:
             self.logger.display("\n  No security concerns identified")

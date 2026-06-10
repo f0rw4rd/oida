@@ -495,7 +495,7 @@ class BlockOperationsMixin(_ScannerBase):
             order_code_info = {}
             try:
                 oc = conn.get_order_code()
-                code = getattr(oc, "Code", getattr(oc, "OrderCode", None))
+                code = getattr(oc, "OrderCode", None)
                 if code:
                     if isinstance(code, bytes):
                         code = code.decode("ascii", errors="ignore").strip("\x00 ")

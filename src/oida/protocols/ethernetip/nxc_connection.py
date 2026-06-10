@@ -7,11 +7,7 @@ NXC-style callable class that executes scanning on instantiation.
 """
 
 from ...connection import NetworkConnection
-from .scanner import EtherNetIPScanner
-
-import logging
-
-logger = logging.getLogger(__name__)
+from .scanner import EtherNetIPScanner, _pycomm3
 
 
 class ethernetip(NetworkConnection):
@@ -20,7 +16,6 @@ class ethernetip(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "ETHERNET/IP"
         self.default_port = 44818
-        self._scan_results = None
         self.conn = None
         self.scanner = None
         super().__init__(args, db, host)
@@ -157,7 +152,6 @@ class ethernetip(NetworkConnection):
             return
 
         results = self.scanner.run_scan()
-        self._scan_results = results
         self.results["data"]["scan_results"] = results
 
     def cleanup(self):
@@ -170,9 +164,4 @@ class ethernetip(NetworkConnection):
 
     @staticmethod
     def check_dependencies() -> bool:
-        try:
-            scanner = EtherNetIPScanner.__new__(EtherNetIPScanner)
-            return scanner.check_dependencies()
-        except Exception as e:
-            logger.debug(f"Failed to get scanner: {e}")
-            return False
+        return _pycomm3.is_available

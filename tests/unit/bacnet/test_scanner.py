@@ -1047,7 +1047,7 @@ class TestBACnetObjectEnumerationParsing(unittest.TestCase):
 
 
 @_skip_no_bacpypes3
-class TestBACnetErrorHandling(unittest.TestCase):
+class TestBACnetNetworkErrorHandling(unittest.TestCase):
     """Test error handling for network failures"""
 
     def setUp(self):

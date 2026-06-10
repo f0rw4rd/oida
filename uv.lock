@@ -1569,6 +1569,7 @@ all = [
     { name = "hartip-py" },
     { name = "hl7apy" },
     { name = "netifaces" },
+    { name = "oida-pyshark" },
     { name = "paho-mqtt" },
     { name = "profinet-py" },
     { name = "pyads" },
@@ -1578,7 +1579,6 @@ all = [
     { name = "pyiec61850-ng" },
     { name = "pymodbus" },
     { name = "pynetdicom" },
-    { name = "pyshark" },
     { name = "pysnmp" },
     { name = "pysoem", marker = "sys_platform != 'win32'" },
     { name = "python-can" },
@@ -1693,7 +1693,7 @@ opcua = [
     { name = "asyncua" },
 ]
 pcap = [
-    { name = "pyshark" },
+    { name = "oida-pyshark" },
 ]
 profinet = [
     { name = "profinet-py" },
@@ -1735,6 +1735,7 @@ requires-dist = [
     { name = "oida", extras = ["ads", "astm", "bacnet", "can", "coap", "dicom", "discovery", "dnp3", "ethercat"], marker = "extra == 'all'" },
     { name = "oida", extras = ["ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms"], marker = "extra == 'all'" },
     { name = "oida", extras = ["fuzz", "modbus", "mqtt", "ocpp", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2"], marker = "extra == 'all'" },
+    { name = "oida-pyshark", marker = "extra == 'pcap'", specifier = ">=0.6.1.post1" },
     { name = "paho-mqtt", marker = "extra == 'mqtt'", specifier = ">=2.1.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
     { name = "profinet-py", marker = "extra == 'discovery'", specifier = ">=0.6.1" },
@@ -1749,7 +1750,6 @@ requires-dist = [
     { name = "pymodbus", marker = "extra == 'modbus'", specifier = ">=3.12.0" },
     { name = "pynetdicom", marker = "extra == 'dicom'", specifier = ">=3.0.4" },
     { name = "pyserial", specifier = ">=3.5" },
-    { name = "pyshark", marker = "extra == 'pcap'", git = "https://github.com/f0rw4rd/pyshark.git?subdirectory=src&rev=789993f3f3bab284ae2c8ba5628b721f61f9eb99" },
     { name = "pysnmp", marker = "extra == 'snmp'", specifier = ">=7.1.22" },
     { name = "pysoem", marker = "sys_platform != 'win32' and extra == 'ethercat'", specifier = ">=1.1.13" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
@@ -1779,6 +1779,21 @@ requires-dist = [
     { name = "zeroconf", marker = "extra == 'discovery'", specifier = ">=0.148.0" },
 ]
 provides-extras = ["ads", "bacnet", "can", "coap", "dicom", "discovery", "dnp3", "ethercat", "ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms", "modbus", "mqtt", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2", "astm", "ocpp", "fuzz", "all", "dev", "docs"]
+
+[[package]]
+name = "oida-pyshark"
+version = "0.6.1.post1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "appdirs" },
+    { name = "lxml" },
+    { name = "packaging" },
+    { name = "termcolor" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/38/24/1aa836eafde1f3288ff9cdc12a11fd6a7e8f3a764c30f643d6a47aaec071/oida_pyshark-0.6.1.post1.tar.gz", hash = "sha256:9c2de6f00a7f91893f1bdd7593a2acb0ebb936b260d7db2f4403008e4bc3bec7", size = 29486, upload-time = "2026-06-10T08:10:36.322Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/b9/e7563f9a88ed77bd17c426df78d1cce2470ef8558abe3137cb0279d15be5/oida_pyshark-0.6.1.post1-py3-none-any.whl", hash = "sha256:3d8a080cf4a809ebb5a71540aea369ad154d9184c4792f6de2473da42f53cefd", size = 43087, upload-time = "2026-06-10T08:10:34.787Z" },
+]
 
 [[package]]
 name = "packaging"
@@ -2069,17 +2084,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1e/7d/ae3f0a63f41e4d2f6cb66a5b57197850f919f59e558159a4dd3a818f5082/pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb", size = 159125, upload-time = "2020-11-23T03:59:15.045Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0", size = 90585, upload-time = "2020-11-23T03:59:13.41Z" },
-]
-
-[[package]]
-name = "pyshark"
-version = "0.6.1"
-source = { git = "https://github.com/f0rw4rd/pyshark.git?subdirectory=src&rev=789993f3f3bab284ae2c8ba5628b721f61f9eb99#789993f3f3bab284ae2c8ba5628b721f61f9eb99" }
-dependencies = [
-    { name = "appdirs" },
-    { name = "lxml" },
-    { name = "packaging" },
-    { name = "termcolor" },
 ]
 
 [[package]]
