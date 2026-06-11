@@ -31,7 +31,7 @@ from .constants import (
     DEFAULT_BAUDRATE,
     UDS_SERVICES,
 )
-from .mixins import CANopenMixin, TrafficMixin, UDSMixin, XCPMixin
+from .mixins import CANopenMixin, ISOTPMixin, TrafficMixin, UDSMixin, XCPMixin
 
 # Lazy import for python-can
 _python_can = lazy_import("can", "CAN")
@@ -76,7 +76,7 @@ protocol_options = {
     protocol_options=protocol_options,
     protocol_type="serial",
 )
-class CANScanner(TrafficMixin, UDSMixin, XCPMixin, CANopenMixin, SerialScanner):
+class CANScanner(ISOTPMixin, TrafficMixin, UDSMixin, XCPMixin, CANopenMixin, SerialScanner):
     """
     CAN bus protocol scanner implementing the SerialScanner interface.
 

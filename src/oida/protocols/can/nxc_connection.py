@@ -29,12 +29,13 @@ from .constants import (
     UDS_SERVICES,
     UDS_SESSIONS,
 )
+from .mixins import ISOTPMixin
 from .scanner import CANScanner
 
 _python_can = lazy_import("can", "CAN")
 
 
-class can(SerialConnection):
+class can(ISOTPMixin, SerialConnection):
     """
     NXC-style CAN bus scanner (callable).
 
@@ -351,27 +352,20 @@ class can(SerialConnection):
 
         try:
             self.conn.send(msg)
-            # VIN response typically uses ISO-TP multi-frame
-            end_time = time.time() + 1.0
-            vin_parts = []
-            while time.time() < end_time:
-                resp = self.conn.recv(timeout=0.1)
-                if resp is None:
-                    continue
-                if OBD2_RESPONSE_RANGE[0] <= resp.arbitration_id <= OBD2_RESPONSE_RANGE[1]:
-                    vin_parts.append(bytes(resp.data))
-
-            if vin_parts:
-                # Try to assemble VIN from ISO-TP frames
-                vin = self._assemble_isotp_data(vin_parts)
-                if vin:
-                    try:
-                        vin_str = vin.decode("ascii", errors="ignore").strip("\x00")
-                        if len(vin_str) >= 5:
-                            obd2_data["VIN"] = vin_str
-                            self.logger.display(f"  VIN: {vin_str}")
-                    except Exception as e:
-                        self.logger.debug(f"VIN decode failed: {e}")
+            # VIN response uses ISO-TP multi-frame: isotp_recv sends Flow Control
+            # after the First Frame and reassembles the de-framed payload.
+            payload = self.isotp_recv(
+                self.conn, OBD2_REQUEST_ID, OBD2_RESPONSE_RANGE[0], timeout=1.0
+            )
+            # De-framed Mode 09 PID 02 response: [0x49, 0x02, NODI, <17 VIN bytes>]
+            if payload and len(payload) > 3 and payload[0] == 0x49 and payload[1] == 0x02:
+                try:
+                    vin_str = payload[3:].decode("ascii", errors="ignore").strip("\x00")
+                    if len(vin_str) >= 5:
+                        obd2_data["VIN"] = vin_str
+                        self.logger.display(f"  VIN: {vin_str}")
+                except Exception as e:
+                    self.logger.debug(f"VIN decode failed: {e}")
         except Exception as e:
             self.logger.debug(f"VIN read failed: {e}")
 
@@ -1128,7 +1122,7 @@ class can(SerialConnection):
                 ]
                 data = boundary_cases[i % len(boundary_cases)]
             else:
-                # smart mode: UDS-aware payloads
+                # Smart mode: UDS-aware payloads
                 data = os.urandom(8)
 
             try:
@@ -1183,48 +1177,7 @@ class can(SerialConnection):
     # -------------------------------------------------------------------
     # Helpers
     # -------------------------------------------------------------------
-
-    def _assemble_isotp_data(self, frames: List[bytes]) -> Optional[bytes]:
-        """
-        Assemble data from ISO-TP frames.
-
-        Handles single-frame and multi-frame (first + consecutive) messages.
-
-        Args:
-            frames: List of raw CAN frame data payloads
-
-        Returns:
-            Assembled payload bytes or None
-        """
-        if not frames:
-            return None
-
-        first = frames[0]
-        if not first:
-            return None
-
-        frame_type = (first[0] >> 4) & 0x0F
-
-        if frame_type == 0x0:
-            # Single frame
-            length = first[0] & 0x0F
-            return first[1 : 1 + length]
-
-        elif frame_type == 0x1:
-            # First frame + consecutive frames
-            total_length = ((first[0] & 0x0F) << 8) | first[1]
-            assembled = bytearray(first[2:])
-
-            for cf in frames[1:]:
-                if not cf:
-                    continue
-                cf_type = (cf[0] >> 4) & 0x0F
-                if cf_type == 0x2:
-                    assembled.extend(cf[1:])
-
-            return bytes(assembled[:total_length])
-
-        return None
+    # NOTE: _assemble_isotp_data and isotp_recv are inherited from ISOTPMixin.
 
     def cleanup(self) -> None:
         """Clean up CAN bus connection."""

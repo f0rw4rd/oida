@@ -46,6 +46,15 @@ MULTICAST_PORT = int(os.environ.get("CAN_PORT", "43113"))
 
 MOCK_VIN = "1OIDA2MOCK3TEST45"  # 17-char VIN
 
+
+def _env_flag(name: str, default: bool = True) -> bool:
+    """Parse a boolean environment flag (1/true/yes/on enable)."""
+    val = os.environ.get(name)
+    if val is None:
+        return default
+    return val.strip().lower() in ("1", "true", "yes", "on")
+
+
 # =============================================================================
 # UDS Constants
 # =============================================================================
@@ -431,6 +440,41 @@ XCP_MEMORY: Dict[int, bytes] = {
 # Background Traffic Configuration
 # =============================================================================
 
+
+def _traffic_rate_scale() -> float:
+    """Return a multiplier applied to periodic-sender INTERVALS (test knob).
+
+    Default is 1.0 (unchanged -- full ~3700 fps flood for manual use). Tests
+    set an opt-in env knob to throttle the high-frequency background flood so
+    the scanner's matching responses are not buried under a datagram storm
+    (which both slows probes to their full timeouts and pushes single-frame
+    answers out of the receive window):
+
+      * ``CAN_QUIET=1``     -> scale 25.0 (e.g. a 10ms sender becomes 250ms)
+      * ``CAN_TRAFFIC_RATE=N`` -> scale = 1/N relative to baseline rate, where
+        ``N`` is a frames-rate FRACTION (0 < N <= 1). ``CAN_TRAFFIC_RATE=0.04``
+        is equivalent to ``CAN_QUIET=1``.
+
+    Crucially this only stretches the *noise* senders' periods. The CANopen
+    heartbeats, J1939 broadcasts / Address Claimed, TPDOs and every protocol
+    responder stay fully active, so the J1939 / sniff / classification tests
+    still observe real traffic -- the bus is throttled, not silenced.
+    """
+    if _env_flag("CAN_QUIET", default=False):
+        return 25.0
+    rate = os.environ.get("CAN_TRAFFIC_RATE")
+    if rate is not None:
+        try:
+            frac = float(rate)
+        except ValueError:
+            return 1.0
+        if 0.0 < frac < 1.0:
+            return 1.0 / frac
+    return 1.0
+
+
+TRAFFIC_RATE_SCALE = _traffic_rate_scale()
+
 # Standard automotive CAN IDs and their periodic data
 BACKGROUND_TRAFFIC: List[Tuple[int, float, int]] = [
     # (arb_id, interval_seconds, data_length)
@@ -449,6 +493,65 @@ EXTENDED_TRAFFIC: List[Tuple[int, float, int]] = [
     (0x18FEF100, 2.000, 8),  # J1939 PGN 65265 (Cruise Control / Vehicle Speed)
     (0x18FEDF00, 5.000, 8),  # J1939 PGN 65247 (Electronic Engine Controller 3)
 ]
+
+# =============================================================================
+# J1939 (SAE J1939) Definitions
+# =============================================================================
+#
+# J1939 rides on 29-bit extended CAN identifiers. The arbitration ID is
+# composed (consistent with the scanner's constants.py masks) as:
+#
+#   arb_id = (priority << 26) | (PGN << 8) | source_address
+#
+# where PGN occupies bits 8..25 (J1939_PGN_MASK = 0x03FFFF00) and the
+# source address occupies bits 0..7 (J1939_SOURCE_MASK = 0x000000FF).
+# For PDU1 (destination-specific) PGNs the low byte of the PGN carries the
+# destination address; for PDU2 (broadcast) PGNs the whole PGN is fixed.
+
+J1939_PRIORITY_MASK = 0x1C000000
+J1939_PGN_MASK = 0x03FFFF00
+J1939_SOURCE_MASK = 0x000000FF
+
+J1939_GLOBAL_ADDRESS = 0xFF  # Broadcast destination address
+
+# Source addresses for the simulated ECUs (distinct from UDS/OBD/CANopen IDs,
+# which live on 11-bit standard frames, so there is no real collision; these
+# are the 8-bit J1939 node addresses).
+J1939_SA_ENGINE = 0x00  # Engine controller #1
+J1939_SA_TRANSMISSION = 0x03  # Transmission #1
+
+# Supported broadcast PGNs: (PGN, interval_seconds, source_address)
+# EEC1  = 61444 (0xF004) Electronic Engine Controller 1 (engine speed)
+# ET1   = 65262 (0xFEEE) Engine Temperature 1 (coolant temp)
+# CCVS1 = 65265 (0xFEF1) Cruise Control / Vehicle Speed 1
+J1939_PGN_EEC1 = 0xF004
+J1939_PGN_ET1 = 0xFEEE
+J1939_PGN_CCVS1 = 0xFEF1
+J1939_PGN_VEHICLE_ID = 0xFEEC  # 65260 (VI) - VIN, multi-packet via TP
+J1939_PGN_REQUEST = 0xEA00  # 59904 Request PGN (PDU1)
+J1939_PGN_ADDRESS_CLAIMED = 0xEE00  # 60928 Address Claimed (PDU1)
+J1939_PGN_TP_CM = 0xEC00  # 60416 Transport Protocol - Connection Mgmt
+J1939_PGN_TP_DT = 0xEB00  # 60160 Transport Protocol - Data Transfer
+
+J1939_TP_CM_BAM = 0x20  # TP.CM control byte for BAM (broadcast)
+
+# Periodic broadcast schedule: (PGN, interval, source_address)
+J1939_BROADCAST_PGNS: List[Tuple[int, float, int]] = [
+    (J1939_PGN_EEC1, 0.100, J1939_SA_ENGINE),  # 100ms
+    (J1939_PGN_ET1, 1.000, J1939_SA_ENGINE),  # 1s
+    (J1939_PGN_CCVS1, 0.100, J1939_SA_TRANSMISSION),  # 100ms
+]
+
+# NAME fields (64-bit) for Address Claimed, per ECU source address.
+# Encoded little-endian as 8 bytes. Built from a simplified NAME (the exact
+# bit layout is not what the scanner inspects; the scanner only needs to see
+# the Address Claimed PGN with a source address).
+J1939_NAMES: Dict[int, int] = {
+    J1939_SA_ENGINE: 0x80_00_00_00_00_00_00_00,  # arbitrary-address-capable engine
+    J1939_SA_TRANSMISSION: 0x00_00_00_00_00_00_03_00,
+}
+
+MOCK_VIN_J1939 = MOCK_VIN + "*"  # J1939 VIN field is "*"-delimited ASCII
 
 
 # =============================================================================
@@ -511,8 +614,32 @@ class CANBus:
 class UDSResponder:
     """Handles UDS (ISO 14229) and OBD-II requests."""
 
-    def __init__(self, bus: CANBus):
+    def __init__(self, bus: CANBus, fc_event: Optional[threading.Event] = None):
         self.bus = bus
+        # Shared with the dispatcher: set when the tester's Flow Control (0x30)
+        # arrives. The off-thread multi-frame senders wait on it before
+        # streaming Consecutive Frames (real ISO-TP behaviour).
+        self._fc_event = fc_event
+
+    def _stream_consecutive_frames(self, resp_id: int, payload: bytes, offset: int) -> None:
+        """Wait for the tester's Flow Control, then stream Consecutive Frames.
+
+        Runs in a short-lived daemon thread so the dispatcher's single reader
+        loop stays free to receive (and signal) the incoming FC frame.
+        """
+        if self._fc_event is not None:
+            # Wait up to 0.5s for the tester's Flow Control before proceeding.
+            self._fc_event.wait(timeout=0.5)
+
+        seq = 1
+        while offset < len(payload):
+            cf_pci = 0x20 | (seq & 0x0F)
+            chunk = payload[offset : offset + 7]
+            cf_data = bytes([cf_pci]) + chunk + bytes(max(0, 7 - len(chunk)))
+            self.bus.send(resp_id, cf_data[:8])
+            offset += 7
+            seq = (seq + 1) & 0x0F
+            time.sleep(0.001)
 
     def handle(self, msg: can.Message) -> None:
         """Process an incoming CAN message for UDS/OBD-II."""
@@ -669,28 +796,24 @@ class UDSResponder:
             frame = bytes([pci]) + resp_payload + bytes(7 - len(resp_payload))
             self.bus.send(resp_id, frame[:8])
         else:
-            # ISO-TP multi-frame response
+            # ISO-TP multi-frame response: send the First Frame, then stream
+            # the Consecutive Frames off-thread only AFTER the tester's Flow
+            # Control (real ECU behaviour). The dispatcher's single reader sets
+            # _fc_event when it sees the 0x30 frame.
             total_len = len(resp_payload)
             # First Frame: [0x1L_hi, 0xLL_lo, data...]
             ff_pci_hi = 0x10 | ((total_len >> 8) & 0x0F)
             ff_pci_lo = total_len & 0xFF
             ff_data = bytes([ff_pci_hi, ff_pci_lo]) + resp_payload[:6]
+            if self._fc_event is not None:
+                self._fc_event.clear()
             self.bus.send(resp_id, ff_data[:8])
 
-            # Wait briefly for Flow Control (in mock, we just proceed)
-            time.sleep(0.002)
-
-            # Consecutive Frames
-            offset = 6
-            seq = 1
-            while offset < total_len:
-                cf_pci = 0x20 | (seq & 0x0F)
-                chunk = resp_payload[offset : offset + 7]
-                cf_data = bytes([cf_pci]) + chunk + bytes(max(0, 7 - len(chunk)))
-                self.bus.send(resp_id, cf_data[:8])
-                offset += 7
-                seq = (seq + 1) & 0x0F
-                time.sleep(0.001)
+            threading.Thread(
+                target=self._stream_consecutive_frames,
+                args=(resp_id, resp_payload, 6),
+                daemon=True,
+            ).start()
 
     def _handle_security_access(self, req_id: int, resp_id: int, data: bytes) -> None:
         """Handle SecurityAccess (0x27)."""
@@ -779,9 +902,39 @@ class UDSResponder:
                 resp += bytes(max(0, 8 - len(resp)))
                 self.bus.send(OBD2_RESPONSE_ID, resp[:8])
 
+        elif mode == 0x03:
+            # Mode 03: Show stored Diagnostic Trouble Codes.
+            # Response: [count_byte, 0x43, num_dtcs, DTC1_hi, DTC1_lo, DTC2_hi, DTC2_lo, ...]
+            # Each DTC is 2 bytes. We report two DTCs: P0301 and C0035.
+            #   P0301 -> first nibble 00b (P) | 0x0301 = 0x0301
+            #   C0035 -> first nibble 01b (C) shifted into bit 14-15 -> 0x4035
+            dtcs = [0x0301, 0x4035]
+            payload = bytes([0x43, len(dtcs)])
+            for dtc in dtcs:
+                payload += bytes([(dtc >> 8) & 0xFF, dtc & 0xFF])
+            resp = bytes([len(payload)]) + payload
+            resp += bytes(max(0, 8 - len(resp)))
+            self.bus.send(OBD2_RESPONSE_ID, resp[:8])
+
         elif mode == 0x09:
             # Mode 09: Vehicle Information
-            if pid == 0x02:
+            if pid == 0x00:
+                # Mode 09 supported PIDs [01-20]: advertise PID 02 (VIN)
+                bitmap = 0b01000000000000000000000000000000  # bit for PID 0x02
+                resp = bytes(
+                    [
+                        0x06,
+                        0x49,
+                        0x00,
+                        (bitmap >> 24) & 0xFF,
+                        (bitmap >> 16) & 0xFF,
+                        (bitmap >> 8) & 0xFF,
+                        bitmap & 0xFF,
+                        0x00,
+                    ]
+                )
+                self.bus.send(OBD2_RESPONSE_ID, resp)
+            elif pid == 0x02:
                 # VIN via ISO-TP multi-frame
                 vin_bytes = MOCK_VIN.encode("ascii")
                 # First byte is number of data items (1 for VIN)
@@ -789,25 +942,20 @@ class UDSResponder:
                 total_len = len(payload) + 2  # +2 for service + PID bytes
                 full_resp = bytes([0x49, pid]) + payload
 
-                # First Frame
+                # First Frame, then off-thread Consecutive Frames after the
+                # tester's Flow Control (see _stream_consecutive_frames).
                 ff_hi = 0x10 | ((total_len >> 8) & 0x0F)
                 ff_lo = total_len & 0xFF
                 ff = bytes([ff_hi, ff_lo]) + full_resp[:6]
+                if self._fc_event is not None:
+                    self._fc_event.clear()
                 self.bus.send(OBD2_RESPONSE_ID, ff[:8])
 
-                time.sleep(0.002)
-
-                # Consecutive frames
-                offset = 6
-                seq = 1
-                while offset < len(full_resp):
-                    cf_pci = 0x20 | (seq & 0x0F)
-                    chunk = full_resp[offset : offset + 7]
-                    cf = bytes([cf_pci]) + chunk + bytes(max(0, 7 - len(chunk)))
-                    self.bus.send(OBD2_RESPONSE_ID, cf[:8])
-                    offset += 7
-                    seq = (seq + 1) & 0x0F
-                    time.sleep(0.001)
+                threading.Thread(
+                    target=self._stream_consecutive_frames,
+                    args=(OBD2_RESPONSE_ID, full_resp, 6),
+                    daemon=True,
+                ).start()
 
     def _send_positive(self, resp_id: int, service_id: int, extra: bytes) -> None:
         """Send a UDS positive response."""
@@ -1435,6 +1583,166 @@ class CCPResponder:
 
 
 # =============================================================================
+# J1939 Responder (SAE J1939 over 29-bit extended CAN IDs)
+# =============================================================================
+
+
+class J1939Responder:
+    """Handles SAE J1939 traffic over extended (29-bit) CAN identifiers.
+
+    Simulates two ECUs (engine SA 0x00, transmission SA 0x03):
+      - Address Claimed (PGN 60928 / 0xEE00) advertising each NAME
+      - Request PGN (PGN 59904 / 0xEA00) handling: answers requests for
+        supported PGNs (EEC1, ET1, CCVS1, Address Claimed, and the VIN)
+      - Periodic broadcast PGNs (EEC1, ET1, CCVS1) driven by the
+        TrafficGenerator, plus on-demand broadcasts on request
+      - Multi-packet VIN (PGN 65260 / 0xFEEC) delivered via BAM transport
+        protocol (TP.CM 0xEC00 announce + TP.DT 0xEB00 data frames)
+
+    All frames use proper extended IDs so the scanner's traffic classifier
+    tags them as J1939 / extended.
+    """
+
+    def __init__(self, bus: CANBus):
+        self.bus = bus
+
+    @staticmethod
+    def make_id(pgn: int, source: int, priority: int = 6) -> int:
+        """Compose a 29-bit J1939 arbitration ID from PGN + source address."""
+        return ((priority & 0x7) << 26) | ((pgn & 0x3FFFF) << 8) | (source & 0xFF)
+
+    @staticmethod
+    def decode_id(arb_id: int) -> Tuple[int, int, int]:
+        """Decode a 29-bit J1939 arbitration ID into (priority, pgn, source)."""
+        priority = (arb_id & J1939_PRIORITY_MASK) >> 26
+        pgn = (arb_id & J1939_PGN_MASK) >> 8
+        source = arb_id & J1939_SOURCE_MASK
+        return priority, pgn, source
+
+    def _send(self, pgn: int, source: int, data: bytes, priority: int = 6) -> None:
+        """Send a single-frame J1939 PGN."""
+        arb_id = self.make_id(pgn, source, priority)
+        frame = data[:8] + bytes(max(0, 8 - len(data)))
+        self.bus.send(arb_id, frame[:8], is_extended=True)
+
+    # ------------------------------------------------------------------
+    # PGN payload builders
+    # ------------------------------------------------------------------
+
+    def build_eec1(self) -> bytes:
+        """EEC1 (0xF004): byte 4-5 = engine speed (rpm), 0.125 rpm/bit LE."""
+        rpm = 800
+        raw = int(rpm / 0.125) & 0xFFFF
+        return bytes([0xF0, 0x7D, 0x00, 0x00, raw & 0xFF, (raw >> 8) & 0xFF, 0x00, 0xFF])
+
+    def build_et1(self) -> bytes:
+        """ET1 (0xFEEE): byte 0 = coolant temp, 1 deg C/bit, -40 offset."""
+        coolant_c = 87
+        return bytes([(coolant_c + 40) & 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
+
+    def build_ccvs1(self) -> bytes:
+        """CCVS1 (0xFEF1): byte 1-2 = wheel-based vehicle speed, 1/256 km/h/bit LE."""
+        speed_kmh = 64
+        raw = int(speed_kmh * 256) & 0xFFFF
+        return bytes([0xFF, raw & 0xFF, (raw >> 8) & 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
+
+    def build_payload(self, pgn: int) -> Optional[bytes]:
+        """Return the 8-byte payload for a single-frame broadcast PGN."""
+        if pgn == J1939_PGN_EEC1:
+            return self.build_eec1()
+        if pgn == J1939_PGN_ET1:
+            return self.build_et1()
+        if pgn == J1939_PGN_CCVS1:
+            return self.build_ccvs1()
+        return None
+
+    # ------------------------------------------------------------------
+    # Broadcast helpers (called by TrafficGenerator)
+    # ------------------------------------------------------------------
+
+    def send_broadcast(self, pgn: int, source: int) -> None:
+        """Send one periodic broadcast PGN frame."""
+        payload = self.build_payload(pgn)
+        if payload is not None:
+            self._send(pgn, source, payload)
+
+    def send_address_claimed(self, source: int) -> None:
+        """Send Address Claimed (PGN 60928) for the given source address."""
+        name = J1939_NAMES.get(source, 0)
+        name_bytes = struct.pack("<Q", name & 0xFFFFFFFFFFFFFFFF)
+        # PGN 0xEE00 with destination = global (0xFF) -> low byte of PGN.
+        pgn = J1939_PGN_ADDRESS_CLAIMED | J1939_GLOBAL_ADDRESS
+        self._send(pgn, source, name_bytes)
+
+    def send_vin_bam(self, source: int) -> None:
+        """Send the VIN (PGN 65260) as a BAM multi-packet transport.
+
+        Sends a TP.CM (BAM) announce frame followed by TP.DT data frames.
+        """
+        vin = MOCK_VIN_J1939.encode("ascii")
+        total_size = len(vin)
+        num_packets = (total_size + 6) // 7
+        target_pgn = J1939_PGN_VEHICLE_ID
+
+        # TP.CM BAM: [0x20, size_lo, size_hi, num_packets, 0xFF, pgn_lo, pgn_mid, pgn_hi]
+        cm = bytes(
+            [
+                J1939_TP_CM_BAM,
+                total_size & 0xFF,
+                (total_size >> 8) & 0xFF,
+                num_packets,
+                0xFF,
+                target_pgn & 0xFF,
+                (target_pgn >> 8) & 0xFF,
+                (target_pgn >> 16) & 0xFF,
+            ]
+        )
+        # TP.CM is broadcast to the global address (PDU1 0xEC00 | 0xFF).
+        self._send(J1939_PGN_TP_CM | J1939_GLOBAL_ADDRESS, source, cm, priority=7)
+        time.sleep(0.002)
+
+        # TP.DT frames: [seq_no, 7 data bytes], 0xFF padding for the last frame.
+        for seq in range(num_packets):
+            chunk = vin[seq * 7 : seq * 7 + 7]
+            chunk = chunk + bytes([0xFF] * (7 - len(chunk)))
+            dt = bytes([seq + 1]) + chunk
+            self._send(J1939_PGN_TP_DT | J1939_GLOBAL_ADDRESS, source, dt, priority=7)
+            time.sleep(0.001)
+
+    # ------------------------------------------------------------------
+    # Request handling
+    # ------------------------------------------------------------------
+
+    def handle(self, msg: can.Message) -> None:
+        """Process an incoming extended-frame J1939 request."""
+        if not msg.is_extended_id:
+            return
+
+        _, pgn, source = self.decode_id(msg.arbitration_id)
+
+        # Request PGN (0xEA00, PDU1). Data bytes 0..2 = the requested PGN (LE).
+        if (pgn & 0xFF00) == J1939_PGN_REQUEST:
+            data = bytes(msg.data)
+            if len(data) < 3:
+                return
+            requested_pgn = data[0] | (data[1] << 8) | (data[2] << 16)
+            self._handle_request(requested_pgn)
+
+    def _handle_request(self, requested_pgn: int) -> None:
+        """Respond to a Request PGN with the requested data."""
+        if requested_pgn in (J1939_PGN_EEC1, J1939_PGN_CCVS1):
+            self.send_broadcast(requested_pgn, J1939_SA_ENGINE)
+        elif requested_pgn == J1939_PGN_ET1:
+            self.send_broadcast(requested_pgn, J1939_SA_ENGINE)
+        elif requested_pgn == J1939_PGN_VEHICLE_ID:
+            self.send_vin_bam(J1939_SA_ENGINE)
+        elif (requested_pgn & 0xFF00) == J1939_PGN_ADDRESS_CLAIMED:
+            # Requesting Address Claimed -> both ECUs claim their address.
+            self.send_address_claimed(J1939_SA_ENGINE)
+            self.send_address_claimed(J1939_SA_TRANSMISSION)
+
+
+# =============================================================================
 # Background Traffic Generator
 # =============================================================================
 
@@ -1442,10 +1750,11 @@ class CCPResponder:
 class TrafficGenerator:
     """Generates realistic background CAN traffic."""
 
-    def __init__(self, bus: CANBus):
+    def __init__(self, bus: CANBus, j1939: Optional["J1939Responder"] = None):
         self.bus = bus
         self.running = False
         self._threads: List[threading.Thread] = []
+        self.j1939 = j1939
 
     def start(self) -> None:
         """Start all traffic generation threads."""
@@ -1494,6 +1803,26 @@ class TrafficGenerator:
         t.start()
         self._threads.append(t)
 
+        # J1939 background traffic (broadcast PGNs + periodic Address Claimed)
+        if self.j1939 is not None:
+            for pgn, interval, source in J1939_BROADCAST_PGNS:
+                t = threading.Thread(
+                    target=self._j1939_broadcast_sender,
+                    args=(pgn, interval, source),
+                    daemon=True,
+                    name=f"j1939-{pgn:04X}",
+                )
+                t.start()
+                self._threads.append(t)
+
+            t = threading.Thread(
+                target=self._j1939_address_claim_sender,
+                daemon=True,
+                name="j1939-addr-claim",
+            )
+            t.start()
+            self._threads.append(t)
+
         log.info("Traffic generator started (%d threads)", len(self._threads))
 
     def stop(self) -> None:
@@ -1505,6 +1834,9 @@ class TrafficGenerator:
 
     def _periodic_sender(self, arb_id: int, interval: float, data_len: int, extended: bool) -> None:
         """Send periodic CAN frames with slightly varying data."""
+        # Throttle the high-frequency noise senders when the test knob is set
+        # (default scale 1.0 leaves manual behaviour unchanged).
+        interval = interval * TRAFFIC_RATE_SCALE
         base_data = [random.randint(0, 255) for _ in range(data_len)]
         counter = 0
 
@@ -1537,6 +1869,9 @@ class TrafficGenerator:
 
     def _pdo_sender(self) -> None:
         """Send CANopen TPDO frames periodically."""
+        # TPDOs are pure background noise for our scans; throttle them with the
+        # same test knob so the CANopen SDO reads are not buried under PDO spam.
+        pdo_interval = 0.1 * TRAFFIC_RATE_SCALE
         counter = 0
 
         while self.running:
@@ -1556,7 +1891,7 @@ class TrafficGenerator:
                 )
                 self.bus.send(CANOPEN_TPDO1_BASE + node_id, tpdo1_data)
 
-            time.sleep(0.1)
+            time.sleep(pdo_interval)
 
             # TPDO2 (0x280 + node_id) - 500ms
             if counter % 5 == 0:
@@ -1613,6 +1948,21 @@ class TrafficGenerator:
                     f"EMCY node {node_id}: error 0x{error_code:04X} reg=0x{error_register:02X}"
                 )
 
+    def _j1939_broadcast_sender(self, pgn: int, interval: float, source: int) -> None:
+        """Periodically broadcast a single J1939 PGN."""
+        while self.running:
+            if self.j1939 is not None:
+                self.j1939.send_broadcast(pgn, source)
+            time.sleep(interval)
+
+    def _j1939_address_claim_sender(self) -> None:
+        """Periodically emit Address Claimed frames for both J1939 ECUs."""
+        while self.running:
+            if self.j1939 is not None:
+                self.j1939.send_address_claimed(J1939_SA_ENGINE)
+                self.j1939.send_address_claimed(J1939_SA_TRANSMISSION)
+            time.sleep(5.0)
+
 
 # =============================================================================
 # Message Dispatcher
@@ -1622,12 +1972,17 @@ class TrafficGenerator:
 class MessageDispatcher:
     """Receives CAN messages and routes them to the appropriate handler."""
 
-    def __init__(self, bus: CANBus):
+    def __init__(self, bus: CANBus, j1939: Optional[J1939Responder] = None):
         self.bus = bus
-        self.uds = UDSResponder(bus)
+        # Shared ISO-TP Flow Control event: the single blocking reader (run())
+        # sets this when it sees a tester Flow Control frame (0x30) so that the
+        # off-thread multi-frame senders may release their Consecutive Frames.
+        self._fc_event = threading.Event()
+        self.uds = UDSResponder(bus, fc_event=self._fc_event)
         self.canopen = CANopenResponder(bus)
         self.xcp = XCPResponder(bus)
         self.ccp = CCPResponder(bus)
+        self.j1939 = j1939
 
     def run(self) -> None:
         """Main receive loop."""
@@ -1640,6 +1995,25 @@ class MessageDispatcher:
                     continue
 
                 arb_id = msg.arbitration_id
+
+                # J1939 (extended 29-bit frames) - handle requests / TP
+                if msg.is_extended_id:
+                    if self.j1939 is not None:
+                        self.j1939.handle(msg)
+                    continue
+
+                # ISO-TP Flow Control (0x30) from the tester on a UDS/OBD-II
+                # request ID: signal the off-thread CF senders. This MUST be
+                # handled by the single reader -- a handler calling bus.recv()
+                # itself would starve this loop and never see the FC.
+                data = bytes(msg.data)
+                if (
+                    (arb_id in UDS_ECUS or arb_id == OBD2_REQUEST_ID)
+                    and len(data) >= 1
+                    and (data[0] & 0xF0) == 0x30
+                ):
+                    self._fc_event.set()
+                    continue
 
                 # UDS / OBD-II
                 if arb_id in UDS_ECUS or arb_id == OBD2_REQUEST_ID:
@@ -1678,6 +2052,9 @@ def main() -> None:
     channel = sys.argv[1] if len(sys.argv) > 1 else MULTICAST_CHANNEL
     port = int(sys.argv[2]) if len(sys.argv) > 2 else MULTICAST_PORT
 
+    # J1939 simulation is on by default; disable with CAN_J1939=0.
+    j1939_enabled = _env_flag("CAN_J1939", default=True)
+
     log.info("=" * 60)
     log.info("OIDA CAN Bus Mock Server")
     log.info("=" * 60)
@@ -1690,18 +2067,32 @@ def main() -> None:
     log.info(
         f"  CCP:      0x{CCP_CRO_ID:03X} -> 0x{CCP_DTO_ID:03X} (stations: {list(CCP_STATIONS.keys())})"
     )
+    if j1939_enabled:
+        log.info(
+            f"  J1939:    SA 0x{J1939_SA_ENGINE:02X} (engine), "
+            f"0x{J1939_SA_TRANSMISSION:02X} (transmission); "
+            "PGNs EEC1/ET1/CCVS1 + VIN via BAM"
+        )
     log.info(f"  VIN:      {MOCK_VIN}")
+    if TRAFFIC_RATE_SCALE != 1.0:
+        log.info(
+            f"  Traffic:  THROTTLED (interval x{TRAFFIC_RATE_SCALE:g}; "
+            "CAN_QUIET/CAN_TRAFFIC_RATE set) -- heartbeats + J1939 + responders stay active"
+        )
     log.info("=" * 60)
 
     bus = CANBus(channel, port)
     bus.connect()
 
+    # J1939 responder (optional, enabled by default)
+    j1939 = J1939Responder(bus) if j1939_enabled else None
+
     # Start background traffic
-    traffic = TrafficGenerator(bus)
+    traffic = TrafficGenerator(bus, j1939=j1939)
     traffic.start()
 
     # Start message dispatcher in main thread
-    dispatcher = MessageDispatcher(bus)
+    dispatcher = MessageDispatcher(bus, j1939=j1939)
     try:
         dispatcher.run()
     except KeyboardInterrupt:
