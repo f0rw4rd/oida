@@ -180,6 +180,9 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "ethercat": ["ethercat-slave-veth"],
     "profinet": ["profinet-device"],
     "goose": ["goose-l2-publisher"],
+    # CAN rides on UDP multicast (host networking) — no TCP port to probe.
+    # Treated like an L2 service: lifecycle via compose, health via docker inspect.
+    "can": ["can-mock"],
 }
 
 # ---------------------------------------------------------------------------
@@ -329,6 +332,16 @@ L2_SERVICES: Set[str] = {
     "ethercat-slave",
     "profinet-device",
     "goose-l2-publisher",
+    # CAN mock speaks python-can udp_multicast over host networking; it has a
+    # Docker HEALTHCHECK but no TCP port, so it is health-checked via inspect.
+    "can-mock",
+}
+
+# Compose service name → Docker container name, for the few services whose
+# container_name differs from the compose service key (needed by docker inspect
+# in check_l2_container_healthy). Services not listed here use the service name.
+L2_CONTAINER_NAME: Dict[str, str] = {
+    "can-mock": "can-mock-server",
 }
 
 # Services that use UDP instead of TCP — use check_udp_port_open().
@@ -516,7 +529,7 @@ def docker_setup():
     for svc in list(_needed_services):
         if svc in L2_SERVICES:
             # L2 services have no TCP port; check via docker inspect
-            if check_l2_container_healthy(svc):
+            if check_l2_container_healthy(L2_CONTAINER_NAME.get(svc, svc)):
                 _preexisting_services.add(svc)
         elif svc in UDP_SERVICES:
             port = SERVICE_HEALTH_PORT.get(svc)
@@ -582,13 +595,15 @@ def _check_required_containers(request):
     if marker:
         for service in marker.args:
             if service in L2_SERVICES:
-                if not check_l2_container_healthy(service):
+                if not check_l2_container_healthy(L2_CONTAINER_NAME.get(service, service)):
                     # Determine the profile hint from the service name
                     profile = "ethercat"
                     if "profinet" in service:
                         profile = "profinet"
                     elif "goose" in service:
                         profile = "goose-l2"
+                    elif "can" in service:
+                        profile = "can"
                     pytest.skip(
                         f"L2 container '{service}' not healthy "
                         f"(start with: docker compose --profile {profile} up -d)"

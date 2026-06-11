@@ -4,7 +4,10 @@
 
 FROM python:3.11-slim
 
-RUN pip install --no-cache-dir python-can==4.4.2
+# Pin to match the host/client python-can: the udp_multicast wire format
+# changed in 4.5.0 (added a hop-limit field), so a 4.4.2 server cannot be
+# unpacked by a 4.6.x client. Keep this in lockstep with the project's pin.
+RUN pip install --no-cache-dir python-can==4.6.1 msgpack
 
 COPY can_server.py /app/can_server.py
 

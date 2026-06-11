@@ -18,8 +18,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..constants import (
     COMMON_UDS_PAIRS,
-    OBD2_REQUEST_ID,
-    OBD2_RESPONSE_RANGE,
     UDS_DID_SCAN_DEFAULT_END,
     UDS_DID_SCAN_DEFAULT_START,
     UDS_NEGATIVE_RESPONSE,
@@ -91,10 +89,9 @@ class UDSMixin:
             if response is not None:
                 resp_id, resp_data = response
 
-                # Check for valid UDS response
-                if len(resp_data) >= 2:
-                    pci_len = resp_data[0] & 0x0F
-                    service_resp = resp_data[1] if pci_len >= 1 else 0
+                # Check for valid UDS response (de-framed: service byte first)
+                if len(resp_data) >= 1:
+                    service_resp = resp_data[0]
 
                     if service_resp == (0x3E + UDS_POSITIVE_RESPONSE_OFFSET):
                         # Positive response to TesterPresent
@@ -104,8 +101,8 @@ class UDSMixin:
                         uds_result = self._enumerate_uds_services(bus, req_id, resp_id)
                         results.append(uds_result)
 
-                    elif service_resp == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 4:
-                        nrc = resp_data[3]
+                    elif service_resp == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 3:
+                        nrc = resp_data[2]
                         nrc_name = UDS_NRC.get(nrc, f"Unknown(0x{nrc:02X})")
                         # A negative response still means something is listening
                         self.logger.display(
@@ -132,29 +129,16 @@ class UDSMixin:
             timeout: Maximum wait time in seconds
 
         Returns:
-            Tuple of (response_id, response_data) or None
+            Tuple of (response_id, de-framed payload) or None. The payload has
+            the ISO-TP PCI stripped (service byte first), reassembled across
+            multiple frames if the ECU answered with a First Frame (in which
+            case ``isotp_recv`` sends the required Flow Control).
         """
         expected_resp = COMMON_UDS_PAIRS.get(request_id, request_id + 0x08)
-        end_time = time.time() + timeout
-
-        while time.time() < end_time:
-            remaining = end_time - time.time()
-            if remaining <= 0:
-                break
-            msg = bus.recv(timeout=min(remaining, 0.05))
-            if msg is None:
-                continue
-
-            # Check if this is a response to our request
-            if msg.arbitration_id == expected_resp:
-                return (msg.arbitration_id, bytes(msg.data))
-
-            # Also check for broadcast responses in the standard range
-            if OBD2_RESPONSE_RANGE[0] <= msg.arbitration_id <= OBD2_RESPONSE_RANGE[1]:
-                if request_id == OBD2_REQUEST_ID:
-                    return (msg.arbitration_id, bytes(msg.data))
-
-        return None
+        payload = self.isotp_recv(bus, request_id, expected_resp, timeout=timeout)
+        if payload is None:
+            return None
+        return (expected_resp, payload)
 
     def _enumerate_uds_services(self, bus: Any, req_id: int, resp_id: int) -> UDSScanResult:
         """
@@ -206,11 +190,11 @@ class UDSMixin:
                 continue
 
             _, resp_data = response
-            if len(resp_data) < 2:
+            if len(resp_data) < 1:
                 continue
 
-            pci_len = resp_data[0] & 0x0F
-            resp_service = resp_data[1] if pci_len >= 1 else 0
+            # De-framed payload: [service, ...] (ISO-TP PCI already stripped)
+            resp_service = resp_data[0]
 
             if resp_service == service_id + UDS_POSITIVE_RESPONSE_OFFSET:
                 # Service is supported
@@ -220,13 +204,13 @@ class UDSMixin:
                 )
 
                 # Extract extra info from specific services
-                if service_id == 0x10 and len(resp_data) >= 4:
-                    session = resp_data[2]
+                if service_id == 0x10 and len(resp_data) >= 2:
+                    session = resp_data[1]
                     result.diagnostic_sessions.append(session)
 
-                if service_id == 0x22 and pci_len > 3:
-                    # ReadDataByIdentifier response may contain VIN
-                    vin_data = resp_data[4 : 4 + pci_len - 3]
+                if service_id == 0x22 and len(resp_data) > 3:
+                    # ReadDataByIdentifier response: [0x62, DID_hi, DID_lo, data...]
+                    vin_data = resp_data[3:]
                     try:
                         vin = vin_data.decode("ascii", errors="ignore").strip("\x00")
                         if vin:
@@ -234,8 +218,8 @@ class UDSMixin:
                     except Exception as e:
                         self.logger.debug(f"Failed to decode VIN data: {e}")
 
-            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 4:
-                nrc = resp_data[3]
+            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 3:
+                nrc = resp_data[2]
                 result.negative_responses[service_id] = nrc
 
                 # Some NRCs still indicate the service exists but is blocked
@@ -296,10 +280,10 @@ class UDSMixin:
                 continue
 
             _, resp_data = resp
-            if len(resp_data) < 2:
+            if len(resp_data) < 1:
                 continue
 
-            resp_service = resp_data[1]
+            resp_service = resp_data[0]
 
             if resp_service == 0x10 + UDS_POSITIVE_RESPONSE_OFFSET:
                 session_name = UDS_SESSIONS.get(session_id, f"VendorSpecific(0x{session_id:02X})")
@@ -315,8 +299,8 @@ class UDSMixin:
                 except Exception as e:
                     self.logger.debug(f"Failed to reset to default session: {e}")
 
-            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 4:
-                nrc = resp_data[3]
+            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 3:
+                nrc = resp_data[2]
                 # 0x7E = subFunctionNotSupportedInActiveSession (still means service exists)
                 if nrc in (0x22, 0x33, 0x7E, 0x7F):
                     session_name = UDS_SESSIONS.get(
@@ -386,15 +370,15 @@ class UDSMixin:
                 continue
 
             _, resp_data = resp
-            if len(resp_data) < 2:
+            if len(resp_data) < 1:
                 continue
 
-            resp_service = resp_data[1]
+            resp_service = resp_data[0]
 
             if resp_service == 0x22 + UDS_POSITIVE_RESPONSE_OFFSET:
-                # Positive response: [PCI, 0x62, DID_hi, DID_lo, data...]
-                pci_len = resp_data[0] & 0x0F
-                did_data = resp_data[4 : 4 + max(0, pci_len - 3)] if pci_len > 3 else b""
+                # De-framed positive response: [0x62, DID_hi, DID_lo, data...]
+                # (multi-frame DIDs like VIN are reassembled by isotp_recv)
+                did_data = resp_data[3:] if len(resp_data) > 3 else b""
                 readable_dids[did] = did_data
                 did_name = UDS_STANDARD_DIDS.get(did, f"DID 0x{did:04X}")
 
@@ -462,18 +446,18 @@ class UDSMixin:
                 continue
 
             _, resp_data = resp
-            if len(resp_data) < 2:
+            if len(resp_data) < 1:
                 continue
 
-            resp_service = resp_data[1]
+            resp_service = resp_data[0]
 
             if resp_service == 0x27 + UDS_POSITIVE_RESPONSE_OFFSET:
-                pci_len = resp_data[0] & 0x0F
-                seed_data = resp_data[3 : 3 + max(0, pci_len - 2)] if pci_len > 2 else b""
+                # De-framed positive response: [0x67, level, seed...]
+                seed_data = resp_data[2:] if len(resp_data) > 2 else b""
                 seeds.append(seed_data)
 
-            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 4:
-                nrc = resp_data[3]
+            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 3:
+                nrc = resp_data[2]
                 nrc_name = UDS_NRC.get(nrc, f"0x{nrc:02X}")
                 if nrc == 0x37:
                     # RequiredTimeDelayNotExpired - wait and retry
@@ -588,16 +572,16 @@ class UDSMixin:
                 continue
 
             _, resp_data = resp
-            if len(resp_data) < 2:
+            if len(resp_data) < 1:
                 continue
 
-            resp_service = resp_data[1]
+            resp_service = resp_data[0]
 
             if resp_service == 0x31 + UDS_POSITIVE_RESPONSE_OFFSET:
                 discovered.append(routine_id)
                 self.logger.display(f"  Routine 0x{routine_id:04X}: available (positive response)")
-            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 4:
-                nrc = resp_data[3]
+            elif resp_service == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 3:
+                nrc = resp_data[2]
                 # These NRCs indicate the routine exists but cannot run right now
                 if nrc in (0x22, 0x31, 0x33, 0x7E, 0x7F):
                     discovered.append(routine_id)
@@ -647,12 +631,12 @@ class UDSMixin:
             return True  # No response can mean successful reset
 
         _, resp_data = resp
-        if len(resp_data) >= 2:
-            if resp_data[1] == 0x11 + UDS_POSITIVE_RESPONSE_OFFSET:
+        if len(resp_data) >= 1:
+            if resp_data[0] == 0x11 + UDS_POSITIVE_RESPONSE_OFFSET:
                 self.logger.success(f"  ECU reset acknowledged ({reset_name})")
                 return True
-            elif resp_data[1] == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 4:
-                nrc = resp_data[3]
+            elif resp_data[0] == UDS_NEGATIVE_RESPONSE and len(resp_data) >= 3:
+                nrc = resp_data[2]
                 nrc_name = UDS_NRC.get(nrc, f"0x{nrc:02X}")
                 self.logger.fail(f"  ECU reset rejected: {nrc_name}")
                 return False

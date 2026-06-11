@@ -2,9 +2,13 @@
 CAN Bus Protocol Integration Tests
 
 Tests oida CAN bus scanner with mocked python-can Bus objects.
-Since CAN is a serial/broadcast protocol (no TCP), there is no Docker mock
-service. Instead, we mock the python-can Bus at the scanner level to validate
-protocol frame construction, workflow orchestration, and structured output.
+Since CAN is a serial/broadcast protocol (no TCP), this file mocks the
+python-can Bus at the scanner level to validate protocol frame construction,
+workflow orchestration, and structured output without any transport.
+
+For END-TO-END tests that run the real mock CAN server over python-can's
+udp_multicast interface (the same transport the ``can-mock`` Docker service
+uses), see ``test_can_mock_e2e.py``.
 
 Uses structured JSON log assertions where the CLI runner is used, and direct
 result dict assertions where the NXC-style class is instantiated directly.
