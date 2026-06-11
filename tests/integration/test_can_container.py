@@ -479,6 +479,7 @@ UDS_DETECTABLE_SERVICES = {
         0x11,
         0x14,
         0x19,
+        0x22,
         0x23,
         0x27,
         0x28,
@@ -491,7 +492,7 @@ UDS_DETECTABLE_SERVICES = {
         0x3E,
         0x85,
     },
-    0x7E1: {0x10, 0x27, 0x31, 0x3E},
+    0x7E1: {0x10, 0x22, 0x27, 0x31, 0x3E},
 }
 
 
@@ -681,7 +682,9 @@ class TestContainerUDS:
         svc0, svc1 = _bounded(_attempt, budget=20.0, what="UDS service enum")
 
         # Both mock ECUs must be discovered and advertise their detectable
-        # service sets. (0x22 is excluded by design -- see UDS_DETECTABLE_SERVICES.)
+        # service sets. 0x22 (ReadDataByIdentifier) is included on purpose: it is
+        # only counted once ISO-TP multi-frame reassembly works, so its presence
+        # guards the ISO-TP fix end-to-end against the live container.
         missing0 = UDS_DETECTABLE_SERVICES[0x7E0] - svc0
         missing1 = UDS_DETECTABLE_SERVICES[0x7E1] - svc1
         assert not missing0, (
@@ -690,9 +693,10 @@ class TestContainerUDS:
         assert not missing1, (
             f"0x7E1 missing services {[hex(s) for s in sorted(missing1)]}: got {sorted(svc1)}"
         )
-        # Exact detectable counts (15 on the engine ECU, 4 on the transmission).
-        assert len(svc0) == 15, f"0x7E0 service count: {sorted(svc0)}"
-        assert len(svc1) == 4, f"0x7E1 service count: {sorted(svc1)}"
+        # Counts match the detectable sets exactly (no over-detection); derived
+        # from the sets so they cannot go stale if the mock's services change.
+        assert len(svc0) == len(UDS_DETECTABLE_SERVICES[0x7E0]), f"0x7E0: {sorted(svc0)}"
+        assert len(svc1) == len(UDS_DETECTABLE_SERVICES[0x7E1]), f"0x7E1: {sorted(svc1)}"
 
     def test_obd2_returns_full_vin(self, can_bus_ready):
         """OBD-II Mode 09 PID 02 delivers the full VIN via ISO-TP multi-frame [Category A]
