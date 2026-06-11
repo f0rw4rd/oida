@@ -1757,6 +1757,11 @@ services:
       - TZ=UTC
       - PYTHONUNBUFFERED=1
       - CAN_MULTICAST_PORT=43113
+      # Throttle the background noise flood for deterministic, fast integration
+      # tests. Heartbeats, J1939 broadcasts/Address-Claimed and every protocol
+      # responder stay fully active -- only the high-frequency noise senders are
+      # stretched. Remove this line for a realistic full-rate (~3700 fps) bus.
+      - CAN_QUIET=1
     restart: unless-stopped
     profiles: ["can"]
     healthcheck:
