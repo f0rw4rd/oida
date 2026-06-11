@@ -16,11 +16,13 @@ Mixins:
 """
 
 from .canopen import CANopenMixin
+from .isotp import ISOTPMixin
 from .traffic import TrafficMixin
 from .uds import UDSMixin
 from .xcp import XCPMixin
 
 __all__ = [
+    "ISOTPMixin",
     "TrafficMixin",
     "UDSMixin",
     "XCPMixin",
