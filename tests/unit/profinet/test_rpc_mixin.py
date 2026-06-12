@@ -432,7 +432,10 @@ class TestReadAlarms:
         mock_alarms = MagicMock()
         mock_alarms.parse_alarm_notification = MagicMock(return_value=alarm_obj)
 
-        with patch.dict("sys.modules", {"profinet.alarms": mock_alarms}):
+        with patch(
+            "oida.protocols.profinet.helpers.get_alarms_module",
+            return_value=mock_alarms,
+        ):
             stub._read_alarms(device, con)
 
         assert len(device.alarms) == 1
@@ -446,7 +449,10 @@ class TestReadAlarms:
         con = MagicMock()
         con.read.return_value = MockResult(b"\x00" * 40)
 
-        with patch.dict("sys.modules", {"profinet.alarms": None}):
+        with patch(
+            "oida.protocols.profinet.helpers.get_alarms_module",
+            return_value=None,
+        ):
             stub._read_alarms(device, con)
 
         # Should show raw byte count instead
