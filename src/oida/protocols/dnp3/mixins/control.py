@@ -216,13 +216,25 @@ class ControlMixin(_ScannerBase):
 
         Dead bands control the threshold before a point value change
         generates an event.
+
+        The opendnp3 binding's WriteDeadBands always emits Group 34 Variation 3
+        (float) on the wire — the C++ stack does not expose a per-variation
+        selector — so the deadband variation is fixed here.
         """
         dnp3 = self._dnp3
 
         entries = self.write_deadband
-        db_type = self.deadband_type
+        db_type = getattr(self, "deadband_type", "float")
 
-        self.logger.debug(f"Writing dead bands (type: {db_type}): {entries}")
+        # The opendnp3 binding only ever serializes G34V3 (float). Warn loudly
+        # instead of silently ignoring a uint16/uint32 request.
+        if db_type != "float":
+            self.logger.warning(
+                f"--deadband-type {db_type} is recorded as metadata only; the "
+                "opendnp3 stack transmits Group 34 Variation 3 (float) on the wire"
+            )
+
+        self.logger.debug(f"Writing dead bands (requested type: {db_type}): {entries}")
 
         try:
             deadbands = []
@@ -251,6 +263,7 @@ class ControlMixin(_ScannerBase):
                 "success": success,
                 "entries": entries,
                 "type": db_type,
+                "wire_variation": "G34V3_float",
             }
 
         except Exception as e:

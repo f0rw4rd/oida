@@ -358,9 +358,11 @@ class NetworkConnection(connection):
         # port was unset, so a user-supplied -p value persisted on the
         # shared Namespace and bled into every subsequent protocol
         # invocation in the same process (CLI uses a process-wide
-        # Namespace). Copying unconditionally is cheap (Namespace is
-        # shallow) and prevents that leak entirely.
-        args = copy.copy(args)
+        # Namespace). Deep-copy so that mutable attributes (lists/dicts/sets,
+        # e.g. scan_range) are not aliased across the two Layer-2 protocols a
+        # single process may run — a shallow copy left those shared and an
+        # in-place mutation bled into the next invocation.
+        args = copy.deepcopy(args)
         if hasattr(self, "default_port") and not getattr(args, "port", None):
             args.port = self.default_port
 

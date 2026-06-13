@@ -485,6 +485,11 @@ _CONFIRM_REQUIRED_FLAGS = {
     # SDO uploads only. Gating it as DANGEROUS contradicted that
     # contract and broke the recon workflow.
     "write_coe": "--write-coe",
+    # --scan-coe-access performs real write-back tests on CoE objects, so it
+    # belongs here even though it is nominally a "scan" (unlike read-only
+    # --scan-coe above). Previously gated only by an inline check in the NXC
+    # wrapper; centralising it ensures uniform enforcement.
+    "scan_coe_access": "--scan-coe-access",
     "add_route": "--add-route",
     "foe_write": "--foe-write",
     "foe_delete": "--foe-delete",

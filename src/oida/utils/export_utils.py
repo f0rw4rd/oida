@@ -229,21 +229,21 @@ def export_table(
 
     for fmt in formats:
         if fmt == "csv":
-            path = _config["output_dir"] / f"{name}.csv"
+            path = _safe_path(name, "csv")
             if _write_csv(path, headers, rows):
                 _log_msg(f"Wrote {path}", level="good")
                 written_paths.append(str(path))
             else:
                 success = False
         elif fmt == "json":
-            path = _config["output_dir"] / f"{name}.json"
+            path = _safe_path(name, "json")
             if _write_json(path, headers, rows):
                 _log_msg(f"Wrote {path}", level="good")
                 written_paths.append(str(path))
             else:
                 success = False
         elif fmt == "xml":
-            path = _config["output_dir"] / f"{name}.xml"
+            path = _safe_path(name, "xml")
             if _write_xml(path, headers, rows, name):
                 _log_msg(f"Wrote {path}", level="good")
                 written_paths.append(str(path))
@@ -281,7 +281,7 @@ def get_export_path(name: str, ext: str = "bin") -> Optional[Path]:
     if not _config["output_dir"]:
         return None
 
-    path = _config["output_dir"] / f"{name}.{ext}"
+    path = _safe_path(name, ext)
     _log_msg(f"Writing {path}", level="good")
     return path
 
@@ -289,6 +289,19 @@ def get_export_path(name: str, ext: str = "bin") -> Optional[Path]:
 # =============================================================================
 # Internal Helpers
 # =============================================================================
+
+
+def _safe_path(name: str, ext: str) -> Path:
+    """Build a sanitized output path inside the configured output_dir.
+
+    Routes *name* through ``safe_output_path()`` so any caller that derives the
+    filename from device-/remote-supplied data cannot escape ``output_dir`` via
+    ``../`` (path traversal). All current callers pass static literals, so this
+    is defence-in-depth at the framework file-output chokepoint.
+    """
+    from .common_types import safe_output_path
+
+    return Path(safe_output_path(f"{name}.{ext}", str(_config["output_dir"])))
 
 
 def _log_msg(message: str, level: str = "info"):

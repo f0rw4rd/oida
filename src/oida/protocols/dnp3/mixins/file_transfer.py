@@ -177,12 +177,30 @@ class FileTransferMixin(_ScannerBase):
                         f"  (binary data: {size} bytes, first 64: {data[:64].hex()})"
                     )
 
-                results["operations"]["read_file"] = {
+                op_result = {
                     "success": True,
                     "filename": filename,
                     "size": size,
                     "data_hex": data.hex() if data and size <= 65536 else None,
                 }
+
+                # Persist to the local path requested via -s/--save-file.
+                save_path = getattr(self, "save_file", None)
+                if save_path and data is not None:
+                    try:
+                        from pathlib import Path
+
+                        out = Path(save_path)
+                        if out.parent and not out.parent.exists():
+                            out.parent.mkdir(parents=True, exist_ok=True)
+                        out.write_bytes(data)
+                        self.logger.display(f"Saved {size} bytes to {out}")
+                        op_result["saved_to"] = str(out)
+                    except OSError as e:
+                        self.logger.fail(f"Could not write '{save_path}': {e}")
+                        op_result["save_error"] = str(e)
+
+                results["operations"]["read_file"] = op_result
             else:
                 reason = f"{status.name}" + (f" ({result.summary})" if result.summary else "")
                 self.logger.warning(f"File read failed for '{filename}': {reason}")

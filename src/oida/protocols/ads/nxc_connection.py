@@ -718,6 +718,14 @@ class ads(NetworkConnection):
             offset = int(parts[1], 0)
             size = int(parts[2], 0)
 
+            # Cap the requested size: _read_raw allocates a ctypes buffer of
+            # `size` bytes before any I/O, so a typo like 0xFFFFFFFF would try a
+            # 4 GB allocation. Mirror the 100 MB cap used for file reads.
+            max_read_size = 100 * 1024 * 1024  # 100 MB
+            if size < 0 or size > max_read_size:
+                self.logger.fail(f"--memory-read size {size} out of range (0..{max_read_size})")
+                return
+
             data = _read_raw(self.conn, group, offset, size)
             self.logger.success(f"Read {len(data)} bytes from {hex(group)}:{offset}")
             self.logger.display(f"  Data: {data.hex()}")

@@ -282,7 +282,14 @@ class ICSLogger:
             "port": port,
             "hostname": hostname[:16] if hostname else "",
         }
-        self._findings: List[Dict[str, str]] = []
+        # Findings are stored per-thread. A single ICSLogger is cached and shared
+        # across concurrent scans that map to the same protocol:host:port key
+        # (duplicate targets, or a hostname that resolves to an already-scanned
+        # IP). Each scan runs on its own ThreadPoolExecutor worker, so backing
+        # the findings buffer with thread-local storage keeps each scan's
+        # findings isolated — no cross-attaching between targets and no torn
+        # read in to_list() while another thread appends.
+        self._findings_local = threading.local()
 
     @property
     def prefix_width(self) -> int:
@@ -526,6 +533,21 @@ class ICSLogger:
         self._json_log("warning", "security", title, data=finding_data)
 
     @property
+    def _findings(self) -> List[Dict[str, str]]:
+        """Per-thread findings buffer (see __init__ for the rationale)."""
+        items = getattr(self._findings_local, "items", None)
+        if items is None:
+            items = []
+            self._findings_local.items = items
+        return items
+
+    @_findings.setter
+    def _findings(self, value: List[Dict[str, str]]) -> None:
+        """Replace this thread's findings buffer (used by callers/tests that
+        reset findings via direct assignment)."""
+        self._findings_local.items = list(value) if value else []
+
+    @property
     def findings(self) -> List[Dict[str, str]]:
         """Access collected security findings."""
         return self._findings
@@ -536,7 +558,7 @@ class ICSLogger:
 
     def clear_findings(self) -> None:
         """Reset the findings list for a new scan on this logger instance."""
-        self._findings = []
+        self._findings_local.items = []
 
     # -----------------------------------------------------------------
     # Structured event methods  (emit console output AND JSON)
@@ -782,15 +804,18 @@ def check_dependencies(*library_names, error_prefix=None):
 
 # Lazy-initialized MockCLI singleton
 _cli_instance = None
+_cli_instance_lock = threading.Lock()
 
 
 def _get_cli():
     """Get or create the MockCLI singleton for legacy logging."""
     global _cli_instance
     if _cli_instance is None:
-        from .cli import MockCLI
+        with _cli_instance_lock:
+            if _cli_instance is None:
+                from .cli import MockCLI
 
-        _cli_instance = MockCLI()
+                _cli_instance = MockCLI()
     return _cli_instance
 
 
@@ -856,6 +881,7 @@ class LogHandler(logging.Handler):
 
 # Cache MacParser instance for efficiency
 _mac_parser = None
+_mac_parser_lock = threading.Lock()
 
 
 def mac_lookup(mac: str, full: bool = False) -> str:
@@ -871,9 +897,11 @@ def mac_lookup(mac: str, full: bool = False) -> str:
     """
     global _mac_parser
     if _mac_parser is None:
-        import manuf2  # Lazy import for faster CLI startup
+        with _mac_parser_lock:
+            if _mac_parser is None:
+                import manuf2  # Lazy import for faster CLI startup
 
-        _mac_parser = manuf2.MacParser()
+                _mac_parser = manuf2.MacParser()
     mac_clean = mac.replace("-", ":")
     if full:
         result = _mac_parser.get_all(mac_clean)

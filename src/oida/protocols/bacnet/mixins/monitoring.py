@@ -596,6 +596,22 @@ class MonitoringMixin:
         except KeyboardInterrupt as e:
             self.logger.debug(f"bacpypes3 subscribe cov failed: {e}")
             self.logger.display("\n  COV monitoring stopped")
+        finally:
+            # Explicitly cancel the subscriptions instead of leaving them to
+            # expire after `lifetime`s. A COV-cancel is a SubscribeCOVRequest
+            # with neither issueConfirmedNotifications nor lifetime set. This
+            # frees subscriber slots on constrained controllers promptly.
+            for obj_type, instance in subscribed:
+                try:
+                    cancel = SubscribeCOVRequest(
+                        subscriberProcessIdentifier=Unsigned(subscriber_pid),
+                        monitoredObjectIdentifier=ObjectIdentifier((obj_type, instance)),
+                    )
+                    cancel.pduDestination = target_addr
+                    await asyncio.wait_for(app.request(cancel), timeout=min(timeout, 3.0))
+                    self.logger.debug(f"COV subscription cancelled for {obj_type}:{instance}")
+                except BaseException as e:
+                    self.logger.debug(f"COV cancel failed for {obj_type}:{instance}: {e}")
 
         self.logger.display("  COV listening complete")
 
