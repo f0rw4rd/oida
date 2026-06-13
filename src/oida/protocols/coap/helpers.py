@@ -218,7 +218,7 @@ def parse_link_format(payload: str) -> List[Dict[str, Any]]:
 
         # Parse attributes after the path
         attrs_str = entry[path_match.end() :]
-        # obs flag (no value)
+        # Obs flag (no value)
         if ";obs" in attrs_str.lower():
             resource["obs"] = True
 

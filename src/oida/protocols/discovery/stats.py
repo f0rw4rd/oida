@@ -740,11 +740,11 @@ class PassiveStatistics:
                 src_is_server = _is_server_port(src_port, transport)
                 dst_is_server = _is_server_port(dst_port, transport)
                 if dst_is_server and not src_is_server:
-                    # dst is server, src is client → client=src, server=dst
+                    # Dst is server, src is client → client=src, server=dst
                     client_ip, client_port = src_ip, src_port
                     server_ip, server_port = dst_ip, dst_port
                 elif src_is_server and not dst_is_server:
-                    # src is server, dst is client → client=dst, server=src
+                    # Src is server, dst is client → client=dst, server=src
                     client_ip, client_port = dst_ip, dst_port
                     server_ip, server_port = src_ip, src_port
                 else:

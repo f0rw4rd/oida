@@ -20,8 +20,11 @@ import socket
 
 import pytest
 
+from tests.unit.hl7.conftest import _make_hl7_instance
+
 try:
     import hl7apy  # noqa: F401
+
     _HL7APY_AVAILABLE = True
 except ImportError:
     _HL7APY_AVAILABLE = False
@@ -165,9 +168,8 @@ class TestHL7ScannerInit(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_scanner_initialization(self):
         """Test basic scanner initialization"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         self.assertEqual(scanner.protocol_name, "hl7")
         self.assertEqual(scanner.default_port, 2575)
@@ -176,10 +178,9 @@ class TestHL7ScannerInit(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_scanner_segment_builder(self):
         """Test scanner has segment builder initialized after proto_flow"""
-        from oida.protocols.hl7 import hl7
         from oida.protocols.hl7.segments import HL7SegmentBuilder
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         # segment_builder is initialized during proto_flow
         self.assertIsInstance(scanner.segment_builder, HL7SegmentBuilder)
@@ -187,9 +188,8 @@ class TestHL7ScannerInit(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_scanner_response_tracking(self):
         """Test scanner initializes response tracking"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         self.assertEqual(scanner.all_responses, [])
         self.assertIsNone(scanner.detected_version)
@@ -228,9 +228,8 @@ class TestHL7VendorIdentification(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_identify_epic(self):
         """Test Epic vendor identification"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         vendor, product = scanner._identify_vendor("EPIC")
 
         self.assertEqual(vendor, "Epic Systems")
@@ -239,9 +238,8 @@ class TestHL7VendorIdentification(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_identify_cerner(self):
         """Test Cerner vendor identification"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         vendor, product = scanner._identify_vendor("CERNER")
 
         self.assertEqual(vendor, "Cerner Corporation")
@@ -249,9 +247,8 @@ class TestHL7VendorIdentification(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_identify_mirth(self):
         """Test Mirth Connect identification"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         vendor, product = scanner._identify_vendor("MIRTH")
 
         self.assertEqual(vendor, "NextGen")
@@ -260,9 +257,8 @@ class TestHL7VendorIdentification(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_identify_compound_name(self):
         """Test identification of compound app names"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         vendor, product = scanner._identify_vendor("EPIC_LAB")
 
         self.assertEqual(vendor, "Epic Systems")
@@ -270,9 +266,8 @@ class TestHL7VendorIdentification(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_identify_unknown_vendor(self):
         """Test handling of unknown vendor"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         vendor, product = scanner._identify_vendor("UNKNOWN_SYSTEM")
 
         self.assertIsNone(vendor)
@@ -281,9 +276,8 @@ class TestHL7VendorIdentification(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_identify_empty_app(self):
         """Test handling of empty app name"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         vendor, product = scanner._identify_vendor("")
 
         self.assertIsNone(vendor)
@@ -324,12 +318,11 @@ class TestHL7Connection(unittest.TestCase):
     @patch("socket.socket")
     def test_create_conn_obj_success(self, mock_socket_class):
         """Test successful MLLP connection"""
-        from oida.protocols.hl7 import hl7
 
         mock_sock = MockSocket()
         mock_socket_class.return_value = mock_sock
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner.create_conn_obj()
@@ -342,12 +335,11 @@ class TestHL7Connection(unittest.TestCase):
     @patch("socket.socket")
     def test_create_conn_obj_refused(self, mock_socket_class):
         """Test connection refused handling"""
-        from oida.protocols.hl7 import hl7
 
         mock_sock = MockSocket(connect_success=False)
         mock_socket_class.return_value = mock_sock
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner.create_conn_obj()
@@ -359,13 +351,12 @@ class TestHL7Connection(unittest.TestCase):
     @patch("socket.socket")
     def test_create_conn_obj_timeout(self, mock_socket_class):
         """Test connection timeout handling"""
-        from oida.protocols.hl7 import hl7
 
         mock_sock = Mock()
         mock_sock.connect.side_effect = socket.timeout("Connection timed out")
         mock_socket_class.return_value = mock_sock
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner.create_conn_obj()
@@ -434,14 +425,13 @@ class TestHL7MessageCreation(unittest.TestCase):
     @patch("hl7apy.core.Message")
     def test_create_test_message_adt(self, mock_message):
         """Test ADT message creation"""
-        from oida.protocols.hl7 import hl7
 
         mock_msg = Mock()
         mock_msg.msh = Mock()
         mock_msg.to_er7.return_value = "MSH|^~\\&|OIDA|SECURITY|TARGET|FACILITY|...|ADT^A01|..."
         mock_message.return_value = mock_msg
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = None
 
         result = scanner._create_test_message("ADT", "A01")
@@ -452,9 +442,8 @@ class TestHL7MessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_test_message_exception_handling(self):
         """Test message creation handles exceptions gracefully"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         # Create a message - should work when hl7apy is installed
         result = scanner._create_test_message("ADT", "A01")
@@ -498,9 +487,8 @@ class TestHL7MLLPFraming(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_mllp_message_framing(self):
         """Test MLLP message is properly framed"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         # Create mock socket that captures sent data
         mock_sock = MockSocket()
@@ -519,9 +507,8 @@ class TestHL7MLLPFraming(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_mllp_message_no_connection(self):
         """Test MLLP send without connection"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.conn = None
         scanner.logger = Mock()
 
@@ -564,7 +551,6 @@ class TestHL7ResponseParsing(unittest.TestCase):
     @patch("hl7apy.parser.parse_message")
     def test_parse_response_extracts_server_info(self, mock_parse):
         """Test response parsing extracts server info"""
-        from oida.protocols.hl7 import hl7
 
         # Mock parsed message
         mock_msg = Mock()
@@ -582,7 +568,7 @@ class TestHL7ResponseParsing(unittest.TestCase):
 
         mock_parse.return_value = mock_msg
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.detected_version = None
 
@@ -595,9 +581,8 @@ class TestHL7ResponseParsing(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_parse_response_handles_empty(self):
         """Test response parsing handles empty response"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         scanner._parse_response(b"")
@@ -639,9 +624,8 @@ class TestHL7ACKExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_aa(self):
         """Test extraction of AA (Application Accept) code"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         response = b"MSH|^~\\&|...\rMSA|AA|MSG123|Accepted"
         result = scanner._extract_ack_code(response)
@@ -651,9 +635,8 @@ class TestHL7ACKExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_ae(self):
         """Test extraction of AE (Application Error) code"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         response = b"MSH|^~\\&|...\rMSA|AE|MSG123|Error"
         result = scanner._extract_ack_code(response)
@@ -663,9 +646,8 @@ class TestHL7ACKExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_ar(self):
         """Test extraction of AR (Application Reject) code"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         response = b"MSH|^~\\&|...\rMSA|AR|MSG123|Rejected"
         result = scanner._extract_ack_code(response)
@@ -675,9 +657,8 @@ class TestHL7ACKExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_none(self):
         """Test extraction returns None for no MSA segment"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         response = b"MSH|^~\\&|...\rPID|1||12345"
         result = scanner._extract_ack_code(response)
@@ -687,9 +668,8 @@ class TestHL7ACKExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_empty(self):
         """Test extraction returns None for empty response"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         result = scanner._extract_ack_code(None)
 
@@ -729,9 +709,8 @@ class TestHL7SecurityAnalysis(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_security_analysis_no_auth(self):
         """Test security analysis detects no authentication"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.results["data"]["ack_code"] = "AA"
 
@@ -747,9 +726,8 @@ class TestHL7SecurityAnalysis(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_security_analysis_no_encryption(self):
         """Test security analysis detects no encryption"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         scanner._analyze_security()
@@ -763,9 +741,8 @@ class TestHL7SecurityAnalysis(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_security_analysis_accepts_unknown_sender(self):
         """Test security analysis flags accepting unknown sender"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.results["data"]["ack_code"] = "AA"
 
@@ -919,9 +896,8 @@ class TestHL7VersionDetection(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_get_version_default(self):
         """Test default version is returned"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = None
 
         version = scanner._get_version()
@@ -931,9 +907,8 @@ class TestHL7VersionDetection(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_get_version_detected(self):
         """Test detected version is used"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = "2.7"
 
         version = scanner._get_version()
@@ -943,10 +918,9 @@ class TestHL7VersionDetection(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_get_version_user_override(self):
         """Test user-specified version overrides detected"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.hl7_version = "2.3"  # User override
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = "2.7"
 
         version = scanner._get_version()
@@ -987,9 +961,8 @@ class TestHL7QueryResults(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_query_results_patients(self):
         """Test extraction of patient data from query response"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         # Mock response with PID segments
@@ -1007,9 +980,8 @@ class TestHL7QueryResults(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_query_results_empty(self):
         """Test extraction with no patients"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         response = b"MSH|^~\\&|TARGET|HOSP|...\rMSA|AA|MSG123|\r"
@@ -1182,11 +1154,10 @@ class TestHL7TLSConnection(unittest.TestCase):
         builds its own ssl.SSLContext via build_tls_context — the
         direct ssl.create_default_context patch never fires.
         """
-        from oida.protocols.hl7 import hl7
 
         mock_create_tls.return_value = MockSocket()
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         scanner.create_conn_obj()
@@ -1206,12 +1177,11 @@ class TestHL7TLSConnection(unittest.TestCase):
         which has its own unit tests. Here we only verify the HL7
         scanner forwards the flag.
         """
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.tls_insecure = True
         mock_create_tls.return_value = MockSocket()
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         scanner.create_conn_obj()
@@ -1225,7 +1195,6 @@ class TestHL7TLSConnection(unittest.TestCase):
     @patch("ssl.create_default_context")
     def test_tls_connection_failure(self, mock_ssl_ctx, mock_socket_class):
         """Test TLS connection failure handling"""
-        from oida.protocols.hl7 import hl7
         import ssl
 
         mock_sock = MockSocket()
@@ -1235,7 +1204,7 @@ class TestHL7TLSConnection(unittest.TestCase):
         mock_ctx.wrap_socket.side_effect = ssl.SSLError("Certificate verify failed")
         mock_ssl_ctx.return_value = mock_ctx
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner.create_conn_obj()
@@ -1291,11 +1260,10 @@ class TestHL7DangerousOperations(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_adt_a03_requires_confirm(self):
         """Test ADT^A03 (Discharge) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = False
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1307,12 +1275,11 @@ class TestHL7DangerousOperations(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_adt_a40_requires_confirm(self):
         """Test ADT^A40 (Patient Merge) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.adt_trigger = "A40"
         self.mock_args.confirm = False
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1331,12 +1298,11 @@ class TestHL7DangerousOperations(unittest.TestCase):
         hl7/mixins/message.py:30 has always emitted a fail() requiring
         --confirm; the test was wrong, not the code.
         """
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.adt_trigger = "A01"
         self.mock_args.confirm = False
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1346,18 +1312,18 @@ class TestHL7DangerousOperations(unittest.TestCase):
         fail_calls = scanner.logger.fail.call_args_list
         confirm_fails = [c for c in fail_calls if "--confirm" in str(c)]
         self.assertGreaterEqual(
-            len(confirm_fails), 1,
+            len(confirm_fails),
+            1,
             "ADT^A01 is a write operation — must require --confirm",
         )
 
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_rde_requires_confirm(self):
         """Test RDE^O11 (Pharmacy Order) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = False
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1429,9 +1395,8 @@ class TestHL7MessageHandlers(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_oru_message(self):
         """Test sending ORU message"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1443,9 +1408,8 @@ class TestHL7MessageHandlers(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_orm_message(self):
         """Test sending ORM message"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1457,14 +1421,13 @@ class TestHL7MessageHandlers(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_siu_message(self):
         """Test sending SIU message"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.appt_id = "APPT001"
         self.mock_args.appt_reason = "Checkup"
         self.mock_args.appt_datetime = "202401011000"
         self.mock_args.appt_duration = 30
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1476,9 +1439,8 @@ class TestHL7MessageHandlers(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_mdm_message(self):
         """Test sending MDM message"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -1521,9 +1483,8 @@ class TestHL7EnumerationMethods(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_get_version_default(self):
         """Test _get_version returns default when not detected"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = None
 
         version = scanner._get_version()
@@ -1533,9 +1494,8 @@ class TestHL7EnumerationMethods(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_get_version_detected(self):
         """Test _get_version returns detected version"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = "2.7"
 
         version = scanner._get_version()
@@ -1576,9 +1536,8 @@ class TestHL7ResponseExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_ca(self):
         """Test extraction of CA (Commit Accept) code"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         response = b"MSH|^~\\&|...\rMSA|CA|MSG123|Committed"
         result = scanner._extract_ack_code(response)
@@ -1588,9 +1547,8 @@ class TestHL7ResponseExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_ce(self):
         """Test extraction of CE (Commit Error) code"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         response = b"MSH|^~\\&|...\rMSA|CE|MSG123|Commit Error"
         result = scanner._extract_ack_code(response)
@@ -1600,9 +1558,8 @@ class TestHL7ResponseExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_ack_code_cr(self):
         """Test extraction of CR (Commit Reject) code"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         response = b"MSH|^~\\&|...\rMSA|CR|MSG123|Commit Reject"
         result = scanner._extract_ack_code(response)
@@ -1612,9 +1569,7 @@ class TestHL7ResponseExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_version_from_msh(self):
         """Test version extraction from MSH-12"""
-        from oida.protocols.hl7 import hl7
-
-        hl7(self.mock_args, None, "192.168.1.100")
+        _make_hl7_instance(self.mock_args, None, "192.168.1.100")
 
         # MSH segment with version 2.7 in field 12
         response = b"MSH|^~\\&|SENDER|FAC|RECV|FAC|20240101||ACK^A01|123|P|2.7"
@@ -1706,9 +1661,8 @@ class TestHL7MessageCreationVariants(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_qry_message(self):
         """Test QRY message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         result = scanner._create_test_message("QRY", "Q01")
 
         self.assertIsNotNone(result)
@@ -1717,9 +1671,8 @@ class TestHL7MessageCreationVariants(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_oru_message(self):
         """Test ORU message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         result = scanner._create_test_message("ORU", "R01")
 
         self.assertIsNotNone(result)
@@ -1728,9 +1681,8 @@ class TestHL7MessageCreationVariants(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_orm_message(self):
         """Test ORM message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         result = scanner._create_test_message("ORM", "O01")
 
         self.assertIsNotNone(result)
@@ -1770,10 +1722,9 @@ class TestHL7SecurityAnalysisExtended(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_security_analysis_tls_enabled(self):
         """Test security analysis when TLS is enabled"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.tls = True
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.results["data"]["tls_enabled"] = True
 
@@ -1788,9 +1739,8 @@ class TestHL7SecurityAnalysisExtended(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_security_analysis_reject_response(self):
         """Test security analysis when server rejects message"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.results["data"]["ack_code"] = "AR"  # Application Reject
 

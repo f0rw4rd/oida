@@ -10,8 +10,6 @@ we use raw SWIG bindings, not a high-level wrapper API.
 import unittest
 from unittest.mock import patch, MagicMock
 
-import pytest
-
 from oida.protocols.mms import MMSScanner, _Lib
 
 
@@ -205,26 +203,30 @@ class TestMMSMockOperations(unittest.TestCase):
             # Should return empty list, not crash
             self.assertEqual(len(result), 0)
 
-    @pytest.mark.network
     def test_disconnected_operations(self):
-        """Test operations when disconnected"""
-        results = self.scanner.run_scan()
+        """Test run_scan handles a failed connection gracefully (no real socket).
 
-        # Should handle disconnection/missing deps gracefully
+        Mocks the connection layer so connect() returns None, exercising the
+        run_scan() connection-failure path without opening a real socket.
+        """
+        with (
+            patch.object(MMSScanner, "check_dependencies", return_value=True),
+            patch.object(MMSScanner, "test_connectivity", return_value=False),
+            patch.object(MMSScanner, "connect", return_value=None),
+            patch.object(MMSScanner, "export_results"),
+        ):
+            results = self.scanner.run_scan()
+
+        # Should handle disconnection gracefully (no crash, structured error)
         self.assertIsInstance(results, dict)
-        if "error" in results:
-            # Accept connection errors or missing dependency errors
-            error_lower = results["error"].lower()
-            valid_errors = ["connection", "missing_dependencies", "dependency", "not available"]
-            self.assertTrue(any(e in error_lower for e in valid_errors))
+        self.assertEqual(results.get("error"), "connection_failed")
 
 
-@pytest.mark.network
 class TestMMSErrorHandling(unittest.TestCase):
-    """Test MMS error handling scenarios"""
+    """Test MMS error handling scenarios (connection layer mocked, no real sockets)."""
 
     def test_connection_timeout(self):
-        """Test connection timeout scenarios"""
+        """Test that a failed/timed-out connection yields a structured error."""
         scanner = MMSScanner(
             {
                 "rhost": "192.168.254.254",  # Non-routable address
@@ -233,45 +235,54 @@ class TestMMSErrorHandling(unittest.TestCase):
             }
         )
 
-        result = scanner.run_scan()
+        with (
+            patch.object(MMSScanner, "check_dependencies", return_value=True),
+            patch.object(MMSScanner, "test_connectivity", return_value=False),
+            patch.object(MMSScanner, "connect", return_value=None),
+            patch.object(MMSScanner, "export_results"),
+        ):
+            result = scanner.run_scan()
 
         self.assertIsInstance(result, dict)
-        if "error" in result:
-            # Accept connection, timeout, or missing dependency errors
-            valid_errors = [
-                "connection_failed",
-                "timeout",
-                "connection_timeout",
-                "missing_dependencies",
-            ]
-            error_val = result["error"].lower()
-            self.assertTrue(any(e in error_val for e in valid_errors))
+        self.assertEqual(result.get("error"), "connection_failed")
 
-    def test_invalid_port(self):
-        """Test invalid port handling"""
-        scanner = MMSScanner({"rhost": "127.0.0.1", "rport": 99999, "timeout": 2})
+    def test_missing_dependencies(self):
+        """Test that run_scan short-circuits cleanly when deps are unavailable."""
+        scanner = MMSScanner({"rhost": "127.0.0.1", "rport": 102, "timeout": 2})
 
-        result = scanner.run_scan()
+        with patch.object(MMSScanner, "check_dependencies", return_value=False):
+            result = scanner.run_scan()
 
         self.assertIsInstance(result, dict)
-        # Should handle invalid port gracefully (either error or empty result)
+        self.assertEqual(result.get("error"), "missing_dependencies")
 
     def test_mms_protocol_errors(self):
-        """Test MMS protocol-specific error handling"""
+        """Test that an exception raised by connect() is captured as a string error."""
         scanner = MMSScanner({"rhost": "127.0.0.1", "rport": 102})
-        result = scanner.run_scan()
+
+        with (
+            patch.object(MMSScanner, "check_dependencies", return_value=True),
+            patch.object(MMSScanner, "test_connectivity", return_value=True),
+            patch.object(MMSScanner, "connect", side_effect=Exception("MMS protocol error")),
+            patch.object(MMSScanner, "export_results"),
+        ):
+            result = scanner.run_scan()
 
         self.assertIsInstance(result, dict)
-        if "error" in result:
-            self.assertIsInstance(result["error"], str)
+        self.assertIn("error", result)
+        self.assertIsInstance(result["error"], str)
+        self.assertIn("MMS protocol error", result["error"])
 
 
 class TestMMSIntegration(unittest.TestCase):
     """Integration tests for MMS scanner"""
 
-    @pytest.mark.network
     def test_complete_mms_scan_workflow(self):
-        """Test complete MMS scanning workflow"""
+        """Test the complete MMS scanning workflow with the connection layer mocked.
+
+        Exercises run_scan() end-to-end (connectivity -> connect -> discover)
+        without any real socket, by mocking connect()/discover().
+        """
         scanner = MMSScanner({"rhost": "127.0.0.1", "rport": 102, "timeout": 10})
 
         # Test basic workflow
@@ -284,13 +295,26 @@ class TestMMSIntegration(unittest.TestCase):
         # Note: dependencies_ok depends on pyiec61850-ng being installed
         self.assertIsInstance(dependencies_ok, bool)
 
-        # Test connectivity check
-        connectivity = scanner.test_connectivity("127.0.0.1", 102)
-        self.assertIsInstance(connectivity, bool)
+        discover_result = {
+            "server_info": {"vendor": "TestVendor"},
+            "logical_devices": [],
+            "logical_nodes": [],
+            "data_objects": [],
+            "security_analysis": {},
+        }
 
-        # Test scan execution
-        result = scanner.run_scan()
+        with (
+            patch.object(MMSScanner, "check_dependencies", return_value=True),
+            patch.object(MMSScanner, "test_connectivity", return_value=True),
+            patch.object(MMSScanner, "connect", return_value=MagicMock()),
+            patch.object(MMSScanner, "discover", return_value=discover_result),
+            patch.object(MMSScanner, "disconnect"),
+            patch.object(MMSScanner, "export_results"),
+        ):
+            result = scanner.run_scan()
+
         self.assertIsInstance(result, dict)
+        self.assertEqual(result, discover_result)
 
     def test_mms_with_different_configurations(self):
         """Test MMS scanner with different configurations"""

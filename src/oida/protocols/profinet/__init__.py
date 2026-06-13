@@ -433,9 +433,7 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
                     # reset_to_factory(sock, src, target, mode=2, timeout_sec=5).
                     # The old (self.interface, mac) call raised TypeError
                     # (missing target) — reuse the opened sock + src_mac.
-                    profinet_mod.reset_to_factory(
-                        sock, src_mac, mac, timeout_sec=int(self.timeout)
-                    )
+                    profinet_mod.reset_to_factory(sock, src_mac, mac, timeout_sec=int(self.timeout))
                     self.logger.success(f"Factory reset sent to {mac}")
                 except Exception as e:
                     self.logger.fail(f"Failed to reset device: {e}")

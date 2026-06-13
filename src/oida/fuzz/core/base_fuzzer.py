@@ -1722,9 +1722,7 @@ class BaseFuzzer(ABC):
                         total = actual_sends
                         resume_base = max(0, getattr(self.config, "index_start", 1) - 1)
                         if self._session is not None:
-                            sent = getattr(
-                                self._session, "num_cases_actually_fuzzed", actual_sends
-                            )
+                            sent = getattr(self._session, "num_cases_actually_fuzzed", actual_sends)
                             total = getattr(self._session, "total_mutant_index", sent)
                         skipped = max(0, total - sent - resume_base)
 

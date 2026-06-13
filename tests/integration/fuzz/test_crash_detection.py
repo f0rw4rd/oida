@@ -332,22 +332,25 @@ class TestActualSendTracking:
             if fuzzer._test_case_manager:
                 progress = fuzzer._test_case_manager.get_progress()
                 actual_sends = progress.get("actual_sends", 0)
-                server_received = CountingHandler.count
 
-                # The key assertion: actual_sends should NOT be massively inflated
-                # Old bug: 100x inflation (30,000 reported vs 300 actual)
-                # After fix: should be within reasonable range
-                # With connection reuse, some sends may be buffered, so actual_sends
-                # can be higher than server_received, but not by 100x
-                if server_received > 0:
-                    ratio = actual_sends / server_received
-                    assert ratio < 100, (
-                        f"actual_sends ({actual_sends}) is {ratio:.0f}x server count ({server_received}). "
-                        f"Should not be inflated >100x."
+                # The key assertion: actual_sends should NOT be massively inflated.
+                # Old bug: total_mutant_index was 100x the callback-based count.
+                # Server-side HTTP handler count is NOT a reliable reference: most
+                # fuzz mutations produce invalid HTTP that Python's BaseHTTPRequestHandler
+                # drops before dispatching to do_GET, so server_received << actual_sends.
+                # Instead compare against boofuzz's own num_cases_actually_fuzzed which
+                # counts transmitted mutations regardless of HTTP validity.
+                bf_session = getattr(fuzzer, "session", None)
+                boofuzz_fuzzed = getattr(bf_session, "num_cases_actually_fuzzed", None)
+
+                assert actual_sends > 0, "Should have recorded some sends"
+
+                if boofuzz_fuzzed is not None and boofuzz_fuzzed > 0:
+                    ratio = actual_sends / boofuzz_fuzzed
+                    assert ratio < 5, (
+                        f"actual_sends ({actual_sends}) is {ratio:.1f}x boofuzz's fuzzed count "
+                        f"({boofuzz_fuzzed}). Callback counter should not be inflated vs boofuzz."
                     )
-
-                    # Also check it's not zero
-                    assert actual_sends > 0, "Should have recorded some sends"
 
         finally:
             server.shutdown()

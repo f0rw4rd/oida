@@ -587,7 +587,7 @@ class SynchrophasorPassiveListener(PySharkListenerBase):
 
         fnom_raw = self.get_field(syn, "conf_fnom", None)
         if fnom_raw is not None:
-            # fnom bit: 0 = 60Hz, 1 = 50Hz
+            # Fnom bit: 0 = 60Hz, 1 = 50Hz
             fnom = self._parse_bool(fnom_raw)
             pmu.nominal_freq = "50Hz" if fnom else "60Hz"
 

@@ -127,7 +127,7 @@ class SNMPScanner(
         # Unified -C/--auth parsing: colon-separated = v3, plain = community
         auth_value = args.get("auth") or args.get("community", "public")
         if ":" in auth_value:
-            # v3 format: user:authpass[:privpass]
+            # V3 format: user:authpass[:privpass]
             parts = auth_value.split(":", 2)
             self._version_auto = False
             self.version = "3"
@@ -382,7 +382,7 @@ class SNMPScanner(
                             f"(supported: {', '.join('v' + v for v in supported)})"
                         )
 
-                    # v3 auto-selected but no credentials provided
+                    # V3 auto-selected but no credentials provided
                     if best == "3" and not self.username:
                         self.logger.fail(
                             "SNMPv3 detected but no credentials provided -- "

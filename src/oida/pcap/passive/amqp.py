@@ -271,7 +271,7 @@ class AMQPPassiveListener(PySharkListenerBase):
         # Connection metadata
         mechanism = str(self.get_field(amqp, "method_arguments_mechanism", "") or "")
         mechanisms = str(self.get_field(amqp, "method_arguments_mechanisms", "") or "")
-        # locale field extracted but not currently used
+        # Locale field extracted but not currently used
         # locale = str(self.get_field(amqp, "method_arguments_locale", "") or "")
         reply_code = str(self.get_field(amqp, "method_arguments_reply_code", "") or "")
         reply_text = str(self.get_field(amqp, "method_arguments_reply_text", "") or "")

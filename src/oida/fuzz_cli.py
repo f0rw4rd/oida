@@ -441,7 +441,7 @@ def handle_fuzz_command(args):
 
     # Handle 'replay' command
     if fuzz_protocol == "replay":
-        # target becomes session name for replay
+        # Target becomes session name for replay
         args.session = target
         return handle_replay_command(args)
 

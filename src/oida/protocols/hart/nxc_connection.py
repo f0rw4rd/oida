@@ -438,9 +438,17 @@ class hart(NetworkConnection):
             return
 
         iterations = getattr(self.args, "fuzz_iterations", 20)
+        fuzz_commands_str = getattr(self.args, "fuzz_commands", None)
+        command_list = None
+        if fuzz_commands_str:
+            try:
+                command_list = [int(c.strip()) for c in fuzz_commands_str.split(",")]
+            except ValueError:
+                self.logger.fail(f"Invalid --fuzz-commands value: {fuzz_commands_str}")
+                return
         self.logger.display(f"Fuzzing HART commands ({iterations} iterations per command)...")
 
-        results = self.scanner.fuzz_commands(iterations)
+        results = self.scanner.fuzz_commands(iterations, command_list=command_list)
         self.results["data"]["fuzzing"] = results
 
         self.logger.display(f"Fuzzing complete: {results.get('tested', 0)} payloads tested")

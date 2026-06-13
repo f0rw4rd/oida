@@ -444,7 +444,7 @@ class IEC104StateMachine:
             ResponseData(
                 raw=raw,
                 parsed=parsed or {},
-                # timestamp defaults to datetime.now() in ResponseData
+                # Timestamp defaults to datetime.now() in ResponseData
             ),
         )
 

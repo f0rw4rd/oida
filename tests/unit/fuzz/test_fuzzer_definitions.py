@@ -36,6 +36,7 @@ def _make_config(protocol_name: str) -> FuzzerConfig:
         console_output=False,
         skip_pre_send_checks=True,
         web_interface=False,
+        enumerate=False,
     )
 
 

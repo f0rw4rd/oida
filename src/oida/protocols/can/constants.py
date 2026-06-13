@@ -1015,7 +1015,7 @@ CANOPEN_FINGERPRINT_INDICES = [
 # CANopen Device Profile Identifiers (lower 16 bits of 0x1000)
 # ---------------------------------------------------------------------------
 # The device type object (0x1000) contains:
-#   bits 15..0:  device profile number
+#   Bits 15..0:  device profile number
 #   bits 31..16: additional information
 
 CANOPEN_DEVICE_PROFILES: Dict[int, str] = {
