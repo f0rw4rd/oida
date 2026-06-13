@@ -140,6 +140,32 @@ class UDSMixin:
             return None
         return (expected_resp, payload)
 
+    def _selected_uds_services(self) -> Dict[int, str]:
+        """Return the UDS services to probe, honouring ``--uds-services``.
+
+        ``--uds-services 0x10,0x22`` scopes the enumeration to those service
+        IDs (unknown IDs are still probed, labelled "Unknown"). When the flag is
+        absent or empty, all known services are probed.
+        """
+        raw = self.args.get("uds-services") or self.args.get("uds_services")
+        if not raw:
+            return dict(UDS_SERVICES)
+
+        selected: Dict[int, str] = {}
+        for token in str(raw).split(","):
+            token = token.strip()
+            if not token:
+                continue
+            try:
+                sid = int(token, 0)
+            except ValueError:
+                self.logger.fail(f"Invalid --uds-services value: {token!r}")
+                continue
+            selected[sid] = UDS_SERVICES.get(sid, "Unknown")
+
+        # Fall back to the full set if parsing yielded nothing usable.
+        return selected or dict(UDS_SERVICES)
+
     def _enumerate_uds_services(self, bus: Any, req_id: int, resp_id: int) -> UDSScanResult:
         """
         Enumerate supported UDS services on a discovered ECU.
@@ -155,8 +181,11 @@ class UDSMixin:
         can = _get_python_can()()
         result = UDSScanResult(request_id=req_id, response_id=resp_id)
 
-        # Probe each known UDS service
-        for service_id, service_name in UDS_SERVICES.items():
+        # Honour --uds-services to scope the probe footprint; default = all known.
+        services = self._selected_uds_services()
+
+        # Probe each requested UDS service
+        for service_id, service_name in services.items():
             # Send service request as single-frame ISO-TP
             if service_id in (0x10,):
                 # DiagnosticSessionControl needs a sub-function

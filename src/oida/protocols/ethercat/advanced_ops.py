@@ -10,10 +10,6 @@ from binascii import hexlify
 
 from ...utils.export_utils import print_table
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -47,7 +43,7 @@ class AdvancedOpsMixin(_ScannerBase):
                     if hasattr(slave, "_fprd"):
                         return slave._fprd(addr, size)
                 except Exception as e:
-                    logger.debug("FPRD read of 0x%04X failed: %s", addr, e)
+                    self.logger.debug("FPRD read of 0x%04X failed: %s", addr, e)
                 return b""
 
             # AL Status registers

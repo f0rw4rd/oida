@@ -124,13 +124,6 @@ def proto_args(parser, parents):
     )
 
     advanced_group.add_argument(
-        "--timeout",
-        type=float,
-        default=2000.0,
-        help="Communication timeout in milliseconds (default: 2000)",
-    )
-
-    advanced_group.add_argument(
         "--op-state",
         action="store_true",
         help="Transition slaves to OP state (enables outputs - use with caution!)",

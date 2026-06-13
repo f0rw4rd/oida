@@ -38,29 +38,33 @@ def _get_aiocoap():
 
 
 class _EventLoopHolder:
-    """Thread-safe singleton holder for the persistent asyncio event loop.
+    """Thread-local holder for the persistent asyncio event loop.
 
-    Ensures that concurrent callers do not race when creating or
-    checking the loop.
+    CoAP scans run under a ThreadPoolExecutor, so each worker thread
+    needs its own loop: a single shared loop would raise "This event
+    loop is already running" and corrupt aiocoap context state when two
+    threads call ``run_until_complete`` concurrently. ``threading.local``
+    gives every thread an isolated loop that persists across calls so
+    aiocoap contexts created on that thread stay valid.
     """
 
-    _lock = threading.Lock()
-    _loop: Optional[asyncio.AbstractEventLoop] = None
+    _local = threading.local()
 
     @classmethod
     def get(cls) -> asyncio.AbstractEventLoop:
-        with cls._lock:
-            if cls._loop is None or cls._loop.is_closed():
-                cls._loop = asyncio.new_event_loop()
-            return cls._loop
+        loop = getattr(cls._local, "loop", None)
+        if loop is None or loop.is_closed():
+            loop = asyncio.new_event_loop()
+            cls._local.loop = loop
+        return loop
 
 
 def run_async(coro):
     """Run an async coroutine from synchronous code.
 
-    Reuses a single persistent event loop so that aiocoap contexts
-    remain valid across calls. The loop is managed by a thread-safe
-    singleton and only closed on explicit shutdown.
+    Reuses a per-thread persistent event loop so that aiocoap contexts
+    remain valid across calls within a thread while concurrent scan
+    threads never share (and thus never collide on) a loop.
     """
     return _EventLoopHolder.get().run_until_complete(coro)
 
@@ -78,12 +82,12 @@ async def shutdown_context(ctx):
 
 
 def coap_ping(host: str, port: int, timeout: float = DEFAULT_TIMEOUT) -> bool:
-    """Send an empty CON message to test CoAP responsiveness.
+    """Send an empty CON message to test CoAP responsiveness over cleartext UDP.
 
-    Uses raw UDP to avoid aiocoap overhead for a simple ping.
+    Uses raw UDP to avoid aiocoap overhead for a simple plaintext ping.
+    This cannot probe a DTLS endpoint (no handshake), so callers must
+    skip it for coaps:// scans and use a scheme-aware probe instead.
     """
-    # TODO: Replace with aiocoap Context.ping() — avoids manual packet
-    # construction and would respect DTLS if configured.
     # CoAP empty CON: Ver=1, Type=CON(0), TKL=0, Code=0.00, MID=0x0001
     ping_msg = b"\x40\x00\x00\x01"
     sock = None

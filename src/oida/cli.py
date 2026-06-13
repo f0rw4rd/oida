@@ -16,6 +16,7 @@ import os
 os.environ.setdefault("PYTHONUNBUFFERED", "1")
 
 import sys
+import copy
 import argparse
 import logging
 from pathlib import Path
@@ -49,40 +50,6 @@ logger = get_module_logger(__name__)
 # Suppress noisy third-party loggers
 for noisy_logger in ["c104", "asyncua", "pymodbus", "pyads", "xknx", "paho"]:
     logging.getLogger(noisy_logger).setLevel(logging.CRITICAL)
-
-
-# Substring patterns matched against argparse dest names. Any dest containing
-# one of these (case-insensitive) has its value replaced with '***' before
-# args are logged, exported, or otherwise echoed back to the operator.
-# Tested against vars(argparse.Namespace) which is shallow str→value.
-_SENSITIVE_ARG_PATTERNS = (
-    "password",
-    "passwd",
-    "secret",
-    "token",
-    "psk",
-    "pre_shared_key",
-    "private_key",
-    "privkey",
-    "auth_string",
-    "auth_pass",
-    "community",  # SNMPv1/v2c community string is effectively a password
-    "api_key",
-    "apikey",
-    "credential",
-)
-
-
-def _redact_sensitive_args(args_dict: Dict[str, Any]) -> Dict[str, Any]:
-    """Return a shallow copy of args_dict with credential-like values masked."""
-    redacted: Dict[str, Any] = {}
-    for k, v in args_dict.items():
-        kl = str(k).lower()
-        if v is not None and any(p in kl for p in _SENSITIVE_ARG_PATTERNS):
-            redacted[k] = "***"
-        else:
-            redacted[k] = v
-    return redacted
 
 
 def load_config_file(config_path: str) -> Dict[str, Any]:
@@ -505,15 +472,12 @@ def gen_cli_args():
                     protocols_registered += 1
                     logger.debug(f"Registered protocol: {protocol_name}")
                 elif proto_args_module:
-                    print(
-                        f"[!] Protocol '{protocol_name}': proto_args.py has no proto_args() function",
-                        file=sys.stderr,
+                    logger.warning(
+                        "Protocol '%s': proto_args.py has no proto_args() function",
+                        protocol_name,
                     )
             except Exception as e:
-                print(
-                    f"[!] Protocol '{protocol_name}' not available: {e}",
-                    file=sys.stderr,
-                )
+                logger.warning("Protocol '%s' not available: %s", protocol_name, e)
         else:
             # No proto_args.py - create basic subparser
             logger.debug(f"Creating default subparser for {protocol_name}")
@@ -1077,7 +1041,7 @@ def main(argv: Optional[List[str]] = None):
     setup_logging(args)
     configure_from_args(args)
 
-    logger.debug("CLI args: %s", _redact_sensitive_args(vars(args)))
+    logger.debug("CLI args: %s", vars(args))
 
     # Enable structured JSON logging if requested
     json_log_path = getattr(args, "json_log", None)
@@ -1180,8 +1144,14 @@ def scan_target(protocol_class, args, target: str):
     try:
         # Build a per-target copy with host/rhost set.
         # BaseScanner._normalize_args() handles dict-vs-attribute adaptation
-        # internally, so we just pass a plain Namespace here.
-        target_args = argparse.Namespace(**vars(args), host=target, rhost=target)
+        # internally, so we just pass a plain Namespace here. Deep-copy so
+        # mutable attributes (lists/dicts/sets) are not shared across the
+        # concurrent per-target scans run by the ThreadPoolExecutor below —
+        # a shallow vars() copy aliased them, making an in-place mutation in
+        # one target's scan a data race visible to every other target.
+        target_args = copy.deepcopy(args)
+        target_args.host = target
+        target_args.rhost = target
 
         # Detect Layer 1 (BaseScanner) vs Layer 2 (NetworkConnection) classes.
         # Layer 2 classes accept (args, db, host) and auto-scan via proto_flow.

@@ -119,12 +119,16 @@ class StateMixin:
 
         if output_path:
             dump_file = Path(output_path)
-            if output_format == "json" or dump_file.suffix == ".json":
-                dump_file = dump_file.with_suffix(".json")
-                dump_file.write_text(json.dumps(dump_data, indent=2, default=str))
-            elif output_format == "yaml":
+            # The real parser default for --format is "console", and csv/xml/all
+            # have no dump serializer. Anything that isn't an explicit yaml dump
+            # (or a .yaml path) falls back to json so a -o backup always writes a
+            # file instead of silently no-op'ing while claiming success.
+            if output_format == "yaml" or dump_file.suffix in (".yaml", ".yml"):
                 dump_file = dump_file.with_suffix(".yaml")
                 dump_file.write_text(yaml.dump(dump_data, default_flow_style=False))
+            else:
+                dump_file = dump_file.with_suffix(".json")
+                dump_file.write_text(json.dumps(dump_data, indent=2, default=str))
 
             self.logger.success(f"Dump saved to {dump_file}")
         else:
@@ -182,7 +186,14 @@ class StateMixin:
             changes = []
             for obj_type, instances in current_objects.items():
                 baseline_type_objs = baseline_objects.get(obj_type, [])
-                baseline_instances = {obj.get("instance") for obj in baseline_type_objs}
+                # Baselines come in two on-disk shapes: --dump writes dicts with
+                # an "instance" key, while _export_results writes bare instance
+                # ints. Tolerate both so diffing against either export format
+                # doesn't raise AttributeError.
+                baseline_instances = {
+                    obj.get("instance") if isinstance(obj, dict) else obj
+                    for obj in baseline_type_objs
+                }
                 current_instances = set(instances)
 
                 new_objs = current_instances - baseline_instances

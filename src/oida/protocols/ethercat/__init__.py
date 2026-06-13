@@ -135,7 +135,9 @@ class EtherCATScanner(
     def __init__(self, args: Dict[str, Any]):
         # Set interface before super().__init__ since SerialScanner requires it
         args.setdefault("interface", args.get("target", "eth0"))
-        # EtherCAT default timeout is 5s (bus protocol needs more time than TCP)
+        # EtherCAT default timeout is 5s (bus protocol needs more time than TCP).
+        # Used by the SerialScanner base for its socket helpers; the dead
+        # CLI --timeout flag (ms, never wired to pysoem ops) was dropped.
         args.setdefault("timeout", 5)
         super().__init__(args)
 
