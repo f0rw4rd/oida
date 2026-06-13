@@ -80,8 +80,17 @@ class RecordsMixin:
         )
 
         if self._send_frame(patient):
-            self.logger.success("Patient record accepted")
+            self.logger.success("Patient record accepted - PATIENT INJECTION POSSIBLE")
             self.results["data"]["patient_accepted"] = True
+            self.results["data"].setdefault("security_findings", []).append(
+                {
+                    "severity": "HIGH",
+                    "operation": "Patient",
+                    "issue": "Patient Injection Possible",
+                    "description": "Endpoint accepts patient records - forged patient "
+                    "demographics can be injected into the LIS",
+                }
+            )
         else:
             self.logger.warning("Patient record rejected")
 

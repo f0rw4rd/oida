@@ -71,7 +71,7 @@ class coap(NetworkConnection):
             dtls_ok = self._try_dtls_cert(dtls_cert, dtls_key, dtls_ca)
             if dtls_ok:
                 self.logger.debug("DTLS certificate connection established")
-                self.scanner._scheme = "coaps"
+                self._activate_dtls_scheme()
             else:
                 self.logger.debug("DTLS certificate auth failed, falling back")
 
@@ -81,7 +81,7 @@ class coap(NetworkConnection):
             dtls_ok = self._try_dtls_rpk(dtls_rpk)
             if dtls_ok:
                 self.logger.debug("DTLS RPK connection established")
-                self.scanner._scheme = "coaps"
+                self._activate_dtls_scheme()
             else:
                 self.logger.debug("DTLS RPK auth failed, falling back")
 
@@ -91,7 +91,7 @@ class coap(NetworkConnection):
             dtls_ok = self._bruteforce_dtls_psk(psk_arg, psk_id_arg)
             if dtls_ok:
                 self.logger.debug("DTLS-PSK connection established, proceeding with scan")
-                self.scanner._scheme = "coaps"
+                self._activate_dtls_scheme()
             else:
                 self.logger.debug("DTLS-PSK failed, falling back to plain CoAP")
 
@@ -124,6 +124,21 @@ class coap(NetworkConnection):
         self._execute_features()
 
         self.logger.debug("proto_flow: completed successfully")
+
+    def _activate_dtls_scheme(self):
+        """Switch the scanner to coaps:// and point it at the DTLS port.
+
+        Without explicit -p, the scanner's port comes from
+        ``get_target_info()`` = ``rport or port or default`` = 5683, but the
+        DTLS handshake (and thus the live session) is on ``DEFAULT_DTLS_PORT``
+        (5684). Inject ``rport`` so post-handshake discovery/writes build
+        ``coaps://host:<dtls_port>/...`` against the negotiated session
+        instead of silently failing against cleartext 5683.
+        """
+        self.scanner._scheme = "coaps"
+        dtls_port = getattr(self.args, "port", None) or DEFAULT_DTLS_PORT
+        self.scanner.args["rport"] = dtls_port
+        self.port = dtls_port
 
     def create_conn_obj(self):
         """Create CoAP connection (aiocoap context)."""
