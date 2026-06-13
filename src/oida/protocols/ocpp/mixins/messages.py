@@ -138,12 +138,17 @@ class MessagesMixin:
         Returns:
             JSON-encoded BootNotification CALL message
         """
+        args = getattr(self, "args", None)
+        vendor = getattr(args, "vendor", None)
+        model = getattr(args, "model", None)
+        vendor = vendor if isinstance(vendor, str) and vendor else "SecurityAudit"
+        model = model if isinstance(model, str) and model else "OIDA-Scanner"
         if version.startswith("2."):
             payload = {
                 "reason": "PowerUp",
                 "chargingStation": {
-                    "model": "OIDA-Scanner",
-                    "vendorName": "SecurityAudit",
+                    "model": model,
+                    "vendorName": vendor,
                     "serialNumber": "SCAN-001",
                     "firmwareVersion": "1.0.0",
                 },
@@ -151,8 +156,8 @@ class MessagesMixin:
         else:
             # OCPP 1.6
             payload = {
-                "chargePointVendor": "SecurityAudit",
-                "chargePointModel": "OIDA-Scanner",
+                "chargePointVendor": vendor,
+                "chargePointModel": model,
                 "chargePointSerialNumber": "SCAN-001",
                 "firmwareVersion": "1.0.0",
             }

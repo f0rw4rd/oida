@@ -584,7 +584,7 @@ class MQTTScanner(
         self.enumerate_sparkplug = self.enumerate  # Sparkplug enumeration requires -e
         self.enumerate_common = parse_bool(args.get("enumerate-common", False))
         self.topic_list_file = args.get("topic-list", "")
-        self.timeout = int(args.get("timeout", 5))
+        self.timeout = int(args.get("timeout", 10))
 
         # Brute-force
         # Support "brute", "default_creds", and "default-creds" (CLI -D flag converts underscore to hyphen)
@@ -602,6 +602,12 @@ class MQTTScanner(
         self.listen_mode = parse_bool(args.get("listen", False))
         self.listen_output = args.get("listen-output") or args.get("listen_output") or ""
         self.unique_only = parse_bool(args.get("unique", False))
+        # Listen duration: --listen-time/-T controls how long listen mode runs
+        # (falls back to --timeout when not provided). 0 = listen forever.
+        listen_time = args.get("listen-time")
+        if listen_time is None:
+            listen_time = args.get("listen_time")
+        self.listen_time = int(listen_time) if listen_time is not None else self.timeout
 
         # Load topics - check if it's a file path first
         topics_arg = args.get("topics", "#")

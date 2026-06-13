@@ -1118,7 +1118,7 @@ class TestHL7ProtoArgsFactory(unittest.TestCase):
         args = hl7_parser.parse_args(["127.0.0.1"])
 
         # Check defaults
-        self.assertEqual(args.hl7_version, "2.5")
+        self.assertIsNone(args.hl7_version)  # None = auto-detect, fall through to 2.5
         self.assertEqual(args.sending_app, "OIDA")
         self.assertEqual(args.sending_facility, "SECURITY")
         self.assertEqual(args.adt_trigger, "A01")

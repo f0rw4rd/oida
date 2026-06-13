@@ -42,7 +42,6 @@ dnp3:enable_unsol
 dnp3:file_auth
 dnp3:init_app
 dnp3:init_data
-dnp3:probe_objects
 dnp3:save_config
 dnp3:start_app
 dnp3:stop_app
@@ -87,7 +86,6 @@ knx:key_write
 knx:memory_write
 knx:property_write
 knx:restart
-mms:test_write
 modbus:broadcast
 modbus:decode
 modbus:fuzz_all_access
@@ -118,6 +116,4 @@ profinet:write_im3
 profinet:write_index
 snap7:fuzz_max_targets
 snap7:password
-snap7:test_write
 snmp:default_creds
-tase2:test_write

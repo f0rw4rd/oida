@@ -1162,8 +1162,8 @@ class HostEnumerationMixin(_ScannerBase):
                         }
                     )
                     self.logger.security_finding(
-                        f"H3C credential found: {username} / {password or '(empty)'}",
                         "Credential disclosure",
+                        f"H3C credential found: {username} / {password or '(empty)'}",
                     )
                     self.logger.info(
                         f"    H3C credential: {username}"
@@ -1185,8 +1185,8 @@ class HostEnumerationMixin(_ScannerBase):
             if username:
                 brocade_users.append({"index": idx, "username": username, "password": password})
                 self.logger.security_finding(
-                    f"Brocade credential found: {username} / {password or '(hash)'}",
                     "Credential disclosure",
+                    f"Brocade credential found: {username} / {password or '(hash)'}",
                 )
 
         # Log and report findings

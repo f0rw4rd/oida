@@ -29,6 +29,17 @@ else:
 class RPCMixin(_ScannerBase):
     """Mixin providing PROFINET RPC read operations."""
 
+    def _apply_rpc_port(self, con) -> None:
+        """Override the RPC destination port from --rpc-port if set.
+
+        RPCCon hardcodes the DCE/RPC endpoint port (34964) in con.peer; honor a
+        user-supplied --rpc-port by rewriting the peer tuple before connecting.
+        """
+        rpc_port = self._arg("rpc_port", None)
+        if rpc_port and getattr(con, "peer", None):
+            host = con.peer[0]
+            con.peer = (host, rpc_port)
+
     def _rpc_operations(self, device: ProfinetDevice, profinet_mod) -> None:
         """Perform RPC read operations on device."""
         if not device.ip_address or device.ip_address == "0.0.0.0":
@@ -56,6 +67,7 @@ class RPCMixin(_ScannerBase):
         self.logger.display(f"  RPC connecting to {device.ip_address}...")
         try:
             con = profinet_mod.RPCCon(device._dcp_desc, timeout=self.timeout)
+            self._apply_rpc_port(con)
             con.connect(self._my_mac)
             self.logger.display("  RPC connected")
         except Exception as e:
@@ -76,8 +88,9 @@ class RPCMixin(_ScannerBase):
             else:
                 discovered_slots = [(0, 1, 0, 0)]
 
-            # Always read I&M0 for basic device info (FW version, order ID)
-            self._read_im_data(device, con, profinet_mod)
+            # Read I&M0 for basic device info (FW version, order ID) unless suppressed
+            if self._arg("read_im", True):
+                self._read_im_data(device, con, profinet_mod)
 
             if write_index:
                 self._write_single_index(device, con, write_index)
@@ -578,12 +591,6 @@ class RPCMixin(_ScannerBase):
             f"  Writing {len(data)} bytes to [{slot}/{subslot}] 0x{idx:04X} ({name})..."
         )
         self.logger.display(f"    Data: {hex_data.upper()}")
-
-        if self._arg("read_only", True):
-            self.logger.fail(
-                "  Write blocked: read-only mode (use --no-read-only to enable writes)"
-            )
-            return
 
         try:
             con.write(api=0, slot=slot, subslot=subslot, idx=idx, data=data)
