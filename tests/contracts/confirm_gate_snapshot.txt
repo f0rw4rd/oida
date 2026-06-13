@@ -57,7 +57,6 @@ ethercat:sdo_write
 ethernetip:write
 fhir:create_observation
 fhir:create_patient
-hart:fuzz_commands
 hart:probe_write
 hl7:probe_ops
 hl7:send_bar

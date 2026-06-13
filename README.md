@@ -62,6 +62,16 @@ list and the per-protocol guides live at
 - **Security:** report it through [getoida.dev/contact](https://getoida.dev/contact); see [SECURITY.md](SECURITY.md) for what to include
 - **Support:** [ko-fi.com/f0rw4rd](https://ko-fi.com/f0rw4rd)
 
+## Legal
+
+OIDA is built for authorized security research and defensive assessment of OT/ICS and healthcare networks. Use it only against systems you own or have explicit written authorization to test. Computer crime statutes in most jurisdictions apply regardless of intent.
+
+The tool can crash devices, trigger physical actuator writes, and extract credentials. These are features, not bugs. Do not run it against systems you are not prepared to disrupt.
+
+Full terms, capability disclosure, warranty disclaimer, and jurisdiction guidance: [getoida.dev/legal](https://getoida.dev/legal/).
+
+All protocol and vendor names (EtherCAT, PROFINET, Modbus, BACnet, EtherNet/IP, OPC UA, DICOM, HL7, FHIR, KNX, and others) are the property of their respective owners. OIDA is unaffiliated with and unendorsed by any of those organizations.
+
 ## License
 
 [AGPL-3.0](LICENSE)

@@ -1007,7 +1007,7 @@ class DiscoveryMixin:
                     version_str = f" OCPP {version}" if version else ""
                     auth_str = " [AUTH REQUIRED]" if status_code in (401, 403) else ""
 
-                    # newline to break out of progress, then print hit
+                    # Newline to break out of progress, then print hit
                     self.logger.progress(tested, total, len(found_endpoints), end="\n")
                     self.logger.success(
                         f"  {path} -> {result.get('reason', '')}{version_str}{auth_str}"
@@ -1031,7 +1031,7 @@ class DiscoveryMixin:
             if rate_delay > 0:
                 time.sleep(rate_delay)
 
-        # final newline after progress
+        # Final newline after progress
         self.logger.progress(tested, total, len(found_endpoints), end="\n")
 
         # --- summary ---

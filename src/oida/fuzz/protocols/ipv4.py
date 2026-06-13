@@ -180,7 +180,6 @@ class IPv4Fuzzer(BaseFuzzer):
         parts = mac_string.replace(":", "").replace("-", "")
         return bytes.fromhex(parts)
 
-
     def _create_ip_header_bytes(
         self,
         version_ihl,

@@ -465,7 +465,6 @@ class VNCFuzzer(BaseFuzzer):
                 self.log.debug(f"Socket close error: {e}")
             self._auth_sock = None
 
-
     def _exchange_version(self) -> bool:
         """
         Exchange RFB version with server (state machine callback).

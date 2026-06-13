@@ -1791,6 +1791,7 @@ class TestCoAPLibcoapInterop:
             term in text for term in ["put", "actuator", "led", "changed", "sending", "coap"]
         ), f"Expected PUT output: {text[:500]}"
 
+    @pytest.mark.timeout(120)
     def test_libcoap_observe(self, cli_runner):
         """Scanner observes resources on libcoap server [Category B]
 

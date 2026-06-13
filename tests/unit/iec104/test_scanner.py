@@ -8,8 +8,6 @@ import socket
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
-import pytest
-
 from oida.protocols.iec104 import IEC104Scanner
 
 
@@ -271,20 +269,24 @@ class TestIEC104MockOperations(unittest.TestCase):
         self.assertEqual(command_result["ioa"], 3001)
         self.assertTrue(command_result["success"])
 
-    @pytest.mark.network
     def test_disconnected_operations(self):
-        """Test operations when disconnected"""
-        results = self.scanner.run_scan()
+        """Test operations when connect() returns None (no live socket)."""
+        # Stub connectivity + connect so run_scan exercises the
+        # "could not connect" path entirely in-process, no real socket.
+        with (
+            patch.object(self.scanner, "check_dependencies", return_value=True),
+            patch.object(self.scanner, "test_connectivity", return_value=False),
+            patch.object(self.scanner, "connect", return_value=None),
+        ):
+            results = self.scanner.run_scan()
 
         # Should handle disconnection gracefully
         self.assertIsInstance(results, dict)
-        if "error" in results:
-            self.assertIn("connection", results["error"].lower())
+        self.assertEqual(results.get("error"), "connection_failed")
 
 
-@pytest.mark.network
 class TestIEC104ErrorHandling(unittest.TestCase):
-    """Test IEC 104 error handling scenarios"""
+    """Test IEC 104 error handling scenarios (no live sockets)."""
 
     def test_connection_timeout(self):
         """Test connection timeout scenarios"""
@@ -296,11 +298,17 @@ class TestIEC104ErrorHandling(unittest.TestCase):
             }
         )
 
-        result = scanner.run_scan()
+        # Simulate the timeout in-process: connectivity probe fails and
+        # connect() yields nothing, the same shape a real timeout produces.
+        with (
+            patch.object(scanner, "check_dependencies", return_value=True),
+            patch.object(scanner, "test_connectivity", return_value=False),
+            patch.object(scanner, "connect", return_value=None),
+        ):
+            result = scanner.run_scan()
 
         self.assertIsInstance(result, dict)
-        if "error" in result:
-            self.assertIn(result["error"], ["connection_failed", "timeout", "connection_timeout"])
+        self.assertEqual(result["error"], "connection_failed")
 
     def test_invalid_asdu_address(self):
         """Test invalid ASDU address handling"""
@@ -308,43 +316,55 @@ class TestIEC104ErrorHandling(unittest.TestCase):
             {"rhost": "127.0.0.1", "rport": 2404, "asdu-address": 65536}  # Invalid ASDU address
         )
 
-        result = scanner.run_scan()
+        with (
+            patch.object(scanner, "check_dependencies", return_value=True),
+            patch.object(scanner, "test_connectivity", return_value=False),
+            patch.object(scanner, "connect", return_value=None),
+        ):
+            result = scanner.run_scan()
         self.assertIsInstance(result, dict)
 
-    @patch("oida.protocols.iec104.c104")
-    def test_iec104_protocol_errors(self, mock_c104):
-        """Test IEC 104 protocol-specific error handling"""
-        mock_client = Mock()
-        mock_c104.Client.return_value = mock_client
+    def test_iec104_protocol_errors(self):
+        """Test IEC 104 protocol-specific error handling.
 
-        # Simulate various IEC 104 errors
-        mock_client.connect.side_effect = Exception("Connection refused")
-
+        connect() raising should be caught and surfaced as a string error,
+        without ever opening a socket.
+        """
         scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404})
-        result = scanner.run_scan()
+
+        with (
+            patch.object(scanner, "check_dependencies", return_value=True),
+            patch.object(scanner, "test_connectivity", return_value=False),
+            patch.object(scanner, "connect", side_effect=Exception("Connection refused")),
+        ):
+            result = scanner.run_scan()
 
         self.assertIsInstance(result, dict)
-        if "error" in result:
-            self.assertIsInstance(result["error"], str)
+        self.assertIn("error", result)
+        self.assertIsInstance(result["error"], str)
 
     def test_invalid_ioa_range(self):
         """Test invalid IOA range handling"""
         scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "ioa-range": "invalid-range"})
 
         # Should handle invalid range gracefully
-        result = scanner.run_scan()
+        with (
+            patch.object(scanner, "check_dependencies", return_value=True),
+            patch.object(scanner, "test_connectivity", return_value=False),
+            patch.object(scanner, "connect", return_value=None),
+        ):
+            result = scanner.run_scan()
         self.assertIsInstance(result, dict)
 
 
 class TestIEC104Integration(unittest.TestCase):
     """Integration tests for IEC 104 scanner"""
 
-    @pytest.mark.network
     def test_complete_iec104_scan_workflow(self):
-        """Test complete IEC 104 scanning workflow"""
+        """Test complete IEC 104 scanning workflow (no live socket)."""
         scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "timeout": 10})
 
-        # Test basic workflow
+        # Test basic workflow (pure metadata, no I/O)
         protocol_name = scanner.get_protocol_name()
         default_port = scanner.get_default_port()
         dependencies_ok = scanner.check_dependencies()
@@ -354,12 +374,19 @@ class TestIEC104Integration(unittest.TestCase):
         # Note: c104 may not be available in test environment
         self.assertIsInstance(dependencies_ok, bool)
 
-        # Test connectivity check
-        connectivity = scanner.test_connectivity("127.0.0.1", 2404)
-        self.assertIsInstance(connectivity, bool)
+        # Connectivity probe + scan run, with the socket layer stubbed so
+        # the workflow is exercised end-to-end without touching the network.
+        with patch.object(scanner, "test_connectivity", return_value=True) as mock_conn:
+            connectivity = scanner.test_connectivity("127.0.0.1", 2404)
+            self.assertIsInstance(connectivity, bool)
+            mock_conn.assert_called_with("127.0.0.1", 2404)
 
-        # Test scan execution
-        result = scanner.run_scan()
+        with (
+            patch.object(scanner, "check_dependencies", return_value=True),
+            patch.object(scanner, "test_connectivity", return_value=False),
+            patch.object(scanner, "connect", return_value=None),
+        ):
+            result = scanner.run_scan()
         self.assertIsInstance(result, dict)
 
     def test_iec104_with_different_configurations(self):

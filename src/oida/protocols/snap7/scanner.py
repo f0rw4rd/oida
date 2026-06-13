@@ -259,7 +259,6 @@ class Snap7Scanner(
         self.read_values = parse_bool(args.get("read-values", False))
         self.max_dbs = safe_int_conversion(args.get("max-dbs"), 100)
 
-
     def get_protocol_name(self) -> str:
         return "S7"
 

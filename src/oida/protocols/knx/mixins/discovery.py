@@ -522,7 +522,9 @@ class DiscoveryMixin:
             if sensor.sensor_value.value is not None:
                 result["value"] = sensor.sensor_value.value
                 result["raw"] = (
-                    str(sensor.sensor_value.last_payload) if sensor.sensor_value.last_payload else None
+                    str(sensor.sensor_value.last_payload)
+                    if sensor.sensor_value.last_payload
+                    else None
                 )
                 self.logger.success(f"Group {group_addr} value: {result['value']}")
             else:

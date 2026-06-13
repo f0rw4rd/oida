@@ -132,6 +132,7 @@ class TestModbusCrashDetection:
                 skip_pre_send_checks=False,
                 reuse_target_connection=False,
                 sleep_time=0.3,
+                calibrate=False,  # calibration probes would exhaust crash_after budget
             )
 
             try:
@@ -177,6 +178,7 @@ class TestIEC104CrashDetection:
                 skip_pre_send_checks=False,
                 reuse_target_connection=False,
                 sleep_time=0.3,
+                calibrate=False,  # calibration probes would exhaust crash_after budget
             )
 
             try:
@@ -222,6 +224,7 @@ class TestMMSCrashDetection:
                 skip_pre_send_checks=False,
                 reuse_target_connection=False,
                 sleep_time=0.3,
+                calibrate=False,  # calibration probes would exhaust crash_after budget
             )
 
             try:

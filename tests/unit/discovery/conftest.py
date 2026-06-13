@@ -56,15 +56,14 @@ def mock_netifaces():
     """
     mock_nf = _make_mock_netifaces()
 
-    # Get the LazyModule instance from core.py
+    # Get the LazyModule instances from core.py and scanner.py (they are separate instances)
     from oida.protocols.discovery import core
+    from oida.protocols.discovery import scanner as disc_scanner
 
-    lazy_mod = core._netifaces
+    lazy_mods = [core._netifaces, disc_scanner._netifaces]
 
-    # Save original state
-    orig_module = lazy_mod._module
-    orig_loaded = lazy_mod._loaded
-    orig_available = lazy_mod._available
+    # Save original state for all lazy modules
+    saved_states = [(m._module, m._loaded, m._available) for m in lazy_mods]
 
     patches = [
         patch.dict("sys.modules", {"netifaces": mock_nf}),
@@ -73,17 +72,19 @@ def mock_netifaces():
     for p in patches:
         p.start()
 
-    # Force the lazy import to use our mock
-    lazy_mod._module = mock_nf
-    lazy_mod._loaded = True
-    lazy_mod._available = True
+    # Force all lazy imports to use our mock
+    for m in lazy_mods:
+        m._module = mock_nf
+        m._loaded = True
+        m._available = True
 
     yield mock_nf
 
     # Restore original state
-    lazy_mod._module = orig_module
-    lazy_mod._loaded = orig_loaded
-    lazy_mod._available = orig_available
+    for m, (orig_module, orig_loaded, orig_available) in zip(lazy_mods, saved_states):
+        m._module = orig_module
+        m._loaded = orig_loaded
+        m._available = orig_available
 
     for p in reversed(patches):
         p.stop()

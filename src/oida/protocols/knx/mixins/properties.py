@@ -190,7 +190,9 @@ class PropertiesMixin:
             original = await read_property()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
+            for payload, _desc in fuzz(
+                original, count=iterations
+            ):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if await write_property(payload):
                         successful += 1

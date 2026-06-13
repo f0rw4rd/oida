@@ -547,7 +547,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
                 return
 
             # UNKNOWN_IOA is the expected outcome of a discovery interrogation:
-            # the server returns points we never pre-registered in c104's local
+            # The server returns points we never pre-registered in c104's local
             # station model, so c104 flags each ASDU's first IOA as unexpected.
             # The scanner's own on_receive_raw parser discovers these points
             # correctly, so this is noise, not a failure. Record it (already done

@@ -851,7 +851,7 @@ def load_register_map(map_name: str) -> Optional[Dict[str, Any]]:
             for name in names_to_try:
                 for map_path in search_path.glob(f"**/{name}"):
                     if map_path.is_file():
-                        # glob results are already inside search_path so
+                        # Glob results are already inside search_path so
                         # they're safe by construction — keep the check
                         # anyway in case search_path itself is a symlink.
                         safe = _resolve_inside(search_path, map_path)

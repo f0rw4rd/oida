@@ -65,23 +65,23 @@ class TestOPCUARequestCount:
 class TestOPCUACategoryCoverage:
     """Verify all required categories have at least one request."""
 
-    REQUIRED_CATEGORIES = {
-        "baseline",
-        "discovery",
-        "channel",
-        "session",
-        "auth",
-        "read",
-        "write",
-        "subscription",
+    REQUIRED_CATEGORIES = [
         "attack",
-    }
+        "auth",
+        "baseline",
+        "channel",
+        "discovery",
+        "read",
+        "session",
+        "subscription",
+        "write",
+    ]
 
     def test_all_required_categories_present(self):
         """Every required category must have at least one request."""
         defs = _get_opcua_request_definitions()
         found_categories = {d.category for d in defs}
-        missing = self.REQUIRED_CATEGORIES - found_categories
+        missing = set(self.REQUIRED_CATEGORIES) - found_categories
         assert not missing, (
             f"OPC UA missing request categories: {missing}. "
             f"Found categories: {sorted(found_categories)}"

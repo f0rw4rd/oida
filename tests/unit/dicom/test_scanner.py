@@ -19,18 +19,66 @@ import pytest
 
 try:
     import pynetdicom  # noqa: F401
+
     _PYNETDICOM_AVAILABLE = True
 except ImportError:
     _PYNETDICOM_AVAILABLE = False
 
-# Most test classes instantiate dicom(...) which triggers proto_flow and real TCP connections
+# The dicom dependency gate is legitimate: without pynetdicom the module-level
+# imports (AE, Dataset, Verification) in oida.protocols.dicom are unavailable.
+# We deliberately do NOT mark this module `network`: _make_dicom_instance below
+# builds the NXC object WITHOUT running proto_flow, so no real socket is opened
+# and the suite runs under the default `-m 'not network'` config.
 pytestmark = [
-    pytest.mark.network,
     pytest.mark.skipif(
         not _PYNETDICOM_AVAILABLE,
         reason="pynetdicom not installed; install via `pip install -e .[dicom]`",
     ),
 ]
+
+
+def _make_dicom_instance(args, host="192.168.1.100", **overrides):
+    """Build a dicom NXC instance WITHOUT triggering proto_flow / a real socket.
+
+    dicom.__init__ -> NetworkConnection.__init__ -> proto_flow() opens a real
+    TCP/DICOM association on construction. We bypass that by constructing via
+    __new__ and setting the attributes that __init__, the base __init__, and
+    proto_flow would otherwise populate. Tests then assign a MockAssociation /
+    MockAE after construction, exactly as before.
+    """
+    from oida.protocols.dicom import dicom as DicomClass
+
+    obj = DicomClass.__new__(DicomClass)
+    # Set by dicom.__init__ before super().__init__()
+    obj.protocol_name = "dicom"
+    obj.default_port = 11112
+    obj.ae = None
+    obj.assoc = None
+    obj._cget_output_path = None
+    obj._cget_received_files = []
+    # Set by NetworkConnection.__init__
+    obj.args = args
+    obj.db = None
+    obj.host = host
+    obj.hostname = host
+    obj.ip = host
+    obj.conn = None
+    obj.logger = Mock()
+    obj.results = {
+        "host": host,
+        "ip": host,
+        "protocol": "dicom",
+        "port": getattr(args, "port", None) or 11112,
+        "success": None,
+        "data": {},
+    }
+    # Set by proto_flow() before the workflow body runs
+    obj.calling_aet = getattr(args, "aet", "OIDA") or "OIDA"
+    obj.called_aet = getattr(args, "called_aet", "ANY")
+
+    for key, val in overrides.items():
+        setattr(obj, key, val)
+    return obj
 
 
 class MockAssociation:
@@ -194,9 +242,8 @@ class TestDICOMScannerInit(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_scanner_initialization(self):
         """Test basic scanner initialization"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         self.assertEqual(scanner.protocol_name, "dicom")
         self.assertEqual(scanner.default_port, 11112)
@@ -205,9 +252,8 @@ class TestDICOMScannerInit(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_scanner_default_aet(self):
         """Test scanner uses correct default AE Titles"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         # proto_flow sets these, but we can check they're accessible
         self.assertIsNotNone(scanner.protocol_name)
 
@@ -240,9 +286,8 @@ class TestDICOMVendorIdentification(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_orthanc(self):
         """Test Orthanc vendor identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.2.826.0.1.3680043.2.135")
 
         self.assertEqual(vendor, "Orthanc")
@@ -251,9 +296,8 @@ class TestDICOMVendorIdentification(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_ge_healthcare(self):
         """Test GE Healthcare vendor identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.2.840.113619")
 
         self.assertEqual(vendor, "GE Healthcare")
@@ -261,9 +305,8 @@ class TestDICOMVendorIdentification(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_philips(self):
         """Test Philips vendor identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.3.46.670589.11")
 
         self.assertEqual(vendor, "Philips MR")
@@ -271,9 +314,8 @@ class TestDICOMVendorIdentification(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_siemens(self):
         """Test Siemens vendor identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.3.12.2.1107.5")
 
         self.assertEqual(vendor, "Siemens syngo")
@@ -281,9 +323,8 @@ class TestDICOMVendorIdentification(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_unknown_vendor(self):
         """Test handling of unknown vendor UID"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.2.3.4.5.6.7.8.9")
 
         self.assertIsNone(vendor)
@@ -292,9 +333,8 @@ class TestDICOMVendorIdentification(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_empty_uid(self):
         """Test handling of empty UID"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("")
 
         self.assertIsNone(vendor)
@@ -455,9 +495,8 @@ class TestDICOMCEcho(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_enum_host_info_success(self):
         """Test successful C-ECHO and host info extraction"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation(echo_success=True)
         scanner.logger = Mock()
 
@@ -468,9 +507,8 @@ class TestDICOMCEcho(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_enum_host_info_failure(self):
         """Test C-ECHO failure handling"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation(echo_success=False)
         scanner.logger = Mock()
 
@@ -481,9 +519,8 @@ class TestDICOMCEcho(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_enum_host_info_no_association(self):
         """Test C-ECHO without active association"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = None
         scanner.logger = Mock()
 
@@ -532,12 +569,11 @@ class TestDICOMCFind(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_cfind_patient_level(self, mock_dataset):
         """Test C-FIND at PATIENT level"""
-        from oida.protocols.dicom import dicom
 
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -551,13 +587,12 @@ class TestDICOMCFind(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_cfind_study_level(self, mock_dataset):
         """Test C-FIND at STUDY level"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "STUDY"
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -569,14 +604,13 @@ class TestDICOMCFind(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_cfind_series_requires_study_uid(self, mock_dataset):
         """Test C-FIND at SERIES level requires study UID"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "SERIES"
         self.mock_args.study_uid = ""  # No study UID
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -588,14 +622,13 @@ class TestDICOMCFind(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_cfind_image_requires_series_uid(self, mock_dataset):
         """Test C-FIND at IMAGE level requires series UID"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "IMAGE"
         self.mock_args.series_uid = ""  # No series UID
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -606,9 +639,8 @@ class TestDICOMCFind(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_cfind_no_association(self):
         """Test C-FIND without active association"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = None
         scanner.logger = Mock()
 
@@ -649,9 +681,8 @@ class TestDICOMResultExtraction(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_extract_cfind_result_patient(self):
         """Test extraction of PATIENT level C-FIND result"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         identifier = Mock()
         identifier.PatientName = "DOE^JOHN"
@@ -670,9 +701,8 @@ class TestDICOMResultExtraction(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_extract_cfind_result_study(self):
         """Test extraction of STUDY level C-FIND result"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         identifier = Mock()
         identifier.StudyInstanceUID = "1.2.3.4.5"
@@ -693,9 +723,8 @@ class TestDICOMResultExtraction(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_extract_cfind_result_series(self):
         """Test extraction of SERIES level C-FIND result"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         identifier = Mock()
         identifier.SeriesInstanceUID = "1.2.3.4.5.6"
@@ -737,17 +766,25 @@ class TestDICOMAETBruteForce(unittest.TestCase):
 
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     @patch("oida.protocols.dicom.AE")
-    @patch("oida.protocols.dicom.Verification")
-    def test_aet_brute_force_finds_valid(self, mock_verification, mock_ae_class):
+    def test_aet_brute_force_finds_valid(self, mock_ae_class):
         """Test AET brute force finds valid AE Titles"""
-        from oida.protocols.dicom import dicom
+        # _aet_brute_force() is gated behind --confirm (safety: it trips PACS
+        # rate-limits / SIEM). The Mock auto-attr already returns truthy, but
+        # set it explicitly so the gate intent is visible.
+        self.mock_args.confirm = True
+        # Steer the wordlist-source resolution down the built-in default path:
+        # leave file/common-ae sources unset so os.path.isfile() is never
+        # handed a Mock.
+        self.mock_args.aet_brute = True
+        self.mock_args.ae_wordlist = None
+        self.mock_args.common_ae = False
 
         mock_ae_instance = Mock()
         mock_assoc = MockAssociation()
         mock_ae_instance.associate.return_value = mock_assoc
         mock_ae_class.return_value = mock_ae_instance
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.called_aet = "ANY"
         scanner.logger = Mock()
 
@@ -784,71 +821,50 @@ class TestDICOMSecurityAnalysis(unittest.TestCase):
         self.mock_args.output = None
         self.mock_args.format = "json"
 
+    def _security_finding_titles(self, scanner):
+        """Collect the title arg of every logger.security_finding(...) call."""
+        titles = []
+        for call in scanner.logger.security_finding.call_args_list:
+            if call.args:
+                titles.append(str(call.args[0]))
+            elif "title" in call.kwargs:
+                titles.append(str(call.kwargs["title"]))
+        return titles
+
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_security_analysis_no_tls(self):
         """Test security analysis detects no TLS"""
-        from oida.protocols.dicom import dicom
+        # _analyze_security emits findings via logger.security_finding(), not a
+        # results["data"]["security_issues"] list.
+        scanner = _make_dicom_instance(
+            self.mock_args,
+            results={"data": {"connected": True, "user_identity_required": False}},
+        )
 
-        # Create scanner without running proto_flow
-        with patch.object(dicom, "proto_flow", return_value=None):
-            scanner = dicom.__new__(dicom)
-            scanner.args = self.mock_args
-            scanner.db = None
-            scanner.ip = "192.168.1.100"
-            scanner.host = "192.168.1.100"
-            scanner.protocol_name = "dicom"
-            scanner.default_port = 11112
-            scanner.ae = None
-            scanner.assoc = None
-            scanner._cget_output_path = None
-            scanner._cget_received_files = []
-            scanner.results = {"data": {"connected": True, "user_identity_required": False}}
-            scanner.calling_aet = "OIDA"
-            scanner.called_aet = "ANY"
-            scanner.logger = Mock()
+        scanner._analyze_security()
 
-            scanner._analyze_security()
-
-            self.assertIn("security_issues", scanner.results["data"])
-            issues = scanner.results["data"]["security_issues"]
-            # Should flag unencrypted communication
-            unencrypted = any("Unencrypted" in str(i.get("issue", "")) for i in issues)
-            self.assertTrue(unencrypted)
+        titles = self._security_finding_titles(scanner)
+        self.assertTrue(
+            any("No encryption" in t for t in titles),
+            f"expected a no-encryption finding, got {titles}",
+        )
 
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_security_analysis_no_auth(self):
         """Test security analysis detects no authentication"""
-        from oida.protocols.dicom import dicom
+        scanner = _make_dicom_instance(
+            self.mock_args,
+            results={"data": {"connected": True, "user_identity_required": False}},
+        )
 
-        # Create scanner without running proto_flow
-        with patch.object(dicom, "proto_flow", return_value=None):
-            scanner = dicom.__new__(dicom)
-            scanner.args = self.mock_args
-            scanner.db = None
-            scanner.ip = "192.168.1.100"
-            scanner.host = "192.168.1.100"
-            scanner.protocol_name = "dicom"
-            scanner.default_port = 11112
-            scanner.ae = None
-            scanner.assoc = None
-            scanner._cget_output_path = None
-            scanner._cget_received_files = []
-            scanner.results = {"data": {"connected": True, "user_identity_required": False}}
-            scanner.calling_aet = "OIDA"
-            scanner.called_aet = "ANY"
-            scanner.logger = Mock()
+        scanner._analyze_security()
 
-            scanner._analyze_security()
-
-            issues = scanner.results["data"]["security_issues"]
-            # Should flag no authentication or weak AET whitelist
-            security_issue_found = any(
-                "Authentication" in str(i.get("issue", ""))
-                or "AET" in str(i.get("issue", ""))
-                or "Unencrypted" in str(i.get("issue", ""))
-                for i in issues
-            )
-            self.assertTrue(security_issue_found)
+        titles = self._security_finding_titles(scanner)
+        # Should flag weak AET whitelist (calling_aet=OIDA) or no encryption
+        self.assertTrue(
+            any("AET" in t or "No encryption" in t for t in titles),
+            f"expected an AET/encryption finding, got {titles}",
+        )
 
 
 class TestDICOMCStoreHandler(unittest.TestCase):
@@ -880,11 +896,10 @@ class TestDICOMCStoreHandler(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_cstore_handler_success(self):
         """Test C-STORE handler saves files correctly"""
-        from oida.protocols.dicom import dicom
         from pathlib import Path
         import tempfile
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.logger = Mock()
 
         # Create mock event with dataset
@@ -912,11 +927,10 @@ class TestDICOMCStoreHandler(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_cstore_handler_blocks_path_traversal(self):
         """Hostile responder cannot escape _cget_output_path via UIDs."""
-        from oida.protocols.dicom import dicom
         from pathlib import Path
         import tempfile
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.logger = Mock()
 
         # All three traversal-attempt UID combos in one sweep — sub-dirs path
@@ -956,7 +970,8 @@ class TestDICOMCStoreHandler(unittest.TestCase):
                     )
                 else:
                     self.assertEqual(
-                        result, 0xC211,
+                        result,
+                        0xC211,
                         f"Blocked traversal must report failure status, got {hex(result)}",
                     )
 
@@ -989,9 +1004,8 @@ class TestDICOMRejectInfo(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_get_reject_info_rejected(self):
         """Test rejection info for rejected association"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation(established=False)
         scanner.assoc.is_rejected = True
 
@@ -1002,9 +1016,8 @@ class TestDICOMRejectInfo(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_get_reject_info_aborted(self):
         """Test rejection info for aborted association"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation(established=False)
         scanner.assoc.is_rejected = False
         scanner.assoc.is_aborted = True
@@ -1016,9 +1029,8 @@ class TestDICOMRejectInfo(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_get_reject_info_no_assoc(self):
         """Test rejection info with no association"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = None
 
         result = scanner._get_reject_info()
@@ -1212,7 +1224,6 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_build_patient_query_wildcard(self, mock_dataset):
         """Test building PATIENT level query with wildcard"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "PATIENT"
         self.mock_args.patient_name = "*"
@@ -1225,7 +1236,7 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1238,7 +1249,6 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_build_study_query_with_filters(self, mock_dataset):
         """Test building STUDY level query with date and modality filters"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "STUDY"
         self.mock_args.patient_name = "*"
@@ -1251,7 +1261,7 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1263,7 +1273,6 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_build_series_query_with_study_uid(self, mock_dataset):
         """Test building SERIES level query with study UID"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "SERIES"
         self.mock_args.patient_name = ""
@@ -1276,7 +1285,7 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1289,7 +1298,6 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_build_image_query_with_series_uid(self, mock_dataset):
         """Test building IMAGE level query with series UID"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "IMAGE"
         self.mock_args.patient_name = ""
@@ -1302,7 +1310,7 @@ class TestDICOMQueryDatasetBuilding(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1344,9 +1352,8 @@ class TestDICOMExtractCFindResultsEdgeCases(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_extract_result_missing_attributes(self):
         """Test extraction when identifier has missing attributes"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         identifier = Mock()
         identifier.PatientName = "DOE^JOHN"
@@ -1361,9 +1368,8 @@ class TestDICOMExtractCFindResultsEdgeCases(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_extract_result_image_level(self):
         """Test extraction of IMAGE level C-FIND result"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         identifier = Mock()
         identifier.SOPInstanceUID = "1.2.3.4.5.6.7"
@@ -1378,9 +1384,8 @@ class TestDICOMExtractCFindResultsEdgeCases(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_extract_result_with_unicode_names(self):
         """Test extraction with unicode characters in patient names"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         identifier = Mock()
         identifier.PatientName = "MUELLER^HANS"
@@ -1393,9 +1398,8 @@ class TestDICOMExtractCFindResultsEdgeCases(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_extract_result_series_with_all_fields(self):
         """Test extraction of SERIES level with all optional fields"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
 
         identifier = Mock()
         identifier.SeriesInstanceUID = "1.2.3.4.5.6"
@@ -1684,7 +1688,6 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_patient_level_query_with_patient_id(self, mock_dataset):
         """Test PATIENT level query with specific patient ID"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "PATIENT"
         self.mock_args.patient_name = ""
@@ -1697,7 +1700,7 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1709,7 +1712,6 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_study_level_query_with_study_date_range(self, mock_dataset):
         """Test STUDY level query with date range"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "STUDY"
         self.mock_args.patient_name = "*"
@@ -1722,7 +1724,7 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1734,7 +1736,6 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_study_level_query_with_specific_uid(self, mock_dataset):
         """Test STUDY level query with specific study UID"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "STUDY"
         self.mock_args.patient_name = ""
@@ -1747,7 +1748,7 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1759,7 +1760,6 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_series_level_query_with_modality_filter(self, mock_dataset):
         """Test SERIES level query with modality filter"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "SERIES"
         self.mock_args.patient_name = ""
@@ -1772,7 +1772,7 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1784,7 +1784,6 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
     @patch("oida.protocols.dicom.Dataset")
     def test_image_level_query_complete(self, mock_dataset):
         """Test IMAGE level query with series and study UIDs"""
-        from oida.protocols.dicom import dicom
 
         self.mock_args.query_level = "IMAGE"
         self.mock_args.patient_name = ""
@@ -1797,7 +1796,7 @@ class TestDICOMCFindQueryLevels(unittest.TestCase):
         mock_ds = Mock()
         mock_dataset.return_value = mock_ds
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.assoc = MockAssociation()
         scanner.logger = Mock()
 
@@ -1834,9 +1833,8 @@ class TestDICOMVendorIdentificationExtended(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_horos(self):
         """Test Horos vendor identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.2.826.0.1.3680043.2.1143")
 
         self.assertEqual(vendor, "HOROS")
@@ -1844,9 +1842,8 @@ class TestDICOMVendorIdentificationExtended(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_conquest(self):
         """Test Conquest DICOM Server identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.2.826.0.1.3680043.2.60")
 
         self.assertEqual(vendor, "Conquest")
@@ -1854,9 +1851,8 @@ class TestDICOMVendorIdentificationExtended(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_pynetdicom(self):
         """Test pynetdicom identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor("1.2.40.0.13.1.3")
 
         self.assertEqual(vendor, "pynetdicom")
@@ -1864,20 +1860,20 @@ class TestDICOMVendorIdentificationExtended(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_partial_uid_match(self):
         """Test partial UID matching for vendor identification"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
-        # Test with GE prefix
+        scanner = _make_dicom_instance(self.mock_args)
+        # Longest-prefix match wins: 1.2.840.113619.6 (GE Centricity) is more
+        # specific than the bare 1.2.840.113619 (GE Healthcare) root, so the
+        # vendor map resolves this trailing-suffix UID to GE Centricity.
         vendor, desc = scanner._identify_vendor("1.2.840.113619.6.123")
 
-        self.assertEqual(vendor, "GE Healthcare")
+        self.assertEqual(vendor, "GE Centricity")
 
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_none_uid(self):
         """Test handling of None UID"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         vendor, desc = scanner._identify_vendor(None)
 
         self.assertIsNone(vendor)
@@ -1913,11 +1909,10 @@ class TestDICOMHandleStoreEdgeCases(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_cstore_handler_with_subdirs(self):
         """Test C-STORE handler with subdirectory structure"""
-        from oida.protocols.dicom import dicom
         from pathlib import Path
         import tempfile
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.logger = Mock()
 
         # Create mock event with dataset
@@ -1944,11 +1939,10 @@ class TestDICOMHandleStoreEdgeCases(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_cstore_handler_exception(self):
         """Test C-STORE handler with exception during save"""
-        from oida.protocols.dicom import dicom
         from pathlib import Path
         import tempfile
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.logger = Mock()
 
         # Create mock event that will raise exception
@@ -1973,9 +1967,8 @@ class TestDICOMHandleStoreEdgeCases(unittest.TestCase):
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_cstore_handler_no_output_path(self):
         """Test C-STORE handler when output path is None"""
-        from oida.protocols.dicom import dicom
 
-        scanner = dicom(self.mock_args, None, "192.168.1.100")
+        scanner = _make_dicom_instance(self.mock_args)
         scanner.logger = Mock()
 
         mock_event = Mock()

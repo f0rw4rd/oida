@@ -426,9 +426,7 @@ class TestCaseManager:
             # `total` (boofuzz position) — fall back to the last sent index if the session
             # object is gone, so it never reads below the sent count.
             total = (
-                total_mutant_index
-                if total_mutant_index is not None
-                else progress["current_case"]
+                total_mutant_index if total_mutant_index is not None else progress["current_case"]
             )
             sent = progress["total_processed"]
             skipped = max(0, total - sent - resume_base)
@@ -786,7 +784,7 @@ class TestCaseManager:
             crash = self.database.get_crash(test_case_id)
 
             if crash:
-                # Use stored payload
+                # Use stored crash payload
                 payload = crash.payload
                 self._log.display(f"Using stored payload ({len(payload)} bytes)")
 
@@ -795,39 +793,50 @@ class TestCaseManager:
                     self._log.display(self._format_data(payload, "hexdump"))
 
             else:
-                # Regenerate payload deterministically
-                self._log.display(
-                    f"Regenerating payload using boofuzz determinism (index={test_case_id})..."
-                )
+                # Check for stored payload in payloads table (store_all_payloads mode)
+                stored = self.database.get_payload(test_case_id)
+                if stored and stored.get("request") is not None:
+                    payload = stored["request"]
+                    self._log.display(f"Using stored payload ({len(payload)} bytes)")
 
-                try:
-                    payload = self.fuzzer._regenerate_payload(test_case_id)
-                except AttributeError:
-                    self._log.fail("Error: Fuzzer does not support payload regeneration")
+                    if show_detail:
+                        self._log.display("\nStored Payload:")
+                        self._log.display(self._format_data(payload, "hexdump"))
+
+                else:
+                    # Regenerate payload deterministically
                     self._log.display(
-                        f"   The _regenerate_payload() method is not implemented in {type(self.fuzzer).__name__}"
+                        f"Regenerating payload using boofuzz determinism (index={test_case_id})..."
                     )
-                    return False
 
-                # Validate CRC32 matches
-                if validate_crc:
-                    regenerated_crc = binascii.crc32(payload) & 0xFFFFFFFF
-
-                    if regenerated_crc != case.crc32:
-                        self._log.fail("CRC32 mismatch!")
-                        self._log.display(f"   Expected: {case.crc32:08x}")
-                        self._log.display(f"   Got:      {regenerated_crc:08x}")
+                    try:
+                        payload = self.fuzzer._regenerate_payload(test_case_id)
+                    except AttributeError:
+                        self._log.fail("Error: Fuzzer does not support payload regeneration")
                         self._log.display(
-                            "   Protocol definition may have changed since recording."
+                            f"   The _regenerate_payload() method is not implemented in {type(self.fuzzer).__name__}"
                         )
-                        self._log.display("   Check git commit hash in session metadata.")
                         return False
 
-                    self._log.display(f"CRC32 validated: {regenerated_crc:08x}")
+                    # Validate CRC32 matches
+                    if validate_crc:
+                        regenerated_crc = binascii.crc32(payload) & 0xFFFFFFFF
 
-                if show_detail:
-                    self._log.display("\nRegenerated Payload:")
-                    self._log.display(self._format_data(payload, "hexdump"))
+                        if regenerated_crc != case.crc32:
+                            self._log.fail("CRC32 mismatch!")
+                            self._log.display(f"   Expected: {case.crc32:08x}")
+                            self._log.display(f"   Got:      {regenerated_crc:08x}")
+                            self._log.display(
+                                "   Protocol definition may have changed since recording."
+                            )
+                            self._log.display("   Check git commit hash in session metadata.")
+                            return False
+
+                        self._log.display(f"CRC32 validated: {regenerated_crc:08x}")
+
+                    if show_detail:
+                        self._log.display("\nRegenerated Payload:")
+                        self._log.display(self._format_data(payload, "hexdump"))
 
             # Create and open socket connection
             socket = self.fuzzer._create_socket()

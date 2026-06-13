@@ -1004,7 +1004,7 @@ class MQTTFuzzer(StatefulFuzzer):
         # Sparkplug B wraps a Google protobuf "Payload" message inside MQTT PUBLISH.
         # Topic format: spBv1.0/<group_id>/<msg_type>/<edge_node>[/<device>]
         # The protobuf body uses standard wire-format tags:
-        #   field 1 (timestamp) tag=0x08 varint
+        #   Field 1 (timestamp) tag=0x08 varint
         #   field 2 (metrics)   tag=0x12 length-delimited
         #   field 3 (seq)       tag=0x18 varint
         # A submessage Metric contains name (tag=0x0a), alias (tag=0x10),

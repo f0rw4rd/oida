@@ -1749,7 +1749,7 @@ class DiscoveryScanner(SerialScanner):
         responded = 0
         for mac, addr in addresses_to_ping:
             try:
-                # ping6 with interface scope for link-local
+                # Ping6 with interface scope for link-local
                 # Format: fe80::xxxx%interface
                 scoped_addr = f"{addr}%{self.interface}"
                 cmd = build_ping_command(scoped_addr, count=1, timeout=1, ipv6=True)

@@ -945,7 +945,7 @@ class ObjectsMixin:
             if resp:
                 prog_info["instanceOf"] = _extract_string(resp)
 
-            # description
+            # Description
             resp = await _read_prop(obj_id, "description")
             if resp:
                 prog_info["description"] = _extract_string(resp)
