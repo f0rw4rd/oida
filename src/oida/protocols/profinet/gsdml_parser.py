@@ -9,8 +9,12 @@ Parses PROFINET device description files to extract:
 
 try:
     from defusedxml import ElementTree as ET
+
+    _DEFUSEDXML_AVAILABLE = True
 except ImportError:
     from xml.etree import ElementTree as ET
+
+    _DEFUSEDXML_AVAILABLE = False
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -178,6 +182,15 @@ def parse_gsdml(source) -> Optional[GSDMLDevice]:
     Returns:
         GSDMLDevice with parsed data, or None on error
     """
+    if not _DEFUSEDXML_AVAILABLE:
+        # GSDML files may be attacker-supplied; refuse to parse without XXE /
+        # billion-laughs protection rather than silently using the stdlib parser.
+        logger.error(
+            "Cannot parse GSDML: defusedxml is not installed. "
+            "Install it (pip install defusedxml, or the 'profinet' extra) "
+            "to safely parse untrusted GSDML files."
+        )
+        return None
     try:
         # Handle ZIP files
         if isinstance(source, (str, Path)):

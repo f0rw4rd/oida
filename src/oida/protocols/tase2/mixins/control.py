@@ -61,7 +61,9 @@ class ControlMixin(_ScannerBase):
                             control_info["selectable"] = True
                             self.logger.warning(f"SELECTABLE: {domain.name}/{var_name}")
                         except Exception as e:
-                            self.logger.debug(f"connection.select_device(domain.name,...: {e}")
+                            self.logger.debug(
+                                f"Select test failed for {domain.name}/{var_name}: {e}"
+                            )
 
                     control_points.append(control_info)
 

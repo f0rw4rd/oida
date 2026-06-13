@@ -108,20 +108,18 @@ Listener categories:
         help="Parse x509 certificates and store security findings",
     )
 
-    # Extract All
-    filter_group.add_argument(
-        "-e",
-        "--extract-all",
-        action="store_true",
-        default=False,
-        help="Enable all extractions (-E file carving)",
-    )
-
     # File Extraction
+    # -e/--extract-all and -E/--extract-files are aliases for the same action
+    # (file carving is currently the only extraction sub-feature). They share a
+    # dest so both set extract_files; --extract-all is kept for forward
+    # compatibility if more extraction sub-features are added later.
     extract_group = pcap_parser.add_argument_group("File Extraction")
     extract_group.add_argument(
+        "-e",
         "-E",
         "--extract-files",
+        "--extract-all",
+        dest="extract_files",
         action="store_true",
         default=False,
         help="Extract files from PCAP (HTTP, SMB, FTP, TFTP, DICOM)",

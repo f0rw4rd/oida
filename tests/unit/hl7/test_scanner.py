@@ -897,6 +897,7 @@ class TestHL7VersionDetection(unittest.TestCase):
     def test_get_version_default(self):
         """Test default version is returned"""
 
+        self.mock_args.hl7_version = None  # No --hl7-version supplied
         scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = None
 
@@ -908,6 +909,7 @@ class TestHL7VersionDetection(unittest.TestCase):
     def test_get_version_detected(self):
         """Test detected version is used"""
 
+        self.mock_args.hl7_version = None  # No --hl7-version supplied
         scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = "2.7"
 
@@ -1484,6 +1486,7 @@ class TestHL7EnumerationMethods(unittest.TestCase):
     def test_get_version_default(self):
         """Test _get_version returns default when not detected"""
 
+        self.mock_args.hl7_version = None  # No --hl7-version supplied
         scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = None
 
@@ -1495,6 +1498,7 @@ class TestHL7EnumerationMethods(unittest.TestCase):
     def test_get_version_detected(self):
         """Test _get_version returns detected version"""
 
+        self.mock_args.hl7_version = None  # No --hl7-version supplied
         scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.detected_version = "2.7"
 

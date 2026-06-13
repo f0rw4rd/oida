@@ -302,10 +302,10 @@ class hl7(
         super().__init__(args, db, host)
 
     def _get_version(self) -> str:
-        """Get HL7 version - use detected version, or user override, or default"""
-        # User can still override with --hl7-version
+        """Get HL7 version - explicit user override wins, then auto-detected, then default"""
+        # An explicit --hl7-version always wins (default is None = not specified)
         user_version = getattr(self.args, "hl7_version", None)
-        if user_version and user_version != "2.5":  # 2.5 is the default, so ignore it
+        if user_version:
             return user_version
         # Use auto-detected version from server
         if self.detected_version:

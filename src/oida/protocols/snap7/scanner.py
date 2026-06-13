@@ -258,6 +258,11 @@ class Snap7Scanner(
         self.test_memory_areas = parse_bool(args.get("test-memory-areas", False))
         self.read_values = parse_bool(args.get("read-values", False))
         self.max_dbs = safe_int_conversion(args.get("max-dbs"), 100)
+        # Connection tuning (applied before client.connect()).
+        # connection_type: PG=1 (programming device), OP=2 (operator panel),
+        # S7Basic=3. pdu_size: requested PDU length negotiated with the PLC.
+        self.connection_type = args.get("connection-type", args.get("connection_type", "PG"))
+        self.pdu_size = safe_int_conversion(args.get("pdu-size", args.get("pdu_size")), None)
 
     def get_protocol_name(self) -> str:
         return "S7"
@@ -333,6 +338,10 @@ class Snap7Scanner(
             snap7_client = _get_snap7_client()
             client = snap7_client.Client()
 
+            # Apply connection tuning before connect() (snap7 reads these at
+            # session setup time; changing them post-connect is a no-op).
+            self._apply_connection_params(client)
+
             # snap7 C library requires IP addresses, not hostnames
             ip = ConnectionHelper.resolve_hostname(host)
             if ip != host:
@@ -357,6 +366,26 @@ class Snap7Scanner(
         except Exception as e:
             self.logger.debug("connect to slot failed: %s", e)
             return None
+
+    def _apply_connection_params(self, client: Any) -> None:
+        """Apply --connection-type / --pdu-size to a fresh client (pre-connect)."""
+        ct_map = {"PG": 1, "OP": 2, "S7BASIC": 3}
+        ct = (self.connection_type or "PG").upper()
+        ct_code = ct_map.get(ct, 1)
+        try:
+            client.set_connection_type(ct_code)
+            self.logger.debug("Set connection type %s (%d)", ct, ct_code)
+        except Exception as e:
+            self.logger.debug("set_connection_type failed: %s", e)
+
+        if self.pdu_size:
+            try:
+                from snap7.type import Parameter
+
+                client.set_param(Parameter.PDURequest, self.pdu_size)
+                self.logger.debug("Set requested PDU size %d", self.pdu_size)
+            except Exception as e:
+                self.logger.debug("set_param(PDURequest) failed: %s", e)
 
     def disconnect(self, connection: Any) -> None:
         """Close S7 connection"""

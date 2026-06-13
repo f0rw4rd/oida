@@ -10,10 +10,6 @@ from typing import TYPE_CHECKING
 
 from ....utils.lazy_import import lazy_import
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 _asyncua_cert_gen = lazy_import(
     "asyncua.crypto.cert_gen", "OPC UA", install_hint="pip install asyncua"
@@ -105,7 +101,7 @@ class SecurityMixin:
             if rejected_sessions and rejected_sessions > 0:
                 self.logger.display(f"  Security rejected sessions: {rejected_sessions}")
         except Exception as e:
-            logger.debug(f"Failed to get rejected_sessions_node: {e}")
+            self.logger.debug(f"Failed to get rejected_sessions_node: {e}")
 
         try:
             rejected_requests_node = self._client.get_node("ns=0;i=2287")
@@ -114,7 +110,7 @@ class SecurityMixin:
             if rejected_requests and rejected_requests > 0:
                 self.logger.display(f"  Security rejected requests: {rejected_requests}")
         except Exception as e:
-            logger.debug(f"Failed to get rejected_requests_node: {e}")
+            self.logger.debug(f"Failed to get rejected_requests_node: {e}")
 
         # 5. Current session count (reconnaissance)
         try:
@@ -124,7 +120,7 @@ class SecurityMixin:
             if session_count:
                 self.logger.display(f"  Active sessions: {session_count}")
         except Exception as e:
-            logger.debug(f"Failed to get session_count_node: {e}")
+            self.logger.debug(f"Failed to get session_count_node: {e}")
 
         # 6. Session diagnostics array (i=3707) - detailed session info
         try:
@@ -260,7 +256,7 @@ class SecurityMixin:
                 if redundancy > 0:
                     self.logger.display(f"  Redundancy: {red_name}")
         except Exception as e:
-            logger.debug(f"Failed to get redundancy_node: {e}")
+            self.logger.debug(f"Failed to get redundancy_node: {e}")
 
         # Store results
         self.results["data"]["security_info"] = security_info

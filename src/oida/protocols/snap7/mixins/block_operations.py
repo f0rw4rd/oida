@@ -435,44 +435,6 @@ class BlockOperationsMixin(_ScannerBase):
 
         return results
 
-    def get_cp_info(self, conn: Any) -> Dict[str, Any]:
-        """Get communication processor info"""
-        try:
-            cp = conn.get_cp_info()
-            info = {
-                "max_pdu": cp.MaxPduLength,
-                "max_connections": cp.MaxConnections,
-                "max_mpi_rate": cp.MaxMpiRate,
-                "max_bus_rate": cp.MaxBusRate,
-            }
-            self.logger.success("CP Info:")
-            for k, v in info.items():
-                self.logger.display(f"    {k}: {v}")
-            return {"success": True, **info}
-        except Exception as e:
-            self.logger.debug("get cp info failed: %s", e)
-            self.logger.fail(f"Failed to get CP info: {e}")
-            return {"success": False, "error": str(e)}
-
-    def get_pdu_length(self, conn: Any) -> Dict[str, Any]:
-        """Get negotiated PDU length"""
-        try:
-            result = conn.get_pdu_length()
-            # Handle both tuple (requested, negotiated) and single int returns
-            if isinstance(result, tuple) and len(result) == 2:
-                requested, negotiated = result
-                self.logger.success(f"PDU Length: requested={requested}, negotiated={negotiated}")
-                return {"success": True, "requested": requested, "negotiated": negotiated}
-            else:
-                # Single value - just negotiated
-                negotiated = result
-                self.logger.success(f"PDU Length: negotiated={negotiated}")
-                return {"success": True, "negotiated": negotiated}
-        except Exception as e:
-            self.logger.debug("get pdu length failed: %s", e)
-            self.logger.fail(f"Failed to get PDU length: {e}")
-            return {"success": False, "error": str(e)}
-
     # =========================================================================
     # Info Action Methods (CLI wrappers for internal methods)
     # =========================================================================
@@ -598,34 +560,18 @@ class BlockOperationsMixin(_ScannerBase):
 
         return result
 
-    def get_order_code_action(self, conn: Any) -> Dict[str, Any]:
-        """Get PLC order code and version"""
-        try:
-            order_code = conn.get_order_code()
-            # S7OrderCode has Code and V1/V2/V3 version fields
-            info = {
-                "order_code": getattr(order_code, "Code", getattr(order_code, "OrderCode", "N/A")),
-                "v1": getattr(order_code, "V1", None),
-                "v2": getattr(order_code, "V2", None),
-                "v3": getattr(order_code, "V3", None),
-            }
-            self.logger.success("Order Code:")
-            self.logger.display(f"    Order Code: {info['order_code']}")
-            if info["v1"] is not None:
-                self.logger.display(f"    Version: {info['v1']}.{info['v2']}.{info['v3']}")
-            return {"success": True, **info}
-        except Exception as e:
-            self.logger.debug("get order code action failed: %s", e)
-            self.logger.fail(f"Failed to get order code: {e}")
-            return {"success": False, "error": str(e)}
-
     def enumerate_dbs_action(self, conn: Any) -> Dict[str, Any]:
         """Enumerate data blocks (CLI action wrapper)"""
         dbs = self._enumerate_data_blocks(conn)
         if dbs:
             self.logger.success(f"Found {len(dbs)} Data Blocks:")
-            for db_num in dbs:
-                self.logger.display(f"    DB{db_num}")
+            for db in dbs:
+                db_num = db["number"]
+                size = db.get("size")
+                if size:
+                    self.logger.display(f"    DB{db_num} ({size} bytes)")
+                else:
+                    self.logger.display(f"    DB{db_num}")
             return {"success": True, "data_blocks": dbs}
         self.logger.display("No accessible data blocks found")
         return {"success": True, "data_blocks": []}

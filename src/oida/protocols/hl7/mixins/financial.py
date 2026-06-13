@@ -205,7 +205,8 @@ class FinancialMixin:
                 transaction_id=f"FT{int(time.time())}",
                 transaction_type=getattr(self.args, "transaction_type", "CG"),
                 transaction_code=getattr(self.args, "transaction_code", "99213"),
-                transaction_description=getattr(self.args, "transaction_code", "Office Visit"),
+                transaction_description=getattr(self.args, "transaction_description", None)
+                or "Office Visit",
                 transaction_amount=getattr(self.args, "transaction_amount", "100.00"),
                 patient_id=patient_id or "DFT_TEST001",
                 diagnosis_code=getattr(self.args, "dx_code", ""),

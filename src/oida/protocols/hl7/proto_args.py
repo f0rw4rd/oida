@@ -76,9 +76,9 @@ Examples:
         "-V",
         "--hl7-version",
         type=str,
-        default="2.5",
+        default=None,
         choices=["2.1", "2.2", "2.3", "2.3.1", "2.4", "2.5", "2.5.1", "2.6", "2.7"],
-        help="HL7 version to use (default: 2.5)",
+        help="HL7 version to use (default: auto-detect from server, else 2.5)",
     )
 
     hl7_group.add_argument(
@@ -394,6 +394,13 @@ Examples:
         type=str,
         metavar="CODE",
         help="Financial transaction code",
+    )
+
+    fin_group.add_argument(
+        "--transaction-description",
+        type=str,
+        metavar="DESC",
+        help="Financial transaction description (default: 'Office Visit')",
     )
 
     fin_group.add_argument(

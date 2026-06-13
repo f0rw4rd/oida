@@ -35,6 +35,7 @@ from ...utils.lazy_import import lazy_import
 from .helpers import (
     _asyncua,
     _get_client_class,
+    _get_ua_module,
     _normalize_opcua_url,
     _parse_opcua_url,
 )
@@ -223,14 +224,18 @@ class opcua(
             )
             self._client.certificate_validator = validator
 
+            ua_mod = _get_ua_module()
+            if not hasattr(ua_mod.MessageSecurityMode, requested_mode):
+                valid_modes = [m for m in dir(ua_mod.MessageSecurityMode) if not m.startswith("_")]
+                raise ValueError(
+                    f"Unknown OPC UA security mode {requested_mode!r}; "
+                    f"expected one of: {', '.join(valid_modes)}"
+                )
             await self._client.set_security(
                 policy_class,
                 certificate=cert_path,
                 private_key=key_path,
-                mode=getattr(
-                    __import__("asyncua.ua", fromlist=["MessageSecurityMode"]).MessageSecurityMode,
-                    requested_mode,
-                ),
+                mode=getattr(ua_mod.MessageSecurityMode, requested_mode),
             )
         except Exception as e:
             self.logger.debug(f"Failed to configure security: {e}")
@@ -259,9 +264,11 @@ class opcua(
             self._client.set_user(usernames[0])
             self._client.set_password(passwords[0])
             if needs_secure_channel and auto_cert_path:
-                self.logger.display(f"Authenticating: {usernames[0]}:*** ({requested_mode})")
+                self.logger.display(
+                    f"Authenticating: {usernames[0]}:{passwords[0]} ({requested_mode})"
+                )
             else:
-                self.logger.display(f"Authenticating: {usernames[0]}:***")
+                self.logger.display(f"Authenticating: {usernames[0]}:{passwords[0]}")
         elif cert_path and key_path:
             security_mode = getattr(self.args, "mode", "SignAndEncrypt")
             security_policy = getattr(self.args, "policy", "Basic256Sha256")
@@ -369,7 +376,14 @@ class opcua(
         if any_dump:
             await self._dump_namespaces()
 
-        # Dump mode dispatch
+        # --dump-namespaces is exclusive: when set it prints only the namespace
+        # table (handled above) and does not co-run an address-space dump. This
+        # matches its "Only show namespace table" help and keeps the dump modes
+        # below genuinely mutually exclusive.
+        if getattr(self.args, "dump_namespaces", False):
+            return
+
+        # Dump mode dispatch (mutually exclusive)
         dump_mode_map = {
             "dump": ("fast", self._dump_address_space),
             "dump_all": ("full", self._dump_address_space),

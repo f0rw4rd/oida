@@ -524,6 +524,12 @@ class SNMPScanner(
 
             # Phase 2b: Write access test (if requested)
             if self.test_write:
+                if not self.confirm_brute:
+                    self.logger.fail(
+                        "--test-write requires --confirm flag "
+                        "(e.g. oida snmp <target> --test-write --confirm)"
+                    )
+                    return results
                 engine, auth_data, transport, context = connection
                 write_result = self._check_write_access(engine, auth_data, transport, context)
                 results["write_access"] = write_result
