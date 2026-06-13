@@ -113,7 +113,8 @@ Examples:
         "-T",
         "--test-memory-areas",
         action="store_true",
-        help="Test access to different memory areas (I, Q, M, DB)",
+        help="Test access to different memory areas (I, Q, M, DB). "
+        "Reports readability; add --confirm to also probe modifiability",
     )
     discovery_group.add_argument(
         "-F",
@@ -264,7 +265,7 @@ Examples:
     write_group.add_argument(
         "--test-write",
         action="store_true",
-        help="Test write access safely (writes same value back)",
+        help="Test write access (writes same value back; requires --confirm)",
     )
 
     # Block Operations

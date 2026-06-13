@@ -86,8 +86,15 @@ class MemoryMixin(_ScannerBase):
         """Test access to different memory areas"""
         from ..constants import S7MemoryArea
 
+        from ....utils import parse_bool
+
         self.logger.debug("Testing memory area access")
         memory_areas = {}
+
+        # The scanner defaults read_only=True with no CLI toggle, so the active
+        # write-back probe (a real write PDU, same value back) is gated on
+        # --confirm rather than read_only.
+        probe_writes = parse_bool(self.args.get("confirm", False))
 
         areas_to_test = [
             ("Inputs", S7MemoryArea.PE, "I"),
@@ -114,8 +121,8 @@ class MemoryMixin(_ScannerBase):
                 area_info["readable"] = True
                 self.logger.debug(f"{area_name} area is readable")
 
-                # Test write access if not read-only
-                if not self.read_only:
+                # Test write access (see probe_writes note above).
+                if probe_writes:
                     try:
                         # Write the same value back
                         connection.write_area(area_code, 0, 0, data)

@@ -684,6 +684,7 @@ class TestSNMPIntegration:
             "-C",
             "private",
             "--test-write",
+            "--confirm",
             format="json",
             json_log=True,
         )
@@ -705,6 +706,7 @@ class TestSNMPIntegration:
             "-C",
             "public",
             "--test-write",
+            "--confirm",
             format="json",
             json_log=True,
         )
@@ -1684,6 +1686,7 @@ class TestSNMPIntegration:
             "-C",
             "private",
             "--test-write",
+            "--confirm",
             format="json",
             json_log=True,
         )
@@ -1706,6 +1709,7 @@ class TestSNMPIntegration:
             "-C",
             "public",
             "--test-write",
+            "--confirm",
             format="json",
             json_log=True,
         )

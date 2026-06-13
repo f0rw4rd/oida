@@ -36,9 +36,17 @@ class HistoryMixin:
             end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(days=1)  # Default: last 24 hours
 
+            def _as_utc(dt: datetime) -> datetime:
+                # fromisoformat yields a naive datetime when no offset is given;
+                # assume UTC so it stays comparable with the UTC-aware default
+                # and read_raw_history does not raise on naive/aware mixing.
+                if dt.tzinfo is None:
+                    return dt.replace(tzinfo=timezone.utc)
+                return dt.astimezone(timezone.utc)
+
             if getattr(self.args, "history_start", None):
                 try:
-                    start_time = datetime.fromisoformat(self.args.history_start)
+                    start_time = _as_utc(datetime.fromisoformat(self.args.history_start))
                 except ValueError as e:
                     self.logger.debug("read history failed: %s", e)
                     self.logger.fail(f"Invalid start time format: {self.args.history_start}")
@@ -46,7 +54,7 @@ class HistoryMixin:
 
             if getattr(self.args, "history_end", None):
                 try:
-                    end_time = datetime.fromisoformat(self.args.history_end)
+                    end_time = _as_utc(datetime.fromisoformat(self.args.history_end))
                 except ValueError as e:
                     self.logger.debug("read history failed: %s", e)
                     self.logger.fail(f"Invalid end time format: {self.args.history_end}")

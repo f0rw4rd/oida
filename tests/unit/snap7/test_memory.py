@@ -20,9 +20,12 @@ class MockMemoryHost(MemoryMixin):
         self.timeout = 5
         self.host = "192.168.1.100"
         self.port = 102
-        self.args = {}
         self.password = ""
         self.read_only = True
+        # Active write-back probe in _test_memory_areas() is gated on --confirm
+        # (read via self.args; the scanner has no read-only toggle, so
+        # read_only is always True).
+        self.args = {"confirm": False}
         self.read_values = False
         self.max_dbs = 10
         self.interface = "eth0"
@@ -60,9 +63,9 @@ class TestTestMemoryAreas(unittest.TestCase):
             self.assertFalse(result[prefix]["readable"])
             self.assertFalse(result[prefix]["writable"])
 
-    def test_writable_when_not_read_only(self):
-        """Test write access is tested when read_only=False."""
-        self.host.read_only = False
+    def test_writable_when_confirmed(self):
+        """Test write access is probed when --confirm is set."""
+        self.host.args = {"confirm": True}
         self.conn.read_area.return_value = bytes([0x00])
         self.conn.write_area.return_value = None
 
@@ -71,9 +74,9 @@ class TestTestMemoryAreas(unittest.TestCase):
         for prefix in ["I", "Q", "M", "C", "T"]:
             self.assertTrue(result[prefix]["writable"])
 
-    def test_write_fails_when_not_read_only(self):
-        """Test write access fails even when allowed."""
-        self.host.read_only = False
+    def test_write_fails_when_confirmed(self):
+        """Test write probe runs but fails when --confirm is set."""
+        self.host.args = {"confirm": True}
         self.conn.read_area.return_value = bytes([0x00])
         self.conn.write_area.side_effect = Exception("write protected")
 
@@ -83,8 +86,8 @@ class TestTestMemoryAreas(unittest.TestCase):
             self.assertTrue(result[prefix]["readable"])
             self.assertFalse(result[prefix]["writable"])
 
-    def test_write_not_tested_when_read_only(self):
-        """Test write access not tested when read_only=True."""
+    def test_write_not_tested_without_confirm(self):
+        """Test write access not probed without --confirm."""
         self.conn.read_area.return_value = bytes([0x00])
 
         result = self.host._test_memory_areas(self.conn)

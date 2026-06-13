@@ -266,7 +266,6 @@ Security Testing:
     )
 
     target_group.add_argument(
-        "-i",
         "--set-ip",
         help="Set IP: IP/CIDR/GATEWAY (e.g., 192.168.1.100/24/192.168.1.1)",
     )

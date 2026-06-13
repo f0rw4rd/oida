@@ -180,14 +180,8 @@ class mqtt(NetworkConnection):
                 detail="Plaintext connection (no TLS)",
             )
 
-        # Report anonymous auth if connected without credentials
-        username = getattr(self.args, "username", "")
-        if self.conn and not username:
-            self.logger.security_finding(
-                "Anonymous access",
-                category="ACCESS_CONTROL",
-                detail="Anonymous authentication allowed",
-            )
+        # The anonymous-access finding is reported once in the scanner's
+        # _analyze_security() to avoid duplicate findings for the same broker.
 
     def _execute_scan(self):
         """Execute MQTT scanning"""

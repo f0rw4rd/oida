@@ -410,7 +410,7 @@ class PySharkListenerBase(ABC):
                 except (AttributeError, TypeError, ValueError):
                     pass
         except Exception as e:
-            self.logger.debug(f"if hasattr(packet, tcp):: {e}")
+            self.logger.debug("get_port_info failed: %s", e)
         return 0, 0
 
     def get_mac_info(self, packet) -> tuple:
@@ -572,7 +572,7 @@ class PySharkListenerBase(ABC):
                     a, b = sorted([src_mac, dst_mac])
                     return f"{a} <-> {b}"
         except Exception as e:
-            self.logger.debug(f"if hasattr(packet, tcp) or hasattr(pa...: {e}")
+            self.logger.debug("get_flow_id failed: %s", e)
         return ""
 
     def get_stream_id(self, packet) -> str:
@@ -591,7 +591,7 @@ class PySharkListenerBase(ABC):
                 if val is not None:
                     return str(val)
         except Exception as e:
-            self.logger.debug(f"if hasattr(packet, tcp):: {e}")
+            self.logger.debug("get_stream_id failed: %s", e)
         return ""
 
     def _format_details_string(self, ix: ProtocolInteraction) -> str:
