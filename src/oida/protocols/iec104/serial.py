@@ -7,7 +7,6 @@ discovery/interrogation for the IEC104Scanner.
 
 from typing import Dict, Any, Optional
 from datetime import datetime
-import struct
 import json
 import time
 
@@ -28,6 +27,8 @@ from .constants import (
     ListenStats,
     COT_ACTIVATION,
     VSQ_SINGLE_OBJECT,
+    IEC101_CA_OCTETS,
+    IEC101_IOA_OCTETS,
 )
 
 
@@ -104,11 +105,16 @@ class IEC101Mixin:
         )
 
     def _build_asdu_101(self, type_id: int, cot: int, ioa: int, data: bytes = b"") -> bytes:
-        """Build ASDU for IEC 101"""
+        """Build ASDU for IEC 101.
+
+        NOTE: assumes the common IEC 60870-5-101 profile of a
+        ``IEC101_CA_OCTETS``-octet Common Address and ``IEC101_IOA_OCTETS``-octet
+        IOA. Stations configured for wider CA/IOA fields are not supported.
+        """
         vsq = VSQ_SINGLE_OBJECT  # 1 object
         cot_bytes = bytes([cot])
-        ca_bytes = bytes([self.common_address & 0xFF])
-        ioa_bytes = struct.pack("<H", ioa)[:2]
+        ca_bytes = self.common_address.to_bytes(IEC101_CA_OCTETS, "little")
+        ioa_bytes = ioa.to_bytes(IEC101_IOA_OCTETS, "little")
         return bytes([type_id, vsq]) + cot_bytes + ca_bytes + ioa_bytes + data
 
     def _send_serial_frame(self, frame: bytes) -> bool:
@@ -123,13 +129,13 @@ class IEC101Mixin:
             self.logger.debug(f"Serial send error: {e}")
             return False
 
-    def _receive_serial_frame(self, timeout: float = None) -> Optional[bytes]:
+    def _receive_serial_frame(self, timeout: Optional[float] = None) -> Optional[bytes]:
         """Receive and parse FT1.2 frame"""
         if not self._serial:
             return None
 
         old_timeout = self._serial.timeout
-        if timeout:
+        if timeout is not None:
             self._serial.timeout = timeout
 
         try:
@@ -163,7 +169,7 @@ class IEC101Mixin:
             self.logger.debug(f"Serial receive error: {e}")
             return None
         finally:
-            if timeout:
+            if timeout is not None:
                 self._serial.timeout = old_timeout
 
     def _parse_serial_frame(self, frame: bytes) -> Optional[Dict[str, Any]]:
@@ -383,14 +389,25 @@ class IEC101Mixin:
         return result
 
     def _process_asdu_101(self, asdu: bytes) -> None:
-        """Process ASDU from IEC 101 response"""
+        """Process ASDU from IEC 101 response.
+
+        NOTE: assumes a ``IEC101_CA_OCTETS``-octet Common Address and
+        ``IEC101_IOA_OCTETS``-octet IOA (the common IEC 60870-5-101 profile);
+        wider CA/IOA configurations are not decoded correctly.
+        """
         if len(asdu) < 5:
             return
 
+        ca_off = 3  # type_id(1) + vsq(1) + cot(1)
+        ioa_off = ca_off + IEC101_CA_OCTETS
         type_id = asdu[0]
         _cot = asdu[2]  # noqa: F841 — extracted but unused; reserved for future multi-object parsing
-        ca = asdu[3]
-        ioa = struct.unpack("<H", asdu[4:6])[0] if len(asdu) >= 6 else 0
+        ca = int.from_bytes(asdu[ca_off : ca_off + IEC101_CA_OCTETS], "little")
+        ioa = (
+            int.from_bytes(asdu[ioa_off : ioa_off + IEC101_IOA_OCTETS], "little")
+            if len(asdu) >= ioa_off + IEC101_IOA_OCTETS
+            else 0
+        )
 
         type_info = IEC104_TYPE_IDS.get(type_id, (f"TYPE_{type_id}", "Unknown"))
         type_name = type_info[0]
@@ -474,13 +491,22 @@ class IEC101Mixin:
         if self.listen_filter and type_id not in self.listen_filter:
             return
 
+        # NOTE: assumes IEC101_CA_OCTETS-octet CA / IEC101_IOA_OCTETS-octet IOA
+        # (the common IEC 60870-5-101 profile); wider fields decode incorrectly.
+        ca_off = 3  # type_id(1) + vsq(1) + cot(1)
+        ioa_off = ca_off + IEC101_CA_OCTETS
+        value_off = ioa_off + IEC101_IOA_OCTETS
         type_info = IEC104_TYPE_IDS.get(type_id, (f"TYPE_{type_id}", "Unknown"))
         cot = asdu[2]
-        ca = asdu[3]
-        ioa = struct.unpack("<H", asdu[4:6])[0] if len(asdu) >= 6 else 0
+        ca = int.from_bytes(asdu[ca_off : ca_off + IEC101_CA_OCTETS], "little")
+        ioa = (
+            int.from_bytes(asdu[ioa_off : ioa_off + IEC101_IOA_OCTETS], "little")
+            if len(asdu) >= value_off
+            else 0
+        )
 
         # Parse value
-        value_data = asdu[6:] if len(asdu) > 6 else b""
+        value_data = asdu[value_off:] if len(asdu) > value_off else b""
         value, quality = self._parse_asdu_value(type_id, value_data)
 
         captured = CapturedASDU(

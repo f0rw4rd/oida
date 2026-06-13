@@ -17,56 +17,6 @@ from ....utils import SecurityAnalyzer
 class SecurityMixin:
     """Mixin providing security operations."""
 
-    async def _test_bcu_auth(self, knx: "XKNX", address: str, key_hex: str) -> Dict[str, Any]:
-        """Test BCU authentication with a key"""
-        self.logger.debug(f"BCU auth test: device={address}")
-        result = {
-            "address": address,
-            "key": key_hex,
-            "success": False,
-            "auth_level": None,
-            "error": None,
-        }
-
-        try:
-            # Parse key
-            key = int(key_hex, 16)
-            self.logger.display(f"Testing BCU auth on {address} with key 0x{key:08X}")
-
-            addr = _xknx_cls.IndividualAddress(address)
-            mgmt = knx.management
-
-            async with mgmt.connection(addr) as p2p:
-                try:
-                    resp = await p2p.request(
-                        _xknx_cls.AuthorizeRequest(key), _xknx_cls.AuthorizeResponse
-                    )
-                    if resp and resp.payload:
-                        level = resp.payload.level
-                        result["auth_level"] = level
-
-                        # Level 3 and 15 typically indicate no access
-                        if level != 3 and level != 15:
-                            result["success"] = True
-                            self.logger.display(
-                                f"  AUTH SUCCESS! Key 0x{key:08X} grants level {level}"
-                            )
-                        else:
-                            self.logger.display(f"  Auth failed: level {level} (no access)")
-
-                except Exception as e:
-                    result["error"] = str(e)
-                    self.logger.debug(f"  Auth request failed: {e}")
-
-        except ValueError as e:
-            result["error"] = f"Invalid key format: {e}"
-            self.logger.fail(result["error"])
-        except Exception as e:
-            result["error"] = str(e)
-            self.logger.fail(f"Error testing BCU auth: {e}")
-
-        return result
-
     async def _brute_bcu_auth(
         self,
         knx: "XKNX",
@@ -231,7 +181,7 @@ class SecurityMixin:
                                 _xknx_cls.MemoryRead(address=mem_addr, count=2),
                                 _xknx_cls.MemoryResponse,
                             )
-                            data = resp.data if resp else None
+                            data = resp.payload.data if resp and resp.payload else None
                             if data:
                                 device_results["readable_addresses"].append(
                                     {
@@ -287,7 +237,7 @@ class SecurityMixin:
                                 _xknx_cls.MemoryRead(address=mem_addr, count=1),
                                 _xknx_cls.MemoryResponse,
                             )
-                            original_data = resp.data if resp else None
+                            original_data = resp.payload.data if resp and resp.payload else None
                             if original_data:
                                 # Write the same value back via MemoryWrite APCI.
                                 await p2p.request(

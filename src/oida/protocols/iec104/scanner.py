@@ -446,9 +446,18 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
                                     # Single object
                                     ioas_to_add = [first_ioa]
 
-                                # Extract measured values from raw info elements
+                                # Extract measured values from raw info elements.
+                                # Returns None when the type size is unknown or the
+                                # requested element runs past the end of the buffer
+                                # (bounds-checked so out-of-range reads never produce
+                                # bogus/duplicate values).
                                 def _extract_value(buf: bytes, ie_off: int, tid: int):
                                     """Return parsed value or None."""
+                                    size = INFO_ELEMENT_SIZES.get(tid)
+                                    if size is None:
+                                        return None
+                                    if ie_off < 0 or ie_off + size > len(buf):
+                                        return None
                                     try:
                                         if tid in (1, 30):  # M_SP single-point
                                             return bool(buf[ie_off] & SIQ_SPI_MASK)
@@ -476,7 +485,9 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
                                                 f"0x{struct.unpack_from('<I', buf, ie_off)[0]:08X}"
                                             )
                                     except (struct.error, IndexError) as e:
-                                        logger.debug(f"if tid in (1, 30):   M_SP single-point: {e}")
+                                        self.logger.debug(
+                                            f"Info-element value extraction failed: {e}"
+                                        )
                                     return None
 
                                 # Store/update discovered IOAs
@@ -876,7 +887,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
         # Command testing / fuzzing
         if self.fuzz_enabled:
             results["commands"] = self._fuzz_commands(client, conn)
-        elif self.test_commands and not self.read_only:
+        elif self.test_commands and self.confirm_dangerous:
             results["commands"] = self._test_commands(client, conn)
 
         # Write operations (explicit value writes)

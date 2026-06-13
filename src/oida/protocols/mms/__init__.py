@@ -85,12 +85,6 @@ protocol_options = {
         "required": False,
         "default": 1000,
     },
-    "wordlist-path": {
-        "type": "string",
-        "description": "Path to wordlist for object name fuzzing",
-        "required": False,
-        "default": "",
-    },
 }
 
 
@@ -115,8 +109,25 @@ class MMSScanner(NetworkScanner):
         self.discover_logical_devices = parse_bool(args.get("discover-logical-devices", True))
         self.read_values = parse_bool(args.get("read-values", False))
         self.test_write = parse_bool(args.get("test-write", False))
+        self.confirm = parse_bool(args.get("confirm", False))
         self.max_objects = safe_int_conversion(args.get("max-objects"), 1000)
-        self.wordlist_path = args.get("wordlist-path", "")
+        # Single-action selectors. --identify queries server identity (always
+        # done as part of server-info); --get-name-list forces logical-device
+        # enumeration; --variable reads one data object by reference substring.
+        self.identify = parse_bool(args.get("identify", False))
+        self.get_name_list = parse_bool(args.get("get-name-list", False))
+        self.variable = args.get("variable") or None
+
+        # --test-write is a destructive op: requires --confirm and clears the
+        # read-only guard so the write path actually runs.
+        if self.test_write:
+            if self.confirm:
+                self.read_only = False
+            else:
+                self.logger.fail(
+                    "--test-write requires --confirm flag (DANGEROUS: issues live writes)"
+                )
+                self.test_write = False
 
         # Internal state
 
@@ -225,11 +236,19 @@ class MMSScanner(NetworkScanner):
         }
 
         try:
-            results["server_info"] = (
-                server_info if server_info is not None else self._get_server_info(connection)
-            )
+            # --identify forces a fresh server-identity query even if a cached
+            # server_info was passed in; otherwise reuse what the caller fetched.
+            if self.identify or server_info is None:
+                results["server_info"] = self._get_server_info(connection)
+            else:
+                results["server_info"] = server_info
 
-            if self.scan_mode in ["discovery", "all"]:
+            # --get-name-list and --variable both need the data model, so force
+            # the discovery path even if scan_mode would otherwise skip it.
+            do_discovery = (
+                self.scan_mode in ["discovery", "all"] or self.get_name_list or self.variable
+            )
+            if do_discovery:
                 if self.discover_logical_devices:
                     results["logical_devices"] = self._discover_logical_devices(connection)
 
@@ -240,7 +259,18 @@ class MMSScanner(NetworkScanner):
                     results["fingerprint"] = fingerprint.to_dict()
                     self._report_fingerprint(fingerprint)
 
-            if self.read_values and self.scan_mode in ["detailed", "all"]:
+            # --variable: read just the object(s) whose reference matches.
+            if self.variable:
+                targets = [
+                    do
+                    for do in results["data_objects"]
+                    if self.variable.lower() in do.get("full_reference", "").lower()
+                ]
+                if targets:
+                    results["read_test_results"] = self._read_data_objects(connection, targets)
+                else:
+                    self.logger.warning(f"No data object matched variable '{self.variable}'")
+            elif self.read_values and self.scan_mode in ["detailed", "all"]:
                 results["read_test_results"] = self._read_data_objects(
                     connection, results["data_objects"]
                 )
@@ -264,6 +294,7 @@ class MMSScanner(NetworkScanner):
         info = {}
         identity = None
         device_list = None
+        mms_error = None
 
         try:
             mms_conn = _Lib.iec61850.IedConnection_getMmsConnection(connection)
@@ -293,6 +324,15 @@ class MMSScanner(NetworkScanner):
             self.logger.debug(f"Error getting MMS identity: {e}")
         finally:
             _Lib.safe_identity_destroy(identity)
+            if mms_error is not None:
+                # NB: the pyiec61850-ng binding exposes this with a typo'd name
+                # ("MmsErrror_destroy"); fall back to the correct spelling in
+                # case a future build fixes it.
+                destroy = getattr(_Lib.iec61850, "MmsErrror_destroy", None) or getattr(
+                    _Lib.iec61850, "MmsError_destroy", None
+                )
+                if destroy is not None:
+                    destroy(mms_error)
 
         try:
             result = _Lib.iec61850.IedConnection_getLogicalDeviceList(connection)
@@ -586,8 +626,10 @@ class MMSScanner(NetworkScanner):
                 return None
             elif mms_type == _Lib.iec61850.MMS_BOOLEAN:
                 return _Lib.iec61850.MmsValue_getBoolean(mms_value)
-            elif mms_type in [_Lib.iec61850.MMS_INTEGER, _Lib.iec61850.MMS_UNSIGNED]:
+            elif mms_type == _Lib.iec61850.MMS_INTEGER:
                 return _Lib.iec61850.MmsValue_toInt32(mms_value)
+            elif mms_type == _Lib.iec61850.MMS_UNSIGNED:
+                return _Lib.iec61850.MmsValue_toUint32(mms_value)
             elif mms_type == _Lib.iec61850.MMS_FLOAT:
                 return _Lib.iec61850.MmsValue_toFloat(mms_value)
             elif mms_type in [_Lib.iec61850.MMS_VISIBLE_STRING, _Lib.iec61850.MMS_STRING]:
@@ -637,6 +679,10 @@ class MMSScanner(NetworkScanner):
 
         if self.read_only:
             self.logger.display("Skipping write tests (read-only mode)")
+            return write_results
+
+        if not self.confirm:
+            self.logger.fail("--test-write requires --confirm flag (DANGEROUS: issues live writes)")
             return write_results
 
         writable_objects = [
@@ -723,7 +769,7 @@ class MMSScanner(NetworkScanner):
             else:
                 return _Lib.iec61850.MmsValue_newInteger(int(value))
         except Exception as e:
-            self.logger.debug(f"if isinstance(value, bool):: {e}")
+            self.logger.debug(f"Failed to create MmsValue: {e}")
             return None
 
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:

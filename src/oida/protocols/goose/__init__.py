@@ -27,10 +27,6 @@ from ...utils import (
 from ...utils.base_scanner import SerialScanner
 from ...utils.lazy_import import lazy_import
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
 _pyiec61850_goose = lazy_import(
@@ -320,7 +316,7 @@ class GOOSEScanner(SerialScanner):
                         _pyiec61850_raw.GooseSubscriber_getSrcMac(sub._subscriber, mac_buf)
                         msg.src_mac = bytes(mac_buf)
                 except Exception as e:
-                    logger.debug(f"if sub._subscriber is not None:: {e}")
+                    self.logger.debug(f"Failed to read GOOSE source MAC: {e}")
 
                 msg_info = self._goose_message_to_dict(msg)
                 messages.append(msg_info)
@@ -392,7 +388,7 @@ class GOOSEScanner(SerialScanner):
                 try:
                     self._goose_subscriber.stop()
                 except Exception as e:
-                    logger.debug(f"self._goose_subscriber.stop(): {e}")
+                    self.logger.debug(f"Failed to stop GOOSE subscriber during cleanup: {e}")
                 self._goose_subscriber = None
 
         self.logger.display(f"Captured {len(messages)} GOOSE messages from {len(seen_gocbs)} GoCBs")
@@ -527,10 +523,9 @@ class GOOSEScanner(SerialScanner):
             go_id = msg.get("goose_id", "")
             if go_id:
                 self.logger.display(f"  GoID: {go_id}")
-            if msg.get("vlan_id") is not None:
-                self.logger.display(f"  VLAN: ID={msg['vlan_id']} Prio={msg.get('vlan_prio', '?')}")
-            if msg.get("dst_mac"):
-                self.logger.display(f"  Dst MAC: {msg['dst_mac']}")
+            # VLAN/dst_mac are not carried on captured GooseMessages
+            # (only the MMS GoCB path populates them, see _gocb_info_to_dict);
+            # they are displayed by _display_gocb instead.
             if msg.get("is_test"):
                 self.logger.warning("  TEST/SIMULATION flag is SET")
             if msg.get("dataset_size") is not None:

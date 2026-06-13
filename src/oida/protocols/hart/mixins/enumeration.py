@@ -15,11 +15,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -248,7 +243,7 @@ class EnumerationMixin(_ScannerBase):
                     probe_client.close()
 
             except Exception as e:
-                logger.debug(f"Failed to get probe_client: {e}")
+                self.logger.debug(f"Probe address {addr} failed: {e}")
             return None
 
         progress = ProgressTracker(len(addresses), threshold=1.0, interval=0.5)

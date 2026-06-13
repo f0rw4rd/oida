@@ -67,7 +67,7 @@ def _load_sunspec_maps() -> Dict[int, dict]:
             if model_id is not None:
                 maps[model_id] = data
         except (json.JSONDecodeError, KeyError, OSError) as e:
-            logger.debug(f"with open(json_file, r) as f:: {e}")
+            logger.debug(f"Failed to load SunSpec map {json_file.name}: {e}")
             continue
 
     return maps
@@ -181,7 +181,9 @@ class SunSpecMixin(_ScannerBase):
         """
         self.logger.display("[SunSpec] Starting SunSpec device discovery...")
 
-        unit_id = getattr(self.args, "unit_id", 1)
+        unit_id = getattr(self.args, "unit_id", None)
+        if unit_id is None:
+            unit_id = 1
         verbose = getattr(self.args, "verbose", 0) or 0
 
         # Step 1: Find the SunSpec base address

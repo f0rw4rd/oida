@@ -54,65 +54,6 @@ class DeviceInfoMixin:
             errors.append(f"{label}: {e}")
         return None
 
-    async def _read_device_info(self, knx: "XKNX", address: str) -> Dict[str, Any]:
-        """Read comprehensive device information"""
-        info = {
-            "address": address,
-            "descriptor": None,
-            "mask_version": None,
-            "manufacturer_id": None,
-            "manufacturer_name": None,
-            "serial": None,
-            "app_program": None,
-            "order_number": None,
-            "errors": [],
-        }
-
-        try:
-            self.logger.display(f"Reading device info from {address}")
-            addr = _xknx_cls.IndividualAddress(address)
-            mgmt = knx.management
-
-            async with mgmt.connection(addr) as p2p:
-                # Device Descriptor (mask version)
-                desc_hex, mask_ver, _desc_bytes = await self._read_descriptor(p2p, info["errors"])
-                if desc_hex:
-                    info["descriptor"] = desc_hex
-                    info["mask_version"] = mask_ver
-                    self.logger.display(f"  Descriptor: {desc_hex}")
-
-                # Manufacturer ID (memory 0x0104, 2 bytes)
-                data = await self._read_memory_field(p2p, 0x0104, 2, "manufacturer", info["errors"])
-                if data:
-                    mfr_id = int.from_bytes(data, "big")
-                    info["manufacturer_id"] = mfr_id
-                    info["manufacturer_name"] = get_vendor_name(mfr_id)
-                    self.logger.display(f"  Manufacturer: {info['manufacturer_name']} ({mfr_id})")
-
-                # Serial Number (memory 0x010B, 6 bytes)
-                data = await self._read_memory_field(p2p, 0x010B, 6, "serial", info["errors"])
-                if data:
-                    info["serial"] = data.hex()
-                    self.logger.display(f"  Serial: {info['serial']}")
-
-                # Application Program (memory 0x0106, 5 bytes)
-                data = await self._read_memory_field(p2p, 0x0106, 5, "app_program", info["errors"])
-                if data:
-                    info["app_program"] = data.hex()
-                    self.logger.display(f"  App Program: {info['app_program']}")
-
-                # Order Number (memory 0x0100, 2 bytes)
-                data = await self._read_memory_field(p2p, 0x0100, 2, "order_number", info["errors"])
-                if data:
-                    info["order_number"] = data.hex()
-                    self.logger.display(f"  Order Number: {info['order_number']}")
-
-        except Exception as e:
-            self.logger.fail(f"Error reading device info from {address}: {e}")
-            info["errors"].append(f"connection: {e}")
-
-        return info
-
     async def _identify_device(self, knx: "XKNX", address: str) -> Dict[str, Any]:
         """
         Identify device using PropertyValueRead from Object 0 (Device Object).

@@ -52,6 +52,23 @@ class hart(NetworkConnection):
         self.enum_host_info()
         self.print_host_info()
 
+        scan_mode = getattr(self.args, "scan_mode", "enumeration")
+
+        # Discovery mode stops after device identification — no further probing
+        if scan_mode == "discovery" and not self._has_specific_action():
+            return
+
+        # Full mode auto-runs command enumeration + security analysis unless the
+        # user already requested a specific action.
+        if scan_mode == "full":
+            if not enumerate_commands and not self._has_specific_action():
+                enumerate_commands = True
+            if not security_analysis and not self._has_specific_action():
+                security_analysis = True
+
+        # Targeted single-command reads (--read-id/-pv/-current/-tag/-output/-status)
+        self._handle_targeted_reads()
+
         # Read process variables
         if getattr(self.args, "read_all_vars", False) or not self._has_specific_action():
             self._handle_read_variables()
@@ -59,6 +76,16 @@ class hart(NetworkConnection):
         # Command enumeration
         if enumerate_commands:
             self._handle_enumerate_commands()
+
+        # Device-specific command enumeration (128-253)
+        if getattr(self.args, "enumerate_device_specific", False):
+            self._handle_enumerate_device_specific()
+
+        # Calibration / write command probes
+        if getattr(self.args, "probe_calibration", False) or getattr(
+            self.args, "probe_write", False
+        ):
+            self._handle_command_probes()
 
         # Security analysis
         if security_analysis:
@@ -92,11 +119,18 @@ class hart(NetworkConnection):
     def _has_specific_action(self) -> bool:
         """Check if user requested specific actions"""
         actions = [
+            "read_id",
             "read_pv",
             "read_current",
+            "read_tag",
+            "read_output",
+            "read_status",
             "read_all_vars",
             "enumerate_commands",
+            "enumerate_device_specific",
             "security_analysis",
+            "probe_calibration",
+            "probe_write",
             "fuzz",
             "write_poll_addr",
             "write_tag",
@@ -320,6 +354,123 @@ class hart(NetworkConnection):
                 f"{output_info.get('upper_range', 0):.2f} {output_info.get('units_name', '')}"
             )
             self.logger.debug(f"  Damping: {output_info.get('damping_seconds', 0):.2f} sec")
+
+    def _handle_targeted_reads(self):
+        """Handle targeted single-command read flags.
+
+        Wires --read-id/-pv/-current/-tag/-output/-status to their existing
+        mixin methods. Device identity (--read-id/--read-tag) is already
+        gathered by enum_host_info(); these flags surface it explicitly.
+        """
+        if not self.scanner:
+            return
+
+        device_info = self.results["data"].get("device_info", {})
+
+        if getattr(self.args, "read_id", False):
+            unique_id = device_info.get("unique_id", "")
+            mfr_id = device_info.get("manufacturer_id", 0)
+            dev_type = device_info.get("device_type", 0)
+            self.logger.display(
+                f"Unique ID: {unique_id or 'unknown'} (mfr {mfr_id}, type {dev_type})"
+            )
+
+        if getattr(self.args, "read_tag", False):
+            tag = device_info.get("tag", "")
+            descriptor = device_info.get("descriptor", "")
+            date = device_info.get("date", "")
+            self.logger.display(f"Tag: {tag or '(none)'}")
+            if descriptor:
+                self.logger.display(f"  Descriptor: {descriptor}")
+            if date:
+                self.logger.display(f"  Date: {date}")
+
+        if getattr(self.args, "read_pv", False):
+            pv = self.scanner.read_primary_variable()
+            if pv:
+                self.results["data"]["primary_variable"] = {
+                    "name": pv.name,
+                    "value": pv.value,
+                    "units": pv.units_name,
+                }
+                self.logger.display(f"Primary Variable: {pv.value:.4f} {pv.units_name}")
+            else:
+                self.logger.warning("Could not read primary variable (Command 1)")
+
+        if getattr(self.args, "read_current", False):
+            current, percent = self.scanner.read_current_and_percent()
+            self.results["data"]["loop_current"] = {"mA": current, "percent": percent}
+            self.logger.display(f"Loop Current: {current:.3f} mA ({percent:.1f}% of range)")
+
+        if getattr(self.args, "read_output", False):
+            output_info = self.scanner.read_output_info()
+            if output_info:
+                self.results["data"]["output_info"] = output_info
+                self.logger.display(
+                    f"Output Range: {output_info.get('lower_range', 0):.2f} - "
+                    f"{output_info.get('upper_range', 0):.2f} "
+                    f"{output_info.get('units_name', '')}"
+                )
+                self.logger.display(f"  Damping: {output_info.get('damping_seconds', 0):.2f} sec")
+            else:
+                self.logger.warning("Could not read output info (Command 15)")
+
+        if getattr(self.args, "read_status", False):
+            status = self.scanner.read_additional_status()
+            if status:
+                self.results["data"]["additional_status"] = status
+                decoded = status.get("extended_device_status_decoded", {})
+                alerts = [k for k, v in decoded.items() if v]
+                if alerts:
+                    self.logger.warning(f"Active status flags: {', '.join(alerts)}")
+                else:
+                    self.logger.display("Additional status: no active flags")
+            else:
+                self.logger.warning("Could not read additional status (Command 48)")
+
+    def _handle_enumerate_device_specific(self):
+        """Enumerate device-specific commands (128-253)."""
+        if not self.scanner:
+            return
+
+        self.logger.display("Enumerating device-specific commands (128-253)...")
+        supported = self.scanner.enumerate_device_specific_commands()
+        self.results["data"]["device_specific_commands"] = supported
+
+        if supported:
+            self.logger.success(f"Device-specific commands supported: {len(supported)}")
+            self.logger.debug(f"  {', '.join(map(str, supported))}")
+        else:
+            self.logger.display("No device-specific commands responded")
+
+    def _handle_command_probes(self):
+        """Probe calibration/write command accessibility via security analysis.
+
+        --probe-calibration / --probe-write surface the write- and
+        dangerous-command accessibility checks from security_analysis(), which
+        are gated behind --confirm because they transmit real (empty-payload)
+        write/calibration commands to the live device.
+        """
+        if not self.scanner:
+            return
+
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--probe-calibration/--probe-write transmit write and "
+                "calibration commands to the device — requires --confirm"
+            )
+            return
+
+        self.logger.display("Probing write/calibration command accessibility...")
+        findings = self.scanner.security_analysis()
+        probe_findings = [f for f in findings if "command accessible" in f.get("issue", "").lower()]
+        self.results["data"]["command_probes"] = probe_findings
+
+        if probe_findings:
+            for f in probe_findings:
+                self.logger.warning(f"  [{f.get('severity', '').upper()}] {f.get('issue')}")
+        else:
+            self.logger.success("No accessible write/calibration commands detected")
 
     def _handle_address_scan(self, range_str: str):
         """Handle poll address scanning mode"""
