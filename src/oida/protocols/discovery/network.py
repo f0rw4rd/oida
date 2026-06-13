@@ -465,7 +465,7 @@ class CDPPassiveListener:
             if hasattr(addr_msg, "addr") and addr_msg.addr:
                 for addr_record in addr_msg.addr:
                     if hasattr(addr_record, "addr"):
-                        # addr is bytes for IPv4
+                        # Addr is bytes for IPv4
                         addr_bytes = addr_record.addr
                         if len(addr_bytes) == 4:  # IPv4
                             ip = socket.inet_ntoa(addr_bytes)

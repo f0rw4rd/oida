@@ -170,6 +170,8 @@ def get_logger(
     with _logger_cache_lock:
         if key in _logger_cache:
             logger = _logger_cache[key]
+            # Each new scanner instance starts with empty findings
+            logger.clear_findings()
             # Update hostname if provided and different (DNS resolution)
             if hostname and logger.extra.get("hostname") != hostname[:16]:
                 logger.extra["hostname"] = hostname[:16]
@@ -531,6 +533,10 @@ class ICSLogger:
     def to_list(self) -> List[Dict[str, str]]:
         """Convert all findings to list of dicts for JSON/CSV export."""
         return list(self._findings)
+
+    def clear_findings(self) -> None:
+        """Reset the findings list for a new scan on this logger instance."""
+        self._findings = []
 
     # -----------------------------------------------------------------
     # Structured event methods  (emit console output AND JSON)

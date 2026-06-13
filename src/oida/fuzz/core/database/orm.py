@@ -529,9 +529,7 @@ class SQLAlchemyDatabase(DatabaseInterface):
             # back to total_processed when absent so callers never see a value below the
             # sent count.
             final_mutant_index = (
-                int(final_mutant_index_meta.value)
-                if final_mutant_index_meta
-                else total_processed
+                int(final_mutant_index_meta.value) if final_mutant_index_meta else total_processed
             )
             # Mutations covered by earlier sessions and fast-forwarded on resume
             # (index_start-1). Lets callers exclude resumed cases from "skipped".

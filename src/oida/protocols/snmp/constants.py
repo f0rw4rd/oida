@@ -647,15 +647,15 @@ CRED_PATTERNS = [
 # Keys are regex patterns matched against the process name (case-insensitive).
 # This avoids false positives like `ssh -p 22` or `mkdir -p`.
 CRED_PATTERNS_CONTEXT = {
-    # sshpass — the #1 HTB SNMP finding (Pandora, Mentor)
+    # Sshpass — the #1 HTB SNMP finding (Pandora, Mentor)
     r"sshpass": [
         r"-p\s+(\S+)",
     ],
-    # curl with credentials: -u user:pass, --user user:pass
+    # Curl with credentials: -u user:pass, --user user:pass
     r"curl": [
         r"(?:-u|--user)\s+(\S+:\S+)",
     ],
-    # wget with password
+    # Wget with password
     r"wget": [
         r"--(?:http-)?password[= ](\S+)",
     ],
@@ -708,7 +708,7 @@ CRED_PATTERNS_CONTEXT = {
     r"openvpn": [
         r"--(?:auth-user-pass|tls-auth|secret)\s+(\S+)",
     ],
-    # kubectl with bearer token
+    # Kubectl with bearer token
     r"kubectl": [
         r"--token[= ](\S+)",
     ],
@@ -717,7 +717,7 @@ CRED_PATTERNS_CONTEXT = {
         r"-u\s+\S+,(\S+)",
         r"(?:-p|--password)[= ]\s*(\S+)",
     ],
-    # rsync password file
+    # Rsync password file
     r"rsync": [
         r"--password-file[= ](\S+)",
     ],

@@ -1789,7 +1789,7 @@ ethernetip_device_types = {
 }
 
 
-#  last update 2023-11, https://www.ethercat.org/en/vendor_id_list.html
+#  Last update 2023-11, https://www.ethercat.org/en/vendor_id_list.html
 #  grep 0x -A1 | cut -d ">" -f2 | cut -d "<" -f1 | grep -v "^--$" | paste -d "|" - - | sed "s/|/:\"/g" | sed 's/$/\",/g
 ethercat_vendor_ids = {
     0x00000001: "EtherCAT Technology Group",

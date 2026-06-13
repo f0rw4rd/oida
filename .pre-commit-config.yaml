@@ -30,6 +30,46 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+      # --- data-leak guards (pre-commit) ---
+      - id: block-scan-artifacts
+        name: block scan/fuzz/PHI artifacts
+        language: fail
+        entry: >-
+          staged file is a scan output, fuzz artifact, or PHI carrier —
+          remove it from the index or add an exemption to .gitignore
+        files: >-
+          (?x)(
+            \.db$
+            | \.db-wal$
+            | \.db-shm$
+            | \.dcm$
+            | (^|/)dicom_output/
+            | (^|/)findings/
+            | (^|/)boofuzz-results/
+            | (^|/)P-[^/]*\.zip$
+          )
+        stages: [pre-commit]
+      - id: block-env-files
+        name: block credential / env files
+        language: fail
+        entry: >-
+          staged file looks like a credential or environment config —
+          secrets must never be committed
+        files: '(^|/)\.env$|(^|/)\.env\.[^/]+$'
+        stages: [pre-commit]
+      - id: check-dicom-magic
+        name: block DICOM magic bytes (PHI guard)
+        entry: .githooks/check-dicom-magic
+        language: script
+        types: [file]
+        exclude: '\.(py|md|txt|yml|yaml|toml|json|lock|cfg|ini|rst|js|ts|css|html)$'
+        stages: [pre-commit]
+      - id: check-secrets
+        name: block probable secrets
+        entry: .githooks/check-secrets
+        language: script
+        types_or: [python, text]
+        stages: [pre-commit]
       # --- commit-msg ---
       - id: no-ai-coauthor
         name: block AI co-author lines

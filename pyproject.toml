@@ -32,46 +32,53 @@ classifiers = [
     "Environment :: Console",
 ]
 requires-python = ">=3.10"
+# Runtime + per-protocol deps are pinned to EXACT (==) versions sourced from
+# uv.lock. End users `pip install oida[...]` resolve our ranges fresh at install
+# time; an exact pin means pip can only ever fetch the one immutable PyPI file
+# for that version, so a malicious *new* in-range release of a dependency (or a
+# hijacked maintainer account) cannot reach them. uv.lock only protects
+# from-source `uv sync`, never a `pip install` from PyPI — hence the pins here.
+# Bump deliberately: edit the version, re-run `uv lock`, then re-release.
 dependencies = [
-    "tqdm>=4.67.3",
-    "manuf2>=2.0.2",
-    "pyserial>=3.5",
-    "termcolor>=3.3.0",
+    "tqdm==4.67.3",
+    "manuf2==2.0.2",
+    "pyserial==3.5",
+    "termcolor==3.3.0",
 ]
 
 [project.optional-dependencies]
 # ── Per-protocol extras (extra name = protocol directory name) ──
-ads = ["pyads>=3.5.2"]
-bacnet = ["BAC0>=2025.9.15", "PyYAML>=6.0.3"]
-can = ["python-can>=4.6.1"]
-coap = ["aiocoap>=0.4.11", "DTLSSocket>=0.2.3; sys_platform != 'win32'", "cbor2>=5.4"]
-dicom = ["pynetdicom>=3.0.4", "pydicom>=3.0.2"]
-discovery = ["zeroconf>=0.148.0", "scapy>=2.7.0", "netifaces>=0.11.0", "profinet-py>=0.6.2", "defusedxml>=0.7.1"]
-dnp3 = ["yadnp3>=3.2.1.1"]
-ethercat = ["pysoem>=1.1.13; sys_platform != 'win32'"]
-ethernetip = ["pycomm3>=1.2.16"]
-fhir = ["fhirclient>=4.4.0", "requests>=2.32.5"]
-goose = ["pyiec61850-ng>=1.6.1.3"]
-hart = ["hartip-py>=0.3.0"]
-hl7 = ["hl7apy>=1.3.5"]
-iec104 = ["c104>=2.2.1"]
-knx = ["xknx>=3.15.0", "xknxproject>=3.9.0"]
-mms = ["pyiec61850-ng>=1.6.1.3"]
-modbus = ["pymodbus>=3.12.0", "PyYAML>=6.0.3"]
-mqtt = ["paho-mqtt>=2.1.0"]
-opcua = ["asyncua>=1.1.8"]
+ads = ["pyads==3.5.2"]
+bacnet = ["BAC0==2025.9.15", "PyYAML==6.0.3"]
+can = ["python-can==4.6.1"]
+coap = ["aiocoap==0.4.17", "DTLSSocket==0.2.3; sys_platform != 'win32'", "cbor2==6.1.2"]
+dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
+discovery = ["zeroconf==0.149.16", "scapy==2.7.0", "netifaces==0.11.0", "profinet-py==0.6.2", "defusedxml==0.7.1"]
+dnp3 = ["yadnp3==3.2.1.1"]
+ethercat = ["pysoem==1.1.13; sys_platform != 'win32'"]
+ethernetip = ["pycomm3==1.2.16"]
+fhir = ["fhirclient==4.4.0", "requests==2.34.2"]
+goose = ["pyiec61850-ng==1.6.1.3"]
+hart = ["hartip-py==0.3.0"]
+hl7 = ["hl7apy==1.3.5"]
+iec104 = ["c104==2.2.1"]
+knx = ["xknx==3.15.0", "xknxproject==3.9.0"]
+mms = ["pyiec61850-ng==1.6.1.3"]
+modbus = ["pymodbus==3.13.0", "PyYAML==6.0.3"]
+mqtt = ["paho-mqtt==2.1.0"]
+opcua = ["asyncua==1.1.8"]
 # pyshark: the PyPI repackage `oida-pyshark` (imports as `pyshark`). It carries
 # upstream's unreleased tshark-4.6 EK fixes. A direct git+https URL here would
 # make PyPI reject the whole `oida` upload (direct-URL deps are not allowed).
-pcap = ["oida-pyshark>=0.6.1.post1"]
-profinet = ["profinet-py>=0.6.2"]
-snap7 = ["python-snap7>=2.0.2"]
-snmp = ["pysnmp>=7.1.22"]
-tase2 = ["pyiec61850-ng>=1.6.1.3"]
+pcap = ["oida-pyshark==0.6.1.post1"]
+profinet = ["profinet-py==0.6.2"]
+snap7 = ["python-snap7==3.0.0"]
+snmp = ["pysnmp==7.1.27"]
+tase2 = ["pyiec61850-ng==1.6.1.3"]
 astm = []
-ocpp = ["websockets>=16.0"]
+ocpp = ["websockets==16.0"]
 # ── Non-protocol extras ──
-fuzz = ["boofuzz>=0.4.0", "sqlalchemy>=2.0.0", "pyasn1>=0.6.2", "crc>=7.1.0", "h2>=4.3.0", "scapy>=2.7.0"]
+fuzz = ["boofuzz==0.4.2", "sqlalchemy==2.0.50", "pyasn1==0.6.3", "crc==7.1.0", "h2==4.3.0", "scapy==2.7.0"]
 all = [
     "oida[ads,astm,bacnet,can,coap,dicom,discovery,dnp3,ethercat]",
     "oida[ethernetip,fhir,goose,hart,hl7,iec104,knx,mms]",
