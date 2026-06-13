@@ -125,6 +125,7 @@ def create_mock_args():
     mock_args.policy_number = None
     mock_args.transaction_amount = None
     mock_args.transaction_code = None
+    mock_args.transaction_description = None
     mock_args.transaction_type = "CG"
     # Order/Observation data
     mock_args.order_id = None

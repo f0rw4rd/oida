@@ -74,11 +74,26 @@ class WritesMixin:
             if dt_lower == "boolean":
                 return value_str.lower() in ("true", "1", "yes", "on")
 
-            # Integer types
-            if dt_lower in ("int16", "int32", "int64", "sbyte"):
-                return int(value_str)
-            if dt_lower in ("uint16", "uint32", "uint64", "byte"):
-                return int(value_str)
+            # Integer types (range-checked so an out-of-range value fails
+            # loudly here instead of wrapping mod 2ⁿ deep in UA encoding on a
+            # --confirm-gated live write).
+            int_ranges = {
+                "sbyte": (-(2**7), 2**7 - 1),
+                "int16": (-(2**15), 2**15 - 1),
+                "int32": (-(2**31), 2**31 - 1),
+                "int64": (-(2**63), 2**63 - 1),
+                "byte": (0, 2**8 - 1),
+                "uint16": (0, 2**16 - 1),
+                "uint32": (0, 2**32 - 1),
+                "uint64": (0, 2**64 - 1),
+            }
+            if dt_lower in int_ranges:
+                ival = int(value_str)
+                lo, hi = int_ranges[dt_lower]
+                if not (lo <= ival <= hi):
+                    self.logger.fail(f"Value {ival} out of range for {data_type} [{lo}, {hi}]")
+                    return None
+                return ival
 
             # Float types
             if dt_lower in ("float", "double"):

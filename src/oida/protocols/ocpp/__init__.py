@@ -74,6 +74,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         "local_list_version",
         "composite_schedule",
         "installed_certs",
+        "firmware_info",
     ]
 
     # Flags that trigger security checks (passive analysis)
@@ -144,7 +145,15 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         if target and (target.startswith("ws://") or target.startswith("wss://")):
             self._target_url = target
             if target.startswith("wss://"):
-                if not getattr(args, "port", None) or getattr(args, "port", 9000) == 9000:
+                # Honor an explicit port in the URL (e.g. wss://host:8443/...) so
+                # downstream checks like _check_tls_certificate probe the right
+                # port; only fall back to 443 when the URL omits the port.
+                from urllib.parse import urlparse
+
+                url_port = urlparse(target).port
+                if url_port:
+                    args.port = url_port
+                elif not getattr(args, "port", None) or getattr(args, "port", 9000) == 9000:
                     args.port = DEFAULT_WSS_PORT
         else:
             # Build URL from host/port
@@ -232,6 +241,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             "local_list_version": self.get_local_list_version,
             "composite_schedule": self.get_composite_schedule,
             "installed_certs": self.get_installed_certs,
+            "firmware_info": self._handle_firmware_info,
         }
         active = [f for f in flag_to_handler if getattr(self.args, f, False)]
         if active:

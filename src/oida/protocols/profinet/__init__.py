@@ -182,6 +182,7 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
 
         try:
             con = profinet_mod.RPCCon(mock_desc, timeout=self.timeout)
+            self._apply_rpc_port(con)
 
             # For RPC-only, try AR establishment with a locally-administered MAC
             fake_mac = bytes([0x02, 0x00, 0x00, 0x00, 0x00, 0x01])

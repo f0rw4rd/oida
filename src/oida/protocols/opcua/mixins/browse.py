@@ -6,10 +6,6 @@ Provides address space browsing, node reading, and permission dumping functional
 
 import asyncio
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 class BrowseMixin:
     """Mixin providing OPC UA address space browsing functionality."""
@@ -120,7 +116,7 @@ class BrowseMixin:
                             dt_name = await dt_node.read_browse_name()
                             data_type = dt_name.Name
                         except Exception as e:
-                            logger.debug(f"OPC UA: read_data_type/browse_name failed: {e}")
+                            self.logger.debug(f"OPC UA: read_data_type/browse_name failed: {e}")
                         try:
                             level_set = await node.get_access_level()
                             parts = []
@@ -196,7 +192,7 @@ class BrowseMixin:
                     try:
                         children = await node.get_children()
                     except Exception as e:
-                        logger.debug(f"Failed to get children: {e}")
+                        self.logger.debug(f"Failed to get children: {e}")
 
                 return node_info, [(c, depth + 1) for c in children]
 
@@ -390,7 +386,7 @@ class BrowseMixin:
                             if restriction_val & 0x04:
                                 entry["restriction_flags"].append("SessionReq")
                     except Exception as e:
-                        logger.debug(f"Failed to get restr: {e}")
+                        self.logger.debug(f"Failed to get restr: {e}")
 
                     # Apply filter
                     include = False
@@ -443,7 +439,7 @@ class BrowseMixin:
                         if perm_filter == "all":
                             results["objects"].append(entry)
                     except Exception as e:
-                        logger.debug(f"Failed to get notifier: {e}")
+                        self.logger.debug(f"Failed to get notifier: {e}")
 
                 # Recurse into children
                 try:
@@ -451,7 +447,7 @@ class BrowseMixin:
                     for child in children:
                         await scan_node(child, depth + 1)
                 except Exception as e:
-                    logger.debug(f"Failed to get children: {e}")
+                    self.logger.debug(f"Failed to get children: {e}")
 
             except Exception as e:
                 self.logger.debug(f"Error scanning node: {e}")
@@ -562,13 +558,13 @@ class BrowseMixin:
                     data_type = await node.read_data_type_as_variant_type()
                     self.logger.display(f"Data Type: {data_type.name}")
                 except Exception as e:
-                    logger.debug(f"Failed to get data_type: {e}")
+                    self.logger.debug(f"Failed to get data_type: {e}")
 
                 try:
                     access_level = await node.get_access_level()
                     self.logger.display(f"Access Level: {access_level}")
                 except Exception as e:
-                    logger.debug(f"Failed to get access_level: {e}")
+                    self.logger.debug(f"Failed to get access_level: {e}")
 
             self.results["data"]["node_read"] = {
                 "node_id": node_id,
