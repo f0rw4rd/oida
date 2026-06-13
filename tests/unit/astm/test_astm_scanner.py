@@ -905,7 +905,10 @@ class TestFuzzRecords:
         scanner._fuzz_records()
 
         fuzz = scanner.results["data"]["fuzz_results"]
-        assert fuzz["tests"] == 3
+        # fuzz_iterations is a floor, not a cap: with fuzz_frame=True the full
+        # case list (8 frame + 30 record = 38) always runs.
+        assert fuzz["tests"] >= 3
+        assert fuzz["errors"] == 0
 
     def test_fuzz_crash_detection(self):
         mock_sock = MagicMock()

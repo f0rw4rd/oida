@@ -155,9 +155,9 @@ class TestModbusCoreOptions:
     """Tests for Modbus core options (--unit-id, --scan-range, --register-type)."""
 
     def test_unit_id_default(self, parser):
-        """Test default unit ID is 1."""
+        """Test default unit ID (None means scan all unit IDs)."""
         args = parser.parse_args(["modbus", "192.168.1.100"])
-        assert args.unit_id == 1
+        assert args.unit_id is None
 
     def test_unit_id_custom(self, parser):
         """Test custom unit ID."""

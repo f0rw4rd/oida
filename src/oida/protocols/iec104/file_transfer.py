@@ -250,6 +250,14 @@ class FileTransferMixin:
             "error": None,
         }
 
+        # --query-log triggers a device-side archive/file-transfer request (Type
+        # 127); some RTUs spin up a file-transfer session or write audit entries,
+        # so gate it like the other state-touching file-transfer ops.
+        if not self.confirm_dangerous:
+            self.logger.fail("--query-log requires --confirm flag")
+            result["error"] = "Log query requires --confirm flag"
+            return result
+
         try:
             # Parse time strings
             now = datetime.now()

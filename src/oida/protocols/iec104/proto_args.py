@@ -107,7 +107,11 @@ Examples:
     # IEC 104 Options
     iec104_group = iec104_parser.add_argument_group("IEC 104 Options")
     iec104_group.add_argument(
-        "-a", "--asdu-address", type=int, default=1, help="ASDU address (default: 1)"
+        "-a",
+        "--asdu-address",
+        type=int,
+        default=-1,
+        help="ASDU address (default: -1 = auto-discover the Common Address)",
     )
     iec104_group.add_argument(
         "-r", "--ioa-range", type=str, help='Information Object Address range (e.g., "0-1000")'
