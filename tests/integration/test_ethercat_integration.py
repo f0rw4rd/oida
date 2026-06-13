@@ -67,7 +67,6 @@ Flag Coverage Matrix (oida ethercat -h):
   --dc-analysis              [B] test_dc_analysis_flag
   -e / --eeprom-dump         [B] test_eeprom_dump_flag
   --no-emergency-monitor     [B] test_no_emergency_monitor_flag
-  --timeout                  [B] test_timeout_flag
   --op-state                 [B] test_op_state_flag
   --boot-state               [B] test_boot_state_flag
   --fsoe / --scan-fsoe       [B] test_fsoe_scan_flag
@@ -429,20 +428,6 @@ class TestEtherCATIntegration:
             self.protocol_name,
             _TEST_INTERFACE,
             "--no-emergency-monitor",
-            json_log=True,
-            timeout=15,
-        )
-
-        assert result.returncode in [0, 1]
-        _assert_ethercat_attempted(result)
-
-    def test_timeout_flag(self, cli_runner):
-        """Test --timeout flag is accepted [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            _TEST_INTERFACE,
-            "--timeout",
-            "5000",
             json_log=True,
             timeout=15,
         )

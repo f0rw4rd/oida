@@ -117,6 +117,10 @@ class ISOTPMixin:
 
             frames: List[bytes] = [first]
             collected = len(first[2:])  # data bytes carried by the FF
+            # The FF is implicitly SN 0; the first CF must carry SN 1 and each
+            # subsequent CF increments mod 16. A gap means a CF was dropped or
+            # reordered -> the payload would be silently corrupted, so bail.
+            expected_sn = 1
             while collected < total_length and time.time() < end_time:
                 remaining = end_time - time.time()
                 if remaining <= 0:
@@ -129,6 +133,11 @@ class ISOTPMixin:
                 cf = bytes(msg.data)
                 if not cf or (cf[0] & 0xF0) != ISOTP_CONSECUTIVE_FRAME:
                     continue
+                if (cf[0] & 0x0F) != expected_sn:
+                    # Out-of-order / dropped Consecutive Frame: abort rather
+                    # than concatenate in arrival order (silent corruption).
+                    return None
+                expected_sn = (expected_sn + 1) & 0x0F
                 frames.append(cf)
                 collected += len(cf[1:])
 

@@ -175,10 +175,7 @@ class ProtocolLoader:
                 # Just verify the module is importable
                 importlib.import_module(module_name)
             except Exception as _frozen_exc:
-                import traceback
-
-                print(f"FROZEN_DIAG: {name} failed: {_frozen_exc}", flush=True)
-                traceback.print_exc()
+                logger.debug("frozen import of %s failed: %s", name, _frozen_exc)
                 continue
 
             protocol_info: Dict[str, Any] = {

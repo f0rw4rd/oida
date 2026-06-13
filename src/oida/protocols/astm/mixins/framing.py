@@ -49,7 +49,14 @@ class FramingMixin:
             return False
 
     def _calculate_checksum(self, data: bytes) -> bytes:
-        """Calculate modulus-256 checksum as 2-char hex"""
+        """Calculate modulus-256 checksum as 2-char hex.
+
+        Delegates to ASTMRecordBuilder so the framing and builder paths can
+        never drift; falls back to a local computation only if no builder is
+        attached yet.
+        """
+        if getattr(self, "record_builder", None) is not None:
+            return self.record_builder._calculate_checksum(data)
         total = sum(data) % 256
         return f"{total:02X}".encode()
 
