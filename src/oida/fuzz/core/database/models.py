@@ -46,7 +46,7 @@ class TestCase(Base):
         Index("idx_test_cases_target", "target_ip", "target_port"),
         Index("idx_test_cases_protocol", "protocol"),
         # Covering index for the common search shape:
-        # filter by protocol+result, order by timestamp DESC.
+        # Filter by protocol+result, order by timestamp DESC.
         Index(
             "idx_test_cases_protocol_result_ts",
             "protocol",

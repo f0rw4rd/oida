@@ -151,7 +151,7 @@ class OSPFPassiveListener(PassiveListenerBase):
             _pkt_len = struct.unpack("!H", data[2:4])[0]  # noqa: F841
             router_id = socket.inet_ntoa(data[4:8])
             area_id = socket.inet_ntoa(data[8:12])
-            # checksum at 12-14
+            # Checksum at 12-14
             auth_type = struct.unpack("!H", data[14:16])[0]
             # auth_data at 16-24
 

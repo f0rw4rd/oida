@@ -830,7 +830,6 @@ class EthernetFuzzer(BaseFuzzer):
             self.session.connect(ipv6_frame)
             self.session.connect(mpls_frame)
 
-
     def _get_monitors(self) -> List[BaseMonitor]:
         """Return list of monitors for Ethernet fuzzing"""
         # For raw Ethernet fuzzing, we typically don't have traditional monitors

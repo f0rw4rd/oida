@@ -685,7 +685,9 @@ class s7(NetworkConnection):
             original = read_fn()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
+            for payload, _desc in fuzz(
+                original, count=iterations
+            ):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if write_fn(payload):
                         successful += 1
@@ -760,7 +762,9 @@ class s7(NetworkConnection):
             original = read_m()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
+            for payload, _desc in fuzz(
+                original, count=iterations
+            ):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if write_m(payload):
                         successful += 1
@@ -804,7 +808,9 @@ class s7(NetworkConnection):
             original = read_q()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
+            for payload, _desc in fuzz(
+                original, count=iterations
+            ):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if write_q(payload):
                         successful += 1

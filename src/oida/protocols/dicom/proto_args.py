@@ -318,7 +318,7 @@ Examples:
     ae_group = dicom_parser.add_argument_group("AE Title Enumeration")
 
     # nargs="?" + const=True + default=None so the scanner can distinguish:
-    #   not specified  -> None  (scanner skips brute force)
+    #   Not specified  -> None  (scanner skips brute force)
     #   --aet-brute    -> True  (use default wordlist)
     #   --aet-brute F  -> "F"   (use custom wordlist file)
     ae_group.add_argument(

@@ -1244,7 +1244,7 @@ class TestEtherCATDocker:
     def test_eeprom_parse_with_raw_socket(self, cli_runner):
         """Test --eeprom-parse runs without crash via raw socket [Category B]"""
         bridge, needs_sudo = _skip_unless_docker_ethercat()
-        result = _run_docker_ethercat(cli_runner, bridge, "-p", needs_sudo=needs_sudo)
+        result = _run_docker_ethercat(cli_runner, bridge, "--eeprom-parse", needs_sudo=needs_sudo)
 
         assert result.returncode in [0, 1]
         _assert_docker_scan_attempted(result)
@@ -1318,7 +1318,7 @@ class TestEtherCATDocker:
             bridge,
             "-i",  # device info
             "-e",  # eeprom dump
-            "-p",  # eeprom parse
+            "--eeprom-parse",
             "-C",  # CoE scan
             "--dc-analysis",
             "--fsoe",

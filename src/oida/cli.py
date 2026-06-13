@@ -785,7 +785,7 @@ def print_bug_report() -> None:
         except Exception:
             lines.append("Install:      unknown")
 
-    # pip version
+    # Pip version
     try:
         from importlib.metadata import version as pkg_version
 

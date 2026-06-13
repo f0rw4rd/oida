@@ -186,7 +186,9 @@ class mms(NetworkConnection):
         original = read_value()
         successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-        for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
+        for payload, _desc in fuzz(
+            original, count=iterations
+        ):  # fuzz() yields (bytes, desc) tuples
             try:
                 if write_value(payload):
                     successful += 1

@@ -291,9 +291,7 @@ class SecurityMixin:
                             if original_data:
                                 # Write the same value back via MemoryWrite APCI.
                                 await p2p.request(
-                                    _xknx_cls.MemoryWrite(
-                                        address=mem_addr, data=original_data
-                                    ),
+                                    _xknx_cls.MemoryWrite(address=mem_addr, data=original_data),
                                     _xknx_cls.MemoryResponse,
                                 )
                                 device_results["writable_addresses"].append(

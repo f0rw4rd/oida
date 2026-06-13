@@ -227,7 +227,7 @@ class RPCMixin(_ScannerBase):
                 device.diagnosis = [
                     {
                         "channel": e.channel_number,
-                        # profinet DiagnosisEntry field is error_type, not
+                        # Profinet DiagnosisEntry field is error_type, not
                         # channel_error_type (the old name raised AttributeError
                         # whenever a device returned diagnosis entries).
                         "error_type": e.error_type,

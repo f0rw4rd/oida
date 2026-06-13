@@ -42,6 +42,7 @@ def mock_config():
         target_ip="127.0.0.1",
         target_port=9999,
         protocol_type=ProtocolType.TCP,
+        enumerate=False,
     )
     config.log_session = False
     config.console_output = False

@@ -363,7 +363,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             self.logger.debug(f"Dispatching TriggerMessage: {getattr(self.args, 'trigger', '')}")
             self._handle_trigger_message()
 
-
     def _enter_listen_mode(self):
         """Enter persistent listen mode with heartbeat keep-alive."""
         if not self.conn or not self.scanner:
@@ -565,7 +564,9 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
                 self.results["data"]["authorize"] = {"id_tag": auth_id, "status": status}
             elif msg_type == MessageType.CALLERROR:
                 # error_code lives on the parsed response, not the request payload.
-                self.logger.display(f"[Authorize] Error: {resp_payload.get('error_code', 'Unknown')}")
+                self.logger.display(
+                    f"[Authorize] Error: {resp_payload.get('error_code', 'Unknown')}"
+                )
         else:
             self.logger.display("[Authorize] No response")
 

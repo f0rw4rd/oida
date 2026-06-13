@@ -378,8 +378,15 @@ def _ids(cases):
     return [c["module"] for c in cases]
 
 
-def _load_listener(case):
+_MAX_PACKETS = 1000  # Cap per-listener feeds to keep unit tests fast (ethercat has 44k)
+
+
+def _load_listener(case, _retries: int = 1):
     """Import and instantiate a listener, feed packets, return it."""
+    import itertools
+
+    from pyshark.capture.capture import TSharkCrashException
+
     mod = importlib.import_module(f"oida.pcap.passive.{case['module']}")
     cls = getattr(mod, case["cls"])
     listener = cls(interface="lo", timeout=10)
@@ -397,9 +404,16 @@ def _load_listener(case):
         include_raw=False,
     )
     try:
-        listener.feed_packets(iter(cap))
+        listener.feed_packets(itertools.islice(iter(cap), _MAX_PACKETS))
+    except TSharkCrashException:
+        if _retries > 0:
+            return _load_listener(case, _retries=_retries - 1)
+        raise
     finally:
-        cap.close()
+        try:
+            cap.close()
+        except Exception:
+            pass  # TShark exits non-zero when killed after islice cap; not a real crash
     return listener
 
 
