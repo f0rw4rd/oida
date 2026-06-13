@@ -43,9 +43,7 @@ class CommandMixin:
 
         # Note: Actually sending commands is dangerous and should only be done
         # with explicit permission. This is just capability detection.
-        self.logger.warning(
-            "Command testing requires --no-read-only flag and is potentially dangerous"
-        )
+        self.logger.warning("Command testing requires --confirm flag and is potentially dangerous")
 
         return results
 

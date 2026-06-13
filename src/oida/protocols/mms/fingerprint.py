@@ -172,7 +172,7 @@ class FingerprintMatcher:
                 if re.match(rule.domain_pattern, domain_name):
                     matching.append(rule)
             except re.error as e:
-                logger.debug(f"if re.match(rule.domain_pattern, doma...: {e}")
+                logger.debug(f"Invalid domain_pattern regex '{rule.domain_pattern}': {e}")
                 continue
         return matching
 

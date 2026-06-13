@@ -201,7 +201,7 @@ class TestIEC104Options:
     def test_asdu_address_default(self, parser_setup):
         parser, _ = parser_setup
         args = parser.parse_args(["iec104", T])
-        assert args.asdu_address == 1
+        assert args.asdu_address == -1  # -1 means auto-discover
 
     def test_ioa_range_short(self, parser_setup):
         parser, _ = parser_setup

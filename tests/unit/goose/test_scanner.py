@@ -1231,7 +1231,12 @@ class TestDisplayGooseMessage(unittest.TestCase):
         self.assertIn("8", display_text)
 
     def test_new_message_with_vlan(self):
-        """Test new message displays VLAN info."""
+        """Test new message: VLAN fields are NOT displayed by _display_goose_message.
+
+        VLAN/dst_mac are only available on GoCB objects (MMS path), not on
+        raw captured GOOSE frames. Those are displayed by _display_gocb instead.
+        This test verifies the AppID is shown in the success line.
+        """
         scanner = _make_scanner()
         msg = {
             "gocb_ref": "test/gcb01",
@@ -1243,9 +1248,10 @@ class TestDisplayGooseMessage(unittest.TestCase):
 
         scanner._display_goose_message(msg, is_new=True)
 
-        display_calls = [str(c) for c in scanner.logger.display.call_args_list]
-        display_text = " ".join(display_calls)
-        self.assertIn("100", display_text)
+        success_calls = [str(c) for c in scanner.logger.success.call_args_list]
+        success_text = " ".join(success_calls)
+        self.assertIn("4096", success_text)  # 0x1000 formatted as int
+        self.assertIn("test/gcb01", success_text)
 
     def test_message_missing_fields_uses_defaults(self):
         """Test message with missing keys uses safe defaults."""

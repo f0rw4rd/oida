@@ -179,7 +179,9 @@ class MapReadWriteMixin(_ScannerBase):
         regs_needed = resolver.get_registers_needed(entry)
         address = entry["address"]
         fc = entry["function_code"]
-        unit_id = getattr(self.args, "unit_id", 1)
+        unit_id = getattr(self.args, "unit_id", None)
+        if unit_id is None:
+            unit_id = 1
 
         # Use map's default unit ID if user didn't specify
         default_uid = resolver.map_data.get("default_unit_id")
@@ -322,7 +324,9 @@ class MapReadWriteMixin(_ScannerBase):
         address = entry["address"]
         fc = entry["function_code"]
         dtype = entry["type"]
-        unit_id = getattr(self.args, "unit_id", 1)
+        unit_id = getattr(self.args, "unit_id", None)
+        if unit_id is None:
+            unit_id = 1
 
         # Use map's default unit ID if user didn't specify
         default_uid = resolver.map_data.get("default_unit_id")

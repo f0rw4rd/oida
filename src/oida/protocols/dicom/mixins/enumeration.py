@@ -308,12 +308,12 @@ class EnumerationMixin(_ScannerBase):
         models = set()
         institutions = set()
 
-        try:
-            # Query at SERIES level for modality details
+        max_series = 1000
+
+        def _build_series_ds(study_uid: str):
             ds = _new_dataset()
             ds.QueryRetrieveLevel = "SERIES"
-            ds.StudyInstanceUID = ""  # All studies
-
+            ds.StudyInstanceUID = study_uid
             # Return keys for device info
             ds.SeriesInstanceUID = ""
             ds.Modality = ""
@@ -322,43 +322,73 @@ class EnumerationMixin(_ScannerBase):
             ds.ManufacturerModelName = ""
             ds.InstitutionName = ""
             ds.InstitutionalDepartmentName = ""
+            return ds
 
+        def _collect(identifier) -> None:
+            mod = str(getattr(identifier, "Modality", "")).strip()
+            if mod and mod not in ("", "None"):
+                modalities.add(mod)
+            sta = str(getattr(identifier, "StationName", "")).strip()
+            if sta and sta not in ("", "None"):
+                stations.add(sta)
+            mfr = str(getattr(identifier, "Manufacturer", "")).strip()
+            if mfr and mfr not in ("", "None"):
+                manufacturers.add(mfr)
+            mdl = str(getattr(identifier, "ManufacturerModelName", "")).strip()
+            if mdl and mdl not in ("", "None"):
+                models.add(mdl)
+            inst = str(getattr(identifier, "InstitutionName", "")).strip()
+            if inst and inst not in ("", "None"):
+                institutions.add(inst)
+
+        try:
+            series_count = 0
+
+            # First try a flat SERIES-level query with an empty StudyInstanceUID.
+            # Lenient SCPs accept this; strict Study-Root SCPs require the unique
+            # StudyInstanceUID key to descend and return nothing — handled by the
+            # study-by-study fallback below.
             responses = self.assoc.send_c_find(
-                ds,
+                _build_series_ds(""),
                 _sop("StudyRootQueryRetrieveInformationModelFind"),
             )
-
-            series_count = 0
-            max_series = 1000
-
             for status, identifier in responses:
-                if status and status.Status in (0xFF00, 0xFF01):
-                    if identifier:
-                        series_count += 1
+                if status and status.Status in (0xFF00, 0xFF01) and identifier:
+                    series_count += 1
+                    _collect(identifier)
+                    if series_count >= max_series:
+                        self.logger.warning(f"Reached series limit ({max_series})")
+                        break
 
-                        mod = str(getattr(identifier, "Modality", "")).strip()
-                        if mod and mod not in ("", "None"):
-                            modalities.add(mod)
+            # Fallback: enumerate studies, then query SERIES per study UID.
+            if series_count == 0:
+                study_ds = _new_dataset()
+                study_ds.QueryRetrieveLevel = "STUDY"
+                study_ds.StudyInstanceUID = ""
+                study_uids = []
+                for status, identifier in self.assoc.send_c_find(
+                    study_ds, _sop("StudyRootQueryRetrieveInformationModelFind")
+                ):
+                    if status and status.Status in (0xFF00, 0xFF01) and identifier:
+                        suid = str(getattr(identifier, "StudyInstanceUID", "")).strip()
+                        if suid:
+                            study_uids.append(suid)
 
-                        sta = str(getattr(identifier, "StationName", "")).strip()
-                        if sta and sta not in ("", "None"):
-                            stations.add(sta)
-
-                        mfr = str(getattr(identifier, "Manufacturer", "")).strip()
-                        if mfr and mfr not in ("", "None"):
-                            manufacturers.add(mfr)
-
-                        mdl = str(getattr(identifier, "ManufacturerModelName", "")).strip()
-                        if mdl and mdl not in ("", "None"):
-                            models.add(mdl)
-
-                        inst = str(getattr(identifier, "InstitutionName", "")).strip()
-                        if inst and inst not in ("", "None"):
-                            institutions.add(inst)
-
-                        if series_count >= max_series:
-                            self.logger.warning(f"Reached series limit ({max_series})")
-                            break
+                stop = False
+                for suid in study_uids:
+                    if stop:
+                        break
+                    for status, identifier in self.assoc.send_c_find(
+                        _build_series_ds(suid),
+                        _sop("StudyRootQueryRetrieveInformationModelFind"),
+                    ):
+                        if status and status.Status in (0xFF00, 0xFF01) and identifier:
+                            series_count += 1
+                            _collect(identifier)
+                            if series_count >= max_series:
+                                self.logger.warning(f"Reached series limit ({max_series})")
+                                stop = True
+                                break
 
             # Display results
             if not any([modalities, stations, manufacturers, models, institutions]):

@@ -91,7 +91,7 @@ class WritesMixin(_ScannerBase):
                 self.conn,
                 address,
                 registers[0],
-                restore_on_exit=not getattr(self.args, "no_restore", False),
+                restore_on_exit=getattr(self.args, "restore_on_exit", False),
             )
             self.results["data"]["write"] = result
 
@@ -109,7 +109,7 @@ class WritesMixin(_ScannerBase):
                 self.conn,
                 address,
                 registers,
-                restore_on_exit=not getattr(self.args, "no_restore", False),
+                restore_on_exit=getattr(self.args, "restore_on_exit", False),
             )
             self.results["data"]["write"] = result
 
@@ -327,6 +327,13 @@ class WritesMixin(_ScannerBase):
         """Handle test write access for registers"""
         thorough = getattr(self.args, "test_write_thorough", False)
         mode = "destructive" if thorough else "safe"
+
+        # Destructive mode writes different values into live registers / flips
+        # coils with only best-effort restore; gate it behind --confirm.
+        # Safe (same-value) mode stays ungated by deliberate decision.
+        if mode == "destructive" and not getattr(self.args, "confirm", False):
+            self.logger.fail("--test-write-thorough (destructive) requires --confirm flag")
+            return
 
         # Use "0-10" as default if scan_range is None or not set
         scan_range = getattr(self.args, "scan_range", None) or "0-10"

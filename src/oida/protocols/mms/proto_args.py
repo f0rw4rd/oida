@@ -35,19 +35,20 @@ def proto_args(parser, parents):
         "-i",
         "--identify",
         action="store_true",
-        help="Send Identify request",
+        help="Query the MMS server identity (vendor/model/revision)",
     )
     mms_group.add_argument(
         "-l",
         "--get-name-list",
         action="store_true",
-        help="Get variable name list",
+        help="Enumerate the logical-device/node name list",
     )
     mms_group.add_argument(
         "-r",
         "--variable",
         type=str,
-        help="Specific variable to read",
+        metavar="REF",
+        help="Read a single variable/data object by reference (substring match)",
     )
     mms_group.add_argument(
         "--read-values",
