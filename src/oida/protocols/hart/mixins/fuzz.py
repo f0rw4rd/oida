@@ -17,11 +17,6 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -178,7 +173,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.write_poll_address(new_address, address=self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Write poll address (cmd 6) failed: {e}")
             return False
 
     def write_tag(self, tag: str, descriptor: str = "", date: Tuple[int, int, int] = None) -> bool:
@@ -207,7 +202,7 @@ class FuzzMixin(_ScannerBase):
             )
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"if date:: {e}")
+            self.logger.debug(f"Write tag/descriptor/date (cmd 18) failed: {e}")
             return False
 
     def write_message(self, message: str) -> bool:
@@ -223,7 +218,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.write_message(message, address=self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Write message (cmd 17) failed: {e}")
             return False
 
     def perform_self_test(self) -> bool:
@@ -235,7 +230,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.perform_self_test(self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Self-test (cmd 41) failed: {e}")
             return False
 
     def reset_config_flag(self) -> bool:
@@ -249,7 +244,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.send_command(HARTCommand.RESET_CONFIG_FLAG, self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Reset config flag (cmd 38) failed: {e}")
             return False
 
     def perform_master_reset(self) -> bool:
@@ -270,7 +265,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.send_command(HARTCommand.PERFORM_MASTER_RESET, self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"perform_master_reset failed: {e}")
+            self.logger.debug(f"Master reset (cmd 42) failed: {e}")
             return False
 
     def send_raw_command(self, command: int, data: bytes = b"") -> Dict[str, Any]:

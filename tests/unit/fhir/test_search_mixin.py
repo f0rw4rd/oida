@@ -43,6 +43,10 @@ class MockSearchHost(SearchMixin):
             organization_name=None,
             location_name=None,
             device_type=None,
+            # Auth attrs must be None so supplied_auth=False in security checks
+            username=None,
+            password=None,
+            token=None,
         )
         defaults.update(arg_overrides)
         for k, v in defaults.items():
@@ -365,9 +369,11 @@ class TestSearchObservations(unittest.TestCase):
             host._search_observations()
 
         params = mock_obs.Observation.where.call_args[1]["struct"]
-        self.assertIsInstance(params["date"], list)
-        self.assertIn("ge2024-01-01", params["date"])
-        self.assertIn("le2024-12-31", params["date"])
+        # Both bounds use $and combinator (bare list raises TypeError in fhirclient)
+        self.assertIsInstance(params["date"], dict)
+        self.assertIn("$and", params["date"])
+        self.assertIn("ge2024-01-01", params["date"]["$and"])
+        self.assertIn("le2024-12-31", params["date"]["$and"])
 
     @patch("oida.protocols.fhir.mixins.search.observation")
     @patch("oida.protocols.fhir.mixins.search.FHIRResourceParser")

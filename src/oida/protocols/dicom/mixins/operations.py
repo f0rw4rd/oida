@@ -403,14 +403,19 @@ class OperationsMixin(_ScannerBase):
 
             for status, identifier in responses:
                 if status:
+                    # Sub-operation counters may appear on Pending responses OR
+                    # only on the terminal (Success/Warning) response, depending
+                    # on the SCP. Capture them from whichever response carries
+                    # them so a final-only SCP isn't reported as "0 transferred".
+                    if hasattr(status, "NumberOfCompletedSuboperations"):
+                        completed = status.NumberOfCompletedSuboperations
+                    if hasattr(status, "NumberOfFailedSuboperations"):
+                        failed = status.NumberOfFailedSuboperations
+                    if hasattr(status, "NumberOfWarningSuboperations"):
+                        warning = status.NumberOfWarningSuboperations
+
                     if status.Status in (0xFF00,):  # Pending
-                        # Extract sub-operation counts if available
-                        if hasattr(status, "NumberOfCompletedSuboperations"):
-                            completed = status.NumberOfCompletedSuboperations
-                        if hasattr(status, "NumberOfFailedSuboperations"):
-                            failed = status.NumberOfFailedSuboperations
-                        if hasattr(status, "NumberOfWarningSuboperations"):
-                            warning = status.NumberOfWarningSuboperations
+                        pass
                     elif status.Status == 0x0000:  # Success
                         self.logger.success(f"C-MOVE completed: {completed} transferred")
                     elif status.Status == 0xB000:  # Warning

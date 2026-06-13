@@ -4,6 +4,8 @@ Argument parser definition for GOOSE (Generic Object Oriented Substation Event) 
 This module registers GOOSE-specific command-line arguments.
 """
 
+import argparse
+
 from ...utils.proto_args_factory import (
     add_target_argument,
     create_protocol_parser,
@@ -16,8 +18,7 @@ def proto_args(parser, parents):
 Examples:
   oida goose eth0                          # Passive GOOSE sniffing on eth0
   oida goose eth0 --timeout 30             # Listen for 30 seconds
-  oida goose eth0 --appid 1000            # Filter by AppID
-  oida goose --rgoose 192.168.1.0/24       # R-GOOSE UDP listener
+  oida goose eth0 --appid 1000            # Filter by AppID (decimal)
   oida goose --mms-enum 192.168.1.100      # Enumerate GoCBs via MMS
 
 Security Testing:
@@ -56,34 +57,38 @@ Security Testing:
         type=int,
         default=None,
         metavar="ID",
-        help="Filter by GOOSE Application ID",
+        help="Filter by GOOSE Application ID (decimal, e.g. 1000; shown as hex 0x03E8 in capture output)",
     )
 
-    # R-GOOSE options
+    # R-GOOSE options (not yet implemented in the high-level API).
+    # --rgoose is kept visible so the mode reports a clear "not yet
+    # supported" message rather than silently sniffing; the auth/key
+    # sub-flags are entirely non-functional and hidden to avoid
+    # advertising capabilities that do not exist.
     rgoose_group = goose_parser.add_argument_group("R-GOOSE Options")
     rgoose_group.add_argument(
         "--rgoose",
         action="store_true",
-        help="Enable R-GOOSE (routable GOOSE over UDP) listener mode",
+        help="Enable R-GOOSE (routable GOOSE over UDP) listener mode (UNIMPLEMENTED)",
     )
     rgoose_group.add_argument(
         "--rgoose-port",
         type=int,
         default=None,
         metavar="PORT",
-        help="R-GOOSE UDP port (required when --rgoose is used)",
+        help=argparse.SUPPRESS,
     )
     rgoose_group.add_argument(
         "--rgoose-auth",
         action="store_true",
-        help="Enable R-GOOSE authentication per IEC 62351-6",
+        help=argparse.SUPPRESS,
     )
     rgoose_group.add_argument(
         "--rgoose-key",
         type=str,
         default=None,
         metavar="PATH",
-        help="Path to R-GOOSE authentication key file (IEC 62351-6)",
+        help=argparse.SUPPRESS,
     )
 
     # MMS GoCB enumeration options

@@ -83,7 +83,7 @@ class SecurityMixin(_ScannerBase):
             )
             return response.response_code == 0
         except Exception as e:
-            self.logger.debug(f"Failed to get code_padded: {e}")
+            self.logger.debug(f"Unlock (cmd 71) send failed: {e}")
             return False
 
     def try_lock(self, lock_code: str, client=None) -> bool:
@@ -114,7 +114,7 @@ class SecurityMixin(_ScannerBase):
             )
             return response.response_code == 0
         except Exception as e:
-            self.logger.debug(f"Failed to get code_padded: {e}")
+            self.logger.debug(f"Lock (cmd 71) send failed: {e}")
             return False
 
     def bruteforce_lock(
@@ -251,86 +251,107 @@ class SecurityMixin(_ScannerBase):
             }
         )
 
-        write_commands = [
-            (6, "Write Polling Address"),
-            (17, "Write Message"),
-            (18, "Write Tag/Descriptor/Date"),
-            (19, "Write Final Assembly Number"),
-            (35, "Write Primary Variable Range"),
-            (44, "Write Primary Variable Units"),
-            (45, "Trim Loop Current Zero"),
-            (46, "Trim Loop Current Gain"),
-            (50, "Write Damping Value"),
-        ]
+        # Probing write/calibration commands (6/17/18/.../42 Master Reset,
+        # 45/46 trim) transmits real mutating commands to live instrumentation.
+        # Sending an empty payload may still be accepted by some devices, so
+        # these accessibility probes are gated behind --confirm exactly like the
+        # named write / master-reset / fuzz paths. Without --confirm the analysis
+        # is limited to non-mutating reachability/status reads below.
+        if getattr(self, "confirm", False):
+            write_commands = [
+                (6, "Write Polling Address"),
+                (17, "Write Message"),
+                (18, "Write Tag/Descriptor/Date"),
+                (19, "Write Final Assembly Number"),
+                (35, "Write Primary Variable Range"),
+                (44, "Write Primary Variable Units"),
+                (45, "Trim Loop Current Zero"),
+                (46, "Trim Loop Current Gain"),
+                (50, "Write Damping Value"),
+            ]
 
-        for cmd, name in write_commands:
+            for cmd, name in write_commands:
+                try:
+                    response = self.client.send_command(cmd, self.poll_address, b"")
+                    if response.response_code not in [
+                        HARTResponseCode.UNDEFINED_COMMAND,
+                        HARTResponseCode.CMD_NOT_IMPLEMENTED,
+                    ]:
+                        findings.append(
+                            {
+                                "severity": "medium",
+                                "issue": f"Write command accessible: {name}",
+                                "description": f"Command {cmd} ({name}) is accessible and may allow "
+                                "configuration changes.",
+                                "command": cmd,
+                            }
+                        )
+                except Exception as e:
+                    self.logger.debug(f"Write-command probe (cmd {cmd}) failed: {e}")
+
+            dangerous_commands = [
+                (42, "Master Reset"),
+                (43, "Set Device Variable Zero"),
+                (45, "Trim Loop Current Zero"),
+                (46, "Trim Loop Current Gain"),
+            ]
+
+            for cmd, name in dangerous_commands:
+                try:
+                    response = self.client.send_command(cmd, self.poll_address, b"")
+                    if response.response_code not in [
+                        HARTResponseCode.UNDEFINED_COMMAND,
+                        HARTResponseCode.CMD_NOT_IMPLEMENTED,
+                        HARTResponseCode.IN_WRITE_PROTECT_MODE,
+                    ]:
+                        findings.append(
+                            {
+                                "severity": "critical",
+                                "issue": f"Dangerous command accessible: {name}",
+                                "description": f"Command {cmd} ({name}) could cause device "
+                                "malfunction or calibration loss.",
+                                "command": cmd,
+                            }
+                        )
+                except Exception as e:
+                    self.logger.debug(f"Dangerous-command probe (cmd {cmd}) failed: {e}")
+        else:
+            findings.append(
+                {
+                    "severity": "info",
+                    "issue": "Write/calibration accessibility probes skipped",
+                    "description": "Active probing of write and dangerous commands "
+                    "(Cmd 6/17/18/42 Master Reset, 45/46 trim) requires --confirm. "
+                    "Re-run with --confirm to test command accessibility against this device.",
+                }
+            )
+
+        # Cmd 38 (Reset Config Changed Flag) is itself a mutating write; only
+        # probe it when --confirm is supplied (it is used here purely to detect
+        # write-protect via the IN_WRITE_PROTECT_MODE response).
+        if getattr(self, "confirm", False):
             try:
-                response = self.client.send_command(cmd, self.poll_address, b"")
-                if response.response_code not in [
-                    HARTResponseCode.UNDEFINED_COMMAND,
-                    HARTResponseCode.CMD_NOT_IMPLEMENTED,
-                ]:
+                response = self.client.send_command(38, self.poll_address, b"")
+                if response.response_code == HARTResponseCode.IN_WRITE_PROTECT_MODE:
                     findings.append(
                         {
-                            "severity": "medium",
-                            "issue": f"Write command accessible: {name}",
-                            "description": f"Command {cmd} ({name}) is accessible and may allow "
-                            "configuration changes.",
-                            "command": cmd,
+                            "severity": "info",
+                            "issue": "Write protect enabled",
+                            "description": "Device has write protection enabled, "
+                            "limiting remote configuration changes.",
+                        }
+                    )
+                else:
+                    findings.append(
+                        {
+                            "severity": "high",
+                            "issue": "Write protect disabled",
+                            "description": "Device does not have write protection enabled. "
+                            "Configuration can be modified remotely.",
                         }
                     )
             except Exception as e:
-                self.logger.debug(f"Failed to get response: {e}")
-
-        dangerous_commands = [
-            (42, "Master Reset"),
-            (43, "Set Device Variable Zero"),
-            (45, "Trim Loop Current Zero"),
-            (46, "Trim Loop Current Gain"),
-        ]
-
-        for cmd, name in dangerous_commands:
-            try:
-                response = self.client.send_command(cmd, self.poll_address, b"")
-                if response.response_code not in [
-                    HARTResponseCode.UNDEFINED_COMMAND,
-                    HARTResponseCode.CMD_NOT_IMPLEMENTED,
-                    HARTResponseCode.IN_WRITE_PROTECT_MODE,
-                ]:
-                    findings.append(
-                        {
-                            "severity": "critical",
-                            "issue": f"Dangerous command accessible: {name}",
-                            "description": f"Command {cmd} ({name}) could cause device malfunction "
-                            "or calibration loss.",
-                            "command": cmd,
-                        }
-                    )
-            except Exception as e:
-                self.logger.debug(f"Failed to get response: {e}")
-
-        try:
-            response = self.client.send_command(38, self.poll_address, b"")
-            if response.response_code == HARTResponseCode.IN_WRITE_PROTECT_MODE:
-                findings.append(
-                    {
-                        "severity": "info",
-                        "issue": "Write protect enabled",
-                        "description": "Device has write protection enabled, "
-                        "limiting remote configuration changes.",
-                    }
-                )
-            else:
-                findings.append(
-                    {
-                        "severity": "high",
-                        "issue": "Write protect disabled",
-                        "description": "Device does not have write protection enabled. "
-                        "Configuration can be modified remotely.",
-                    }
-                )
-        except Exception as e:
-            self.logger.debug(f"Failed to get response: {e}")
+                self.logger.debug(f"Write-protect probe (cmd 38) failed: {e}")
 
         # HART-SEC-010: v1-no-TLS finding
         if self.server_version == 1:

@@ -407,7 +407,8 @@ def crack_knxproj(
                         f.cancel()
                     break
             except Exception as e:
-                logger.debug(f"Failed to get result: {e}")
+                if logger:
+                    logger.debug(f"Failed to get result: {e}")
                 continue
 
     if logger:

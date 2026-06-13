@@ -179,6 +179,37 @@ class CipSecurityMixin(_ScannerBase):
             self.logger.debug("  TLS/DTLS: Not available on port 2221")
             return False
 
+    def _dump_security_lightweight(self, conn: Any) -> Dict[str, Any]:
+        """
+        Lightweight CIP Security probe for the default --check-security path.
+
+        Reads only the CIP Security (0x5D) and EtherNet/IP Security (0x5E) state
+        objects, which is what _report_security_status() needs. It deliberately
+        skips Certificate Management (0x5F, which downloads every installed cert)
+        and Password Authenticator (0x61) -- those heavy reads only run under the
+        opt-in --dump-security flag (see _dump_security_settings).
+        """
+        security_dump = {
+            "cip_security": None,
+            "eip_security": None,
+            "certificates": None,
+            "password_auth": None,
+        }
+
+        if not conn or not hasattr(conn, "generic_message"):
+            self.logger.debug("Connection does not support security operations")
+            return security_dump
+
+        cip_sec = self._dump_cip_security_object(conn)
+        if cip_sec:
+            security_dump["cip_security"] = cip_sec
+
+        eip_sec = self._dump_eip_security_object(conn)
+        if eip_sec:
+            security_dump["eip_security"] = eip_sec
+
+        return security_dump
+
     def _dump_security_settings(self, conn: Any) -> Dict[str, Any]:
         """
         Dump detailed security settings from all CIP Security objects.

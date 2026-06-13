@@ -322,30 +322,48 @@ class ReportingMixin(_ScannerBase):
         data = self.results.get("data", {})
         port = getattr(self.args, "port", self.default_port)
 
-        # Export C-FIND results
+        # Export C-FIND results. The columns must match the query level: a
+        # PATIENT-level query never carries StudyDate/Modality/StudyInstanceUID,
+        # so hard-coding study columns would export blank cells and drop the
+        # patient demographics actually retrieved.
         cfind = data.get("cfind_results", {})
         results = cfind.get("results", [])
         if results:
-            headers = [
-                "Host",
-                "Port",
-                "PatientName",
-                "PatientID",
-                "StudyDate",
-                "Modality",
-                "StudyUID",
-            ]
+            query_level = (cfind.get("query_level") or "PATIENT").upper()
+            # (column label, result-dict key) per query level
+            level_columns = {
+                "PATIENT": [
+                    ("PatientName", "PatientName"),
+                    ("PatientID", "PatientID"),
+                    ("BirthDate", "PatientBirthDate"),
+                    ("Sex", "PatientSex"),
+                    ("StudyCount", "StudyCount"),
+                ],
+                "STUDY": [
+                    ("PatientName", "PatientName"),
+                    ("PatientID", "PatientID"),
+                    ("StudyDate", "StudyDate"),
+                    ("StudyDescription", "StudyDescription"),
+                    ("AccessionNumber", "AccessionNumber"),
+                    ("StudyUID", "StudyInstanceUID"),
+                ],
+                "SERIES": [
+                    ("Modality", "Modality"),
+                    ("SeriesNumber", "SeriesNumber"),
+                    ("SeriesDescription", "SeriesDescription"),
+                    ("InstanceCount", "InstanceCount"),
+                    ("SeriesUID", "SeriesInstanceUID"),
+                ],
+                "IMAGE": [
+                    ("InstanceNumber", "InstanceNumber"),
+                    ("SOPClassUID", "SOPClassUID"),
+                    ("SOPInstanceUID", "SOPInstanceUID"),
+                ],
+            }
+            columns = level_columns.get(query_level, level_columns["PATIENT"])
+            headers = ["Host", "Port"] + [label for label, _ in columns]
             rows = [
-                [
-                    self.ip,
-                    port,
-                    r.get("PatientName", ""),
-                    r.get("PatientID", ""),
-                    r.get("StudyDate", ""),
-                    r.get("Modality", ""),
-                    r.get("StudyInstanceUID", "")[:40],
-                ]
-                for r in results
+                [self.ip, port] + [str(r.get(key, ""))[:64] for _, key in columns] for r in results
             ]
             export_data(rows, headers, file_fmt, output_dir, "dicom_cfind", logger=self.logger)
 
