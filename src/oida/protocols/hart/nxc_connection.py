@@ -433,8 +433,16 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        self.logger.display("Enumerating device-specific commands (128-253)...")
-        supported = self.scanner.enumerate_device_specific_commands()
+        cmd_range = getattr(self.args, "command_range", "128-253")
+        if "-" in str(cmd_range):
+            start, end = map(int, str(cmd_range).split("-"))
+        else:
+            start = end = int(cmd_range)
+        start = max(128, start)
+        end = min(253, end)
+
+        self.logger.display(f"Enumerating device-specific commands ({start}-{end})...")
+        supported = self.scanner.enumerate_device_specific_commands(start=start, end=end)
         self.results["data"]["device_specific_commands"] = supported
 
         if supported:

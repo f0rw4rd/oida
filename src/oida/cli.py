@@ -157,6 +157,39 @@ def merge_config_with_args(
     return args
 
 
+_SENSITIVE_PATTERNS = (
+    "password",
+    "passwd",
+    "secret",
+    "token",
+    "psk",
+    "shared_key",
+    "private_key",
+    "auth_string",
+    "auth_pass",
+    "community",
+    "apikey",
+    "api_key",
+    "credential",
+)
+
+
+def _redact_sensitive_args(args: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a copy of args with credential-like values replaced by '***'.
+
+    None values are kept as-is so callers can distinguish 'not supplied'
+    from 'supplied but hidden'.
+    """
+    result = {}
+    for k, v in args.items():
+        key_lower = k.lower()
+        if v is not None and any(pat in key_lower for pat in _SENSITIVE_PATTERNS):
+            result[k] = "***"
+        else:
+            result[k] = v
+    return result
+
+
 def _sanitize_table_filename(title: str) -> str:
     """Convert a table title to a safe filename stem.
 

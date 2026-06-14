@@ -2117,6 +2117,8 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             str(port),
             "--scan-mode",
             "full",
+            "--command-range",
+            "0-5",
             format="json",
             json_log=True,
             timeout=60,
