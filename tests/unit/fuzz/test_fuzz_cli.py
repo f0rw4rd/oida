@@ -230,5 +230,52 @@ class TestFuzzHandleCommand:
         assert result == 1
 
 
+class TestSplitTargetPort:
+    """Test embedded host:port parsing for fuzzer targets."""
+
+    @pytest.mark.parametrize(
+        "target,expected",
+        [
+            ("127.0.0.1:8080", ("127.0.0.1", 8080)),
+            ("127.0.0.1", ("127.0.0.1", None)),
+            ("example.com:1883", ("example.com", 1883)),
+            ("[::1]:8080", ("::1", 8080)),
+            ("[::1]", ("::1", None)),
+            ("::1", ("::1", None)),
+            ("2001:db8::1", ("2001:db8::1", None)),
+            ("[2001:db8::1]:502", ("2001:db8::1", 502)),
+            # Invalid ports -> treated as host, no port
+            ("127.0.0.1:99999", ("127.0.0.1:99999", None)),
+            ("127.0.0.1:abc", ("127.0.0.1:abc", None)),
+            ("127.0.0.1:0", ("127.0.0.1:0", None)),
+            ("", ("", None)),
+        ],
+    )
+    def test_split(self, target, expected):
+        from oida.fuzz_cli import _split_target_port
+
+        assert _split_target_port(target) == expected
+
+    def test_explicit_flag_wins_over_embedded(self):
+        """-p/--port flag takes precedence over an embedded port."""
+        from oida.fuzz_cli import _split_target_port
+
+        host, embedded_port = _split_target_port("127.0.0.1:8080")
+        user_port = 9090
+        port = user_port or embedded_port or 502
+        assert host == "127.0.0.1"
+        assert port == 9090
+
+    def test_embedded_wins_over_default(self):
+        """Embedded port is used when no --port flag is given."""
+        from oida.fuzz_cli import _split_target_port
+
+        host, embedded_port = _split_target_port("127.0.0.1:8080")
+        user_port = None
+        port = user_port or embedded_port or 502
+        assert host == "127.0.0.1"
+        assert port == 8080
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

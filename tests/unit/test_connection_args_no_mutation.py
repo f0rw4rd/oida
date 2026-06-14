@@ -15,8 +15,11 @@ class TestArgsCopySemantics(unittest.TestCase):
         import pathlib
 
         src = pathlib.Path("src/oida/connection.py").read_text()
-        # Look for the copy.copy preceding the port set.
-        self.assertIn("args = copy.copy(args)", src)
+        # Look for the copy preceding the port set (shallow or deep).
+        self.assertTrue(
+            "args = copy.copy(args)" in src or "args = copy.deepcopy(args)" in src,
+            "args copy missing — see CODE_REVIEW HIGH (Namespace leak)",
+        )
 
     def test_namespace_not_mutated_when_port_set(self):
         """A Namespace passed in must come out unchanged."""

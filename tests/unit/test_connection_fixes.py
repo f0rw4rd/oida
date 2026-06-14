@@ -37,9 +37,8 @@ class TestArgsCopyOnInit(unittest.TestCase):
 
         src = pathlib.Path("src/oida/connection.py").read_text()
         # Look for the unconditional copy (the fix).
-        self.assertIn(
-            "args = copy.copy(args)",
-            src,
+        self.assertTrue(
+            "args = copy.copy(args)" in src or "args = copy.deepcopy(args)" in src,
             "args copy regression — see CODE_REVIEW HIGH (Namespace leak)",
         )
         # Old gating idiom — make sure it's gone or wrapped after copy.

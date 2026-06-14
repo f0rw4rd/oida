@@ -23,7 +23,11 @@ def proto_args(parser, parents):
         "target",
         nargs="?",
         default=None,
-        help="Network interface (e.g., eth0, enp0s3)",
+        help=(
+            "Network interface (Linux: eth0, enp0s3; "
+            r"Windows: 'Ethernet', 'Wi-Fi', or \Device\NPF_{GUID} — run Get-NetAdapter to list). "
+            "Omit to auto-select."
+        ),
     )
 
     # Main options
