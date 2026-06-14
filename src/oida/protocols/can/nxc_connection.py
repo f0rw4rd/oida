@@ -323,7 +323,12 @@ class can(ISOTPMixin, SerialConnection):
         # Collect responses
         end_time = time.time() + 1.0
         while time.time() < end_time:
-            resp = self.conn.recv(timeout=0.1)
+            try:
+                resp = self.conn.recv(timeout=0.1)
+            except Exception:
+                # udp_multicast datagrams can coalesce under load, yielding
+                # msgpack decode failures; skip the corrupt packet and continue.
+                continue
             if resp is None:
                 continue
 
