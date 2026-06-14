@@ -110,7 +110,6 @@ class ProtocolType(Enum):
     UDP = "udp"
     RAW = "raw"
     SERIAL = "serial"
-    BLE = "ble"
     IEC104 = "iec104"  # IEC 60870-5-104 with automatic STARTDT handshake
     ICMP = "icmp"  # ICMP raw sockets (kernel handles IP header and checksum)
     ICMPV6 = "icmpv6"  # ICMPv6 raw sockets (kernel handles IPv6 header and checksum)

@@ -15,7 +15,6 @@ from oida.fuzz.core.connections import MockConnectionFactory
 EXPECTED_FAILURES = {
     "raw_socket": ["icmp", "icmpv6", "ipv4", "ipv6", "ethernet", "profinet_dcp"],
     "serial": ["modbus_rtu"],
-    "ble": ["gatt"],  # Requires BLE device address
     "radamsa": [  # Requires pyradamsa optional dependency
         "mutation",
         "http_mutation",
@@ -28,7 +27,6 @@ EXPECTED_FAILURES = {
 ALL_EXPECTED_FAILURES = (
     EXPECTED_FAILURES["raw_socket"]
     + EXPECTED_FAILURES["serial"]
-    + EXPECTED_FAILURES["ble"]
     + EXPECTED_FAILURES["radamsa"]
 )
 
@@ -85,7 +83,7 @@ class TestProtocolImport:
     def test_category_protocols_exist_in_registry(self):
         """Verify all protocols listed in categories exist in registry."""
         # Protocols that require optional dependencies (may not be installed)
-        optional_protocols = {"gatt", "http2"}  # Requires bleak / hpack
+        optional_protocols = {"http2"}  # Requires hpack
 
         missing = []
         for category_name, category_data in PROTOCOL_CATEGORIES.items():
