@@ -259,6 +259,28 @@ SERVICE_STARTUP_TIMEOUT = 120
 DEFAULT_CLI_TIMEOUT = 30
 
 
+def _service_unavailable(msg: str) -> None:
+    """Fail or skip when a required mock service is not reachable.
+
+    Set OIDA_SKIP_MISSING_SERVICES=1 in the environment to skip instead of fail
+    (useful for local dev without services running).
+    """
+    if os.environ.get("OIDA_SKIP_MISSING_SERVICES"):
+        pytest.skip(msg)
+    else:
+        pytest.fail(msg)
+
+
+def _l2_service_unavailable(msg: str) -> None:
+    """Always skip when an L2 (raw-socket) service is not available.
+
+    L2 services require special Docker profiles and host networking with
+    CAP_NET_RAW — they are not part of the standard core service set and
+    are only available in specific test environments.
+    """
+    pytest.skip(msg)
+
+
 def check_port_open(host: str, port: int, timeout: int = 3) -> bool:
     """Check if a TCP port is open"""
     try:
@@ -315,10 +337,11 @@ def ensure_mock(protocol_name: str) -> None:
         reachable = check_port_open(MOCK_HOST, port, timeout=2)
 
     if not reachable:
-        pytest.skip(
-            f"{protocol_name} mock not available on port {port} "
-            f"(run 'make mock-start' or use pytest markers)"
-        )
+        msg = f"{protocol_name} mock not available on port {port} (run: python services.py up)"
+        if os.environ.get("OIDA_SKIP_MISSING_SERVICES"):
+            pytest.skip(msg)
+        else:
+            pytest.fail(msg)
 
 
 # ---------------------------------------------------------------------------
@@ -350,6 +373,13 @@ UDP_SERVICES: Set[str] = {
     "coap-libcoap",
     "coap-dtls",
     "coap-dtls-cert",
+    # BACnet — port 47808/UDP, cannot be health-checked via TCP
+    "bacnet-mock",
+    "bacnet-conpot",
+    # SNMP — port 161/UDP (mapped to 10161/10162/10164), cannot be health-checked via TCP
+    "snmp-mock",
+    "snmp-switch",
+    "snmp-v3only",
 }
 
 # Docker compose project name (must match docker_compose_project_name fixture)
@@ -498,6 +528,73 @@ def pytest_collection_modifyitems(items):
                 _needed_services.update(marker.args)
 
 
+def pytest_collection_finish(session):
+    """Start needed Docker services right after collection, in the controller.
+
+    This hook fires in the controller process (before xdist workers execute
+    any tests), so services are guaranteed to be up when workers begin.
+    Without this, session-scoped fixtures in xdist workers see an empty
+    _needed_services because each worker imports conftest fresh.
+    """
+    if not _needed_services:
+        return
+
+    # Detect already-running services
+    for svc in list(_needed_services):
+        if svc in L2_SERVICES:
+            if check_l2_container_healthy(L2_CONTAINER_NAME.get(svc, svc)):
+                _preexisting_services.add(svc)
+        elif svc in UDP_SERVICES:
+            port = SERVICE_HEALTH_PORT.get(svc)
+            if port and check_udp_port_open(MOCK_HOST, port, timeout=1):
+                _preexisting_services.add(svc)
+        else:
+            port = SERVICE_HEALTH_PORT.get(svc)
+            if port and check_port_open(MOCK_HOST, port, timeout=1):
+                _preexisting_services.add(svc)
+
+    to_start = _needed_services - _preexisting_services
+    if not to_start:
+        return
+
+    cmd = [
+        "docker",
+        "compose",
+        "-f",
+        str(DOCKER_COMPOSE_PATH),
+        "-p",
+        "oida-test",
+        "up",
+        "-d",
+        "--build",
+        *sorted(to_start),
+    ]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, timeout=600)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        print(f"\n[docker_setup] failed to start {sorted(to_start)}: {e}")
+        return
+
+    # Wait for TCP-checkable services to be reachable (up to 90s)
+    import time
+
+    deadline = time.monotonic() + 90
+    pending = {
+        svc
+        for svc in to_start
+        if svc not in L2_SERVICES and svc not in UDP_SERVICES and SERVICE_HEALTH_PORT.get(svc)
+    }
+    while pending and time.monotonic() < deadline:
+        for svc in list(pending):
+            port = SERVICE_HEALTH_PORT[svc]
+            if check_port_open(MOCK_HOST, port, timeout=1):
+                pending.discard(svc)
+        if pending:
+            time.sleep(2)
+    if pending:
+        print(f"\n[docker_setup] services still not ready after 90s: {sorted(pending)}")
+
+
 # ---------------------------------------------------------------------------
 # Override pytest-docker fixtures
 # ---------------------------------------------------------------------------
@@ -517,61 +614,13 @@ def docker_compose_project_name():
 
 @pytest.fixture(scope="session")
 def docker_setup():
-    """Start only the compose services required by collected test markers.
-    Services already listening (e.g. from ``make mock-start``) are skipped.
+    """Sentinel fixture — actual Docker startup happens in pytest_collection_finish.
 
-    If some services are already running (pre-existing from ``make mock-start``)
-    and additional services need to be started, we skip the compose up to avoid
-    Docker network conflicts.  The per-test ``_check_required_containers``
-    fixture will skip tests whose services are not available.
+    This fixture exists so _start_mock and _check_required_containers can
+    express an ordering dependency on it (ensuring they don't race with
+    container startup in single-process mode).
     """
-    # Detect already-running services
-    for svc in list(_needed_services):
-        if svc in L2_SERVICES:
-            # L2 services have no TCP port; check via docker inspect
-            if check_l2_container_healthy(L2_CONTAINER_NAME.get(svc, svc)):
-                _preexisting_services.add(svc)
-        elif svc in UDP_SERVICES:
-            port = SERVICE_HEALTH_PORT.get(svc)
-            if port and check_udp_port_open(MOCK_HOST, port, timeout=1):
-                _preexisting_services.add(svc)
-        else:
-            port = SERVICE_HEALTH_PORT.get(svc)
-            if port and check_port_open(MOCK_HOST, port, timeout=1):
-                _preexisting_services.add(svc)
-
-    to_start = _needed_services - _preexisting_services
-    if to_start:
-        if _preexisting_services:
-            # Some services already running from a previous compose session.
-            # Starting new services would likely fail with a Docker network
-            # overlap error.  Let per-test skip guards handle missing services.
-            return []
-        # Bring the services up ourselves (rather than delegating the command to
-        # pytest-docker) so a build/start failure -- e.g. an upstream package that
-        # has vanished from its index -- degrades to per-test skips via
-        # _check_required_containers instead of erroring the entire session.
-        cmd = [
-            "docker",
-            "compose",
-            "-f",
-            str(DOCKER_COMPOSE_PATH),
-            "-p",
-            "oida-test",
-            "up",
-            "-d",
-            "--wait",
-            *sorted(to_start),
-        ]
-        try:
-            subprocess.run(cmd, check=True, capture_output=True, timeout=600)
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            print(
-                f"[docker_setup] could not start {sorted(to_start)}: {e}; "
-                "per-test guards will skip unavailable services"
-            )
-        return []
-    return []  # Everything already running — no Docker commands
+    return []
 
 
 @pytest.fixture(scope="session")
@@ -589,7 +638,7 @@ def docker_cleanup():
 
 
 @pytest.fixture(autouse=True)
-def _check_required_containers(request):
+def _check_required_containers(request, docker_setup):
     """Skip tests whose @pytest.mark.containers(...) services aren't reachable."""
     marker = request.node.get_closest_marker("containers")
     if marker:
@@ -604,18 +653,18 @@ def _check_required_containers(request):
                         profile = "goose-l2"
                     elif "can" in service:
                         profile = "can"
-                    pytest.skip(
+                    _l2_service_unavailable(
                         f"L2 container '{service}' not healthy "
                         f"(start with: docker compose --profile {profile} up -d)"
                     )
             elif service in UDP_SERVICES:
                 port = SERVICE_HEALTH_PORT.get(service)
                 if port and not check_udp_port_open(MOCK_HOST, port, timeout=2):
-                    pytest.skip(f"Container '{service}' not available (UDP port {port})")
+                    _service_unavailable(f"Container '{service}' not available (UDP port {port})")
             else:
                 port = SERVICE_HEALTH_PORT.get(service)
                 if port and not check_port_open(MOCK_HOST, port, timeout=2):
-                    pytest.skip(f"Container '{service}' not available (port {port})")
+                    _service_unavailable(f"Container '{service}' not available (port {port})")
 
 
 # ---------------------------------------------------------------------------

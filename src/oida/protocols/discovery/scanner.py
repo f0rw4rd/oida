@@ -28,8 +28,8 @@ from ...utils.ics_logger import get_module_logger
 from ...utils.lazy_import import lazy_import
 
 _scapy = lazy_import("scapy", "discovery")
-_netifaces = lazy_import("netifaces", "discovery")
 _profinet = lazy_import("profinet", "PROFINET")
+from ...utils import iface_info as _netifaces
 
 from .arp import ARPScanner, ARPPassiveListener, EthernetPassiveListener
 from .dhcp import DHCPPassiveListener, DHCPServerScanner
@@ -473,20 +473,18 @@ class DiscoveryScanner(SerialScanner):
             (like loopback or virtual interfaces)
 
         Raises:
-            ImportError: If netifaces module is not available
+            ImportError: Should not occur (psutil always available)
             ValueError: If interface does not exist
             RuntimeError: If unable to query interface
         """
-        netifaces = _netifaces()  # Raises DependencyError if not available
-
         # Validate interface exists first
-        if self.interface not in netifaces.interfaces():
+        if self.interface not in _netifaces.interfaces():
             raise ValueError(f"Interface '{self.interface}' not found")
 
         try:
-            addrs = netifaces.ifaddresses(self.interface)
-            if netifaces.AF_LINK in addrs:
-                for addr_info in addrs[netifaces.AF_LINK]:
+            addrs = _netifaces.ifaddresses(self.interface)
+            if _netifaces.AF_LINK in addrs:
+                for addr_info in addrs[_netifaces.AF_LINK]:
                     mac = addr_info.get("addr", "")
                     if mac and mac != "00:00:00:00:00:00":
                         return mac.lower()

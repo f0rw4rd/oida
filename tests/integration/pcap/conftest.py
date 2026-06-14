@@ -298,9 +298,8 @@ def _run_e2e_test(case: dict) -> dict:
     if decode_as:
         # PcapScanner expects semicolon-separated "key,value" pairs
         scan_args["decode_as"] = ";".join(f"{k},{v}" for k, v in decode_as.items())
-    max_packets = case.get("max_packets")
-    if max_packets:
-        scan_args["max_packets"] = max_packets
+    max_packets = case.get("max_packets", _MAX_TEST_PACKETS)
+    scan_args["max_packets"] = max_packets
     scanner = PcapScanner(pcap, args=scan_args)
     result = scanner.run_scan()
 
@@ -732,6 +731,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "filter": "ntlmssp",
         "pcap": "smb/bruteshark_ntlm_smb.pcap",
         "details": ["msg_type"],
+        "max_packets": 1000,  # PCAP has 1000 total; real credentials start at packet 707
     },
     {
         "id": "irc",

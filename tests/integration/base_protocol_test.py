@@ -69,7 +69,7 @@ class BaseProtocolIntegrationTest(ABC):
     # Autouse fixture: ensure this protocol's mock is running before any test
 
     @pytest.fixture(autouse=True, scope="class")
-    def _start_mock(self):
+    def _start_mock(self, docker_setup):
         """Ensure this protocol's mock service is running before any test"""
         ensure_mock(self.protocol_name)
 

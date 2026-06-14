@@ -60,13 +60,13 @@ class MDNSScanner:
                 self.scanner._handle_service(zc, type_, name)
 
         # Create Zeroconf instance bound to specific interface
-        import netifaces
+        from ...utils import iface_info as _netifaces
 
-        addrs = netifaces.ifaddresses(self.interface)
-        if netifaces.AF_INET not in addrs:
+        addrs = _netifaces.ifaddresses(self.interface)
+        if _netifaces.AF_INET not in addrs:
             logger.warning(f"No IPv4 address on {self.interface}")
             return {}
-        iface_ip = addrs[netifaces.AF_INET][0]["addr"]
+        iface_ip = addrs[_netifaces.AF_INET][0]["addr"]
 
         browsers = []
         try:
@@ -246,13 +246,13 @@ class DNSSDScanner:
                 pass
 
         # Create Zeroconf instance bound to specific interface
-        import netifaces
+        from ...utils import iface_info as _netifaces
 
-        addrs = netifaces.ifaddresses(self.interface)
-        if netifaces.AF_INET not in addrs:
+        addrs = _netifaces.ifaddresses(self.interface)
+        if _netifaces.AF_INET not in addrs:
             logger.warning(f"No IPv4 address on {self.interface}")
             return {}
-        iface_ip = addrs[netifaces.AF_INET][0]["addr"]
+        iface_ip = addrs[_netifaces.AF_INET][0]["addr"]
 
         zc = None
         browsers = []

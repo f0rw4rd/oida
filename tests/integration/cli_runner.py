@@ -6,6 +6,7 @@ Supports optional structured JSON log capture via --json-log.
 """
 
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -143,19 +144,53 @@ class CLIRunner:
         # Execute command
         start_time = time.time()
         scan_log = None
+        effective_timeout = timeout or self.default_timeout
+        proc = None
         try:
-            result = subprocess.run(
+            proc = subprocess.Popen(
                 cmd,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                timeout=timeout or self.default_timeout,
+                start_new_session=True,  # own process group so we can kill the whole tree
             )
+            try:
+                stdout, stderr = proc.communicate(timeout=effective_timeout)
+            except subprocess.TimeoutExpired:
+                # Kill the entire process group (handles grandchildren / asyncio fds)
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    proc.kill()
+                try:
+                    stdout, stderr = proc.communicate(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    stdout, stderr = "", ""
+                execution_time = time.time() - start_time
+                if json_log_path and os.path.exists(json_log_path):
+                    try:
+                        from .json_log_reader import ScanLog
+
+                        scan_log = ScanLog(json_log_path)
+                    except Exception:
+                        pass
+                return CLIResult(
+                    returncode=-1,
+                    stdout=stdout or "",
+                    stderr=f"Command timed out after {effective_timeout}s",
+                    execution_time=execution_time,
+                    command=cmd,
+                    scan_log=scan_log,
+                )
+
+            result_returncode = proc.returncode
             execution_time = time.time() - start_time
 
             # Parse JSON if requested
             json_output = None
             if expect_json:
-                json_output = self._try_parse_json(result.stdout)
+                json_output = self._try_parse_json(stdout)
 
             # Parse structured JSON log if captured
             if json_log_path and os.path.exists(json_log_path):
@@ -167,9 +202,9 @@ class CLIRunner:
                     pass  # Don't fail if log parsing fails
 
             return CLIResult(
-                returncode=result.returncode,
-                stdout=result.stdout,
-                stderr=result.stderr,
+                returncode=result_returncode,
+                stdout=stdout,
+                stderr=stderr,
                 json_output=json_output,
                 execution_time=execution_time,
                 command=cmd,
@@ -177,7 +212,7 @@ class CLIRunner:
             )
 
         except subprocess.TimeoutExpired:
-            # Still try to parse JSON log on timeout
+            # Fallback — should not reach here with Popen-based flow above
             if json_log_path and os.path.exists(json_log_path):
                 try:
                     from .json_log_reader import ScanLog
@@ -189,13 +224,23 @@ class CLIRunner:
             return CLIResult(
                 returncode=-1,
                 stdout="",
-                stderr=f"Command timed out after {timeout or self.default_timeout}s",
-                execution_time=timeout or self.default_timeout,
+                stderr=f"Command timed out after {effective_timeout}s",
+                execution_time=effective_timeout,
                 command=cmd,
                 scan_log=scan_log,
             )
 
         finally:
+            # Kill leftover process if pytest-timeout or another exception interrupted us
+            if proc is not None and proc.poll() is None:
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                except (ProcessLookupError, PermissionError, OSError):
+                    proc.kill()
+                try:
+                    proc.communicate(timeout=3)
+                except Exception:
+                    pass
             # Clean up temp file
             if json_log_path:
                 try:
