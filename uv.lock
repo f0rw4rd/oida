@@ -1599,12 +1599,6 @@ wheels = [
 ]
 
 [[package]]
-name = "netifaces"
-version = "0.11.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a6/91/86a6eac449ddfae239e93ffc1918cf33fd9bab35c04d1e963b311e347a73/netifaces-0.11.0.tar.gz", hash = "sha256:043a79146eb2907edf439899f262b3dfe41717d34124298ed281139a8b93ca32", size = 30106, upload-time = "2021-05-31T08:33:02.506Z" }
-
-[[package]]
 name = "nodeenv"
 version = "1.10.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1641,10 +1635,10 @@ all = [
     { name = "h2" },
     { name = "hartip-py" },
     { name = "hl7apy" },
-    { name = "netifaces", marker = "sys_platform != 'win32'" },
     { name = "oida-pyshark" },
     { name = "paho-mqtt" },
     { name = "profinet-py" },
+    { name = "psutil" },
     { name = "pyads" },
     { name = "pyasn1" },
     { name = "pycomm3" },
@@ -1702,8 +1696,8 @@ dicom = [
 ]
 discovery = [
     { name = "defusedxml" },
-    { name = "netifaces", marker = "sys_platform != 'win32'" },
     { name = "profinet-py" },
+    { name = "psutil" },
     { name = "scapy" },
     { name = "zeroconf" },
 ]
@@ -1806,7 +1800,6 @@ requires-dist = [
     { name = "msgpack", marker = "extra == 'dev'", specifier = ">=1.1.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.1,<5" },
-    { name = "netifaces", marker = "sys_platform != 'win32' and extra == 'discovery'", specifier = "==0.11.0" },
     { name = "oida", extras = ["ads", "astm", "bacnet", "can", "coap", "dicom", "discovery", "dnp3", "ethercat"], marker = "extra == 'all'" },
     { name = "oida", extras = ["ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms"], marker = "extra == 'all'" },
     { name = "oida", extras = ["fuzz", "modbus", "mqtt", "ocpp", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2"], marker = "extra == 'all'" },
@@ -1815,6 +1808,7 @@ requires-dist = [
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
     { name = "profinet-py", marker = "extra == 'discovery'", specifier = "==0.6.2" },
     { name = "profinet-py", marker = "extra == 'profinet'", specifier = "==0.6.2" },
+    { name = "psutil", marker = "extra == 'discovery'", specifier = "==7.2.2" },
     { name = "pyads", marker = "extra == 'ads'", specifier = "==3.5.2" },
     { name = "pyasn1", marker = "extra == 'fuzz'", specifier = "==0.6.3" },
     { name = "pycomm3", marker = "extra == 'ethernetip'", specifier = "==1.2.16" },
