@@ -66,7 +66,13 @@ class TrafficMixin:
             if remaining <= 0:
                 break
 
-            msg = bus.recv(timeout=min(remaining, 1.0))
+            try:
+                msg = bus.recv(timeout=min(remaining, 1.0))
+            except Exception:
+                # udp_multicast datagrams can coalesce under load, yielding
+                # msgpack decode failures; skip the corrupt packet and continue.
+                stats.error_frames += 1
+                continue
             if msg is None:
                 continue
 
