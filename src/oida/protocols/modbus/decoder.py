@@ -964,3 +964,171 @@ def encode_string(value: str, length: Optional[int] = None, byte_order: str = "b
     """Quick encode of string to registers"""
     encoder = ModbusEncoder(byte_order)
     return encoder.encode_string(value, length or len(value))
+
+
+class MapNameResolver:
+    """Resolve friendly register names from a loaded register map.
+
+    Backs the name-based features (``--list-names`` / ``--search-name`` /
+    ``--read-name`` / ``--write-name``) in the modbus read/write mixin. Wraps
+    :func:`load_register_map` and the module's :class:`ModbusDecoder` /
+    :class:`ModbusEncoder`, exposing per-entry resolution plus engineering-value
+    decode/encode (scale/offset and min/max applied).
+    """
+
+    def __init__(self, map_name: str):
+        data = load_register_map(map_name)
+        if data is None:
+            raise ValueError(
+                f"Register map not found: {map_name!r} (use --list-maps to see available maps)"
+            )
+        self.map_data: Dict[str, Any] = data
+        self.vendor = data.get("vendor", "Unknown")
+        self.model = data.get("model", "Unknown")
+        self.byte_order = data.get("byte_order", "big")
+        self.word_order = data.get("word_order", "big")
+        self._decoder = ModbusDecoder(byte_order=self.byte_order, word_order=self.word_order)
+        self._encoder = ModbusEncoder(byte_order=self.byte_order, word_order=self.word_order)
+        self._entries: List[Dict[str, Any]] = [
+            self._build_entry(name, d)
+            for name, d in data.get("registers", {}).items()
+            if isinstance(d, dict) and d.get("address") is not None
+        ]
+        self._by_name = {e["name"].lower(): e for e in self._entries}
+
+    @staticmethod
+    def _build_entry(name: str, d: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize a raw map definition into a resolver entry.
+
+        Derives ``function_code`` and ``section`` when the map omits them: a
+        ``coil`` type reads via FC1 (section ``coils``), everything else via FC3
+        (section ``holding_registers``). Explicit values in the map win.
+        """
+        dtype = d.get("type", "u16")
+        fc = d.get("function_code")
+        if fc is None:
+            fc = 1 if dtype == "coil" else 3
+        section = d.get("section")
+        if section is None:
+            section = "coils" if dtype == "coil" else "holding_registers"
+        entry = dict(d)  # passthrough scale/offset/values/min/max/length/etc.
+        entry["name"] = name
+        entry["type"] = dtype
+        entry["function_code"] = fc
+        entry["section"] = section
+        entry.setdefault("access", d.get("access", "r"))
+        entry.setdefault("description", d.get("description", ""))
+        entry.setdefault("unit", d.get("unit", ""))
+        return entry
+
+    def list_all(self) -> List[Dict[str, Any]]:
+        """Return all register entries in map order."""
+        return list(self._entries)
+
+    def search(self, query: str) -> List[Dict[str, Any]]:
+        """Return entries whose name or description contains *query* (ci)."""
+        q = query.lower()
+        return [
+            e
+            for e in self._entries
+            if q in e["name"].lower() or q in str(e.get("description", "")).lower()
+        ]
+
+    def resolve(self, name: str) -> Optional[Dict[str, Any]]:
+        """Return the entry for an exact (case-insensitive) name, or None."""
+        return self._by_name.get(name.lower())
+
+    def get_registers_needed(self, entry: Dict[str, Any]) -> int:
+        """Number of 16-bit registers a single read of *entry* spans."""
+        raw = str(entry.get("type", "u16")).lower()
+        dtype = TYPE_ALIASES.get(raw, raw)
+        if dtype == "str":
+            char_len = entry.get("length", 2)
+            return max(1, (int(char_len) + 1) // 2)
+        if raw == "coil":
+            return 1
+        return REGISTERS_PER_TYPE.get(dtype, 1) or 1
+
+    def _enum_label(self, entry: Dict[str, Any], value: Any) -> Optional[str]:
+        values_map = entry.get("values")
+        if not isinstance(values_map, dict) or value is None:
+            return None
+        key = value
+        if isinstance(value, float) and value.is_integer():
+            key = int(value)
+        return values_map.get(str(key))
+
+    def decode_value(self, entry: Dict[str, Any], raw_regs: List[int]) -> Dict[str, Any]:
+        """Decode raw register values into an engineering value dict.
+
+        Applies the entry's scale/offset and resolves an ``enum_label`` from a
+        ``values`` map. Returns ``{"error": ...}`` on a decode failure rather
+        than raising, mirroring what the read-by-name handler expects.
+        """
+        dtype = entry.get("type", "u16")
+        try:
+            decoded = self._decoder.decode(raw_regs, dtype, string_length=entry.get("length"))
+        except Exception as e:  # noqa: BLE001 - surfaced to the caller as an error dict
+            return {
+                "name": entry.get("name"),
+                "value": None,
+                "error": str(e),
+                "address": entry.get("address"),
+            }
+        if not decoded:
+            return {"name": entry.get("name"), "value": None, "error": "decode_failed"}
+
+        value = decoded[0].get("value")
+        scale = entry.get("scale", 1.0)
+        offset = entry.get("offset", 0.0)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if scale != 1.0 or offset != 0.0:
+                value = value * scale + offset
+
+        result = {
+            "name": entry.get("name"),
+            "value": value,
+            "address": entry.get("address"),
+            "type": dtype,
+            "unit": entry.get("unit", ""),
+            "description": entry.get("description", ""),
+            "raw": list(raw_regs),
+        }
+        label = self._enum_label(entry, value)
+        if label is not None:
+            result["enum_label"] = label
+        return result
+
+    def encode_value(self, entry: Dict[str, Any], value_str: str) -> List[int]:
+        """Encode an engineering value string into raw register values.
+
+        Reverses scale/offset and enforces the entry's min/max for numeric
+        types. Raises ``ValueError`` on a range violation (the write-by-name
+        handler treats that as a validation error).
+        """
+        raw = str(entry.get("type", "u16")).lower()
+        dtype = TYPE_ALIASES.get(raw, raw)
+
+        if dtype == "str":
+            return self._encoder.encode(value_str, "str", length=entry.get("length"))
+
+        try:
+            num = float(value_str)
+        except ValueError as e:
+            raise ValueError(f"'{value_str}' is not a valid number for type {raw}") from e
+
+        mn = entry.get("min")
+        mx = entry.get("max")
+        if mn is not None and num < float(mn):
+            raise ValueError(f"value {num} below minimum {mn}")
+        if mx is not None and num > float(mx):
+            raise ValueError(f"value {num} above maximum {mx}")
+
+        scale = entry.get("scale", 1.0)
+        offset = entry.get("offset", 0.0)
+        if scale != 1.0 or offset != 0.0:
+            num = (num - offset) / scale
+
+        if dtype in ("f32", "f64"):
+            return self._encoder.encode(repr(num), dtype)
+        return self._encoder.encode(str(int(round(num))), dtype)
