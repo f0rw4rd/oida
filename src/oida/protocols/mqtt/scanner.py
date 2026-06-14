@@ -777,8 +777,8 @@ class MQTTScanner(
             if not conn:
                 return results
         else:
-            # Connected (anonymous allowed) - note it in auth results
-            results["auth"]["anonymous_allowed"] = True
+            # Connected - only mark anonymous if no credentials were provided
+            results["auth"]["anonymous_allowed"] = not bool(self.username)
 
         # Run brute-force if enabled (even when anonymous works, to find additional creds)
         if self.brute_enabled:

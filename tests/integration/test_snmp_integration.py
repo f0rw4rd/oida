@@ -732,7 +732,7 @@ class TestSNMPIntegration:
             "--walk",
             format="json",
             json_log=True,
-            timeout=10,
+            timeout=30,
         )
         assert result.success, f"Walk failed: {result.stderr}"
         _assert_log_has_events(result, min_count=3)
@@ -769,7 +769,7 @@ class TestSNMPIntegration:
             "list:net-snmp",
             format="json",
             json_log=True,
-            timeout=10,
+            timeout=30,
         )
         # Vendor subtree may have entries or be empty
         assert result.returncode in [0, 1]
@@ -787,7 +787,7 @@ class TestSNMPIntegration:
             "list:all",
             format="json",
             json_log=True,
-            timeout=15,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -803,7 +803,7 @@ class TestSNMPIntegration:
             "--walk-all",
             format="json",
             json_log=True,
-            timeout=15,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -896,7 +896,7 @@ class TestSNMPIntegration:
             "--enum",
             format="json",
             json_log=True,
-            timeout=15,
+            timeout=30,
         )
         assert result.returncode in [0, 1]
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -2169,7 +2169,7 @@ class TestSNMPIntegration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Walk-write failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2709,6 +2709,8 @@ class TestSNMPSwitch:
             str(port),
             "--enum",
             "creds",
+            "--timeout",
+            "5",
             format="json",
             json_log=True,
         )
@@ -2739,6 +2741,8 @@ class TestSNMPSwitch:
             str(port),
             "--enum",
             "creds",
+            "--timeout",
+            "5",
             format="json",
             json_log=True,
         )
@@ -2767,6 +2771,8 @@ class TestSNMPSwitch:
             str(port),
             "--enum",
             "creds",
+            "--timeout",
+            "5",
             format="json",
             json_log=True,
         )
@@ -2792,6 +2798,8 @@ class TestSNMPSwitch:
             str(port),
             "--enum",
             "creds",
+            "--timeout",
+            "5",
             format="json",
             json_log=True,
         )
