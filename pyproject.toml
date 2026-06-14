@@ -53,7 +53,7 @@ bacnet = ["BAC0==2025.9.15", "PyYAML==6.0.3"]
 can = ["python-can==4.6.1"]
 coap = ["aiocoap==0.4.17", "DTLSSocket==0.2.3; sys_platform != 'win32'", "cbor2==6.1.2"]
 dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
-discovery = ["zeroconf==0.149.16", "scapy==2.7.0", "netifaces==0.11.0", "profinet-py==0.6.2", "defusedxml==0.7.1"]
+discovery = ["zeroconf==0.149.16", "scapy==2.7.0", "netifaces==0.11.0; sys_platform != 'win32'", "profinet-py==0.6.2", "defusedxml==0.7.1"]
 dnp3 = ["yadnp3==3.2.1.1"]
 ethercat = ["pysoem==1.1.13; sys_platform != 'win32'"]
 ethernetip = ["pycomm3==1.2.16"]
@@ -103,6 +103,7 @@ dev = [
     "Brotli>=1.2.0",          # tests/unit/fuzz/test_transformers.py
     "docker>=7.1.0",          # tests/integration/common/test_mock_services_integration.py
     "defusedxml>=0.7.1",      # SSDP/UPnP — also in discovery extra; here for unit tests
+    "msgpack>=1.1.0",         # python-can udp_multicast — gates tests/integration/test_can_mock_e2e.py
 ]
 docs = [
     # Note: docs site lives in the separate oida-website repo
