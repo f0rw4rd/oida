@@ -628,8 +628,11 @@ class CommandMixin:
                 )
                 break
 
-            # Generate fuzzed payloads
-            for i, payload in enumerate(fuzz(base_cmd, count=self.fuzz_iterations, max_len=16)):
+            # Generate fuzzed payloads. fuzz() yields (payload_bytes, description)
+            # tuples — unpack so payload is bytes (not the tuple).
+            for i, (payload, _desc) in enumerate(
+                fuzz(base_cmd, count=self.fuzz_iterations, max_len=16)
+            ):
                 try:
                     # Try to send the fuzzed command via c104's raw interface
                     if hasattr(conn, "send_raw"):

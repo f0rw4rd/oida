@@ -1525,6 +1525,30 @@ class HL7SegmentParser:
         return ", ".join(components) if components else addr_field
 
     @staticmethod
+    def _iter_segments(element: Any):
+        """Yield every Segment in document order, descending into Groups.
+
+        hl7apy nests segments inside message Groups for standard structures
+        (e.g. an ORU^R01's PID/OBR/OBX live under an ORU_R01_PATIENT_RESULT
+        group, not at the top level). Walking only ``message.children`` would
+        therefore see just MSH + the group container and miss every clinical
+        segment. This flattens the tree so the parser sees PID/ORC/OBR/OBX/
+        RXE/RXD/RXA regardless of grouping.
+
+        hl7apy is the module-level optional dependency; the only caller
+        (``parse_message``) has already imported it, so the import here is just
+        deferring an internal class reference, not guarding an optional dep.
+        """
+        from hl7apy.core import Group, Segment
+
+        for child in element.children:
+            if isinstance(child, Segment):
+                yield child
+            elif isinstance(child, Group):
+                yield from HL7SegmentParser._iter_segments(child)
+            # else: Field/Component/unknown — not a segment, skip
+
+    @staticmethod
     def parse_message(message: Any, extended: bool = False) -> dict:
         """Parse full HL7 message using hl7apy"""
         from hl7apy.parser import parse_message
@@ -1546,7 +1570,7 @@ class HL7SegmentParser:
         current_patient = {}
         current_order: dict = {}
 
-        for child in msg.children:
+        for child in HL7SegmentParser._iter_segments(msg):
             seg_name = child.name
             result["segments"][seg_name] = str(child.to_er7())
 
