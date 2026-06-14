@@ -28,8 +28,6 @@ SKIP_DEFINE = {
     "profinet_dcp",
     # Serial protocols require a real serial device
     "modbus_rtu",
-    # BLE requires a device address
-    "gatt",
     # Mutation fuzzer requires seed files
     "mutation",
 }

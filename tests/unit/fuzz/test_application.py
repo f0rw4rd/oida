@@ -243,7 +243,6 @@ class TestProtocolType:
         assert ProtocolType.UDP.value == "udp"
         assert ProtocolType.RAW.value == "raw"
         assert ProtocolType.SERIAL.value == "serial"
-        assert ProtocolType.BLE.value == "ble"
         assert ProtocolType.IEC104.value == "iec104"
 
 

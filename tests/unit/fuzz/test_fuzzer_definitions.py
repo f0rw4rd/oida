@@ -22,7 +22,6 @@ XFAIL_PROTOCOLS = {
     "profinet_dcp",
     "industrial_ethernet",
     "modbus_rtu",
-    "gatt",
 }
 
 

@@ -40,7 +40,6 @@ SKIP_PROTOCOLS = {
     "industrial_ethernet",
     "profinet_dcp",
     "modbus_rtu",
-    "gatt",
     "mutation",
 }
 

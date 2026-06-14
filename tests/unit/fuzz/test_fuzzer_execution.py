@@ -29,8 +29,6 @@ SKIP_PROTOCOLS = {
     "profinet_dcp",
     # Serial port
     "modbus_rtu",
-    # BLE hardware
-    "gatt",
     # Optional pyradamsa dependency
     "mutation",
     # Industrial ethernet (requires raw socket)
