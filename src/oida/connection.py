@@ -435,14 +435,14 @@ class SerialConnection(connection):
         Returns:
             dict: Interface info (MAC, MTU, etc.)
         """
-        import netifaces
+        from .utils import iface_info
 
         try:
-            addrs = netifaces.ifaddresses(self.interface)
+            addrs = iface_info.ifaddresses(self.interface)
             return {
                 "interface": self.interface,
-                "mac": addrs.get(netifaces.AF_LINK, [{}])[0].get("addr"),
-                "ipv4": addrs.get(netifaces.AF_INET, [{}])[0].get("addr"),
+                "mac": addrs.get(iface_info.AF_LINK, [{}])[0].get("addr"),
+                "ipv4": addrs.get(iface_info.AF_INET, [{}])[0].get("addr"),
             }
         except Exception as e:
             self.logger.debug(f"get interface info failed: {e}")

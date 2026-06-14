@@ -69,6 +69,45 @@ WELL_KNOWN_PORTS = {
 }
 
 
+def _split_target_port(target):
+    """Split an optional embedded port off a fuzzer target.
+
+    Accepts ``host:port`` and bracketed IPv6 ``[::1]:port`` forms, returning a
+    socket-ready host (brackets stripped) and the parsed port. Bare IPv6
+    (``::1``, ``2001:db8::1``) and malformed ports are left untouched.
+
+    Returns:
+        tuple[str, int | None]: (host, port) where port is None if absent/invalid.
+    """
+
+    def _valid_port(s):
+        return s.isdigit() and 1 <= int(s) <= 65535
+
+    if not target:
+        return target, None
+
+    # Bracketed IPv6: [::1] or [::1]:8080
+    if target.startswith("["):
+        close = target.find("]")
+        if close != -1:
+            host = target[1:close]
+            rest = target[close + 1 :]
+            if rest.startswith(":") and _valid_port(rest[1:]):
+                return host, int(rest[1:])
+            return host, None
+        return target.strip("[]"), None
+
+    # Exactly one colon -> host:port (IPv4 or hostname)
+    if target.count(":") == 1:
+        host, port_str = target.rsplit(":", 1)
+        if _valid_port(port_str):
+            return host, int(port_str)
+        return target, None
+
+    # Zero colons, or 2+ colons (bare IPv6) -> host only
+    return target.strip("[]"), None
+
+
 def setup_fuzz_logging(verbose: bool = False):
     """
     Configure logging for fuzz CLI based on verbosity.
@@ -871,10 +910,13 @@ def run_fuzzing(args, protocol, target):
         print("Use 'oida fuzz list' to see available protocols")
         return 1
 
-    # Get default port - check fuzzer class attribute first, then well-known ports
+    # Auto-parse an embedded port from the target (e.g. 127.0.0.1:8080, [::1]:8080)
+    target, embedded_port = _split_target_port(target)
+
+    # Get default port - explicit --port flag wins, then embedded port, then defaults
     user_port = getattr(args, "port", None)
     default_port = getattr(fuzzer_class, "default_port", None) or WELL_KNOWN_PORTS.get(protocol, 0)
-    port = user_port if user_port else default_port
+    port = user_port or embedded_port or default_port
     display_port = port
 
     # Create ICSLogger and set global context for consistent output
@@ -889,6 +931,8 @@ def run_fuzzing(args, protocol, target):
     # Display banner (NXC-style)
     print()
     fuzz_logger.display(f"Fuzzer: {fuzzer_class.__name__}")
+    if embedded_port and not user_port:
+        fuzz_logger.display(f"Parsed target: {target}:{embedded_port}")
 
     # Handle seed
     seed = getattr(args, "seed", None)

@@ -17,10 +17,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from ...utils.lazy_import import lazy_import
 from ...utils.ics_logger import get_module_logger
-
-_netifaces = lazy_import("netifaces", "discovery")
+from ...utils import iface_info as _netifaces
 
 logger = get_module_logger(__name__)
 
@@ -299,18 +297,16 @@ def get_interface_ips(interface: str) -> List[str]:
         List of IPv4 addresses
 
     Raises:
-        ImportError: If netifaces module is not available
+        ImportError: Should not occur (psutil always available)
         ValueError: If interface not found or has no IPv4 addresses
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface IP detection")
 
     ips = []
     try:
-        addrs = _netifaces().ifaddresses(interface)
-        if _netifaces().AF_INET in addrs:
-            for addr_info in addrs[_netifaces().AF_INET]:
+        addrs = _netifaces.ifaddresses(interface)
+        if _netifaces.AF_INET in addrs:
+            for addr_info in addrs[_netifaces.AF_INET]:
                 if "addr" in addr_info:
                     ips.append(addr_info["addr"])
         if not ips:
@@ -334,9 +330,7 @@ def is_interface_up(interface: str) -> bool:
         state = get_interface_state(interface)
         if state is not None:
             return state == "up"
-        # Final fallback: check if interface exists in netifaces
-        if _netifaces.is_available:
-            return interface in _netifaces().interfaces()
+        return interface in _netifaces.interfaces()
         return False
     except Exception as e:
         logger.debug(f"Could not check interface state for {interface}: {e}")
@@ -372,16 +366,14 @@ def get_interface_ip(interface: str) -> str:
         IPv4 address string
 
     Raises:
-        ImportError: If netifaces module is not available
+        ImportError: Should not occur (psutil always available)
         ValueError: If interface not found or has no IPv4 address
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface IP detection")
     try:
-        addrs = _netifaces().ifaddresses(interface)
-        if _netifaces().AF_INET in addrs:
-            for addr_info in addrs[_netifaces().AF_INET]:
+        addrs = _netifaces.ifaddresses(interface)
+        if _netifaces.AF_INET in addrs:
+            for addr_info in addrs[_netifaces.AF_INET]:
                 ip = addr_info.get("addr")
                 if ip:
                     return ip
@@ -509,17 +501,15 @@ def get_interface_networks(interface: str) -> list:
         List of (ip_address, network_cidr) tuples
 
     Raises:
-        ImportError: If netifaces module is not available
+        ImportError: Should not occur (psutil always available)
         ValueError: If interface not found or has no networks
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface network detection")
     networks = []
     try:
-        addrs = _netifaces().ifaddresses(interface)
-        if _netifaces().AF_INET in addrs:
-            for addr_info in addrs[_netifaces().AF_INET]:
+        addrs = _netifaces.ifaddresses(interface)
+        if _netifaces.AF_INET in addrs:
+            for addr_info in addrs[_netifaces.AF_INET]:
                 ip = addr_info.get("addr")
                 netmask = addr_info.get("netmask")
                 if ip and netmask and not ip.startswith("127."):
@@ -643,18 +633,16 @@ def get_interface_ipv6(interface: str) -> List[str]:
         List of IPv6 address strings
 
     Raises:
-        ImportError: If netifaces module is not available
+        ImportError: Should not occur (psutil always available)
         ValueError: If interface not found or has no IPv6 addresses
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface IPv6 detection")
     try:
-        addrs = _netifaces().ifaddresses(interface)
+        addrs = _netifaces.ifaddresses(interface)
         ipv6_addrs = []
 
-        if _netifaces().AF_INET6 in addrs:
-            for addr_info in addrs[_netifaces().AF_INET6]:
+        if _netifaces.AF_INET6 in addrs:
+            for addr_info in addrs[_netifaces.AF_INET6]:
                 ip = addr_info.get("addr", "")
                 # Remove interface suffix (e.g., %eth0)
                 if "%" in ip:
@@ -681,14 +669,12 @@ def get_interface_info(interface: str) -> Dict[str, Any]:
         Dict with mac, ipv4_addresses, ipv6_addresses
 
     Raises:
-        ImportError: If netifaces module is not available
+        ImportError: Should not occur (psutil always available)
         ValueError: If interface not found
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface info detection")
     try:
-        addrs = _netifaces().ifaddresses(interface)
+        addrs = _netifaces.ifaddresses(interface)
         result: dict[str, Any] = {
             "mac": None,
             "ipv4_addresses": [],
@@ -696,23 +682,23 @@ def get_interface_info(interface: str) -> Dict[str, Any]:
         }
 
         # Get MAC
-        if _netifaces().AF_LINK in addrs:
-            for addr_info in addrs[_netifaces().AF_LINK]:
+        if _netifaces.AF_LINK in addrs:
+            for addr_info in addrs[_netifaces.AF_LINK]:
                 mac = addr_info.get("addr", "")
                 if mac and mac != "00:00:00:00:00:00":
                     result["mac"] = mac.lower()
                     break
 
         # Get IPv4
-        if _netifaces().AF_INET in addrs:
-            for addr_info in addrs[_netifaces().AF_INET]:
+        if _netifaces.AF_INET in addrs:
+            for addr_info in addrs[_netifaces.AF_INET]:
                 ip = addr_info.get("addr")
                 if ip and not ip.startswith("127."):
                     result["ipv4_addresses"].append(ip)
 
         # Get IPv6
-        if _netifaces().AF_INET6 in addrs:
-            for addr_info in addrs[_netifaces().AF_INET6]:
+        if _netifaces.AF_INET6 in addrs:
+            for addr_info in addrs[_netifaces.AF_INET6]:
                 ip = addr_info.get("addr", "")
                 if "%" in ip:
                     ip = ip.split("%")[0]
@@ -900,7 +886,7 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
         InterfaceCapabilities with address info and scanner compatibility
 
     Raises:
-        ImportError: If netifaces module is not available
+        ImportError: Should not occur (psutil always available)
         ValueError: If interface not found
         RuntimeError: If unable to query interface
 
@@ -911,20 +897,18 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
         ...     # Can run IPv4-based scans
         ...     pass
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface capability checks")
 
-    if interface not in _netifaces().interfaces():
+    if interface not in _netifaces.interfaces():
         raise ValueError(f"Interface '{interface}' not found")
 
     caps = InterfaceCapabilities(interface=interface)
 
     try:
-        addrs = _netifaces().ifaddresses(interface)
+        addrs = _netifaces.ifaddresses(interface)
 
         # Check MAC
-        if _netifaces().AF_LINK in addrs:
-            for addr_info in addrs[_netifaces().AF_LINK]:
+        if _netifaces.AF_LINK in addrs:
+            for addr_info in addrs[_netifaces.AF_LINK]:
                 mac = addr_info.get("addr", "")
                 if mac and mac != "00:00:00:00:00:00":
                     caps.has_mac = True
@@ -932,8 +916,8 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
                     break
 
         # Check IPv4
-        if _netifaces().AF_INET in addrs:
-            for addr_info in addrs[_netifaces().AF_INET]:
+        if _netifaces.AF_INET in addrs:
+            for addr_info in addrs[_netifaces.AF_INET]:
                 ip = addr_info.get("addr")
                 if ip and not ip.startswith("127."):
                     caps.has_ipv4 = True
@@ -943,8 +927,8 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
                         caps.ipv4_address = ip  # Use first non-loopback IPv4
 
         # Check IPv6
-        if _netifaces().AF_INET6 in addrs:
-            for addr_info in addrs[_netifaces().AF_INET6]:
+        if _netifaces.AF_INET6 in addrs:
+            for addr_info in addrs[_netifaces.AF_INET6]:
                 ip = addr_info.get("addr", "")
                 # Remove interface suffix (e.g., %eth0)
                 if "%" in ip:
