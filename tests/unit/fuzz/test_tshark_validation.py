@@ -203,7 +203,6 @@ SKIP_INSTANTIATE = {
     "industrial_ethernet",
     "profinet_dcp",
     "modbus_rtu",
-    "gatt",
     "mutation",
 }
 
