@@ -53,7 +53,12 @@ from ..core.session import (
     SequenceConfig,
     SequenceDirection,
 )
-from ..core.session.state_machine import ProtocolState, StateMachine, StateType
+from ..core.session.state_machine import (
+    ProtocolState,
+    StateMachine,
+    StateType,
+    TransitionRule,
+)
 from ..primitives.dynamic import SmartBytes, SmartString, StringContext
 
 
@@ -270,9 +275,25 @@ class IEC104StateMachine:
             state_type=StateType.DATA_TRANSFER,
             description="STARTDT confirmed, I-format transfer active",
         )
+        # Explicit transition table for the IEC 104 connection lifecycle.
+        # `requires` only encodes the forward chain; without these rules the
+        # legal reverse/teardown edges (STOPDT, disconnect) are not modelled, so
+        # can_transition() would reject them — e.g. the unforced
+        # require_state("CONNECTED") that StatefulFuzzer issues from
+        # DATA_TRANSFER. allow_invalid_transitions stays True (a fuzzer must be
+        # able to send APDUs in any state), but the table keeps the model
+        # correct and get_transition_graph()/enforce mode accurate.
+        transitions = [
+            TransitionRule("DISCONNECTED", "CONNECTED", description="TCP connect"),
+            TransitionRule("CONNECTED", "DATA_TRANSFER", description="STARTDT act/con"),
+            TransitionRule("DATA_TRANSFER", "CONNECTED", description="STOPDT act/con"),
+            TransitionRule("DATA_TRANSFER", "DISCONNECTED", description="Disconnect / link loss"),
+            TransitionRule("CONNECTED", "DISCONNECTED", description="Disconnect / link loss"),
+        ]
         self._sm = StateMachine(
             initial_state=disconnected,
             states=[disconnected, connected, data_transfer],
+            transitions=transitions,
             context=self._context,
             allow_invalid_transitions=True,
         )
