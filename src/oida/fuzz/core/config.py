@@ -175,6 +175,18 @@ class FuzzerConfig:
     calibration_probes: int = 50  # Probes to send during calibration (min 30 clean)
     adaptive_timeout: bool = False  # Adapt monitor timeout online (Jacobson/Karels EWMA)
     detect_drift: bool = False  # Recalibrate on sustained latency drift (implies adaptive)
+    # Auto-restart-and-resume: command run once per crash to bring the target back up
+    restart_command: Optional[List[str]] = None  # argv; None = no auto-restart
+    restart_delay: float = 2.0  # seconds to wait after restart before re-probing
+    # External-script health monitor: argv whose exit 0 == healthy (None = disabled)
+    script_monitor_command: Optional[List[str]] = None
+    # Protocol-agnostic valid-case probe (bytes sent each check; None = disabled)
+    valid_case_probe: Optional[bytes] = None
+    valid_case_expect: Optional[bytes] = None  # substring that must appear in the reply
+    # On-target oida-fuzzing-agent client (None host = disabled)
+    agent_monitor_host: Optional[str] = None
+    agent_monitor_port: int = 5555
+    agent_monitor_token: Optional[str] = None
 
     def __post_init__(self):
         """Initialize protocol_options if not provided"""

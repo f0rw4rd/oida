@@ -108,6 +108,9 @@ class CrashTracker:
         self._crashes: List[CrashEvent] = []
         self._is_crashed = False
         self._last_crash: Optional[CrashEvent] = None
+        # Set once per crash episode by the first monitor that runs the restart
+        # command, so monitors sharing a tracker don't each restart the target.
+        self._restart_claimed = False
 
     @property
     def is_crashed(self) -> bool:
@@ -181,7 +184,22 @@ class CrashTracker:
             self._last_crash.recovered = True
             self._last_crash.recovery_time = time.time()
             self._is_crashed = False
+            self._restart_claimed = False
             return True
+
+    def claim_restart(self) -> bool:
+        """Atomically claim the right to restart the target for the current crash.
+
+        Returns True for exactly one caller per crash episode (and only while the
+        target is in a crashed state); subsequent callers get False until the next
+        recovery resets the claim. This lets several monitors share a tracker without
+        each firing the restart command.
+        """
+        with self._lock:
+            if self._is_crashed and not self._restart_claimed:
+                self._restart_claimed = True
+                return True
+            return False
 
     def get_crashes(self) -> List[CrashEvent]:
         """Get all recorded crash events."""
@@ -208,6 +226,7 @@ class CrashTracker:
             self._crashes = []
             self._is_crashed = False
             self._last_crash = None
+            self._restart_claimed = False
 
 
 class IEC104States(IntEnum):
@@ -253,11 +272,22 @@ class ProtocolMonitor(BaseMonitor):
         max_recovery_attempts: int = 5,
         session_filename: Optional[str] = None,
         crash_tracker: Optional[CrashTracker] = None,
+        restart_command: Optional[List[str]] = None,
+        restart_delay: float = 2.0,
+        command_runner: Optional[Any] = None,
     ):
         # Connection parameters
         self.host = host
         self.port = port
         self.timeout = timeout
+
+        # Auto-restart-and-resume: run restart_command once per crash episode before
+        # re-probing, so a long run survives a DoS without manual intervention.
+        self.restart_command = list(restart_command) if restart_command else None
+        self.restart_delay = restart_delay
+        if command_runner is None and self.restart_command:
+            command_runner = RealCommandRunner()
+        self.command_runner = command_runner
 
         # Check settings
         self.check_interval = check_interval
@@ -483,6 +513,41 @@ class ProtocolMonitor(BaseMonitor):
             )
             fuzz_data_logger.log_fail(crash_msg)
 
+    def _should_restart(self) -> bool:
+        """Whether this monitor should fire the restart command now.
+
+        Deduped via the shared CrashTracker when present (one restart per crash
+        across all monitors); falls back to "first recovery attempt" when the
+        monitor runs standalone without a tracker.
+        """
+        if not self.restart_command or self.command_runner is None:
+            return False
+        if self.crash_tracker is not None:
+            return self.crash_tracker.claim_restart()
+        return self.recovery_attempts == 1
+
+    def _maybe_restart_target(self, fuzz_data_logger=None) -> None:
+        """Run the configured restart command once per crash, then wait restart_delay."""
+        if not self._should_restart():
+            return
+
+        cmd_str = " ".join(self.restart_command)
+        self.logger.display(f"Restarting target: {cmd_str}")
+        if fuzz_data_logger:
+            fuzz_data_logger.log_info(f"Running restart command: {cmd_str}")
+        try:
+            result = self.command_runner.run(self.restart_command, capture_output=True, timeout=30)
+            rc = getattr(result, "returncode", None)
+            if rc not in (None, 0):
+                self.logger.warning(f"Restart command exited with code {rc}")
+        except Exception as e:
+            self.logger.warning(f"Restart command failed: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"Restart command failed: {e}")
+
+        if self.restart_delay > 0:
+            time.sleep(self.restart_delay)
+
     def _try_recovery(self, fuzz_data_logger=None) -> bool:
         """Attempt to recover from crash state with limit.
 
@@ -515,6 +580,9 @@ class ProtocolMonitor(BaseMonitor):
             f"Recovery attempt {self.recovery_attempts}/{self.max_recovery_attempts} "
             f"(crashed at test case {tc})"
         )
+
+        # Auto-restart the target once per crash episode before re-probing.
+        self._maybe_restart_target(fuzz_data_logger)
 
         # Try single check
         if self._check_alive_once(fuzz_data_logger):
