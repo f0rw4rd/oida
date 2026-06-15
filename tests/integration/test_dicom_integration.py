@@ -143,6 +143,13 @@ from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST, check_port_open
 
 
+# DICOM SCP mocks use pynetdicom's default maximum_associations (~10); under
+# -n auto the scanner's own multi-association brute-force plus parallel workers
+# exceed that cap and tests flake en masse. Pin the module to one xdist worker.
+# Honored only under `--dist loadgroup`. Mirrors test_iec104_integration.py.
+pytestmark = pytest.mark.xdist_group("dicom_service")
+
+
 # ---------------------------------------------------------------------------
 # Known Mock Data Constants (extracted from dicom_server.py)
 # ---------------------------------------------------------------------------
