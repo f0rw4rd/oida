@@ -83,7 +83,13 @@ def _udp_multicast_available() -> Optional[str]:
 
 
 _SKIP_REASON = _udp_multicast_available()
-pytestmark = [pytest.mark.can, pytest.mark.skipif(bool(_SKIP_REASON), reason=str(_SKIP_REASON))]
+# Shares the can-mock container; these timing-sensitive e2e tests flake under
+# parallel load, so pin them to one xdist worker (honored under --dist loadgroup).
+pytestmark = [
+    pytest.mark.can,
+    pytest.mark.skipif(bool(_SKIP_REASON), reason=str(_SKIP_REASON)),
+    pytest.mark.xdist_group("can_service"),
+]
 
 
 # ---------------------------------------------------------------------------
