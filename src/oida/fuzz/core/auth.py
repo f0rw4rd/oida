@@ -24,7 +24,6 @@ class ProtocolAuthenticator(ABC):
             protocol_name: Protocol name for logging
         """
         self._log = get_logger(f"AUTH-{protocol_name}", "auth", 0)
-        self._protocol_name = protocol_name
 
     @abstractmethod
     def authenticate(self, connection) -> bool:
@@ -332,23 +331,3 @@ class MQTTAuthenticator(ProtocolAuthenticator):
                 byte |= 0x80
             result += bytes([byte])
         return result if result else b"\x00"
-
-
-class NoAuthenticator(ProtocolAuthenticator):
-    """Null authenticator for protocols that don't require authentication."""
-
-    def __init__(self, protocol_name: str = "NOAUTH"):
-        super().__init__(protocol_name)
-
-    def authenticate(self, conn) -> bool:
-        """Always returns True (no authentication needed)."""
-        self._log.debug("No authentication required")
-        return True
-
-    def validate(self, conn) -> bool:
-        """Always returns True."""
-        return True
-
-    def get_credentials(self) -> Dict[str, str]:
-        """Return empty credentials."""
-        return {}

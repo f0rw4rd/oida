@@ -17,30 +17,12 @@ import struct
 import time
 from typing import Any, Dict, List, Optional
 
+import h2.config
+import h2.connection
+import h2.events
+import h2.exceptions
+
 from .base import ProtocolBaseline, ProtocolMonitor, CrashTracker
-
-try:
-    import h2.connection
-    import h2.config
-    import h2.events
-    import h2.exceptions
-
-    H2_AVAILABLE = True
-except ImportError:
-    H2_AVAILABLE = False
-
-
-# HTTP/2 Frame Types
-FRAME_DATA = 0x00
-FRAME_HEADERS = 0x01
-FRAME_PRIORITY = 0x02
-FRAME_RST_STREAM = 0x03
-FRAME_SETTINGS = 0x04
-FRAME_PUSH_PROMISE = 0x05
-FRAME_PING = 0x06
-FRAME_GOAWAY = 0x07
-FRAME_WINDOW_UPDATE = 0x08
-FRAME_CONTINUATION = 0x09
 
 
 class HTTP2Monitor(ProtocolMonitor):
@@ -102,9 +84,6 @@ class HTTP2Monitor(ProtocolMonitor):
         self.hpack_errors: int = 0
         self.last_error_check: float = 0
 
-        # Baseline for responses
-        self.ping_baseline: Optional[bytes] = None
-
     def _create_socket(self) -> socket.socket:
         """Create socket with optional TLS."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,41 +101,37 @@ class HTTP2Monitor(ProtocolMonitor):
 
     def _connect(self) -> bool:
         """Establish HTTP/2 connection."""
-        if not H2_AVAILABLE:
-            self.logger.warning("h2 library not available, using raw socket mode")
-
         try:
             self._sock = self._create_socket()
             self._sock.connect((self.host, self.port))
 
-            if H2_AVAILABLE:
-                config = h2.config.H2Configuration(client_side=True)
-                self._h2_conn = h2.connection.H2Connection(config=config)
-                self._h2_conn.initiate_connection()
+            config = h2.config.H2Configuration(client_side=True)
+            self._h2_conn = h2.connection.H2Connection(config=config)
+            self._h2_conn.initiate_connection()
+            self._sock.sendall(self._h2_conn.data_to_send())
+
+            # Wait for server SETTINGS
+            data = self._sock.recv(65535)
+            if data:
+                events = self._h2_conn.receive_data(data)
                 self._sock.sendall(self._h2_conn.data_to_send())
 
-                # Wait for server SETTINGS
-                data = self._sock.recv(65535)
-                if data:
-                    events = self._h2_conn.receive_data(data)
-                    self._sock.sendall(self._h2_conn.data_to_send())
-
-                    # Check for connection errors
-                    for event in events:
-                        if isinstance(event, h2.events.ConnectionTerminated):
-                            self.logger.fail(f"Connection terminated: {event.error_code}")
-                            return False
+                # Check for connection errors
+                for event in events:
+                    if isinstance(event, h2.events.ConnectionTerminated):
+                        self.logger.fail(f"Connection terminated: {event.error_code}")
+                        return False
 
             return True
 
         except (socket.error, ssl.SSLError, OSError) as e:
             self.logger.debug(f"Connection failed: {e}")
             return False
+        except h2.exceptions.ProtocolError as e:
+            self.logger.warning(f"H2 protocol error during connect: {e}")
+            return False
         except Exception as e:
-            if H2_AVAILABLE and isinstance(e, h2.exceptions.ProtocolError):
-                self.logger.warning(f"H2 protocol error during connect: {e}")
-            else:
-                self.logger.debug(f"Unexpected error during connect: {e}")
+            self.logger.debug(f"Unexpected error during connect: {e}")
             return False
 
     def _disconnect(self):
@@ -186,53 +161,33 @@ class HTTP2Monitor(ProtocolMonitor):
         if not self._sock:
             return None
 
+        if not self._h2_conn:
+            return None
+
         ping_data = struct.pack(">Q", int(time.time() * 1000) & 0xFFFFFFFFFFFFFFFF)
 
-        if H2_AVAILABLE and self._h2_conn:
-            try:
-                self._h2_conn.ping(ping_data)
+        try:
+            self._h2_conn.ping(ping_data)
+            self._sock.sendall(self._h2_conn.data_to_send())
+
+            # Wait for PING ACK
+            self._sock.settimeout(self.timeout)
+            data = self._sock.recv(65535)
+
+            if data:
+                events = self._h2_conn.receive_data(data)
                 self._sock.sendall(self._h2_conn.data_to_send())
 
-                # Wait for PING ACK
-                self._sock.settimeout(self.timeout)
-                data = self._sock.recv(65535)
+                for event in events:
+                    if isinstance(event, h2.events.PingAckReceived):
+                        return event.ping_data
+                    elif isinstance(event, h2.events.ConnectionTerminated):
+                        self.logger.warning(f"Connection terminated: {event.error_code}")
+                        return None
 
-                if data:
-                    events = self._h2_conn.receive_data(data)
-                    self._sock.sendall(self._h2_conn.data_to_send())
-
-                    for event in events:
-                        if isinstance(event, h2.events.PingAckReceived):
-                            return event.ping_data
-                        elif isinstance(event, h2.events.ConnectionTerminated):
-                            self.logger.warning(f"Connection terminated: {event.error_code}")
-                            return None
-
-            except Exception as e:
-                self.logger.debug(f"PING failed: {e}")
-                return None
-        else:
-            # Raw socket mode - construct PING frame manually
-            # Frame header: length (3) + type (1) + flags (1) + stream_id (4)
-            # PING is type 0x06, no flags for request, stream 0
-            frame = struct.pack(">I", 8)[1:]  # 3-byte length = 8
-            frame += struct.pack("B", FRAME_PING)  # type
-            frame += struct.pack("B", 0x00)  # flags (no ACK)
-            frame += struct.pack(">I", 0)  # stream ID = 0
-            frame += ping_data  # 8 bytes opaque data
-
-            try:
-                self._sock.sendall(frame)
-                response = self._sock.recv(17)  # 9-byte header + 8-byte payload
-
-                if len(response) >= 17:
-                    resp_type = response[3]
-                    resp_flags = response[4]
-                    if resp_type == FRAME_PING and (resp_flags & 0x01):  # ACK flag
-                        return response[9:17]  # Return ping data
-            except Exception as e:
-                self.logger.debug(f"Raw PING failed: {e}")
-                return None
+        except Exception as e:
+            self.logger.debug(f"PING failed: {e}")
+            return None
 
         return None
 
@@ -309,96 +264,6 @@ class HTTP2Monitor(ProtocolMonitor):
 
         return []
 
-    def get_server_state(self) -> Optional[Dict[str, Any]]:
-        """Fetch server state from diagnostic endpoint.
-
-        Returns:
-            Server state dictionary or None on failure
-        """
-        import urllib.request
-        import urllib.error
-
-        scheme = "https" if self.use_tls else "http"
-        url = f"{scheme}://{self.host}:{self.diagnostics_port}/.well-known/h2/state"
-
-        try:
-            ctx = None
-            if self.use_tls:
-                ctx = ssl.create_default_context()
-                if not self.verify_ssl:
-                    ctx.check_hostname = False
-                    ctx.verify_mode = ssl.CERT_NONE
-
-            req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, timeout=self.timeout, context=ctx) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-
-        except Exception as e:
-            self.logger.debug(f"Failed to fetch state: {e}")
-            return None
-
-    def get_hpack_state(self) -> Optional[Dict[str, Any]]:
-        """Fetch HPACK table state from diagnostic endpoint.
-
-        Returns:
-            HPACK state dictionary or None on failure
-        """
-        import urllib.request
-        import urllib.error
-
-        scheme = "https" if self.use_tls else "http"
-        url = f"{scheme}://{self.host}:{self.diagnostics_port}/.well-known/h2/hpack"
-
-        try:
-            ctx = None
-            if self.use_tls:
-                ctx = ssl.create_default_context()
-                if not self.verify_ssl:
-                    ctx.check_hostname = False
-                    ctx.verify_mode = ssl.CERT_NONE
-
-            req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, timeout=self.timeout, context=ctx) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-
-        except Exception as e:
-            self.logger.debug(f"Failed to fetch HPACK state: {e}")
-            return None
-
-    def get_frame_log(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """Fetch recent frame events from diagnostic endpoint.
-
-        Args:
-            limit: Maximum number of events to return
-
-        Returns:
-            List of frame event dictionaries
-        """
-        import urllib.request
-        import urllib.error
-
-        scheme = "https" if self.use_tls else "http"
-        url = f"{scheme}://{self.host}:{self.diagnostics_port}/.well-known/h2/frames"
-
-        try:
-            ctx = None
-            if self.use_tls:
-                ctx = ssl.create_default_context()
-                if not self.verify_ssl:
-                    ctx.check_hostname = False
-                    ctx.verify_mode = ssl.CERT_NONE
-
-            req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, timeout=self.timeout, context=ctx) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                if isinstance(data, list):
-                    return data[-limit:]
-                return []
-
-        except Exception as e:
-            self.logger.debug(f"Failed to fetch frames: {e}")
-            return []
-
     def get_error_summary(self) -> Dict[str, Any]:
         """Get summary of detected errors.
 
@@ -422,7 +287,6 @@ class HTTP2Monitor(ProtocolMonitor):
 
         ping_response = self._send_ping()
         if ping_response:
-            self.ping_baseline = ping_response
             self.baseline_established = True
             self.baseline = ProtocolBaseline(
                 raw_response=ping_response,

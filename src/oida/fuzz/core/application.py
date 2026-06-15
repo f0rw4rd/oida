@@ -15,7 +15,6 @@ class FuzzerApplication:
     def __init__(
         self,
         fuzzer_factory: Optional[Callable] = None,
-        database_factory: Optional[Callable] = None,
         connection_factory: Optional[ConnectionFactory] = None,
     ):
         from .session.manager import (
@@ -24,7 +23,6 @@ class FuzzerApplication:
         )  # Import here to avoid circular imports
 
         self.fuzzer_factory = fuzzer_factory or create_fuzzer
-        self.database_factory = database_factory
         self.connection_factory = connection_factory
         self.TestCaseManager = TestCaseManager
 
@@ -64,6 +62,9 @@ class FuzzerApplication:
     def run_command(self, args) -> int:
         """Execute the fuzzer command with given arguments"""
         try:
+            agent_monitor_host, agent_monitor_port = self._split_hostport(
+                getattr(args, "agent_monitor", None), 5555
+            )
             config = FuzzerConfig(
                 target_ip=args.ip,
                 target_port=args.port,
@@ -93,7 +94,6 @@ class FuzzerApplication:
                     args, "receive_data_after_each_request", True
                 ),
                 sleep_time=getattr(args, "sleep_time", 0.0),
-                monitor_retry_delay=getattr(args, "monitor_retry_delay", 0.1),
                 # Socket timeouts / reconnection (None = connection/protocol default)
                 recv_timeout=getattr(args, "recv_timeout", None),
                 send_timeout=getattr(args, "send_timeout", None),
@@ -118,12 +118,8 @@ class FuzzerApplication:
                 ),
                 restart_command=self._split_command(getattr(args, "restart_command", None)),
                 restart_delay=getattr(args, "restart_delay", 2.0),
-                agent_monitor_host=self._split_hostport(getattr(args, "agent_monitor", None), 5555)[
-                    0
-                ],
-                agent_monitor_port=self._split_hostport(getattr(args, "agent_monitor", None), 5555)[
-                    1
-                ],
+                agent_monitor_host=agent_monitor_host,
+                agent_monitor_port=agent_monitor_port,
                 agent_monitor_token=getattr(args, "agent_token", None),
             )
 

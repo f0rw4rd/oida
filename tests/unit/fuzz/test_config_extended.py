@@ -253,12 +253,12 @@ class TestFuzzerConfig:
         config.set_option("timeout", 30)
         assert config.get_option("timeout") == 30
 
-    def test_set_option_creates_dict_if_none(self):
-        """set_option creates protocol_options dict if None."""
+    def test_set_option_writes_to_postinit_dict(self):
+        """__post_init__ guarantees a dict; set_option stores into it."""
         from src.oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(target_ip="10.0.0.1", target_port=80)
-        config.protocol_options = None
+        assert config.protocol_options == {}
         config.set_option("key", "value")
         assert config.get_option("key") == "value"
 
