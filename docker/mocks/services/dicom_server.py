@@ -1286,6 +1286,12 @@ def main():
     # Create Application Entity
     ae = AE(ae_title=SERVER_AET)
 
+    # pynetdicom defaults to maximum_associations=10. The oida scanner churns
+    # many short-lived associations per scan (AE brute-force, C-FIND/C-MOVE,
+    # dump-all), so a low cap causes spurious "association rejected" errors.
+    # Raise it generously so the mock is not the bottleneck under test load.
+    ae.maximum_associations = 100
+
     # Add supported presentation contexts
     # C-ECHO
     ae.add_supported_context(Verification)
