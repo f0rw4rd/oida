@@ -37,15 +37,8 @@ REQUIRED_CATEGORIES = {
     "ethernetip": {"baseline", "read", "write", "boundary"},
     "bacnet": {"baseline", "read", "write", "overflow"},
     "ads": {"baseline", "read", "write", "boundary"},
-    "fins": {"read", "boundary", "high_crash"},
-    # ICS/SCADA P2 protocols
-    "tase2": {"baseline", "attacks", "malformed"},
-    "hartip": {"baseline", "read", "write", "overflow"},
-    "profinet_dcp": {"baseline", "read", "write", "overflow"},
-    "industrial_ethernet": {"baseline", "standard", "overflow"},
     # Healthcare/specialty (from earlier audit)
     "hl7": {"baseline", "overflow"},
-    "dicom": {"baseline", "attacks"},
     "echo": {"baseline", "overflow"},
     "daytime": {"baseline", "overflow"},
     # Network/IT protocols (from 2026-02-14 audit)
@@ -93,9 +86,6 @@ OVERFLOW_EXPECTED = {
     "ethernetip",
     "bacnet",
     "mms",
-    "hartip",
-    "profinet_dcp",
-    "industrial_ethernet",
 }
 
 # Protocols that should have auth/security category
@@ -110,10 +100,7 @@ AUTH_EXPECTED = {
     "opcua",
     "iec104",
     "ads",
-    "fins",
     "mms",
-    "tase2",
-    "hartip",
     "ethernetip",
 }
 

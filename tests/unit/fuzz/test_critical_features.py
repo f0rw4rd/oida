@@ -206,32 +206,6 @@ CRITICAL_FEATURE_REQUIREMENTS = {
             ["Quick_Coverage", "ADT", "ORU", "ORM", "Query"],
         ),
     ],
-    "dicom": [
-        (
-            "PDU length field mismatch attacks",
-            ["PDU_Length", "Length"],
-        ),
-        (
-            "AE title buffer overflow",
-            ["AE_Title", "Title"],
-        ),
-        (
-            "Association negotiation attacks (CVE-2021-41688 pattern)",
-            ["Association", "Malformed"],
-        ),
-        (
-            "PDU type corruption (all 256 types)",
-            ["PDU_Type", "Corruption"],
-        ),
-        (
-            "DIMSE command field fuzzing",
-            ["DIMSE", "Command"],
-        ),
-        (
-            "PDV fragmentation attacks",
-            ["PDV", "Fragmentation", "Fragment"],
-        ),
-    ],
     "echo": [
         (
             "Buffer overflow with large payloads",

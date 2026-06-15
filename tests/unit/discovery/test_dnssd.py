@@ -62,14 +62,13 @@ class TestDNSSDScannerScan:
         mock_zeroconf = MagicMock()
         mock_browser = MagicMock()
 
-        # Mock netifaces to return valid interface info
-        import netifaces
+        # Interface enumeration is mocked by the autouse mock_netifaces fixture;
+        # override the address for this interface to a known value.
+        from oida.utils import iface_info
 
-        mock_netifaces = MagicMock()
-        mock_netifaces.AF_INET = netifaces.AF_INET
-        mock_netifaces.ifaddresses.return_value = {netifaces.AF_INET: [{"addr": "192.168.1.1"}]}
-
-        with patch.dict("sys.modules", {"netifaces": mock_netifaces}):
+        with patch.object(
+            iface_info, "ifaddresses", return_value={iface_info.AF_INET: [{"addr": "192.168.1.1"}]}
+        ):
             with patch("zeroconf.Zeroconf", return_value=mock_zeroconf):
                 with patch(
                     "zeroconf.ServiceBrowser", return_value=mock_browser
@@ -87,14 +86,13 @@ class TestDNSSDScannerScan:
 
         mock_zeroconf = MagicMock()
 
-        # Mock netifaces to return valid interface info
-        import netifaces
+        # Interface enumeration is mocked by the autouse mock_netifaces fixture;
+        # override the address for this interface to a known value.
+        from oida.utils import iface_info
 
-        mock_netifaces = MagicMock()
-        mock_netifaces.AF_INET = netifaces.AF_INET
-        mock_netifaces.ifaddresses.return_value = {netifaces.AF_INET: [{"addr": "192.168.1.1"}]}
-
-        with patch.dict("sys.modules", {"netifaces": mock_netifaces}):
+        with patch.object(
+            iface_info, "ifaddresses", return_value={iface_info.AF_INET: [{"addr": "192.168.1.1"}]}
+        ):
             with patch("zeroconf.Zeroconf", return_value=mock_zeroconf):
                 with patch("zeroconf.ServiceBrowser"):
                     with patch("zeroconf.ServiceListener"):
@@ -335,14 +333,13 @@ class TestDNSSDServiceTypes:
             service_types_browsed.append(stype)
             return MagicMock()
 
-        # Mock netifaces to return valid interface info
-        import netifaces
+        # Interface enumeration is mocked by the autouse mock_netifaces fixture;
+        # override the address for this interface to a known value.
+        from oida.utils import iface_info
 
-        mock_netifaces = MagicMock()
-        mock_netifaces.AF_INET = netifaces.AF_INET
-        mock_netifaces.ifaddresses.return_value = {netifaces.AF_INET: [{"addr": "192.168.1.1"}]}
-
-        with patch.dict("sys.modules", {"netifaces": mock_netifaces}):
+        with patch.object(
+            iface_info, "ifaddresses", return_value={iface_info.AF_INET: [{"addr": "192.168.1.1"}]}
+        ):
             with patch("zeroconf.Zeroconf", return_value=mock_zeroconf):
                 with patch("zeroconf.ServiceBrowser", side_effect=track_browser):
                     with patch("zeroconf.ServiceListener"):

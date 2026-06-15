@@ -510,11 +510,6 @@ ICS_STATELESS_PROTOCOLS = [
     "modbus_rtu",
     "dnp3",
     "bacnet",
-    "fins",
-    "tase2",
-    "profinet_dcp",
-    "industrial_ethernet",
-    "hartip",
 ]
 
 

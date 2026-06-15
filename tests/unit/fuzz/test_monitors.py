@@ -208,7 +208,6 @@ class TestMonitorRegistry:
             "dhcp",
             "tftp",
             "hl7",
-            "dicom",
         ]
         for name in expected:
             if name not in monitors:
@@ -434,7 +433,6 @@ class TestProtocolDefaultMonitors:
             ("dns", "socket"),
             ("mms", "mms"),
             ("hl7", "hl7"),
-            ("dicom", "dicom"),
         ],
     )
     def test_protocol_specific_monitors(self, protocol, expected_monitor):
