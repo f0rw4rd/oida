@@ -175,6 +175,26 @@ class TestIEC104StateMachine:
         sm = IEC104StateMachine()
         assert sm.validate_current_state() is True
 
+    def test_reverse_and_teardown_edges_legal_under_enforce(self):
+        """The STOPDT (DATA_TRANSFER->CONNECTED) and disconnect edges must be
+        permitted by can_transition() — i.e. modelled in the rule table — not
+        merely tolerated because allow_invalid_transitions is True. Regression
+        for the missing IEC 104 transition table."""
+        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+
+        sm = IEC104StateMachine()
+        inner = sm.state_machine
+        assert inner.can_transition("DATA_TRANSFER", "CONNECTED")
+        assert inner.can_transition("CONNECTED", "DISCONNECTED")
+        assert inner.can_transition("DATA_TRANSFER", "DISCONNECTED")
+
+        # An unforced STOPDT-style transition must succeed even in enforce mode.
+        sm.start_data_transfer()
+        assert sm.state == "DATA_TRANSFER"
+        inner.allow_invalid_transitions = False
+        inner.transition_to("CONNECTED")  # unforced; would raise before the fix
+        assert sm.state == "CONNECTED"
+
 
 # =============================================================================
 # Test Helper Functions
