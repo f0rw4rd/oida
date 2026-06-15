@@ -1857,6 +1857,11 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             ),
             # Connection termination
             TransitionRule(
+                from_state="SYN_RECEIVED",
+                to_state="FIN_WAIT_1",
+                description="Local CLOSE during handshake (send FIN) [RFC 9293 3.10.4]",
+            ),
+            TransitionRule(
                 from_state="ESTABLISHED",
                 to_state="FIN_WAIT_1",
                 description="Active close (send FIN)",
@@ -1875,6 +1880,12 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
                 from_state="FIN_WAIT_1",
                 to_state="CLOSING",
                 description="Receive FIN before ACK (simultaneous close)",
+            ),
+            TransitionRule(
+                from_state="FIN_WAIT_1",
+                to_state="TIME_WAIT",
+                description="Receive FIN that also ACKs our FIN (single-segment close) "
+                "[RFC 9293 3.3.2; omitted from the canonical diagram]",
             ),
             TransitionRule(
                 from_state="FIN_WAIT_2", to_state="TIME_WAIT", description="Receive FIN"
@@ -1899,7 +1910,10 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
                 to_state="CLOSED",
                 description="2*MSL timeout expired",
             ),
-            # Reset transitions (can happen from any state)
+            # Reset transitions: a valid RST aborts the connection to CLOSED
+            # from any synchronized state (RFC 9293 3.5.3 / 3.10.7.4). The
+            # tracker does not sequence-validate the RST — it models OIDA's own
+            # state, not the target's window checks.
             TransitionRule(
                 from_state="SYN_SENT",
                 to_state="CLOSED",
@@ -1907,6 +1921,11 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             ),
             TransitionRule(from_state="SYN_RECEIVED", to_state="CLOSED", description="Receive RST"),
             TransitionRule(from_state="ESTABLISHED", to_state="CLOSED", description="Receive RST"),
+            TransitionRule(from_state="FIN_WAIT_1", to_state="CLOSED", description="Receive RST"),
+            TransitionRule(from_state="FIN_WAIT_2", to_state="CLOSED", description="Receive RST"),
+            TransitionRule(from_state="CLOSE_WAIT", to_state="CLOSED", description="Receive RST"),
+            TransitionRule(from_state="CLOSING", to_state="CLOSED", description="Receive RST"),
+            TransitionRule(from_state="LAST_ACK", to_state="CLOSED", description="Receive RST"),
         ]
 
         # Create state machine (starts in CLOSED)
