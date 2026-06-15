@@ -25,6 +25,8 @@ import importlib
 import importlib.util
 import pathlib
 
+from tests._ast_safe import safe_parse
+
 import pytest
 
 SRC_ROOT = pathlib.Path(__file__).resolve().parents[2] / "src" / "oida"
@@ -40,7 +42,7 @@ def _collect_function_level_relative_imports():
         rel = py.relative_to(SRC_ROOT.parent)
         pkg_parts = list(rel.with_suffix("").parts[:-1])
         try:
-            tree = ast.parse(py.read_text())
+            tree = safe_parse(py.read_text())
         except SyntaxError:
             continue
         for fn in (
@@ -135,7 +137,7 @@ def _collect_internal_symbol_imports():
         rel = py.relative_to(SRC_ROOT.parent)
         pkg_parts = list(rel.with_suffix("").parts[:-1])
         try:
-            tree = ast.parse(py.read_text())
+            tree = safe_parse(py.read_text())
         except SyntaxError:
             continue
         for fn in (
@@ -188,7 +190,7 @@ def _module_defined_names(target: str):
     if origin.suffix != ".py" or not origin.exists():
         return None
     try:
-        tree = ast.parse(origin.read_text())
+        tree = safe_parse(origin.read_text())
     except SyntaxError:
         return None
 

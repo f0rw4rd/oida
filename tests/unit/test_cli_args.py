@@ -144,11 +144,12 @@ def test_help_does_not_crash(main_parser, proto):
 SPECIAL_SUBCOMMANDS = {"serial", "fuzz", "pcap"}
 
 
-@pytest.mark.parametrize("proto", [pytest.param(p, id=p) for p in _get_registered_protos()])
+@pytest.mark.parametrize(
+    "proto",
+    [pytest.param(p, id=p) for p in _get_registered_protos() if p not in SPECIAL_SUBCOMMANDS],
+)
 def test_protocol_has_target_argument(main_parser, proto):
     """Every protocol (except special subcommands) should accept a target."""
-    if proto in SPECIAL_SUBCOMMANDS:
-        pytest.skip("Special subcommand, not a protocol")
     if proto not in main_parser._subparsers_action.choices:
         pytest.skip(f"{proto} not registered")
 

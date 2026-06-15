@@ -21,6 +21,8 @@ import ast
 import pathlib
 import re
 
+from tests._ast_safe import safe_parse
+
 import pytest
 
 SRC_ROOT = pathlib.Path(__file__).resolve().parents[2] / "src" / "oida"
@@ -71,7 +73,7 @@ def _collect_dangerous_flag_dests() -> dict[str, set[str]]:
     for proto_args in SRC_ROOT.glob("protocols/*/proto_args.py"):
         protocol = proto_args.parent.name
         try:
-            tree = ast.parse(proto_args.read_text())
+            tree = safe_parse(proto_args.read_text())
         except SyntaxError:
             continue
         for node in ast.walk(tree):
@@ -115,13 +117,11 @@ def _enforced_dests_per_protocol() -> dict[str, set[str]]:
             continue
         protocol = py.relative_to(SRC_ROOT / "protocols").parts[0]
         try:
-            tree = ast.parse(py.read_text())
+            tree = safe_parse(py.read_text())
         except SyntaxError:
             continue
         for fn in (
-            n
-            for n in ast.walk(tree)
-            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+            n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
         ):
             try:
                 body_src = ast.unparse(fn)
