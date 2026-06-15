@@ -97,3 +97,35 @@ def test_get_request_definitions(protocol_name):
         pytest.skip(f"{protocol_name} has not implemented get_request_definitions")
     except ImportError as e:
         pytest.skip(f"Missing dependency: {e}")
+
+
+def test_mdns_request_definitions_match_connected(mock_config, mock_factory):
+    """mDNS static request inventory must match the requests actually connected.
+
+    get_request_definitions() drives --list-requests / --requests /
+    --disable-requests selection; a request connected via session.connect()
+    but absent from the inventory can be fuzzed yet never listed or
+    individually selected (and vice versa). This asserts set-equality between
+    the two sources of truth for the mDNS fuzzer, guarding the drift fixed in
+    src/oida/fuzz/protocols/mdns.py.
+    """
+    fuzzer_class = PROTOCOL_FUZZERS["mdns"]
+    if fuzzer_class is None:
+        pytest.skip("mdns fuzzer not available (optional dependency)")
+
+    try:
+        fuzzer = fuzzer_class(config=mock_config, connection_factory=mock_factory)
+        session = fuzzer.session
+    except ImportError as e:
+        pytest.skip(f"Missing dependency for mdns: {e}")
+
+    defined = {d.name for d in fuzzer_class.get_request_definitions()}
+
+    # session.nodes maps node-id -> request node; exclude the synthetic root.
+    connected = {node.name for node in session.nodes.values()} - {session.root.name}
+
+    assert connected == defined, (
+        "mDNS request inventory drift: "
+        f"connected-but-not-listed={sorted(connected - defined)}, "
+        f"listed-but-not-connected={sorted(defined - connected)}"
+    )

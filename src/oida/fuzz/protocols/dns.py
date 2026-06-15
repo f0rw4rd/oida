@@ -121,19 +121,24 @@ class DNSFuzzer(BaseFuzzer):
         ]
 
     def _define_protocol(self) -> None:
-        """Define DNS protocol structure for fuzzing
+        """Define DNS protocol structure for fuzzing.
 
-        OPTIMIZATION COMPLETED: Consolidated from 68 to 27 requests (60% reduction)
+        Builds and wires 64 requests (matching get_request_definitions()). Every
+        Request constructed here is connected to the session in the tiered
+        ordering block at the end of this method, so the advertised surface and
+        the actually-fuzzed surface stay in sync. Breakdown:
         - 1 baseline test (non-fuzzable connectivity check)
-        - 7 core query types (A, AAAA, MX, PTR, TXT, SRV, CAA)
-        - 2 DNSSEC queries (DNSKEY, RRSIG) - reduced from 8
-        - 3 EDNS0 tests (OPTIONS, COOKIES, EXTENDED_ERRORS) - reduced from 11
-        - 6 attack patterns (cache poisoning, amplification, overflows, parsing)
-        - 2 UPDATE operations (ADD, MALFORMED) - reduced from 4
-        - 3 zone transfer tests (AXFR, IXFR, TCP_LENGTH_ATTACK) - reduced from 5
-        - 3 RCODE tests (FORMERR, SERVFAIL, NXDOMAIN) - reduced from 16
-
-        Expected performance improvement: 2-3x faster fuzzing with maintained coverage
+        - 10 core query types (A, AAAA, MX, PTR, TXT, SRV, CAA, TLSA, SVCB, HTTPS)
+        - 9 DNSSEC queries (DNSKEY, RRSIG, DS, NSEC, NSEC3, NSEC3PARAM, CDS,
+          CDNSKEY, algorithm negotiation)
+        - 10 EDNS0 tests (OPTIONS, 3x COOKIES, EXTENDED_ERRORS, NSID, PADDING,
+          KEY_TAG, EXPIRE, CHAIN)
+        - 9 buffer-overflow / parsing attack patterns
+        - 4 UPDATE operations (ADD, DELETE, WITH_PREREQ, MALFORMED)
+        - 3 header-flag combinations (AD, CD, AD+CD)
+        - 16 RCODE response-parsing tests (NOERROR..BADTIME, incl. TSIG codes)
+        - 1 malformed EDNS0 OPT record
+        - 1 compression-pointer loop (CVE-2020-25681)
         """
 
         # 0. DNS Baseline - Simple connectivity test (all fields non-fuzzable)
@@ -568,9 +573,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # CVE-2020-25928 - Response count mismatch
-        Request(
+        dns_response_mismatch = Request(
             "DNS_Response_Mismatch",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header",
                     children=(
@@ -609,9 +614,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # CVE-2020-24341 - Missing null termination
-        Request(
+        dns_no_null_term = Request(
             "DNS_No_Null_Term",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header",
                     children=(
@@ -710,9 +715,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # DS Query - Delegation Signer
-        Request(
+        dns_ds_query = Request(
             "DNS_DS_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_DS",
                     children=(
@@ -794,9 +799,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # NSEC Query - Next Secure
-        Request(
+        dns_nsec_query = Request(
             "DNS_NSEC_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NSEC",
                     children=(
@@ -836,9 +841,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # NSEC3 Query - Next Secure Hashed
-        Request(
+        dns_nsec3_query = Request(
             "DNS_NSEC3_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NSEC3",
                     children=(
@@ -878,9 +883,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # NSEC3PARAM Query - NSEC3 parameters (RFC 5155)
-        Request(
+        dns_nsec3param_query = Request(
             "DNS_NSEC3PARAM_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NSEC3PARAM",
                     children=(
@@ -920,9 +925,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # CDS Query - Child DS (RFC 7344)
-        Request(
+        dns_cds_query = Request(
             "DNS_CDS_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_CDS",
                     children=(
@@ -962,9 +967,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # CDNSKEY Query - Child DNSKEY (RFC 7344)
-        Request(
+        dns_cdnskey_query = Request(
             "DNS_CDNSKEY_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_CDNSKEY",
                     children=(
@@ -1118,9 +1123,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # DNS Cookies - Client Only (initial request)
-        Request(
+        dns_cookies_client_only = Request(
             "DNS_COOKIES_CLIENT_ONLY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_Cookies_Client",
                     children=(
@@ -1170,9 +1175,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # DNS Cookies - Malformed (fuzzing attack vectors)
-        Request(
+        dns_cookies_malformed = Request(
             "DNS_COOKIES_MALFORMED",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_Cookies_Mal",
                     children=(
@@ -1302,9 +1307,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # NSID - Name Server Identifier (RFC 5001) - EDNS0 option code 3
-        Request(
+        dns_nsid = Request(
             "DNS_NSID",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NSID",
                     children=(
@@ -1347,9 +1352,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # Padding (RFC 7830) - EDNS0 option code 12 (for privacy/anti-fingerprinting)
-        Request(
+        dns_padding = Request(
             "DNS_PADDING",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_Padding",
                     children=(
@@ -1410,9 +1415,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # DAU/DHU/N3U - DNSSEC Algorithm Understood (RFC 6975) - codes 5, 6, 7
-        Request(
+        dns_dnssec_algorithms = Request(
             "DNS_DNSSEC_ALGORITHMS",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_DNSSEC_Alg",
                     children=(
@@ -1470,9 +1475,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # edns-key-tag (RFC 8145) - option code 14
-        Request(
+        dns_edns_key_tag = Request(
             "DNS_EDNS_KEY_TAG",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_KeyTag",
                     children=(
@@ -1518,9 +1523,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # EDNS EXPIRE (RFC 7314) - option code 9
-        Request(
+        dns_edns_expire = Request(
             "DNS_EDNS_EXPIRE",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_Expire",
                     children=(
@@ -1563,9 +1568,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # CHAIN Query (RFC 7901) - option code 13
-        Request(
+        dns_chain_query = Request(
             "DNS_CHAIN_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_Chain",
                     children=(
@@ -1670,9 +1675,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # UPDATE request to delete a record
-        Request(
+        dns_update_delete_record = Request(
             "DNS_UPDATE_DELETE_RECORD",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_UPDATE_DEL",
                     children=(
@@ -1717,9 +1722,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # UPDATE with prerequisites
-        Request(
+        dns_update_with_prereq = Request(
             "DNS_UPDATE_WITH_PREREQ",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_UPDATE_PR",
                     children=(
@@ -1830,9 +1835,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # DNS Header Flags - AD (Authentic Data) and CD (Checking Disabled)
-        Request(
+        dns_flags_ad = Request(
             "DNS_FLAGS_AD",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_AD",
                     children=(
@@ -1875,9 +1880,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_flags_cd = Request(
             "DNS_FLAGS_CD",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_CD",
                     children=(
@@ -1920,9 +1925,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_flags_ad_cd_both = Request(
             "DNS_FLAGS_AD_CD_BOTH",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_AD_CD",
                     children=(
@@ -2008,9 +2013,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # TLSA - TLS Authentication (RFC 6698) - Type 52
-        Request(
+        dns_tlsa_query = Request(
             "DNS_TLSA_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_TLSA",
                     children=(
@@ -2055,9 +2060,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # SVCB - Service Binding (RFC 9460) - Type 64
-        Request(
+        dns_svcb_query = Request(
             "DNS_SVCB_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_SVCB",
                     children=(
@@ -2100,9 +2105,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # HTTPS - HTTPS Service (RFC 9460) - Type 65
-        Request(
+        dns_https_query = Request(
             "DNS_HTTPS_QUERY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_HTTPS",
                     children=(
@@ -2193,9 +2198,9 @@ class DNSFuzzer(BaseFuzzer):
         # ============================================================
 
         # Standard RCODEs (RFC 1035)
-        Request(
+        dns_rcode_noerror = Request(
             "DNS_RCODE_NOERROR",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NOERROR",
                     children=(
@@ -2222,9 +2227,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_formerr = Request(
             "DNS_RCODE_FORMERR",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_FORMERR",
                     children=(
@@ -2249,9 +2254,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_servfail = Request(
             "DNS_RCODE_SERVFAIL",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_SERVFAIL",
                     children=(
@@ -2266,9 +2271,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_nxdomain = Request(
             "DNS_RCODE_NXDOMAIN",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NXDOMAIN",
                     children=(
@@ -2283,9 +2288,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_notimp = Request(
             "DNS_RCODE_NOTIMP",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NOTIMP",
                     children=(
@@ -2300,9 +2305,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_refused = Request(
             "DNS_RCODE_REFUSED",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_REFUSED",
                     children=(
@@ -2318,9 +2323,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # UPDATE-specific RCODEs (RFC 2136)
-        Request(
+        dns_rcode_yxdomain = Request(
             "DNS_RCODE_YXDOMAIN",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_YXDOMAIN",
                     children=(
@@ -2335,9 +2340,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_yxrrset = Request(
             "DNS_RCODE_YXRRSET",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_YXRRSET",
                     children=(
@@ -2352,9 +2357,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_nxrrset = Request(
             "DNS_RCODE_NXRRSET",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NXRRSET",
                     children=(
@@ -2371,9 +2376,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_notauth = Request(
             "DNS_RCODE_NOTAUTH",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NOTAUTH",
                     children=(
@@ -2388,9 +2393,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_notzone = Request(
             "DNS_RCODE_NOTZONE",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_NOTZONE",
                     children=(
@@ -2406,9 +2411,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # EDNS Extended RCODEs (RFC 2671, RFC 6891)
-        Request(
+        dns_rcode_badvers = Request(
             "DNS_RCODE_BADVERS",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_BADVERS",
                     children=(
@@ -2446,9 +2451,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # DNS Cookies RCODE (RFC 7873)
-        Request(
+        dns_rcode_badcookie = Request(
             "DNS_RCODE_BADCOOKIE",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_BADCOOKIE",
                     children=(
@@ -2486,9 +2491,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # Additional Important RCODEs
-        Request(
+        dns_rcode_badsig = Request(
             "DNS_RCODE_BADSIG",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_BADSIG",
                     children=(
@@ -2515,9 +2520,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_badkey = Request(
             "DNS_RCODE_BADKEY",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_BADKEY",
                     children=(
@@ -2544,9 +2549,9 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
-        Request(
+        dns_rcode_badtime = Request(
             "DNS_RCODE_BADTIME",
-            children=(  # noqa: F841
+            children=(
                 Block(
                     "DNS_Header_BADTIME",
                     children=(
@@ -2657,8 +2662,9 @@ class DNSFuzzer(BaseFuzzer):
         )
 
         # ==================== TIERED REQUEST ORDERING ====================
-        # CONSOLIDATED: Reduced from 68 to 27 requests for 2-3x faster fuzzing
-        # Optimized for efficiency: baseline → core → security-critical → exotic
+        # Every Request defined above is wired into the session here so the
+        # advertised fuzz surface (get_request_definitions) matches what is
+        # actually fuzzed. Ordering: baseline -> core -> security-critical -> exotic.
 
         # TIER 0: BASELINE - Non-fuzzable connectivity test (FASTEST - <100ms)
         self.session.connect(dns_baseline)  # Simple A query, all fields static
@@ -2673,12 +2679,17 @@ class DNSFuzzer(BaseFuzzer):
         self.session.connect(dns_txt_query)  # Text records
         self.session.connect(dns_srv_query)  # Service discovery
         self.session.connect(dns_caa_query)  # Certificate authority authorization
+        self.session.connect(dns_tlsa_query)  # TLSA / DANE record
+        self.session.connect(dns_svcb_query)  # SVCB service binding
+        self.session.connect(dns_https_query)  # HTTPS service binding
 
         # TIER 3: CRITICAL ATTACK PATTERNS - High-severity vulnerabilities
         self.session.connect(dns_cache_poisoning)  # CVE-2008-1447, Kaminsky attack
         self.session.connect(dns_amplification)  # DDoS amplification
         self.session.connect(dns_domain_overflow)  # AMNESIA:33 buffer overflow
         self.session.connect(dns_length_overflow)  # AMNESIA:33 length validation
+        self.session.connect(dns_response_mismatch)  # CVE-2020-25928 count mismatch
+        self.session.connect(dns_no_null_term)  # CVE-2020-24341 missing null term
 
         # TIER 4: BUFFER OVERFLOW & PARSING ATTACKS
         self.session.connect(dns_long_domain)  # Oversized domain names
@@ -2687,20 +2698,57 @@ class DNSFuzzer(BaseFuzzer):
         self.session.connect(dns_invalid_flags)  # Invalid header flags
         self.session.connect(dns_malformed_edns0)  # Malformed EDNS0 extensions
 
-        # TIER 5: DNSSEC QUERIES - Cryptographic extensions (2 of 8 tests)
+        # TIER 5: DNSSEC QUERIES - Cryptographic extensions
         self.session.connect(dns_dnskey_query)  # Public key records
         self.session.connect(dns_rrsig_query)  # Resource record signatures
+        self.session.connect(dns_ds_query)  # Delegation signer
+        self.session.connect(dns_nsec_query)  # Next secure record
+        self.session.connect(dns_nsec3_query)  # Hashed next secure record
+        self.session.connect(dns_nsec3param_query)  # NSEC3 parameters
+        self.session.connect(dns_cds_query)  # Child DS
+        self.session.connect(dns_cdnskey_query)  # Child DNSKEY
+        self.session.connect(dns_dnssec_algorithms)  # Algorithm negotiation
 
-        # TIER 6: EDNS0 EXTENSIONS - Modern DNS features (3 of 11 tests)
+        # TIER 6: EDNS0 EXTENSIONS - Modern DNS features
         self.session.connect(dns_edns0_options)  # Extended DNS options
         self.session.connect(dns_cookies)  # DNS cookies (RFC 7873)
+        self.session.connect(dns_cookies_client_only)  # Client-only cookie
+        self.session.connect(dns_cookies_malformed)  # Malformed cookie data
         self.session.connect(dns_extended_errors)  # Extended error codes (RFC 8914)
+        self.session.connect(dns_nsid)  # Name server identifier
+        self.session.connect(dns_padding)  # EDNS padding option
+        self.session.connect(dns_edns_key_tag)  # EDNS key tag signaling
+        self.session.connect(dns_edns_expire)  # EDNS expire option
+        self.session.connect(dns_chain_query)  # EDNS chain query
 
-        # TIER 7: DYNAMIC UPDATE - DNS UPDATE operations (RFC 2136) (2 of 4 tests)
+        # TIER 7: DYNAMIC UPDATE - DNS UPDATE operations (RFC 2136)
         self.session.connect(dns_update_add)  # Add resource records
+        self.session.connect(dns_update_delete_record)  # Delete resource records
+        self.session.connect(dns_update_with_prereq)  # Update with prerequisites
         self.session.connect(dns_update_malformed)  # Malformed UPDATE messages
 
-        # NOTE: TCP/Zone Transfer and RCODE tests are connected later after their definitions
+        # TIER 8: HEADER FLAG COMBINATIONS - DNSSEC AD/CD signaling
+        self.session.connect(dns_flags_ad)  # Authentic Data flag
+        self.session.connect(dns_flags_cd)  # Checking Disabled flag
+        self.session.connect(dns_flags_ad_cd_both)  # AD+CD combination
+
+        # TIER 9: RCODE RESPONSES - Response-code parsing (RFC 6895 / TSIG)
+        self.session.connect(dns_rcode_noerror)
+        self.session.connect(dns_rcode_formerr)
+        self.session.connect(dns_rcode_servfail)
+        self.session.connect(dns_rcode_nxdomain)
+        self.session.connect(dns_rcode_notimp)
+        self.session.connect(dns_rcode_refused)
+        self.session.connect(dns_rcode_yxdomain)
+        self.session.connect(dns_rcode_yxrrset)
+        self.session.connect(dns_rcode_nxrrset)
+        self.session.connect(dns_rcode_notauth)
+        self.session.connect(dns_rcode_notzone)
+        self.session.connect(dns_rcode_badvers)
+        self.session.connect(dns_rcode_badcookie)
+        self.session.connect(dns_rcode_badsig)
+        self.session.connect(dns_rcode_badkey)
+        self.session.connect(dns_rcode_badtime)
 
     def get_fuzzing_targets(self) -> list:
         """Return list of DNS fuzzing targets and their purposes"""

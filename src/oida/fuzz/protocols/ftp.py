@@ -36,7 +36,7 @@ from ..core.base_fuzzer import CommonState, RequestInfo
 from ..core.config import FuzzerConfig
 from ..core.connections.stateful import StatefulConnection, TLSHandler
 from ..core.session.state_machine import create_auth_state_machine
-from ..core.session import StateContext, ResponseData
+from ..core.session import StateContext
 from ..core.stateful_fuzzer import StatefulFuzzer
 from ..core.auth import UsernamePasswordAuth, ProtocolAuthenticator
 from ..primitives.dynamic import SmartString
@@ -146,11 +146,6 @@ class FTPSConnection(FTPConnection):
     def get_tls_info(self) -> dict:
         """Get TLS connection information (delegates to TLSHandler)."""
         return self.tls_handler.get_tls_info()
-
-
-# Legacy aliases for backwards compatibility
-FTPSocketConnection = FTPConnection
-FTPSSocketConnection = FTPSConnection
 
 
 # =============================================================================
@@ -293,62 +288,6 @@ class FTPFuzzer(StatefulFuzzer):
             auth_result = ctx.get_response("AUTH")
         """
         return self._state_context
-
-    def store_banner_response(self, banner: str) -> None:
-        """Store FTP banner response for later reference.
-
-        State Machine V2 Pattern:
-        Store the 220 banner from connection for cross-state access.
-
-        Args:
-            banner: Server banner text (e.g., "220 vsFTPd 3.0.3 ready.")
-        """
-        self._state_context.set_response(
-            "BANNER",
-            ResponseData(
-                raw=banner.encode("utf-8") if isinstance(banner, str) else banner,
-                parsed={"server": banner.strip() if banner else ""},
-                response_code=220,
-            ),
-        )
-        self._state_context.set("server_banner", banner)
-
-    def store_auth_response(self, response: str, code: int, success: bool) -> None:
-        """Store FTP authentication response.
-
-        State Machine V2 Pattern:
-        Store USER/PASS response for cross-state access.
-
-        Args:
-            response: Response text from server
-            code: FTP response code (230=success, 530=failed)
-            success: Whether authentication succeeded
-        """
-        self._state_context.set_response(
-            "AUTH",
-            ResponseData(
-                raw=response.encode("utf-8") if isinstance(response, str) else response,
-                parsed={"code": code, "success": success, "message": response.strip()},
-                response_code=code,
-            ),
-        )
-        self._state_context.set("authenticated", success)
-
-    def get_ftp_state_info(self) -> dict:
-        """Get current FTP state information.
-
-        State Machine V2 Pattern:
-        Use this for debugging and logging state.
-
-        Returns:
-            Dictionary with context keys and responses
-        """
-        return {
-            "authenticated": self._state_context.get("authenticated", False),
-            "server_banner": self._state_context.get("server_banner"),
-            "context_keys": self._state_context.keys(),
-            "responses_stored": self._state_context.response_keys(),
-        }
 
     def _create_authenticator(self, config: FuzzerConfig) -> Optional[ProtocolAuthenticator]:
         """Create FTP authenticator from config options."""
@@ -561,12 +500,12 @@ class FTPFuzzer(StatefulFuzzer):
         """Create FTP connection (consumes 220 banner on connect)."""
         use_tls = self.config.get_option("use_tls", False)
         if use_tls:
-            return FTPSSocketConnection(
+            return FTPSConnection(
                 self.config.target_ip,
                 self.config.target_port,
                 **self._timeout_overrides(),
             )
-        return FTPSocketConnection(
+        return FTPConnection(
             self.config.target_ip,
             self.config.target_port,
             **self._timeout_overrides(),
@@ -2350,133 +2289,3 @@ class FTPFuzzer(StatefulFuzzer):
         else:
             # Use StatefulFuzzer's authenticator-based approach
             super().fuzz_all()
-
-    def test_ftps_attack_patterns(self) -> None:
-        """
-        Test FTPS state confusion and downgrade attack patterns
-
-        This method demonstrates how to use the state machine in attack mode
-        to test for vulnerabilities in the FTPS upgrade sequence.
-
-        Attack patterns tested:
-        1. Sending commands before TLS upgrade (cleartext injection)
-        2. Skipping PBSZ command
-        3. Skipping PROT command
-        4. TLS downgrade by jumping directly to authenticated
-        5. Authentication before TLS establishment
-
-        Example usage:
-            fuzzer = FTPFuzzer(config)
-            fuzzer.test_ftps_attack_patterns()
-        """
-        use_tls = self.config.get_option("use_tls", False)
-        if not use_tls or not self.state_machine:
-            self.log.warning("FTPS attack patterns require use_tls=True and state machine")
-            return
-
-        # Enable attack mode
-        self.enable_invalid_state_testing()
-        self.log.display("Testing FTPS state confusion vulnerabilities")
-
-        attack_patterns = [
-            (
-                "Sending USER command before TLS upgrade (cleartext injection)",
-                ["CONNECTED"],
-                lambda: self._test_command_before_tls(),
-            ),
-            (
-                "Skipping PBSZ after TLS establishment",
-                ["CONNECTED", "TLS_NEGOTIATION", "TLS_ESTABLISHED", "PROT_SET"],
-                lambda: self._test_skip_pbsz(),
-            ),
-            (
-                "Skipping PROT after PBSZ",
-                [
-                    "CONNECTED",
-                    "TLS_NEGOTIATION",
-                    "TLS_ESTABLISHED",
-                    "PBSZ_SET",
-                    "AUTHENTICATED",
-                ],
-                lambda: self._test_skip_prot(),
-            ),
-            (
-                "Jumping directly to authenticated without TLS",
-                ["CONNECTED", "AUTHENTICATED"],
-                lambda: self._test_no_tls_auth(),
-            ),
-            (
-                "Authenticating before completing TLS setup",
-                ["CONNECTED", "TLS_NEGOTIATION", "AUTHENTICATED"],
-                lambda: self._test_early_auth(),
-            ),
-        ]
-
-        for pattern_name, state_sequence, test_func in attack_patterns:
-            self.log.display(f"\n{'=' * 60}")
-            self.log.display(f"Attack Pattern: {pattern_name}")
-            self.log.display(f"State Sequence: {' → '.join(state_sequence)}")
-            self.log.display(f"{'=' * 60}")
-
-            try:
-                # Reset to initial state
-                self.force_invalid_state_transition("CONNECTED")
-
-                # Follow the attack pattern state sequence
-                for state in state_sequence[1:]:  # Skip first (already in CONNECTED)
-                    self.force_invalid_state_transition(state)
-                    self.log.display(f"Forced transition to: {state}")
-
-                # Execute pattern-specific test
-                test_func()
-
-                self.log.display(f"✓ Attack pattern completed: {pattern_name}")
-
-            except Exception as e:
-                self.log.fail(f"✗ Attack pattern failed: {pattern_name} - {e}")
-
-        # Disable attack mode
-        self.disable_invalid_state_testing()
-        self.log.display("\nFTPS attack pattern testing completed")
-
-    def _test_command_before_tls(self):
-        """Test sending FTP commands before TLS upgrade"""
-        sock = self.session.targets[0]._target_connection
-        self.log.display("Attempting to send USER command in cleartext")
-        sock.send(f"USER {self.username}\r\n".encode())
-        response = sock.recv(1024).decode("utf-8", errors="ignore")
-        self.log.display(f"Server response: {response.strip()}")
-
-    def _test_skip_pbsz(self):
-        """Test skipping PBSZ command after TLS"""
-        sock = self.session.targets[0]._target_connection
-        self.log.display("Attempting to send PROT without PBSZ")
-        sock.send(b"PROT P\r\n")
-        response = sock.recv(1024).decode("utf-8", errors="ignore")
-        self.log.display(f"Server response: {response.strip()}")
-
-    def _test_skip_prot(self):
-        """Test skipping PROT command after PBSZ"""
-        sock = self.session.targets[0]._target_connection
-        self.log.display("Attempting authentication without PROT")
-        sock.send(f"USER {self.username}\r\n".encode())
-        response = sock.recv(1024).decode("utf-8", errors="ignore")
-        self.log.display(f"Server response: {response.strip()}")
-
-    def _test_no_tls_auth(self):
-        """Test authentication without TLS upgrade"""
-        sock = self.session.targets[0]._target_connection
-        self.log.display("Attempting authentication without TLS")
-        sock.send(f"USER {self.username}\r\n".encode())
-        sock.recv(1024)
-        sock.send(f"PASS {self.password}\r\n".encode())
-        response = sock.recv(1024).decode("utf-8", errors="ignore")
-        self.log.display(f"Server response: {response.strip()}")
-
-    def _test_early_auth(self):
-        """Test authentication before TLS handshake completes"""
-        sock = self.session.targets[0]._target_connection
-        self.log.display("Attempting authentication after AUTH TLS but before handshake")
-        sock.send(f"USER {self.username}\r\n".encode())
-        response = sock.recv(1024).decode("utf-8", errors="ignore")
-        self.log.display(f"Server response: {response.strip()}")

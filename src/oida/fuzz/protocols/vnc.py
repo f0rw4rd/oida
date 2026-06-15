@@ -1,24 +1,10 @@
 """VNC Protocol Fuzzer with State Machine Support
 
-State Machine V2 Integration:
-- StateContext: Carries response data between state transitions
-- Response storage: Stores version, security negotiation data for cross-state access
-- Context-aware callbacks: State callbacks can access shared context
-
-Integration Pattern Example:
-    This fuzzer demonstrates the StateContext integration pattern:
-
-    1. Create StateContext in __init__:
-        self._state_context = StateContext()
-
-    2. Store responses for cross-state data access:
-        ctx.set_response("VERSION", ResponseData(raw=version, parsed={"version": "003.008"}))
-        ctx.set_response("SECURITY", ResponseData(raw=types, parsed={"type": "VNC_AUTH"}))
-
-    3. Access previous responses in later states:
-        version_resp = ctx.get_response("VERSION")
-        if version_resp:
-            print(f"Server version: {version_resp.parsed.get('version')}")
+The fuzzer drives the RFB handshake (version exchange -> security negotiation
+-> authentication) through a StateMachine, then fuzzes pre-auth or post-auth
+client messages. A shared StateContext is created in __init__ and passed to the
+state machine; the challenge nonce is stashed in its crypto store so the
+challenge-response step can recover it.
 """
 
 from typing import List
@@ -27,23 +13,11 @@ from boofuzz import Block, Delim, Group, Request, Static
 
 from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
 from ..core.config import FuzzerConfig
-from ..core.connections.tcp import ResilientTCPConnection
 from ..core.session.state_machine import ProtocolState, StateMachine, StateType
-from ..core.session import StateContext, ResponseData
+from ..core.session import StateContext
 from ..monitors import SocketHealthMonitor
 from ..primitives.dynamic import SmartBytes, SmartString
 from ..primitives.smart_string import StringContext
-
-
-class VNCMessageTypes:
-    """VNC client-to-server message types"""
-
-    SET_PIXEL_FORMAT = 0
-    SET_ENCODINGS = 2
-    FRAMEBUFFER_UPDATE_REQUEST = 3
-    KEY_EVENT = 4
-    POINTER_EVENT = 5
-    CLIENT_CUT_TEXT = 6
 
 
 class VNCSecurityTypes:
@@ -61,39 +35,6 @@ class VNCSecurityTypes:
     SASL = 20
     MD5_HASH = 21
     XVP = 22
-
-
-class VNCEncodingTypes:
-    """VNC encoding type constants"""
-
-    RAW = 0
-    COPY_RECT = 1
-    RRE = 2
-    CORRE = 4
-    HEXTILE = 5
-    ZLIB = 6
-    TIGHT = 7
-    ZLIBHEX = 8
-    ULTRA = 9
-    ZRLE = 16
-    CURSOR = -239
-    DESKTOP_SIZE = -223
-
-
-class VNCSocketConnection(ResilientTCPConnection):
-    """VNC Socket handler for fuzzing with EAGAIN handling"""
-
-    def __init__(self, host, port=5900, send_timeout=5.0, recv_timeout=5.0):
-        super().__init__(
-            host,
-            port,
-            send_timeout=send_timeout,
-            recv_timeout=recv_timeout,
-            max_reconnect_attempts=3,
-            reconnect_delay=0.5,
-        )
-        self.protocol_version = None
-        self.security_type = None
 
 
 class VNCFuzzer(BaseFuzzer):
@@ -271,102 +212,6 @@ class VNCFuzzer(BaseFuzzer):
 
         super().__init__(config, connection_factory)
 
-    @property
-    def context(self) -> StateContext:
-        """Get the StateContext for data propagation.
-
-        State Machine V2 Pattern:
-        Protocols can use this to access shared state:
-            ctx = fuzzer.context
-            version = ctx.get_response("VERSION")
-            security = ctx.get_response("SECURITY")
-        """
-        return self._state_context
-
-    def store_version_response(self, server_version: bytes, client_version: str) -> None:
-        """Store VNC version exchange response.
-
-        State Machine V2 Pattern:
-        Store the RFB version exchange for cross-state access.
-
-        Args:
-            server_version: Server's RFB version bytes
-            client_version: Client version string sent
-        """
-        self._state_context.set_response(
-            "VERSION",
-            ResponseData(
-                raw=server_version,
-                parsed={
-                    "server_version": server_version.decode("utf-8", errors="ignore").strip(),
-                    "client_version": client_version,
-                },
-            ),
-        )
-        self._state_context.set("rfb_version", client_version)
-
-    def store_security_response(self, security_types: bytes, selected_type: str) -> None:
-        """Store VNC security negotiation response.
-
-        State Machine V2 Pattern:
-        Store security type selection for cross-state access.
-
-        Args:
-            security_types: Available security types from server
-            selected_type: Security type name selected (e.g., "VNC_AUTH", "NONE")
-        """
-        self._state_context.set_response(
-            "SECURITY",
-            ResponseData(
-                raw=security_types,
-                parsed={
-                    "available_types": list(security_types),
-                    "selected_type": selected_type,
-                },
-            ),
-        )
-        self._state_context.set("security_type", selected_type)
-
-    def store_auth_response(self, result: bytes, success: bool) -> None:
-        """Store VNC authentication result.
-
-        State Machine V2 Pattern:
-        Store auth result for cross-state access.
-
-        Args:
-            result: Security result bytes from server
-            success: Whether authentication succeeded
-        """
-        self._state_context.set_response(
-            "AUTH",
-            ResponseData(
-                raw=result,
-                parsed={
-                    "success": success,
-                    "result_code": result.hex() if result else "",
-                },
-                response_code=0 if success else 1,
-            ),
-        )
-        self._state_context.set("authenticated", success)
-
-    def get_vnc_state_info(self) -> dict:
-        """Get current VNC state information.
-
-        State Machine V2 Pattern:
-        Use this for debugging and logging state.
-
-        Returns:
-            Dictionary with context keys and responses
-        """
-        return {
-            "authenticated": self._state_context.get("authenticated", False),
-            "security_type": self._state_context.get("security_type"),
-            "rfb_version": self._state_context.get("rfb_version"),
-            "context_keys": self._state_context.keys(),
-            "responses_stored": self._state_context.response_keys(),
-        }
-
     def setup_custom_monitors(self) -> List:
         """Setup VNC-specific monitors"""
         return [
@@ -509,9 +354,6 @@ class VNCFuzzer(BaseFuzzer):
             sock.send(client_version)
             self.log.debug(f"Sent client version: {self.vnc_version}")
 
-            # Store in StateContext for cross-state access
-            self.store_version_response(server_version, self.vnc_version)
-
             return True
 
         except Exception as e:
@@ -562,9 +404,6 @@ class VNCFuzzer(BaseFuzzer):
             sock.send(bytes([selected]))
             self.log.display(f"Selected security type: {self.security_type}")
 
-            # Store in StateContext for cross-state access
-            self.store_security_response(security_types, self.security_type)
-
             return True
 
         except Exception as e:
@@ -584,10 +423,8 @@ class VNCFuzzer(BaseFuzzer):
                 # For RFB 3.8, even with NONE we get a SecurityResult
                 result = sock.recv(4)
                 if result == b"\x00\x00\x00\x00":
-                    self.store_auth_response(result, success=True)
                     return True
                 else:
-                    self.store_auth_response(result, success=False)
                     self.log.fail(f"Security result failed: {result.hex()}")
                     return False
 
@@ -605,19 +442,14 @@ class VNCFuzzer(BaseFuzzer):
             # Process challenge with VNC DES (bit-reversed key, ECB mode)
             response = self._process_challenge(challenge, self.password.encode())
 
-            # Store response in crypto state
-            self._state_context.crypto.set_nonce("vnc_response", response)
-
             sock.send(response)
 
             # Receive security result
             result = sock.recv(4)
             if result == b"\x00\x00\x00\x00":
-                self.store_auth_response(result, success=True)
                 self.log.display("VNC authentication successful")
                 return True
             else:
-                self.store_auth_response(result, success=False)
                 self.log.fail(f"VNC authentication failed: result={result.hex()}")
                 return False
 
