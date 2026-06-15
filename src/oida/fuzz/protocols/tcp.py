@@ -28,8 +28,6 @@ from .tcp_state_integration import StatefulTCPFuzzerMixin
 class TCPOptions(Enum):
     """Extended TCP header options"""
 
-    END = 0
-    NOP = 1
     MSS = 2
     WINDOW_SCALE = 3
     SACK_PERMITTED = 4
@@ -39,8 +37,6 @@ class TCPOptions(Enum):
     USER_TIMEOUT = 28
     AUTH = 29
     MULTIPATH_TCP = 30
-    FASTOPEN_COOKIE = 34
-    ENCRYPTION = 69  # Experimental
 
 
 class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
@@ -284,7 +280,6 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         self.mptcp_block = None
         self._setup_extension_blocks()
         super().__init__(config, connection_factory)
-        self.protocol_name = "TCP" if not use_raw_socket else "TCP-RAW"
 
         # Log socket mode after super().__init__() so self.log is available
         if config:
@@ -460,8 +455,6 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
 
     def _define_tcp_options(self) -> Block:
         """Define comprehensive TCP options block"""
-        # (encryption_block was built here but never embedded in a Request —
-        # the live kind=69 TCP-ENO fuzzing is the separate tcp_eno request.)
         if self.mptcp_block is None:
             raise RuntimeError("MPTCP block not properly initialized")
 
@@ -1583,11 +1576,11 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
 
     def fuzz_sack(self):
         """Fuzz Selective ACK mechanisms"""
-        self.fuzz_node("TCP_SACK.SACK_Options")
+        self.fuzz_node("TCP_SACK.SACK_Options_Block")
 
     def fuzz_mptcp(self):
         """Fuzz Multipath TCP extensions"""
-        self.fuzz_node("TCP_MPTCP.MPTCP_Option")
+        self.fuzz_node("TCP_MPTCP.MPTCP_Block_Options")
 
     def fuzz_auth(self):
         """Fuzz TCP Authentication"""
