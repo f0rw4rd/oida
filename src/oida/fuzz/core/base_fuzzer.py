@@ -382,12 +382,15 @@ class BaseFuzzer(ABC):
         # Determine logic
         logic = monitor_config.logic if monitor_config else self.config.monitor_logic
 
-        # Handle "none" case - no monitors
+        # Handle "none" case - no monitors (but still honour explicit script/valid-case
+        # monitors and auto-restart if the user asked for them).
         if monitor_config.is_empty():
+            extra = self._create_extra_monitors()
+            self._apply_restart_config(extra)
             return CombinedMonitor(
                 host=self.config.target_ip,
                 port=self.config.target_port,
-                monitors=[],
+                monitors=extra or [],
                 skip_pre_send=self.config.skip_pre_send_checks,
                 check_interval=self.config.monitor_check_interval,
                 logic=logic,
@@ -397,6 +400,11 @@ class BaseFuzzer(ABC):
 
         # Create monitor instances from configuration
         monitors = self._create_monitors_from_config(monitor_config)
+
+        # Append the platform-feature monitors (script / valid-case) when configured,
+        # and arm auto-restart on every monitor.
+        monitors.extend(self._create_extra_monitors())
+        self._apply_restart_config(monitors)
 
         # Determine check_interval: use the maximum from monitor specs if specified,
         # otherwise fall back to config default
@@ -445,6 +453,76 @@ class BaseFuzzer(ABC):
                 self.log.warning(f"Unknown or failed monitor: {spec.name}")
 
         return monitors
+
+    def _create_extra_monitors(self) -> List[BaseMonitor]:
+        """Build the script / valid-case monitors that need richer args than the
+        ``name:interval`` registry path can carry."""
+        extra: List[BaseMonitor] = []
+
+        if self.config.script_monitor_command:
+            from ..monitors.script import ScriptMonitor
+
+            extra.append(
+                ScriptMonitor(
+                    host=self.config.target_ip,
+                    port=self.config.target_port,
+                    command=self.config.script_monitor_command,
+                    check_interval=self.config.monitor_check_interval,
+                )
+            )
+            self.log.display(f"Script monitor: {' '.join(self.config.script_monitor_command)}")
+
+        if self.config.valid_case_probe:
+            from ..monitors.network import ValidCaseMonitor
+
+            extra.append(
+                ValidCaseMonitor(
+                    host=self.config.target_ip,
+                    port=self.config.target_port,
+                    probe=self.config.valid_case_probe,
+                    expect=self.config.valid_case_expect,
+                    check_interval=self.config.monitor_check_interval,
+                )
+            )
+            self.log.display(f"Valid-case probe: {len(self.config.valid_case_probe)} bytes")
+
+        if self.config.agent_monitor_host:
+            from ..monitors.agent import AgentMonitor
+
+            extra.append(
+                AgentMonitor(
+                    host=self.config.agent_monitor_host,
+                    port=self.config.agent_monitor_port,
+                    token=self.config.agent_monitor_token,
+                    check_interval=self.config.monitor_check_interval,
+                )
+            )
+            self.log.display(
+                f"Agent monitor: {self.config.agent_monitor_host}:{self.config.agent_monitor_port}"
+            )
+
+        return extra
+
+    def _apply_restart_config(self, monitors: List[BaseMonitor]) -> None:
+        """Arm auto-restart-and-resume on every monitor that supports it.
+
+        The restart command is deduped at run time via the shared CrashTracker, so
+        arming all monitors is safe — exactly one restart fires per crash episode.
+        """
+        if not self.config.restart_command:
+            return
+        for m in monitors:
+            if hasattr(m, "restart_command"):
+                m.restart_command = list(self.config.restart_command)
+                m.restart_delay = self.config.restart_delay
+                if getattr(m, "command_runner", None) is None:
+                    from ..core.session.commands import RealCommandRunner
+
+                    m.command_runner = RealCommandRunner()
+        self.log.display(
+            f"Auto-restart armed: {' '.join(self.config.restart_command)} "
+            f"(delay {self.config.restart_delay}s)"
+        )
 
     def _log_monitor_config(self) -> None:
         """Log monitor configuration for debugging and visibility."""
