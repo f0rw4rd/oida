@@ -1213,11 +1213,8 @@ class IPv6Fuzzer(BaseFuzzer):
             ),
         )
 
-        # =============================================================
-        # PHASE 1: Quick Coverage (0-30 seconds)
-        # Single pass through all packet types with minimal mutations
-        # =============================================================
-
+        # Quick-coverage requests: single pass through all packet types with
+        # minimal mutations so every code path is touched early.
         ipv6_quick_coverage = Request(
             "IPv6_Quick_Coverage",
             children=(
@@ -1315,42 +1312,16 @@ class IPv6Fuzzer(BaseFuzzer):
         )
 
         # =============================================================
-        # PHASE 2: High-Crash Tests (30 sec - 5 minutes)
-        # CVE patterns and overflow attacks - highest crash probability
+        # Connect requests in mutation order. boofuzz fuzzes requests in
+        # connect() order, so earlier groups are exercised first; the
+        # group labels below are ordering buckets, not a wall-clock schedule.
         # =============================================================
 
-        # (CVE-targeted requests already defined above, will be connected in correct order)
-
-        # =============================================================
-        # PHASE 3: CVE-Targeted Operations (5-15 minutes)
-        # Length validation, jumbograms, RA flooding
-        # =============================================================
-
-        # (Already defined above)
-
-        # =============================================================
-        # PHASE 4: Boundary Attacks (15-30 minutes)
-        # Extension header fuzzing with full mutation
-        # =============================================================
-
-        # (Conditional extension headers already defined above)
-
-        # =============================================================
-        # PHASE 5: Standard Protocol Tests (30+ minutes)
-        # Full fuzzing of basic packet types
-        # =============================================================
-
-        # (Standard requests already defined above)
-
-        # =============================================================
-        # Connect requests in OPTIMIZED ORDER
-        # =============================================================
-
-        # PHASE 1: Quick Coverage (~30 seconds)
+        # Quick coverage first (broad, shallow)
         self.session.connect(ipv6_quick_coverage)
         self.session.connect(ipv6_quick_icmpv6_types)
 
-        # PHASE 2: High-Crash Tests - CVE and Overflow patterns (30s - 5min)
+        # High-crash tests next - CVE and overflow patterns
         # These have highest probability of finding crashes
         if self.is_request_enabled("IPv6_CVE_2020_17440_Payload_Length"):
             self.session.connect(ipv6_payload_length_vuln)  # CVE-2020-17440
@@ -1365,14 +1336,14 @@ class IPv6Fuzzer(BaseFuzzer):
         if self.is_request_enabled("IPv6_Malformed"):
             self.session.connect(ipv6_malformed)  # Malformed packets
 
-        # PHASE 3: CVE-Targeted Operations (5-15 min)
+        # CVE-targeted operations: length validation, jumbograms, RA flooding
         self.session.connect(ipv6_incorrect_length)  # Length validation bypass
         if self.is_request_enabled("IPv6_Jumbogram"):
             self.session.connect(ipv6_jumbogram)  # Jumbogram handling
         if self.is_request_enabled("IPv6_Router_Advertisement_Flood"):
             self.session.connect(ipv6_router_adv_flood)  # RA flooding (THC-IPv6 style)
 
-        # PHASE 4: Boundary Attacks - Extension headers (15-30 min)
+        # Boundary attacks: extension-header fuzzing with full mutation
         if include_extensions:
             if extension_type == "fragment" and self.is_request_enabled("IPv6_Fragment"):
                 self.session.connect(ipv6_fragment)
@@ -1383,8 +1354,8 @@ class IPv6Fuzzer(BaseFuzzer):
             elif extension_type == "chain" and self.is_request_enabled("IPv6_Extension_Chain"):
                 self.session.connect(ipv6_chain)
 
-        # PHASE 5: Standard Protocol Tests (30+ min)
-        # Lower crash probability but important for coverage
+        # Standard protocol tests last: lower crash probability but important
+        # for coverage of the basic packet types
         if self.is_request_enabled("IPv6_Basic"):
             self.session.connect(ipv6_basic)
         if self.is_request_enabled("IPv6_TCP"):

@@ -48,20 +48,10 @@ class DHCPFuzzer(BaseFuzzer):
     DEFAULT_MONITORS = "dhcp:50"
 
     PROTOCOL_OPTIONS = {
-        "client_mac": {
-            "type": str,
-            "default": "00:11:22:33:44:55",
-            "description": "Client MAC address for DHCP requests",
-        },
         "timeout": {
             "type": float,
             "default": 5.0,
             "description": "Response timeout in seconds",
-        },
-        "enable_overflow": {
-            "type": bool,
-            "default": True,
-            "description": "Enable buffer overflow tests (may crash servers)",
         },
     }
 
@@ -1034,25 +1024,10 @@ class DHCPv6Fuzzer(BaseFuzzer):
     DEFAULT_MONITORS = "dhcp:50"
 
     PROTOCOL_OPTIONS = {
-        "client_duid": {
-            "type": str,
-            "default": "00:11:22:33:44:55",
-            "description": "Client DUID link-layer address for DHCPv6 requests",
-        },
         "timeout": {
             "type": float,
             "default": 5.0,
             "description": "Response timeout in seconds",
-        },
-        "enable_overflow": {
-            "type": bool,
-            "default": True,
-            "description": "Enable buffer overflow tests (may crash servers)",
-        },
-        "enable_relay": {
-            "type": bool,
-            "default": True,
-            "description": "Enable relay message fuzzing",
         },
     }
 

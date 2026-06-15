@@ -25,8 +25,7 @@ Usage:
             super().fuzz_all()
 """
 
-from dataclasses import dataclass, field
-from enum import Enum, auto
+from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 import struct
 import logging
@@ -34,26 +33,6 @@ import logging
 from ..core.session.state_machine import StateTransitionError
 
 logger = logging.getLogger(__name__)
-
-
-class TCPState(Enum):
-    """TCP connection states — convenience enum mapping to central StateMachine state names.
-
-    Each member's .name matches the corresponding ProtocolState.name in the
-    central StateMachine created by TCPFuzzer._define_state_machine().
-    """
-
-    CLOSED = auto()
-    LISTEN = auto()
-    SYN_SENT = auto()
-    SYN_RECEIVED = auto()
-    ESTABLISHED = auto()
-    FIN_WAIT_1 = auto()
-    FIN_WAIT_2 = auto()
-    CLOSE_WAIT = auto()
-    CLOSING = auto()
-    LAST_ACK = auto()
-    TIME_WAIT = auto()
 
 
 class TCPFlags:
@@ -71,19 +50,9 @@ class TCPFlags:
 
 @dataclass
 class TCPPacketInfo:
-    """Parsed TCP packet information"""
+    """Parsed TCP packet information (only TCP flags are consumed downstream)"""
 
-    src_port: int = 0
-    dst_port: int = 0
-    seq_num: int = 0
-    ack_num: int = 0
-    data_offset: int = 5
     flags: int = 0
-    window: int = 0
-    checksum: int = 0
-    urgent_ptr: int = 0
-    options: bytes = field(default_factory=bytes)
-    payload: bytes = field(default_factory=bytes)
 
     @property
     def has_syn(self) -> bool:
@@ -191,17 +160,6 @@ class TCPStateTracker:
         return self.fuzzer.state_machine
 
     @property
-    def current_state(self) -> TCPState:
-        """Current state as TCPState enum, read from the central StateMachine."""
-        if self._sm:
-            state_name = self._sm.get_current_state_name()
-            try:
-                return TCPState[state_name]
-            except KeyError:
-                return TCPState.CLOSED
-        return TCPState.CLOSED
-
-    @property
     def current_state_name(self) -> str:
         """Current state name as string, read from the central StateMachine."""
         if self._sm:
@@ -229,14 +187,16 @@ class TCPStateTracker:
             self._transition_to("ESTABLISHED", "os_handshake_complete", force=True)
             self.fuzzer.log.debug("Standard TCP socket: auto-transitioned to ESTABLISHED")
 
-        # Pre-send: Validate/update state before sending packet
-        def pre_send_callback(target, fuzz_data_logger, session, sock):
+        # Pre-send: Validate/update state before sending packet.
+        # boofuzz invokes this with positional (target, fuzz_data_logger, session, sock).
+        def pre_send_callback(_target, _fuzz_data_logger, session, _sock):
             self._on_pre_send(session)
 
         session._callback_monitor.on_pre_send.append(pre_send_callback)
 
-        # Post-send: Parse response (if any) and update state
-        def post_send_callback(target, fuzz_data_logger, session, *args, **kwargs):
+        # Post-send: Parse response (if any) and update state.
+        # boofuzz invokes this with positional (target, fuzz_data_logger, session, ...).
+        def post_send_callback(_target, _fuzz_data_logger, session, *_args, **_kwargs):
             self._on_post_send(session)
 
         session.register_post_test_case_callback(post_send_callback)
@@ -247,7 +207,6 @@ class TCPStateTracker:
         self,
         state_name: str,
         trigger: str,
-        packet_info: Optional[TCPPacketInfo] = None,
         force: bool = False,
     ) -> bool:
         """
@@ -256,7 +215,6 @@ class TCPStateTracker:
         Args:
             state_name: Target state name (e.g. "SYN_SENT", "ESTABLISHED")
             trigger: What triggered the transition (for logging)
-            packet_info: Optional packet that triggered this
             force: If True, bypass validation
 
         Returns:
@@ -404,7 +362,7 @@ class TCPStateTracker:
 
         new_state = self._state_for_outgoing_flags(packet_info.flags)
         if new_state:
-            self._transition_to(new_state, f"sent_{packet_info.flag_string()}", packet_info)
+            self._transition_to(new_state, f"sent_{packet_info.flag_string()}")
 
     def _state_for_outgoing_flags(self, flags: int) -> Optional[str]:
         """
@@ -470,7 +428,7 @@ class TCPStateTracker:
 
         new_state = self._state_for_incoming_flags(packet_info.flags)
         if new_state:
-            self._transition_to(new_state, f"recv_{packet_info.flag_string()}", packet_info)
+            self._transition_to(new_state, f"recv_{packet_info.flag_string()}")
 
     def _state_for_incoming_flags(self, flags: int) -> Optional[str]:
         """
@@ -563,51 +521,11 @@ def parse_tcp_header(data: bytes) -> Optional[TCPPacketInfo]:
         return None
 
     try:
-        # TCP header format (20 bytes minimum):
-        # 0-1: Source port
-        # 2-3: Destination port
-        # 4-7: Sequence number
-        # 8-11: Acknowledgment number
+        # TCP header format (20 bytes minimum); only byte 13 (flags) is consumed.
         # 12: Data offset (4 bits) + Reserved (4 bits)
         # 13: Flags
-        # 14-15: Window
-        # 16-17: Checksum
-        # 18-19: Urgent pointer
-
-        src_port, dst_port = struct.unpack("!HH", data[0:4])
-        seq_num, ack_num = struct.unpack("!II", data[4:12])
-
-        data_offset_byte = data[12]
-        data_offset = (data_offset_byte >> 4) & 0x0F
-
         flags = data[13]
-        window = struct.unpack("!H", data[14:16])[0]
-        checksum = struct.unpack("!H", data[16:18])[0]
-        urgent_ptr = struct.unpack("!H", data[18:20])[0]
-
-        header_len = data_offset * 4
-
-        options = b""
-        if header_len > 20 and len(data) >= header_len:
-            options = data[20:header_len]
-
-        payload = b""
-        if len(data) > header_len:
-            payload = data[header_len:]
-
-        return TCPPacketInfo(
-            src_port=src_port,
-            dst_port=dst_port,
-            seq_num=seq_num,
-            ack_num=ack_num,
-            data_offset=data_offset,
-            flags=flags,
-            window=window,
-            checksum=checksum,
-            urgent_ptr=urgent_ptr,
-            options=options,
-            payload=payload,
-        )
+        return TCPPacketInfo(flags=flags)
     except (struct.error, IndexError) as e:
         logger.debug(f"Operation failed: {e}")
         return None
