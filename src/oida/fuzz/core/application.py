@@ -28,6 +28,39 @@ class FuzzerApplication:
         self.connection_factory = connection_factory
         self.TestCaseManager = TestCaseManager
 
+    @staticmethod
+    def _split_command(value):
+        """Split a CLI command string into argv (shell-style, not run via a shell)."""
+        if not value:
+            return None
+        import shlex
+
+        return shlex.split(value)
+
+    @staticmethod
+    def _split_hostport(value, default_port):
+        """Split ``HOST:PORT`` (port optional) for --agent-monitor. Returns
+        ``(host, port)`` or ``(None, default_port)`` when value is empty."""
+        if not value:
+            return None, default_port
+        if ":" in value:
+            host, _, port = value.rpartition(":")
+            try:
+                return host, int(port)
+            except ValueError:
+                raise ValueError(f"Invalid port in --agent-monitor: {value!r}")
+        return value, default_port
+
+    @staticmethod
+    def _parse_hex(value, label):
+        """Parse a hex string (spaces tolerated) into bytes, with a clear error."""
+        if not value:
+            return None
+        try:
+            return bytes.fromhex(value.replace(" ", ""))
+        except ValueError as e:
+            raise ValueError(f"Invalid hex for {label}: {value!r} ({e})")
+
     def run_command(self, args) -> int:
         """Execute the fuzzer command with given arguments"""
         try:
@@ -77,6 +110,21 @@ class FuzzerApplication:
                 calibration_probes=getattr(args, "calibration_probes", 50),
                 adaptive_timeout=getattr(args, "adaptive_timeout", False),
                 detect_drift=getattr(args, "detect_drift", False),
+                # Platform-feature monitors + auto-restart
+                script_monitor_command=self._split_command(getattr(args, "script_monitor", None)),
+                valid_case_probe=self._parse_hex(getattr(args, "valid_case", None), "--valid-case"),
+                valid_case_expect=self._parse_hex(
+                    getattr(args, "valid_case_expect", None), "--valid-case-expect"
+                ),
+                restart_command=self._split_command(getattr(args, "restart_command", None)),
+                restart_delay=getattr(args, "restart_delay", 2.0),
+                agent_monitor_host=self._split_hostport(getattr(args, "agent_monitor", None), 5555)[
+                    0
+                ],
+                agent_monitor_port=self._split_hostport(getattr(args, "agent_monitor", None), 5555)[
+                    1
+                ],
+                agent_monitor_token=getattr(args, "agent_token", None),
             )
 
             # Create fuzzer with optional connection factory injection
