@@ -627,14 +627,12 @@ class OPCUAFuzzer(BaseFuzzer):
 
         secure_channel = ProtocolState(
             name="SECURE_CHANNEL",
-            validation=self._validate_channel,
             requires=["HELLO_COMPLETE"],
             description="SecureChannel established",
         )
 
         session_active = ProtocolState(
             name="SESSION_ACTIVE",
-            validation=self._validate_session,
             requires=["SECURE_CHANNEL"],
             description="Session created and activated",
         )
@@ -654,14 +652,6 @@ class OPCUAFuzzer(BaseFuzzer):
             f"OPC UA state machine initialized - SecureChannelId: {self.secure_channel_id}, "
             f"TokenId: {self.token_id}"
         )
-
-    def _validate_channel(self) -> bool:
-        """Check if SecureChannel is still valid"""
-        return self.secure_channel_id != 0 and self.token_id != 0
-
-    def _validate_session(self) -> bool:
-        """Check if session is still valid"""
-        return self.auth_token is not None
 
     def _define_protocol(self) -> None:
         """Define OPC UA protocol fuzzing structure"""
