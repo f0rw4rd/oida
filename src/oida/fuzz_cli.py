@@ -342,6 +342,61 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         help="Delay between monitor retry attempts (default: 0.1s)",
     )
     fuzz_parser.add_argument(
+        "--script-monitor",
+        type=str,
+        metavar="CMD",
+        dest="script_monitor",
+        help="External health-check command run between test cases; exit 0 = healthy "
+        "(e.g. --script-monitor \"ssh plc 'pidof runtime >/dev/null'\")",
+    )
+    fuzz_parser.add_argument(
+        "--valid-case",
+        type=str,
+        metavar="HEX",
+        dest="valid_case",
+        help="Hex bytes of a known-good request; sent between test cases to verify the "
+        "target still answers correctly (protocol-agnostic valid-case probe)",
+    )
+    fuzz_parser.add_argument(
+        "--valid-case-expect",
+        type=str,
+        metavar="HEX",
+        dest="valid_case_expect",
+        help="Hex substring that must appear in the valid-case reply (default: strict "
+        "baseline match). Use when replies vary, e.g. embedded timestamps",
+    )
+    fuzz_parser.add_argument(
+        "--agent-monitor",
+        type=str,
+        metavar="HOST:PORT",
+        dest="agent_monitor",
+        help="Query an on-target oida-fuzzing-agent (separate repo) for real "
+        "crash/exit/hang detection (e.g. --agent-monitor 10.0.0.5:5555)",
+    )
+    fuzz_parser.add_argument(
+        "--agent-token",
+        type=str,
+        metavar="SECRET",
+        dest="agent_token",
+        help="Shared secret for the oida-fuzzing-agent handshake (--agent-monitor)",
+    )
+    fuzz_parser.add_argument(
+        "--restart-command",
+        type=str,
+        metavar="CMD",
+        dest="restart_command",
+        help="Command run once per crash to bring the target back up, then resume "
+        '(e.g. --restart-command "docker restart plc")',
+    )
+    fuzz_parser.add_argument(
+        "--restart-delay",
+        type=float,
+        default=2.0,
+        metavar="SECONDS",
+        dest="restart_delay",
+        help="Seconds to wait after the restart command before re-probing (default: 2.0)",
+    )
+    fuzz_parser.add_argument(
         "--recv-timeout",
         type=float,
         default=None,
@@ -1125,6 +1180,14 @@ def run_fuzzing(args, protocol, target):
     wrapped.enumerate = getattr(args, "enumerate", True)
     # Crash handling
     wrapped.pause_on_crash = getattr(args, "pause_on_crash", False)
+    # Platform-feature monitors (script / valid-case) + auto-restart
+    wrapped.script_monitor = getattr(args, "script_monitor", None)
+    wrapped.valid_case = getattr(args, "valid_case", None)
+    wrapped.valid_case_expect = getattr(args, "valid_case_expect", None)
+    wrapped.restart_command = getattr(args, "restart_command", None)
+    wrapped.restart_delay = getattr(args, "restart_delay", 2.0)
+    wrapped.agent_monitor = getattr(args, "agent_monitor", None)
+    wrapped.agent_token = getattr(args, "agent_token", None)
 
     # Run application (enumeration happens during fuzzer creation)
     print()

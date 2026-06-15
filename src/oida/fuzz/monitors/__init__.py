@@ -259,7 +259,14 @@ def __getattr__(name):
         return _cache[name]
 
     _base_attrs = {"CrashEvent", "CrashTracker", "ProtocolBaseline", "ProtocolMonitor"}
-    _network_attrs = {"PingMonitor", "SocketHealthMonitor", "CustomSSLSocketMonitor"}
+    _network_attrs = {
+        "PingMonitor",
+        "SocketHealthMonitor",
+        "CustomSSLSocketMonitor",
+        "ValidCaseMonitor",
+    }
+    _script_attrs = {"ScriptMonitor"}
+    _agent_attrs = {"AgentMonitor"}
     _industrial_attrs = {
         "IEC104States",
         "ModbusMonitor",
@@ -302,16 +309,34 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _network_attrs:
-        from .network import PingMonitor, SocketHealthMonitor, CustomSSLSocketMonitor
+        from .network import (
+            PingMonitor,
+            SocketHealthMonitor,
+            CustomSSLSocketMonitor,
+            ValidCaseMonitor,
+        )
 
         _cache.update(
             {
                 "PingMonitor": PingMonitor,
                 "SocketHealthMonitor": SocketHealthMonitor,
                 "CustomSSLSocketMonitor": CustomSSLSocketMonitor,
+                "ValidCaseMonitor": ValidCaseMonitor,
             }
         )
         return _cache[name]
+
+    if name in _script_attrs:
+        from .script import ScriptMonitor
+
+        _cache["ScriptMonitor"] = ScriptMonitor
+        return ScriptMonitor
+
+    if name in _agent_attrs:
+        from .agent import AgentMonitor
+
+        _cache["AgentMonitor"] = AgentMonitor
+        return AgentMonitor
 
     if name in _industrial_attrs:
         from .industrial import (
@@ -429,6 +454,11 @@ __all__ = [
     "PingMonitor",
     "SocketHealthMonitor",
     "CustomSSLSocketMonitor",
+    "ValidCaseMonitor",
+    # External-script monitor
+    "ScriptMonitor",
+    # On-target agent monitor
+    "AgentMonitor",
     # Industrial monitors
     "ModbusMonitor",
     "ModbusRTUMonitor",
