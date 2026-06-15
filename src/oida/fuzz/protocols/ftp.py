@@ -2329,11 +2329,17 @@ class FTPFuzzer(StatefulFuzzer):
                     )
                     return
 
-                # Reset and re-authenticate on new/changed connection
+                # Reset and re-authenticate on new/changed connection.
+                # AUTHENTICATED is reached through the multi-hop TLS-upgrade
+                # chain (CONNECTED -> TLS_NEGOTIATION -> TLS_ESTABLISHED ->
+                # PBSZ_SET -> PROT_SET -> AUTHENTICATED), so we must traverse the
+                # full path (running each state's setup callback on the fresh
+                # connection). require_state() only does a single hop and would
+                # be rejected in enforce mode.
                 self.state_machine.reset_to_initial()
                 self.log.debug(f"Authenticating via state machine (gen {generation})")
                 try:
-                    self.state_machine.require_state("AUTHENTICATED")
+                    self.state_machine.traverse_to_state("AUTHENTICATED")
                     self.log.debug("FTP authenticated")
                     # Mark this connection generation as authenticated
                     self._ftps_authenticated_conn_id = current_identity
