@@ -725,5 +725,110 @@ class TestCreateAuthStateMachine:
         login.assert_called_once()
 
 
+class TestStateMachineRegressions:
+    """Regression tests for state machine correctness fixes."""
+
+    def _two_state_cycle(self):
+        from src.oida.fuzz.core.session.state_machine import (
+            ProtocolState,
+            StateMachine,
+            TransitionRule,
+        )
+
+        s1 = ProtocolState(name="S1")
+        s2 = ProtocolState(name="S2")
+        rules = [
+            TransitionRule(from_state="S1", to_state="S2"),
+            TransitionRule(from_state="S2", to_state="S1"),
+        ]
+        return StateMachine(initial_state=s1, states=[s1, s2], transitions=rules)
+
+    def test_reset_returns_to_initial_after_history_eviction(self):
+        """reset()/reset_to_initial() must use the true initial state even after
+        the bounded state_history deque (maxlen=1000) has evicted it."""
+        sm = self._two_state_cycle()
+        # More than 1000 transitions so the original initial entry is evicted.
+        for _ in range(1100):
+            target = "S2" if sm.current_state.name == "S1" else "S1"
+            sm.transition_to(target)
+
+        # The deque no longer starts with the initial state...
+        assert sm.get_state_history()[0] != "S1"
+
+        # ...but reset must still land on it.
+        sm.reset_to_initial()
+        assert sm.current_state.name == "S1"
+
+        sm.transition_to("S2")
+        sm.reset()
+        assert sm.current_state.name == "S1"
+
+    def test_get_path_is_rules_traversable(self):
+        """get_path_to_state must respect the rule table (not just 'requires'),
+        and traverse_to_state must follow the path without raising."""
+        from src.oida.fuzz.core.session.state_machine import (
+            ProtocolState,
+            StateMachine,
+            TransitionRule,
+        )
+
+        a = ProtocolState(name="A")
+        b = ProtocolState(name="B")
+        c = ProtocolState(name="C")
+        # 'requires' is empty on C, so the old BFS treated C as reachable from
+        # anywhere (A->C). The rule table only permits A->B->C, so the returned
+        # path must go through B.
+        rules = [
+            TransitionRule(from_state="A", to_state="B"),
+            TransitionRule(from_state="B", to_state="C"),
+        ]
+        sm = StateMachine(initial_state=a, states=[a, b, c], transitions=rules)
+
+        assert sm.get_path_to_state("C") == ["A", "B", "C"]
+        assert sm.traverse_to_state("C") is True
+        assert sm.current_state.name == "C"
+
+    def test_failed_enter_does_not_exit_current_state(self):
+        """A failed enter() must not run the current state's on_exit, and must
+        leave the machine in its current state (clean rollback)."""
+        from src.oida.fuzz.core.session.state_machine import (
+            ProtocolState,
+            StateMachine,
+            StateTransitionError,
+            TransitionRule,
+        )
+
+        exit_calls = []
+        s1 = ProtocolState(name="S1", on_exit=lambda: exit_calls.append("S1"))
+        s2 = ProtocolState(name="S2", setup=lambda: False)  # entry always fails
+        rules = [TransitionRule(from_state="S1", to_state="S2")]
+        sm = StateMachine(initial_state=s1, states=[s1, s2], transitions=rules)
+
+        with pytest.raises(StateTransitionError):
+            sm.transition_to("S2")
+
+        assert sm.current_state.name == "S1"
+        assert exit_calls == []
+
+    def test_set_state_no_setup_records_entry_time(self):
+        """set_state_no_setup must stamp entry_time so timeout tracking keeps
+        working after a forced (attack-mode) transition."""
+        sm = self._two_state_cycle()
+        assert sm.states["S2"].entry_time is None
+        sm.set_state_no_setup("S2")
+        assert sm.states["S2"].entry_time is not None
+
+    def test_context_callback_internal_typeerror_propagates(self):
+        """A TypeError raised *inside* a context-accepting callback must
+        propagate, not be silently swallowed and retried with no args."""
+        from src.oida.fuzz.core.session.state_machine import _call_with_optional_context
+
+        def cb(_ctx):
+            raise TypeError("internal boom")
+
+        with pytest.raises(TypeError, match="internal boom"):
+            _call_with_optional_context(cb, context=object())
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
