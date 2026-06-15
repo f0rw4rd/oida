@@ -198,12 +198,12 @@ class IPv6Fuzzer(BaseFuzzer):
                             ),
                         )
                         if vlan_id is not None
-                        else Static("", ""),
+                        else Static("VLAN_Absent", ""),
                         Word("EtherType", 0x86DD, endian=">", fuzzable=True),  # IPv6
                     ),
                 )
                 if include_ethernet
-                else Static("", ""),
+                else Static("Ethernet_Absent", ""),
                 Block(
                     "IPv6_Header",
                     children=(

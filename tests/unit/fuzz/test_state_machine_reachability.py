@@ -44,6 +44,41 @@ STATEFUL_PROTOCOLS_TLS = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def _mock_opcua_handshake():
+    """Let opcua build its state machine offline.
+
+    opcua's `_define_state_machine` derives live protocol state
+    (ChannelId / TokenId / AuthToken) from a real asyncua handshake; with no
+    server it bails out and never builds the SM, which made every opcua
+    reachability case skip. Mock the asyncua Client so the handshake "succeeds"
+    with deterministic state and the static SM gets built. No-op (and opcua
+    falls back to skipping) if asyncua is not installed.
+    """
+    try:
+        import asyncua
+    except ImportError:
+        yield
+        return
+
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    def make_client(url, *args, **kwargs):
+        client = MagicMock()
+        client.connect = AsyncMock()
+        client.disconnect = AsyncMock()
+        conn = client.uaclient.protocol._connection
+        conn.security_token.ChannelId = 1
+        conn.security_token.TokenId = 1
+        conn.remote_nonce = b"\x00" * 32
+        client.uaclient.protocol.authentication_token = b"\x01" * 8
+        return client
+
+    with patch.object(asyncua, "Client") as mock_client:
+        mock_client.side_effect = make_client
+        yield
+
+
 def _create_fuzzer(protocol_name, protocol_options, tmp_path):
     """Create a fuzzer instance with MockConnectionFactory for introspection."""
     boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
