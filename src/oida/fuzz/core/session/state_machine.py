@@ -45,14 +45,18 @@ def _call_with_optional_context(func: Callable, context: Optional["StateContext"
             )
             has_positional = any(p.kind in positional_kinds for p in sig.parameters.values())
         except (ValueError, TypeError):
-            # Can't inspect (e.g., built-in) — try with context, fall back
-            has_positional = True
-
-        if has_positional:
+            # Can't introspect (e.g., a built-in): we genuinely don't know the
+            # arity, so best-effort try with context and fall back to no-arg.
+            # This is the ONLY place we swallow TypeError — when we can inspect
+            # the signature we dispatch to the exact form below and let any
+            # TypeError raised *inside* the callback propagate.
             try:
                 return func(context)
             except TypeError:
-                pass
+                return func()
+
+        if has_positional:
+            return func(context)
 
     return func()
 
@@ -140,6 +144,18 @@ class ProtocolState:
 
     The state machine will automatically detect which style is used and
     pass the context only when the callback accepts it.
+
+    Note on hierarchy: ``parent``/``children`` and the ancestor helpers exist
+    as scaffolding, but StateMachine.transition_to() does NOT yet implement
+    hierarchical (statechart) semantics — entering/exiting a child does not run
+    its ancestors' on_enter/on_exit, and there is no least-common-ancestor
+    handling. Setting ``parent=`` today only builds the tree for introspection;
+    do not rely on superstate behavior being inherited until that is wired up.
+
+    Note on timeouts: ``timeout``/``timeout_callback`` are evaluated lazily —
+    is_timed_out() is only checked at the start of the next transition_to().
+    There is no background timer, so a timeout callback will not fire on its own
+    if no further transition is attempted.
     """
 
     def __init__(
@@ -336,14 +352,26 @@ class StateMachine:
         context: Optional["StateContext"] = None,
     ):
         self.states: Dict[str, ProtocolState] = {s.name: s for s in states}
+        # Ensure the initial state is part of the machine so resets and
+        # name lookups stay consistent.
+        if initial_state.name not in self.states:
+            self.states[initial_state.name] = initial_state
         self.current_state = initial_state
+        # Remember the initial state explicitly. It must NOT be recovered from
+        # state_history, which is a bounded deque (maxlen below): after enough
+        # transitions the left end is evicted and history[0] is no longer the
+        # initial state, which would make reset() land on the wrong state.
+        self._initial_state = initial_state
         self.auto_validate = auto_validate
         self.transitions = transitions or []
         self.allow_invalid_transitions = allow_invalid_transitions
         self.state_history: deque[str] = deque([initial_state.name], maxlen=1000)
         self.transition_log: deque[Dict[str, Any]] = deque(maxlen=1000)
         self._context = context
-        self._lock = threading.Lock()
+        # Re-entrant so that the whole transition (check -> action -> enter ->
+        # commit) can be held under one lock without deadlocking if a callback
+        # legitimately re-enters the machine on the same thread.
+        self._lock = threading.RLock()
 
         _log.debug(f"StateMachine initialized with {len(states)} states")
         _log.debug(f"Initial state: {initial_state.name}")
@@ -408,51 +436,56 @@ class StateMachine:
         Raises:
             StateTransitionError: If transition is invalid or fails
         """
-        # Check current state timeout
-        if self.current_state.is_timed_out():
-            _log.warning(f"Current state {self.current_state.name} has timed out")
-            self.current_state.handle_timeout(self._context)
+        # Hold the lock across the entire transition. A transition is a
+        # check-then-act compound (can_transition -> action -> enter -> commit);
+        # guarding only the final write would let a concurrent caller pass the
+        # check and run setup/actions in parallel, corrupting the machine.
+        with self._lock:
+            # Check current state timeout
+            if self.current_state.is_timed_out():
+                _log.warning(f"Current state {self.current_state.name} has timed out")
+                self.current_state.handle_timeout(self._context)
 
-        if state_name not in self.states:
-            raise StateTransitionError(f"Unknown state: {state_name}")
+            if state_name not in self.states:
+                raise StateTransitionError(f"Unknown state: {state_name}")
 
-        target_state = self.states[state_name]
+            target_state = self.states[state_name]
+            previous_state = self.current_state.name
 
-        # Check if transition is allowed (unless forced or invalid transitions allowed)
-        if not force and not self.allow_invalid_transitions:
-            if not self.can_transition(self.current_state.name, state_name):
-                raise StateTransitionError(
-                    f"Invalid transition: {self.current_state.name} → {state_name}. "
-                    f"Use force=True to bypass validation."
-                )
-
-        # Execute transition action from rules
-        for rule in self.transitions:
-            if rule.from_state == self.current_state.name and rule.to_state == state_name:
-                try:
-                    rule.execute_action(self._context)
-                except Exception as e:
+            # Check if transition is allowed (unless forced or invalid transitions allowed)
+            if not force and not self.allow_invalid_transitions:
+                if not self.can_transition(previous_state, state_name):
                     raise StateTransitionError(
-                        f"Transition action failed: {self.current_state.name} → {state_name}: {e}"
+                        f"Invalid transition: {previous_state} → {state_name}. "
+                        f"Use force=True to bypass validation."
                     )
 
-        # Exit current state
-        self.current_state.exit(self._context)
+            # Execute transition action from rules
+            for rule in self.transitions:
+                if rule.from_state == previous_state and rule.to_state == state_name:
+                    try:
+                        rule.execute_action(self._context)
+                    except Exception as e:
+                        raise StateTransitionError(
+                            f"Transition action failed: {previous_state} → {state_name}: {e}"
+                        )
 
-        # Attempt to enter the state
-        _log.debug(
-            f"Attempting state transition: {self.current_state.name} → {state_name}"
-            + (" [FORCED]" if force else "")
-        )
-
-        if not target_state.enter(self._context):
-            raise StateTransitionError(
-                f"Failed to enter state: {state_name}. Setup callback returned False."
+            _log.debug(
+                f"Attempting state transition: {previous_state} → {state_name}"
+                + (" [FORCED]" if force else "")
             )
 
-        # Transition successful — atomically update state, history, and log
-        with self._lock:
-            previous_state = self.current_state.name
+            # Enter the target BEFORE exiting the current state. If entry fails
+            # we raise without having run the old state's on_exit, so the
+            # machine stays cleanly in its current state (no exit-without-
+            # transition side effects).
+            if not target_state.enter(self._context):
+                raise StateTransitionError(
+                    f"Failed to enter state: {state_name}. Setup callback returned False."
+                )
+
+            # Entry succeeded: exit the old state, then commit.
+            self.current_state.exit(self._context)
             self.current_state = target_state
             self.state_history.append(state_name)
             self.transition_log.append(
@@ -482,6 +515,9 @@ class StateMachine:
         with self._lock:
             previous_state = self.current_state.name
             self.current_state = target_state
+            # Record entry time so is_timed_out()/timeout tracking keeps working
+            # even though we skipped the setup callback.
+            target_state.entry_time = time.time()
             self.state_history.append(state_name)
             self.transition_log.append(
                 {
@@ -560,8 +596,8 @@ class StateMachine:
     def reset_to_initial(self):
         """Reset to initial state."""
         with self._lock:
-            initial_state_name = self.state_history[0]
-            initial_state = self.states[initial_state_name]
+            initial_state = self._initial_state
+            initial_state_name = initial_state.name
             self.current_state = initial_state
             self.state_history = deque([initial_state_name], maxlen=1000)
 
@@ -602,8 +638,8 @@ class StateMachine:
         a completely fresh start (useful for preflight state validation).
         """
         with self._lock:
-            initial_state_name = self.state_history[0]
-            initial_state = self.states[initial_state_name]
+            initial_state = self._initial_state
+            initial_state_name = initial_state.name
             self.current_state = initial_state
             self.state_history = deque([initial_state_name], maxlen=1000)
             self.transition_log = deque(maxlen=1000)
@@ -682,7 +718,7 @@ class StateMachine:
         if target_state not in self.states:
             return []
 
-        initial_state = self.state_history[0]
+        initial_state = self._initial_state.name
         if target_state == initial_state:
             return [initial_state]
 
@@ -693,17 +729,16 @@ class StateMachine:
         while queue:
             current, path = queue.popleft()
 
-            # Get states we can transition to from current
-            for next_state, state in self.states.items():
+            # Get states we can transition to from current. Use can_transition()
+            # — the same legality check transition_to() enforces — so the path we
+            # return is guaranteed traversable. (For requires-only machines
+            # can_transition falls back to the 'requires' field, preserving the
+            # previous reachability semantics.)
+            for next_state in self.states:
                 if next_state in visited:
                     continue
 
-                # Check if we can reach next_state from current
-                # A state can be reached if current is in its requires list
-                # OR if it has no requires (can be reached from anywhere)
-                can_reach = (not state.requires) or (current in state.requires)
-
-                if can_reach:
+                if self.can_transition(current, next_state):
                     new_path = path + [next_state]
                     if next_state == target_state:
                         return new_path
