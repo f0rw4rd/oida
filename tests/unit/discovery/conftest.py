@@ -48,46 +48,23 @@ def _make_mock_netifaces():
 
 @pytest.fixture(autouse=True)
 def mock_netifaces():
-    """Mock netifaces module for all discovery tests.
+    """Mock interface enumeration for all discovery tests.
 
-    core.py uses lazy_import("netifaces") which calls importlib.import_module.
-    We patch sys.modules so the lazy import resolves to our mock, and reset
-    the LazyModule's internal cache so it re-evaluates.
+    Since the netifaces2 migration, core.py and scanner.py both bind
+    ``from ...utils import iface_info as _netifaces`` (the same module
+    object). Its ``AF_INET``/``AF_INET6``/``AF_LINK`` constants are real and
+    already match the keys in ``_INTERFACE_ADDRESSES``, so we only need to
+    patch the two enumeration functions to avoid touching real interfaces.
     """
     mock_nf = _make_mock_netifaces()
 
-    # Get the LazyModule instances from core.py and scanner.py (they are separate instances)
-    from oida.protocols.discovery import core
-    from oida.protocols.discovery import scanner as disc_scanner
+    from oida.utils import iface_info
 
-    lazy_mods = [core._netifaces, disc_scanner._netifaces]
-
-    # Save original state for all lazy modules
-    saved_states = [(m._module, m._loaded, m._available) for m in lazy_mods]
-
-    patches = [
-        patch.dict("sys.modules", {"netifaces": mock_nf}),
-    ]
-
-    for p in patches:
-        p.start()
-
-    # Force all lazy imports to use our mock
-    for m in lazy_mods:
-        m._module = mock_nf
-        m._loaded = True
-        m._available = True
-
-    yield mock_nf
-
-    # Restore original state
-    for m, (orig_module, orig_loaded, orig_available) in zip(lazy_mods, saved_states):
-        m._module = orig_module
-        m._loaded = orig_loaded
-        m._available = orig_available
-
-    for p in reversed(patches):
-        p.stop()
+    with (
+        patch.object(iface_info, "interfaces", return_value=list(_KNOWN_INTERFACES)),
+        patch.object(iface_info, "ifaddresses", side_effect=_mock_ifaddresses),
+    ):
+        yield mock_nf
 
 
 @pytest.fixture(autouse=True)

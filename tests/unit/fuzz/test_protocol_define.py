@@ -15,22 +15,10 @@ from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
 pytestmark = pytest.mark.core
 
-# Protocols that cannot run _define_protocol() in a unit-test environment
-# (e.g. need real serial ports, BLE devices, raw sockets, or seed files).
-SKIP_DEFINE = {
-    # Raw socket protocols require root and real interfaces
-    "icmp",
-    "icmpv6",
-    "ipv4",
-    "ipv6",
-    "ethernet",
-    "industrial_ethernet",
-    "profinet_dcp",
-    # Serial protocols require a real serial device
-    "modbus_rtu",
-    # Mutation fuzzer requires seed files
-    "mutation",
-}
+# Protocols that need an extra option supplied before _define_protocol() can run
+# offline. The mutation fuzzer refuses to build without at least one seed; we
+# provide a throwaway seed directory in the test rather than skipping it.
+SEED_REQUIRED = {"mutation"}
 
 
 @pytest.fixture
@@ -58,10 +46,12 @@ def mock_factory():
     "protocol_name",
     sorted(PROTOCOL_FUZZERS.keys()),
 )
-def test_define_protocol_completes(protocol_name, mock_config, mock_factory):
+def test_define_protocol_completes(protocol_name, mock_config, mock_factory, tmp_path):
     """Verify _define_protocol() runs without error for each registered fuzzer."""
-    if protocol_name in SKIP_DEFINE:
-        pytest.skip(f"{protocol_name} requires special environment")
+    if protocol_name in SEED_REQUIRED:
+        seed = tmp_path / "seed.bin"
+        seed.write_bytes(b"AAAA")
+        mock_config.set_option("seed_directory", f"{tmp_path}/")
 
     fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
     if fuzzer_class is None:
