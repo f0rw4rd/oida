@@ -1430,6 +1430,68 @@ services:
       oida.description: "HART-IP tertiary master, separate UDP/TCP ports, no auth"
       oida.ports: "5098/udp, 5099/tcp"
 
+  # ----------------------------------------------------------------------------
+  # Pure-Python HART-IP mocks (hart_server.py). The C hipserver above is the
+  # FieldComm reference used by the scanner integration tests; these provide the
+  # richer per-command device data that the protocol-level tests in
+  # tests/integration/test_hart_mock.py assert against.
+  # ----------------------------------------------------------------------------
+  hart-pymock:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.hart
+    container_name: hart-pymock
+    hostname: hart-pymock
+    ports:
+      - "5090:5094/udp"
+      - "5091:5095/tcp"
+    environment:
+      - TZ=UTC
+      - HART_MODE=basic
+      - HART_UDP_PORT=5094
+      - HART_TCP_PORT=5095
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 5095), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP pure-Python mock (basic device), per-command device data"
+      oida.ports: "5090/udp, 5091/tcp"
+
+  hart-pymock-multidrop:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.hart
+    container_name: hart-pymock-multidrop
+    hostname: hart-pymock-multidrop
+    ports:
+      - "5092:5094/udp"
+      - "5093:5095/tcp"
+    environment:
+      - TZ=UTC
+      - HART_MODE=multidrop
+      - HART_UDP_PORT=5094
+      - HART_TCP_PORT=5095
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 5095), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP pure-Python mock (multidrop bus), multiple device addresses"
+      oida.ports: "5092/udp, 5093/tcp"
+
   # ============================================================================
   # SNMP Mock Service
   # ============================================================================
@@ -1858,6 +1920,14 @@ services:
       - PNET_VERBOSITY=2
     restart: unless-stopped
     profiles: ["profinet"]
+    healthcheck:
+      # No listening port (raw L2 device); health = the pn_dev process (PID 1)
+      # is alive, which only happens once it has bound the interface.
+      test: ["CMD-SHELL", "grep -q pn_dev /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
       oida.protocol: "profinet"
       oida.group: "profinet"
@@ -1885,6 +1955,15 @@ services:
       - GOOSE_CONF_REV=1
     restart: unless-stopped
     profiles: ["goose-l2"]
+    healthcheck:
+      # No listening port (raw L2 publisher); health = the publisher process
+      # (PID 1, the exec'd python3) is alive. It only reaches the loop after the
+      # raw socket binds, so this also catches an interface/bind failure.
+      test: ["CMD-SHELL", "grep -q python /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     labels:
       oida.protocol: "goose"
       oida.group: "goose"
@@ -1929,7 +2008,7 @@ services:
     networks:
       - ics-network
     healthcheck:
-      test: ["CMD-SHELL", "nc 127.0.0.1 21 </dev/null 2>&1 | grep -q 220"]
+      test: ["CMD-SHELL", "nc -w 2 127.0.0.1 21 </dev/null 2>&1 | grep -q 220"]
       interval: 10s
       timeout: 5s
       retries: 3

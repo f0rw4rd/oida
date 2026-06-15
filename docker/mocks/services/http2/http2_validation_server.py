@@ -219,13 +219,115 @@ class HTTP2ValidationServer:
             f"[PROTOCOL_ERROR] {error_type}: {message} (code={error_code}, stream={stream_id})"
         )
 
+    # HTTP/2 client connection preface (h2c prior-knowledge).
+    _H2_PREFACE = b"PRI * HTTP/2.0\r\n"
+
+    def _diagnostic_json(self, path: str) -> bytes:
+        """Build the JSON body for a diagnostic / echo path (shared by h2 + h1)."""
+        max_events = 100
+        if path == "/.well-known/h2/state":
+            payload = {
+                "server": "http2-python-validation",
+                "stats": self.stats,
+                "hpack_state": self.hpack_state,
+            }
+        elif path == "/.well-known/h2/frames":
+            payload = [e.to_dict() for e in list(self.frame_events)[-max_events:]]
+        elif path == "/.well-known/h2/errors":
+            payload = [e.to_dict() for e in list(self.protocol_errors)[-max_events:]]
+        elif path == "/.well-known/h2/hpack":
+            payload = self.hpack_state
+        else:
+            payload = {"error": "Unknown diagnostic endpoint"}
+        return json.dumps(payload, indent=2).encode("utf-8")
+
+    async def _handle_http1(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        initial: bytes,
+    ):
+        """Serve diagnostic / echo endpoints over plain HTTP/1.1.
+
+        The fuzzer/clients speak h2c, but the introspection endpoints
+        (/.well-known/h2/*, /echo) are also queried over HTTP/1.1 for tooling
+        that can't easily speak HTTP/2. Without this the connection was closed
+        immediately and those queries failed.
+        """
+        # Read up to end of headers.
+        buf = initial
+        while b"\r\n\r\n" not in buf and len(buf) < 65536:
+            chunk = await reader.read(4096)
+            if not chunk:
+                break
+            buf += chunk
+
+        request_line = buf.split(b"\r\n", 1)[0].decode("latin-1", errors="replace")
+        parts = request_line.split()
+        method = parts[0] if parts else "GET"
+        path = parts[1] if len(parts) > 1 else "/"
+
+        if path == "/echo":
+            body = json.dumps(
+                {"method": method, "path": path, "server": "http2-python-validation"},
+                indent=2,
+            ).encode("utf-8")
+        elif path.startswith("/.well-known/h2/"):
+            body = self._diagnostic_json(path)
+        else:
+            body = json.dumps(
+                {
+                    "message": "HTTP/2 Validation Server",
+                    "path": path,
+                    "method": method,
+                    "endpoints": {
+                        "/echo": "Echo request back",
+                        "/.well-known/h2/state": "Server state",
+                        "/.well-known/h2/frames": "Recent frame events",
+                        "/.well-known/h2/errors": "Protocol errors",
+                        "/.well-known/h2/hpack": "HPACK table state",
+                    },
+                },
+                indent=2,
+            ).encode("utf-8")
+
+        response = (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: application/json\r\n"
+            b"Content-Length: " + str(len(body)).encode() + b"\r\n"
+            b"Server: http2-validation-server\r\n"
+            b"Connection: close\r\n"
+            b"\r\n" + body
+        )
+        writer.write(response)
+        await writer.drain()
+
     async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        """Handle a single HTTP/2 connection."""
+        """Handle a single HTTP/2 (h2c) or fallback HTTP/1.1 connection."""
         peername = writer.get_extra_info("peername")
         logger.info(f"New connection from {peername}")
 
         self.stats["connections_total"] += 1
         self.stats["connections_active"] += 1
+
+        # Peek the first bytes to distinguish an HTTP/2 prior-knowledge preface
+        # from a plain HTTP/1.1 request (used by the diagnostic endpoints).
+        try:
+            initial = await reader.read(len(self._H2_PREFACE))
+            if initial and not self._H2_PREFACE.startswith(initial[: len(self._H2_PREFACE)]):
+                try:
+                    await self._handle_http1(reader, writer, initial)
+                finally:
+                    self.stats["connections_active"] -= 1
+                    writer.close()
+                    try:
+                        await writer.wait_closed()
+                    except Exception:
+                        pass
+                    logger.info(f"Connection closed from {peername}")
+                return
+        except Exception:
+            initial = b""
 
         config = h2.config.H2Configuration(
             client_side=False,
@@ -235,6 +337,18 @@ class HTTP2ValidationServer:
         conn.initiate_connection()
         writer.write(conn.data_to_send())
         await writer.drain()
+        # Feed the bytes we already consumed during the peek.
+        if initial:
+            try:
+                events = conn.receive_data(initial)
+                for event in events:
+                    await self._handle_event(conn, writer, event, {})
+                outbound = conn.data_to_send()
+                if outbound:
+                    writer.write(outbound)
+                    await writer.drain()
+            except Exception:
+                pass
 
         # Track stream data for building responses
         stream_data: Dict[int, Dict] = {}

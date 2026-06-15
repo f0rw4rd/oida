@@ -365,6 +365,8 @@ L2_SERVICES: Set[str] = {
 # in check_l2_container_healthy). Services not listed here use the service name.
 L2_CONTAINER_NAME: Dict[str, str] = {
     "can-mock": "can-mock-server",
+    # marker uses the compose service name; the container is named differently
+    "profinet-device": "profinet-pnet-device",
 }
 
 # Services that use UDP instead of TCP — use check_udp_port_open().
@@ -724,7 +726,7 @@ def skip_unless_l2_docker(
     Raises:
         pytest.skip: If requirements are not met.
     """
-    if not check_l2_container_healthy(container_name):
+    if not check_l2_container_healthy(L2_CONTAINER_NAME.get(container_name, container_name)):
         pytest.skip(
             f"L2 container '{container_name}' not available "
             f"(start with: docker compose --profile {profile_hint} up -d {container_name})"
