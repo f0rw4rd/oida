@@ -69,6 +69,13 @@ from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST, MOCK_PORTS
 
 
+# All MMS tests share a single libiec61850 server per port (102/10106/10107/10108),
+# and libiec61850 caps concurrent MMS clients (~5 by default). Pin the whole module
+# to one xdist worker so parallel runs don't exceed that cap and flake on rc=1.
+# Honored only under `--dist loadgroup`. Mirrors test_iec104_integration.py.
+pytestmark = pytest.mark.xdist_group("mms_service")
+
+
 # ---------------------------------------------------------------------------
 # Known mock data constants (from libiec61850 server_example_basic_io)
 # ---------------------------------------------------------------------------
