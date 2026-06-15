@@ -5,7 +5,6 @@ Tests cover:
 - ProtocolAuthenticator: abstract interface enforcement
 - UsernamePasswordAuth: initialization, authenticate flow, validate, credentials
 - MQTTAuthenticator: initialization, CONNECT packet building, authenticate, validate
-- NoAuthenticator: always succeeds
 """
 
 import pytest
@@ -51,9 +50,16 @@ class TestProtocolAuthenticatorInterface:
 
     def test_get_credentials_default_empty(self):
         """Default get_credentials returns empty dict."""
-        from src.oida.fuzz.core.auth import NoAuthenticator
+        from src.oida.fuzz.core.auth import ProtocolAuthenticator
 
-        auth = NoAuthenticator()
+        class MinimalAuth(ProtocolAuthenticator):
+            def authenticate(self, connection):
+                return True
+
+            def validate(self, connection):
+                return True
+
+        auth = MinimalAuth()
         assert auth.get_credentials() == {}
 
 
@@ -370,33 +376,3 @@ class TestMQTTAuthenticatorCredentials:
         creds = auth.get_credentials()
         assert creds["username"] == "(none)"
         assert creds["password"] == "(none)"
-
-
-# =============================================================================
-# Test NoAuthenticator
-# =============================================================================
-
-
-class TestNoAuthenticator:
-    """Tests for NoAuthenticator."""
-
-    def test_authenticate_always_true(self):
-        """NoAuthenticator always returns True for authenticate."""
-        from src.oida.fuzz.core.auth import NoAuthenticator
-
-        auth = NoAuthenticator()
-        assert auth.authenticate(Mock()) is True
-
-    def test_validate_always_true(self):
-        """NoAuthenticator always returns True for validate."""
-        from src.oida.fuzz.core.auth import NoAuthenticator
-
-        auth = NoAuthenticator()
-        assert auth.validate(Mock()) is True
-
-    def test_get_credentials_empty(self):
-        """NoAuthenticator returns empty credentials."""
-        from src.oida.fuzz.core.auth import NoAuthenticator
-
-        auth = NoAuthenticator()
-        assert auth.get_credentials() == {}

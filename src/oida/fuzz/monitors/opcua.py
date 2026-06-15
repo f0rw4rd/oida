@@ -76,8 +76,6 @@ class OPCUAMonitor(ProtocolMonitor):
         self.server_protocol_version: Optional[int] = None
         self.server_receive_buffer: Optional[int] = None
         self.server_send_buffer: Optional[int] = None
-        self.server_max_message: Optional[int] = None
-        self.server_max_chunk: Optional[int] = None
 
     def _build_hello_message(self) -> bytes:
         """Build OPC UA Hello message.
@@ -153,8 +151,8 @@ class OPCUAMonitor(ProtocolMonitor):
                 self.server_protocol_version,
                 self.server_receive_buffer,
                 self.server_send_buffer,
-                self.server_max_message,
-                self.server_max_chunk,
+                _server_max_message,
+                _server_max_chunk,
             ) = struct.unpack("<IIIII", response[8:28])
             return True
         except struct.error as e:
@@ -193,10 +191,6 @@ class OPCUAMonitor(ProtocolMonitor):
                     raw_response=response,
                     parsed_fields={
                         "protocol_version": self.server_protocol_version,
-                        "receive_buffer": self.server_receive_buffer,
-                        "send_buffer": self.server_send_buffer,
-                        "max_message_size": self.server_max_message,
-                        "max_chunk_count": self.server_max_chunk,
                     },
                 )
                 self.baseline_response = response

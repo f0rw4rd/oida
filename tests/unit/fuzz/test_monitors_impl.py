@@ -106,9 +106,7 @@ class TestPingMonitorCheckAlive:
         # First fails, second succeeds
         mock_runner.run.side_effect = [Mock(returncode=1), Mock(returncode=0)]
 
-        monitor = PingMonitor(
-            "192.168.1.1", command_runner=mock_runner, retry_count=2, retry_delay=0.001
-        )
+        monitor = PingMonitor("192.168.1.1", command_runner=mock_runner, retry_count=2)
 
         result = monitor._check_alive(Mock())
 
@@ -218,9 +216,7 @@ class TestSocketHealthMonitorCheckAlive:
             mock_socket.connect.side_effect = socket.error("Connection refused")
             mock_socket_class.return_value = mock_socket
 
-            monitor = SocketHealthMonitor(
-                "192.168.1.1", 80, retry_count=1, failure_threshold=3, retry_delay=0.001
-            )
+            monitor = SocketHealthMonitor("192.168.1.1", 80, retry_count=1, failure_threshold=3)
 
             result = monitor._check_alive(Mock())
 

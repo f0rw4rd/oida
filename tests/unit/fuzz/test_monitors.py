@@ -223,7 +223,7 @@ class TestMonitorRegistry:
         assert hasattr(info, "name")
         assert hasattr(info, "cls")
         assert hasattr(info, "default_interval")
-        assert hasattr(info, "description")
+        assert hasattr(info, "default_port")
 
     def test_create_monitor(self):
         """Test create_monitor creates monitor instance."""

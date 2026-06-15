@@ -4,7 +4,6 @@ import threading
 import time
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from enum import IntEnum, auto
 from typing import Any, Dict, List, Optional
 
 import urllib3
@@ -32,35 +31,17 @@ class ProtocolBaseline:
         parsed_fields: Protocol-specific parsed data (function codes, status codes, etc.)
         timestamp: Unix timestamp when baseline was established
         response_length: Length of the baseline response
-        rtt: Most recent measured round-trip time of a health probe, in seconds
     """
 
     raw_response: bytes
     parsed_fields: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     response_length: int = field(default=0)
-    rtt: Optional[float] = None
 
     def __post_init__(self):
         """Set response_length from raw_response if not provided."""
         if self.response_length == 0 and self.raw_response:
             self.response_length = len(self.raw_response)
-
-    def matches(self, current_response: bytes, fields_to_check: Optional[List[str]] = None) -> bool:
-        """Check if a current response matches this baseline.
-
-        Args:
-            current_response: The response to compare
-            fields_to_check: Optional list of parsed_fields keys to check.
-                           If None, compares raw_response bytes.
-
-        Returns:
-            True if responses match, False otherwise
-        """
-        if fields_to_check is None:
-            return current_response == self.raw_response
-        # Field-based comparison would be done by subclasses
-        return True
 
     def get_field(self, name: str, default: Any = None) -> Any:
         """Get a parsed field value."""
@@ -78,7 +59,6 @@ class CrashEvent:
     monitor_name: str
     reason: str
     recovered: bool = False
-    recovery_time: Optional[float] = None
 
 
 class CrashTracker:
@@ -98,7 +78,7 @@ class CrashTracker:
 
         # Query crash state
         if tracker.is_crashed:
-            print(f"Crashed at test case {tracker.last_crash.test_case_id}")
+            print("Target is currently crashed")
         print(f"Total crashes: {tracker.crash_count}")
     """
 
@@ -123,18 +103,6 @@ class CrashTracker:
         """Total number of crashes detected."""
         with self._lock:
             return len(self._crashes)
-
-    @property
-    def last_crash(self) -> Optional[CrashEvent]:
-        """Most recent crash event."""
-        with self._lock:
-            return self._last_crash
-
-    @property
-    def unrecovered_crashes(self) -> List[CrashEvent]:
-        """Crashes that haven't been recovered from."""
-        with self._lock:
-            return [c for c in self._crashes if not c.recovered]
 
     def record_crash(
         self,
@@ -182,7 +150,6 @@ class CrashTracker:
                 return False
 
             self._last_crash.recovered = True
-            self._last_crash.recovery_time = time.time()
             self._is_crashed = False
             self._restart_claimed = False
             return True
@@ -201,11 +168,6 @@ class CrashTracker:
                 return True
             return False
 
-    def get_crashes(self) -> List[CrashEvent]:
-        """Get all recorded crash events."""
-        with self._lock:
-            return self._crashes.copy()
-
     def get_crash_summary(self) -> Dict[str, Any]:
         """Get summary of crash statistics."""
         with self._lock:
@@ -219,22 +181,6 @@ class CrashTracker:
                 ),
                 "monitors_with_crashes": list(set(c.monitor_name for c in self._crashes)),
             }
-
-    def reset(self):
-        """Reset all crash state (use with caution)."""
-        with self._lock:
-            self._crashes = []
-            self._is_crashed = False
-            self._last_crash = None
-            self._restart_claimed = False
-
-
-class IEC104States(IntEnum):
-    """IEC 60870-5-104 connection states."""
-
-    DISCONNECTED = auto()
-    ACTIVE = auto()
-    ERROR = auto()
 
 
 class ProtocolMonitor(BaseMonitor):
@@ -306,7 +252,6 @@ class ProtocolMonitor(BaseMonitor):
 
         # Online timeout adaptation (armed by the calibration phase when enabled).
         # Stay None for the static default behavior.
-        self.last_rtt: Optional[float] = None
         self.rto_estimator: Optional[RtoEstimator] = None
         self.drift_detector: Optional[DriftDetector] = None
 
@@ -435,9 +380,6 @@ class ProtocolMonitor(BaseMonitor):
 
     def _record_rtt(self, rtt: float) -> None:
         """Store a clean probe RTT and, if armed, adapt the timeout / watch for drift."""
-        self.last_rtt = rtt
-        if self.baseline is not None:
-            self.baseline.rtt = rtt
         if self.rto_estimator is not None:
             self.timeout = self.rto_estimator.update(rtt)
         if self.drift_detector is not None and self.drift_detector.add(rtt):
@@ -701,7 +643,6 @@ __all__ = [
     "CrashTracker",
     "RealCommandRunner",
     "FuzzerConfig",
-    "IEC104States",
     "ICSLogger",
     "ProtocolBaseline",
     "ProtocolMonitor",

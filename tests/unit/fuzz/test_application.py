@@ -59,7 +59,6 @@ class TestArgsWrapper:
         args.monitor_config = None
         args.monitor_logic = "and"
         args.reuse_connection = True
-        args.monitor_retry_delay = 0.1
         args.tls_enabled = False
         args.enumerate = True
         args.node = None
@@ -329,15 +328,15 @@ class TestFuzzerConfigOptions:
         config.set_option("new_option", "value")
         assert config.get_option("new_option") == "value"
 
-    def test_set_option_on_none_options(self):
-        """Test set_option when protocol_options is None."""
+    def test_set_option_initializes_dict(self):
+        """__post_init__ guarantees protocol_options is a dict; set_option writes to it."""
         from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="127.0.0.1",
             target_port=502,
         )
-        config.protocol_options = None
+        assert config.protocol_options == {}
 
         config.set_option("key", "value")
         assert config.get_option("key") == "value"
