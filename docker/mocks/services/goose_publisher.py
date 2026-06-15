@@ -44,6 +44,64 @@ GOOSE_MULTICAST_DST = b"\x01\x0c\xcd\x01\x00\x00"  # Standard GOOSE multicast MA
 # ---------------------------------------------------------------------------
 
 
+def _iface_exists(interface: str) -> bool:
+    return os.path.isdir(f"/sys/class/net/{interface}")
+
+
+def _iface_is_up(interface: str) -> bool:
+    try:
+        with open(f"/sys/class/net/{interface}/operstate") as fh:
+            return fh.read().strip() in ("up", "unknown")
+    except OSError:
+        return False
+
+
+def _default_route_iface() -> str:
+    """Interface of the default route (column 0 of /proc/net/route, dest 00000000)."""
+    try:
+        with open("/proc/net/route") as fh:
+            for line in fh.readlines()[1:]:
+                fields = line.split()
+                if len(fields) >= 2 and fields[1] == "00000000":
+                    return fields[0]
+    except OSError:
+        pass
+    return ""
+
+
+def _resolve_interface(preferred: str) -> str:
+    """Pick a usable interface, falling back when *preferred* doesn't exist.
+
+    With ``network_mode: host`` the container sees the host's interfaces, where
+    the configured default (``eth0``) often does not exist (e.g. the NIC is
+    ``enp1s0``). Prefer, in order: the configured interface, a Docker bridge
+    (so a host-side capture on that bridge can see the frames), the
+    default-route interface, then any non-loopback interface that is up.
+    """
+    if _iface_exists(preferred):
+        return preferred
+
+    try:
+        candidates = sorted(os.listdir("/sys/class/net"))
+    except OSError:
+        candidates = []
+
+    bridges = [i for i in candidates if i.startswith("br-") and _iface_is_up(i)]
+    if bridges:
+        chosen = bridges[0]
+    elif _default_route_iface() and _iface_is_up(_default_route_iface()):
+        chosen = _default_route_iface()
+    else:
+        non_lo_up = [i for i in candidates if i != "lo" and _iface_is_up(i)]
+        chosen = non_lo_up[0] if non_lo_up else preferred
+
+    if chosen != preferred:
+        log.warning(
+            "Configured interface %r not found; falling back to %r", preferred, chosen
+        )
+    return chosen
+
+
 def _get_interface_mac(interface: str) -> bytes:
     """Return the 6-byte MAC address for *interface*.
 
@@ -345,7 +403,7 @@ class GoosePublisher:
 
 
 def main() -> None:
-    interface = os.environ.get("GOOSE_INTERFACE", "eth0")
+    interface = _resolve_interface(os.environ.get("GOOSE_INTERFACE", "eth0"))
     appid = int(os.environ.get("GOOSE_APPID", "0x1000"), 0)
     gocb_ref = os.environ.get("GOOSE_GOCB_REF", "simpleIOGenericIO/LLN0$GO$gcb01")
     dataset_ref = os.environ.get("GOOSE_DATASET_REF", "simpleIOGenericIO/LLN0$dataset1")
