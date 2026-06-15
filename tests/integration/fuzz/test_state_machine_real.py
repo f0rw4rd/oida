@@ -93,6 +93,7 @@ def _get_inner_state_machine(fuzzer):
 
 
 @pytest.mark.mms
+@pytest.mark.xdist_group("mms_service")
 class TestMMSReal:
     """Verify MMS state machine reaches all states against real mms-libiec61850."""
 
@@ -399,6 +400,7 @@ class TestOPCUAReal:
 
 @pytest.mark.iec104
 @pytest.mark.timeout(120)
+@pytest.mark.xdist_group("iec104_service")
 class TestIEC104Real:
     """Verify IEC 104 state machine and sequence configuration.
 

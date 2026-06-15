@@ -19,8 +19,10 @@ from unittest.mock import patch, MagicMock
 
 from .conftest import require_docker_mock
 
-# Mark all tests in this module
-pytestmark = [pytest.mark.mms, pytest.mark.fuzz]
+# Mark all tests in this module. Shares the capped libiec61850 MMS server
+# (port 102) with test_mms_integration.py; same xdist_group so all access to
+# that server serializes onto one worker (honored under --dist loadgroup).
+pytestmark = [pytest.mark.mms, pytest.mark.fuzz, pytest.mark.xdist_group("mms_service")]
 
 
 # =============================================================================
