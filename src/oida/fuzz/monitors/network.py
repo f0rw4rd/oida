@@ -32,7 +32,6 @@ class PingMonitor(ProtocolMonitor):
         ping_count: Number of pings per attempt (default: 1)
         failure_threshold: Consecutive failures before reporting down (default: 2)
         command_runner: Command execution interface (default: RealCommandRunner)
-        retry_delay: Delay between retries in seconds (default: 0.1)
     """
 
     def __init__(
@@ -42,7 +41,6 @@ class PingMonitor(ProtocolMonitor):
         ping_count: int = 1,
         failure_threshold: int = 2,
         command_runner: Optional[CommandRunner] = None,
-        retry_delay: float = 0.1,
     ):
         # PingMonitor uses port=0 since it's ICMP-based
         super().__init__(
@@ -56,7 +54,6 @@ class PingMonitor(ProtocolMonitor):
 
         self.ping_count = str(ping_count)
         self.command_runner = command_runner or RealCommandRunner()
-        self.retry_delay = retry_delay
 
         # Adjust ping command based on OS
         if platform.system().lower() == "windows":
@@ -120,12 +117,9 @@ class SocketHealthMonitor(ProtocolMonitor):
         retry_count: Number of retry attempts (default: 3)
         timeout: Connection timeout in seconds (default: 2)
         failure_threshold: Consecutive failures before reporting down (default: 2)
-        retry_delay: Delay between retries in seconds (default: 0.1)
     """
 
-    def __init__(
-        self, host, port, retry_count=3, timeout=2, failure_threshold=2, retry_delay: float = 0.1
-    ):
+    def __init__(self, host, port, retry_count=3, timeout=2, failure_threshold=2):
         super().__init__(
             host=host,
             port=int(port),
@@ -134,7 +128,6 @@ class SocketHealthMonitor(ProtocolMonitor):
             retry_count=retry_count,
             failure_threshold=failure_threshold,
         )
-        self.retry_delay = retry_delay
 
     def _check_alive_once(self, fuzz_data_logger=None) -> bool:
         """Attempt TCP connection to target"""
@@ -325,7 +318,6 @@ class ValidCaseMonitor(ProtocolMonitor):
         # Strict baseline mode: first good response defines the baseline.
         if not self.baseline_established:
             self.baseline = ProtocolBaseline(raw_response=response)
-            self.baseline_response = response
             self.baseline_established = True
             self.logger.display(f"Valid-case baseline established ({len(response)} bytes)")
             return True

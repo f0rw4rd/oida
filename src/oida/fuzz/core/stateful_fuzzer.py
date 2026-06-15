@@ -17,7 +17,7 @@ from .config import FuzzerConfig
 from .connections import ConnectionFactory
 from .connections.stateful import StatefulConnection
 from .auth import ProtocolAuthenticator
-from .session.state_machine import StateMachine, StateTransitionError
+from .session.state_machine import StateTransitionError
 
 
 class AuthenticationFailedError(Exception):
@@ -110,7 +110,6 @@ class StatefulFuzzer(BaseFuzzer):
 
         # State tracking for state-aware requests
         self._current_state: str = CommonState.CONNECTED.value
-        self._state_machine: Optional[StateMachine] = None
 
         # Mapping from boofuzz node names to RequestInfo names
         # Protocols can populate this using _register_request_nodes()
@@ -126,7 +125,7 @@ class StatefulFuzzer(BaseFuzzer):
             f"[STATE] Authenticator: {self.AUTHENTICATOR_CLASS.__name__ if self.AUTHENTICATOR_CLASS else 'None'}"
         )
         self.log.debug(
-            f"[STATE] State machine: {'Configured' if self._state_machine else 'Not configured'}"
+            f"[STATE] State machine: {'Configured' if self.state_machine else 'Not configured'}"
         )
 
     # ==================== STATE TRACKING METHODS ====================
@@ -654,92 +653,6 @@ class StatefulFuzzer(BaseFuzzer):
 
         # Run normal fuzzing
         super().fuzz_all()
-
-    def fuzz_single(self, request_name: str, **kwargs) -> None:
-        """Fuzz a single request with authentication support.
-
-        Args:
-            request_name: Name of request to fuzz
-            **kwargs: Additional arguments passed to parent
-        """
-        self.log.debug(
-            f"[STATE] fuzz_single() called for '{request_name}', current state: {self._current_state}"
-        )
-
-        # Access session to trigger lazy initialization
-        _ = self.session
-
-        # Setup auth callback
-        self._setup_auth_callback()
-
-        # Log state requirement for this request
-        request_info = self._get_request_info_for_node(request_name)
-        if request_info:
-            self.log.debug(
-                f"[STATE] Request '{request_name}' requires state: {request_info.requires_state or self.DEFAULT_REQUEST_STATE}"
-            )
-        else:
-            self.log.debug(
-                f"[STATE] Request '{request_name}' not found, will use default state: {self.DEFAULT_REQUEST_STATE}"
-            )
-
-        # Run single request fuzzing
-        self.fuzz_node(request_name)
-
-    def validate_auth(self) -> bool:
-        """Validate current authentication state.
-
-        Returns:
-            True if authenticated, False otherwise
-        """
-        if not self.authenticator:
-            return True  # No auth required
-
-        try:
-            conn = self.session.targets[0]._target_connection
-            return self.authenticator.validate(conn)
-        except Exception as e:
-            self.log.fail(f"Auth validation error: {e}")
-            return False
-
-    # State machine integration - for protocols that use state machines
-
-    def enable_invalid_state_testing(self) -> None:
-        """Enable attack mode for state confusion testing."""
-        self.log.debug("[STATE] Enabling invalid state testing mode")
-        if self.state_machine:
-            self.state_machine.enable_invalid_state_testing()
-            self.log.display("[STATE] Attack mode enabled: invalid state transitions allowed")
-        else:
-            self.log.warning("[STATE] Cannot enable attack mode - no state machine configured")
-
-    def disable_invalid_state_testing(self) -> None:
-        """Disable attack mode, re-enable normal state validation."""
-        self.log.debug("[STATE] Disabling invalid state testing mode")
-        if self.state_machine:
-            self.state_machine.disable_invalid_state_testing()
-            self.log.display("[STATE] Attack mode disabled: normal state validation restored")
-        else:
-            self.log.warning("[STATE] Cannot disable attack mode - no state machine configured")
-
-    def force_invalid_state_transition(self, state_name: str) -> None:
-        """Force transition to state (bypass validation).
-
-        For testing state confusion vulnerabilities.
-
-        Args:
-            state_name: Target state name
-        """
-        current = self._get_current_state()
-        self.log.debug(f"[STATE] Forcing invalid state transition: {current} -> {state_name}")
-
-        if not self.state_machine:
-            self.log.warning("[STATE] No state machine configured, using internal state only")
-            self._current_state = state_name
-            return
-
-        self.state_machine.transition_to(state_name, force=True)
-        self.log.debug(f"[STATE] Forced transition to: {state_name}")
 
     # ==================== STATE REACHABILITY VALIDATION ====================
 
