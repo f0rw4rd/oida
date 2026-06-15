@@ -335,13 +335,6 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         help="Delay between test cases in seconds (default: 0.0)",
     )
     fuzz_parser.add_argument(
-        "--monitor-retry-delay",
-        type=float,
-        default=0.1,
-        metavar="SECONDS",
-        help="Delay between monitor retry attempts (default: 0.1s)",
-    )
-    fuzz_parser.add_argument(
         "--script-monitor",
         type=str,
         metavar="CMD",
@@ -854,7 +847,6 @@ def show_protocol_usage(protocol):
     print("  --seed SEED              Random seed for reproducibility")
     print("  --check-interval N       Monitor check interval (default: 100)")
     print("  -R, --reuse-connection   Reuse TCP connection (faster, less stable)")
-    print("  --monitor-retry-delay N  Delay between retries (default: 0.1s)")
 
     # Show full protocol-specific options
     try:
@@ -1159,7 +1151,6 @@ def run_fuzzing(args, protocol, target):
     else:
         wrapped.receive_data_after_each_request = wrapped.receive_data_after_fuzz
     wrapped.sleep_time = getattr(args, "sleep_time", 0.0)
-    wrapped.monitor_retry_delay = getattr(args, "monitor_retry_delay", 0.1)
     wrapped.recv_timeout = getattr(args, "recv_timeout", None)
     wrapped.send_timeout = getattr(args, "send_timeout", None)
     wrapped.reconnect_delay = getattr(args, "reconnect_delay", None)

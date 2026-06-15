@@ -9,7 +9,7 @@ target — none of which a black-box network probe can do.
 
 Protocol (newline-delimited text; see the oida-fuzzing-agent repo README):
     HELLO 1 <token>   -> OK version=1 instance=<n> state=<state>
-    STATUS            -> OK state=up|down|crashed|hung pid=.. test=.. signal=..
+    STATUS            -> OK state=up|down|crash|hung pid=.. test=.. signal=..
     CRASH             -> OK kind=.. signal=.. test=.. dump=.. stderr_tail=..
 
 `_check_alive_once` returns True only when the agent reports ``state=up``. On a
@@ -116,8 +116,8 @@ class AgentMonitor(ProtocolMonitor):
         if state == "up":
             return True
 
-        # crashed / hung / down: pull + acknowledge the crash detail for the log.
-        if state in ("crash", "crashed", "hung"):
+        # crash / hung / down: pull + acknowledge the crash detail for the log.
+        if state in ("crash", "hung"):
             detail = {}
             try:
                 (detail,) = self._session("CRASH")

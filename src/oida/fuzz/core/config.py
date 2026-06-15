@@ -124,7 +124,6 @@ class FuzzerConfig:
     crash_threshold: int = 5
     restart_timeout: int = 5
     web_port: int = 26000
-    process_monitor_port: Optional[int] = None
     log_session: bool = True
     skip_pre_send_checks: bool = True
     monitor_check_interval: int = 100
@@ -153,9 +152,6 @@ class FuzzerConfig:
     receive_data_after_fuzz: bool = True  # Wait for response after fuzz payload
     receive_data_after_each_request: bool = True  # Wait for response after setup/prereq requests
     sleep_time: float = 0.0  # Delay between test cases in seconds (0.0 = no delay)
-    monitor_retry_delay: float = (
-        0.1  # Delay between monitor retry attempts in seconds (default=0.1)
-    )
     # Socket timeouts / reconnection (None = use connection/protocol default)
     recv_timeout: Optional[float] = None  # Data-socket receive timeout (default 5.0)
     send_timeout: Optional[float] = None  # Data-socket send timeout (default 5.0)
@@ -199,8 +195,6 @@ class FuzzerConfig:
 
     def set_option(self, key: str, value: Any) -> None:
         """Set a protocol-specific option"""
-        if self.protocol_options is None:
-            self.protocol_options = {}
         self.protocol_options[key] = value
 
 

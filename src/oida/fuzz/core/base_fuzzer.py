@@ -286,11 +286,6 @@ class BaseFuzzer(ABC):
             self.log.debug("Using boofuzz default mutations")
 
     @property
-    def logger(self) -> ICSLogger:
-        """Alias for self.log - provides consistent logger access pattern."""
-        return self.log
-
-    @property
     def session(self) -> Session:
         """Lazy session creation to avoid immediate network connections"""
         if self._session is None:
@@ -565,24 +560,6 @@ class BaseFuzzer(ABC):
             self.log.debug(
                 f"Max reconnect attempts: {self.config.max_reconnect_attempts} (override)"
             )
-
-    def get_monitor_info(self) -> dict:
-        """Get monitor configuration info for external logging."""
-        monitor_names = []
-        if hasattr(self.monitor, "monitors") and self.monitor.monitors:
-            for m in self.monitor.monitors:
-                monitor_names.append(type(m).__name__)
-
-        logic = getattr(self.monitor, "logic", "and")
-
-        return {
-            "type": type(self.monitor).__name__,
-            "target": f"{self.config.target_ip}:{self.config.target_port}",
-            "check_interval": self.config.monitor_check_interval,
-            "logic": logic,
-            "skip_pre_send": self.config.skip_pre_send_checks,
-            "sub_monitors": monitor_names,
-        }
 
     def setup_custom_monitors(self) -> List[BaseMonitor]:
         return []
@@ -1058,35 +1035,6 @@ class BaseFuzzer(ABC):
         registry = self.test_case_registry
         return registry.get_minimal_test_set() if registry else []
 
-    def run_test_case(self, test_id: int) -> None:
-        """
-        Run a single test case by ID.
-
-        This creates a temporary session configured to run only the specified test case.
-
-        Args:
-            test_id: Test case ID to run
-        """
-        original_start = self.config.index_start
-        original_end = self.config.index_end
-
-        try:
-            # Configure to run only this test case
-            self.config.index_start = test_id
-            self.config.index_end = test_id + 1
-
-            # Re-create session with new indices
-            self._session = None
-
-            # Run the single test case
-            self.fuzz_all()
-
-        finally:
-            # Restore original config
-            self.config.index_start = original_start
-            self.config.index_end = original_end
-            self._session = None
-
     def _define_state_machine(self) -> None:
         """
         Optional: Define state machine for stateful protocols
@@ -1528,36 +1476,6 @@ class BaseFuzzer(ABC):
 
     # State machine convenience methods
 
-    def get_current_state(self) -> Optional[str]:
-        """
-        Get current protocol state
-
-        Returns:
-            Current state name, or None if no state machine defined
-
-        Example:
-            state = fuzzer.get_current_state()
-            print(f"Currently in state: {state}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_current_state_name()
-        return None
-
-    def get_valid_next_states(self) -> List[str]:
-        """
-        Get list of valid next states from current state
-
-        Returns:
-            List of state names that can be transitioned to
-
-        Example:
-            next_states = fuzzer.get_valid_next_states()
-            print(f"Can transition to: {next_states}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_valid_next_states()
-        return []
-
     def enable_invalid_state_testing(self):
         """
         Enable attack mode: allow invalid state transitions
@@ -1601,37 +1519,6 @@ class BaseFuzzer(ABC):
 
         self.log.warning(f"Forcing invalid state transition to: {target_state}")
         self.state_machine.transition_to(target_state, force=True)
-
-    def get_transition_graph(self) -> Dict[str, List[str]]:
-        """
-        Get state transition graph
-
-        Returns:
-            Dictionary mapping states to valid next states
-
-        Example:
-            graph = fuzzer.get_transition_graph()
-            for from_state, to_states in graph.items():
-                print(f"{from_state} can transition to: {to_states}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_transition_graph()
-        return {}
-
-    def get_state_history(self) -> List[str]:
-        """
-        Get history of state transitions
-
-        Returns:
-            List of state names in order visited
-
-        Example:
-            history = fuzzer.get_state_history()
-            print(f"State progression: {' → '.join(history)}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_state_history()
-        return []
 
     def _start_progress_monitor(self):
         """Start background thread for progress updates.
