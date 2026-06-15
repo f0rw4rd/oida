@@ -102,7 +102,8 @@ def populated_session(temp_session, mms_host, mms_port):
         temp_session,
         "--seed",
         "12345",
-        "--nolog",
+        # NOTE: do NOT pass --nolog here — it disables session-DB persistence,
+        # so no <session>.db is written and the replay tests below all skip.
         "-e",
         "MMS_Baseline",
         timeout=60,

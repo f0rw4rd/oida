@@ -8,6 +8,7 @@ in OPC UA servers with weak configurations.
 import asyncio
 import pytest
 import subprocess
+import tempfile
 import time
 import sys
 import socket
@@ -49,17 +50,29 @@ def vulnerable_opcua_server(request):
 
     # Use a unique port per test class to avoid conflicts
     port = _find_free_port()
+    # NOTE: must NOT use unbuffered PIPEs here. The vulnerable server logs
+    # verbosely (asyncua INFO) during its heavy address-space startup; an
+    # unread PIPE fills its ~64KB buffer, the server blocks on write, never
+    # reaches "Listening", and the port never opens -> false "failed to start"
+    # skips. Capture to a temp file instead so startup can't deadlock.
+    log_file = tempfile.NamedTemporaryFile(
+        prefix=f"opcua_vuln_{port}_", suffix=".log", delete=False
+    )
     proc = subprocess.Popen(
         [sys.executable, str(server_script), "--port", str(port)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=log_file,
+        stderr=subprocess.STDOUT,
     )
 
     # Wait for server to be ready (asyncua startup can be slow under load)
     if not _wait_for_port(port, timeout=30):
         proc.terminate()
-        stdout, stderr = proc.communicate(timeout=5)
-        pytest.skip(f"Vulnerable OPC UA server failed to start on port {port}")
+        log_file.flush()
+        server_log = Path(log_file.name).read_text(errors="replace")[-2000:]
+        pytest.skip(
+            f"Vulnerable OPC UA server failed to start on port {port}. "
+            f"Server log tail:\n{server_log}"
+        )
 
     url = f"opc.tcp://localhost:{port}/vulnerable/"
     yield url
@@ -175,6 +188,7 @@ class TestOPCUACommandInjection:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=2",
                 "--method-args",
@@ -197,6 +211,7 @@ class TestOPCUACommandInjection:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=2",
                 "--method-args",
@@ -224,6 +239,7 @@ class TestOPCUAPathTraversal:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=11",
                 "--method-args",
@@ -248,6 +264,7 @@ class TestOPCUAPathTraversal:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=17",
                 "--method-args",
@@ -388,6 +405,7 @@ class TestOPCUACodeExecution:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=23",
                 "--method-args",
@@ -410,6 +428,7 @@ class TestOPCUACodeExecution:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=23",
                 "--method-args",
@@ -438,6 +457,7 @@ class TestOPCUAEnvDisclosure:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=20",
                 "--method-args",
@@ -462,6 +482,7 @@ class TestOPCUAEnvDisclosure:
                 "oida.cli",
                 "opcua",
                 vulnerable_opcua_server,
+                "--confirm",
                 "--call-method",
                 "ns=2;i=20",
                 "--method-args",
