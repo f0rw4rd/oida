@@ -80,10 +80,6 @@ class MonitorConfig:
         """Check if no monitors are configured."""
         return len(self.monitors) == 0
 
-    def get_monitor_names(self) -> List[str]:
-        """Get list of monitor names."""
-        return [spec.name for spec in self.monitors]
-
     def format_display(self) -> str:
         """Format for display in startup output.
 
@@ -192,10 +188,6 @@ class FuzzerConfig:
     def get_option(self, key: str, default: Any = None) -> Any:
         """Get a protocol-specific option with a default value"""
         return self.protocol_options.get(key, default)
-
-    def set_option(self, key: str, value: Any) -> None:
-        """Set a protocol-specific option"""
-        self.protocol_options[key] = value
 
 
 def hexdump(data, bytes_per_line=16):

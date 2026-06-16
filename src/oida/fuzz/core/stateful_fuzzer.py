@@ -700,7 +700,6 @@ class StatefulFuzzer(BaseFuzzer):
             # Initial/CONNECTED state is always reachable
             if state_name == initial_state:
                 result.reachable = True
-                result.skip_reason = "initial state" if not state.has_setup() else None
                 results.append(result)
                 continue
 

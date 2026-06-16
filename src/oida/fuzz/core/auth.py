@@ -69,10 +69,6 @@ class UsernamePasswordAuth(ProtocolAuthenticator):
         self,
         username: str,
         password: str,
-        user_cmd_fmt: str = "USER {}\r\n",
-        pass_cmd_fmt: str = "PASS {}\r\n",
-        user_ok_codes: Optional[list] = None,
-        pass_ok_codes: Optional[list] = None,
         protocol_name: str = "AUTH",
     ):
         """Initialize username/password authenticator.
@@ -80,19 +76,15 @@ class UsernamePasswordAuth(ProtocolAuthenticator):
         Args:
             username: Username for authentication
             password: Password for authentication
-            user_cmd_fmt: Format string for USER command (with {} placeholder)
-            pass_cmd_fmt: Format string for PASS command (with {} placeholder)
-            user_ok_codes: Acceptable response codes for USER (default: [331])
-            pass_ok_codes: Acceptable response codes for PASS (default: [230])
             protocol_name: Protocol name for logging
         """
         super().__init__(protocol_name)
         self.username = username
         self.password = password
-        self.user_cmd_fmt = user_cmd_fmt
-        self.pass_cmd_fmt = pass_cmd_fmt
-        self.user_ok_codes = user_ok_codes or [331]
-        self.pass_ok_codes = pass_ok_codes or [230]
+        self.user_cmd_fmt = "USER {}\r\n"
+        self.pass_cmd_fmt = "PASS {}\r\n"
+        self.user_ok_codes = [331]
+        self.pass_ok_codes = [230]
 
     def authenticate(self, conn) -> bool:
         """Perform USER/PASS authentication.
