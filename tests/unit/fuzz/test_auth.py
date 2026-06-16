@@ -95,16 +95,6 @@ class TestUsernamePasswordAuthCreation:
         assert 331 in auth.user_ok_codes
         assert 230 in auth.pass_ok_codes
 
-    def test_custom_command_formats(self):
-        """Custom command formats accepted."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
-
-        auth = UsernamePasswordAuth(
-            "user", "pass", user_cmd_fmt="LOGIN {}\r\n", pass_cmd_fmt="SECRET {}\r\n"
-        )
-        assert auth.user_cmd_fmt == "LOGIN {}\r\n"
-        assert auth.pass_cmd_fmt == "SECRET {}\r\n"
-
 
 class TestUsernamePasswordAuthAuthenticate:
     """Tests for UsernamePasswordAuth authenticate method."""

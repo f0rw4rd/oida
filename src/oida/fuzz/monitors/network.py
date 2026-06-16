@@ -61,22 +61,6 @@ class PingMonitor(ProtocolMonitor):
         else:
             self.ping_cmd = ["ping", "-c", self.ping_count]
 
-    def __repr__(self):
-        return (
-            f"PingMonitor(host={self.host}, retry_count={self.retry_count}, "
-            f"failure_threshold={self.failure_threshold}, "
-            f"consecutive_failures={self.consecutive_failures})"
-        )
-
-    def __str__(self):
-        if self.crashed:
-            status = "CRASHED"
-        elif self.consecutive_failures > 0:
-            status = f"{self.consecutive_failures} failures"
-        else:
-            status = "healthy"
-        return f"PingMonitor for {self.host} ({status})"
-
     def _check_alive_once(self, fuzz_data_logger=None) -> bool:
         """Execute ping command and check result"""
         try:
@@ -204,7 +188,6 @@ class CustomSSLSocketMonitor(BaseMonitor):
             secure_sock = context.wrap_socket(sock)
 
             secure_sock.connect((self.fuzzer_config.target_ip, self.fuzzer_config.target_port))
-            secure_sock.close()
             return True
         except Exception as e:
             self.logger.fail(f"Target down! {str(e)}")
