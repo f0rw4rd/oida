@@ -2,7 +2,6 @@ import traceback
 from typing import Optional, Callable
 from .config import FuzzerConfig
 from .base_fuzzer import BaseFuzzer
-from .connections import ConnectionFactory
 from ...utils.ics_logger import get_logger
 
 # Module-level logger for application startup/shutdown
@@ -15,7 +14,6 @@ class FuzzerApplication:
     def __init__(
         self,
         fuzzer_factory: Optional[Callable] = None,
-        connection_factory: Optional[ConnectionFactory] = None,
     ):
         from .session.manager import (
             TestCaseManager,
@@ -23,7 +21,6 @@ class FuzzerApplication:
         )  # Import here to avoid circular imports
 
         self.fuzzer_factory = fuzzer_factory or create_fuzzer
-        self.connection_factory = connection_factory
         self.TestCaseManager = TestCaseManager
 
     @staticmethod
@@ -123,13 +120,9 @@ class FuzzerApplication:
                 agent_monitor_token=getattr(args, "agent_token", None),
             )
 
-            # Create fuzzer with optional connection factory injection
             # Note: BaseFuzzer now handles TestCaseManager creation and callback registration
             # automatically when config.log_session is True
-            if self.connection_factory:
-                fuzzer = self._create_fuzzer_with_factory(args.protocol, config)
-            else:
-                fuzzer = self.fuzzer_factory(args.protocol, config)
+            fuzzer = self.fuzzer_factory(args.protocol, config)
 
             return self._execute_command(args, fuzzer)
 
@@ -151,21 +144,6 @@ class FuzzerApplication:
             _log.fail(f"Error: {e}")
             traceback.print_exc()
             return 1
-
-    def _create_fuzzer_with_factory(self, protocol: str, config: FuzzerConfig) -> BaseFuzzer:
-        """Create fuzzer with injected connection factory"""
-        # Import locally to avoid circular dependency
-        from ..protocols import PROTOCOL_FUZZERS as fuzzers
-
-        if protocol not in fuzzers:
-            raise ValueError(f"Unsupported protocol: {protocol}. Supported: {list(fuzzers.keys())}")
-
-        if not config.session_filename:
-            config.session_filename = f"{protocol}_{config.target_ip}_{config.target_port}_session"
-
-        # Create fuzzer with connection factory
-        fuzzer_class = fuzzers[protocol]
-        return fuzzer_class(config, self.connection_factory)
 
     def _execute_command(self, args, fuzzer: BaseFuzzer) -> int:
         """Execute the specific command requested"""

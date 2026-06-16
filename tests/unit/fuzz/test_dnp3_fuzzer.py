@@ -73,8 +73,8 @@ class TestDNP3FuzzerCreation:
 
     def test_fuzzer_custom_addresses(self, fuzzer_config):
         """Test fuzzer with custom DNP3 addresses."""
-        fuzzer_config.set_option("source_address", 10)
-        fuzzer_config.set_option("dest_address", 5)
+        fuzzer_config.protocol_options["source_address"] = 10
+        fuzzer_config.protocol_options["dest_address"] = 5
         fuzzer = DNP3Fuzzer(
             config=fuzzer_config,
             connection_factory=MockConnectionFactory(),
@@ -84,7 +84,7 @@ class TestDNP3FuzzerCreation:
 
     def test_fuzzer_auth_option(self, fuzzer_config):
         """Test fuzzer with authentication option."""
-        fuzzer_config.set_option("enable_auth", True)
+        fuzzer_config.protocol_options["enable_auth"] = True
         fuzzer = DNP3Fuzzer(
             config=fuzzer_config,
             connection_factory=MockConnectionFactory(),
@@ -117,7 +117,7 @@ class TestDNP3FuzzerCreation:
 
     def test_fuzzer_control_requires_write(self, fuzzer_config):
         """Test enable_control requires enable_write as master gate."""
-        fuzzer_config.set_option("enable_control", True)
+        fuzzer_config.protocol_options["enable_control"] = True
         fuzzer = DNP3Fuzzer(
             config=fuzzer_config,
             connection_factory=MockConnectionFactory(),
@@ -126,7 +126,7 @@ class TestDNP3FuzzerCreation:
         # so the effective value should be False
         assert fuzzer.enable_control is False
 
-        fuzzer_config.set_option("enable_write", True)
+        fuzzer_config.protocol_options["enable_write"] = True
         fuzzer2 = DNP3Fuzzer(
             config=fuzzer_config,
             connection_factory=MockConnectionFactory(),

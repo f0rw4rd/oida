@@ -10,10 +10,9 @@ import urllib3
 from boofuzz.exception import BoofuzzFailure
 from boofuzz.monitors import BaseMonitor
 
-from ..core.session.commands import CommandRunner, RealCommandRunner
-from ..core.config import FuzzerConfig
+from ..core.session.commands import RealCommandRunner
 from ..core.calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
-from ...utils.ics_logger import get_logger, ICSLogger
+from ...utils.ics_logger import get_logger
 
 # Disable SSL warnings for fuzzing contexts
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -36,12 +35,11 @@ class ProtocolBaseline:
     raw_response: bytes
     parsed_fields: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
-    response_length: int = field(default=0)
 
-    def __post_init__(self):
-        """Set response_length from raw_response if not provided."""
-        if self.response_length == 0 and self.raw_response:
-            self.response_length = len(self.raw_response)
+    @property
+    def response_length(self) -> int:
+        """Length of the baseline response."""
+        return len(self.raw_response) if self.raw_response else 0
 
     def get_field(self, name: str, default: Any = None) -> Any:
         """Get a parsed field value."""
@@ -638,12 +636,9 @@ class ProtocolMonitor(BaseMonitor):
 __all__ = [
     "BaseMonitor",
     "BoofuzzFailure",
-    "CommandRunner",
     "CrashEvent",
     "CrashTracker",
     "RealCommandRunner",
-    "FuzzerConfig",
-    "ICSLogger",
     "ProtocolBaseline",
     "ProtocolMonitor",
 ]

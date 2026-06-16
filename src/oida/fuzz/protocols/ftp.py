@@ -171,10 +171,6 @@ class FTPAuthenticator(UsernamePasswordAuth):
         super().__init__(
             username=username,
             password=password,
-            user_cmd_fmt="USER {}\r\n",
-            pass_cmd_fmt="PASS {}\r\n",
-            user_ok_codes=[331],
-            pass_ok_codes=[230],
             protocol_name=protocol_name,
         )
 

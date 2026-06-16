@@ -20,6 +20,14 @@ import random
 
 from oida.utils.ics_logger import get_logger, get_module_logger
 
+try:
+    from termcolor import colored
+except ImportError:
+
+    def colored(text, *args, **kwargs):
+        return text
+
+
 # Module logger
 logger = get_module_logger(__name__)
 
@@ -553,13 +561,6 @@ def show_fuzz_help():
     """Show comprehensive fuzz help with all protocols listed"""
     from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
 
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
-
     print()
     print(colored("[!]", "yellow", attrs=["bold"]) + " Protocol is required")
     print()
@@ -602,13 +603,6 @@ def show_fuzz_help():
 def handle_list_command(args):
     """List available protocol fuzzers with NXC-style output"""
     from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
-
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
 
     category_filter = getattr(args, "category", None)
     with_options = getattr(args, "with_options", False)
@@ -663,13 +657,6 @@ def handle_list_command(args):
 
 def handle_replay_command(args):
     """Replay test cases from a session with NXC-style output"""
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
-
     session = getattr(args, "session", None)
 
     if not session:
@@ -802,14 +789,7 @@ def handle_replay_command(args):
 
 def show_protocol_usage(protocol):
     """Show comprehensive usage help when target is missing"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_TO_CATEGORY
-
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
+    from .fuzz.protocols import PROTOCOL_FUZZERS
 
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -820,7 +800,6 @@ def show_protocol_usage(protocol):
 
     # Get protocol info - check for default port in config or well-known ports
     default_port = getattr(fuzzer_class, "default_port", None) or WELL_KNOWN_PORTS.get(protocol, 0)
-    PROTOCOL_TO_CATEGORY.get(protocol, "unknown")
 
     print()
     print(
@@ -879,13 +858,6 @@ def show_protocol_options(protocol):
     from .fuzz.protocols import PROTOCOL_FUZZERS
 
     try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
-
-    try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
     except KeyError:
         logger.error(f"Unknown protocol: {protocol}")
@@ -907,13 +879,6 @@ def show_protocol_options(protocol):
 def show_protocol_requests(protocol):
     """Show available requests for a protocol with NXC-style output"""
     from .fuzz.protocols import PROTOCOL_FUZZERS
-
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
 
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -942,13 +907,6 @@ def run_fuzzing(args, protocol, target):
     from .fuzz.protocols import PROTOCOL_FUZZERS
     from .fuzz import FuzzerApplication
 
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
-
     # Validate protocol
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -964,16 +922,15 @@ def run_fuzzing(args, protocol, target):
     user_port = getattr(args, "port", None)
     default_port = getattr(fuzzer_class, "default_port", None) or WELL_KNOWN_PORTS.get(protocol, 0)
     port = user_port or embedded_port or default_port
-    display_port = port
 
     # Create ICSLogger and set global context for consistent output
     verbose = getattr(args, "verbose", False)
-    fuzz_logger = get_logger(f"FUZZ-{protocol.upper()}", target, display_port, verbose=verbose)
+    fuzz_logger = get_logger(f"FUZZ-{protocol.upper()}", target, port, verbose=verbose)
 
     # Set global context so internal modules can use ics_logger helper functions
     from oida.utils.ics_logger import set_context
 
-    set_context(f"FUZZ-{protocol.upper()}", target, display_port, verbose=verbose)
+    set_context(f"FUZZ-{protocol.upper()}", target, port, verbose=verbose)
 
     # Display banner (NXC-style)
     print()
@@ -1023,7 +980,7 @@ def run_fuzzing(args, protocol, target):
 
             db = SQLAlchemyDatabase(db_path)
             db.init_schema()
-            stats = db.get_target_stats(target, display_port)
+            stats = db.get_target_stats(target, port)
             if stats["last_id"] and stats["last_id"] > 0:
                 resume_from = stats["last_id"] + 1
         except ImportError as e:
