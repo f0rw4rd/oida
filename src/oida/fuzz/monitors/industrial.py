@@ -363,7 +363,7 @@ class IEC104Monitor(ProtocolMonitor):
 
         current_time = time.time()
         if current_time - self.last_check >= 1.0:  # Rate limit to 1 check per second
-            if self.state == IEC104States.DISCONNECTED:
+            if self.state in (IEC104States.DISCONNECTED, IEC104States.ERROR):
                 if not self._connect():
                     return False
             elif not self._check_alive(fuzz_data_logger):

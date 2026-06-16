@@ -51,7 +51,7 @@ def test_define_protocol_completes(protocol_name, mock_config, mock_factory, tmp
     if protocol_name in SEED_REQUIRED:
         seed = tmp_path / "seed.bin"
         seed.write_bytes(b"AAAA")
-        mock_config.set_option("seed_directory", f"{tmp_path}/")
+        mock_config.protocol_options["seed_directory"] = f"{tmp_path}/"
 
     fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
     if fuzzer_class is None:

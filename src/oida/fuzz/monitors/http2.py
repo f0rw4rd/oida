@@ -226,7 +226,6 @@ class HTTP2Monitor(ProtocolMonitor):
             List of error dictionaries
         """
         import urllib.request
-        import urllib.error
 
         scheme = "https" if self.use_tls else "http"
         url = f"{scheme}://{self.host}:{self.diagnostics_port}/.well-known/h2/errors"
@@ -259,7 +258,7 @@ class HTTP2Monitor(ProtocolMonitor):
                                 self.hpack_errors += 1
                     return data
 
-        except (urllib.error.URLError, json.JSONDecodeError, Exception) as e:
+        except Exception as e:
             self.logger.debug(f"Failed to fetch errors: {e}")
 
         return []
@@ -297,52 +296,6 @@ class HTTP2Monitor(ProtocolMonitor):
 
         self._disconnect()
         return False
-
-    def alive(self) -> bool:
-        """Check if target is alive (boofuzz interface).
-
-        Returns:
-            True if target is responding, False otherwise
-        """
-        return self._check_alive()
-
-    def post_send(self, target=None, fuzz_data_logger=None, session=None):
-        """Called after each fuzz iteration (boofuzz interface).
-
-        Boofuzz's IFuzzLogger contract requires post_send to return a
-        bool — True means target is alive, False means it crashed. The
-        previous implementation returned None on every call, which
-        boofuzz interprets as falsy → falsely flagging every iteration
-        as a crash. Return True when alive, False when crash detected.
-        """
-        self.test_case_count += 1
-
-        # Only check at intervals — assume alive on uncheck cycles.
-        if self.test_case_count % self.check_interval != 0:
-            return True
-
-        alive = self._check_alive(fuzz_data_logger)
-        if not alive and session:
-            session.add_fail()
-        return bool(alive)
-
-    def pre_send(self, target=None, fuzz_data_logger=None, session=None):
-        """Called before each fuzz iteration (boofuzz interface)."""
-        pass
-
-    def restart_target(self, target=None, fuzz_data_logger=None, session=None) -> bool:
-        """Attempt to restart/recover target (boofuzz interface).
-
-        Returns:
-            True if target is responding after restart, False otherwise
-        """
-        self._disconnect()
-
-        # Wait for potential recovery
-        time.sleep(1.0)
-
-        # Try to reconnect
-        return self._connect()
 
     def __del__(self):
         """Cleanup on destruction."""

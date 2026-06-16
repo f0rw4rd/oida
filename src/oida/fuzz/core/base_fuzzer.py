@@ -13,7 +13,6 @@ from .mutation import (
     set_mutation_seed,
 )
 from .session.state_machine import StateMachine, StateTransitionError
-from .session.test_case import TestCaseRegistry, TestCaseDefinition, ProtocolFeature
 from ...utils.ics_logger import get_logger, ICSLogger, set_progress_active
 import logging
 
@@ -196,9 +195,6 @@ class BaseFuzzer(ABC):
         self._test_case_manager: Optional[TestCaseManager] = None
         self._database: Optional["DatabaseInterface"] = None
 
-        # Test case registry (lazy initialization)
-        self._test_case_registry: Optional[TestCaseRegistry] = None
-
         # Request registry for selective fuzzing
         self._available_requests: Dict[str, RequestInfo] = {}
         self._enabled_requests: Optional[Set[str]] = None  # None = all enabled
@@ -218,7 +214,6 @@ class BaseFuzzer(ABC):
         # Progress monitoring
         self._progress_stop_flag = False
         self._progress_interval = 5  # seconds
-        self._total_mutations = None  # Cached total mutation count for progress %
 
     def _configure_console_output(self):
         """Configure console output verbosity"""
@@ -718,15 +713,6 @@ class BaseFuzzer(ABC):
         # Otherwise, check blacklist (--disable)
         return name not in self._disabled_requests
 
-    def get_available_requests(self) -> List[RequestInfo]:
-        """
-        Get list of all available requests for this fuzzer.
-
-        Returns:
-            List of RequestInfo objects
-        """
-        return list(self._available_requests.values())
-
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:
         """
@@ -942,98 +928,6 @@ class BaseFuzzer(ABC):
     @abstractmethod
     def _define_protocol(self) -> None:
         """Define the protocol-specific fuzzing structure"""
-
-    def _register_test_cases(self) -> Optional[TestCaseRegistry]:
-        """
-        Optional: Register test cases with feature mapping.
-
-        Override this method to pre-register test cases and map them to protocol features.
-        This enables fast verification, selective execution, and deterministic coverage testing.
-
-        Returns:
-            TestCaseRegistry object, or None if protocol doesn't support test case registration
-
-        Example:
-            def _register_test_cases(self) -> TestCaseRegistry:
-                from oida.fuzz.core.test_case import TestCaseRegistry, TestCaseDefinition, HTTPFeature
-
-                registry = TestCaseRegistry('http')
-
-                # Register baseline test
-                registry.register(TestCaseDefinition(
-                    id=1,
-                    name="HTTP_Baseline_GET",
-                    category="connectivity",
-                    features=[HTTPFeature.HTTP_BASELINE, HTTPFeature.HTTP_METHOD_GET],
-                    request_name="HTTP_Baseline"
-                ))
-
-                # Register method variations
-                registry.register(TestCaseDefinition(
-                    id=2,
-                    name="HTTP_Method_POST",
-                    category="http_methods",
-                    features=[HTTPFeature.HTTP_METHOD_POST],
-                    mutations={"Method": "POST"},
-                    request_name="HTTP_Unified_Standard"
-                ))
-
-                return registry
-        """
-        return None  # Default: no test case registration
-
-    @property
-    def test_case_registry(self) -> Optional[TestCaseRegistry]:
-        """Get test case registry (lazy initialization)"""
-        if self._test_case_registry is None:
-            self._test_case_registry = self._register_test_cases()
-        return self._test_case_registry
-
-    def get_test_cases(self) -> List[TestCaseDefinition]:
-        """
-        Get all registered test cases.
-
-        Returns:
-            List of test case definitions, or empty list if not supported
-        """
-        registry = self.test_case_registry
-        return registry.test_cases if registry else []
-
-    def get_test_case(self, test_id: int) -> Optional[TestCaseDefinition]:
-        """
-        Get specific test case by ID.
-
-        Args:
-            test_id: Test case ID
-
-        Returns:
-            TestCaseDefinition or None
-        """
-        registry = self.test_case_registry
-        return registry.get_by_id(test_id) if registry else None
-
-    def get_test_cases_for_feature(self, feature: ProtocolFeature) -> List[TestCaseDefinition]:
-        """
-        Get all test cases that exercise a specific feature.
-
-        Args:
-            feature: Protocol feature to filter by
-
-        Returns:
-            List of test cases exercising the feature
-        """
-        registry = self.test_case_registry
-        return registry.get_by_feature(feature) if registry else []
-
-    def get_minimal_test_set(self) -> List[TestCaseDefinition]:
-        """
-        Get minimal set of test cases that covers all features.
-
-        Returns:
-            Minimal covering set, or empty list if not supported
-        """
-        registry = self.test_case_registry
-        return registry.get_minimal_test_set() if registry else []
 
     def _define_state_machine(self) -> None:
         """
@@ -1351,17 +1245,6 @@ class BaseFuzzer(ABC):
         # Apply multi-machine distribution filtering if configured
         if self.config.distribution_total and self.config.distribution_id:
             self._apply_distribution_filtering()
-
-        # Cache total mutations for progress percentage (computed once)
-        if self._total_mutations is None:
-            try:
-                self._total_mutations = sum(
-                    node.num_mutations()
-                    for node in self.session.nodes.values()
-                    if hasattr(node, "num_mutations")
-                )
-            except Exception:
-                self._total_mutations = 0
 
         # Start progress monitor if logging is enabled
         progress_thread = None

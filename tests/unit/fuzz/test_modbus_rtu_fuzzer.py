@@ -57,10 +57,9 @@ def fuzzer_config():
         target_ip="127.0.0.1",  # Placeholder for RTU
         target_port=502,  # Placeholder for RTU
         session_filename="modbus_rtu_test",
+        # Serial port settings via protocol options
+        protocol_options={"serial_port": "/dev/ttyUSB0", "baudrate": 9600},
     )
-    # Serial port settings via protocol options
-    config.set_option("serial_port", "/dev/ttyUSB0")
-    config.set_option("baudrate", 9600)
     return config
 
 
@@ -102,7 +101,7 @@ class TestModbusRTUFuzzerCreation:
 
     def test_fuzzer_custom_baudrate(self, fuzzer_config):
         """Test fuzzer with custom baudrate."""
-        fuzzer_config.set_option("baudrate", 115200)
+        fuzzer_config.protocol_options["baudrate"] = 115200
         fuzzer = ModbusRTUFuzzer(
             config=fuzzer_config,
             connection_factory=MockConnectionFactory(),

@@ -330,14 +330,12 @@ class StateMachine:
         self,
         initial_state: ProtocolState,
         states: List[ProtocolState],
-        auto_validate: bool = True,
         transitions: Optional[List[TransitionRule]] = None,
         allow_invalid_transitions: bool = False,
         context: Optional["StateContext"] = None,
     ):
         self.states: Dict[str, ProtocolState] = {s.name: s for s in states}
         self.current_state = initial_state
-        self.auto_validate = auto_validate
         self.transitions = transitions or []
         self.allow_invalid_transitions = allow_invalid_transitions
         self.state_history: deque[str] = deque([initial_state.name], maxlen=1000)
@@ -609,17 +607,6 @@ class StateMachine:
             self.transition_log = deque(maxlen=1000)
 
         _log.debug(f"Resetting state machine (full reset): {initial_state_name}")
-
-    def get_states_by_type(self, state_type: StateType) -> List[str]:
-        """Get all states of a given type.
-
-        Args:
-            state_type: StateType enum value to filter by
-
-        Returns:
-            List of state names matching the type
-        """
-        return [name for name, state in self.states.items() if state.state_type == state_type]
 
     def get_topological_order(self) -> List[str]:
         """Return states sorted by dependency order (Kahn's algorithm).
