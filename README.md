@@ -65,3 +65,7 @@ list and the per-protocol guides live at
 ## License
 
 [AGPL-3.0](LICENSE)
+
+## Trademarks
+
+All marks belong to their owners; used nominatively to describe interoperability; no endorsement implied.
