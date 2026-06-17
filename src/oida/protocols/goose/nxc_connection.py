@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 """GOOSE NXC-style callable class."""
 
-import time
-
 from ...connection import SerialConnection
 from ...utils.permissions import check_raw_socket_capability
 
@@ -28,7 +26,10 @@ class goose(SerialConnection):
 
         if mms_enum:
             # GoCB enumeration via MMS - no raw socket needed
-            self._mms_enum_mode(mms_enum)
+            self.logger.display(f"Enumerating GoCBs on {mms_enum} via MMS...")
+            self.create_conn_obj()
+            if self.conn:
+                self._execute_scan()
         elif rgoose:
             # R-GOOSE UDP mode - not yet supported
             self.logger.fail(
@@ -52,13 +53,6 @@ class goose(SerialConnection):
                 self.enum_host_info()
                 self.print_host_info()
                 self._execute_scan()
-
-    def _mms_enum_mode(self, target: str):
-        """GoCB enumeration via MMS connection."""
-        self.logger.display(f"Enumerating GoCBs on {target} via MMS...")
-        self.create_conn_obj()
-        if self.conn:
-            self._execute_scan()
 
     def create_conn_obj(self):
         """Create GOOSE connection object."""
@@ -101,7 +95,6 @@ class goose(SerialConnection):
 
             try:
                 self.scanner.disconnect(conn)
-                time.sleep(0.1)
                 self.logger.debug("GOOSE connection closed")
             except Exception as e:
                 self.logger.debug(f"Error closing GOOSE connection: {e}")
