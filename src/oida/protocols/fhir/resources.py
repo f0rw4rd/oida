@@ -14,9 +14,6 @@ from typing import Any, Dict
 class FHIRResourceBuilder:
     """Build FHIR R4 resources for testing purposes"""
 
-    def __init__(self, version: str = "R4"):
-        self.version = version
-
     @staticmethod
     def build_patient(
         patient_id: str = "",
@@ -218,280 +215,20 @@ class FHIRResourceBuilder:
 
         return obs
 
-    @staticmethod
-    def build_medication_request(
-        medication_request_id: str = "",
-        patient_reference: str = "",
-        medication_code: str = "",
-        medication_display: str = "",
-        medication_system: str = "http://www.nlm.nih.gov/research/umls/rxnorm",
-        dosage_text: str = "",
-        dosage_route: str = "",
-        status: str = "active",
-        intent: str = "order",
-        authored_on: str = "",
-        requester_reference: str = "",
-    ) -> Dict[str, Any]:
-        """
-        Build a MedicationRequest resource dictionary
-
-        Args:
-            medication_request_id: Logical resource ID
-            patient_reference: Patient reference
-            medication_code: Medication code (RxNorm)
-            medication_display: Medication display name
-            medication_system: Medication code system
-            dosage_text: Dosage instruction text
-            dosage_route: Route of administration
-            status: Request status
-            intent: Request intent
-            authored_on: When request was authored
-            requester_reference: Prescriber reference
-
-        Returns:
-            Dict representing FHIR MedicationRequest resource
-        """
-        med_req: Dict[str, Any] = {
-            "resourceType": "MedicationRequest",
-            "id": medication_request_id,
-            "status": status,
-            "intent": intent,
-        }
-
-        # Medication
-        if medication_code or medication_display:
-            med_req["medicationCodeableConcept"] = {
-                "coding": [
-                    {
-                        "system": medication_system,
-                        "code": medication_code,
-                        "display": medication_display,
-                    }
-                ]
-            }
-
-        # Subject
-        if patient_reference:
-            if not patient_reference.startswith("Patient/"):
-                patient_reference = f"Patient/{patient_reference}"
-            med_req["subject"] = {"reference": patient_reference}
-
-        # Authored on
-        if authored_on:
-            med_req["authoredOn"] = authored_on
-
-        # Requester
-        if requester_reference:
-            med_req["requester"] = {"reference": requester_reference}
-
-        # Dosage instruction
-        if dosage_text:
-            dosage: Dict[str, Any] = {"text": dosage_text}
-            if dosage_route:
-                dosage["route"] = {
-                    "coding": [
-                        {
-                            "system": "http://snomed.info/sct",
-                            "display": dosage_route,
-                        }
-                    ]
-                }
-            med_req["dosageInstruction"] = [dosage]
-
-        return med_req
-
-    @staticmethod
-    def build_condition(
-        condition_id: str = "",
-        patient_reference: str = "",
-        code: str = "",
-        code_display: str = "",
-        code_system: str = "http://snomed.info/sct",
-        clinical_status: str = "active",
-        verification_status: str = "confirmed",
-        onset_datetime: str = "",
-        recorded_date: str = "",
-        category_code: str = "encounter-diagnosis",
-    ) -> Dict[str, Any]:
-        """
-        Build a Condition resource dictionary
-
-        Args:
-            condition_id: Logical resource ID
-            patient_reference: Patient reference
-            code: Condition code (SNOMED, ICD-10)
-            code_display: Display name
-            code_system: Code system URI
-            clinical_status: Clinical status (active, recurrence, etc.)
-            verification_status: Verification status (confirmed, provisional, etc.)
-            onset_datetime: When condition started
-            recorded_date: When condition was recorded
-            category_code: Condition category
-
-        Returns:
-            Dict representing FHIR Condition resource
-        """
-        cond: Dict[str, Any] = {
-            "resourceType": "Condition",
-            "id": condition_id,
-        }
-
-        # Clinical status
-        if clinical_status:
-            cond["clinicalStatus"] = {
-                "coding": [
-                    {
-                        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
-                        "code": clinical_status,
-                    }
-                ]
-            }
-
-        # Verification status
-        if verification_status:
-            cond["verificationStatus"] = {
-                "coding": [
-                    {
-                        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
-                        "code": verification_status,
-                    }
-                ]
-            }
-
-        # Category
-        if category_code:
-            cond["category"] = [
-                {
-                    "coding": [
-                        {
-                            "system": "http://terminology.hl7.org/CodeSystem/condition-category",
-                            "code": category_code,
-                        }
-                    ]
-                }
-            ]
-
-        # Code
-        if code or code_display:
-            cond["code"] = {
-                "coding": [
-                    {
-                        "system": code_system,
-                        "code": code,
-                        "display": code_display,
-                    }
-                ]
-            }
-
-        # Subject
-        if patient_reference:
-            if not patient_reference.startswith("Patient/"):
-                patient_reference = f"Patient/{patient_reference}"
-            cond["subject"] = {"reference": patient_reference}
-
-        # Onset
-        if onset_datetime:
-            cond["onsetDateTime"] = onset_datetime
-
-        # Recorded date
-        if recorded_date:
-            cond["recordedDate"] = recorded_date
-
-        return cond
-
-    @staticmethod
-    def build_encounter(
-        encounter_id: str = "",
-        patient_reference: str = "",
-        class_code: str = "AMB",
-        class_display: str = "ambulatory",
-        type_code: str = "",
-        type_display: str = "",
-        status: str = "finished",
-        period_start: str = "",
-        period_end: str = "",
-        service_provider_reference: str = "",
-    ) -> Dict[str, Any]:
-        """
-        Build an Encounter resource dictionary
-
-        Args:
-            encounter_id: Logical resource ID
-            patient_reference: Patient reference
-            class_code: Encounter class code (AMB, EMER, IMP, etc.)
-            class_display: Encounter class display
-            type_code: Encounter type code
-            type_display: Encounter type display
-            status: Encounter status
-            period_start: Start of encounter
-            period_end: End of encounter
-            service_provider_reference: Organization reference
-
-        Returns:
-            Dict representing FHIR Encounter resource
-        """
-        enc: Dict[str, Any] = {
-            "resourceType": "Encounter",
-            "id": encounter_id,
-            "status": status,
-        }
-
-        # Class
-        if class_code:
-            enc["class"] = {
-                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-                "code": class_code,
-                "display": class_display,
-            }
-
-        # Type
-        if type_code or type_display:
-            enc["type"] = [
-                {
-                    "coding": [
-                        {
-                            "code": type_code,
-                            "display": type_display,
-                        }
-                    ]
-                }
-            ]
-
-        # Subject
-        if patient_reference:
-            if not patient_reference.startswith("Patient/"):
-                patient_reference = f"Patient/{patient_reference}"
-            enc["subject"] = {"reference": patient_reference}
-
-        # Period
-        if period_start or period_end:
-            enc["period"] = {}
-            if period_start:
-                enc["period"]["start"] = period_start
-            if period_end:
-                enc["period"]["end"] = period_end
-
-        # Service provider
-        if service_provider_reference:
-            enc["serviceProvider"] = {"reference": service_provider_reference}
-
-        return enc
-
 
 class FHIRResourceParser:
     """Parse FHIR R4 resources into simplified dictionaries"""
 
     @staticmethod
-    def _format_fhir_date(date_obj: Any, date_only: bool = True) -> str:
+    def _format_fhir_date(date_obj: Any) -> str:
         """
-        Convert FHIR date/datetime object to string.
+        Convert a FHIR date/datetime object to a YYYY-MM-DD string.
 
         Args:
             date_obj: FHIRDate, FHIRDateTime, or other date object
-            date_only: If True, return only YYYY-MM-DD, otherwise full datetime
 
         Returns:
-            Formatted date string or empty string
+            Formatted date string (date-only) or empty string
         """
         if not date_obj:
             return ""
@@ -507,8 +244,8 @@ class FHIRResourceParser:
             # Detect if we got a useless object repr instead of actual date
             if result.startswith("<") or "object at" in result:
                 return ""
-        # Return date-only portion if requested
-        if date_only and len(result) >= 10:
+        # Return date-only portion (YYYY-MM-DD)
+        if len(result) >= 10:
             return str(result[:10])
         return str(result)
 

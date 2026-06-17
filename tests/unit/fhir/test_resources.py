@@ -6,9 +6,7 @@ Unit tests for FHIR resource builder and parser functionality.
 Tests the FHIRResourceBuilder and FHIRResourceParser classes for:
 - Patient resource creation and parsing
 - Observation resource creation and parsing
-- MedicationRequest resource creation and parsing
-- Condition resource creation and parsing
-- Encounter resource creation and parsing
+- Parsing of the remaining clinical resource types
 """
 
 import unittest
@@ -17,14 +15,6 @@ from unittest.mock import MagicMock
 
 class TestFHIRResourceBuilder(unittest.TestCase):
     """Test FHIR resource builder functionality"""
-
-    def test_builder_initialization(self):
-        """Test FHIRResourceBuilder initialization"""
-        from oida.protocols.fhir.resources import FHIRResourceBuilder
-
-        builder = FHIRResourceBuilder()
-        self.assertIsNotNone(builder)
-        self.assertEqual(builder.version, "R4")
 
     def test_build_patient_minimal(self):
         """Test building a minimal Patient resource"""
@@ -108,64 +98,6 @@ class TestFHIRResourceBuilder(unittest.TestCase):
 
         self.assertEqual(obs["resourceType"], "Observation")
         self.assertEqual(obs["category"][0]["coding"][0]["code"], "laboratory")
-
-    def test_build_medication_request(self):
-        """Test building a MedicationRequest"""
-        from oida.protocols.fhir.resources import FHIRResourceBuilder
-
-        builder = FHIRResourceBuilder()
-        med = builder.build_medication_request(
-            medication_request_id="MED001",
-            patient_reference="Patient/PT001",
-            medication_code="197361",
-            medication_display="Lisinopril 10 MG Oral Tablet",
-            dosage_text="Take 1 tablet by mouth daily",
-        )
-
-        self.assertEqual(med["resourceType"], "MedicationRequest")
-        self.assertEqual(med["id"], "MED001")
-        self.assertEqual(med["status"], "active")
-        self.assertEqual(med["intent"], "order")
-        self.assertEqual(med["subject"]["reference"], "Patient/PT001")
-
-    def test_build_condition(self):
-        """Test building a Condition resource"""
-        from oida.protocols.fhir.resources import FHIRResourceBuilder
-
-        builder = FHIRResourceBuilder()
-        condition = builder.build_condition(
-            condition_id="CON001",
-            patient_reference="Patient/PT001",
-            code="73211009",
-            code_system="http://snomed.info/sct",
-            code_display="Diabetes mellitus",
-            clinical_status="active",
-            onset_datetime="2020-05-15",
-        )
-
-        self.assertEqual(condition["resourceType"], "Condition")
-        self.assertEqual(condition["id"], "CON001")
-        self.assertEqual(condition["clinicalStatus"]["coding"][0]["code"], "active")
-        self.assertEqual(condition["onsetDateTime"], "2020-05-15")
-
-    def test_build_encounter(self):
-        """Test building an Encounter resource"""
-        from oida.protocols.fhir.resources import FHIRResourceBuilder
-
-        builder = FHIRResourceBuilder()
-        encounter = builder.build_encounter(
-            encounter_id="ENC001",
-            patient_reference="Patient/PT001",
-            class_code="AMB",
-            status="finished",
-            period_start="2024-01-15T09:00:00Z",
-            period_end="2024-01-15T10:30:00Z",
-        )
-
-        self.assertEqual(encounter["resourceType"], "Encounter")
-        self.assertEqual(encounter["id"], "ENC001")
-        self.assertEqual(encounter["status"], "finished")
-        self.assertEqual(encounter["class"]["code"], "AMB")
 
 
 class TestFHIRResourceParser(unittest.TestCase):

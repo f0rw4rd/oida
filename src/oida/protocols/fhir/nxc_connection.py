@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 from ...connection import NetworkConnection
 
 from .helpers import (
+    FHIR_SECURITY_MODES,
     FHIR_VENDOR_MAP,
     _get_fhir_validation_error,
     capabilitystatement,
@@ -261,7 +262,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             return True
 
         except Exception as e:
-            self.logger.debug("send failed: %s", e)
+            self.logger.debug("Connection setup failed: %s", e)
             self.logger.fail(f"Connection failed: {e}")
             self.results["data"]["connected"] = False
             self.results["error"] = str(e)
@@ -471,7 +472,17 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         security = server_info.get("security", {})
         services = security.get("security_services", [])
         if services:
-            service_names = [s.get("display") or s.get("code") for s in services if s]
+            service_names = []
+            for svc in services:
+                if not svc:
+                    continue
+                # Prefer the human-readable mode description keyed by
+                # "<system>|<code>" (see FHIR_SECURITY_MODES), then fall back
+                # to the server-supplied display / raw code.
+                system = svc.get("system") or ""
+                code = svc.get("code") or ""
+                mode = FHIR_SECURITY_MODES.get(f"{system}|{code}") or FHIR_SECURITY_MODES.get(code)
+                service_names.append(mode or svc.get("display") or code)
             self.logger.display(f"  Security: {', '.join(filter(None, service_names))}")
         else:
             self.logger.security_finding(

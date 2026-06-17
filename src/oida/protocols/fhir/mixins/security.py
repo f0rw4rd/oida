@@ -24,7 +24,6 @@ class SecurityMixin:
         auth_results = {
             "anonymous_access": False,
             "invalid_token_rejected": True,
-            "token_required": True,
         }
 
         # Test anonymous access
@@ -222,9 +221,7 @@ class SecurityMixin:
         self.logger.display(f"Tested {tested} credentials, found {len(valid_creds)} valid")
 
         if valid_creds:
-            findings = self.results["data"].get("security_findings", [])
-            self.results["data"]["security_findings"] = findings
-            self.results["data"]["security_findings"].append(
+            self.results["data"].setdefault("security_findings", []).append(
                 {
                     "category": "AUTHENTICATION",
                     "issue": "Valid Credentials Found",
@@ -275,13 +272,13 @@ class SecurityMixin:
         # Check -u/--username (can be single value or file)
         username_arg = getattr(self.args, "username", None)
         if username_arg and not usernames:
-            parsed, is_file = parse_credential_input(username_arg)
+            parsed, _ = parse_credential_input(username_arg)
             usernames = parsed
 
         # Check -P/--password (can be single value or file)
         password_arg = getattr(self.args, "password", None)
         if password_arg and not passwords:
-            parsed, is_file = parse_credential_input(password_arg)
+            parsed, _ = parse_credential_input(password_arg)
             passwords = parsed
 
         # Check --wordlist (user:pass format)
@@ -336,6 +333,13 @@ class SecurityMixin:
         token_url = getattr(self.args, "token_url", None) or oauth_endpoints.get("token")
         if not token_url:
             return None
+
+        # Record the resolved OAuth2 authorize endpoint (operator override via
+        # --auth-url, else the SMART oauth-uris value discovered in the
+        # CapabilityStatement) so it surfaces in the exported results.
+        auth_url = getattr(self.args, "auth_url", None) or oauth_endpoints.get("authorize")
+        if auth_url:
+            self.results["data"].setdefault("oauth2", {})["authorize_url"] = auth_url
 
         client_id = getattr(self.args, "client_id", None) or "oida_scanner"
         client_secret = getattr(self.args, "client_secret", None) or ""
