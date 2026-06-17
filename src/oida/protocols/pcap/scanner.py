@@ -465,6 +465,20 @@ class PcapScanner:
             # Truncated pcap files cause tshark to exit non-zero after
             # successfully outputting all complete packets.  Propagate so the
             # retry loop can detect the truncation message and stop retrying.
+            if is_crash:
+                # Kill subprocesses and clear the process list to suppress noisy
+                # __del__ asyncio exceptions from the orphaned capture.
+                if capture is not None:
+                    for proc in getattr(capture, "_running_processes", []):
+                        try:
+                            proc.kill()
+                        except Exception as e:
+                            self.logger.debug(f"proc.kill(): {e}")
+                    try:
+                        capture._running_processes.clear()
+                    except Exception as e:
+                        self.logger.debug(f"capture._running_processes.clear(): {e}")
+
             if is_crash and (packet_count > 0 or is_truncated):
                 self.logger.debug(
                     "_run_pyshark_pipeline: tshark exited non-zero after %d packets "
@@ -472,33 +486,11 @@ class PcapScanner:
                     packet_count,
                     e,
                 )
-                # Suppress noisy __del__ exceptions from the orphaned capture
-                # by killing subprocesses and clearing the process list.
-                if capture is not None:
-                    for proc in getattr(capture, "_running_processes", []):
-                        try:
-                            proc.kill()
-                        except Exception as e:
-                            self.logger.debug(f"proc.kill(): {e}")
-                    try:
-                        capture._running_processes.clear()
-                    except Exception as e:
-                        self.logger.debug(f"capture._running_processes.clear(): {e}")
+                # Truncated pcap: propagate so the retry loop stops retrying.
                 if is_truncated:
                     raise
             elif is_crash:
                 # No packets processed — genuine crash, propagate for retry.
-                # Kill subprocesses to suppress noisy __del__ asyncio errors.
-                if capture is not None:
-                    for proc in getattr(capture, "_running_processes", []):
-                        try:
-                            proc.kill()
-                        except Exception as e:
-                            self.logger.debug(f"proc.kill(): {e}")
-                    try:
-                        capture._running_processes.clear()
-                    except Exception as e:
-                        self.logger.debug(f"capture._running_processes.clear(): {e}")
                 raise
             else:
                 self.logger.fail(f"PyShark pipeline error: {e}")
