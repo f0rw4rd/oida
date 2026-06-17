@@ -480,7 +480,6 @@ class EnumerationMixin(_ScannerBase):
                                 months[study_date[:6]] += 1
                             except ValueError as e:
                                 self.logger.debug("time analysis failed: %s", e)
-                                pass
 
                         if study_count >= max_studies:
                             break
