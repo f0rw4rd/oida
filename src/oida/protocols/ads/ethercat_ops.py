@@ -58,8 +58,6 @@ from .helpers import (
     _read_sdo_entry_desc,
     _write_raw,
     _write_coe_sdo,
-    _test_coe_write_access,
-    _test_coe_write_only,
     _read_write_raw,
     _is_ads_timeout,
     _extract_ads_error,
@@ -75,7 +73,7 @@ logger = logging.getLogger(__name__)
 class EtherCATOpsMixin:
     """Mixin providing EtherCAT-over-ADS bridge operations for ADSScanner."""
 
-    def _list_files(self, connection: Any, path: str = "C:\\TwinCAT\\") -> Dict[str, Any]:
+    def _list_files(self, path: str = "C:\\TwinCAT\\") -> Dict[str, Any]:
         """List files via SystemService file access (port 10000).
 
         Uses index groups:
@@ -185,7 +183,7 @@ class EtherCATOpsMixin:
         self.logger.display(f"  Found {len(result['files'])} entries")
         return result
 
-    def _read_file(self, connection: Any, path: str) -> Dict[str, Any]:
+    def _read_file(self, path: str) -> Dict[str, Any]:
         """Read a file from target via SystemService (port 10000).
 
         Uses index groups:
@@ -254,8 +252,7 @@ class EtherCATOpsMixin:
                         try:
                             _write_raw(sys_conn, ADS_IDX_GRP["FILE_CLOSE"], file_handle, b"")
                         except Exception as e:
-                            self.logger.debug("read file failed: %s", e)
-                            pass
+                            self.logger.debug("file close failed: %s", e)
 
             finally:
                 sys_conn.close()
@@ -395,7 +392,6 @@ class EtherCATOpsMixin:
                         task_info = {
                             "index": task_idx,
                             "raw_hex": data[:32].hex(),
-                            "raw_size": len(data),
                         }
 
                         # Try to extract cycle time (uint32, 100ns units)
@@ -443,9 +439,7 @@ class EtherCATOpsMixin:
 
         return result
 
-    def _read_registry(
-        self, connection: Any, hive: str, key: str, value: str = None
-    ) -> Dict[str, Any]:
+    def _read_registry(self, hive: str, key: str, value: str = None) -> Dict[str, Any]:
         """Read Windows registry via SystemService (port 10000).
 
         Uses index groups:
@@ -542,7 +536,7 @@ class EtherCATOpsMixin:
         return result
 
     def _add_route(
-        self, connection: Any, netid: str, ip: str, route_name: str = "route"
+        self, netid: str, ip: str, route_name: str = "route"
     ) -> Dict[str, Any]:
         """Add an AMS route via SystemService (port 10000).
 
@@ -663,7 +657,7 @@ class EtherCATOpsMixin:
 
         return result
 
-    def _scan_ethercat(self, connection: Any) -> Dict[str, Any]:
+    def _scan_ethercat(self) -> Dict[str, Any]:
         """Scan EtherCAT master and slaves via ADS.
 
         Connects to the EtherCAT master (AMS port 0xFFFF) to read:
@@ -954,7 +948,7 @@ class EtherCATOpsMixin:
                                 sdata = _read_coe_sdo(slave_conn, idx, sub)
                                 if sdata is None:
                                     if test_access:
-                                        wo_ok, wo_err = _test_coe_write_only(slave_conn, idx, sub)
+                                        wo_ok, _ = _write_coe_sdo(slave_conn, idx, sub, b"\x00")
                                         if wo_ok:
                                             sub_name = _resolve_name(slave_conn, idx, sub)
                                             sub_obj = {
@@ -984,7 +978,7 @@ class EtherCATOpsMixin:
                                 if len(sdata) <= 4:
                                     sub_obj["value"] = int.from_bytes(sdata, "little")
                                 if test_access:
-                                    writable, write_err = _test_coe_write_access(
+                                    writable, write_err = _write_coe_sdo(
                                         slave_conn, idx, sub, sdata
                                     )
                                     if writable:
@@ -1012,7 +1006,7 @@ class EtherCATOpsMixin:
                         if data is None:
                             # Object not readable — test write-only if access mode
                             if test_access:
-                                wo_ok, wo_err = _test_coe_write_only(slave_conn, idx, 0)
+                                wo_ok, _ = _write_coe_sdo(slave_conn, idx, 0, b"\x00")
                                 if wo_ok:
                                     name = _resolve_name(slave_conn, idx, 0)
                                     obj = {
@@ -1044,7 +1038,7 @@ class EtherCATOpsMixin:
                             obj["value"] = int.from_bytes(data, "little")
 
                         if test_access:
-                            writable, write_err = _test_coe_write_access(slave_conn, idx, 0, data)
+                            writable, write_err = _write_coe_sdo(slave_conn, idx, 0, data)
                             if writable:
                                 obj["access"] = "RW"
                                 access_stats["RW"] += 1
@@ -1091,7 +1085,7 @@ class EtherCATOpsMixin:
                                     sdata = _read_coe_sdo(slave_conn, idx, sub)
                                 if sdata is None:
                                     if test_access:
-                                        wo_ok, wo_err = _test_coe_write_only(slave_conn, idx, sub)
+                                        wo_ok, _ = _write_coe_sdo(slave_conn, idx, sub, b"\x00")
                                         if wo_ok:
                                             sub_name = _resolve_name(slave_conn, idx, sub)
                                             sub_obj = {
@@ -1131,7 +1125,7 @@ class EtherCATOpsMixin:
                                     sub_obj["value"] = int.from_bytes(sdata, "little")
 
                                 if test_access:
-                                    writable, write_err = _test_coe_write_access(
+                                    writable, write_err = _write_coe_sdo(
                                         slave_conn, idx, sub, sdata
                                     )
                                     if writable:
@@ -1277,7 +1271,6 @@ class EtherCATOpsMixin:
 
                 results[port] = {
                     "words": words,
-                    "raw_size": len(raw_data),
                     "header": header,
                 }
 
@@ -1432,13 +1425,6 @@ class EtherCATOpsMixin:
                         )
                 if sync_managers:
                     port_result["sync_managers"] = sync_managers
-
-                # Decode DC
-                if 0x0990 in registers:
-                    dc_raw = bytes.fromhex(registers[0x0990]["data"])
-                    if len(dc_raw) >= 8:
-                        dc_time = struct.unpack_from("<Q", dc_raw, 0)[0]
-                        port_result["dc_system_time_ns"] = dc_time
 
                 results[port] = port_result
                 self.logger.display(f"    Read {len(registers)} registers")
@@ -2148,6 +2134,22 @@ class EtherCATOpsMixin:
                 # Read all FSoE objects
                 if port_result["fsoe_supported"]:
                     slave_conn.set_timeout(max(self.ads_timeout_ms, 3000))
+                    def _decode(dtype, data, obj_entry):
+                        """Decode raw CoE bytes into obj_entry['value'] by dtype."""
+                        obj_entry["raw"] = data.hex()
+                        if dtype == "uint8" and len(data) >= 1:
+                            obj_entry["value"] = data[0]
+                        elif dtype == "uint16" and len(data) >= 2:
+                            obj_entry["value"] = struct.unpack("<H", data[:2])[0]
+                        elif dtype == "uint32" and len(data) >= 4:
+                            obj_entry["value"] = struct.unpack("<I", data[:4])[0]
+                        elif dtype == "string":
+                            obj_entry["value"] = data.rstrip(b"\x00").decode(
+                                "utf-8", errors="replace"
+                            )
+                        elif dtype == "octets":
+                            obj_entry["value"] = data.hex()
+
                     for idx, sub, name, dtype, read_sz in FSOE_COE_OBJECTS + FSOE_PARAM_OBJECTS:
                         offset = (idx << 16) | sub
                         obj_entry = {
@@ -2167,21 +2169,7 @@ class EtherCATOpsMixin:
                                 )
                                 continue
 
-                            obj_entry["raw"] = data.hex()
-
-                            # Decode by type
-                            if dtype == "uint8" and len(data) >= 1:
-                                obj_entry["value"] = data[0]
-                            elif dtype == "uint16" and len(data) >= 2:
-                                obj_entry["value"] = struct.unpack("<H", data[:2])[0]
-                            elif dtype == "uint32" and len(data) >= 4:
-                                obj_entry["value"] = struct.unpack("<I", data[:4])[0]
-                            elif dtype == "string":
-                                obj_entry["value"] = data.rstrip(b"\x00").decode(
-                                    "utf-8", errors="replace"
-                                )
-                            elif dtype == "octets":
-                                obj_entry["value"] = data.hex()
+                            _decode(dtype, data, obj_entry)
 
                             port_result["objects"].append(obj_entry)
 
@@ -2198,19 +2186,7 @@ class EtherCATOpsMixin:
                                     data = _read_raw(
                                         slave_conn, ADS_IDX_GRP["COE_SDO"], offset, actual
                                     )
-                                    obj_entry["raw"] = data.hex()
-                                    if dtype == "uint8" and len(data) >= 1:
-                                        obj_entry["value"] = data[0]
-                                    elif dtype == "uint16" and len(data) >= 2:
-                                        obj_entry["value"] = struct.unpack("<H", data[:2])[0]
-                                    elif dtype == "uint32" and len(data) >= 4:
-                                        obj_entry["value"] = struct.unpack("<I", data[:4])[0]
-                                    elif dtype == "string":
-                                        obj_entry["value"] = data.rstrip(b"\x00").decode(
-                                            "utf-8", errors="replace"
-                                        )
-                                    elif dtype == "octets":
-                                        obj_entry["value"] = data.hex()
+                                    _decode(dtype, data, obj_entry)
                                     port_result["objects"].append(obj_entry)
                                 except Exception:
                                     obj_entry["error"] = f"short-read ({actual}/{read_sz})"

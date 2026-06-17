@@ -61,16 +61,6 @@ def _validate_ams_netid(netid: str):
         )
 
 
-def _get_pyads_constants():
-    """Get pyads constants lazily."""
-    pyads = _get_pyads()
-    return {
-        "INDEXGROUP_MEMORYBYTE": pyads.constants.INDEXGROUP_MEMORYBYTE,
-        "INDEXGROUP_MEMORYBIT": pyads.constants.INDEXGROUP_MEMORYBIT,
-        "INDEXGROUP_DATA": pyads.constants.INDEXGROUP_DATA,
-    }
-
-
 def _read_raw(conn, index_group, index_offset, size):
     """Read raw bytes from ADS device.
 
@@ -127,10 +117,11 @@ def _read_coe_sdo(conn, index, subindex):
 
 
 def _read_sdo_entry_desc(conn, index, subindex):
-    """Read SDO entry description via ig=0xF3FE (name, type, access).
+    """Read SDO entry description via ig=0xF3FE.
 
-    Returns dict with 'name', 'data_type', 'bit_length', 'obj_access'
-    or None if unavailable.
+    Returns dict with 'name', or None if unavailable. The header carries
+    data_type/bit_length/obj_access fields too, but the only caller needs
+    the object name, so they are not decoded.
     """
     ig = 0xF3FE
     offset = (index << 16) | subindex
@@ -152,16 +143,8 @@ def _read_sdo_entry_desc(conn, index, subindex):
 
     if len(raw) < 10:
         return None
-    data_type = struct.unpack_from("<H", raw, 4)[0]
-    bit_length = struct.unpack_from("<H", raw, 6)[0]
-    obj_access = struct.unpack_from("<H", raw, 8)[0]
     name = raw[10:].rstrip(b"\x00").decode("utf-8", errors="replace")
-    return {
-        "name": name,
-        "data_type": data_type,
-        "bit_length": bit_length,
-        "obj_access": obj_access,
-    }
+    return {"name": name}
 
 
 def _write_raw(conn, index_group, index_offset, data):
@@ -185,23 +168,6 @@ def _write_coe_sdo(conn, index, subindex, data):
         return True, None
     except Exception as e:
         return False, str(e)
-
-
-def _test_coe_write_access(conn, index, subindex, data):
-    """Test write access by writing back the same data that was read.
-
-    Returns (True, None) if the write is accepted, (False, error_str) otherwise.
-    """
-    return _write_coe_sdo(conn, index, subindex, data)
-
-
-def _test_coe_write_only(conn, index, subindex):
-    """Test write-only access for objects where read failed.
-
-    Attempts a 1-byte zero write. Returns (True, None) if accepted,
-    (False, error_str) otherwise.
-    """
-    return _write_coe_sdo(conn, index, subindex, b"\x00")
 
 
 def _read_write_raw(conn, index_group, index_offset, read_size, write_data):
@@ -445,21 +411,21 @@ _memory_areas_cache: dict = {}
 def _get_memory_areas():
     """Get memory areas with lazily-loaded pyads constants."""
     if "areas" not in _memory_areas_cache:
-        consts = _get_pyads_constants()
+        pyads = _get_pyads()
         _memory_areas_cache["areas"] = [
             {
-                "group": consts["INDEXGROUP_MEMORYBYTE"],
+                "group": pyads.constants.INDEXGROUP_MEMORYBYTE,
                 "name": "M-Area (Bytes)",
                 "offset": 0,
                 "size": 4,
             },
             {
-                "group": consts["INDEXGROUP_MEMORYBIT"],
+                "group": pyads.constants.INDEXGROUP_MEMORYBIT,
                 "name": "M-Area (Bits)",
                 "offset": 0,
                 "size": 1,
             },
-            {"group": consts["INDEXGROUP_DATA"], "name": "Data Area", "offset": 0, "size": 4},
+            {"group": pyads.constants.INDEXGROUP_DATA, "name": "Data Area", "offset": 0, "size": 4},
             {"group": INDEXGROUP_IOIMAGE_RWIB, "name": "Input Image", "offset": 0, "size": 4},
             {"group": INDEXGROUP_IOIMAGE_RWOB, "name": "Output Image", "offset": 0, "size": 4},
         ]

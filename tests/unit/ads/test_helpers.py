@@ -376,43 +376,6 @@ class TestWriteCoeSdo(unittest.TestCase):
         self.assertIn("Write failed", err)
 
 
-class TestTestCoeWriteAccess(unittest.TestCase):
-    """Tests for _test_coe_write_access()"""
-
-    def setUp(self):
-        from oida.protocols.ads.helpers import _test_coe_write_access
-
-        self.fn = _test_coe_write_access
-
-    @patch("oida.protocols.ads.helpers._write_raw")
-    def test_delegates_to_write_coe_sdo(self, mock_write_raw):
-        """_test_coe_write_access delegates to _write_coe_sdo."""
-        mock_conn = Mock()
-        ok, err = self.fn(mock_conn, 0x1008, 0, b"\x42")
-        self.assertTrue(ok)
-        self.assertIsNone(err)
-
-
-class TestTestCoeWriteOnly(unittest.TestCase):
-    """Tests for _test_coe_write_only()"""
-
-    def setUp(self):
-        from oida.protocols.ads.helpers import _test_coe_write_only
-
-        self.fn = _test_coe_write_only
-
-    @patch("oida.protocols.ads.helpers._write_raw")
-    def test_writes_zero_byte(self, mock_write_raw):
-        """_test_coe_write_only writes a single zero byte."""
-        mock_conn = Mock()
-        ok, err = self.fn(mock_conn, 0x1008, 0)
-        self.assertTrue(ok)
-        self.assertIsNone(err)
-        # Verify that _write_raw was called with b"\x00"
-        args = mock_write_raw.call_args
-        self.assertEqual(args[0][3], b"\x00")
-
-
 class TestReadSdoEntryDesc(unittest.TestCase):
     """Tests for _read_sdo_entry_desc()"""
 
@@ -442,9 +405,6 @@ class TestReadSdoEntryDesc(unittest.TestCase):
 
         self.assertIsNotNone(result)
         self.assertEqual(result["name"], "TestObj")
-        self.assertEqual(result["data_type"], 5)
-        self.assertEqual(result["bit_length"], 16)
-        self.assertEqual(result["obj_access"], 0x3F)
 
     @patch("oida.protocols.ads.helpers._read_raw")
     def test_short_data_returns_none(self, mock_read_raw):
@@ -480,7 +440,6 @@ class TestReadSdoEntryDesc(unittest.TestCase):
 
         self.assertIsNotNone(result)
         self.assertEqual(result["name"], "X")
-        self.assertEqual(result["data_type"], 3)
 
     @patch("oida.protocols.ads.helpers._read_raw")
     def test_runtime_error_actual_size_too_small(self, mock_read_raw):
@@ -680,14 +639,14 @@ class TestCaptureStderr(unittest.TestCase):
 class TestGetMemoryAreas(unittest.TestCase):
     """Tests for _get_memory_areas()"""
 
-    @patch("oida.protocols.ads.helpers._get_pyads_constants")
-    def test_returns_list_of_dicts(self, mock_consts):
+    @patch("oida.protocols.ads.helpers._get_pyads")
+    def test_returns_list_of_dicts(self, mock_get_pyads):
         """Memory areas should be a list of dicts with expected keys."""
-        mock_consts.return_value = {
-            "INDEXGROUP_MEMORYBYTE": 0x4020,
-            "INDEXGROUP_MEMORYBIT": 0x4021,
-            "INDEXGROUP_DATA": 0x4040,
-        }
+        mock_pyads = Mock()
+        mock_pyads.constants.INDEXGROUP_MEMORYBYTE = 0x4020
+        mock_pyads.constants.INDEXGROUP_MEMORYBIT = 0x4021
+        mock_pyads.constants.INDEXGROUP_DATA = 0x4040
+        mock_get_pyads.return_value = mock_pyads
         # Clear the cache to force reload
         from oida.protocols.ads import helpers
 

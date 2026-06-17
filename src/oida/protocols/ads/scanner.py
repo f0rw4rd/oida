@@ -369,7 +369,6 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
                     info["writable"] = True
                 except Exception as e:
                     self.logger.debug("process symbol failed: %s", e)
-                    pass
 
         except Exception as e:
             self.logger.debug("process symbol failed: %s", e)
@@ -379,12 +378,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
 
     def _format_value(self, value) -> str:
         """Format a symbol value for display"""
-        if isinstance(value, bytes):
-            return value.hex()
-        elif isinstance(value, (list, tuple)):
-            return str(value)
-        else:
-            return str(value)
+        return value.hex() if isinstance(value, bytes) else str(value)
 
     def _scan_routes(self, connection: Any) -> Dict[str, Any]:
         """Scan AMS routing table via system service.
@@ -514,8 +508,6 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
                         "netid": netid,
                         "ext": ext,
                         "status": result["detail"],
-                        "port": probe_port,
-                        "type": result["type"],
                     }
                 )
                 self.logger.success(f"  {netid} - active: {result['detail']} ({result['type']})")
@@ -657,14 +649,13 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
 
         Uses index groups:
         - 0x01010004: Device info (SystemID, PlatformID, VolumeNo)
-        - 0x01010006: License count and details
+        - 0x01010006: License count
         """
         result = {
             "success": False,
             "system_id": None,
             "platform_id": None,
             "volume_no": None,
-            "licenses": [],
         }
 
         self.logger.display("Querying license information (port 30)...")
@@ -866,11 +857,10 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
                     try:
                         data, addr = sock.recvfrom(1024)
                         if len(data) >= 12:
-                            magic, resp_invoke, resp_op = struct.unpack("<III", data[:12])
+                            magic = struct.unpack("<I", data[:4])[0]
                             if magic == ADS_UDP_MAGIC:
                                 device = {
                                     "ip": addr[0],
-                                    "port": addr[1],
                                 }
 
                                 # Parse TLV data after header
