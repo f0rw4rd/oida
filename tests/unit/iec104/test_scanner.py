@@ -36,9 +36,7 @@ class TestIEC104ScannerInit(unittest.TestCase):
                 "timeout": 30,
                 "debug": True,
                 "asdu-address": 10,
-                "ioa-range": "1000-2000",
                 "common-address": 5,
-                "max-commands": 20,
             }
         )
 
@@ -47,9 +45,7 @@ class TestIEC104ScannerInit(unittest.TestCase):
         self.assertEqual(scanner.timeout, 30)
         self.assertTrue(scanner.debug)
         self.assertEqual(scanner.asdu_address, 10)
-        self.assertEqual(scanner.ioa_range, "1000-2000")
         self.assertEqual(scanner.common_address, 5)
-        self.assertEqual(scanner.max_commands, 20)
 
 
 class TestIEC104ProtocolLogic(unittest.TestCase):
@@ -384,13 +380,11 @@ class TestIEC104Integration(unittest.TestCase):
                 "rport": 2404,
                 "common-address": 1,
                 "asdu-address": 10,
-                "ioa-range": "1-1000",
             }
         )
 
         self.assertEqual(scanner.common_address, 1)
         self.assertEqual(scanner.asdu_address, 10)
-        self.assertEqual(scanner.ioa_range, "1-1000")
 
 
 class TestIEC104AdvancedFeatures(unittest.TestCase):
@@ -809,51 +803,28 @@ class TestIEC104WriteOperations(unittest.TestCase):
 
 
 class TestIEC104FileTransfer(unittest.TestCase):
-    """Test IEC 104 file transfer operations"""
+    """Test IEC 104 file-transfer capability detection (no F_* ASDU exchange)."""
 
-    def setUp(self):
-        """Set up test environment"""
-        self.scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "timeout": 5})
+    def test_probe_files_flag(self):
+        """Test --probe-files flag is parsed."""
+        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "probe-files": True})
+        self.assertTrue(scanner.probe_files)
 
-    def test_upload_requires_confirm(self):
-        """Test file upload requires --confirm"""
-        scanner = IEC104Scanner(
-            {
-                "rhost": "127.0.0.1",
-                "rport": 2404,
-                "upload-file": "/tmp/test.txt",
-                "upload-ioa": 1000,
-            }
-        )
-        # Without confirm, upload should not proceed
-        self.assertFalse(scanner.confirm_dangerous)
+    def test_report_file_transfer_none(self):
+        """No file-transfer type IDs seen -> not supported."""
+        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404})
+        result = scanner._report_file_transfer()
+        self.assertFalse(result["supported"])
+        self.assertEqual(result["type_ids_found"], [])
 
-    def test_delete_requires_confirm(self):
-        """Test file delete requires --confirm"""
-        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "delete-file": 1000})
-        # Without confirm, delete should not proceed
-        self.assertFalse(scanner.confirm_dangerous)
-
-    def test_download_file_args(self):
-        """Test download file argument parsing"""
-        scanner = IEC104Scanner(
-            {
-                "rhost": "127.0.0.1",
-                "rport": 2404,
-                "download-file": "1000",
-                "file-output": "/tmp/output.bin",
-            }
-        )
-        self.assertEqual(scanner.download_file_ioa, "1000")
-        self.assertEqual(scanner.file_output, "/tmp/output.bin")
-
-    def test_query_log_args(self):
-        """Test query log argument parsing"""
-        scanner = IEC104Scanner(
-            {"rhost": "127.0.0.1", "rport": 2404, "query-log": "1000", "log-type": 2}
-        )
-        self.assertEqual(scanner.query_log_ioa, "1000")
-        self.assertEqual(scanner.log_type, 2)
+    def test_report_file_transfer_detected(self):
+        """File-transfer type IDs (120-127) observed -> supported."""
+        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404})
+        scanner._file_transfer_supported = True
+        scanner._raw_type_ids = {120, 122}
+        result = scanner._report_file_transfer()
+        self.assertTrue(result["supported"])
+        self.assertEqual(result["type_ids_found"], [120, 122])
 
 
 class TestIEC104FuzzingArgs(unittest.TestCase):
@@ -1433,12 +1404,6 @@ class TestDisplayListenSummary(unittest.TestCase):
 class TestCommandsMixin(unittest.TestCase):
     """Test CommandsMixin methods"""
 
-    def test_test_commands_returns_dict(self):
-        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404})
-        result = scanner._test_commands(MagicMock(), MagicMock())
-        self.assertIsInstance(result, dict)
-        self.assertEqual(result["commands_tested"], 0)
-
     def test_fuzz_requires_confirm(self):
         """Test fuzz_commands requires --confirm"""
         scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404})
@@ -1484,59 +1449,6 @@ class TestCommandsMixin(unittest.TestCase):
         result = scanner._write_value(MagicMock(), MagicMock())
         self.assertFalse(result["success"])
         self.assertIn("No write operation", result["error"])
-
-
-class TestFileTransferMixin(unittest.TestCase):
-    """Test FilesMixin methods"""
-
-    def test_upload_requires_confirm(self):
-        """Test _upload_file requires confirm_dangerous"""
-        scanner = IEC104Scanner(
-            {
-                "rhost": "127.0.0.1",
-                "rport": 2404,
-                "upload-file": "/tmp/test.bin",
-                "upload-ioa": 1000,
-            }
-        )
-        # _upload_file(conn, ioa, path, nof)
-        result = scanner._upload_file(MagicMock(), 1000, "/tmp/test.bin", 1)
-        self.assertFalse(result.get("success", True))
-        self.assertIn("confirm", result.get("error", "").lower())
-
-    def test_delete_requires_confirm(self):
-        """Test _delete_file requires confirm_dangerous"""
-        scanner = IEC104Scanner(
-            {
-                "rhost": "127.0.0.1",
-                "rport": 2404,
-                "delete-file": 1000,
-            }
-        )
-        # _delete_file(conn, ioa)
-        result = scanner._delete_file(MagicMock(), 1000)
-        self.assertFalse(result.get("success", True))
-        self.assertIn("confirm", result.get("error", "").lower())
-
-
-class TestIOARangeValidation(unittest.TestCase):
-    """Test IOA range validation (W12 fix)"""
-
-    def test_valid_range(self):
-        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "ioa-range": "100-500"})
-        self.assertEqual(scanner.ioa_start, 100)
-        self.assertEqual(scanner.ioa_end, 500)
-
-    def test_invalid_format_uses_default(self):
-        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "ioa-range": "notarange"})
-        self.assertEqual(scanner.ioa_start, 1)
-        self.assertEqual(scanner.ioa_end, 1000)
-
-    def test_out_of_range_end_clamped(self):
-        """Test IOA end value > 16777215 is clamped"""
-        scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "ioa-range": "0-20000000"})
-        self.assertEqual(scanner.ioa_start, 0)
-        self.assertEqual(scanner.ioa_end, 16777215)
 
 
 class TestReadIOAParsing(unittest.TestCase):

@@ -13,7 +13,6 @@ class iec104(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "IEC 104"
         self.default_port = 2404
-        self._scan_results = None
         super().__init__(args, db, host)
 
     # Note: proto_logger() inherited from NetworkConnection base class
@@ -107,7 +106,6 @@ class iec104(NetworkConnection):
         self.logger.debug("Executing scan...")
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
 
     def cleanup(self):
         """Cleanup Iec104 connection"""

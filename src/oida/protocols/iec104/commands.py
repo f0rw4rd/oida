@@ -5,10 +5,6 @@ Provides write operations (single, double, step, setpoint) and command fuzzing.
 """
 
 from typing import Dict, Any
-import struct
-import time
-
-from .constants import COT_ACTIVATION
 
 
 class CommandMixin:
@@ -29,25 +25,6 @@ class CommandMixin:
         - self._best_common_address()
         - c104 module (via _get_c104())
     """
-
-    def _test_commands(self, client: Any, conn: Any) -> Dict[str, Any]:
-        """Test command execution capabilities"""
-        self.logger.display("Testing IEC 104 commands...")
-
-        results = {
-            "commands_tested": 0,
-            "successful": [],
-            "failed": [],
-            "access_denied": [],
-        }
-
-        # Note: Actually sending commands is dangerous and should only be done
-        # with explicit permission. This is just capability detection.
-        self.logger.warning(
-            "Command testing requires --no-read-only flag and is potentially dangerous"
-        )
-
-        return results
 
     def _has_write_operation(self) -> bool:
         """Check if any write operation is requested"""
@@ -165,7 +142,7 @@ class CommandMixin:
                 # IOA may exist as a monitoring point from interrogation/read
                 existing = station.get_point(ioa)
                 if existing is not None:
-                    station.remove_point(existing)
+                    station.remove_point(ioa)
                     point = station.add_point(
                         io_address=ioa, type=write_type, command_mode=cmd_mode
                     )
@@ -318,68 +295,49 @@ class CommandMixin:
 
         try:
             ca = self._best_common_address()
-            # Type 105, VSQ=1, COT=ACTIVATION(6), CA
-            # Info object: IOA=0 (3 bytes LE), QRP=1 (general reset)
-            asdu = struct.pack(
-                "<B B H H",
-                105,  # Type ID: C_RP_NA_1
-                0x01,  # VSQ: 1 object, no sequence
-                COT_ACTIVATION,  # COT: activation
-                ca,  # Common address
-            )
-            # IOA = 0 (3 bytes little-endian) + QRP = 1
-            info_obj = struct.pack("<HB B", 0, 0, 1)  # IOA low(2B) + IOA high(1B) + QRP
-            asdu += info_obj
 
-            if hasattr(conn, "send_raw"):
-                conn.send_raw(asdu)
+            # c104 exposes no raw-send interface, so use its point-based API.
+            from ._deps import _get_c104
+
+            c104 = _get_c104()
+            station = conn.get_station(ca)
+            if station is None:
+                station = conn.add_station(common_address=ca)
+            if station is None:
+                self.logger.fail(f"Cannot create station CA={ca}")
+                result["error"] = "Station not available"
+                return result
+
+            # Try to use c104's Type enum for C_RP_NA_1
+            try:
+                rp_type = c104.Type.C_RP_NA_1
+            except AttributeError:
+                self.logger.fail("c104 library does not support C_RP_NA_1")
+                result["error"] = "Unsupported by c104 library"
+                return result
+
+            point = station.add_point(
+                io_address=0, type=rp_type, command_mode=c104.CommandMode.DIRECT
+            )
+            if point is None:
+                existing = station.get_point(0)
+                if existing is not None:
+                    station.remove_point(0)
+                    point = station.add_point(
+                        io_address=0, type=rp_type, command_mode=c104.CommandMode.DIRECT
+                    )
+            if point is None:
+                self.logger.fail("Cannot create reset process point at IOA=0")
+                result["error"] = "Point creation failed"
+                return result
+
+            success = point.transmit(cause=c104.Cot.ACTIVATION)
+            if success:
                 self.logger.success(f"Reset process command sent to CA={ca}")
                 result["success"] = True
             else:
-                # Try c104 point-based API
-                from ._deps import _get_c104
-
-                c104 = _get_c104()
-                station = conn.get_station(ca)
-                if station is None:
-                    station = conn.add_station(common_address=ca)
-                if station is None:
-                    self.logger.fail(f"Cannot create station CA={ca}")
-                    result["error"] = "Station not available"
-                    return result
-
-                # Try to use c104's Type enum for C_RP_NA_1
-                try:
-                    rp_type = c104.Type.C_RP_NA_1
-                except AttributeError:
-                    self.logger.fail(
-                        "c104 library does not support C_RP_NA_1 and send_raw unavailable"
-                    )
-                    result["error"] = "Unsupported by c104 library"
-                    return result
-
-                point = station.add_point(
-                    io_address=0, type=rp_type, command_mode=c104.CommandMode.DIRECT
-                )
-                if point is None:
-                    existing = station.get_point(0)
-                    if existing is not None:
-                        station.remove_point(existing)
-                        point = station.add_point(
-                            io_address=0, type=rp_type, command_mode=c104.CommandMode.DIRECT
-                        )
-                if point is None:
-                    self.logger.fail("Cannot create reset process point at IOA=0")
-                    result["error"] = "Point creation failed"
-                    return result
-
-                success = point.transmit(cause=c104.Cot.ACTIVATION)
-                if success:
-                    self.logger.success(f"Reset process command sent to CA={ca}")
-                    result["success"] = True
-                else:
-                    self.logger.fail("Reset process command transmission failed")
-                    result["error"] = "Transmission failed"
+                self.logger.fail("Reset process command transmission failed")
+                result["error"] = "Transmission failed"
 
         except Exception as e:
             self.logger.fail(f"Reset process failed: {e}")
@@ -448,40 +406,18 @@ class CommandMixin:
         try:
             ca = self._best_common_address()
 
-            # Build ASDU header: type_id(1B) + VSQ(1B) + COT(2B) + CA(2B)
-            asdu_header = struct.pack(
-                "<B B H H",
-                type_id,
-                0x01,  # VSQ: 1 object, no sequence
-                COT_ACTIVATION,
-                ca,
-            )
-
-            # IOA: 3 bytes little-endian
-            ioa_bytes = struct.pack("<HB", ioa & 0xFFFF, (ioa >> 16) & 0xFF)
-
-            # Build value + qualifier bytes based on type
+            # Validate value and record it for reporting (range-clamp matches
+            # the IEC 104 wire encoding for each parameter type).
             if type_id == 110:
-                # P_ME_NA_1: NVA (normalized, int16 representing -1.0..+1.0) + QPM
-                val = float(self.write_value)
-                nva = int(val * 32767)
-                nva = max(-32768, min(32767, nva))
-                value_bytes = struct.pack("<h B", nva, 0)  # NVA + QPM=0
-                result["value"] = str(val)
-
+                # P_ME_NA_1: NVA (normalized, int16 representing -1.0..+1.0)
+                result["value"] = str(float(self.write_value))
             elif type_id == 111:
-                # P_ME_NB_1: SVA (scaled, int16) + QPM
-                val = int(float(self.write_value))
-                val = max(-32768, min(32767, val))
-                value_bytes = struct.pack("<h B", val, 0)  # SVA + QPM=0
+                # P_ME_NB_1: SVA (scaled, int16)
+                val = max(-32768, min(32767, int(float(self.write_value))))
                 result["value"] = str(val)
-
             elif type_id == 112:
-                # P_ME_NC_1: IEEE 754 float + QPM
-                val = float(self.write_value)
-                value_bytes = struct.pack("<f B", val, 0)  # float + QPM=0
-                result["value"] = str(val)
-
+                # P_ME_NC_1: IEEE 754 float
+                result["value"] = str(float(self.write_value))
             elif type_id == 113:
                 # P_AC_NA_1: QPA (qualifier of parameter activation)
                 val = int(float(self.write_value))
@@ -489,70 +425,60 @@ class CommandMixin:
                     self.logger.fail(f"QPA value {val} out of range 0-255")
                     result["error"] = f"Invalid QPA: {val}"
                     return result
-                value_bytes = struct.pack("<B", val)  # QPA only
                 result["value"] = str(val)
             else:
                 result["error"] = f"Unknown parameter type {type_id}"
                 return result
 
-            asdu = asdu_header + ioa_bytes + value_bytes
+            # c104 exposes no raw-send interface, so use its point-based API.
+            from ._deps import _get_c104
 
-            if hasattr(conn, "send_raw"):
-                conn.send_raw(asdu)
+            c104 = _get_c104()
+            try:
+                write_type = c104.Type(type_id)
+            except (ValueError, AttributeError):
+                self.logger.fail(f"c104 does not support Type {type_id}")
+                result["error"] = f"Unsupported type {type_id}"
+                return result
+
+            station = conn.get_station(ca)
+            if station is None:
+                station = conn.add_station(common_address=ca)
+            if station is None:
+                self.logger.fail(f"Cannot create station CA={ca}")
+                result["error"] = "Station not available"
+                return result
+
+            point = station.add_point(
+                io_address=ioa, type=write_type, command_mode=c104.CommandMode.DIRECT
+            )
+            if point is None:
+                existing = station.get_point(ioa)
+                if existing is not None:
+                    station.remove_point(ioa)
+                    point = station.add_point(
+                        io_address=ioa, type=write_type, command_mode=c104.CommandMode.DIRECT
+                    )
+            if point is None:
+                self.logger.fail(f"Cannot create parameter point at IOA={ioa}")
+                result["error"] = "Point creation failed"
+                return result
+
+            # Set value on the point
+            if type_id in (110, 112):
+                point.value = float(self.write_value)
+            elif type_id == 111:
+                point.value = int(float(self.write_value))
+            elif type_id == 113:
+                point.value = int(float(self.write_value))
+
+            success = point.transmit(cause=c104.Cot.ACTIVATION)
+            if success:
                 self.logger.success(f"{type_name} sent: IOA={ioa}, value={result['value']}")
                 result["success"] = True
             else:
-                # Fallback: try c104 point-based API with matching type enum
-                from ._deps import _get_c104
-
-                c104 = _get_c104()
-                try:
-                    write_type = c104.Type(type_id)
-                except (ValueError, AttributeError):
-                    self.logger.fail(
-                        f"c104 does not support Type {type_id} and send_raw unavailable"
-                    )
-                    result["error"] = f"Unsupported type {type_id}"
-                    return result
-
-                station = conn.get_station(ca)
-                if station is None:
-                    station = conn.add_station(common_address=ca)
-                if station is None:
-                    self.logger.fail(f"Cannot create station CA={ca}")
-                    result["error"] = "Station not available"
-                    return result
-
-                point = station.add_point(
-                    io_address=ioa, type=write_type, command_mode=c104.CommandMode.DIRECT
-                )
-                if point is None:
-                    existing = station.get_point(ioa)
-                    if existing is not None:
-                        station.remove_point(existing)
-                        point = station.add_point(
-                            io_address=ioa, type=write_type, command_mode=c104.CommandMode.DIRECT
-                        )
-                if point is None:
-                    self.logger.fail(f"Cannot create parameter point at IOA={ioa}")
-                    result["error"] = "Point creation failed"
-                    return result
-
-                # Set value on the point
-                if type_id in (110, 112):
-                    point.value = float(self.write_value)
-                elif type_id == 111:
-                    point.value = int(float(self.write_value))
-                elif type_id == 113:
-                    point.value = int(float(self.write_value))
-
-                success = point.transmit(cause=c104.Cot.ACTIVATION)
-                if success:
-                    self.logger.success(f"{type_name} sent: IOA={ioa}, value={result['value']}")
-                    result["success"] = True
-                else:
-                    self.logger.fail(f"{type_name} transmission failed")
-                    result["error"] = "Transmission failed"
+                self.logger.fail(f"{type_name} transmission failed")
+                result["error"] = "Transmission failed"
 
         except ValueError as e:
             self.logger.fail(f"Invalid parameter value '{self.write_value}': {e}")
@@ -564,9 +490,14 @@ class CommandMixin:
         return result
 
     def _fuzz_commands(self, client: Any, conn: Any) -> Dict[str, Any]:
-        """Fuzz IEC 104 commands using the simplified fuzz generator"""
-        from ...utils.fuzzer import fuzz
+        """Fuzz IEC 104 commands.
 
+        Not implemented: the c104 library exposes no raw-send interface
+        (``conn.send_raw`` / ``conn.command`` do not exist), so arbitrary
+        fuzzed ASDU bytes cannot be transmitted. The previous implementation
+        silently incremented counters without sending anything; rather than
+        lie about coverage, fail loudly and return zero work done.
+        """
         results: Dict[str, Any] = {
             "tested": 0,
             "errors": [],
@@ -579,115 +510,8 @@ class CommandMixin:
             self.logger.fail("--fuzz requires --confirm flag (sends commands to device)")
             return results
 
-        self.logger.display(
-            f"Starting IEC 104 command fuzzing (IOA={self.fuzz_ioa}, {self.fuzz_iterations} iterations)..."
+        self.logger.fail(
+            "iec104 --fuzz is not supported: the c104 library exposes no "
+            "raw-send interface for arbitrary ASDU bytes. No commands were sent."
         )
-
-        # Command types to fuzz (Type 45-51 are control commands)
-        command_types = [
-            (45, "C_SC_NA_1", "Single command"),
-            (46, "C_DC_NA_1", "Double command"),
-            (48, "C_SE_NA_1", "Set point normalized"),
-            (49, "C_SE_NB_1", "Set point scaled"),
-            (50, "C_SE_NC_1", "Set point float"),
-        ]
-
-        for type_id, type_name, description in command_types:
-            cmd_stats = {
-                "type_id": type_id,
-                "type_name": type_name,
-                "tested": 0,
-                "errors": 0,
-            }
-
-            self.logger.display(f"Fuzzing {type_name} ({description})...")
-
-            # Generate base command structure based on type
-            if type_id == 45:  # Single command
-                base_cmd = struct.pack("<H B", self.fuzz_ioa, 0x01)  # IOA + SIQ
-            elif type_id == 46:  # Double command
-                base_cmd = struct.pack("<H B", self.fuzz_ioa, 0x01)  # IOA + DIQ
-            elif type_id == 48:  # Set point normalized
-                base_cmd = struct.pack("<H h B", self.fuzz_ioa, 0, 0)  # IOA + NVA + QOS
-            elif type_id == 49:  # Set point scaled
-                base_cmd = struct.pack("<H h B", self.fuzz_ioa, 0, 0)  # IOA + SVA + QOS
-            elif type_id == 50:  # Set point float
-                base_cmd = struct.pack("<H f B", self.fuzz_ioa, 0.0, 0)  # IOA + IEEE float + QOS
-            else:
-                base_cmd = struct.pack("<H", self.fuzz_ioa)
-
-            # The c104 library does NOT expose a raw send interface
-            # (conn.send_raw / conn.command don't exist), so the
-            # previous code silently incremented counters without
-            # transmitting anything. Bail loudly the first time we
-            # discover that — counters used to lie about coverage.
-            if not (hasattr(conn, "send_raw") or hasattr(conn, "command")):
-                self.logger.warning(
-                    "iec104 --fuzz-commands requires a raw-send interface on "
-                    "the c104 connection (send_raw/command) which the current "
-                    "c104 build does not expose. Skipping fuzzing for "
-                    f"Type {type_id} ({type_name})."
-                )
-                break
-
-            # Generate fuzzed payloads
-            for i, payload in enumerate(fuzz(base_cmd, count=self.fuzz_iterations, max_len=16)):
-                try:
-                    # Try to send the fuzzed command via c104's raw interface
-                    if hasattr(conn, "send_raw"):
-                        # Construct APDU with fuzzed payload
-                        asdu_header = struct.pack(
-                            "<B B B H",
-                            type_id,  # Type ID
-                            1,  # Number of objects
-                            COT_ACTIVATION,
-                            self._best_common_address(),
-                        )
-                        apdu_data = asdu_header + payload
-                        conn.send_raw(apdu_data)
-                    elif hasattr(conn, "command"):
-                        # Use structured command if available
-                        pass
-
-                    cmd_stats["tested"] += 1
-                    results["tested"] += 1
-                    self.logger.debug(
-                        f"  [{i + 1}/{self.fuzz_iterations}] {type_name} payload={payload.hex()[:16]}..."
-                    )
-
-                except Exception as e:
-                    error_str = str(e)
-                    cmd_stats["errors"] += 1
-                    results["errors"].append(
-                        {
-                            "type_id": type_id,
-                            "payload": payload.hex()[:32],
-                            "error": error_str,
-                        }
-                    )
-
-                    # Check for crash indicators
-                    if "connection" in error_str.lower() or "timeout" in error_str.lower():
-                        results["crashes"].append(
-                            {
-                                "type_id": type_id,
-                                "payload": payload.hex(),
-                                "error": error_str,
-                            }
-                        )
-                        self.logger.fail(f"  Possible crash/disconnect: {error_str[:50]}")
-                        break  # Stop fuzzing this type if connection lost
-
-                # Small delay
-                time.sleep(0.05)
-
-            results["commands_fuzzed"].append(cmd_stats)
-
-        # Summary
-        self.logger.display("Fuzzing complete:")
-        self.logger.display(f"  Commands tested: {results['tested']}")
-        self.logger.display(f"  Errors: {len(results['errors'])}")
-        if results["crashes"]:
-            self.logger.fail(f"  Potential crashes: {len(results['crashes'])}")
-
         return results

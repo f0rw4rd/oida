@@ -43,7 +43,7 @@ from .constants import (
 )
 
 # Dependency helpers
-from ._deps import _c104, _serial, _get_c104, _C104Cache, c104, PYSERIAL_AVAILABLE
+from ._deps import _c104, _serial, _get_c104, c104, PYSERIAL_AVAILABLE
 
 # Scanner
 from .scanner import IEC104Scanner, metadata, run
@@ -78,7 +78,6 @@ __all__ = [
     "_c104",
     "_serial",
     "_get_c104",
-    "_C104Cache",
     "c104",
     "PYSERIAL_AVAILABLE",
     # Scanner
