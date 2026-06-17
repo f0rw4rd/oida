@@ -216,21 +216,6 @@ class TestEtherNetIPProtocolLogic(unittest.TestCase):
         # Since we're mocking, just verify no crash
         self.assertTrue(True)
 
-    def test_device_identity_parsing(self):
-        """Test device identity information parsing returns expected structure"""
-        scanner = self.EtherNetIPScanner(self.args)
-        mock_client = MagicMock()
-
-        # Mock _read_tag to return None (no tags found)
-        scanner._read_tag = MagicMock(return_value=None)
-
-        identity = scanner._get_device_identity(mock_client)
-
-        # Method always sets vendor_name and product_name (defaults)
-        self.assertIn("vendor_name", identity)
-        self.assertEqual(identity["vendor_name"], "Rockwell Automation")
-        self.assertIn("product_name", identity)
-
     def test_class_discovery(self):
         """Test CIP class discovery logic"""
         scanner = self.EtherNetIPScanner(self.args)
@@ -267,9 +252,9 @@ class TestEtherNetIPProtocolLogic(unittest.TestCase):
 
         scanner._read_cip_attribute = mock_read_cip
 
-        # Current signature: _explore_class_attributes(conn, class_id, use_param_obj=False, can_detect_perms=False)
+        # Current signature: _explore_class_attributes(conn, class_id, can_detect_perms)
         # Returns: (class_attributes_dict, rows_list, instances_found_count)
-        result = scanner._explore_class_attributes(mock_client, 1, False, False)
+        result = scanner._explore_class_attributes(mock_client, 1, False)
 
         # Returns a tuple (attributes, rows, instances_count)
         self.assertIsInstance(result, tuple)
@@ -297,7 +282,6 @@ class TestEtherNetIPMockOperations(unittest.TestCase):
         # Mock all the internal methods
         scanner.connect = Mock(return_value=mock_client)
         scanner.disconnect = Mock()
-        scanner._get_device_identity = Mock(return_value={"vendor_name": "Test"})
         scanner._get_device_info = Mock(return_value={"tags_found": []})
         scanner._discover_classes = Mock(return_value=[])
         scanner._analyze_security = Mock(return_value={"security_level": "low"})
@@ -321,14 +305,15 @@ class TestEtherNetIPMockOperations(unittest.TestCase):
         mock_result.error = None
         mock_client.generic_message.return_value = mock_result
 
-        # Signature: _test_attribute_write(conn, class_id, instance, attr_id, original_value)
-        result = scanner._test_attribute_write(mock_client, 8, 1, 1, b"\x01\x02")
-        self.assertTrue(result)
+        # _test_write_with_status returns (success, status_code, extended_status)
+        success, status, _ext = scanner._test_write_with_status(mock_client, 8, 1, 1, b"\x01\x02")
+        self.assertTrue(success)
+        self.assertEqual(status, 0x00)
 
         # Test failure case
         mock_client.generic_message.side_effect = Exception("Write failed")
-        result = scanner._test_attribute_write(mock_client, 1, 1, 1, b"\x01\x02")
-        self.assertFalse(result)
+        success, status, _ext = scanner._test_write_with_status(mock_client, 1, 1, 1, b"\x01\x02")
+        self.assertFalse(success)
 
     def test_fuzzing_operations(self):
         """Test fuzzing functionality"""
@@ -517,7 +502,6 @@ class TestEtherNetIPAttacks(unittest.TestCase):
             ATTACK_CRASHCPU_PAYLOAD,
             ATTACK_CRASHETHER_PAYLOAD,
             ATTACK_RESETETHER_PAYLOAD,
-            ATTACK_TYPES,
         )
 
         # Verify payloads are bytes
@@ -531,18 +515,6 @@ class TestEtherNetIPAttacks(unittest.TestCase):
         self.assertGreater(len(ATTACK_CRASHCPU_PAYLOAD), 0)
         self.assertGreater(len(ATTACK_CRASHETHER_PAYLOAD), 0)
         self.assertGreater(len(ATTACK_RESETETHER_PAYLOAD), 0)
-
-        # Verify ATTACK_TYPES dictionary
-        self.assertIn("stopcpu", ATTACK_TYPES)
-        self.assertIn("crashcpu", ATTACK_TYPES)
-        self.assertIn("crashether", ATTACK_TYPES)
-        self.assertIn("resetether", ATTACK_TYPES)
-
-        # Verify each attack type has required keys
-        for attack_name, attack_info in ATTACK_TYPES.items():
-            self.assertIn("payload", attack_info)
-            self.assertIn("name", attack_info)
-            self.assertIn("destructive", attack_info)
 
     def test_attack_options_in_protocol_options(self):
         """Test that attack options are defined in protocol_options"""

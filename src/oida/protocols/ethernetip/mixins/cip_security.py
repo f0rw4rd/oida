@@ -17,11 +17,9 @@ import base64
 import struct
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
-from ....utils.protocol_helpers import ConnectionHelper
 from ....utils.lazy_import import lazy_import
 
 _cryptography = lazy_import("cryptography", "EtherNet/IP", install_hint="pip install cryptography")
-from ..constants import CIP_SECURITY_CLASSES
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -31,58 +29,6 @@ else:
 
 class CipSecurityMixin(_ScannerBase):
     """Mixin providing CIP Security detection and analysis."""
-
-    def _detect_cip_security(self, conn: Any) -> Dict[str, Any]:
-        """
-        Detect CIP Security features by probing security-related objects.
-
-        Checks for CIP Security Object (0x5D), EtherNet/IP Security (0x5E),
-        Certificate Management (0x5F), and authentication objects.
-        """
-        security_info = {
-            "cip_security_supported": False,
-            "security_objects": [],
-            "authentication_methods": [],
-            "security_state": "unknown",
-            "tls_support": False,
-        }
-
-        self.logger.debug("Checking for CIP Security support...")
-
-        for class_id, class_name in CIP_SECURITY_CLASSES.items():
-            try:
-                # Try to read class attribute from the security class using pycomm3
-                data = self._read_cip_attribute(conn, class_id, 1, 1)
-
-                if data is not None:
-                    security_info["security_objects"].append(
-                        {
-                            "class_id": class_id,
-                            "class_name": class_name,
-                            "accessible": True,
-                        }
-                    )
-                    security_info["cip_security_supported"] = True
-                    self.logger.display(f"  Found: {class_name} (0x{class_id:02X})")
-
-                    # Check for specific authentication types
-                    if class_id == 0x61:  # Password Authenticator
-                        security_info["authentication_methods"].append("password")
-                    elif class_id == 0x62:  # Certificate Authenticator
-                        security_info["authentication_methods"].append("certificate")
-
-            except Exception as e:
-                self.logger.debug(f"Security class 0x{class_id:02X} not accessible: {e}")
-
-        if security_info["cip_security_supported"]:
-            security_info["security_state"] = "detected"
-        else:
-            security_info["security_state"] = "not_detected"
-
-        # Check for TLS support (EtherNet/IP Secure uses port 2221)
-        security_info["tls_support"] = self._check_tls_support()
-
-        return security_info
 
     def _report_security_status(self, security: Dict[str, Any]) -> None:
         """
@@ -141,43 +87,6 @@ class CipSecurityMixin(_ScannerBase):
             max_certs = certs.get("max_certificates", 0)
             if installed > 0:
                 self.logger.display(f"Certificates: {installed}/{max_certs} installed")
-
-    def _check_tls_support(self) -> bool:
-        """Check if EtherNet/IP Secure (TLS on port 2221) is supported"""
-        from ....utils.socket_helpers import build_tls_context
-
-        host, _ = self.get_target_info()
-        try:
-            context = build_tls_context({}, logger=self.logger)
-
-            sock = ConnectionHelper.create_tcp_socket(host, 2221, timeout=2)
-
-            # Try TLS handshake
-            ssl_sock = context.wrap_socket(sock, server_hostname=host)
-
-            # Check TLS certificate using central display function
-            try:
-                cert_der = ssl_sock.getpeercert(binary_form=True)
-                if cert_der:
-                    from ....utils.security_findings import display_cert_info
-
-                    display_cert_info(
-                        logger=self.logger,
-                        cert=cert_der,
-                        protocol="ethernetip",
-                        target=f"{host}:2221",
-                        verbose=self.debug,
-                    )
-            except Exception as e:
-                self.logger.debug(f"check tls support failed: {e}")
-                pass  # Certificate check is optional
-
-            ssl_sock.close()
-            self.logger.display("  TLS/DTLS: Supported (port 2221)")
-            return True
-        except Exception:
-            self.logger.debug("  TLS/DTLS: Not available on port 2221")
-            return False
 
     def _dump_security_settings(self, conn: Any) -> Dict[str, Any]:
         """

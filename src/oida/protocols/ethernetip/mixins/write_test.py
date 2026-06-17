@@ -12,7 +12,7 @@ Handles attribute write testing and permission detection:
 from __future__ import annotations
 
 import struct
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -58,26 +58,6 @@ class WriteTestMixin(_ScannerBase):
             result["full_support"] = bool(class_desc & 0x0001)
 
         return result
-
-    def _get_permission_via_parameter_object(self, conn: Any, param_instance: int) -> Optional[str]:
-        """Get attribute permission from Parameter Object Descriptor.
-
-        Args:
-            conn: pycomm3 connection
-            param_instance: Parameter instance number (maps to attribute/parameter)
-
-        Returns:
-            Permission string: "R", "W", "RW", or None if not available
-        """
-        from ..cip_definitions import get_permission_from_descriptor
-
-        # Read Descriptor attribute (attribute 4) from Parameter Object
-        data = self._read_cip_attribute(conn, 0x0F, param_instance, 4)
-        if data is None or len(data) < 2:
-            return None
-
-        descriptor = struct.unpack("<H", data[:2])[0]
-        return get_permission_from_descriptor(descriptor)
 
     def _test_write_with_status(
         self,
@@ -147,19 +127,8 @@ class WriteTestMixin(_ScannerBase):
         instance: int,
         attr_id: int,
         value: bytes,
-        use_param_obj: bool,
-        param_instance_map: Optional[dict] = None,
     ) -> str:
-        """Determine attribute permission using best available method.
-
-        Strategy:
-        1. If Parameter Object available AND a (class,inst,attr) ->
-           param-instance map has been built, get permission from the
-           Parameter Object descriptor. Callers in class_explorer.py
-           currently never build that map (TODO: walk class 0x0F at
-           connect time and populate the link-path back-references),
-           so in practice the write-test path below is the active one.
-        2. Otherwise, use write-test approach and interpret error codes.
+        """Determine attribute permission via write-test error interpretation.
 
         Args:
             conn: pycomm3 connection
@@ -167,26 +136,13 @@ class WriteTestMixin(_ScannerBase):
             instance: Instance number
             attr_id: Attribute ID
             value: Current attribute value (for write-back test)
-            use_param_obj: True if Parameter Object is available
-            param_instance_map: Optional mapping of (class,inst,attr) -> param instance
 
         Returns:
             Permission string: "R", "W", "RW", "R?", "R*", or "?"
         """
         from ..cip_definitions import interpret_write_error
 
-        # Method 1: Try Parameter Object if available AND the caller
-        # actually built the lookup map. Currently unreachable —
-        # class_explorer.py calls _determine_permission without the map.
-        # Left intact for the eventual map-builder implementation.
-        if use_param_obj and param_instance_map:
-            key = (class_id, instance, attr_id)
-            if key in param_instance_map:
-                perm = self._get_permission_via_parameter_object(conn, param_instance_map[key])
-                if perm:
-                    return perm
-
-        # Method 2: Write-test with error interpretation. Requires --write
+        # Write-test with error interpretation. Requires --write
         # AND a non-empty value to write back. WITHOUT --write we have no
         # signal at all — return "R?" to surface that to the operator
         # rather than the silent "?" which looked like a real verdict.
@@ -205,53 +161,13 @@ class WriteTestMixin(_ScannerBase):
         # detect writability, don't pretend the attribute is read-only.
         return "R?"
 
-    def _test_attribute_write(
-        self,
-        conn: Any,
-        class_id: int,
-        instance: int,
-        attr_id: int,
-        original_value: bytes,
-    ) -> bool:
-        """Test if an attribute is writable using pycomm3.
-
-        Args:
-            conn: pycomm3 connection
-            class_id: CIP class ID
-            instance: Instance number (0=class attrs, 1+=instance attrs)
-            attr_id: Attribute ID
-            original_value: Original raw bytes to write back
-
-        Returns:
-            True if write succeeded, False otherwise
-        """
-        if not hasattr(conn, "generic_message"):
-            return False
-
-        try:
-            # Try to write the same value back using Set_Attribute_Single (0x10)
-            result = conn.generic_message(
-                service=0x10,  # Set_Attribute_Single
-                class_code=class_id,
-                instance=instance,
-                attribute=attr_id,
-                request_data=original_value,
-                connected=True,
-                unconnected_send=False,
-            )
-            return result is not None and not result.error
-        except Exception as e:
-            self.logger.debug(f"test attribute write failed: {e}")
-            return False
-
-    def _test_write_access(self, conn: Any, attributes: Dict[str, Any]) -> Dict[str, Any]:
+    def _test_write_access(self, attributes: Dict[str, Any]) -> Dict[str, Any]:
         """Summarize write access from already-collected permission data.
 
         Permission detection is now done inline during _explore_class_attributes.
         This function just summarizes the results.
 
         Args:
-            conn: pycomm3 connection (not used - kept for API compatibility)
             attributes: Dict from _explore_classes with structure:
                 {class_id: {"class_attributes": {...}, "instances": {...}}}
 
@@ -284,7 +200,6 @@ class WriteTestMixin(_ScannerBase):
                     writable = perm in ("RW", "W")
                     class_write_results["class_attributes"][attr_id] = {
                         "writable": writable,
-                        "perm": perm,
                         "name": attr_info.get("name", ""),
                     }
                     if writable:
@@ -306,7 +221,6 @@ class WriteTestMixin(_ScannerBase):
                         writable = perm in ("RW", "W")
                         instance_results[attr_id] = {
                             "writable": writable,
-                            "perm": perm,
                             "name": attr_info.get("name", ""),
                         }
                         if writable:

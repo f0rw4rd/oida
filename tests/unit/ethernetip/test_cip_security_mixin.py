@@ -3,7 +3,6 @@
 Unit tests for EtherNet/IP CipSecurityMixin.
 
 Tests cover:
-- _detect_cip_security: no security objects, all 6 found, partial support
 - _report_security_status: not supported, not configured, enabled, EIP caps, PSK, certs
 - _dump_cip_security_object: state parsing, profiles bitmask, active profile, not accessible
 - _dump_eip_security_object: state parsing, capability flags, PSK count, active PSK, not accessible
@@ -20,7 +19,6 @@ import pytest
 
 pytestmark = pytest.mark.core
 
-from oida.protocols.ethernetip.constants import CIP_SECURITY_CLASSES
 from oida.protocols.ethernetip.mixins.cip_security import CipSecurityMixin
 
 
@@ -41,113 +39,6 @@ class MockSecurityHost(CipSecurityMixin):
 
     def get_target_info(self):
         return ("192.168.1.100", 44818)
-
-    def _check_tls_support(self):
-        return False
-
-
-# =============================================================================
-# _detect_cip_security tests
-# =============================================================================
-
-
-class TestDetectCipSecurity(unittest.TestCase):
-    """Test _detect_cip_security method."""
-
-    def setUp(self):
-        self.host = MockSecurityHost()
-        self.conn = MagicMock()
-
-    def test_no_security_objects(self):
-        """No security classes accessible."""
-        result = self.host._detect_cip_security(self.conn)
-        self.assertFalse(result["cip_security_supported"])
-        self.assertEqual(result["security_objects"], [])
-        self.assertEqual(result["authentication_methods"], [])
-        self.assertEqual(result["security_state"], "not_detected")
-
-    def test_all_security_classes_found(self):
-        """All 6 CIP Security classes accessible."""
-        for class_id in CIP_SECURITY_CLASSES:
-            self.host.set_attr(class_id, 1, 1, b"\x01")
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertTrue(result["cip_security_supported"])
-        self.assertEqual(len(result["security_objects"]), 6)
-        self.assertEqual(result["security_state"], "detected")
-
-    def test_partial_support_cip_security_only(self):
-        """Only CIP Security Object (0x5D) accessible."""
-        self.host.set_attr(0x5D, 1, 1, b"\x01")
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertTrue(result["cip_security_supported"])
-        self.assertEqual(len(result["security_objects"]), 1)
-        self.assertEqual(result["security_objects"][0]["class_id"], 0x5D)
-
-    def test_password_authenticator_detected(self):
-        """Password Authenticator (0x61) adds 'password' to auth methods."""
-        self.host.set_attr(0x61, 1, 1, b"\x01")
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertIn("password", result["authentication_methods"])
-
-    def test_certificate_authenticator_detected(self):
-        """Certificate Authenticator (0x62) adds 'certificate' to auth methods."""
-        self.host.set_attr(0x62, 1, 1, b"\x01")
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertIn("certificate", result["authentication_methods"])
-
-    def test_both_auth_methods(self):
-        """Both password and certificate auth detected."""
-        self.host.set_attr(0x61, 1, 1, b"\x01")
-        self.host.set_attr(0x62, 1, 1, b"\x01")
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertIn("password", result["authentication_methods"])
-        self.assertIn("certificate", result["authentication_methods"])
-
-    def test_cip_security_with_password_auth(self):
-        """CIP Security + Password Authenticator detected."""
-        self.host.set_attr(0x5D, 1, 1, b"\x01")
-        self.host.set_attr(0x61, 1, 1, b"\x01")
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertTrue(result["cip_security_supported"])
-        self.assertEqual(len(result["security_objects"]), 2)
-        self.assertIn("password", result["authentication_methods"])
-
-    def test_tls_support_checked(self):
-        """TLS support is checked."""
-        self.host._check_tls_support = MagicMock(return_value=True)
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertTrue(result["tls_support"])
-        self.host._check_tls_support.assert_called_once()
-
-    def test_exception_during_read(self):
-        """Exception during security class read handled gracefully."""
-
-        def raise_for_0x5D(conn, cls, inst, attr, **kw):
-            if cls == 0x5D:
-                raise RuntimeError("timeout")
-            return None
-
-        self.host._read_cip_attribute = raise_for_0x5D
-
-        result = self.host._detect_cip_security(self.conn)
-        self.assertFalse(result["cip_security_supported"])
-
-    def test_security_objects_have_class_info(self):
-        """Each found security object has class_id, class_name, accessible."""
-        self.host.set_attr(0x5D, 1, 1, b"\x01")
-
-        result = self.host._detect_cip_security(self.conn)
-        obj = result["security_objects"][0]
-        self.assertEqual(obj["class_id"], 0x5D)
-        self.assertEqual(obj["class_name"], "CIP Security")
-        self.assertTrue(obj["accessible"])
 
 
 # =============================================================================

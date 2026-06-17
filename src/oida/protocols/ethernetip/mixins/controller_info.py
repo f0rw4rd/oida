@@ -41,7 +41,6 @@ class ControllerInfoMixin(_ScannerBase):
         result = {
             "keyswitch": None,
             "mode": "Unknown",
-            "mode_raw": None,
             "is_editable": False,
             "is_remote": False,
             "is_faulted": False,
@@ -58,7 +57,6 @@ class ControllerInfoMixin(_ScannerBase):
             # Get keyswitch from pycomm3 LogixDriver info
             keyswitch = info.get("keyswitch", "").upper()
             result["keyswitch"] = keyswitch
-            result["mode_raw"] = keyswitch
 
             # Interpret keyswitch positions for ControlLogix/CompactLogix
             # Possible values: RUN, PROG, REM (REMOTE)
@@ -108,7 +106,6 @@ class ControllerInfoMixin(_ScannerBase):
             "controller_time": None,
             "system_time": None,
             "clock_drift_seconds": None,
-            "ptp_enabled": None,
         }
 
         if self._driver_type != "logix":
@@ -276,8 +273,8 @@ class ControllerInfoMixin(_ScannerBase):
     def _dump_tags(
         self,
         conn: Any,
-        output_dir: str = "",
-        output_format: str = "console",
+        output_dir: str,
+        output_format: str,
     ) -> Dict[str, Any]:
         """
         Dump all tags with values using the central table formatting function.
@@ -611,39 +608,6 @@ class ControllerInfoMixin(_ScannerBase):
                 self.logger.warning(f"  ... and {len(dangerous) - 5} more")
 
         return dangerous
-
-    def _get_device_identity(self, conn: Any) -> Dict[str, Any]:
-        """Get device identity information via Logix tags or CIP Identity Object"""
-        device_info = {}
-        try:
-            # Try to read common Logix string tags for device info
-            info_tags = ["DeviceName", "Location", "FirmwareVersion"]
-            for tag in info_tags:
-                val = self._read_tag(conn, tag)
-                if val is not None:
-                    device_info[tag.lower()] = val
-                    self.logger.debug(f"Read {tag}: {val}")
-
-            # Try to read a sample analog input to verify connection
-            sample_tags = ["AI_Temperature", "AI_Pressure", "SYS_Uptime"]
-            for tag in sample_tags:
-                val = self._read_tag(conn, tag)
-                if val is not None:
-                    device_info["sample_tag"] = {tag: val}
-                    self.logger.display(f"Sample tag {tag}: {val}")
-                    break
-
-            # Set vendor info for generic device
-            device_info["vendor_name"] = "Rockwell Automation"
-            device_info["product_name"] = device_info.get("devicename", "Logix PLC")
-
-            self.logger.display(f"EtherNet/IP Device: {device_info.get('product_name', 'Unknown')}")
-            self.logger.display(f"Vendor: {device_info.get('vendor_name', 'Unknown')}")
-
-        except Exception as e:
-            self.logger.debug(f"Error getting device identity: {e}")
-
-        return device_info
 
     def _get_device_info(self, conn: Any) -> Dict[str, Any]:
         """Get additional device information by reading known tags"""

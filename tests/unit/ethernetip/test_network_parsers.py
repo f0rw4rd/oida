@@ -255,61 +255,6 @@ class TestParseInterfaceConfig(unittest.TestCase):
         self.host._parse_interface_config(info, data)
         self.assertNotIn("ip_address", info)
 
-    def test_list_input(self):
-        """List/tuple input parses IP, subnet, gateway."""
-        info = {}
-        self.host._parse_interface_config(info, [192, 168, 1, 100, 255, 255, 255, 0, 10, 0, 0, 1])
-        self.assertEqual(info["ip_address"], "192.168.1.100")
-        self.assertEqual(info["network_mask"], "255.255.255.0")
-        self.assertEqual(info["gateway"], "10.0.0.1")
-
-    def test_list_short(self):
-        """Short list only parses available fields."""
-        info = {}
-        self.host._parse_interface_config(info, [192, 168, 1, 100])
-        self.assertEqual(info["ip_address"], "192.168.1.100")
-        self.assertNotIn("network_mask", info)
-
-    def test_dict_input(self):
-        """Dict input extracts named fields."""
-        info = {}
-        self.host._parse_interface_config(
-            info,
-            {
-                "ip_address": "10.0.0.1",
-                "network_mask": "255.0.0.0",
-                "gateway": "10.0.0.254",
-                "dns_primary": "8.8.8.8",
-                "dns_secondary": "8.8.4.4",
-                "domain_name": "test.local",
-            },
-        )
-        self.assertEqual(info["ip_address"], "10.0.0.1")
-        self.assertEqual(info["network_mask"], "255.0.0.0")
-        self.assertEqual(info["gateway"], "10.0.0.254")
-        self.assertEqual(info["dns_primary"], "8.8.8.8")
-        self.assertEqual(info["dns_secondary"], "8.8.4.4")
-        self.assertEqual(info["domain_name"], "test.local")
-
-    def test_dict_input_alt_keys(self):
-        """Dict with alternative key names (ip, subnet, dns1, dns2)."""
-        info = {}
-        self.host._parse_interface_config(
-            info,
-            {
-                "ip": "10.0.0.1",
-                "subnet": "255.0.0.0",
-                "dns1": "1.1.1.1",
-                "dns2": "1.0.0.1",
-                "domain": "corp.local",
-            },
-        )
-        self.assertEqual(info["ip_address"], "10.0.0.1")
-        self.assertEqual(info["network_mask"], "255.0.0.0")
-        self.assertEqual(info["dns_primary"], "1.1.1.1")
-        self.assertEqual(info["dns_secondary"], "1.0.0.1")
-        self.assertEqual(info["domain_name"], "corp.local")
-
     def test_bytearray_input(self):
         """bytearray is treated same as bytes."""
         info = {}
@@ -454,33 +399,8 @@ class TestParseMacAddress(unittest.TestCase):
         result = self.host._parse_mac_address(bytearray(b"\x01\x02\x03\x04\x05\x06"))
         self.assertEqual(result, "01:02:03:04:05:06")
 
-    def test_list_input(self):
-        result = self.host._parse_mac_address([0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE])
-        self.assertEqual(result, "DE:AD:BE:EF:CA:FE")
-
-    def test_tuple_input(self):
-        result = self.host._parse_mac_address((0x00, 0x00, 0x00, 0x00, 0x00, 0x01))
-        self.assertEqual(result, "00:00:00:00:00:01")
-
-    def test_string_passthrough(self):
-        result = self.host._parse_mac_address("AA:BB:CC:DD:EE:FF")
-        self.assertEqual(result, "AA:BB:CC:DD:EE:FF")
-
-    def test_int_48bit(self):
-        # 0x001122334455 => 00:11:22:33:44:55
-        result = self.host._parse_mac_address(0x001122334455)
-        self.assertEqual(result, "00:11:22:33:44:55")
-
-    def test_int_zero(self):
-        result = self.host._parse_mac_address(0)
-        self.assertEqual(result, "00:00:00:00:00:00")
-
     def test_bytes_too_short(self):
         result = self.host._parse_mac_address(b"\x01\x02\x03")
-        self.assertIsNone(result)
-
-    def test_list_too_short(self):
-        result = self.host._parse_mac_address([1, 2, 3])
         self.assertIsNone(result)
 
     def test_none_input(self):

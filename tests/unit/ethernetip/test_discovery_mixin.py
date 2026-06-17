@@ -9,7 +9,6 @@ Tests cover:
 - _list_services: communications service, unknown type, no response, empty
 - _list_interfaces: CIP Identity, Ethernet Link, unknown type, no response
 - _broadcast_discovery: no lhost, success, deduplication, socket error
-- _parse_list_identity_response: delegates to parsers, failure fallback
 """
 
 import struct
@@ -87,7 +86,7 @@ class MockDiscoveryHost(DiscoveryMixin):
         self._parse_header_response = None
         self._build_packet_response = b"\x00" * 24
 
-    def _send_enip_command(self, host, port, command, use_udp=False):
+    def _send_enip_command(self, host, port, command, data=b""):
         return self._send_response
 
     def _parse_enip_header(self, data):
@@ -207,16 +206,6 @@ class TestListIdentity(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["device_ip"], "10.0.0.1")
 
-    def test_status_flags_owned_configured(self):
-        """Status word with owned and configured bits set."""
-        response = _build_list_identity_response(status=0x0003)
-        self.host._send_response = response
-        result = self.host._list_identity("192.168.1.100", display=False)
-        self.assertTrue(result["success"])
-        self.assertTrue(result["status_owned"])
-        self.assertTrue(result["status_configured"])
-        self.assertFalse(result["status_faulted"])
-
     def test_status_flags_faulted(self):
         """Status word with fault bits set."""
         response = _build_list_identity_response(status=0x00F1)
@@ -302,18 +291,6 @@ class TestListIdentity(unittest.TestCase):
         result = self.host._list_identity("192.168.1.100", display=False)
         self.assertTrue(result["success"])
         self.assertNotIn("status_owned", result)
-
-    def test_udp_mode(self):
-        """use_udp parameter propagated to _send_enip_command."""
-        calls = []
-
-        def mock_send(host, port, command, use_udp=False):
-            calls.append(use_udp)
-            return None
-
-        self.host._send_enip_command = mock_send
-        self.host._list_identity("192.168.1.100", use_udp=True)
-        self.assertTrue(calls[0])
 
 
 # =============================================================================
@@ -625,14 +602,6 @@ class TestBroadcastDiscovery(unittest.TestCase):
             TimeoutError("done"),
         ]
 
-        self.host._parse_list_identity_response = MagicMock(
-            return_value={
-                "success": True,
-                "vendor_name": "Rockwell",
-                "product_name": "TestDevice",
-            }
-        )
-
         result = self.host._broadcast_discovery(lhost="192.168.1.1", timeout=0.5)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["ip_address"], "192.168.1.100")
@@ -654,10 +623,6 @@ class TestBroadcastDiscovery(unittest.TestCase):
             TimeoutError("done"),
             TimeoutError("done"),
         ]
-
-        self.host._parse_list_identity_response = MagicMock(
-            return_value={"success": True, "vendor_name": "Test", "product_name": "PLC"}
-        )
 
         result = self.host._broadcast_discovery(lhost="192.168.1.1", timeout=0.5)
         self.assertEqual(len(result), 1)
@@ -708,51 +673,8 @@ class TestBroadcastDiscovery(unittest.TestCase):
             TimeoutError("done"),
         ]
 
-        self.host._parse_list_identity_response = MagicMock(
-            return_value={"success": True, "vendor_name": "Test", "product_name": "PLC"}
-        )
-
         result = self.host._broadcast_discovery(lhost="192.168.1.1", timeout=0.5)
         self.assertEqual(len(result), 2)
-
-
-# =============================================================================
-# _parse_list_identity_response tests
-# =============================================================================
-
-
-class TestParseListIdentityResponse(unittest.TestCase):
-    """Test _parse_list_identity_response method."""
-
-    def setUp(self):
-        self.host = MockDiscoveryHost()
-
-    def test_delegates_to_parsers_valid_data(self):
-        """Test the method works with valid data (delegates to parsers.parse_list_identity)."""
-        response = _build_list_identity_response(vendor_id=1, product_name="TestPLC", state=3)
-        result = self.host._parse_list_identity_response(response)
-        self.assertTrue(result["success"])
-        self.assertEqual(result["product_name"], "TestPLC")
-
-    def test_returns_empty_on_invalid_data(self):
-        """Invalid data returns default empty result."""
-        result = self.host._parse_list_identity_response(b"\x00\x01")
-        self.assertFalse(result["success"])
-        self.assertEqual(result["vendor_id"], 0)
-        self.assertEqual(result["product_name"], "")
-
-    def test_returns_empty_on_empty_bytes(self):
-        result = self.host._parse_list_identity_response(b"")
-        self.assertFalse(result["success"])
-
-    def test_valid_packet_parsed(self):
-        """Full valid ListIdentity packet is parsed correctly."""
-        response = _build_list_identity_response(
-            vendor_id=1, product_name="MyPLC", serial=0x12345678
-        )
-        result = self.host._parse_list_identity_response(response)
-        self.assertTrue(result["success"])
-        self.assertEqual(result["serial_number"], 0x12345678)
 
 
 if __name__ == "__main__":

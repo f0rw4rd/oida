@@ -132,7 +132,7 @@ class ClassExplorerMixin(_ScannerBase):
         # Collect all data first
         for class_id in explore_list:
             class_attributes, rows, instances_found = self._explore_class_attributes(
-                conn, class_id, use_param_obj, can_detect_perms
+                conn, class_id, can_detect_perms
             )
             if class_attributes:
                 attributes[class_id] = class_attributes
@@ -146,7 +146,7 @@ class ClassExplorerMixin(_ScannerBase):
 
         # Print combined attribute table
         if all_rows:
-            self._print_attr_table(all_rows, show_perm=True)
+            self._print_attr_table(all_rows)
             total_instances = sum(c[2] for c in class_summary)
             self.logger.display(
                 f"Total: {len(class_summary)} classes, {total_instances} instances, {len(all_rows)} attributes"
@@ -191,15 +191,13 @@ class ClassExplorerMixin(_ScannerBase):
         self,
         conn: Any,
         class_id: int,
-        use_param_obj: bool = False,
-        can_detect_perms: bool = False,
+        can_detect_perms: bool,
     ) -> tuple:
         """Explore attributes of a specific class including all instances.
 
         Args:
             conn: pycomm3 connection
             class_id: CIP class ID to explore
-            use_param_obj: Whether to use Parameter Object for permission detection
             can_detect_perms: Whether permissions can be determined (0x0F available or --write set)
 
         Returns: (result_dict, rows_list, instances_found)
@@ -226,9 +224,7 @@ class ClassExplorerMixin(_ScannerBase):
 
                     # Determine permission
                     if can_detect_perms:
-                        perm = self._determine_permission(
-                            conn, class_id, 0, attr_id, data, use_param_obj
-                        )
+                        perm = self._determine_permission(conn, class_id, 0, attr_id, data)
                     else:
                         perm = "???"
 
@@ -242,7 +238,6 @@ class ClassExplorerMixin(_ScannerBase):
                     rows.append((class_id, 0, attr_id, data, name, dtype, perm))
             except Exception as e:
                 self.logger.debug(f"explore class attributes failed: {e}")
-                pass  # Attribute may not exist
 
         result["class_attributes"] = class_attrs
 
@@ -253,7 +248,6 @@ class ClassExplorerMixin(_ScannerBase):
                 max_instances = int(class_attrs[2]["value"])
             except (ValueError, TypeError) as e:
                 self.logger.debug(f"explore class attributes failed: {e}")
-                pass
 
         # For known multi-instance classes, scan more
         if class_id in [0x04, 0x47, 0x48, 0x64, 0x65, 0xF4]:
@@ -279,7 +273,7 @@ class ClassExplorerMixin(_ScannerBase):
                         # Determine permission
                         if can_detect_perms:
                             perm = self._determine_permission(
-                                conn, class_id, instance, attr_id, data, use_param_obj
+                                conn, class_id, instance, attr_id, data
                             )
                         else:
                             perm = "???"
@@ -294,7 +288,6 @@ class ClassExplorerMixin(_ScannerBase):
                         rows.append((class_id, instance, attr_id, data, name, dtype, perm))
                 except Exception as e:
                     self.logger.debug(f"explore class attributes failed: {e}")
-                    pass  # Attribute may not exist
 
             result["instances"][instance] = instance_attrs
 
@@ -312,14 +305,11 @@ class ClassExplorerMixin(_ScannerBase):
             return [self._serialize_value(v) for v in value]
         return value
 
-    def _print_attr_table(self, rows: list, show_perm: bool = False) -> None:
+    def _print_attr_table(self, rows: list) -> None:
         """Print attributes as a formatted table with dynamic column widths.
 
         Args:
-            rows: List of tuples. If show_perm:
-                  (class_id, inst, attr, data, desc, dtype, perm)
-                  Otherwise: (class_id, inst, attr, data, desc, dtype)
-            show_perm: Whether to show the Perm column
+            rows: List of 7-tuples (class_id, inst, attr, data, desc, dtype, perm)
         """
         from ..cip_definitions import parse_attribute
 
@@ -327,13 +317,7 @@ class ClassExplorerMixin(_ScannerBase):
         processed = []
         max_val, max_desc, max_type = 5, 11, 4  # Minimum widths for headers
 
-        for row in rows:
-            if show_perm and len(row) >= 7:
-                class_id, instance, attr_id, data, desc, dtype, perm = row
-            else:
-                class_id, instance, attr_id, data, desc, dtype = row[:6]
-                perm = "?"
-
+        for class_id, instance, attr_id, data, desc, dtype, perm in rows:
             _, _, parsed_val = parse_attribute(class_id, instance, attr_id, data)
             val = self._format_parsed_value(parsed_val, data)
             processed.append((class_id, instance, attr_id, val, desc, dtype, perm))
@@ -352,45 +336,24 @@ class ClassExplorerMixin(_ScannerBase):
 
         # Header
         self.logger.display("CIP Attributes:")
-        if show_perm:
-            self.logger.display(
-                f"  \u250c{hdr_class}\u252c{hdr_inst}\u252c{hdr_attr}\u252c{hdr_perm}\u252c{hdr_val}\u252c{hdr_desc}\u252c{hdr_type}\u2510"
-            )
-            self.logger.display(
-                f"  \u2502 Class  \u2502 Inst \u2502 Attr \u2502 Perm \u2502 {'Value':<{max_val}} \u2502 {'Description':<{max_desc}} \u2502 {'Type':<{max_type}} \u2502"
-            )
-            self.logger.display(
-                f"  \u251c{hdr_class}\u253c{hdr_inst}\u253c{hdr_attr}\u253c{hdr_perm}\u253c{hdr_val}\u253c{hdr_desc}\u253c{hdr_type}\u2524"
-            )
-        else:
-            self.logger.display(
-                f"  \u250c{hdr_class}\u252c{hdr_inst}\u252c{hdr_attr}\u252c{hdr_val}\u252c{hdr_desc}\u252c{hdr_type}\u2510"
-            )
-            self.logger.display(
-                f"  \u2502 Class  \u2502 Inst \u2502 Attr \u2502 {'Value':<{max_val}} \u2502 {'Description':<{max_desc}} \u2502 {'Type':<{max_type}} \u2502"
-            )
-            self.logger.display(
-                f"  \u251c{hdr_class}\u253c{hdr_inst}\u253c{hdr_attr}\u253c{hdr_val}\u253c{hdr_desc}\u253c{hdr_type}\u2524"
-            )
+        self.logger.display(
+            f"  \u250c{hdr_class}\u252c{hdr_inst}\u252c{hdr_attr}\u252c{hdr_perm}\u252c{hdr_val}\u252c{hdr_desc}\u252c{hdr_type}\u2510"
+        )
+        self.logger.display(
+            f"  \u2502 Class  \u2502 Inst \u2502 Attr \u2502 Perm \u2502 {'Value':<{max_val}} \u2502 {'Description':<{max_desc}} \u2502 {'Type':<{max_type}} \u2502"
+        )
+        self.logger.display(
+            f"  \u251c{hdr_class}\u253c{hdr_inst}\u253c{hdr_attr}\u253c{hdr_perm}\u253c{hdr_val}\u253c{hdr_desc}\u253c{hdr_type}\u2524"
+        )
 
         for class_id, instance, attr_id, val, desc, dtype, perm in processed:
-            if show_perm:
-                self.logger.display(
-                    f"  \u2502 0x{class_id:02X}   \u2502 {instance:4d} \u2502 {attr_id:4d} \u2502 {perm:4s} \u2502 {val:<{max_val}} \u2502 {desc:<{max_desc}} \u2502 {dtype:<{max_type}} \u2502"
-                )
-            else:
-                self.logger.display(
-                    f"  \u2502 0x{class_id:02X}   \u2502 {instance:4d} \u2502 {attr_id:4d} \u2502 {val:<{max_val}} \u2502 {desc:<{max_desc}} \u2502 {dtype:<{max_type}} \u2502"
-                )
+            self.logger.display(
+                f"  \u2502 0x{class_id:02X}   \u2502 {instance:4d} \u2502 {attr_id:4d} \u2502 {perm:4s} \u2502 {val:<{max_val}} \u2502 {desc:<{max_desc}} \u2502 {dtype:<{max_type}} \u2502"
+            )
 
-        if show_perm:
-            self.logger.display(
-                f"  \u2514{hdr_class}\u2534{hdr_inst}\u2534{hdr_attr}\u2534{hdr_perm}\u2534{hdr_val}\u2534{hdr_desc}\u2534{hdr_type}\u2518"
-            )
-        else:
-            self.logger.display(
-                f"  \u2514{hdr_class}\u2534{hdr_inst}\u2534{hdr_attr}\u2534{hdr_val}\u2534{hdr_desc}\u2534{hdr_type}\u2518"
-            )
+        self.logger.display(
+            f"  \u2514{hdr_class}\u2534{hdr_inst}\u2534{hdr_attr}\u2534{hdr_perm}\u2534{hdr_val}\u2534{hdr_desc}\u2534{hdr_type}\u2518"
+        )
 
     def _format_parsed_value(self, parsed_val: Any, data: bytes) -> str:
         """Format a parsed attribute value for display"""
@@ -438,5 +401,4 @@ class ClassExplorerMixin(_ScannerBase):
                     return f"'{printable}'"
             except Exception as e:
                 self.logger.debug(f"format raw bytes failed: {e}")
-                pass  # Not printable ASCII
         return hex_val

@@ -22,6 +22,7 @@ from ..constants import (
     ENIP_CMD_LIST_SERVICES,
     ENIP_CMD_LIST_INTERFACES,
 )
+from ..parsers import parse_list_identity
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -36,7 +37,6 @@ class DiscoveryMixin(_ScannerBase):
         self,
         host: str,
         port: int = 44818,
-        use_udp: bool = False,
         display: bool = True,
     ) -> Dict[str, Any]:
         """
@@ -56,7 +56,7 @@ class DiscoveryMixin(_ScannerBase):
             "state": 0,
         }
 
-        response = self._send_enip_command(host, port, ENIP_CMD_LIST_IDENTITY, use_udp=use_udp)
+        response = self._send_enip_command(host, port, ENIP_CMD_LIST_IDENTITY)
         if not response:
             return result
 
@@ -177,8 +177,6 @@ class DiscoveryMixin(_ScannerBase):
             # Bits 8-11: Extended Device Status (more specific)
             status = result.get("status", 0)
             if status:
-                result["status_owned"] = bool(status & 0x0001)
-                result["status_configured"] = bool(status & 0x0002)
                 result["status_minor_recoverable_fault"] = bool(status & 0x0010)
                 result["status_minor_unrecoverable_fault"] = bool(status & 0x0020)
                 result["status_major_recoverable_fault"] = bool(status & 0x0040)
@@ -392,12 +390,10 @@ class DiscoveryMixin(_ScannerBase):
                         continue
                     seen_ips.add(ip_addr)
 
-                    # Parse the response as ListIdentity
-                    header = self._parse_enip_header(data)
-                    if header and header["command"] == ENIP_CMD_LIST_IDENTITY:
-                        # Re-parse as full identity using existing method
-                        # We need to manually parse here since _list_identity expects a host
-                        device = self._parse_list_identity_response(data)
+                    # Parse the response as ListIdentity via the shared parser
+                    # (_list_identity expects a host, so parse the raw bytes here)
+                    device = parse_list_identity(data)
+                    if device:
                         device["ip_address"] = ip_addr
                         devices.append(device)
 
@@ -423,27 +419,3 @@ class DiscoveryMixin(_ScannerBase):
 
         self.logger.display(f"Discovered {len(devices)} device(s)")
         return devices
-
-    def _parse_list_identity_response(self, data: bytes) -> Dict[str, Any]:
-        """Parse a ListIdentity response packet.
-
-        Delegates to the shared ``parse_list_identity`` parser in
-        ``parsers.py`` and returns a consistent empty-result dict on failure.
-        """
-        from ..parsers import parse_list_identity
-
-        parsed = parse_list_identity(data)
-        if parsed is not None:
-            return parsed
-
-        return {
-            "success": False,
-            "vendor_id": 0,
-            "vendor_name": "Unknown",
-            "device_type": 0,
-            "product_code": 0,
-            "revision": (0, 0),
-            "serial_number": 0,
-            "product_name": "",
-            "state": 0,
-        }
