@@ -1251,6 +1251,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--test-write-thorough",
+            "--confirm",
             "--scan-range",
             "0-5",
             format="json",

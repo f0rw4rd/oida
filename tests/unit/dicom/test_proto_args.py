@@ -19,7 +19,9 @@ class TestDICOMProtoArgs:
         assert _parse().target == "127.0.0.1"
 
     def test_default_port(self):
-        assert _parse().port == 104
+        # No -p means the CLI default is None; create_conn_obj() resolves the
+        # effective port at connect time (11112 plaintext, 2762 with --tls).
+        assert _parse().port is None
 
     def test_aet(self):
         args = _parse("--aet", "OIDA_SCU")

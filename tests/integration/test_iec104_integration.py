@@ -19,6 +19,8 @@ import pytest
 
 from .conftest import DOCKER_COMPOSE_PATH, MOCK_HOST, MOCK_PORTS, check_port_open
 
+pytestmark = pytest.mark.xdist_group("iec104_service")
+
 
 # ---------------------------------------------------------------------------
 # Constants — known mock data (ground truth from iec104_server.c)
@@ -544,6 +546,8 @@ class TestIEC104Integration:
             "--port",
             str(port),
             "--interrogate",
+            "--wait-time",
+            "6",
             format="json",
             json_log=True,
         )

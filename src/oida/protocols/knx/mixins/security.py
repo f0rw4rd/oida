@@ -114,18 +114,46 @@ class SecurityMixin:
         return results
 
     async def _write_bcu_key(self, knx: "XKNX", address: str, key_arg: str) -> Dict[str, Any]:
-        """Write BCU key (DANGEROUS operation) - NOT IMPLEMENTED"""
-        # Notify user that this feature is not available (KeyWriteRequest APCI
-        # is not exposed by xknx, so there is no way to implement it yet).
-        self.logger.fail("BCU key writing is NOT IMPLEMENTED in current xknx version")
-        self.logger.display("This feature requires custom APCI implementation (KeyWriteRequest)")
+        """Write BCU key (DANGEROUS operation) - NOT IMPLEMENTED.
 
-        return {
+        The actual KeyWriteRequest APCI is not exposed by xknx, so the write
+        cannot be performed yet. We still validate the KEY:LEVEL argument so
+        the operator gets a precise error on malformed input rather than a
+        generic "not implemented".
+        """
+        result: Dict[str, Any] = {
             "address": address,
             "key_arg": key_arg,
             "success": False,
-            "error": "KeyWriteRequest not implemented - requires custom APCI",
+            "new_level": None,
+            "error": None,
         }
+
+        # Notify user immediately that this feature is not available.
+        self.logger.fail("BCU key writing is NOT IMPLEMENTED in current xknx version")
+        self.logger.display("This feature requires custom APCI implementation (KeyWriteRequest)")
+
+        try:
+            # Parse KEY:LEVEL format for validation only.
+            parts = key_arg.split(":")
+            if len(parts) != 2:
+                result["error"] = "Expected format: KEY:LEVEL (e.g., 'FFFFFFFF:0')"
+                return result
+
+            key = int(parts[0], 16)
+            level = int(parts[1])
+
+            self.logger.debug(f"Requested key: 0x{key:08X} level: {level} for {address}")
+
+            # Feature not available.
+            result["error"] = "KeyWriteRequest not implemented - requires custom APCI"
+        except ValueError as e:
+            result["error"] = f"Invalid key/level format: {e}"
+        except Exception as e:
+            result["error"] = str(e)
+            self.logger.fail(f"Error writing BCU key: {e}")
+
+        return result
 
     async def _test_read_access(self, knx: "XKNX", devices: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Test read access to devices"""
@@ -218,9 +246,7 @@ class SecurityMixin:
                             if original_data:
                                 # Write the same value back via MemoryWrite APCI.
                                 await p2p.request(
-                                    _xknx_cls.MemoryWrite(
-                                        address=mem_addr, data=original_data
-                                    ),
+                                    _xknx_cls.MemoryWrite(address=mem_addr, data=original_data),
                                     _xknx_cls.MemoryResponse,
                                 )
                                 device_results["writable_addresses"].append(

@@ -82,6 +82,9 @@ class OCPPScanner(NetworkScanner):
         self.target_url = args.get("target-url", "") or args.get("target", "")
         self.ocpp_version = args.get("version", "auto")
         self.charge_point_id = args.get("charge-point-id", DEFAULT_CP_ID)
+        # Optional explicit WebSocket URL path override (e.g. /ocpp/CP_001).
+        # When set it fully replaces the default "/{charge_point_id}" path.
+        self.ws_path = args.get("ws-path", "") or ""
         self.username = args.get("username", "") or ""
         self.password = args.get("password", "") or ""
         # TLS inferred from wss:// scheme (no --tls flag)
@@ -128,7 +131,8 @@ class OCPPScanner(NetworkScanner):
                 args["rhost"] = url
             port = args.get("rport", DEFAULT_WS_PORT)
             scheme = "wss" if self.tls else "ws"
-            self.target_url = f"{scheme}://{url}:{port}/{self.charge_point_id}"
+            path = self._url_path()
+            self.target_url = f"{scheme}://{url}:{port}{path}"
             if _log:
                 _log.debug(f"Constructed WebSocket URL from host: {self.target_url}")
 
@@ -155,13 +159,23 @@ class OCPPScanner(NetworkScanner):
 
         scheme = "wss" if self.tls else "ws"
         host, port = self.get_target_info()
-        return f"{scheme}://{host}:{port}/{self.charge_point_id}"
+        return f"{scheme}://{host}:{port}{self._url_path()}"
+
+    def _url_path(self) -> str:
+        """Return the WebSocket URL path component.
+
+        Uses the explicit --ws-path override when provided, otherwise the
+        default "/{charge_point_id}". A leading slash is added if missing.
+        """
+        if self.ws_path:
+            return self.ws_path if self.ws_path.startswith("/") else f"/{self.ws_path}"
+        return f"/{self.charge_point_id}"
 
     def _get_subprotocols(self) -> List[str]:
         """Get WebSocket subprotocols to negotiate based on version preference."""
         if self.ocpp_version == "auto":
             # Try all versions, prefer newest
-            protos = ["ocpp2.0.1", "ocpp1.6"]
+            protos = ["ocpp2.1", "ocpp2.0.1", "ocpp1.6"]
         elif self.ocpp_version in OCPP_SUBPROTOCOLS:
             protos = [OCPP_SUBPROTOCOLS[self.ocpp_version]]
         else:
@@ -254,11 +268,16 @@ class OCPPScanner(NetworkScanner):
             loop.set_exception_handler(_quiet_handler)
             try:
                 ws = loop.run_until_complete(ws_connect(ws_url, **connect_kwargs))
-                self.logger.debug(f"Connected, subprotocol: {getattr(ws, 'subprotocol', 'none')}")
-                return ws
-            finally:
-                # Don't close the loop yet - we need it for send/recv
-                self._event_loop = loop
+            except Exception:
+                # Connection failed: close the loop now so it isn't leaked
+                # (cleanup() only closes _event_loop via disconnect(), which is
+                # skipped when conn stays None). Re-raise for the handler below.
+                loop.close()
+                raise
+            self.logger.debug(f"Connected, subprotocol: {getattr(ws, 'subprotocol', 'none')}")
+            # Keep the loop open only on success - we need it for send/recv
+            self._event_loop = loop
+            return ws
 
         except Exception as e:
             self.logger.debug(f"WebSocket connection failed: {e}")

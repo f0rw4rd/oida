@@ -141,6 +141,12 @@ class EnumerationMixin(_ScannerBase):
                 parts = options["enum_range"].split("-")
                 start = int(parts[0], 0)
                 end = int(parts[1], 0) if len(parts) > 1 else start
+                if start > end:
+                    self.logger.fail(
+                        f"  Invalid range: start 0x{start:04X} > end 0x{end:04X} "
+                        f"({options['enum_range']})"
+                    )
+                    return None
                 return [(i, idx_module.get_index_name(i)) for i in range(start, end + 1)]
             except ValueError:
                 self.logger.fail(f"  Invalid range format: {options['enum_range']}")

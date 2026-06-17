@@ -169,10 +169,23 @@ class TestBinarySmoke:
             assert known, f"Unexpected frozen diagnostic failure: {line}"
 
     def test_binary_size(self, oida_bin):
-        """Binary is between 30MB and 200MB (sanity check)."""
-        size_mb = oida_bin.stat().st_size / (1024 * 1024)
-        assert 30 <= size_mb <= 200, (
-            f"Binary size {size_mb:.1f}MB outside expected range [30MB, 200MB]"
+        """Onedir bundle is between 30MB and 500MB (sanity check).
+
+        For onedir builds, oida_bin is the bootloader exe inside the bundle
+        directory.  The bootloader is only ~20 MB; the full bundle (all .so
+        libraries and bundled packages) lives in the parent directory.  Measure
+        the parent so the check reflects real bundle size.
+        """
+        bundle_dir = oida_bin.parent
+        if bundle_dir.is_dir() and bundle_dir != oida_bin:
+            size_mb = (
+                sum(f.stat().st_size for f in bundle_dir.rglob("*") if f.is_file())
+                / (1024 * 1024)
+            )
+        else:
+            size_mb = oida_bin.stat().st_size / (1024 * 1024)
+        assert 30 <= size_mb <= 500, (
+            f"Bundle size {size_mb:.1f}MB outside expected range [30MB, 500MB]"
         )
 
     def test_json_output_format(self, oida_bin):

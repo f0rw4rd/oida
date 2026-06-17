@@ -43,11 +43,7 @@ ALL_PROTOCOL_TIERS = {
     "dhcpv6": ("P2", 5),
     "ntp": ("P2", 5),
     "hl7": ("P2", 5),
-    "dicom": ("P2", 5),
     "vnc": ("P2", 5),
-    "tase2": ("P2", 5),
-    "hartip": ("P2", 5),
-    "fins": ("P2", 5),
     # P3 - Simple/Niche
     "echo": ("P3", 3),
     "daytime": ("P3", 3),
@@ -61,8 +57,6 @@ ALL_PROTOCOL_TIERS = {
     "ipv6": ("P3", 3),
     "ethernet": ("P3", 3),
     "tcp": ("P3", 3),
-    "industrial_ethernet": ("P3", 3),
-    "profinet_dcp": ("P3", 3),
     # Special
     "mutation": ("N/A", 1),
 }
@@ -143,15 +137,8 @@ ICS_SCADA_TIERS = {
     "ethernetip": ("P0", 8),
     "bacnet": ("P0", 8),
     "ads": ("P0", 8),
-    "fins": ("P0", 8),
-    # P2 - Standard ICS
-    "tase2": ("P2", 5),
-    "hartip": ("P2", 5),
-    "profinet_dcp": ("P2", 5),
-    "industrial_ethernet": ("P2", 5),
     # P2 - Healthcare/Other
     "hl7": ("P2", 5),
-    "dicom": ("P2", 5),
     # P3 - Simple
     "echo": ("P3", 3),
     "daytime": ("P3", 3),

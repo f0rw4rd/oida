@@ -47,6 +47,12 @@ class ICMPv6Fuzzer(BaseFuzzer):
     - High-crash tests (RDNSS overflow, option attacks) run in first 2 minutes
     - CVE-relevant operations tested within first 5 minutes
     - Boundary attacks complete within first 10 minutes
+
+    Includes THC-IPv6 attack modes: fake_router6 / fake_advertiser6 (RA/NA
+    spoofing), parasite6 (neighbor-cache MITM), flood_router6 /
+    flood_advertise6 (RA/NA flooding), and smurf6 (echo amplification).
+
+    Note: Requires root/admin privileges for raw socket access.
     """
 
     PROTOCOL_OPTIONS = {
@@ -190,52 +196,6 @@ class ICMPv6Fuzzer(BaseFuzzer):
             RequestInfo("ICMPv6_Parasite_NS", "THC-IPv6 parasite6 MITM attack", "thc"),
             RequestInfo("ICMPv6_Smurf_Echo", "THC-IPv6 smurf6 amplification attack", "thc"),
         ]
-
-    """
-    ICMPv6 (Internet Control Message Protocol for IPv6) Fuzzer
-    
-    Comprehensive ICMPv6 fuzzing including THC-IPv6 attack modes:
-    - fake_router6: Router Advertisement spoofing
-    - fake_advertiser6: Neighbor Advertisement spoofing  
-    - parasite6: Man-in-the-middle via neighbor cache poisoning
-    - flood_router6: Router Advertisement flooding
-    - flood_advertise6: Neighbor Advertisement flooding
-    - smurf6: ICMPv6 echo amplification attacks
-    
-    Standard ICMPv6 messages:
-    
-    Error Messages:
-    - Destination Unreachable (Type 1)
-    - Packet Too Big (Type 2)
-    - Time Exceeded (Type 3)
-    - Parameter Problem (Type 4)
-    
-    Informational Messages:
-    - Echo Request/Reply (Type 128/129)
-    - Multicast Listener Query/Report/Done (Type 130/131/132)
-    
-    Neighbor Discovery Protocol (NDP):
-    - Router Solicitation (Type 133)
-    - Router Advertisement (Type 134)
-    - Neighbor Solicitation (Type 135)
-    - Neighbor Advertisement (Type 136)
-    - Redirect (Type 137)
-    
-    Inverse Neighbor Discovery:
-    - Inverse NS/NA (Type 141/142)
-    
-    Mobile IPv6:
-    - Home Agent Address Discovery Request/Reply (Type 144/145)
-    - Mobile Prefix Solicitation/Advertisement (Type 146/147)
-    
-    Secure Neighbor Discovery (SEND):
-    - Certification Path Solicitation/Advertisement (Type 148/149)
-    
-    Multicast Router Discovery:
-    - MRD Advertisement/Solicitation/Termination (Type 151/152/153)
-    
-    Note: Requires root/admin privileges for raw socket access
-    """
 
     def __init__(self, config: FuzzerConfig, connection_factory=None):
         # ICMPv6 uses IPPROTO_ICMPV6 socket - kernel handles IPv6 header and checksum
@@ -1741,8 +1701,8 @@ class ICMPv6Fuzzer(BaseFuzzer):
         if attack_mode == "smurf" or attack_mode == "normal":
             self.session.connect(smurf_echo)
 
-    def _get_monitors(self) -> List[BaseMonitor]:
-        """Return list of monitors for ICMPv6 service"""
+    def setup_custom_monitors(self) -> Optional[List[BaseMonitor]]:
+        """Setup ICMPv6-specific monitors"""
         monitors = []
         from ..monitors import PingMonitor
 
@@ -1754,7 +1714,3 @@ class ICMPv6Fuzzer(BaseFuzzer):
             monitors.append(ping_monitor)
 
         return monitors
-
-    def setup_custom_monitors(self) -> Optional[List[BaseMonitor]]:
-        """Setup ICMPv6-specific monitors"""
-        return self._get_monitors()

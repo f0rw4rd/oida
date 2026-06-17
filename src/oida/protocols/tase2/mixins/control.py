@@ -44,12 +44,26 @@ class ControlMixin(_ScannerBase):
                         "operate",
                     ]
                 ):
-                    control_points.append(
-                        {
-                            "domain": domain.name,
-                            "name": var_name,
-                        }
-                    )
+                    control_info = {
+                        "domain": domain.name,
+                        "name": var_name,
+                        "selectable": False,
+                        "operable": False,
+                    }
+
+                    # Don't actually try to control in read-only mode
+                    if not self.read_only:
+                        try:
+                            # Try select (SBO)
+                            connection.select_device(domain.name, var_name)
+                            control_info["selectable"] = True
+                            self.logger.warning(f"SELECTABLE: {domain.name}/{var_name}")
+                        except Exception as e:
+                            self.logger.debug(
+                                f"Select test failed for {domain.name}/{var_name}: {e}"
+                            )
+
+                    control_points.append(control_info)
 
         if control_points:
             self.logger.display(f"Found {len(control_points)} potential control point(s)")

@@ -9,7 +9,6 @@ Updated for the refactored NXC-style ADS module.
 import ctypes
 import unittest
 from unittest.mock import Mock, patch
-import pytest
 
 
 class MockADSConnection:
@@ -239,7 +238,6 @@ class TestADSScannerInit(unittest.TestCase):
         self.assertEqual(scanner.get_default_port(), 48898)
 
 
-@pytest.mark.network
 class TestADSProtocolLogic(unittest.TestCase):
     """Test ADS protocol implementation logic"""
 
@@ -323,7 +321,6 @@ class TestADSProtocolLogic(unittest.TestCase):
         self.assertEqual(results["areas_tested"], 5)  # 5 memory areas
 
 
-@pytest.mark.network
 class TestADSMockOperations(unittest.TestCase):
     """Test ADS operations with mocked dependencies"""
 

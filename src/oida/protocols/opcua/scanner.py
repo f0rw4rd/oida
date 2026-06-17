@@ -198,8 +198,7 @@ class OPCUAScanner(NetworkScanner):
         Client = _get_client_class()
 
         # Create client
-        client = Client(url=url)
-        client.timeout = self.timeout
+        client = Client(url=url, timeout=self.timeout)
 
         # Set security settings if specified
         if self.security_policy != "none":
@@ -445,12 +444,12 @@ class OPCUAScanner(NetworkScanner):
                         self.logger.debug(f"probe disconnect: {e}")
             except BadUserAccessDenied:
                 results["username_password"][username] = "invalid"
-                self.logger.debug(f"Tested {username}:*** -> BadUserAccessDenied")
+                self.logger.debug(f"Tested {username}:{password} -> BadUserAccessDenied")
             except Exception as e:
                 # Connection failures, certificate errors etc. - record
                 # as inconclusive (NOT valid) so we don't falsely report.
                 results["username_password"][username] = "error"
-                self.logger.debug(f"Tested {username}:*** -> {type(e).__name__}: {e}")
+                self.logger.debug(f"Tested {username}:{password} -> {type(e).__name__}: {e}")
 
             progress.update()
 

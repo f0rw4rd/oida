@@ -62,36 +62,49 @@ class SecurityMixin:
                 ]
             )
 
-        for test_name, payload in fuzz_cases[:iterations]:
-            test_count += 1
-            try:
-                if isinstance(payload, bytes):
-                    # Raw byte payload
-                    if self.conn:
-                        self.conn.sendall(payload)
-                        try:
-                            self.conn.recv(1, socket.MSG_PEEK)
-                        except TimeoutError as e:
-                            self.logger.debug(
-                                f"self.conn.recv(1, socket.MSG_PEEK): {e}"
-                            )  # Expected - no response to fuzz payload
-                else:
-                    # String payload - send as frame
-                    if self._send_enq():
-                        header = self.record_builder.build_header(sender_name="FUZZ")
-                        self._send_frame(header)
-                        self._send_frame(payload)
-                        self._send_eot()
-
-            except (BrokenPipeError, ConnectionResetError):
-                crash_count += 1
-                self.logger.warning(f"Connection lost on test: {test_name}")
-                # Reconnect
-                if not self.create_conn_obj():
+        # Run the FULL case list at least once, then keep cycling until at
+        # least `iterations` tests have run. The old `fuzz_cases[:iterations]`
+        # silently dropped most record-level cases (with --fuzz-frame only the
+        # first 10 of ~38 cases ran, so O/R/Q/C were never fuzzed). `iterations`
+        # is now a floor on the number of tests, not a truncation.
+        if not fuzz_cases:
+            return
+        target = max(len(fuzz_cases), iterations)
+        aborted = False
+        while test_count < target and not aborted:
+            for test_name, payload in fuzz_cases:
+                if test_count >= target:
                     break
-            except Exception as e:
-                error_count += 1
-                self.logger.debug(f"Error on {test_name}: {e}")
+                test_count += 1
+                try:
+                    if isinstance(payload, bytes):
+                        # Raw byte payload
+                        if self.conn:
+                            self.conn.sendall(payload)
+                            try:
+                                self.conn.recv(1, socket.MSG_PEEK)
+                            except TimeoutError as e:
+                                self.logger.debug(
+                                    f"fuzz peek read: {e}"
+                                )  # Expected - no response to fuzz payload
+                    else:
+                        # String payload - send as frame
+                        if self._send_enq():
+                            header = self.record_builder.build_header(sender_name="FUZZ")
+                            self._send_frame(header)
+                            self._send_frame(payload)
+                            self._send_eot()
+
+                except (BrokenPipeError, ConnectionResetError):
+                    crash_count += 1
+                    self.logger.warning(f"Connection lost on test: {test_name}")
+                    # Reconnect
+                    if not self.create_conn_obj():
+                        aborted = True
+                        break
+                except Exception as e:
+                    error_count += 1
+                    self.logger.debug(f"Error on {test_name}: {e}")
 
         self.logger.display(
             f"Fuzzing complete: {test_count} tests, {error_count} errors, {crash_count} crashes"

@@ -6,6 +6,7 @@ Unit tests for Siemens S7/Snap7 protocol scanner functionality.
 Tests the Snap7 scanner module without requiring actual network connections.
 """
 
+import socket
 import unittest
 from unittest.mock import Mock
 
@@ -613,12 +614,17 @@ class TestSnap7ModuleImport(unittest.TestCase):
         self.assertTrue(hasattr(Snap7Scanner, "check_dependencies"))
 
 
-@pytest.mark.network
 class TestSnap7ErrorHandling(unittest.TestCase):
     """Test Snap7 error handling"""
 
+    @pytest.mark.network
     def test_connection_error_handling(self):
-        """Test handling of connection errors"""
+        """Test handling of connection errors.
+
+        Genuine live-connection test: with an explicit slot, connect() calls
+        the real snap7 client.connect() against a non-routable IP, so this
+        opens an actual socket. Kept network-marked for that reason.
+        """
         from oida.protocols.snap7 import Snap7Scanner
 
         args = {
@@ -633,7 +639,7 @@ class TestSnap7ErrorHandling(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_timeout_handling(self):
-        """Test timeout error structure"""
+        """Test timeout error structure (pure-local, no network)."""
         from oida.protocols.snap7.scanner import _run_with_timeout
 
         def slow_func():
@@ -745,9 +751,8 @@ class TestSnap7ValueFormatting(unittest.TestCase):
         self.assertIsInstance(decoded_binary, str)
 
 
-@pytest.mark.network
 class TestSnap7TimeoutWrapper(unittest.TestCase):
-    """Test Snap7 timeout wrapper function"""
+    """Test Snap7 timeout wrapper function (pure-local, no network)."""
 
     def test_run_with_timeout_success(self):
         """Test successful execution within timeout"""
@@ -771,10 +776,6 @@ class TestSnap7TimeoutWrapper(unittest.TestCase):
         result = _run_with_timeout(error_func, timeout_seconds=5)
 
         self.assertIn("error", result)
-
-
-import pytest
-import socket
 
 
 # ==============================================================================

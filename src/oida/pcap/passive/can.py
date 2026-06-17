@@ -188,7 +188,7 @@ class CANPassiveListener(PySharkListenerBase):
             can_layer = packet.canfd
 
         if can_layer is None:
-            # caneth header only, no CAN frame parsed
+            # Caneth header only, no CAN frame parsed
             return
 
         # Extract core CAN fields

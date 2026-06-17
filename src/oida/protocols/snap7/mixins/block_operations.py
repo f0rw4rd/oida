@@ -557,27 +557,6 @@ class BlockOperationsMixin(_ScannerBase):
 
         return result
 
-    def get_order_code_action(self, conn: Any) -> Dict[str, Any]:
-        """Get PLC order code and version"""
-        try:
-            order_code = conn.get_order_code()
-            # S7OrderCode has OrderCode and V1/V2/V3 version fields
-            info = {
-                "order_code": getattr(order_code, "OrderCode", "N/A"),
-                "v1": getattr(order_code, "V1", None),
-                "v2": getattr(order_code, "V2", None),
-                "v3": getattr(order_code, "V3", None),
-            }
-            self.logger.success("Order Code:")
-            self.logger.display(f"    Order Code: {info['order_code']}")
-            if info["v1"] is not None:
-                self.logger.display(f"    Version: {info['v1']}.{info['v2']}.{info['v3']}")
-            return {"success": True, **info}
-        except Exception as e:
-            self.logger.debug("get order code action failed: %s", e)
-            self.logger.fail(f"Failed to get order code: {e}")
-            return {"success": False, "error": str(e)}
-
     def enumerate_dbs_action(self, conn: Any) -> Dict[str, Any]:
         """Enumerate data blocks (CLI action wrapper)"""
         dbs = self._enumerate_data_blocks(conn)

@@ -42,7 +42,16 @@ Examples:
     add_target_argument(dicom_parser)
 
     # Network Options (--port, --timeout)
-    add_network_options(dicom_parser, default_port=104)
+    # default_port=None so create_conn_obj() can resolve the effective port:
+    # 11112 (de-facto PACS default) for plaintext, or 2762 when --tls is set,
+    # while still honouring an explicit -p. A larger default timeout than the
+    # framework's 2s suits slow C-FIND/C-GET against a busy PACS.
+    add_network_options(
+        dicom_parser,
+        default_port=None,
+        port_help="Target port (default: 11112, or 2762 with --tls)",
+        default_timeout=10,
+    )
 
     # TLS Options (--tls, --tls-cert, --tls-key, --tls-ca, --tls-insecure)
     add_tls_options(dicom_parser, default_tls_port=2762)
@@ -318,7 +327,7 @@ Examples:
     ae_group = dicom_parser.add_argument_group("AE Title Enumeration")
 
     # nargs="?" + const=True + default=None so the scanner can distinguish:
-    #   not specified  -> None  (scanner skips brute force)
+    #   Not specified  -> None  (scanner skips brute force)
     #   --aet-brute    -> True  (use default wordlist)
     #   --aet-brute F  -> "F"   (use custom wordlist file)
     ae_group.add_argument(

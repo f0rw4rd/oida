@@ -16,6 +16,28 @@ INTERFACE="${PNET_INTERFACE:-eth0}"
 VERBOSITY="${PNET_VERBOSITY:-2}"
 STORAGE_DIR="/var/lib/pnet"
 
+# With network_mode: host the container sees the host's interfaces, where the
+# configured default (eth0) often doesn't exist (e.g. the NIC is enp1s0). Fall
+# back to a Docker bridge (so a host-side capture can see the frames), then the
+# default-route interface, then any non-loopback interface that is up.
+resolve_interface() {
+    local pref="$1"
+    if ip link show "$pref" >/dev/null 2>&1; then echo "$pref"; return; fi
+    local br
+    br=$(ip -o link show 2>/dev/null | awk -F': ' '{print $2}' | sed 's/@.*//' | grep '^br-' | head -1)
+    if [ -n "$br" ]; then echo "$br"; return; fi
+    local dr
+    dr=$(ip route show default 2>/dev/null | awk '/default/{print $5; exit}')
+    if [ -n "$dr" ]; then echo "$dr"; return; fi
+    ip -o link show up 2>/dev/null | awk -F': ' '{print $2}' | sed 's/@.*//' | grep -v '^lo$' | head -1
+}
+
+RESOLVED_INTERFACE="$(resolve_interface "${INTERFACE}")"
+if [ -n "${RESOLVED_INTERFACE}" ] && [ "${RESOLVED_INTERFACE}" != "${INTERFACE}" ]; then
+    echo "Configured interface '${INTERFACE}' not found; falling back to '${RESOLVED_INTERFACE}'"
+    INTERFACE="${RESOLVED_INTERFACE}"
+fi
+
 echo "========================================"
 echo " OIDA PROFINET IO Device Emulation"
 echo "========================================"

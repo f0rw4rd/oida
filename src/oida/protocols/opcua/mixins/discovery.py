@@ -4,10 +4,6 @@ OPC UA Discovery Mixin
 Provides server discovery, endpoint enumeration, and namespace browsing functionality.
 """
 
-from oida.utils.ics_logger import get_module_logger
-
-logger = get_module_logger(__name__)
-
 
 class DiscoveryMixin:
     """Mixin providing OPC UA discovery functionality."""
@@ -70,7 +66,7 @@ class DiscoveryMixin:
             self.results["data"]["servers_on_network"] = len(servers)
 
         except Exception as e:
-            logger.debug("find servers on network failed: %s", e)
+            self.logger.debug("find servers on network failed: %s", e)
             self.logger.fail(f"FindServersOnNetwork failed: {e}")
             self.logger.display("Note: GDS/LDS discovery requires a discovery server")
 
@@ -162,7 +158,7 @@ class DiscoveryMixin:
             self.results["data"]["endpoints_detail"] = endpoint_list
 
         except Exception as e:
-            logger.debug("get endpoints failed: %s", e)
+            self.logger.debug("get endpoints failed: %s", e)
             self.logger.fail(f"Failed to get endpoints: {e}")
 
     async def _dump_namespaces(self):
@@ -268,7 +264,7 @@ class DiscoveryMixin:
 
                 display_cert_info(self.logger, server_cert, self.results.get("data"))
             except Exception as e:
-                logger.debug("show endpoints summary failed: %s", e)
+                self.logger.debug("show endpoints summary failed: %s", e)
 
         # Collect security issues
         issues = []

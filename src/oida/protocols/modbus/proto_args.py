@@ -121,7 +121,7 @@ Custom Function Codes:
         "-u",
         "--unit-id",
         type=bounded_int(0, 247),
-        default=1,
+        default=None,
         help="Modbus unit ID / slave ID (0-247, default: 1)",
     )
     modbus_group.add_argument(

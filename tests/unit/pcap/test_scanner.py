@@ -111,9 +111,10 @@ class TestArgsPropagation:
         scanner = PcapScanner("f.pcap", args={"extract_files": True})
         assert scanner.args["extract_files"] is True
 
-    def test_extract_all_flag_stored(self):
-        scanner = PcapScanner("f.pcap", args={"extract_all": True})
-        assert scanner.args["extract_all"] is True
+    def test_extract_all_alias_sets_extract_files(self):
+        # -e/--extract-all collapses onto the extract_files dest
+        scanner = PcapScanner("f.pcap", args={"extract_files": True})
+        assert scanner.args["extract_files"] is True
 
     def test_args_default_empty_dict(self):
         scanner = PcapScanner("f.pcap")

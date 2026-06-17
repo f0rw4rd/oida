@@ -36,20 +36,7 @@ class TFTPFuzzer(BaseFuzzer):
     # Protocol-specific monitor: TFTP read check every 50 tests
     DEFAULT_MONITORS = "tftp:50"
 
-    PROTOCOL_OPTIONS = {
-        "timeout": {
-            "type": float,
-            "default": 2.0,
-            "description": "Response timeout in seconds",
-            "example": "3.0",
-        },
-        "max_filename_len": {
-            "type": int,
-            "default": 512,
-            "description": "Maximum filename length for overflow testing",
-            "example": "1024",
-        },
-    }
+    PROTOCOL_OPTIONS: dict = {}
 
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:

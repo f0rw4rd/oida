@@ -97,6 +97,7 @@ def _load_packets(
     display_filter: str | None = None,
     max_packets: int = _MAX_TEST_PACKETS,
     decode_as: dict | None = None,
+    _retries: int = 2,
 ) -> list:
     """Load packets from *pcap_path* using pyshark.FileCapture.
 
@@ -105,8 +106,13 @@ def _load_packets(
     runtime.  Falls back to XML mode if the fork isn't installed.
 
     *max_packets* caps the number of packets loaded to keep tests fast.
+    *_retries* allows up to 2 retries if TShark crashes (retcode 255) due to
+    transient resource pressure in the full test suite.
     """
+    import time
+
     import pyshark
+    from pyshark.capture.capture import TSharkCrashException
 
     cap_kwargs: dict = {"input_file": pcap_path}
     if display_filter:
@@ -116,14 +122,29 @@ def _load_packets(
     if _ek_mode_available:
         cap_kwargs["use_ek"] = True
 
-    cap = pyshark.FileCapture(**cap_kwargs)
-    packets = []
-    for i, pkt in enumerate(cap):
-        packets.append(pkt)
-        if i + 1 >= max_packets:
-            break
-    cap.close()
-    return packets
+    try:
+        cap = pyshark.FileCapture(**cap_kwargs)
+        packets = []
+        for i, pkt in enumerate(cap):
+            packets.append(pkt)
+            if i + 1 >= max_packets:
+                break
+        try:
+            cap.close()
+        except Exception:
+            pass  # TShark may exit non-zero when killed after packet cap; not a real crash
+        return packets
+    except TSharkCrashException:
+        if _retries > 0:
+            time.sleep(0.3)  # brief pause to let previous TShark process exit
+            return _load_packets(
+                pcap_path,
+                display_filter=display_filter,
+                max_packets=max_packets,
+                decode_as=decode_as,
+                _retries=_retries - 1,
+            )
+        raise
 
 
 def _pcap_path(*parts: str) -> str:
@@ -277,6 +298,8 @@ def _run_e2e_test(case: dict) -> dict:
     if decode_as:
         # PcapScanner expects semicolon-separated "key,value" pairs
         scan_args["decode_as"] = ";".join(f"{k},{v}" for k, v in decode_as.items())
+    max_packets = case.get("max_packets", _MAX_TEST_PACKETS)
+    scan_args["max_packets"] = max_packets
     scanner = PcapScanner(pcap, args=scan_args)
     result = scanner.run_scan()
 
@@ -552,6 +575,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "pcap": "ethercat/cisagov_ethercat_example.pcap",
         "data_key": "ethercat_passive_data",
         "data_fields": ["role", "protocol"],
+        "max_packets": 1000,  # PCAP has 44k packets; cap e2e pipeline to stay under 60s
     },
     {
         "id": "knx",
@@ -707,6 +731,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "filter": "ntlmssp",
         "pcap": "smb/bruteshark_ntlm_smb.pcap",
         "details": ["msg_type"],
+        "max_packets": 1000,  # PCAP has 1000 total; real credentials start at packet 707
     },
     {
         "id": "irc",

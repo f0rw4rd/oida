@@ -85,11 +85,18 @@ class CoAPScanner(NetworkScanner):
         self.logger.debug("Connecting to %s:%d (timeout=%ds)", host, port, timeout)
         t0 = _time.monotonic()
 
-        alive = coap_ping(host, port, timeout=timeout)
-        ping_elapsed = _time.monotonic() - t0
-        self.logger.debug(
-            "CoAP ping to %s:%d took %.2fs, alive=%s", host, port, ping_elapsed, alive
-        )
+        if self._scheme == "coaps":
+            # The raw-UDP coap_ping sends cleartext and cannot complete a DTLS
+            # handshake, so a DTLS-only server would always look "not alive".
+            # Skip it and go straight to the scheme-aware GET probe below.
+            alive = False
+            self.logger.debug("DTLS scheme requested; skipping cleartext raw CoAP ping")
+        else:
+            alive = coap_ping(host, port, timeout=timeout)
+            ping_elapsed = _time.monotonic() - t0
+            self.logger.debug(
+                "CoAP ping to %s:%d took %.2fs, alive=%s", host, port, ping_elapsed, alive
+            )
 
         if not alive:
             self.logger.debug(

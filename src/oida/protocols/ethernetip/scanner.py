@@ -13,7 +13,7 @@ This module keeps only:
   the ``_read_cip_attribute`` primitive, and the high-level scan-flow methods.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 import struct
 
 from ...utils import (
@@ -153,9 +153,9 @@ protocol_options = {
     },
     "dump_security": {
         "type": "bool",
-        "description": "Dump detailed CIP Security settings (state, profiles, certs, passwords)",
+        "description": "Dump detailed CIP Security settings (certs, password-auth policy); heavy CIP traffic per host",
         "required": False,
-        "default": True,
+        "default": False,
     },
     "download_files": {
         "type": "bool",
@@ -287,15 +287,15 @@ class EtherNetIPScanner(
         self.broadcast = parse_bool(args.get("broadcast", False))  # Requires --lhost
         self.check_security = enumerate_all or parse_bool(args.get("check_security", True))
         self.deep_scan = parse_bool(args.get("deep_scan", False))
-        self.dump_security = enumerate_all or parse_bool(args.get("dump_security", True))
+        self.dump_security = enumerate_all or parse_bool(args.get("dump_security", False))
         self.download_files = parse_bool(args.get("download_files", False))
         self.file_output = args.get("file_output", "")
         self.max_file_size = int(args.get("max_file_size", 65536))
 
         # CIP routing options (for CVE-2024-6242 style testing)
-        # TODO(routing): --route-path is currently only surfaced (warned about
-        # for non-Logix); routed CIP object reads are not yet wired into the
-        # cip_objects enumeration, which builds its own PortSegment route.
+        # --route-path is threaded into _discover_cip_objects() via
+        # _build_route_path_segments(): a supplied path drives routed CIP object
+        # reads against a backplane slot / downstream device.
         self.route_path_str = args.get("route_path", "")
         self.target_slot = int(args.get("slot", 0))
         self.discover_routes = parse_bool(args.get("discover_routes", False))
@@ -331,6 +331,63 @@ class EtherNetIPScanner(
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    def _parse_route_path(self, route_str: str) -> List[Dict[str, Any]]:
+        """
+        Parse CIP route path string into list of segments.
+
+        Format: "port/link,port/link,..." where:
+        - port: Port number (1=backplane, 2=ethernet)
+        - link: Slot number (0-16) or IP address
+
+        Example: "1/2,1/0" = backplane/slot2 -> backplane/slot0
+        """
+        if not route_str:
+            return []
+
+        segments = []
+        for segment in route_str.split(","):
+            segment = segment.strip()
+            if "/" not in segment:
+                continue
+
+            parts = segment.split("/", 1)
+            try:
+                port = int(parts[0])
+                link_str = parts[1]
+
+                # Check if link is IP address or slot number
+                if "." in link_str:
+                    link = link_str  # IP address
+                else:
+                    link = int(link_str)  # Slot number
+
+                segments.append({"port": port, "link": link})
+            except ValueError:
+                self.logger.warning(f"Invalid route segment: {segment}")
+
+        return segments
+
+    def _build_route_path_segments(self) -> Optional[list]:
+        """Build a pycomm3 PortSegment route list from the --route-path string.
+
+        Returns None when no route path was supplied (unrouted reads) so the
+        CVE-2024-6242-style routed enumeration is only used on demand.
+        """
+        parsed = self._parse_route_path(self.route_path_str)
+        if not parsed:
+            return None
+
+        from .mixins.cip_objects import _port_segment_mod
+
+        try:
+            return [
+                _port_segment_mod.PortSegment(port=seg["port"], link_address=seg["link"])
+                for seg in parsed
+            ]
+        except Exception as e:
+            self.logger.warning(f"Could not build CIP route path: {e}")
+            return None
 
     def get_protocol_name(self) -> str:
         return "EtherNet/IP"
@@ -664,7 +721,10 @@ class EtherNetIPScanner(
         if not self.enumerate_objects:
             return
 
-        results["cip_objects"] = self._enumerate_objects(connection)
+        route_path = self._build_route_path_segments()
+        if route_path:
+            self.logger.display(f"Enumerating CIP objects via route path {self.route_path_str}")
+        results["cip_objects"] = self._enumerate_objects(connection, route_path=route_path)
         if not results["cip_objects"]:
             return
 
@@ -722,11 +782,20 @@ class EtherNetIPScanner(
             )
 
     def _discover_security_features(self, connection: Any, results: Dict[str, Any]):
-        """Check CIP Security features"""
+        """Check CIP Security features.
+
+        --check-security (default) does a lightweight 0x5D/0x5E state probe.
+        The heavy full dump (cert download via 0x5F, password-auth policy via
+        0x61) only runs under the opt-in --dump-security flag.
+        """
         if not (self.check_security or self.dump_security):
             return
 
-        results["security"] = self._dump_security_settings(connection)
+        if self.dump_security:
+            results["security"] = self._dump_security_settings(connection)
+        else:
+            results["security"] = self._dump_security_lightweight(connection)
+
         if self.check_security:
             self._report_security_status(results["security"])
 
@@ -770,7 +839,13 @@ class EtherNetIPScanner(
                 results["attributes"] = self._explore_classes(connection, results["classes"])
 
         if self.test_write and not self.read_only:
-            results["write_test_results"] = self._test_write_access(results["attributes"])
+            if not getattr(self, "confirm", False):
+                self.logger.error(
+                    "--write issues live Set_Attribute_Single writes to PLC "
+                    "attributes (may cause DoS) — requires --confirm"
+                )
+            else:
+                results["write_test_results"] = self._test_write_access(results["attributes"])
 
         if self.fuzz and not self.read_only:
             # --fuzz writes random/edge-case values to writable attributes

@@ -201,7 +201,10 @@ class EepromOpsMixin(_ScannerBase):
 
             try:
                 eeprom_data = []
-                # Read EEPROM word addresses 0x00 to 0x7F (128 words)
+                failed_addrs = []
+                # Read EEPROM word addresses 0x00 to 0x7F (128 words).
+                # Best-effort: a single flaky read shouldn't truncate the dump,
+                # so continue past failures and record the failed addresses.
                 for addr in range(0x00, 0x80):
                     try:
                         data = slave.eeprom_read(addr)
@@ -211,13 +214,18 @@ class EepromOpsMixin(_ScannerBase):
                             )
                     except Exception as e:
                         self.logger.debug(f"EEPROM read error at 0x{addr:04X}: {e}")
-                        break
+                        failed_addrs.append(f"0x{addr:04X}")
 
                 eeprom_raw[position] = {
                     "slave_position": position,
                     "data": eeprom_data,
                     "total_bytes": len(eeprom_data) * 4,
+                    "failed_addresses": failed_addrs,
                 }
+                if failed_addrs:
+                    self.logger.debug(
+                        f"  Slave {position}: {len(failed_addrs)} EEPROM word(s) failed to read"
+                    )
                 self.logger.display(f"  Read {len(eeprom_data) * 4} bytes from slave {position}")
 
             except Exception as e:
@@ -253,14 +261,24 @@ class EepromOpsMixin(_ScannerBase):
             self.logger.display(f"Parsing ESI for slave {position}...")
 
             try:
-                # Read EEPROM - pysoem returns 4 bytes per word read, use first 2
+                # Read EEPROM - pysoem returns 4 bytes per word read, use first 2.
+                # A single flaky read shouldn't truncate the image (which would
+                # silently misparse), so pad the failed word with zeros to keep
+                # byte alignment and only stop after several consecutive failures
+                # (the genuine end-of-device signal).
                 raw = bytearray()
+                consecutive_failures = 0
                 for word_addr in range(0, 1024):
                     try:
                         data = slave.eeprom_read(word_addr)
                         raw.extend(data[:2])
-                    except Exception:
-                        break
+                        consecutive_failures = 0
+                    except Exception as e:
+                        self.logger.debug(f"ESI EEPROM read error at word 0x{word_addr:04X}: {e}")
+                        consecutive_failures += 1
+                        if consecutive_failures >= 4:
+                            break
+                        raw.extend(b"\x00\x00")
 
                 if len(raw) < 128:
                     results[position] = {"error": "Insufficient EEPROM data"}

@@ -199,6 +199,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=True,
+    icon="assets/oida.ico",
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

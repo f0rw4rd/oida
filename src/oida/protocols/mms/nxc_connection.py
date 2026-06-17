@@ -9,10 +9,6 @@ from ...connection import NetworkConnection
 
 from . import MMSScanner, _Lib, _pyiec61850
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 class mms(NetworkConnection):
     """NXC-style MMS scanner (callable)"""
@@ -152,12 +148,12 @@ class mms(NetworkConnection):
                     try:
                         return struct.pack("<f", value)
                     except (struct.error, OverflowError) as e:
-                        logger.debug(f"Return value computation failed: {e}")
+                        self.logger.debug(f"Failed to pack float for fuzz read: {e}")
                         return b"\x00\x00\x00\x00"
                 else:
                     return str(value).encode()[:16]
             except Exception as e:
-                logger.debug(f"Failed to get result: {e}")
+                self.logger.debug(f"Failed to read fuzz target value: {e}")
                 return b"\x00\x00\x00\x00"
             finally:
                 _Lib.safe_mms_value_delete(mms_value)
@@ -174,7 +170,7 @@ class mms(NetworkConnection):
                 _, _, ok = _Lib.unpack_result(result)
                 return ok
             except Exception as e:
-                logger.debug(f"Failed to get value: {e}")
+                self.logger.debug(f"Failed to write fuzz payload: {e}")
                 return False
             finally:
                 _Lib.safe_mms_value_delete(mms_value)
@@ -182,7 +178,9 @@ class mms(NetworkConnection):
         original = read_value()
         successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-        for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
+        for payload, _desc in fuzz(
+            original, count=iterations
+        ):  # fuzz() yields (bytes, desc) tuples
             try:
                 if write_value(payload):
                     successful += 1

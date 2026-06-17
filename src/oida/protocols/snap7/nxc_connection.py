@@ -116,6 +116,7 @@ class s7(NetworkConnection):
             "write_timers",
             "write_counters",
             "db_fill",
+            "test_write",
             # DateTime
             "get_datetime",
             "set_datetime",
@@ -167,6 +168,9 @@ class s7(NetworkConnection):
             "write_timers",
             "write_counters",
             "db_fill",
+            # --test-write writes each probed value back unchanged, but still
+            # issues active write PDUs against the PLC.
+            "test_write",
             "set_datetime",
             "sync_datetime",
             # Brute-force probes trip Siemens account-lockout / SCALANCE SIEM.
@@ -319,6 +323,12 @@ class s7(NetworkConnection):
             if not self._require_confirm("db_fill"):
                 return None
             return self._action_db_fill()
+
+        if getattr(self.args, "test_write", False):
+            if not self._require_confirm("test_write"):
+                return None
+            self.logger.display("Testing write access (writes same value back)...")
+            return self.scanner.test_write_access_action(self.conn)
 
         # Date/Time operations
         if getattr(self.args, "set_datetime", None):
@@ -641,7 +651,9 @@ class s7(NetworkConnection):
             original = read_fn()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
 
-            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
+            for payload, _desc in fuzz(
+                original, count=iterations
+            ):  # fuzz() yields (bytes, desc) tuples
                 try:
                     if write_fn(payload):
                         successful += 1

@@ -119,6 +119,10 @@ class CoeOpsMixin(_ScannerBase):
                 return {}
 
         self.logger.display("Scanning CoE object dictionary (with access type detection)...")
+        if not getattr(self, "confirm", False):
+            self.logger.display(
+                "  Read-only mode: write-access probing disabled (use --confirm to detect RW/WO)"
+            )
         results = {}
 
         scan_slaves = self._slave_filter()
@@ -331,9 +335,13 @@ class CoeOpsMixin(_ScannerBase):
     def _test_sdo_write_access(self, slave: Any, index: int, subindex: int, data: bytes) -> bool:
         """Test if SDO object is writable by writing the same value back.
 
-        This is a safe test - we write the exact same value that was read.
+        Even a same-value write back can latch a state change on objects with
+        write side effects (control words, command/trigger objects, store/restore
+        0x1010/0x1011). Gated behind --confirm; without it, classify as RO.
         Returns True if write succeeds, False otherwise.
         """
+        if not getattr(self, "confirm", False):
+            return False
         try:
             slave.sdo_write(index, subindex, data)
             return True

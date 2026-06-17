@@ -1540,6 +1540,5 @@ class BACnetFuzzer(BaseFuzzer):
             self.session.connect(dcc_with_password)
 
 
-
 # For backward compatibility and explicit exports
 __all__ = ["BACnetFuzzer"]

@@ -297,7 +297,7 @@ def _get_interface_state_linux(interface: str) -> Optional[str]:
 
 
 def _get_interface_state_portable(interface: str) -> Optional[str]:
-    """Check interface state using psutil or netifaces (all platforms)."""
+    """Check interface state using psutil (all platforms)."""
     try:
         import psutil
 
@@ -309,14 +309,6 @@ def _get_interface_state_portable(interface: str) -> Optional[str]:
             return "up"  # Has addresses, assume up
     except ImportError as e:
         logger.debug(f"Optional import psutil not available: {e}")
-
-    try:
-        import netifaces
-
-        if interface in netifaces.interfaces():
-            return "up"  # netifaces can't check state, but interface exists
-    except ImportError as e:
-        logger.debug(f"Optional import netifaces not available: {e}")
 
     return None
 
@@ -340,16 +332,8 @@ def check_interface_exists(interface: str) -> bool:
     except ImportError as e:
         logger.debug(f"Optional import psutil not available: {e}")
 
-    # Portable check via netifaces
-    try:
-        import netifaces
-
-        return interface in netifaces.interfaces()
-    except ImportError as e:
-        logger.debug(f"Optional import netifaces not available: {e}")
-
     # Can't verify - fail open
-    logger.debug(f"Cannot verify interface {interface} (no psutil/netifaces)")
+    logger.debug(f"Cannot verify interface {interface} (no psutil)")
     return True
 
 
