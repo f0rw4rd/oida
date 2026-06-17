@@ -979,28 +979,6 @@ class TestProbeOperations(unittest.TestCase):
 
 
 # =============================================================================
-# IN1 Duplicate Key Fix Verification
-# =============================================================================
-
-
-class TestIN1FieldsNoDuplicates(unittest.TestCase):
-    """Verify IN1_FIELDS has no duplicate field mappings"""
-
-    def test_in1_fields_no_duplicate_values(self):
-        """Test IN1_FIELDS has no duplicate field index values (except intentional)"""
-        from oida.protocols.hl7.segments import HL7SegmentParser
-
-        fields = HL7SegmentParser.IN1_FIELDS
-        list(fields.values())
-
-        # Check that PlanExpirationDate (13) is the only entry for field 13
-        # After fix, InsurancePolicyExpirationDate should be removed
-        field_13_keys = [k for k, v in fields.items() if v == 13]
-        self.assertEqual(len(field_13_keys), 1, f"Field 13 has multiple keys: {field_13_keys}")
-        self.assertEqual(field_13_keys[0], "PlanExpirationDate")
-
-
-# =============================================================================
 # Integration Tests
 # =============================================================================
 

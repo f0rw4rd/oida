@@ -178,7 +178,7 @@ class EnumMixin:
 
                 # RXE segment - Pharmacy/Treatment Encoded Order
                 elif segment.startswith("RXE|"):
-                    # parse_rxe doesn't expose RXE-13, so extract it directly.
+                    # The RXE parser doesn't expose RXE-13, so extract it directly.
                     fields = segment.split("|")
                     if len(fields) > 13 and fields[13]:
                         pharmacy.add(HL7SegmentParser.get_field(fields, 13))

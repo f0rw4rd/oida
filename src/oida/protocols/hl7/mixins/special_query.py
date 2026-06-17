@@ -248,9 +248,7 @@ class SpecialQueryMixin:
                         "operation": "QBP^Z34/Z44",
                         "issue": "Immunization Records Accessible",
                         "description": f"Query returned {len(medications)} immunization records",
-                    }
-                    if medications
-                    else None,
+                    },
                 )
             else:
                 self.logger.display("  No immunization records found in response")

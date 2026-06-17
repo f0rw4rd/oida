@@ -20,17 +20,16 @@ from ._helpers import populate_msh
 class DeviceMixin:
     """Mixin providing IHE PCD Patient Care Device message operations."""
 
-    def _add_pcd_patient_segments(self, msg: Message, *, default_patient_id: str = "PCD_TEST001"):
+    def _add_pcd_patient_segments(self, msg: Message):
         """Add PID and PV1 segments common to PCD messages.
 
         Args:
             msg: HL7 Message to add segments to.
-            default_patient_id: Fallback patient ID if none provided via args.
         """
         patient_id = getattr(self.args, "patient_id", None)
         patient_name = getattr(self.args, "patient_name", None)
         pid = self.segment_builder.build_pid(
-            patient_id=patient_id or default_patient_id,
+            patient_id=patient_id or "PCD_TEST001",
             patient_name=patient_name or "DOE^JOHN",
         )
         if pid:

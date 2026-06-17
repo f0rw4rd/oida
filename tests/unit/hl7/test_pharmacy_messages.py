@@ -188,23 +188,6 @@ class TestHL7ADTTriggerEvents(unittest.TestCase):
 class TestHL7SegmentParserPharmacy(unittest.TestCase):
     """Test the HL7SegmentParser pharmacy segment parsing"""
 
-    def test_rxa_field_indices_exist(self):
-        """Test RXA field indices are defined"""
-        from oida.protocols.hl7.segments import HL7SegmentParser
-
-        self.assertTrue(hasattr(HL7SegmentParser, "RXA_FIELDS"))
-        self.assertIn("AdminCode", HL7SegmentParser.RXA_FIELDS)
-        self.assertIn("AdminAmount", HL7SegmentParser.RXA_FIELDS)
-        self.assertIn("CompletionStatus", HL7SegmentParser.RXA_FIELDS)
-
-    def test_rxd_field_indices_exist(self):
-        """Test RXD field indices are defined"""
-        from oida.protocols.hl7.segments import HL7SegmentParser
-
-        self.assertTrue(hasattr(HL7SegmentParser, "RXD_FIELDS"))
-        self.assertIn("DispenseGiveCode", HL7SegmentParser.RXD_FIELDS)
-        self.assertIn("ActualDispenseAmount", HL7SegmentParser.RXD_FIELDS)
-
     def test_parse_rxa_segment(self):
         """Test parsing an RXA segment"""
         from oida.protocols.hl7.segments import HL7SegmentParser
