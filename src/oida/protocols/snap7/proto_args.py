@@ -72,6 +72,20 @@ Examples:
         type=str,
         help="PLC password or wordlist file (if path exists, brute-force with it)",
     )
+    s7_group.add_argument(
+        "--connection-type",
+        type=str,
+        choices=["PG", "OP", "S7Basic"],
+        default="PG",
+        help="Connection type (default: PG for programming device)",
+    )
+    s7_group.add_argument(
+        "--pdu-size",
+        type=int,
+        choices=[240, 480, 960],
+        default=480,
+        help="PDU size for communication (default: 480)",
+    )
 
     # Output Options (--output, --format, -v, -d)
     # Main parser already provides -o/--output, --format, -v/--verbose, -d/--debug.
