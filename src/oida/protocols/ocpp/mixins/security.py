@@ -5,6 +5,9 @@ Provides explicit security check methods for the NXC-style OCPP connection class
 Each check is triggered by its own CLI flag.
 """
 
+import base64
+import time
+
 from ..constants import (
     SECURITY_CONFIG_KEYS,
     SENSITIVE_CONFIG_KEYS,
@@ -1188,9 +1191,6 @@ class SecurityMixin:
             usernames: List of usernames to test
             passwords: List of passwords to test
         """
-        import time
-        import base64
-
         delay = getattr(self.args, "brute_rate", 0.5)
         continue_on_success = getattr(self.args, "continue_on_success", False)
         target_url = self.results["data"].get("target_url", "")
@@ -1267,8 +1267,6 @@ class SecurityMixin:
         Args:
             id_tags: List of idTag values to test
         """
-        import time
-
         if not self.conn:
             self.logger.fail("[Brute] No connection for IdTag brute force")
             return

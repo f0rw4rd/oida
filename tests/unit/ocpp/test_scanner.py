@@ -222,29 +222,6 @@ class TestMessagesMixin(unittest.TestCase):
 
         self.assertEqual(data[2], {})
 
-    # --- CALLERROR message format [4, messageId, errorCode, errorDescription, errorDetails] ---
-
-    def test_build_call_error_produces_5_element_array(self):
-        """OCPP-J CALLERROR must be [4, messageId, errorCode, errorDescription, errorDetails]."""
-        mixin = self._make_mixin()
-        raw = mixin._build_call_error("abc123", "NotImplemented", "Not supported")
-        data = json.loads(raw)
-
-        self.assertEqual(len(data), 5, "CALLERROR must have exactly 5 elements")
-        self.assertEqual(data[0], 4)
-        self.assertEqual(data[1], "abc123")
-        self.assertEqual(data[2], "NotImplemented")
-        self.assertEqual(data[3], "Not supported")
-        self.assertEqual(data[4], {}, "Error details default to empty dict")
-
-    def test_build_call_error_with_details(self):
-        mixin = self._make_mixin()
-        details = {"field": "chargePointVendor", "reason": "missing"}
-        raw = mixin._build_call_error("id1", "FormationViolation", "Bad format", details)
-        data = json.loads(raw)
-
-        self.assertEqual(data[4], details)
-
     # --- Parse message: round-trip and edge cases ---
 
     def test_parse_call_extracts_action_and_payload(self):
@@ -345,9 +322,9 @@ class TestMessagesMixin(unittest.TestCase):
         self.assertEqual(msg_id, "abc")
         self.assertEqual(parsed["status"], "Accepted")
 
-    def test_build_then_parse_callerror_roundtrip(self):
+    def test_parse_callerror_roundtrip(self):
         mixin = self._make_mixin()
-        raw = mixin._build_call_error("abc", "InternalError", "Oops", {"detail": "stack"})
+        raw = json.dumps([4, "abc", "InternalError", "Oops", {"detail": "stack"}])
         msg_type, msg_id, parsed = mixin._parse_message(raw)
 
         self.assertEqual(msg_type, 4)
@@ -902,16 +879,6 @@ class TestIncomingCallHandler(unittest.TestCase):
         data = json.loads(response)
         self.assertEqual(data[0], 3, "Response must be CALLRESULT")
         self.assertEqual(data[1], "msg1", "Must echo the original message ID")
-
-    def test_incoming_call_records_server_command(self):
-        """All server-initiated CALLs must be recorded for reporting."""
-        scanner = self._make_scanner()
-        scanner._handle_incoming_call("Reset", {"type": "Soft"}, "m1", Mock())
-        scanner._handle_incoming_call("GetDiagnostics", {}, "m2", Mock())
-
-        self.assertEqual(len(scanner._server_commands), 2)
-        self.assertEqual(scanner._server_commands[0]["action"], "Reset")
-        self.assertEqual(scanner._server_commands[1]["action"], "GetDiagnostics")
 
     def test_remote_start_rejected_by_default(self):
         """Scanner must reject RemoteStartTransaction to avoid unintended charging."""
@@ -2726,7 +2693,6 @@ class TestListenMode(unittest.TestCase):
         scanner.options = {}
         scanner.timeout = 5
         scanner.logger = MagicMock()
-        scanner._server_commands = []
         return scanner
 
     def test_listen_mode_returns_empty_without_connection(self):

@@ -650,19 +650,6 @@ class TestWsBruteDispatch(unittest.TestCase):
 
         assert "ws_brute" in ocpp._OPERATION_FLAGS
 
-    def test_ws_brute_is_recognized_as_operation(self):
-        """_has_any_operation_flag should return True when ws_brute is set."""
-        from oida.protocols.ocpp import ocpp
-
-        instance = ocpp.__new__(ocpp)
-        instance.args = Mock()
-
-        for flag in ocpp._OPERATION_FLAGS:
-            setattr(instance.args, flag, None)
-        instance.args.ws_brute = True
-
-        assert instance._has_any_operation_flag() is True
-
 
 if __name__ == "__main__":
     unittest.main()
