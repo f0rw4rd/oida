@@ -227,6 +227,7 @@ class MessageMixin:
                     sex=getattr(self.args, "patient_sex", ""),
                     address=getattr(self.args, "patient_address", ""),
                     phone=getattr(self.args, "patient_phone", ""),
+                    ssn=getattr(self.args, "ssn", "") or "",
                 )
                 if pid:
                     msg.add(pid)

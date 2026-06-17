@@ -17,53 +17,14 @@ from ._helpers import populate_msh
 
 
 class ContinuationMixin:
-    """Mixin providing HL7 continuation/fragmentation handling.
+    """Mixin providing HL7 continuation/fragmentation building blocks.
 
-    TODO(continuation): the reassembly helpers (_check_continuation /
-    _reassemble_fragments) are tested, but the public entry
-    _send_mllp_message_with_continuation is not yet wired into the query/scan
-    path — DSC/MSH-14 continuation is therefore not exercised end-to-end.
+    Exposes the DSC/MSH-14 detection (_check_continuation), QCN request
+    builder (_create_continuation_request), and fragment reassembly
+    (_reassemble_fragments) helpers. These are unit-tested but not yet
+    chained into the query/scan path, so DSC/MSH-14 continuation is not
+    driven end-to-end.
     """
-
-    def _send_mllp_message_with_continuation(self, message: str) -> Optional[bytes]:
-        """Send message and handle continuation (DSC) responses"""
-        fragments = []
-        continuation_pointer = None
-
-        # Send initial message
-        response = self._send_mllp_message(message)
-        if not response:
-            return None
-
-        fragments.append(response)
-
-        # Check for continuation
-        continuation_pointer, continuation_style = self._check_continuation(response)
-
-        while continuation_pointer:
-            self.logger.debug(f"Fetching continuation: {continuation_pointer}")
-
-            # Create continuation request
-            cont_msg = self._create_continuation_request(continuation_pointer)
-            if not cont_msg:
-                break
-
-            # Send continuation request
-            cont_response = self._send_mllp_message(cont_msg)
-            if not cont_response:
-                break
-
-            fragments.append(cont_response)
-
-            # Check for more continuations
-            continuation_pointer, continuation_style = self._check_continuation(cont_response)
-
-        # Reassemble fragments if multiple
-        if len(fragments) > 1:
-            self.logger.display(f"Reassembled {len(fragments)} message fragments")
-            return self._reassemble_fragments(fragments)
-
-        return response
 
     def _check_continuation(self, response: bytes) -> tuple:
         """Check if response has continuation (DSC segment or MSH-14)"""

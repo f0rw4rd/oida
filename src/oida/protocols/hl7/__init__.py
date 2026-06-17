@@ -643,7 +643,6 @@ class hl7(
             return msg.to_er7()
         except Exception as e:
             self.logger.debug("create test message failed: %s", e)
-            pass
 
         # Fallback: create raw HL7 message for unsupported types
         msh = f"MSH|^~\\&|OIDA|SECURITY|TARGET|FACILITY|{timestamp}||{msg_type}^{trigger_event}|{msg_id}|P|{version}"
@@ -689,13 +688,38 @@ class hl7(
                     )
                     return None
 
-            return strip_mllp(response)
+            stripped = strip_mllp(response)
+            self._handle_response_options(stripped)
+            return stripped
         except TimeoutError:
             self.logger.debug("Response timeout")
             return None
         except Exception as e:
             self.logger.debug(f"Send/receive error: {e}")
             return None
+
+    def _handle_response_options(self, response: bytes) -> None:
+        """Apply --save-response / --parse-segments to a received response."""
+        if not response:
+            return
+
+        save_path = getattr(self.args, "save_response", None)
+        if save_path:
+            try:
+                with open(save_path, "ab") as fh:
+                    fh.write(response)
+                    fh.write(b"\n")
+                self.logger.display(f"Saved raw response to {save_path}")
+            except OSError as e:
+                self.logger.warning(f"Could not save response to {save_path}: {e}")
+
+        if getattr(self.args, "parse_segments", False):
+            text = response.decode("utf-8", errors="ignore")
+            segments = [s for s in text.replace("\r\n", "\r").replace("\n", "\r").split("\r") if s]
+            self.logger.display(f"Response segments ({len(segments)}):")
+            for segment in segments:
+                seg_id = segment.split("|", 1)[0]
+                self.logger.display(f"  [{seg_id}] {segment}")
 
     def _get_field_value(self, segment, field_name: str) -> str:
         """Extract value from HL7 field, handling hl7apy object types"""
@@ -916,6 +940,109 @@ class hl7(
                 for f in findings
             ]
             export_data(rows, headers, file_fmt, output_dir, "hl7_security", logger=self.logger)
+
+        # Export enumerated providers (--enum-providers)
+        providers = data.get("providers", {})
+        if providers and any(providers.values()):
+            headers = ["Host", "Port", "Category", "Provider"]
+            rows = [
+                [self.ip, port, category, name]
+                for category, names in providers.items()
+                for name in names
+            ]
+            if rows:
+                export_data(
+                    rows, headers, file_fmt, output_dir, "hl7_providers", logger=self.logger
+                )
+
+        # Export interface topology (--enum-apps)
+        topology = data.get("interface_topology", {})
+        if topology:
+            headers = ["Host", "Port", "Application", "Vendor", "Product", "Facility"]
+            rows = []
+            for app_name, info in topology.get("applications", {}).items():
+                facs = info.get("facilities") or [""]
+                for fac in facs:
+                    rows.append(
+                        [
+                            self.ip,
+                            port,
+                            app_name,
+                            info.get("vendor", "") or "",
+                            info.get("product", "") or "",
+                            fac,
+                        ]
+                    )
+            if rows:
+                export_data(rows, headers, file_fmt, output_dir, "hl7_apps", logger=self.logger)
+
+        # Export enumerated locations (--enum-locations)
+        loc_data = data.get("locations", {})
+        if loc_data:
+            headers = ["Host", "Port", "Type", "Location"]
+            rows = []
+            for loc_type, key in (
+                ("Nursing Unit", "nursing_units"),
+                ("Room", "rooms"),
+                ("Bed", "beds"),
+                ("Full Location", "full_locations"),
+            ):
+                rows.extend([self.ip, port, loc_type, v] for v in loc_data.get(key, []))
+            if rows:
+                export_data(
+                    rows, headers, file_fmt, output_dir, "hl7_locations", logger=self.logger
+                )
+
+        # Export master file results (--master-file)
+        mf_data = data.get("master_file_results", {})
+        if mf_data:
+            staff = mf_data.get("staff_entries", [])
+            if staff:
+                keys = ["StaffID", "StaffName", "StaffType", "Department", "ActiveStatus"]
+                headers = ["Host", "Port"] + keys
+                rows = [[self.ip, port] + [s.get(k, "") for k in keys] for s in staff]
+                export_data(
+                    rows, headers, file_fmt, output_dir, "hl7_staff", logger=self.logger
+                )
+            charges = mf_data.get("charge_entries", [])
+            if charges:
+                keys = [
+                    "PrimaryKeyValue",
+                    "Price",
+                    "Department",
+                    "EffectiveStartDate",
+                    "EffectiveEndDate",
+                ]
+                headers = ["Host", "Port"] + keys
+                rows = [[self.ip, port] + [c.get(k, "") for k in keys] for c in charges]
+                export_data(
+                    rows, headers, file_fmt, output_dir, "hl7_charges", logger=self.logger
+                )
+
+        # Export WhoAmI server identity (--whoami)
+        whoami = data.get("whoami_results", {})
+        if whoami and any(whoami.values()):
+            headers = ["Host", "Port", "ServerApp", "ServerFacility", "Version"]
+            rows = [
+                [
+                    self.ip,
+                    port,
+                    whoami.get("server_app", ""),
+                    whoami.get("server_facility", ""),
+                    whoami.get("version", ""),
+                ]
+            ]
+            export_data(rows, headers, file_fmt, output_dir, "hl7_whoami", logger=self.logger)
+
+        # Export tabular (RTB) results (--rtb)
+        tabular = data.get("tabular_results", {})
+        if tabular and tabular.get("rows"):
+            columns = tabular.get("columns") or [
+                f"Col{i + 1}" for i in range(len(tabular["rows"][0]))
+            ]
+            headers = ["Host", "Port"] + columns
+            rows = [[self.ip, port] + list(r) for r in tabular["rows"]]
+            export_data(rows, headers, file_fmt, output_dir, "hl7_tabular", logger=self.logger)
 
     def _disconnect(self):
         """Close MLLP connection"""

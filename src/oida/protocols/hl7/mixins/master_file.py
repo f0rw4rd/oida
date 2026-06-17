@@ -232,9 +232,7 @@ class MasterFileMixin:
                         "operation": "MFN",
                         "issue": "Staff Master File Accessible",
                         "description": f"Query returned {len(staff_entries)} staff records",
-                    }
-                    if staff_entries
-                    else None,
+                    },
                 )
 
             if charge_entries:

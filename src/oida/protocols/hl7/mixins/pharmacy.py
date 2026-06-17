@@ -54,34 +54,14 @@ class PharmacyMixin:
 
     def _send_rx_message(self):
         """Send RDE^O11 (Pharmacy Order) message with prescription data"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "RDE^O11 (Pharmacy Order) is a dangerous operation. Use --confirm to proceed."
-            )
-            return
-
-        self.logger.display("Sending RDE^O11 (Pharmacy/Treatment Order) message...")
-
-        msg = self._create_rx_message()
-        if msg:
-            response = self._send_mllp_message(msg)
-            if response:
-                self.logger.success("Received RDE response")
-                self._parse_response(response)
-                self._extract_detailed_response(response, "RDE^O11")
-
-                ack = self.results["data"].get("ack_code", "")
-                if ack == "AA":
-                    drug = getattr(self.args, "rx_drug", "Unknown")
-                    self.results["data"].setdefault("security_findings", []).append(
-                        {
-                            "operation": "RDE",
-                            "issue": "Prescription Order Accepted",
-                            "description": f"Server accepted prescription for {drug} from unknown source",
-                        }
-                    )
-            else:
-                self.logger.warning("No response to RDE message")
+        drug = getattr(self.args, "rx_drug", "Unknown")
+        self._send_pharmacy_confirmed(
+            msg_type="RDE^O11",
+            label="Pharmacy/Treatment Order",
+            create_fn=self._create_rx_message,
+            finding_issue="Prescription Order Accepted",
+            finding_description=f"Server accepted prescription for {drug} from unknown source",
+        )
 
     def _send_ras_message(self):
         """Send RAS^O17 Pharmacy Administration message"""
