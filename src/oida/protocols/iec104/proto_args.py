@@ -10,7 +10,6 @@ from ...utils.proto_args_factory import (
     add_network_options,
     add_dangerous_options,
     add_listen_options,
-    add_file_transfer_options,
     add_tls_options,
     add_full_width_and_json_log,
 )
@@ -28,8 +27,7 @@ def proto_args(parser, parents):
 Examples:
   oida iec104 192.168.1.100                       # Basic discovery (TESTFR only)
   oida iec104 192.168.1.100 --interrogate         # General interrogation
-  oida iec104 192.168.1.100 --probe-files         # Probe file-transfer capability
-  oida iec104 192.168.1.100 --list-files          # List remote files
+  oida iec104 192.168.1.100 --probe-files         # Detect file-transfer capability
   oida iec104 192.168.1.100 --listen -T 120       # Passive listen for 2 minutes
   oida iec104 192.168.1.100 -S                    # Station scan (common address 1-254)
   oida iec104 192.168.1.100 -S 1-10               # Station scan (range)
@@ -109,16 +107,7 @@ Examples:
     iec104_group.add_argument(
         "-a", "--asdu-address", type=int, default=1, help="ASDU address (default: 1)"
     )
-    iec104_group.add_argument(
-        "-r", "--ioa-range", type=str, help='Information Object Address range (e.g., "0-1000")'
-    )
     iec104_group.add_argument("-c", "--common-address", type=int, help="Common address of ASDU")
-    iec104_group.add_argument(
-        "--max-commands",
-        type=int,
-        default=100,
-        help="Maximum number of commands to test (default: 100)",
-    )
     iec104_group.add_argument(
         "-w",
         "--wait-time",
@@ -150,69 +139,14 @@ Examples:
         metavar="ADDR",
         help="Originator address (0-255) to identify this client in device logs",
     )
-    # File Transfer (--list-files, --read-file, --write-file, --file-output)
-    file_group = add_file_transfer_options(iec104_parser, include_write=False)
+    # File Transfer capability detection (Type IDs 120-127). c104 exposes no
+    # high-level file-transfer API, so only capability detection is supported —
+    # not the actual F_* ASDU download/upload/delete/log exchange.
+    file_group = iec104_parser.add_argument_group("File Transfer")
     file_group.add_argument(
         "--probe-files",
         action="store_true",
-        help="Probe for file transfer capability (Type IDs 120-127)",
-    )
-    file_group.add_argument(
-        "-D",
-        "--download-file",
-        type=int,
-        metavar="IOA",
-        help="Download file by IOA using c104 (Type 120-125)",
-    )
-    file_group.add_argument(
-        "--delete-file",
-        type=int,
-        metavar="IOA",
-        help="Delete file by IOA (Type 122, SCQ=4) - requires --confirm",
-    )
-    file_group.add_argument(
-        "--upload-file",
-        type=str,
-        metavar="PATH",
-        help="Local file to upload to device - requires --confirm",
-    )
-    file_group.add_argument(
-        "--upload-ioa",
-        type=int,
-        metavar="IOA",
-        help="Target IOA for upload",
-    )
-    file_group.add_argument(
-        "--upload-nof",
-        type=int,
-        default=1,
-        choices=[1, 2],
-        help="File type: 1=transparent (default), 2=disturbance recording",
-    )
-    file_group.add_argument(
-        "--query-log",
-        type=int,
-        metavar="IOA",
-        help="Query archive log by IOA (Type 127)",
-    )
-    file_group.add_argument(
-        "--log-start",
-        type=str,
-        metavar="TIME",
-        help="Log query start time (ISO format or 'now-1h')",
-    )
-    file_group.add_argument(
-        "--log-end",
-        type=str,
-        metavar="TIME",
-        help="Log query end time (ISO format or 'now')",
-    )
-    file_group.add_argument(
-        "--log-type",
-        type=int,
-        default=2,
-        choices=[1, 2, 3, 4],
-        help="Log type: 1=transparent, 2=disturbance (default), 3=events, 4=analogue",
+        help="Detect file-transfer capability (reports Type IDs 120-127)",
     )
 
     # Read Operations

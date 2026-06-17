@@ -203,16 +203,6 @@ class TestIEC104Options:
         args = parser.parse_args(["iec104", T])
         assert args.asdu_address == 1
 
-    def test_ioa_range_short(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "-r", "0-1000"])
-        assert args.ioa_range == "0-1000"
-
-    def test_ioa_range_long(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--ioa-range", "100-5000"])
-        assert args.ioa_range == "100-5000"
-
     def test_common_address_short(self, parser_setup):
         parser, _ = parser_setup
         args = parser.parse_args(["iec104", T, "-c", "5"])
@@ -222,16 +212,6 @@ class TestIEC104Options:
         parser, _ = parser_setup
         args = parser.parse_args(["iec104", T, "--common-address", "10"])
         assert args.common_address == 10
-
-    def test_max_commands_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.max_commands == 100
-
-    def test_max_commands_custom(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--max-commands", "50"])
-        assert args.max_commands == 50
 
     def test_wait_time_short(self, parser_setup):
         parser, _ = parser_setup
@@ -268,77 +248,6 @@ class TestFileTransferOptions:
         parser, _ = parser_setup
         with pytest.raises(SystemExit):
             parser.parse_args(["iec104", T, "-P"])
-
-    def test_download_file(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "-D", "1000"])
-        assert args.download_file == 1000
-
-    def test_download_file_long(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--download-file", "2000"])
-        assert args.download_file == 2000
-
-    def test_delete_file(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--delete-file", "500"])
-        assert args.delete_file == 500
-
-    def test_upload_file(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--upload-file", "/tmp/test.bin"])
-        assert args.upload_file == "/tmp/test.bin"
-
-    def test_upload_ioa(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--upload-ioa", "1000"])
-        assert args.upload_ioa == 1000
-
-    def test_upload_nof_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.upload_nof == 1
-
-    def test_upload_nof_choices(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--upload-nof", "2"])
-        assert args.upload_nof == 2
-
-    def test_upload_nof_invalid(self, parser_setup):
-        parser, _ = parser_setup
-        with pytest.raises(SystemExit):
-            parser.parse_args(["iec104", T, "--upload-nof", "3"])
-
-    def test_query_log(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--query-log", "1000"])
-        assert args.query_log == 1000
-
-    def test_log_start(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--log-start", "2024-01-01T00:00:00"])
-        assert args.log_start == "2024-01-01T00:00:00"
-
-    def test_log_end(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "--log-end", "now"])
-        assert args.log_end == "now"
-
-    def test_log_type_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.log_type == 2
-
-    def test_log_type_choices(self, parser_setup):
-        parser, _ = parser_setup
-        for choice in [1, 2, 3, 4]:
-            args = parser.parse_args(["iec104", T, "--log-type", str(choice)])
-            assert args.log_type == choice
-
-    def test_log_type_invalid(self, parser_setup):
-        parser, _ = parser_setup
-        with pytest.raises(SystemExit):
-            parser.parse_args(["iec104", T, "--log-type", "5"])
 
 
 class TestReadOperations:
@@ -609,11 +518,6 @@ class TestBooleanFlagsDefaults:
 class TestValueArgumentsDefaults:
     """Test value arguments default to None."""
 
-    def test_ioa_range_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.ioa_range is None
-
     def test_common_address_default(self, parser_setup):
         parser, _ = parser_setup
         args = parser.parse_args(["iec104", T])
@@ -668,41 +572,6 @@ class TestValueArgumentsDefaults:
         parser, _ = parser_setup
         args = parser.parse_args(["iec104", T])
         assert args.write_ioa is None
-
-    def test_download_file_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.download_file is None
-
-    def test_delete_file_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.delete_file is None
-
-    def test_upload_file_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.upload_file is None
-
-    def test_upload_ioa_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.upload_ioa is None
-
-    def test_query_log_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.query_log is None
-
-    def test_log_start_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.log_start is None
-
-    def test_log_end_default(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T])
-        assert args.log_end is None
 
     def test_tls_cert_default(self, parser_setup):
         parser, _ = parser_setup
@@ -791,31 +660,6 @@ class TestComplexUsageScenarios:
         assert args.balanced is True
         assert args.interrogate is True
 
-    def test_file_download(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(["iec104", T, "-D", "1000"])
-        assert args.download_file == 1000
-
-    def test_file_upload_with_confirm(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(
-            [
-                "iec104",
-                T,
-                "--upload-file",
-                "/tmp/fw.bin",
-                "--upload-ioa",
-                "1000",
-                "--upload-nof",
-                "1",
-                "--confirm",
-            ]
-        )
-        assert args.upload_file == "/tmp/fw.bin"
-        assert args.upload_ioa == 1000
-        assert args.upload_nof == 1
-        assert args.confirm is True
-
     def test_fuzzing_scenario(self, parser_setup):
         parser, _ = parser_setup
         args = parser.parse_args(
@@ -850,27 +694,6 @@ class TestComplexUsageScenarios:
         assert args.write_type == 128
         assert args.write_ioa == 500
         assert args.value == "42"
-
-    def test_log_query(self, parser_setup):
-        parser, _ = parser_setup
-        args = parser.parse_args(
-            [
-                "iec104",
-                T,
-                "--query-log",
-                "1000",
-                "--log-start",
-                "now-1h",
-                "--log-end",
-                "now",
-                "--log-type",
-                "3",
-            ]
-        )
-        assert args.query_log == 1000
-        assert args.log_start == "now-1h"
-        assert args.log_end == "now"
-        assert args.log_type == 3
 
 
 class TestInterrogateGroupsFlag:

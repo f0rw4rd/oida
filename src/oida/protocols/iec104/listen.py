@@ -20,7 +20,6 @@ from .constants import (
     ASDU_DATA_OFFSET,
     ASDU_IOA_OFFSET,
     ASDU_TYPE_ID_OFFSET,
-    ASDU_VSQ_OFFSET,
     COT_ACTIVATION,
     COT_ACTIVATION_CONFIRM,
     COT_SPONTANEOUS,
@@ -35,7 +34,6 @@ from .constants import (
     QDS_OV,
     QDS_SB,
     SIQ_SPI_MASK,
-    VSQ_COUNT_MASK,
     VTI_TRANSIENT,
     VTI_VALUE_MASK,
 )
@@ -197,7 +195,6 @@ class ListenMixin:
                     if scanner.listen_filter and type_id not in scanner.listen_filter:
                         return
 
-                    _vsq = data[ASDU_VSQ_OFFSET] & VSQ_COUNT_MASK  # noqa: F841 — parsed for completeness
                     cot = data[ASDU_COT_OFFSET] & COT_VALUE_MASK
                     common_address = struct.unpack("<H", data[ASDU_CA_OFFSET : ASDU_CA_OFFSET + 2])[
                         0
