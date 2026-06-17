@@ -450,15 +450,16 @@ class modbus(
             self.logger.display(f"  Standard: {standard.upper()}")
         self.logger.display(f"  Byte order: {byte_order}, Word order: {word_order}")
 
-        # Use map's default unit ID if user didn't explicitly specify one
+        # Use map's default unit ID only if the user did not explicitly pass -u
+        # (argparse default is None). An explicit -u 1 must be honored verbatim.
         user_unit_id = getattr(self.args, "unit_id", None)
         default_uid = reg_map.get("default_unit_id")
-        if user_unit_id is None or user_unit_id == 1:
-            if default_uid is not None and default_uid != 1:
+        if user_unit_id is None:
+            if default_uid is not None:
                 unit_id = default_uid
                 self.logger.display(f"  Using default unit ID from map: {default_uid}")
             else:
-                unit_id = user_unit_id if user_unit_id is not None else 1
+                unit_id = 1
         else:
             unit_id = user_unit_id
 
@@ -568,20 +569,16 @@ class modbus(
         else:
             headers = ["Name", "Addr", "Type", "Acc", "Value", "Description"]
 
-        # First pass: collect all register values (needed for scale_factor_register)
+        # First pass: read every register and collect all raw word values so that
+        # scale_factor_register lookups resolve regardless of whether the SF
+        # register precedes or follows its value register in address order.
         all_registers = {}
+        read_results = {}  # name -> (raw_regs, raw_hex) or None on read error
 
         for name, reg_def in sorted_regs:
             address = reg_def.get("address")
             dtype = reg_def.get("type", "u16")
-            enum_map = reg_def.get("enum")
-            scale_factor_reg = reg_def.get("scale_factor_register")
-            access = reg_def.get("access", "r")
-            unit = reg_def.get("unit", "")
-            scale = reg_def.get("scale", 1.0)
-            offset = reg_def.get("offset", 0.0)
             description = reg_def.get("description", "")
-            hex_addr = reg_def.get("hex_address", f"0x{address:04X}")
 
             # Determine register count (handle strings with length field)
             if dtype in ("str", "string"):
@@ -601,19 +598,7 @@ class modbus(
                     )
 
                 if result.isError():
-                    stats["errors"] += 1
-                    exc_code = getattr(result, "exception_code", None)
-                    if exc_code is not None:
-                        exc_name = EXCEPTION_CODES.get(exc_code, f"Unknown ({exc_code})")
-                        value_str = f"ERR:{exc_code:02d}"
-                        err_desc = f"{exc_name} - {description}" if description else exc_name
-                    else:
-                        value_str = "ERROR"
-                        err_desc = description
-                    if verbose:
-                        rows.append([name, hex_addr, dtype, access, value_str, "-", err_desc])
-                    else:
-                        rows.append([name, hex_addr, dtype, access, value_str, err_desc])
+                    read_results[name] = ("error", result)
                     continue
 
                 raw_regs = list(result.registers)
@@ -622,6 +607,55 @@ class modbus(
                 # Store register values for scale_factor_register lookups
                 for i, reg_val in enumerate(raw_regs):
                     all_registers[address + i] = reg_val
+
+                read_results[name] = (raw_regs, raw_hex)
+
+            except Exception as e:
+                read_results[name] = ("exception", e)
+
+        # Second pass: decode/display using the fully populated all_registers map.
+        for name, reg_def in sorted_regs:
+            address = reg_def.get("address")
+            dtype = reg_def.get("type", "u16")
+            enum_map = reg_def.get("enum")
+            scale_factor_reg = reg_def.get("scale_factor_register")
+            access = reg_def.get("access", "r")
+            unit = reg_def.get("unit", "")
+            scale = reg_def.get("scale", 1.0)
+            offset = reg_def.get("offset", 0.0)
+            description = reg_def.get("description", "")
+            hex_addr = reg_def.get("hex_address", f"0x{address:04X}")
+
+            outcome = read_results.get(name)
+
+            if outcome is not None and outcome[0] == "exception":
+                e = outcome[1]
+                stats["errors"] += 1
+                if verbose:
+                    rows.append([name, hex_addr, dtype, access, f"ERROR: {e}", "-", description])
+                else:
+                    rows.append([name, hex_addr, dtype, access, f"ERROR: {e}", description])
+                continue
+
+            if outcome is not None and outcome[0] == "error":
+                result = outcome[1]
+                stats["errors"] += 1
+                exc_code = getattr(result, "exception_code", None)
+                if exc_code is not None:
+                    exc_name = EXCEPTION_CODES.get(exc_code, f"Unknown ({exc_code})")
+                    value_str = f"ERR:{exc_code:02d}"
+                    err_desc = f"{exc_name} - {description}" if description else exc_name
+                else:
+                    value_str = "ERROR"
+                    err_desc = description
+                if verbose:
+                    rows.append([name, hex_addr, dtype, access, value_str, "-", err_desc])
+                else:
+                    rows.append([name, hex_addr, dtype, access, value_str, err_desc])
+                continue
+
+            try:
+                raw_regs, raw_hex = outcome
 
                 # Decode the value
                 decoded = decoder.decode(raw_regs, dtype)
@@ -858,7 +892,9 @@ class modbus(
             return
 
         # Show unit ID being used
-        unit_id = getattr(self.args, "unit_id", 1)
+        unit_id = getattr(self.args, "unit_id", None)
+        if unit_id is None:
+            unit_id = 1
         if self.broadcast_mode:
             self.logger.display("    Unit ID: 0 (broadcast)")
         else:

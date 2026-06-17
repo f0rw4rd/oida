@@ -75,6 +75,14 @@ class MDNSFuzzer(BaseFuzzer):
             RequestInfo("Service_Subtypes", "Service subtype queries", "service"),
             RequestInfo("Unicast_Response_Query", "Unicast response flag", "service"),
             RequestInfo("Duplicate_Records", "Duplicate record tests", "standard"),
+            RequestInfo("Multi_Known_Answer", "Known answer suppression", "query"),
+            RequestInfo("Negative_Response", "NSEC negative responses", "response"),
+            RequestInfo("PTR_Query", "Service discovery PTR queries", "query"),
+            RequestInfo("SRV_Query", "Service instance SRV queries", "query"),
+            RequestInfo("Cache_Flush_Query", "Cache flush bit queries", "query"),
+            RequestInfo("Probe_Query", "Name uniqueness probe", "query"),
+            RequestInfo("Goodbye_Packet", "Service termination announcements", "response"),
+            RequestInfo("EDNS0_Packet", "EDNS0 extension packets", "edns"),
         ]
 
     def __init__(self, config: FuzzerConfig, connection_factory=None):

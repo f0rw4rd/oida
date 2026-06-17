@@ -586,6 +586,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         )
 
     @pytest.mark.slow
+    @pytest.mark.timeout(200)
     def test_scan_ports(self, cli_runner, target, port, docker_services):
         """Test scanning common ADS ports [Category B]"""
         result = cli_runner.run(
@@ -605,6 +606,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             _assert_log_event_structure(result.scan_log)
 
     @pytest.mark.slow
+    @pytest.mark.timeout(200)
     def test_scan_ports_extended(self, cli_runner, target, port, docker_services):
         """Test scanning extended ADS ports (50+) [Category B]"""
         result = cli_runner.run(

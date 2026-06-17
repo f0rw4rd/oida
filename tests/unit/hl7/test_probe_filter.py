@@ -8,27 +8,38 @@ master-file updates — every probe was a real HL7 write.
 import unittest
 from unittest.mock import MagicMock, patch
 
+from tests.unit.hl7.conftest import _make_hl7_instance
+
 
 class TestProbeReadOnlyFilter(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_default_filters_to_qry_qbp_only(self):
         """Without --confirm only QRY/QBP types should be probed."""
-        from oida.protocols.hl7 import hl7
-
         mock_args = MagicMock()
         mock_args.port = 2575
         mock_args.timeout = 1
         mock_args.confirm = False
         for attr in (
-            "find", "get", "store", "move", "aet_brute", "probe_ops",
-            "worklist", "dump_all", "fuzz", "tls", "verbose",
-            "enum_operators", "enum_devices", "time_analysis",
+            "find",
+            "get",
+            "store",
+            "move",
+            "aet_brute",
+            "probe_ops",
+            "worklist",
+            "dump_all",
+            "fuzz",
+            "tls",
+            "verbose",
+            "enum_operators",
+            "enum_devices",
+            "time_analysis",
         ):
             setattr(mock_args, attr, False)
         mock_args.aet = "OIDA"
         mock_args.called_aet = "ANY"
 
-        scanner = hl7(mock_args, None, "127.0.0.1")
+        scanner = _make_hl7_instance(mock_args, None, "127.0.0.1")
         scanner.logger = MagicMock()
         scanner.results = {"data": {}}
         scanner._create_test_message = MagicMock(return_value="MSH|...")
@@ -40,27 +51,35 @@ class TestProbeReadOnlyFilter(unittest.TestCase):
         # Without --confirm: only QRY/QBP types attempted.
         creates = scanner._create_test_message.call_args_list
         msg_types = {call.args[0] for call in creates}
-        self.assertTrue(msg_types.issubset({"QRY", "QBP"}),
-                        f"Got unexpected types: {msg_types}")
+        self.assertTrue(msg_types.issubset({"QRY", "QBP"}), f"Got unexpected types: {msg_types}")
 
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_warning_emitted_about_filter(self):
-        from oida.protocols.hl7 import hl7
-
         mock_args = MagicMock()
         mock_args.port = 2575
         mock_args.timeout = 1
         mock_args.confirm = False
         for attr in (
-            "find", "get", "store", "move", "aet_brute", "probe_ops",
-            "worklist", "dump_all", "fuzz", "tls", "verbose",
-            "enum_operators", "enum_devices", "time_analysis",
+            "find",
+            "get",
+            "store",
+            "move",
+            "aet_brute",
+            "probe_ops",
+            "worklist",
+            "dump_all",
+            "fuzz",
+            "tls",
+            "verbose",
+            "enum_operators",
+            "enum_devices",
+            "time_analysis",
         ):
             setattr(mock_args, attr, False)
         mock_args.aet = "OIDA"
         mock_args.called_aet = "ANY"
 
-        scanner = hl7(mock_args, None, "127.0.0.1")
+        scanner = _make_hl7_instance(mock_args, None, "127.0.0.1")
         scanner.logger = MagicMock()
         scanner.results = {"data": {}}
         scanner._create_test_message = MagicMock(return_value=None)

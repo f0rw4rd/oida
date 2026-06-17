@@ -430,7 +430,7 @@ class S7commPassiveListener(PySharkListenerBase):
 
         else:
             # Catch-all for packets not matching any specific handler:
-            # bare Ack (ROSCTR=2) with no function code, unknown function
+            # Bare Ack (ROSCTR=2) with no function code, unknown function
             # codes, or malformed/fuzz packets.  Every s7comm-filtered
             # packet must produce at least one interaction.
             rosctr_name = ROSCTR.get(rosctr, f"ROSCTR {rosctr}")

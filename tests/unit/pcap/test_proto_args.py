@@ -55,9 +55,15 @@ class TestExtractFlags:
         assert ns.extract_files is True
 
     def test_extract_all_flag(self):
+        # -e/--extract-all is an alias of -E/--extract-files (shared dest)
         main, _ = _build_parser()
         ns = main.parse_args(["pcap", "f.pcap", "-e"])
-        assert ns.extract_all is True
+        assert ns.extract_files is True
+
+    def test_extract_all_long_flag(self):
+        main, _ = _build_parser()
+        ns = main.parse_args(["pcap", "f.pcap", "--extract-all"])
+        assert ns.extract_files is True
 
 
 class TestOptionalArguments:

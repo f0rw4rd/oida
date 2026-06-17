@@ -16,10 +16,29 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from ...utils.lazy_import import lazy_import
+from ...utils import iface_info as _iface_info
 from ...utils.ics_logger import get_module_logger
 
-_netifaces = lazy_import("netifaces", "discovery")
+
+class _IfaceInfoAdapter:
+    """Adapter exposing the psutil-based iface_info module through the same
+    surface the discovery code uses for the old lazy netifaces module:
+
+    - ``_netifaces.is_available`` -> always True (psutil is a hard dependency)
+    - ``_netifaces()``           -> the iface_info module (attrs resolved at
+      call time so test patches on iface_info take effect)
+
+    This keeps core.py consistent with scanner.py / mdns.py, which already
+    bind ``from ...utils import iface_info as _netifaces``.
+    """
+
+    is_available = True
+
+    def __call__(self):
+        return _iface_info
+
+
+_netifaces = _IfaceInfoAdapter()
 
 logger = get_module_logger(__name__)
 

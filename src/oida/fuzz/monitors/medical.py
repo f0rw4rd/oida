@@ -126,12 +126,11 @@ class HL7Monitor(ProtocolMonitor):
                         return fields[1]  # AA, AE, AR, etc.
             return None
         except Exception as e:
-            self.logger.debug(f"if response.startswith(self.MLLP_START):: {e}")
+            self.logger.debug(f"HL7 ACK parse failed: {e}")
             return None
 
     def _store_baseline(self, response: bytes, fuzz_data_logger=None):
         """Store the first response as baseline"""
-        self.baseline_response = response
         self.baseline_ack_code = self._parse_ack_code(response)
         self.baseline_established = True
 

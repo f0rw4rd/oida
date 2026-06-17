@@ -19,6 +19,45 @@ else:
 class ScannerReportingMixin(_ScannerBase):
     """Mixin providing decoding and result reporting for ModbusScanner."""
 
+    def _decode_register_values(
+        self,
+        registers: Dict[int, int],
+        decode_type: str,
+        byte_order: str = "big",
+        word_order: str = "big",
+    ) -> List[Dict[str, Any]]:
+        """
+        Decode register values using specified data type
+
+        Args:
+            registers: Dict of {address: value}
+            decode_type: Type string (f32, i32, str, etc.)
+            byte_order: Byte order (big/little)
+            word_order: Word order for 32/64-bit (big/little)
+
+        Returns:
+            List of decoded values with metadata
+        """
+        from ..decoder import REGISTERS_PER_TYPE, ModbusDecoder
+
+        decoder = ModbusDecoder(byte_order=byte_order, word_order=word_order)
+
+        # Convert dict to sorted list
+        sorted_addrs = sorted(registers.keys())
+        reg_values = [registers[addr] for addr in sorted_addrs]
+
+        decoded = decoder.decode(reg_values, decode_type)
+
+        # Add address info
+        regs_per_value = REGISTERS_PER_TYPE.get(decode_type, 1) or 1
+        for i, item in enumerate(decoded):
+            base_addr = (
+                sorted_addrs[i * regs_per_value] if i * regs_per_value < len(sorted_addrs) else 0
+            )
+            item["address"] = base_addr
+
+        return decoded
+
     def _report_findings(self, results: Dict[str, Any]):
         """Report scan findings"""
         from ..decoder import ModbusDecoder

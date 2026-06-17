@@ -3,7 +3,7 @@ Tests for discovery module helper functions
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestLookupMacVendor:
@@ -73,23 +73,16 @@ class TestGetInterfaceNetwork:
     """Test get_interface_network helper function"""
 
     def test_valid_interface_returns_cidr(self):
-        """Test that valid interface returns CIDR notation"""
+        """Test that valid interface returns CIDR notation.
 
-        mock_netifaces = MagicMock()
-        mock_netifaces.AF_INET = 2
-        mock_netifaces.ifaddresses.return_value = {
-            2: [{"addr": "192.168.1.100", "netmask": "255.255.255.0"}]
-        }
+        The autouse ``mock_netifaces`` conftest fixture patches
+        ``oida.utils.iface_info`` so "eth0" resolves to 192.168.1.100/24.
+        """
+        from oida.protocols.discovery import get_interface_network
 
-        with patch.dict("sys.modules", {"netifaces": mock_netifaces}):
-            with patch("oida.protocols.discovery.netifaces", mock_netifaces, create=True):
-                # Need to reimport to use patched module
-                import oida.protocols.discovery as discovery_module
-
-                result = discovery_module.get_interface_network("eth0")
-                # Since we can't easily patch the import inside the function,
-                # this will use the actual netifaces or fail gracefully
-                assert result is None or result.endswith("/24") or "/" in str(result)
+        result = get_interface_network("eth0")
+        assert result is not None
+        assert result.endswith("/24")
 
     def test_invalid_interface_raises_error(self):
         """Test that invalid interface raises ValueError"""

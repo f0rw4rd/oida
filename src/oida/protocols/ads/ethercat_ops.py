@@ -69,6 +69,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Upper bound on the device-reported EtherCAT slave count. The protocol allows
+# up to 65535 slaves per segment, but real networks are far smaller; this caps
+# the per-slave scan loop so a spoofed/garbage count can't DoS the scanner.
+MAX_SLAVE_PORTS = 1024
+
 
 class EtherCATOpsMixin:
     """Mixin providing EtherCAT-over-ADS bridge operations for ADSScanner."""
@@ -724,6 +729,17 @@ class EtherCATOpsMixin:
                     result["success"] = True
                     return result
 
+                # Sanity-clamp the device-reported count: it is attacker-controlled
+                # and drives an unbounded per-slave network loop below. The EtherCAT
+                # spec allows up to 65535 slaves, but a real segment is far smaller;
+                # clamp to MAX_SLAVE_PORTS to avoid a self-inflicted scanner DoS.
+                if slave_count > MAX_SLAVE_PORTS:
+                    self.logger.warning(
+                        f"  Device reported {slave_count} slaves — clamping scan to "
+                        f"{MAX_SLAVE_PORTS} (implausible count, possible spoofing)"
+                    )
+                    slave_count = MAX_SLAVE_PORTS
+
                 self.logger.display(f"  EtherCAT slaves: {slave_count}")
 
                 # Determine slave port range: first port from ig=0x0007
@@ -1020,8 +1036,8 @@ class EtherCATOpsMixin:
                                     }
                                     objects.append(obj)
                                     access_stats["WO"] += 1
-                                range_found += 1
-                                self.logger.debug(f"  0x{idx:04X}:0 WO ({name})")
+                                    range_found += 1
+                                    self.logger.debug(f"  0x{idx:04X}:0 WO ({name})")
                             continue
 
                         name = _resolve_name(slave_conn, idx, 0)
@@ -1898,9 +1914,16 @@ class EtherCATOpsMixin:
                         slave_conn, ADS_IDX_GRP["ECAT_FOE_WRITE_DATA"], handle, 4, chunk
                     )
                 except RuntimeError as e:
-                    self.logger.debug(
-                        f"_read_write_raw call failed: {e}"
-                    )  # Short-read on ack is OK — device may return <4 bytes
+                    # A short-read on the ack ("N were read") is benign — the device
+                    # may return fewer than the requested 4 bytes. Any other
+                    # RuntimeError is a genuine write rejection: abort and fail.
+                    if not re.search(r"were\s+read", str(e)):
+                        return {
+                            "success": False,
+                            "bytes_written": bytes_written,
+                            "error": f"FoE write chunk rejected at offset {offset}: {e}",
+                        }
+                    self.logger.debug(f"  FoE write ack short-read (benign): {e}")
                 bytes_written += len(chunk)
                 offset += len(chunk)
                 if total > chunk_size:

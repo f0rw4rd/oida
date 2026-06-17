@@ -180,7 +180,6 @@ class IPv4Fuzzer(BaseFuzzer):
         parts = mac_string.replace(":", "").replace("-", "")
         return bytes.fromhex(parts)
 
-
     def _create_ip_header_bytes(
         self,
         version_ihl,
@@ -318,12 +317,12 @@ class IPv4Fuzzer(BaseFuzzer):
                             ),
                         )
                         if vlan_id is not None
-                        else Static("", ""),
+                        else Static("VLAN_Absent", ""),
                         Word("EtherType", 0x0800, endian=">", fuzzable=True),  # IPv4
                     ),
                 )
                 if include_ethernet
-                else Static("", ""),
+                else Static("Ethernet_Absent", ""),
                 Block(
                     "IP_Header",
                     children=(

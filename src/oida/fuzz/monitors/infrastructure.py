@@ -43,9 +43,6 @@ class DHCPDiscoverMonitor(ProtocolMonitor):
             failure_threshold=failure_threshold,
         )
 
-        # DHCP-specific baseline
-        self.baseline_response_received = False
-
     def _create_dhcp_discover(self) -> bytes:
         """Create a DHCP DISCOVER packet"""
         # DHCP DISCOVER message (simplified)
@@ -139,7 +136,6 @@ class DHCPDiscoverMonitor(ProtocolMonitor):
 
         # Store baseline on first successful request
         if not self.baseline_established:
-            self.baseline_response_received = True
             self.baseline_established = True
             if fuzz_data_logger:
                 fuzz_data_logger.log_info(
@@ -181,9 +177,6 @@ class TFTPReadMonitor(ProtocolMonitor):
             retry_count=retry_count,
             failure_threshold=failure_threshold,
         )
-
-        # TFTP-specific baseline
-        self.baseline_response_received = False
 
     def _create_tftp_rrq(self) -> bytes:
         """Create a TFTP Read Request (RRQ) packet"""
@@ -239,7 +232,6 @@ class TFTPReadMonitor(ProtocolMonitor):
 
         # Store baseline on first successful request
         if not self.baseline_established:
-            self.baseline_response_received = True
             self.baseline_established = True
             if fuzz_data_logger:
                 fuzz_data_logger.log_info(

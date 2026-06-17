@@ -6,9 +6,11 @@ parsing, and the sync/async bridge used by the scanner.
 
 import asyncio
 import importlib
+import inspect
 import json
 import re
 import socket
+import threading
 from typing import Any, Dict, List, Optional, Tuple
 
 from ...utils.ics_logger import get_module_logger
@@ -26,31 +28,46 @@ def is_aiocoap_available() -> bool:
     return _aiocoap.is_available
 
 
-# Resolve the aiocoap module through the project's lazy_import() proxy
-# (imports once, caches thereafter). Used instead of a bare ``import aiocoap``
-# inside each function.
-_get_aiocoap = _aiocoap
+def _get_aiocoap():
+    """Return the aiocoap module, loading it once via the lazy_import proxy.
+
+    Use this instead of ``import aiocoap`` inside every function so that the
+    module is resolved through the project's lazy_import() mechanism and
+    cached after the first call.
+    """
+    return _aiocoap()
 
 
-_loop: Optional[asyncio.AbstractEventLoop] = None
+class _EventLoopHolder:
+    """Thread-local holder for the persistent asyncio event loop.
 
+    CoAP scans run under a ThreadPoolExecutor, so each worker thread
+    needs its own loop: a single shared loop would raise "This event
+    loop is already running" and corrupt aiocoap context state when two
+    threads call ``run_until_complete`` concurrently. ``threading.local``
+    gives every thread an isolated loop that persists across calls so
+    aiocoap contexts created on that thread stay valid.
+    """
 
-def _get_loop() -> asyncio.AbstractEventLoop:
-    """Return the persistent asyncio event loop, creating it on first use."""
-    global _loop
-    if _loop is None or _loop.is_closed():
-        _loop = asyncio.new_event_loop()
-    return _loop
+    _local = threading.local()
+
+    @classmethod
+    def get(cls) -> asyncio.AbstractEventLoop:
+        loop = getattr(cls._local, "loop", None)
+        if loop is None or loop.is_closed():
+            loop = asyncio.new_event_loop()
+            cls._local.loop = loop
+        return loop
 
 
 def run_async(coro):
     """Run an async coroutine from synchronous code.
 
-    Reuses a single persistent event loop so that aiocoap contexts
-    remain valid across calls. The coap module is single-threaded, so
-    no locking is needed.
+    Reuses a per-thread persistent event loop so that aiocoap contexts
+    remain valid across calls within a thread while concurrent scan
+    threads never share (and thus never collide on) a loop.
     """
-    return _get_loop().run_until_complete(coro)
+    return _EventLoopHolder.get().run_until_complete(coro)
 
 
 async def create_context():
@@ -66,12 +83,12 @@ async def shutdown_context(ctx):
 
 
 def coap_ping(host: str, port: int, timeout: float = DEFAULT_TIMEOUT) -> bool:
-    """Send an empty CON message to test CoAP responsiveness.
+    """Send an empty CON message to test CoAP responsiveness over cleartext UDP.
 
-    Uses raw UDP to avoid aiocoap overhead for a simple ping.
+    Uses raw UDP to avoid aiocoap overhead for a simple plaintext ping.
+    This cannot probe a DTLS endpoint (no handshake), so callers must
+    skip it for coaps:// scans and use a scheme-aware probe instead.
     """
-    # TODO: Replace with aiocoap Context.ping() — avoids manual packet
-    # construction and would respect DTLS if configured.
     # CoAP empty CON: Ver=1, Type=CON(0), TKL=0, Code=0.00, MID=0x0001
     ping_msg = b"\x40\x00\x00\x01"
     sock = None
@@ -206,7 +223,7 @@ def parse_link_format(payload: str) -> List[Dict[str, Any]]:
 
         # Parse attributes after the path
         attrs_str = entry[path_match.end() :]
-        # obs flag (no value)
+        # Obs flag (no value)
         if ";obs" in attrs_str.lower():
             resource["obs"] = True
 
@@ -320,6 +337,74 @@ async def coap_get_blockwise(
     return code_str, bytes(assembled)
 
 
+async def coap_put_blockwise(
+    ctx,
+    uri: str,
+    payload: bytes,
+    block_size: int = 512,
+    timeout: float = DEFAULT_TIMEOUT,
+    content_format: Optional[int] = None,
+) -> Dict[str, Any]:
+    """PUT a large payload using Block1 upload (RFC 7959).
+
+    Splits *payload* into *block_size* chunks and sends each with the
+    Block1 option until the server has received all blocks.
+
+    Returns dict with keys: code, success.
+    """
+    aiocoap = _get_aiocoap()
+
+    szx = BLOCK_SIZES.get(block_size, 5)
+    total_blocks = (len(payload) + block_size - 1) // block_size
+    if total_blocks == 0:
+        total_blocks = 1
+
+    logger.debug(
+        "Block1 PUT %s: %d bytes in %d blocks (block_size=%d)",
+        uri,
+        len(payload),
+        total_blocks,
+        block_size,
+    )
+
+    for block_num in range(total_blocks):
+        start = block_num * block_size
+        end = min(start + block_size, len(payload))
+        chunk = payload[start:end]
+        more = block_num < total_blocks - 1
+
+        request = aiocoap.Message(code=aiocoap.PUT, uri=uri, payload=chunk)
+        request.opt.block1 = aiocoap.optiontypes.BlockOption.BlockwiseTuple(block_num, more, szx)
+        if content_format is not None:
+            request.opt.content_format = content_format
+
+        try:
+            response = await asyncio.wait_for(ctx.request(request).response, timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.debug("Block1 PUT timeout at block %d/%d", block_num, total_blocks)
+            return {"code": "timeout", "success": False}
+        except Exception as e:
+            logger.debug("Block1 PUT error at block %d: %s", block_num, e)
+            return {"code": f"error:{e}", "success": False}
+
+        code_str = str(response.code)
+        logger.debug(
+            "Block1 PUT block %d/%d: %s (%d bytes)",
+            block_num + 1,
+            total_blocks,
+            code_str,
+            len(chunk),
+        )
+
+        # 2.31 Continue means server wants more blocks
+        if more and not code_str.startswith("2."):
+            logger.debug("Block1 PUT rejected at block %d: %s", block_num, code_str)
+            return {"code": code_str, "success": False}
+
+    # Final response code
+    return {"code": code_str, "success": code_str.startswith("2.")}
+
+
 async def try_dtls_psk(
     host: str,
     port: int,
@@ -389,6 +474,33 @@ async def try_dtls_psk(
         return False, None, str(e)
 
 
+def _dtls_supports_kwargs(aiocoap_creds: Any, *kwargs: str) -> bool:
+    """Return True if aiocoap's DTLS credential accepts all of ``kwargs``.
+
+    The pinned aiocoap DTLS credential only takes ``psk`` / ``client_identity``
+    (PSK mode); certificate and RPK kwargs are rejected. We inspect the
+    constructor signature so callers can detect an unsupported auth mode before
+    touching the filesystem, rather than masking it behind a later error.
+    """
+    dtls_cls = getattr(aiocoap_creds, "DTLS", None)
+    if dtls_cls is None:
+        return False
+    try:
+        params = inspect.signature(dtls_cls.__init__).parameters
+    except (TypeError, ValueError):
+        # Signature not introspectable -- fall back to attempting the call.
+        try:
+            dtls_cls(**{k: b"" for k in kwargs})
+            return True
+        except TypeError:
+            return False
+        except Exception:
+            return True
+    if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        return True
+    return all(k in params for k in kwargs)
+
+
 async def try_dtls_cert(
     host: str,
     port: int,
@@ -397,25 +509,95 @@ async def try_dtls_cert(
     ca_path: Optional[str] = None,
     timeout: float = DEFAULT_TIMEOUT,
 ) -> Tuple[bool, Optional[Any], str]:
-    """Report that certificate-based DTLS is unsupported by the aiocoap backend.
+    """Attempt a CoAP DTLS connection with certificate-based authentication.
 
-    The pinned aiocoap (0.4.17) DTLS credential type only accepts
-    ``psk`` / ``client_identity`` — there is no client-certificate
-    constructor on the tinydtls backend. Rather than read the cert/key
-    files and fail against an API that does not exist, return the honest
-    "not supported" result immediately.
+    Creates an aiocoap DTLS context using X.509 certificates and tries to
+    GET /.well-known/core. Returns (success, context, detail).
 
-    Returns (success, context, detail) == (False, None, <reason>).
+    On success the context is returned open (caller must shut it down).
+    On failure the context is closed and None is returned.
+
+    Note: Certificate-based DTLS requires a DTLS backend that supports it
+    (e.g. the OpenSSL-based tinydtls or python-dtls). If the installed
+    aiocoap backend does not support certificates, this will fail with a
+    descriptive error message.
     """
-    return (
-        False,
-        None,
-        (
-            "DTLS certificate authentication is not supported by the installed "
-            "aiocoap DTLS backend (tinydtls), which only supports PSK mode. "
-            "Certificate auth requires an OpenSSL-based DTLS backend."
-        ),
-    )
+    ctx = None
+    try:
+        aiocoap = _get_aiocoap()
+        aiocoap_creds = importlib.import_module("aiocoap.credentials")
+
+        client_creds = aiocoap_creds.CredentialsMap()
+        target_uri = f"coaps://{host}:{port}/*"
+
+        # aiocoap supports certificate DTLS via the DTLS credential type
+        # with client_cert / server_cert parameters (backend-dependent).
+        if not hasattr(aiocoap_creds, "DTLS"):
+            return False, None, "aiocoap credentials module missing DTLS class"
+
+        # Probe whether the installed DTLS credential even accepts certificate
+        # kwargs BEFORE touching the filesystem. The pinned aiocoap DTLS
+        # credential (tinydtls backend) only supports PSK, so cert auth is
+        # not supported -- report that honestly instead of failing later on a
+        # missing file and masking the real reason.
+        if not _dtls_supports_kwargs(aiocoap_creds, "client_cert", "private_key"):
+            return (
+                False,
+                None,
+                (
+                    "certificate authentication is not supported by the installed "
+                    "aiocoap DTLS backend (likely tinydtls), which only supports PSK "
+                    "mode. Certificate auth requires an OpenSSL-based DTLS backend."
+                ),
+            )
+
+        # Read cert and key files now that we know cert auth is usable.
+        cred_kwargs = {}
+        with open(cert_path, "rb") as f:
+            cred_kwargs["client_cert"] = f.read()
+        with open(key_path, "rb") as f:
+            cred_kwargs["private_key"] = f.read()
+        if ca_path:
+            with open(ca_path, "rb") as f:
+                cred_kwargs["ca_certs"] = f.read()
+
+        client_creds[target_uri] = aiocoap_creds.DTLS(**cred_kwargs)
+
+        ctx = await aiocoap.Context.create_client_context()
+        ctx.client_credentials = client_creds
+
+        uri = f"coaps://{host}:{port}/.well-known/core"
+        request = aiocoap.Message(code=aiocoap.GET, uri=uri)
+        response = await asyncio.wait_for(ctx.request(request).response, timeout=timeout)
+        code_str = str(response.code)
+
+        if code_str.startswith("2.") or code_str.startswith("4."):
+            return True, ctx, code_str
+
+        await ctx.shutdown()
+        return False, None, f"unexpected response: {code_str}"
+
+    except FileNotFoundError as e:
+        if ctx:
+            try:
+                await ctx.shutdown()
+            except Exception as exc:
+                logger.debug("DTLS-cert cleanup error after FileNotFoundError: %s", exc)
+        return False, None, f"certificate file not found: {e}"
+    except asyncio.TimeoutError:
+        if ctx:
+            try:
+                await ctx.shutdown()
+            except Exception as exc:
+                logger.debug("DTLS-cert cleanup error after timeout: %s", exc)
+        return False, None, "timeout"
+    except Exception as e:
+        if ctx:
+            try:
+                await ctx.shutdown()
+            except Exception as exc:
+                logger.debug("DTLS-cert cleanup error: %s", exc)
+        return False, None, str(e)
 
 
 async def try_dtls_rpk(
@@ -424,24 +606,81 @@ async def try_dtls_rpk(
     rpk_path: str,
     timeout: float = DEFAULT_TIMEOUT,
 ) -> Tuple[bool, Optional[Any], str]:
-    """Report that Raw Public Key DTLS is unsupported by the aiocoap backend.
+    """Attempt a CoAP DTLS connection with Raw Public Key (RPK) authentication.
 
-    RPK (RFC 7250) is not exposed by the pinned aiocoap (0.4.17) DTLS
-    credential type, whose constructor only accepts ``psk`` /
-    ``client_identity``. Return the honest "not supported" result
-    immediately rather than read the RPK file and fail against a
-    constructor kwarg that does not exist.
+    RPK (RFC 7250) uses raw public keys instead of X.509 certificates,
+    reducing overhead for constrained devices.
 
-    Returns (success, context, detail) == (False, None, <reason>).
+    Note: RPK support depends on the aiocoap DTLS backend. Most backends
+    (tinydtls, mbedtls) have limited or no RPK support. This function
+    will return a descriptive error if RPK is not supported.
+
+    Returns (success, context, detail).
     """
-    return (
-        False,
-        None,
-        (
-            "DTLS Raw Public Key (RPK) authentication is not supported by the "
-            "installed aiocoap DTLS backend, which only supports PSK mode."
-        ),
-    )
+    ctx = None
+    try:
+        aiocoap = _get_aiocoap()
+        aiocoap_creds = importlib.import_module("aiocoap.credentials")
+
+        client_creds = aiocoap_creds.CredentialsMap()
+        target_uri = f"coaps://{host}:{port}/*"
+
+        # Probe RPK support BEFORE reading the key file so an unsupported
+        # backend is reported honestly rather than masked by a missing file.
+        if not hasattr(aiocoap_creds, "DTLS") or not _dtls_supports_kwargs(
+            aiocoap_creds, "raw_public_key"
+        ):
+            return (
+                False,
+                None,
+                (
+                    "Raw Public Key (RPK) authentication is not supported by the "
+                    "installed aiocoap DTLS backend. RPK (RFC 7250) requires a DTLS "
+                    "backend with RPK support; the installed backend likely only "
+                    "supports PSK mode."
+                ),
+            )
+
+        with open(rpk_path, "rb") as f:
+            rpk_data = f.read()
+
+        client_creds[target_uri] = aiocoap_creds.DTLS(raw_public_key=rpk_data)
+
+        ctx = await aiocoap.Context.create_client_context()
+        ctx.client_credentials = client_creds
+
+        uri = f"coaps://{host}:{port}/.well-known/core"
+        request = aiocoap.Message(code=aiocoap.GET, uri=uri)
+        response = await asyncio.wait_for(ctx.request(request).response, timeout=timeout)
+        code_str = str(response.code)
+
+        if code_str.startswith("2.") or code_str.startswith("4."):
+            return True, ctx, code_str
+
+        await ctx.shutdown()
+        return False, None, f"unexpected response: {code_str}"
+
+    except FileNotFoundError as e:
+        if ctx:
+            try:
+                await ctx.shutdown()
+            except Exception as exc:
+                logger.debug("DTLS-RPK cleanup error after FileNotFoundError: %s", exc)
+        return False, None, f"RPK file not found: {e}"
+    except asyncio.TimeoutError:
+        if ctx:
+            try:
+                await ctx.shutdown()
+            except Exception as exc:
+                logger.debug("DTLS-RPK cleanup error after timeout: %s", exc)
+        return False, None, "timeout"
+    except Exception as e:
+        if ctx:
+            try:
+                await ctx.shutdown()
+            except Exception as exc:
+                logger.debug("DTLS-RPK cleanup error: %s", exc)
+        return False, None, str(e)
 
 
 # ------------------------------------------------------------------

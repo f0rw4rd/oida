@@ -33,6 +33,8 @@ from __future__ import annotations
 import ast
 import pathlib
 
+from tests._ast_safe import safe_parse
+
 import pytest
 
 SRC_ROOT = pathlib.Path(__file__).resolve().parents[2] / "src" / "oida"
@@ -83,9 +85,9 @@ def _is_input_credential(expr_text: str) -> bool:
         if f"args.{frag}" in txt:
             return True
         # getattr(args | self.args, "<frag>", ...)
-        if f"getattr(" in txt and f'"{frag}"' in txt and "args" in txt:
+        if "getattr(" in txt and f'"{frag}"' in txt and "args" in txt:
             return True
-        if f"getattr(" in txt and f"'{frag}'" in txt and "args" in txt:
+        if "getattr(" in txt and f"'{frag}'" in txt and "args" in txt:
             return True
     return False
 
@@ -108,15 +110,14 @@ def _collect_credential_log_sites() -> set[tuple[str, int]]:
     for py in SRC_ROOT.rglob("*.py"):
         rel = py.relative_to(SRC_ROOT).as_posix()
         try:
-            tree = ast.parse(py.read_text())
+            tree = safe_parse(py.read_text())
         except SyntaxError:
             continue
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
             if not (
-                isinstance(node.func, ast.Attribute)
-                and node.func.attr in _USER_FACING_METHODS
+                isinstance(node.func, ast.Attribute) and node.func.attr in _USER_FACING_METHODS
             ):
                 continue
             for arg in node.args:
@@ -172,7 +173,7 @@ def test_predicate_self_check():
     a no-op — a synthetic ``logger.info(f"pw={self.args.password}")``
     must still be flagged.
     """
-    synthetic = ast.parse(
+    synthetic = safe_parse(
         'logger.info(f"pw={self.args.password}")\n'
         'logger.success(f"recovered={found_password}")\n'  # NOT a leak — local
     )

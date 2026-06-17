@@ -28,8 +28,6 @@ from .tcp_state_integration import StatefulTCPFuzzerMixin
 class TCPOptions(Enum):
     """Extended TCP header options"""
 
-    END = 0
-    NOP = 1
     MSS = 2
     WINDOW_SCALE = 3
     SACK_PERMITTED = 4
@@ -39,8 +37,6 @@ class TCPOptions(Enum):
     USER_TIMEOUT = 28
     AUTH = 29
     MULTIPATH_TCP = 30
-    FASTOPEN_COOKIE = 34
-    ENCRYPTION = 69  # Experimental
 
 
 class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
@@ -118,9 +114,84 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
 
         return help_text
 
+    # Single source of truth for every request connected in _define_protocol().
+    # Tuples are (name, description, category, requires_state) in the same tiered
+    # order as the session.connect(...) calls. get_request_definitions() and
+    # fuzz_all() both derive from this so they never drift out of sync.
+    _REQUEST_CATALOG = [
+        # TIER 1: baseline
+        ("TCP_Data", "Data transfer", "standard", "ESTABLISHED"),
+        ("TCP_FIN", "FIN packet", "teardown", "ESTABLISHED"),
+        # TIER 2: core protocol
+        ("TCP_SYN", "SYN packet", "handshake", "CLOSED"),
+        ("TCP_SYN_ACK", "SYN-ACK packet", "handshake", "SYN_RECEIVED"),
+        ("TCP_Options_Edge_Cases", "Options edge cases", "boundary", "SYN_SENT"),
+        # TIER 3: advanced features
+        ("TCP_SACK", "Selective ACK option", "options", "ESTABLISHED"),
+        ("TCP_ECN_Setup", "ECN negotiation", "handshake", "CLOSED"),
+        ("TCP_THC_Flag_Fuzz", "THC flag combinations", "attack", "ESTABLISHED"),
+        # TIER 4: edge cases & validation
+        ("TCP_Invalid_States", "Invalid state combinations", "attack", "ESTABLISHED"),
+        ("TCP_Reserved_Bit_Test", "Reserved bit tests", "attack", "CLOSED"),
+        ("TCP_Incorrect_Data_Offset", "Incorrect Data_Offset values", "boundary", "ESTABLISHED"),
+        # TIER 5: CVE & vulnerability patterns
+        ("TCP_CVE_2020_13987_Checksum_OOB", "CVE-2020-13987", "cve", "SYN_SENT"),
+        ("TCP_CVE_2020_17437_Urgent_No_Bounds", "CVE-2020-17437", "cve", "ESTABLISHED"),
+        ("TCP_CVE_2021_31401_Header_Overflow", "CVE-2021-31401", "cve", "ESTABLISHED"),
+        ("TCP_Length_Underflow_Pattern", "Length underflow", "cve", "SYN_SENT"),
+        ("TCP_SACK_Panic", "SACK panic trigger", "cve", "ESTABLISHED"),
+        ("TCP_Integer_Overflow", "Integer overflow", "cve", "ESTABLISHED"),
+        ("TCP_Timestamp_Attacks", "PAWS timestamp attacks", "attack", "ESTABLISHED"),
+        # TIER 6: exotic features
+        ("TCP_MPTCP", "Multipath TCP option", "options", "ESTABLISHED"),
+        ("TCP_Auth", "TCP-AO authentication", "options", "ESTABLISHED"),
+        ("TCP_Options_Parsing_Overflow", "Options parsing overflow", "cve", "SYN_SENT"),
+        ("TCP_State_Confusion", "State machine confusion", "attack", "ESTABLISHED"),
+        ("TCP_Memory_Corruption", "Memory corruption patterns", "attack", "ESTABLISHED"),
+        ("TCP_Urgent_Exploits", "WinNuke urgent pointer exploits", "attack", "ESTABLISHED"),
+        # TIER 7: extended IANA-registered TCP options
+        ("TCP_Echo_Option", "Echo option (kind=6)", "extended", "SYN_SENT"),
+        ("TCP_Echo_Reply", "Echo Reply option (kind=7)", "extended", "ESTABLISHED"),
+        ("TCP_CC_Option", "CC option (kind=11)", "extended", "SYN_SENT"),
+        ("TCP_CC_NEW", "CC.NEW option (kind=12)", "extended", "SYN_SENT"),
+        ("TCP_CC_ECHO", "CC.ECHO option (kind=13)", "extended", "SYN_SENT"),
+        ("TCP_Alt_Checksum_Request", "Alt Checksum Request (kind=14)", "extended", "SYN_SENT"),
+        ("TCP_Alt_Checksum_Data", "Alt Checksum Data (kind=15)", "extended", "ESTABLISHED"),
+        ("TCP_POC_Permitted", "POC Permitted (kind=9)", "extended", "SYN_SENT"),
+        ("TCP_POC_Profile", "POC Profile (kind=10)", "extended", "ESTABLISHED"),
+        ("TCP_MD5_Signature", "MD5 Signature (kind=19)", "extended", "SYN_SENT"),
+        ("TCP_SNACK", "Selective NACK (kind=21)", "extended", "ESTABLISHED"),
+        ("TCP_QuickStart", "Quick-Start (kind=27)", "extended", "SYN_SENT"),
+        ("TCP_Record_Boundaries", "Record Boundaries (kind=22)", "extended", "ESTABLISHED"),
+        ("TCP_Corruption_Experienced", "Corruption Experienced (kind=23)", "extended", "ESTABLISHED"),
+        ("TCP_ENO", "Encryption Negotiation (kind=69)", "extended", "SYN_SENT"),
+        ("TCP_AccECN_Order0", "Accurate ECN Order 0 (kind=172)", "extended", "SYN_SENT"),
+        ("TCP_AccECN_Order1", "Accurate ECN Order 1 (kind=173)", "extended", "ESTABLISHED"),
+        ("TCP_AccECN_Order2", "Accurate ECN Order 2 (kind=174)", "extended", "ESTABLISHED"),
+        ("TCP_Experimental_253", "Experimental (kind=253)", "extended", "SYN_SENT"),
+        ("TCP_Experimental_254", "Experimental (kind=254)", "extended", "SYN_SENT"),
+        ("TCP_Skeeter", "Skeeter (kind=16, proprietary)", "extended", "SYN_SENT"),
+        ("TCP_Bubba", "Bubba (kind=17, proprietary)", "extended", "SYN_SENT"),
+        ("TCP_SCPS", "SCPS Capabilities (kind=20)", "extended", "SYN_SENT"),
+        ("TCP_SNAP", "SNAP (kind=24, proprietary)", "extended", "ESTABLISHED"),
+    ]
+
+    # Requests historically fuzzed at sub-block granularity rather than at the
+    # top-level request node. Maps request name -> list of node paths to fuzz.
+    _SUBPATH_NODES = {
+        "TCP_Data": ["TCP_Data.Data_Header", "TCP_Data.Data_Block.Data_Content"],
+        "TCP_SACK": ["TCP_SACK.SACK_Options_Block"],
+        "TCP_ECN_Setup": ["TCP_ECN_Setup.ECN_Header"],
+        "TCP_MPTCP": ["TCP_MPTCP.MPTCP_Block_Options"],
+        "TCP_Auth": ["TCP_Auth.Auth_Option"],
+    }
+
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:
         """Get static request definitions for --list-requests
+
+        Derived from _REQUEST_CATALOG (single source of truth covering every
+        request connected in _define_protocol).
 
         TCP State Machine States:
         - CLOSED: No connection active
@@ -136,111 +207,8 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         - TIME_WAIT: Waiting to ensure remote received final ACK
         """
         return [
-            # Standard TCP Handshake - SYN tests start from CLOSED state
-            RequestInfo("TCP_SYN", "SYN packet", "handshake", requires_state="CLOSED"),
-            RequestInfo(
-                "TCP_SYN_ACK",
-                "SYN-ACK packet",
-                "handshake",
-                requires_state="SYN_RECEIVED",
-            ),
-            RequestInfo("TCP_ECN_Setup", "ECN negotiation", "handshake", requires_state="CLOSED"),
-            # Options - require ESTABLISHED for data transfer
-            RequestInfo(
-                "TCP_SACK",
-                "Selective ACK option",
-                "options",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_MPTCP",
-                "Multipath TCP option",
-                "options",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_Auth",
-                "TCP-AO authentication",
-                "options",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo("TCP_Data", "Data transfer", "standard", requires_state="ESTABLISHED"),
-            # THC-IPv6 style attacks - most require ESTABLISHED
-            RequestInfo(
-                "TCP_THC_Flag_Fuzz",
-                "THC flag combinations",
-                "attack",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_Options_Edge_Cases",
-                "Options edge cases",
-                "boundary",
-                requires_state="SYN_SENT",
-            ),
-            RequestInfo(
-                "TCP_Invalid_States",
-                "Invalid state combinations",
-                "attack",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_Reserved_Bit_Test",
-                "Reserved bit tests",
-                "attack",
-                requires_state="CLOSED",
-            ),
-            # Teardown - FIN requires ESTABLISHED to initiate close
-            RequestInfo("TCP_FIN", "FIN packet", "teardown", requires_state="ESTABLISHED"),
-            # CVE patterns - most target ESTABLISHED connections
-            RequestInfo(
-                "TCP_CVE_2020_13987_Checksum_OOB",
-                "CVE-2020-13987",
-                "cve",
-                requires_state="SYN_SENT",
-            ),
-            RequestInfo(
-                "TCP_CVE_2020_17437_Urgent_No_Bounds",
-                "CVE-2020-17437",
-                "cve",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_CVE_2021_31401_Header_Overflow",
-                "CVE-2021-31401",
-                "cve",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_Length_Underflow_Pattern",
-                "Length underflow",
-                "cve",
-                requires_state="SYN_SENT",
-            ),
-            RequestInfo(
-                "TCP_Options_Parsing_Overflow",
-                "Options parsing overflow",
-                "cve",
-                requires_state="SYN_SENT",
-            ),
-            RequestInfo(
-                "TCP_SACK_Panic",
-                "SACK panic trigger",
-                "cve",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_Integer_Overflow",
-                "Integer overflow",
-                "cve",
-                requires_state="ESTABLISHED",
-            ),
-            RequestInfo(
-                "TCP_State_Confusion",
-                "State machine confusion",
-                "attack",
-                requires_state="ESTABLISHED",
-            ),
+            RequestInfo(name, desc, category, requires_state=state)
+            for name, desc, category, state in cls._REQUEST_CATALOG
         ]
 
     def __init__(
@@ -284,7 +252,6 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         self.mptcp_block = None
         self._setup_extension_blocks()
         super().__init__(config, connection_factory)
-        self.protocol_name = "TCP" if not use_raw_socket else "TCP-RAW"
 
         # Log socket mode after super().__init__() so self.log is available
         if config:
@@ -460,10 +427,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
 
     def _define_tcp_options(self) -> Block:
         """Define comprehensive TCP options block"""
-        # (encryption_block was built here but never embedded in a Request —
-        # the live kind=69 TCP-ENO fuzzing is the separate tcp_eno request.)
-        if self.mptcp_block is None:
-            raise RuntimeError("MPTCP block not properly initialized")
+        assert self.mptcp_block is not None
 
         # Create all TCP options individually so they can be tested separately
         return Block(
@@ -1572,76 +1536,6 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
 
         return self.session
 
-    def fuzz_handshake(self):
-        """Fuzz TCP handshake sequence"""
-        self.fuzz_node("TCP_SYN")
-        self.fuzz_node("TCP_SYN_ACK")
-
-    def fuzz_ecn(self):
-        """Fuzz ECN negotiation"""
-        self.fuzz_node("TCP_ECN_Setup.ECN_Header")
-
-    def fuzz_sack(self):
-        """Fuzz Selective ACK mechanisms"""
-        self.fuzz_node("TCP_SACK.SACK_Options")
-
-    def fuzz_mptcp(self):
-        """Fuzz Multipath TCP extensions"""
-        self.fuzz_node("TCP_MPTCP.MPTCP_Option")
-
-    def fuzz_auth(self):
-        """Fuzz TCP Authentication"""
-        self.fuzz_node("TCP_Auth.Auth_Option")
-
-    def fuzz_data_transfer(self):
-        """Fuzz TCP data transfer with payload variations"""
-        self.fuzz_node("TCP_Data.Data_Header")
-        self.fuzz_node("TCP_Data.Data_Block.Data_Content")
-
-    def fuzz_termination(self):
-        """Fuzz connection teardown"""
-        self.fuzz_node("TCP_FIN")
-
-    def fuzz_thc_flags(self):
-        """Fuzz extended TCP flag combinations (THC-IPv6 style)"""
-        self.fuzz_node("TCP_THC_Flag_Fuzz")
-
-    def fuzz_options_edge_cases(self):
-        """Fuzz TCP options with boundary values"""
-        self.fuzz_node("TCP_Options_Edge_Cases")
-
-    def fuzz_invalid_states(self):
-        """Fuzz invalid TCP state combinations for robustness testing"""
-        self.fuzz_node("TCP_Invalid_States")
-
-    def fuzz_reserved_bits(self):
-        """Test reserved bit protocol compliance"""
-        self.fuzz_node("TCP_Reserved_Bit_Test")
-
-    def fuzz_sack_panic(self):
-        """Fuzz SACK Panic vulnerability patterns (CVE-2019-11477)"""
-        self.fuzz_node("TCP_SACK_Panic")
-
-    def fuzz_integer_overflow(self):
-        """Fuzz integer overflow conditions in TCP processing"""
-        self.fuzz_node("TCP_Integer_Overflow")
-
-    def fuzz_state_confusion(self):
-        """Fuzz state confusion attacks (Land attack variants)"""
-        self.fuzz_node("TCP_State_Confusion")
-
-    def fuzz_memory_corruption(self):
-        """Fuzz memory corruption through TCP option processing"""
-        self.fuzz_node("TCP_Memory_Corruption")
-
-    def fuzz_urgent_exploits(self):
-        """Fuzz urgent pointer exploitations (WinNuke variants)"""
-        self.fuzz_node("TCP_Urgent_Exploits")
-
-    def fuzz_timestamp_attacks(self):
-        """Fuzz timestamp attacks and PAWS exploitation"""
-        self.fuzz_node("TCP_Timestamp_Attacks")
-
     def fuzz_all(self):
         """Execute comprehensive protocol fuzzing including THC-IPv6 techniques"""
         # Register state tracking callbacks if enabled
@@ -1659,31 +1553,11 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             self.log.display("TCP state tracking enabled")
 
         try:
-            self.fuzz_handshake()
-            self.fuzz_ecn()
-            self.fuzz_sack()
-            self.fuzz_mptcp()
-            self.fuzz_auth()
-            self.fuzz_data_transfer()
-            self.fuzz_termination()
-
-            # THC-IPv6 inspired legitimate testing
-            self.fuzz_thc_flags()
-            self.fuzz_options_edge_cases()
-            self.fuzz_invalid_states()
-            self.fuzz_reserved_bits()
-
-            # Advanced vulnerability exploitation patterns
-            self.fuzz_sack_panic()
-            self.fuzz_integer_overflow()
-            self.fuzz_state_confusion()
-            self.fuzz_memory_corruption()
-
-            # Urgent pointer and timestamp exploitation
-            if self.is_request_enabled("TCP_Urgent_Exploits"):
-                self.fuzz_urgent_exploits()
-            if self.is_request_enabled("TCP_Timestamp_Attacks"):
-                self.fuzz_timestamp_attacks()
+            for name, _desc, _category, _state in self._REQUEST_CATALOG:
+                if not self.is_request_enabled(name):
+                    continue
+                for node_path in self._SUBPATH_NODES.get(name, [name]):
+                    self.fuzz_node(node_path)
         finally:
             # Log state tracking summary
             if track_states and hasattr(self, "state_tracker"):

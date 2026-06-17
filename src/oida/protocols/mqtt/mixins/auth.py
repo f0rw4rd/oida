@@ -32,16 +32,8 @@ class AuthMixin:
         if success:
             result["anonymous_allowed"] = True
             result["requires_auth"] = False
-            self.report_vulnerability(
-                "Anonymous Authentication",
-                "CRITICAL",
-                "Broker allows connections without credentials (CVE-2017-7650 style)",
-            )
-            self.logger.security_finding(
-                "Anonymous access",
-                category="ACCESS_CONTROL",
-                detail="Anonymous authentication allowed",
-            )
+            # The anonymous-access finding is reported once in _analyze_security
+            # to avoid duplicate findings for the same broker.
         else:
             self.logger.display(f"Anonymous authentication denied ({reason})")
         return result

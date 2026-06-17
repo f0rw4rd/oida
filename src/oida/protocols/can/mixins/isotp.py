@@ -86,7 +86,12 @@ class ISOTPMixin:
             remaining = end_time - time.time()
             if remaining <= 0:
                 break
-            msg = bus.recv(timeout=min(remaining, 0.05))
+            try:
+                msg = bus.recv(timeout=min(remaining, 0.05))
+            except Exception:
+                # udp_multicast datagrams can coalesce under load, yielding
+                # msgpack decode failures; skip the corrupt packet and continue.
+                continue
             if msg is None:
                 continue
             if not self._isotp_id_matches(msg, request_id, response_id):
@@ -117,11 +122,24 @@ class ISOTPMixin:
 
             frames: List[bytes] = [first]
             collected = len(first[2:])  # data bytes carried by the FF
+            # The FF is implicitly SN 0; the first CF must carry SN 1 and each
+            # subsequent CF increments mod 16. On a duplicating transport (the
+            # udp_multicast test bus re-sends frames) a Consecutive Frame can
+            # arrive twice or interleaved with a stale copy, so a frame whose SN
+            # does not match the one we expect is treated as a duplicate/stray
+            # and skipped -- we keep waiting for the expected SN rather than
+            # aborting (which would drop an otherwise-complete payload).
+            expected_sn = 1
             while collected < total_length and time.time() < end_time:
                 remaining = end_time - time.time()
                 if remaining <= 0:
                     break
-                msg = bus.recv(timeout=min(remaining, 0.05))
+                try:
+                    msg = bus.recv(timeout=min(remaining, 0.05))
+                except Exception:
+                    # udp_multicast datagrams can coalesce under load, yielding
+                    # msgpack decode failures; skip the corrupt packet and continue.
+                    continue
                 if msg is None:
                     continue
                 if not self._isotp_id_matches(msg, request_id, response_id):
@@ -129,6 +147,11 @@ class ISOTPMixin:
                 cf = bytes(msg.data)
                 if not cf or (cf[0] & 0xF0) != ISOTP_CONSECUTIVE_FRAME:
                     continue
+                if (cf[0] & 0x0F) != expected_sn:
+                    # Duplicate or out-of-order Consecutive Frame: ignore it and
+                    # keep waiting for the SN we actually need.
+                    continue
+                expected_sn = (expected_sn + 1) & 0x0F
                 frames.append(cf)
                 collected += len(cf[1:])
 

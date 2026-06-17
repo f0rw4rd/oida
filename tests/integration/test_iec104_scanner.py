@@ -33,6 +33,8 @@ from typing import Dict, Any
 
 import pytest
 
+pytestmark = pytest.mark.xdist_group("iec104_service")
+
 c104 = pytest.importorskip("c104", reason="c104 library required for IEC 104 integration tests")
 
 from oida.protocols.iec104 import IEC104Scanner  # noqa: E402

@@ -402,9 +402,18 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                                     # Single object
                                     ioas_to_add = [first_ioa]
 
-                                # Extract measured values from raw info elements
+                                # Extract measured values from raw info elements.
+                                # Returns None when the type size is unknown or the
+                                # requested element runs past the end of the buffer
+                                # (bounds-checked so out-of-range reads never produce
+                                # bogus/duplicate values).
                                 def _extract_value(buf: bytes, ie_off: int, tid: int):
                                     """Return parsed value or None."""
+                                    size = INFO_ELEMENT_SIZES.get(tid)
+                                    if size is None:
+                                        return None
+                                    if ie_off < 0 or ie_off + size > len(buf):
+                                        return None
                                     try:
                                         if tid in (1, 30):  # M_SP single-point
                                             return bool(buf[ie_off] & SIQ_SPI_MASK)
@@ -432,7 +441,9 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                                                 f"0x{struct.unpack_from('<I', buf, ie_off)[0]:08X}"
                                             )
                                     except (struct.error, IndexError) as e:
-                                        scanner.logger.debug(f"Value decode failed for Type {tid}: {e}")
+                                        scanner.logger.debug(
+                                            f"Info-element value extraction failed for Type {tid}: {e}"
+                                        )
                                     return None
 
                                 # Store/update discovered IOAs
@@ -503,7 +514,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                 return
 
             # UNKNOWN_IOA is the expected outcome of a discovery interrogation:
-            # the server returns points we never pre-registered in c104's local
+            # The server returns points we never pre-registered in c104's local
             # station model, so c104 flags each ASDU's first IOA as unexpected.
             # The scanner's own on_receive_raw parser discovers these points
             # correctly, so this is noise, not a failure. Record it (already done
@@ -1293,7 +1304,8 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         self.logger.display(f"Counter interrogation: {result['new_points']} counter points")
         return result
 
-    def _parse_cp56time2a(self, buf: bytes) -> Optional[datetime]:
+    @staticmethod
+    def _parse_cp56time2a(buf: bytes) -> Optional[datetime]:
         """Parse 7-byte CP56Time2a into a datetime."""
         if len(buf) < CP56TIME2A_SIZE:
             return None
@@ -1306,8 +1318,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         sec, ms_rem = divmod(ms, 1000)
         try:
             return datetime(year, month, day, hour, minute, sec, ms_rem * 1000)
-        except ValueError as e:
-            self.logger.debug(f"Invalid CP56Time2a fields: {e}")
+        except ValueError:
             return None
 
     def _read_clock(self, client: Any, conn: Any) -> Dict[str, Any]:

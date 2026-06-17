@@ -620,8 +620,22 @@ class UDSResponder:
         # arrives. The off-thread multi-frame senders wait on it before
         # streaming Consecutive Frames (real ISO-TP behaviour).
         self._fc_event = fc_event
+        # Monotonic generation tag for multi-frame exchanges. Because _fc_event
+        # is shared, a Flow Control from a *new* exchange would otherwise also
+        # wake a streamer still parked from a previous one — making it dump
+        # stale Consecutive Frames onto the bus and corrupt the new read. Each
+        # streamer captures the generation current when its First Frame was
+        # sent and bails if a newer exchange has since superseded it.
+        self._mf_generation = 0
 
-    def _stream_consecutive_frames(self, resp_id: int, payload: bytes, offset: int) -> None:
+    def _next_mf_generation(self) -> int:
+        """Bump and return the multi-frame generation tag."""
+        self._mf_generation += 1
+        return self._mf_generation
+
+    def _stream_consecutive_frames(
+        self, resp_id: int, payload: bytes, offset: int, generation: int = 0
+    ) -> None:
         """Wait for the tester's Flow Control, then stream Consecutive Frames.
 
         Runs in a short-lived daemon thread so the dispatcher's single reader
@@ -630,6 +644,12 @@ class UDSResponder:
         if self._fc_event is not None:
             # Wait up to 0.5s for the tester's Flow Control before proceeding.
             self._fc_event.wait(timeout=0.5)
+
+        # A newer multi-frame exchange started while we were parked: the FC we
+        # just observed belongs to it, not to us. Abort rather than inject stale
+        # Consecutive Frames into the active read.
+        if generation and generation != self._mf_generation:
+            return
 
         seq = 1
         while offset < len(payload):
@@ -807,11 +827,12 @@ class UDSResponder:
             ff_data = bytes([ff_pci_hi, ff_pci_lo]) + resp_payload[:6]
             if self._fc_event is not None:
                 self._fc_event.clear()
+            generation = self._next_mf_generation()
             self.bus.send(resp_id, ff_data[:8])
 
             threading.Thread(
                 target=self._stream_consecutive_frames,
-                args=(resp_id, resp_payload, 6),
+                args=(resp_id, resp_payload, 6, generation),
                 daemon=True,
             ).start()
 
@@ -949,11 +970,12 @@ class UDSResponder:
                 ff = bytes([ff_hi, ff_lo]) + full_resp[:6]
                 if self._fc_event is not None:
                     self._fc_event.clear()
+                generation = self._next_mf_generation()
                 self.bus.send(OBD2_RESPONSE_ID, ff[:8])
 
                 threading.Thread(
                     target=self._stream_consecutive_frames,
-                    args=(OBD2_RESPONSE_ID, full_resp, 6),
+                    args=(OBD2_RESPONSE_ID, full_resp, 6, generation),
                     daemon=True,
                 ).start()
 
@@ -1034,10 +1056,19 @@ class CANopenResponder:
             frame = bytes([cmd, index & 0xFF, (index >> 8) & 0xFF, subindex]) + padded
             self.bus.send(resp_id, frame[:8])
         else:
-            # Segmented transfer - store pending data
+            # Segmented transfer - store pending state keyed by node. Tracking
+            # the next expected toggle plus the last frame sent lets us stay
+            # idempotent when the lossy udp_multicast test transport duplicates
+            # a client's segment request (CiA-301: a repeated toggle means
+            # "resend the previous segment", not "advance").
             if not hasattr(self, "_pending_segments"):
-                self._pending_segments: Dict[int, Tuple[bytes, int]] = {}
-            self._pending_segments[node_id] = (value, 0)  # (data, toggle)
+                self._pending_segments: Dict[int, dict] = {}
+            self._pending_segments[node_id] = {
+                "data": value,
+                "offset": 0,
+                "expected_toggle": 0,
+                "last_frame": None,
+            }
 
             # Initiate upload response with size indicated
             total_len = len(value)
@@ -1047,43 +1078,45 @@ class CANopenResponder:
             self.bus.send(resp_id, frame[:8])
 
     def _handle_sdo_segment_upload(self, node_id: int, resp_id: int, cmd: int) -> None:
-        """Handle SDO segment upload request."""
+        """Handle SDO segment upload request (toggle-idempotent)."""
         if not hasattr(self, "_pending_segments"):
             self._pending_segments = {}
 
-        if node_id not in self._pending_segments:
+        state = self._pending_segments.get(node_id)
+        if state is None:
             self._send_sdo_abort(resp_id, 0, 0, 0x05040001)
             return
 
-        data_buf, expected_toggle = self._pending_segments[node_id]
         req_toggle = (cmd >> 4) & 0x01
 
-        # Send next segment
-        offset = 0
-        # Calculate how many bytes we've already sent
-        # We need to track the offset properly
-        if not hasattr(self, "_segment_offsets"):
-            self._segment_offsets: Dict[int, int] = {}
-        offset = self._segment_offsets.get(node_id, 0)
+        # Duplicate request (toggle does not match the segment we are about to
+        # serve): re-send the previous segment instead of advancing the offset,
+        # so a duplicated request on the multicast bus cannot desync the stream.
+        if req_toggle != state["expected_toggle"]:
+            if state["last_frame"] is not None:
+                self.bus.send(resp_id, state["last_frame"])
+            return
 
+        data_buf = state["data"]
+        offset = state["offset"]
         remaining = data_buf[offset:]
+
         if len(remaining) <= 7:
             # Last segment
             seg_data = remaining + bytes(7 - len(remaining))
             n = 7 - len(remaining)
             resp_cmd = (SDO_SCS_SEGMENT_UPLOAD << 5) | (req_toggle << 4) | (n << 1) | 0x01
-            frame = bytes([resp_cmd]) + seg_data
-            self.bus.send(resp_id, frame[:8])
-            # Clean up
+            frame = (bytes([resp_cmd]) + seg_data)[:8]
+            self.bus.send(resp_id, frame)
             del self._pending_segments[node_id]
-            if node_id in self._segment_offsets:
-                del self._segment_offsets[node_id]
         else:
             seg_data = remaining[:7]
             resp_cmd = (SDO_SCS_SEGMENT_UPLOAD << 5) | (req_toggle << 4)
-            frame = bytes([resp_cmd]) + seg_data
-            self.bus.send(resp_id, frame[:8])
-            self._segment_offsets[node_id] = offset + 7
+            frame = (bytes([resp_cmd]) + seg_data)[:8]
+            self.bus.send(resp_id, frame)
+            state["offset"] = offset + 7
+            state["expected_toggle"] = 1 - req_toggle
+            state["last_frame"] = frame
 
     def _get_od_value(
         self, node_id: int, node_data: dict, index: int, subindex: int
@@ -1983,12 +2016,17 @@ class MessageDispatcher:
         self.xcp = XCPResponder(bus)
         self.ccp = CCPResponder(bus)
         self.j1939 = j1939
+        self.running = True
+
+    def stop(self) -> None:
+        """Signal the receive loop to exit (call before bus shutdown)."""
+        self.running = False
 
     def run(self) -> None:
         """Main receive loop."""
         log.info("Message dispatcher started")
 
-        while True:
+        while self.running:
             try:
                 msg = self.bus.recv(timeout=0.5)
                 if msg is None:
@@ -2038,8 +2076,10 @@ class MessageDispatcher:
                 # Ignore other traffic (our own background, etc.)
 
             except Exception:
-                # Silently ignore malformed packets (e.g. healthcheck probes)
-                pass
+                # Malformed packet (e.g. healthcheck probe) or a closed bus
+                # during teardown. Yield briefly so a shut-down bus that keeps
+                # raising cannot spin this thread at 100% CPU.
+                time.sleep(0.01)
 
 
 # =============================================================================

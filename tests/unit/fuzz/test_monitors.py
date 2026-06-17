@@ -123,7 +123,7 @@ class TestMonitorConfig:
         from oida.fuzz.core.config import MonitorConfig
 
         config = MonitorConfig.parse("ping:50,modbus:10,socket")
-        names = config.get_monitor_names()
+        names = [spec.name for spec in config.monitors]
         assert names == ["ping", "modbus", "socket"]
 
     def test_format_display(self):
@@ -208,11 +208,9 @@ class TestMonitorRegistry:
             "dhcp",
             "tftp",
             "hl7",
-            "dicom",
         ]
         for name in expected:
-            if name not in monitors:
-                pytest.skip(f"Monitor '{name}' not available (not yet implemented?)")
+            assert name in monitors, f"Monitor '{name}' not registered"
 
     def test_monitor_info_has_required_fields(self):
         """Test MonitorInfo has all required fields."""
@@ -224,7 +222,7 @@ class TestMonitorRegistry:
         assert hasattr(info, "name")
         assert hasattr(info, "cls")
         assert hasattr(info, "default_interval")
-        assert hasattr(info, "description")
+        assert hasattr(info, "default_port")
 
     def test_create_monitor(self):
         """Test create_monitor creates monitor instance."""
@@ -392,28 +390,25 @@ class TestProtocolDefaultMonitors:
         """Test ModbusFuzzer has protocol-specific DEFAULT_MONITORS."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
-        if fuzzer_class:
-            assert hasattr(fuzzer_class, "DEFAULT_MONITORS")
-            assert "modbus" in fuzzer_class.DEFAULT_MONITORS
+        fuzzer_class = PROTOCOL_FUZZERS["modbus"]
+        assert hasattr(fuzzer_class, "DEFAULT_MONITORS")
+        assert "modbus" in fuzzer_class.DEFAULT_MONITORS
 
     def test_http_fuzzer_default_monitors(self):
         """Test HTTPFuzzer has protocol-specific DEFAULT_MONITORS."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get("http")
-        if fuzzer_class:
-            assert hasattr(fuzzer_class, "DEFAULT_MONITORS")
-            assert "http" in fuzzer_class.DEFAULT_MONITORS
+        fuzzer_class = PROTOCOL_FUZZERS["http"]
+        assert hasattr(fuzzer_class, "DEFAULT_MONITORS")
+        assert "http" in fuzzer_class.DEFAULT_MONITORS
 
     def test_iec104_fuzzer_default_monitors(self):
         """Test IEC104Fuzzer has protocol-specific DEFAULT_MONITORS."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get("iec104")
-        if fuzzer_class:
-            assert hasattr(fuzzer_class, "DEFAULT_MONITORS")
-            assert "iec104" in fuzzer_class.DEFAULT_MONITORS
+        fuzzer_class = PROTOCOL_FUZZERS["iec104"]
+        assert hasattr(fuzzer_class, "DEFAULT_MONITORS")
+        assert "iec104" in fuzzer_class.DEFAULT_MONITORS
 
     def test_get_default_monitors_method(self):
         """Test get_default_monitors class method."""
@@ -434,16 +429,15 @@ class TestProtocolDefaultMonitors:
             ("dns", "socket"),
             ("mms", "mms"),
             ("hl7", "hl7"),
-            ("dicom", "dicom"),
         ],
     )
     def test_protocol_specific_monitors(self, protocol, expected_monitor):
         """Test each protocol has its specific monitor as default."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get(protocol)
-        if fuzzer_class and hasattr(fuzzer_class, "DEFAULT_MONITORS"):
-            assert expected_monitor in fuzzer_class.DEFAULT_MONITORS
+        fuzzer_class = PROTOCOL_FUZZERS[protocol]
+        assert hasattr(fuzzer_class, "DEFAULT_MONITORS")
+        assert expected_monitor in fuzzer_class.DEFAULT_MONITORS
 
 
 class TestCLIMonitorArgs:

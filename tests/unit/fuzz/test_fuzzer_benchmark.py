@@ -40,7 +40,6 @@ SKIP_PROTOCOLS = {
     "industrial_ethernet",
     "profinet_dcp",
     "modbus_rtu",
-    "gatt",
     "mutation",
 }
 
@@ -182,6 +181,7 @@ def _make_config():
         console_output=False,
         skip_pre_send_checks=True,
         web_interface=False,
+        enumerate=False,
     )
 
 

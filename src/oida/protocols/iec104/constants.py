@@ -51,6 +51,14 @@ ASDU_HEADER_SIZE = 12  # APCI(6) + TI(1) + VSQ(1) + COT(2) + CA(2)
 IOA_SIZE = 3
 IFRAME_MASK = 0x01  # (data[2] & IFRAME_MASK) == 0 → I-frame
 
+# IEC 60870-5-101 (serial) Common Address / IOA octet widths.
+# NOTE: these widths are configurable per IEC 60870-5-101 (CA may be 1 or 2
+# octets, IOA 1/2/3 octets). This implementation currently assumes the most
+# common 1-octet CA / 2-octet IOA profile; stations configured for wider
+# fields will have their CA/IOA parsed and built incorrectly.
+IEC101_CA_OCTETS = 1
+IEC101_IOA_OCTETS = 2
+
 # =============================================================================
 # VSQ (Variable Structure Qualifier)
 # =============================================================================
@@ -450,12 +458,6 @@ protocol_options = {
         "description": "File type for upload: 1=transparent, 2=disturbance",
         "required": False,
         "default": 1,
-    },
-    "confirm-upload": {
-        "type": "bool",
-        "description": "Confirm upload operation (required for upload)",
-        "required": False,
-        "default": False,
     },
     "query-log": {
         "type": "int",

@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING, List
-
-from ..register_io import read_registers_batched
+from typing import TYPE_CHECKING, Dict, List
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
+
+    from ..nxc_connection import modbus
 else:
     _ScannerBase = object
 
@@ -78,13 +78,7 @@ class MonitorMixin(_ScannerBase):
 
                 # Read registers
                 try:
-                    values = read_registers_batched(
-                        self.conn,
-                        register_type,
-                        addresses,
-                        unit_id=self.scanner.unit_id,
-                        fallback_individual=False,
-                    )
+                    values = self._read_register_batch(addresses, register_type)
                 except Exception as e:
                     self.logger.warning(f"Read error: {e}")
                     time.sleep(interval)
@@ -147,3 +141,18 @@ class MonitorMixin(_ScannerBase):
             else:
                 addresses.append(int(part))
         return sorted(set(addresses))
+
+    def _read_register_batch(self: "modbus", addresses: List[int], reg_type: str) -> Dict[int, int]:
+        """Read a batch of registers efficiently.
+
+        Delegates to :func:`register_io.read_registers_batched`.
+        """
+        from ..register_io import read_registers_batched
+
+        return read_registers_batched(
+            self.conn,
+            reg_type,
+            addresses,
+            unit_id=self.scanner.unit_id,
+            fallback_individual=False,
+        )

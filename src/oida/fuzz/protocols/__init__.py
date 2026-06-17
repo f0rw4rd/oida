@@ -41,14 +41,6 @@ except ImportError:
     HTTP2Fuzzer = None
     _HTTP2_AVAILABLE = False
 from .ethernet import EthernetFuzzer
-
-try:
-    from .gatt import GATTApplicationFuzzer
-
-    _GATT_AVAILABLE = True
-except ImportError:
-    GATTApplicationFuzzer = None
-    _GATT_AVAILABLE = False
 from .echo import EchoFuzzer
 from .daytime import DaytimeFuzzer
 from .opcua import OPCUAFuzzer
@@ -101,11 +93,6 @@ if _HTTP2_AVAILABLE:
 else:
     PROTOCOL_FUZZERS.pop("http2", None)
 
-if _GATT_AVAILABLE:
-    PROTOCOL_FUZZERS["gatt"] = GATTApplicationFuzzer
-else:
-    PROTOCOL_FUZZERS.pop("gatt", None)
-
 # Protocol categories for discovery and filtering
 PROTOCOL_CATEGORIES = {
     "web": {
@@ -141,7 +128,7 @@ PROTOCOL_CATEGORIES = {
     "iot": {
         "name": "IoT Protocols",
         "description": "Internet of Things and embedded protocols",
-        "protocols": ["mqtt", "coap", "gatt"],
+        "protocols": ["mqtt", "coap"],
     },
     "network": {
         "name": "Network Infrastructure",

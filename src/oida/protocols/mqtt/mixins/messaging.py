@@ -15,9 +15,6 @@ from ..scanner import ListenStats
 from ....utils.export_utils import print_table
 from ....utils.fuzzer import fuzz
 
-# Cap publish fuzzing to the first N discovered topics
-MAX_FUZZ_TOPICS = 10
-
 
 class MessagingMixin:
     """Mixin providing MQTT messaging operations."""
@@ -78,17 +75,17 @@ class MessagingMixin:
         return on_message
 
     def _wait_for_messages(self):
-        """Block until timeout or KeyboardInterrupt."""
-        timeout_str = "forever" if self.timeout == 0 else f"{self.timeout}s"
+        """Block until listen duration elapses or KeyboardInterrupt."""
+        timeout_str = "forever" if self.listen_time == 0 else f"{self.listen_time}s"
         self.logger.debug(f"Listening for {timeout_str}...")
         try:
-            if self.timeout == 0:
+            if self.listen_time == 0:
                 while not self._stop_listen:
                     time.sleep(0.1)
             else:
-                time.sleep(self.timeout)
-        except KeyboardInterrupt:
-            self.logger.debug("Listen interrupted by user (Ctrl-C)")
+                time.sleep(self.listen_time)
+        except KeyboardInterrupt as e:
+            self.logger.debug(f"wait_for_messages interrupted: {e}")
 
     def _open_output_file(self):
         """Open the listen output file if configured. Returns file handle or None."""
@@ -110,7 +107,7 @@ class MessagingMixin:
             source = Path(self.topics_file).name
         else:
             source = f"pattern '{self.topics_pattern}'"
-        timeout_str = "forever" if self.timeout == 0 else f"{self.timeout}s"
+        timeout_str = "forever" if self.listen_time == 0 else f"{self.listen_time}s"
         self.logger.display(f"Listen mode started (topics: {source}, duration: {timeout_str})")
 
         try:
@@ -182,7 +179,7 @@ class MessagingMixin:
         }
         v5_state = {"has_v5_props": False}
 
-        timeout_str = "forever" if self.timeout == 0 else f"{self.timeout}s"
+        timeout_str = "forever" if self.listen_time == 0 else f"{self.listen_time}s"
         sub_desc = (
             ", ".join(subscribe_topics)
             if len(subscribe_topics) <= 3
@@ -331,7 +328,9 @@ class MessagingMixin:
         conn.loop_start()
 
         # Limit to first 10 topics
-        for topic in topics[:MAX_FUZZ_TOPICS]:
+        max_topics = min(len(topics), 10)
+
+        for topic in topics[:max_topics]:
             topic_stats = {"topic": topic, "payloads_sent": 0, "errors": 0}
 
             # Generate fuzz payloads

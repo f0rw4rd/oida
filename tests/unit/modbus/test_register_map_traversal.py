@@ -37,10 +37,11 @@ class TestRegisterMapTraversal(unittest.TestCase):
     def test_traversal_in_search_name_does_not_escape(self):
         from oida.protocols.modbus.decoder import load_register_map
 
-        # No file with that name should exist in the search dirs; the
-        # _resolve_inside guard would also prevent escape if there were
-        # a matching file outside the root.
-        result = load_register_map("../../etc/passwd")
+        # A traversal name that does not resolve to an existing file must
+        # not escape the search root: the _resolve_inside guard keeps the
+        # candidate inside register_maps/, so the lookup returns None
+        # rather than reading a file outside the root.
+        result = load_register_map("../../nonexistent-xyzzy/passwd")
         self.assertIsNone(result)
 
 

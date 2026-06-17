@@ -15,24 +15,10 @@ from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
 pytestmark = pytest.mark.core
 
-# Protocols that cannot run _define_protocol() in a unit-test environment
-# (e.g. need real serial ports, BLE devices, raw sockets, or seed files).
-SKIP_DEFINE = {
-    # Raw socket protocols require root and real interfaces
-    "icmp",
-    "icmpv6",
-    "ipv4",
-    "ipv6",
-    "ethernet",
-    "industrial_ethernet",
-    "profinet_dcp",
-    # Serial protocols require a real serial device
-    "modbus_rtu",
-    # BLE requires a device address
-    "gatt",
-    # Mutation fuzzer requires seed files
-    "mutation",
-}
+# Protocols that need an extra option supplied before _define_protocol() can run
+# offline. The mutation fuzzer refuses to build without at least one seed; we
+# provide a throwaway seed directory in the test rather than skipping it.
+SEED_REQUIRED = {"mutation"}
 
 
 @pytest.fixture
@@ -42,6 +28,7 @@ def mock_config():
         target_ip="127.0.0.1",
         target_port=9999,
         protocol_type=ProtocolType.TCP,
+        enumerate=False,
     )
     config.log_session = False
     config.console_output = False
@@ -59,10 +46,12 @@ def mock_factory():
     "protocol_name",
     sorted(PROTOCOL_FUZZERS.keys()),
 )
-def test_define_protocol_completes(protocol_name, mock_config, mock_factory):
+def test_define_protocol_completes(protocol_name, mock_config, mock_factory, tmp_path):
     """Verify _define_protocol() runs without error for each registered fuzzer."""
-    if protocol_name in SKIP_DEFINE:
-        pytest.skip(f"{protocol_name} requires special environment")
+    if protocol_name in SEED_REQUIRED:
+        seed = tmp_path / "seed.bin"
+        seed.write_bytes(b"AAAA")
+        mock_config.protocol_options["seed_directory"] = f"{tmp_path}/"
 
     fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
     if fuzzer_class is None:
@@ -108,3 +97,35 @@ def test_get_request_definitions(protocol_name):
         pytest.skip(f"{protocol_name} has not implemented get_request_definitions")
     except ImportError as e:
         pytest.skip(f"Missing dependency: {e}")
+
+
+def test_mdns_request_definitions_match_connected(mock_config, mock_factory):
+    """mDNS static request inventory must match the requests actually connected.
+
+    get_request_definitions() drives --list-requests / --requests /
+    --disable-requests selection; a request connected via session.connect()
+    but absent from the inventory can be fuzzed yet never listed or
+    individually selected (and vice versa). This asserts set-equality between
+    the two sources of truth for the mDNS fuzzer, guarding the drift fixed in
+    src/oida/fuzz/protocols/mdns.py.
+    """
+    fuzzer_class = PROTOCOL_FUZZERS["mdns"]
+    if fuzzer_class is None:
+        pytest.skip("mdns fuzzer not available (optional dependency)")
+
+    try:
+        fuzzer = fuzzer_class(config=mock_config, connection_factory=mock_factory)
+        session = fuzzer.session
+    except ImportError as e:
+        pytest.skip(f"Missing dependency for mdns: {e}")
+
+    defined = {d.name for d in fuzzer_class.get_request_definitions()}
+
+    # session.nodes maps node-id -> request node; exclude the synthetic root.
+    connected = {node.name for node in session.nodes.values()} - {session.root.name}
+
+    assert connected == defined, (
+        "mDNS request inventory drift: "
+        f"connected-but-not-listed={sorted(connected - defined)}, "
+        f"listed-but-not-connected={sorted(defined - connected)}"
+    )

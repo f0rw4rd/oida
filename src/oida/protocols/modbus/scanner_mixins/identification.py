@@ -208,6 +208,16 @@ class ScannerIdentificationMixin(_ScannerBase):
                     objects[obj_name] = value.decode("utf-8", errors="replace").strip("\x00")
                 else:
                     objects[obj_name] = str(value)
+        elif hasattr(result, "objects"):
+            # Alternative list-of-dicts format ({object_id, value})
+            for obj in result.objects:
+                obj_id = obj.get("object_id", 0)
+                value = obj.get("value", b"")
+                obj_name = MEI_OBJECT_NAMES.get(obj_id, f"Object_{obj_id:02X}")
+                if isinstance(value, bytes):
+                    objects[obj_name] = value.decode("utf-8", errors="replace").strip("\x00")
+                else:
+                    objects[obj_name] = str(value)
 
         return objects
 

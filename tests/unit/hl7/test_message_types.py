@@ -13,10 +13,7 @@ Tests the implementation of:
 import unittest
 from unittest.mock import Mock, patch
 
-import pytest
-
-# Most test classes instantiate hl7(...) which triggers proto_flow and real socket connections
-pytestmark = pytest.mark.network
+from tests.unit.hl7.conftest import _make_hl7_instance
 
 # MLLP framing characters
 MLLP_START = b"\x0b"
@@ -128,6 +125,7 @@ def create_mock_args():
     mock_args.policy_number = None
     mock_args.transaction_amount = None
     mock_args.transaction_code = None
+    mock_args.transaction_description = None
     mock_args.transaction_type = "CG"
     # Order/Observation data
     mock_args.order_id = None
@@ -301,9 +299,8 @@ class TestMFNMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_mfn_m01_message(self):
         """Test MFN^M01 (General Master File) message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_mfn_message("M01")
 
         self.assertIsNotNone(msg)
@@ -313,13 +310,12 @@ class TestMFNMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_mfn_m02_message(self):
         """Test MFN^M02 (Staff/Practitioner Master File) message creation"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.staff_id = "STF001"
         self.mock_args.staff_name = "DOE^JANE^DR"
         self.mock_args.staff_type = "MD"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_mfn_message("M02")
 
         self.assertIsNotNone(msg)
@@ -329,12 +325,11 @@ class TestMFNMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_mfn_m04_message(self):
         """Test MFN^M04 (Charge Description Master File) message creation"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.charge_code = "CHG001"
         self.mock_args.charge_price = "250.00"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_mfn_message("M04")
 
         self.assertIsNotNone(msg)
@@ -351,11 +346,10 @@ class TestMFNMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_mfn_requires_confirm(self):
         """Test MFN message requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = False
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -368,11 +362,10 @@ class TestMFNMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_mfn_with_confirm(self):
         """Test MFN message sends when --confirm is set"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = True
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -390,9 +383,8 @@ class TestMFQMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_mfq_message(self):
         """Test MFQ^M01 message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_mfq_message()
 
         self.assertIsNotNone(msg)
@@ -414,9 +406,8 @@ class TestQBPMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_qbp_q40_message(self):
         """Test QBP^Q40 (WhoAmI) message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_qbp_message("Q40", "WhoAmI")
 
         self.assertIsNotNone(msg)
@@ -427,9 +418,8 @@ class TestQBPMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_qbp_q13_message(self):
         """Test QBP^Q13 (Tabular Query) message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_qbp_message("Q13", "TabularPatientList")
 
         self.assertIsNotNone(msg)
@@ -438,9 +428,8 @@ class TestQBPMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_qbp_z34_message(self):
         """Test QBP^Z34 (Immunization History) message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_qbp_immunization_message("Z34", "PT001")
 
         self.assertIsNotNone(msg)
@@ -450,9 +439,8 @@ class TestQBPMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_qbp_z44_message(self):
         """Test QBP^Z44 (Immunization + Forecast) message creation"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_qbp_immunization_message("Z44", "PT001")
 
         self.assertIsNotNone(msg)
@@ -468,9 +456,8 @@ class TestQBPMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_qbp_q40_message(self):
         """Test sending QBP^Q40 (WhoAmI) query"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -481,9 +468,8 @@ class TestQBPMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_qbp_q13_message(self):
         """Test sending QBP^Q13 (Tabular Query)"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -494,11 +480,10 @@ class TestQBPMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_qbp_z34_requires_patient_id(self):
         """Test QBP^Z34 requires --patient-id"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.patient_id = None
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -511,11 +496,10 @@ class TestQBPMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_qbp_z44_requires_patient_id(self):
         """Test QBP^Z44 requires --patient-id"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.patient_id = None
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -533,14 +517,13 @@ class TestQBPResultExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_whoami_results(self):
         """Test extraction of WhoAmI response"""
-        from oida.protocols.hl7 import hl7
 
         response = (
             b"MSH|^~\\&|SERVER_APP|SERVER_FAC|OIDA|SECURITY|20240101||RSP^K40|123|P|2.5\r"
             b"MSA|AA|123\r"
         )
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         scanner._extract_whoami_results(response)
@@ -550,7 +533,6 @@ class TestQBPResultExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_rtb_results(self):
         """Test extraction of RTB (tabular) response"""
-        from oida.protocols.hl7 import hl7
 
         response = (
             b"MSH|^~\\&|SERVER|FAC|...\r"
@@ -560,7 +542,7 @@ class TestQBPResultExtraction(unittest.TestCase):
             b"RDT|PT002~SMITH^JANE~19900202\r"
         )
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         scanner._extract_rtb_results(response)
@@ -673,13 +655,12 @@ class TestBARMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_bar_p01_message(self):
         """Test BAR^P01 (Add Billing Account) message creation"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.patient_id = "PT001"
         self.mock_args.account_number = "ACC001"
         self.mock_args.guarantor_name = "DOE^JOHN"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_bar_message()
 
         self.assertIsNotNone(msg)
@@ -690,14 +671,13 @@ class TestBARMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_bar_with_insurance(self):
         """Test BAR^P01 with insurance information"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.patient_id = "PT001"
         self.mock_args.insurance_company = "BlueCross"
         self.mock_args.insurance_group = "GRP123"
         self.mock_args.policy_number = "POL456"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_bar_message()
 
         self.assertIsNotNone(msg)
@@ -713,13 +693,12 @@ class TestDFTMessageCreation(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_dft_p03_message(self):
         """Test DFT^P03 (Post Financial Transaction) message creation"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.patient_id = "PT001"
         self.mock_args.transaction_amount = "150.00"
         self.mock_args.transaction_code = "99213"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         msg = scanner._create_dft_message()
 
         self.assertIsNotNone(msg)
@@ -736,11 +715,10 @@ class TestFinancialMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_bar_requires_confirm(self):
         """Test BAR^P01 requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = False
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -753,11 +731,10 @@ class TestFinancialMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_dft_requires_confirm(self):
         """Test DFT^P03 requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = False
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -768,12 +745,11 @@ class TestFinancialMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_bar_with_confirm(self):
         """Test BAR^P01 sends when --confirm is set"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = True
         self.mock_args.patient_id = "PT001"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -784,12 +760,11 @@ class TestFinancialMessageSending(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_send_dft_with_confirm(self):
         """Test DFT^P03 sends when --confirm is set"""
-        from oida.protocols.hl7 import hl7
 
         self.mock_args.confirm = True
         self.mock_args.patient_id = "PT001"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -807,7 +782,6 @@ class TestFinancialResultExtraction(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_extract_financial_results(self):
         """Test extraction of financial data from response"""
-        from oida.protocols.hl7 import hl7
 
         response = (
             b"MSH|^~\\&|SERVER|FAC|...\r"
@@ -817,7 +791,7 @@ class TestFinancialResultExtraction(unittest.TestCase):
             b"IN1|1|PLAN001||BlueCross||||GRP123||||||||||||||\r"
         )
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         scanner._extract_financial_results(response)
@@ -864,11 +838,10 @@ class TestContinuationHandling(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_check_continuation_dsc(self):
         """Test checking for DSC continuation segment"""
-        from oida.protocols.hl7 import hl7
 
         response = b"MSH|^~\\&|SERVER|FAC|...\rMSA|AA|123\rPID|1||PT001||DOE^JOHN\rDSC|CONT123|I\r"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         pointer, style = scanner._check_continuation(response)
@@ -879,11 +852,10 @@ class TestContinuationHandling(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_check_continuation_none(self):
         """Test checking for continuation with no DSC segment"""
-        from oida.protocols.hl7 import hl7
 
         response = b"MSH|^~\\&|SERVER|FAC|...\rMSA|AA|123\rPID|1||PT001||DOE^JOHN\r"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         pointer, style = scanner._check_continuation(response)
@@ -893,9 +865,8 @@ class TestContinuationHandling(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_create_continuation_request(self):
         """Test creating continuation request message"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         msg = scanner._create_continuation_request("CONT123")
@@ -907,13 +878,12 @@ class TestContinuationHandling(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_reassemble_fragments(self):
         """Test reassembling fragmented messages"""
-        from oida.protocols.hl7 import hl7
 
         fragment1 = b"MSH|^~\\&|SERVER|FAC|...\rMSA|AA|123\rPID|1||PT001||DOE^JOHN\rDSC|CONT123|I\r"
 
         fragment2 = b"MSH|^~\\&|SERVER|FAC|...\rMSA|AA|456\rPID|2||PT002||SMITH^JANE\r"
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner._reassemble_fragments([fragment1, fragment2])
@@ -944,9 +914,8 @@ class TestProbeOperations(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_probe_includes_mfn_messages(self):
         """Test probe operations include MFN message types"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
@@ -960,9 +929,8 @@ class TestProbeOperations(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_probe_results_structure(self):
         """Test probe results have expected structure"""
-        from oida.protocols.hl7 import hl7
 
-        scanner = hl7(self.mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = MockSocket()
 
