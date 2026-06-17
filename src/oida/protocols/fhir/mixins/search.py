@@ -696,17 +696,13 @@ class SearchMixin:
         self.logger.display(f"Reading {resource_type}/{resource_id}...")
 
         try:
+            # Only the five resource types reachable from --read-* CLI args.
             resource_models = {
                 "Patient": patient.Patient,
                 "Observation": observation.Observation,
                 "MedicationRequest": medicationrequest.MedicationRequest,
                 "Condition": condition.Condition,
                 "Encounter": encounter.Encounter,
-                "Procedure": procedure.Procedure,
-                "AllergyIntolerance": allergyintolerance.AllergyIntolerance,
-                "Immunization": immunization.Immunization,
-                "DiagnosticReport": diagnosticreport.DiagnosticReport,
-                "DocumentReference": documentreference.DocumentReference,
             }
 
             model = resource_models.get(resource_type)
