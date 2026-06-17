@@ -50,11 +50,18 @@ class TestAstmFramingChecksumGuard(unittest.TestCase):
 
 class TestSnap7ModuleLoggerRefactor(unittest.TestCase):
     def test_fuzz_helpers_use_self_logger(self):
-        """3 fuzz helpers used module-level logger; should now use self.logger."""
+        """Fuzz helpers must use self.logger, not the module-level logger.
+
+        The MK/PA area-write helpers were deduped into a single
+        ``_fuzz_area(area, size, label, ...)`` whose nested ``write_area``
+        logs ``write_area({label}) failed`` (label = MK/PA at the call sites),
+        so the per-area string literals no longer appear in source.
+        """
         src = _read("src/oida/protocols/snap7/nxc_connection.py")
-        self.assertIn("self.logger.debug(f\"db_write failed:", src)
-        self.assertIn("self.logger.debug(f\"write_area(MK) failed:", src)
-        self.assertIn("self.logger.debug(f\"write_area(PA) failed:", src)
+        self.assertIn('self.logger.debug(f"db_write failed:', src)
+        self.assertIn('self.logger.debug(f"write_area({label}) failed:', src)
+        # Guard against regression to the module-level logger in the fuzz path.
+        self.assertNotIn("logger.debug(f\"write_area", src.replace("self.logger", ""))
 
 
 class TestFuzzHttp2MonitorReturnsBool(unittest.TestCase):
