@@ -917,7 +917,7 @@ class TestCANScannerSniffing(unittest.TestCase):
 
         self.scanner = CANScanner({"interface": "vcan0"})
 
-    @patch("oida.protocols.can.scanner.time")
+    @patch("oida.protocols.can.mixins.traffic.time")
     def test_sniff_traffic_collects_stats(self, mock_time):
         """Test traffic sniffing collects statistics."""
         mock_bus = MagicMock()
@@ -1495,8 +1495,6 @@ class TestCCPScanResult(unittest.TestCase):
         self.assertEqual(result.station_address, 0)
         self.assertFalse(result.connected)
         self.assertEqual(result.ccp_version, "")
-        self.assertEqual(result.device_id, b"")
-        self.assertEqual(result.session_status, 0)
         self.assertEqual(result.error, "")
 
 
@@ -1716,7 +1714,7 @@ class TestCCPScannerMock(unittest.TestCase):
         self.assertEqual(resp[1], 0x00)  # No error
 
     @patch("oida.protocols.can.scanner._python_can")
-    @patch("oida.protocols.can.scanner.time")
+    @patch("oida.protocols.can.mixins.xcp.time")
     def test_recv_ccp_response_wrong_id(self, mock_time, mock_can_lazy):
         """Test CCP response ignores wrong arbitration IDs."""
         mock_bus = MagicMock()
@@ -1795,7 +1793,7 @@ class TestEnhancedUDSScannerMock(unittest.TestCase):
 
         mock_bus.recv.side_effect = recv_side_effect
 
-        sessions = self.scanner.uds_session_scan(mock_bus, 0x7E0, 0x7E8)
+        sessions = self.scanner.uds_session_scan(mock_bus, 0x7E0)
 
         # Should have found at least one session
         mock_bus.send.assert_called()
@@ -1823,7 +1821,7 @@ class TestEnhancedUDSScannerMock(unittest.TestCase):
 
         mock_bus.recv.side_effect = recv_side_effect
 
-        readable = self.scanner.uds_did_scan(mock_bus, 0x7E0, 0x7E8, did_range=(0xF190, 0xF190))
+        readable = self.scanner.uds_did_scan(mock_bus, 0x7E0, did_range=(0xF190, 0xF190))
 
         self.assertIsInstance(readable, dict)
         mock_bus.send.assert_called()
@@ -1853,7 +1851,6 @@ class TestEnhancedUDSScannerMock(unittest.TestCase):
         seeds = self.scanner.uds_security_seed_collect(
             mock_bus,
             0x7E0,
-            0x7E8,
             security_level=0x01,
             count=3,
         )
@@ -1870,7 +1867,7 @@ class TestEnhancedUDSScannerMock(unittest.TestCase):
         mock_bus.recv.return_value = None
 
         routines = self.scanner.uds_routine_scan(
-            mock_bus, 0x7E0, 0x7E8, routine_range=(0x0000, 0x0005)
+            mock_bus, 0x7E0, routine_range=(0x0000, 0x0005)
         )
 
         self.assertIsInstance(routines, list)
@@ -1889,7 +1886,7 @@ class TestEnhancedUDSScannerMock(unittest.TestCase):
         mock_msg.data = bytearray([0x02, 0x51, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00])
         mock_bus.recv.return_value = mock_msg
 
-        result = self.scanner.uds_ecu_reset(mock_bus, 0x7E0, 0x7E8, reset_type=0x01)
+        result = self.scanner.uds_ecu_reset(mock_bus, 0x7E0, reset_type=0x01)
 
         self.assertTrue(result)
         mock_bus.send.assert_called_once()
@@ -2192,7 +2189,6 @@ class TestCANopenConstants(unittest.TestCase):
     def test_od_entries(self):
         """Test standard OD entry definitions."""
         from oida.protocols.can.constants import (
-            CANOPEN_OD_DEVICE_NAME,
             CANOPEN_OD_DEVICE_TYPE,
             CANOPEN_OD_ENTRIES,
             CANOPEN_OD_ERROR_REGISTER,
@@ -2201,7 +2197,6 @@ class TestCANopenConstants(unittest.TestCase):
 
         self.assertEqual(CANOPEN_OD_DEVICE_TYPE, 0x1000)
         self.assertEqual(CANOPEN_OD_ERROR_REGISTER, 0x1001)
-        self.assertEqual(CANOPEN_OD_DEVICE_NAME, 0x1008)
         self.assertEqual(CANOPEN_OD_IDENTITY, 0x1018)
         self.assertIn(0x1000, CANOPEN_OD_ENTRIES)
         self.assertEqual(CANOPEN_OD_ENTRIES[0x1000], "Device Type")
@@ -2644,36 +2639,6 @@ class TestCANopenScannerMock(unittest.TestCase):
         if result:
             self.assertIn(10, result)
             self.assertEqual(result[10]["state_name"], "Operational")
-
-    @patch("oida.protocols.can.scanner._python_can")
-    def test_canopen_nmt_state_read(self, mock_can_lazy):
-        """Test reading NMT state via node guarding."""
-        mock_can = MagicMock()
-        mock_can_lazy.return_value = mock_can
-        mock_bus = MagicMock()
-
-        mock_msg = MagicMock()
-        mock_msg.arbitration_id = 0x701  # Heartbeat for node 1
-        mock_msg.is_remote_frame = False
-        mock_msg.data = bytearray([0x05])  # Operational
-        mock_bus.recv.return_value = mock_msg
-
-        state = self.scanner.canopen_nmt_state_read(mock_bus, 1, timeout=0.1)
-
-        self.assertEqual(state, 0x05)
-        mock_bus.send.assert_called_once()
-
-    @patch("oida.protocols.can.scanner._python_can")
-    def test_canopen_nmt_state_read_timeout(self, mock_can_lazy):
-        """Test NMT state read timeout."""
-        mock_can = MagicMock()
-        mock_can_lazy.return_value = mock_can
-        mock_bus = MagicMock()
-        mock_bus.recv.return_value = None
-
-        state = self.scanner.canopen_nmt_state_read(mock_bus, 1, timeout=0.05)
-
-        self.assertIsNone(state)
 
     @patch("oida.protocols.can.scanner._python_can")
     def test_canopen_od_scan(self, mock_can_lazy):
@@ -3194,26 +3159,10 @@ class TestCANopenConstantsExtended(unittest.TestCase):
         self.assertEqual(CANOPEN_LSS_RX_ID, 0x7E5)
 
     def test_cia309_constants(self):
-        """Test CiA 309 Modbus gateway constants."""
-        from oida.protocols.can.constants import (
-            CIA309_MODBUS_FC_READ_HOLDING,
-            CIA309_MODBUS_FC_READ_INPUT,
-            CIA309_MODBUS_FC_WRITE_MULTIPLE,
-            CIA309_MODBUS_FC_WRITE_SINGLE,
-            CIA309_OD_GATEWAY_CONFIG,
-            CIA309_OD_MODBUS_MAP_BASE,
-            CIA309_OD_SLAVE_MAP_BASE,
-            CIA309_PROFILE_NUMBER,
-        )
+        """Test CiA 309 Modbus gateway profile number."""
+        from oida.protocols.can.constants import CIA309_PROFILE_NUMBER
 
         self.assertEqual(CIA309_PROFILE_NUMBER, 309)
-        self.assertEqual(CIA309_OD_GATEWAY_CONFIG, 0x5000)
-        self.assertEqual(CIA309_OD_MODBUS_MAP_BASE, 0x5100)
-        self.assertEqual(CIA309_OD_SLAVE_MAP_BASE, 0x5200)
-        self.assertEqual(CIA309_MODBUS_FC_READ_HOLDING, 0x03)
-        self.assertEqual(CIA309_MODBUS_FC_READ_INPUT, 0x04)
-        self.assertEqual(CIA309_MODBUS_FC_WRITE_SINGLE, 0x06)
-        self.assertEqual(CIA309_MODBUS_FC_WRITE_MULTIPLE, 0x10)
 
     def test_timestamp_id(self):
         """Test TIME stamp object COB-ID."""
@@ -3798,7 +3747,7 @@ class TestCANopenScannerEdgeCases(unittest.TestCase):
             time_counter[0] += 0.5
             return time_counter[0]
 
-        with patch("oida.protocols.can.scanner.time") as mock_time:
+        with patch("oida.protocols.can.mixins.canopen.time") as mock_time:
             mock_time.time = fast_time
             nodes = self.scanner.canopen_node_scan(mock_bus)
 
@@ -3911,18 +3860,6 @@ class TestCANopenScannerEdgeCases(unittest.TestCase):
 
         self.assertEqual(len(found), 1)
         self.assertEqual(found[0][0], 0x1000)
-
-    @patch("oida.protocols.can.scanner._python_can")
-    def test_nmt_state_read_no_response(self, mock_can_lazy):
-        """Test NMT state read returns None when no response."""
-        mock_can = MagicMock()
-        mock_can_lazy.return_value = mock_can
-        mock_bus = MagicMock()
-        mock_bus.recv.return_value = None
-
-        result = self.scanner.canopen_nmt_state_read(mock_bus, 99, timeout=0.05)
-
-        self.assertIsNone(result)
 
     @patch("oida.protocols.can.scanner._python_can")
     def test_device_info_partial_read(self, mock_can_lazy):
@@ -4332,7 +4269,6 @@ class TestCANopenNXCHandlerDispatch(unittest.TestCase):
             "canopen_od_scan",
             "canopen_emcy_monitor",
             "canopen_heartbeat_monitor",
-            "canopen_nmt_state_read",
             "canopen_pdo_discover",
             "canopen_modbus_gateway_detect",
             "canopen_modbus_register_map",
@@ -4380,7 +4316,6 @@ class TestCANopenImports(unittest.TestCase):
         self.assertTrue(callable(getattr(scanner, "canopen_od_scan", None)))
         self.assertTrue(callable(getattr(scanner, "canopen_emcy_monitor", None)))
         self.assertTrue(callable(getattr(scanner, "canopen_heartbeat_monitor", None)))
-        self.assertTrue(callable(getattr(scanner, "canopen_nmt_state_read", None)))
         self.assertTrue(callable(getattr(scanner, "canopen_pdo_discover", None)))
         self.assertTrue(callable(getattr(scanner, "canopen_modbus_gateway_detect", None)))
         self.assertTrue(callable(getattr(scanner, "canopen_modbus_register_map", None)))
