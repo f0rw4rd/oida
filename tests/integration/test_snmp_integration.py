@@ -18,6 +18,13 @@ import pytest
 from .conftest import MOCK_HOST, MOCK_PORTS
 
 
+# SNMP runs over UDP, which drops packets under heavy concurrent load — many
+# SNMP classes walking mocks across xdist workers cause incomplete walks and
+# missing findings. Serialize all SNMP tests onto one worker. Honored only
+# under `--dist loadgroup`. Mirrors test_hart/mms/iec104 integration files.
+pytestmark = pytest.mark.xdist_group("snmp_service")
+
+
 # ---------------------------------------------------------------------------
 # Constants — known mock data (ground truth from snmpd.conf / entrypoint.sh)
 # ---------------------------------------------------------------------------
