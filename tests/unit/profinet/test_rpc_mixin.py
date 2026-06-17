@@ -120,7 +120,7 @@ class MockPDRealData:
         self.interface = MagicMock()
         self.interface.chassis_id = "plc-test-01"
         self.interface.ip_str = "192.168.1.100"
-        self.interface.netmask_str = "255.255.255.0"
+        self.interface.subnet_str = "255.255.255.0"
         self.interface.gateway_str = "192.168.1.1"
 
         port1 = MagicMock()
@@ -134,7 +134,7 @@ class MockPDRealData:
         port2.subslot = 0x8002
         port2.link_state_link = 2  # Down
         port2.mau_type_name = "Unknown"
-        port2.peers = [MagicMock(chassis_id="switch-01", port_id="port1")]
+        port2.peers = [MagicMock(chassis_id="switch-01", port_id="port1", mac_str="aa:bb:cc:dd:ee:ff")]
         port2.mau_type = 0
 
         self.ports = [port1, port2]
@@ -373,20 +373,16 @@ class TestReadModuleDiff:
 
         assert device.module_diff is None
 
-    def test_read_module_diff_no_get_mismatches(self):
-        """Test fallback when diff object has entries but no get_mismatches."""
+    def test_read_module_diff_no_mismatches_reported(self):
+        """all_ok False but get_mismatches empty still reports a match."""
         stub = RPCMixinStub()
         device = ProfinetDevice(mac_address="00:11:22:33:44:55")
         con = MagicMock()
-
-        diff = MagicMock(spec=["entries"])
-        diff.entries = [MagicMock(), MagicMock()]
-        del diff.all_ok  # Remove all_ok attr
-        con.read_module_diff.return_value = diff
+        con.read_module_diff.return_value = MockModuleDiff(all_ok=False, mismatches=[])
 
         stub._read_module_diff(device, con)
 
-        assert any("2 entries" in msg for _, msg in stub.logger.messages)
+        assert any("matches" in msg for _, msg in stub.logger.messages)
 
 
 class TestReadAlarms:

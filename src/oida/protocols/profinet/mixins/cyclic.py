@@ -33,7 +33,6 @@ class CyclicMixin(_ScannerBase):
     def _cyclic_io_test(
         self,
         device: ProfinetDevice,
-        profinet_mod,
         discovered_slots: Optional[list] = None,
     ) -> None:
         """Run cyclic IO test on a device.
@@ -238,12 +237,6 @@ class CyclicMixin(_ScannerBase):
                 if s.output_length > 0:
                     cyclic.set_output_data(s.slot, s.subslot, bytes(s.output_length))
 
-            received_count = [0]
-
-            def on_input(slot, subslot, data):
-                received_count[0] += 1
-
-            cyclic.on_input(on_input)
             cyclic.start()
 
             self.logger.display(f"  Cyclic exchange running for {duration}s...")
