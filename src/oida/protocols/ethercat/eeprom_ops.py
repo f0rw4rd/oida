@@ -46,13 +46,17 @@ class EepromOpsMixin(_ScannerBase):
             progress.update(msg=f"Reading EEPROM from slave {position}")
 
             try:
-                # Read EEPROM categories (pass 0-based index)
+                # Parse the SII/ESI structure once, then derive every category
+                # from the parsed result. pysoem's CdefSlave only exposes
+                # man/id/rev/name/input/output — everything else (serial,
+                # FMMU/SM counts, strings, PDO sizes) must come from the SII.
+                sii = self._read_slave_sii(master, i)
                 eeprom_data[i + 1] = {
-                    "general": self._read_eeprom_general(master, i),
-                    "fmmu": self._read_eeprom_fmmu(master, i),
-                    "sync_manager": self._read_eeprom_sync_manager(master, i),
-                    "pdo": self._read_eeprom_pdo(master, i),
-                    "strings": self._read_eeprom_strings(master, i),
+                    "general": self._read_eeprom_general(master, i, sii),
+                    "fmmu": self._read_eeprom_fmmu(sii),
+                    "sync_manager": self._read_eeprom_sync_manager(sii),
+                    "pdo": self._read_eeprom_pdo(master, i, sii),
+                    "strings": self._read_eeprom_strings(master, i, sii),
                 }
 
             except Exception as e:
@@ -61,76 +65,102 @@ class EepromOpsMixin(_ScannerBase):
 
         return eeprom_data
 
-    def _read_eeprom_general(self, master: Any, slave_pos: int) -> Dict[str, Any]:
-        """Read general EEPROM information"""
+    def _read_slave_sii(self, master: Any, slave_pos: int) -> Dict[str, Any]:
+        """Read and parse the SII/ESI structure for one slave.
+
+        Returns a dict with header + parsed categories (strings/general/fmmu/
+        sync_managers/txpdo/rxpdo/dc). On read failure returns {}.
+        """
+        slave = master.slaves[slave_pos]
+        raw = bytearray()
+        try:
+            for word_addr in range(0, 1024):
+                try:
+                    data = slave.eeprom_read(word_addr)
+                    raw.extend(data[:2])
+                except Exception:
+                    break
+        except Exception as e:
+            self.logger.debug(f"SII read failed for slave {slave_pos + 1}: {e}")
+            return {}
+
+        if len(raw) < 128:
+            return {}
+
+        parsed: Dict[str, Any] = {
+            "header": parse_sii_header(raw),
+            "strings": [],
+            "general": {},
+            "fmmu": [],
+            "sync_managers": [],
+            "txpdo": [],
+            "rxpdo": [],
+        }
+
+        strings = [""]  # 1-indexed
+        offset = 0x80
+        while offset + 4 <= len(raw):
+            cat_type = struct.unpack_from("<H", raw, offset)[0]
+            cat_size_bytes = struct.unpack_from("<H", raw, offset + 2)[0] * 2
+            if cat_type in (0xFFFF, 0x7FFF, 0x0000):
+                break
+            cat_data = raw[offset + 4 : offset + 4 + cat_size_bytes]
+
+            if cat_type == 10:  # STRINGS
+                strings = parse_strings_category(cat_data)
+                parsed["strings"] = strings[1:]
+            elif cat_type == 30:  # GENERAL
+                parsed["general"] = parse_general_category(cat_data, strings)
+            elif cat_type == 40:  # FMMU
+                parsed["fmmu"] = parse_fmmu_category(cat_data)
+            elif cat_type == 41:  # SyncManager
+                parsed["sync_managers"] = parse_syncmanager_category(cat_data)
+            elif cat_type == 50:  # TxPDO
+                parsed["txpdo"] = parse_pdo_category(cat_data, strings)
+            elif cat_type == 51:  # RxPDO
+                parsed["rxpdo"] = parse_pdo_category(cat_data, strings)
+
+            offset += 4 + cat_size_bytes
+
+        return parsed
+
+    def _read_eeprom_general(
+        self, master: Any, slave_pos: int, sii: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Read general EEPROM information (identity from pysoem, rest from SII)."""
         try:
             slave = master.slaves[slave_pos]
+            header = sii.get("header", {})
             return {
                 "vendor_id": slave.man,
                 "product_code": slave.id,
                 "revision_number": slave.rev,
-                # pysoem CdefSlave has man/id/rev but no `serial`; the bare
-                # slave.serial raised AttributeError and made the whole general
-                # EEPROM read return an error dict. getattr keeps it non-fatal
-                # (serial actually lives in the SII header parser).
-                "serial_number": getattr(slave, "serial", None),
-                "execution_delay": getattr(slave, "delay", 0),
-                "port_descriptor": getattr(slave, "port_des", 0),
-                "fmmu_count": getattr(slave, "FMMUfunc", 0),
-                "sync_manager_count": getattr(slave, "SMfunc", 0),
+                "serial_number": header.get("serial_number"),
+                "fmmu_count": len(sii.get("fmmu", [])),
+                "sync_manager_count": len(sii.get("sync_managers", [])),
             }
         except Exception as e:
             return {"error": str(e)}
 
-    def _read_eeprom_fmmu(self, master: Any, slave_pos: int) -> List[Dict[str, Any]]:
-        """Read FMMU configuration from EEPROM"""
-        fmmus = []
-        try:
-            # FMMU data is typically at EEPROM offset 0x0040
-            # This is a simplified implementation
-            slave = master.slaves[slave_pos]
-            fmmu_count = getattr(slave, "FMMUfunc", 0)
+    def _read_eeprom_fmmu(self, sii: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Return FMMU configuration parsed from the SII FMMU category."""
+        return sii.get("fmmu", [])
 
-            for i in range(fmmu_count):
-                fmmus.append({"index": i, "usage": f"FMMU_{i}", "configured": True})
-        except Exception as e:
-            fmmus.append({"error": str(e)})
+    def _read_eeprom_sync_manager(self, sii: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Return SyncManager configuration parsed from the SII SM category."""
+        return sii.get("sync_managers", [])
 
-        return fmmus
-
-    def _read_eeprom_sync_manager(self, master: Any, slave_pos: int) -> List[Dict[str, Any]]:
-        """Read Sync Manager configuration from EEPROM"""
-        sync_managers = []
-        try:
-            slave = master.slaves[slave_pos]
-            sm_count = getattr(slave, "SMfunc", 0)
-
-            input_bytes = len(slave.input) if slave.input else 0
-            output_bytes = len(slave.output) if slave.output else 0
-            for i in range(sm_count):
-                sync_managers.append(
-                    {
-                        "index": i,
-                        "start_address": 0x1000 + (i * 0x100),  # Typical addresses
-                        "length": input_bytes if i < 2 else output_bytes,
-                        "control": 0x26 if i % 2 == 0 else 0x22,  # Typical control values
-                        "enable": True,
-                    }
-                )
-        except Exception as e:
-            sync_managers.append({"error": str(e)})
-
-        return sync_managers
-
-    def _read_eeprom_pdo(self, master: Any, slave_pos: int) -> Dict[str, Any]:
-        """Read PDO configuration from EEPROM"""
+    def _read_eeprom_pdo(
+        self, master: Any, slave_pos: int, sii: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Read PDO configuration (counts from SII, byte sizes from pysoem)."""
         try:
             slave = master.slaves[slave_pos]
             input_bytes = len(slave.input) if slave.input else 0
             output_bytes = len(slave.output) if slave.output else 0
             return {
-                "rx_pdo_count": 0,  # Would need to parse EEPROM structure
-                "tx_pdo_count": 0,
+                "rx_pdo_count": len(sii.get("rxpdo", [])),
+                "tx_pdo_count": len(sii.get("txpdo", [])),
                 "input_size": input_bytes,
                 "output_size": output_bytes,
                 "input_bits": input_bytes * 8,
@@ -139,15 +169,18 @@ class EepromOpsMixin(_ScannerBase):
         except Exception as e:
             return {"error": str(e)}
 
-    def _read_eeprom_strings(self, master: Any, slave_pos: int) -> Dict[str, Any]:
-        """Read string data from EEPROM"""
+    def _read_eeprom_strings(
+        self, master: Any, slave_pos: int, sii: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Read string data (device name from pysoem, group/order from SII)."""
         try:
             slave = master.slaves[slave_pos]
+            general = sii.get("general", {})
             return {
                 "device_name": slave.name.decode("utf-8") if slave.name else "",
-                "group_type": getattr(slave, "group", ""),
-                "image_name": getattr(slave, "image", ""),
-                "device_type": getattr(slave, "dtype", ""),
+                "group_type": general.get("group", ""),
+                "image_name": general.get("image", ""),
+                "order": general.get("order", ""),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -192,38 +225,6 @@ class EepromOpsMixin(_ScannerBase):
                 eeprom_raw[position] = {"error": str(e)}
 
         return eeprom_raw
-
-    def _calculate_sii_crc(self, data: bytes) -> int:
-        """Calculate CRC-8 for SII header. Delegates to eeprom module."""
-        return calculate_sii_crc(data)
-
-    def _parse_sii_header(self, data: bytes) -> Dict[str, Any]:
-        """Parse SII header. Delegates to eeprom module."""
-        return parse_sii_header(data)
-
-    def _parse_strings_category(self, data: bytes) -> List[str]:
-        """Parse STRINGS category. Delegates to eeprom module."""
-        return parse_strings_category(data)
-
-    def _parse_general_category(self, data: bytes, strings: List[str]) -> Dict[str, Any]:
-        """Parse GENERAL category. Delegates to eeprom module."""
-        return parse_general_category(data, strings)
-
-    def _parse_syncmanager_category(self, data: bytes) -> List[Dict[str, Any]]:
-        """Parse SyncManager category. Delegates to eeprom module."""
-        return parse_syncmanager_category(data)
-
-    def _parse_fmmu_category(self, data: bytes) -> List[Dict[str, Any]]:
-        """Parse FMMU category. Delegates to eeprom module."""
-        return parse_fmmu_category(data)
-
-    def _parse_pdo_category(self, data: bytes, strings: List[str]) -> List[Dict[str, Any]]:
-        """Parse PDO category. Delegates to eeprom module."""
-        return parse_pdo_category(data, strings)
-
-    def _parse_dc_category(self, data: bytes, strings: List[str]) -> Dict[str, Any]:
-        """Parse DC category. Delegates to eeprom module."""
-        return parse_dc_category(data, strings)
 
     def _parse_eeprom_esi(self, master: Any) -> Dict[int, Any]:
         """Parse EEPROM ESI (EtherCAT Slave Information) per ETG.2010."""
@@ -278,7 +279,7 @@ class EepromOpsMixin(_ScannerBase):
                 }
 
                 # Parse header (bytes 0x00-0x7F)
-                slave_result["header"] = self._parse_sii_header(raw)
+                slave_result["header"] = parse_sii_header(raw)
 
                 # Parse categories starting at byte 0x80 (word 0x40)
                 strings = [""]  # 1-indexed
@@ -304,26 +305,26 @@ class EepromOpsMixin(_ScannerBase):
                     )
 
                     if cat_type == 10:  # STRINGS
-                        strings = self._parse_strings_category(cat_data)
+                        strings = parse_strings_category(cat_data)
                         slave_result["strings"] = strings[1:]  # Return without empty first element
 
                     elif cat_type == 30:  # GENERAL
-                        slave_result["general"] = self._parse_general_category(cat_data, strings)
+                        slave_result["general"] = parse_general_category(cat_data, strings)
 
                     elif cat_type == 40:  # FMMU
-                        slave_result["fmmu"] = self._parse_fmmu_category(cat_data)
+                        slave_result["fmmu"] = parse_fmmu_category(cat_data)
 
                     elif cat_type == 41:  # SyncManager
-                        slave_result["sync_managers"] = self._parse_syncmanager_category(cat_data)
+                        slave_result["sync_managers"] = parse_syncmanager_category(cat_data)
 
                     elif cat_type == 50:  # TxPDO
-                        slave_result["txpdo"] = self._parse_pdo_category(cat_data, strings)
+                        slave_result["txpdo"] = parse_pdo_category(cat_data, strings)
 
                     elif cat_type == 51:  # RxPDO
-                        slave_result["rxpdo"] = self._parse_pdo_category(cat_data, strings)
+                        slave_result["rxpdo"] = parse_pdo_category(cat_data, strings)
 
                     elif cat_type == 60:  # DC
-                        slave_result["dc"] = self._parse_dc_category(cat_data, strings)
+                        slave_result["dc"] = parse_dc_category(cat_data, strings)
 
                     offset += 4 + cat_size_bytes
 
@@ -652,7 +653,7 @@ class EepromOpsMixin(_ScannerBase):
                 header_data.extend(data[:2])
 
             # Calculate new CRC
-            new_crc = self._calculate_sii_crc(bytes(header_data))
+            new_crc = calculate_sii_crc(bytes(header_data))
 
             # Write CRC at word 0x07 (byte 0x0E) - low byte is CRC, high byte is 0x00
             crc_data = struct.pack("<H", new_crc)
