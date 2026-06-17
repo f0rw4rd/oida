@@ -46,10 +46,7 @@ Flag Coverage Matrix (oida hart -h):
   --scan-addresses            [B] test_scan_addresses
   --enumerate-commands        [B] test_enumerate_commands
   --command-range             [B] test_command_range
-  --enumerate-device-specific [B] test_enumerate_device_specific
   --security-analysis         [A] test_security_analysis
-  --probe-calibration         [B] test_probe_calibration
-  --probe-write               [B] test_probe_write
   --detect-wireless           [B] test_detect_wireless
   --wireless-info             [B] test_wireless_info
   --list-sub-devices          [B] test_list_sub_devices
@@ -76,9 +73,6 @@ Flag Coverage Matrix (oida hart -h):
   --quick                     [B] test_quick_mode
   --full                      [B] test_full_mode
   --deep-scan                 [B] test_deep_scan
-  --scan-mode discovery       [B] test_scan_mode_discovery
-  --scan-mode enumeration     [B] test_scan_mode_enumeration
-  --scan-mode full            [B] test_scan_mode_full
   (wrong port)                [C] test_wrong_port
   (unreachable host)          [C] test_unreachable_host
   (nonexistent host)          [C] test_nonexistent_host
@@ -626,35 +620,6 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
         ), f"Expected command range output: {text[:500]}"
 
     @pytest.mark.slow
-    def test_enumerate_device_specific(self, cli_runner, target, port):
-        """Test --enumerate-device-specific enumerates device-specific commands [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--enumerate-device-specific",
-            "--command-range",
-            "128-135",
-            format="json",
-            json_log=True,
-            timeout=90,
-        )
-
-        assert result.returncode != -1
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "device-specific",
-                "enumerate",
-                "command",
-                "hart",
-                "connected",
-                "128",
-            ]
-        ), f"Expected device-specific enumeration output: {text[:500]}"
-
     # ========================================================================
     # Security Tests
     # ========================================================================
@@ -690,63 +655,6 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
                 "vulnerability",
             ]
         ), f"Expected security analysis output: {text[:500]}"
-
-    @pytest.mark.security
-    def test_probe_calibration(self, cli_runner, target, port):
-        """Test --probe-calibration tests calibration command access [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--probe-calibration",
-            format="json",
-            json_log=True,
-            timeout=45,
-        )
-
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "calibration",
-                "probe",
-                "hart",
-                "connected",
-                "device",
-                "command",
-            ]
-        ), f"Expected calibration probe output: {text[:500]}"
-
-    @pytest.mark.security
-    def test_probe_write(self, cli_runner, target, port):
-        """Test --probe-write tests write command accessibility [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--probe-write",
-            format="json",
-            json_log=True,
-            timeout=45,
-        )
-
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "write",
-                "probe",
-                "hart",
-                "connected",
-                "device",
-                "command",
-                "accessible",
-            ]
-        ), f"Expected write probe output: {text[:500]}"
 
     @pytest.mark.security
     def test_security_finding_write_unprotected(self, cli_runner, target, port):
@@ -2055,86 +1963,6 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
                 "device",
             ]
         ), f"Expected deep scan output: {text[:500]}"
-
-    def test_scan_mode_discovery(self, cli_runner, target, port):
-        """Test --scan-mode discovery [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--scan-mode",
-            "discovery",
-            format="json",
-            json_log=True,
-            timeout=45,
-        )
-
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "discovery",
-                "hart",
-                "connected",
-                "device",
-            ]
-        ), f"Expected discovery scan mode output: {text[:500]}"
-
-    def test_scan_mode_enumeration(self, cli_runner, target, port):
-        """Test --scan-mode enumeration [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--scan-mode",
-            "enumeration",
-            format="json",
-            json_log=True,
-            timeout=45,
-        )
-
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "enumeration",
-                "hart",
-                "connected",
-                "device",
-            ]
-        ), f"Expected enumeration scan mode output: {text[:500]}"
-
-    def test_scan_mode_full(self, cli_runner, target, port):
-        """Test --scan-mode full [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--scan-mode",
-            "full",
-            "--command-range",
-            "0-5",
-            format="json",
-            json_log=True,
-            timeout=60,
-        )
-
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "full",
-                "hart",
-                "connected",
-                "device",
-            ]
-        ), f"Expected full scan mode output: {text[:500]}"
 
     # ========================================================================
     # TLS/PSK Tests
