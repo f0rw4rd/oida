@@ -15,6 +15,9 @@ from ..scanner import ListenStats
 from ....utils.export_utils import print_table
 from ....utils.fuzzer import fuzz
 
+# Cap publish fuzzing to the first N discovered topics
+MAX_FUZZ_TOPICS = 10
+
 
 class MessagingMixin:
     """Mixin providing MQTT messaging operations."""
@@ -84,8 +87,8 @@ class MessagingMixin:
                     time.sleep(0.1)
             else:
                 time.sleep(self.timeout)
-        except KeyboardInterrupt as e:
-            self.logger.debug(f"if self.timeout  0:: {e}")
+        except KeyboardInterrupt:
+            self.logger.debug("Listen interrupted by user (Ctrl-C)")
 
     def _open_output_file(self):
         """Open the listen output file if configured. Returns file handle or None."""
@@ -328,9 +331,7 @@ class MessagingMixin:
         conn.loop_start()
 
         # Limit to first 10 topics
-        max_topics = min(len(topics), 10)
-
-        for topic in topics[:max_topics]:
+        for topic in topics[:MAX_FUZZ_TOPICS]:
             topic_stats = {"topic": topic, "payloads_sent": 0, "errors": 0}
 
             # Generate fuzz payloads

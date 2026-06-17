@@ -65,14 +65,9 @@ class SecurityMixin:
                 }
             )
             for cred in valid_creds:
-                if isinstance(cred, dict):
-                    self.logger.security_finding(
-                        "Default credentials", detail=f"Username: {cred.get('username', 'unknown')}"
-                    )
-                elif isinstance(cred, (list, tuple)) and len(cred) >= 1:
-                    self.logger.security_finding(
-                        "Default credentials", detail=f"Username: {cred[0]}"
-                    )
+                self.logger.security_finding(
+                    "Default credentials", detail=f"Username: {cred.get('username', 'unknown')}"
+                )
 
         # No TLS
         if not self.use_tls:
