@@ -43,14 +43,9 @@ Examples:
     add_network_options(coap_parser, default_port=5683)
 
     # Discovery options
+    # Resource enumeration via /.well-known/core runs unconditionally on every
+    # scan, so there is no toggle for it here.
     discovery_group = coap_parser.add_argument_group("Discovery")
-    discovery_group.add_argument(
-        "-r",
-        "--resources",
-        action="store_true",
-        default=True,
-        help="Enumerate resources via /.well-known/core (default: enabled)",
-    )
     discovery_group.add_argument(
         "-R",
         "--probe-paths",

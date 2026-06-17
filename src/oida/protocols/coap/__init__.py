@@ -19,7 +19,6 @@ from .helpers import (
     coap_ping,
     coap_request,  # noqa: F401
     coap_get_blockwise,
-    coap_put_blockwise,
     try_dtls_psk,
     try_dtls_cert,
     try_dtls_rpk,
@@ -39,17 +38,8 @@ from .constants import (
     protocol_options,
 )
 
-# Lazy import reference for dependency checking
-from ...utils.lazy_import import lazy_import
-
-_aiocoap = lazy_import("aiocoap", "CoAP")
-_dtlssocket = lazy_import("DTLSSocket", "CoAP", install_hint="pip install DTLSSocket")
-
-# Flag to indicate if dependencies are missing (for tests to mock)
-dependencies_missing = not _aiocoap.is_available
-
 # NXC-style callable class
-from .nxc_connection import coap  # noqa: E402, F401
+from .nxc_connection import coap  # noqa: F401
 
 __all__ = [
     # Scanner
@@ -64,7 +54,6 @@ __all__ = [
     "parse_payload",
     "coap_ping",
     "coap_get_blockwise",
-    "coap_put_blockwise",
     "try_dtls_psk",
     "try_dtls_cert",
     "try_dtls_rpk",
