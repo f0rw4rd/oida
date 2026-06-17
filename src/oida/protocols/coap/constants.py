@@ -7,50 +7,6 @@ DEFAULT_PORT = 5683
 DEFAULT_DTLS_PORT = 5684
 DEFAULT_TIMEOUT = 2.0
 
-# CoAP message types
-CON = 0  # Confirmable
-NON = 1  # Non-confirmable
-ACK = 2  # Acknowledgement
-RST = 3  # Reset
-
-MSG_TYPES = {0: "CON", 1: "NON", 2: "ACK", 3: "RST"}
-
-# CoAP method codes
-METHODS = {
-    "GET": 0x01,
-    "POST": 0x02,
-    "PUT": 0x03,
-    "DELETE": 0x04,
-    "FETCH": 0x05,
-    "PATCH": 0x06,
-    "IPATCH": 0x07,
-}
-
-# CoAP response codes
-RESPONSE_CODES = {
-    "2.01": "Created",
-    "2.02": "Deleted",
-    "2.03": "Valid",
-    "2.04": "Changed",
-    "2.05": "Content",
-    "4.00": "Bad Request",
-    "4.01": "Unauthorized",
-    "4.02": "Bad Option",
-    "4.03": "Forbidden",
-    "4.04": "Not Found",
-    "4.05": "Method Not Allowed",
-    "4.06": "Not Acceptable",
-    "4.12": "Precondition Failed",
-    "4.13": "Request Entity Too Large",
-    "4.15": "Unsupported Content-Format",
-    "5.00": "Internal Server Error",
-    "5.01": "Not Implemented",
-    "5.02": "Bad Gateway",
-    "5.03": "Service Unavailable",
-    "5.04": "Gateway Timeout",
-    "5.05": "Proxying Not Supported",
-}
-
 # Content formats (Option 12)
 CONTENT_FORMATS = {
     0: "text/plain",
@@ -161,12 +117,6 @@ WRITE_METHODS = {"PUT", "POST", "DELETE", "PATCH", "IPATCH"}
 
 # Protocol options dictionary for scanner registration
 protocol_options: Dict[str, Dict[str, Any]] = {
-    "resources": {
-        "type": "bool",
-        "description": "Enumerate resources via /.well-known/core",
-        "required": False,
-        "default": True,
-    },
     "probe-paths": {
         "type": "bool",
         "description": "Probe common IoT paths",
