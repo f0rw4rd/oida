@@ -107,10 +107,10 @@ class _ScanHandler:
                 self.iin = None
                 self._lock = threading.Lock()
 
-            def BeginFragment(self, response_info):
+            def BeginFragment(self, _response_info):
                 pass
 
-            def EndFragment(self, response_info):
+            def EndFragment(self, _response_info):
                 pass
 
             def Process(self, info, values):
@@ -194,7 +194,7 @@ class _MasterApp:
                 with self._lock:
                     self.iin = iin
 
-            def OnTaskStart(self, task_type, task_id):
+            def OnTaskStart(self, _task_type, _task_id):
                 pass
 
             def OnTaskComplete(self, info):
@@ -268,7 +268,7 @@ class _LogHandler:
                 self._logger = _logger
                 self._debug = _debug
 
-            def log(self, module, id, level, location, message):
+            def log(self, _module, _id, _level, location, message):
                 if self._debug and self._logger:
                     self._logger.debug(f"[dnp3-lib] {message}")
 
@@ -406,8 +406,7 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         # File delete
         self.delete_file = args.get("delete-file", None)
 
-        # Diagnostic/stealth operations
-        self.no_ack_mode = args.get("no-ack", False)
+        # Diagnostic operations
         self.delay_measure = args.get("delay-measure", False)
 
         # Security statistics
@@ -437,19 +436,6 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
 
         # Alias for backward compat with mixins that reference self._handler
         self._handler = None
-
-        # Collected results
-        self._scan_data = {
-            "binary_inputs": [],
-            "double_bit_binary_inputs": [],
-            "binary_output_statuses": [],
-            "counters": [],
-            "frozen_counters": [],
-            "analog_inputs": [],
-            "analog_output_statuses": [],
-            "device_attributes": [],
-            "iin": None,
-        }
 
     @cached_property
     def _dnp3(self):
@@ -523,31 +509,6 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         method_fn(self._master, callback, config)
         event.wait(timeout=timeout + 2.0)
         return result_holder[0]
-
-    # ------------------------------------------------------------------
-    # Standardized operation helper
-    # ------------------------------------------------------------------
-
-    def _run_operation(self, name: str, results: dict, fn, **meta):
-        """Run a DNP3 operation with standard error handling and result recording."""
-        try:
-            ret = fn()
-            if isinstance(ret, tuple):
-                success, detail = ret
-            else:
-                success = ret
-                detail = None
-            result_str = self._op_result(success)
-            self.logger.display(f"{name}: {result_str}")
-            entry = {"success": success, **meta}
-            if detail is not None:
-                entry["detail"] = detail
-            if not success:
-                entry["error"] = self._error_detail()
-            results["operations"][name] = entry
-        except Exception as e:
-            self.logger.fail(f"{name} error: {type(e).__name__}: {e}")
-            results["operations"][name] = {"success": False, "error": str(e), **meta}
 
     # ------------------------------------------------------------------
     # Connection management
@@ -784,7 +745,7 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         except Exception as e:
             raise ICSConnectionError(str(e), protocol="DNP3")
 
-    def disconnect(self, connection: Any) -> None:
+    def disconnect(self, _connection: Any) -> None:
         """Clean up DNP3 connection resources."""
         # Shut down in reverse order: master -> channel -> manager.
         # Always clear the reference even if Shutdown() raises.
@@ -810,7 +771,7 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
     # Discovery orchestrator
     # ------------------------------------------------------------------
 
-    def discover(self, connection: Any) -> Dict[str, Any]:
+    def discover(self, _connection: Any) -> Dict[str, Any]:
         """Perform DNP3 discovery and data collection."""
         results = {
             "connection": {
@@ -1134,22 +1095,6 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         self._read_device_attributes(results)
         return results
 
-    def time_sync_cmd(self, mode: str = "lan") -> bool:
-        """Synchronize time with outstation.
-
-        Note: In opendnp3, timeSyncMode is set at stack creation time and
-        cannot be changed after. This method triggers a class scan which
-        causes the stack to execute its configured time sync procedure.
-        """
-        dnp3 = self._dnp3
-        return self._sync_scan(
-            lambda master, handler, config: master.ScanClasses(
-                dnp3.ClassField.AllClasses(),
-                handler,
-                config,
-            )
-        )
-
     def cold_restart(self) -> Optional[int]:
         """Send cold restart, return delay in ms or None."""
         dnp3 = self._dnp3
@@ -1186,29 +1131,3 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         self._master.CheckLinkStatus(callback)
         event.wait(timeout=float(self.op_timeout) + 2.0)
         return result_holder[0]
-
-    def write_analog_output(
-        self, index: int, value: float, ao_type: str = "float", use_sbo: bool = False
-    ) -> bool:
-        """Write to an analog output point."""
-        dnp3 = self._dnp3
-        if ao_type == "int32":
-            cmd = dnp3.AnalogOutputInt32(int(value))
-        elif ao_type == "int16":
-            cmd = dnp3.AnalogOutputInt16(int(value))
-        elif ao_type == "double":
-            cmd = dnp3.AnalogOutputDouble64(float(value))
-        else:
-            cmd = dnp3.AnalogOutputFloat32(float(value))
-
-        result = self._sync_callback(
-            lambda master, callback, config: (
-                master.SelectAndOperate(cmd, index, callback, config)
-                if use_sbo
-                else master.DirectOperate(cmd, index, callback, config)
-            )
-        )
-        if result is not None:
-            summary = getattr(result, "summary", None)
-            return summary == dnp3.TaskCompletion.SUCCESS
-        return False

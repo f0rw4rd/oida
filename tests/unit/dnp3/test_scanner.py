@@ -213,43 +213,6 @@ class TestKnownAttributes:
 class TestDNP3ScannerScanData:
     """Test internal scan data structure."""
 
-    def test_initial_scan_data_structure(self):
-        """Test that _scan_data is initialized with all expected keys."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-
-        expected_keys = [
-            "binary_inputs",
-            "double_bit_binary_inputs",
-            "binary_output_statuses",
-            "counters",
-            "frozen_counters",
-            "analog_inputs",
-            "analog_output_statuses",
-            "device_attributes",
-            "iin",
-        ]
-
-        for key in expected_keys:
-            assert key in scanner._scan_data
-
-    def test_initial_scan_data_empty(self):
-        """Test that all scan data lists start empty."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-
-        for key in [
-            "binary_inputs",
-            "double_bit_binary_inputs",
-            "binary_output_statuses",
-            "counters",
-            "frozen_counters",
-            "analog_inputs",
-            "analog_output_statuses",
-            "device_attributes",
-        ]:
-            assert scanner._scan_data[key] == []
-
-        assert scanner._scan_data["iin"] is None
-
     def test_initial_state_not_connected(self):
         """Test initial state variables."""
         scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
@@ -1360,16 +1323,6 @@ class TestFileDeleteConfiguration:
 class TestDiagnosticConfiguration:
     """Test diagnostic operation configuration."""
 
-    def test_no_ack_mode_default(self):
-        """Test no ack mode defaults to False."""
-        scanner = DNP3Scanner(
-            {
-                "rhost": "127.0.0.1",
-                "rport": 20000,
-            }
-        )
-        assert scanner.no_ack_mode is False
-
     def test_delay_measure_default(self):
         """Test delay measure defaults to False."""
         scanner = DNP3Scanner(
@@ -1379,17 +1332,6 @@ class TestDiagnosticConfiguration:
             }
         )
         assert scanner.delay_measure is False
-
-    def test_no_ack_mode_configuration(self):
-        """Test scanner with no ack mode."""
-        scanner = DNP3Scanner(
-            {
-                "rhost": "127.0.0.1",
-                "rport": 20000,
-                "no-ack": True,
-            }
-        )
-        assert scanner.no_ack_mode is True
 
     def test_delay_measure_configuration(self):
         """Test scanner with delay measure."""
@@ -1450,11 +1392,6 @@ class TestMixinMethodsExist:
         """Test _read_security_stats method exists."""
         scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
         assert hasattr(scanner, "_read_security_stats")
-
-    def test_run_operation_helper_exists(self):
-        """Test _run_operation helper exists."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-        assert hasattr(scanner, "_run_operation")
 
 
 class TestTransportConfiguration:
@@ -1744,50 +1681,6 @@ class TestBuildSAConfig:
         config = scanner._build_sa_config()
         assert config is not None
         assert config["update_key"] == bytes.fromhex("deadbeef")
-
-
-class TestRunOperationHelper:
-    """Test the _run_operation helper method."""
-
-    def test_run_operation_success(self):
-        """Test _run_operation records success."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-        results = {"operations": {}}
-        scanner._run_operation("test_op", results, lambda: True)
-        assert results["operations"]["test_op"]["success"] is True
-
-    def test_run_operation_failure(self):
-        """Test _run_operation records failure."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-        results = {"operations": {}}
-        scanner._run_operation("test_op", results, lambda: False)
-        assert results["operations"]["test_op"]["success"] is False
-
-    def test_run_operation_exception(self):
-        """Test _run_operation handles exceptions."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-        results = {"operations": {}}
-        scanner._run_operation(
-            "test_op", results, lambda: (_ for _ in ()).throw(RuntimeError("boom"))
-        )
-        assert results["operations"]["test_op"]["success"] is False
-        assert "boom" in results["operations"]["test_op"]["error"]
-
-    def test_run_operation_tuple_return(self):
-        """Test _run_operation handles (success, detail) tuple return."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-        results = {"operations": {}}
-        scanner._run_operation("test_op", results, lambda: (True, {"count": 5}))
-        assert results["operations"]["test_op"]["success"] is True
-        assert results["operations"]["test_op"]["detail"] == {"count": 5}
-
-    def test_run_operation_with_metadata(self):
-        """Test _run_operation passes extra metadata."""
-        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-        results = {"operations": {}}
-        scanner._run_operation("test_op", results, lambda: True, index=5, mode="direct")
-        assert results["operations"]["test_op"]["index"] == 5
-        assert results["operations"]["test_op"]["mode"] == "direct"
 
 
 class TestConstantsGroupNames:

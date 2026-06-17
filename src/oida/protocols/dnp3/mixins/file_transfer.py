@@ -14,7 +14,6 @@ Handles file transfer and octet string operations:
 
 from __future__ import annotations
 
-import time
 from typing import Any, Dict, TYPE_CHECKING
 
 from ....utils.payload import resolve_file_payload
@@ -518,8 +517,6 @@ class FileTransferMixin(_ScannerBase):
                 )
             )
 
-            time.sleep(0.5)
-
             if scan_result:
                 octet_data = []
                 if hasattr(self._handler, "octet_strings"):
@@ -531,7 +528,7 @@ class FileTransferMixin(_ScannerBase):
                         if not (start_idx <= os_item.index <= end_idx):
                             continue
                         val_obj = os_item.value
-                        raw_value = getattr(val_obj, "value", b"")
+                        raw_value = val_obj.ToBytes()
                         if isinstance(raw_value, (bytes, bytearray)):
                             hex_value = raw_value.hex()
                             length = len(raw_value)
