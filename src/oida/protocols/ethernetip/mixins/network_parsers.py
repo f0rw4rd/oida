@@ -111,41 +111,25 @@ class NetworkParsersMixin(_ScannerBase):
 
         return tcp_ip_info
 
-    def _parse_interface_config(self, tcp_ip_info: Dict[str, Any], value: Any) -> None:
-        """Parse the interface configuration structure (attr 5)."""
+    def _parse_interface_config(self, tcp_ip_info: Dict[str, Any], value: bytes) -> None:
+        """Parse the interface configuration structure (attr 5).
+
+        ``value`` is the raw bytes returned by ``_read_cip_attribute``.
+        """
         try:
-            if isinstance(value, (bytes, bytearray)):
-                # Structure: IP(4) + Subnet(4) + Gateway(4) + DNS1(4) + DNS2(4) + Domain(string)
-                # CIP stores IP addresses in little-endian format (reversed byte order)
-                if len(value) >= 20:
-                    # Reverse bytes to get correct IP address order
-                    tcp_ip_info["ip_address"] = f"{value[3]}.{value[2]}.{value[1]}.{value[0]}"
-                    tcp_ip_info["network_mask"] = f"{value[7]}.{value[6]}.{value[5]}.{value[4]}"
-                    tcp_ip_info["gateway"] = f"{value[11]}.{value[10]}.{value[9]}.{value[8]}"
-                    tcp_ip_info["dns_primary"] = f"{value[15]}.{value[14]}.{value[13]}.{value[12]}"
-                    tcp_ip_info["dns_secondary"] = (
-                        f"{value[19]}.{value[18]}.{value[17]}.{value[16]}"
+            # Structure: IP(4) + Subnet(4) + Gateway(4) + DNS1(4) + DNS2(4) + Domain(string)
+            # CIP stores IP addresses in little-endian format (reversed byte order)
+            if len(value) >= 20:
+                # Reverse bytes to get correct IP address order
+                tcp_ip_info["ip_address"] = f"{value[3]}.{value[2]}.{value[1]}.{value[0]}"
+                tcp_ip_info["network_mask"] = f"{value[7]}.{value[6]}.{value[5]}.{value[4]}"
+                tcp_ip_info["gateway"] = f"{value[11]}.{value[10]}.{value[9]}.{value[8]}"
+                tcp_ip_info["dns_primary"] = f"{value[15]}.{value[14]}.{value[13]}.{value[12]}"
+                tcp_ip_info["dns_secondary"] = f"{value[19]}.{value[18]}.{value[17]}.{value[16]}"
+                if len(value) > 20:
+                    tcp_ip_info["domain_name"] = (
+                        value[20:].decode("utf-8", errors="ignore").rstrip("\x00")
                     )
-                    if len(value) > 20:
-                        tcp_ip_info["domain_name"] = (
-                            value[20:].decode("utf-8", errors="ignore").rstrip("\x00")
-                        )
-            elif isinstance(value, (list, tuple)):
-                # Some devices return as list of values
-                if len(value) >= 4:
-                    tcp_ip_info["ip_address"] = ".".join(map(str, value[:4]))
-                if len(value) >= 8:
-                    tcp_ip_info["network_mask"] = ".".join(map(str, value[4:8]))
-                if len(value) >= 12:
-                    tcp_ip_info["gateway"] = ".".join(map(str, value[8:12]))
-            elif isinstance(value, dict):
-                # Structured response
-                tcp_ip_info["ip_address"] = value.get("ip_address") or value.get("ip")
-                tcp_ip_info["network_mask"] = value.get("network_mask") or value.get("subnet")
-                tcp_ip_info["gateway"] = value.get("gateway")
-                tcp_ip_info["dns_primary"] = value.get("dns_primary") or value.get("dns1")
-                tcp_ip_info["dns_secondary"] = value.get("dns_secondary") or value.get("dns2")
-                tcp_ip_info["domain_name"] = value.get("domain_name") or value.get("domain")
         except Exception as e:
             self.logger.debug(f"Error parsing interface config: {e}")
 
@@ -224,22 +208,13 @@ class NetworkParsersMixin(_ScannerBase):
 
         return eth_link_info
 
-    def _parse_mac_address(self, value: Any) -> Optional[str]:
-        """Parse MAC address from various formats."""
+    def _parse_mac_address(self, value: bytes) -> Optional[str]:
+        """Parse a MAC address from the raw 6-byte Physical Address attribute."""
         try:
-            if isinstance(value, (bytes, bytearray)) and len(value) >= 6:
+            if value and len(value) >= 6:
                 return ":".join(f"{b:02X}" for b in value[:6])
-            elif isinstance(value, (list, tuple)) and len(value) >= 6:
-                return ":".join(f"{int(b):02X}" for b in value[:6])
-            elif isinstance(value, str):
-                return value
-            elif isinstance(value, int):
-                # 48-bit integer
-                mac_bytes = value.to_bytes(6, byteorder="big")
-                return ":".join(f"{b:02X}" for b in mac_bytes)
         except Exception as e:
             self.logger.debug(f"parse mac address failed: {e}")
-            pass  # Invalid MAC format
         return None
 
     def _parse_assembly_instances(self, conn: Any) -> Dict[str, Any]:
@@ -306,7 +281,6 @@ class NetworkParsersMixin(_ScannerBase):
 
             except Exception as e:
                 self.logger.debug(f"parse assembly instances failed: {e}")
-                pass  # Instance doesn't exist
 
         if found_count > 0:
             self.logger.display(f"  Found {found_count} assembly instances")

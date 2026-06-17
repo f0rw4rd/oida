@@ -21,7 +21,6 @@ from oida.protocols.ethernetip.attacks import (
     ATTACK_CRASHETHER_PAYLOAD,
     ATTACK_RESETETHER_PAYLOAD,
     ATTACK_STOPCPU_PAYLOAD,
-    ATTACK_TYPES,
     DANGEROUS_TAG_PATTERNS,
 )
 
@@ -83,38 +82,6 @@ class TestAttackPayloads(unittest.TestCase):
             ATTACK_RESETETHER_PAYLOAD,
         ]
         self.assertEqual(len(payloads), len(set(payloads)))
-
-
-class TestAttackTypes(unittest.TestCase):
-    """Test ATTACK_TYPES dictionary."""
-
-    def test_all_attack_types_defined(self):
-        expected = {"stopcpu", "crashcpu", "crashether", "resetether"}
-        self.assertEqual(set(ATTACK_TYPES.keys()), expected)
-
-    def test_attack_types_have_required_keys(self):
-        for name, info in ATTACK_TYPES.items():
-            self.assertIn("payload", info, f"{name} missing 'payload'")
-            self.assertIn("name", info, f"{name} missing 'name'")
-            self.assertIn("destructive", info, f"{name} missing 'destructive'")
-
-    def test_attack_payloads_match(self):
-        self.assertIs(ATTACK_TYPES["stopcpu"]["payload"], ATTACK_STOPCPU_PAYLOAD)
-        self.assertIs(ATTACK_TYPES["crashcpu"]["payload"], ATTACK_CRASHCPU_PAYLOAD)
-        self.assertIs(ATTACK_TYPES["crashether"]["payload"], ATTACK_CRASHETHER_PAYLOAD)
-        self.assertIs(ATTACK_TYPES["resetether"]["payload"], ATTACK_RESETETHER_PAYLOAD)
-
-    def test_destructive_flags(self):
-        self.assertTrue(ATTACK_TYPES["stopcpu"]["destructive"])
-        self.assertTrue(ATTACK_TYPES["crashcpu"]["destructive"])
-        self.assertTrue(ATTACK_TYPES["crashether"]["destructive"])
-        # Reset is non-destructive
-        self.assertFalse(ATTACK_TYPES["resetether"]["destructive"])
-
-    def test_attack_names_are_strings(self):
-        for name, info in ATTACK_TYPES.items():
-            self.assertIsInstance(info["name"], str)
-            self.assertGreater(len(info["name"]), 0)
 
 
 class TestDangerousTagPatterns(unittest.TestCase):

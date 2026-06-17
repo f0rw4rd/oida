@@ -8,22 +8,17 @@ Tests cover:
 - Protocol name / default port
 - Dependency checking
 - _read_cip_attribute with various result types
-- _parse_route_path
 - enumerate_all flag propagation
 - connect / disconnect logic
 - _build_enip_packet / _parse_enip_header / _parse_cip_response
-- _send_enip_command via TCP and UDP
+- _send_enip_command via TCP
 - _register_session
 - ListIdentity, ListServices, ListInterfaces parsing
-- _parse_list_identity_response
 - Attack commands (CPU stop, crash, reset)
-- _detect_cip_security
 - _dump_security_settings and sub-methods
-- _check_tls_support
 - _check_parameter_object
 - _test_write_with_status
 - _determine_permission
-- _test_attribute_write
 - _test_write_access
 - _analyze_security
 - _fuzz_blacklist
@@ -63,7 +58,6 @@ class TestScannerInitAdvanced(unittest.TestCase):
 
     def test_enumerate_all_enables_all_flags(self):
         scanner = make_scanner(enumerate_all=True)
-        self.assertTrue(scanner.list_identity)
         self.assertTrue(scanner.list_services)
         self.assertTrue(scanner.list_interfaces)
         self.assertTrue(scanner.enumerate_objects)
@@ -78,8 +72,7 @@ class TestScannerInitAdvanced(unittest.TestCase):
         self.assertEqual(scanner.max_class, 50)
 
     def test_individual_flags(self):
-        scanner = make_scanner(list_identity=True, list_services=False, list_interfaces=True)
-        self.assertTrue(scanner.list_identity)
+        scanner = make_scanner(list_services=False, list_interfaces=True)
         self.assertFalse(scanner.list_services)
         self.assertTrue(scanner.list_interfaces)
 
@@ -126,58 +119,6 @@ class TestScannerInitAdvanced(unittest.TestCase):
         scanner = make_scanner()
         self.assertIsNone(scanner._driver_type)
         self.assertIsNone(scanner._pycomm3_driver)
-
-
-# =============================================================================
-# Route path parsing
-# =============================================================================
-
-
-class TestRoutePathParsing(unittest.TestCase):
-    """Test CIP route path string parsing."""
-
-    def test_empty_route(self):
-        scanner = make_scanner()
-        result = scanner._parse_route_path("")
-        self.assertEqual(result, [])
-
-    def test_single_segment(self):
-        scanner = make_scanner()
-        result = scanner._parse_route_path("1/2")
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["port"], 1)
-        self.assertEqual(result[0]["link"], 2)
-
-    def test_multiple_segments(self):
-        scanner = make_scanner()
-        result = scanner._parse_route_path("1/2,1/0")
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0]["port"], 1)
-        self.assertEqual(result[0]["link"], 2)
-        self.assertEqual(result[1]["port"], 1)
-        self.assertEqual(result[1]["link"], 0)
-
-    def test_ip_link_address(self):
-        scanner = make_scanner()
-        result = scanner._parse_route_path("2/192.168.1.100")
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["port"], 2)
-        self.assertEqual(result[0]["link"], "192.168.1.100")
-
-    def test_invalid_segment_no_slash(self):
-        scanner = make_scanner()
-        result = scanner._parse_route_path("invalid")
-        self.assertEqual(result, [])
-
-    def test_invalid_segment_bad_port(self):
-        scanner = make_scanner()
-        result = scanner._parse_route_path("abc/2")
-        self.assertEqual(result, [])
-
-    def test_whitespace_trimming(self):
-        scanner = make_scanner()
-        result = scanner._parse_route_path("  1/2 , 1/0 ")
-        self.assertEqual(len(result), 2)
 
 
 # =============================================================================
@@ -359,19 +300,6 @@ class TestEnipCommands(unittest.TestCase):
         self.assertIsNotNone(result)
         mock_sock.send.assert_called_once()
 
-    @patch("socket.socket")
-    def test_send_enip_command_udp(self, mock_socket_class):
-        mock_sock = MagicMock()
-        mock_sock.recvfrom.return_value = (
-            b"\x63\x00" + b"\x00" * 22,
-            ("192.168.1.100", 44818),
-        )
-        mock_socket_class.return_value = mock_sock
-
-        result = self.scanner._send_enip_command("192.168.1.100", 44818, 0x0063, use_udp=True)
-        self.assertIsNotNone(result)
-        mock_sock.sendto.assert_called_once()
-
     @patch("oida.protocols.ethernetip.mixins.enip_commands.ConnectionHelper")
     def test_send_enip_command_timeout(self, mock_helper):
         mock_sock = MagicMock()
@@ -424,41 +352,6 @@ class TestRegisterSession(unittest.TestCase):
 # =============================================================================
 # Test write access
 # =============================================================================
-
-
-class TestWriteAccess(unittest.TestCase):
-    """Test write access testing methods."""
-
-    def setUp(self):
-        self.scanner = make_scanner(write=True)
-
-    def test_test_attribute_write_success(self):
-        conn = MagicMock()
-        mock_result = MagicMock()
-        mock_result.error = None
-        conn.generic_message.return_value = mock_result
-
-        result = self.scanner._test_attribute_write(conn, 0x09, 1, 1, b"\x01")
-        self.assertTrue(result)
-
-    def test_test_attribute_write_failure(self):
-        conn = MagicMock()
-        conn.generic_message.side_effect = Exception("Write denied")
-        result = self.scanner._test_attribute_write(conn, 0x01, 1, 1, b"\x01")
-        self.assertFalse(result)
-
-    def test_test_attribute_write_no_generic_message(self):
-        conn = MagicMock(spec=[])
-        result = self.scanner._test_attribute_write(conn, 0x01, 1, 1, b"\x01")
-        self.assertFalse(result)
-
-    def test_test_attribute_write_error_result(self):
-        conn = MagicMock()
-        mock_result = MagicMock()
-        mock_result.error = "Attribute not settable"
-        conn.generic_message.return_value = mock_result
-        result = self.scanner._test_attribute_write(conn, 0x01, 1, 1, b"\x01")
-        self.assertFalse(result)
 
 
 class TestWriteWithStatus(unittest.TestCase):
@@ -519,36 +412,27 @@ class TestWriteWithStatus(unittest.TestCase):
 class TestDeterminePermission(unittest.TestCase):
     """Test _determine_permission."""
 
-    def test_no_write_test_no_param_obj(self):
-        """Without --write and without a Parameter Object map we have no
-        signal — return R? rather than the silent ? which used to render
-        as 'read-only' in downstream reports."""
+    def test_no_write_test(self):
+        """Without --write we have no signal — return R? rather than the
+        silent ? which used to render as 'read-only' in downstream reports."""
         scanner = make_scanner()
         conn = MagicMock()
-        result = scanner._determine_permission(conn, 0x01, 1, 1, b"\x01", False)
+        result = scanner._determine_permission(conn, 0x01, 1, 1, b"\x01")
         self.assertEqual(result, "R?")
 
     def test_write_test_success(self):
         scanner = make_scanner(write=True)
         scanner._test_write_with_status = MagicMock(return_value=(True, 0x00, []))
         conn = MagicMock()
-        result = scanner._determine_permission(conn, 0x09, 1, 1, b"\x01", False)
+        result = scanner._determine_permission(conn, 0x09, 1, 1, b"\x01")
         self.assertEqual(result, "RW")
 
     def test_write_test_read_only(self):
         scanner = make_scanner(write=True)
         scanner._test_write_with_status = MagicMock(return_value=(False, 0x0E, []))
         conn = MagicMock()
-        result = scanner._determine_permission(conn, 0x01, 1, 1, b"\x01", False)
+        result = scanner._determine_permission(conn, 0x01, 1, 1, b"\x01")
         self.assertEqual(result, "R")
-
-    def test_param_obj_lookup(self):
-        scanner = make_scanner(write=True)
-        scanner._get_permission_via_parameter_object = MagicMock(return_value="RW")
-        conn = MagicMock()
-        param_map = {(0x01, 1, 1): 5}
-        result = scanner._determine_permission(conn, 0x01, 1, 1, b"\x01", True, param_map)
-        self.assertEqual(result, "RW")
 
 
 # =============================================================================
@@ -582,53 +466,6 @@ class TestCheckParameterObject(unittest.TestCase):
         self.assertTrue(result["available"])
         self.assertEqual(result["num_instances"], 50)
         self.assertTrue(result["full_support"])
-
-
-# =============================================================================
-# Security detection
-# =============================================================================
-
-
-class TestCipSecurityDetection(unittest.TestCase):
-    """Test CIP Security detection."""
-
-    def test_no_security_objects(self):
-        scanner = make_scanner()
-        scanner._read_cip_attribute = MagicMock(return_value=None)
-        scanner._check_tls_support = MagicMock(return_value=False)
-        conn = MagicMock()
-        result = scanner._detect_cip_security(conn)
-        self.assertFalse(result["cip_security_supported"])
-        self.assertEqual(result["security_state"], "not_detected")
-
-    def test_security_object_found(self):
-        scanner = make_scanner()
-
-        def mock_read(conn, cls, inst, attr):
-            if cls == 0x5D:
-                return b"\x01"
-            return None
-
-        scanner._read_cip_attribute = mock_read
-        scanner._check_tls_support = MagicMock(return_value=False)
-        conn = MagicMock()
-        result = scanner._detect_cip_security(conn)
-        self.assertTrue(result["cip_security_supported"])
-        self.assertEqual(result["security_state"], "detected")
-
-    def test_password_authenticator_detected(self):
-        scanner = make_scanner()
-
-        def mock_read(conn, cls, inst, attr):
-            if cls == 0x61:
-                return b"\x01"
-            return None
-
-        scanner._read_cip_attribute = mock_read
-        scanner._check_tls_support = MagicMock(return_value=False)
-        conn = MagicMock()
-        result = scanner._detect_cip_security(conn)
-        self.assertIn("password", result["authentication_methods"])
 
 
 # =============================================================================
@@ -924,15 +761,6 @@ class TestNxcConnection(unittest.TestCase):
         result = obj._convert_args_to_dict()
         self.assertEqual(result["host"], "10.0.0.1")
         self.assertEqual(result["port"], 44818)
-
-    def test_convert_args_to_dict_from_empty(self):
-        from oida.protocols.ethernetip.nxc_connection import ethernetip
-
-        obj = ethernetip.__new__(ethernetip)
-        obj.args = 42  # Neither dict nor has __dict__
-        obj.host = "1.2.3.4"
-        result = obj._convert_args_to_dict()
-        self.assertEqual(result["host"], "1.2.3.4")
 
 
 # =============================================================================

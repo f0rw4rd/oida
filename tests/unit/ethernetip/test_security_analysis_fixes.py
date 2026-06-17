@@ -7,7 +7,7 @@ Covers three bugs from CODE_REVIEW.md HIGH:
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from oida.protocols.ethernetip.mixins.security_analysis import _count_writable_attrs
 
