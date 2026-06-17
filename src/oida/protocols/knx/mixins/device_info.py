@@ -54,65 +54,6 @@ class DeviceInfoMixin:
             errors.append(f"{label}: {e}")
         return None
 
-    async def _read_device_info(self, knx: "XKNX", address: str) -> Dict[str, Any]:
-        """Read comprehensive device information"""
-        info = {
-            "address": address,
-            "descriptor": None,
-            "mask_version": None,
-            "manufacturer_id": None,
-            "manufacturer_name": None,
-            "serial": None,
-            "app_program": None,
-            "order_number": None,
-            "errors": [],
-        }
-
-        try:
-            self.logger.display(f"Reading device info from {address}")
-            addr = _xknx_cls.IndividualAddress(address)
-            mgmt = knx.management
-
-            async with mgmt.connection(addr) as p2p:
-                # Device Descriptor (mask version)
-                desc_hex, mask_ver, _desc_bytes = await self._read_descriptor(p2p, info["errors"])
-                if desc_hex:
-                    info["descriptor"] = desc_hex
-                    info["mask_version"] = mask_ver
-                    self.logger.display(f"  Descriptor: {desc_hex}")
-
-                # Manufacturer ID (memory 0x0104, 2 bytes)
-                data = await self._read_memory_field(p2p, 0x0104, 2, "manufacturer", info["errors"])
-                if data:
-                    mfr_id = int.from_bytes(data, "big")
-                    info["manufacturer_id"] = mfr_id
-                    info["manufacturer_name"] = get_vendor_name(mfr_id)
-                    self.logger.display(f"  Manufacturer: {info['manufacturer_name']} ({mfr_id})")
-
-                # Serial Number (memory 0x010B, 6 bytes)
-                data = await self._read_memory_field(p2p, 0x010B, 6, "serial", info["errors"])
-                if data:
-                    info["serial"] = data.hex()
-                    self.logger.display(f"  Serial: {info['serial']}")
-
-                # Application Program (memory 0x0106, 5 bytes)
-                data = await self._read_memory_field(p2p, 0x0106, 5, "app_program", info["errors"])
-                if data:
-                    info["app_program"] = data.hex()
-                    self.logger.display(f"  App Program: {info['app_program']}")
-
-                # Order Number (memory 0x0100, 2 bytes)
-                data = await self._read_memory_field(p2p, 0x0100, 2, "order_number", info["errors"])
-                if data:
-                    info["order_number"] = data.hex()
-                    self.logger.display(f"  Order Number: {info['order_number']}")
-
-        except Exception as e:
-            self.logger.fail(f"Error reading device info from {address}: {e}")
-            info["errors"].append(f"connection: {e}")
-
-        return info
-
     async def _identify_device(self, knx: "XKNX", address: str) -> Dict[str, Any]:
         """
         Identify device using PropertyValueRead from Object 0 (Device Object).
@@ -156,21 +97,21 @@ class DeviceInfoMixin:
             "errors": [],
         }
 
-        # Device properties to read from Object 0
+        # Device properties to read from Object 0 (PID -> result key)
         DEVICE_PROPS = {
-            12: ("manufacturer_id", 2),  # 2 bytes - manufacturer code
-            11: ("serial_number", 6),  # 6 bytes - serial number
-            55: ("product_id", None),  # varies - product identifier
-            78: ("hardware_type", None),  # varies - hardware type
-            9: ("firmware_revision", None),  # varies - firmware version
-            15: ("order_info", None),  # varies - order/model number
+            12: "manufacturer_id",  # manufacturer code
+            11: "serial_number",  # serial number
+            55: "product_id",  # product identifier
+            78: "hardware_type",  # hardware type
+            9: "firmware_revision",  # firmware version
+            15: "order_info",  # order/model number
             # New high-value properties
-            93: ("app_version", None),  # application version
-            91: ("application_id", None),  # application identifier
-            54: ("prog_mode", 1),  # 1 byte - programming mode (0/1)
-            53: ("error_flags", 1),  # 1 byte - error flags
-            56: ("max_apdu", 2),  # 2 bytes - max APDU length
-            16: ("pei_type", 1),  # 1 byte - PEI type
+            93: "app_version",  # application version
+            91: "application_id",  # application identifier
+            54: "prog_mode",  # programming mode (0/1)
+            53: "error_flags",  # error flags
+            56: "max_apdu",  # max APDU length
+            16: "pei_type",  # PEI type
         }
 
         try:
@@ -186,11 +127,11 @@ class DeviceInfoMixin:
                     if mask_ver:
                         info["mask_version"] = mask_ver.upper()
                     if desc_bytes:
-                        info["bcu_type"] = self._parse_mask_version(desc_bytes)
+                        info["bcu_type"] = parse_bcu_type(desc_bytes)
                     self.logger.debug(f"  Descriptor: {info['descriptor']} -> {info['bcu_type']}")
 
                 # 2. Read key properties from Object 0 using PropertyValueRead
-                for pid, (key, expected_len) in DEVICE_PROPS.items():
+                for pid, key in DEVICE_PROPS.items():
                     try:
                         resp = await p2p.request(
                             _xknx_cls.PropertyValueRead(
@@ -272,10 +213,6 @@ class DeviceInfoMixin:
             info["errors"].append(f"connection: {e}")
 
         return info
-
-    def _parse_mask_version(self, desc_bytes: bytes) -> str:
-        """Parse mask version bytes to BCU type string"""
-        return parse_bcu_type(desc_bytes)
 
     def _display_device_info(self, info: Dict[str, Any]) -> None:
         """Display formatted device identification info"""
@@ -430,7 +367,7 @@ class DeviceInfoMixin:
                 desc_hex, _mask_ver, desc_bytes = await self._read_descriptor(p2p, info["errors"])
                 if desc_hex:
                     info["mask_version"] = desc_hex
-                    info["bcu_type"] = self._parse_mask_version(desc_bytes)
+                    info["bcu_type"] = parse_bcu_type(desc_bytes)
                     self.logger.display(f"  Mask Version: {info['mask_version']}")
                     self.logger.display(f"  BCU Type: {info['bcu_type']}")
 

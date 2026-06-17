@@ -14,7 +14,6 @@ from .scanner import (
     metadata,
     run,
 )
-from . import scanner as _scanner_mod  # noqa: F401
 
 # Re-export from helpers module
 from .helpers import (
@@ -55,14 +54,6 @@ from .data import (
     COMMON_BCU_KEYS,
     get_vendor_name,
 )
-
-# Lazy import reference for dependency checking
-from ...utils.lazy_import import lazy_import
-
-_xknx = lazy_import("xknx", "KNX")
-
-# Flag to indicate if dependencies are missing (for tests to mock)
-dependencies_missing = not _xknx.is_available
 
 # NXC-style callable class
 from .nxc_connection import knx  # noqa: E402, F401

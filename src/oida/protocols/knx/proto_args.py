@@ -39,13 +39,9 @@ def proto_args(parser, parents):
         help="Connection timeout in seconds (default: 5.0)",
     )
     network_group.add_argument(
-        "--nat",
+        "--no-nat",
         action="store_true",
-        default=True,
-        help="Use NAT mode for unicast (default: enabled)",
-    )
-    network_group.add_argument(
-        "--no-nat", action="store_true", help="Disable NAT mode (use explicit local IP in requests)"
+        help="Disable NAT mode (use explicit local IP in requests; NAT is on by default)",
     )
 
     knx_group = knx_parser.add_argument_group("KNX Options")

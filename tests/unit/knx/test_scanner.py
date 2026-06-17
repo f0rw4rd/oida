@@ -117,36 +117,6 @@ def knx_constants():
                 "required": False,
                 "default": "",
             },
-            "auto-addr": {
-                "type": "bool",
-                "description": "Automatically scan for individual addresses",
-                "required": False,
-                "default": False,
-            },
-            "addr-min": {
-                "type": "int",
-                "description": "Minimum address for scanning",
-                "required": False,
-                "default": 0,
-            },
-            "addr-max": {
-                "type": "int",
-                "description": "Maximum address for scanning",
-                "required": False,
-                "default": 255,
-            },
-            "device-range": {
-                "type": "string",
-                "description": "Device address range to scan (e.g., 1.1.1-1.1.255)",
-                "required": False,
-                "default": "1.1.1-1.1.255",
-            },
-            "wordlist-path": {
-                "type": "string",
-                "description": "Path to wordlist file for password attacks",
-                "required": False,
-                "default": "",
-            },
             "test-read": {
                 "type": "bool",
                 "description": "Test read access to device memory",
@@ -581,10 +551,6 @@ class TestProtocolOptions:
     def test_protocol_options_interface(self, knx_constants):
         """Test interface option exists"""
         assert "interface" in knx_constants.protocol_options
-
-    def test_protocol_options_auto_addr(self, knx_constants):
-        """Test auto-addr option exists"""
-        assert "auto-addr" in knx_constants.protocol_options
 
     def test_protocol_options_test_flags(self, knx_constants):
         """Test test-* options exist"""

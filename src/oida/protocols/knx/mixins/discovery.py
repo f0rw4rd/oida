@@ -37,9 +37,8 @@ class DiscoveryMixin:
             if cm is not None:
                 info["connection_type"] = str(getattr(cm, "connection_type", "") or "")
 
-            self.logger.display(
-                f"KNX Gateway: {info.get('gateway_ip', 'Unknown')}:{info.get('gateway_port', 0)}"
-            )
+            host, port = self.get_target_info()
+            self.logger.display(f"KNX Gateway: {host}:{port}")
 
         except Exception as e:
             self.logger.debug(f"Error getting gateway info: {e}")
@@ -89,77 +88,6 @@ class DiscoveryMixin:
             self.logger.fail(f"Error discovering devices: {e}")
 
         return devices
-
-    async def _discover_group_addresses(self, knx: "XKNX") -> List[Dict[str, Any]]:
-        """Discover active group addresses"""
-        self.logger.debug("Starting group address discovery (10s monitor)")
-        group_addresses = []
-
-        try:
-            # Monitor group communication for a short time
-            self.logger.display("Monitoring group communication...")
-
-            # Set up telegram listener
-            received_telegrams = []
-
-            async def telegram_received(telegram):
-                if telegram.destination_address:
-                    received_telegrams.append(
-                        {
-                            "destination": str(telegram.destination_address),
-                            "source": str(telegram.source_address),
-                            "payload": str(telegram.payload) if telegram.payload else "",
-                            "timestamp": datetime.now().isoformat(),
-                        }
-                    )
-
-            # Register listener and wait
-            knx.telegram_queue.register_telegram_received_cb(telegram_received)
-
-            # Monitor for 10 seconds
-            await asyncio.sleep(10)
-
-            # Process received telegrams - track sources for each group
-            group_sources = {}  # group_addr -> set of source devices
-            for telegram in received_telegrams:
-                dest = telegram["destination"]
-                src = telegram["source"]
-                if dest not in group_sources:
-                    group_sources[dest] = set()
-                group_sources[dest].add(src)
-
-            # Build results with source info
-            for group_addr, sources in group_sources.items():
-                group_addresses.append(
-                    {
-                        "address": group_addr,
-                        "sources": list(sources),
-                        "activity_detected": True,
-                        "last_seen": datetime.now().isoformat(),
-                    }
-                )
-
-            if group_addresses:
-                # Collect unique source devices
-                all_sources = set()
-                for ga in group_addresses:
-                    all_sources.update(ga.get("sources", []))
-
-                self.logger.display(
-                    f"Discovered {len(group_addresses)} active group addresses from {len(all_sources)} devices:"
-                )
-                for ga in sorted(group_addresses, key=lambda x: x["address"]):
-                    addr = ga.get("address", "?")
-                    sources = ga.get("sources", [])
-                    src_str = ", ".join(sorted(sources))
-                    self.logger.success(f"  {addr} <- {src_str}")
-            else:
-                self.logger.display("No active group addresses discovered")
-
-        except Exception as e:
-            self.logger.fail(f"Error discovering group addresses: {e}")
-
-        return group_addresses
 
     async def _listen_bus_traffic(self, knx: "XKNX", duration: int = 30) -> Dict[str, Any]:
         """Passive bus traffic monitoring - listens without sending probes"""
@@ -352,8 +280,8 @@ class DiscoveryMixin:
         self.logger.debug(f"Requesting extended info from {ip}:{port}")
         info = {}
 
-        # Check NAT mode setting (default: True)
-        use_nat = self.args.get("nat", True) and not self.args.get("no-nat", False)
+        # NAT mode is on by default; --no-nat opts out.
+        use_nat = not self.args.get("no-nat", False)
         self.logger.debug(f"NAT mode: {use_nat}")
 
         # TODO: Raw UDP KNXnet/IP tunnelling — xknx handles connection
@@ -599,17 +527,22 @@ class DiscoveryMixin:
     async def _test_routing(self, knx: "XKNX") -> Dict[str, Any]:
         """Test KNX routing capabilities"""
         self.logger.debug("Testing routing capabilities")
-        routing_test = {"routing_supported": False, "routing_counter": 0, "errors": []}
+        routing_test = {"routing_supported": False, "errors": []}
 
         try:
-            # Test routing by sending a telegram with routing
+            # Test routing by sending a GroupValueWrite telegram. xknx requires
+            # an APCI instance as the payload (raw bytes raise ConversionError
+            # later inside the queue task, which would not be observable here).
+            from xknx.dpt import DPTBinary
+
             test_telegram = _xknx_cls.Telegram(
-                destination_address=_xknx_cls.IndividualAddress("1.1.255"),
+                destination_address=_xknx_cls.GroupAddress("0/0/1"),
                 source_address=_xknx_cls.IndividualAddress("1.1.0"),
-                payload=b"\x00",
+                payload=_xknx_cls.GroupValueWrite(DPTBinary(0)),
             )
 
-            # Send test telegram
+            # Only mark routing as supported once the telegram is actually
+            # accepted onto the bus (no exception from the send path).
             await knx.telegrams.put(test_telegram)
             routing_test["routing_supported"] = True
 

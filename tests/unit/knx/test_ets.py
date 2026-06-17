@@ -15,7 +15,6 @@ Tests the oida.protocols.knx.ets module which handles:
 - Multiprocessing password cracking
 """
 
-import io
 import sys
 from unittest.mock import Mock, patch, MagicMock
 from zipfile import ZipFile
@@ -401,90 +400,6 @@ class TestTestKnxprojPassword:
                 result = ets.test_knxproj_password(mock_knxproj_ets5, "password")
 
                 assert result is False
-
-
-# ============================================================================
-# Test: test_knxproj_password_fast()
-# ============================================================================
-
-
-class TestTestKnxprojPasswordFast:
-    """Test test_knxproj_password_fast() function."""
-
-    def test_valid_password_ets5(self, ets, tmp_path):
-        """Test fast password validation for ETS5 (direct password)."""
-        # Create a proper mock knxproj with inner zip
-        knxproj_path = tmp_path / "test.knxproj"
-
-        # Create inner zip content
-        inner_zip_buffer = io.BytesIO()
-        with ZipFile(inner_zip_buffer, "w") as inner_zf:
-            inner_zf.writestr("test_file.xml", b"<test />")
-        inner_zip_data = inner_zip_buffer.getvalue()
-
-        # Create outer knxproj
-        with ZipFile(knxproj_path, "w") as zf:
-            zf.writestr("P-TEST.signature", b"sig")
-            zf.writestr("P-TEST/project.xml", b'<?xml version="1.0"?><Project CreatedBy="ETS5" />')
-            zf.writestr("P-TEST.zip", inner_zip_data)
-
-        # Mock pyzipper
-        mock_pyzipper = Mock()
-        mock_aes_zip = Mock()
-        mock_aes_zip.__enter__ = Mock(return_value=mock_aes_zip)
-        mock_aes_zip.__exit__ = Mock(return_value=False)
-        mock_aes_zip.namelist.return_value = ["test_file.xml"]
-        mock_aes_zip.read.return_value = b"<test />"
-        mock_pyzipper.AESZipFile.return_value = mock_aes_zip
-
-        with patch.object(ets, "_get_pyzipper", return_value=mock_pyzipper):
-            info = {
-                "project_id": "P-TEST",
-                "ets_version": "ETS5",
-            }
-
-            result = ets.test_knxproj_password_fast(str(knxproj_path), "test_password", info)
-
-            assert result is True
-            mock_aes_zip.setpassword.assert_called_once_with(b"test_password")
-
-    def test_fallback_when_pyzipper_not_available(self, ets, mock_knxproj_ets5):
-        """Test fallback to full test when pyzipper is not available."""
-        with patch.object(ets, "_get_pyzipper", return_value=None):
-            with patch.object(ets, "test_knxproj_password", return_value=True) as mock_test:
-                info = {"project_id": "P-1234", "ets_version": "ETS5"}
-
-                result = ets.test_knxproj_password_fast(mock_knxproj_ets5, "password", info)
-
-                assert result is True
-                mock_test.assert_called_once_with(mock_knxproj_ets5, "password")
-
-    def test_invalid_password_returns_false(self, ets, tmp_path):
-        """Test that invalid password returns False."""
-        knxproj_path = tmp_path / "test.knxproj"
-
-        inner_zip_buffer = io.BytesIO()
-        with ZipFile(inner_zip_buffer, "w") as inner_zf:
-            inner_zf.writestr("test.xml", b"data")
-
-        with ZipFile(knxproj_path, "w") as zf:
-            zf.writestr("P-TEST.signature", b"sig")
-            zf.writestr("P-TEST.zip", inner_zip_buffer.getvalue())
-
-        # Mock pyzipper to raise decryption error
-        mock_pyzipper = Mock()
-        mock_aes_zip = Mock()
-        mock_aes_zip.__enter__ = Mock(return_value=mock_aes_zip)
-        mock_aes_zip.__exit__ = Mock(return_value=False)
-        mock_aes_zip.namelist.side_effect = Exception("Bad password")
-        mock_pyzipper.AESZipFile.return_value = mock_aes_zip
-
-        with patch.object(ets, "_get_pyzipper", return_value=mock_pyzipper):
-            info = {"project_id": "P-TEST", "ets_version": "ETS5"}
-
-            result = ets.test_knxproj_password_fast(str(knxproj_path), "wrong_password", info)
-
-            assert result is False
 
 
 # ============================================================================

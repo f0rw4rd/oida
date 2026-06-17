@@ -581,8 +581,8 @@ class PropertiesMixin:
                 properties.append(
                     {
                         "property_id": prop_id,
-                        "name": self._get_property_name(obj_idx, prop_id),
-                        "data_type": self._get_data_type_name(data_type),
+                        "name": get_prop_name(obj_idx, prop_id),
+                        "data_type": get_data_type_name(data_type),
                         "data_type_id": data_type,
                         "max_count": payload.max_count,
                         "writeable": writeable,
@@ -981,14 +981,6 @@ class PropertiesMixin:
         if obj_type >= 200:
             return f"Vendor-Specific ({obj_type})"
         return get_obj_type_name(obj_type)
-
-    def _get_property_name(self, obj_idx: int, prop_id: int) -> str:
-        """Get property name for a given object and property ID"""
-        return get_prop_name(obj_idx, prop_id)
-
-    def _get_data_type_name(self, data_type: int) -> str:
-        """Get data type name from type ID"""
-        return get_data_type_name(data_type)
 
     def _print_access_legend(self):
         """Print the access level legend for property output"""

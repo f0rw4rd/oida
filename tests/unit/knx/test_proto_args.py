@@ -90,10 +90,10 @@ class TestNetworkOptionsGroup:
         assert args.timeout == 10.0
 
     def test_nat_default(self, parser_setup):
-        """Test NAT mode is enabled by default."""
+        """Test NAT mode is enabled by default (--no-nat not set)."""
         parser, _ = parser_setup
         args = parser.parse_args(["knx"])
-        assert args.nat is True
+        assert args.no_nat is False
 
     def test_no_nat_flag(self, parser_setup):
         """Test --no-nat flag."""

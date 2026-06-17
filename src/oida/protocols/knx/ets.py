@@ -83,19 +83,9 @@ def _test_knxproj_password_fast_mp(args: tuple) -> Optional[str]:
         with ZipFile(file_path) as outer:
             inner_data = outer.read(inner_zip_name)
 
-        # For ETS6: Derive key using PBKDF2
+        # For ETS6: Derive key using PBKDF2 (shared helper)
         if ets_version == "ETS6":
-            from cryptography.hazmat.primitives import hashes
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-            import base64
-
-            derived = PBKDF2HMAC(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=b"21.project.ets.knx.org",
-                iterations=65536,
-            ).derive(password.encode("utf-16-le"))
-            zip_password = base64.b64encode(derived)
+            zip_password = derive_ets6_zip_password(password).encode("ascii")
         else:
             # ETS5: Direct password
             zip_password = password.encode()
@@ -267,62 +257,6 @@ def test_knxproj_password(file_path: str, password: str) -> bool:
         return False
 
 
-def test_knxproj_password_fast(file_path: str, password: str, info: Dict[str, Any]) -> bool:
-    """Fast password test - only verify ZIP decryption, skip XML parsing.
-
-    This is significantly faster than full xknxproject parsing.
-
-    Args:
-        file_path: Path to .knxproj file
-        password: Password to test
-        info: Project info dict from get_knxproj_info()
-
-    Returns:
-        True if password is valid, False otherwise
-    """
-    pyzipper = _get_pyzipper()
-    if pyzipper is None:
-        # Fallback to regular method if pyzipper not available
-        return test_knxproj_password(file_path, password)
-
-    inner_zip_name = info["project_id"] + ".zip"
-
-    try:
-        # Read inner ZIP from outer archive
-        with ZipFile(file_path) as outer:
-            inner_data = outer.read(inner_zip_name)
-
-        # For ETS6: Derive key using PBKDF2
-        if info["ets_version"] == "ETS6":
-            from cryptography.hazmat.primitives import hashes
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-            import base64
-
-            derived = PBKDF2HMAC(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=b"21.project.ets.knx.org",
-                iterations=65536,
-            ).derive(password.encode("utf-16-le"))
-            zip_password = base64.b64encode(derived)
-        else:
-            # ETS5: Direct password
-            zip_password = password.encode()
-
-        # Try to open inner ZIP with derived password
-        with pyzipper.AESZipFile(io.BytesIO(inner_data)) as inner:
-            inner.setpassword(zip_password)
-            # Read first file to verify password (namelist() doesn't validate!)
-            files = inner.namelist()
-            if files:
-                inner.read(files[0])  # Actually decrypt to verify password
-        return True
-
-    except Exception as e:
-        logger.debug(f"Operation failed: {e}")
-        return False
-
-
 # ============================================================================
 # Password Cracking
 # ============================================================================
@@ -407,7 +341,8 @@ def crack_knxproj(
                         f.cancel()
                     break
             except Exception as e:
-                logger.debug(f"Failed to get result: {e}")
+                if logger:
+                    logger.debug(f"Failed to get result: {e}")
                 continue
 
     if logger:
