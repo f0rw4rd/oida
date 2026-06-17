@@ -397,7 +397,6 @@ class TestDHCPv6PassiveListener:
         assert dhcpv6_listener.interface == "eth0"
         assert dhcpv6_listener.timeout == 1
         assert dhcpv6_listener.discovered_devices == {}
-        assert dhcpv6_listener.dhcpv6_servers == {}
 
     def test_dhcpv6_message_types(self):
         """Test DHCPv6 message type mapping."""
@@ -446,7 +445,7 @@ class TestDHCPPassiveListener:
         assert dhcp_listener.interface == "eth0"
         assert dhcp_listener.timeout == 1
         assert dhcp_listener.discovered_devices == {}
-        assert dhcp_listener.dhcp_servers == {}
+        assert dhcp_listener.dhcp_servers == set()
 
     def test_dhcp_options_parsing(self, dhcp_listener):
         """Test DHCP options parsing (scapy tuple format)."""

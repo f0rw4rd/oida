@@ -864,7 +864,6 @@ class NetBIOSPassiveListener:
             return
 
         src_ip = packet[IP].src
-        packet[IP].dst
         dport = packet[UDP].dport
         sport = packet[UDP].sport
 

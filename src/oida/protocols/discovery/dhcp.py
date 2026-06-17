@@ -10,7 +10,7 @@ import random
 import threading
 import time
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Set
 
 from .core import (
     DiscoveredDevice,
@@ -84,7 +84,7 @@ class DHCPPassiveListener:
 
         self.timeout = validate_timeout(timeout)
         self.discovered_devices: Dict[str, DiscoveredDevice] = {}
-        self.dhcp_servers: Dict[str, Dict] = {}
+        self.dhcp_servers: Set[str] = set()
         self._lock = threading.Lock()
         self.nxc_logger = nxc_logger  # NXC-style logger for colored output
 
@@ -173,7 +173,7 @@ class DHCPPassiveListener:
 
             elif msg_type in (DHCP_OFFER, DHCP_ACK):
                 # Server traffic - track server and update client
-                self._process_server_response(packet, client_mac, options, msg_type)
+                self._process_server_response(packet, client_mac, options)
 
         except Exception as e:
             logger.debug(f"DHCP parse error: {e}")
@@ -244,9 +244,7 @@ class DHCPPassiveListener:
                     f"hostname={hostname} vendor={vendor_class}{client_id_info}"
                 )
 
-    def _process_server_response(
-        self, packet, client_mac: str, options: Dict, msg_type: int
-    ) -> None:
+    def _process_server_response(self, packet, client_mac: str, options: Dict) -> None:
         """Process DHCP server response (Offer/ACK)."""
         from scapy.all import BOOTP, IP
 
@@ -272,18 +270,8 @@ class DHCPPassiveListener:
             # Track DHCP server (validate IP)
             if server_ip and is_valid_discovered_ip(server_ip, self.interface):
                 if server_ip not in self.dhcp_servers:
-                    self.dhcp_servers[server_ip] = {
-                        "server_ip": server_ip,
-                        "first_seen": datetime.now().isoformat(),
-                        "offers_count": 0,
-                        "acks_count": 0,
-                    }
+                    self.dhcp_servers.add(server_ip)
                     logger.debug(f"DHCP: Server detected at {server_ip}")
-
-                if msg_type == DHCP_OFFER:
-                    self.dhcp_servers[server_ip]["offers_count"] += 1
-                elif msg_type == DHCP_ACK:
-                    self.dhcp_servers[server_ip]["acks_count"] += 1
 
                 # Also add server as discovered device
                 if server_ip not in [
@@ -733,7 +721,7 @@ class DHCPServerScanner:
             return ""
         if isinstance(value, list) and value:
             return str(value[0])
-        return str(value) if value else ""
+        return str(value)
 
     def _decode_string(self, value) -> str:
         """Decode string from DHCP option value."""

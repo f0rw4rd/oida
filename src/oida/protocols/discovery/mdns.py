@@ -12,7 +12,7 @@ import struct
 import threading
 import time
 from datetime import datetime
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator
 
 from .core import DiscoveredDevice, MDNS_SERVICE_TYPES, validate_interface, validate_timeout
 from ...utils.ics_logger import get_module_logger
@@ -234,7 +234,6 @@ class DNSSDScanner:
         class ServiceEnumerator(ServiceListener):
             def __init__(self, scanner: "DNSSDScanner"):
                 self.scanner = scanner
-                self.service_types: List[str] = []
 
             def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
                 self.scanner._handle_service(zc, type_, name)

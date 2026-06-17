@@ -16,9 +16,10 @@ from ...utils import (
     parse_bool,
 )
 from ...utils import ics_logger as module
-from ...utils.ics_logger import mac_lookup
 from ...utils.permissions import check_raw_socket_capability
 from ...utils.lazy_import import lazy_import
+from ...utils.ics_logger import get_module_logger
+from .core import lookup_mac_vendor
 
 
 # Lazy import for scapy - only loads when actually used
@@ -28,10 +29,7 @@ _scapy = lazy_import("scapy", "LLDP")
 _scapy_classes: Dict[str, Any] = {}
 dependencies_missing = not _scapy.is_available
 
-
-def _get_scapy():
-    """Get scapy module, raising DependencyError if not available."""
-    return _scapy()
+logger = get_module_logger(__name__)
 
 
 def _load_scapy_classes() -> Dict[str, Any]:
@@ -39,7 +37,7 @@ def _load_scapy_classes() -> Dict[str, Any]:
     if _scapy_classes:
         return _scapy_classes
 
-    _get_scapy()
+    _scapy()  # Ensure scapy is available (raises DependencyError if not)
     from scapy.all import (
         AsyncSniffer,
         load_contrib,
@@ -86,13 +84,6 @@ def _load_scapy_classes() -> Dict[str, Any]:
 # LLDP constants
 LLDP_MULTICAST_MAC = "01:80:c2:00:00:0e"
 LLDP_ETHERTYPE = 0x88CC
-
-
-def lookup_mac_vendor(mac_address: str) -> str:
-    """Look up MAC address vendor - wrapper around utils.mac_lookup."""
-    if not mac_address:
-        return "Unknown"
-    return mac_lookup(mac_address) or "Unknown"
 
 
 @dataclass
@@ -224,7 +215,6 @@ class LLDPScanner(SerialScanner):
         """Perform LLDP discovery by sniffing network traffic"""
         results = {
             "devices": [],
-            "statistics": {},
             "security_analysis": {},
             "industrial_devices": [],
         }
@@ -243,9 +233,6 @@ class LLDPScanner(SerialScanner):
             # Filter industrial devices if requested
             if self.filter_industrial:
                 results["industrial_devices"] = self._filter_industrial_devices(results["devices"])
-
-            # Generate statistics
-            results["statistics"] = self._generate_statistics()
 
             # Security analysis
             results["security_analysis"] = self._analyze_security(results)
@@ -793,33 +780,6 @@ class LLDPScanner(SerialScanner):
 
         return industrial_devices
 
-    def _generate_statistics(self) -> Dict[str, Any]:
-        """Generate capture statistics"""
-        stats = {
-            "total_devices": len(self.discovered_devices),
-            "total_packets": self.packet_count,
-            "vendor_distribution": {},
-            "capability_distribution": {},
-        }
-
-        # Vendor distribution
-        vendor_counts = {}
-        capability_counts = {}
-
-        for device in self.discovered_devices.values():
-            # Count vendors
-            vendor = lookup_mac_vendor(device.mac_address)
-            vendor_counts[vendor] = vendor_counts.get(vendor, 0) + 1
-
-            # Count capabilities
-            for capability in device.capabilities:
-                capability_counts[capability] = capability_counts.get(capability, 0) + 1
-
-        stats["vendor_distribution"] = vendor_counts
-        stats["capability_distribution"] = capability_counts
-
-        return stats
-
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze security implications of discovered devices"""
         analysis = SecurityAnalyzer.assess_protocol_security(
@@ -943,7 +903,6 @@ class LLDPPassiveListener:
         # Live capture
         listener = LLDPPassiveListener(interface="eth0", timeout=60)
         devices = listener.scan()
-        devices = listener.scan()
 
         # Testing - feed packets directly
         listener = LLDPPassiveListener(interface="eth0")
@@ -996,7 +955,7 @@ class LLDPPassiveListener:
         try:
             self.process_packet(packet)
         except Exception as e:
-            self.logger.debug(f"process_packet failed: {e}")
+            logger.debug(f"process_packet failed: {e}")
 
     def feed_packet(self, packet) -> None:
         """Feed a single packet for testing."""
@@ -1118,7 +1077,7 @@ class LLDPPassiveListener:
                         device.ip_addresses.append(mgmt_addr)
 
         except Exception as e:
-            self.logger.debug(f"Operation failed: {e}")
+            logger.debug(f"Operation failed: {e}")
 
     def _format_id(self, tlv, field1: str, field2: str, is_mac: bool) -> str:
         """Format chassis/port ID."""
@@ -1131,7 +1090,7 @@ class LLDPPassiveListener:
                     return data.decode("utf-8", errors="ignore")
                 return str(data)
         except Exception as e:
-            self.logger.debug(f"LLDP: TLV chassis/port ID field extract failed: {e}")
+            logger.debug(f"LLDP: TLV chassis/port ID field extract failed: {e}")
         return ""
 
     def _get_string_field(self, tlv, field_names: list) -> str:
@@ -1174,5 +1133,5 @@ class LLDPPassiveListener:
                         return _socket.inet_ntop(_socket.AF_INET6, addr)
                 return str(addr)
         except Exception as e:
-            self.logger.debug(f"Optional import _socket not available: {e}")
+            logger.debug(f"_socket address formatting failed: {e}")
         return None

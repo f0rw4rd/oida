@@ -113,10 +113,10 @@ class IGMPPassiveListener(PassiveListenerBase):
                 igmp_info = self._parse_igmpv3_report(packet[IGMPv3mr], dst_ip)
             elif IGMPv3 in packet:
                 # IGMPv3 Query
-                igmp_info = self._parse_igmpv3_query(packet[IGMPv3], dst_ip)
+                igmp_info = self._parse_igmpv3_query(packet)
             elif IGMP in packet:
                 # IGMPv1/v2
-                igmp_info = self._parse_igmpv1v2(packet[IGMP], dst_ip)
+                igmp_info = self._parse_igmpv1v2(packet[IGMP])
             elif Raw in packet:
                 # Fallback to raw parsing for packets without scapy IGMP layer
                 igmp_info = self._parse_igmp_raw(bytes(packet[Raw].load), dst_ip)
@@ -183,12 +183,12 @@ class IGMPPassiveListener(PassiveListenerBase):
         except Exception as e:
             logger.debug(f"IGMP parse error: {e}")
 
-    def _parse_igmpv1v2(self, igmp, dst_ip: str) -> Optional[Dict]:
+    def _parse_igmpv1v2(self, igmp) -> Optional[Dict]:
         """Parse IGMPv1/v2 packet using scapy's native IGMP layer."""
         try:
             msg_type = igmp.type
-            mrtime = igmp.mrtime if hasattr(igmp, "mrtime") else 0
-            gaddr = igmp.gaddr if hasattr(igmp, "gaddr") else "0.0.0.0"
+            mrcode = igmp.mrcode
+            gaddr = igmp.gaddr
 
             # Determine type name and version
             type_name = "Unknown"
@@ -196,7 +196,7 @@ class IGMPPassiveListener(PassiveListenerBase):
 
             if msg_type == IGMP_MEMBERSHIP_QUERY:
                 type_name = "Query"
-                version = 1 if mrtime == 0 else 2
+                version = 1 if mrcode == 0 else 2
             elif msg_type == IGMP_V1_MEMBERSHIP_REPORT:
                 type_name = "Report"
                 version = 1
@@ -212,10 +212,9 @@ class IGMPPassiveListener(PassiveListenerBase):
             is_ics = group_address in ICS_MULTICAST_GROUPS
 
             return {
-                "type": msg_type,
                 "type_name": type_name,
                 "version": version,
-                "max_response_time": mrtime,
+                "max_response_time": mrcode,
                 "group_address": group_address,
                 "group_name": group_name or ICS_MULTICAST_GROUPS.get(group_address, ""),
                 "is_ics_related": is_ics,
@@ -225,19 +224,27 @@ class IGMPPassiveListener(PassiveListenerBase):
             logger.debug(f"IGMPv1/v2 parse failed: {e}")
             return None
 
-    def _parse_igmpv3_query(self, igmp, dst_ip: str) -> Optional[Dict]:
+    def _parse_igmpv3_query(self, packet) -> Optional[Dict]:
         """Parse IGMPv3 Query using scapy's native layer."""
         try:
-            gaddr = igmp.gaddr if hasattr(igmp, "gaddr") else "0.0.0.0"
-            group_address = str(gaddr)
+            from scapy.contrib.igmpv3 import IGMPv3, IGMPv3mq
+
+            # The group address lives on the IGMPv3mq (group-specific query) layer,
+            # not the IGMPv3 base layer. A general query has no group address.
+            if IGMPv3mq in packet:
+                group_address = str(packet[IGMPv3mq].gaddr)
+            else:
+                group_address = "0.0.0.0"
+
+            mrcode = packet[IGMPv3].mrcode if IGMPv3 in packet else 0
+
             group_name = MULTICAST_GROUPS.get(group_address, "")
             is_ics = group_address in ICS_MULTICAST_GROUPS
 
             return {
-                "type": IGMP_MEMBERSHIP_QUERY,
                 "type_name": "Query",
                 "version": 3,
-                "max_response_time": igmp.mrcode if hasattr(igmp, "mrcode") else 0,
+                "max_response_time": mrcode,
                 "group_address": group_address,
                 "group_name": group_name or ICS_MULTICAST_GROUPS.get(group_address, ""),
                 "is_ics_related": is_ics,
@@ -263,14 +270,12 @@ class IGMPPassiveListener(PassiveListenerBase):
             is_ics = any(g in ICS_MULTICAST_GROUPS for g in groups) if groups else False
 
             return {
-                "type": IGMP_V3_MEMBERSHIP_REPORT,
                 "type_name": "Report",
                 "version": 3,
                 "max_response_time": 0,
                 "group_address": group_address,
                 "group_name": group_name or ICS_MULTICAST_GROUPS.get(group_address, ""),
                 "is_ics_related": is_ics,
-                "all_groups": groups,
             }
 
         except Exception as e:
@@ -293,7 +298,6 @@ class IGMPPassiveListener(PassiveListenerBase):
             # doesn't handle this type, so use manual parsing
             if msg_type == IGMP_V3_MEMBERSHIP_REPORT:
                 return {
-                    "type": msg_type,
                     "type_name": "Report",
                     "version": 3,
                     "max_response_time": 0,
@@ -333,7 +337,6 @@ class IGMPPassiveListener(PassiveListenerBase):
             is_ics = group_address in ICS_MULTICAST_GROUPS
 
             return {
-                "type": msg_type,
                 "type_name": type_name,
                 "version": version,
                 "max_response_time": max_resp,

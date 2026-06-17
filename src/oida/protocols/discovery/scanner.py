@@ -6,6 +6,7 @@ Contains:
 - discovery: NXC-style callable class for CLI integration
 """
 
+import dataclasses
 import ipaddress
 import os
 import re
@@ -40,7 +41,6 @@ from .dhcpv6 import DHCPv6PassiveListener, DHCPv6ServerScanner
 from .core import (
     DiscoveredDevice,
     OutOfScopeWarning,
-    ResponseDeduplicator,
     build_device_description,
     check_ip_in_network_scope,
     get_interface_network,
@@ -93,7 +93,6 @@ from .pim_passive import PIMPassiveListener
 
 # Scapy-based file carving listener
 from .file_carving import FileCarvingListener
-from .stats import PassiveStatistics
 
 logger = get_module_logger(__name__)
 
@@ -419,12 +418,6 @@ class DiscoveryScanner(SerialScanner):
         self._ip_to_mac: Dict[str, str] = {}
         self._lock = threading.Lock()
 
-        # Shared deduplicator across all discovery protocols
-        self.dedup = ResponseDeduplicator()
-
-        # Wireshark-style traffic statistics
-        self.stats = PassiveStatistics(nxc_logger=self.logger)
-
         # Get local interface info to filter from results
         self.local_mac = self._get_local_mac()
         self.interface_caps = self._get_interface_capabilities()
@@ -629,7 +622,6 @@ class DiscoveryScanner(SerialScanner):
             self._pcap_max_bytes = self.pcap_max_size_mb * 1024 * 1024
             self._pcap_stopped = False
             self._pcap_last_packet_time = time.time()
-            self._pcap_interface_warning_shown = False
 
             def packet_handler(pkt):
                 """Store packet and check size limit."""
@@ -798,8 +790,6 @@ class DiscoveryScanner(SerialScanner):
                 scan_tasks.append(("lldp-passive", self._run_lldp_passive))
             if self.enable_ssdp:
                 scan_tasks.append(("ssdp-listen", lambda: self._run_scanner("ssdp-listen")))
-            if self.enable_dcp:
-                scan_tasks.append(("dcp-listen", self._run_dcp_passive))
             if self.enable_cdp:
                 scan_tasks.append(("cdp", lambda: self._run_scanner("cdp")))
             if self.enable_stp:
@@ -902,7 +892,7 @@ class DiscoveryScanner(SerialScanner):
         def get_task_category(task_name: str) -> str:
             """Get category from registry, handling special cases"""
             # Handle special task names that map to registry entries
-            name_map = {"dcp-identify": "dcp-listen", "lldp": "lldp"}
+            name_map = {"dcp-identify": "dcp-listen"}
             lookup_name = name_map.get(task_name, task_name)
             config = _SCANNER_CONFIGS.get(lookup_name)
             if config and len(config) >= 4:
@@ -916,7 +906,7 @@ class DiscoveryScanner(SerialScanner):
         broadcast_tasks = [(n, f) for n, f in scan_tasks if get_task_category(n) == "broadcast"]
         ics_tasks = [(n, f) for n, f in scan_tasks if get_task_category(n) == "ics"]
 
-        def run_tasks(tasks, timeout_per_task=None, label=None, max_workers=None):
+        def run_tasks(tasks, timeout_per_task=None, max_workers=None):
             """Run tasks in parallel, return when all complete"""
             if not tasks:
                 return {}
@@ -977,20 +967,10 @@ class DiscoveryScanner(SerialScanner):
             self.logger.info(f"Scanning {self.interface} ({total_scan_time}s, passive + active)...")
             self.logger.info(f"Excluding locals: {self._format_excluded_locals()}")
 
-            def make_extended_passive(orig_func):
-                """Wrap passive scanner - scanner already has correct timeout from constructor"""
-
-                def extended():
-                    # No need to modify self.timeout - scanner received timeout via args_builder
-                    # This avoids thread-safety issues with shared state
-                    return orig_func()
-
-                return extended
-
-            passive_extended = [(name, make_extended_passive(func)) for name, func in passive_tasks]
-
-            # Run all tasks together - passive listens while active probes
-            all_tasks = passive_extended + active_tasks
+            # Run all tasks together - passive listens while active probes.
+            # Passive scanners already received their timeout via args_builder,
+            # so no per-task wrapping is needed.
+            all_tasks = passive_tasks + active_tasks
             # Executor timeout: user timeout + buffer for active tasks
             executor_timeout = total_scan_time + 60
             # Use enough workers for ALL tasks to run in parallel
@@ -1146,8 +1126,6 @@ class DiscoveryScanner(SerialScanner):
                         scan_tasks.append(("lldp-passive", self._run_lldp_passive))
                     if self.enable_ssdp:
                         scan_tasks.append(("ssdp-listen", lambda: self._run_scanner("ssdp-listen")))
-                    if self.enable_dcp:
-                        scan_tasks.append(("dcp-listen", self._run_dcp_passive))
                     if self.enable_cdp:
                         scan_tasks.append(("cdp", lambda: self._run_scanner("cdp")))
                     if self.enable_arp_passive:
@@ -1584,13 +1562,6 @@ class DiscoveryScanner(SerialScanner):
 
         return result
 
-    def _run_dcp_passive(self) -> Dict[str, DiscoveredDevice]:
-        """Run DCP passive listening (PROFINET) - not supported with profinet-py"""
-        # profinet-py only supports active DCP discovery
-        # passive mode would require scapy sniffing which we removed
-        logger.debug("DCP: passive mode not supported, use active mode")
-        return {}
-
     def _run_dcp_active(self) -> Dict[str, DiscoveredDevice]:
         """Run DCP active identify (PROFINET)"""
         if not _profinet.is_available:
@@ -1869,7 +1840,8 @@ class DiscoveryScanner(SerialScanner):
                         mac = eui64_to_mac(ip)
                         if mac:
                             device.mac_address = mac
-                            device.vendor = lookup_mac_vendor(mac)
+                            if not device.manufacturer:
+                                device.manufacturer = lookup_mac_vendor(mac)
                             device.updated_fields.append("mac_address")
                             logger.debug(f"EUI-64 extracted: {ip} -> {mac}")
                             # Re-key device by MAC
@@ -2195,42 +2167,14 @@ class DiscoveryScanner(SerialScanner):
                 logger.debug(f"mDNS enrich error: {e}")
 
     def _device_to_dict(self, device: DiscoveredDevice) -> Dict[str, Any]:
-        """Convert DiscoveredDevice to dictionary"""
-        return {
-            "mac_address": device.mac_address,
-            "ip_addresses": device.ip_addresses,
-            "name": device.name,
-            "manufacturer": device.manufacturer,
-            "model": device.model,
-            "description": device.description,
-            "device_type": device.device_type,
-            "discovered_by": device.discovered_by,
-            "discovery_reasons": device.discovery_reasons,
-            "first_seen": device.first_seen,
-            "last_seen": device.last_seen,
-            "is_new": device.is_new,
-            "updated_fields": device.updated_fields,
-            "arp_data": device.arp_data,
-            "lldp_data": device.lldp_data,
-            "dcp_data": device.dcp_data,
-            "mdns_services": device.mdns_services,
-            "ssdp_data": device.ssdp_data,
-            "dnssd_data": device.dnssd_data,
-            "wsdiscovery_data": device.wsdiscovery_data,
-            "llmnr_data": device.llmnr_data,
-            "cdp_data": device.cdp_data,
-            "knx_data": device.knx_data,
-            "bacnet_data": device.bacnet_data,
-            "opcua_data": device.opcua_data,
-            "ethernetip_data": device.ethernetip_data,
-            "netbios_data": device.netbios_data,
-            "stp_data": device.stp_data,
-            "codesys_data": device.codesys_data,
-            "moxa_data": device.moxa_data,
-            "lantronix_data": device.lantronix_data,
-            "ipv6_data": device.ipv6_data,
-            "dhcp_data": device.dhcp_data,
-        }
+        """Convert DiscoveredDevice to dictionary.
+
+        Serializes every dataclass field so that protocol-specific payloads
+        (ntp_data, rip_data, hsrp_data, the IT-infra dicts, etc.) reach the
+        export path instead of being silently dropped by a hand-maintained
+        allowlist that drifts behind the dataclass definition.
+        """
+        return {f.name: getattr(device, f.name) for f in dataclasses.fields(device)}
 
     def _is_industrial(self, device: Dict[str, Any]) -> bool:
         """Check if device appears to be industrial/ICS"""
@@ -2575,14 +2519,10 @@ class discovery(SerialConnection):
         return self._connection is not None
 
     def enum_host_info(self) -> None:
-        """Set host info"""
-        self.device_info = {
-            "interface": self.interface,
-            "protocol": "discovery",
-        }
+        """Required NXC framework hook; discovery has no per-host enumeration step."""
 
     def print_host_info(self) -> None:
-        """Print host info"""
+        """Required NXC framework hook; discovery prints findings via _report_findings."""
 
     def _execute_scan(self) -> None:
         """Execute discovery scan"""

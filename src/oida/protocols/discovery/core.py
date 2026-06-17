@@ -12,7 +12,6 @@ import ipaddress
 import re
 import socket
 import threading
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
@@ -101,8 +100,6 @@ def validate_interface(interface: str) -> str:
     """
     if not interface:
         raise ValueError("Interface name cannot be empty")
-    if not isinstance(interface, str):
-        raise ValueError(f"Interface must be a string, got {type(interface).__name__}")
     # Basic sanity check - interface names are usually short alphanumeric with optional numbers
     if len(interface) > 64:
         raise ValueError(f"Interface name too long: {len(interface)} chars")
@@ -277,18 +274,6 @@ def is_valid_mac(mac: str) -> bool:
     return True
 
 
-def is_broadcast_mac(mac: str) -> bool:
-    """Check if MAC address is a broadcast address.
-
-    Args:
-        mac: MAC address to check
-
-    Returns:
-        True if MAC is ff:ff:ff:ff:ff:ff
-    """
-    return normalize_mac(mac) == "ff:ff:ff:ff:ff:ff"
-
-
 def get_interface_ips(interface: str) -> List[str]:
     """Get all IPv4 addresses assigned to an interface.
 
@@ -341,25 +326,6 @@ def is_interface_up(interface: str) -> bool:
     except Exception as e:
         logger.debug(f"Could not check interface state for {interface}: {e}")
         return False
-
-
-def wait_for_interface(interface: str, timeout: float = 30.0, check_interval: float = 1.0) -> bool:
-    """Wait for an interface to come up.
-
-    Args:
-        interface: Network interface name
-        timeout: Maximum time to wait in seconds
-        check_interval: Time between checks in seconds
-
-    Returns:
-        True if interface came up within timeout, False otherwise
-    """
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if is_interface_up(interface):
-            return True
-        time.sleep(check_interval)
-    return False
 
 
 def get_interface_ip(interface: str) -> str:
@@ -669,61 +635,6 @@ def get_interface_ipv6(interface: str) -> List[str]:
         raise  # Re-raise ValueError as-is
     except Exception as e:
         raise RuntimeError(f"Failed to get IPv6 for interface '{interface}': {e}") from e
-
-
-def get_interface_info(interface: str) -> Dict[str, Any]:
-    """Get full interface info: MAC, IPv4, IPv6 addresses.
-
-    Args:
-        interface: Network interface name
-
-    Returns:
-        Dict with mac, ipv4_addresses, ipv6_addresses
-
-    Raises:
-        ImportError: If netifaces module is not available
-        ValueError: If interface not found
-        RuntimeError: If unable to query interface
-    """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface info detection")
-    try:
-        addrs = _netifaces().ifaddresses(interface)
-        result: dict[str, Any] = {
-            "mac": None,
-            "ipv4_addresses": [],
-            "ipv6_addresses": [],
-        }
-
-        # Get MAC
-        if _netifaces().AF_LINK in addrs:
-            for addr_info in addrs[_netifaces().AF_LINK]:
-                mac = addr_info.get("addr", "")
-                if mac and mac != "00:00:00:00:00:00":
-                    result["mac"] = mac.lower()
-                    break
-
-        # Get IPv4
-        if _netifaces().AF_INET in addrs:
-            for addr_info in addrs[_netifaces().AF_INET]:
-                ip = addr_info.get("addr")
-                if ip and not ip.startswith("127."):
-                    result["ipv4_addresses"].append(ip)
-
-        # Get IPv6
-        if _netifaces().AF_INET6 in addrs:
-            for addr_info in addrs[_netifaces().AF_INET6]:
-                ip = addr_info.get("addr", "")
-                if "%" in ip:
-                    ip = ip.split("%")[0]
-                if ip and not ip.startswith("::1") and not ip.startswith("fe80::1"):
-                    result["ipv6_addresses"].append(ip)
-
-        return result
-    except ValueError:
-        raise ValueError(f"Interface '{interface}' not found")
-    except Exception as e:
-        raise RuntimeError(f"Failed to get interface info for '{interface}': {e}") from e
 
 
 @dataclass
@@ -1187,143 +1098,6 @@ def classify_device_type(types_list: List[str], protocol: str) -> tuple:
     return ("Unknown", "Unclassified Device")
 
 
-def create_discovered_device(
-    ip: str = "",
-    mac: str = "",
-    name: str = "",
-    manufacturer: str = "",
-    model: str = "",
-    device_type: str = "",
-    description: str = "",
-    discovered_by: str = "",
-    protocol_data: Optional[Dict[str, Any]] = None,
-    **kwargs,
-) -> "DiscoveredDevice":
-    """Factory function for creating DiscoveredDevice instances.
-
-    Reduces duplication by handling common patterns:
-    - Auto-generates timestamps (first_seen, last_seen)
-    - Wraps discovered_by as list
-    - Sets protocol-specific data field based on discovered_by
-
-    Args:
-        ip: Primary IP address (will be wrapped in list)
-        mac: MAC address
-        name: Device name
-        manufacturer: Device manufacturer
-        model: Device model
-        device_type: Device type classification
-        description: Device description
-        discovered_by: Protocol name that discovered this device
-        protocol_data: Protocol-specific data dict (auto-assigned to correct field)
-        **kwargs: Additional fields to set on device
-
-    Returns:
-        Configured DiscoveredDevice instance
-    """
-    timestamp = datetime.now().isoformat()
-
-    # Build base device
-    device = DiscoveredDevice(
-        mac_address=mac,
-        ip_addresses=[ip] if ip else [],
-        name=name,
-        manufacturer=manufacturer,
-        model=model,
-        device_type=device_type,
-        description=description,
-        discovered_by=[discovered_by] if discovered_by else [],
-        first_seen=timestamp,
-        last_seen=timestamp,
-    )
-
-    # Set protocol-specific data field based on discovered_by
-    if protocol_data and discovered_by:
-        field_map = {
-            "arp": "arp_data",
-            "lldp": "lldp_data",
-            "dcp": "dcp_data",
-            "mdns": "mdns_services",  # Note: list type
-            "ssdp": "ssdp_data",
-            "dns-sd": "dnssd_data",
-            "ws-discovery": "wsdiscovery_data",
-            "llmnr": "llmnr_data",
-            "cdp": "cdp_data",
-            "knx": "knx_data",
-            "bacnet": "bacnet_data",
-            "opcua": "opcua_data",
-            "ethernetip": "ethernetip_data",
-            "netbios": "netbios_data",
-            "stp": "stp_data",
-            "codesys": "codesys_data",
-            "moxa": "moxa_data",
-            "lantronix": "lantronix_data",
-            "ipv6": "ipv6_data",
-            "dhcp": "dhcp_data",
-            "fins": "fins_data",
-            "fins-passive": "fins_data",
-            "hsrp": "hsrp_data",
-            "igmp": "igmp_data",
-            "dhcpv6": "dhcpv6_data",
-            # IT infrastructure broadcast probes
-            "hid": "hid_data",
-            "mssql": "mssql_data",
-            "bjnp": "bjnp_data",
-            "sonicwall": "sonicwall_data",
-            "db2": "db2_data",
-            "sybase": "sybase_data",
-            "xdmcp": "xdmcp_data",
-            "jenkins": "jenkins_data",
-            "pcanywhere": "pcanywhere_data",
-            # BruteShark-inspired passive listeners
-            "ftp-passive": "ftp_passive_data",
-            "telnet-passive": "telnet_passive_data",
-            "imap-passive": "imap_passive_data",
-            "smtp-passive": "smtp_passive_data",
-            "kerberos-passive": "kerberos_passive_data",
-            "ntlm-passive": "ntlm_passive_data",
-            "sip-passive": "sip_passive_data",
-            "file-carving": "file_carving_data",
-            "pop3-passive": "pop3_passive_data",
-            # ICS passive monitoring
-            "modbus-passive": "modbus_passive_data",
-            "iec104-passive": "iec104_passive_data",
-            # Additional credential extraction
-            "mssql-passive": "mssql_passive_data",
-            "vnc-passive": "vnc_passive_data",
-            "rdp-passive": "rdp_passive_data",
-            "radius-passive": "radius_passive_data",
-            "mysql-passive": "mysql_passive_data",
-            "pgsql-passive": "pgsql_passive_data",
-            "ldap-passive": "ldap_passive_data",
-            "tacacs-passive": "tacacs_passive_data",
-            "socks-passive": "socks_passive_data",
-            "mqtt-passive": "mqtt_passive_data",
-            "bfd-passive": "bfd_passive_data",
-            "bgp-passive": "bgp_passive_data",
-            "irc-passive": "irc_passive_data",
-            "pap-passive": "pap_passive_data",
-        }
-        field_name = field_map.get(discovered_by.lower())
-        if field_name:
-            if field_name == "mdns_services":
-                # mdns_services is a list
-                setattr(
-                    device,
-                    field_name,
-                    [protocol_data] if isinstance(protocol_data, dict) else protocol_data,
-                )
-            else:
-                setattr(device, field_name, protocol_data)
-
-    # Apply any additional kwargs
-    for key, value in kwargs.items():
-        if hasattr(device, key):
-            setattr(device, key, value)
-
-    return device
-
-
 def get_broadcast_address(subnet: Optional[str]) -> str:
     """Get broadcast address for a subnet, defaulting to global broadcast.
 
@@ -1453,10 +1227,7 @@ def check_ip_in_network_scope(
 
 @dataclass
 class OutOfScopeWarning:
-    """Warning about a device with IP not directly reachable from interface.
-
-    Also aliased as UnreachableIPWarning for clarity.
-    """
+    """Warning about a device with IP not directly reachable from interface."""
 
     ip: str
     expected_network: str  # The interface's network CIDR
@@ -1591,6 +1362,7 @@ class DiscoveredDevice:
     lldp_data: Optional[Dict[str, Any]] = None
     dcp_data: Optional[Dict[str, Any]] = None
     mdns_services: Optional[List[Dict[str, Any]]] = None
+    mdns_data: Optional[Dict[str, Any]] = None  # mDNS passive listener payload
     ssdp_data: Optional[Dict[str, Any]] = None
     dnssd_data: Optional[Dict[str, Any]] = None
     wsdiscovery_data: Optional[Dict[str, Any]] = None
@@ -1748,6 +1520,9 @@ class DiscoveredDevice:
                 self.mdns_services = []
                 updated.append("mdns_services")
             self.mdns_services.extend(other.mdns_services)
+        if other.mdns_data and not self.mdns_data:
+            self.mdns_data = other.mdns_data
+            updated.append("mdns_data")
         if other.ssdp_data and not self.ssdp_data:
             self.ssdp_data = other.ssdp_data
             updated.append("ssdp_data")
@@ -1818,6 +1593,18 @@ class DiscoveredDevice:
         if other.dhcpv6_data and not self.dhcpv6_data:
             self.dhcpv6_data = other.dhcpv6_data
             updated.append("dhcpv6_data")
+        if other.ads_data and not self.ads_data:
+            self.ads_data = other.ads_data
+            updated.append("ads_data")
+        if other.netmanage_data and not self.netmanage_data:
+            self.netmanage_data = other.netmanage_data
+            updated.append("netmanage_data")
+        if other.ntp_data and not self.ntp_data:
+            self.ntp_data = other.ntp_data
+            updated.append("ntp_data")
+        if other.vrrp_data and not self.vrrp_data:
+            self.vrrp_data = other.vrrp_data
+            updated.append("vrrp_data")
 
         # IT infrastructure broadcast discovery data
         for _infra_field in [

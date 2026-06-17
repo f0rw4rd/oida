@@ -140,7 +140,7 @@ class TestDiscoveryScannerDiscover:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", return_value={}) as mock_lldp:
-                with patch.object(scanner, "_run_dcp_passive", return_value={}) as mock_dcp:
+                with patch.object(scanner, "_run_dcp_active", return_value={}) as mock_dcp:
                     with patch.object(scanner, "_run_scanner", side_effect=mock_run_scanner):
                         with patch.object(scanner, "_report_findings"):
                             # Pass connection="eth0" to indicate valid interface
@@ -148,7 +148,9 @@ class TestDiscoveryScannerDiscover:
 
                             # Passive methods should be called
                             assert mock_lldp.called
-                            assert mock_dcp.called
+                            # DCP only runs as an active probe (dcp-identify);
+                            # passive-only mode must not invoke it
+                            assert not mock_dcp.called
                             # Passive listeners: ssdp-listen, cdp, arp-passive
                             assert "ssdp-listen" in called_scanners
                             assert "cdp" in called_scanners
@@ -212,7 +214,7 @@ class TestDiscoveryScannerDiscover:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", return_value={}) as mock_lldp:
-                with patch.object(scanner, "_run_dcp_passive", return_value={}):
+                with patch.object(scanner, "_run_dcp_active", return_value={}):
                     with patch.object(scanner, "_run_dcp_active", return_value={}):
                         with patch.object(scanner, "_run_scanner", side_effect=mock_run_scanner):
                             with patch.object(scanner, "_report_findings"):
@@ -245,7 +247,7 @@ class TestDiscoveryScannerDiscover:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", return_value={}) as mock_lldp:
-                with patch.object(scanner, "_run_dcp_passive", return_value={}):
+                with patch.object(scanner, "_run_dcp_active", return_value={}):
                     with patch.object(scanner, "_run_scanner", side_effect=mock_run_scanner):
                         with patch.object(scanner, "_report_findings"):
                             scanner.discover(connection="eth0")
@@ -312,7 +314,7 @@ class TestDiscoveryScannerDiscover:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", side_effect=track_lldp):
-                with patch.object(scanner, "_run_dcp_passive", return_value={}):
+                with patch.object(scanner, "_run_dcp_active", return_value={}):
                     with patch.object(scanner, "_run_scanner", side_effect=track_scanner):
                         with patch.object(scanner, "_report_findings"):
                             scanner.discover(connection="eth0")
@@ -336,7 +338,7 @@ class TestDiscoveryScannerDiscover:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", side_effect=Exception("LLDP error")):
-                with patch.object(scanner, "_run_dcp_passive", return_value={}):
+                with patch.object(scanner, "_run_dcp_active", return_value={}):
                     with patch.object(scanner, "_run_scanner", return_value={}):
                         with patch.object(scanner, "_report_findings"):
                             # Should not raise exception
@@ -662,7 +664,7 @@ class TestDiscoveryScannerTiming:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", side_effect=mock_lldp):
-                with patch.object(scanner, "_run_dcp_passive", return_value={}):
+                with patch.object(scanner, "_run_dcp_active", return_value={}):
                     with patch.object(scanner, "_run_scanner", side_effect=mock_scanner):
                         with patch.object(scanner, "_report_findings"):
                             scanner.discover(connection="lo")
@@ -699,7 +701,7 @@ class TestDiscoveryScannerTiming:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", return_value={}):
-                with patch.object(scanner, "_run_dcp_passive", return_value={}):
+                with patch.object(scanner, "_run_dcp_active", return_value={}):
                     with patch.object(scanner, "_run_dcp_active", return_value={}):
                         with patch.object(scanner, "_run_scanner", side_effect=mock_scanner):
                             with patch.object(scanner, "_report_findings"):
@@ -736,7 +738,7 @@ class TestDiscoveryScannerTiming:
             return_value=(True, None),
         ):
             with patch.object(scanner, "_run_lldp_passive", return_value={}):
-                with patch.object(scanner, "_run_dcp_passive", return_value={}):
+                with patch.object(scanner, "_run_dcp_active", return_value={}):
                     with patch.object(scanner, "_run_dcp_active", return_value={}):
                         with patch.object(scanner, "_run_scanner", side_effect=mock_scanner):
                             with patch.object(scanner, "_report_findings"):

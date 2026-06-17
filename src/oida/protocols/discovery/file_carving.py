@@ -11,7 +11,6 @@ Extracts files from TCP/UDP streams using header-footer carving:
 Based on BruteShark's FileExtractingModule approach.
 """
 
-import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from .base import PassiveListenerBase
@@ -20,7 +19,6 @@ from ...shared.file_carving_common import (
     FileCarvingMixin,
     StreamBuffer,
 )
-from ...utils.common_types import safe_output_path
 from ...utils.ics_logger import get_module_logger
 from ...utils.lazy_import import lazy_import
 
@@ -144,42 +142,3 @@ class FileCarvingListener(FileCarvingMixin, PassiveListenerBase):
         stream = self._streams[stream_key]
         stream.data.extend(payload)
         self._try_extract_files(stream)
-
-    # Override save methods to use safe_output_path
-
-    def _save_file(self, extracted: ExtractedFile) -> None:
-        """Save extracted file to disk with path traversal protection."""
-        if not self.output_dir:
-            return
-        try:
-            os.makedirs(self.output_dir, exist_ok=True)
-            filename = f"{extracted.md5_hash}{extracted.extension}"
-            filepath = safe_output_path(filename, self.output_dir)
-            with open(filepath, "wb") as f:
-                f.write(extracted.data)
-            logger.debug(f"Saved: {filepath}")
-        except ValueError as e:
-            logger.warning(f"Path traversal blocked: {e}")
-        except Exception as e:
-            logger.debug(f"Failed to save file: {e}")
-
-    def save_files(self, output_dir: str) -> int:
-        """Save all extracted files to a directory with path traversal protection."""
-        os.makedirs(output_dir, exist_ok=True)
-        count = 0
-
-        for f in self.files:
-            try:
-                filename = f"{f.md5_hash}{f.extension}"
-                filepath = safe_output_path(filename, output_dir)
-                with open(filepath, "wb") as file:
-                    file.write(f.data)
-                count += 1
-                logger.debug(f"Saved: {filepath}")
-            except ValueError as e:
-                logger.warning(f"Path traversal blocked: {e}")
-            except Exception as e:
-                logger.debug(f"Failed to save {f.md5_hash}: {e}")
-
-        logger.info(f"Saved {count} files to {output_dir}")
-        return count

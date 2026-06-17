@@ -47,16 +47,6 @@ NTP_MODES = {
     7: "Private",
 }
 
-# NTP stratum levels
-NTP_STRATUM = {
-    0: "Unspecified/Invalid",
-    1: "Primary (GPS, atomic clock)",
-    2: "Secondary",
-    3: "Secondary",
-    # 2-15: Secondary references
-    16: "Unsynchronized",
-}
-
 # Reference clock identifiers (stratum 1)
 NTP_REFID = {
     "GPS": "GPS receiver",
@@ -123,7 +113,7 @@ class NTPPassiveListener:
         self.interface = validate_interface(interface)
         self.timeout = validate_timeout(timeout)
         self.discovered_devices: Dict[str, DiscoveredDevice] = {}
-        self.ntp_servers: Dict[str, Dict] = {}  # IP -> server info
+        self.server_count = 0  # number of distinct NTP servers seen
         self._lock = threading.Lock()
 
     def scan(self) -> Dict[str, DiscoveredDevice]:
@@ -153,7 +143,7 @@ class NTPPassiveListener:
         sniffer.stop()
 
         logger.debug(
-            f"NTP: {len(self.discovered_devices)} devices, {len(self.ntp_servers)} servers"
+            f"NTP: {len(self.discovered_devices)} devices, {self.server_count} servers"
         )
         return self.discovered_devices
 
@@ -193,20 +183,18 @@ class NTPPassiveListener:
             return
 
         src_ip = packet[IP].src
-        dst_ip = packet[IP].dst
 
         # Extract MAC from Ethernet layer if available
         src_mac = ""
         if Ether in packet:
             src_mac = packet[Ether].src
 
-        self._process_scapy_ntp(packet, src_ip, dst_ip, src_mac)
+        self._process_scapy_ntp(packet, src_ip, src_mac)
 
-    def _process_scapy_ntp(self, packet, src_ip: str, dst_ip: str, src_mac: str = "") -> None:
+    def _process_scapy_ntp(self, packet, src_ip: str, src_mac: str) -> None:
         """Process NTP packet using scapy's native NTP layer."""
         try:
-            from scapy.all import NTP
-
+            NTP = _scapy_all().NTP
             ntp = packet[NTP]
             version = ntp.version
             mode = ntp.mode
@@ -255,13 +243,9 @@ class NTPPassiveListener:
 
                     self.discovered_devices[device_key] = device
 
-                    # Track servers separately
+                    # Track server count separately
                     if is_server:
-                        self.ntp_servers[src_ip] = {
-                            "stratum": stratum,
-                            "version": version,
-                            "ref_id": ref_id,
-                        }
+                        self.server_count += 1
 
                     role = "Server" if is_server else "Client"
                     logger.debug(f"NTP: {src_ip} {role} v{version} stratum={stratum}")
@@ -289,7 +273,7 @@ class NTPPassiveListener:
                     return f"{ref_id} ({NTP_REFID[ref_id]})"
                 return ref_id
         except Exception as e:
-            logger.debug(f"if isinstance(ref_id, bytes):: {e}")
+            logger.debug(f"NTP: ref_id format failed: {e}")
         return str(ref_id) if ref_id else ""
 
     def _stratum_description(self, stratum: int) -> str:

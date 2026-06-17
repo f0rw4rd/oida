@@ -30,7 +30,7 @@ class PingEnrichScanner:
     """Ping discovered hosts to verify they're alive.
 
     Pings both IPv4 and IPv6 addresses found during discovery.
-    Updates device.is_alive and device.ping_latency fields.
+    Marks reachable devices with a "ping" discovered_by tag.
     """
 
     def __init__(
@@ -74,17 +74,10 @@ class PingEnrichScanner:
                     logger.debug(f"enrich: ping latency probe failed: {e}")
 
         # Update devices with ping results
-        for ip, latency in alive_ips.items():
+        for ip in alive_ips:
             device_key = ips_to_ping[ip]
             if device_key in self.devices:
                 device = self.devices[device_key]
-                if not hasattr(device, "ping_data") or device.ping_data is None:
-                    device.ping_data = {}
-                device.ping_data[ip] = {
-                    "alive": True,
-                    "latency_ms": latency,
-                    "timestamp": datetime.now().isoformat(),
-                }
                 if "ping" not in device.discovered_by:
                     device.discovered_by.append("ping")
                 self.discovered_devices[device_key] = device
@@ -116,12 +109,12 @@ class PingEnrichScanner:
                             time_part = line.split("time=")[1].split()[0]
                             return float(time_part)
                         except (IndexError, ValueError) as e:
-                            logger.debug(f"NTP enrich: timestamp parse failed: {e}")
+                            logger.debug(f"ping enrich: latency parse failed: {e}")
                             return 0.0
                 return 0.0
             return None
         except Exception as e:
-            logger.debug(f"NTP enrich: IPv6-detection branch failed: {e}")
+            logger.debug(f"ping enrich: host ping failed: {e}")
             return None
 
 
@@ -129,7 +122,7 @@ class ReverseDNSEnrichScanner:
     """Reverse DNS (PTR) lookup for discovered IPs.
 
     Resolves hostnames from IP addresses using DNS PTR records.
-    Updates device.name and device.dns_names fields.
+    Updates device.name.
     """
 
     def __init__(
@@ -137,12 +130,10 @@ class ReverseDNSEnrichScanner:
         interface: str,
         timeout: int = 2,
         devices: Optional[Dict[str, DiscoveredDevice]] = None,
-        dns_server: Optional[str] = None,
     ):
         self.interface = interface
         self.timeout = timeout
         self.devices = devices or {}
-        self.dns_server = dns_server
         self.discovered_devices: Dict[str, DiscoveredDevice] = {}
 
     def scan(self) -> Dict[str, DiscoveredDevice]:
@@ -184,12 +175,6 @@ class ReverseDNSEnrichScanner:
             if device_key in self.devices:
                 device = self.devices[device_key]
 
-                # Add to dns_names list
-                if not hasattr(device, "dns_names") or device.dns_names is None:
-                    device.dns_names = []
-                if hostname not in device.dns_names:
-                    device.dns_names.append(hostname)
-
                 # Set name if not already set
                 if not device.name or device.name.startswith("Unknown"):
                     device.name = hostname.split(".")[0]  # Short hostname
@@ -208,7 +193,7 @@ class ReverseDNSEnrichScanner:
             hostname, _, _ = socket.gethostbyaddr(ip)
             return hostname
         except OSError as e:
-            logger.debug(f"hostname, _, _  socket.gethostbyaddr(ip): {e}")
+            logger.debug(f"reverse DNS: gethostbyaddr({ip}) failed: {e}")
             return None
 
 
@@ -291,9 +276,6 @@ class NetBIOSEnrichScanner:
             if device_key in self.devices:
                 device = self.devices[device_key]
 
-                if not hasattr(device, "netbios_name") or not device.netbios_name:
-                    device.netbios_name = name
-
                 # Set device name if not set
                 if not device.name or device.name.startswith("Unknown"):
                     device.name = name
@@ -335,7 +317,7 @@ class NetBIOSEnrichScanner:
             return name if name else None
 
         except Exception as e:
-            logger.debug(f"if len(data)  57:: {e}")
+            logger.debug(f"NetBIOS enrich: NBSTAT response parse failed: {e}")
             return None
 
 
@@ -425,11 +407,6 @@ class MDNSEnrichScanner:
             device_key = ips_to_query[ip]
             if device_key in self.devices:
                 device = self.devices[device_key]
-
-                if not hasattr(device, "mdns_names") or device.mdns_names is None:
-                    device.mdns_names = []
-                if name not in device.mdns_names:
-                    device.mdns_names.append(name)
 
                 if not device.name or device.name.startswith("Unknown"):
                     device.name = name.replace(".local", "")

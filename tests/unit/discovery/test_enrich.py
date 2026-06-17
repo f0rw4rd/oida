@@ -66,9 +66,7 @@ class TestPingEnrichScanner:
 
         assert len(results) == 1
         device = results["aa:bb:cc:dd:ee:ff"]
-        assert hasattr(device, "ping_data")
-        assert "192.168.1.100" in device.ping_data
-        assert device.ping_data["192.168.1.100"]["alive"] is True
+        assert "ping" in device.discovered_by
 
     @patch("oida.protocols.discovery.enrich.subprocess.run")
     def test_scan_ping_failure(self, mock_run):
@@ -133,9 +131,8 @@ class TestReverseDNSEnrichScanner:
 
         assert len(results) == 1
         device = results["aa:bb:cc:dd:ee:ff"]
-        assert hasattr(device, "dns_names")
-        assert "server.example.com" in device.dns_names
         assert device.name == "server"  # Short hostname
+        assert "rdns" in device.discovered_by
 
     @patch("oida.protocols.discovery.enrich.socket.gethostbyaddr")
     def test_scan_no_ptr_record(self, mock_gethostbyaddr):
@@ -169,8 +166,8 @@ class TestReverseDNSEnrichScanner:
         device = results["aa:bb:cc:dd:ee:ff"]
         # Existing name should be preserved
         assert device.name == "existing-name"
-        # But dns_names should still be populated
-        assert "newname.example.com" in device.dns_names
+        # Resolution still marks the device as rdns-enriched
+        assert "rdns" in device.discovered_by
 
 
 class TestNetBIOSEnrichScanner:
@@ -275,8 +272,8 @@ class TestEnrichmentIntegration:
 
             assert len(results) == 1
             device = results["aa:bb:cc:dd:ee:ff"]
-            # All 3 IPs should be pinged
-            assert len(device.ping_data) == 3
+            # Reachable device is marked via the ping enrichment source
+            assert "ping" in device.discovered_by
 
     def test_discovered_by_updated(self):
         """Test that discovered_by is updated with enrichment source."""

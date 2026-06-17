@@ -15,7 +15,7 @@ Useful for discovering:
 import socket
 import struct
 from datetime import datetime
-from typing import Dict, List
+from typing import List
 
 from .base import PassiveListenerBase
 from .core import DiscoveredDevice
@@ -43,14 +43,6 @@ class PIMPassiveListener(PassiveListenerBase):
     PROTOCOL_NAME = "pim-passive"
     BPF_FILTER = "ip proto 103"
 
-    def __init__(
-        self,
-        interface: str,
-        timeout: int = 30,
-    ):
-        super().__init__(interface, timeout)
-        self.multicast_groups: Dict[str, List[str]] = {}  # group -> router IPs
-
     def should_process_packet(self, packet) -> bool:
         """Filter for PIM packets (IP protocol 103)."""
         try:
@@ -65,8 +57,18 @@ class PIMPassiveListener(PassiveListenerBase):
         """Process PIM packet using scapy's PIM layer or raw parsing."""
         try:
             from scapy.all import IP, Raw, Ether
-            from scapy.contrib.pim import PIM, PIMv2Hello
+            from scapy.contrib.pim import (
+                PIMv2Hdr,
+                PIMv2Hello,
+                PIMv2HelloHoldtime,
+                PIMv2HelloDRPriority,
+                PIMv2HelloGenerationID,
+            )
+        except ImportError as e:
+            logger.debug(f"scapy PIM layer unavailable: {e}")
+            return
 
+        try:
             src_ip = packet[IP].src
             dst_ip = packet[IP].dst
 
@@ -76,30 +78,26 @@ class PIMPassiveListener(PassiveListenerBase):
                 src_mac = packet[Ether].src
 
             # Try scapy's PIM layer first
-            if PIM in packet:
-                pim = packet[PIM]
-                version = pim.version if hasattr(pim, "version") else 2
-                msg_type = pim.type if hasattr(pim, "type") else 0
+            if PIMv2Hdr in packet:
+                pim = packet[PIMv2Hdr]
+                version = pim.version
+                msg_type = pim.type
 
                 # Extract Hello-specific info
                 hold_time = 105  # default
                 dr_priority = 1  # default
                 generation_id = 0
-                neighbors = []
-                address_list = []
+                address_list: List[str] = []
 
                 if PIMv2Hello in packet:
                     hello = packet[PIMv2Hello]
-                    # Parse Hello options
-                    if hasattr(hello, "option"):
-                        for opt in hello.option:
-                            if hasattr(opt, "type") and hasattr(opt, "value"):
-                                if opt.type == 1:  # Hold Time
-                                    hold_time = opt.value
-                                elif opt.type == 19:  # DR Priority
-                                    dr_priority = opt.value
-                                elif opt.type == 20:  # Generation ID
-                                    generation_id = opt.value
+                    for opt in getattr(hello, "option", []):
+                        if isinstance(opt, PIMv2HelloHoldtime):
+                            hold_time = opt.holdtime
+                        elif isinstance(opt, PIMv2HelloDRPriority):
+                            dr_priority = opt.dr_priority
+                        elif isinstance(opt, PIMv2HelloGenerationID):
+                            generation_id = opt.generation_id
 
                 self._update_device(
                     src_ip=src_ip,
@@ -110,9 +108,7 @@ class PIMPassiveListener(PassiveListenerBase):
                     hold_time=hold_time,
                     dr_priority=dr_priority,
                     generation_id=generation_id,
-                    neighbors=neighbors,
                     address_list=address_list,
-                    multicast_groups=[],
                 )
 
             # Fallback to raw parsing if scapy layer not available
@@ -142,15 +138,11 @@ class PIMPassiveListener(PassiveListenerBase):
             # Byte 1: reserved (or subtypes for some message types)
             # Bytes 2-3: checksum
 
-            PIM_TYPES.get(msg_type, f"Unknown({msg_type})")
-
             # Default values
             hold_time = 105
             dr_priority = 1
             generation_id = 0
-            neighbors = []
-            address_list = []
-            multicast_groups = []
+            address_list: List[str] = []
 
             # Parse Hello message (type 0)
             if msg_type == 0 and len(data) > 4:
@@ -197,12 +189,6 @@ class PIMPassiveListener(PassiveListenerBase):
 
                     offset += 4 + opt_len
 
-            # Parse Join/Prune message (type 3) for multicast groups
-            elif msg_type == 3 and len(data) > 4:
-                # Join/Prune has upstream neighbor + groups
-                # Just extract basic info for now
-                pass
-
             self._update_device(
                 src_ip=src_ip,
                 src_mac=src_mac,
@@ -212,9 +198,7 @@ class PIMPassiveListener(PassiveListenerBase):
                 hold_time=hold_time,
                 dr_priority=dr_priority,
                 generation_id=generation_id,
-                neighbors=neighbors,
                 address_list=address_list,
-                multicast_groups=multicast_groups,
             )
 
         except Exception as e:
@@ -230,9 +214,7 @@ class PIMPassiveListener(PassiveListenerBase):
         hold_time: int,
         dr_priority: int,
         generation_id: int,
-        neighbors: List[str],
         address_list: List[str],
-        multicast_groups: List[str],
     ) -> None:
         """Update or create device entry."""
         with self._lock:
@@ -240,9 +222,6 @@ class PIMPassiveListener(PassiveListenerBase):
             device_key = src_mac if src_mac else f"pim:{src_ip}"
 
             msg_type_name = PIM_TYPES.get(msg_type, f"Unknown({msg_type})")
-
-            # Higher DR priority is better (wins election)
-            dr_priority > 1
 
             if device_key not in self.discovered_devices:
                 device = DiscoveredDevice(
@@ -264,21 +243,12 @@ class PIMPassiveListener(PassiveListenerBase):
                     "hold_time": hold_time,
                     "dr_priority": dr_priority,
                     "generation_id": generation_id,
-                    "neighbors": neighbors,
                     "address_list": address_list,
-                    "multicast_groups": multicast_groups,
                     "multicast_dst": dst_ip,
                     "protocol": "PIM",
                 }
 
                 self.discovered_devices[device_key] = device
-
-                # Track multicast groups
-                for group in multicast_groups:
-                    if group not in self.multicast_groups:
-                        self.multicast_groups[group] = []
-                    if src_ip not in self.multicast_groups[group]:
-                        self.multicast_groups[group].append(src_ip)
 
                 logger.debug(f"PIM: {src_ip} {msg_type_name} pri={dr_priority} hold={hold_time}s")
             else:
@@ -290,20 +260,9 @@ class PIMPassiveListener(PassiveListenerBase):
                 # AttributeError / TypeError.
                 if dev.pim_data is None:
                     dev.pim_data = {}
-                # Update neighbors if new ones found
-                existing_neighbors = dev.pim_data.get("neighbors", [])
-                for n in neighbors:
-                    if n not in existing_neighbors:
-                        existing_neighbors.append(n)
-                dev.pim_data["neighbors"] = existing_neighbors
-
-                # Update multicast groups
-                existing_groups = dev.pim_data.get("multicast_groups", [])
-                for g in multicast_groups:
-                    if g not in existing_groups:
-                        existing_groups.append(g)
-                        if g not in self.multicast_groups:
-                            self.multicast_groups[g] = []
-                        if src_ip not in self.multicast_groups[g]:
-                            self.multicast_groups[g].append(src_ip)
-                dev.pim_data["multicast_groups"] = existing_groups
+                # Merge any newly observed advertised addresses
+                existing_addrs = dev.pim_data.get("address_list", [])
+                for addr in address_list:
+                    if addr not in existing_addrs:
+                        existing_addrs.append(addr)
+                dev.pim_data["address_list"] = existing_addrs
