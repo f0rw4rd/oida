@@ -64,11 +64,6 @@ NETMANAGE_BROADCAST = "255.255.255.255"
 
 # Header sizes
 HEADER_SIZE = 30
-MAC_SIZE = 18
-COMMAND_SIZE = 4
-VERSION_SIZE = 2
-CHECKSUM_SIZE = 2
-SIZE_OF_ALL_SIZE = 4
 
 # Checksum offset in header
 CHECKSUM_OFFSET = 24
@@ -388,7 +383,7 @@ class NetManageDataBlock:
             data_len = size - 6  # size includes header
 
             if data_len < 0 or len(data) < data_start + data_len:
-                # Just take what's available
+                # Header-declared size is bogus/truncated: clamp to remaining bytes
                 data_len = max(0, len(data) - data_start)
 
             block_data = data[data_start : data_start + data_len]
@@ -469,6 +464,7 @@ class NetManageDevice:
                 else str(self.last_seen)
             ),
             netmanage_data={
+                "protocol_version": self.protocol_version,
                 "firmware_version": self.firmware_version,
                 "serial_number": self.serial_number,
                 "boot_mode": self.boot_mode,

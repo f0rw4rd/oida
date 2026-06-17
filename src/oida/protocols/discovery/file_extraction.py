@@ -111,7 +111,7 @@ class FileExtractor:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
     def get_files_summary(self) -> List[Dict[str, Any]]:
-        return [{k: v for k, v in f.items() if k != "data"} for f in self._files]
+        return list(self._files)
 
     def get_statistics(self) -> Dict[str, Any]:
         by_proto: Dict[str, Dict[str, int]] = {}

@@ -6,7 +6,6 @@ Contains:
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime
 import threading
 import time
 from typing import Any, Dict, Iterator, Optional, TYPE_CHECKING
@@ -215,55 +214,3 @@ class PassiveListenerBase(ABC):
         for packet in packets:
             self._safe_process_packet(packet)
         return self.discovered_devices
-
-    # -------------------------------------------------------------------------
-    # Utility methods for subclasses
-    # -------------------------------------------------------------------------
-
-    def _add_device(
-        self,
-        key: str,
-        device: "DiscoveredDevice",
-    ) -> bool:
-        """Thread-safe device addition with validation.
-
-        Args:
-            key: Device key (usually MAC or IP)
-            device: DiscoveredDevice instance
-
-        Returns:
-            True if device was added, False if filtered out (broadcast/multicast MAC)
-
-        Raises:
-            ValueError: If device has empty mac_address (scapy-based listeners
-                should always extract MAC from packet[Ether].src)
-        """
-        from .core import is_valid_mac
-
-        # Validate MAC is present - scapy listeners should always have access to Ether layer
-        if not device.mac_address:
-            raise ValueError(
-                f"{self.PROTOCOL_NAME}: Device created without MAC address. "
-                f"Scapy-based listeners must extract MAC from packet[Ether].src. "
-                f"Device IP: {device.ip_addresses}"
-            )
-
-        # Filter out broadcast/multicast MACs (ff:ff:ff:ff:ff:ff, 01:00:5e:*, 33:33:*)
-        if not is_valid_mac(device.mac_address):
-            logger.debug(
-                f"{self.PROTOCOL_NAME}: Skipping invalid MAC {device.mac_address} "
-                f"(broadcast/multicast) for IP {device.ip_addresses}"
-            )
-            return False
-
-        with self._lock:
-            if key not in self.discovered_devices:
-                self.discovered_devices[key] = device
-            else:
-                # Update last_seen
-                self.discovered_devices[key].last_seen = datetime.now().isoformat()
-        return True
-
-    def _get_timestamp(self) -> str:
-        """Get current ISO timestamp."""
-        return datetime.now().isoformat()

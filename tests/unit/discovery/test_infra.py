@@ -883,7 +883,7 @@ class TestPCAnywhereScannerParseResponse:
         caps_field = b"AHM_____"  # 8 bytes
         response = b"NR" + name_field + caps_field
 
-        device = scanner._parse_response(response, "192.168.1.90")
+        device = scanner._parse_nr_response(response, "192.168.1.90")
 
         assert device is not None
         assert device.ip_addresses == ["192.168.1.90"]
@@ -899,21 +899,21 @@ class TestPCAnywhereScannerParseResponse:
         from oida.protocols.discovery.infra import PCAnywhereScanner
 
         scanner = PCAnywhereScanner(interface="eth0")
-        device = scanner._parse_response(b"XX" + b"SERVER\x00", "192.168.1.1")
+        device = scanner._parse_nr_response(b"XX" + b"SERVER\x00", "192.168.1.1")
         assert device is None
 
     def test_response_too_short(self):
         from oida.protocols.discovery.infra import PCAnywhereScanner
 
         scanner = PCAnywhereScanner(interface="eth0")
-        device = scanner._parse_response(b"N", "192.168.1.1")
+        device = scanner._parse_nr_response(b"N", "192.168.1.1")
         assert device is None
 
     def test_nr_only_no_name(self):
         from oida.protocols.discovery.infra import PCAnywhereScanner
 
         scanner = PCAnywhereScanner(interface="eth0")
-        device = scanner._parse_response(b"NR\x00", "192.168.1.1")
+        device = scanner._parse_nr_response(b"NR\x00", "192.168.1.1")
         assert device is not None
         # Falls back to IP-based name
         assert "192.168.1.1" in device.name

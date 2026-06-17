@@ -24,7 +24,6 @@ from ...shared.ospf_constants import (  # noqa: F401 - re-exported
     OSPF_AUTH_TYPES,
     OSPF_MULTICAST_ALL_ROUTERS,
     OSPF_MULTICAST_DR,
-    OSPF_NETWORK_TYPES,
     OSPF_PROTOCOL,
     OSPF_TYPES,
 )
@@ -52,7 +51,6 @@ class OSPFPassiveListener(PassiveListenerBase):
         timeout: int = 30,
     ):
         super().__init__(interface, timeout)
-        self.areas: Dict[str, Dict] = {}  # area_id -> info
 
     def should_process_packet(self, packet) -> bool:
         """Filter for OSPF packets (IP protocol 89)."""
@@ -87,7 +85,7 @@ class OSPFPassiveListener(PassiveListenerBase):
                 area_id = ospf_hdr.area
 
                 # Extract authentication info
-                auth_type = ospf_hdr.authtype if hasattr(ospf_hdr, "authtype") else 0
+                auth_type = ospf_hdr.authtype
                 auth_type_name = OSPF_AUTH_TYPES.get(auth_type, f"Unknown({auth_type})")
 
                 # Process Hello packets for neighbor info
@@ -96,21 +94,16 @@ class OSPFPassiveListener(PassiveListenerBase):
                 if OSPF_Hello in packet:
                     hello = packet[OSPF_Hello]
                     hello_info = {
-                        "network_mask": str(hello.mask) if hasattr(hello, "mask") else "",
-                        "hello_interval": hello.hellointerval
-                        if hasattr(hello, "hellointerval")
-                        else 10,
-                        "options": hello.options if hasattr(hello, "options") else 0,
-                        "priority": hello.prio if hasattr(hello, "prio") else 1,
-                        "dead_interval": hello.deadinterval
-                        if hasattr(hello, "deadinterval")
-                        else 40,
-                        "designated_router": str(hello.router) if hasattr(hello, "router") else "",
-                        "backup_dr": str(hello.backup) if hasattr(hello, "backup") else "",
+                        "network_mask": str(hello.mask),
+                        "hello_interval": hello.hellointerval,
+                        "options": hello.options,
+                        "priority": hello.prio,
+                        "dead_interval": hello.deadinterval,
+                        "designated_router": str(hello.router),
+                        "backup_dr": str(hello.backup),
                     }
                     # Extract neighbors from Hello packet
-                    if hasattr(hello, "neighbors"):
-                        neighbors = [str(n) for n in hello.neighbors]
+                    neighbors = [str(n) for n in hello.neighbors]
 
                 self._update_device(
                     src_ip=src_ip,
@@ -279,20 +272,6 @@ class OSPFPassiveListener(PassiveListenerBase):
                     )
 
                 self.discovered_devices[device_key] = device
-
-                # Track area
-                if area_id not in self.areas:
-                    self.areas[area_id] = {
-                        "area_id": area_id,
-                        "routers": [],
-                    }
-                self.areas[area_id]["routers"].append(
-                    {
-                        "ip": src_ip,
-                        "router_id": router_id,
-                        "role": role,
-                    }
-                )
 
                 logger.debug(f"OSPF: {src_ip} RID={router_id} Area={area_id} {role}")
             else:

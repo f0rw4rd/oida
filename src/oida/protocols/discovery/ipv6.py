@@ -286,35 +286,6 @@ class IPv6Scanner:
             logger.debug(f"IPv6: multicast MAC conversion error: {e}")
             return "33:33:00:00:00:01"
 
-    def _add_device(self, ipv6_addr: str, discovery_method: str) -> None:
-        """Add discovered IPv6 device"""
-        # Normalize IPv6 to prevent duplicates
-        ipv6_addr = normalize_ipv6(ipv6_addr)
-
-        with self._lock:
-            if ipv6_addr in self.discovered_devices:
-                return
-
-            device = DiscoveredDevice(
-                ip_addresses=[ipv6_addr],
-                discovered_by=[f"ipv6-{discovery_method}"],
-                first_seen=datetime.now().isoformat(),
-                last_seen=datetime.now().isoformat(),
-                ipv6_data={
-                    "addresses": [ipv6_addr],
-                    "discovery_method": discovery_method,
-                    "is_router": discovery_method == "all-routers",
-                },
-            )
-
-            # Try to determine if EUI-64 format (contains ff:fe)
-            if "ff:fe" in ipv6_addr.lower():
-                device.ipv6_data["eui64_format"] = True
-
-            self.discovered_devices[ipv6_addr] = device
-            logger.debug(f"IPv6: Found {ipv6_addr} via {discovery_method}")
-
-
 class IPv6PassiveListener(PassiveListenerBase):
     """Comprehensive passive IPv6 traffic listener.
 
@@ -340,14 +311,6 @@ class IPv6PassiveListener(PassiveListenerBase):
     PROTOCOL_NAME = "ipv6-passive"
     BPF_FILTER = "ip6"
 
-    # ICMPv6 types
-    ICMPV6_ECHO_REQUEST = 128
-    ICMPV6_ECHO_REPLY = 129
-    ICMPV6_RS = 133  # Router Solicitation
-    ICMPV6_RA = 134  # Router Advertisement
-    ICMPV6_NS = 135  # Neighbor Solicitation
-    ICMPV6_NA = 136  # Neighbor Advertisement
-
     def should_process_packet(self, packet) -> bool:
         """Check if packet is an IPv6 packet."""
         from scapy.all import IPv6
@@ -364,7 +327,6 @@ class IPv6PassiveListener(PassiveListenerBase):
 
             ipv6 = packet[IPv6]
             src = ipv6.src
-            ipv6.dst
 
             # Get MAC if available
             mac = ""
