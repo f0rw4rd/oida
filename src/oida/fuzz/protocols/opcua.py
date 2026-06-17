@@ -898,9 +898,13 @@ class OPCUAFuzzer(BaseFuzzer):
                         DWord("SenderCertificate_Length", 0xFFFFFFFF, endian="<", fuzzable=False),
                         # ReceiverCertificateThumbprint - null for Policy None
                         DWord("ReceiverThumbprint_Length", 0xFFFFFFFF, endian="<", fuzzable=False),
-                        # SequenceHeader
-                        DWord("SequenceNumber", 1, endian="<", fuzzable=False),
-                        DWord("RequestId", 1, endian="<", fuzzable=False),
+                        # SequenceHeader — dynamic so each sent chunk carries a
+                        # unique, incrementing SequenceNumber/RequestId (per
+                        # OPC UA spec); rendered via original_value() each case.
+                        DynamicDWord(
+                            "SequenceNumber", lambda: self._next_sequence_number(), endian="<"
+                        ),
+                        DynamicDWord("RequestId", lambda: self._next_request_id(), endian="<"),
                         # OpenSecureChannelRequest body
                         # TypeId - FourByte NodeId for OpenSecureChannelRequest (446)
                         Static("TypeId_Encoding", bytes([OPCUANodeIdTypes.FOUR_BYTE])),
