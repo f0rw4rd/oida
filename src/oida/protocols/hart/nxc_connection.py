@@ -20,7 +20,6 @@ class hart(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "HART"
         self.default_port = 5094
-        self._scan_results = None
         self.scanner = None
         super().__init__(args, db, host)
 
@@ -55,6 +54,9 @@ class hart(NetworkConnection):
         # Read process variables
         if getattr(self.args, "read_all_vars", False) or not self._has_specific_action():
             self._handle_read_variables()
+
+        # Granular read operations (Commands 0/1/2/13/15/48)
+        self._handle_granular_reads()
 
         # Command enumeration
         if enumerate_commands:
@@ -92,9 +94,13 @@ class hart(NetworkConnection):
     def _has_specific_action(self) -> bool:
         """Check if user requested specific actions"""
         actions = [
+            "read_id",
             "read_pv",
             "read_current",
             "read_all_vars",
+            "read_tag",
+            "read_output",
+            "read_status",
             "enumerate_commands",
             "security_analysis",
             "fuzz",
@@ -292,9 +298,6 @@ class hart(NetworkConnection):
 
     def _handle_read_variables(self):
         """Read and display process variables"""
-        if not self.scanner:
-            return
-
         variables = self.scanner.read_all_variables()
         if variables:
             self.results["data"]["variables"] = [
@@ -320,6 +323,68 @@ class hart(NetworkConnection):
                 f"{output_info.get('upper_range', 0):.2f} {output_info.get('units_name', '')}"
             )
             self.logger.debug(f"  Damping: {output_info.get('damping_seconds', 0):.2f} sec")
+
+    def _handle_granular_reads(self):
+        """Handle granular per-command read flags (--read-id/-pv/-current/-tag/-output/-status)."""
+        # --read-id / --read-tag: device identity (Command 0) and tag/descriptor
+        # (Command 13) are already gathered by enum_host_info() into device_info;
+        # surface a confirmation line when explicitly requested.
+        if getattr(self.args, "read_id", False) or getattr(self.args, "read_tag", False):
+            device_info = self.results["data"].get("device_info", {})
+            if device_info:
+                if getattr(self.args, "read_id", False):
+                    self.logger.display(
+                        f"Unique ID: {device_info.get('unique_id', 'unknown')}"
+                    )
+                if getattr(self.args, "read_tag", False):
+                    self.logger.display(
+                        f"Tag: {device_info.get('tag', '')} "
+                        f"Descriptor: {device_info.get('descriptor', '')} "
+                        f"Date: {device_info.get('date', '')}"
+                    )
+
+        # --read-pv: primary variable (Command 1)
+        if getattr(self.args, "read_pv", False):
+            pv = self.scanner.read_primary_variable()
+            if pv:
+                self.results["data"]["primary_variable"] = {
+                    "name": pv.name,
+                    "value": pv.value,
+                    "units": pv.units_name,
+                    "units_code": pv.units_code,
+                }
+                self.logger.display(f"  {pv.name}: {pv.value:.4f} {pv.units_name}")
+
+        # --read-current: loop current and percent of range (Command 2)
+        if getattr(self.args, "read_current", False):
+            current, percent = self.scanner.read_current_and_percent()
+            self.results["data"]["loop_current"] = {
+                "current_mA": current,
+                "percent_range": percent,
+            }
+            self.logger.display(f"  Loop Current: {current:.4f} mA ({percent:.2f}% of range)")
+
+        # --read-output: output information (Command 15)
+        if getattr(self.args, "read_output", False):
+            output_info = self.scanner.read_output_info()
+            if output_info:
+                self.results["data"]["output_info"] = output_info
+                self.logger.display(
+                    f"  Range: {output_info.get('lower_range', 0):.2f} - "
+                    f"{output_info.get('upper_range', 0):.2f} {output_info.get('units_name', '')}"
+                )
+
+        # --read-status: additional device status (Command 48)
+        if getattr(self.args, "read_status", False):
+            status = self.scanner.read_additional_status()
+            if status:
+                self.results["data"]["additional_status"] = status
+                decoded = status.get("extended_device_status_decoded", {})
+                alerts = [k for k, v in decoded.items() if v]
+                if alerts:
+                    self.logger.display(f"  Status flags: {', '.join(alerts)}")
+                else:
+                    self.logger.display("  No active status flags")
 
     def _handle_address_scan(self, range_str: str):
         """Handle poll address scanning mode"""
@@ -356,9 +421,6 @@ class hart(NetworkConnection):
 
     def _handle_enumerate_commands(self):
         """Handle command enumeration"""
-        if not self.scanner:
-            return
-
         cmd_range = getattr(self.args, "command_range", "0-48")
         self.logger.display(f"Enumerating HART commands ({cmd_range})...")
 
@@ -376,9 +438,6 @@ class hart(NetworkConnection):
 
     def _handle_list_sub_devices(self):
         """Handle sub-device listing for WirelessHART gateways"""
-        if not self.scanner:
-            return
-
         self.logger.display("Listing sub-devices (WirelessHART gateway)...")
 
         sub_devices = self.scanner.list_sub_devices()
@@ -396,9 +455,6 @@ class hart(NetworkConnection):
 
     def _handle_security_analysis(self):
         """Handle security analysis"""
-        if not self.scanner:
-            return
-
         self.logger.display("Performing security analysis...")
 
         findings = self.scanner.security_analysis()
@@ -429,9 +485,6 @@ class hart(NetworkConnection):
 
     def _handle_fuzz(self):
         """Handle HART fuzzing"""
-        if not self.scanner:
-            return
-
         confirm = getattr(self.args, "confirm", False)
         if not confirm:
             self.logger.fail("--fuzz requires --confirm flag")
@@ -451,9 +504,6 @@ class hart(NetworkConnection):
 
     def _handle_raw_command(self):
         """Send raw HART command"""
-        if not self.scanner:
-            return
-
         command = getattr(self.args, "raw_command", None)
         if command is None:
             return
@@ -496,9 +546,6 @@ class hart(NetworkConnection):
 
     def _handle_check_lock(self):
         """Check device lock state"""
-        if not self.scanner:
-            return
-
         self.logger.display("Checking device lock state...")
 
         from .scanner import LockState
@@ -521,9 +568,6 @@ class hart(NetworkConnection):
 
     def _handle_bruteforce_lock(self):
         """Handle device lock bruteforce"""
-        if not self.scanner:
-            return
-
         confirm = getattr(self.args, "confirm", False)
         if not confirm:
             self.logger.fail("--bruteforce-lock requires --confirm flag")
@@ -549,9 +593,6 @@ class hart(NetworkConnection):
 
     def _handle_lock_operations(self):
         """Handle lock/unlock operations (require --confirm)"""
-        if not self.scanner:
-            return
-
         confirm = getattr(self.args, "confirm", False)
 
         unlock_code = getattr(self.args, "unlock", None)
@@ -578,9 +619,6 @@ class hart(NetworkConnection):
 
     def _handle_write_operations(self):
         """Handle write operations (require --confirm)"""
-        if not self.scanner:
-            return
-
         confirm = getattr(self.args, "confirm", False)
 
         new_addr = getattr(self.args, "write_poll_addr", None)

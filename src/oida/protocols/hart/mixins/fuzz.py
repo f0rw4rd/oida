@@ -34,9 +34,7 @@ class FuzzMixin(_ScannerBase):
     def fuzz_commands(self, iterations: int = 20, command_list: List[int] = None) -> Dict[str, Any]:
         """Fuzz HART commands with malformed data."""
         from ..hartip import HARTResponseCode, HARTIPTimeoutError
-        from ....utils.lazy_import import lazy_import
-
-        _fuzzer = lazy_import("oida.utils.fuzzer", "fuzzer")
+        from ....utils.fuzzer import fuzz
 
         if not self.client:
             return {"error": "Not connected"}
@@ -50,10 +48,6 @@ class FuzzMixin(_ScannerBase):
             "anomalies": [],
             "errors": [],
         }
-
-        if not _fuzzer.is_available:
-            return self._basic_fuzz(iterations, command_list)
-        fuzz = _fuzzer.fuzz
 
         for cmd in command_list:
             cmd_stats = {"command": cmd, "iterations": 0, "anomalies": 0}
@@ -69,8 +63,8 @@ class FuzzMixin(_ScannerBase):
             for base_payload in base_payloads:
                 # fuzz() yields (payload_bytes, description) tuples; unpack so
                 # payload.hex() / send_command(payload) get bytes, not a tuple.
-                for i, (payload, _desc) in enumerate(
-                    fuzz(base_payload, count=iterations // len(base_payloads))
+                for payload, _desc in fuzz(
+                    base_payload, count=iterations // len(base_payloads)
                 ):
                     try:
                         response = self.client.send_command(cmd, self.poll_address, payload)
@@ -113,51 +107,6 @@ class FuzzMixin(_ScannerBase):
                         results["errors"].append({"command": cmd, "error": str(e)})
 
                     time.sleep(0.05)
-
-            results["commands_fuzzed"].append(cmd_stats)
-
-        return results
-
-    def _basic_fuzz(self, iterations: int, command_list: List[int]) -> Dict[str, Any]:
-        """Basic fuzzing without radamsa"""
-        from ..hartip import HARTIPTimeoutError
-
-        results: Dict[str, Any] = {
-            "tested": 0,
-            "commands_fuzzed": [],
-            "anomalies": [],
-            "errors": [],
-        }
-
-        fuzz_payloads = [
-            b"",
-            b"\x00",
-            b"\xff",
-            b"\x00" * 50,
-            b"\xff" * 50,
-            b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09",
-            b"\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8\xf7\xf6",
-            bytes(range(256)),
-        ]
-
-        for cmd in command_list:
-            cmd_stats = {"command": cmd, "iterations": 0, "anomalies": 0}
-
-            for payload in fuzz_payloads[:iterations]:
-                try:
-                    self.client.send_command(cmd, self.poll_address, payload)
-                    cmd_stats["iterations"] += 1
-                    results["tested"] += 1
-                except (HARTIPTimeoutError, TimeoutError):
-                    results["anomalies"].append(
-                        {
-                            "command": cmd,
-                            "payload": payload.hex()[:32],
-                            "error": "timeout",
-                        }
-                    )
-                except Exception as e:
-                    results["errors"].append({"command": cmd, "error": str(e)})
 
             results["commands_fuzzed"].append(cmd_stats)
 
