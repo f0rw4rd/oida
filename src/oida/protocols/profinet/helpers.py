@@ -11,14 +11,9 @@ logger = logging.getLogger(__name__)
 _profinet = lazy_import("profinet", "PROFINET")
 
 
-def _get_profinet():
-    """Get profinet module, raising DependencyError if not available."""
-    return _profinet()
-
-
 def get_indices_module():
     """Get profinet.indices module."""
-    _get_profinet()
+    _profinet()  # raise DependencyError if profinet-py is not installed
     from profinet import indices
 
     return indices
@@ -26,7 +21,7 @@ def get_indices_module():
 
 def get_blocks_module():
     """Get profinet.blocks module."""
-    _get_profinet()
+    _profinet()  # raise DependencyError if profinet-py is not installed
     from profinet import blocks
 
     return blocks

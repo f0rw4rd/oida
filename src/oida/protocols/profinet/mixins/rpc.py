@@ -10,7 +10,6 @@ Handles RPC read operations:
 - Alarm reading
 - Single index read/write
 - Slot discovery and display
-- AR data and API data
 """
 
 from __future__ import annotations
@@ -112,7 +111,7 @@ class RPCMixin(_ScannerBase):
             # Handle fuzzing
             fuzz_mode = self._arg("fuzz", None)
             if fuzz_mode:
-                self._handle_fuzz(device, con, discovered_slots)
+                self._handle_fuzz(con, discovered_slots)
         finally:
             con.close()
 
@@ -121,7 +120,7 @@ class RPCMixin(_ScannerBase):
             import time
 
             time.sleep(1)  # Let device release previous AR
-            self._cyclic_io_test(device, profinet_mod, discovered_slots)
+            self._cyclic_io_test(device, discovered_slots)
 
     def _read_im_data(self, device: ProfinetDevice, con, profinet_mod) -> None:
         """Read I&M data from device."""
@@ -251,7 +250,7 @@ class RPCMixin(_ScannerBase):
         """Read physical topology (PDRealData) from device.
 
         Displays interface info, port link states, MAU types, and
-        LLDP peer information (chassis ID, port ID, management address).
+        LLDP peer information (chassis ID, port ID, MAC address).
         """
         self.logger.display("  Reading topology (PDRealData)...")
         try:
@@ -263,9 +262,9 @@ class RPCMixin(_ScannerBase):
                 iface = pd_real.interface
                 self.logger.display(f"  Interface: {iface.chassis_id}")
                 self.logger.display(f"    IP: {iface.ip_str}")
-                if hasattr(iface, "netmask_str") and iface.netmask_str:
-                    self.logger.display(f"    Netmask: {iface.netmask_str}")
-                if hasattr(iface, "gateway_str") and iface.gateway_str:
+                if iface.subnet_str:
+                    self.logger.display(f"    Netmask: {iface.subnet_str}")
+                if iface.gateway_str:
                     self.logger.display(f"    Gateway: {iface.gateway_str}")
 
             # Display port info
@@ -289,8 +288,8 @@ class RPCMixin(_ScannerBase):
                         peer_info = f"    Peer: {peer.chassis_id}"
                         if peer.port_id:
                             peer_info += f":{peer.port_id}"
-                        if hasattr(peer, "mgmt_addr") and peer.mgmt_addr:
-                            peer_info += f" ({peer.mgmt_addr})"
+                        if peer.mac_str:
+                            peer_info += f" ({peer.mac_str})"
                         self.logger.display(peer_info)
                 else:
                     self.logger.display("    No peer detected")
@@ -308,21 +307,16 @@ class RPCMixin(_ScannerBase):
             diff = con.read_module_diff()
             device.module_diff = diff
 
-            if hasattr(diff, "all_ok") and diff.all_ok:
+            if diff.all_ok:
                 self.logger.success("  Configuration matches (all modules OK)")
             else:
-                if hasattr(diff, "get_mismatches"):
-                    mismatches = diff.get_mismatches()
-                    if mismatches:
-                        self.logger.warning(f"  {len(mismatches)} configuration mismatch(es):")
-                        for slot, subslot, state in mismatches:
-                            self.logger.display(f"    Slot {slot} Sub {subslot}: {state}")
-                    else:
-                        self.logger.success("  Configuration matches")
-                elif hasattr(diff, "entries"):
-                    self.logger.display(f"  Module diff: {len(diff.entries)} entries")
+                mismatches = diff.get_mismatches()
+                if mismatches:
+                    self.logger.warning(f"  {len(mismatches)} configuration mismatch(es):")
+                    for slot, subslot, state in mismatches:
+                        self.logger.display(f"    Slot {slot} Sub {subslot}: {state}")
                 else:
-                    self.logger.display("  Module diff data retrieved")
+                    self.logger.success("  Configuration matches")
         except Exception as e:
             self.logger.debug(f"Failed to read module diff: {e}")
 
@@ -601,26 +595,6 @@ class RPCMixin(_ScannerBase):
                 self.logger.debug(f"Failed to get result: {e}")
         except Exception as e:
             self.logger.fail(f"  Write failed: {e}")
-
-    def _read_ar_data(self, con) -> Optional[dict]:
-        """Read AR (Application Relationship) data via index 0xF820."""
-        try:
-            result = con.read(api=0, slot=0, subslot=1, idx=0xF820)
-            if result and result.payload:
-                return {"size": len(result.payload), "data": result.payload}
-        except Exception as e:
-            self.logger.debug(f"Failed to read AR data: {e}")
-        return None
-
-    def _read_api_data(self, con) -> Optional[dict]:
-        """Read API data via index 0xF821."""
-        try:
-            result = con.read(api=0, slot=0, subslot=1, idx=0xF821)
-            if result and result.payload:
-                return {"size": len(result.payload), "data": result.payload}
-        except Exception as e:
-            self.logger.debug(f"Failed to read API data: {e}")
-        return None
 
     def _discover_slots(self, con) -> list:
         """Discover all slots and subslots from RealIdentificationData.

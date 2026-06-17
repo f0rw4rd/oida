@@ -12,8 +12,6 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
-from ..models import ProfinetDevice
-
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -25,7 +23,6 @@ class FuzzMixin(_ScannerBase):
 
     def _handle_fuzz(
         self,
-        device: ProfinetDevice,
         con,
         discovered_slots: Optional[list] = None,
     ) -> None:
@@ -195,7 +192,10 @@ class FuzzMixin(_ScannerBase):
 
                 time.sleep(self._arg("fuzz_delay", 0.05))
 
-            # Restore original value with retry logic
+            # Restore original value with retry logic. A fuzzed device can
+            # be briefly unresponsive after a write storm; 3 attempts with a
+            # 0.5s gap covers the typical PNIO AR re-arm window without
+            # hanging the run. Failure to restore aborts (corrupted index).
             restore_ok = False
             for attempt in range(3):
                 try:

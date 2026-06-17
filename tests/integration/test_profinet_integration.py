@@ -54,7 +54,6 @@ Flag Coverage Matrix (oida profinet -h):
   -T / --timeout             [B] test_timeout_flag
   --no-rpc                   [B] test_no_rpc_flag
   -R / --rpc-only            [B] test_rpc_only_flag
-  -p / --port / --rpc-port   [B] test_rpc_port_flag
   -V / --vendor-id           [B] test_vendor_id_flag
   -D / --device-id           [B] test_device_id_flag
   --no-read-im               [B] test_no_read_im_flag
@@ -262,20 +261,6 @@ class TestPROFINETIntegration:
         assert any(
             term in text for term in ["rpc", "connect", "failed", "error", "profinet", "timeout"]
         ), f"Expected RPC attempt in output: {text[:500]}"
-
-    def test_rpc_port_flag(self, cli_runner):
-        """Test --rpc-port flag is accepted [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            "192.168.1.1",
-            "--rpc-only",
-            "--rpc-port",
-            "34964",
-            json_log=True,
-            timeout=15,
-        )
-
-        assert result.returncode in [0, 1]
 
     def test_vendor_id_flag(self, cli_runner):
         """Test --vendor-id flag is accepted [Category B]"""
