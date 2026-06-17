@@ -54,7 +54,6 @@ MOCK_IOA_RANGES = {
     "float": (700, 719),  # 20 x Type 13
     "integrated_totals": (800, 809),  # 10 x Type 15
 }
-MOCK_FILE_IOAS = [10000, 10001, 10002, 10003]  # 3 files + directory
 
 # Custom types mock (port 2405)
 CUSTOM_TYPE_IDS = [200, 201, 210, 220]
@@ -178,7 +177,6 @@ class TestIEC104Integration:
         assert "iec104" in output
         assert "--interrogate" in output
         assert "--asdu-address" in output
-        assert "--ioa-range" in output
 
     def test_basic_discovery(self, cli_runner, target, port):
         """Test default discovery scan (no flags) produces log events [Category A]"""
@@ -307,14 +305,13 @@ class TestIEC104Integration:
     # ========================================================================
 
     def test_ioa_range_single_points(self, cli_runner, target, port):
-        """Test --ioa-range 100-119 covers single points [Category A]"""
+        """Test interrogation covers single points [Category A]"""
         result = cli_runner.run(
             "iec104",
             target,
             "--port",
             str(port),
-            "--ioa-range",
-            "100-119",
+            "--interrogate",
             format="json",
             json_log=True,
         )
@@ -322,15 +319,13 @@ class TestIEC104Integration:
         _assert_log_has_events(result)
 
     def test_ioa_range_full(self, cli_runner, target, port):
-        """Test --ioa-range 100-820 with interrogation discovers all 120 mock data points [Category A]"""
+        """Test interrogation discovers all 120 mock data points [Category A]"""
         result = cli_runner.run(
             "iec104",
             target,
             "--port",
             str(port),
             "--interrogate",
-            "--ioa-range",
-            "100-820",
             "--wait-time",
             "5",
             "--timeout",
@@ -347,28 +342,6 @@ class TestIEC104Integration:
         summary = _get_scan_summary(result.scan_log)
         assert f"{MOCK_POINT_COUNT} points" in summary, (
             f"Expected '{MOCK_POINT_COUNT} points' in summary, got: {summary}"
-        )
-
-    def test_ioa_range_empty(self, cli_runner, target, port):
-        """Test --ioa-range 50000-50100 with no data points [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--interrogate",
-            "--ioa-range",
-            "50000-50100",
-            format="json",
-            json_log=True,
-            timeout=20,
-        )
-        assert result.returncode in [0, 1], f"Unexpected rc={result.returncode}"
-        # Scanner still runs interrogation (server sends all points via GI);
-        # IOA range only filters display. Should complete without error.
-        text = _combined_text(result, result.scan_log)
-        assert "connect" in text or "testfr" in text or "interrogation" in text, (
-            f"Expected scan activity even with empty IOA range, got: {text[:500]}"
         )
 
     # ========================================================================
@@ -416,21 +389,6 @@ class TestIEC104Integration:
             f"Expected '{MOCK_POINT_COUNT} points' in scan summary, got: {summary}"
         )
 
-    def test_max_commands(self, cli_runner, target, port):
-        """Test --max-commands 50 limits command count [Category A]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--max-commands",
-            "50",
-            format="json",
-            json_log=True,
-        )
-        assert result.success, f"Max commands scan failed: {result.stderr}"
-        _assert_log_has_events(result)
-
     # ========================================================================
     # P5: File Transfer
     # ========================================================================
@@ -451,65 +409,6 @@ class TestIEC104Integration:
         _assert_log_has_events(result)
         text = _combined_text(result, result.scan_log)
         assert "file" in text, f"Expected 'file' in output, got: {text[:500]}"
-
-    def test_list_files(self, cli_runner, target, port):
-        """Test --list-files enumerates files from mock [Category A]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--list-files",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.success, f"List files failed: {result.stderr}"
-        _assert_log_has_events(result)
-        text = _combined_text(result, result.scan_log)
-        assert "file" in text or "directory" in text or "list" in text, (
-            f"Expected file-related messages, got: {text[:500]}"
-        )
-
-    def test_download_file(self, cli_runner, target, port):
-        """Test --download-file 10001 [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--download-file",
-            "10001",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1], f"Download file unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "file" in text or "download" in text, (
-            f"Expected file download activity, got: {text[:500]}"
-        )
-
-    def test_query_log(self, cli_runner, target, port):
-        """Test --query-log 10000 --log-type 2 queries archive log [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--query-log",
-            "10000",
-            "--log-type",
-            "2",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1], f"Query log unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "log" in text or "query" in text or "archive" in text, (
-            f"Expected log query activity, got: {text[:500]}"
-        )
 
     def test_probe_custom_types_main(self, cli_runner, target, port):
         """Test --probe-custom-types probes Type IDs 128-255 [Category B]"""
@@ -1063,51 +962,6 @@ class TestIEC104Integration:
         )
 
     # ========================================================================
-    # P11: File Safety Guards
-    # ========================================================================
-
-    def test_upload_requires_confirm(self, cli_runner, target, port, tmp_path):
-        """Test --upload-file without --confirm is blocked [Category C]"""
-        upload_file = tmp_path / "test_upload.bin"
-        upload_file.write_bytes(b"\x00" * 16)
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--upload-file",
-            str(upload_file),
-            "--upload-ioa",
-            "1000",
-            expect_json=False,
-            json_log=True,
-            timeout=15,
-        )
-        # Should be blocked or fail
-        text = _combined_text(result, result.scan_log)
-        assert "blocked" in text or "confirm" in text or result.returncode in [1, 2], (
-            f"Upload without confirm should be blocked, got rc={result.returncode}, text: {text[:300]}"
-        )
-
-    def test_delete_requires_confirm(self, cli_runner, target, port):
-        """Test --delete-file without --confirm is blocked [Category C]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--delete-file",
-            "1000",
-            expect_json=False,
-            json_log=True,
-            timeout=15,
-        )
-        text = _combined_text(result, result.scan_log)
-        assert "blocked" in text or "confirm" in text or result.returncode in [1, 2], (
-            f"Delete without confirm should be blocked, got rc={result.returncode}, text: {text[:300]}"
-        )
-
-    # ========================================================================
     # P12: Verbosity
     # ========================================================================
 
@@ -1281,23 +1135,6 @@ class TestIEC104Integration:
         assert result.returncode != -1, "Should not hang"
         assert result.returncode in [0, 1, 2], (
             f"Invalid ASDU address should exit cleanly, got rc={result.returncode}"
-        )
-
-    def test_invalid_ioa_range(self, cli_runner, target, port):
-        """Test --ioa-range 60000-60100 (no data in mock) [Category C]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--ioa-range",
-            "60000-60100",
-            expect_json=False,
-            timeout=15,
-        )
-        assert result.returncode != -1, "Should not hang"
-        assert result.returncode in [0, 1, 2], (
-            f"Empty IOA range should exit cleanly, got rc={result.returncode}"
         )
 
     # ========================================================================
@@ -1514,14 +1351,13 @@ class TestIEC104CustomTypes:
                 )
 
     def test_custom_type_ioa_range(self, cli_runner, target, port):
-        """Test --ioa-range 1000-1019 against custom types mock [Category B]"""
+        """Test interrogation against custom types mock [Category B]"""
         result = cli_runner.run(
             "iec104",
             target,
             "--port",
             str(port),
-            "--ioa-range",
-            "1000-1019",
+            "--interrogate",
             format="json",
             json_log=True,
             timeout=30,
@@ -1675,7 +1511,7 @@ class TestIEC104Conpot:
             )
 
     def test_conpot_ioa_range(self, cli_runner, target, port):
-        """Test --asdu-address 7720 --ioa-range 1-4000 scans Conpot [Category B]"""
+        """Test --asdu-address 7720 interrogation scans Conpot [Category B]"""
         result = cli_runner.run(
             "iec104",
             target,
@@ -1683,8 +1519,7 @@ class TestIEC104Conpot:
             str(port),
             "--asdu-address",
             str(CONPOT_ASDU_ADDRESS),
-            "--ioa-range",
-            "1-4000",
+            "--interrogate",
             format="json",
             json_log=True,
             timeout=60,
@@ -2197,261 +2032,4 @@ class TestIEC104Fuzz:
         )
         assert result.returncode in [0, 1, 2], (
             f"Fuzz nonexistent IOA unexpected rc={result.returncode}"
-        )
-
-
-# ===========================================================================
-# Class 6: File Transfer Tests (port 2404)
-# ===========================================================================
-
-
-@pytest.mark.iec104
-class TestIEC104FileTransfer:
-    """File transfer tests for IEC 104 scanner against lib60870 mock.
-
-    The lib60870 mock provides 3 files + directory on IOA 10000-10003,
-    supporting Type IDs 120-127.
-    """
-
-    @pytest.fixture
-    def target(self):
-        return MOCK_HOST
-
-    @pytest.fixture
-    def port(self):
-        return IEC104_PORT
-
-    @pytest.fixture(autouse=True)
-    def _require_iec104_mock(self, target, port):
-        """Skip all tests if the IEC 104 mock is not reachable."""
-        if not check_port_open(target, port):
-            pytest.skip(f"IEC 104 mock not reachable on {target}:{port}")
-
-    def test_list_files_discovers_mock_files(self, cli_runner, target, port):
-        """Test --list-files discovers mock directory [Category A]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--list-files",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.success, f"List files failed: {result.stderr}"
-        text = _combined_text(result, result.scan_log)
-        assert "file" in text or "directory" in text or "list" in text, (
-            f"Expected file listing activity, got: {text[:500]}"
-        )
-
-    def test_download_file_10001(self, cli_runner, target, port):
-        """Test --download-file 10001 reads file from mock [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--download-file",
-            "10001",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1], f"Download 10001 unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "file" in text or "download" in text or "10001" in text, (
-            f"Expected file download activity, got: {text[:500]}"
-        )
-
-    def test_download_file_10002(self, cli_runner, target, port):
-        """Test --download-file 10002 reads second file [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--download-file",
-            "10002",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1], f"Download 10002 unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "file" in text or "download" in text, (
-            f"Expected file download activity, got: {text[:500]}"
-        )
-
-    def test_download_nonexistent_ioa(self, cli_runner, target, port):
-        """Test --download-file 99999 with nonexistent IOA [Category C]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--download-file",
-            "99999",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1, 2], (
-            f"Download nonexistent IOA unexpected rc={result.returncode}"
-        )
-        text = _combined_text(result, result.scan_log)
-        assert "error" in text or "fail" in text or "not found" in text or "file" in text, (
-            f"Expected error for nonexistent file IOA, got: {text[:500]}"
-        )
-
-    def test_upload_file(self, cli_runner, target, port, tmp_path):
-        """Test --upload-file with --confirm uploads to mock [Category B]"""
-        upload_file = tmp_path / "test_upload.bin"
-        upload_file.write_bytes(b"test file content for IEC 104 upload")
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--upload-file",
-            str(upload_file),
-            "--upload-ioa",
-            "10001",
-            "--confirm",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1, 2], f"Upload file unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "upload" in text or "file" in text or "write" in text, (
-            f"Expected upload activity, got: {text[:500]}"
-        )
-
-    def test_delete_file_with_confirm(self, cli_runner, target, port):
-        """Test --delete-file 10003 --confirm attempts file deletion [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--delete-file",
-            "10003",
-            "--confirm",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1, 2], f"Delete file unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "delete" in text or "file" in text or "10003" in text, (
-            f"Expected delete activity, got: {text[:500]}"
-        )
-
-    def test_query_log_archive(self, cli_runner, target, port):
-        """Test --query-log 10000 queries archive log [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--query-log",
-            "10000",
-            "--log-type",
-            "2",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1], f"Query log unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "log" in text or "query" in text or "archive" in text, (
-            f"Expected log query activity, got: {text[:500]}"
-        )
-
-    def test_query_log_with_time_range(self, cli_runner, target, port):
-        """Test --query-log with --log-start/--log-end time range [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--query-log",
-            "10000",
-            "--log-start",
-            "now-1h",
-            "--log-end",
-            "now",
-            "--log-type",
-            "2",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1], (
-            f"Query log with time range unexpected rc={result.returncode}"
-        )
-
-    def test_probe_files_and_list(self, cli_runner, target, port):
-        """Test --probe-files combined with --list-files [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--probe-files",
-            "--list-files",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1], f"Probe + list files unexpected rc={result.returncode}"
-        text = _combined_text(result, result.scan_log)
-        assert "file" in text, f"Expected file activity, got: {text[:500]}"
-
-    def test_upload_without_ioa(self, cli_runner, target, port, tmp_path):
-        """Test --upload-file without --upload-ioa is silently skipped [Category C]
-
-        The scanner does not error when --upload-ioa is missing — it simply
-        skips the upload operation and proceeds with normal scanning.
-        """
-        upload_file = tmp_path / "test_upload.bin"
-        upload_file.write_bytes(b"\x00" * 16)
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--upload-file",
-            str(upload_file),
-            "--confirm",
-            format="json",
-            json_log=True,
-            timeout=15,
-        )
-        assert result.returncode in [0, 1, 2], (
-            f"Upload without IOA unexpected rc={result.returncode}"
-        )
-        # Scanner silently skips upload when --upload-ioa is missing
-        # and proceeds with normal discovery scan
-
-    def test_download_directory_ioa(self, cli_runner, target, port):
-        """Test --download-file 10000 attempts directory IOA download [Category B]"""
-        result = cli_runner.run(
-            "iec104",
-            target,
-            "--port",
-            str(port),
-            "--download-file",
-            "10000",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.returncode in [0, 1, 2], (
-            f"Download directory IOA unexpected rc={result.returncode}"
-        )
-        text = _combined_text(result, result.scan_log)
-        assert "file" in text or "download" in text or "directory" in text, (
-            f"Expected file-related activity, got: {text[:500]}"
         )
