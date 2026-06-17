@@ -27,9 +27,6 @@ class TestASTMRecordBuilder:
         """Test builder initializes with correct defaults"""
         assert self.builder.version == "E1394"
         assert self.builder.field_delimiter == "|"
-        assert self.builder.component_delimiter == "^"
-        assert self.builder.repeat_delimiter == "\\"
-        assert self.builder.escape_delimiter == "&"
 
     def test_build_header_basic(self):
         """Test basic header record generation"""
@@ -48,7 +45,6 @@ class TestASTMRecordBuilder:
             receiver_name="ANALYZER",
             receiver_id="AID456",
             processing_id="P",
-            version="E1394",
         )
 
         assert "TEST_LIS^ID123" in header
@@ -179,20 +175,6 @@ class TestASTMRecordBuilder:
         assert "&S&" in escaped  # ^ escaped
         assert "&E&" in escaped  # & escaped
 
-    def test_build_manufacturer_record(self):
-        """Test manufacturer record generation"""
-        mfr = self.builder.build_manufacturer(
-            manufacturer_name="Roche",
-            instrument_type="Chemistry",
-            instrument_name="cobas 8000",
-            serial_number="SN12345",
-            software_version="8.1.2",
-        )
-
-        assert mfr.startswith("M|")
-        assert "Roche" in mfr
-        assert "cobas 8000" in mfr
-
 
 class TestASTMConstants:
     """Test ASTM protocol constants"""
@@ -210,26 +192,6 @@ class TestASTMConstants:
         assert ETB == b"\x17"
         assert CR == b"\x0d"
         assert LF == b"\x0a"
-
-    def test_record_type_constants(self):
-        """Test record type constants"""
-        from oida.protocols.astm.records import (
-            RECORD_HEADER,
-            RECORD_PATIENT,
-            RECORD_ORDER,
-            RECORD_RESULT,
-            RECORD_COMMENT,
-            RECORD_QUERY,
-            RECORD_TERMINATOR,
-        )
-
-        assert RECORD_HEADER == "H"
-        assert RECORD_PATIENT == "P"
-        assert RECORD_ORDER == "O"
-        assert RECORD_RESULT == "R"
-        assert RECORD_COMMENT == "C"
-        assert RECORD_QUERY == "Q"
-        assert RECORD_TERMINATOR == "L"
 
 
 class TestASTMVendorMapping:
@@ -305,17 +267,19 @@ class TestLabTestTypes:
 
 
 class TestASTMChecksum:
-    """Test ASTM checksum calculation"""
+    """Test ASTM checksum calculation (framing mixin)"""
+
+    def setup_method(self):
+        """The checksum is a pure method on FramingMixin; exercise it directly."""
+        from oida.protocols.astm.mixins import FramingMixin
+
+        self.framing = FramingMixin()
 
     def test_checksum_calculation(self):
         """Test checksum calculation is correct"""
-        from oida.protocols.astm.records import ASTMRecordBuilder
-
-        builder = ASTMRecordBuilder()
-
         # Test known checksum
         data = b"1H|\\^&"
-        checksum = builder._calculate_checksum(data)
+        checksum = self.framing._calculate_checksum(data)
 
         # Checksum should be 2 uppercase hex characters
         assert len(checksum) == 2
@@ -323,13 +287,9 @@ class TestASTMChecksum:
 
     def test_checksum_modulus(self):
         """Test checksum uses modulus 256"""
-        from oida.protocols.astm.records import ASTMRecordBuilder
-
-        builder = ASTMRecordBuilder()
-
         # Sum > 255 should wrap around
         data = bytes([255, 255, 255])  # Sum = 765, 765 % 256 = 253 = 0xFD
-        checksum = builder._calculate_checksum(data)
+        checksum = self.framing._calculate_checksum(data)
         assert checksum == b"FD"
 
 

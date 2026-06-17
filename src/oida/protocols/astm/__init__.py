@@ -20,20 +20,4 @@ CLI examples:
 # Re-export the NXC-style connection class (mixin-based)
 from .nxc_connection import astm
 
-# Re-export record constants used by tests and external code
-from .records import (  # noqa: F401 - re-exported
-    ASTMRecordBuilder,
-    STX,
-    ETX,
-    EOT,
-    ENQ,
-    ACK,
-    NAK,
-    ETB,
-    CR,
-    LF,
-    ASTM_VENDOR_MAP,
-    LAB_TEST_TYPES,
-)
-
 __all__ = ["astm"]
