@@ -44,7 +44,6 @@ from .constants import (
     FILE_TRANSFER_TYPE_ID_START,
     FILE_TRANSFER_TYPE_ID_END,
     IFRAME_MASK,
-    IOA_MAX,
     IOA_SIZE,
     MONITORING_TYPE_ID_MAX,
     NORMALIZED_SCALE,
@@ -53,13 +52,8 @@ from .constants import (
 )
 from . import _deps
 from .serial import IEC101Mixin
-from .file_transfer import FileTransferMixin
 from .commands import CommandMixin
 from .listen import ListenMixin
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 @register_protocol(
@@ -76,7 +70,7 @@ Features:
     references=[{"type": "url", "ref": "https://en.wikipedia.org/wiki/IEC_60870-5"}],
     protocol_options=protocol_options,
 )
-class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, NetworkScanner):
+class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
     """IEC 60870-5-104 Scanner with enhanced type ID and file transfer discovery"""
 
     def __init__(self, args: Dict[str, Any]):
@@ -95,24 +89,6 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
             self.logger.warning(f"ASDU address {self.asdu_address} out of range, using -1")
             self.asdu_address = -1
 
-        # Parse IOA range
-        ioa_range_str = args.get("ioa-range") or "1-1000"
-        self.ioa_range = ioa_range_str  # Store original for test compatibility
-        try:
-            start, end = map(int, ioa_range_str.split("-"))
-            # W12: Validate IOA bounds (24-bit address space: 0-IOA_MAX)
-            if start < 0 or start > IOA_MAX:
-                self.logger.warning(f"IOA start {start} out of range, clamping to 0-{IOA_MAX}")
-                start = max(0, min(start, IOA_MAX))
-            if end < 0 or end > IOA_MAX:
-                self.logger.warning(f"IOA end {end} out of range, clamping to 0-{IOA_MAX}")
-                end = max(0, min(end, IOA_MAX))
-            self.ioa_start = start
-            self.ioa_end = end
-        except ValueError:
-            self.logger.warning(f"Invalid IOA range '{ioa_range_str}', using 1-1000")
-            self.ioa_start = 1
-            self.ioa_end = 1000
         ca = args.get("common-address")
         if ca is not None:
             self.common_address = int(ca)
@@ -151,28 +127,9 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
         self.test_commands = args.get("test-commands", False)
         wt = args.get("wait-time")
         self.wait_time = int(wt) if wt is not None else 3
-        self.list_files = args.get("list-files", False)
-        self.download_file_ioa = args.get("download-file")
-        self.file_output = args.get("file-output")
-        self.delete_file_ioa = args.get("delete-file")
-
-        # Upload options
-        self.upload_file_path = args.get("upload-file")
-        self.upload_ioa = args.get("upload-ioa")
-        self.upload_nof = args.get("upload-nof", 1)
 
         # Unified dangerous-operation confirmation flag
         self.confirm_dangerous = args.get("confirm", False)
-
-        # Query log options
-        self.query_log_ioa = args.get("query-log")
-        self.log_start = args.get("log-start")
-        self.log_end = args.get("log-end")
-        self.log_type = args.get("log-type", 2)
-
-        # Command options
-        mc = args.get("max-commands")
-        self.max_commands = int(mc) if mc is not None else 10
 
         # Custom type probing
         self.probe_custom_types = args.get("probe-custom-types", False)
@@ -258,7 +215,6 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
 
         # Output/export options
         self.output_dir = args.get("output-dir") or args.get("output")
-        self.output_format = args.get("format", "csv,json")
         self.full_width = args.get("full-width", False)
 
         # Listen mode state
@@ -476,7 +432,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
                                                 f"0x{struct.unpack_from('<I', buf, ie_off)[0]:08X}"
                                             )
                                     except (struct.error, IndexError) as e:
-                                        logger.debug(f"if tid in (1, 30):   M_SP single-point: {e}")
+                                        scanner.logger.debug(f"Value decode failed for Type {tid}: {e}")
                                     return None
 
                                 # Store/update discovered IOAs
@@ -858,26 +814,20 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
             else:
                 results["clock"] = self._read_clock(client, conn)
 
-        # File transfer probing
-        if (
-            self.probe_files
-            or self.list_files
-            or self.download_file_ioa
-            or self.delete_file_ioa
-            or self.upload_file_path
-            or self.query_log_ioa
-        ):
-            results["file_transfer"] = self._probe_file_transfer(client, conn)
+        # File transfer capability reporting (Type IDs 120-127 seen during
+        # interrogation). c104 exposes no high-level file-transfer API, so we
+        # only report whether the outstation advertises file-transfer type IDs;
+        # we do not attempt the (unimplemented) F_* ASDU exchange.
+        if self.probe_files:
+            results["file_transfer"] = self._report_file_transfer()
 
         # Custom type probing (Type IDs 128-255)
         if self.probe_custom_types:
             results["custom_type_probe"] = self._probe_custom_types(client, conn)
 
-        # Command testing / fuzzing
+        # Command fuzzing
         if self.fuzz_enabled:
             results["commands"] = self._fuzz_commands(client, conn)
-        elif self.test_commands and not self.read_only:
-            results["commands"] = self._test_commands(client, conn)
 
         # Write operations (explicit value writes)
         if self._has_write_operation():
@@ -1343,8 +1293,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
         self.logger.display(f"Counter interrogation: {result['new_points']} counter points")
         return result
 
-    @staticmethod
-    def _parse_cp56time2a(buf: bytes) -> Optional[datetime]:
+    def _parse_cp56time2a(self, buf: bytes) -> Optional[datetime]:
         """Parse 7-byte CP56Time2a into a datetime."""
         if len(buf) < CP56TIME2A_SIZE:
             return None
@@ -1358,7 +1307,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
         try:
             return datetime(year, month, day, hour, minute, sec, ms_rem * 1000)
         except ValueError as e:
-            logger.debug(f"Return value computation failed: {e}")
+            self.logger.debug(f"Invalid CP56Time2a fields: {e}")
             return None
 
     def _read_clock(self, client: Any, conn: Any) -> Dict[str, Any]:
@@ -1492,6 +1441,42 @@ class IEC104Scanner(ListenMixin, CommandMixin, FileTransferMixin, IEC101Mixin, N
     # =========================================================================
     # Analysis & Reporting
     # =========================================================================
+
+    def _report_file_transfer(self) -> Dict[str, Any]:
+        """Report file-transfer capability based on type IDs (120-127) observed
+        during interrogation. c104 has no high-level file-transfer API, so this
+        is detection only — no F_* ASDU exchange is performed."""
+        self.logger.display("Checking file-transfer capability (Type IDs 120-127)...")
+        result: Dict[str, Any] = {"supported": False, "type_ids_found": [], "files": []}
+
+        with self._lock:
+            supported = self._file_transfer_supported
+            file_types = sorted(
+                tid
+                for tid in self._raw_type_ids
+                if FILE_TRANSFER_TYPE_ID_START <= tid <= FILE_TRANSFER_TYPE_ID_END
+            )
+
+        if supported or file_types:
+            result["supported"] = True
+            result["type_ids_found"] = file_types
+            for tid in file_types:
+                if tid in IEC104_TYPE_IDS:
+                    result["files"].append(
+                        {
+                            "type_id": tid,
+                            "name": IEC104_TYPE_IDS[tid][0],
+                            "description": IEC104_TYPE_IDS[tid][1],
+                        }
+                    )
+            self.logger.security_finding(
+                "File transfer exposed",
+                detail="Server advertises file-transfer type IDs (120-127)",
+            )
+        else:
+            self.logger.display("No file-transfer type IDs detected")
+
+        return result
 
     def _compile_type_info(self) -> Dict[str, Any]:
         """Compile discovered type ID information"""

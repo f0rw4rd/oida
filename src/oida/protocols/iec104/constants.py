@@ -41,7 +41,6 @@ FCV = 0x10  # Frame count valid
 # APCI / APDU Frame Structure
 # =============================================================================
 
-APCI_HEADER_SIZE = 6
 ASDU_TYPE_ID_OFFSET = 6
 ASDU_VSQ_OFFSET = 7
 ASDU_COT_OFFSET = 8
@@ -229,13 +228,6 @@ CP56TIME2A_BASE_YEAR = 2000
 
 ASDU_ADDRESS_MAX = 65535
 IOA_MAX = 16777215
-
-# =============================================================================
-# Time Conversion
-# =============================================================================
-
-MS_PER_HOUR = 3_600_000
-MS_PER_MINUTE = 60_000
 
 
 @dataclass
