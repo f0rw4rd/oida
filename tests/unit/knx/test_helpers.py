@@ -19,9 +19,13 @@ from pathlib import Path
 
 
 _MUTATED_SYS_MODULES = (
+    "oida",
+    "oida.utils",
     "oida.utils.lazy_import",
     "oida.utils.module",
     "oida.utils.ics_logger",
+    "oida.protocols",
+    "oida.protocols.knx",
     "oida.protocols.knx.constants",
     "oida.protocols.knx.helpers",
 )

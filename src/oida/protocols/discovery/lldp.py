@@ -217,6 +217,7 @@ class LLDPScanner(SerialScanner):
             "devices": [],
             "security_analysis": {},
             "industrial_devices": [],
+            "statistics": {},
         }
 
         try:
@@ -237,6 +238,9 @@ class LLDPScanner(SerialScanner):
             # Security analysis
             results["security_analysis"] = self._analyze_security(results)
 
+            # Capture statistics (device/vendor/capability distribution)
+            results["statistics"] = self._generate_statistics()
+
             # Report findings
             self._report_findings(results)
 
@@ -246,6 +250,24 @@ class LLDPScanner(SerialScanner):
             results["error"] = str(e)
 
         return results
+
+    def _generate_statistics(self) -> Dict[str, Any]:
+        """Generate capture statistics (device counts, vendor + capability distribution)."""
+        vendor_counts: Dict[str, int] = {}
+        capability_counts: Dict[str, int] = {}
+
+        for device in self.discovered_devices.values():
+            vendor = lookup_mac_vendor(device.mac_address)
+            vendor_counts[vendor] = vendor_counts.get(vendor, 0) + 1
+            for capability in device.capabilities:
+                capability_counts[capability] = capability_counts.get(capability, 0) + 1
+
+        return {
+            "total_devices": len(self.discovered_devices),
+            "total_packets": self.packet_count,
+            "vendor_distribution": vendor_counts,
+            "capability_distribution": capability_counts,
+        }
 
     def _capture_lldp_packets(self, interface: str) -> Dict[str, Any]:
         """Capture and process LLDP packets"""
