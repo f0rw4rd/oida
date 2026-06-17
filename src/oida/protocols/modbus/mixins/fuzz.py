@@ -35,8 +35,6 @@ class FuzzMixin(_ScannerBase):
             f"Starting Modbus fuzzing (mode: {fuzz_mode}, iterations: {iterations})"
         )
 
-        total_stats = {"tests": 0, "writes": 0, "errors": 0, "crashes": 0}
-
         if register_map:
             # Map-based fuzzing
             results = self._fuzz_registers_from_map(register_map, iterations)
@@ -45,25 +43,24 @@ class FuzzMixin(_ScannerBase):
             results = self._fuzz_registers(iterations, fuzz_mode)
         elif fuzz_mode == "function":
             # Function code fuzzing only
-            results = self._fuzz_function_codes(iterations)
+            results = self._fuzz_function_codes()
         elif fuzz_mode == "full":
             # Combined fuzzing
             reg_results = self._fuzz_registers(iterations // 2, "boundary")
-            fc_results = self._fuzz_function_codes(iterations // 2)
+            fc_results = self._fuzz_function_codes()
             results = {**reg_results, **fc_results}
         else:
             self.logger.fail(f"Unknown fuzz mode: {fuzz_mode}")
             return
 
+        results = results or {}
         if results:
             self.results["data"]["fuzz"] = results
-            for key in ["tests", "writes", "errors", "crashes"]:
-                total_stats[key] += results.get(key, 0)
 
         self.logger.display("=== Fuzzing Summary ===")
         self.logger.display(
-            f"Tests: {total_stats['tests']}, Writes: {total_stats['writes']}, "
-            f"Errors: {total_stats['errors']}, Crashes: {total_stats['crashes']}"
+            f"Tests: {results.get('tests', 0)}, Writes: {results.get('writes', 0)}, "
+            f"Errors: {results.get('errors', 0)}, Crashes: {results.get('crashes', 0)}"
         )
 
     def _fuzz_registers(self, iterations: int, mode: str) -> Dict:
@@ -139,7 +136,7 @@ class FuzzMixin(_ScannerBase):
 
         return stats
 
-    def _fuzz_function_codes(self, iterations: int) -> Dict:
+    def _fuzz_function_codes(self) -> Dict:
         """Fuzz vendor-specific function codes (65-127)."""
         stats = {"tests": 0, "responses": 0, "errors": 0, "crashes": 0, "supported": []}
 
@@ -285,26 +282,17 @@ class FuzzMixin(_ScannerBase):
             special = [0.0, -0.0, 1.0, -1.0, float("inf"), float("-inf"), float("nan")]
             special.extend([1e-38, 1e38, -1e-38, -1e38])
             for val in special:
-                try:
-                    yield self._pack_as_registers(">f", val)
-                except Exception as e:
-                    self.logger.debug(f"yield self._pack_as_registers(f, val): {e}")
+                yield self._pack_as_registers(">f", val)
 
             for _ in range(count - len(special)):
                 val = random.uniform(-1e38, 1e38)
-                try:
-                    yield self._pack_as_registers(">f", val)
-                except Exception as e:
-                    self.logger.debug(f"yield self._pack_as_registers(f, val): {e}")
+                yield self._pack_as_registers(">f", val)
 
         elif dtype in ("i32", "int32", "s32"):
             # Signed 32-bit boundaries
             boundaries = [0, 1, -1, 0x7FFFFFFF, -0x80000000, 0x7F, 0x80, 0xFF]
             for val in boundaries:
-                try:
-                    yield self._pack_as_registers(">i", val)
-                except Exception as e:
-                    self.logger.debug(f"yield self._pack_as_registers(i, val): {e}")
+                yield self._pack_as_registers(">i", val)
 
             for _ in range(count - len(boundaries)):
                 val = random.randint(-0x80000000, 0x7FFFFFFF)

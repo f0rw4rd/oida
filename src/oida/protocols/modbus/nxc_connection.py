@@ -343,9 +343,9 @@ class modbus(
             self._handle_write_multiple_coils()
 
         # Test write access (--test-write or --test-write-thorough)
-        if getattr(self.args, "test_write", False):
-            self._handle_test_write()
-        elif getattr(self.args, "test_write_thorough", False):
+        if getattr(self.args, "test_write", False) or getattr(
+            self.args, "test_write_thorough", False
+        ):
             self._handle_test_write()
 
         # Enumerate function codes (--enumerate-functions)

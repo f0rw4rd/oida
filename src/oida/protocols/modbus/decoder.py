@@ -413,33 +413,6 @@ class ModbusDecoder:
                 )
         return results
 
-    def decode_auto(
-        self, registers: List[int], types: List[str] = None
-    ) -> Dict[str, List[Dict[str, Any]]]:
-        """
-        Decode registers as multiple types for comparison
-
-        Useful for figuring out the correct data type.
-
-        Args:
-            registers: List of register values
-            types: Types to try (default: common types)
-
-        Returns:
-            Dict mapping type names to decoded values
-        """
-        if types is None:
-            types = ["u16", "i16", "u32", "i32", "f32", "hex", "str"]
-
-        results = {}
-        for dtype in types:
-            try:
-                results[dtype] = self.decode(registers, dtype)
-            except Exception as e:
-                results[dtype] = [{"error": str(e)}]
-
-        return results
-
 
 class ModbusEncoder:
     """
@@ -680,6 +653,77 @@ class ModbusEncoder:
         return [bcd]
 
 
+def _required_registers(definition: Dict[str, Any]) -> int:
+    """Number of 16-bit registers a typed register definition occupies."""
+    data_type = definition.get("type", "u16")
+    if data_type in ("str", "string"):
+        # For strings, length = char count, need (length+1)//2 registers
+        char_length = definition.get("length", 2)  # Default 2 chars = 1 register
+        return (char_length + 1) // 2
+    return REGISTERS_PER_TYPE.get(data_type, 1) or 1
+
+
+def _decode_map_entry(
+    definition: Dict[str, Any],
+    reg_values: List[int],
+    decoder: ModbusDecoder,
+    sf_lookup: Optional[Dict[int, int]] = None,
+) -> Dict[str, Any]:
+    """Decode one register-map entry from its raw register values.
+
+    Applies the map's data type, static scale/offset (or a SunSpec dynamic
+    scale-factor register when ``sf_lookup`` supplies it), and enum labelling.
+    Shared by :func:`decode_with_map` and :class:`MapNameResolver`.
+    """
+    addr = definition.get("address")
+    data_type = definition.get("type", "u16")
+    scale = definition.get("scale", 1.0)
+    offset = definition.get("offset", 0.0)
+    unit = definition.get("unit", "")
+    description = definition.get("description", "")
+    access = definition.get("access", "r")
+
+    try:
+        decoded = decoder.decode(reg_values, data_type)
+    except Exception as e:
+        return {"value": None, "error": str(e), "address": addr}
+
+    if not decoded:
+        return {"value": None, "error": "decode_failed", "address": addr}
+
+    raw_value = decoded[0]["value"]
+
+    # Check for dynamic scale factor (SunSpec standard)
+    sf_register = definition.get("scale_factor_register")
+    if sf_lookup is not None and sf_register is not None and sf_register in sf_lookup:
+        sf_value = sf_lookup[sf_register]
+        # SunSpec scale factor is a signed int16 exponent
+        if sf_value > 32767:
+            sf_value -= 65536  # Convert to signed
+        scaled_value = raw_value * (10**sf_value)
+    elif isinstance(raw_value, (int, float)):
+        scaled_value = raw_value * scale + offset
+    else:
+        scaled_value = raw_value
+
+    # Check for enum mapping
+    enum_map = definition.get("enum") or definition.get("values")
+    enum_label = None
+    if enum_map and isinstance(scaled_value, (int, float)):
+        enum_label = enum_map.get(str(int(scaled_value)))
+
+    return {
+        "value": scaled_value,
+        "raw_value": raw_value,
+        "enum_label": enum_label,
+        "unit": unit,
+        "address": addr,
+        "type": data_type,
+        "description": description,
+        "access": access,
+    }
+
+
 def decode_with_map(
     registers: Dict[int, int], register_map: Dict[str, Any], decoder: Optional[ModbusDecoder] = None
 ) -> Dict[str, Any]:
@@ -716,20 +760,7 @@ def decode_with_map(
         if addr is None:
             continue
 
-        data_type = definition.get("type", "u16")
-        scale = definition.get("scale", 1.0)
-        offset = definition.get("offset", 0.0)
-        unit = definition.get("unit", "")
-        description = definition.get("description", "")
-        access = definition.get("access", "r")
-
-        # Get required number of registers
-        if data_type in ("str", "string"):
-            # For strings, length = char count, need (length+1)//2 registers
-            char_length = definition.get("length", 2)  # Default 2 chars = 1 register
-            regs_needed = (char_length + 1) // 2
-        else:
-            regs_needed = REGISTERS_PER_TYPE.get(data_type, 1) or 1
+        regs_needed = _required_registers(definition)
 
         # Collect register values
         reg_values = []
@@ -745,50 +776,11 @@ def decode_with_map(
                 "value": None,
                 "error": "missing_registers",
                 "address": addr,
-                "description": description,
+                "description": definition.get("description", ""),
             }
             continue
 
-        # Decode
-        try:
-            decoded = decoder.decode(reg_values, data_type)
-            if decoded:
-                raw_value = decoded[0]["value"]
-
-                # Check for dynamic scale factor (SunSpec standard)
-                sf_register = definition.get("scale_factor_register")
-                if sf_register is not None and sf_register in registers:
-                    sf_value = registers[sf_register]
-                    # SunSpec scale factor is a signed int16 exponent
-                    if sf_value > 32767:
-                        sf_value -= 65536  # Convert to signed
-                    dynamic_scale = 10**sf_value
-                    scaled_value = raw_value * dynamic_scale
-                else:
-                    scaled_value = raw_value * scale + offset
-
-                # Check for enum mapping
-                enum_map = definition.get("enum")
-                enum_label = None
-                if enum_map and isinstance(scaled_value, (int, float)):
-                    # Try both int and string keys
-                    key = str(int(scaled_value))
-                    enum_label = enum_map.get(key)
-
-                results[name] = {
-                    "value": scaled_value,
-                    "raw_value": raw_value,
-                    "enum_label": enum_label,
-                    "unit": unit,
-                    "address": addr,
-                    "type": data_type,
-                    "description": description,
-                    "access": access,
-                }
-            else:
-                results[name] = {"value": None, "error": "decode_failed", "address": addr}
-        except Exception as e:
-            results[name] = {"value": None, "error": str(e), "address": addr}
+        results[name] = _decode_map_entry(definition, reg_values, decoder, sf_lookup=registers)
 
     return results
 
@@ -861,6 +853,125 @@ def load_register_map(map_name: str) -> Optional[Dict[str, Any]]:
                             return json.load(f)
 
     return None
+
+
+class MapNameResolver:
+    """Resolve friendly register names against a loaded register map.
+
+    Wraps :func:`load_register_map` plus :class:`ModbusDecoder` /
+    :class:`ModbusEncoder` so the ``--read-name`` / ``--write-name`` /
+    ``--list-names`` / ``--search-name`` CLI handlers can look a register up
+    by name, decode a read into an engineering value, and encode a write
+    value back to raw registers.
+
+    A "section" (``registers`` / ``coils`` / ``discrete_inputs``) is folded
+    onto each entry along with a derived ``function_code`` so callers do not
+    need to know the map layout.
+    """
+
+    # Section -> default Modbus read function code
+    _SECTION_FC = {
+        "registers": 3,
+        "coils": 1,
+        "discrete_inputs": 2,
+    }
+
+    def __init__(self, map_name: str):
+        """Load ``map_name``; raises ValueError if the map cannot be found."""
+        self.map_name = map_name
+        self.map_data = load_register_map(map_name)
+        if not self.map_data:
+            raise ValueError(f"Register map not found: {map_name}")
+
+        self.vendor = self.map_data.get("vendor", "Unknown")
+        self.model = self.map_data.get("model", "Unknown")
+        self.byte_order = self.map_data.get("byte_order", "big")
+        self.word_order = self.map_data.get("word_order", "big")
+
+        self._decoder = ModbusDecoder(byte_order=self.byte_order, word_order=self.word_order)
+        self._encoder = ModbusEncoder(byte_order=self.byte_order, word_order=self.word_order)
+
+        # Build a name -> normalized-entry index across every section.
+        self._entries: Dict[str, Dict[str, Any]] = {}
+        for section, fc in self._SECTION_FC.items():
+            for name, definition in (self.map_data.get(section) or {}).items():
+                addr = definition.get("address")
+                if addr is None or not isinstance(addr, int):
+                    continue
+                entry = dict(definition)
+                entry["name"] = name
+                entry["section"] = section
+                # An explicit per-register function_code wins over the section default.
+                entry["function_code"] = definition.get("function_code", fc)
+                entry.setdefault("type", "u16" if section == "registers" else "bits")
+                self._entries[name] = entry
+
+    def resolve(self, name: str) -> Optional[Dict[str, Any]]:
+        """Return the normalized entry for ``name`` (exact, case-insensitive)."""
+        if name in self._entries:
+            return self._entries[name]
+        lowered = name.lower()
+        for key, entry in self._entries.items():
+            if key.lower() == lowered:
+                return entry
+        return None
+
+    def search(self, query: str) -> List[Dict[str, Any]]:
+        """Return entries whose name or description contains ``query``."""
+        q = query.lower()
+        return [
+            entry
+            for entry in self._entries.values()
+            if q in entry["name"].lower() or q in str(entry.get("description", "")).lower()
+        ]
+
+    def list_all(self) -> List[Dict[str, Any]]:
+        """Return every entry, sorted by address."""
+        return sorted(self._entries.values(), key=lambda e: e.get("address", 0))
+
+    def get_registers_needed(self, entry: Dict[str, Any]) -> int:
+        """Number of 16-bit registers the entry's value occupies."""
+        if entry.get("section") in ("coils", "discrete_inputs"):
+            return 1
+        return _required_registers(entry)
+
+    def decode_value(self, entry: Dict[str, Any], raw_regs: List[int]) -> Dict[str, Any]:
+        """Decode raw register values for ``entry`` into an engineering value."""
+        return _decode_map_entry(entry, raw_regs, self._decoder)
+
+    def encode_value(self, entry: Dict[str, Any], value_str: str) -> List[int]:
+        """Encode an engineering ``value_str`` for ``entry`` to raw registers.
+
+        Applies inverse scale/offset for numeric types and enforces the
+        optional ``min``/``max`` range before encoding.
+        """
+        data_type = entry.get("type", "u16")
+        scale = entry.get("scale", 1.0)
+        offset = entry.get("offset", 0.0)
+
+        numeric_type = data_type in ("f32", "f64", "i16", "i32", "i64", "u16", "u32", "u64", "bcd")
+        if numeric_type and (scale != 1.0 or offset != 0.0):
+            raw = (float(value_str) - offset) / scale
+            # Validate against declared engineering range before inverse-scaling.
+            self._check_range(entry, float(value_str))
+            encode_input = repr(raw)
+        else:
+            if numeric_type:
+                self._check_range(entry, float(value_str))
+            encode_input = value_str
+
+        return self._encoder.encode(encode_input, data_type, length=entry.get("length"))
+
+    @staticmethod
+    def _check_range(entry: Dict[str, Any], value: float) -> None:
+        """Raise ValueError if ``value`` falls outside the entry's min/max."""
+        rng = entry.get("range") or {}
+        min_v = entry.get("min", rng.get("min"))
+        max_v = entry.get("max", rng.get("max"))
+        if min_v is not None and value < min_v:
+            raise ValueError(f"{value} is below minimum {min_v}")
+        if max_v is not None and value > max_v:
+            raise ValueError(f"{value} is above maximum {max_v}")
 
 
 def list_register_maps() -> List[Dict[str, str]]:

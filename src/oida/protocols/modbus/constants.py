@@ -101,33 +101,6 @@ class CANopenMEICommand(IntEnum):
     SDO_UPLOAD = 0x40  # SDO upload/read (CCS=2 from CiA 301)
 
 
-# CANopen data types (CiA 301 / CiA 309-2)
-CANOPEN_DATA_TYPES = {
-    0x01: ("BOOLEAN", 1),
-    0x02: ("INTEGER8", 1),
-    0x03: ("INTEGER16", 2),
-    0x04: ("INTEGER32", 4),
-    0x05: ("UNSIGNED8", 1),
-    0x06: ("UNSIGNED16", 2),
-    0x07: ("UNSIGNED32", 4),
-    0x08: ("REAL32", 4),
-    0x09: ("VISIBLE_STRING", 0),
-    0x0A: ("OCTET_STRING", 0),
-    0x0B: ("UNICODE_STRING", 0),
-    0x0F: ("DOMAIN", 0),
-    0x10: ("INTEGER24", 3),
-    0x11: ("REAL64", 8),
-    0x12: ("INTEGER40", 5),
-    0x13: ("INTEGER48", 6),
-    0x14: ("INTEGER56", 7),
-    0x15: ("INTEGER64", 8),
-    0x16: ("UNSIGNED24", 3),
-    0x18: ("UNSIGNED40", 5),
-    0x19: ("UNSIGNED48", 6),
-    0x1A: ("UNSIGNED56", 7),
-    0x1B: ("UNSIGNED64", 8),
-}
-
 # Common CANopen Object Dictionary entries
 CANOPEN_COMMON_OBJECTS = {
     (0x1000, 0): "Device Type",
