@@ -21,40 +21,42 @@ SUNSPEC_SECURITY_MODELS = {3, 4, 5, 6, 7, 8, 9}
 
 # Security-critical control models with their writable registers that have
 # direct operational impact on DER devices. Keys are model IDs, values are
-# dicts mapping register names to (access, impact_description).
-SUNSPEC_CRITICAL_CONTROLS: Dict[int, Dict[str, tuple]] = {
+# dicts mapping register names to an impact description. (These are all
+# "rw" control-class registers per the SunSpec spec, but the actual access
+# is read from each device's register map at scan time.)
+SUNSPEC_CRITICAL_CONTROLS: Dict[int, Dict[str, str]] = {
     123: {
-        "conn": ("rw", "Connect/disconnect inverter from grid"),
-        "w_max_lim_pct": ("rw", "Active power curtailment (% of WMax)"),
-        "w_max_lim_ena": ("rw", "Enable/disable power limiting"),
-        "out_pf_set": ("rw", "Output power factor setpoint"),
-        "out_pf_set_ena": ("rw", "Enable/disable PF control"),
-        "var_pct_ena": ("rw", "Enable/disable reactive power control"),
-        "var_w_max_pct": ("rw", "Reactive power as % of WMax"),
-        "var_max_pct": ("rw", "Reactive power as % of VArMax"),
-        "var_aval_pct": ("rw", "Reactive power as % of available"),
+        "conn": "Connect/disconnect inverter from grid",
+        "w_max_lim_pct": "Active power curtailment (% of WMax)",
+        "w_max_lim_ena": "Enable/disable power limiting",
+        "out_pf_set": "Output power factor setpoint",
+        "out_pf_set_ena": "Enable/disable PF control",
+        "var_pct_ena": "Enable/disable reactive power control",
+        "var_w_max_pct": "Reactive power as % of WMax",
+        "var_max_pct": "Reactive power as % of VArMax",
+        "var_aval_pct": "Reactive power as % of available",
     },
     124: {
-        "stor_ctl_mod": ("rw", "Storage charge/discharge control mode"),
-        "wcha_max": ("rw", "Maximum charge power setpoint"),
-        "out_w_rte": ("rw", "Discharge rate (% of max)"),
-        "in_w_rte": ("rw", "Charge rate (% of max)"),
-        "cha_gri_set": ("rw", "Charging source (PV vs grid)"),
-        "min_rsv_pct": ("rw", "Minimum reserve percentage"),
-        "vacha_max": ("rw", "Maximum charging VA"),
+        "stor_ctl_mod": "Storage charge/discharge control mode",
+        "wcha_max": "Maximum charge power setpoint",
+        "out_w_rte": "Discharge rate (% of max)",
+        "in_w_rte": "Charge rate (% of max)",
+        "cha_gri_set": "Charging source (PV vs grid)",
+        "min_rsv_pct": "Minimum reserve percentage",
+        "vacha_max": "Maximum charging VA",
     },
     121: {
-        "w_max": ("rw", "Maximum active power setting"),
-        "v_ref": ("rw", "Voltage reference setpoint"),
-        "v_ref_ofs": ("rw", "Voltage reference offset"),
+        "w_max": "Maximum active power setting",
+        "v_ref": "Voltage reference setpoint",
+        "v_ref_ofs": "Voltage reference offset",
     },
     802: {
-        "set_op": ("rw", "Battery connect/disconnect command"),
-        "set_inv_state": ("rw", "Set inverter state (stop/standby/start)"),
-        "soc_rsv_max": ("rw", "Max operational reserve setpoint"),
-        "soc_rsv_min": ("rw", "Min operational reserve setpoint"),
-        "ctrl_hb": ("rw", "Controller heartbeat"),
-        "alm_rst": ("rw", "Alarm reset"),
+        "set_op": "Battery connect/disconnect command",
+        "set_inv_state": "Set inverter state (stop/standby/start)",
+        "soc_rsv_max": "Max operational reserve setpoint",
+        "soc_rsv_min": "Min operational reserve setpoint",
+        "ctrl_hb": "Controller heartbeat",
+        "alm_rst": "Alarm reset",
     },
 }
 

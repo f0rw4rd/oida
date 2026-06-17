@@ -267,10 +267,9 @@ def is_valid_bit_key(key: str) -> bool:
     """Check if a key is a valid bit position (0-31 as string or int)."""
     try:
         bit_num = int(key)
-        return 0 <= bit_num <= 31
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Failed to get bit_num: {e}")
+    except (ValueError, TypeError):
         return False
+    return 0 <= bit_num <= 31
 
 
 def is_valid_enum_key(key: str) -> bool:
@@ -342,6 +341,10 @@ def validate_enums(data: dict, result: ValidationResult) -> None:
             continue
 
         for code, description in enum_values.items():
+            if not is_valid_enum_key(str(code)):
+                result.warning(
+                    f"enums['{enum_name}']['{code}']: key should be a numeric or hex code"
+                )
             if not isinstance(description, str):
                 result.error(
                     f"enums['{enum_name}']['{code}']: value must be a string, got {type(description).__name__}"

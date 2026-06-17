@@ -80,7 +80,7 @@ class RawFCMixin(_ScannerBase):
 
         # Check for file reference (@path/to/file)
         try:
-            data, path = resolve_file_payload(payload_str)
+            data, _path = resolve_file_payload(payload_str)
             if data is not None:
                 return data
         except OSError as e:

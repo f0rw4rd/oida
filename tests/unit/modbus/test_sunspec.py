@@ -241,9 +241,9 @@ class TestRawRegsToValue:
         result = _raw_regs_to_value([0x4142], "string")
         assert result == "AB"
 
-    # sunssf (treated as u16)
+    # sunssf is a signed int16 scale-factor exponent
     def test_sunssf(self):
-        assert _raw_regs_to_value([0xFFFC], "sunssf") == 0xFFFC
+        assert _raw_regs_to_value([0xFFFC], "sunssf") == -4
 
     # acc16 (treated as u16)
     def test_acc16(self):

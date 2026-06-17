@@ -22,7 +22,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
     """Mixin providing FC 8 diagnostics for ModbusScanner."""
 
     def _run_diagnostics(
-        self, client: Any, tests: str = "all", diag_data: str = None
+        self, client: Any, tests: str, diag_data: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Run Modbus diagnostics (Function Code 8)
@@ -45,8 +45,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             "supported_subfunctions": [],
         }
 
-        # Handle None or "all" for tests parameter
-        if tests is None or tests == "all":
+        if tests == "all":
             test_list = ["echo", "counters", "register"]
         else:
             test_list = tests.split(",")
@@ -80,7 +79,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
 
         # Clear counters (subfunction 0x0A) - mutates device state.
         if "clear" in test_list:
-            if not self._args_get("confirm", False):
+            if not self.args.get("confirm", False):
                 self.logger.fail(
                     "--diag clear runs subfunction 0x0A (Clear Counters and Diagnostic "
                     "Register) which mutates device state — requires --confirm"
@@ -94,7 +93,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
         # Restart communications (subfunction 0x01) - resets the listen-only
         # mode and clears communications event counters. Disruptive.
         if "restart" in test_list:
-            if not self._args_get("confirm", False):
+            if not self.args.get("confirm", False):
                 self.logger.fail(
                     "--diag restart runs subfunction 0x01 (Restart Communications) "
                     "which resets device state — requires --confirm"
@@ -107,26 +106,12 @@ class ScannerDiagnosticsMixin(_ScannerBase):
 
         return results
 
-    def _args_get(self, key: str, default=None):
-        """Pull a value from the scanner's args dict (which may be a dict-or-Namespace)."""
-        args = getattr(self, "args", None)
-        if args is None:
-            return default
-        if isinstance(args, dict):
-            return args.get(key, default)
-        return getattr(args, key, default)
-
     def _diagnostic_restart(self, client: Any) -> bool:
         """Restart Communications Option (subfunction 0x01)."""
         try:
-            method = getattr(client, "diag_restart_communication", None)
-            if not method:
-                # Older pymodbus may not expose this directly; bail visibly.
-                self.logger.debug("pymodbus client has no diag_restart_communication")
-                return False
             # pymodbus 3.x: diag_restart_communication(toggle, *, device_id).
-            # toggle=False clears no event log / leaves the comms event log intact.
-            result = method(False, device_id=self.unit_id)
+            # toggle=False leaves the comms event log intact.
+            result = client.diag_restart_communication(False, device_id=self.unit_id)
             return not result.isError()
         except Exception as e:
             self.logger.debug(f"Restart communications failed: {e}")
