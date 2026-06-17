@@ -114,7 +114,7 @@ class PcapScanner:
         file_size = os.path.getsize(self.pcap_file)
         self.logger.debug("run_scan: file=%s size=%d bytes", self.pcap_file, file_size)
         self.logger.debug("run_scan: args=%s", list(self.args.keys()))
-        enabled = [k for k in ("extract_files", "extract_all") if self.args.get(k)]
+        enabled = [k for k in ("extract_files",) if self.args.get(k)]
         self.logger.debug("run_scan: optional extractions enabled: %s", enabled or "none")
 
         self.logger.info(f"PCAP analysis: {self.pcap_file}")
@@ -159,7 +159,7 @@ class PcapScanner:
         # dynamic attributes (e.g. mms_passive_data) not in the dataclass schema.
         if self.discovered_devices:
             self.results["devices"] = [
-                {k: v for k, v in vars(d).items() if v is not None and v != [] and v != ""}
+                {k: v for k, v in vars(d).items() if v not in (None, "", [], {}, ())}
                 for d in self.discovered_devices.values()
             ]
 
@@ -172,11 +172,8 @@ class PcapScanner:
         # Include traffic statistics
         self.results["traffic_statistics"] = self.stats.to_dict()
 
-        # Expand --extract-all into individual flags
-        if self.args.get("extract_all"):
-            self.args.setdefault("extract_files", True)
-
-        # Optional extractions (these do real extra work)
+        # Optional extractions (these do real extra work).
+        # -e/--extract-all and -E/--extract-files share the extract_files dest.
         if self.args.get("extract_files"):
             self._run_file_extraction()
 
@@ -364,12 +361,17 @@ class PcapScanner:
                     "_run_pyshark_pipeline: decode_as after listener merge: %s", decode_as_final
                 )
 
+            max_packets = self.args.get("max_packets")
             capture_kw: Dict[str, Any] = {
                 "keep_packets": False,
                 "decode_as": decode_as_final if decode_as_final else None,
                 "display_filter": display_filter,
                 "override_prefs": override_prefs if override_prefs else None,
             }
+            if max_packets:
+                # Pass tshark -c flag to stop after N packets (FileCapture has no packet_count)
+                existing = capture_kw.get("custom_parameters") or []
+                capture_kw["custom_parameters"] = list(existing) + ["-c", str(int(max_packets))]
 
             # Ensure an asyncio event loop exists for pyshark (it uses asyncio
             # internally).  Previous tests or callers may have consumed/closed
@@ -463,11 +465,22 @@ class PcapScanner:
             is_crash = "crashed" in err_msg or "retcode" in err_msg
             is_truncated = "cut short" in err_msg or "truncated" in err_msg
             # Truncated pcap files cause tshark to exit non-zero after
-            # successfully outputting all complete packets.  Propagate so the
-            # retry loop can detect the truncation message and stop retrying.
-            if is_crash:
-                # Kill subprocesses and clear the process list to suppress noisy
-                # __del__ asyncio exceptions from the orphaned capture.
+            # successfully outputting all complete packets.  Don't discard the
+            # intel already harvested from the valid prefix — fall through to the
+            # harvest/export block below instead of re-raising.
+            if is_crash and (packet_count > 0 or is_truncated):
+                self.logger.debug(
+                    "_run_pyshark_pipeline: tshark exited non-zero after %d packets "
+                    "(truncated pcap?): %s",
+                    packet_count,
+                    e,
+                )
+                if is_truncated:
+                    self.logger.info(
+                        "PCAP file appears truncated — reporting intel from the valid prefix"
+                    )
+                # Suppress noisy __del__ exceptions from the orphaned capture
+                # by killing subprocesses and clearing the process list.
                 if capture is not None:
                     for proc in getattr(capture, "_running_processes", []):
                         try:
@@ -478,19 +491,19 @@ class PcapScanner:
                         capture._running_processes.clear()
                     except Exception as e:
                         self.logger.debug(f"capture._running_processes.clear(): {e}")
-
-            if is_crash and (packet_count > 0 or is_truncated):
-                self.logger.debug(
-                    "_run_pyshark_pipeline: tshark exited non-zero after %d packets "
-                    "(truncated pcap?): %s",
-                    packet_count,
-                    e,
-                )
-                # Truncated pcap: propagate so the retry loop stops retrying.
-                if is_truncated:
-                    raise
             elif is_crash:
                 # No packets processed — genuine crash, propagate for retry.
+                # Kill subprocesses to suppress noisy __del__ asyncio errors.
+                if capture is not None:
+                    for proc in getattr(capture, "_running_processes", []):
+                        try:
+                            proc.kill()
+                        except Exception as e:
+                            self.logger.debug(f"proc.kill(): {e}")
+                    try:
+                        capture._running_processes.clear()
+                    except Exception as e:
+                        self.logger.debug(f"capture._running_processes.clear(): {e}")
                 raise
             else:
                 self.logger.fail(f"PyShark pipeline error: {e}")
@@ -505,74 +518,78 @@ class PcapScanner:
         proto_map: Dict[str, Any] = {}  # PROTOCOL_NAME.upper() -> listener
 
         for name, listener in listeners.items():
-            # Collect interactions for unified table
-            all_interactions.extend(listener.interactions)
-            proto_map[listener.PROTOCOL_NAME.upper()] = listener
+            try:
+                # Collect interactions for unified table
+                all_interactions.extend(listener.interactions)
+                proto_map[listener.PROTOCOL_NAME.upper()] = listener
 
-            # Collect credentials + hashes (normalized rows)
-            all_cred_rows.extend(listener._collect_credentials())
-            all_cred_rows.extend(listener._collect_hashes())
+                # Collect credentials + hashes (normalized rows)
+                all_cred_rows.extend(listener._collect_credentials())
+                all_cred_rows.extend(listener._collect_hashes())
 
-            # Harvest: returns only custom info tables + alerts
-            harvest_data = listener.harvest()
-            if not harvest_data:
-                continue
+                # Harvest: returns only custom info tables + alerts
+                harvest_data = listener.harvest()
+                if not harvest_data:
+                    continue
 
-            # Display custom info tables (PLC identity, OPC UA endpoints, etc.)
-            for table in harvest_data.get("tables", []):
-                export_data(
-                    data=table["rows"],
-                    headers=table["headers"],
-                    output_format="console",
-                    title=table.get("title"),
-                    logger=self.logger,
-                )
-                all_tables.append(table)
-
-            # Merge results
-            for key, value in harvest_data.get("results", {}).items():
-                if key == "protocols_used_append":
-                    for proto in value:
-                        if proto not in self.results["protocols_used"]:
-                            self.results["protocols_used"].append(proto)
-                elif key == "tls_certificates_merge":
-                    # Merge certificates into the unified TLS results dict
-                    if "tls" not in self.results:
-                        self.results["tls"] = {
-                            "certificates": {},
-                            "connections": [],
-                            "total_certificates": 0,
-                            "total_connections": 0,
-                        }
-                    for thumb, cert_data in value.items():
-                        self.results["tls"]["certificates"][thumb] = cert_data
-                    self.results["tls"]["total_certificates"] = len(
-                        self.results["tls"]["certificates"]
+                # Display custom info tables (PLC identity, OPC UA endpoints, etc.)
+                for table in harvest_data.get("tables", []):
+                    export_data(
+                        data=table["rows"],
+                        headers=table["headers"],
+                        output_format="console",
+                        title=table.get("title"),
+                        logger=self.logger,
                     )
-                elif key == "tls_connections":
-                    if "tls" not in self.results:
-                        self.results["tls"] = {
-                            "certificates": {},
-                            "connections": [],
-                            "total_certificates": 0,
-                            "total_connections": 0,
-                        }
-                    self.results["tls"]["connections"] = value
-                    self.results["tls"]["total_connections"] = len(value)
-                else:
-                    self.results[key] = value
+                    all_tables.append(table)
 
-            # Log alerts (security warnings)
-            for alert in harvest_data.get("alerts", []):
-                level = alert.get("level", "info")
-                msg = alert["message"]
-                getattr(self.logger, level, self.logger.info)(msg)
+                # Merge results
+                for key, value in harvest_data.get("results", {}).items():
+                    if key == "protocols_used_append":
+                        for proto in value:
+                            if proto not in self.results["protocols_used"]:
+                                self.results["protocols_used"].append(proto)
+                    elif key == "tls_certificates_merge":
+                        # Merge certificates into the unified TLS results dict
+                        if "tls" not in self.results:
+                            self.results["tls"] = {
+                                "certificates": {},
+                                "connections": [],
+                                "total_certificates": 0,
+                                "total_connections": 0,
+                            }
+                        for thumb, cert_data in value.items():
+                            self.results["tls"]["certificates"][thumb] = cert_data
+                        self.results["tls"]["total_certificates"] = len(
+                            self.results["tls"]["certificates"]
+                        )
+                    elif key == "tls_connections":
+                        if "tls" not in self.results:
+                            self.results["tls"] = {
+                                "certificates": {},
+                                "connections": [],
+                                "total_certificates": 0,
+                                "total_connections": 0,
+                            }
+                        self.results["tls"]["connections"] = value
+                        self.results["tls"]["total_connections"] = len(value)
+                    else:
+                        self.results[key] = value
 
-            # Log informational messages
-            for log_msg in harvest_data.get("log_messages", []):
-                level = log_msg.get("level", "info")
-                msg = log_msg["message"]
-                getattr(self.logger, level, self.logger.info)(msg)
+                # Log alerts (security warnings)
+                for alert in harvest_data.get("alerts", []):
+                    level = alert.get("level", "info")
+                    msg = alert["message"]
+                    getattr(self.logger, level, self.logger.info)(msg)
+
+                # Log informational messages
+                for log_msg in harvest_data.get("log_messages", []):
+                    level = log_msg.get("level", "info")
+                    msg = log_msg["message"]
+                    getattr(self.logger, level, self.logger.info)(msg)
+            except Exception as e:
+                self.logger.debug("harvest failed for listener %s: %s", name, e)
+                continue
 
         # --- Unified interaction table (central) ---
         if all_interactions:
@@ -651,73 +668,77 @@ class PcapScanner:
 
         # Merge device results from all listeners
         for name, listener in listeners.items():
-            devices = listener.discovered_devices
-            if devices:
-                self.logger.debug(
-                    "_run_pyshark_pipeline: %s produced %d devices", name, len(devices)
-                )
-                self.discovered_devices.update(devices)
-                if name not in self.results["protocols_used"]:
-                    self.results["protocols_used"].append(name)
-                self.logger.success(f"{name}: {len(devices)} devices")
-
-            # Surface extracted credentials (SMTP, FTP, SNMP, etc.)
-            creds = getattr(listener, "credentials", [])
-            for cred in creds:
-                # Try multiple attribute names for username
-                username = getattr(cred, "username", "") or getattr(
-                    cred, "community_or_username", ""
-                )
-                password = getattr(cred, "password", "")
-                method = getattr(cred, "auth_method", "")
-                cred_type = getattr(cred, "credential_type", "")
-                # Try multiple attribute names for server IP + port
-                server = getattr(cred, "server_ip", "") or getattr(cred, "dest_ip", "")
-                port = getattr(cred, "server_port", 0) or getattr(cred, "dest_port", 0)
-                server_str = f"{server}:{port}" if server and port else server
-                self.logger.debug(
-                    "_run_pyshark_pipeline: credential from %s — type=%s method=%s user=%s server=%s",
-                    name,
-                    cred_type,
-                    method,
-                    username,
-                    server_str,
-                )
-                # Treat "community" and "plaintext" both as plaintext display
-                if cred_type in ("plaintext", "community") and username:
-                    self.logger.success(
-                        f"{name} credential ({method}): {username}:{password} @ {server_str}",
+            try:
+                devices = listener.discovered_devices
+                if devices:
+                    self.logger.debug(
+                        "_run_pyshark_pipeline: %s produced %d devices", name, len(devices)
                     )
-                elif cred_type == "hash" and username:
-                    hashcat = getattr(cred, "hashcat_format", None)
-                    if hashcat is not None:
-                        # Modern decoder: hashcat_format is the source of truth.
-                        # An empty string means the captured material is not
-                        # crackable (e.g. NTLM without the Type 2 challenge, or a
-                        # pgsql md5 with no salt). It is already surfaced as
-                        # INCOMPLETE in the summary, so skip the line rather than
-                        # printing a bare value that looks like a deliverable hash.
-                        if hashcat:
-                            self.logger.success(
-                                f"{name} hash ({method}): {username} @ {server_str} [{hashcat}]",
+                    self.discovered_devices.update(devices)
+                    if name not in self.results["protocols_used"]:
+                        self.results["protocols_used"].append(name)
+                    self.logger.success(f"{name}: {len(devices)} devices")
+
+                # Surface extracted credentials (SMTP, FTP, SNMP, etc.)
+                creds = getattr(listener, "credentials", [])
+                for cred in creds:
+                    # Try multiple attribute names for username
+                    username = getattr(cred, "username", "") or getattr(
+                        cred, "community_or_username", ""
+                    )
+                    password = getattr(cred, "password", "")
+                    method = getattr(cred, "auth_method", "")
+                    cred_type = getattr(cred, "credential_type", "")
+                    # Try multiple attribute names for server IP + port
+                    server = getattr(cred, "server_ip", "") or getattr(cred, "dest_ip", "")
+                    port = getattr(cred, "server_port", 0) or getattr(cred, "dest_port", 0)
+                    server_str = f"{server}:{port}" if server and port else server
+                    self.logger.debug(
+                        "_run_pyshark_pipeline: credential from %s — type=%s method=%s user=%s server=%s",
+                        name,
+                        cred_type,
+                        method,
+                        username,
+                        server_str,
+                    )
+                    # Treat "community" and "plaintext" both as plaintext display
+                    if cred_type in ("plaintext", "community") and username:
+                        self.logger.success(
+                            f"{name} credential ({method}): {username}:{password} @ {server_str}",
+                        )
+                    elif cred_type == "hash" and username:
+                        hashcat = getattr(cred, "hashcat_format", None)
+                        if hashcat is not None:
+                            # Modern decoder: hashcat_format is the source of truth.
+                            # An empty string means the captured material is not
+                            # crackable (e.g. NTLM without the Type 2 challenge, or a
+                            # pgsql md5 with no salt). It is already surfaced as
+                            # INCOMPLETE in the summary, so skip the line rather than
+                            # printing a bare value that looks like a deliverable hash.
+                            if hashcat:
+                                self.logger.success(
+                                    f"{name} hash ({method}): {username} @ {server_str} [{hashcat}]",
+                                )
+                        else:
+                            # Legacy cred without a hashcat_format property.
+                            hash_val = getattr(cred, "hash_value", "") or getattr(
+                                cred, "password_hash", ""
                             )
-                    else:
-                        # Legacy cred without a hashcat_format property.
-                        hash_val = getattr(cred, "hash_value", "") or getattr(
-                            cred, "password_hash", ""
+                            if hash_val:
+                                self.logger.success(
+                                    f"{name} hash ({method}): {username} @ {server_str} [{hash_val}]",
+                                )
+                    elif username and cred_type:
+                        hash_val = getattr(cred, "hashcat_format", "") or getattr(
+                            cred, "hash_value", ""
                         )
                         if hash_val:
                             self.logger.success(
                                 f"{name} hash ({method}): {username} @ {server_str} [{hash_val}]",
                             )
-                elif username and cred_type:
-                    hash_val = getattr(cred, "hashcat_format", "") or getattr(
-                        cred, "hash_value", ""
-                    )
-                    if hash_val:
-                        self.logger.success(
-                            f"{name} hash ({method}): {username} @ {server_str} [{hash_val}]",
-                        )
+            except Exception as e:
+                self.logger.debug("device merge failed for listener %s: %s", name, e)
+                continue
 
         # Store tables for per-file export (used by cli.py export_results)
         if all_tables:
@@ -757,7 +778,7 @@ class PcapScanner:
         if not all_hashes:
             return
 
-        output_dir = self.args.get("output_dir")
+        output_dir = self.args.get("output") or self.args.get("output_dir")
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
             hashcat_path = get_export_path("hashcat", "txt")
@@ -951,9 +972,7 @@ class PcapScanner:
         table_data = []
 
         for device in devices.values():
-            device_dict = {
-                k: v for k, v in vars(device).items() if v is not None and v != [] and v != ""
-            }
+            device_dict = {k: v for k, v in vars(device).items() if v not in (None, "", [], {}, ())}
 
             mac = device.mac_address or "(unknown)"
 
@@ -1034,7 +1053,7 @@ class PcapScanner:
                 if not vendor and mac:
                     vendor = lookup_mac_vendor(mac)
                 device_dict = {
-                    k: v for k, v in vars(dev).items() if v is not None and v != [] and v != ""
+                    k: v for k, v in vars(dev).items() if v not in (None, "", [], {}, ())
                 }
                 rows.append(
                     [
@@ -1143,7 +1162,6 @@ class pcap(SerialConnection):
         """Convert args namespace to dict for PcapScanner."""
         result = super()._convert_args_to_dict()
         for key in (
-            "extract_all",
             "extract_files",
             "extract_dir",
             "extract_protocols",

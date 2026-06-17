@@ -211,7 +211,7 @@ Examples:
         "-P",
         "--probe-objects",
         action="store_true",
-        help="Probe all DNP3 groups 0-122 to discover supported objects (requires --confirm)",
+        help="Probe all DNP3 groups 0-122 to discover supported objects (read-only)",
     )
     poll_group.add_argument(
         "--security-stats",
@@ -352,7 +352,11 @@ Examples:
         type=str,
         choices=["uint16", "uint32", "float"],
         default="float",
-        help="Dead band value type: uint16 (G34V1), uint32 (G34V2), float (G34V3) (default: float)",
+        help=(
+            "Dead band value type recorded in results. NOTE: the opendnp3 binding "
+            "always transmits Group 34 Variation 3 (float) on the wire; uint16/uint32 "
+            "are metadata only."
+        ),
     )
 
     # Freeze Operations (Group 20-23 targets)
@@ -432,8 +436,17 @@ Examples:
         help="Delete file on outstation (requires --confirm)",
     )
 
-    # Diagnostic Operations
+    # Diagnostic/Stealth Operations
     diag_group = dnp3_parser.add_argument_group("Diagnostic Operations")
+    diag_group.add_argument(
+        "-n",
+        "--no-ack",
+        action="store_true",
+        help=(
+            "Prefer no-acknowledgment (NR) variants where the opendnp3 stack "
+            "supports them (currently freeze operations); implies --freeze-no-ack"
+        ),
+    )
     diag_group.add_argument(
         "-d",
         "--delay-measure",
@@ -664,6 +677,16 @@ def validate_args(args) -> None:
         except ValueError as e:
             raise ConfigurationError(
                 f"invalid --scan-range: {e}",
+                protocol="DNP3",
+            )
+
+    # Validate TLS requires both cert and key — refuse to silently fall back to
+    # cleartext TCP (the channel builder only uses TLS when both are present).
+    if getattr(args, "tls", False):
+        if not getattr(args, "tls_cert", None) or not getattr(args, "tls_key", None):
+            raise ConfigurationError(
+                "--tls requires both --tls-cert and --tls-key; refusing to fall "
+                "back to plaintext TCP",
                 protocol="DNP3",
             )
 

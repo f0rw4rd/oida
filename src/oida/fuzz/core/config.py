@@ -80,10 +80,6 @@ class MonitorConfig:
         """Check if no monitors are configured."""
         return len(self.monitors) == 0
 
-    def get_monitor_names(self) -> List[str]:
-        """Get list of monitor names."""
-        return [spec.name for spec in self.monitors]
-
     def format_display(self) -> str:
         """Format for display in startup output.
 
@@ -110,7 +106,6 @@ class ProtocolType(Enum):
     UDP = "udp"
     RAW = "raw"
     SERIAL = "serial"
-    BLE = "ble"
     IEC104 = "iec104"  # IEC 60870-5-104 with automatic STARTDT handshake
     ICMP = "icmp"  # ICMP raw sockets (kernel handles IP header and checksum)
     ICMPV6 = "icmpv6"  # ICMPv6 raw sockets (kernel handles IPv6 header and checksum)
@@ -125,7 +120,6 @@ class FuzzerConfig:
     crash_threshold: int = 5
     restart_timeout: int = 5
     web_port: int = 26000
-    process_monitor_port: Optional[int] = None
     log_session: bool = True
     skip_pre_send_checks: bool = True
     monitor_check_interval: int = 100
@@ -154,9 +148,6 @@ class FuzzerConfig:
     receive_data_after_fuzz: bool = True  # Wait for response after fuzz payload
     receive_data_after_each_request: bool = True  # Wait for response after setup/prereq requests
     sleep_time: float = 0.0  # Delay between test cases in seconds (0.0 = no delay)
-    monitor_retry_delay: float = (
-        0.1  # Delay between monitor retry attempts in seconds (default=0.1)
-    )
     # Socket timeouts / reconnection (None = use connection/protocol default)
     recv_timeout: Optional[float] = None  # Data-socket receive timeout (default 5.0)
     send_timeout: Optional[float] = None  # Data-socket send timeout (default 5.0)
@@ -176,6 +167,18 @@ class FuzzerConfig:
     calibration_probes: int = 50  # Probes to send during calibration (min 30 clean)
     adaptive_timeout: bool = False  # Adapt monitor timeout online (Jacobson/Karels EWMA)
     detect_drift: bool = False  # Recalibrate on sustained latency drift (implies adaptive)
+    # Auto-restart-and-resume: command run once per crash to bring the target back up
+    restart_command: Optional[List[str]] = None  # argv; None = no auto-restart
+    restart_delay: float = 2.0  # seconds to wait after restart before re-probing
+    # External-script health monitor: argv whose exit 0 == healthy (None = disabled)
+    script_monitor_command: Optional[List[str]] = None
+    # Protocol-agnostic valid-case probe (bytes sent each check; None = disabled)
+    valid_case_probe: Optional[bytes] = None
+    valid_case_expect: Optional[bytes] = None  # substring that must appear in the reply
+    # On-target oida-fuzzing-agent client (None host = disabled)
+    agent_monitor_host: Optional[str] = None
+    agent_monitor_port: int = 5555
+    agent_monitor_token: Optional[str] = None
 
     def __post_init__(self):
         """Initialize protocol_options if not provided"""
@@ -185,12 +188,6 @@ class FuzzerConfig:
     def get_option(self, key: str, default: Any = None) -> Any:
         """Get a protocol-specific option with a default value"""
         return self.protocol_options.get(key, default)
-
-    def set_option(self, key: str, value: Any) -> None:
-        """Set a protocol-specific option"""
-        if self.protocol_options is None:
-            self.protocol_options = {}
-        self.protocol_options[key] = value
 
 
 def hexdump(data, bytes_per_line=16):

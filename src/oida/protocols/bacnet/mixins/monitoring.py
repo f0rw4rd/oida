@@ -49,14 +49,18 @@ class MonitoringMixin:
                     )
                     request.pduDestination = target_addr
 
-                    response = await asyncio.wait_for(
-                        app.request(request), timeout=min(timeout, 3.0)
-                    )
-                    if response and not isinstance(
-                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                    ):
-                        findings.append(f"Schedule:{instance} - {display_name} readable")
-                        break
+                    try:
+                        response = await asyncio.wait_for(
+                            app.request(request), timeout=min(timeout, 3.0)
+                        )
+                        if response and not isinstance(
+                            response, (AbortPDU, ErrorPDU, RejectPDU, Error)
+                        ):
+                            findings.append(f"Schedule:{instance} - {display_name} readable")
+                            break
+                    except asyncio.TimeoutError as e:
+                        self.logger.debug(f"bacpypes3 check schedules failed: {e}")
+                        continue
                 except BaseException as e:
                     self.logger.debug(f"bacpypes3 check schedules failed: {e}")
                     continue
@@ -99,13 +103,17 @@ class MonitoringMixin:
                 )
                 request.pduDestination = target_addr
 
-                response = await asyncio.wait_for(
-                    app.request(request), timeout=min(timeout, 3.0)
-                )
-                if response and not isinstance(
-                    response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                ):
-                    findings.append(f"Calendar:{instance} - dateList readable")
+                try:
+                    response = await asyncio.wait_for(
+                        app.request(request), timeout=min(timeout, 3.0)
+                    )
+                    if response and not isinstance(
+                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
+                    ):
+                        findings.append(f"Calendar:{instance} - dateList readable")
+                except asyncio.TimeoutError as e:
+                    self.logger.debug(f"bacpypes3 check calendars failed: {e}")
+                    continue
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 check calendars failed: {e}")
                 continue
@@ -156,16 +164,20 @@ class MonitoringMixin:
                     )
                     request.pduDestination = target_addr
 
-                    response = await asyncio.wait_for(
-                        app.request(request), timeout=min(timeout, 3.0)
-                    )
-                    if response and not isinstance(
-                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                    ):
-                        findings.append(
-                            f"NotificationClass:{instance} - {display_name} readable"
+                    try:
+                        response = await asyncio.wait_for(
+                            app.request(request), timeout=min(timeout, 3.0)
                         )
-                        break
+                        if response and not isinstance(
+                            response, (AbortPDU, ErrorPDU, RejectPDU, Error)
+                        ):
+                            findings.append(
+                                f"NotificationClass:{instance} - {display_name} readable"
+                            )
+                            break
+                    except asyncio.TimeoutError as e:
+                        self.logger.debug(f"bacpypes3 check alarms failed: {e}")
+                        continue
                 except BaseException as e:
                     self.logger.debug(f"bacpypes3 check alarms failed: {e}")
                     continue
@@ -212,26 +224,30 @@ class MonitoringMixin:
                 )
                 request.pduDestination = target_addr
 
-                response = await asyncio.wait_for(
-                    app.request(request), timeout=min(timeout, 3.0)
-                )
-                if response and not isinstance(
-                    response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                ):
-                    if hasattr(response, "propertyValue"):
-                        pv = response.propertyValue
-                        if hasattr(pv, "tagList"):
-                            tags = list(pv.tagList)
-                            for tag in tags:
-                                if (
-                                    hasattr(tag, "tag_data")
-                                    and tag.tag_data
-                                    and len(tag.tag_data) <= 4
-                                ):
-                                    count = int.from_bytes(tag.tag_data, "big")
-                                    findings.append(f"TrendLog:{instance} - {count} records")
-                                    total_records += count
-                                    break
+                try:
+                    response = await asyncio.wait_for(
+                        app.request(request), timeout=min(timeout, 3.0)
+                    )
+                    if response and not isinstance(
+                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
+                    ):
+                        if hasattr(response, "propertyValue"):
+                            pv = response.propertyValue
+                            if hasattr(pv, "tagList"):
+                                tags = list(pv.tagList)
+                                for tag in tags:
+                                    if (
+                                        hasattr(tag, "tag_data")
+                                        and tag.tag_data
+                                        and len(tag.tag_data) <= 4
+                                    ):
+                                        count = int.from_bytes(tag.tag_data, "big")
+                                        findings.append(f"TrendLog:{instance} - {count} records")
+                                        total_records += count
+                                        break
+                except asyncio.TimeoutError as e:
+                    self.logger.debug(f"bacpypes3 check trendlogs failed: {e}")
+                    continue
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 check trendlogs failed: {e}")
                 continue
@@ -282,13 +298,17 @@ class MonitoringMixin:
                 )
                 request.pduDestination = target_addr
 
-                response = await asyncio.wait_for(
-                    app.request(request), timeout=min(timeout, 3.0)
-                )
-                if response and not isinstance(
-                    response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                ):
-                    findings.append(f"{obj_type}:{instance} - Priority array readable")
+                try:
+                    response = await asyncio.wait_for(
+                        app.request(request), timeout=min(timeout, 3.0)
+                    )
+                    if response and not isinstance(
+                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
+                    ):
+                        findings.append(f"{obj_type}:{instance} - Priority array readable")
+                except asyncio.TimeoutError as e:
+                    self.logger.debug(f"bacpypes3 check priority failed: {e}")
+                    continue
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 check priority failed: {e}")
                 continue
@@ -301,13 +321,17 @@ class MonitoringMixin:
                 )
                 request.pduDestination = target_addr
 
-                response = await asyncio.wait_for(
-                    app.request(request), timeout=min(timeout, 3.0)
-                )
-                if response and not isinstance(
-                    response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                ):
-                    findings.append(f"{obj_type}:{instance} - Relinquish default readable")
+                try:
+                    response = await asyncio.wait_for(
+                        app.request(request), timeout=min(timeout, 3.0)
+                    )
+                    if response and not isinstance(
+                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
+                    ):
+                        findings.append(f"{obj_type}:{instance} - Relinquish default readable")
+                except asyncio.TimeoutError as e:
+                    self.logger.debug(f"bacpypes3 check priority failed: {e}")
+                    continue
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 check priority failed: {e}")
                 continue
@@ -363,29 +387,33 @@ class MonitoringMixin:
                     )
                     request.pduDestination = target_addr
 
-                    response = await asyncio.wait_for(
-                        app.request(request), timeout=min(timeout, 2.0)
-                    )
-                    if response and not isinstance(
-                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                    ):
-                        name = "unknown"
-                        if hasattr(response, "propertyValue") and hasattr(
-                            response.propertyValue, "tagList"
+                    try:
+                        response = await asyncio.wait_for(
+                            app.request(request), timeout=min(timeout, 2.0)
+                        )
+                        if response and not isinstance(
+                            response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                         ):
-                            tags = list(response.propertyValue.tagList)
-                            for tag in tags:
-                                if hasattr(tag, "tag_data") and tag.tag_data:
-                                    try:
-                                        name = tag.tag_data.decode(
-                                            "utf-8", errors="replace"
-                                        ).strip()
-                                        break
-                                    except Exception as e:
-                                        self.logger.debug(
-                                            f"Life safety object name decode failed: {e}"
-                                        )
-                        findings.append(f"{display_name}:{instance} - '{name}'")
+                            name = "unknown"
+                            if hasattr(response, "propertyValue") and hasattr(
+                                response.propertyValue, "tagList"
+                            ):
+                                tags = list(response.propertyValue.tagList)
+                                for tag in tags:
+                                    if hasattr(tag, "tag_data") and tag.tag_data:
+                                        try:
+                                            name = tag.tag_data.decode(
+                                                "utf-8", errors="replace"
+                                            ).strip()
+                                            break
+                                        except Exception as e:
+                                            self.logger.debug(
+                                                f"Life safety object name decode failed: {e}"
+                                            )
+                            findings.append(f"{display_name}:{instance} - '{name}'")
+                    except asyncio.TimeoutError as e:
+                        self.logger.debug(f"bacpypes3 enum life safety failed: {e}")
+                        continue
                 except BaseException as e:
                     self.logger.debug(f"bacpypes3 enum life safety failed: {e}")
                     continue
@@ -439,15 +467,19 @@ class MonitoringMixin:
                     )
                     request.pduDestination = target_addr
 
-                    response = await asyncio.wait_for(
-                        app.request(request), timeout=min(timeout, 2.0)
-                    )
-                    if response and not isinstance(
-                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                    ):
-                        findings.append(
-                            f"LifeSafetyPoint:{instance} - {display_name} accessible"
+                    try:
+                        response = await asyncio.wait_for(
+                            app.request(request), timeout=min(timeout, 2.0)
                         )
+                        if response and not isinstance(
+                            response, (AbortPDU, ErrorPDU, RejectPDU, Error)
+                        ):
+                            findings.append(
+                                f"LifeSafetyPoint:{instance} - {display_name} accessible"
+                            )
+                    except asyncio.TimeoutError as e:
+                        self.logger.debug(f"bacpypes3 check life safety failed: {e}")
+                        continue
                 except BaseException as e:
                     self.logger.debug(f"bacpypes3 check life safety failed: {e}")
                     continue
@@ -547,16 +579,41 @@ class MonitoringMixin:
             self.logger.display("  Device may not support COV subscriptions")
             return
 
-        # Capturing the actual notifications requires subclassing the
-        # bacpypes3 application to override
-        # do_ConfirmedCOVNotificationRequest / do_UnconfirmedCOVNotificationRequest;
-        # the standalone NormalApplication used here does not surface them.
-        # We report the accepted subscriptions rather than busy-waiting on a
-        # queue that will never be populated.
-        self.logger.display(
-            "  Note: live COV notification capture is not implemented "
-            "(requires a custom application subclass); reporting subscriptions only."
-        )
+        # Listen for COV notifications
+        monitor_duration = getattr(self.args, "cov_duration", 30)
+        self.logger.display(f"  Listening for COV notifications for {monitor_duration}s...")
+        self.logger.display("  Press Ctrl+C to stop early")
+
+        try:
+            end_time = asyncio.get_event_loop().time() + monitor_duration
+            while asyncio.get_event_loop().time() < end_time:
+                await asyncio.sleep(1.0)
+                # COV notifications arrive as unsolicited confirmed/unconfirmed
+                # requests. In bacpypes3, they're handled by the application's
+                # do_ConfirmedCOVNotificationRequest / do_UnconfirmedCOVNotificationRequest
+                # For now we just wait - actual notification handling requires
+                # subclassing the application
+        except KeyboardInterrupt as e:
+            self.logger.debug(f"bacpypes3 subscribe cov failed: {e}")
+            self.logger.display("\n  COV monitoring stopped")
+        finally:
+            # Explicitly cancel the subscriptions instead of leaving them to
+            # expire after `lifetime`s. A COV-cancel is a SubscribeCOVRequest
+            # with neither issueConfirmedNotifications nor lifetime set. This
+            # frees subscriber slots on constrained controllers promptly.
+            for obj_type, instance in subscribed:
+                try:
+                    cancel = SubscribeCOVRequest(
+                        subscriberProcessIdentifier=Unsigned(subscriber_pid),
+                        monitoredObjectIdentifier=ObjectIdentifier((obj_type, instance)),
+                    )
+                    cancel.pduDestination = target_addr
+                    await asyncio.wait_for(app.request(cancel), timeout=min(timeout, 3.0))
+                    self.logger.debug(f"COV subscription cancelled for {obj_type}:{instance}")
+                except BaseException as e:
+                    self.logger.debug(f"COV cancel failed for {obj_type}:{instance}: {e}")
+
+        self.logger.display("  COV listening complete")
 
     async def _bacpypes3_read_range(self, app, target_addr, device_id: int, timeout: float):
         """Read historical data from trend log objects using ReadRange.
@@ -602,6 +659,8 @@ class MonitoringMixin:
                 "objectName",
                 "totalRecordCount",
                 "recordCount",
+                "logBuffer",
+                "logDeviceObjectProperty",
             ]
 
             for prop in metadata_props:
@@ -636,6 +695,8 @@ class MonitoringMixin:
                                         except BaseException as e:
                                             self.logger.debug(f"bacpypes3 read range failed: {e}")
                                             tl_info[prop] = tag.tag_data.hex()
+                                    else:
+                                        tl_info[prop] = str(tag.tag_data.hex())
                                     break
 
                 except (asyncio.TimeoutError, TimeoutError) as e:

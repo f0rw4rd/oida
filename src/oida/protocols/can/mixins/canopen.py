@@ -47,6 +47,7 @@ from ..constants import (
     SDO_N_BITS_MASK,
     SDO_SCS_ABORT,
     SDO_SCS_INITIATE_UPLOAD,
+    SDO_SCS_SEGMENT_UPLOAD,
     SDO_SIZE_INDICATED_BIT,
     CANopenNode,
     CANopenSDOResponse,
@@ -62,6 +63,19 @@ def _get_python_can():
 
 class CANopenMixin:
     """Mixin providing CANopen (CiA 301) protocol operations."""
+
+    @staticmethod
+    def _safe_recv(bus: Any, timeout: float) -> Any:
+        """bus.recv() that tolerates transient transport decode errors.
+
+        The udp_multicast test transport can coalesce datagrams under load,
+        making python-can raise on the corrupt packet. Treat that like an
+        empty read so one bad frame never aborts a CANopen scan/monitor.
+        """
+        try:
+            return bus.recv(timeout=timeout)
+        except Exception:
+            return None
 
     @staticmethod
     def _node_from_heartbeat(node_id: int, data: bytes) -> CANopenNode:
@@ -80,7 +94,7 @@ class CANopenMixin:
             remaining = end_time - time.time()
             if remaining <= 0:
                 break
-            msg = bus.recv(timeout=min(remaining, 0.5))
+            msg = self._safe_recv(bus, min(remaining, 0.5))
             if msg is None:
                 continue
             arb_id = msg.arbitration_id
@@ -140,7 +154,7 @@ class CANopenMixin:
             # Listen for response
             end_time = time.time() + timeout_per_node
             while time.time() < end_time:
-                resp = bus.recv(timeout=timeout_per_node)
+                resp = self._safe_recv(bus, timeout_per_node)
                 if resp is None:
                     break
                 if resp.arbitration_id == heartbeat_cob_id and not resp.is_remote_frame:
@@ -289,6 +303,7 @@ class CANopenMixin:
                 # Read segments
                 assembled = bytearray()
                 toggle = 0
+                is_last = False
                 max_segments = 256  # Safety limit
 
                 for _ in range(max_segments):
@@ -307,7 +322,32 @@ class CANopenMixin:
                         self.logger.debug(f"CANopen: SDO segment upload frame send failed: {e}")
                         break
 
-                    seg_resp = self._recv_sdo_response(bus, sdo_tx_id, timeout)
+                    # Wait for a *valid* segment-upload response carrying the
+                    # toggle bit we just sent. On a shared/lossy bus (e.g. the
+                    # udp_multicast test transport) stray frames appear: a
+                    # duplicated initiate-upload response (SCS=2), a heartbeat,
+                    # or a duplicated segment echoing the wrong toggle. Parsing
+                    # any of those as segment data silently corrupts the result,
+                    # so drain until we see the expected segment (SCS=0, matching
+                    # toggle), an abort, or the deadline.
+                    seg_resp = None
+                    seg_deadline = time.time() + timeout
+                    while time.time() < seg_deadline:
+                        remaining = seg_deadline - time.time()
+                        candidate = self._recv_sdo_response(bus, sdo_tx_id, remaining)
+                        if candidate is None:
+                            break
+                        cand_scs = (candidate[0] >> 5) & 0x07
+                        if cand_scs == SDO_SCS_ABORT:
+                            seg_resp = candidate
+                            break
+                        if cand_scs != SDO_SCS_SEGMENT_UPLOAD:
+                            continue  # stray initiate/other frame — ignore
+                        if ((candidate[0] >> 4) & 0x01) != toggle:
+                            continue  # duplicate/reordered segment — ignore
+                        seg_resp = candidate
+                        break
+
                     if seg_resp is None:
                         break
 
@@ -339,6 +379,14 @@ class CANopenMixin:
 
                     toggle = 1 - toggle
 
+                # A segmented transfer that never delivered its final segment, or
+                # came up short of the indicated size, is incomplete — report it
+                # as an error rather than handing back a truncated/garbled value.
+                if not is_last or (total_size > 0 and len(assembled) < total_size):
+                    result.error = True
+                    result.abort_message = "Incomplete segmented SDO transfer"
+                    return result
+
                 if total_size > 0:
                     result.data = bytes(assembled[:total_size])
                 else:
@@ -363,7 +411,7 @@ class CANopenMixin:
             remaining = end_time - time.time()
             if remaining <= 0:
                 break
-            msg = bus.recv(timeout=min(remaining, 0.05))
+            msg = self._safe_recv(bus, min(remaining, 0.05))
             if msg is None:
                 continue
             if msg.arbitration_id == sdo_tx_id and not msg.is_remote_frame:
@@ -544,7 +592,7 @@ class CANopenMixin:
             remaining = end_time - time.time()
             if remaining <= 0:
                 break
-            msg = bus.recv(timeout=min(remaining, 0.5))
+            msg = self._safe_recv(bus, min(remaining, 0.5))
             if msg is None:
                 continue
 
@@ -607,7 +655,7 @@ class CANopenMixin:
             remaining = end_time - time.time()
             if remaining <= 0:
                 break
-            msg = bus.recv(timeout=min(remaining, 0.5))
+            msg = self._safe_recv(bus, min(remaining, 0.5))
             if msg is None:
                 continue
 

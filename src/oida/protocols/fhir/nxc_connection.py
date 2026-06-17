@@ -276,6 +276,12 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         hostname = parsed.hostname
         port = parsed.port or 443
 
+        # Snapshot the slice of the shared logger.findings accumulator that the
+        # certificate probe contributes, so _analyze_security can pull only the
+        # cert findings instead of relabeling every accumulated finding (auth,
+        # brute force, ...) as CERTIFICATE.
+        cert_start_idx = len(self.logger.findings)
+
         check_tls_certificate(
             host=hostname,
             port=port,
@@ -284,6 +290,8 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             timeout=10,
             verbose=getattr(self.args, "verbose", 0) > 0,
         )
+
+        self._cert_findings = list(self.logger.findings[cert_start_idx:])
 
     def enum_host_info(self) -> bool:
         """Retrieve and parse CapabilityStatement. Returns False on fatal errors."""

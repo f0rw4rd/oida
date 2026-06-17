@@ -91,7 +91,7 @@ class RsyncPassiveListener(PySharkListenerBase):
         hdr_magic = str(self.get_field(rsync, "hdr_magic", "") or "")
         hdr_version = str(self.get_field(rsync, "hdr_version", "") or "")
         query = str(self.get_field(rsync, "query", "") or "")
-        # motd, module_list, response are parsed from raw_data instead
+        # Motd, module_list, response are parsed from raw_data instead
         command = str(self.get_field(rsync, "command", "") or "")
         raw_data = str(self.get_field(rsync, "data", "") or "")
 

@@ -122,6 +122,7 @@ class can(ISOTPMixin, SerialConnection):
             "sniff-time": self.sniff_time,
             "filter-id": getattr(self.args, "filter_id", ""),
             "uds-scan": getattr(self.args, "uds_scan", False),
+            "uds-services": getattr(self.args, "uds_services", None),
             "verbose": getattr(self.args, "verbose", 0),
             "debug": getattr(self.args, "debug", False),
         }
@@ -324,13 +325,18 @@ class can(ISOTPMixin, SerialConnection):
         # Collect responses
         end_time = time.time() + 1.0
         while time.time() < end_time:
-            resp = self.conn.recv(timeout=0.1)
+            try:
+                resp = self.conn.recv(timeout=0.1)
+            except Exception:
+                # udp_multicast datagrams can coalesce under load, yielding
+                # msgpack decode failures; skip the corrupt packet and continue.
+                continue
             if resp is None:
                 continue
 
             if OBD2_RESPONSE_RANGE[0] <= resp.arbitration_id <= OBD2_RESPONSE_RANGE[1]:
                 data = bytes(resp.data)
-                if len(data) >= 6 and data[1] == 0x41 and data[2] == 0x00:
+                if len(data) >= 7 and data[1] == 0x41 and data[2] == 0x00:
                     # Parse supported PIDs bitmap
                     bitmap = (data[3] << 24) | (data[4] << 16) | (data[5] << 8) | data[6]
                     supported = []
@@ -441,6 +447,14 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_xcp_scan(self) -> None:
         """Handle XCP protocol discovery scan."""
+        # scan_xcp sends a CONNECT to every arbitration ID (0x000-0x7FF) —
+        # comparable bus load to --id-scan, so gate it the same way.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--xcp-scan sends XCP CONNECT to every arbitration ID "
+                "(disruptive on live bus) — requires --confirm"
+            )
+            return
         xcp_results = self.scanner.scan_xcp(self.conn)
 
         self.results["data"]["xcp_results"] = []
@@ -525,6 +539,14 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_ccp_scan(self) -> None:
         """Handle CCP protocol discovery scan."""
+        # scan_ccp broadcasts CONNECT across all 256 station addresses —
+        # comparable bus load to --id-scan, so gate it the same way.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--ccp-scan sends CCP CONNECT to all 256 station addresses "
+                "(disruptive on live bus) — requires --confirm"
+            )
+            return
         cro_id = int(getattr(self.args, "ccp_cro_id", None) or "0x701", 0)
         dto_id = int(getattr(self.args, "ccp_dto_id", None) or "0x702", 0)
 

@@ -24,7 +24,6 @@ class ProtocolAuthenticator(ABC):
             protocol_name: Protocol name for logging
         """
         self._log = get_logger(f"AUTH-{protocol_name}", "auth", 0)
-        self._protocol_name = protocol_name
 
     @abstractmethod
     def authenticate(self, connection) -> bool:
@@ -70,10 +69,6 @@ class UsernamePasswordAuth(ProtocolAuthenticator):
         self,
         username: str,
         password: str,
-        user_cmd_fmt: str = "USER {}\r\n",
-        pass_cmd_fmt: str = "PASS {}\r\n",
-        user_ok_codes: Optional[list] = None,
-        pass_ok_codes: Optional[list] = None,
         protocol_name: str = "AUTH",
     ):
         """Initialize username/password authenticator.
@@ -81,19 +76,15 @@ class UsernamePasswordAuth(ProtocolAuthenticator):
         Args:
             username: Username for authentication
             password: Password for authentication
-            user_cmd_fmt: Format string for USER command (with {} placeholder)
-            pass_cmd_fmt: Format string for PASS command (with {} placeholder)
-            user_ok_codes: Acceptable response codes for USER (default: [331])
-            pass_ok_codes: Acceptable response codes for PASS (default: [230])
             protocol_name: Protocol name for logging
         """
         super().__init__(protocol_name)
         self.username = username
         self.password = password
-        self.user_cmd_fmt = user_cmd_fmt
-        self.pass_cmd_fmt = pass_cmd_fmt
-        self.user_ok_codes = user_ok_codes or [331]
-        self.pass_ok_codes = pass_ok_codes or [230]
+        self.user_cmd_fmt = "USER {}\r\n"
+        self.pass_cmd_fmt = "PASS {}\r\n"
+        self.user_ok_codes = [331]
+        self.pass_ok_codes = [230]
 
     def authenticate(self, conn) -> bool:
         """Perform USER/PASS authentication.
@@ -332,23 +323,3 @@ class MQTTAuthenticator(ProtocolAuthenticator):
                 byte |= 0x80
             result += bytes([byte])
         return result if result else b"\x00"
-
-
-class NoAuthenticator(ProtocolAuthenticator):
-    """Null authenticator for protocols that don't require authentication."""
-
-    def __init__(self, protocol_name: str = "NOAUTH"):
-        super().__init__(protocol_name)
-
-    def authenticate(self, conn) -> bool:
-        """Always returns True (no authentication needed)."""
-        self._log.debug("No authentication required")
-        return True
-
-    def validate(self, conn) -> bool:
-        """Always returns True."""
-        return True
-
-    def get_credentials(self) -> Dict[str, str]:
-        """Return empty credentials."""
-        return {}

@@ -429,7 +429,7 @@ class TestAnalyzeSecurity(unittest.TestCase):
                 "cors_enabled": False,
             }
         }
-        host.logger.findings = [
+        host._cert_findings = [
             {"title": "Self-signed cert", "detail": "Certificate is self-signed"}
         ]
 

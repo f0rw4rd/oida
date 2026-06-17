@@ -351,7 +351,8 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         self.enable_unsol = args.get("enable-unsol", False)
         self.disable_unsol = args.get("disable-unsol", False)
 
-        # Dead band configuration (Group 34)
+        # Dead band configuration (Group 34). The opendnp3 binding always emits
+        # G34V3 (float) on the wire; deadband_type is recorded as metadata only.
         self.write_deadband = args.get("write-deadband", None)
         self.deadband_type = args.get("deadband-type", "float")
 
@@ -387,11 +388,16 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         # Address scanning
         self.scan_range = args.get("scan-range", None)
 
+        # Diagnostic/stealth: prefer no-ack (NR) variants where the stack
+        # supports them. opendnp3 only exposes NR for freeze, so --no-ack
+        # implies --freeze-no-ack rather than being a dead flag.
+        self.no_ack_mode = args.get("no-ack", False)
+
         # Freeze operations
         self.freeze_immediate = args.get("freeze-immediate", False)
         self.freeze_clear = args.get("freeze-clear", False)
         self.freeze_at_time = args.get("freeze-at-time", None)
-        self.freeze_no_ack = args.get("freeze-no-ack", False)
+        self.freeze_no_ack = args.get("freeze-no-ack", False) or self.no_ack_mode
 
         # Application control
         self.stop_app = args.get("stop-app", False)
@@ -741,9 +747,32 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
             return self._master
 
         except ICSConnectionError:
+            self._teardown_partial_connection()
             raise
         except Exception as e:
+            self._teardown_partial_connection()
             raise ICSConnectionError(str(e), protocol="DNP3")
+
+    def _teardown_partial_connection(self) -> None:
+        """Shut down any opendnp3 objects created before connect() failed.
+
+        Without this the DNP3Manager's worker threads (and the channel) leak on
+        every failed connect, which accumulates badly under range scanning.
+        """
+        for name in ("_master", "_channel", "_manager"):
+            obj = getattr(self, name, None)
+            if obj is not None:
+                try:
+                    obj.Shutdown()
+                except Exception as e:
+                    self.logger.debug(f"Error shutting down {name} after connect failure: {e}")
+                setattr(self, name, None)
+        self._connected = False
+        self._scan_handler = None
+        self._handler = None
+        self._app = None
+        self._chan_listener = None
+        self._log_handler = None
 
     def disconnect(self, _connection: Any) -> None:
         """Clean up DNP3 connection resources."""
@@ -806,6 +835,8 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
             self._perform_analog_control(results, "direct_operate")
         if self.ao_sbo is not None:
             self._perform_analog_control(results, "sbo")
+        if self.file_auth:
+            self._authenticate_file(results)
         if self.list_dir:
             self._list_directory(results)
         if self.read_file:

@@ -23,7 +23,7 @@ class SecurityMixin:
                     "description": "Broker accepts connections without credentials",
                 }
             )
-            self.logger.security_finding("Anonymous access allowed")
+            self.logger.security_finding("Anonymous access", detail="Anonymous authentication allowed")
 
         # $SYS exposure
         sys_count = results.get("broker_info", {}).get("sys_topic_count", 0)

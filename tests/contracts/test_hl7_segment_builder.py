@@ -15,12 +15,14 @@ from __future__ import annotations
 import ast
 import pathlib
 
+from tests._ast_safe import safe_parse
+
 HL7_ROOT = pathlib.Path(__file__).resolve().parents[2] / "src" / "oida" / "protocols" / "hl7"
 
 
 def _builder_methods() -> set[str]:
     """Collect every `def build_<x>` defined on HL7SegmentBuilder."""
-    tree = ast.parse((HL7_ROOT / "segments.py").read_text())
+    tree = safe_parse((HL7_ROOT / "segments.py").read_text())
     out: set[str] = set()
     for cls in ast.walk(tree):
         if isinstance(cls, ast.ClassDef) and cls.name == "HL7SegmentBuilder":
@@ -38,7 +40,7 @@ def _builder_call_sites() -> set[tuple[str, str]]:
         if py.name == "segments.py":
             continue
         try:
-            tree = ast.parse(py.read_text())
+            tree = safe_parse(py.read_text())
         except SyntaxError:
             continue
         for node in ast.walk(tree):

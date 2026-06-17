@@ -44,7 +44,7 @@ class IPv4ResolveScanner:
         }
         scanner = IPv4ResolveScanner(interface="eth0", macs_to_resolve=macs_to_resolve)
         results = scanner.scan()
-        # results maps MAC -> DiscoveredDevice with IPv4 added
+        # Results maps MAC -> DiscoveredDevice with IPv4 added
     """
 
     def __init__(

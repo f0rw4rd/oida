@@ -20,6 +20,14 @@ import random
 
 from oida.utils.ics_logger import get_logger, get_module_logger
 
+try:
+    from termcolor import colored
+except ImportError:
+
+    def colored(text, *args, **kwargs):
+        return text
+
+
 # Module logger
 logger = get_module_logger(__name__)
 
@@ -67,6 +75,45 @@ WELL_KNOWN_PORTS = {
     "iccp": 102,
     "http2": 443,
 }
+
+
+def _split_target_port(target):
+    """Split an optional embedded port off a fuzzer target.
+
+    Accepts ``host:port`` and bracketed IPv6 ``[::1]:port`` forms, returning a
+    socket-ready host (brackets stripped) and the parsed port. Bare IPv6
+    (``::1``, ``2001:db8::1``) and malformed ports are left untouched.
+
+    Returns:
+        tuple[str, int | None]: (host, port) where port is None if absent/invalid.
+    """
+
+    def _valid_port(s):
+        return s.isdigit() and 1 <= int(s) <= 65535
+
+    if not target:
+        return target, None
+
+    # Bracketed IPv6: [::1] or [::1]:8080
+    if target.startswith("["):
+        close = target.find("]")
+        if close != -1:
+            host = target[1:close]
+            rest = target[close + 1 :]
+            if rest.startswith(":") and _valid_port(rest[1:]):
+                return host, int(rest[1:])
+            return host, None
+        return target.strip("[]"), None
+
+    # Exactly one colon -> host:port (IPv4 or hostname)
+    if target.count(":") == 1:
+        host, port_str = target.rsplit(":", 1)
+        if _valid_port(port_str):
+            return host, int(port_str)
+        return target, None
+
+    # Zero colons, or 2+ colons (bare IPv6) -> host only
+    return target.strip("[]"), None
 
 
 def setup_fuzz_logging(verbose: bool = False):
@@ -296,11 +343,59 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         help="Delay between test cases in seconds (default: 0.0)",
     )
     fuzz_parser.add_argument(
-        "--monitor-retry-delay",
+        "--script-monitor",
+        type=str,
+        metavar="CMD",
+        dest="script_monitor",
+        help="External health-check command run between test cases; exit 0 = healthy "
+        "(e.g. --script-monitor \"ssh plc 'pidof runtime >/dev/null'\")",
+    )
+    fuzz_parser.add_argument(
+        "--valid-case",
+        type=str,
+        metavar="HEX",
+        dest="valid_case",
+        help="Hex bytes of a known-good request; sent between test cases to verify the "
+        "target still answers correctly (protocol-agnostic valid-case probe)",
+    )
+    fuzz_parser.add_argument(
+        "--valid-case-expect",
+        type=str,
+        metavar="HEX",
+        dest="valid_case_expect",
+        help="Hex substring that must appear in the valid-case reply (default: strict "
+        "baseline match). Use when replies vary, e.g. embedded timestamps",
+    )
+    fuzz_parser.add_argument(
+        "--agent-monitor",
+        type=str,
+        metavar="HOST:PORT",
+        dest="agent_monitor",
+        help="Query an on-target oida-fuzzing-agent (separate repo) for real "
+        "crash/exit/hang detection (e.g. --agent-monitor 10.0.0.5:5555)",
+    )
+    fuzz_parser.add_argument(
+        "--agent-token",
+        type=str,
+        metavar="SECRET",
+        dest="agent_token",
+        help="Shared secret for the oida-fuzzing-agent handshake (--agent-monitor)",
+    )
+    fuzz_parser.add_argument(
+        "--restart-command",
+        type=str,
+        metavar="CMD",
+        dest="restart_command",
+        help="Command run once per crash to bring the target back up, then resume "
+        '(e.g. --restart-command "docker restart plc")',
+    )
+    fuzz_parser.add_argument(
+        "--restart-delay",
         type=float,
-        default=0.1,
+        default=2.0,
         metavar="SECONDS",
-        help="Delay between monitor retry attempts (default: 0.1s)",
+        dest="restart_delay",
+        help="Seconds to wait after the restart command before re-probing (default: 2.0)",
     )
     fuzz_parser.add_argument(
         "--recv-timeout",
@@ -441,7 +536,7 @@ def handle_fuzz_command(args):
 
     # Handle 'replay' command
     if fuzz_protocol == "replay":
-        # target becomes session name for replay
+        # Target becomes session name for replay
         args.session = target
         return handle_replay_command(args)
 
@@ -465,13 +560,6 @@ def handle_fuzz_command(args):
 def show_fuzz_help():
     """Show comprehensive fuzz help with all protocols listed"""
     from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
-
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
 
     print()
     print(colored("[!]", "yellow", attrs=["bold"]) + " Protocol is required")
@@ -515,13 +603,6 @@ def show_fuzz_help():
 def handle_list_command(args):
     """List available protocol fuzzers with NXC-style output"""
     from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
-
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
 
     category_filter = getattr(args, "category", None)
     with_options = getattr(args, "with_options", False)
@@ -576,13 +657,6 @@ def handle_list_command(args):
 
 def handle_replay_command(args):
     """Replay test cases from a session with NXC-style output"""
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
-
     session = getattr(args, "session", None)
 
     if not session:
@@ -715,14 +789,7 @@ def handle_replay_command(args):
 
 def show_protocol_usage(protocol):
     """Show comprehensive usage help when target is missing"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_TO_CATEGORY
-
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
+    from .fuzz.protocols import PROTOCOL_FUZZERS
 
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -733,7 +800,6 @@ def show_protocol_usage(protocol):
 
     # Get protocol info - check for default port in config or well-known ports
     default_port = getattr(fuzzer_class, "default_port", None) or WELL_KNOWN_PORTS.get(protocol, 0)
-    PROTOCOL_TO_CATEGORY.get(protocol, "unknown")
 
     print()
     print(
@@ -760,7 +826,6 @@ def show_protocol_usage(protocol):
     print("  --seed SEED              Random seed for reproducibility")
     print("  --check-interval N       Monitor check interval (default: 100)")
     print("  -R, --reuse-connection   Reuse TCP connection (faster, less stable)")
-    print("  --monitor-retry-delay N  Delay between retries (default: 0.1s)")
 
     # Show full protocol-specific options
     try:
@@ -793,13 +858,6 @@ def show_protocol_options(protocol):
     from .fuzz.protocols import PROTOCOL_FUZZERS
 
     try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
-
-    try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
     except KeyError:
         logger.error(f"Unknown protocol: {protocol}")
@@ -821,13 +879,6 @@ def show_protocol_options(protocol):
 def show_protocol_requests(protocol):
     """Show available requests for a protocol with NXC-style output"""
     from .fuzz.protocols import PROTOCOL_FUZZERS
-
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
 
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -856,13 +907,6 @@ def run_fuzzing(args, protocol, target):
     from .fuzz.protocols import PROTOCOL_FUZZERS
     from .fuzz import FuzzerApplication
 
-    try:
-        from termcolor import colored
-    except ImportError:
-
-        def colored(text, *args, **kwargs):
-            return text
-
     # Validate protocol
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -871,24 +915,28 @@ def run_fuzzing(args, protocol, target):
         print("Use 'oida fuzz list' to see available protocols")
         return 1
 
-    # Get default port - check fuzzer class attribute first, then well-known ports
+    # Auto-parse an embedded port from the target (e.g. 127.0.0.1:8080, [::1]:8080)
+    target, embedded_port = _split_target_port(target)
+
+    # Get default port - explicit --port flag wins, then embedded port, then defaults
     user_port = getattr(args, "port", None)
     default_port = getattr(fuzzer_class, "default_port", None) or WELL_KNOWN_PORTS.get(protocol, 0)
-    port = user_port if user_port else default_port
-    display_port = port
+    port = user_port or embedded_port or default_port
 
     # Create ICSLogger and set global context for consistent output
     verbose = getattr(args, "verbose", False)
-    fuzz_logger = get_logger(f"FUZZ-{protocol.upper()}", target, display_port, verbose=verbose)
+    fuzz_logger = get_logger(f"FUZZ-{protocol.upper()}", target, port, verbose=verbose)
 
     # Set global context so internal modules can use ics_logger helper functions
     from oida.utils.ics_logger import set_context
 
-    set_context(f"FUZZ-{protocol.upper()}", target, display_port, verbose=verbose)
+    set_context(f"FUZZ-{protocol.upper()}", target, port, verbose=verbose)
 
     # Display banner (NXC-style)
     print()
     fuzz_logger.display(f"Fuzzer: {fuzzer_class.__name__}")
+    if embedded_port and not user_port:
+        fuzz_logger.display(f"Parsed target: {target}:{embedded_port}")
 
     # Handle seed
     seed = getattr(args, "seed", None)
@@ -932,7 +980,7 @@ def run_fuzzing(args, protocol, target):
 
             db = SQLAlchemyDatabase(db_path)
             db.init_schema()
-            stats = db.get_target_stats(target, display_port)
+            stats = db.get_target_stats(target, port)
             if stats["last_id"] and stats["last_id"] > 0:
                 resume_from = stats["last_id"] + 1
         except ImportError as e:
@@ -1060,7 +1108,6 @@ def run_fuzzing(args, protocol, target):
     else:
         wrapped.receive_data_after_each_request = wrapped.receive_data_after_fuzz
     wrapped.sleep_time = getattr(args, "sleep_time", 0.0)
-    wrapped.monitor_retry_delay = getattr(args, "monitor_retry_delay", 0.1)
     wrapped.recv_timeout = getattr(args, "recv_timeout", None)
     wrapped.send_timeout = getattr(args, "send_timeout", None)
     wrapped.reconnect_delay = getattr(args, "reconnect_delay", None)
@@ -1081,6 +1128,14 @@ def run_fuzzing(args, protocol, target):
     wrapped.enumerate = getattr(args, "enumerate", True)
     # Crash handling
     wrapped.pause_on_crash = getattr(args, "pause_on_crash", False)
+    # Platform-feature monitors (script / valid-case) + auto-restart
+    wrapped.script_monitor = getattr(args, "script_monitor", None)
+    wrapped.valid_case = getattr(args, "valid_case", None)
+    wrapped.valid_case_expect = getattr(args, "valid_case_expect", None)
+    wrapped.restart_command = getattr(args, "restart_command", None)
+    wrapped.restart_delay = getattr(args, "restart_delay", 2.0)
+    wrapped.agent_monitor = getattr(args, "agent_monitor", None)
+    wrapped.agent_token = getattr(args, "agent_token", None)
 
     # Run application (enumeration happens during fuzzer creation)
     print()

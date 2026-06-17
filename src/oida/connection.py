@@ -358,9 +358,11 @@ class NetworkConnection(connection):
         # port was unset, so a user-supplied -p value persisted on the
         # shared Namespace and bled into every subsequent protocol
         # invocation in the same process (CLI uses a process-wide
-        # Namespace). Copying unconditionally is cheap (Namespace is
-        # shallow) and prevents that leak entirely.
-        args = copy.copy(args)
+        # Namespace). Deep-copy so that mutable attributes (lists/dicts/sets,
+        # e.g. scan_range) are not aliased across the two Layer-2 protocols a
+        # single process may run — a shallow copy left those shared and an
+        # in-place mutation bled into the next invocation.
+        args = copy.deepcopy(args)
         if hasattr(self, "default_port") and not getattr(args, "port", None):
             args.port = self.default_port
 
@@ -433,14 +435,14 @@ class SerialConnection(connection):
         Returns:
             dict: Interface info (MAC, MTU, etc.)
         """
-        import netifaces
+        from .utils import iface_info
 
         try:
-            addrs = netifaces.ifaddresses(self.interface)
+            addrs = iface_info.ifaddresses(self.interface)
             return {
                 "interface": self.interface,
-                "mac": addrs.get(netifaces.AF_LINK, [{}])[0].get("addr"),
-                "ipv4": addrs.get(netifaces.AF_INET, [{}])[0].get("addr"),
+                "mac": addrs.get(iface_info.AF_LINK, [{}])[0].get("addr"),
+                "ipv4": addrs.get(iface_info.AF_INET, [{}])[0].get("addr"),
             }
         except Exception as e:
             self.logger.debug(f"get interface info failed: {e}")

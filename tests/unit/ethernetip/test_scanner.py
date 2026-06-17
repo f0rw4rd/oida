@@ -7,7 +7,6 @@ Unit tests for EtherNet/IP (Industrial Ethernet protocol) scanner functionality.
 
 import unittest
 from unittest.mock import Mock, patch, MagicMock
-import pytest
 
 
 class MockEtherNetIPClient:
@@ -264,7 +263,6 @@ class TestEtherNetIPProtocolLogic(unittest.TestCase):
         self.assertIsInstance(rows, list)
 
 
-@pytest.mark.network
 class TestEtherNetIPMockOperations(unittest.TestCase):
     """Test EtherNet/IP operations with mocked dependencies"""
 
@@ -377,7 +375,6 @@ class TestEtherNetIPMockOperations(unittest.TestCase):
         self.assertIsInstance(device_info["tag_values"], dict)
 
 
-@pytest.mark.network
 class TestEtherNetIPErrorHandling(unittest.TestCase):
     """Test EtherNet/IP error handling"""
 

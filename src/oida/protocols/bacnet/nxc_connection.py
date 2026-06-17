@@ -217,6 +217,8 @@ class bacnet(
             self.args.test_write = False
             self.args.check_reinit = False
             self.args.check_oos = False
+            self.args.brute_force = False
+            self.args.test_dcc = False
 
         # Assessment shortcuts
         if getattr(self.args, "assess_network", False):
@@ -344,10 +346,16 @@ class bacnet(
                     await self._bacpypes3_check_auth(app, target_addr, device_id, timeout)
 
                 if getattr(self.args, "brute_force", False):
-                    await self._bacpypes3_brute_force(app, target_addr, device_id, timeout)
+                    if not getattr(self.args, "confirm", False):
+                        self.logger.fail("--brute-force requires --confirm flag")
+                    else:
+                        await self._bacpypes3_brute_force(app, target_addr, device_id, timeout)
 
                 if getattr(self.args, "test_dcc", False):
-                    await self._bacpypes3_test_dcc(app, target_addr, device_id, timeout)
+                    if not getattr(self.args, "confirm", False):
+                        self.logger.fail("--test-dcc requires --confirm flag")
+                    else:
+                        await self._bacpypes3_test_dcc(app, target_addr, device_id, timeout)
 
                 if getattr(self.args, "test_reinit_pass", False):
                     if not getattr(self.args, "confirm", False):

@@ -184,7 +184,6 @@ Examples:
     )
 
     write_group.add_argument(
-        "-cf",
         "--content-format",
         type=str,
         metavar="FMT",

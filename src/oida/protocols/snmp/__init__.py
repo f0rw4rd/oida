@@ -12,7 +12,7 @@ CLI examples:
     oida snmp 192.168.1.1 --snmp-version 3 --snmp-user admin
 """
 
-from .scanner import SNMPScanner, protocol_options, metadata, run
+from .scanner import SNMPScanner, protocol_options, metadata, run, scan_targets
 from .nxc_connection import snmp
 from .constants import (
     SNMP_OIDS,
@@ -29,6 +29,7 @@ __all__ = [
     "protocol_options",
     "metadata",
     "run",
+    "scan_targets",
     "SNMP_OIDS",
     "VENDOR_OIDS",
     "VENDOR_SPECIFIC_OIDS",

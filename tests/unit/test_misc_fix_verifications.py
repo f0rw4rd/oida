@@ -67,11 +67,21 @@ class TestSnap7ModuleLoggerRefactor(unittest.TestCase):
 class TestFuzzHttp2MonitorReturnsBool(unittest.TestCase):
     def test_post_send_returns_bool(self):
         """boofuzz IFuzzLogger contract requires bool return; the old
-        code returned None which boofuzz reads as 'crashed'."""
-        src = _read("src/oida/fuzz/monitors/http2.py")
-        # The fix returns True on uncheck cycles + bool(alive) otherwise.
-        self.assertIn("return bool(alive)", src)
-        self.assertIn("return True", src)
+        code returned None which boofuzz reads as 'crashed'.
+
+        post_send now lives on the shared ProtocolMonitor base (it returns
+        True on uncheck cycles and delegates to the bool-returning
+        _check_alive otherwise); the per-protocol HTTP/2 health probe is
+        _check_alive_once, which is annotated -> bool. Verify both honour
+        the bool contract rather than grepping a since-refactored literal.
+        """
+        base_src = _read("src/oida/fuzz/monitors/base.py")
+        self.assertIn("def post_send(", base_src)
+        self.assertIn("return True", base_src)
+        self.assertIn("return self._check_alive(", base_src)
+
+        http2_src = _read("src/oida/fuzz/monitors/http2.py")
+        self.assertIn("def _check_alive_once(self, fuzz_data_logger=None) -> bool:", http2_src)
 
 
 class TestAdsScanCoeUngated(unittest.TestCase):

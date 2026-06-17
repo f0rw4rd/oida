@@ -17,10 +17,7 @@ import sys
 import unittest
 from unittest.mock import Mock, patch
 
-import pytest
-
-# Tests spawn real subprocesses and/or instantiate hl7(...) which makes real socket connections
-pytestmark = pytest.mark.network
+from tests.unit.hl7.conftest import _make_hl7_instance
 
 
 class TestHL7HelpOutput(unittest.TestCase):
@@ -439,7 +436,6 @@ class TestHL7RequiredPatientData(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_adt_requires_patient_data(self):
         """Test ADT fails without patient ID or name"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = Mock()
         mock_args.port = 2575
@@ -487,7 +483,7 @@ class TestHL7RequiredPatientData(unittest.TestCase):
         mock_args.pr_type = ""
         mock_args.pr_practitioner = ""
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()  # Mock connection
 
@@ -500,7 +496,6 @@ class TestHL7RequiredPatientData(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_adt_succeeds_with_patient_id(self):
         """Test ADT succeeds with patient ID"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = Mock()
         mock_args.port = 2575
@@ -554,7 +549,7 @@ class TestHL7RequiredPatientData(unittest.TestCase):
         mock_args.probe_ops = False
         mock_args.output = None
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner._create_message_with_segments("ADT", "A01")
@@ -566,7 +561,6 @@ class TestHL7RequiredPatientData(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_orm_requires_patient_data(self):
         """Test ORM fails without patient data"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = Mock()
         mock_args.port = 2575
@@ -620,7 +614,7 @@ class TestHL7RequiredPatientData(unittest.TestCase):
         mock_args.probe_ops = False
         mock_args.output = None
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner._create_message_with_segments("ORM", "O01")
@@ -631,7 +625,6 @@ class TestHL7RequiredPatientData(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_siu_requires_patient_data(self):
         """Test SIU fails without patient data"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = Mock()
         mock_args.port = 2575
@@ -685,7 +678,7 @@ class TestHL7RequiredPatientData(unittest.TestCase):
         mock_args.probe_ops = False
         mock_args.output = None
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner._create_message_with_segments("SIU", "S12")
@@ -696,7 +689,6 @@ class TestHL7RequiredPatientData(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_oru_requires_patient_data(self):
         """Test ORU fails without patient data"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = Mock()
         mock_args.port = 2575
@@ -750,7 +742,7 @@ class TestHL7RequiredPatientData(unittest.TestCase):
         mock_args.probe_ops = False
         mock_args.output = None
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
 
         result = scanner._create_message_with_segments("ORU", "R01")
@@ -815,11 +807,10 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_adt_requires_confirm(self):
         """Test ADT (all triggers) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = self._create_mock_args()
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()
 
@@ -833,11 +824,10 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_orm_requires_confirm(self):
         """Test ORM (Order) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = self._create_mock_args()
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()
 
@@ -851,11 +841,10 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_oru_requires_confirm(self):
         """Test ORU (Observation Result) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = self._create_mock_args()
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()
 
@@ -869,11 +858,10 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_siu_requires_confirm(self):
         """Test SIU (Scheduling) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = self._create_mock_args()
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()
 
@@ -887,11 +875,10 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_mdm_requires_confirm(self):
         """Test MDM (Document) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = self._create_mock_args()
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()
 
@@ -905,7 +892,6 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_rx_requires_confirm(self):
         """Test RDE^O11 (Pharmacy Order) requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = self._create_mock_args()
         mock_args.rx_drug = "Amoxicillin"
@@ -918,7 +904,7 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
         mock_args.rx_refills = "0"
         mock_args.rx_provider = ""
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()
 
@@ -932,11 +918,10 @@ class TestHL7WriteOperationsRequireConfirm(unittest.TestCase):
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_custom_message_requires_confirm(self):
         """Test custom message type requires --confirm"""
-        from oida.protocols.hl7 import hl7
 
         mock_args = self._create_mock_args()
 
-        scanner = hl7(mock_args, None, "192.168.1.100")
+        scanner = _make_hl7_instance(mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
         scanner.conn = Mock()
 
@@ -1133,7 +1118,7 @@ class TestHL7ProtoArgsFactory(unittest.TestCase):
         args = hl7_parser.parse_args(["127.0.0.1"])
 
         # Check defaults
-        self.assertEqual(args.hl7_version, "2.5")
+        self.assertIsNone(args.hl7_version)  # None = auto-detect, fall through to 2.5
         self.assertEqual(args.sending_app, "OIDA")
         self.assertEqual(args.sending_facility, "SECURITY")
         self.assertEqual(args.adt_trigger, "A01")

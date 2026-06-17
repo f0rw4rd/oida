@@ -42,7 +42,9 @@ Examples:
     add_network_options(astm_parser, default_port=12000)
 
     # TLS Options (--tls, --tls-cert, --tls-key, --tls-ca, --tls-insecure)
-    add_tls_options(astm_parser, default_tls_port=1395)
+    # No default_tls_port: create_conn_obj() always uses --port (default 12000)
+    # and does not switch ports for --tls, so the help must not claim it does.
+    add_tls_options(astm_parser)
 
     # Discovery Options (--discover, --quick, --full, --deep-scan)
     add_discovery_options(astm_parser)

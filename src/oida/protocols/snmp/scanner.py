@@ -124,7 +124,7 @@ class SNMPScanner(
         # Unified -C/--auth parsing: colon-separated = v3, plain = community
         auth_value = args.get("auth") or args.get("community", "public")
         if ":" in auth_value:
-            # v3 format: user:authpass[:privpass]
+            # V3 format: user:authpass[:privpass]
             parts = auth_value.split(":", 2)
             self._version_auto = False
             self.version = "3"
@@ -376,7 +376,7 @@ class SNMPScanner(
                             f"(supported: {', '.join('v' + v for v in supported)})"
                         )
 
-                    # v3 auto-selected but no credentials provided
+                    # V3 auto-selected but no credentials provided
                     if best == "3" and not self.username:
                         self.logger.fail(
                             "SNMPv3 detected but no credentials provided -- "
@@ -518,6 +518,12 @@ class SNMPScanner(
 
             # Phase 2b: Write access test (if requested)
             if self.test_write:
+                if not self.confirm_brute:
+                    self.logger.fail(
+                        "--test-write requires --confirm flag "
+                        "(e.g. oida snmp <target> --test-write --confirm)"
+                    )
+                    return results
                 engine, auth_data, transport, context = connection
                 write_result = self._check_write_access(engine, auth_data, transport, context)
                 results["write_access"] = write_result
@@ -725,6 +731,48 @@ class SNMPScanner(
         sys_info = result.get("sys_info", {})
         if not sys_info.get("sysContact") and not sys_info.get("sysLocation"):
             self.logger.warning("sysContact and sysLocation not configured")
+
+
+def scan_targets(targets, **kwargs):
+    """Multi-target scan for discovery integration.
+
+    Args:
+        targets: List of IP addresses to scan
+        **kwargs: SNMP parameters (community, version, port, timeout, etc.)
+
+    Returns:
+        Dict mapping IP -> result dict
+    """
+    from ...utils import ics_logger as _log
+
+    results = {}
+    for target in targets:
+        args = {
+            "host": target,
+            "port": kwargs.get("port", 161),
+            "timeout": kwargs.get("timeout", 2),
+            "community": kwargs.get("community", "public"),
+            "snmp_version": kwargs.get("version", "2c"),
+            "snmp_user": kwargs.get("username", ""),
+            "snmp_auth_protocol": kwargs.get("auth_protocol", "SHA"),
+            "snmp_auth_pass": kwargs.get("auth_pass", ""),
+            "snmp_priv_protocol": kwargs.get("priv_protocol", "AES128"),
+            "snmp_priv_pass": kwargs.get("priv_pass", ""),
+            "snmp_security_level": kwargs.get("security_level", "authPriv"),
+        }
+        try:
+            scanner = SNMPScanner(args)
+            connection = scanner.connect()
+            if connection:
+                result = scanner.discover(connection)
+                if result:
+                    results[target] = result
+                scanner.disconnect(connection)
+        except Exception as e:
+            _log.log_debug(f"SNMP scan failed for {target}: {e}")
+
+    _log.log_info(f"SNMP found {len(results)} devices from {len(targets)} targets")
+    return results
 
 
 # Module-level exports

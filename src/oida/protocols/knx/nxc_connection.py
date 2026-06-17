@@ -234,10 +234,16 @@ class knx(NetworkConnection):
 
         result = {"ip": ip, "port": 3671, "services": {}}
 
-        # Parse HPAI (8 bytes starting at offset 6)
+        # Parse HPAI (8 bytes starting at offset 6):
+        #   [0]=length [1]=protocol [2:6]=IPv4 addr [6:8]=port (big-endian)
+        # Decode the advertised control-endpoint port instead of assuming the
+        # default 3671 (gateways behind NAT/port-forward advertise their real
+        # port here, which follow-up tunnels need).
         offset = 6
         if len(data) > offset + 8:
             hpai_len = data[offset]
+            if hpai_len >= 8 and offset + hpai_len <= len(data):
+                result["port"] = (data[offset + 6] << 8) | data[offset + 7]
             if hpai_len > 0 and offset + hpai_len <= len(data):
                 offset += hpai_len
             else:

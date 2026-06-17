@@ -4,17 +4,15 @@ import threading
 import time
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from enum import IntEnum, auto
 from typing import Any, Dict, List, Optional
 
 import urllib3
 from boofuzz.exception import BoofuzzFailure
 from boofuzz.monitors import BaseMonitor
 
-from ..core.session.commands import CommandRunner, RealCommandRunner
-from ..core.config import FuzzerConfig
+from ..core.session.commands import RealCommandRunner
 from ..core.calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
-from ...utils.ics_logger import get_logger, ICSLogger
+from ...utils.ics_logger import get_logger
 
 # Disable SSL warnings for fuzzing contexts
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -32,35 +30,16 @@ class ProtocolBaseline:
         parsed_fields: Protocol-specific parsed data (function codes, status codes, etc.)
         timestamp: Unix timestamp when baseline was established
         response_length: Length of the baseline response
-        rtt: Most recent measured round-trip time of a health probe, in seconds
     """
 
     raw_response: bytes
     parsed_fields: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
-    response_length: int = field(default=0)
-    rtt: Optional[float] = None
 
-    def __post_init__(self):
-        """Set response_length from raw_response if not provided."""
-        if self.response_length == 0 and self.raw_response:
-            self.response_length = len(self.raw_response)
-
-    def matches(self, current_response: bytes, fields_to_check: Optional[List[str]] = None) -> bool:
-        """Check if a current response matches this baseline.
-
-        Args:
-            current_response: The response to compare
-            fields_to_check: Optional list of parsed_fields keys to check.
-                           If None, compares raw_response bytes.
-
-        Returns:
-            True if responses match, False otherwise
-        """
-        if fields_to_check is None:
-            return current_response == self.raw_response
-        # Field-based comparison would be done by subclasses
-        return True
+    @property
+    def response_length(self) -> int:
+        """Length of the baseline response."""
+        return len(self.raw_response) if self.raw_response else 0
 
     def get_field(self, name: str, default: Any = None) -> Any:
         """Get a parsed field value."""
@@ -78,7 +57,6 @@ class CrashEvent:
     monitor_name: str
     reason: str
     recovered: bool = False
-    recovery_time: Optional[float] = None
 
 
 class CrashTracker:
@@ -98,7 +76,7 @@ class CrashTracker:
 
         # Query crash state
         if tracker.is_crashed:
-            print(f"Crashed at test case {tracker.last_crash.test_case_id}")
+            print("Target is currently crashed")
         print(f"Total crashes: {tracker.crash_count}")
     """
 
@@ -108,6 +86,9 @@ class CrashTracker:
         self._crashes: List[CrashEvent] = []
         self._is_crashed = False
         self._last_crash: Optional[CrashEvent] = None
+        # Set once per crash episode by the first monitor that runs the restart
+        # command, so monitors sharing a tracker don't each restart the target.
+        self._restart_claimed = False
 
     @property
     def is_crashed(self) -> bool:
@@ -120,18 +101,6 @@ class CrashTracker:
         """Total number of crashes detected."""
         with self._lock:
             return len(self._crashes)
-
-    @property
-    def last_crash(self) -> Optional[CrashEvent]:
-        """Most recent crash event."""
-        with self._lock:
-            return self._last_crash
-
-    @property
-    def unrecovered_crashes(self) -> List[CrashEvent]:
-        """Crashes that haven't been recovered from."""
-        with self._lock:
-            return [c for c in self._crashes if not c.recovered]
 
     def record_crash(
         self,
@@ -179,14 +148,23 @@ class CrashTracker:
                 return False
 
             self._last_crash.recovered = True
-            self._last_crash.recovery_time = time.time()
             self._is_crashed = False
+            self._restart_claimed = False
             return True
 
-    def get_crashes(self) -> List[CrashEvent]:
-        """Get all recorded crash events."""
+    def claim_restart(self) -> bool:
+        """Atomically claim the right to restart the target for the current crash.
+
+        Returns True for exactly one caller per crash episode (and only while the
+        target is in a crashed state); subsequent callers get False until the next
+        recovery resets the claim. This lets several monitors share a tracker without
+        each firing the restart command.
+        """
         with self._lock:
-            return self._crashes.copy()
+            if self._is_crashed and not self._restart_claimed:
+                self._restart_claimed = True
+                return True
+            return False
 
     def get_crash_summary(self) -> Dict[str, Any]:
         """Get summary of crash statistics."""
@@ -201,21 +179,6 @@ class CrashTracker:
                 ),
                 "monitors_with_crashes": list(set(c.monitor_name for c in self._crashes)),
             }
-
-    def reset(self):
-        """Reset all crash state (use with caution)."""
-        with self._lock:
-            self._crashes = []
-            self._is_crashed = False
-            self._last_crash = None
-
-
-class IEC104States(IntEnum):
-    """IEC 60870-5-104 connection states."""
-
-    DISCONNECTED = auto()
-    ACTIVE = auto()
-    ERROR = auto()
 
 
 class ProtocolMonitor(BaseMonitor):
@@ -253,11 +216,22 @@ class ProtocolMonitor(BaseMonitor):
         max_recovery_attempts: int = 5,
         session_filename: Optional[str] = None,
         crash_tracker: Optional[CrashTracker] = None,
+        restart_command: Optional[List[str]] = None,
+        restart_delay: float = 2.0,
+        command_runner: Optional[Any] = None,
     ):
         # Connection parameters
         self.host = host
         self.port = port
         self.timeout = timeout
+
+        # Auto-restart-and-resume: run restart_command once per crash episode before
+        # re-probing, so a long run survives a DoS without manual intervention.
+        self.restart_command = list(restart_command) if restart_command else None
+        self.restart_delay = restart_delay
+        if command_runner is None and self.restart_command:
+            command_runner = RealCommandRunner()
+        self.command_runner = command_runner
 
         # Check settings
         self.check_interval = check_interval
@@ -276,7 +250,6 @@ class ProtocolMonitor(BaseMonitor):
 
         # Online timeout adaptation (armed by the calibration phase when enabled).
         # Stay None for the static default behavior.
-        self.last_rtt: Optional[float] = None
         self.rto_estimator: Optional[RtoEstimator] = None
         self.drift_detector: Optional[DriftDetector] = None
 
@@ -405,9 +378,6 @@ class ProtocolMonitor(BaseMonitor):
 
     def _record_rtt(self, rtt: float) -> None:
         """Store a clean probe RTT and, if armed, adapt the timeout / watch for drift."""
-        self.last_rtt = rtt
-        if self.baseline is not None:
-            self.baseline.rtt = rtt
         if self.rto_estimator is not None:
             self.timeout = self.rto_estimator.update(rtt)
         if self.drift_detector is not None and self.drift_detector.add(rtt):
@@ -483,6 +453,41 @@ class ProtocolMonitor(BaseMonitor):
             )
             fuzz_data_logger.log_fail(crash_msg)
 
+    def _should_restart(self) -> bool:
+        """Whether this monitor should fire the restart command now.
+
+        Deduped via the shared CrashTracker when present (one restart per crash
+        across all monitors); falls back to "first recovery attempt" when the
+        monitor runs standalone without a tracker.
+        """
+        if not self.restart_command or self.command_runner is None:
+            return False
+        if self.crash_tracker is not None:
+            return self.crash_tracker.claim_restart()
+        return self.recovery_attempts == 1
+
+    def _maybe_restart_target(self, fuzz_data_logger=None) -> None:
+        """Run the configured restart command once per crash, then wait restart_delay."""
+        if not self._should_restart():
+            return
+
+        cmd_str = " ".join(self.restart_command)
+        self.logger.display(f"Restarting target: {cmd_str}")
+        if fuzz_data_logger:
+            fuzz_data_logger.log_info(f"Running restart command: {cmd_str}")
+        try:
+            result = self.command_runner.run(self.restart_command, capture_output=True, timeout=30)
+            rc = getattr(result, "returncode", None)
+            if rc not in (None, 0):
+                self.logger.warning(f"Restart command exited with code {rc}")
+        except Exception as e:
+            self.logger.warning(f"Restart command failed: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"Restart command failed: {e}")
+
+        if self.restart_delay > 0:
+            time.sleep(self.restart_delay)
+
     def _try_recovery(self, fuzz_data_logger=None) -> bool:
         """Attempt to recover from crash state with limit.
 
@@ -515,6 +520,9 @@ class ProtocolMonitor(BaseMonitor):
             f"Recovery attempt {self.recovery_attempts}/{self.max_recovery_attempts} "
             f"(crashed at test case {tc})"
         )
+
+        # Auto-restart the target once per crash episode before re-probing.
+        self._maybe_restart_target(fuzz_data_logger)
 
         # Try single check
         if self._check_alive_once(fuzz_data_logger):
@@ -628,13 +636,9 @@ class ProtocolMonitor(BaseMonitor):
 __all__ = [
     "BaseMonitor",
     "BoofuzzFailure",
-    "CommandRunner",
     "CrashEvent",
     "CrashTracker",
     "RealCommandRunner",
-    "FuzzerConfig",
-    "IEC104States",
-    "ICSLogger",
     "ProtocolBaseline",
     "ProtocolMonitor",
 ]

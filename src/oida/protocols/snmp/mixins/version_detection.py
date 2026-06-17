@@ -229,20 +229,26 @@ class VersionDetectionMixin(_ScannerBase):
         if fmt == 1 and len(payload) >= 4:
             # IPv4 address
             info["decoded"] = socket.inet_ntoa(payload[:4])
+            info["format_name"] = "IPv4"
         elif fmt == 2 and len(payload) >= 16:
             # IPv6 address
             info["decoded"] = socket.inet_ntop(socket.AF_INET6, payload[:16])
+            info["format_name"] = "IPv6"
         elif fmt == 3 and len(payload) >= 6:
             # MAC address
             info["decoded"] = ":".join(f"{b:02x}" for b in payload[:6])
+            info["format_name"] = "MAC"
         elif fmt == 4:
             # Text
             info["decoded"] = payload.decode("utf-8", errors="replace")
+            info["format_name"] = "text"
         elif fmt == 5:
             # Octets
             info["decoded"] = payload.hex()
+            info["format_name"] = "octets"
         else:
             # Enterprise-specific or unknown
             info["decoded"] = payload.hex()
+            info["format_name"] = f"enterprise-specific({fmt})"
 
         return info

@@ -11,8 +11,7 @@ Test Classification Summary
 Category A (strict -- mock validates exact data):                 124 tests
 Category B (conditional -- mock may not support, accept pass/fail):  2 tests
 Category C (error handling -- assert graceful failure):            19 tests
-Skipped (untestable -- requires raw socket / hardware):             4 tests
-Total:                                                            149 tests
+Total:                                                            145 tests
 ---------------------------------------------------------------------------
 
 Recent Code Fixes Verified:
@@ -59,7 +58,6 @@ import tempfile
 import unittest
 from unittest.mock import Mock
 
-import pytest
 
 from oida.protocols.ethercat import EtherCATScanner, ethercat, protocol_options, metadata
 from oida.protocols.ethercat.constants import (
@@ -1082,8 +1080,8 @@ class TestCoeOperations(unittest.TestCase):
         self.assertEqual(val_str, "")
 
     def test_test_sdo_write_access_success(self):
-        """Test SDO write access test (same-value write) [Category A]"""
-        scanner = _make_scanner()
+        """Test SDO write access test (same-value write) requires --confirm [Category A]"""
+        scanner = _make_scanner(confirm=True)
         mock_slave = Mock()
         mock_slave.sdo_write = Mock()
         data = bytes([0x42])
@@ -1092,9 +1090,19 @@ class TestCoeOperations(unittest.TestCase):
         self.assertTrue(result)
         mock_slave.sdo_write.assert_called_once_with(0x7000, 1, data)
 
+    def test_test_sdo_write_access_gated_without_confirm(self):
+        """Without --confirm, write-access probing is skipped (no write) [Category A]"""
+        scanner = _make_scanner()
+        mock_slave = Mock()
+        mock_slave.sdo_write = Mock()
+
+        result = scanner._test_sdo_write_access(mock_slave, 0x7000, 1, bytes([0x42]))
+        self.assertFalse(result)
+        mock_slave.sdo_write.assert_not_called()
+
     def test_test_sdo_write_access_failure(self):
         """Test SDO write access test when write fails [Category A]"""
-        scanner = _make_scanner()
+        scanner = _make_scanner(confirm=True)
         mock_slave = Mock()
         mock_slave.sdo_write = Mock(side_effect=Exception("Abort"))
 
@@ -1569,32 +1577,6 @@ class TestErrorHandling(unittest.TestCase):
         # Should not raise
         scanner.disconnect(mock_conn)
         mock_conn.close.assert_called()
-
-
-# ===========================================================================
-# Skipped Tests (require raw socket / hardware)
-# ===========================================================================
-
-
-@pytest.mark.skip(reason="Requires raw socket capability (NET_RAW/root)")
-class TestRawSocketConnect(unittest.TestCase):
-    """Tests that require raw socket access [Skip]"""
-
-    def test_connect_to_interface(self):
-        """Test actual EtherCAT connection to interface [Skip]"""
-        pass
-
-    def test_transition_to_op_state(self):
-        """Test OP state transition with real slaves [Skip]"""
-        pass
-
-    def test_processdata_thread(self):
-        """Test process data thread with real PDO exchange [Skip]"""
-        pass
-
-    def test_emergency_callback_live(self):
-        """Test emergency callback with real hardware [Skip]"""
-        pass
 
 
 if __name__ == "__main__":

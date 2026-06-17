@@ -285,13 +285,24 @@ class AdvancedParsersMixin(_ScannerBase):
         total_size = struct.unpack("<I", init_response[:4])[0]
         transfer_size = struct.unpack("<H", init_response[4:6])[0]
 
+        # Bound the device-reported total_size against max_size: a malicious or
+        # buggy PLC can advertise a huge total_size and OOM the scanner (data is
+        # held fully in memory before base64 encoding). This also covers the case
+        # where the attr-6 pre-check above was skipped (size_data unreadable).
+        effective_max = min(total_size, max_size)
+        if total_size > max_size:
+            self.logger.warning(
+                f"Reported file size {total_size} exceeds max {max_size}, "
+                f"capping download at {effective_max} bytes"
+            )
+
         self.logger.display(
             f"  Downloading file: {total_size} bytes in {transfer_size}-byte chunks"
         )
 
         # Upload Transfer (Service 0x4F) - repeat until done
         transfer_number = 0
-        while len(file_data) < total_size:
+        while len(file_data) < effective_max:
             # Request: Transfer Number (USINT)
             transfer_request = struct.pack("<B", transfer_number)
 
@@ -315,6 +326,14 @@ class AdvancedParsersMixin(_ScannerBase):
             # Packet type: 0=first, 1=middle, 2=last, 3=first&last (abort)
             if packet_type in (2, 3):
                 break
+
+            if len(file_data) >= effective_max:
+                self.logger.warning(f"  Download reached cap of {effective_max} bytes, stopping")
+                break
+
+        # Truncate any overrun from the final chunk to honor the cap.
+        if len(file_data) > effective_max:
+            del file_data[effective_max:]
 
         self.logger.success(f"  Downloaded {len(file_data)} bytes")
         return bytes(file_data)

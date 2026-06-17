@@ -137,6 +137,9 @@ pytestmark = [
     pytest.mark.slow,
     pytest.mark.containers("can-mock"),
     pytest.mark.skipif(bool(_SKIP_REASON), reason=str(_SKIP_REASON)),
+    # Shares the can-mock container; serialize onto one xdist worker so
+    # timing-dependent tests don't flake under parallel load (--dist loadgroup).
+    pytest.mark.xdist_group("can_service"),
 ]
 
 

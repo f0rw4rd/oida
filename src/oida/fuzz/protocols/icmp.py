@@ -165,8 +165,7 @@ class ICMPFuzzer(BaseFuzzer):
         """
         # Get protocol options
         icmp_type = self.config.get_option("icmp_type", 8)  # Echo Request
-        # (icmp_code was read and discarded here — Request Code fields are
-        # hardcoded, so the icmp_code option isn't threaded into them.)
+        icmp_code = self.config.get_option("icmp_code", 0)  # threaded into the Echo Request Code
         include_data = self.config.get_option("include_data", True)
         data_size = self.config.get_option("data_size", 56)
         identifier = self.config.get_option("identifier", 1)
@@ -743,7 +742,7 @@ class ICMPFuzzer(BaseFuzzer):
                     "ICMP_Message",
                     children=(
                         Byte("Type", icmp_type, fuzzable=True),
-                        Byte("Code", 0, fuzzable=True),
+                        Byte("Code", icmp_code, fuzzable=True),
                         Checksum(
                             "Checksum", block_name="ICMP_Message", algorithm="ipv4", endian=">"
                         ),

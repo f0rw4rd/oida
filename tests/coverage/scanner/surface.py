@@ -33,11 +33,11 @@ EXPECTED_SURFACE: dict[str, set[str]] = {
         "diagnostics",
     },
     "iec104": {
-        "connection_info",
-        "server_info",
-        "asdu_types",
-        "stations",
-        "type_ids",
+        "device_info",
+        "scan_results",
+        "scan_results.server_info",
+        "scan_results.type_ids",
+        "scan_results.data_points",
     },
     "opcua": {
         "endpoints",
@@ -64,12 +64,15 @@ EXPECTED_SURFACE: dict[str, set[str]] = {
     },
     "bacnet": {
         "device_info",
-        "devices",
+        "device_info.devices",
     },
     "snap7": {
-        "cpu_info",
-        "plc_status",
-        "block_list",
+        "device_info",
+        "scan_results",
+        "scan_results.cpu_info",
+        "scan_results.plc_status",
+        "scan_results.firmware_info",
+        "security_findings",
     },
     "mms": {
         "device_info",
@@ -81,22 +84,26 @@ EXPECTED_SURFACE: dict[str, set[str]] = {
         "tags",
     },
     "snmp": {
-        "system_info",
-        "interfaces",
-        "communities_tested",
+        "sys_info",
+        "vendor",
     },
     "coap": {
-        "well_known",
-        "resources",
-        "device_info",
+        "scan_results",
+        "scan_results.resources",
+    },
+    "ocpp": {
+        "target_url",
+        "server_info",
+        "boot_notification",
     },
     "mqtt": {
         "broker_info",
         "topics",
     },
     "hl7": {
-        "device_info",
-        "version",
+        "connected",
+        "server_info",
+        "ack_code",
     },
     "fhir": {
         "server_info",
@@ -104,8 +111,9 @@ EXPECTED_SURFACE: dict[str, set[str]] = {
         "resource_types",
     },
     "dicom": {
-        "device_info",
-        "sop_classes",
+        "connected",
+        "accepted_contexts",
+        "c_echo",
     },
 }
 

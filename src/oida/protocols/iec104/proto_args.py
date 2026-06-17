@@ -105,7 +105,11 @@ Examples:
     # IEC 104 Options
     iec104_group = iec104_parser.add_argument_group("IEC 104 Options")
     iec104_group.add_argument(
-        "-a", "--asdu-address", type=int, default=1, help="ASDU address (default: 1)"
+        "-a",
+        "--asdu-address",
+        type=int,
+        default=-1,
+        help="ASDU address (default: -1 = auto-discover the Common Address)",
     )
     iec104_group.add_argument("-c", "--common-address", type=int, help="Common address of ASDU")
     iec104_group.add_argument(

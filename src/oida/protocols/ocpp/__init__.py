@@ -146,7 +146,15 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         if target and (target.startswith("ws://") or target.startswith("wss://")):
             self._target_url = target
             if target.startswith("wss://"):
-                if not getattr(args, "port", None) or getattr(args, "port", 9000) == 9000:
+                # Honor an explicit port in the URL (e.g. wss://host:8443/...) so
+                # downstream checks like _check_tls_certificate probe the right
+                # port; only fall back to 443 when the URL omits the port.
+                from urllib.parse import urlparse
+
+                url_port = urlparse(target).port
+                if url_port:
+                    args.port = url_port
+                elif not getattr(args, "port", None) or getattr(args, "port", 9000) == 9000:
                     args.port = DEFAULT_WSS_PORT
         else:
             # Build URL from host/port
@@ -367,7 +375,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             self.logger.debug(f"Dispatching TriggerMessage: {getattr(self.args, 'trigger', '')}")
             self._handle_trigger_message()
 
-
     def _enter_listen_mode(self):
         """Enter persistent listen mode with heartbeat keep-alive."""
         if not self.conn or not self.scanner:
@@ -569,7 +576,9 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
                 self.results["data"]["authorize"] = {"id_tag": auth_id, "status": status}
             elif msg_type == MessageType.CALLERROR:
                 # error_code lives on the parsed response, not the request payload.
-                self.logger.display(f"[Authorize] Error: {resp_payload.get('error_code', 'Unknown')}")
+                self.logger.display(
+                    f"[Authorize] Error: {resp_payload.get('error_code', 'Unknown')}"
+                )
         else:
             self.logger.display("[Authorize] No response")
 

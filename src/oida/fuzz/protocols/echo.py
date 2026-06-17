@@ -389,9 +389,6 @@ class EchoFuzzer(BaseFuzzer):
 
     def _define_udp_protocol(self) -> None:
         """Define UDP-specific echo tests (MTU, amplification, fragmentation)"""
-        # (max_payload_size was read and discarded here; UDP payload sizes are
-        # hardcoded literals below, so the option steers nothing.)
-
         # IP fragmentation attacks
         fragmentation = Request(
             "UDP_Fragmentation_Attack",

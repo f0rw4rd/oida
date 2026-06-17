@@ -774,7 +774,7 @@ class LLDPScanner(SerialScanner):
         ]
 
         for device in devices:
-            # devices already contains LLDPDevice objects
+            # Devices already contains LLDPDevice objects
 
             # Check system description and name for industrial keywords
             text_to_check = (
@@ -832,7 +832,7 @@ class LLDPScanner(SerialScanner):
         # Check for information disclosure
         mgmt_addr_count = 0
         for device in results.get("devices", []):
-            # devices already contains LLDPDevice objects
+            # Devices already contains LLDPDevice objects
             if device.management_addresses:
                 mgmt_addr_count += 1
 
@@ -851,7 +851,7 @@ class LLDPScanner(SerialScanner):
 
         # Report discovered devices
         for device in results.get("devices", []):
-            # devices already contains LLDPDevice objects
+            # Devices already contains LLDPDevice objects
             vendor = lookup_mac_vendor(device.mac_address)
 
             # Report host with comprehensive info for each management address

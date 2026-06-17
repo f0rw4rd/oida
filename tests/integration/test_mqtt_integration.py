@@ -450,14 +450,14 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "--port",
             str(port),
             "--listen",
-            "--timeout",
+            "--listen-time",
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=20,
         )
 
-        # Listen mode should complete after timeout
+        # Listen mode should complete after listen-time
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
         assert any(term in text for term in ["listen", "message", "topic", "complete"]), (
@@ -751,11 +751,11 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             str(port),
             "--listen",
             "--unique",
-            "--timeout",
+            "--listen-time",
             "3",
             format="json",
             json_log=True,
-            timeout=20,
+            timeout=15,
         )
 
         assert result.returncode in [0, 1]

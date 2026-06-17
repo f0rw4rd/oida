@@ -141,7 +141,7 @@ class TestMonitorConfigMethods:
         from src.oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping:50,modbus:10,socket")
-        names = mc.get_monitor_names()
+        names = [spec.name for spec in mc.monitors]
         assert names == ["ping", "modbus", "socket"]
 
     def test_format_display_with_monitors(self):
@@ -179,7 +179,6 @@ class TestProtocolType:
         assert ProtocolType.UDP.value == "udp"
         assert ProtocolType.RAW.value == "raw"
         assert ProtocolType.SERIAL.value == "serial"
-        assert ProtocolType.BLE.value == "ble"
         assert ProtocolType.IEC104.value == "iec104"
         assert ProtocolType.ICMP.value == "icmp"
         assert ProtocolType.ICMPV6.value == "icmpv6"
@@ -247,20 +246,21 @@ class TestFuzzerConfig:
         assert config.get_option("missing", 42) == 42
 
     def test_set_option(self):
-        """set_option stores a protocol option."""
+        """protocol_options stores a protocol option."""
         from src.oida.fuzz.core.config import FuzzerConfig
 
-        config = FuzzerConfig(target_ip="10.0.0.1", target_port=80)
-        config.set_option("timeout", 30)
+        config = FuzzerConfig(
+            target_ip="10.0.0.1", target_port=80, protocol_options={"timeout": 30}
+        )
         assert config.get_option("timeout") == 30
 
-    def test_set_option_creates_dict_if_none(self):
-        """set_option creates protocol_options dict if None."""
+    def test_set_option_writes_to_postinit_dict(self):
+        """__post_init__ guarantees a dict; mutating it stores options."""
         from src.oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(target_ip="10.0.0.1", target_port=80)
-        config.protocol_options = None
-        config.set_option("key", "value")
+        assert config.protocol_options == {}
+        config.protocol_options["key"] = "value"
         assert config.get_option("key") == "value"
 
     def test_distributed_fuzzing_config(self):

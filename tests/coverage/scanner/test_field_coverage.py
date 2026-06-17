@@ -546,7 +546,6 @@ def test_snap7_coverage(coverage_results_dir):
         port,
         target_name,
         coverage_results_dir,
-        info=True,
         rack=0,
         slot=1,
     )
@@ -767,7 +766,7 @@ def test_ocpp_coverage(coverage_results_dir):
         ("ocpp-insecure", 9000),
     )
 
-    from oida.protocols.ocpp.nxc_connection import ocpp
+    from oida.protocols.ocpp import ocpp
 
     semantic_hit, _ = _run_and_record(
         "ocpp",
