@@ -92,10 +92,6 @@ class mms(NetworkConnection):
 
     def _handle_fuzz(self, scan_results: Dict) -> None:
         """Handle fuzzing mode (--fuzz)"""
-        fuzz_enabled = getattr(self.args, "fuzz", False)
-        if not fuzz_enabled:
-            return
-
         if not getattr(self.args, "confirm", False):
             self.logger.fail("--fuzz requires --confirm flag (DANGEROUS operation)")
             return
@@ -142,7 +138,7 @@ class mms(NetworkConnection):
                 result = _Lib.iec61850.IedConnection_readObject(
                     self.conn, reference, _Lib.iec61850.IEC61850_FC_MX
                 )
-                mms_value, error_code, ok = _Lib.unpack_result(result)
+                mms_value, _, _ = _Lib.unpack_result(result)
 
                 if mms_value is None:
                     return b"\x00\x00\x00\x00"
