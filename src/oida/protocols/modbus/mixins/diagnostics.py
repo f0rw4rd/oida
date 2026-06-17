@@ -43,5 +43,5 @@ class DiagnosticsMixin(_ScannerBase):
 
         if diag_results.get("counters"):
             self.logger.display("  Counters:")
-            for subfunc, info in diag_results["counters"].items():
+            for info in diag_results["counters"].values():
                 self.logger.display(f"    {info['name']}: {info['value']}")

@@ -29,7 +29,7 @@ class CANopenMixin(_ScannerBase):
 
         # Build MEI request for gateway info
         # FC 43, MEI Type 13, Command 0x01 (Get Info)
-        request_data = bytes([0x01])  # GET_INFO command
+        request_data = bytes([CANopenMEICommand.GET_INFO])
 
         result = self.scanner._send_mei_canopen(self.conn, request_data)
 

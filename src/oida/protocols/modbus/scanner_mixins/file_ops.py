@@ -42,7 +42,7 @@ class ScannerFileOpsMixin(_ScannerBase):
 
         try:
             # Use pymodbus built-in read_file_record method
-            FileRecord, ReadFileRecordRequest, _ = _get_file_record_classes()
+            FileRecord, _, _ = _get_file_record_classes()
             records = [
                 FileRecord(
                     file_number=file_number,
@@ -56,16 +56,13 @@ class ScannerFileOpsMixin(_ScannerBase):
                 record_data = []
                 if hasattr(result, "records") and result.records:
                     for rec in result.records:
-                        if hasattr(rec, "record_data"):
-                            # Convert bytes to register values
-                            data = rec.record_data
-                            registers = []
-                            for i in range(0, len(data), 2):
-                                if i + 1 < len(data):
-                                    registers.append(struct.unpack(">H", data[i : i + 2])[0])
-                            record_data.append(registers)
-                        elif hasattr(rec, "record_length"):
-                            record_data.append(rec)
+                        # pymodbus FileRecord always carries record_data.
+                        data = rec.record_data
+                        registers = []
+                        for i in range(0, len(data), 2):
+                            if i + 1 < len(data):
+                                registers.append(struct.unpack(">H", data[i : i + 2])[0])
+                        record_data.append(registers)
                 return {
                     "file_number": file_number,
                     "record_number": record_number,
@@ -101,7 +98,7 @@ class ScannerFileOpsMixin(_ScannerBase):
 
         try:
             # Use pymodbus built-in write_file_record method
-            FileRecord, _, WriteFileRecordRequest = _get_file_record_classes()
+            FileRecord, _, _ = _get_file_record_classes()
 
             # Pad data to even length if needed
             if len(data) % 2 != 0:

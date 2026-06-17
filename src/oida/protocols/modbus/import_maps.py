@@ -69,7 +69,7 @@ def parse_nymea_file(filepath: Path) -> Optional[Dict[str, Any]]:
     try:
         with open(filepath) as f:
             data = json.load(f)
-    except (json.JSONDecodeError, Exception) as e:
+    except Exception as e:
         logger.error("Error parsing %s: %s", filepath, e)
         return None
 
@@ -342,7 +342,6 @@ def parse_solarman_yaml(filepath: Path) -> Optional[Dict[str, Any]]:
 
     # Process parameters groups
     for group in data.get("parameters", []):
-        group.get("group", "")
         for item in group.get("items", []):
             name = item.get("name", "")
             if not name:

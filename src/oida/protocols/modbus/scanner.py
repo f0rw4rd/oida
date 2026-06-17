@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import struct
-import threading
 from datetime import datetime
-from typing import Dict, List, Any, TYPE_CHECKING
+from typing import Dict, List, Any
 
 from ...utils import (
     NetworkScanner,
@@ -15,43 +14,26 @@ from ...utils import (
     parse_bool,
 )
 from ...utils.cli import run as cli_run
-from ...utils.lazy_import import lazy_import, check_dependency
+from ...utils.lazy_import import lazy_import
 
-# Type hints only - no runtime import
-if TYPE_CHECKING:
-    pass
-
-# Lazy import for pymodbus - only loads when actually used
+# Lazy import for pymodbus - only loads when actually used.
+# lazy_import() already memoizes the imported module, so no extra caching needed.
 _pymodbus = lazy_import("pymodbus", "Modbus")
 
-
-# Thread-safe cached module references using singleton pattern (avoids global keyword)
-class _PymodbusCache:
-    """Singleton cache for pymodbus module to avoid global keyword usage."""
-
-    module = None
-    version = None
-    lock = threading.RLock()
-
-
-_cache = _PymodbusCache()
+_pymodbus_version: int | None = None
 
 
 def _get_pymodbus():
     """Get pymodbus module, raising DependencyError if not available."""
-    with _cache.lock:
-        if _cache.module is None:
-            _cache.module = _pymodbus()
-        return _cache.module
+    return _pymodbus()
 
 
 def _get_pymodbus_version():
-    """Get pymodbus major version number."""
-    with _cache.lock:
-        if _cache.version is None:
-            pymodbus = _get_pymodbus()
-            _cache.version = int(pymodbus.__version__.split(".")[0])
-        return _cache.version
+    """Get pymodbus major version number (cached)."""
+    global _pymodbus_version
+    if _pymodbus_version is None:
+        _pymodbus_version = int(_get_pymodbus().__version__.split(".")[0])
+    return _pymodbus_version
 
 
 def _get_modbus_tcp_client():
@@ -73,8 +55,6 @@ def _get_modbus_serial_client():
 def _get_modbus_udp_client():
     """Get ModbusUdpClient class lazily (may not exist in all versions)."""
     _get_pymodbus()
-    if not check_dependency("pymodbus.client"):
-        return None
     try:
         from pymodbus.client import ModbusUdpClient
 
@@ -87,8 +67,6 @@ def _get_modbus_udp_client():
 def _get_modbus_tls_client():
     """Get ModbusTlsClient class lazily (may not exist in all versions)."""
     _get_pymodbus()
-    if not check_dependency("pymodbus.client"):
-        return None
     try:
         from pymodbus.client import ModbusTlsClient
 
@@ -144,13 +122,6 @@ def execute_pdu(client, pdu, unit_id=0):
 from ...utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
-
-# Import device database utilities (optional module)
-# Using check_dependency for graceful fallback
-if check_dependency("oida.protocols.modbus.device_db"):
-    from .device_db import get_exception_info
-else:
-    get_exception_info = None
 
 # Re-export constants for backwards compatibility (tests import from scanner)
 from .constants import (  # noqa: F401

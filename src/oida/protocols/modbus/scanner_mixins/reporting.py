@@ -1,9 +1,8 @@
 """
 Modbus Scanner Reporting Mixin
 
-Handles register decoding, monitoring, and result reporting:
+Handles register decoding and result reporting:
 - Register value decoding (single and multi-register types)
-- Register monitoring (continuous polling)
 - Scan result reporting and table building
 """
 
@@ -18,46 +17,7 @@ else:
 
 
 class ScannerReportingMixin(_ScannerBase):
-    """Mixin providing decoding, monitoring, and reporting for ModbusScanner."""
-
-    def _decode_register_values(
-        self,
-        registers: Dict[int, int],
-        decode_type: str,
-        byte_order: str = "big",
-        word_order: str = "big",
-    ) -> List[Dict[str, Any]]:
-        """
-        Decode register values using specified data type
-
-        Args:
-            registers: Dict of {address: value}
-            decode_type: Type string (f32, i32, str, etc.)
-            byte_order: Byte order (big/little)
-            word_order: Word order for 32/64-bit (big/little)
-
-        Returns:
-            List of decoded values with metadata
-        """
-        from ..decoder import ModbusDecoder, REGISTERS_PER_TYPE
-
-        decoder = ModbusDecoder(byte_order=byte_order, word_order=word_order)
-
-        # Convert dict to sorted list
-        sorted_addrs = sorted(registers.keys())
-        reg_values = [registers[addr] for addr in sorted_addrs]
-
-        decoded = decoder.decode(reg_values, decode_type)
-
-        # Add address info
-        regs_per_value = REGISTERS_PER_TYPE.get(decode_type, 1) or 1
-        for i, item in enumerate(decoded):
-            base_addr = (
-                sorted_addrs[i * regs_per_value] if i * regs_per_value < len(sorted_addrs) else 0
-            )
-            item["address"] = base_addr
-
-        return decoded
+    """Mixin providing decoding and result reporting for ModbusScanner."""
 
     def _report_findings(self, results: Dict[str, Any]):
         """Report scan findings"""
@@ -171,7 +131,6 @@ class ScannerReportingMixin(_ScannerBase):
                         i16_val = str(decoded)
             except Exception as e:
                 self.logger.debug("build decode all rows failed: %s", e)
-                pass
 
             # Decode bits
             bits_val = ""
@@ -181,7 +140,6 @@ class ScannerReportingMixin(_ScannerBase):
                     bits_val = results[0]["value"]
             except Exception as e:
                 self.logger.debug("build decode all rows failed: %s", e)
-                pass
 
             # Decode ASCII (only if printable)
             ascii_val = ""
@@ -193,7 +151,6 @@ class ScannerReportingMixin(_ScannerBase):
                         ascii_val = f'"{decoded}"'
             except Exception as e:
                 self.logger.debug("build decode all rows failed: %s", e)
-                pass
 
             rows.append([addr, val, hex_val, i16_val, bits_val, ascii_val])
 

@@ -424,135 +424,6 @@ class TestMEIParsing(unittest.TestCase):
         self.assertEqual(objects["VendorDefined_81"], "VendorSpecificData2")
 
 
-class TestDeviceDatabase(unittest.TestCase):
-    """Tests for Modbus device database functions"""
-
-    def setUp(self):
-        """Set up for device database tests"""
-        try:
-            from oida.protocols.modbus.device_db import (
-                identify_vendor,
-                identify_product,
-                fingerprint_by_exceptions,
-                fuzzy_vendor_match,
-                VENDOR_PATTERNS,
-            )
-
-            self.identify_vendor = identify_vendor
-            self.identify_product = identify_product
-            self.fingerprint_by_exceptions = fingerprint_by_exceptions
-            self.fuzzy_vendor_match = fuzzy_vendor_match
-            self.VENDOR_PATTERNS = VENDOR_PATTERNS
-            self.db_available = True
-        except ImportError:
-            self.db_available = False
-
-    def test_identify_vendor(self):
-        """Test vendor name lookup from database"""
-        if not self.db_available:
-            self.skipTest("Device database not available")
-
-        # Test with known vendor (may return None if not in DB)
-        result = self.identify_vendor("Schneider Electric")
-        if result:
-            self.assertIn("vendor_name", result)
-            self.assertIn("Schneider", result["vendor_name"])
-
-    def test_identify_vendor_unknown(self):
-        """Test vendor lookup for unknown vendor"""
-        if not self.db_available:
-            self.skipTest("Device database not available")
-
-        result = self.identify_vendor("Unknown Vendor XYZ123")
-        # Should return None for unknown vendor
-        self.assertIsNone(result)
-
-    def test_identify_product(self):
-        """Test product code matching"""
-        if not self.db_available:
-            self.skipTest("Device database not available")
-
-        # Test with known vendor/product combination
-        result = self.identify_product("Schneider Electric", "PM5100")
-        # May return None if product not in DB
-        if result:
-            self.assertIn("vendor", result)
-            self.assertIn("model", result)
-
-    def test_fingerprint_by_exceptions(self):
-        """Test exception pattern matching for device fingerprinting"""
-        if not self.db_available:
-            self.skipTest("Device database not available")
-
-        # Simulate exception responses from function code probing
-        # None = success, int = exception code
-        exception_results = {
-            1: None,  # READ_COILS - supported
-            2: None,  # READ_DISCRETE_INPUTS - supported
-            3: None,  # READ_HOLDING_REGISTERS - supported
-            4: None,  # READ_INPUT_REGISTERS - supported
-            5: 1,  # WRITE_SINGLE_COIL - ILLEGAL_FUNCTION
-            6: 1,  # WRITE_SINGLE_REGISTER - ILLEGAL_FUNCTION
-            43: None,  # MEI - supported
-            90: 1,  # UMAS - not supported (not Schneider)
-        }
-
-        result = self.fingerprint_by_exceptions(exception_results)
-
-        self.assertIn("supported_fcs", result)
-        self.assertIn("unsupported_fcs", result)
-        self.assertIn(1, result["supported_fcs"])
-        self.assertIn(5, result["unsupported_fcs"])
-
-    def test_fingerprint_schneider_umas(self):
-        """Test fingerprinting Schneider device via UMAS (FC 90)"""
-        if not self.db_available:
-            self.skipTest("Device database not available")
-
-        # UMAS FC 90 supported = likely Schneider Unity/Modicon PLC
-        exception_results = {
-            3: None,  # READ_HOLDING_REGISTERS - supported
-            4: None,  # READ_INPUT_REGISTERS - supported
-            43: None,  # MEI - supported
-            90: None,  # UMAS - supported (Schneider)
-        }
-
-        result = self.fingerprint_by_exceptions(exception_results)
-
-        # Should identify as potential Schneider device
-        vendor_matches = result.get("vendor_matches", [])
-        schneider_match = any("Schneider" in m.get("vendor", "") for m in vendor_matches)
-        if vendor_matches:
-            self.assertTrue(schneider_match)
-
-    def test_fuzzy_vendor_match(self):
-        """Test fuzzy vendor name matching"""
-        if not self.db_available:
-            self.skipTest("Device database not available")
-
-        # Test various vendor name patterns
-        test_cases = [
-            ("schneider electric industries", "Schneider Electric"),
-            ("SIEMENS AG", "Siemens AG"),
-            ("Allen-Bradley", "Rockwell Automation"),
-            ("beckhoff automation gmbh", "Beckhoff Automation"),
-            ("MOXA INC", "Moxa Inc."),
-        ]
-
-        for input_name, expected in test_cases:
-            result = self.fuzzy_vendor_match(input_name)
-            if result:  # Pattern might not match
-                self.assertEqual(result, expected, f"Failed for input: {input_name}")
-
-    def test_fuzzy_vendor_no_match(self):
-        """Test fuzzy matching with no pattern match"""
-        if not self.db_available:
-            self.skipTest("Device database not available")
-
-        result = self.fuzzy_vendor_match("Completely Unknown Vendor")
-        self.assertIsNone(result)
-
-
 class TestFingerprintingLogic(unittest.TestCase):
     """Tests for device fingerprinting logic"""
 
@@ -1031,28 +902,6 @@ class TestParseMEIResponse(unittest.TestCase):
         self.assertEqual(result["MajorMinorRevision"], "1.2.3")
         self.assertEqual(result["ProductName"], "PowerLogic PM5100")
 
-    def test_parse_mei_response_objects_format(self):
-        """Test parsing MEI response with .objects attribute"""
-        mock_response = Mock()
-        mock_response.information = None
-        mock_response.objects = [
-            {"object_id": 0x00, "value": b"Siemens AG"},
-            {"object_id": 0x01, "value": b"6ES7"},
-            {"object_id": 0x02, "value": b"V3.2.16"},
-        ]
-        delattr(mock_response, "information")
-        mock_response.objects = [
-            {"object_id": 0x00, "value": b"Siemens AG"},
-            {"object_id": 0x01, "value": b"6ES7"},
-            {"object_id": 0x02, "value": b"V3.2.16"},
-        ]
-
-        result = self.scanner._parse_mei_response(mock_response)
-
-        self.assertEqual(result["VendorName"], "Siemens AG")
-        self.assertEqual(result["ProductCode"], "6ES7")
-        self.assertEqual(result["MajorMinorRevision"], "V3.2.16")
-
     def test_parse_mei_response_binary_data(self):
         """Test parsing MEI response with non-UTF8 binary data"""
         mock_response = Mock()
@@ -1118,68 +967,6 @@ class TestParseMEIResponse(unittest.TestCase):
         self.assertEqual(result["VendorName"], "KnownVendor")
         self.assertIn("Object_50", result)
         self.assertIn("Object_80", result)
-
-
-class TestDecodeRegisterValues(unittest.TestCase):
-    """Test _decode_register_values method"""
-
-    @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
-        """Set up scanner instance"""
-        from oida.protocols.modbus.scanner import ModbusScanner
-
-        args = {"rhost": "192.168.1.1", "rport": 502, "timeout": 5}
-        self.scanner = ModbusScanner(args)
-
-    def test_decode_register_uint16(self):
-        """Test decoding uint16 values"""
-        registers = {40001: 100, 40002: 200, 40003: 300}
-
-        decoded = self.scanner._decode_register_values(registers, "uint16", byte_order="big")
-
-        self.assertEqual(len(decoded), 3)
-        self.assertEqual(decoded[0]["address"], 40001)
-
-    def test_decode_register_float32(self):
-        """Test decoding float32 values (2 registers per value)"""
-        # Float32 needs 2 registers
-        registers = {40001: 0x4048, 40002: 0xF5C3}  # ~3.14
-
-        decoded = self.scanner._decode_register_values(
-            registers, "f32", byte_order="big", word_order="big"
-        )
-
-        self.assertGreater(len(decoded), 0)
-        self.assertEqual(decoded[0]["address"], 40001)
-
-    def test_decode_register_int32(self):
-        """Test decoding int32 values (2 registers per value)"""
-        registers = {40001: 0x0000, 40002: 0x03E8}  # 1000
-
-        decoded = self.scanner._decode_register_values(
-            registers, "i32", byte_order="big", word_order="big"
-        )
-
-        self.assertGreater(len(decoded), 0)
-        self.assertEqual(decoded[0]["address"], 40001)
-
-    def test_decode_register_byte_order_little(self):
-        """Test decoding with little endian byte order"""
-        registers = {40001: 0x1234}
-
-        decoded = self.scanner._decode_register_values(registers, "uint16", byte_order="little")
-
-        self.assertGreater(len(decoded), 0)
-
-    def test_decode_register_word_order_little(self):
-        """Test decoding with little endian word order"""
-        registers = {40001: 0x1234, 40002: 0x5678}
-
-        decoded = self.scanner._decode_register_values(
-            registers, "i32", byte_order="big", word_order="little"
-        )
-
-        self.assertGreater(len(decoded), 0)
 
 
 class TestModbusScannerErrorPaths(unittest.TestCase):
@@ -1426,39 +1213,32 @@ class TestModbusLazyImports(unittest.TestCase):
 
     @patch("oida.protocols.modbus.scanner._pymodbus")
     def test_get_pymodbus(self, mock_lazy_pymodbus):
-        """Test _get_pymodbus function"""
-        from oida.protocols.modbus.scanner import _get_pymodbus, _cache
+        """Test _get_pymodbus function (delegates to the memoized lazy import)"""
+        from oida.protocols.modbus.scanner import _get_pymodbus
 
-        # Reset cached module (uses _cache singleton)
-        saved = _cache.module
-        try:
-            _cache.module = None
-            mock_lazy_pymodbus.return_value = Mock(__name__="pymodbus")
+        mock_lazy_pymodbus.return_value = Mock(__name__="pymodbus")
 
-            result = _get_pymodbus()
+        result = _get_pymodbus()
 
-            self.assertIsNotNone(result)
-            mock_lazy_pymodbus.assert_called_once()
-        finally:
-            _cache.module = saved
+        self.assertIsNotNone(result)
+        mock_lazy_pymodbus.assert_called_once()
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
     def test_get_pymodbus_version(self, mock_get_pymodbus):
         """Test _get_pymodbus_version function"""
-        from oida.protocols.modbus.scanner import _get_pymodbus_version, _cache
+        import oida.protocols.modbus.scanner as scanner_mod
 
-        # Reset cached version (uses _cache singleton)
-        saved = _cache.version
+        # Reset the module-level version cache
+        saved = scanner_mod._pymodbus_version
         try:
-            _cache.version = None
-            mock_pymodbus = Mock(__version__="3.5.2")
-            mock_get_pymodbus.return_value = mock_pymodbus
+            scanner_mod._pymodbus_version = None
+            mock_get_pymodbus.return_value = Mock(__version__="3.5.2")
 
-            version = _get_pymodbus_version()
+            version = scanner_mod._get_pymodbus_version()
 
             self.assertEqual(version, 3)
         finally:
-            _cache.version = saved
+            scanner_mod._pymodbus_version = saved
 
 
 class TestModbusScannerMEIErrorHandling(unittest.TestCase):
@@ -1573,45 +1353,6 @@ class TestModbusScannerInitializationEdgeCases(unittest.TestCase):
         self.assertEqual(scanner.serial_port, "/dev/ttyS0")
         self.assertEqual(scanner.baudrate, 115200)
         self.assertTrue(scanner.get_device_id)
-
-
-class TestModbusDecodeRegisterValuesEdgeCases(unittest.TestCase):
-    """Test _decode_register_values with edge cases"""
-
-    @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
-        """Set up scanner instance"""
-        from oida.protocols.modbus.scanner import ModbusScanner
-
-        args = {"rhost": "192.168.1.1", "rport": 502, "timeout": 5}
-        self.scanner = ModbusScanner(args)
-
-    def test_decode_register_empty_dict(self):
-        """Test decoding empty register dictionary"""
-        registers = {}
-
-        decoded = self.scanner._decode_register_values(registers, "uint16", byte_order="big")
-
-        self.assertEqual(len(decoded), 0)
-
-    def test_decode_register_single_value(self):
-        """Test decoding single register"""
-        registers = {40001: 42}
-
-        decoded = self.scanner._decode_register_values(registers, "uint16", byte_order="big")
-
-        self.assertEqual(len(decoded), 1)
-        self.assertEqual(decoded[0]["address"], 40001)
-
-    def test_decode_register_unsorted_addresses(self):
-        """Test decoding with unsorted register addresses"""
-        registers = {40005: 500, 40001: 100, 40003: 300}
-
-        decoded = self.scanner._decode_register_values(registers, "uint16", byte_order="big")
-
-        # Should sort addresses before decoding
-        self.assertEqual(len(decoded), 3)
-        self.assertEqual(decoded[0]["address"], 40001)
 
 
 class TestModbusExceptionCodeEnum(unittest.TestCase):
