@@ -38,19 +38,6 @@ EIGRP_OPCODES = {
     11: "SIA Reply",
 }
 
-# EIGRP TLV types
-EIGRP_TLV_TYPES = {
-    0x0001: "Parameters",
-    0x0002: "Sequence",
-    0x0003: "Software Version",
-    0x0004: "Next Multicast Sequence",
-    0x0005: "Peer Termination",
-    0x0102: "Internal Route (IPv4)",
-    0x0103: "External Route (IPv4)",
-    0x0402: "Internal Route (IPv6)",
-    0x0403: "External Route (IPv6)",
-}
-
 # EIGRP flags
 EIGRP_FLAGS = {
     0x01: "Init",
@@ -79,7 +66,6 @@ class EIGRPPassiveListener(PassiveListenerBase):
         timeout: int = 30,
     ):
         super().__init__(interface, timeout)
-        self.autonomous_systems: Dict[int, Dict] = {}  # AS -> info
 
     def should_process_packet(self, packet) -> bool:
         """Filter for EIGRP packets (IP protocol 88)."""
@@ -124,6 +110,8 @@ class EIGRPPassiveListener(PassiveListenerBase):
                 # Extract K-values and hold time from TLVs
                 k_values = {}
                 hold_time = 15  # default
+                # scapy's EIGRP dissector does not expose the Software Version
+                # TLV (0x0003); only the raw-parse fallback recovers it.
                 software_version = ""
                 routes = []
 
@@ -136,7 +124,6 @@ class EIGRPPassiveListener(PassiveListenerBase):
                         "k3": param.k3 if hasattr(param, "k3") else 1,
                         "k4": param.k4 if hasattr(param, "k4") else 0,
                         "k5": param.k5 if hasattr(param, "k5") else 0,
-                        "k6": param.k6 if hasattr(param, "k6") else 0,
                     }
                     hold_time = param.holdtime if hasattr(param, "holdtime") else 15
 
@@ -323,19 +310,6 @@ class EIGRPPassiveListener(PassiveListenerBase):
                 }
 
                 self.discovered_devices[device_key] = device
-
-                # Track AS
-                if as_number not in self.autonomous_systems:
-                    self.autonomous_systems[as_number] = {
-                        "as_number": as_number,
-                        "routers": [],
-                    }
-                self.autonomous_systems[as_number]["routers"].append(
-                    {
-                        "ip": src_ip,
-                        "hold_time": hold_time,
-                    }
-                )
 
                 logger.debug(f"EIGRP: {src_ip} AS={as_number} {opcode_name} hold={hold_time}s")
             else:

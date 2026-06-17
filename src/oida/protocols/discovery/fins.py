@@ -33,7 +33,6 @@ FINS_UDP_PORT = 9600
 
 # FINS command codes
 FINS_CMD_CONTROLLER_DATA_READ = 0x0501  # Read controller data
-FINS_CMD_CONTROLLER_STATUS_READ = 0x0601  # Read controller status
 
 # FINS header structure (for UDP)
 # ICF: Information Control Field
@@ -130,7 +129,7 @@ class FINSScanner:
         header = struct.pack("BBBBBBBBBB", icf, rsv, gct, dna, da1, da2, sna, sa1, sa2, sid)
 
         # FINS command: Controller Data Read (MRC=0x05, SRC=0x01 → 0x0501)
-        command = struct.pack(">H", 0x0501)
+        command = struct.pack(">H", FINS_CMD_CONTROLLER_DATA_READ)
 
         return header + command
 

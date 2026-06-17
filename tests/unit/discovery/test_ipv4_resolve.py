@@ -5,10 +5,7 @@ Unit tests for IPv4 resolve scanner.
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 
-from oida.protocols.discovery.ipv4_resolve import (
-    IPv4ResolveScanner,
-    IPv4ResolvePassiveScanner,
-)
+from oida.protocols.discovery.ipv4_resolve import IPv4ResolveScanner
 from oida.protocols.discovery.core import DiscoveredDevice
 
 
@@ -128,70 +125,3 @@ class TestIPv4ResolveScanner:
         results = scanner.scan()
 
         assert len(results) == 0
-
-
-class TestIPv4ResolvePassiveScanner:
-    """Tests for IPv4ResolvePassiveScanner (ARP cache lookup)."""
-
-    def test_init(self):
-        """Test passive scanner initialization."""
-        scanner = IPv4ResolvePassiveScanner(interface="eth0")
-        assert scanner.interface == "eth0"
-        assert scanner.macs_to_resolve == {}
-
-    def test_scan_no_macs(self):
-        """Test scan with no MACs to resolve."""
-        scanner = IPv4ResolvePassiveScanner(interface="eth0")
-        results = scanner.scan()
-        assert results == {}
-
-    @patch("builtins.open")
-    def test_scan_from_arp_cache(self, mock_open):
-        """Test scan successfully reads from ARP cache."""
-        # Mock /proc/net/arp content
-        arp_content = """IP address       HW type     Flags       HW address            Mask     Device
-192.168.1.100    0x1         0x2         aa:bb:cc:dd:ee:ff     *        eth0
-192.168.1.200    0x1         0x2         11:22:33:44:55:66     *        eth0
-"""
-        mock_open.return_value.__enter__.return_value.read.return_value = arp_content
-        mock_open.return_value.__enter__.return_value.__iter__ = lambda self: iter(
-            arp_content.splitlines()
-        )
-
-        device = DiscoveredDevice(
-            mac_address="aa:bb:cc:dd:ee:ff",
-            ip_addresses=["fe80::1"],
-            name="IPv6 Device",
-            discovered_by=["ipv6"],
-            first_seen=datetime.now().isoformat(),
-            last_seen=datetime.now().isoformat(),
-        )
-        scanner = IPv4ResolvePassiveScanner(
-            interface="eth0",
-            macs_to_resolve={"aa:bb:cc:dd:ee:ff": device},
-        )
-        results = scanner.scan()
-
-        assert len(results) == 1
-        assert "192.168.1.100" in results["aa:bb:cc:dd:ee:ff"].ip_addresses
-
-    @patch("builtins.open")
-    def test_scan_arp_cache_not_found(self, mock_open):
-        """Test scan when ARP cache cannot be read."""
-        mock_open.side_effect = FileNotFoundError()
-
-        device = DiscoveredDevice(
-            mac_address="aa:bb:cc:dd:ee:ff",
-            ip_addresses=["fe80::1"],
-            name="IPv6 Device",
-            discovered_by=["ipv6"],
-            first_seen=datetime.now().isoformat(),
-            last_seen=datetime.now().isoformat(),
-        )
-        scanner = IPv4ResolvePassiveScanner(
-            interface="eth0",
-            macs_to_resolve={"aa:bb:cc:dd:ee:ff": device},
-        )
-        results = scanner.scan()
-
-        assert results == {}

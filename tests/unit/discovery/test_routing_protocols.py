@@ -31,7 +31,6 @@ class TestOSPFPassiveListener:
         assert ospf_listener.interface == "eth0"
         assert ospf_listener.timeout == 1
         assert ospf_listener.discovered_devices == {}
-        assert ospf_listener.areas == {}
 
     def test_ospf_protocol_name(self, ospf_listener):
         """Test OSPF protocol name constant."""
@@ -140,7 +139,6 @@ class TestEIGRPPassiveListener:
         assert eigrp_listener.interface == "eth0"
         assert eigrp_listener.timeout == 1
         assert eigrp_listener.discovered_devices == {}
-        assert eigrp_listener.autonomous_systems == {}
 
     def test_eigrp_protocol_name(self, eigrp_listener):
         """Test EIGRP protocol name constant."""
@@ -168,7 +166,6 @@ class TestEIGRPPassiveListener:
             EIGRP_PROTOCOL,
             EIGRP_MULTICAST,
             EIGRP_OPCODES,
-            EIGRP_TLV_TYPES,
             EIGRP_FLAGS,
         )
 
@@ -176,7 +173,6 @@ class TestEIGRPPassiveListener:
         assert EIGRP_MULTICAST == "224.0.0.10"
         assert EIGRP_OPCODES[5] == "Hello"
         assert EIGRP_OPCODES[1] == "Update"
-        assert EIGRP_TLV_TYPES[0x0001] == "Parameters"
         assert EIGRP_FLAGS[0x01] == "Init"
 
 
@@ -290,7 +286,6 @@ class TestPIMPassiveListener:
         assert pim_listener.interface == "eth0"
         assert pim_listener.timeout == 1
         assert pim_listener.discovered_devices == {}
-        assert pim_listener.multicast_groups == {}
 
     def test_pim_protocol_name(self, pim_listener):
         """Test PIM protocol name constant."""

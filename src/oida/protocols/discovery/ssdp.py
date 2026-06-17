@@ -498,9 +498,6 @@ class SSDPPassiveListener(PassiveListenerBase):
         """Parse SSDP message (NOTIFY or M-SEARCH response)."""
         try:
             lines = payload.split("\r\n")
-            if not lines:
-                return None
-
             result = {}
 
             # Determine message type from first line

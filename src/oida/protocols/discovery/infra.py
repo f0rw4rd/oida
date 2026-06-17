@@ -152,7 +152,7 @@ class HIDScanner:
         if fields[0] != "discovered":
             return None
 
-        hid_data = {"raw_response": text, "fields": fields}
+        hid_data: Dict[str, Any] = {}
 
         mac = ""
         name = ""
@@ -313,7 +313,6 @@ class MSSQLBrowserScanner:
         primary = instances[0]
 
         mssql_data = {
-            "raw_response": data.hex(),
             "instances": instances,
             "instance_count": len(instances),
             "server_name": primary.get("ServerName", ""),
@@ -452,7 +451,6 @@ class BJNPScanner:
             return None
 
         bjnp_data = {
-            "raw_response": data.hex(),
             "type": data[4],
             "code": data[5],
         }
@@ -500,14 +498,11 @@ class BJNPScanner:
                             val = val.strip()
                             if key == "MFG" or key == "MANUFACTURER":
                                 device.manufacturer = val
-                                bjnp_data["manufacturer"] = val
                             elif key == "MDL" or key == "MODEL":
                                 device.model = val
-                                bjnp_data["model"] = val
                                 device.name = val
                             elif key == "DES" or key == "DESCRIPTION":
                                 device.description = val
-                                bjnp_data["description"] = val
                             elif key == "VER":
                                 bjnp_data["version"] = val
 
@@ -617,7 +612,7 @@ class SonicWallScanner:
         if len(data) < 54:
             return None
 
-        sonicwall_data = {"raw_response": data.hex()}
+        sonicwall_data: Dict[str, Any] = {}
 
         # Extract device IP
         try:
@@ -759,7 +754,7 @@ class DB2Scanner:
         if "DB2RETADDR" not in text:
             return None
 
-        db2_data = {"raw_response": data.hex()}
+        db2_data: Dict[str, Any] = {}
 
         # Extract version (SQLxxxxx pattern)
         version_match = re.search(r"SQL\d+", text)
@@ -899,7 +894,7 @@ class SybaseScanner:
         if len(data) < 2:
             return None
 
-        sybase_data: Dict[str, Any] = {"raw_response": data.hex()}
+        sybase_data: Dict[str, Any] = {}
 
         # Try to extract readable strings for instance name
         try:
@@ -912,15 +907,6 @@ class SybaseScanner:
                     sybase_data["instance_name"] = readable[0]
         except Exception as e:
             logger.debug(f"Sybase discovery response ASCII decode failed: {e}")
-
-        # Try to find port number (usually a 2-byte big-endian value)
-        if len(data) >= 4:
-            # Common location for port in response
-            for offset in range(len(data) - 1):
-                port = struct.unpack(">H", data[offset : offset + 2])[0]
-                if 1024 < port < 65535:
-                    sybase_data["port"] = port
-                    break
 
         instance = sybase_data.get("instance_name", "")
         desc = f"Sybase ASA ({instance})" if instance else "Sybase ASA"
@@ -1035,17 +1021,13 @@ class XDMCPScanner:
         if len(data) < 6:
             return None
 
-        version, opcode, length = struct.unpack(">HHH", data[:6])
+        version, opcode, _ = struct.unpack(">HHH", data[:6])
 
         # Opcode 5 = WILLING
         if opcode != 5:
             return None
 
-        xdmcp_data = {
-            "raw_response": data.hex(),
-            "version": version,
-            "opcode": opcode,
-        }
+        xdmcp_data: Dict[str, Any] = {"version": version}
 
         offset = 6
         hostname = ""
@@ -1189,7 +1171,7 @@ class JenkinsScanner:
         if "<hudson>" not in text and "<jenkins>" not in text:
             return None
 
-        jenkins_data = {"raw_response": text}
+        jenkins_data: Dict[str, str] = {}
 
         # Parse XML fields with regex (avoid xml.etree for robustness)
         version_match = re.search(r"<version>([^<]+)</version>", text)
@@ -1314,17 +1296,6 @@ class PCAnywhereScanner:
 
         return self.discovered_devices
 
-    def _parse_response(self, data: bytes, ip: str) -> Optional[DiscoveredDevice]:
-        """Parse pcAnywhere response (NR or ST).
-
-        Dispatches to _parse_nr_response for NR packets.
-        """
-        if len(data) < 3:
-            return None
-        if data[:2] == b"NR":
-            return self._parse_nr_response(data, ip)
-        return None
-
     def _parse_nr_response(self, data: bytes, ip: str) -> Optional[DiscoveredDevice]:
         """Parse pcAnywhere NR (Name Response).
 
@@ -1336,7 +1307,7 @@ class PCAnywhereScanner:
         if data[:2] != b"NR":
             return None
 
-        pcanywhere_data = {"raw_response": data.hex()}
+        pcanywhere_data: Dict[str, str] = {}
 
         name_data = data[2:]
         server_name = ""
