@@ -63,8 +63,6 @@ class ads(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "ADS"
         self.default_port = 48898
-        self._scan_results = None
-        self._connection = None
         super().__init__(args, db, host)
 
     def proto_flow(self):
@@ -123,7 +121,6 @@ class ads(NetworkConnection):
         """Create ADS connection"""
         self.logger.debug(f"Connecting to {self.ip}:{self.args.port}")
         self.conn = self.scanner.connect()
-        self._connection = self.conn
         if self.conn:
             self.logger.success("Connected to ADS device")
         else:
@@ -940,7 +937,7 @@ class ads(NetworkConnection):
 
     def _list_files_nxc(self, path: str):
         """List files via SystemService (NXC wrapper)"""
-        result = self.scanner._list_files(self.conn, path)
+        result = self.scanner._list_files(path)
 
         if result.get("success"):
             self.results["data"]["files"] = result["files"]
@@ -972,7 +969,7 @@ class ads(NetworkConnection):
 
     def _read_file_nxc(self, path: str):
         """Read file content (NXC wrapper)"""
-        result = self.scanner._read_file(self.conn, path)
+        result = self.scanner._read_file(path)
 
         if result.get("success"):
             self.results["data"]["file_content"] = {
@@ -1172,7 +1169,7 @@ class ads(NetworkConnection):
         key = parts[1]
         value = parts[2] if len(parts) > 2 else None
 
-        result = self.scanner._read_registry(self.conn, hive, key, value)
+        result = self.scanner._read_registry(hive, key, value)
 
         if result.get("success"):
             self.results["data"]["registry"] = {
@@ -1217,7 +1214,7 @@ class ads(NetworkConnection):
 
     def _scan_ethercat_nxc(self):
         """Scan EtherCAT configuration (NXC wrapper)"""
-        result = self.scanner._scan_ethercat(self.conn)
+        result = self.scanner._scan_ethercat()
 
         if result.get("success"):
             self.results["data"]["ethercat"] = result
@@ -2012,7 +2009,7 @@ class ads(NetworkConnection):
             self._ethercat_scan = None
             return [int(user_port)]
 
-        result = self.scanner._scan_ethercat(self.conn)
+        result = self.scanner._scan_ethercat()
         if not result.get("success") or not result.get("slaves"):
             self.logger.fail(f"EtherCAT discovery failed: {result.get('error', 'no slaves found')}")
             return None
@@ -2192,7 +2189,7 @@ class ads(NetworkConnection):
         ip = all_parts[1]
         name = all_parts[2] if len(all_parts) > 2 else "oida"
 
-        result = self.scanner._add_route(self.conn, netid, ip, name)
+        result = self.scanner._add_route(netid, ip, name)
 
         if result.get("success"):
             self.logger.success(f"Route added: {netid} -> {ip}")
@@ -2429,9 +2426,9 @@ class ads(NetworkConnection):
 
     def cleanup(self):
         """Cleanup ADS connection"""
-        if self._connection:
+        if self.conn:
             try:
-                self.scanner.disconnect(self._connection)
+                self.scanner.disconnect(self.conn)
             except Exception as e:
                 self.logger.debug(f"Cleanup error: {e}")
 

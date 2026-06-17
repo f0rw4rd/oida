@@ -32,8 +32,6 @@ def _make_ads_instance(**overrides):
             obj = AdsClass.__new__(AdsClass)
             obj.protocol_name = "ADS"
             obj.default_port = 48898
-            obj._scan_results = None
-            obj._connection = None
             obj.conn = None
             obj.args = Mock()
             obj.db = None
@@ -124,7 +122,6 @@ class TestCreateConnObj(unittest.TestCase):
         obj.create_conn_obj()
 
         self.assertIsNotNone(obj.conn)
-        self.assertIsNotNone(obj._connection)
         obj.logger.success.assert_called()
 
     def test_failed_connection(self):
@@ -498,7 +495,7 @@ class TestCleanup(unittest.TestCase):
     def test_disconnects_connection(self):
         obj = _make_ads_instance()
         mock_conn = Mock()
-        obj._connection = mock_conn
+        obj.conn = mock_conn
 
         obj.cleanup()
 
@@ -507,7 +504,7 @@ class TestCleanup(unittest.TestCase):
     def test_no_connection(self):
         """When no connection exists, cleanup should not raise."""
         obj = _make_ads_instance()
-        obj._connection = None
+        obj.conn = None
 
         obj.cleanup()
 
@@ -516,7 +513,7 @@ class TestCleanup(unittest.TestCase):
     def test_disconnect_exception_handled(self):
         """Exception during disconnect should be caught."""
         obj = _make_ads_instance()
-        obj._connection = Mock()
+        obj.conn = Mock()
         obj.scanner.disconnect.side_effect = Exception("disconnect error")
 
         # Should not raise
@@ -791,13 +788,9 @@ class TestAdsInitAttributes(unittest.TestCase):
         obj = _make_ads_instance()
         self.assertEqual(obj.default_port, 48898)
 
-    def test_initial_scan_results_none(self):
-        obj = _make_ads_instance()
-        self.assertIsNone(obj._scan_results)
-
     def test_initial_connection_none(self):
         obj = _make_ads_instance()
-        self.assertIsNone(obj._connection)
+        self.assertIsNone(obj.conn)
 
 
 if __name__ == "__main__":

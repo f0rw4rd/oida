@@ -466,8 +466,10 @@ ADS_FILE_FLAG: Dict[str, int] = {
 # I/O Image Constants
 # ---------------------------------------------------------------------------
 
-INDEXGROUP_IOIMAGE_RWIB: int = 0xF020  # Input image read/write byte
-INDEXGROUP_IOIMAGE_RWOB: int = 0xF030  # Output image read/write byte
+# Aliases for the I/O image byte index groups (same values as the
+# ADS_IDX_GRP IO_INPUT_BYTE / IO_OUTPUT_BYTE entries above).
+INDEXGROUP_IOIMAGE_RWIB: int = ADS_IDX_GRP["IO_INPUT_BYTE"]  # Input image read/write byte
+INDEXGROUP_IOIMAGE_RWOB: int = ADS_IDX_GRP["IO_OUTPUT_BYTE"]  # Output image read/write byte
 
 # ---------------------------------------------------------------------------
 # Timeout Constants (all milliseconds unless noted)
