@@ -59,17 +59,10 @@ class CFindMixin(_ScannerBase):
                 ds.NumberOfPatientRelatedStudies = ""
 
             elif query_level == "STUDY":
-                if patient_id:
-                    ds.PatientID = patient_id
-                if patient_name:
-                    ds.PatientName = patient_name
-                if study_date:
-                    ds.StudyDate = study_date
+                # ModalitiesInStudy is study-level only (no return key below)
                 if modality:
                     ds.ModalitiesInStudy = modality
-                if accession_number:
-                    ds.AccessionNumber = accession_number
-                # Return keys
+                # Return keys (also carry the query filters when supplied)
                 ds.StudyInstanceUID = ""
                 ds.StudyDate = study_date or ""
                 ds.StudyTime = ""
@@ -140,7 +133,7 @@ class CFindMixin(_ScannerBase):
 
         self.results["data"]["cfind_results"] = {
             "query_level": query_level,
-            "query": {"PatientName": patient_name, "StudyUID": study_uid, "SeriesUID": series_uid},
+            "query": {"PatientName": patient_name},
             "count": len(results),
             "results": results[:50],  # Store first 50 for export
         }
@@ -228,7 +221,7 @@ class CFindMixin(_ScannerBase):
                     # Recursively extract from sequence items
                     if elem.value:
                         seq_items = []
-                        for i, item in enumerate(elem.value):
+                        for item in elem.value:
                             seq_items.append(self._extract_all_tags(item, phi_only))
                         if seq_items:
                             result[elem.keyword or f"Tag_{elem.tag}"] = seq_items

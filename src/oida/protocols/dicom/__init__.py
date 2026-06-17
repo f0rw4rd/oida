@@ -40,11 +40,12 @@ from .nxc_connection import (
 # installed so the patch decorator's lookup succeeds in dev environments
 # without the optional dep.
 try:
-    from pynetdicom import AE, evt  # type: ignore  # noqa: F401
+    from pynetdicom import AE  # type: ignore  # noqa: F401
+    from pynetdicom.sop_class import Verification  # type: ignore  # noqa: F401
     from pydicom.dataset import Dataset  # type: ignore  # noqa: F401
 except ImportError:  # pragma: no cover — optional dep
     AE = None  # type: ignore
-    evt = None  # type: ignore
+    Verification = None  # type: ignore
     Dataset = None  # type: ignore
 
 
@@ -55,5 +56,6 @@ __all__ = [
     "DEFAULT_AET_WORDLIST",
     "DICOM_VENDOR_MAP",
     "AE",
+    "Verification",
     "Dataset",
 ]
