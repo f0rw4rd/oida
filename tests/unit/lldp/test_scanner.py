@@ -339,7 +339,7 @@ class TestLLDPMockOperations(unittest.TestCase):
         scanner.discovered_devices = {device1.mac_address: device1, device2.mac_address: device2}
         scanner.packet_count = 50
 
-        with patch("oida.protocols.discovery.lldp.mac_lookup", return_value="Cisco"):
+        with patch("oida.protocols.discovery.lldp.lookup_mac_vendor", return_value="Cisco"):
             stats = scanner._generate_statistics()
 
         self.assertEqual(stats["total_devices"], 2)
