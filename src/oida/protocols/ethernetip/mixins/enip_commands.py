@@ -10,7 +10,6 @@ Handles ENIP packet building, parsing, and session registration:
 
 from __future__ import annotations
 
-import socket
 import struct
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
@@ -74,9 +73,8 @@ class EnipCommandsMixin(_ScannerBase):
           - Reserved (1 byte)
           - General Status (1 byte)
           - Additional Status Size (1 byte)
-          - Additional Status (variable)
         """
-        result = {"general_status": 0xFF, "reply_service": 0, "additional_status": []}
+        result = {"general_status": 0xFF, "reply_service": 0}
 
         try:
             if len(data) < 24:
@@ -98,19 +96,13 @@ class EnipCommandsMixin(_ScannerBase):
                 offset += 4
 
                 if item_type == 0x00B2 and item_len >= 4:
-                    # CIP response
+                    # CIP response: reply_service, reserved, general_status, add_status_size
                     cip_data = cpf_data[offset : offset + item_len]
-                    reply_service, reserved, general_status, add_size = struct.unpack(
+                    reply_service, _reserved, general_status, _add_size = struct.unpack(
                         "<BBBB", cip_data[:4]
                     )
                     result["reply_service"] = reply_service
                     result["general_status"] = general_status
-
-                    # Parse additional status words if present
-                    if add_size > 0 and len(cip_data) >= 4 + add_size * 2:
-                        for i in range(add_size):
-                            add_word = struct.unpack("<H", cip_data[4 + i * 2 : 6 + i * 2])[0]
-                            result["additional_status"].append(add_word)
                     break
 
                 offset += item_len
@@ -130,24 +122,16 @@ class EnipCommandsMixin(_ScannerBase):
         port: int,
         command: int,
         data: bytes = b"",
-        use_udp: bool = False,
     ) -> Optional[bytes]:
-        """Send an EtherNet/IP command and receive response"""
+        """Send an EtherNet/IP command over TCP and receive the response."""
         packet = self._build_enip_packet(command, data)
         sock = None
 
         try:
-            if use_udp:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                sock.settimeout(self.timeout)
-                sock.sendto(packet, (host, port))
-                response, addr = sock.recvfrom(4096)
-                return response
-            else:
-                sock = ConnectionHelper.create_tcp_socket(host, port, self.timeout)
-                sock.send(packet)
-                response = sock.recv(4096)
-                return response
+            sock = ConnectionHelper.create_tcp_socket(host, port, self.timeout)
+            sock.send(packet)
+            response = sock.recv(4096)
+            return response
         except TimeoutError:
             self.logger.debug(f"Timeout sending command 0x{command:04X} to {host}:{port}")
             return None

@@ -261,7 +261,6 @@ class FuzzMixin(_ScannerBase):
             "errors": [],
             "interesting": [],
             "restored": False,
-            "type": cip_type,
         }
 
         class_name = get_object_name(class_id)

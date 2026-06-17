@@ -3,8 +3,8 @@
 """
 Shared EtherNet/IP packet parsers.
 
-Centralised ListIdentity response parsing used by both the standalone
-broadcast_discovery() helper and the EtherNetIPScanner class methods.
+Centralised ListIdentity response parsing used by the standalone
+broadcast_discovery() helper and the DiscoveryMixin broadcast loop.
 """
 
 import struct

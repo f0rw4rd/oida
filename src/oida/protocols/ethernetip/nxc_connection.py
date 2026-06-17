@@ -21,13 +21,11 @@ class ethernetip(NetworkConnection):
         super().__init__(args, db, host)
 
     def _convert_args_to_dict(self):
-        """Convert args to dict for scanner compatibility."""
+        """Convert args (argparse Namespace or dict) to dict for the scanner."""
         if isinstance(self.args, dict):
             result = dict(self.args)
-        elif hasattr(self.args, "__dict__"):
-            result = dict(vars(self.args))
         else:
-            result = {}
+            result = dict(vars(self.args))
         # Ensure host is set from connection
         result["host"] = self.host
         return result
@@ -68,8 +66,7 @@ class ethernetip(NetworkConnection):
         try:
             # ListIdentity doesn't require an established connection
             # display=False since print_host_info() handles display
-            port = getattr(self.args, "port", 44818)
-            identity = self.scanner._list_identity(self.host, port, display=False)
+            identity = self.scanner._list_identity(self.host, self.args.port, display=False)
             if identity.get("success"):
                 self.results["data"]["device_info"] = identity
                 # Try to get IP config type (Static/DHCP) from TCP/IP Interface
@@ -103,7 +100,7 @@ class ethernetip(NetworkConnection):
             return
 
         info = self.results["data"].get("device_info", {})
-        port = getattr(self.args, "port", 44818)
+        port = self.args.port
 
         # The "Connected to EtherNet/IP device …" success banner was already
         # emitted by create_conn_obj(); use display() here so the banner appears

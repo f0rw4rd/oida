@@ -576,7 +576,6 @@ class CipObjectsMixin(_ScannerBase):
         route_path: Optional[list] = None,
         max_class: Optional[int] = None,
         quiet: bool = False,
-        force_probe: bool = False,
     ) -> Dict[int, Dict[str, Any]]:
         """
         Enumerate CIP objects - uses Message Router object list if available,
@@ -587,13 +586,12 @@ class CipObjectsMixin(_ScannerBase):
             route_path: Optional route path for routed enumeration (e.g., to a backplane slot)
             max_class: Maximum class ID to probe (default uses self.max_class)
             quiet: If True, suppress progress display
-            force_probe: If True, skip Object List and probe all classes (--full-enum)
         """
         objects = {}
 
-        # Try fast path: get object list from Message Router (unless force_probe)
+        # Try fast path: get object list from Message Router (skipped for --full-enum)
         object_list = None
-        if not force_probe and not self.full_enum:
+        if not self.full_enum:
             object_list = self._get_object_list(conn, route_path)
 
         if object_list:

@@ -149,8 +149,7 @@ class AttacksMixin(_ScannerBase):
                 try:
                     sock.close()
                 except Exception as e:
-                    self.logger.debug(f"send attack command failed: {e}")
-                    pass  # Ignore socket close errors
+                    self.logger.debug(f"socket close failed: {e}")
 
         return result
 
