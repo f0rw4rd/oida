@@ -85,12 +85,6 @@ protocol_options = {
         "required": False,
         "default": 1000,
     },
-    "wordlist-path": {
-        "type": "string",
-        "description": "Path to wordlist for object name fuzzing",
-        "required": False,
-        "default": "",
-    },
 }
 
 
@@ -116,7 +110,6 @@ class MMSScanner(NetworkScanner):
         self.read_values = parse_bool(args.get("read-values", False))
         self.test_write = parse_bool(args.get("test-write", False))
         self.max_objects = safe_int_conversion(args.get("max-objects"), 1000)
-        self.wordlist_path = args.get("wordlist-path", "")
 
         # Internal state
 
@@ -308,7 +301,6 @@ class MMSScanner(NetworkScanner):
         finally:
             _Lib.safe_linked_list_destroy(device_list)
 
-        info["supports_get_server_directory"] = True
         return info
 
     def _fingerprint_device(
@@ -723,7 +715,7 @@ class MMSScanner(NetworkScanner):
             else:
                 return _Lib.iec61850.MmsValue_newInteger(int(value))
         except Exception as e:
-            self.logger.debug(f"if isinstance(value, bool):: {e}")
+            self.logger.debug(f"Failed to create MmsValue from {value!r}: {e}")
             return None
 
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
