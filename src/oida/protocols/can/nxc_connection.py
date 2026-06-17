@@ -21,7 +21,6 @@ from ...utils.lazy_import import lazy_import
 from .constants import (
     CAN_STD_ID_MAX,
     CANOPEN_OD_ENTRIES,
-    COMMON_UDS_PAIRS,
     DEFAULT_BAUDRATE,
     OBD2_PIDS,
     OBD2_REQUEST_ID,
@@ -294,6 +293,9 @@ class can(ISOTPMixin, SerialConnection):
                 ],
                 "sessions": r.diagnostic_sessions,
                 "vehicle_info": r.vehicle_info,
+                "negative_responses": {
+                    f"0x{svc:02X}": f"0x{nrc:02X}" for svc, nrc in r.negative_responses.items()
+                },
             }
             self.results["data"]["uds_results"].append(entry)
 
@@ -451,6 +453,7 @@ class can(ISOTPMixin, SerialConnection):
                 "max_cto": r.max_cto,
                 "max_dto": r.max_dto,
                 "resource_protection": f"0x{r.resource_protection:02X}",
+                "comm_mode_basic": f"0x{r.comm_mode_basic:02X}",
             }
             self.results["data"]["xcp_results"].append(entry)
 
@@ -481,6 +484,7 @@ class can(ISOTPMixin, SerialConnection):
             "status": result.status,
             "max_cto": result.max_cto,
             "max_dto": result.max_dto,
+            "comm_mode_basic": f"0x{result.comm_mode_basic:02X}",
             "error": result.error,
         }
 
@@ -547,8 +551,7 @@ class can(ISOTPMixin, SerialConnection):
         if req_id is None:
             return
 
-        resp_id = COMMON_UDS_PAIRS.get(req_id, req_id + 0x08)
-        sessions = self.scanner.uds_session_scan(self.conn, req_id, resp_id)
+        sessions = self.scanner.uds_session_scan(self.conn, req_id)
         self.results["data"]["uds_sessions"] = {
             "request_id": f"0x{req_id:03X}",
             "supported_sessions": [
@@ -566,8 +569,6 @@ class can(ISOTPMixin, SerialConnection):
         if req_id is None:
             return
 
-        resp_id = COMMON_UDS_PAIRS.get(req_id, req_id + 0x08)
-
         # Parse DID range
         did_range = None
         if did_range_str and did_range_str != "true":
@@ -580,7 +581,7 @@ class can(ISOTPMixin, SerialConnection):
                 self.logger.fail(f"Invalid DID range: {did_range_str}")
                 return
 
-        readable = self.scanner.uds_did_scan(self.conn, req_id, resp_id, did_range=did_range)
+        readable = self.scanner.uds_did_scan(self.conn, req_id, did_range=did_range)
 
         from .constants import UDS_STANDARD_DIDS
 
@@ -602,7 +603,6 @@ class can(ISOTPMixin, SerialConnection):
         if req_id is None:
             return
 
-        resp_id = COMMON_UDS_PAIRS.get(req_id, req_id + 0x08)
         level = getattr(self.args, "seed_level", 0x01)
         count = getattr(self.args, "seed_count", 10)
 
@@ -613,7 +613,6 @@ class can(ISOTPMixin, SerialConnection):
         seeds = self.scanner.uds_security_seed_collect(
             self.conn,
             req_id,
-            resp_id,
             security_level=level,
             count=count,
         )
@@ -631,8 +630,7 @@ class can(ISOTPMixin, SerialConnection):
         if req_id is None:
             return
 
-        resp_id = COMMON_UDS_PAIRS.get(req_id, req_id + 0x08)
-        routines = self.scanner.uds_routine_scan(self.conn, req_id, resp_id)
+        routines = self.scanner.uds_routine_scan(self.conn, req_id)
         self.results["data"]["uds_routines"] = {
             "request_id": f"0x{req_id:03X}",
             "routines": [f"0x{r:04X}" for r in routines],
@@ -648,12 +646,11 @@ class can(ISOTPMixin, SerialConnection):
         if req_id is None:
             return
 
-        resp_id = COMMON_UDS_PAIRS.get(req_id, req_id + 0x08)
         reset_type = getattr(self.args, "uds_reset_type", 0x01)
         if isinstance(reset_type, str):
             reset_type = int(reset_type, 0)
 
-        success = self.scanner.uds_ecu_reset(self.conn, req_id, resp_id, reset_type=reset_type)
+        success = self.scanner.uds_ecu_reset(self.conn, req_id, reset_type=reset_type)
         self.results["data"]["uds_reset"] = {
             "request_id": f"0x{req_id:03X}",
             "reset_type": f"0x{reset_type:02X}",
