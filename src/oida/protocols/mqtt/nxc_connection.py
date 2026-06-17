@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """MQTT NXC-style callable class."""
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from ...connection import NetworkConnection
 from .scanner import MQTTScanner, dependencies_missing
@@ -22,7 +22,6 @@ class mqtt(NetworkConnection):
         self.protocol_name = "mqtt"
         self.default_port = 1883
         self.conn = None
-        self._scan_results = {}
         self.scanner = None
         self._connection_error = False  # True if connection failed (not auth)
         # Auto-upgrade to MQTT 5.0 if properties are used
@@ -47,20 +46,6 @@ class mqtt(NetworkConnection):
             current_version = getattr(args, "protocol_version", 4)
             if current_version < 5:
                 args.protocol_version = 5
-                # Note: logger not available yet in __init__, will log in proto_flow
-
-    def _get_subscribe_topics(self) -> List[str]:
-        """Get subscription topics, including auto-subscribe to response topic."""
-        topics_arg = getattr(self.args, "topics", "#")
-        topics = [t.strip() for t in topics_arg.split(",") if t.strip()]
-
-        # Auto-subscribe to response topic if listen mode
-        response_topic = getattr(self.args, "response_topic", None)
-        listen_mode = getattr(self.args, "listen", False)
-        if response_topic and listen_mode and response_topic not in topics:
-            topics.append(response_topic)
-
-        return topics
 
     def _build_publish_properties(self) -> Any:
         """Build MQTT 5.0 properties from args.
@@ -193,7 +178,6 @@ class mqtt(NetworkConnection):
         """Execute MQTT scanning"""
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
         # All logging is now handled by the scanner during enumeration
 
     def _has_publish_request(self) -> bool:
@@ -222,10 +206,10 @@ class mqtt(NetworkConnection):
                 else:
                     return message.encode("utf-8"), None
         except FileNotFoundError as e:
-            self.logger.debug(f"if null_msg:: {e}")
+            self.logger.debug(f"Payload file read failed: {e}")
             return None, f"Payload file not found: {payload_file}"
         except ValueError as e:
-            self.logger.debug(f"if null_msg:: {e}")
+            self.logger.debug(f"Hex payload decode failed: {e}")
             return None, f"Invalid hex payload: {e}"
 
     def _handle_publish_and_listen(self):

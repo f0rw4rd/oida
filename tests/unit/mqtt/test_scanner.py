@@ -124,24 +124,6 @@ class TestMQTTDataStructures(unittest.TestCase):
         )
         self.assertEqual(binary_msg.payload_str(), "80818283")
 
-    def test_mqtt_message_to_dict(self):
-        """Test MQTTMessage to_dict method"""
-        from oida.protocols.mqtt.scanner import MQTTMessage
-
-        msg = MQTTMessage(
-            topic="test/topic",
-            payload=b"test",
-            qos=1,
-            retain=True,
-        )
-        result = msg.to_dict()
-
-        self.assertIn("topic", result)
-        self.assertIn("payload", result)
-        self.assertIn("qos", result)
-        self.assertIn("retain", result)
-        self.assertIn("timestamp", result)
-
     def test_listen_stats_dataclass(self):
         """Test ListenStats dataclass"""
         from oida.protocols.mqtt.scanner import ListenStats
@@ -198,7 +180,9 @@ class TestMQTTScannerInit(unittest.TestCase):
         scanner = MQTTScanner(args)
 
         self.assertTrue(scanner.use_tls)
-        self.assertTrue(scanner.tls_insecure)
+        # tls-cert/key/ca/insecure are not stored as attributes; they are read
+        # from self.args via build_tls_context() at connect time.
+        self.assertTrue(scanner.args.get("tls-insecure"))
 
     def test_initialization_with_topic_options(self):
         """Test scanner initialization with topic options"""
@@ -1490,13 +1474,12 @@ class TestMQTTSecurityAnalysisAdvanced(unittest.TestCase):
         self.assertTrue(any("Plaintext" in i for i in issue_types))
 
     def test_analyze_security_weak_credentials_formats(self):
-        """Test weak credentials detection with different formats"""
+        """Test weak credentials detection (brute_results emits dicts)"""
         from oida.protocols.mqtt.scanner import MQTTScanner
 
         args = {"rhost": "127.0.0.1", "rport": 1883}
         scanner = MQTTScanner(args)
 
-        # Test with dict format
         results_dict = {
             "auth": {"brute_results": {"valid": [{"username": "admin", "password": "admin123"}]}},
             "broker_info": {},
@@ -1505,16 +1488,6 @@ class TestMQTTSecurityAnalysisAdvanced(unittest.TestCase):
 
         issues_dict = scanner._analyze_security(results_dict)
         self.assertTrue(any("Weak credentials" in i["issue"] for i in issues_dict))
-
-        # Test with tuple format
-        results_tuple = {
-            "auth": {"brute_results": {"valid": [("root", "password")]}},
-            "broker_info": {},
-            "topics": [],
-        }
-
-        issues_tuple = scanner._analyze_security(results_tuple)
-        self.assertTrue(any("Weak credentials" in i["issue"] for i in issues_tuple))
 
 
 class TestMQTTDisconnectAndCleanup(unittest.TestCase):
@@ -1735,7 +1708,7 @@ class TestMQTTTLSErrors(unittest.TestCase):
             }
         )
 
-        self.assertEqual(scanner.tls_cert, "/nonexistent/cert.pem")
+        self.assertEqual(scanner.args.get("tls-cert"), "/nonexistent/cert.pem")
 
     def test_invalid_private_key_path(self):
         """Test handling of invalid private key path."""
@@ -1750,7 +1723,7 @@ class TestMQTTTLSErrors(unittest.TestCase):
             }
         )
 
-        self.assertEqual(scanner.tls_key, "/nonexistent/key.pem")
+        self.assertEqual(scanner.args.get("tls-key"), "/nonexistent/key.pem")
 
 
 class TestMQTTResourceCleanup(unittest.TestCase):
