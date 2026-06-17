@@ -30,192 +30,8 @@ _pyiec61850_tase2 = lazy_import(
 
 
 # =============================================================================
-# TASE.2 Error Codes and Constants
-# =============================================================================
-
-
-class TASE2ErrorClass:
-    """MMS Error Classes used in TASE.2 responses."""
-
-    ACCESS = "ACCESS"
-    INITIATE = "INITIATE"
-    DEFINITION = "DEFINITION"
-    RESOURCE = "RESOURCE"
-    SERVICE = "SERVICE"
-    FILE = "FILE"
-
-
-class TASE2ErrorCode:
-    """
-    TASE.2/MMS Error Codes.
-
-    Used in negative responses to indicate specific failure conditions.
-    """
-
-    # Access class errors (most common)
-    OBJECT_NON_EXISTENT = "OBJECT-NON-EXISTENT"
-    OBJECT_ACCESS_DENIED = "OBJECT-ACCESS-DENIED"
-    OBJECT_ACCESS_UNSUPPORTED = "OBJECT-ACCESS-UNSUPPORTED"
-    OBJECT_INVALIDATED = "OBJECT-INVALIDATED"
-
-    # Hardware/system errors
-    HARDWARE_FAULT = "HARDWARE-FAULT"
-    TEMPORARILY_UNAVAILABLE = "TEMPORARILY-UNAVAILABLE"
-
-    # Type/attribute errors
-    TYPE_INCONSISTENT = "TYPE-INCONSISTENT"
-    OBJECT_ATTRIBUTE_INCONSISTENT = "OBJECT-ATTRIBUTE-INCONSISTENT"
-    OBJECT_ATTRIBUTE_UNSUPPORTED = "OBJECT-ATTRIBUTE-UNSUPPORTED"
-    ATTRIBUTE_INCONSISTENT = "ATTRIBUTE-INCONSISTENT"
-
-    # Other
-    OTHER = "OTHER"
-
-
-class TASE2DataAccessError:
-    """
-    MMS DataAccessError codes used in Read/Write responses.
-    """
-
-    SUCCESS = 0
-    OBJECT_NON_EXISTENT = 1
-    OBJECT_ACCESS_DENIED = 2
-    OBJECT_ACCESS_UNSUPPORTED = 3
-    OBJECT_INVALIDATED = 4
-    HARDWARE_FAULT = 5
-    TYPE_INCONSISTENT = 6
-    TEMPORARILY_UNAVAILABLE = 7
-    OBJECT_UNDEFINED = 8
-
-    @classmethod
-    def to_string(cls, code: int) -> str:
-        """Convert error code to human-readable string."""
-        mapping = {
-            0: "Success",
-            1: "Object does not exist",
-            2: "Access denied (bilateral table)",
-            3: "Access not supported",
-            4: "Object invalidated",
-            5: "Hardware fault",
-            6: "Type inconsistent",
-            7: "Temporarily unavailable (device busy/armed)",
-            8: "Object undefined",
-        }
-        return mapping.get(code, f"Unknown error ({code})")
-
-
-class TASE2DeviceState:
-    """
-    TASE.2 Device States.
-
-    SBO devices have two states that affect operation execution.
-    """
-
-    IDLE = "IDLE"  # Not selected, ready for new Select
-    ARMED = "ARMED"  # Selected, waiting for Operate command
-
-
-class TASE2TagValue:
-    """
-    TASE.2 Device Tag Values.
-
-    Tags control whether device operations are permitted.
-    """
-
-    NO_TAG = "NO_TAG"  # No restrictions
-    OPEN_AND_CLOSE_INHIBIT = "OPEN_AND_CLOSE_INHIBIT"  # Full lockout
-    CLOSE_ONLY_INHIBIT = "CLOSE_ONLY_INHIBIT"  # Only open operations allowed
-
-
-class TASE2PointType:
-    """TASE.2 Data Point Types."""
-
-    # Real (analog) types
-    REAL = "DATA_REAL"
-    REAL_Q = "DATA_REAL_Q"
-    REAL_Q_TIME = "DATA_REAL_Q_TIME"
-    REAL_EXTENDED = "DATA_REAL_EXTENDED"
-
-    # State (digital) types
-    STATE = "DATA_STATE"
-    STATE_Q = "DATA_STATE_Q"
-    STATE_Q_TIME = "DATA_STATE_Q_TIME"
-    STATE_EXTENDED = "DATA_STATE_EXTENDED"
-    STATE_SUPPLEMENTAL = "DATA_STATE_SUPPLEMENTAL"
-
-    # Discrete types
-    DISCRETE = "DATA_DISCRETE"
-    DISCRETE_Q = "DATA_DISCRETE_Q"
-    DISCRETE_Q_TIME = "DATA_DISCRETE_Q_TIME"
-    DISCRETE_EXTENDED = "DATA_DISCRETE_EXTENDED"
-
-
-class TASE2Quality:
-    """TASE.2 Quality Flags."""
-
-    VALIDITY_GOOD = 0x00
-    VALIDITY_INVALID = 0x01
-    VALIDITY_RESERVED = 0x02
-    VALIDITY_HELD = 0x03
-
-    # Additional quality bits
-    CURRENT_SOURCE = 0x04  # 1=substituted, 0=measured
-    NORMAL_VALUE = 0x08  # 1=abnormal, 0=normal
-    TIME_STAMP_QUALITY = 0x10  # 1=invalid, 0=valid
-
-    @classmethod
-    def decode(cls, quality_byte: int) -> Dict[str, Any]:
-        """Decode quality byte into readable dict."""
-        validity_map = {0: "good", 1: "invalid", 2: "reserved", 3: "held"}
-        return {
-            "validity": validity_map.get(quality_byte & 0x03, "unknown"),
-            "substituted": bool(quality_byte & 0x04),
-            "abnormal": bool(quality_byte & 0x08),
-            "timestamp_invalid": bool(quality_byte & 0x10),
-            "raw": quality_byte,
-        }
-
-
-class TASE2DSConditions:
-    """
-    TASE.2 DSConditions flags.
-
-    These indicate which conditions triggered a transfer report.
-    """
-
-    INTERVAL_TIMEOUT = 0x01  # Report sent due to interval time
-    OBJECT_CHANGE = 0x02  # Object value/status/quality changed
-    OPERATOR_REQUEST = 0x04  # Operator requested the report
-    INTEGRITY_TIMEOUT = 0x08  # Integrity check interval expired (RBE only)
-    OTHER_EXTERNAL_EVENT = 0x10  # Other external event occurred
-
-    @classmethod
-    def decode(cls, conditions: int) -> Dict[str, bool]:
-        """Decode conditions bitfield into dict."""
-        return {
-            "interval_timeout": bool(conditions & cls.INTERVAL_TIMEOUT),
-            "object_change": bool(conditions & cls.OBJECT_CHANGE),
-            "operator_request": bool(conditions & cls.OPERATOR_REQUEST),
-            "integrity_timeout": bool(conditions & cls.INTEGRITY_TIMEOUT),
-            "other_external_event": bool(conditions & cls.OTHER_EXTERNAL_EVENT),
-        }
-
-
-# =============================================================================
 # Block 4: Information Messages Constants
 # =============================================================================
-
-
-class TASE2IMStatus:
-    """
-    TASE.2 Information Message Status Values.
-
-    Status of messages in an IM store.
-    """
-
-    ACTIVE = "ACTIVE"  # Message is active/current
-    ARCHIVED = "ARCHIVED"  # Message has been archived
-    DELETED = "DELETED"  # Message marked for deletion
 
 
 class TASE2IMStorageStatus:
@@ -241,55 +57,6 @@ class TASE2IMScope:
 
     VCC = "VCC"  # Virtual Control Center scope (server-wide)
     ICC = "ICC"  # Invocation Control Center scope (bilateral-specific)
-
-
-def parse_tase2_error(error_class: str, error_code: str) -> str:
-    """
-    Parse TASE.2/MMS error into human-readable description.
-
-    Args:
-        error_class: MMS error class (e.g., "ACCESS")
-        error_code: MMS error code (e.g., "OBJECT-ACCESS-DENIED")
-
-    Returns:
-        Human-readable error description
-    """
-    descriptions = {
-        (
-            TASE2ErrorClass.ACCESS,
-            TASE2ErrorCode.OBJECT_NON_EXISTENT,
-        ): "Object does not exist - check bilateral table configuration",
-        (
-            TASE2ErrorClass.ACCESS,
-            TASE2ErrorCode.OBJECT_ACCESS_DENIED,
-        ): "Access denied - not authorized in bilateral table",
-        (
-            TASE2ErrorClass.ACCESS,
-            TASE2ErrorCode.HARDWARE_FAULT,
-        ): "Hardware fault - device is unavailable or inoperable",
-        (
-            TASE2ErrorClass.ACCESS,
-            TASE2ErrorCode.TEMPORARILY_UNAVAILABLE,
-        ): "Temporarily unavailable - device is ARMED or busy",
-        (
-            TASE2ErrorClass.ACCESS,
-            TASE2ErrorCode.TYPE_INCONSISTENT,
-        ): "Type inconsistent - wrong data type for operation",
-        (
-            TASE2ErrorClass.ACCESS,
-            TASE2ErrorCode.OBJECT_ATTRIBUTE_INCONSISTENT,
-        ): "Attribute inconsistent - invalid parameter value",
-        (
-            TASE2ErrorClass.INITIATE,
-            TASE2ErrorCode.OTHER,
-        ): "Association initiation failed - check AP titles and bilateral table",
-    }
-    return descriptions.get((error_class, error_code), f"Error: {error_class}/{error_code}")
-
-
-def _require_lib():
-    """Raise DependencyError if pyiec61850-ng is not installed."""
-    _pyiec61850_tase2()  # raises DependencyError if missing
 
 
 protocol_options = {
@@ -396,10 +163,8 @@ class TASE2Scanner(
         # Internal state
         self.client = None
         self.domains = []
-        self.bilateral_table_id = ""
         self.supported_features = {}
         self.tase2_version = None
-        self.device_states = {}  # Track SBO device states (IDLE/ARMED)
 
     def get_protocol_name(self) -> str:
         return "TASE.2/ICCP"
@@ -415,7 +180,7 @@ class TASE2Scanner(
         """Establish TASE.2 connection."""
         host, port = self.get_target_info()
 
-        _require_lib()
+        _pyiec61850_tase2()  # raises DependencyError if pyiec61850-ng is missing
 
         try:
             self.client = _pyiec61850_tase2.TASE2Client(
@@ -464,9 +229,18 @@ class TASE2Scanner(
         }
 
         try:
-            # Protocol discovery (Phase 1)
-            results["supported_features"] = self.get_supported_features(connection)
-            results["server_blocks"] = self._enumerate_server_blocks(connection)
+            # Protocol discovery (Phase 1) - fetch the conformance-block map once
+            # and feed it to both consumers to avoid a double round trip and a
+            # duplicate block table in the operator output.
+            try:
+                server_blocks = connection.get_server_blocks()
+            except Exception as e:
+                self.logger.debug(f"Error getting server blocks: {e}")
+                server_blocks = None
+            results["server_blocks"] = self._enumerate_server_blocks(connection, server_blocks)
+            results["supported_features"] = self.get_supported_features(
+                connection, server_blocks, display=False
+            )
             results["tase2_version"] = self.get_tase2_version(connection)
 
             # Bilateral table info
@@ -539,8 +313,6 @@ class TASE2Scanner(
             if blt_info["table_id"]:
                 self.logger.display(f"Bilateral Table ID: {blt_info['table_id']}")
             self.logger.display(f"Server BLT Count: {blt_info['table_count']}")
-
-            self.bilateral_table_id = blt_info["table_id"]
 
         except Exception as e:
             self.logger.debug(f"Error getting bilateral table: {e}")

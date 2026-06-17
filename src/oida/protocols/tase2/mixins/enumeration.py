@@ -85,8 +85,6 @@ class EnumerationMixin(_ScannerBase):
             "domain": domain,
             "name": name,
             "type_name": "",
-            "deletable": False,
-            "structure": [],
         }
 
         try:
@@ -116,7 +114,7 @@ class EnumerationMixin(_ScannerBase):
         results = []
 
         try:
-            values = connection.read_points(domain, names)
+            values = connection.read_points([(domain, n) for n in names])
 
             for name, pv in zip(names, values):
                 results.append(
@@ -201,7 +199,8 @@ class EnumerationMixin(_ScannerBase):
             return False
 
         try:
-            result = connection.create_data_set(domain, dataset_name, members)
+            member_refs = [f"{m['domain']}/{m['name']}" for m in members]
+            result = connection.create_data_set(domain, dataset_name, member_refs)
             if result:
                 self.logger.display(f"Created data set {domain}/{dataset_name}")
             return bool(result)

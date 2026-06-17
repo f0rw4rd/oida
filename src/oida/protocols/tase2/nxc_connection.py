@@ -156,7 +156,7 @@ class tase2(NetworkConnection):
         ]
         for attr in action_attrs:
             val = getattr(self.args, attr, None)
-            if val is True or (val is not None and val is not False):
+            if val not in (None, False):
                 return True
         return False
 
@@ -181,7 +181,7 @@ class tase2(NetworkConnection):
         """Check if the requested action is a write/control operation needing --confirm."""
         for attr in self._WRITE_ACTIONS:
             val = getattr(self.args, attr, None)
-            if val is True or (val is not None and val is not False):
+            if val not in (None, False):
                 return True
         return False
 
@@ -212,8 +212,8 @@ class tase2(NetworkConnection):
             self.logger.display(f"Listing variables for {domain}...")
             variables = self.conn.get_domain_variables(domain)
             for v in variables:
-                self.logger.display(f"  {v.name}")
-            result = {"variables": [v.name for v in variables]}
+                self.logger.display(f"  {v}")
+            result = {"variables": list(variables)}
 
         # List data sets
         elif getattr(self.args, "list_data_sets", None):
@@ -406,10 +406,25 @@ class tase2(NetworkConnection):
         elif getattr(self.args, "get_server_info", False):
             self.logger.display("Getting server info...")
             info = self.conn.get_server_info()
-            self.logger.display(f"  Domains: {len(info.domains)}")
-            self.logger.display(f"  Bilateral Tables: {info.bilateral_tables}")
-            self.logger.display(f"  Conformance Blocks: {info.supported_blocks}")
-            result = {"server_info": True}
+            domain_count = len(self.conn.get_domains())
+            self.logger.display(f"  Vendor: {info.vendor}")
+            self.logger.display(f"  Model: {info.model}")
+            self.logger.display(f"  Revision: {info.revision}")
+            self.logger.display(f"  Domains: {domain_count}")
+            self.logger.display(f"  Bilateral Table ID: {info.bilateral_table_id}")
+            self.logger.display(f"  Bilateral Table Count: {info.bilateral_table_count}")
+            self.logger.display(f"  Conformance Blocks: {info.conformance_blocks}")
+            result = {
+                "server_info": {
+                    "vendor": info.vendor,
+                    "model": info.model,
+                    "revision": info.revision,
+                    "domain_count": domain_count,
+                    "bilateral_table_id": info.bilateral_table_id,
+                    "bilateral_table_count": info.bilateral_table_count,
+                    "conformance_blocks": info.conformance_blocks,
+                }
+            }
 
         # Get supported features
         elif getattr(self.args, "get_features", False):
@@ -442,9 +457,6 @@ class tase2(NetworkConnection):
             self.logger.display(f"Getting type for {domain}/{name}...")
             type_info = self.scanner.get_data_value_type(self.conn, domain, name)
             self.logger.display(f"  Type: {type_info['type_name']}")
-            self.logger.display(f"  Deletable: {type_info['deletable']}")
-            if type_info["structure"]:
-                self.logger.display(f"  Structure: {type_info['structure']}")
             result = {"type_info": type_info}
 
         # Read multiple points
@@ -624,10 +636,10 @@ class tase2(NetworkConnection):
             if messages:
                 self.logger.display(f"Found {len(messages)} message(s):")
                 for msg in messages:
-                    self.logger.display(
-                        f"  {msg['message_id']} - {msg.get('size', 0)} bytes "
-                        f"[{msg.get('status', 'UNKNOWN')}] from {msg.get('originator', '?')}"
-                    )
+                    line = f"  {msg['message_id']} - {msg.get('size', 0)} bytes"
+                    if msg.get("time_created"):
+                        line += f" @ {msg['time_created']}"
+                    self.logger.display(line)
             else:
                 self.logger.display("No messages found")
             result = {"messages": messages}
@@ -646,8 +658,6 @@ class tase2(NetworkConnection):
             if msg.get("content"):
                 self.logger.display("Message content:")
                 self.logger.display(f"  {msg['content']}")
-                if msg.get("originator"):
-                    self.logger.display(f"  From: {msg['originator']}")
                 if msg.get("time_created"):
                     self.logger.display(f"  Time: {msg['time_created']}")
             elif msg.get("error"):

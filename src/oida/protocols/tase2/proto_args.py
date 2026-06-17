@@ -57,31 +57,35 @@ Requires: pyiec61850-ng (pip install pyiec61850-ng)
         help="Remote AP title",
     )
 
-    # Discovery options
+    # Discovery options (enabled by default; pass --no-* to disable)
     discovery_group = tase2_parser.add_argument_group("Discovery Options")
     discovery_group.add_argument(
-        "--discover-vcc",
-        action="store_true",
+        "--no-discover-vcc",
+        dest="discover_vcc",
+        action="store_false",
         default=True,
-        help="Discover Virtual Control Centers (default: True)",
+        help="Skip Virtual Control Center discovery (default: enabled)",
     )
     discovery_group.add_argument(
-        "--discover-icc",
-        action="store_true",
+        "--no-discover-icc",
+        dest="discover_icc",
+        action="store_false",
         default=True,
-        help="Discover Indication Control Centers (default: True)",
+        help="Skip Indication Control Center discovery (default: enabled)",
     )
     discovery_group.add_argument(
-        "--analyze-blt",
-        action="store_true",
+        "--no-analyze-blt",
+        dest="analyze_blt",
+        action="store_false",
         default=True,
-        help="Analyze bilateral tables (default: True)",
+        help="Skip bilateral table analysis (default: enabled)",
     )
     discovery_group.add_argument(
-        "--enumerate-points",
-        action="store_true",
+        "--no-enumerate-points",
+        dest="enumerate_points",
+        action="store_false",
         default=True,
-        help="Enumerate data points (default: True)",
+        help="Skip data point enumeration (default: enabled)",
     )
     discovery_group.add_argument(
         "--max-points",
