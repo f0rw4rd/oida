@@ -96,6 +96,13 @@ from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST
 
 
+# The HART mock holds mutable per-device state (lock status, password, poll
+# address) that concurrent tests would corrupt, so serialize all HART tests
+# onto one xdist worker. Honored only under `--dist loadgroup`. Mirrors
+# test_mms_integration.py / test_iec104_integration.py.
+pytestmark = pytest.mark.xdist_group("hart_service")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
