@@ -51,7 +51,7 @@ Total collected (including 8 inherited from BaseProtocolIntegrationTest): 65 tes
 Flag Coverage Matrix (proto_args.py):
   --port                       [A] test_basic_unicast_discovery
   --timeout                    [A] test_custom_timeout
-  --nat                        [A] test_nat_mode_discovery
+  (NAT default-on)             [A] test_nat_mode_discovery
   --no-nat                     [A] test_no_nat_mode_discovery
   --interface                  [skip] requires specific network interface
   --tcp                        [B] test_tcp_tunneling_mode
@@ -270,13 +270,12 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.containers("knx-calimero")
     def test_nat_mode_discovery(self, cli_runner, target, port):
-        """Test NAT mode discovery (default enabled) [Category A]"""
+        """Test NAT mode discovery (NAT is enabled by default) [Category A]"""
         result = cli_runner.run(
             self.protocol_name,
             target,
             "--port",
             str(port),
-            "--nat",
             format="json",
             json_log=True,
             timeout=30,
