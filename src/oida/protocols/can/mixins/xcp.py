@@ -12,6 +12,7 @@ Handles XCP (ASAM MCD-1 XCP) and CCP (CCP v2.1) protocol operations:
 """
 
 import struct
+import time
 from typing import Any, List, Optional, Tuple
 
 from ..constants import (
@@ -24,9 +25,6 @@ from ..constants import (
     CCP_DISCONNECT_CMD,
     CCP_DISCONNECT_END_SESSION,
     CCP_DTO_COMMAND_RETURN,
-    CCP_EXCHANGE_ID_CMD,
-    CCP_GET_CCP_VERSION_CMD,
-    CCP_GET_S_STATUS_CMD,
     XCP_CONNECT_CMD,
     XCP_CONNECT_MODE_NORMAL,
     XCP_DISCONNECT_CMD,
@@ -49,13 +47,6 @@ def _get_python_can():
     from ..scanner import _python_can
 
     return _python_can
-
-
-def _get_time():
-    """Resolve time module from scanner module (for test patchability)."""
-    from ..scanner import time
-
-    return time
 
 
 class XCPMixin:
@@ -333,12 +324,9 @@ class XCPMixin:
         Returns:
             Tuple of (arb_id, data) or None
         """
-        time = _get_time()
         end_time = time.time() + timeout
         while time.time() < end_time:
             remaining = end_time - time.time()
-            if remaining <= 0:
-                break
             msg = bus.recv(timeout=min(remaining, 0.02))
             if msg is None:
                 continue
@@ -458,92 +446,6 @@ class XCPMixin:
 
         return results
 
-    def ccp_get_info(
-        self,
-        bus: Any,
-        cro_id: int,
-        dto_id: int,
-        station_address: int,
-    ) -> CCPScanResult:
-        """
-        Gather info from a CCP slave (version, exchange ID, session status).
-
-        Args:
-            bus: python-can Bus instance
-            cro_id: CRO arbitration ID
-            dto_id: DTO arbitration ID
-            station_address: Slave station address
-
-        Returns:
-            CCPScanResult with collected information
-        """
-        result = CCPScanResult(cro_id=cro_id, dto_id=dto_id, station_address=station_address)
-        ctr = 0
-
-        # Step 1: CONNECT
-        ctr += 1
-        station_lo = station_address & 0xFF
-        station_hi = (station_address >> 8) & 0xFF
-        connect_cro = bytes(
-            [
-                CCP_CONNECT_CMD,
-                ctr & 0xFF,
-                station_lo,
-                station_hi,
-                0x00,
-                0x00,
-                0x00,
-                0x00,
-            ]
-        )
-        self.send_message(bus, cro_id, connect_cro)
-        resp = self._recv_ccp_response(bus, dto_id, timeout=0.2)
-        if resp is None or len(resp) < 3 or resp[1] != 0x00:
-            result.error = "CONNECT failed"
-            return result
-        result.connected = True
-
-        # Step 2: GET_CCP_VERSION (0x1B)
-        ctr += 1
-        # CRO: [CMD=0x1B, CTR, main_ver, release_ver, 0, 0, 0, 0]
-        # Request version 2.1
-        version_cro = bytes(
-            [CCP_GET_CCP_VERSION_CMD, ctr & 0xFF, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00]
-        )
-        self.send_message(bus, cro_id, version_cro)
-        resp = self._recv_ccp_response(bus, dto_id, timeout=0.2)
-        if resp and len(resp) >= 5 and resp[1] == 0x00:
-            result.ccp_version = f"{resp[3]}.{resp[4]}"
-            self.logger.display(f"  CCP version: {result.ccp_version}")
-
-        # Step 3: EXCHANGE_ID (0x17)
-        ctr += 1
-        exchange_cro = bytes([CCP_EXCHANGE_ID_CMD, ctr & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        self.send_message(bus, cro_id, exchange_cro)
-        resp = self._recv_ccp_response(bus, dto_id, timeout=0.2)
-        if resp and len(resp) >= 8 and resp[1] == 0x00:
-            # Response contains slave device ID info
-            id_length = resp[3]
-            result.device_id = bytes(resp[4:8])
-            self.logger.display(
-                f"  EXCHANGE_ID: length={id_length} "
-                f"data={' '.join(f'{b:02X}' for b in result.device_id)}"
-            )
-
-        # Step 4: GET_S_STATUS (0x0D)
-        ctr += 1
-        status_cro = bytes([CCP_GET_S_STATUS_CMD, ctr & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        self.send_message(bus, cro_id, status_cro)
-        resp = self._recv_ccp_response(bus, dto_id, timeout=0.2)
-        if resp and len(resp) >= 4 and resp[1] == 0x00:
-            result.session_status = resp[3]
-            self.logger.display(f"  Session status: 0x{resp[3]:02X}")
-
-        # Disconnect
-        self._ccp_disconnect(bus, cro_id, station_address, dto_id=dto_id)
-
-        return result
-
     def _recv_ccp_response(self, bus: Any, dto_id: int, timeout: float = 0.1) -> Optional[bytes]:
         """
         Receive a CCP DTO response.
@@ -556,12 +458,9 @@ class XCPMixin:
         Returns:
             Response data bytes or None
         """
-        time = _get_time()
         end_time = time.time() + timeout
         while time.time() < end_time:
             remaining = end_time - time.time()
-            if remaining <= 0:
-                break
             msg = bus.recv(timeout=min(remaining, 0.02))
             if msg is None:
                 continue

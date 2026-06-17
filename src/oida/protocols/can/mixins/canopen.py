@@ -303,7 +303,8 @@ class CANopenMixin:
                             is_extended_id=False,
                         )
                         bus.send(seg_msg)
-                    except Exception:
+                    except Exception as e:
+                        self.logger.debug(f"CANopen: SDO segment upload frame send failed: {e}")
                         break
 
                     seg_resp = self._recv_sdo_response(bus, sdo_tx_id, timeout)
@@ -665,44 +666,6 @@ class CANopenMixin:
             self.logger.display("  No heartbeat messages detected")
 
         return nodes
-
-    def canopen_nmt_state_read(self, bus: Any, node_id: int, timeout: float = 1.0) -> Optional[int]:
-        """
-        Read the current NMT state of a node via node guarding RTR.
-
-        Args:
-            bus: python-can Bus instance
-            node_id: Target node ID
-            timeout: Response timeout
-
-        Returns:
-            NMT state code or None if no response
-        """
-        can = _get_python_can()()
-        heartbeat_cob_id = CANOPEN_HEARTBEAT_BASE + node_id
-
-        try:
-            msg = can.Message(
-                arbitration_id=heartbeat_cob_id,
-                data=[],
-                is_extended_id=False,
-                is_remote_frame=True,
-            )
-            bus.send(msg)
-        except Exception as e:
-            self.logger.debug(f"CANopen: single-node heartbeat RTR frame send failed: {e}")
-            return None
-
-        end_time = time.time() + timeout
-        while time.time() < end_time:
-            resp = bus.recv(timeout=min(end_time - time.time(), 0.1))
-            if resp is None:
-                continue
-            if resp.arbitration_id == heartbeat_cob_id and not resp.is_remote_frame:
-                data = bytes(resp.data)
-                if len(data) >= 1:
-                    return data[0] & 0x7F
-        return None
 
     def canopen_pdo_discover(self, bus: Any, node_id: int) -> Dict[str, Any]:
         """
