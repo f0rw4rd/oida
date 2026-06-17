@@ -48,45 +48,23 @@ def _make_mock_netifaces():
 
 @pytest.fixture(autouse=True)
 def mock_netifaces():
-    """Mock netifaces module for all discovery tests.
+    """Mock interface enumeration for all discovery tests.
 
-    core.py uses lazy_import("netifaces") which calls importlib.import_module.
-    We patch sys.modules so the lazy import resolves to our mock, and reset
-    the LazyModule's internal cache so it re-evaluates.
+    Since the netifaces2 migration, core.py and scanner.py both bind
+    ``from ...utils import iface_info as _netifaces`` (the same module
+    object). Its ``AF_INET``/``AF_INET6``/``AF_LINK`` constants are real and
+    already match the keys in ``_INTERFACE_ADDRESSES``, so we only need to
+    patch the two enumeration functions to avoid touching real interfaces.
     """
     mock_nf = _make_mock_netifaces()
 
-    # Get the LazyModule instance from core.py
-    from oida.protocols.discovery import core
+    from oida.utils import iface_info
 
-    lazy_mod = core._netifaces
-
-    # Save original state
-    orig_module = lazy_mod._module
-    orig_loaded = lazy_mod._loaded
-    orig_available = lazy_mod._available
-
-    patches = [
-        patch.dict("sys.modules", {"netifaces": mock_nf}),
-    ]
-
-    for p in patches:
-        p.start()
-
-    # Force the lazy import to use our mock
-    lazy_mod._module = mock_nf
-    lazy_mod._loaded = True
-    lazy_mod._available = True
-
-    yield mock_nf
-
-    # Restore original state
-    lazy_mod._module = orig_module
-    lazy_mod._loaded = orig_loaded
-    lazy_mod._available = orig_available
-
-    for p in reversed(patches):
-        p.stop()
+    with (
+        patch.object(iface_info, "interfaces", return_value=list(_KNOWN_INTERFACES)),
+        patch.object(iface_info, "ifaddresses", side_effect=_mock_ifaddresses),
+    ):
+        yield mock_nf
 
 
 @pytest.fixture(autouse=True)

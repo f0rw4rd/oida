@@ -32,6 +32,25 @@ def proto_args(parser, parents):
     # MMS-specific options (match scanner protocol_options)
     mms_group = mms_parser.add_argument_group("MMS Options")
     mms_group.add_argument(
+        "-i",
+        "--identify",
+        action="store_true",
+        help="Query the MMS server identity (vendor/model/revision)",
+    )
+    mms_group.add_argument(
+        "-l",
+        "--get-name-list",
+        action="store_true",
+        help="Enumerate the logical-device/node name list",
+    )
+    mms_group.add_argument(
+        "-r",
+        "--variable",
+        type=str,
+        metavar="REF",
+        help="Read a single variable/data object by reference (substring match)",
+    )
+    mms_group.add_argument(
         "--read-values",
         action="store_true",
         help="Read values from discovered data objects",

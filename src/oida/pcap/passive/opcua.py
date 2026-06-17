@@ -1380,7 +1380,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
                 san_ext = cert.extensions.get_extension_for_class(x509_mod.SubjectAlternativeName)
                 san_values = []
                 for name in san_ext.value:
-                    # cryptography returns typed objects; prefix with type
+                    # Cryptography returns typed objects; prefix with type
                     if hasattr(name, "value"):
                         val = name.value
                         type_name = type(name).__name__

@@ -17,11 +17,6 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -34,13 +29,19 @@ class FuzzMixin(_ScannerBase):
     def fuzz_commands(self, iterations: int = 20, command_list: List[int] = None) -> Dict[str, Any]:
         """Fuzz HART commands with malformed data."""
         from ..hartip import HARTResponseCode, HARTIPTimeoutError
-        from ....utils.fuzzer import fuzz
 
         if not self.client:
             return {"error": "Not connected"}
 
         if command_list is None:
             command_list = [0, 1, 2, 3, 6, 11, 12, 13, 15, 17, 18, 42, 48]
+
+        # Prefer the type-aware mutation engine; if it is unavailable fall back
+        # to the deterministic boundary payloads in _basic_fuzz.
+        try:
+            from ....utils.fuzzer import fuzz
+        except Exception:
+            return self._basic_fuzz(iterations, command_list)
 
         results: Dict[str, Any] = {
             "tested": 0,
@@ -112,6 +113,56 @@ class FuzzMixin(_ScannerBase):
 
         return results
 
+    def _basic_fuzz(self, iterations: int, command_list: List[int]) -> Dict[str, Any]:
+        """Basic fuzzing without radamsa.
+
+        Deterministic boundary payloads used when the mutation engine is not
+        available. ``iterations`` selects how many of the fixed payloads to
+        send per command.
+        """
+        from ..hartip import HARTIPTimeoutError
+
+        results: Dict[str, Any] = {
+            "tested": 0,
+            "commands_fuzzed": [],
+            "anomalies": [],
+            "errors": [],
+        }
+
+        fuzz_payloads = [
+            b"",
+            b"\x00",
+            b"\xff",
+            b"\x00" * 50,
+            b"\xff" * 50,
+            b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09",
+            b"\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8\xf7\xf6",
+            bytes(range(256)),
+        ]
+
+        for cmd in command_list:
+            cmd_stats = {"command": cmd, "iterations": 0, "anomalies": 0}
+
+            for payload in fuzz_payloads[:iterations]:
+                try:
+                    self.client.send_command(cmd, self.poll_address, payload)
+                    cmd_stats["iterations"] += 1
+                    results["tested"] += 1
+                except (HARTIPTimeoutError, TimeoutError):
+                    results["anomalies"].append(
+                        {
+                            "command": cmd,
+                            "payload": payload.hex()[:32],
+                            "error": "timeout",
+                        }
+                    )
+                except Exception as e:
+                    results["errors"].append({"command": cmd, "error": str(e)})
+
+            results["commands_fuzzed"].append(cmd_stats)
+
+        return results
+
     def write_poll_address(self, new_address: int) -> bool:
         """Write new polling address (Command 6).
 
@@ -127,7 +178,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.write_poll_address(new_address, address=self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Write poll address (cmd 6) failed: {e}")
             return False
 
     def write_tag(self, tag: str, descriptor: str = "", date: Tuple[int, int, int] = None) -> bool:
@@ -156,7 +207,7 @@ class FuzzMixin(_ScannerBase):
             )
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"if date:: {e}")
+            self.logger.debug(f"Write tag/descriptor/date (cmd 18) failed: {e}")
             return False
 
     def write_message(self, message: str) -> bool:
@@ -172,7 +223,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.write_message(message, address=self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Write message (cmd 17) failed: {e}")
             return False
 
     def perform_self_test(self) -> bool:
@@ -184,7 +235,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.perform_self_test(self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Self-test (cmd 41) failed: {e}")
             return False
 
     def reset_config_flag(self) -> bool:
@@ -198,7 +249,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.send_command(HARTCommand.RESET_CONFIG_FLAG, self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"Reset config flag (cmd 38) failed: {e}")
             return False
 
     def perform_master_reset(self) -> bool:
@@ -219,7 +270,7 @@ class FuzzMixin(_ScannerBase):
             response = self.client.send_command(HARTCommand.PERFORM_MASTER_RESET, self.poll_address)
             return response.response_code == 0
         except Exception as e:
-            logger.debug(f"perform_master_reset failed: {e}")
+            self.logger.debug(f"Master reset (cmd 42) failed: {e}")
             return False
 
     def send_raw_command(self, command: int, data: bytes = b"") -> Dict[str, Any]:

@@ -10,7 +10,6 @@ Covers additional fuzz inputs that should not hang or crash:
 
 import struct
 import threading
-import time
 import unittest
 
 

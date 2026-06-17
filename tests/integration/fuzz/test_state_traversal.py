@@ -392,22 +392,43 @@ class TestOPCUAStateTraversal:
     OPC UA has 4 states (when use_session=True):
     CONNECTED -> HELLO_COMPLETE -> SECURE_CHANNEL -> SESSION_ACTIVE
 
-    Note: In mock mode, the actual asyncua handshake fails (no real server),
-    so the state machine may not be created. We test the structure when
-    it is created, and skip gracefully when it is not.
+    OPC UA derives live protocol state (ChannelId / TokenId / AuthToken) from a
+    real asyncua handshake, which can't run against the MockConnectionFactory
+    target. The autouse fixture below mocks the asyncua Client so the handshake
+    "succeeds" with deterministic state and the static state machine is built,
+    letting us verify its structure offline.
     """
+
+    @pytest.fixture(autouse=True)
+    def _mock_opcua_handshake(self):
+        try:
+            import asyncua
+        except ImportError:
+            yield
+            return
+
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        def make_client(url, *args, **kwargs):
+            client = MagicMock()
+            client.connect = AsyncMock()
+            client.disconnect = AsyncMock()
+            conn = client.uaclient.protocol._connection
+            conn.security_token.ChannelId = 1
+            conn.security_token.TokenId = 1
+            conn.remote_nonce = b"\x00" * 32
+            client.uaclient.protocol.authentication_token = b"\x01" * 8
+            return client
+
+        with patch.object(asyncua, "Client") as mock_client:
+            mock_client.side_effect = make_client
+            yield
 
     def test_state_machine_structure_with_mock(self, tmp_path):
         """OPC UA should define 4 states when session mode is enabled."""
         fuzzer = _create_mock_fuzzer("opcua", tmp_path, protocol_options={"use_session": True})
         sm = _get_inner_state_machine(fuzzer)
-        if sm is None:
-            # In mock mode, _define_state_machine early-returns because asyncua
-            # cannot connect to 127.0.0.1:9999. This is expected behavior.
-            pytest.skip(
-                "OPC UA state machine not created in mock mode "
-                "(asyncua needs real server for handshake)"
-            )
+        assert sm is not None, "OPC UA state machine should be built with use_session=True"
 
         expected = {"CONNECTED", "HELLO_COMPLETE", "SECURE_CHANNEL", "SESSION_ACTIVE"}
         actual = set(sm.states.keys())
@@ -417,8 +438,7 @@ class TestOPCUAStateTraversal:
         """OPC UA should have a linear topological order."""
         fuzzer = _create_mock_fuzzer("opcua", tmp_path, protocol_options={"use_session": True})
         sm = _get_inner_state_machine(fuzzer)
-        if sm is None:
-            pytest.skip("OPC UA state machine not created in mock mode")
+        assert sm is not None, "OPC UA state machine should be built with use_session=True"
 
         topo = sm.get_topological_order()
         assert len(topo) == 4

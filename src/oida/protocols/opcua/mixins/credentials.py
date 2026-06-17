@@ -58,8 +58,8 @@ class CredentialsMixin:
         for username, password in credentials:
             tested += 1
             try:
-                test_client = Client(url=url)
-                test_client.timeout = 5
+                timeout = getattr(self.args, "timeout", 5)
+                test_client = Client(url=url, timeout=timeout)
                 test_client.set_user(username)
                 test_client.set_password(password)
 
@@ -181,8 +181,8 @@ class CredentialsMixin:
             try:
                 # Create client with appropriate auth
                 Client = _get_client_class()
-                client = Client(url=url)
-                client.timeout = 5
+                timeout = getattr(self.args, "timeout", 5)
+                client = Client(url=url, timeout=timeout)
 
                 if auth["type"] == "username":
                     client.set_user(auth["user"])

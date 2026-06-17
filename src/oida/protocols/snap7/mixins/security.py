@@ -354,3 +354,19 @@ class SecurityMixin(_ScannerBase):
         except Exception as e:
             self.logger.debug(f"S7 outputs area read/write probe failed: {e}")
         return result
+
+    def test_write_access_action(self, conn: Any) -> Dict[str, Any]:
+        """Test write access (CLI action wrapper). Writes each probed value back
+        unchanged, but still issues active write PDUs against the PLC."""
+        result = self._test_write_access(conn)
+        writable = result.get("writable_areas", [])
+        if writable:
+            self.logger.security_finding(
+                "Writable access",
+                detail=f"S7 memory areas are writable: {', '.join(writable)}",
+            )
+            for area in writable:
+                self.logger.display(f"    WRITABLE: {area} area")
+        else:
+            self.logger.success("No writable memory areas detected (read-only)")
+        return {"success": True, **result}

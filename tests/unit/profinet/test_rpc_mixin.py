@@ -858,11 +858,14 @@ class TestWriteSingleIndex:
 
         assert any("Invalid" in msg for _, msg in stub.logger.messages)
 
-    def test_write_blocked_read_only_mode(self):
-        stub = RPCMixinStub(args={"confirm": True, "read_only": True})
+    def test_write_proceeds_with_confirm(self):
+        # --confirm is the only gate; there is no --read-only/--no-read-only flag,
+        # so a confirmed write of a valid spec must actually reach con.write().
+        stub = RPCMixinStub(args={"confirm": True})
         device = ProfinetDevice(mac_address="00:11:22:33:44:55")
         con = MockCon()
 
         stub._write_single_index(device, con, "0xAFF1:48656C6C6F")
 
-        assert any("read-only" in msg for _, msg in stub.logger.messages)
+        assert con.writes == [(0, 1, 0xAFF1, b"Hello")]
+        assert not any("read-only" in msg for _, msg in stub.logger.messages)

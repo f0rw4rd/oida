@@ -26,6 +26,11 @@ from ..helpers import (
 )
 from ..resources import FHIRResourceParser
 
+# Above this many patient records returned for an *unauthenticated* request we
+# flag likely unrestricted access. Only meaningful when no credentials/token
+# were supplied -- an authorized token routinely returns far more.
+UNRESTRICTED_PATIENT_THRESHOLD = 10
+
 
 class SearchMixin:
     """Mixin providing FHIR resource search operations."""
@@ -149,13 +154,24 @@ class SearchMixin:
                     "records": parsed,
                 }
 
-                # Security finding if many patients returned
-                if len(parsed) > 10:
+                # Security finding only when an *unauthenticated* search returns
+                # a large result set. With supplied auth a big count is expected,
+                # so gate on the absence of credentials/token to avoid false
+                # positives on authorized access.
+                supplied_auth = bool(
+                    getattr(self.args, "username", None)
+                    or getattr(self.args, "password", None)
+                    or getattr(self.args, "token", None)
+                )
+                if not supplied_auth and len(parsed) > UNRESTRICTED_PATIENT_THRESHOLD:
                     self.results["data"].setdefault("security_findings", []).append(
                         {
                             "operation": "Patient Search",
                             "issue": "Unrestricted Patient Access",
-                            "description": f"Search returned {len(parsed)} patient records",
+                            "description": (
+                                f"Unauthenticated search returned {len(parsed)} patient "
+                                f"records (> {UNRESTRICTED_PATIENT_THRESHOLD})"
+                            ),
                         }
                     )
             else:
@@ -207,7 +223,10 @@ class SearchMixin:
             date_to = getattr(self.args, "date_to", None)
             if date_to:
                 if "date" in search_params:
-                    search_params["date"] = [search_params["date"], f"le{date_to}"]
+                    # Both bounds: emit a repeated `date` param (date=ge..&date=le..).
+                    # A bare two-element list value raises TypeError in
+                    # fhirclient's as_parameter(); the $and combinator round-trips.
+                    search_params["date"] = {"$and": [search_params["date"], f"le{date_to}"]}
                 else:
                     search_params["date"] = f"le{date_to}"
 

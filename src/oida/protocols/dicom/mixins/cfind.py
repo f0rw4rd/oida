@@ -120,12 +120,9 @@ class CFindMixin(_ScannerBase):
 
             self.logger.display(f"C-FIND Results: {len(results)} {query_level.lower()}s found")
 
-            # Security check - wildcard query returned results
-            if patient_name == "*" and len(results) > 0:
-                self.logger.security_finding(
-                    "Unrestricted query access",
-                    detail=f"Wildcard query returned {len(results)} patient records - PHI exposure",
-                )
+            # NOTE: the "Unrestricted query access" wildcard finding is emitted
+            # once by _analyze_security() (reporting.py) from cfind_results, so
+            # it is intentionally NOT emitted inline here to avoid double-report.
 
         except Exception as e:
             self.logger.debug("cfind query failed: %s", e)

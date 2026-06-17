@@ -64,6 +64,7 @@ Examples:
         mqtt_parser,
         default_port=1883,
         include_timeout=True,
+        default_timeout=10,
         port_help="MQTT port (default: 1883, or 8883 with --tls)",
     )
 

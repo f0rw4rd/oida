@@ -19,7 +19,7 @@ from .conftest import (
     _skip_unless_pyshark,
 )
 
-pytestmark = [pytest.mark.integration]
+pytestmark = [pytest.mark.integration, pytest.mark.xdist_group("pcap_pipeline")]
 
 
 # ---------------------------------------------------------------------------

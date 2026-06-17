@@ -834,7 +834,7 @@ def validate_all_maps(
                     seen_devices[key] = []
                 seen_devices[key].append(json_file)
         except Exception as e:
-            logger.debug(f"with open(json_file) as f:: {e}")
+            logger.debug(f"Failed to read map for duplicate check {json_file}: {e}")
 
     # Check for duplicates
     for key, files in seen_devices.items():
@@ -890,7 +890,7 @@ def print_report(results: List[ValidationResult], verbose: bool = False) -> bool
             for section in REGISTER_SECTIONS:
                 total_registers += len(data.get(section, {}))
         except Exception as e:
-            logger.debug(f"with open(r.path) as f:: {e}")
+            logger.debug(f"Failed to count registers in {r.path}: {e}")
 
     logger.info("=" * 70)
     logger.info("MODBUS REGISTER MAP VALIDATION REPORT")

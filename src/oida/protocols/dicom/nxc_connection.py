@@ -426,7 +426,7 @@ class dicom(
 
         # Get calling AE Title
         self.calling_aet = getattr(self.args, "aet", "OIDA")
-        self.called_aet = getattr(self.args, "called_aet", "ANY")
+        self.called_aet = getattr(self.args, "called_aet", "ANY-SCP")
 
         # AET brute force mode
         if getattr(self.args, "aet_brute", None) is not None or getattr(
@@ -492,9 +492,12 @@ class dicom(
 
     def create_conn_obj(self) -> bool:
         """Establish DICOM association"""
-        port = getattr(self.args, "port", self.default_port)
-        timeout = getattr(self.args, "timeout", 30)
         use_tls = getattr(self.args, "tls", False)
+        # Resolve the effective port: explicit -p wins; otherwise the advertised
+        # TLS port (2762) when --tls is set, else the de-facto PACS default
+        # (self.default_port = 11112). Previously a bare --tls connected to 104.
+        port = getattr(self.args, "port", None) or (2762 if use_tls else self.default_port)
+        timeout = getattr(self.args, "timeout", 10)
 
         transport = "TLS" if use_tls else "TCP"
         self.logger.info(f"Connecting via {transport}")

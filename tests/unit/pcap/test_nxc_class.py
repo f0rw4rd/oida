@@ -24,7 +24,6 @@ def _make_args(**overrides):
         "port": None,
         "verbose": 0,
         "debug": False,
-        "extract_all": False,
         "extract_files": False,
         "extract_dir": None,
         "extract_protocols": "http,smb,ftp-data,tftp,dicom,imf",
@@ -72,10 +71,12 @@ class TestConvertArgsToDict:
         result = nxc._convert_args_to_dict()
         assert result["extract_files"] is True
 
-    def test_extract_all_propagated(self):
-        nxc = _build_nxc(extract_all=True)
+    def test_extract_all_alias_propagated(self):
+        # -e/--extract-all shares the extract_files dest; only extract_files
+        # is forwarded by _convert_args_to_dict.
+        nxc = _build_nxc(extract_files=True)
         result = nxc._convert_args_to_dict()
-        assert result["extract_all"] is True
+        assert result["extract_files"] is True
 
     def test_none_values_excluded(self):
         """Keys whose value is None should not appear (parent logic)."""

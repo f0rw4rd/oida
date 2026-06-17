@@ -47,15 +47,13 @@ def check_raw_socket_capability() -> Tuple[bool, Optional[str]]:
             test_socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))
             test_socket.close()
         else:
-            # Windows/macOS: check via platform_compat
-            from .platform_compat import check_l2_available
-
-            if check_l2_available():
-                return True, None
+            # Windows/macOS have no AF_PACKET, so Layer-2 raw capture via this
+            # path is unavailable. (Previously this imported a non-existent
+            # platform_compat.check_l2_available, raising ImportError here.)
             return False, "l2_not_available"
         return True, None
     except PermissionError as e:
-        logger.debug(f"if hasattr(socket, AF_PACKET):: {e}")
+        logger.debug(f"raw socket creation denied (need root/CAP_NET_RAW): {e}")
         return False, "permission_error"
     except Exception as e:
         # Fallback for other errors (e.g., AF_PACKET not available on non-Linux)

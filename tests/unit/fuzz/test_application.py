@@ -25,52 +25,6 @@ class TestFuzzerApplication:
         app = FuzzerApplication(fuzzer_factory=custom_factory)
         assert app.fuzzer_factory == custom_factory
 
-    def test_application_with_connection_factory(self):
-        """Test FuzzerApplication with connection factory."""
-        from oida.fuzz.core.application import FuzzerApplication
-        from oida.fuzz.core.connections import MockConnectionFactory
-
-        conn_factory = MockConnectionFactory()
-        app = FuzzerApplication(connection_factory=conn_factory)
-        assert app.connection_factory == conn_factory
-
-
-class TestArgsWrapper:
-    """Test argument wrapper construction in run_fuzzing."""
-
-    def test_args_wrapper_basic_fields(self):
-        """Test ArgsWrapper has basic required fields."""
-        # Create a mock args object like the CLI would produce
-        args = Mock()
-        args.ip = "192.168.1.1"
-        args.port = 502
-        args.protocol = "modbus"
-        args.session = "test_session"
-        args.nolog = False
-        args.skip_pre_send = True
-        args.check_interval = 100
-        args.console_output = False
-        args.seed = 12345
-        args.protocol_options = {}
-        args.distribution_total = None
-        args.distribution_id = None
-        args.enabled_requests = None
-        args.disabled_requests = None
-        args.monitor_config = None
-        args.monitor_logic = "and"
-        args.reuse_connection = True
-        args.monitor_retry_delay = 0.1
-        args.tls_enabled = False
-        args.enumerate = True
-        args.node = None
-        args.command = "fuzz"
-        args.index_start = 1
-
-        # Verify all expected attributes exist
-        assert args.ip == "192.168.1.1"
-        assert args.port == 502
-        assert args.protocol == "modbus"
-
 
 class TestFuzzerConfigFromArgs:
     """Test FuzzerConfig creation from CLI args."""
@@ -198,37 +152,33 @@ class TestBaseFuzzerClassMethods:
         """Test get_protocol_options returns dict."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
-        if fuzzer_class:
-            options = fuzzer_class.get_protocol_options()
-            assert isinstance(options, dict)
+        fuzzer_class = PROTOCOL_FUZZERS["modbus"]
+        options = fuzzer_class.get_protocol_options()
+        assert isinstance(options, dict)
 
     def test_get_request_definitions(self):
         """Test get_request_definitions returns list."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
-        if fuzzer_class:
-            requests = fuzzer_class.get_request_definitions()
-            assert isinstance(requests, list)
+        fuzzer_class = PROTOCOL_FUZZERS["modbus"]
+        requests = fuzzer_class.get_request_definitions()
+        assert isinstance(requests, list)
 
     def test_format_options_help(self):
         """Test format_options_help returns string."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
-        if fuzzer_class:
-            help_text = fuzzer_class.format_options_help()
-            assert isinstance(help_text, str)
+        fuzzer_class = PROTOCOL_FUZZERS["modbus"]
+        help_text = fuzzer_class.format_options_help()
+        assert isinstance(help_text, str)
 
     def test_format_requests_help(self):
         """Test format_requests_help returns string."""
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
-        fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
-        if fuzzer_class:
-            help_text = fuzzer_class.format_requests_help()
-            assert isinstance(help_text, str)
+        fuzzer_class = PROTOCOL_FUZZERS["modbus"]
+        help_text = fuzzer_class.format_requests_help()
+        assert isinstance(help_text, str)
 
 
 class TestProtocolType:
@@ -243,7 +193,6 @@ class TestProtocolType:
         assert ProtocolType.UDP.value == "udp"
         assert ProtocolType.RAW.value == "raw"
         assert ProtocolType.SERIAL.value == "serial"
-        assert ProtocolType.BLE.value == "ble"
         assert ProtocolType.IEC104.value == "iec104"
 
 
@@ -319,28 +268,28 @@ class TestFuzzerConfigOptions:
         assert config.get_option("missing") is None
 
     def test_set_option(self):
-        """Test set_option method."""
+        """Test protocol_options stores options."""
         from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="127.0.0.1",
             target_port=502,
+            protocol_options={"new_option": "value"},
         )
 
-        config.set_option("new_option", "value")
         assert config.get_option("new_option") == "value"
 
-    def test_set_option_on_none_options(self):
-        """Test set_option when protocol_options is None."""
+    def test_set_option_initializes_dict(self):
+        """__post_init__ guarantees protocol_options is a dict; mutating it stores options."""
         from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="127.0.0.1",
             target_port=502,
         )
-        config.protocol_options = None
+        assert config.protocol_options == {}
 
-        config.set_option("key", "value")
+        config.protocol_options["key"] = "value"
         assert config.get_option("key") == "value"
 
 

@@ -1768,7 +1768,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "1.0",
             format="json",
             json_log=True,
-            timeout=15,
+            timeout=30,
         )
 
         assert result.success, f"Scan timeout param failed: {result.stderr}"

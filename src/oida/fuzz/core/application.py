@@ -2,7 +2,6 @@ import traceback
 from typing import Optional, Callable
 from .config import FuzzerConfig
 from .base_fuzzer import BaseFuzzer
-from .connections import ConnectionFactory
 from ...utils.ics_logger import get_logger
 
 # Module-level logger for application startup/shutdown
@@ -15,8 +14,6 @@ class FuzzerApplication:
     def __init__(
         self,
         fuzzer_factory: Optional[Callable] = None,
-        database_factory: Optional[Callable] = None,
-        connection_factory: Optional[ConnectionFactory] = None,
     ):
         from .session.manager import (
             TestCaseManager,
@@ -24,13 +21,47 @@ class FuzzerApplication:
         )  # Import here to avoid circular imports
 
         self.fuzzer_factory = fuzzer_factory or create_fuzzer
-        self.database_factory = database_factory
-        self.connection_factory = connection_factory
         self.TestCaseManager = TestCaseManager
+
+    @staticmethod
+    def _split_command(value):
+        """Split a CLI command string into argv (shell-style, not run via a shell)."""
+        if not value:
+            return None
+        import shlex
+
+        return shlex.split(value)
+
+    @staticmethod
+    def _split_hostport(value, default_port):
+        """Split ``HOST:PORT`` (port optional) for --agent-monitor. Returns
+        ``(host, port)`` or ``(None, default_port)`` when value is empty."""
+        if not value:
+            return None, default_port
+        if ":" in value:
+            host, _, port = value.rpartition(":")
+            try:
+                return host, int(port)
+            except ValueError:
+                raise ValueError(f"Invalid port in --agent-monitor: {value!r}")
+        return value, default_port
+
+    @staticmethod
+    def _parse_hex(value, label):
+        """Parse a hex string (spaces tolerated) into bytes, with a clear error."""
+        if not value:
+            return None
+        try:
+            return bytes.fromhex(value.replace(" ", ""))
+        except ValueError as e:
+            raise ValueError(f"Invalid hex for {label}: {value!r} ({e})")
 
     def run_command(self, args) -> int:
         """Execute the fuzzer command with given arguments"""
         try:
+            agent_monitor_host, agent_monitor_port = self._split_hostport(
+                getattr(args, "agent_monitor", None), 5555
+            )
             config = FuzzerConfig(
                 target_ip=args.ip,
                 target_port=args.port,
@@ -60,7 +91,6 @@ class FuzzerApplication:
                     args, "receive_data_after_each_request", True
                 ),
                 sleep_time=getattr(args, "sleep_time", 0.0),
-                monitor_retry_delay=getattr(args, "monitor_retry_delay", 0.1),
                 # Socket timeouts / reconnection (None = connection/protocol default)
                 recv_timeout=getattr(args, "recv_timeout", None),
                 send_timeout=getattr(args, "send_timeout", None),
@@ -77,15 +107,22 @@ class FuzzerApplication:
                 calibration_probes=getattr(args, "calibration_probes", 50),
                 adaptive_timeout=getattr(args, "adaptive_timeout", False),
                 detect_drift=getattr(args, "detect_drift", False),
+                # Platform-feature monitors + auto-restart
+                script_monitor_command=self._split_command(getattr(args, "script_monitor", None)),
+                valid_case_probe=self._parse_hex(getattr(args, "valid_case", None), "--valid-case"),
+                valid_case_expect=self._parse_hex(
+                    getattr(args, "valid_case_expect", None), "--valid-case-expect"
+                ),
+                restart_command=self._split_command(getattr(args, "restart_command", None)),
+                restart_delay=getattr(args, "restart_delay", 2.0),
+                agent_monitor_host=agent_monitor_host,
+                agent_monitor_port=agent_monitor_port,
+                agent_monitor_token=getattr(args, "agent_token", None),
             )
 
-            # Create fuzzer with optional connection factory injection
             # Note: BaseFuzzer now handles TestCaseManager creation and callback registration
             # automatically when config.log_session is True
-            if self.connection_factory:
-                fuzzer = self._create_fuzzer_with_factory(args.protocol, config)
-            else:
-                fuzzer = self.fuzzer_factory(args.protocol, config)
+            fuzzer = self.fuzzer_factory(args.protocol, config)
 
             return self._execute_command(args, fuzzer)
 
@@ -107,21 +144,6 @@ class FuzzerApplication:
             _log.fail(f"Error: {e}")
             traceback.print_exc()
             return 1
-
-    def _create_fuzzer_with_factory(self, protocol: str, config: FuzzerConfig) -> BaseFuzzer:
-        """Create fuzzer with injected connection factory"""
-        # Import locally to avoid circular dependency
-        from ..protocols import PROTOCOL_FUZZERS as fuzzers
-
-        if protocol not in fuzzers:
-            raise ValueError(f"Unsupported protocol: {protocol}. Supported: {list(fuzzers.keys())}")
-
-        if not config.session_filename:
-            config.session_filename = f"{protocol}_{config.target_ip}_{config.target_port}_session"
-
-        # Create fuzzer with connection factory
-        fuzzer_class = fuzzers[protocol]
-        return fuzzer_class(config, self.connection_factory)
 
     def _execute_command(self, args, fuzzer: BaseFuzzer) -> int:
         """Execute the specific command requested"""

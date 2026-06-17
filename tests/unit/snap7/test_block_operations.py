@@ -554,37 +554,5 @@ class TestListBlocksOfType(unittest.TestCase):
         self.assertFalse(result["success"])
 
 
-class TestGetOrderCodeAction(unittest.TestCase):
-    """Test BlockOperationsMixin.get_order_code_action()."""
-
-    def setUp(self):
-        self.host = MockBlockOpsHost()
-        self.conn = Mock()
-
-    def test_get_order_code_success(self):
-        """Test successful order code action."""
-        oc = Mock()
-        oc.OrderCode = "6ES7 511-1AK02-0AB0"
-        oc.V1 = 2
-        oc.V2 = 9
-        oc.V3 = 0
-        self.conn.get_order_code.return_value = oc
-
-        result = self.host.get_order_code_action(self.conn)
-
-        self.assertTrue(result["success"])
-        self.assertEqual(result["order_code"], "6ES7 511-1AK02-0AB0")
-        self.assertEqual(result["v1"], 2)
-        self.assertEqual(result["v2"], 9)
-
-    def test_get_order_code_failure(self):
-        """Test order code action failure."""
-        self.conn.get_order_code.side_effect = Exception("denied")
-
-        result = self.host.get_order_code_action(self.conn)
-
-        self.assertFalse(result["success"])
-
-
 if __name__ == "__main__":
     unittest.main()

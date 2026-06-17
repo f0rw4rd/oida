@@ -29,84 +29,13 @@ from boofuzz import Block, Group, Request, Static
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.connections import TCPSocketConnection
-from ..core.session import StateContext, ResponseData
+from ..core.session import StateContext
 from ..primitives.dynamic import SmartString
 from ..primitives.smart_string import StringContext
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-class SMTPCommands:
-    """SMTP command constants"""
-
-    # Connection commands
-    HELO = "HELO"
-    EHLO = "EHLO"
-    QUIT = "QUIT"
-    NOOP = "NOOP"
-    RSET = "RSET"
-
-    # Mail transaction commands
-    MAIL_FROM = "MAIL FROM"
-    RCPT_TO = "RCPT TO"
-    DATA = "DATA"
-    BDAT = "BDAT"
-
-    # Information commands
-    VRFY = "VRFY"
-    EXPN = "EXPN"
-    HELP = "HELP"
-
-    # Authentication commands
-    AUTH = "AUTH"
-    AUTH_LOGIN = "AUTH LOGIN"
-    AUTH_PLAIN = "AUTH PLAIN"
-
-    # Security commands
-    STARTTLS = "STARTTLS"
-
-    # Extended SMTP commands
-    SIZE = "SIZE"
-    DSN = "DSN"
-    BODY = "BODY"
-
-
-class SMTPResponseCodes:
-    """SMTP response code constants"""
-
-    # 2xx Success
-    READY = 220
-    CLOSING = 221
-    AUTH_SUCCESS = 235
-    OK = 250
-    WILL_FORWARD = 251
-    CANNOT_VERIFY = 252
-
-    # 3xx Intermediate
-    AUTH_CONTINUE = 334
-    START_MAIL = 354
-
-    # 4xx Transient Failure
-    SERVICE_UNAVAILABLE = 421
-    MAILBOX_BUSY = 450
-    LOCAL_ERROR = 451
-    INSUFFICIENT_STORAGE = 452
-
-    # 5xx Permanent Failure
-    SYNTAX_ERROR = 500
-    SYNTAX_ERROR_PARAMS = 501
-    NOT_IMPLEMENTED = 502
-    BAD_SEQUENCE = 503
-    PARAM_NOT_IMPLEMENTED = 504
-    MAILBOX_NOT_FOUND = 550
-    USER_NOT_LOCAL = 551
-    STORAGE_EXCEEDED = 552
-    MAILBOX_NAME_INVALID = 553
-    TRANSACTION_FAILED = 554
-    AUTH_REQUIRED = 530
-    AUTH_FAILED = 535
 
 
 class SMTPFuzzer(BaseFuzzer):
@@ -161,100 +90,6 @@ class SMTPFuzzer(BaseFuzzer):
         self._state_context = StateContext()
 
         super().__init__(config, connection_factory)
-
-    @property
-    def context(self) -> StateContext:
-        """Get the StateContext for data propagation.
-
-        State Machine V2 Pattern:
-        Protocols can use this to access shared state:
-            ctx = fuzzer.context
-            ehlo_resp = ctx.get_response("EHLO")
-            auth_result = ctx.get_response("AUTH")
-        """
-        return self._state_context
-
-    def store_ehlo_response(self, response: str, capabilities: list = None) -> None:
-        """Store SMTP EHLO response for later reference.
-
-        State Machine V2 Pattern:
-        Store the EHLO response with parsed capabilities for cross-state access.
-
-        Args:
-            response: Server response text
-            capabilities: List of ESMTP capabilities parsed from response
-        """
-        self._state_context.set_response(
-            "EHLO",
-            ResponseData(
-                raw=response.encode("utf-8") if isinstance(response, str) else response,
-                parsed={
-                    "capabilities": capabilities or [],
-                    "response": response.strip(),
-                },
-                response_code=250,
-            ),
-        )
-        if capabilities:
-            self._state_context.set("smtp_capabilities", capabilities)
-
-    def store_starttls_response(self, response: str, success: bool) -> None:
-        """Store SMTP STARTTLS response.
-
-        State Machine V2 Pattern:
-        Store STARTTLS response for cross-state access.
-
-        Args:
-            response: Server response text
-            success: Whether STARTTLS was accepted (220)
-        """
-        self._state_context.set_response(
-            "STARTTLS",
-            ResponseData(
-                raw=response.encode("utf-8") if isinstance(response, str) else response,
-                parsed={"success": success, "response": response.strip()},
-                response_code=220 if success else 454,
-            ),
-        )
-        self._state_context.set("tls_established", success)
-
-    def store_auth_response(self, response: str, code: int, success: bool) -> None:
-        """Store SMTP authentication response.
-
-        State Machine V2 Pattern:
-        Store AUTH response for cross-state access.
-
-        Args:
-            response: Response text from server
-            code: SMTP response code (235=success, 535=failed)
-            success: Whether authentication succeeded
-        """
-        self._state_context.set_response(
-            "AUTH",
-            ResponseData(
-                raw=response.encode("utf-8") if isinstance(response, str) else response,
-                parsed={"code": code, "success": success, "message": response.strip()},
-                response_code=code,
-            ),
-        )
-        self._state_context.set("authenticated", success)
-
-    def get_smtp_state_info(self) -> dict:
-        """Get current SMTP state information.
-
-        State Machine V2 Pattern:
-        Use this for debugging and logging state.
-
-        Returns:
-            Dictionary with context keys and responses
-        """
-        return {
-            "authenticated": self._state_context.get("authenticated", False),
-            "tls_established": self._state_context.get("tls_established", False),
-            "capabilities": self._state_context.get("smtp_capabilities", []),
-            "context_keys": self._state_context.keys(),
-            "responses_stored": self._state_context.response_keys(),
-        }
 
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:
@@ -1195,7 +1030,6 @@ class SMTPFuzzer(BaseFuzzer):
                 ehlo_tls_sent,
                 authenticated,
             ]
-            _final_state = "AUTHENTICATED"  # noqa: F841 (kept for future state machine use)
         else:
             states = [
                 connected,
@@ -1204,7 +1038,6 @@ class SMTPFuzzer(BaseFuzzer):
                 tls_established,
                 ehlo_tls_sent,
             ]
-            _final_state = "EHLO_TLS_SENT"  # noqa: F841 (kept for future state machine use)
 
         # Define transition rules
         transitions = [

@@ -42,7 +42,6 @@ dnp3:enable_unsol
 dnp3:file_auth
 dnp3:init_app
 dnp3:init_data
-dnp3:probe_objects
 dnp3:save_config
 dnp3:start_app
 dnp3:stop_app
@@ -57,7 +56,6 @@ ethercat:sdo_write
 ethernetip:write
 fhir:create_observation
 fhir:create_patient
-hart:fuzz_commands
 hl7:probe_ops
 hl7:send_bar
 hl7:send_dft
@@ -66,11 +64,9 @@ hl7:send_ras
 hl7:send_rds
 hl7:send_rgv
 hl7:send_rx
-iec104:delete_file
 iec104:param_float
 iec104:param_normalized
 iec104:param_scaled
-iec104:upload_file
 iec104:value
 iec104:write_double
 iec104:write_float
@@ -87,7 +83,6 @@ knx:key_write
 knx:memory_write
 knx:property_write
 knx:restart
-mms:test_write
 modbus:broadcast
 modbus:decode
 modbus:fuzz_all_access
@@ -118,6 +113,4 @@ profinet:write_im3
 profinet:write_index
 snap7:fuzz_max_targets
 snap7:password
-snap7:test_write
 snmp:default_creds
-tase2:test_write

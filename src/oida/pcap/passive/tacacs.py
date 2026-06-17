@@ -440,7 +440,7 @@ class TACACSPassiveListener(PySharkListenerBase):
         """Update device entries with protocol-specific data."""
         version = ""
         if majvers and majvers != "?" and minvers and minvers != "?":
-            # majvers is the full version byte; extract actual major from high nibble
+            # Majvers is the full version byte; extract actual major from high nibble
             try:
                 maj_int = int(majvers, 0)
                 # TACACS+ packs major in high nibble (0xC = 12 for TACACS+)

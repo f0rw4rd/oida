@@ -59,6 +59,22 @@ class ASTMRecordBuilder:
         """Join fields with field delimiter"""
         return self.field_delimiter.join(fields)
 
+    def _calculate_checksum(self, data: bytes) -> bytes:
+        """
+        Calculate ASTM checksum.
+
+        The checksum is the modulus-256 sum of the bytes from the frame number
+        to and including the ETX/ETB character, formatted as 2 uppercase hex chars.
+
+        Args:
+            data: Bytes from frame number through ETX/ETB
+
+        Returns:
+            2-byte hex checksum (e.g., b"A5")
+        """
+        total = sum(data) % 256
+        return f"{total:02X}".encode()
+
     def build_header(
         self,
         sender_name: str = "OIDA",

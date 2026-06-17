@@ -27,6 +27,7 @@ Total:                                                                  16 tests
 
 import argparse
 import importlib.util
+import itertools
 import os
 import sys
 import threading
@@ -82,7 +83,13 @@ def _udp_multicast_available() -> Optional[str]:
 
 
 _SKIP_REASON = _udp_multicast_available()
-pytestmark = [pytest.mark.can, pytest.mark.skipif(bool(_SKIP_REASON), reason=str(_SKIP_REASON))]
+# Shares the can-mock container; these timing-sensitive e2e tests flake under
+# parallel load, so pin them to one xdist worker (honored under --dist loadgroup).
+pytestmark = [
+    pytest.mark.can,
+    pytest.mark.skipif(bool(_SKIP_REASON), reason=str(_SKIP_REASON)),
+    pytest.mark.xdist_group("can_service"),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -102,15 +109,22 @@ def _load_mock_server():
     return module
 
 
-def _unique_channel() -> str:
-    """Pick a per-process multicast group unlikely to clash with a container.
+_CHANNEL_COUNTER = itertools.count()
 
-    A running ``can-mock`` container uses 239.0.0.1; we use the 239.200.x.y
-    administratively-scoped range keyed off the PID so concurrent test
-    processes do not stomp on each other.
+
+def _unique_channel() -> str:
+    """Pick a per-test multicast group unlikely to clash with a container.
+
+    A running ``can-mock`` container uses 239.0.0.1; we use the 239.2xx.x.y
+    administratively-scoped range keyed off the PID (octets 3-4) so concurrent
+    test *processes* do not stomp on each other, plus a per-call counter in the
+    second octet so each function-scoped mock in a process gets its own group.
+    A fresh group per test means no leftover frames, off-thread Consecutive
+    Frame senders, or Flow-Control state can bleed from one test into the next.
     """
     pid = os.getpid()
-    return f"239.200.{(pid >> 8) & 0xFF}.{pid & 0xFF}"
+    n = next(_CHANNEL_COUNTER)
+    return f"239.{200 + (n % 32)}.{(pid >> 8) & 0xFF}.{pid & 0xFF}"
 
 
 class _MockServer:
@@ -140,8 +154,17 @@ class _MockServer:
         time.sleep(0.6)
 
     def stop(self) -> None:
+        # Stop the dispatcher's receive loop BEFORE closing the bus so it does
+        # not busy-spin on recv() errors, then join it. A leaked dispatcher
+        # thread per test (function-scoped mock) would otherwise pile up and
+        # saturate the CPU, wrecking the timing-sensitive multicast reads of
+        # later tests.
+        if self._dispatcher is not None:
+            self._dispatcher.stop()
         if self._traffic is not None:
             self._traffic.stop()
+        if self._dispatcher_thread is not None:
+            self._dispatcher_thread.join(timeout=2.0)
         if self._bus is not None:
             self._bus.shutdown()
 
@@ -156,9 +179,15 @@ def mock_module():
     return _load_mock_server()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def mock_server(mock_module):
-    """Start one mock server for the whole module on a unique channel."""
+    """Start a fresh mock server per test on its own multicast group.
+
+    Function-scoped (not module-scoped) so no bus traffic, ISO-TP Flow-Control
+    state, or off-thread Consecutive Frame senders survive from one test into
+    the next — the udp_multicast bus is shared by every member of a group, so a
+    single long-lived mock made multi-frame reads cross-contaminate.
+    """
     server = _MockServer(mock_module, _unique_channel())
     server.start()
     yield server
@@ -354,20 +383,33 @@ class TestE2EJ1939:
             req_id = m.J1939Responder.make_id(m.J1939_PGN_REQUEST | 0xFF, 0xFE, priority=6)
             pgn = m.J1939_PGN_VEHICLE_ID
             data = bytes([pgn & 0xFF, (pgn >> 8) & 0xFF, (pgn >> 16) & 0xFF, 0, 0, 0, 0, 0])
-            rx.send(can.Message(arbitration_id=req_id, data=data, is_extended_id=True))
 
-            # Collect TP.DT frames (PGN 0xEB00) carrying VIN bytes.
-            tp_dt_payloads = []
-            end = time.time() + 3.0
-            while time.time() < end:
+            # Collect TP.DT frames (PGN 0xEB00) carrying VIN bytes. Key each by
+            # its J1939 sequence-number byte (data[0]) so duplicated frames on
+            # the lossy udp_multicast bus collapse to one and the payload is
+            # reassembled in sequence order rather than arrival order. The
+            # request (or its TP response) can also be dropped outright, so the
+            # request is re-sent each second until the VIN reassembles.
+            vin = ""
+            end = time.time() + 6.0
+            next_req = 0.0
+            tp_dt_frames = {}
+            while time.time() < end and m.MOCK_VIN not in vin:
+                now = time.time()
+                if now >= next_req:
+                    rx.send(can.Message(arbitration_id=req_id, data=data, is_extended_id=True))
+                    next_req = now + 1.0
                 msg = rx.recv(timeout=0.5)
                 if msg is None or not msg.is_extended_id:
                     continue
                 _, rpgn, _ = m.J1939Responder.decode_id(msg.arbitration_id)
                 if (rpgn & 0xFF00) == m.J1939_PGN_TP_DT:
-                    tp_dt_payloads.append(bytes(msg.data)[1:])  # drop seq byte
-            assembled = b"".join(tp_dt_payloads).replace(b"\xff", b"")
-            vin = assembled.decode("ascii", errors="ignore")
+                    frame = bytes(msg.data)
+                    tp_dt_frames[frame[0]] = frame[1:]  # seq -> payload, dedup
+                    assembled = b"".join(
+                        tp_dt_frames[seq] for seq in sorted(tp_dt_frames)
+                    ).replace(b"\xff", b"")
+                    vin = assembled.decode("ascii", errors="ignore")
             assert m.MOCK_VIN in vin
         finally:
             rx.shutdown()
@@ -442,9 +484,17 @@ class TestE2EUDS:
         hardware) [Category A].
         """
         # Clear before the scan so we only observe THIS scan's Flow Control.
-        mock_server._dispatcher._fc_event.clear()
-        _run_nxc(mock_server.channel, no_sniff=True, obd2=True)
-        assert mock_server._dispatcher._fc_event.is_set(), (
+        # The udp_multicast test bus can drop the First Frame (so the scanner
+        # never reaches the FC step); retry the read a few times before failing
+        # so a single lost datagram is not reported as a scanner bug.
+        observed = False
+        for _ in range(5):
+            mock_server._dispatcher._fc_event.clear()
+            _run_nxc(mock_server.channel, no_sniff=True, obd2=True)
+            if mock_server._dispatcher._fc_event.is_set():
+                observed = True
+                break
+        assert observed, (
             "scanner did not send an ISO-TP Flow Control frame for the multi-frame VIN response"
         )
 

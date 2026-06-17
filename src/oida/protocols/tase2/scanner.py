@@ -148,6 +148,14 @@ class TASE2Scanner(
     def __init__(self, args: Dict[str, Any]):
         super().__init__(args)
 
+        # Safety gate: write/control/tag operations run only when --confirm is
+        # given. BaseScanner hardwires read_only=True (the legacy "read-only"
+        # arg is never surfaced by the tase2 CLI, so nothing could ever clear
+        # it) which silently no-op'd every confirm-gated op. Drive read_only
+        # off --confirm so the dangerous paths actually execute under --confirm.
+        self.confirm = parse_bool(args.get("confirm", False))
+        self.read_only = not self.confirm
+
         # Options
         self.discover_vcc = parse_bool(args.get("discover-vcc", True))
         self.discover_icc = parse_bool(args.get("discover-icc", True))
@@ -269,9 +277,12 @@ class TASE2Scanner(
                 if results["control_points"]:
                     results["conformance_blocks"].append("Block 5 (Control)")
 
-            # Write access testing
-            if self.test_write and not self.read_only:
-                self._test_write_access(connection, results)
+            # Write access testing (mutates points - gated behind --confirm)
+            if self.test_write:
+                if self.read_only:
+                    self.logger.warning("--test-write requires --confirm; skipping write tests")
+                else:
+                    self._test_write_access(connection, results)
 
             # Security analysis
             results["security_analysis"] = self._analyze_security(results)

@@ -290,7 +290,7 @@ class FuzzMixin(_ScannerBase):
                     attribute=attr_id,
                     request_data=fuzz_data,
                     connected=True,
-                    unconnected_send=True,
+                    unconnected_send=False,
                 )
                 results["test_count"] += 1
 
@@ -320,7 +320,7 @@ class FuzzMixin(_ScannerBase):
                     instance=instance,
                     attribute=attr_id,
                     connected=True,
-                    unconnected_send=True,
+                    unconnected_send=False,
                 )
 
                 if read_result.error and "timeout" in str(read_result.error).lower():

@@ -411,11 +411,15 @@ class SecurityMixin:
                 }
             )
 
-        # Add certificate findings from logger
-        for finding in self.logger.findings:
+        # Add certificate findings recorded during the TLS certificate probe.
+        # Use only that snapshot (captured in _check_tls_certificate); iterating
+        # the whole logger.findings accumulator would duplicate and mislabel
+        # every other finding (anonymous access, default creds, ...) as
+        # CERTIFICATE.
+        for finding in getattr(self, "_cert_findings", []):
             findings.append(
                 {
-                    "category": "CERTIFICATE",
+                    "category": finding.get("category", "CERTIFICATE"),
                     "issue": finding.get("title", ""),
                     "description": finding.get("detail", ""),
                 }

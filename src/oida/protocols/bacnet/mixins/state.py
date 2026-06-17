@@ -6,6 +6,7 @@ Handles device state dump, diff comparison, and monitor loop.
 
 import asyncio
 import json
+import yaml
 from datetime import datetime
 from pathlib import Path
 from ..constants import CONTROL_POINT_TYPES
@@ -114,11 +115,21 @@ class StateMixin:
 
         # Output dump
         output_path = getattr(self.args, "output", None)
+        output_format = getattr(self.args, "format", "json")
 
         if output_path:
-            # --format only offers json (cli.py choices); always write JSON.
-            dump_file = Path(output_path).with_suffix(".json")
-            dump_file.write_text(json.dumps(dump_data, indent=2, default=str))
+            dump_file = Path(output_path)
+            # The real parser default for --format is "console", and csv/xml/all
+            # have no dump serializer. Anything that isn't an explicit yaml dump
+            # (or a .yaml path) falls back to json so a -o backup always writes a
+            # file instead of silently no-op'ing while claiming success.
+            if output_format == "yaml" or dump_file.suffix in (".yaml", ".yml"):
+                dump_file = dump_file.with_suffix(".yaml")
+                dump_file.write_text(yaml.dump(dump_data, default_flow_style=False))
+            else:
+                dump_file = dump_file.with_suffix(".json")
+                dump_file.write_text(json.dumps(dump_data, indent=2, default=str))
+
             self.logger.success(f"Dump saved to {dump_file}")
         else:
             for device_id, device_dump in dump_data["devices"].items():
@@ -175,7 +186,14 @@ class StateMixin:
             changes = []
             for obj_type, instances in current_objects.items():
                 baseline_type_objs = baseline_objects.get(obj_type, [])
-                baseline_instances = {obj.get("instance") for obj in baseline_type_objs}
+                # Baselines come in two on-disk shapes: --dump writes dicts with
+                # an "instance" key, while _export_results writes bare instance
+                # ints. Tolerate both so diffing against either export format
+                # doesn't raise AttributeError.
+                baseline_instances = {
+                    obj.get("instance") if isinstance(obj, dict) else obj
+                    for obj in baseline_type_objs
+                }
                 current_instances = set(instances)
 
                 new_objs = current_instances - baseline_instances

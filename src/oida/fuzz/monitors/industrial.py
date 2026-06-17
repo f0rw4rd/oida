@@ -308,9 +308,7 @@ class IEC104Monitor(ProtocolMonitor):
                     self.logger.display(f"IEC 104 baseline established: {response.hex()}")
 
                 # Compare with baseline (using standardized baseline)
-                baseline_raw = (
-                    self.baseline.raw_response if self.baseline else self.baseline_response
-                )
+                baseline_raw = self.baseline.raw_response
                 if response != baseline_raw:
                     self.logger.warning(
                         f"TESTFR response changed! Expected: {self.baseline_response.hex()}, Got: {response.hex()}"
@@ -365,7 +363,7 @@ class IEC104Monitor(ProtocolMonitor):
 
         current_time = time.time()
         if current_time - self.last_check >= 1.0:  # Rate limit to 1 check per second
-            if self.state == IEC104States.DISCONNECTED:
+            if self.state in (IEC104States.DISCONNECTED, IEC104States.ERROR):
                 if not self._connect():
                     return False
             elif not self._check_alive(fuzz_data_logger):
@@ -449,7 +447,6 @@ class MMSMonitor(ProtocolMonitor):
         # MMS-specific state
         self.socket: Optional[socket.socket] = None
         self.connected = False
-        self.baseline_vendor: Optional[str] = None
 
     def _build_tpkt(self, data: bytes) -> bytes:
         """Wrap data in TPKT header (RFC 1006)."""
@@ -564,7 +561,6 @@ class MMSMonitor(ProtocolMonitor):
                         # Store raw for now, parsing can be added later
                     },
                 )
-                self.baseline_response = response
                 self.baseline_established = True
                 self.logger.display(f"MMS baseline established (response size: {len(response)})")
                 if fuzz_data_logger:
@@ -643,9 +639,6 @@ class MQTTMonitor(ProtocolMonitor):
             failure_threshold=failure_threshold,
         )
 
-        # MQTT-specific baseline
-        self.baseline_connack: Optional[bytes] = None
-
     def _create_connect_packet(self, client_id: str = "monitor") -> bytes:
         """Create minimal MQTT CONNECT packet (v3.1.1)."""
         client_id_bytes = client_id.encode("utf-8")
@@ -661,10 +654,6 @@ class MQTTMonitor(ProtocolMonitor):
 
         remaining_length = len(variable_header) + len(payload)
         return bytes([0x10, remaining_length]) + variable_header + payload
-
-    def _create_pingreq(self) -> bytes:
-        """Create MQTT PINGREQ packet."""
-        return b"\xc0\x00"
 
     def _check_alive_once(self, fuzz_data_logger=None) -> bool:
         """Single health check: CONNECT + wait for CONNACK."""
@@ -715,9 +704,6 @@ class MQTTMonitor(ProtocolMonitor):
                         "session_present": bool(response[2] & 0x01),
                     },
                 )
-                # Legacy attributes for backwards compatibility
-                self.baseline_connack = response
-                self.baseline_response = response
                 self.baseline_established = True
                 self.logger.display(f"MQTT baseline established (reason_code={reason_code})")
                 if fuzz_data_logger:
@@ -727,11 +713,7 @@ class MQTTMonitor(ProtocolMonitor):
                 return True
 
             # Compare with baseline (reason code should match)
-            baseline_reason = (
-                self.baseline.get_field("reason_code")
-                if self.baseline
-                else self.baseline_connack[3]
-            )
+            baseline_reason = self.baseline.get_field("reason_code")
             if response[3] != baseline_reason:
                 self.logger.warning(
                     f"MQTT response changed: reason_code {baseline_reason} -> {response[3]}"
@@ -1004,7 +986,6 @@ class ModbusRTUMonitor(ProtocolMonitor):
                     "slave_address": response[0],
                 },
             )
-            self.baseline_response = response
             self.baseline_function_code = function_code
             self.baseline_established = True
             self.logger.display(

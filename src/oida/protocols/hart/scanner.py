@@ -217,8 +217,12 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
         self.host = args.get("rhost", "127.0.0.1")
         self.port = int(args.get("rport", self.default_port))
         self.timeout = float(args.get("timeout", 5))
-        self.transport = args.get("protocol", "udp").lower()
+        # `protocol` is the argparse subparser dest (always literal "hart"),
+        # so transport must be derived from the --tcp flag instead.
+        self.transport = "tcp" if args.get("tcp", False) else "udp"
         self.poll_address = int(args.get("poll-addr", 0))
+        self.debug = args.get("debug", False)
+        self.confirm = bool(args.get("confirm", False))
 
         # HART-IP v2 TLS/PSK settings
         self.psk_identity = args.get("psk-identity")

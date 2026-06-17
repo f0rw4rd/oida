@@ -13,7 +13,6 @@ from .mutation import (
     set_mutation_seed,
 )
 from .session.state_machine import StateMachine, StateTransitionError
-from .session.test_case import TestCaseRegistry, TestCaseDefinition, ProtocolFeature
 from ...utils.ics_logger import get_logger, ICSLogger, set_progress_active
 import logging
 
@@ -196,9 +195,6 @@ class BaseFuzzer(ABC):
         self._test_case_manager: Optional[TestCaseManager] = None
         self._database: Optional["DatabaseInterface"] = None
 
-        # Test case registry (lazy initialization)
-        self._test_case_registry: Optional[TestCaseRegistry] = None
-
         # Request registry for selective fuzzing
         self._available_requests: Dict[str, RequestInfo] = {}
         self._enabled_requests: Optional[Set[str]] = None  # None = all enabled
@@ -218,7 +214,6 @@ class BaseFuzzer(ABC):
         # Progress monitoring
         self._progress_stop_flag = False
         self._progress_interval = 5  # seconds
-        self._total_mutations = None  # Cached total mutation count for progress %
 
     def _configure_console_output(self):
         """Configure console output verbosity"""
@@ -284,11 +279,6 @@ class BaseFuzzer(ABC):
             # Only disable global if we're not using it
             # (don't interfere with other fuzzers that might be using it)
             self.log.debug("Using boofuzz default mutations")
-
-    @property
-    def logger(self) -> ICSLogger:
-        """Alias for self.log - provides consistent logger access pattern."""
-        return self.log
 
     @property
     def session(self) -> Session:
@@ -382,12 +372,15 @@ class BaseFuzzer(ABC):
         # Determine logic
         logic = monitor_config.logic if monitor_config else self.config.monitor_logic
 
-        # Handle "none" case - no monitors
+        # Handle "none" case - no monitors (but still honour explicit script/valid-case
+        # monitors and auto-restart if the user asked for them).
         if monitor_config.is_empty():
+            extra = self._create_extra_monitors()
+            self._apply_restart_config(extra)
             return CombinedMonitor(
                 host=self.config.target_ip,
                 port=self.config.target_port,
-                monitors=[],
+                monitors=extra or [],
                 skip_pre_send=self.config.skip_pre_send_checks,
                 check_interval=self.config.monitor_check_interval,
                 logic=logic,
@@ -397,6 +390,11 @@ class BaseFuzzer(ABC):
 
         # Create monitor instances from configuration
         monitors = self._create_monitors_from_config(monitor_config)
+
+        # Append the platform-feature monitors (script / valid-case) when configured,
+        # and arm auto-restart on every monitor.
+        monitors.extend(self._create_extra_monitors())
+        self._apply_restart_config(monitors)
 
         # Determine check_interval: use the maximum from monitor specs if specified,
         # otherwise fall back to config default
@@ -446,6 +444,76 @@ class BaseFuzzer(ABC):
 
         return monitors
 
+    def _create_extra_monitors(self) -> List[BaseMonitor]:
+        """Build the script / valid-case monitors that need richer args than the
+        ``name:interval`` registry path can carry."""
+        extra: List[BaseMonitor] = []
+
+        if self.config.script_monitor_command:
+            from ..monitors.script import ScriptMonitor
+
+            extra.append(
+                ScriptMonitor(
+                    host=self.config.target_ip,
+                    port=self.config.target_port,
+                    command=self.config.script_monitor_command,
+                    check_interval=self.config.monitor_check_interval,
+                )
+            )
+            self.log.display(f"Script monitor: {' '.join(self.config.script_monitor_command)}")
+
+        if self.config.valid_case_probe:
+            from ..monitors.network import ValidCaseMonitor
+
+            extra.append(
+                ValidCaseMonitor(
+                    host=self.config.target_ip,
+                    port=self.config.target_port,
+                    probe=self.config.valid_case_probe,
+                    expect=self.config.valid_case_expect,
+                    check_interval=self.config.monitor_check_interval,
+                )
+            )
+            self.log.display(f"Valid-case probe: {len(self.config.valid_case_probe)} bytes")
+
+        if self.config.agent_monitor_host:
+            from ..monitors.agent import AgentMonitor
+
+            extra.append(
+                AgentMonitor(
+                    host=self.config.agent_monitor_host,
+                    port=self.config.agent_monitor_port,
+                    token=self.config.agent_monitor_token,
+                    check_interval=self.config.monitor_check_interval,
+                )
+            )
+            self.log.display(
+                f"Agent monitor: {self.config.agent_monitor_host}:{self.config.agent_monitor_port}"
+            )
+
+        return extra
+
+    def _apply_restart_config(self, monitors: List[BaseMonitor]) -> None:
+        """Arm auto-restart-and-resume on every monitor that supports it.
+
+        The restart command is deduped at run time via the shared CrashTracker, so
+        arming all monitors is safe — exactly one restart fires per crash episode.
+        """
+        if not self.config.restart_command:
+            return
+        for m in monitors:
+            if hasattr(m, "restart_command"):
+                m.restart_command = list(self.config.restart_command)
+                m.restart_delay = self.config.restart_delay
+                if getattr(m, "command_runner", None) is None:
+                    from ..core.session.commands import RealCommandRunner
+
+                    m.command_runner = RealCommandRunner()
+        self.log.display(
+            f"Auto-restart armed: {' '.join(self.config.restart_command)} "
+            f"(delay {self.config.restart_delay}s)"
+        )
+
     def _log_monitor_config(self) -> None:
         """Log monitor configuration for debugging and visibility."""
         monitor_names = []
@@ -487,24 +555,6 @@ class BaseFuzzer(ABC):
             self.log.debug(
                 f"Max reconnect attempts: {self.config.max_reconnect_attempts} (override)"
             )
-
-    def get_monitor_info(self) -> dict:
-        """Get monitor configuration info for external logging."""
-        monitor_names = []
-        if hasattr(self.monitor, "monitors") and self.monitor.monitors:
-            for m in self.monitor.monitors:
-                monitor_names.append(type(m).__name__)
-
-        logic = getattr(self.monitor, "logic", "and")
-
-        return {
-            "type": type(self.monitor).__name__,
-            "target": f"{self.config.target_ip}:{self.config.target_port}",
-            "check_interval": self.config.monitor_check_interval,
-            "logic": logic,
-            "skip_pre_send": self.config.skip_pre_send_checks,
-            "sub_monitors": monitor_names,
-        }
 
     def setup_custom_monitors(self) -> List[BaseMonitor]:
         return []
@@ -662,15 +712,6 @@ class BaseFuzzer(ABC):
 
         # Otherwise, check blacklist (--disable)
         return name not in self._disabled_requests
-
-    def get_available_requests(self) -> List[RequestInfo]:
-        """
-        Get list of all available requests for this fuzzer.
-
-        Returns:
-            List of RequestInfo objects
-        """
-        return list(self._available_requests.values())
 
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:
@@ -887,127 +928,6 @@ class BaseFuzzer(ABC):
     @abstractmethod
     def _define_protocol(self) -> None:
         """Define the protocol-specific fuzzing structure"""
-
-    def _register_test_cases(self) -> Optional[TestCaseRegistry]:
-        """
-        Optional: Register test cases with feature mapping.
-
-        Override this method to pre-register test cases and map them to protocol features.
-        This enables fast verification, selective execution, and deterministic coverage testing.
-
-        Returns:
-            TestCaseRegistry object, or None if protocol doesn't support test case registration
-
-        Example:
-            def _register_test_cases(self) -> TestCaseRegistry:
-                from oida.fuzz.core.test_case import TestCaseRegistry, TestCaseDefinition, HTTPFeature
-
-                registry = TestCaseRegistry('http')
-
-                # Register baseline test
-                registry.register(TestCaseDefinition(
-                    id=1,
-                    name="HTTP_Baseline_GET",
-                    category="connectivity",
-                    features=[HTTPFeature.HTTP_BASELINE, HTTPFeature.HTTP_METHOD_GET],
-                    request_name="HTTP_Baseline"
-                ))
-
-                # Register method variations
-                registry.register(TestCaseDefinition(
-                    id=2,
-                    name="HTTP_Method_POST",
-                    category="http_methods",
-                    features=[HTTPFeature.HTTP_METHOD_POST],
-                    mutations={"Method": "POST"},
-                    request_name="HTTP_Unified_Standard"
-                ))
-
-                return registry
-        """
-        return None  # Default: no test case registration
-
-    @property
-    def test_case_registry(self) -> Optional[TestCaseRegistry]:
-        """Get test case registry (lazy initialization)"""
-        if self._test_case_registry is None:
-            self._test_case_registry = self._register_test_cases()
-        return self._test_case_registry
-
-    def get_test_cases(self) -> List[TestCaseDefinition]:
-        """
-        Get all registered test cases.
-
-        Returns:
-            List of test case definitions, or empty list if not supported
-        """
-        registry = self.test_case_registry
-        return registry.test_cases if registry else []
-
-    def get_test_case(self, test_id: int) -> Optional[TestCaseDefinition]:
-        """
-        Get specific test case by ID.
-
-        Args:
-            test_id: Test case ID
-
-        Returns:
-            TestCaseDefinition or None
-        """
-        registry = self.test_case_registry
-        return registry.get_by_id(test_id) if registry else None
-
-    def get_test_cases_for_feature(self, feature: ProtocolFeature) -> List[TestCaseDefinition]:
-        """
-        Get all test cases that exercise a specific feature.
-
-        Args:
-            feature: Protocol feature to filter by
-
-        Returns:
-            List of test cases exercising the feature
-        """
-        registry = self.test_case_registry
-        return registry.get_by_feature(feature) if registry else []
-
-    def get_minimal_test_set(self) -> List[TestCaseDefinition]:
-        """
-        Get minimal set of test cases that covers all features.
-
-        Returns:
-            Minimal covering set, or empty list if not supported
-        """
-        registry = self.test_case_registry
-        return registry.get_minimal_test_set() if registry else []
-
-    def run_test_case(self, test_id: int) -> None:
-        """
-        Run a single test case by ID.
-
-        This creates a temporary session configured to run only the specified test case.
-
-        Args:
-            test_id: Test case ID to run
-        """
-        original_start = self.config.index_start
-        original_end = self.config.index_end
-
-        try:
-            # Configure to run only this test case
-            self.config.index_start = test_id
-            self.config.index_end = test_id + 1
-
-            # Re-create session with new indices
-            self._session = None
-
-            # Run the single test case
-            self.fuzz_all()
-
-        finally:
-            # Restore original config
-            self.config.index_start = original_start
-            self.config.index_end = original_end
-            self._session = None
 
     def _define_state_machine(self) -> None:
         """
@@ -1326,17 +1246,6 @@ class BaseFuzzer(ABC):
         if self.config.distribution_total and self.config.distribution_id:
             self._apply_distribution_filtering()
 
-        # Cache total mutations for progress percentage (computed once)
-        if self._total_mutations is None:
-            try:
-                self._total_mutations = sum(
-                    node.num_mutations()
-                    for node in self.session.nodes.values()
-                    if hasattr(node, "num_mutations")
-                )
-            except Exception:
-                self._total_mutations = 0
-
         # Start progress monitor if logging is enabled
         progress_thread = None
         if self.config.log_session:
@@ -1450,36 +1359,6 @@ class BaseFuzzer(ABC):
 
     # State machine convenience methods
 
-    def get_current_state(self) -> Optional[str]:
-        """
-        Get current protocol state
-
-        Returns:
-            Current state name, or None if no state machine defined
-
-        Example:
-            state = fuzzer.get_current_state()
-            print(f"Currently in state: {state}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_current_state_name()
-        return None
-
-    def get_valid_next_states(self) -> List[str]:
-        """
-        Get list of valid next states from current state
-
-        Returns:
-            List of state names that can be transitioned to
-
-        Example:
-            next_states = fuzzer.get_valid_next_states()
-            print(f"Can transition to: {next_states}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_valid_next_states()
-        return []
-
     def enable_invalid_state_testing(self):
         """
         Enable attack mode: allow invalid state transitions
@@ -1523,37 +1402,6 @@ class BaseFuzzer(ABC):
 
         self.log.warning(f"Forcing invalid state transition to: {target_state}")
         self.state_machine.transition_to(target_state, force=True)
-
-    def get_transition_graph(self) -> Dict[str, List[str]]:
-        """
-        Get state transition graph
-
-        Returns:
-            Dictionary mapping states to valid next states
-
-        Example:
-            graph = fuzzer.get_transition_graph()
-            for from_state, to_states in graph.items():
-                print(f"{from_state} can transition to: {to_states}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_transition_graph()
-        return {}
-
-    def get_state_history(self) -> List[str]:
-        """
-        Get history of state transitions
-
-        Returns:
-            List of state names in order visited
-
-        Example:
-            history = fuzzer.get_state_history()
-            print(f"State progression: {' → '.join(history)}")
-        """
-        if self.state_machine:
-            return self.state_machine.get_state_history()
-        return []
 
     def _start_progress_monitor(self):
         """Start background thread for progress updates.
@@ -1722,9 +1570,7 @@ class BaseFuzzer(ABC):
                         total = actual_sends
                         resume_base = max(0, getattr(self.config, "index_start", 1) - 1)
                         if self._session is not None:
-                            sent = getattr(
-                                self._session, "num_cases_actually_fuzzed", actual_sends
-                            )
+                            sent = getattr(self._session, "num_cases_actually_fuzzed", actual_sends)
                             total = getattr(self._session, "total_mutant_index", sent)
                         skipped = max(0, total - sent - resume_base)
 

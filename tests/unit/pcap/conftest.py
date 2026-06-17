@@ -94,7 +94,17 @@ def _get_listener_direct(pcap_path: Path, listener_name: str):
     assert listener_name in listeners, f"Failed to create {listener_name} listener"
     listener = listeners[listener_name]
 
+    import asyncio
+
     import pyshark
+
+    # pyshark uses asyncio internally; on Python 3.10+ the main thread has no
+    # implicit event loop, so FileCapture's get_event_loop() raises RuntimeError
+    # unless one is set first. Mirror the guard in PcapScanner._run_pyshark_pipeline.
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
     cap = pyshark.FileCapture(str(pcap_path), keep_packets=False)
     for packet in cap:

@@ -45,7 +45,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             "supported_subfunctions": [],
         }
 
-        if tests == "all":
+        if tests is None or tests == "all":
             test_list = ["echo", "counters", "register"]
         else:
             test_list = tests.split(",")
@@ -79,7 +79,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
 
         # Clear counters (subfunction 0x0A) - mutates device state.
         if "clear" in test_list:
-            if not self.args.get("confirm", False):
+            if not self._args_get("confirm", False):
                 self.logger.fail(
                     "--diag clear runs subfunction 0x0A (Clear Counters and Diagnostic "
                     "Register) which mutates device state — requires --confirm"
@@ -93,7 +93,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
         # Restart communications (subfunction 0x01) - resets the listen-only
         # mode and clears communications event counters. Disruptive.
         if "restart" in test_list:
-            if not self.args.get("confirm", False):
+            if not self._args_get("confirm", False):
                 self.logger.fail(
                     "--diag restart runs subfunction 0x01 (Restart Communications) "
                     "which resets device state — requires --confirm"
@@ -105,6 +105,15 @@ class ScannerDiagnosticsMixin(_ScannerBase):
                     results["supported_subfunctions"].append(0x01)
 
         return results
+
+    def _args_get(self, key: str, default=None):
+        """Pull a value from the scanner's args (which may be a dict or Namespace)."""
+        args = getattr(self, "args", None)
+        if args is None:
+            return default
+        if isinstance(args, dict):
+            return args.get(key, default)
+        return getattr(args, key, default)
 
     def _diagnostic_restart(self, client: Any) -> bool:
         """Restart Communications Option (subfunction 0x01)."""

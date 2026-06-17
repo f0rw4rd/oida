@@ -116,9 +116,8 @@ class TestTASE2ConformanceBlocks(unittest.TestCase):
         self.assertTrue(scanner.test_write)
 
 
-@pytest.mark.network
 class TestTASE2MockOperations(unittest.TestCase):
-    """Test TASE.2 operations with mocked dependencies"""
+    """Test TASE.2 operations with mocked dependencies (no real sockets)"""
 
     def setUp(self):
         """Set up test environment"""
@@ -132,14 +131,20 @@ class TestTASE2MockOperations(unittest.TestCase):
         # Note: The check depends on lazy import behavior
         self.assertIsInstance(self.scanner.check_dependencies(), bool)
 
-    def test_disconnected_operations(self):
-        """Test operations when disconnected"""
+    @patch.object(TASE2Scanner, "connect", return_value=None)
+    @patch.object(TASE2Scanner, "test_connectivity", return_value=False)
+    @patch.object(TASE2Scanner, "check_dependencies", return_value=True)
+    def test_disconnected_operations(self, _mock_deps, _mock_conn_test, _mock_connect):
+        """Test run_scan handles a failed connection gracefully.
+
+        Dependency/connectivity/connect are patched so no real socket is
+        opened: connect() returns None, exercising the connection_failed path.
+        """
         results = self.scanner.run_scan()
 
         # Should handle disconnection gracefully
         self.assertIsInstance(results, dict)
-        if "error" in results:
-            self.assertIn("connection", results["error"].lower())
+        self.assertEqual(results.get("error"), "connection_failed")
 
 
 class TestTASE2DomainTypes(unittest.TestCase):
@@ -168,12 +173,17 @@ class TestTASE2BilateralTable(unittest.TestCase):
         self.assertEqual(self.scanner.domains, [])
 
 
-@pytest.mark.network
 class TestTASE2ErrorHandling(unittest.TestCase):
     """Test TASE.2 error handling scenarios"""
 
+    @pytest.mark.network
     def test_connection_timeout(self):
-        """Test connection timeout scenarios"""
+        """Test connection timeout scenarios.
+
+        Marked 'network': intentionally opens a real TCP connection to a
+        non-routable address to verify the timeout path. Excluded from the
+        default '-m not network' run because it relies on live socket timing.
+        """
         scanner = TASE2Scanner(
             {
                 "rhost": "192.168.254.254",  # Non-routable address

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Tuple
 
 from ..constants import OBJECT_TYPE_NAMES
+from ....utils.export_utils import export_table, configure_from_args, parse_output_format
 
 
 class ExportMixin:
@@ -36,8 +37,6 @@ class ExportMixin:
 
     def _export_results(self):
         """Export scan results"""
-        from ....utils.export_utils import export_table, configure_from_args
-
         output_path = getattr(self.args, "output", None)
         if not output_path:
             return
@@ -52,20 +51,26 @@ class ExportMixin:
         }
 
         output_format = getattr(self.args, "format", "json")
+        formats = parse_output_format(output_format)
         output_file = Path(output_path)
 
-        if output_format == "json":
-            output_file = output_file.with_suffix(".json")
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            output_file.write_text(json.dumps(results, indent=2, default=str))
-            self.logger.success(f"Results exported to {output_file}")
-        elif output_format == "csv":
-            headers = ["device_id", "address", "object_type", "instance"]
-            rows = []
-            for device_id, objects in self.objects.items():
-                address = self.devices.get(device_id, {}).get("address", "")
-                for obj_type, instances in objects.items():
-                    for instance in instances:
-                        rows.append([device_id, address, obj_type, instance])
-            if rows:
-                export_table("bacnet_objects", headers, rows)
+        # Rich nested JSON (devices + objects) when JSON output is requested.
+        if "json" in formats:
+            json_file = output_file.with_suffix(".json")
+            json_file.parent.mkdir(parents=True, exist_ok=True)
+            json_file.write_text(json.dumps(results, indent=2, default=str))
+            self.logger.success(f"Results exported to {json_file}")
+
+        # Tabular object inventory for console/csv/xml (and the table rows of
+        # "all"). Routed through export_table so xml/all/console no longer
+        # silently no-op; export_table honours the configured format list.
+        headers = ["device_id", "address", "object_type", "instance"]
+        rows = []
+        for device_id, objects in self.objects.items():
+            address = self.devices.get(device_id, {}).get("address", "")
+            for obj_type, instances in objects.items():
+                for instance in instances:
+                    rows.append([device_id, address, obj_type, instance])
+
+        if rows and any(fmt in formats for fmt in ("console", "csv", "xml")):
+            export_table("bacnet_objects", headers, rows)
