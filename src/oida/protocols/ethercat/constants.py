@@ -12,10 +12,7 @@ from typing import Dict
 from ...utils.vendor_maps import ethercat_vendor_ids as vendor_ids
 
 # Canonical CoE definitions live in coe.py — re-export for backward compat
-from .coe import AL_STATES as SLAVE_STATES  # noqa: F401
 from .coe import get_al_state_name as get_slave_state_name  # noqa: F401
-from .coe import COE_OBJECT_NAMES as COE_STANDARD_OBJECTS  # noqa: F401
-from .coe import get_coe_object_name  # noqa: F401
 
 # AL Status Codes (ETG.1000.6)
 AL_STATUS_CODES: Dict[int, str] = {

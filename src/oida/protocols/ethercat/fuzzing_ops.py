@@ -23,8 +23,6 @@ class FuzzingOpsMixin(_ScannerBase):
         fuzzing_results = {
             "sdo_fuzzing": {},
             "pdo_fuzzing": {},
-            "crashes_detected": 0,
-            "anomalies": [],
         }
 
         if self.fuzz_sdo:
