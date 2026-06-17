@@ -60,9 +60,22 @@ from unittest.mock import Mock, patch
 
 from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST
+from .cli_runner import CLIRunner
 
 # Mark all tests in this module
 pytestmark = pytest.mark.bacnet
+
+
+@pytest.fixture
+def cli_runner():
+    """BACnet-local CLI runner with a generous timeout.
+
+    BACnet discovery is UDP/BAC0-based and timing-sensitive; multi-check scans
+    (notably ``--assess``, which runs 8 checks) intermittently exceed the global
+    30s default and get SIGKILL'd, surfacing as a flaky returncode -1. A larger
+    timeout lets the scan finish so the test asserts on real output.
+    """
+    return CLIRunner(timeout=120)
 
 
 # ---------------------------------------------------------------------------
