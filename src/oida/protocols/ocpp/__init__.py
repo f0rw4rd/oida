@@ -69,6 +69,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         "enum_versions",
         "get_config",
         "data_transfer",
+        "firmware_info",
         "meter_values",
         "enum_connectors",
         "local_list_version",
@@ -114,7 +115,8 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         "test_meter_inject",
     ]
 
-    # Combined list for _has_any_operation_flag()
+    # Combined list of every flag that triggers an operation; consumed by
+    # proto_flow() to decide whether the connection phase can be skipped.
     _OPERATION_FLAGS = (
         _DISCOVERY_FLAGS
         + _SECURITY_CHECK_FLAGS
@@ -151,16 +153,17 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             tls = getattr(args, "port", None) == DEFAULT_WSS_PORT
             port = getattr(args, "port", None) or (DEFAULT_WSS_PORT if tls else DEFAULT_WS_PORT)
             args.port = port
-            cp_id = getattr(args, "charge_point_id", "CP_SCANNER_001")
             scheme = "wss" if tls else "ws"
-            self._target_url = f"{scheme}://{host}:{port}/{cp_id}"
+            ws_path = getattr(args, "ws_path", None)
+            if ws_path:
+                path = ws_path if ws_path.startswith("/") else f"/{ws_path}"
+            else:
+                cp_id = getattr(args, "charge_point_id", "CP_SCANNER_001")
+                path = f"/{cp_id}"
+            self._target_url = f"{scheme}://{host}:{port}{path}"
 
         super().__init__(args, db, host)
         self.logger.debug(f"OCPP target URL resolved: {self._target_url}")
-
-    def _has_any_operation_flag(self) -> bool:
-        """Check if any operation flag is set (like OPC UA pattern)."""
-        return any(getattr(self.args, flag, None) for flag in self._OPERATION_FLAGS)
 
     def proto_flow(self):
         """Execute OCPP scanning workflow (modeled after OPC UA _async_proto_flow)."""
@@ -226,6 +229,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         flag_to_handler = {
             "get_config": self._handle_get_configuration,
             "data_transfer": self._handle_data_transfer_probe,
+            "firmware_info": self._handle_firmware_info,
             "enumerate": self._handle_enumerate_actions,
             "meter_values": self.probe_meter_values,
             "enum_connectors": self.enumerate_connectors,
