@@ -76,6 +76,50 @@ class s7(NetworkConnection):
         else:
             self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
 
+    def enum_host_info(self):
+        """Enumerate Siemens S7 device information (NetworkConnection contract)."""
+        if not self.conn:
+            return
+
+        self.logger.debug("Enumerating device information...")
+        try:
+            cpu_info = self.scanner._get_cpu_info(self.conn)
+            plc_status = self.scanner._get_plc_status(self.conn)
+            self.results["data"]["device_info"] = {
+                "cpu_info": cpu_info,
+                "plc_status": plc_status,
+            }
+        except Exception as e:
+            self.logger.warning(f"Device enumeration failed: {e}")
+            self.results["data"]["device_info"] = {
+                "connected": True,
+                "enum_error": str(e),
+            }
+
+    def print_host_info(self):
+        """Display Siemens S7 device information (NetworkConnection contract)."""
+        if getattr(self.args, "quiet", False):
+            return
+
+        info = self.results["data"].get("device_info", {})
+        port = getattr(self.args, "port", 102)
+        cpu_info = info.get("cpu_info", {})
+        plc_status = info.get("plc_status", {})
+
+        if cpu_info.get("module_type"):
+            self.logger.success(f"Siemens S7: {self.host}:{port}")
+            self.logger.display(f"    Module: {cpu_info.get('module_type', 'Unknown')}")
+            if cpu_info.get("s7_series"):
+                self.logger.display(f"    Series: {cpu_info['s7_series']}")
+            if cpu_info.get("module_name"):
+                self.logger.display(f"    Name: {cpu_info['module_name']}")
+            if cpu_info.get("serial_number"):
+                self.logger.display(f"    Serial: {cpu_info['serial_number']}")
+            if plc_status.get("status"):
+                self.logger.display(f"    Status: {plc_status['status']}")
+        else:
+            self.logger.display(f"Siemens S7: {self.host}:{port}")
+
     def _execute_scan(self):
         """Execute Snap7 scanning (security analysis + discovery)."""
         self.logger.debug("Executing scan")
