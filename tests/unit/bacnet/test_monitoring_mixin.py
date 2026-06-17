@@ -32,7 +32,6 @@ def _create_instance(**kwargs):
         },
     }
     instance.bacnet = Mock()
-    instance.host_info = {}
     return instance
 
 

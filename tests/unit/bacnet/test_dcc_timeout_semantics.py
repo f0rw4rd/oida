@@ -57,14 +57,6 @@ class TestIsSuccessResponseSemantics(unittest.TestCase):
 
         self.assertTrue(self.mixin._is_success_response(_AckPDU(), types))
 
-    def test_is_no_reply_companion_predicate(self):
-        """Operators distinguishing UDP loss from device rejection use this."""
-        from oida.protocols.bacnet.mixins.security import SecurityMixin
-
-        m = SecurityMixin.__new__(SecurityMixin)
-        self.assertTrue(m._is_no_reply(None))
-        self.assertFalse(m._is_no_reply(object()))
-
 
 if __name__ == "__main__":
     unittest.main()

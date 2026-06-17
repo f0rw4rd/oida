@@ -83,16 +83,6 @@ class SecurityMixin:
             (types["ErrorPDU"], types["Error"], types["AbortPDU"], types["RejectPDU"]),
         )
 
-    def _is_no_reply(self, response) -> bool:
-        """Companion predicate: True iff the target did not send a reply.
-
-        Used by callers that need to distinguish 'target said no' (real
-        rejection — fine) from 'we got nothing back' (could be a slow
-        target, a filter, or the target silently accepted — UNKNOWN, so
-        emit no finding either way).
-        """
-        return response is None
-
     def _handle_security_assessment(self):
         """Full security assessment"""
         # The "assessment" calls _handle_test_write (writes back the value it
@@ -634,6 +624,8 @@ class SecurityMixin:
         ReadPropertyRequest = types["ReadPropertyRequest"]
         ObjectIdentifier = types["ObjectIdentifier"]
         PropertyIdentifier = types["PropertyIdentifier"]
+        CharacterString = types["CharacterString"]
+        Unsigned = types["Unsigned"]
         AbortPDU = types["AbortPDU"]
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
@@ -674,21 +666,17 @@ class SecurityMixin:
                     ):
                         sc_found = True
                         value = "present"
-                        if hasattr(response, "propertyValue") and hasattr(
-                            response.propertyValue, "tagList"
-                        ):
-                            tags = list(response.propertyValue.tagList)
-                            for tag in tags:
-                                if hasattr(tag, "tag_data") and tag.tag_data:
-                                    try:
-                                        value = tag.tag_data.decode(
-                                            "utf-8", errors="replace"
-                                        ).strip()
-                                    except Exception as e:
-                                        self.logger.debug(f"BACnet/SC property decode failed: {e}")
-                                        if len(tag.tag_data) <= 4:
-                                            value = int.from_bytes(tag.tag_data, "big")
-                                    break
+                        pv = getattr(response, "propertyValue", None)
+                        if pv is not None and hasattr(pv, "cast_out"):
+                            for cast_type in (CharacterString, Unsigned):
+                                try:
+                                    decoded = pv.cast_out(cast_type)
+                                    if decoded is not None:
+                                        value = decoded
+                                        break
+                                except BaseException as e:
+                                    self.logger.debug(f"BACnet/SC property decode failed: {e}")
+                                    continue
                         findings.append(f"{display_name}: {value}")
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 check bacnet sc failed: {e}")
@@ -763,19 +751,18 @@ class SecurityMixin:
             response = await asyncio.wait_for(app.request(request), timeout=timeout)
             current_value = None
             if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
-                if hasattr(response, "propertyValue") and hasattr(
-                    response.propertyValue, "tagList"
-                ):
-                    tags = list(response.propertyValue.tagList)
-                    for tag in tags:
-                        if hasattr(tag, "tag_data") and tag.tag_data:
-                            import struct
-
-                            if len(tag.tag_data) == 4:
-                                current_value = struct.unpack(">f", tag.tag_data)[0]
-                            elif len(tag.tag_data) <= 4:
-                                current_value = int.from_bytes(tag.tag_data, "big")
-                            break
+                pv = getattr(response, "propertyValue", None)
+                if pv is not None and hasattr(pv, "cast_out"):
+                    for cast_type in (Real, Unsigned):
+                        try:
+                            current_value = pv.cast_out(cast_type)
+                            if current_value is not None:
+                                break
+                        except BaseException as e:
+                            self.logger.debug(
+                                f"bacpypes3 test priority writes failed: {e}"
+                            )
+                            continue
         except BaseException as e:
             self.logger.debug(f"bacpypes3 test priority writes failed: {e}")
             current_value = None
@@ -787,7 +774,6 @@ class SecurityMixin:
         self.logger.display(f"  Current value: {current_value}")
 
         writable_priorities = []
-        rejected_priorities = []
 
         for priority in range(1, 17):
             priority_name = BACNET_PRIORITY_LEVELS.get(priority, f"Priority {priority}")
@@ -818,7 +804,6 @@ class SecurityMixin:
                             f"    [!] Priority {priority:2d} ({priority_name}): WRITABLE"
                         )
                     else:
-                        rejected_priorities.append(priority)
                         self.logger.display(
                             f"    [-] Priority {priority:2d} ({priority_name}): rejected"
                         )
@@ -829,7 +814,6 @@ class SecurityMixin:
                     )
                 except BaseException as e:
                     self.logger.debug(f"bacpypes3 test priority writes failed: {e}")
-                    rejected_priorities.append(priority)
 
             except BaseException as e:
                 self.logger.debug(f"Priority {priority} write error: {e}")
@@ -967,19 +951,15 @@ class SecurityMixin:
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
 
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
+                    from bacpypes3.primitivedata import Boolean
+
                     oos_value = "unknown"
-                    if hasattr(response, "propertyValue") and hasattr(
-                        response.propertyValue, "tagList"
-                    ):
-                        tags = list(response.propertyValue.tagList)
-                        for tag in tags:
-                            if hasattr(tag, "tag_data") and tag.tag_data:
-                                oos_value = (
-                                    bool(tag.tag_data[0])
-                                    if len(tag.tag_data) == 1
-                                    else str(tag.tag_data)
-                                )
-                                break
+                    pv = getattr(response, "propertyValue", None)
+                    if pv is not None and hasattr(pv, "cast_out"):
+                        try:
+                            oos_value = bool(pv.cast_out(Boolean))
+                        except BaseException as e:
+                            self.logger.debug(f"bacpypes3 test oos failed: {e}")
                     readable.append((obj_type, instance, oos_value))
                     self.logger.display(
                         f"  {obj_type}:{instance} outOfService={oos_value} (readable)"

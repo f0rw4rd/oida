@@ -18,6 +18,8 @@ class FilesMixin:
         ReadPropertyRequest = types["ReadPropertyRequest"]
         ObjectIdentifier = types["ObjectIdentifier"]
         PropertyIdentifier = types["PropertyIdentifier"]
+        CharacterString = types["CharacterString"]
+        Unsigned = types["Unsigned"]
         AbortPDU = types["AbortPDU"]
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
@@ -58,9 +60,6 @@ class FilesMixin:
                         response = await asyncio.wait_for(
                             app.request(request), timeout=min(timeout, 3.0)
                         )
-                    except (asyncio.TimeoutError, TimeoutError) as e:
-                        self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
-                        continue
                     except BaseException as e:
                         self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
                         continue
@@ -68,31 +67,26 @@ class FilesMixin:
                     if response and not isinstance(
                         response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                     ):
-                        if hasattr(response, "propertyValue"):
-                            pv = response.propertyValue
-                            value = None
+                        pv = getattr(response, "propertyValue", None)
+                        value = None
+                        if pv is not None and hasattr(pv, "cast_out"):
+                            for cast_type in (CharacterString, Unsigned):
+                                try:
+                                    decoded = pv.cast_out(cast_type)
+                                except BaseException as e:
+                                    self.logger.debug(
+                                        f"bacpypes3 enumerate files failed: {e}"
+                                    )
+                                    continue
+                                if decoded is not None and decoded != "":
+                                    value = (
+                                        str(decoded).strip()
+                                        if cast_type is CharacterString
+                                        else decoded
+                                    )
+                                    break
 
-                            if hasattr(pv, "tagList"):
-                                tags = list(pv.tagList)
-                                for tag in tags:
-                                    if hasattr(tag, "tag_data") and tag.tag_data:
-                                        tag_str = str(tag)
-                                        if "open" in tag_str or "close" in tag_str:
-                                            continue
-                                        data = tag.tag_data
-                                        try:
-                                            value = data.decode("utf-8", errors="replace").strip()
-                                        except Exception as e:
-                                            self.logger.debug(
-                                                f"String decode failed, trying int: {e}"
-                                            )
-                                            if len(data) <= 4:
-                                                value = int.from_bytes(data, "big")
-                                            else:
-                                                value = data.hex()
-                                        break
-
-                            if value:
+                        if value:
                                 if prop_name == "fileSize":
                                     self.logger.display(f"    {display_name}: {value} bytes")
                                 elif prop_name == "readOnly":
@@ -112,6 +106,7 @@ class FilesMixin:
         ReadPropertyRequest = types["ReadPropertyRequest"]
         ObjectIdentifier = types["ObjectIdentifier"]
         PropertyIdentifier = types["PropertyIdentifier"]
+        Unsigned = types["Unsigned"]
 
         self.logger.display(f"\n[Reading File:{file_instance}]")
 
@@ -128,14 +123,12 @@ class FilesMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
                 file_size = 0
-                if hasattr(response, "propertyValue") and hasattr(
-                    response.propertyValue, "tagList"
-                ):
-                    tags = list(response.propertyValue.tagList)
-                    for tag in tags:
-                        if hasattr(tag, "tag_data") and tag.tag_data and len(tag.tag_data) <= 4:
-                            file_size = int.from_bytes(tag.tag_data, "big")
-                            break
+                pv = getattr(response, "propertyValue", None)
+                if pv is not None and hasattr(pv, "cast_out"):
+                    try:
+                        file_size = int(pv.cast_out(Unsigned))
+                    except BaseException as e:
+                        self.logger.debug(f"bacpypes3 read file size decode failed: {e}")
                 self.logger.display(f"  File size: {file_size} bytes")
             except BaseException as e:
                 self.logger.warning(f"  Could not read file size: {e}")

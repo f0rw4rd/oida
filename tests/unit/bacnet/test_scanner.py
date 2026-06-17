@@ -1334,7 +1334,7 @@ class TestBACnetApplyShortcuts(unittest.TestCase):
         mock_args.enum_bbmd = False
         mock_args.enum_fdt = False
         mock_args.enum_routers = False
-        mock_args.enum_networks = False
+        mock_args.networks = False
         mock_args.quiet = True
 
         scanner = self.bacnet_class(mock_args, self.mock_db, "192.168.1.100")
@@ -1342,7 +1342,7 @@ class TestBACnetApplyShortcuts(unittest.TestCase):
         self.assertTrue(scanner.args.enum_bbmd)
         self.assertTrue(scanner.args.enum_fdt)
         self.assertTrue(scanner.args.enum_routers)
-        self.assertTrue(scanner.args.enum_networks)
+        self.assertTrue(scanner.args.networks)
 
     @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
     def test_assess_access_shortcut(self, mock_asyncio_run):
