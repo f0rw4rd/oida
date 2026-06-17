@@ -37,16 +37,6 @@ _pydicom = lazy_import("pydicom", "DICOM")
 PYNETDICOM_AVAILABLE = _pynetdicom.is_available
 
 
-def _get_pynetdicom():
-    """Get pynetdicom module, raising DependencyError if not available."""
-    return _pynetdicom()
-
-
-def _get_pydicom():
-    """Get pydicom module, raising DependencyError if not available."""
-    return _pydicom()
-
-
 def _get_ae():
     """Get pynetdicom AE class.
 
@@ -58,16 +48,6 @@ def _get_ae():
     if _pkg.AE is not None:
         return _pkg.AE
     return _pynetdicom.AE
-
-
-def _get_evt():
-    """Get pynetdicom evt module."""
-    return _pynetdicom.evt
-
-
-def _get_storage_contexts():
-    """Get StoragePresentationContexts."""
-    return _pynetdicom.StoragePresentationContexts
 
 
 def _get_sop_classes():
@@ -130,19 +110,6 @@ def _get_sop_classes():
     }
 
 
-def _get_dataset():
-    """Get pydicom Dataset class.
-
-    Looks up via the parent package so unit tests that
-    `@patch('oida.protocols.dicom.Dataset')` can substitute it.
-    """
-    from oida.protocols import dicom as _pkg
-
-    if _pkg.Dataset is not None:
-        return _pkg.Dataset
-    return _pydicom.Dataset
-
-
 def _get_dcmread():
     """Get pydicom dcmread function."""
     return _pydicom.dcmread
@@ -160,8 +127,14 @@ def _sop(name: str):
 
 
 def _new_dataset():
-    """Create a new pydicom Dataset instance."""
-    Dataset = _get_dataset()
+    """Create a new pydicom Dataset instance.
+
+    Looks up the class via the parent package so unit tests that
+    `@patch('oida.protocols.dicom.Dataset')` can substitute it.
+    """
+    from oida.protocols import dicom as _pkg
+
+    Dataset = _pkg.Dataset if _pkg.Dataset is not None else _pydicom.Dataset
     return Dataset()
 
 
@@ -440,7 +413,7 @@ class dicom(
                         self._cget_output_path / f"{_safe_name(str(sop_uid))}.dcm"
                     )
 
-                ds.save_as(filename, write_like_original=False)
+                ds.save_as(filename, enforce_file_format=True)
                 self._cget_received_files.append(str(filename))
 
             return 0x0000  # Success
@@ -529,9 +502,9 @@ class dicom(
         try:
             # Get lazy-loaded classes
             AE = _get_ae()
-            evt = _get_evt()
+            evt = _pynetdicom.evt
             sop = _get_sop_classes()
-            StoragePresentationContexts = _get_storage_contexts()
+            StoragePresentationContexts = _pynetdicom.StoragePresentationContexts
 
             # Create Application Entity
             self.ae = AE(ae_title=self.calling_aet)
@@ -699,7 +672,6 @@ class dicom(
                 reject_info = self._get_reject_info()
                 self.logger.fail(f"Association rejected: {reject_info}")
                 self.results["data"]["connected"] = False
-                self.results["data"]["reject_reason"] = reject_info
                 return False
 
         except Exception as e:
