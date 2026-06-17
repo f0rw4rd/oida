@@ -354,7 +354,6 @@ class OPCUAScanner(NetworkScanner):
         results = {
             "anonymous_access": False,
             "username_password": {},
-            "certificate_auth": False,
             "tested_credentials": [],
         }
 
@@ -518,28 +517,28 @@ class OPCUAScanner(NetworkScanner):
 
     async def _test_write_access(self, node) -> Dict[str, Any]:
         """
-        Test write access to a variable node using AccessLevel attribute.
+        Test write access to a variable node.
 
-        Checks the UserAccessLevel attribute bitmask to determine write
-        permissions without performing actual write operations.
+        Prefers the UserAccessLevel attribute bitmask (no write performed). If
+        the node does not expose AccessLevel (BadAttributeIdInvalid), falls back
+        to a read/write-back round trip to probe writability.
 
         Args:
             node: OPC UA node to test
 
         Returns:
-            Dict with writable (bool), access_level (int), and error (str or None)
+            Dict with writable (bool) and error (str or None)
         """
-        result = {"writable": False, "access_level": 0, "error": None}
+        result = {"writable": False, "error": None}
         try:
             # Check UserAccessLevel attribute (respects current user permissions)
             access = await node.read_attribute(ua.AttributeIds.UserAccessLevel)
             level = access.Value.Value
-            result["access_level"] = level
 
             # Check write bit (bit 1 = 0x02). _explore_node consumes only
-            # "writable"/"access_level"/"error", so we don't compute the
-            # other AccessLevel bits here (the full bitmask breakdown lives
-            # in the --scan-writable path).
+            # "writable"/"error", so we don't compute the other AccessLevel
+            # bits here (the full bitmask breakdown lives in the
+            # --scan-writable path).
             result["writable"] = (level & 0x02) != 0
 
         except Exception as e:

@@ -66,8 +66,7 @@ class FilesMixin:
                             size = None
                             try:
                                 size_node = await child.get_child("0:Size")
-                                size_val = await size_node.read_value()
-                                size = size_val
+                                size = await size_node.read_value()
                             except Exception as e:
                                 self.logger.debug("search failed: %s", e)
                                 try:
@@ -85,8 +84,7 @@ class FilesMixin:
                             writable = None
                             try:
                                 writable_node = await child.get_child("0:Writable")
-                                writable_val = await writable_node.read_value()
-                                writable = writable_val
+                                writable = await writable_node.read_value()
                             except Exception as e:
                                 self.logger.debug("search failed: %s", e)
                                 try:
@@ -184,8 +182,7 @@ class FilesMixin:
 
             # Open file for reading (mode = 1 = Read)
             try:
-                result = await file_node.call_method(open_method, ua.Byte(1))
-                file_handle = result
+                file_handle = await file_node.call_method(open_method, ua.Byte(1))
                 self.logger.debug(f"File opened with handle: {file_handle}")
             except ua.UaStatusCodeError as e:
                 self.logger.debug("read file failed: %s", e)
@@ -323,8 +320,7 @@ class FilesMixin:
 
             # Open file for writing (mode = 2 = Write, mode = 6 = Write+EraseExisting)
             try:
-                result = await file_node.call_method(open_method, ua.Byte(6))
-                file_handle = result
+                file_handle = await file_node.call_method(open_method, ua.Byte(6))
                 self.logger.debug(f"File opened for writing with handle: {file_handle}")
             except ua.UaStatusCodeError as e:
                 self.logger.debug("write file failed: %s", e)
