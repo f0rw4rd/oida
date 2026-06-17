@@ -30,26 +30,6 @@ _scapy_all = lazy_import("scapy.all", "discovery")
 
 logger = get_module_logger(__name__)
 
-# VRRP constants
-VRRP_MULTICAST_V4 = "224.0.0.18"
-VRRP_MULTICAST_V6 = "ff02::12"
-VRRP_PROTOCOL = 112
-
-# VRRP states
-VRRP_STATES = {
-    0: "Initialize",
-    1: "Backup",
-    2: "Master",
-}
-
-# VRRP auth types (v2 only)
-VRRP_AUTH_TYPES = {
-    0: "None",
-    1: "Simple Text",
-    2: "IP Auth Header",
-}
-
-
 class VRRPPassiveListener:
     """Passive VRRP traffic listener.
 
@@ -74,7 +54,6 @@ class VRRPPassiveListener:
         self.interface = validate_interface(interface)
         self.timeout = validate_timeout(timeout)
         self.discovered_devices: Dict[str, DiscoveredDevice] = {}
-        self.virtual_routers: Dict[str, Dict] = {}  # VRID -> info
         self._lock = threading.Lock()
 
     def scan(self) -> Dict[str, DiscoveredDevice]:
@@ -103,9 +82,7 @@ class VRRPPassiveListener:
         time.sleep(self.timeout)
         sniffer.stop()
 
-        logger.debug(
-            f"VRRP: {len(self.discovered_devices)} routers, {len(self.virtual_routers)} VRIDs"
-        )
+        logger.debug(f"VRRP: {len(self.discovered_devices)} routers")
         return self.discovered_devices
 
     def _safe_process_packet(self, packet) -> None:
@@ -146,7 +123,6 @@ class VRRPPassiveListener:
             version = vrrp.version
             vrid = vrrp.vrid
             priority = vrrp.priority
-            vrrp.ipcount if hasattr(vrrp, "ipcount") else 0
             # Only the Master sends VRRP Advertisements (RFC 5798 §6.4.3 +
             # RFC 3768 §6.4.3 for v2); Backup routers MUST NOT transmit
             # them. So observing ANY Advertisement = sender is Master,
@@ -199,22 +175,6 @@ class VRRPPassiveListener:
                     }
 
                     self.discovered_devices[device_key] = device
-
-                    # Track virtual router
-                    vrid_key = str(vrid)
-                    if vrid_key not in self.virtual_routers:
-                        self.virtual_routers[vrid_key] = {
-                            "vrid": vrid,
-                            "virtual_ips": virtual_ips,
-                            "routers": [],
-                        }
-                    self.virtual_routers[vrid_key]["routers"].append(
-                        {
-                            "ip": src_ip,
-                            "priority": priority,
-                            "is_master": is_master,
-                        }
-                    )
 
                     role = "Master" if is_master else "Backup"
                     logger.debug(f"VRRP: {src_ip} VRID={vrid} {role} pri={priority}")

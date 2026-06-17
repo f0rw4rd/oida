@@ -274,8 +274,7 @@ class BACnetScanner:
 
             offset = 4
 
-            # Parse NPDU
-            data[offset]
+            # Parse NPDU (data[offset] is the version byte, unused)
             npdu_control = data[offset + 1]
             offset += 2
 
@@ -641,7 +640,6 @@ class CODESYSScanner:
             vendor = ""
             node_name = ""
             version = ""
-            mac_address = ""
             max_channels = 0
             target_type = 0
             serial_number = ""
@@ -733,7 +731,6 @@ class CODESYSScanner:
                 "vendor": vendor,
                 "node_name": node_name,
                 "version": version,
-                "mac_address": mac_address,
                 "max_channels": max_channels,
                 "target_type": target_type,
                 "data_version": data_version,
@@ -742,7 +739,6 @@ class CODESYSScanner:
             }
 
             return DiscoveredDevice(
-                mac_address=mac_address,
                 ip_addresses=[ip],
                 name=device_name or node_name or f"CODESYS Device ({ip})",
                 manufacturer=vendor or "CODESYS",
@@ -899,9 +895,6 @@ class ADSScanner:
         """Parse TLV tags from ADS UDP discovery response."""
         result: Dict[str, Any] = {}
         pos = 0
-
-        # Reverse lookup for tag names
-        _tag_names = {v: k.lower() for k, v in self.ADS_UDP_TAG.items()}  # noqa: F841
 
         while pos < len(data) - 4:
             try:

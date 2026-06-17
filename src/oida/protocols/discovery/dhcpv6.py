@@ -60,30 +60,8 @@ DHCPV6_MSG_TYPES = {
     13: "Relay-Reply",
 }
 
-# DHCPv6 option codes
-DHCPV6_OPT_CLIENTID = 1
-DHCPV6_OPT_SERVERID = 2
-DHCPV6_OPT_IA_NA = 3
-DHCPV6_OPT_IA_TA = 4
-DHCPV6_OPT_IAADDR = 5
-DHCPV6_OPT_ORO = 6
-DHCPV6_OPT_PREFERENCE = 7
-DHCPV6_OPT_ELAPSED_TIME = 8
-DHCPV6_OPT_RELAY_MSG = 9
-DHCPV6_OPT_AUTH = 11
-DHCPV6_OPT_UNICAST = 12
-DHCPV6_OPT_STATUS_CODE = 13
-DHCPV6_OPT_RAPID_COMMIT = 14
-DHCPV6_OPT_USER_CLASS = 15
-DHCPV6_OPT_VENDOR_CLASS = 16
-DHCPV6_OPT_VENDOR_OPTS = 17
-DHCPV6_OPT_INTERFACE_ID = 18
-DHCPV6_OPT_RECONF_MSG = 19
-DHCPV6_OPT_RECONF_ACCEPT = 20
+# DHCPv6 option code (only the one we request in the Solicit)
 DHCPV6_OPT_DNS_SERVERS = 23
-DHCPV6_OPT_DOMAIN_LIST = 24
-DHCPV6_OPT_FQDN = 39
-DHCPV6_OPT_REMOTE_ID = 37
 
 # DUID types (Device Unique Identifier)
 DUID_TYPES = {
@@ -118,7 +96,6 @@ class DHCPv6PassiveListener:
         self.interface = validate_interface(interface)
         self.timeout = validate_timeout(timeout)
         self.discovered_devices: Dict[str, DiscoveredDevice] = {}
-        self.dhcpv6_servers: Dict[str, Dict] = {}
         self._lock = threading.Lock()
 
     def scan(self) -> Dict[str, DiscoveredDevice]:
@@ -147,9 +124,7 @@ class DHCPv6PassiveListener:
         time.sleep(self.timeout)
         sniffer.stop()
 
-        logger.debug(
-            f"DHCPv6: {len(self.discovered_devices)} devices, {len(self.dhcpv6_servers)} servers"
-        )
+        logger.debug(f"DHCPv6: {len(self.discovered_devices)} devices")
         return self.discovered_devices
 
     def _safe_process_packet(self, packet) -> None:
@@ -227,8 +202,7 @@ class DHCPv6PassiveListener:
                         "transaction_id": dhcp_info.get("transaction_id"),
                         "duid": dhcp_info.get("duid"),
                         "duid_type": dhcp_info.get("duid_type"),
-                        "vendor_class": dhcp_info.get("vendor_class"),
-                        "user_class": dhcp_info.get("user_class"),
+                        "server_duid": dhcp_info.get("server_duid"),
                         "fqdn": dhcp_info.get("fqdn"),
                         "is_server": is_server,
                         "protocol": "DHCPv6/UDP",
@@ -236,12 +210,6 @@ class DHCPv6PassiveListener:
                     }
 
                     self.discovered_devices[device_key] = device
-
-                    if is_server:
-                        self.dhcpv6_servers[src_ip] = {
-                            "address": src_ip,
-                            "duid": dhcp_info.get("duid"),
-                        }
 
                     msg_type = dhcp_info.get("msg_type_name", "?")
                     role = "server" if is_server else "client"

@@ -307,7 +307,7 @@ class TestDHCPPassiveListenerInit:
         assert listener.interface == "eth0"
         assert listener.timeout == 30
         assert listener.discovered_devices == {}
-        assert listener.dhcp_servers == {}
+        assert listener.dhcp_servers == set()
         assert listener.nxc_logger is None
 
     def test_with_nxc_logger(self):

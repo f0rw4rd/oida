@@ -157,6 +157,9 @@ class HSRPPassiveListener(PassiveListenerBase):
                         "auth_data": hsrp_info.get("auth_data"),
                         "md5_key_id": hsrp_info.get("md5_key_id"),
                         "md5_algorithm": hsrp_info.get("md5_algorithm"),
+                        "md5_flags": hsrp_info.get("md5_flags"),
+                        "md5_source_ip": hsrp_info.get("md5_source_ip"),
+                        "md5_digest": hsrp_info.get("md5_digest"),
                         "ip_version": hsrp_info.get("ip_version"),
                         "multicast_group": dst_ip,
                         "active_groups": hsrp_info.get("active_groups"),
@@ -261,7 +264,6 @@ class HSRPPassiveListener(PassiveListenerBase):
             return None
 
         try:
-            data[0]
             opcode = data[1]
             state = data[2]
             hello_time = data[3]
@@ -380,7 +382,6 @@ class HSRPPassiveListener(PassiveListenerBase):
             return None
 
         try:
-            data[0]
             opcode = data[1]
             state = data[2]
             ip_version = data[3]
