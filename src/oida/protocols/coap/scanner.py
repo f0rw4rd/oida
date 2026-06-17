@@ -3,6 +3,7 @@
 Provides the CoAPScanner class for scanning CoAP/LwM2M IoT and ICS devices.
 """
 
+import asyncio
 import time as _time
 from typing import Any, Dict, List
 
@@ -19,7 +20,6 @@ from .constants import (
     COMMON_PATHS,
     LWM2M_OBJECTS,
     LWM2M_SEC_MODES,
-    WRITE_METHODS,
     protocol_options,
 )
 from .helpers import (
@@ -60,7 +60,6 @@ class CoAPScanner(NetworkScanner):
     """
 
     def __init__(self, args: Dict[str, Any]):
-        self._ctx = None
         self._resources: List[Dict[str, Any]] = []
         self._block_size: int = args.get("block_size", 512)
         self._scheme: str = "coaps" if args.get("dtls") else "coap"
@@ -104,7 +103,6 @@ class CoAPScanner(NetworkScanner):
                 self.logger.debug("Fallback GET to %s returned %s", uri, code)
                 if code.startswith("2.") or code.startswith("4."):
                     # Got a real CoAP response — server is alive
-                    self._ctx = ctx
                     elapsed = _time.monotonic() - t0
                     self.logger.debug("Connection established via GET fallback in %.2fs", elapsed)
                     return ctx
@@ -116,7 +114,6 @@ class CoAPScanner(NetworkScanner):
             return None
 
         ctx = run_async(create_context())
-        self._ctx = ctx
         elapsed = _time.monotonic() - t0
         self.logger.debug("aiocoap context created in %.2fs", elapsed)
         return ctx
@@ -126,7 +123,6 @@ class CoAPScanner(NetworkScanner):
         self.logger.debug("Disconnecting aiocoap context")
         if connection is not None:
             run_async(shutdown_context(connection))
-        self._ctx = None
         self.logger.debug("Disconnected")
 
     # ------------------------------------------------------------------
@@ -187,7 +183,7 @@ class CoAPScanner(NetworkScanner):
         """
         host, port = self.get_target_info()
         uri = f"{self._scheme}://{host}:{port}/.well-known/core"
-        block_size = getattr(self, "_block_size", 512)
+        block_size = self._block_size
 
         self.logger.debug("GET %s", uri)
         code, payload = run_async(coap_get(ctx, uri, timeout=self.timeout))
@@ -341,13 +337,7 @@ class CoAPScanner(NetworkScanner):
             path_results: Dict[str, str] = {}
 
             for method in active_methods:
-                if method in WRITE_METHODS:
-                    # Empty payload for write probes
-                    result = run_async(
-                        coap_request(ctx, method, uri, payload=b"", timeout=self.timeout)
-                    )
-                else:
-                    result = run_async(coap_request(ctx, method, uri, timeout=self.timeout))
+                result = run_async(coap_request(ctx, method, uri, timeout=self.timeout))
                 path_results[method] = result["code"]
 
             if not confirm:
@@ -430,8 +420,6 @@ class CoAPScanner(NetworkScanner):
         self, ctx, resources: List[Dict[str, Any]], max_notifications: int = 5
     ) -> List[Dict[str, Any]]:
         """Subscribe to observable resources and collect notifications."""
-        import asyncio
-
         host, port = self.get_target_info()
         observable = [r for r in resources if r.get("obs")]
         self.logger.debug(
@@ -484,7 +472,7 @@ class CoAPScanner(NetworkScanner):
 
                 # Cancel observation
                 pr.observation.cancel()
-            except (asyncio.TimeoutError, Exception) as e:
+            except Exception as e:
                 self.logger.debug("Observe %s failed: %s", path, e)
 
             return collected

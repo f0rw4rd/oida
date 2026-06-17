@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """CoAP NXC-style callable class."""
 
+import time as _time
+
 from ...connection import NetworkConnection
 from ...utils.payload import resolve_file_payload
 
@@ -34,7 +36,6 @@ class coap(NetworkConnection):
     default_port = 5683
 
     def __init__(self, args, db, host):
-        self.default_port = 5683
         self.scanner = None
         self._scan_results = None
         # Set port before super().__init__() which calls proto_flow()
@@ -43,8 +44,6 @@ class coap(NetworkConnection):
 
     def proto_flow(self):
         """Main CoAP scanning workflow."""
-        import time as _time
-
         self.logger.debug("proto_flow: host=%s, port=%s", self.host, self.port)
 
         args_dict = self._convert_args_to_dict()
@@ -372,7 +371,7 @@ class coap(NetworkConnection):
                 path, value = ipatch_args
                 self._do_write("IPATCH", path, value)
 
-    def _try_dtls_cert(self, cert_path, key_path, ca_path=None):
+    def _try_dtls_cert(self, cert_path, key_path, ca_path):
         """Attempt DTLS connection with certificate authentication."""
         dtls_port = getattr(self.args, "port", None) or DEFAULT_DTLS_PORT
         timeout = getattr(self.args, "timeout", 5) or 5

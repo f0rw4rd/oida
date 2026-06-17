@@ -92,7 +92,6 @@ class TestConnect:
         result = scanner.connect()
 
         assert result is mock_ctx
-        assert scanner._ctx is mock_ctx
         mock_ping.assert_called_once()
 
     @patch("oida.protocols.coap.scanner.run_async")
@@ -124,7 +123,6 @@ class TestConnect:
         result = scanner.connect()
 
         assert result is mock_ctx
-        assert scanner._ctx is mock_ctx
 
     @patch("oida.protocols.coap.scanner.run_async")
     @patch("oida.protocols.coap.scanner.create_context")
@@ -175,18 +173,15 @@ class TestDisconnect:
     def test_disconnect_with_context(self, mock_run):
         scanner = _make_scanner()
         mock_ctx = MagicMock()
-        scanner._ctx = mock_ctx
 
         scanner.disconnect(mock_ctx)
 
-        assert scanner._ctx is None
         mock_run.assert_called_once()
 
     @patch("oida.protocols.coap.scanner.run_async")
     def test_disconnect_with_none(self, mock_run):
         scanner = _make_scanner()
         scanner.disconnect(None)
-        assert scanner._ctx is None
         mock_run.assert_not_called()
 
 

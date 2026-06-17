@@ -237,61 +237,6 @@ class TestBlockwiseTransfer(unittest.TestCase):
         assert payload == b"chunk0chunk1chunk2"
         assert call_count == 3
 
-    def test_coap_put_blockwise_upload(self):
-        """Block1 PUT splits payload into blocks."""
-        import asyncio
-        import sys
-
-        from oida.protocols.coap.helpers import coap_put_blockwise
-
-        received_blocks = []
-
-        async def mock_request_handler():
-            resp = Mock()
-            resp.code = Mock(__str__=lambda self: "2.04")
-            resp.payload = b""
-            return resp
-
-        ctx = Mock()
-
-        def make_request_obj(msg):
-            received_blocks.append(msg.payload)
-            obj = Mock()
-            obj.response = mock_request_handler()
-            return obj
-
-        ctx.request = make_request_obj
-
-        # 100 bytes with block_size=32 should produce 4 blocks (32+32+32+4)
-        payload = b"A" * 100
-
-        # Create a mock aiocoap module
-        mock_aiocoap = Mock()
-        mock_aiocoap.PUT = 3
-
-        def mock_msg(code=None, uri=None, payload=b""):
-            m = Mock()
-            m.payload = payload
-            m.opt = Mock()
-            return m
-
-        mock_aiocoap.Message = mock_msg
-        mock_aiocoap.optiontypes.BlockOption.BlockwiseTuple = Mock()
-
-        with patch.dict(sys.modules, {"aiocoap": mock_aiocoap}):
-            loop = asyncio.new_event_loop()
-            try:
-                result = loop.run_until_complete(
-                    coap_put_blockwise(
-                        ctx, "coap://test:5683/upload", payload, block_size=32, timeout=5
-                    )
-                )
-            finally:
-                loop.close()
-
-        assert result["success"] is True
-        assert len(received_blocks) == 4  # 100 / 32 = 3.125, rounded up to 4
-
     def test_scanner_uses_block_size_from_args(self):
         """CoAPScanner picks up block_size from args dict."""
         with patch("oida.protocols.coap.scanner._aiocoap") as mock:
@@ -349,7 +294,7 @@ class TestDTLSCert(unittest.TestCase):
 
         with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
             mock_run.return_value = (False, None, "backend does not support certificates")
-            result = instance._try_dtls_cert("/path/cert.pem", "/path/key.pem")
+            result = instance._try_dtls_cert("/path/cert.pem", "/path/key.pem", None)
 
         assert result is False
         assert instance.conn is None
@@ -379,8 +324,13 @@ class TestDTLSCert(unittest.TestCase):
         assert result is False
         assert instance.conn is None
 
-    def test_helper_try_dtls_cert_file_not_found(self):
-        """try_dtls_cert returns descriptive error for missing cert file."""
+    def test_helper_try_dtls_cert_unsupported(self):
+        """try_dtls_cert reports that the aiocoap backend lacks cert auth.
+
+        The pinned aiocoap (0.4.17) DTLS credential only supports PSK, so
+        the helper returns the honest "not supported" result immediately
+        rather than read files and fail against a non-existent API.
+        """
         import asyncio
 
         from oida.protocols.coap.helpers import try_dtls_cert
@@ -395,10 +345,10 @@ class TestDTLSCert(unittest.TestCase):
 
         assert ok is False
         assert ctx is None
-        assert "not found" in detail.lower() or "no such file" in detail.lower()
+        assert "not supported" in detail.lower()
 
-    def test_helper_try_dtls_rpk_file_not_found(self):
-        """try_dtls_rpk returns descriptive error for missing RPK file."""
+    def test_helper_try_dtls_rpk_unsupported(self):
+        """try_dtls_rpk reports that the aiocoap backend lacks RPK auth."""
         import asyncio
 
         from oida.protocols.coap.helpers import try_dtls_rpk
@@ -413,7 +363,7 @@ class TestDTLSCert(unittest.TestCase):
 
         assert ok is False
         assert ctx is None
-        assert "not found" in detail.lower() or "no such file" in detail.lower()
+        assert "not supported" in detail.lower()
 
 
 # ---------------------------------------------------------------------------
