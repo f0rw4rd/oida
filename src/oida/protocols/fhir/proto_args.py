@@ -451,12 +451,6 @@ Examples:
         "scope-bypass requires manual verification)",
     )
 
-    security_group.add_argument(
-        "--test-404-vs-403",
-        action="store_true",
-        help="Test information leakage via 404 vs 403 responses",
-    )
-
     # ============================================================================
     # Active Testing
     # ============================================================================
@@ -551,13 +545,6 @@ Examples:
     # Response Handling
     # ============================================================================
     response_group = fhir_parser.add_argument_group("Response Options")
-
-    response_group.add_argument(
-        "-X",
-        "--extract-response",
-        action="store_true",
-        help="Extract and display detailed response data",
-    )
 
     response_group.add_argument(
         "--include",

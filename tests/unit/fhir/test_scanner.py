@@ -120,11 +120,9 @@ class TestFHIRScannerInit(unittest.TestCase):
         self.mock_args.test_auth = False
         self.mock_args.test_cross_patient = False
         self.mock_args.test_scope = False
-        self.mock_args.test_404_vs_403 = False
         self.mock_args.bulk_export = False
         self.mock_args.bulk_export_type = "Patient"
         self.mock_args.confirm = False
-        self.mock_args.extract_response = False
         self.mock_args.include = None
         self.mock_args.revinclude = None
         self.mock_args.elements = None
@@ -215,11 +213,9 @@ class TestFHIRVendorIdentification(unittest.TestCase):
         self.mock_args.test_auth = False
         self.mock_args.test_cross_patient = False
         self.mock_args.test_scope = False
-        self.mock_args.test_404_vs_403 = False
         self.mock_args.bulk_export = False
         self.mock_args.bulk_export_type = "Patient"
         self.mock_args.confirm = False
-        self.mock_args.extract_response = False
         self.mock_args.include = None
         self.mock_args.revinclude = None
         self.mock_args.elements = None
@@ -379,11 +375,9 @@ class TestFHIRBaseURL(unittest.TestCase):
         self.mock_args.test_auth = False
         self.mock_args.test_cross_patient = False
         self.mock_args.test_scope = False
-        self.mock_args.test_404_vs_403 = False
         self.mock_args.bulk_export = False
         self.mock_args.bulk_export_type = "Patient"
         self.mock_args.confirm = False
-        self.mock_args.extract_response = False
         self.mock_args.include = None
         self.mock_args.revinclude = None
         self.mock_args.elements = None

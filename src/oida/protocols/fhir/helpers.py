@@ -88,47 +88,34 @@ FHIR_SECURITY_MODES = {
 # Lazy Imports
 # =========================================================================
 
+# _fhirclient keeps a private handle because is_fhirclient_available() reads
+# its .is_available attribute directly (see below).
 _fhirclient = lazy_import("fhirclient.client", "FHIR")
+fhirclient = _fhirclient
 
-# Individual model modules
-_capabilitystatement = lazy_import("fhirclient.models.capabilitystatement", "FHIR")
-_patient = lazy_import("fhirclient.models.patient", "FHIR")
-_observation = lazy_import("fhirclient.models.observation", "FHIR")
-_medicationrequest = lazy_import("fhirclient.models.medicationrequest", "FHIR")
-_condition = lazy_import("fhirclient.models.condition", "FHIR")
-_encounter = lazy_import("fhirclient.models.encounter", "FHIR")
-_procedure = lazy_import("fhirclient.models.procedure", "FHIR")
-_allergyintolerance = lazy_import("fhirclient.models.allergyintolerance", "FHIR")
-_immunization = lazy_import("fhirclient.models.immunization", "FHIR")
-_diagnosticreport = lazy_import("fhirclient.models.diagnosticreport", "FHIR")
-_documentreference = lazy_import("fhirclient.models.documentreference", "FHIR")
+# _fhirabstractbase is read directly by _get_fhir_validation_error(); it needs
+# no public alias.
 _fhirabstractbase = lazy_import("fhirclient.models.fhirabstractbase", "FHIR")
 
-# Additional resource types for expanded search
-_practitioner = lazy_import("fhirclient.models.practitioner", "FHIR")
-_organization = lazy_import("fhirclient.models.organization", "FHIR")
-_location = lazy_import("fhirclient.models.location", "FHIR")
-_device = lazy_import("fhirclient.models.device", "FHIR")
-_servicerequest = lazy_import("fhirclient.models.servicerequest", "FHIR")
+# Individual model modules (lazy; access via __getattr__ triggers load)
+capabilitystatement = lazy_import("fhirclient.models.capabilitystatement", "FHIR")
+patient = lazy_import("fhirclient.models.patient", "FHIR")
+observation = lazy_import("fhirclient.models.observation", "FHIR")
+medicationrequest = lazy_import("fhirclient.models.medicationrequest", "FHIR")
+condition = lazy_import("fhirclient.models.condition", "FHIR")
+encounter = lazy_import("fhirclient.models.encounter", "FHIR")
+procedure = lazy_import("fhirclient.models.procedure", "FHIR")
+allergyintolerance = lazy_import("fhirclient.models.allergyintolerance", "FHIR")
+immunization = lazy_import("fhirclient.models.immunization", "FHIR")
+diagnosticreport = lazy_import("fhirclient.models.diagnosticreport", "FHIR")
+documentreference = lazy_import("fhirclient.models.documentreference", "FHIR")
 
-# Aliases for lazy modules (access via __getattr__ triggers load)
-fhirclient = _fhirclient
-capabilitystatement = _capabilitystatement
-patient = _patient
-observation = _observation
-medicationrequest = _medicationrequest
-condition = _condition
-encounter = _encounter
-procedure = _procedure
-allergyintolerance = _allergyintolerance
-immunization = _immunization
-diagnosticreport = _diagnosticreport
-documentreference = _documentreference
-practitioner = _practitioner
-organization = _organization
-location = _location
-device = _device
-servicerequest = _servicerequest
+# Additional resource types for expanded search
+practitioner = lazy_import("fhirclient.models.practitioner", "FHIR")
+organization = lazy_import("fhirclient.models.organization", "FHIR")
+location = lazy_import("fhirclient.models.location", "FHIR")
+device = lazy_import("fhirclient.models.device", "FHIR")
+servicerequest = lazy_import("fhirclient.models.servicerequest", "FHIR")
 
 
 # =========================================================================
