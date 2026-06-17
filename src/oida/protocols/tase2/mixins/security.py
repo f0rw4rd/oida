@@ -37,12 +37,7 @@ class SecurityMixin(_ScannerBase):
         - Device control security (CheckBackID, timeouts, tags)
         - Data access permissions
         - Transfer set security (Critical flag)
-
-        When available, supplements with analyze_security() from
-        pyiec61850-ng >= 1.6.0.9 TASE2Client for deeper analysis.
         """
-        client_security = {}
-
         # Count accessible items
         readable_points = sum(1 for p in results.get("data_points", []) if p.get("readable"))
         writable_points = sum(1 for p in results.get("data_points", []) if p.get("writable"))
@@ -111,22 +106,6 @@ class SecurityMixin(_ScannerBase):
         if control_points > 0:
             analysis["concerns"].append(f"{control_points} device control points discovered")
 
-            # Check for SBO vs Non-SBO devices
-            _sbo_devices = [
-                cp
-                for cp in results.get("control_points", [])  # noqa: F841
-                if cp.get("is_sbo", True)
-            ]
-            non_sbo_devices = [
-                cp for cp in results.get("control_points", []) if not cp.get("is_sbo", True)
-            ]
-
-            if non_sbo_devices:
-                analysis["concerns"].append(
-                    f"CRITICAL: {len(non_sbo_devices)} Non-SBO (Direct Control) devices - "
-                    "no Select-Before-Operate protection"
-                )
-
             # CheckBackID predictability analysis
             check_back_ids = results.get("check_back_ids", [])
             if len(check_back_ids) >= 2:
@@ -170,16 +149,6 @@ class SecurityMixin(_ScannerBase):
                 analysis["recommendations"].append(
                     "Consider device tagging for critical control points"
                 )
-
-        # =====================================================================
-        # SBO Device State Security
-        # =====================================================================
-        armed_devices = [k for k, v in self.device_states.items() if v == "ARMED"]
-        if armed_devices:
-            analysis["concerns"].append(
-                f"WARNING: {len(armed_devices)} device(s) in ARMED state - "
-                "may be awaiting command execution"
-            )
 
         # =====================================================================
         # Conformance Block Security Analysis
@@ -232,25 +201,6 @@ class SecurityMixin(_ScannerBase):
                 analysis["concerns"].append(
                     f"Outdated TASE.2 version {version['major']} - current is 2000.08"
                 )
-
-        # =====================================================================
-        # Merge client-side security analysis (pyiec61850-ng >= 1.6.0.9)
-        # =====================================================================
-        if client_security:
-            # Merge concerns and recommendations from client analysis
-            for concern in client_security.get("concerns", []):
-                if concern not in analysis["concerns"]:
-                    analysis["concerns"].append(concern)
-            for rec in client_security.get("recommendations", []):
-                if rec not in analysis["recommendations"]:
-                    analysis["recommendations"].append(rec)
-            # Carry over any additional keys the client analysis provides
-            for key in ("domain_count", "bilateral_table_id", "bilateral_table_count"):
-                if key in client_security and key not in analysis:
-                    analysis[key] = client_security[key]
-            # Use client conformance_blocks if we didn't detect them ourselves
-            if not analysis.get("supported_blocks") and client_security.get("conformance_blocks"):
-                analysis["supported_blocks"] = client_security["conformance_blocks"]
 
         # Calculate risk score
         critical_count = sum(1 for c in analysis["concerns"] if "CRITICAL" in c)

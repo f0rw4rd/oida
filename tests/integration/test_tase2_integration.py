@@ -24,11 +24,9 @@ Security Findings Tested (from scanner.py _analyze_security + _analyze_im_securi
   [F05] N data points accessible for reading
   [F06] CRITICAL: N data points are WRITABLE
   [F07] N device control points discovered
-  [F08] CRITICAL: N Non-SBO (Direct Control) devices
   [F09] CheckBackID values appear sequential - may be predictable
   [F10] N device(s) tagged OPEN_AND_CLOSE_INHIBIT (fully locked out)
   [F11] N device(s) tagged CLOSE_ONLY (partial lockout)
-  [F12] WARNING: N device(s) in ARMED state
   [F13] Block 5 (Device Control) enabled
   [F14] Block 2 (RBE) enabled - automatic data streaming available
   [F15] Block 4 (Information Messages) enabled
@@ -823,33 +821,6 @@ class TestTASE2FindingControlPoints(unittest.TestCase):
         self.assertIn("2", matching[0])
 
 
-class TestTASE2FindingNonSBODevices(unittest.TestCase):
-    """[F08] CRITICAL: Non-SBO (Direct Control) devices [Category A]"""
-
-    def test_finding_non_sbo_direct_control(self):
-        """Verify CRITICAL Non-SBO concern when devices lack SBO [Category A]"""
-        scanner = _make_scanner()
-        results = _make_base_results(
-            control_points=[
-                {"name": "Tap_Setpoint", "is_sbo": False},
-                {"name": "Valve_Control", "is_sbo": False},
-            ],
-        )
-
-        analysis = scanner._analyze_security(results)
-
-        matching = [
-            c
-            for c in analysis["concerns"]
-            if "CRITICAL" in c and "Non-SBO" in c and "Direct Control" in c
-        ]
-        self.assertTrue(
-            matching,
-            f"Expected 'CRITICAL: Non-SBO (Direct Control)' concern; got: {analysis['concerns']}",
-        )
-        self.assertIn("2", matching[0])
-
-
 class TestTASE2FindingSequentialCheckBackID(unittest.TestCase):
     """[F09] CheckBackID values sequential/predictable [Category A]"""
 
@@ -949,29 +920,6 @@ class TestTASE2FindingCloseOnlyInhibit(unittest.TestCase):
             f"Expected 'CLOSE_ONLY (partial lockout)' for CLOSE_ONLY_INHIBIT; "
             f"got: {analysis['concerns']}",
         )
-
-
-class TestTASE2FindingArmedDevices(unittest.TestCase):
-    """[F12] WARNING: Devices in ARMED state [Category A]"""
-
-    def test_finding_armed_device_state(self):
-        """Verify WARNING for devices in ARMED state [Category A]"""
-        scanner = _make_scanner()
-        # Directly set device_states on the scanner since _analyze_security reads self.device_states
-        scanner.device_states = {
-            "ICC1/Breaker1_Control": "ARMED",
-            "ICC1/Breaker2_Control": "ARMED",
-        }
-        results = _make_base_results()
-
-        analysis = scanner._analyze_security(results)
-
-        matching = [c for c in analysis["concerns"] if "WARNING" in c and "ARMED" in c]
-        self.assertTrue(
-            matching,
-            f"Expected 'WARNING: N device(s) in ARMED state'; got: {analysis['concerns']}",
-        )
-        self.assertIn("2", matching[0])
 
 
 class TestTASE2FindingBlock5Enabled(unittest.TestCase):
@@ -1356,7 +1304,6 @@ class TestTASE2RiskScore(unittest.TestCase):
     def test_risk_score_high_for_insecure_config(self):
         """Verify risk score is elevated for insecure configuration [Category A]"""
         scanner = _make_scanner()
-        scanner.device_states = {"ICC1/Dev1": "ARMED"}
         results = _make_base_results(
             tls_enabled=False,
             bilateral_table={"table_id": "", "table_count": 0},
@@ -1365,7 +1312,7 @@ class TestTASE2RiskScore(unittest.TestCase):
                 {"readable": True, "writable": True},
             ],
             control_points=[
-                {"name": "Dev1", "is_sbo": False},
+                {"name": "Dev1"},
             ],
             supported_features={"block1": True, "block2": True, "block5": True},
             tase2_version={"major": 1996, "minor": 0},
@@ -1384,11 +1331,6 @@ class TestTASE2RiskScore(unittest.TestCase):
     def test_risk_score_capped_at_10(self):
         """Verify risk score does not exceed 10 [Category A]"""
         scanner = _make_scanner()
-        scanner.device_states = {
-            "ICC1/Dev1": "ARMED",
-            "ICC1/Dev2": "ARMED",
-            "ICC1/Dev3": "ARMED",
-        }
         results = _make_base_results(
             tls_enabled=False,
             bilateral_table={"table_id": "", "table_count": 0},
@@ -1398,9 +1340,9 @@ class TestTASE2RiskScore(unittest.TestCase):
                 {"readable": True, "writable": True},
             ],
             control_points=[
-                {"name": "Dev1", "is_sbo": False},
-                {"name": "Dev2", "is_sbo": False},
-                {"name": "Dev3", "is_sbo": False},
+                {"name": "Dev1"},
+                {"name": "Dev2"},
+                {"name": "Dev3"},
             ],
             check_back_ids=[1, 2, 3, 4],
             supported_features={
@@ -1429,7 +1371,6 @@ class TestTASE2CompositeSecurity(unittest.TestCase):
     def test_all_major_concerns_in_worst_case(self):
         """Verify ALL major concerns appear for maximally-insecure config [Category A]"""
         scanner = _make_scanner()
-        scanner.device_states = {"ICC1/Dev1": "ARMED"}
         results = _make_base_results(
             tls_enabled=False,
             bilateral_table={"table_id": "", "table_count": 0},
@@ -1438,8 +1379,8 @@ class TestTASE2CompositeSecurity(unittest.TestCase):
                 {"readable": True, "writable": False},
             ],
             control_points=[
-                {"name": "Dev1", "is_sbo": True},
-                {"name": "Dev2", "is_sbo": False},
+                {"name": "Dev1"},
+                {"name": "Dev2"},
             ],
             device_tags=[
                 {"name": "TaggedDev", "tag_value": "OPEN_AND_CLOSE_INHIBIT"},
@@ -1469,10 +1410,8 @@ class TestTASE2CompositeSecurity(unittest.TestCase):
             "data points accessible",  # F05
             "writable",  # F06
             "device control points",  # F07
-            "non-sbo",  # F08
             "checkbackid",  # F09
             "open_and_close_inhibit",  # F10
-            "armed",  # F12
             "block 5",  # F13
             "block 2",  # F14
             "block 4",  # F15
@@ -1517,7 +1456,6 @@ class TestTASE2CompositeSecurity(unittest.TestCase):
     def test_no_false_positives_for_secure_config(self):
         """Verify secure config produces minimal findings [Category A]"""
         scanner = _make_scanner()
-        scanner.device_states = {}
         results = _make_base_results(
             tls_enabled=True,
             certificate_info={"self_signed": False, "expired": False},
