@@ -68,8 +68,6 @@ class SecurityAnalysisMixin(_ScannerBase):
         if certs.get("installed_certificates", 0) > 0:
             auth_methods.append("certificate")
 
-        host, port = self.get_target_info()
-
         # access_control: we can only assert this when --write actually ran
         # AND found zero writable attributes. Without --write the dict is
         # empty for an entirely different reason (test wasn't run), so the
@@ -213,7 +211,7 @@ class SecurityAnalysisMixin(_ScannerBase):
         self.report_service_info(host, port=port, name="ethernetip", proto="tcp")
 
         # Note: Device identity and CIP Security status already displayed
-        # in _list_identity() and _detect_cip_security()
+        # in _list_identity() and _report_security_status()
 
         # Report dangerous tags
         dangerous_tags = results.get("dangerous_tags", [])

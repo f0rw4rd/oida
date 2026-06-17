@@ -25,44 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# CIP Data Type Codes (from CIP Vol 1, Appendix C)
-# =============================================================================
-CIP_TYPE_CODES = {
-    0x00: "?",
-    0xC1: "BOOL",
-    0xC2: "SINT",
-    0xC3: "INT",
-    0xC4: "DINT",
-    0xC5: "LINT",
-    0xC6: "USINT",
-    0xC7: "UINT",
-    0xC8: "UDINT",
-    0xC9: "ULINT",
-    0xCA: "REAL",
-    0xCB: "LREAL",
-    0xCC: "STIME",
-    0xCD: "DATE",
-    0xCE: "TIME_OF_DAY",
-    0xCF: "DATE_AND_TIME",
-    0xD0: "STRING",
-    0xD1: "BYTE",
-    0xD2: "WORD",
-    0xD3: "DWORD",
-    0xD4: "LWORD",
-    0xD5: "STRING2",
-    0xD6: "FTIME",
-    0xD7: "LTIME",
-    0xD8: "ITIME",
-    0xD9: "STRINGN",
-    0xDA: "SHORT_STRING",
-    0xDB: "TIME",
-    0xDC: "EPATH",
-    0xDD: "ENGUNIT",
-    0xDE: "STRINGI",
-}
-
-
-# =============================================================================
 # Parsing Functions
 # =============================================================================
 
@@ -385,47 +347,8 @@ def parse_acd_last_conflict(data: bytes) -> dict:
 # =============================================================================
 
 # Parameter Object (0x0F) Descriptor Bit Definitions
-PARAM_DESC_SUPPORTS_SCALING = 0x0001  # Bit 0: Scaling supported
-PARAM_DESC_SUPPORTS_LINKS = 0x0002  # Bit 1: Parameter links supported
-PARAM_DESC_SCALING_REQUIRED = 0x0004  # Bit 2: Scaling required
-PARAM_DESC_CALIBRATION = 0x0008  # Bit 3: Calibration data
 PARAM_DESC_READ_ONLY = 0x0010  # Bit 4: Read-only (cannot be set)
-PARAM_DESC_MONITOR = 0x0020  # Bit 5: Monitor parameter (real-time display)
-PARAM_DESC_RESERVED_6 = 0x0040  # Bit 6: Reserved
-PARAM_DESC_RESERVED_7 = 0x0080  # Bit 7: Reserved
-PARAM_DESC_RESERVED_8 = 0x0100  # Bit 8: Reserved
-PARAM_DESC_RESERVED_9 = 0x0200  # Bit 9: Reserved
-PARAM_DESC_NON_DISPLAYED = 0x0400  # Bit 10: Non-displayed (hidden from UIs)
-PARAM_DESC_INDIRECT = 0x0800  # Bit 11: Indirect parameter reference
-PARAM_DESC_RESERVED_12 = 0x1000  # Bit 12: Reserved
-PARAM_DESC_RESERVED_13 = 0x2000  # Bit 13: Reserved
 PARAM_DESC_WRITE_ONLY = 0x4000  # Bit 14: Write-only (cannot be read)
-PARAM_DESC_RESERVED_15 = 0x8000  # Bit 15: Reserved
-
-
-def parse_param_descriptor(descriptor: int) -> dict:
-    """Parse Parameter Object Descriptor (Attribute 4) bits.
-
-    The Descriptor is a 16-bit field in the Parameter Object that defines
-    access permissions and display properties.
-
-    Args:
-        descriptor: 16-bit descriptor value
-
-    Returns:
-        Dict with parsed permission and property flags
-    """
-    return {
-        "read_only": bool(descriptor & PARAM_DESC_READ_ONLY),  # Bit 4
-        "write_only": bool(descriptor & PARAM_DESC_WRITE_ONLY),  # Bit 14
-        "monitor": bool(descriptor & PARAM_DESC_MONITOR),  # Bit 5
-        "non_displayed": bool(descriptor & PARAM_DESC_NON_DISPLAYED),  # Bit 10
-        "indirect": bool(descriptor & PARAM_DESC_INDIRECT),  # Bit 11
-        "supports_scaling": bool(descriptor & PARAM_DESC_SUPPORTS_SCALING),  # Bit 0
-        "supports_links": bool(descriptor & PARAM_DESC_SUPPORTS_LINKS),  # Bit 1
-        "scaling_required": bool(descriptor & PARAM_DESC_SCALING_REQUIRED),  # Bit 2
-        "raw": descriptor,
-    }
 
 
 def get_permission_from_descriptor(descriptor: int) -> str:
@@ -492,37 +415,6 @@ def interpret_write_error(status_code: int) -> tuple:
 
 
 # =============================================================================
-# Encoding Functions
-# =============================================================================
-
-
-def encode_usint(value: int) -> bytes:
-    return bytes([value & 0xFF])
-
-
-def encode_uint(value: int) -> bytes:
-    return struct.pack("<H", value & 0xFFFF)
-
-
-def encode_udint(value: int) -> bytes:
-    return struct.pack("<I", value & 0xFFFFFFFF)
-
-
-def encode_string(value: str) -> bytes:
-    encoded = value.encode("ascii", errors="ignore")[:255]
-    return bytes([len(encoded)]) + encoded
-
-
-def encode_bool(value: bool) -> bytes:
-    return bytes([1 if value else 0])
-
-
-def encode_ipv4(value: str) -> bytes:
-    parts = value.split(".")
-    return bytes([int(p) for p in parts[:4]])
-
-
-# =============================================================================
 # Attribute Definition
 # =============================================================================
 
@@ -534,9 +426,7 @@ class AttrDef:
     name: str
     cip_type: str
     parse: Callable[[bytes], Any]
-    encode: Optional[Callable[[Any], bytes]] = None
     desc: str = ""
-    perm: str = "R"  # R=Read-only, RW=Read/Write, W=Write-only
 
 
 # =============================================================================
@@ -545,11 +435,11 @@ class AttrDef:
 
 # Class-level attributes common to all objects (all read-only per CIP spec)
 CLASS_ATTRIBUTES = {
-    1: AttrDef("Revision", "UINT", parse_uint, perm="R"),
-    2: AttrDef("Max Instance", "UINT", parse_uint, perm="R"),
-    3: AttrDef("Num Instances", "UINT", parse_uint, perm="R"),
-    6: AttrDef("Max Class Attr", "UINT", parse_uint, perm="R"),
-    7: AttrDef("Max Inst Attr", "UINT", parse_uint, perm="R"),
+    1: AttrDef("Revision", "UINT", parse_uint),
+    2: AttrDef("Max Instance", "UINT", parse_uint),
+    3: AttrDef("Num Instances", "UINT", parse_uint),
+    6: AttrDef("Max Class Attr", "UINT", parse_uint),
+    7: AttrDef("Max Inst Attr", "UINT", parse_uint),
 }
 
 # Object definitions: {class_id: {attr_id: AttrDef}}
@@ -642,7 +532,7 @@ CIP_OBJECTS: Dict[int, Dict[str, Any]] = {
         "name": "Discrete Output Point",
         "class_attrs": CLASS_ATTRIBUTES,
         "inst_attrs": {
-            1: AttrDef("Value", "BOOL", parse_bool, encode_bool),
+            1: AttrDef("Value", "BOOL", parse_bool),
             2: AttrDef("Status", "USINT", parse_usint),
             3: AttrDef("Force Enable", "BOOL", parse_bool),
             4: AttrDef("Forced Value", "BOOL", parse_bool),
@@ -732,7 +622,7 @@ CIP_OBJECTS: Dict[int, Dict[str, Any]] = {
         "name": "Time Sync",
         "class_attrs": CLASS_ATTRIBUTES,
         "inst_attrs": {
-            1: AttrDef("PTP Enable", "BOOL", parse_bool, encode_bool),
+            1: AttrDef("PTP Enable", "BOOL", parse_bool),
             2: AttrDef("Port Enable", "BOOL", parse_bool),
             3: AttrDef("Port Log Announce Interval", "INT", parse_int),
             4: AttrDef("Port Log Sync Interval", "INT", parse_int),
@@ -949,28 +839,6 @@ CIP_OBJECTS: Dict[int, Dict[str, Any]] = {
 
 
 # =============================================================================
-# Port Type Definitions
-# =============================================================================
-PORT_TYPES = {
-    0: "Backplane",
-    1: "Backplane (Redundant)",
-    2: "ControlNet",
-    3: "ControlNet (Redundant)",
-    4: "EtherNet/IP",
-    5: "EtherNet/IP (Redundant)",
-    6: "DeviceNet",
-    7: "DeviceNet (Redundant)",
-    8: "SerialPort",
-    9: "SerialPort (Redundant)",
-    100: "USB",
-    101: "CompoNet",
-    200: "Modbus",
-    65534: "Any",
-    65535: "None",
-}
-
-
-# =============================================================================
 # Device Type Definitions
 # =============================================================================
 DEVICE_TYPES = {
@@ -1046,11 +914,6 @@ VENDOR_IDS = {
 # =============================================================================
 # Helper Functions
 # =============================================================================
-
-
-def get_object_def(class_id: int) -> Optional[Dict]:
-    """Get object definition by class ID"""
-    return CIP_OBJECTS.get(class_id)
 
 
 def get_attr_def(class_id: int, instance: int, attr_id: int) -> Optional[AttrDef]:
@@ -1142,8 +1005,3 @@ def get_vendor_name(vendor_id: int) -> str:
 def get_device_type_name(device_type: int) -> str:
     """Get device type name"""
     return DEVICE_TYPES.get(device_type, f"Unknown (0x{device_type:02X})")
-
-
-def get_port_type_name(port_type: int) -> str:
-    """Get port type name"""
-    return PORT_TYPES.get(port_type, f"Unknown ({port_type})")

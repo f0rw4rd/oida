@@ -5,7 +5,7 @@ Unit tests for EtherNet/IP CipObjectsMixin.
 Tests cover:
 - _parse_identity_response: full 14+ byte response, short data, with/without product_name
 - _get_object_list: success with UINT count + class_ids, no data, exception
-- _enumerate_objects: with object_list (fast path), slow probe path, quiet mode, force_probe
+- _enumerate_objects: with object_list (fast path), slow probe path, quiet mode, full_enum
 - _enumerate_ports: found ports with types, port names, no ports accessible
 """
 
@@ -315,16 +315,6 @@ class TestEnumerateObjects(unittest.TestCase):
         result = self.host._enumerate_objects(self.conn, route_path=route, quiet=True)
         self.assertIn(0x01, result)
         self.assertIn(0x04, result)
-
-    def test_force_probe_skips_object_list(self):
-        """force_probe=True bypasses object list."""
-        self.host._get_object_list = MagicMock(return_value=[0x01, 0x02])
-        self.host.set_attr(0x01, 1, 1, b"\x01")
-
-        result = self.host._enumerate_objects(self.conn, force_probe=True, max_class=3)
-        # Should have probed individually, not used the object list
-        self.host._get_object_list.assert_not_called()
-        self.assertIn(0x01, result)
 
     def test_full_enum_skips_object_list(self):
         """full_enum flag bypasses object list."""

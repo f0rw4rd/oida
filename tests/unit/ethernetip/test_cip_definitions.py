@@ -23,24 +23,14 @@ pytestmark = pytest.mark.core
 
 from oida.protocols.ethernetip.cip_definitions import (
     CIP_OBJECTS,
-    CIP_TYPE_CODES,
     CLASS_ATTRIBUTES,
     DEVICE_TYPES,
-    PORT_TYPES,
     VENDOR_IDS,
     AttrDef,
-    encode_bool,
-    encode_ipv4,
-    encode_string,
-    encode_udint,
-    encode_uint,
-    encode_usint,
     get_attr_def,
     get_device_type_name,
-    get_object_def,
     get_object_name,
     get_permission_from_descriptor,
-    get_port_type_name,
     get_vendor_name,
     infer_type_from_data,
     interpret_write_error,
@@ -64,7 +54,6 @@ from oida.protocols.ethernetip.cip_definitions import (
     parse_mac,
     parse_media_counters,
     parse_multicast_config,
-    parse_param_descriptor,
     parse_real,
     parse_revision,
     parse_sint,
@@ -383,71 +372,8 @@ class TestEpathParser(unittest.TestCase):
         self.assertIsInstance(result, str)
 
 
-class TestEncodeFunctions(unittest.TestCase):
-    """Test CIP data encoding functions."""
-
-    def test_encode_usint(self):
-        self.assertEqual(encode_usint(0), b"\x00")
-        self.assertEqual(encode_usint(255), b"\xff")
-        self.assertEqual(encode_usint(256), b"\x00")  # masked to 0xFF
-
-    def test_encode_uint(self):
-        self.assertEqual(encode_uint(0), b"\x00\x00")
-        self.assertEqual(encode_uint(1337), struct.pack("<H", 1337))
-
-    def test_encode_udint(self):
-        self.assertEqual(encode_udint(0), b"\x00\x00\x00\x00")
-        self.assertEqual(encode_udint(0xDEADBEEF), struct.pack("<I", 0xDEADBEEF))
-
-    def test_encode_string(self):
-        result = encode_string("Hello")
-        self.assertEqual(result, b"\x05Hello")
-
-    def test_encode_string_truncation(self):
-        long_str = "A" * 300
-        result = encode_string(long_str)
-        self.assertEqual(result[0], 255)
-        self.assertEqual(len(result), 256)
-
-    def test_encode_bool(self):
-        self.assertEqual(encode_bool(True), b"\x01")
-        self.assertEqual(encode_bool(False), b"\x00")
-
-    def test_encode_ipv4(self):
-        result = encode_ipv4("192.168.1.100")
-        self.assertEqual(result, b"\xc0\xa8\x01\x64")
-
-
 class TestParameterDescriptor(unittest.TestCase):
-    """Test Parameter Object descriptor parsing."""
-
-    def test_parse_param_descriptor_read_only(self):
-        result = parse_param_descriptor(0x0010)  # Bit 4: read-only
-        self.assertTrue(result["read_only"])
-        self.assertFalse(result["write_only"])
-
-    def test_parse_param_descriptor_write_only(self):
-        result = parse_param_descriptor(0x4000)  # Bit 14: write-only
-        self.assertTrue(result["write_only"])
-        self.assertFalse(result["read_only"])
-
-    def test_parse_param_descriptor_monitor(self):
-        result = parse_param_descriptor(0x0020)  # Bit 5: monitor
-        self.assertTrue(result["monitor"])
-
-    def test_parse_param_descriptor_non_displayed(self):
-        result = parse_param_descriptor(0x0400)  # Bit 10: non-displayed
-        self.assertTrue(result["non_displayed"])
-
-    def test_parse_param_descriptor_scaling(self):
-        result = parse_param_descriptor(0x0007)  # Bits 0-2
-        self.assertTrue(result["supports_scaling"])
-        self.assertTrue(result["supports_links"])
-        self.assertTrue(result["scaling_required"])
-
-    def test_parse_param_descriptor_raw(self):
-        result = parse_param_descriptor(0x1234)
-        self.assertEqual(result["raw"], 0x1234)
+    """Test Parameter Object descriptor permission parsing."""
 
     def test_get_permission_read_only(self):
         self.assertEqual(get_permission_from_descriptor(0x0010), "R")
@@ -498,14 +424,6 @@ class TestInterpretWriteError(unittest.TestCase):
 class TestObjectLookups(unittest.TestCase):
     """Test CIP object, attribute, vendor, and device type lookups."""
 
-    def test_get_object_def_identity(self):
-        obj = get_object_def(0x01)
-        self.assertIsNotNone(obj)
-        self.assertEqual(obj["name"], "Identity")
-
-    def test_get_object_def_unknown(self):
-        self.assertIsNone(get_object_def(0xFE))
-
     def test_get_attr_def_identity_vendor(self):
         attr = get_attr_def(0x01, 1, 1)
         self.assertIsNotNone(attr)
@@ -543,14 +461,6 @@ class TestObjectLookups(unittest.TestCase):
 
     def test_get_device_type_name_unknown(self):
         result = get_device_type_name(0xFD)
-        self.assertIn("Unknown", result)
-
-    def test_get_port_type_name_known(self):
-        self.assertEqual(get_port_type_name(0), "Backplane")
-        self.assertEqual(get_port_type_name(4), "EtherNet/IP")
-
-    def test_get_port_type_name_unknown(self):
-        result = get_port_type_name(999)
         self.assertIn("Unknown", result)
 
 
@@ -614,27 +524,11 @@ class TestAttrDef(unittest.TestCase):
         attr = AttrDef("Test", "UINT", parse_uint)
         self.assertEqual(attr.name, "Test")
         self.assertEqual(attr.cip_type, "UINT")
-        self.assertIsNone(attr.encode)
-        self.assertEqual(attr.perm, "R")
+        self.assertEqual(attr.desc, "")
 
-    def test_create_with_encode(self):
-        attr = AttrDef("Test", "UINT", parse_uint, encode_uint, "A description", "RW")
-        self.assertEqual(attr.perm, "RW")
+    def test_create_with_desc(self):
+        attr = AttrDef("Test", "UINT", parse_uint, "A description")
         self.assertEqual(attr.desc, "A description")
-        self.assertIsNotNone(attr.encode)
-
-
-class TestCipTypeCodes(unittest.TestCase):
-    """Test CIP type code definitions."""
-
-    def test_type_codes_populated(self):
-        self.assertGreater(len(CIP_TYPE_CODES), 0)
-
-    def test_known_types(self):
-        self.assertEqual(CIP_TYPE_CODES[0xC1], "BOOL")
-        self.assertEqual(CIP_TYPE_CODES[0xC3], "INT")
-        self.assertEqual(CIP_TYPE_CODES[0xCA], "REAL")
-        self.assertEqual(CIP_TYPE_CODES[0xD0], "STRING")
 
     def test_class_attributes_defined(self):
         self.assertIn(1, CLASS_ATTRIBUTES)
@@ -689,12 +583,6 @@ class TestVendorAndDeviceMaps(unittest.TestCase):
 
     def test_plc_device_type(self):
         self.assertEqual(DEVICE_TYPES[0x0E], "Programmable Logic Controller")
-
-    def test_port_types_populated(self):
-        self.assertGreater(len(PORT_TYPES), 0)
-
-    def test_backplane_port(self):
-        self.assertEqual(PORT_TYPES[0], "Backplane")
 
 
 if __name__ == "__main__":

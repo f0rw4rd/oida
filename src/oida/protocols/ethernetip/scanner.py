@@ -13,7 +13,7 @@ This module keeps only:
   the ``_read_cip_attribute`` primitive, and the high-level scan-flow methods.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 import struct
 
 from ...utils import (
@@ -112,12 +112,6 @@ protocol_options = {
     "fuzz": {
         "type": "bool",
         "description": "Fuzz each writeable attribute found",
-        "required": False,
-        "default": False,
-    },
-    "list_identity": {
-        "type": "bool",
-        "description": "Send ListIdentity command to get device information",
         "required": False,
         "default": False,
     },
@@ -285,7 +279,8 @@ class EtherNetIPScanner(
         enumerate_all = parse_bool(args.get("enumerate_all", False))
 
         # CLI options (enabled by enumerate_all or individually)
-        self.list_identity = enumerate_all or parse_bool(args.get("list_identity", False))
+        # Note: ListIdentity always runs in _discover_ucmm_commands, so there is
+        # no separate toggle for it.
         self.list_services = enumerate_all or parse_bool(args.get("list_services", False))
         self.list_interfaces = enumerate_all or parse_bool(args.get("list_interfaces", False))
         self.enumerate_objects = enumerate_all or parse_bool(args.get("enumerate_objects", False))
@@ -336,42 +331,6 @@ class EtherNetIPScanner(
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-
-    def _parse_route_path(self, route_str: str) -> List[Dict[str, Any]]:
-        """
-        Parse CIP route path string into list of segments.
-
-        Format: "port/link,port/link,..." where:
-        - port: Port number (1=backplane, 2=ethernet)
-        - link: Slot number (0-16) or IP address
-
-        Example: "1/2,1/0" = backplane/slot2 -> backplane/slot0
-        """
-        if not route_str:
-            return []
-
-        segments = []
-        for segment in route_str.split(","):
-            segment = segment.strip()
-            if "/" not in segment:
-                continue
-
-            parts = segment.split("/", 1)
-            try:
-                port = int(parts[0])
-                link_str = parts[1]
-
-                # Check if link is IP address or slot number
-                if "." in link_str:
-                    link = link_str  # IP address
-                else:
-                    link = int(link_str)  # Slot number
-
-                segments.append({"port": port, "link": link})
-            except ValueError:
-                self.logger.warning(f"Invalid route segment: {segment}")
-
-        return segments
 
     def get_protocol_name(self) -> str:
         return "EtherNet/IP"
@@ -462,12 +421,14 @@ class EtherNetIPScanner(
         # Try LogixDriver first (for Rockwell PLCs)
         try:
             LogixDriver = _get_logix_driver()
-            # Skip automatic tag upload (slow) - we'll do it manually if needed
-            # Use slot if specified (default 0 = CPU in slot 0)
+            # Skip automatic tag upload (slow) - we'll do it manually if needed.
+            # pycomm3 has no `slot=` kwarg; the CPU slot is encoded in the path
+            # as "<host>/<slot>" (default 0 = CPU in slot 0, plain host).
             slot = self.target_slot if self.target_slot > 0 else None
+            target = f"{host}/{slot}" if slot else host
             if slot:
-                self.logger.debug(f"Using slot {slot} for connection")
-            driver = LogixDriver(host, slot=slot, init_tags=False, init_program_tags=False)
+                self.logger.debug(f"Using slot {slot} for connection (path {target})")
+            driver = LogixDriver(target, init_tags=False, init_program_tags=False)
             driver.open()
             self._driver_type = "logix"
             self._pycomm3_driver = driver
@@ -809,9 +770,7 @@ class EtherNetIPScanner(
                 results["attributes"] = self._explore_classes(connection, results["classes"])
 
         if self.test_write and not self.read_only:
-            results["write_test_results"] = self._test_write_access(
-                connection, results["attributes"]
-            )
+            results["write_test_results"] = self._test_write_access(results["attributes"])
 
         if self.fuzz and not self.read_only:
             # --fuzz writes random/edge-case values to writable attributes
