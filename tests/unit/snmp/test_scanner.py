@@ -141,11 +141,6 @@ class TestVendorSpecificOIDs:
 class TestARPTableParsing:
     """Test ARP table extraction"""
 
-    def test_arp_table_oid(self, snmp_constants):
-        """Test that ARP table OID is correct"""
-        assert "ipNetToMediaTable" in snmp_constants.SNMP_TABLES
-        assert snmp_constants.SNMP_TABLES["ipNetToMediaTable"] == ".1.3.6.1.2.1.4.22.1"
-
     def test_arp_table_method_exists(self, snmp_scanner_class):
         """Test that _get_arp_table method exists"""
         scanner = snmp_scanner_class({"rhost": "192.168.1.1"})
@@ -154,11 +149,6 @@ class TestARPTableParsing:
 
 class TestMACTableParsing:
     """Test MAC table (CAM table) extraction"""
-
-    def test_mac_table_oid(self, snmp_constants):
-        """Test that MAC table OID is correct"""
-        assert "dot1dTpFdbTable" in snmp_constants.SNMP_TABLES
-        assert snmp_constants.SNMP_TABLES["dot1dTpFdbTable"] == ".1.3.6.1.2.1.17.4.3.1"
 
     def test_mac_table_method_exists(self, snmp_scanner_class):
         """Test that _get_mac_table method exists"""

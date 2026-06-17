@@ -52,7 +52,6 @@ class VersionDetectionMixin(_ScannerBase):
             if eid and len(eid) > 0:
                 v3_engine_data["engine_id"] = bytes(eid)
                 v3_engine_data["engine_boots"] = ctx.get("snmpEngineBoots", 0)
-                v3_engine_data["engine_time"] = ctx.get("snmpEngineTime", 0)
 
         async def _probe_version(mp_model=None, v3=False):
             """Probe a single SNMP version. Returns (version_str, supported, detail)."""
@@ -186,8 +185,6 @@ class VersionDetectionMixin(_ScannerBase):
         if v3_engine_data.get("engine_id"):
             engine_info = self._decode_engine_id(v3_engine_data["engine_id"])
             engine_info["engine_boots"] = v3_engine_data.get("engine_boots", 0)
-            engine_info["engine_time"] = v3_engine_data.get("engine_time", 0)
-            result["engine_id"] = engine_info
 
             parts = [f"engineID: {engine_info['hex']}"]
             if engine_info.get("enterprise_name"):
@@ -232,26 +229,20 @@ class VersionDetectionMixin(_ScannerBase):
         if fmt == 1 and len(payload) >= 4:
             # IPv4 address
             info["decoded"] = socket.inet_ntoa(payload[:4])
-            info["format_name"] = "IPv4"
         elif fmt == 2 and len(payload) >= 16:
             # IPv6 address
             info["decoded"] = socket.inet_ntop(socket.AF_INET6, payload[:16])
-            info["format_name"] = "IPv6"
         elif fmt == 3 and len(payload) >= 6:
             # MAC address
             info["decoded"] = ":".join(f"{b:02x}" for b in payload[:6])
-            info["format_name"] = "MAC"
         elif fmt == 4:
             # Text
             info["decoded"] = payload.decode("utf-8", errors="replace")
-            info["format_name"] = "text"
         elif fmt == 5:
             # Octets
             info["decoded"] = payload.hex()
-            info["format_name"] = "octets"
         else:
             # Enterprise-specific or unknown
             info["decoded"] = payload.hex()
-            info["format_name"] = f"enterprise-specific({fmt})"
 
         return info
