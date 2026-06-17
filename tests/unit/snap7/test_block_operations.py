@@ -425,72 +425,6 @@ class TestListSZLIDs(unittest.TestCase):
         self.assertFalse(result["success"])
 
 
-class TestGetCPInfo(unittest.TestCase):
-    """Test BlockOperationsMixin.get_cp_info()."""
-
-    def setUp(self):
-        self.host = MockBlockOpsHost()
-        self.conn = Mock()
-
-    def test_get_cp_info_success(self):
-        """Test successful CP info retrieval."""
-        cp = Mock()
-        cp.MaxPduLength = 480
-        cp.MaxConnections = 32
-        cp.MaxMpiRate = 12000000
-        cp.MaxBusRate = 187500
-        self.conn.get_cp_info.return_value = cp
-
-        result = self.host.get_cp_info(self.conn)
-
-        self.assertTrue(result["success"])
-        self.assertEqual(result["max_pdu"], 480)
-        self.assertEqual(result["max_connections"], 32)
-
-    def test_get_cp_info_failure(self):
-        """Test CP info failure."""
-        self.conn.get_cp_info.side_effect = Exception("not available")
-
-        result = self.host.get_cp_info(self.conn)
-
-        self.assertFalse(result["success"])
-
-
-class TestGetPDULength(unittest.TestCase):
-    """Test BlockOperationsMixin.get_pdu_length()."""
-
-    def setUp(self):
-        self.host = MockBlockOpsHost()
-        self.conn = Mock()
-
-    def test_pdu_length_tuple(self):
-        """Test PDU length returned as tuple (requested, negotiated)."""
-        self.conn.get_pdu_length.return_value = (480, 240)
-
-        result = self.host.get_pdu_length(self.conn)
-
-        self.assertTrue(result["success"])
-        self.assertEqual(result["requested"], 480)
-        self.assertEqual(result["negotiated"], 240)
-
-    def test_pdu_length_single_value(self):
-        """Test PDU length returned as single value."""
-        self.conn.get_pdu_length.return_value = 240
-
-        result = self.host.get_pdu_length(self.conn)
-
-        self.assertTrue(result["success"])
-        self.assertEqual(result["negotiated"], 240)
-
-    def test_pdu_length_failure(self):
-        """Test PDU length failure."""
-        self.conn.get_pdu_length.side_effect = Exception("fail")
-
-        result = self.host.get_pdu_length(self.conn)
-
-        self.assertFalse(result["success"])
-
-
 class TestDeleteBlock(unittest.TestCase):
     """Test BlockOperationsMixin.delete_block()."""
 
@@ -630,7 +564,7 @@ class TestGetOrderCodeAction(unittest.TestCase):
     def test_get_order_code_success(self):
         """Test successful order code action."""
         oc = Mock()
-        oc.Code = "6ES7 511-1AK02-0AB0"
+        oc.OrderCode = "6ES7 511-1AK02-0AB0"
         oc.V1 = 2
         oc.V2 = 9
         oc.V3 = 0
@@ -639,6 +573,7 @@ class TestGetOrderCodeAction(unittest.TestCase):
         result = self.host.get_order_code_action(self.conn)
 
         self.assertTrue(result["success"])
+        self.assertEqual(result["order_code"], "6ES7 511-1AK02-0AB0")
         self.assertEqual(result["v1"], 2)
         self.assertEqual(result["v2"], 9)
 

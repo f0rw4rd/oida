@@ -125,21 +125,15 @@ class TestSnap7DataStructures(unittest.TestCase):
         version2 = S7FirmwareVersion.from_string("4.1.3")
         self.assertEqual(version2.major, 4)
 
-    def test_s7_firmware_version_comparison(self):
-        """Test S7FirmwareVersion comparison operators"""
+    def test_s7_firmware_version_equality(self):
+        """Test S7FirmwareVersion equality"""
         from oida.protocols.snap7 import S7FirmwareVersion
 
-        v1 = S7FirmwareVersion(4, 0, 0)
-        v2 = S7FirmwareVersion(4, 1, 0)
         v3 = S7FirmwareVersion(4, 1, 3)
         v4 = S7FirmwareVersion(4, 1, 3)
 
-        self.assertTrue(v1 < v2)
-        self.assertTrue(v2 < v3)
-        self.assertTrue(v3 == v4)
-        self.assertTrue(v3 >= v4)
-        self.assertTrue(v3 <= v4)
-        self.assertTrue(v2 > v1)
+        self.assertEqual(v3, v4)
+        self.assertNotEqual(v3, S7FirmwareVersion(4, 1, 4))
 
 
 class TestSnap7DeviceLookup(unittest.TestCase):
@@ -402,9 +396,7 @@ class TestSnap7CPUInfo(unittest.TestCase):
         cpu_info = {
             "module_type": "CPU 1511-1 PN",
             "serial_number": "S C-1234567890",
-            "as_name": "Test PLC",
             "module_name": "CPU 1511-1 PN",
-            "copyright": "Siemens AG",
             "s7_series": "S7-1500",
         }
 

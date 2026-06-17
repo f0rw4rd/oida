@@ -63,6 +63,7 @@ class SlotScanMixin(_ScannerBase):
         from ..szl_parser import SZLParser
         from ..device_lookup import lookup_device_name
         from ....utils.protocol_helpers import ConnectionHelper
+        from snap7.type import Parameter
 
         try:
             snap7_client = _get_snap7_client()
@@ -70,9 +71,9 @@ class SlotScanMixin(_ScannerBase):
 
             # Set short timeouts for scanning (ms)
             try:
-                client.set_param(2, 2000)  # p_u32_PingTimeout
-                client.set_param(3, 3000)  # p_i32_RecvTimeout
-                client.set_param(4, 3000)  # p_i32_SendTimeout
+                client.set_param(Parameter.PingTimeout, 2000)
+                client.set_param(Parameter.RecvTimeout, 3000)
+                client.set_param(Parameter.SendTimeout, 3000)
             except Exception as e:
                 self.logger.debug("scan slots set_param failed: %s", e)
 
@@ -150,8 +151,6 @@ class SlotScanMixin(_ScannerBase):
                 info["module_name"] = module_name
                 info["hw_order_code"] = hw_order_code
                 info["firmware"] = fw_version or "?"
-                info["bootloader"] = bootloader_version
-                info["status"] = plc_status
                 info["series"] = self._identify_series_from_order_code(
                     hw_order_code or module_name or ""
                 )
@@ -182,11 +181,7 @@ class SlotScanMixin(_ScannerBase):
                 # Simplified info for Phase 2
                 info["order_code"] = hw_order_code or module_name or "Unknown"
                 info["firmware"] = fw_version or "?"
-                try:
-                    info["series"] = self._identify_series_from_order_code(info["order_code"])
-                except Exception as e:
-                    self.logger.debug("scan slots series_id failed: %s", e)
-                    info["series"] = "S7-300/400"
+                info["series"] = self._identify_series_from_order_code(info["order_code"])
 
                 msg = f"Rack {rack} Slot {slot}: {info['series']} - "
                 msg += f"{info['order_code']} [{info['firmware']}]"
@@ -261,7 +256,6 @@ class SlotScanMixin(_ScannerBase):
         if found:
             main_slot = _identify_main_slot(found)
             if main_slot:
-                main_slot["is_main_cpu"] = True
                 self.logger.display(f"Main CPU: Rack {main_slot['rack']} Slot {main_slot['slot']}")
 
         return found

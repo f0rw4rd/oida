@@ -7,7 +7,7 @@ Siemens S7 Protocol Scanner
 Scanner implementation for Siemens S7 PLCs using the Snap7 library.
 """
 
-from typing import Dict, List, Optional, Any, TYPE_CHECKING
+from typing import Dict, List, Optional, Any
 from ...utils import (
     register_protocol,
     create_protocol_module,
@@ -29,23 +29,13 @@ from .mixins import (
 
 logger = get_module_logger(__name__)
 
-# Type hints only - no runtime import
-if TYPE_CHECKING:
-    pass
-
 # Lazy import for snap7 - only loads when actually used
 _snap7 = lazy_import("snap7", "Snap7")
 
 
-def _get_snap7():
-    """Get snap7 module, raising DependencyError if not available."""
-    return _snap7()
-
-
 def _get_snap7_client():
-    """Get snap7.client module lazily."""
-    snap7_mod = _get_snap7()
-    return snap7_mod.client
+    """Get snap7.client module lazily (raises DependencyError if unavailable)."""
+    return _snap7().client
 
 
 def _get_block_types():
@@ -104,15 +94,11 @@ def _run_with_timeout(func, timeout_seconds=5, error_msg="Operation timed out"):
             err_str = str(e)
             if "b'" in err_str and "'" in err_str:
                 # Extract and decode the bytes portion
-                try:
-                    import re
+                import re
 
-                    match = re.search(r"b'([^']*)'", err_str)
-                    if match:
-                        err_str = match.group(1)
-                except Exception as e:
-                    logger.debug("run with timeout failed: %s", e)
-                    pass  # Regex extraction failed, use original error string
+                match = re.search(r"b'([^']*)'", err_str)
+                if match:
+                    err_str = match.group(1)
             return {"error": err_str}
 
 

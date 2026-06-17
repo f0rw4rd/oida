@@ -330,9 +330,11 @@ class TestScanSlots(unittest.TestCase):
             "_scan_single_slot",
             side_effect=[slot_info, None],
         ):
-            self.host.scan_slots("192.168.1.100", 102)
+            found = self.host.scan_slots("192.168.1.100", 102)
 
-        self.assertTrue(main_info.get("is_main_cpu"))
+        # Main CPU is identified from the found slots
+        self.assertIn(slot_info, found)
+        mock_main_slot.assert_called_once_with(found)
 
     @patch("oida.protocols.snap7.scanner._identify_main_slot")
     @patch("oida.protocols.snap7.scanner._suppress_snap7_logging")

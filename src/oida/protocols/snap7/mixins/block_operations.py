@@ -253,19 +253,20 @@ class BlockOperationsMixin(_ScannerBase):
 
         try:
             type_map = self._get_block_type_map()
-            data = conn.full_upload(type_map[block_type], block_num)
+            # python-snap7 full_upload() returns a (bytearray, int) tuple
+            data, size = conn.full_upload(type_map[block_type], block_num)
             if output_file:
                 output_path = safe_file_path(str(Path(output_file).resolve()))
-                Path(output_path).write_bytes(data)
+                Path(output_path).write_bytes(bytes(data))
                 self.logger.success(
-                    f"{block_type}{block_num} ({len(data)} bytes) saved to {output_path}"
+                    f"{block_type}{block_num} ({size} bytes) saved to {output_path}"
                 )
             else:
-                self.logger.success(f"{block_type}{block_num} ({len(data)} bytes):")
-                self.logger.display(DataFormatter.format_hex_dump(data[:128]))
-                if len(data) > 128:
-                    self.logger.display(f"    ... ({len(data) - 128} more bytes)")
-            return {"success": True, "type": block_type, "num": block_num, "size": len(data)}
+                self.logger.success(f"{block_type}{block_num} ({size} bytes):")
+                self.logger.display(DataFormatter.format_hex_dump(bytes(data[:128])))
+                if size > 128:
+                    self.logger.display(f"    ... ({size - 128} more bytes)")
+            return {"success": True, "type": block_type, "num": block_num, "size": size}
         except Exception as e:
             self.logger.debug("upload full block failed: %s", e)
             self.logger.fail(f"Failed to upload {block_type}{block_num}: {e}")
@@ -435,44 +436,6 @@ class BlockOperationsMixin(_ScannerBase):
 
         return results
 
-    def get_cp_info(self, conn: Any) -> Dict[str, Any]:
-        """Get communication processor info"""
-        try:
-            cp = conn.get_cp_info()
-            info = {
-                "max_pdu": cp.MaxPduLength,
-                "max_connections": cp.MaxConnections,
-                "max_mpi_rate": cp.MaxMpiRate,
-                "max_bus_rate": cp.MaxBusRate,
-            }
-            self.logger.success("CP Info:")
-            for k, v in info.items():
-                self.logger.display(f"    {k}: {v}")
-            return {"success": True, **info}
-        except Exception as e:
-            self.logger.debug("get cp info failed: %s", e)
-            self.logger.fail(f"Failed to get CP info: {e}")
-            return {"success": False, "error": str(e)}
-
-    def get_pdu_length(self, conn: Any) -> Dict[str, Any]:
-        """Get negotiated PDU length"""
-        try:
-            result = conn.get_pdu_length()
-            # Handle both tuple (requested, negotiated) and single int returns
-            if isinstance(result, tuple) and len(result) == 2:
-                requested, negotiated = result
-                self.logger.success(f"PDU Length: requested={requested}, negotiated={negotiated}")
-                return {"success": True, "requested": requested, "negotiated": negotiated}
-            else:
-                # Single value - just negotiated
-                negotiated = result
-                self.logger.success(f"PDU Length: negotiated={negotiated}")
-                return {"success": True, "negotiated": negotiated}
-        except Exception as e:
-            self.logger.debug("get pdu length failed: %s", e)
-            self.logger.fail(f"Failed to get PDU length: {e}")
-            return {"success": False, "error": str(e)}
-
     # =========================================================================
     # Info Action Methods (CLI wrappers for internal methods)
     # =========================================================================
@@ -507,7 +470,6 @@ class BlockOperationsMixin(_ScannerBase):
                     }
             except Exception as e:
                 self.logger.debug("info_action: order_code failed: %s", e)
-                pass  # Order code not available
 
             # Get PDU length
             pdu_length = None
@@ -515,7 +477,6 @@ class BlockOperationsMixin(_ScannerBase):
                 pdu_length = conn.get_pdu_length()
             except Exception as e:
                 self.logger.debug("info_action: pdu_length failed: %s", e)
-                pass  # PDU length not available
 
             # Get PLC datetime
             plc_datetime = None
@@ -525,7 +486,6 @@ class BlockOperationsMixin(_ScannerBase):
                     plc_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
             except Exception as e:
                 self.logger.debug("info_action: plc_datetime failed: %s", e)
-                pass  # PLC datetime not available
 
             # Get CP info
             cp_info = {}
@@ -540,7 +500,6 @@ class BlockOperationsMixin(_ScannerBase):
                     }
             except Exception as e:
                 self.logger.debug("info_action: cp_info failed: %s", e)
-                pass  # CP info not available
 
             # Build display (NXC style)
             order_code = order_code_info.get("order_code", "")
@@ -602,9 +561,9 @@ class BlockOperationsMixin(_ScannerBase):
         """Get PLC order code and version"""
         try:
             order_code = conn.get_order_code()
-            # S7OrderCode has Code and V1/V2/V3 version fields
+            # S7OrderCode has OrderCode and V1/V2/V3 version fields
             info = {
-                "order_code": getattr(order_code, "Code", getattr(order_code, "OrderCode", "N/A")),
+                "order_code": getattr(order_code, "OrderCode", "N/A"),
                 "v1": getattr(order_code, "V1", None),
                 "v2": getattr(order_code, "V2", None),
                 "v3": getattr(order_code, "V3", None),
