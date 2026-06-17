@@ -24,7 +24,6 @@ def _create_instance(**kwargs):
         1001: {"analogInput": [1, 2]},
     }
     instance.bacnet = Mock()
-    instance.host_info = {}
     instance.remote_networks = []
     return instance
 

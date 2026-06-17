@@ -91,8 +91,6 @@ def create_mock_args(**overrides):
         "verbose": 0,
         "password": None,
         "password_list": None,
-        "subnet_mask": None,
-        "network_number": None,
         "retries": 1,
         "vendor_info": False,
         "rpm_batch_size": 10,

@@ -159,12 +159,6 @@ def _load_bacpypes3() -> Dict[str, Any]:
     return _bp
 
 
-def bp(name: str) -> Any:
-    """Get a bacpypes3 type by name. Triggers lazy import on first call."""
-    types = _load_bacpypes3()
-    return types[name]
-
-
 # BACnet Object Type Constants
 OBJECT_TYPES = {
     0: "analogInput",

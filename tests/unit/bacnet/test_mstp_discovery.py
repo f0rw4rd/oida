@@ -22,7 +22,6 @@ def _create_instance(**kwargs):
     }
     instance.objects = {}
     instance.bacnet = Mock()
-    instance.host_info = {}
     return instance
 
 

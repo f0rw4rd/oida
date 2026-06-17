@@ -54,19 +54,5 @@ class TestBac0Availability(unittest.TestCase):
         self.assertIsInstance(result, bool)
 
 
-class TestBpAccessor(unittest.TestCase):
-    """Test bp() type accessor."""
-
-    def test_bp_returns_same_as_load(self):
-        from oida.protocols.bacnet.constants import bp, _load_bacpypes3
-
-        try:
-            types = _load_bacpypes3()
-            result = bp("ReadPropertyRequest")
-            self.assertEqual(result, types["ReadPropertyRequest"])
-        except ImportError:
-            self.skipTest("bacpypes3 not installed")
-
-
 if __name__ == "__main__":
     unittest.main()

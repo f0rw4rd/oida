@@ -207,12 +207,8 @@ class ObjectsMixin:
 
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
-            except (asyncio.TimeoutError, TimeoutError) as e:
-                self.logger.debug(f"bacpypes3 enumerate services failed: {e}")
-                pass
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 enumerate services failed: {e}")
-                pass
             else:
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                     if hasattr(response, "propertyValue"):
@@ -292,12 +288,8 @@ class ObjectsMixin:
 
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
-            except (asyncio.TimeoutError, TimeoutError) as e:
-                self.logger.debug(f"bacpypes3 enumerate services failed: {e}")
-                pass
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 enumerate services failed: {e}")
-                pass
             else:
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                     if hasattr(response, "propertyValue"):
@@ -370,7 +362,6 @@ class ObjectsMixin:
                     return response
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"read prop failed: {e}")
-                pass
             except BaseException as e:
                 self.logger.debug(f"Deep enum read {prop_name} failed: {e}")
             return None
@@ -717,7 +708,6 @@ class ObjectsMixin:
                     return response
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"read prop failed: {e}")
-                pass
             except BaseException as e:
                 self.logger.debug(f"Program enum read {prop_name} failed: {e}")
             return None
@@ -898,7 +888,6 @@ class ObjectsMixin:
                     prog_info["programState"] = PROGRAM_STATES.get(
                         state_val, f"unknown-{state_val}"
                     )
-                    prog_info["programStateRaw"] = state_val
                 else:
                     prog_info["programState"] = _extract_string(resp)
 
@@ -910,7 +899,6 @@ class ObjectsMixin:
                     prog_info["programChange"] = PROGRAM_CHANGES.get(
                         change_val, f"unknown-{change_val}"
                     )
-                    prog_info["programChangeRaw"] = change_val
                 else:
                     prog_info["programChange"] = _extract_string(resp)
 
