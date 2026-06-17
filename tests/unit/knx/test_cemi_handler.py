@@ -211,20 +211,16 @@ class TestableCustomCEMIHandler:
     def __init__(self, xknx_instance, logger, helpers_module=None):
         self.xknx = xknx_instance
         self.is_in_discovery = False
-        self._original_handler = None
         self.logger = logger
-        self.alive_bus_members = set()
         self._helpers = helpers_module
 
     async def fast_bus_discovery(
         self,
         bus_range,
-        callback=None,
         timeout=5,
         listen_time=0,
     ):
         """Fast bus discovery implementation for testing."""
-        self.alive_bus_members.clear()
         self.is_in_discovery = True
         found_devices = set()
         captured_traffic = []
@@ -242,9 +238,6 @@ class TestableCustomCEMIHandler:
                     src_addr = str(cemi.data.src_addr)
                     if src_addr not in found_devices:
                         found_devices.add(src_addr)
-                        self.alive_bus_members.add(src_addr)
-                        if callback:
-                            callback(src_addr)
                         self.logger.success(f"Found device: {src_addr}")
                 return original_handle(cemi)
 
@@ -394,15 +387,6 @@ class TestCustomCEMIHandlerInit:
         """Test that is_in_discovery starts as False."""
         assert handler.is_in_discovery is False
 
-    def test_init_original_handler_is_none(self, handler):
-        """Test that _original_handler starts as None."""
-        assert handler._original_handler is None
-
-    def test_init_alive_bus_members_empty(self, handler):
-        """Test that alive_bus_members starts as empty set."""
-        assert isinstance(handler.alive_bus_members, set)
-        assert len(handler.alive_bus_members) == 0
-
 
 # ============================================================================
 # Tests for fast_bus_discovery - Basic Functionality
@@ -412,15 +396,11 @@ class TestCustomCEMIHandlerInit:
 class TestFastBusDiscoveryBasic:
     """Test basic fast_bus_discovery functionality."""
 
-    def test_clears_alive_bus_members_on_start(self, handler):
-        """Test that alive_bus_members is cleared at discovery start."""
-        handler.alive_bus_members.add("1.1.1")
-        handler.alive_bus_members.add("1.1.2")
+    def test_no_devices_when_none_respond(self, handler):
+        """Discovery returns an empty device set when nothing responds."""
+        result = asyncio.run(handler.fast_bus_discovery("1.1.1", timeout=0))
 
-        asyncio.run(handler.fast_bus_discovery("1.1.1", timeout=0))
-
-        # Should be empty after clearing (no devices found in this case)
-        assert len(handler.alive_bus_members) == 0
+        assert len(result["devices"]) == 0
 
     def test_sets_discovery_flag_false_after_scan(self, handler):
         """Test that is_in_discovery is set False after scan completes."""
@@ -446,14 +426,6 @@ class TestFastBusDiscoveryBasic:
 
 class TestCEMIFrameHandling:
     """Test cEMI frame handling during discovery."""
-
-    def test_l_data_ind_triggers_device_detection(self, handler):
-        """Test that L_DATA_IND frame triggers device detection."""
-        # Simulate receiving an L_DATA_IND frame during discovery
-        handler.is_in_discovery = True
-        handler.alive_bus_members.add("1.1.5")  # Simulate device found
-
-        assert "1.1.5" in handler.alive_bus_members
 
     def test_no_devices_found_when_no_responses(self, handler):
         """Test that no devices are found when no L_DATA_IND received."""
@@ -481,31 +453,42 @@ class TestCEMIFrameHandling:
 
 
 class TestDeviceDiscoveryTracking:
-    """Test device discovery tracking (alive_bus_members set)."""
+    """Test device discovery tracking (returned `devices` set)."""
 
-    def test_found_device_added_to_alive_bus_members(self, handler):
-        """Test that discovered devices are added to alive_bus_members."""
-        handler.alive_bus_members.add("1.1.1")
+    def test_discovery_returns_set_of_devices(self, handler):
+        """The returned `devices` value is a set (dedups by construction)."""
+        result = asyncio.run(handler.fast_bus_discovery("1.1.1", timeout=0))
 
-        assert "1.1.1" in handler.alive_bus_members
+        assert isinstance(result["devices"], set)
 
-    def test_duplicate_devices_not_added_twice(self, handler):
-        """Test that duplicate device addresses are not added multiple times."""
-        handler.alive_bus_members.add("1.1.1")
-        handler.alive_bus_members.add("1.1.1")
+    def test_found_device_appears_in_result(self, mock_xknx, mock_logger):
+        """A device responding via L_DATA_IND is reported in result['devices']."""
+        mock_helpers = MagicMock()
+        mock_helpers.parse_bus_ranges = MagicMock(
+            return_value=[MockIndividualAddress("1.1.5")]
+        )
+        handler = TestableCustomCEMIHandler(mock_xknx, mock_logger, mock_helpers)
 
-        assert len(handler.alive_bus_members) == 1
+        # Drive a synthetic L_DATA_IND through the installed handler mid-scan.
+        original_send = mock_xknx.cemi_handler.send_telegram
+        frame = MockCEMIFrame(
+            code=MockCEMIMessageCode.L_DATA_IND,
+            data=MockCEMIData(src_addr=MockIndividualAddress("1.1.5")),
+        )
 
-    def test_multiple_devices_tracked(self, handler):
-        """Test that multiple different devices are tracked."""
-        handler.alive_bus_members.add("1.1.1")
-        handler.alive_bus_members.add("1.1.2")
-        handler.alive_bus_members.add("2.1.5")
+        async def _send_then_respond(telegram):
+            # The intercepting handler was swapped onto handle_cemi_frame.
+            handler.xknx.cemi_handler.handle_cemi_frame(frame)
+            handler.xknx.cemi_handler.handle_cemi_frame(frame)  # duplicate
+            return await original_send(telegram)
 
-        assert len(handler.alive_bus_members) == 3
-        assert "1.1.1" in handler.alive_bus_members
-        assert "1.1.2" in handler.alive_bus_members
-        assert "2.1.5" in handler.alive_bus_members
+        mock_xknx.cemi_handler.send_telegram = _send_then_respond
+
+        result = asyncio.run(handler.fast_bus_discovery("1.1.5", timeout=0))
+
+        assert "1.1.5" in result["devices"]
+        # Re-running interception with the same address must not double-count.
+        assert len(result["devices"]) == 1
 
 
 # ============================================================================
@@ -528,29 +511,6 @@ class TestTrafficCapture:
 
         # Verify callback was registered
         assert len(handler.xknx.telegram_queue._callbacks) > 0
-
-
-# ============================================================================
-# Tests for Callback Invocation on Device Discovery
-# ============================================================================
-
-
-class TestCallbackInvocation:
-    """Test callback invocation on device discovery."""
-
-    def test_callback_parameter_accepted(self, handler):
-        """Test that callback parameter is accepted."""
-        mock_callback = MagicMock()
-
-        result = asyncio.run(handler.fast_bus_discovery("1.1.1", callback=mock_callback, timeout=0))
-
-        assert "devices" in result
-
-    def test_callback_none_is_valid(self, handler):
-        """Test that callback=None works without errors."""
-        result = asyncio.run(handler.fast_bus_discovery("1.1.1", callback=None, timeout=0))
-
-        assert result is not None
 
 
 # ============================================================================
@@ -821,15 +781,9 @@ class TestIntegration:
         """Test complete discovery workflow."""
         handler = TestableCustomCEMIHandler(mock_xknx, mock_logger, mock_helpers)
 
-        # Pre-populate some data
-        handler.alive_bus_members.add("old.addr")
-
         result = asyncio.run(
-            handler.fast_bus_discovery("1.1.1-1.1.5", callback=None, timeout=0, listen_time=0)
+            handler.fast_bus_discovery("1.1.1-1.1.5", timeout=0, listen_time=0)
         )
-
-        # Old data should be cleared
-        assert "old.addr" not in handler.alive_bus_members
 
         # Result structure is correct
         assert "devices" in result
@@ -848,38 +802,6 @@ class TestIntegration:
         assert result1 is not None
         assert result2 is not None
         assert handler.is_in_discovery is False
-
-    def test_callback_invoked_for_each_device(self, mock_xknx, mock_logger):
-        """Test that callback is invoked for each discovered device."""
-        callback_calls = []
-
-        def mock_callback(addr):
-            callback_calls.append(addr)
-
-        # Create a handler that simulates device discovery
-        class SimulatedDiscoveryHandler(TestableCustomCEMIHandler):
-            async def fast_bus_discovery(self, bus_range, callback=None, **kwargs):
-                self.alive_bus_members.clear()
-                self.is_in_discovery = True
-                found = set()
-
-                # Simulate finding devices
-                for addr in ["1.1.1", "1.1.2"]:
-                    found.add(addr)
-                    self.alive_bus_members.add(addr)
-                    if callback:
-                        callback(addr)
-                    self.logger.success(f"Found device: {addr}")
-
-                self.is_in_discovery = False
-                return {"devices": found, "traffic": []}
-
-        handler = SimulatedDiscoveryHandler(mock_xknx, mock_logger)
-        asyncio.run(handler.fast_bus_discovery("1.1.1-1.1.2", callback=mock_callback, timeout=0))
-
-        assert len(callback_calls) == 2
-        assert "1.1.1" in callback_calls
-        assert "1.1.2" in callback_calls
 
 
 # ============================================================================

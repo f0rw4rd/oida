@@ -5,7 +5,6 @@ following the oida import standards.
 """
 
 import re
-import warnings
 from functools import lru_cache
 from typing import TYPE_CHECKING, Optional, Any, Generator, Dict, Tuple
 
@@ -26,18 +25,18 @@ _xknx = lazy_import("xknx", "KNX")
 _xknxproject = lazy_import("xknxproject", "KNX")
 _pyzipper = lazy_import("pyzipper", "KNX")
 
-# Suppress xknx asyncio warnings without using logging module
-warnings.filterwarnings("ignore", message=".*Future exception was never retrieved.*")
-
 
 # ============================================================================
 # Cached getters using lru_cache for thread safety
 # ============================================================================
 
 
-@lru_cache(maxsize=1)
 def _get_xknx():
-    """Get xknx module, raising DependencyError if not available."""
+    """Get xknx module, raising DependencyError if not available.
+
+    ``lazy_import`` already memoises the resolved module behind a lock, so no
+    extra ``lru_cache`` is needed here.
+    """
     return _xknx()
 
 
@@ -91,14 +90,6 @@ def _get_individual_address():
     return _get_xknx_classes()[4]
 
 
-def _get_p2p_connection():
-    """Get P2PConnection (optional in some xknx versions)."""
-    _get_xknx()
-    import xknx.io as xknx_io
-
-    return getattr(xknx_io, "P2PConnection", None)
-
-
 @lru_cache(maxsize=1)
 def _get_cemi_classes() -> Tuple:
     """Get cEMI classes for frame handling.
@@ -121,7 +112,6 @@ def _get_apci_classes() -> Dict[str, Any]:
     """
     _get_xknx()
     from xknx.dpt import DPTArray
-    from xknx.management.procedures import nm_individual_address_check, dm_restart
     from xknx.telegram.apci import (
         MemoryRead,
         MemoryWrite,
@@ -148,8 +138,6 @@ def _get_apci_classes() -> Dict[str, Any]:
 
     return {
         "DPTArray": DPTArray,
-        "nm_individual_address_check": nm_individual_address_check,
-        "dm_restart": dm_restart,
         "MemoryRead": MemoryRead,
         "MemoryWrite": MemoryWrite,
         "MemoryResponse": MemoryResponse,

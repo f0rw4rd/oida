@@ -75,36 +75,6 @@ def knx_constants():
                 "required": False,
                 "default": "",
             },
-            "auto-addr": {
-                "type": "bool",
-                "description": "Automatically scan for individual addresses",
-                "required": False,
-                "default": False,
-            },
-            "addr-min": {
-                "type": "int",
-                "description": "Minimum address for scanning",
-                "required": False,
-                "default": 0,
-            },
-            "addr-max": {
-                "type": "int",
-                "description": "Maximum address for scanning",
-                "required": False,
-                "default": 255,
-            },
-            "device-range": {
-                "type": "string",
-                "description": "Device address range to scan (e.g., 1.1.1-1.1.255)",
-                "required": False,
-                "default": "1.1.1-1.1.255",
-            },
-            "wordlist-path": {
-                "type": "string",
-                "description": "Path to wordlist file for password attacks",
-                "required": False,
-                "default": "",
-            },
             "test-read": {
                 "type": "bool",
                 "description": "Test read access to device memory",
@@ -797,7 +767,7 @@ class TestConstantsModule:
         assert hasattr(knx_constants, "protocol_options")
         assert isinstance(knx_constants.protocol_options, dict)
         assert "interface" in knx_constants.protocol_options
-        assert "device-range" in knx_constants.protocol_options
+        assert "test-read" in knx_constants.protocol_options
 
 
 # ============================================================================

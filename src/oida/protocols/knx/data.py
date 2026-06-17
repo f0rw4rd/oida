@@ -1198,18 +1198,6 @@ DATA_TYPES = {
     0x24: "GENERIC_20",
 }
 
-# Common KNX Memory Addresses
-MEMORY_MAP = {
-    0x0060: ("Address Table Pointer", 1),
-    0x0100: ("Order Number", 2),
-    0x0104: ("Manufacturer ID", 2),
-    0x0106: ("Application Program", 5),
-    0x010B: ("Serial Number", 6),
-    0x0116: ("Run Error Flags", 1),
-    0x011A: ("Programming Mode", 1),
-}
-
-
 def get_vendor_name(vendor_id: int) -> str:
     """Get vendor name from manufacturer ID"""
     return VENDORS.get(vendor_id, f"Unknown ({vendor_id})")
@@ -1232,11 +1220,6 @@ def get_property_name(obj_type: int, prop_id: int) -> str:
         return OBJECT_PROP_TYPES["global"][prop_id]
 
     return f"PID_{prop_id}"
-
-
-def get_prop_type_name(type_id: int) -> str:
-    """Get property data type name"""
-    return PROP_TYPE_MAP.get(type_id & 0x3F, f"TYPE_{type_id}")
 
 
 def normalize_descriptor(value):
