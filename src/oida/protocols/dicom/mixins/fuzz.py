@@ -59,10 +59,7 @@ class FuzzMixin(_ScannerBase):
 
             # Generate fuzz payloads - use string-like data
             base_value = b"TESTPATIENT"
-            # fuzz() yields (payload_bytes, description) tuples — unpack them.
-            # The old `for i, payload` treated the whole tuple as bytes, so
-            # payload.decode() crashed on the first iteration and no field was
-            # ever fuzzed.
+            # fuzz() yields (payload_bytes, description) tuples.
             for i, (payload, _desc) in enumerate(fuzz(base_value, count=iterations, max_len=64)):
                 try:
                     # Decode payload to string (DICOM uses strings for these

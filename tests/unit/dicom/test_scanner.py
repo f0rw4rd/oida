@@ -727,6 +727,9 @@ class TestDICOMAETBruteForce(unittest.TestCase):
         self.mock_args.store = False
         self.mock_args.move = False
         self.mock_args.aet_brute = True
+        self.mock_args.ae_wordlist = None
+        self.mock_args.common_ae = True
+        self.mock_args.confirm = True
         self.mock_args.probe_ops = False
         self.mock_args.worklist = False
         self.mock_args.dump_all = False
@@ -809,10 +812,15 @@ class TestDICOMSecurityAnalysis(unittest.TestCase):
 
             scanner._analyze_security()
 
-            self.assertIn("security_issues", scanner.results["data"])
-            issues = scanner.results["data"]["security_issues"]
+            # Findings are emitted via logger.security_finding(title, detail=...)
+            titles = [str(c.args[0]) for c in scanner.logger.security_finding.call_args_list]
+            details = [
+                str(c.kwargs.get("detail", "")) for c in scanner.logger.security_finding.call_args_list
+            ]
             # Should flag unencrypted communication
-            unencrypted = any("Unencrypted" in str(i.get("issue", "")) for i in issues)
+            unencrypted = any("No encryption" in t for t in titles) or any(
+                "plaintext" in d for d in details
+            )
             self.assertTrue(unencrypted)
 
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
@@ -840,13 +848,15 @@ class TestDICOMSecurityAnalysis(unittest.TestCase):
 
             scanner._analyze_security()
 
-            issues = scanner.results["data"]["security_issues"]
-            # Should flag no authentication or weak AET whitelist
+            # Findings are emitted via logger.security_finding(title, detail=...)
+            titles = [str(c.args[0]) for c in scanner.logger.security_finding.call_args_list]
+            details = [
+                str(c.kwargs.get("detail", "")) for c in scanner.logger.security_finding.call_args_list
+            ]
+            blob = " ".join(titles + details)
+            # Should flag no authentication / weak AET whitelist / no encryption
             security_issue_found = any(
-                "Authentication" in str(i.get("issue", ""))
-                or "AET" in str(i.get("issue", ""))
-                or "Unencrypted" in str(i.get("issue", ""))
-                for i in issues
+                kw in blob for kw in ("AET", "authentication", "No encryption", "plaintext")
             )
             self.assertTrue(security_issue_found)
 
@@ -1867,10 +1877,13 @@ class TestDICOMVendorIdentificationExtended(unittest.TestCase):
         from oida.protocols.dicom import dicom
 
         scanner = dicom(self.mock_args, None, "192.168.1.100")
-        # Test with GE prefix
-        vendor, desc = scanner._identify_vendor("1.2.840.113619.6.123")
-
+        # GE base prefix with no more-specific sub-entry -> base GE Healthcare.
+        vendor, desc = scanner._identify_vendor("1.2.840.113619.4.123")
         self.assertEqual(vendor, "GE Healthcare")
+
+        # Longest-prefix wins: the .6 sub-tree resolves to the specific product.
+        vendor, desc = scanner._identify_vendor("1.2.840.113619.6.123")
+        self.assertEqual(vendor, "GE Centricity")
 
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_identify_none_uid(self):

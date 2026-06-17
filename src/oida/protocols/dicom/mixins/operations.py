@@ -247,14 +247,11 @@ class OperationsMixin(_ScannerBase):
                 _sop("PatientRootQueryRetrieveInformationModelGet"),
             )
 
+            # Drain the response generator (files are written by the bound
+            # C-STORE handler); only warn on unexpected non-pending/non-success.
             for status, identifier in responses:
-                if status:
-                    if status.Status in (0xFF00,):  # Pending
-                        pass  # Still in progress
-                    elif status.Status == 0x0000:  # Success
-                        pass
-                    else:
-                        self.logger.warning(f"C-GET status: 0x{status.Status:04X}")
+                if status and status.Status not in (0xFF00, 0x0000):
+                    self.logger.warning(f"C-GET status: 0x{status.Status:04X}")
 
             self.logger.success(
                 f"Retrieved {len(self._cget_received_files)} images to {output_dir}"

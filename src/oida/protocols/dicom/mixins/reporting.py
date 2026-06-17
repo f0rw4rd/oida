@@ -67,7 +67,7 @@ class ReportingMixin(_ScannerBase):
                         transfer_syntaxes.add(ts_str)
 
             self.results["data"]["accepted_contexts"] = contexts
-            self.results["data"]["transfer_syntaxes"] = sorted(list(transfer_syntaxes))
+            self.results["data"]["transfer_syntaxes"] = sorted(transfer_syntaxes)
 
             # User identity negotiation (indicates if auth is required)
             user_identity = getattr(self.assoc.acceptor, "user_identity", None)
@@ -351,7 +351,7 @@ class ReportingMixin(_ScannerBase):
 
         # Export server info
         if data.get("connected"):
-            headers = ["Host", "Port", "AET", "Vendor", "Version", "MaxPDU"]
+            headers = ["Host", "Port", "AET", "Vendor", "Version", "MaxPDU", "Operations"]
             rows = [
                 [
                     self.ip,
@@ -360,9 +360,26 @@ class ReportingMixin(_ScannerBase):
                     data.get("vendor", ""),
                     data.get("implementation_version", ""),
                     str(data.get("max_pdu_size", "")),
+                    ", ".join(data.get("supported_operations", [])),
                 ]
             ]
             export_data(rows, headers, file_fmt, output_dir, "dicom_server", logger=self.logger)
+
+        # Export enumerated devices/modalities (--enum-devices)
+        devices = data.get("devices", {})
+        if devices:
+            headers = ["Host", "Port", "Modalities", "Stations", "Manufacturers", "Institutions"]
+            rows = [
+                [
+                    self.ip,
+                    port,
+                    ", ".join(devices.get("modalities", [])),
+                    ", ".join(devices.get("stations", [])),
+                    ", ".join(devices.get("manufacturers", [])),
+                    ", ".join(devices.get("institutions", [])),
+                ]
+            ]
+            export_data(rows, headers, file_fmt, output_dir, "dicom_devices", logger=self.logger)
 
         # Security findings are exported via self.logger.findings (populated by security_finding())
 
@@ -417,6 +434,33 @@ class ReportingMixin(_ScannerBase):
             self.logger.security_finding(
                 "Open transfer policy",
                 detail=f"Transferred {cmove['completed']} images to external AET '{cmove.get('dest_aet', '')}'",
+            )
+
+        # Personnel exposure (from --enum-operators)
+        personnel = data.get("personnel", {})
+        named_personnel = sum(
+            len(personnel.get(k, []))
+            for k in (
+                "operators",
+                "performing_physicians",
+                "referring_physicians",
+                "reading_physicians",
+                "requesting_physicians",
+            )
+        )
+        if named_personnel > 0:
+            self.logger.security_finding(
+                "Personnel exposure",
+                detail=f"{named_personnel} staff names (operators/physicians) readable via metadata",
+            )
+
+        # Excessive data retention (from --time-analysis)
+        time_analysis = data.get("time_analysis", {})
+        retention_days = time_analysis.get("retention_days", 0)
+        if retention_days > 365 * 10:
+            self.logger.security_finding(
+                "Excessive data retention",
+                detail=f"{retention_days // 365} years of historical PHI retained (oldest: {time_analysis.get('oldest_study', '')})",
             )
 
         # No TLS
