@@ -1058,12 +1058,6 @@ class TestHL7SegmentBuilderExports(unittest.TestCase):
 
         self.assertIsNotNone(HL7SegmentBuilder)
 
-    def test_segment_builder_hl7apy_flag(self):
-        """Test HL7APY_AVAILABLE flag in segments module"""
-        from oida.protocols.hl7.segments import HL7APY_AVAILABLE
-
-        self.assertIsInstance(HL7APY_AVAILABLE, bool)
-
 
 class TestHL7SegmentBuilderExtended(unittest.TestCase):
     """Extended tests for HL7 segment builder"""

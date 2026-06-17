@@ -13,18 +13,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# Import hl7apy at module load. The lazy_import wrapper in __init__.py prints
-# a friendly "pip install hl7apy" hint, but the actual usage points are here
-# (Segment-builder methods reference hl7apy.core.Segment directly), so we
-# surface the failure with a clear ImportError instead of letting it propagate
-# from a builder call deep in scan flow.
+# Import hl7apy at module load. Availability is gated by HL7APY_AVAILABLE in
+# __init__.py (which prints a friendly "pip install hl7apy" hint); this local
+# import just makes hl7apy.core.Segment available to the builder methods. If the
+# dep is missing, Segment stays None and builder calls raise inside their own
+# try/except.
 try:
     from hl7apy.core import Segment
-
-    HL7APY_AVAILABLE = True
 except ImportError as _hl7_err:  # pragma: no cover — release-checked dep
     Segment = None  # type: ignore[assignment]
-    HL7APY_AVAILABLE = False
     logger.debug("hl7apy not installed; HL7 segment building disabled: %s", _hl7_err)
 
 
@@ -1357,109 +1354,6 @@ class HL7SegmentParser:
     """Parse HL7 v2 message segments using hl7apy library"""
 
     # ────────────────────────────────────────────────────────────────────
-    # Field-index reference tables (used by callers wanting to address a
-    # field by its semantic name without remembering the HL7 index). Tests
-    # also assert these exist + are non-duplicated.
-    # ────────────────────────────────────────────────────────────────────
-
-    # IN1 (Insurance) field indices per HL7 v2.5 §6.5.6.
-    # Note: field 13 historically had two entries (`PlanExpirationDate`
-    # AND `InsurancePolicyExpirationDate`). Only one allowed — the
-    # canonical name per HL7 spec is `PlanExpirationDate`.
-    IN1_FIELDS = {
-        "SetID": 1,
-        "InsurancePlanID": 2,
-        "InsuranceCompanyID": 3,
-        "InsuranceCompanyName": 4,
-        "InsuranceCompanyAddress": 5,
-        "InsuranceCompanyContact": 6,
-        "InsuranceCompanyPhone": 7,
-        "GroupNumber": 8,
-        "GroupName": 9,
-        "InsuredGroupEmpID": 10,
-        "InsuredGroupEmpName": 11,
-        "PlanEffectiveDate": 12,
-        "PlanExpirationDate": 13,
-        "AuthorizationInfo": 14,
-        "PlanType": 15,
-        "NameOfInsured": 16,
-        "InsuredRelationship": 17,
-        "InsuredDOB": 18,
-        "InsuredAddress": 19,
-        "AssignmentOfBenefits": 20,
-        "CoordinationOfBenefits": 21,
-        "CoordinationPriority": 22,
-        "VerificationDateTime": 28,
-        "VerificationBy": 29,
-        "TypeOfAgreement": 30,
-        "BillingStatus": 31,
-        "LifetimeReserveDays": 32,
-        "DelayBeforeLR": 33,
-        "CompanyPlanCode": 35,
-        "PolicyNumber": 36,
-        "PolicyDeductible": 37,
-        "PolicyLimitAmount": 38,
-        "PolicyLimitDays": 39,
-        "RoomRateSemiPrivate": 40,
-        "RoomRatePrivate": 41,
-        "InsuredEmploymentStatus": 42,
-        "InsuredAdminCode": 43,
-        "InsuredEmployerName": 44,
-    }
-
-    # RXA (Pharmacy Administration) field indices per HL7 v2.5 §4.4.4.
-    RXA_FIELDS = {
-        "GiveSubIDCounter": 1,
-        "AdministrationSubIDCounter": 2,
-        "DateTimeStartOfAdministration": 3,
-        "DateTimeEndOfAdministration": 4,
-        "AdminCode": 5,
-        "AdminAmount": 6,
-        "AdminUnits": 7,
-        "AdminDosageForm": 8,
-        "AdministrationNotes": 9,
-        "AdministeringProvider": 10,
-        "AdministeredAtLocation": 11,
-        "AdministeredPerTimeUnit": 12,
-        "AdministeredStrength": 13,
-        "AdministeredStrengthUnits": 14,
-        "SubstanceLotNumber": 15,
-        "SubstanceExpirationDate": 16,
-        "SubstanceManufacturerName": 17,
-        "SubstanceTreatmentRefusalReason": 18,
-        "Indication": 19,
-        "CompletionStatus": 20,
-        "ActionCode": 21,
-        "SystemEntryDateTime": 22,
-    }
-
-    # RXD (Pharmacy Dispense) field indices per HL7 v2.5 §4.4.6.
-    RXD_FIELDS = {
-        "DispenseSubIDCounter": 1,
-        "DispenseGiveCode": 2,
-        "DateTimeDispensed": 3,
-        "ActualDispenseAmount": 4,
-        "ActualDispenseUnits": 5,
-        "ActualDosageForm": 6,
-        "PrescriptionNumber": 7,
-        "NumberOfRefillsRemaining": 8,
-        "DispenseNotes": 9,
-        "DispensingProvider": 10,
-        "SubstitutionStatus": 11,
-        "TotalDailyDose": 12,
-        "DeliverToLocation": 13,
-        "NeedsHumanReview": 14,
-        "PharmacyInstructions": 15,
-        "DispenseToLocation": 16,
-        "NeedsHumanReviewIndicator": 17,
-        "SubstanceLotNumber": 18,
-        "SubstanceExpirationDate": 19,
-        "SubstanceManufacturerName": 20,
-        "Indication": 21,
-        "DispensePackageSize": 22,
-        "DispensePackageSizeUnit": 23,
-    }
-
     @staticmethod
     def _normalize_message(message: Any) -> str:
         """Normalize message to string with proper HL7 line endings"""
@@ -1770,29 +1664,6 @@ class HL7SegmentParser:
             "OrderingProvider": get(seg, "orc_12").replace("^", " "),
             "EnteringOrganization": get(seg, "orc_17"),
             "OrderFacility": get(seg, "orc_21"),
-        }
-
-    @staticmethod
-    def parse_rxe(segment: str) -> dict:
-        """Parse RXE pharmacy encoded order segment"""
-        from hl7apy.parser import parse_segment
-
-        seg = parse_segment(segment) if isinstance(segment, str) else segment
-        get = HL7SegmentParser._get_field_value
-        comp = HL7SegmentParser._get_component
-        rxe_2 = get(seg, "rxe_2")
-        return {
-            "DrugCode": comp(rxe_2, 0),
-            "DrugName": comp(rxe_2, 1),
-            "Dose": get(seg, "rxe_3"),
-            "Units": get(seg, "rxe_5"),
-            "Route": get(seg, "rxe_6"),
-            "Quantity": get(seg, "rxe_10"),
-            "Refills": get(seg, "rxe_12"),
-            "PrescriptionNumber": get(seg, "rxe_15"),
-            "RefillsRemaining": get(seg, "rxe_16"),
-            "DispensingPharmacy": get(seg, "rxe_40"),
-            "Status": "Ordered",
         }
 
     @staticmethod

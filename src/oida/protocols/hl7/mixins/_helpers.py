@@ -85,18 +85,16 @@ def build_qrd(
     return qrd
 
 
-def build_rcp(version: str, *, priority: str = "I", quantity: str = "999^RD") -> Segment:
+def build_rcp(version: str) -> Segment:
     """Build an RCP (Response Control Parameters) segment.
 
     Args:
         version: HL7 version string.
-        priority: RCP-1 query priority (default "I" for Immediate).
-        quantity: RCP-2 quantity limited request (default "999^RD").
 
     Returns:
-        Populated RCP Segment.
+        Populated RCP Segment (RCP-1 "I" Immediate, RCP-2 "999^RD").
     """
     rcp = Segment("RCP", version=version)
-    rcp.rcp_1 = priority
-    rcp.rcp_2 = quantity
+    rcp.rcp_1 = "I"  # Query priority: Immediate
+    rcp.rcp_2 = "999^RD"  # Quantity limited request
     return rcp
