@@ -113,6 +113,13 @@ class MQTTFuzzer(StatefulFuzzer):
     CONNECTION_CLASS = None  # MQTT uses plain TCP (no banner/handshake)
     AUTHENTICATOR_CLASS = MQTTAuthenticator
 
+    # The MQTT state machine's connected/authenticated state is named "READY"
+    # (not the generic CommonState.AUTHENTICATED). Requests without an explicit
+    # requires_state default to it so the matcher recognises the already-
+    # established connection instead of re-sending a second CONNECT — which MQTT
+    # brokers reject (one CONNECT per connection), closing the socket.
+    DEFAULT_REQUEST_STATE = "READY"
+
     # Use MQTT-specific monitor for protocol-aware health checks
     DEFAULT_MONITORS = "mqtt"
 
