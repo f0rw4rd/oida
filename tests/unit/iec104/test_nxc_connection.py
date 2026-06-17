@@ -33,7 +33,6 @@ def _make_iec104_instance(**overrides):
             obj = IEC104Class.__new__(IEC104Class)
             obj.protocol_name = "IEC 104"
             obj.default_port = 2404
-            obj._scan_results = None
             obj.conn = None
             obj.args = Mock()
             obj.args.tls = False
@@ -101,10 +100,6 @@ class TestIEC104InitAttributes(unittest.TestCase):
     def test_default_port(self):
         obj = _make_iec104_instance()
         self.assertEqual(obj.default_port, 2404)
-
-    def test_initial_scan_results_none(self):
-        obj = _make_iec104_instance()
-        self.assertIsNone(obj._scan_results)
 
 
 class TestCheckDependencies(unittest.TestCase):
@@ -301,10 +296,9 @@ class TestExecuteScan(unittest.TestCase):
 
         obj.scanner.discover.assert_called_once_with(mock_conn)
         self.assertEqual(obj.results["data"]["scan_results"], scan_results)
-        self.assertEqual(obj._scan_results, scan_results)
 
-    def test_scan_results_stored_on_instance(self):
-        """_scan_results attribute should mirror the results dict entry."""
+    def test_scan_results_stored_in_results(self):
+        """Scan results should be stored under results['data']['scan_results']."""
         obj = _make_iec104_instance()
         obj.conn = Mock()
         expected = {"type_ids": {30: "M_SP_TB_1"}}
@@ -312,7 +306,6 @@ class TestExecuteScan(unittest.TestCase):
 
         obj._execute_scan()
 
-        self.assertIs(obj._scan_results, expected)
         self.assertIs(obj.results["data"]["scan_results"], expected)
 
 
@@ -467,7 +460,6 @@ class TestProtoFlowViaInit(unittest.TestCase):
 
         self.assertEqual(instance.protocol_name, "IEC 104")
         self.assertEqual(instance.default_port, 2404)
-        self.assertIsNone(instance._scan_results)
         mock_super_init.assert_called_once_with(args, db, host)
 
 

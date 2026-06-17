@@ -211,7 +211,8 @@ class IEC101Mixin:
         """Reset remote link (IEC 101)"""
         control = FC_RESET_REMOTE_LINK | DIR_MASTER | PRM_PRIMARY
         frame = self._build_fixed_frame(control, self.link_address)
-        self._send_serial_frame(frame)
+        if not self._send_serial_frame(frame):
+            return False
         response = self._receive_serial_frame(timeout=2.0)
         if response:
             parsed = self._parse_serial_frame(response)
@@ -226,7 +227,8 @@ class IEC101Mixin:
             control |= FCB
         self._fcb = not self._fcb
         frame = self._build_fixed_frame(control, self.link_address)
-        self._send_serial_frame(frame)
+        if not self._send_serial_frame(frame):
+            return None
         return self._receive_serial_frame(timeout=self.timeout)
 
     def _send_user_data_101(self, asdu: bytes) -> Optional[bytes]:
@@ -236,7 +238,8 @@ class IEC101Mixin:
             control |= FCB
         self._fcb = not self._fcb
         frame = self._build_variable_frame(control, self.link_address, asdu)
-        self._send_serial_frame(frame)
+        if not self._send_serial_frame(frame):
+            return None
         return self._receive_serial_frame(timeout=self.timeout)
 
     # =========================================================================
@@ -324,8 +327,7 @@ class IEC101Mixin:
         if self.interrogate:
             results["interrogation"] = self._perform_interrogation_101()
 
-        # Compile discovered data (only when interrogation was performed)
-        if self.interrogate:
+            # Compile discovered data
             with self._lock:
                 results["data_points"] = dict(self._discovered_points)
                 results["type_ids"] = self._compile_type_info()
