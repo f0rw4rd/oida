@@ -36,9 +36,6 @@ class ASTMRecordBuilder:
         """
         self.version = version
         self.field_delimiter = "|"
-        self.repeat_delimiter = "\\"
-        self.component_delimiter = "^"
-        self.escape_delimiter = "&"
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ASTM format (YYYYMMDDHHMMSS)"""
@@ -62,22 +59,6 @@ class ASTMRecordBuilder:
         """Join fields with field delimiter"""
         return self.field_delimiter.join(fields)
 
-    def _calculate_checksum(self, data: bytes) -> bytes:
-        """
-        Calculate ASTM checksum.
-
-        The checksum is the modulus-256 sum of the bytes from the frame number
-        to and including the ETX/ETB character, formatted as 2 uppercase hex chars.
-
-        Args:
-            data: Bytes from frame number through ETX/ETB
-
-        Returns:
-            2-byte hex checksum (e.g., b"A5")
-        """
-        total = sum(data) % 256
-        return f"{total:02X}".encode()
-
     def build_header(
         self,
         sender_name: str = "OIDA",
@@ -85,7 +66,6 @@ class ASTMRecordBuilder:
         receiver_name: str = "",
         receiver_id: str = "",
         processing_id: str = "P",
-        version: str = "",
         message_datetime: str = "",
     ) -> str:
         """
@@ -99,7 +79,6 @@ class ASTMRecordBuilder:
             receiver_name: Receiving system name (H-10)
             receiver_id: Receiving system ID (H-10 component)
             processing_id: P=Production, D=Debug, T=Training (H-11)
-            version: ASTM version (H-12)
             message_datetime: Message date/time (H-13)
 
         Returns:
@@ -119,7 +98,7 @@ class ASTMRecordBuilder:
             "",  # Receiver ID (optional)
             f"{receiver_name}^{receiver_id}" if receiver_id else receiver_name,  # Receiver
             processing_id or "P",  # Processing ID
-            version or self.version,  # Version
+            self.version,  # Version
             message_datetime or self._get_timestamp(),  # Date/Time
         ]
         return self._join_fields(fields)
@@ -240,7 +219,6 @@ class ASTMRecordBuilder:
         instrument_charge: str = "",
         instrument_section: str = "",
         report_type: str = "",
-        reserved: str = "",
     ) -> str:
         """
         Build O (Order) record.
@@ -475,107 +453,6 @@ class ASTMRecordBuilder:
         ]
         return self._join_fields(fields)
 
-    def build_manufacturer(
-        self,
-        sequence: int = 1,
-        manufacturer_name: str = "",
-        instrument_type: str = "",
-        instrument_name: str = "",
-        serial_number: str = "",
-        software_version: str = "",
-    ) -> str:
-        """
-        Build M (Manufacturer) record.
-
-        Manufacturer-specific information (optional record).
-
-        Args:
-            sequence: Sequence number (M-2)
-            manufacturer_name: Manufacturer name (M-3)
-            instrument_type: Instrument type (M-4)
-            instrument_name: Instrument name (M-5)
-            serial_number: Serial number (M-6)
-            software_version: Software version (M-7)
-
-        Returns:
-            Formatted M record string
-        """
-        fields = [
-            "M",  # Record type
-            str(sequence),  # Sequence number
-            manufacturer_name,  # Manufacturer
-            instrument_type,  # Instrument type
-            instrument_name,  # Instrument name
-            serial_number,  # Serial number
-            software_version,  # Software version
-        ]
-        return self._join_fields(fields)
-
-    def build_scientific(
-        self,
-        sequence: int = 1,
-        analytical_method: str = "",
-        instrumentation: str = "",
-        reagents: str = "",
-        units: str = "",
-        quality_control: str = "",
-        specimen_descriptor: str = "",
-        reserved: str = "",
-        container: str = "",
-        specimen_id: str = "",
-        analyte: str = "",
-        result: str = "",
-        units_2: str = "",
-        reference_range: str = "",
-        abnormal_flag: str = "",
-        nature_of_abnormality: str = "",
-    ) -> str:
-        """
-        Build S (Scientific) record.
-
-        Detailed scientific information about test methodology (optional).
-
-        Args:
-            sequence: Sequence number
-            analytical_method: Analytical method (S-3)
-            instrumentation: Instrumentation (S-4)
-            reagents: Reagents used (S-5)
-            units: Units of measure (S-6)
-            quality_control: QC information (S-7)
-            specimen_descriptor: Specimen descriptor (S-8)
-            container: Container type (S-10)
-            specimen_id: Specimen ID (S-11)
-            analyte: Analyte name (S-12)
-            result: Result value (S-13)
-            units_2: Alternative units (S-14)
-            reference_range: Reference range (S-15)
-            abnormal_flag: Abnormal flag (S-16)
-            nature_of_abnormality: Nature of abnormality (S-17)
-
-        Returns:
-            Formatted S record string
-        """
-        fields = [
-            "S",  # Record type
-            str(sequence),  # Sequence number
-            analytical_method,  # Analytical method
-            instrumentation,  # Instrumentation
-            reagents,  # Reagents
-            units,  # Units
-            quality_control,  # QC
-            specimen_descriptor,  # Specimen descriptor
-            reserved,  # Reserved
-            container,  # Container
-            specimen_id,  # Specimen ID
-            analyte,  # Analyte
-            result,  # Result
-            units_2,  # Alternative units
-            reference_range,  # Reference range
-            abnormal_flag,  # Abnormal flag
-            nature_of_abnormality,  # Nature of abnormality
-        ]
-        return self._join_fields(fields)
-
 
 # ASTM Protocol Constants
 STX = b"\x02"  # Start of text
@@ -587,17 +464,6 @@ NAK = b"\x15"  # Negative acknowledgment
 ETB = b"\x17"  # End of transmission block (intermediate frame)
 CR = b"\x0d"  # Carriage return
 LF = b"\x0a"  # Line feed
-
-# Record type identifiers
-RECORD_HEADER = "H"
-RECORD_PATIENT = "P"
-RECORD_ORDER = "O"
-RECORD_RESULT = "R"
-RECORD_COMMENT = "C"
-RECORD_QUERY = "Q"
-RECORD_TERMINATOR = "L"
-RECORD_MANUFACTURER = "M"
-RECORD_SCIENTIFIC = "S"
 
 # Analyzer/Instrument vendor mapping
 ASTM_VENDOR_MAP = {
@@ -809,15 +675,6 @@ __all__ = [
     "ETB",
     "CR",
     "LF",
-    "RECORD_HEADER",
-    "RECORD_PATIENT",
-    "RECORD_ORDER",
-    "RECORD_RESULT",
-    "RECORD_COMMENT",
-    "RECORD_QUERY",
-    "RECORD_TERMINATOR",
-    "RECORD_MANUFACTURER",
-    "RECORD_SCIENTIFIC",
     "ASTM_VENDOR_MAP",
     "LAB_TEST_TYPES",
 ]
