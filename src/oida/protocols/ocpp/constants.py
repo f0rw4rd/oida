@@ -315,64 +315,6 @@ SENSITIVE_CONFIG_KEYS = [
 HARMLESS_CONFIG_KEY = "HeartbeatInterval"
 
 
-class ResetType(str, Enum):
-    """Reset type values"""
-
-    SOFT = "Soft"
-    HARD = "Hard"
-
-
-class UnlockStatus(str, Enum):
-    """UnlockConnector response status values"""
-
-    UNLOCKED = "Unlocked"
-    UNLOCK_FAILED = "UnlockFailed"
-    NOT_SUPPORTED = "NotSupported"
-
-
-class RemoteStartStopStatus(str, Enum):
-    """RemoteStartTransaction / RemoteStopTransaction response status"""
-
-    ACCEPTED = "Accepted"
-    REJECTED = "Rejected"
-
-
-class ChargingProfilePurpose(str, Enum):
-    """Charging profile purpose values (OCPP 1.6)"""
-
-    CHARGE_POINT_MAX_PROFILE = "ChargePointMaxProfile"
-    TX_DEFAULT_PROFILE = "TxDefaultProfile"
-    TX_PROFILE = "TxProfile"
-
-
-class ChargingRateUnit(str, Enum):
-    """Charging rate unit"""
-
-    WATTS = "W"
-    AMPS = "A"
-
-
-# MeterValues measurand types (OCPP 1.6 / 2.0.1)
-METER_VALUE_MEASURANDS = [
-    "Energy.Active.Import.Register",
-    "Energy.Active.Export.Register",
-    "Energy.Reactive.Import.Register",
-    "Energy.Reactive.Export.Register",
-    "Power.Active.Import",
-    "Power.Active.Export",
-    "Power.Reactive.Import",
-    "Power.Reactive.Export",
-    "Current.Import",
-    "Current.Export",
-    "Voltage",
-    "Temperature",
-    "SoC",
-    "Frequency",
-    "RPM",
-    "Power.Offered",
-    "Current.Offered",
-]
-
 # Dummy/fake values for security probes (clearly non-functional)
 FAKE_ID_TAG = "OIDA_SEC_TEST_00000000"
 FAKE_FIRMWARE_URL = "http://0.0.0.0/test.bin"
@@ -417,76 +359,8 @@ SSRF_PROBE_URLS = [
 ]
 
 
-class AvailabilityType(str, Enum):
-    """ChangeAvailability type values (OCPP 1.6)"""
-
-    INOPERATIVE = "Inoperative"
-    OPERATIVE = "Operative"
-
-
-class AvailabilityStatus(str, Enum):
-    """ChangeAvailability response status"""
-
-    ACCEPTED = "Accepted"
-    REJECTED = "Rejected"
-    SCHEDULED = "Scheduled"
-
-
-class StopTransactionReason(str, Enum):
-    """StopTransaction reason values (OCPP 1.6)"""
-
-    EMERGENCY_STOP = "EmergencyStop"
-    EV_DISCONNECTED = "EVDisconnected"
-    HARD_RESET = "HardReset"
-    LOCAL = "Local"
-    OTHER = "Other"
-    POWER_LOSS = "PowerLoss"
-    REBOOT = "Reboot"
-    REMOTE = "Remote"
-    SOFT_RESET = "SoftReset"
-    UNLOCK_COMMAND = "UnlockCommand"
-    DE_AUTHORIZED = "DeAuthorized"
-
-
-class TransactionEventType(str, Enum):
-    """TransactionEvent eventType values (OCPP 2.0.1)"""
-
-    STARTED = "Started"
-    UPDATED = "Updated"
-    ENDED = "Ended"
-
-
-class TriggerReason(str, Enum):
-    """TransactionEvent triggerReason values (OCPP 2.0.1)"""
-
-    AUTHORIZED = "Authorized"
-    CABLE_PLUGGED_IN = "CablePluggedIn"
-    CHARGING_RATE_CHANGED = "ChargingRateChanged"
-    CHARGING_STATE_CHANGED = "ChargingStateChanged"
-    DEAUTHORIZED = "Deauthorized"
-    ENERGY_LIMIT_REACHED = "EnergyLimitReached"
-    EV_COMMUNICATION_LOST = "EVCommunicationLost"
-    EV_CONNECT_TIMEOUT = "EVConnectTimeout"
-    METER_VALUE_CLOCK = "MeterValueClock"
-    METER_VALUE_PERIODIC = "MeterValuePeriodic"
-    TIME_LIMIT_REACHED = "TimeLimitReached"
-    TRIGGER = "Trigger"
-    UNLOCK_COMMAND = "UnlockCommand"
-    STOP_AUTHORIZED = "StopAuthorized"
-    EV_DEPARTED = "EVDeparted"
-    EV_DETECTED = "EVDetected"
-    REMOTE_STOP = "RemoteStop"
-    REMOTE_START = "RemoteStart"
-    ABNORMAL_CONDITION = "AbnormalCondition"
-    SIGNED_DATA_RECEIVED = "SignedDataReceived"
-    RESET_COMMAND = "ResetCommand"
-
-
 # Maximum number of server-initiated CALLs to handle while waiting for a CALLRESULT
 MAX_INCOMING_CALLS_PER_EXCHANGE = 5
-
-# Default timeout for passive listening (seconds)
-DEFAULT_LISTEN_TIMEOUT = 10
 
 # Default heartbeat interval for listen mode (seconds)
 # Used when BootNotification doesn't provide an interval
