@@ -41,7 +41,6 @@ class TestPSKBruteforce(unittest.TestCase):
         args.put = None
         args.post = None
         args.delete = None
-        args.resources = True
         args.observe_count = 5
 
         # Prevent super().__init__ from calling proto_flow
