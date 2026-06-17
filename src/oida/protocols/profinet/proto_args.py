@@ -97,16 +97,6 @@ Security Testing:
     )
 
     rpc_group.add_argument(
-        "-p",
-        "--port",
-        "--rpc-port",
-        dest="rpc_port",
-        type=int,
-        default=34964,
-        help="RPC port (default: 34964)",
-    )
-
-    rpc_group.add_argument(
         "-V",
         "--vendor-id",
         type=lambda x: int(x, 0),
