@@ -135,57 +135,6 @@ class TestCheckProtectionLevel(unittest.TestCase):
         self.assertEqual(fields["anl_sch"], 5)
 
 
-class TestAuthenticate(unittest.TestCase):
-    """Test SecurityMixin.authenticate()."""
-
-    def setUp(self):
-        self.host = MockSecurityHost()
-        self.conn = Mock()
-
-    def test_authenticate_success(self):
-        """Test successful authentication."""
-        result = self.host.authenticate(self.conn, "password")
-
-        self.assertTrue(result)
-        self.conn.set_session_password.assert_called_once_with("password")
-        self.conn.get_cpu_state.assert_called_once()
-
-    def test_authenticate_failure(self):
-        """Test authentication failure."""
-        self.conn.set_session_password.side_effect = Exception("wrong password")
-
-        result = self.host.authenticate(self.conn, "wrong")
-
-        self.assertFalse(result)
-
-    def test_authenticate_truncates_long_password(self):
-        """Test password > 8 chars is truncated to 8."""
-        self.host.authenticate(self.conn, "verylongpassword123")
-
-        self.conn.set_session_password.assert_called_once_with("verylong")
-
-    def test_authenticate_8_char_password(self):
-        """Test exactly 8-char password is not truncated."""
-        self.host.authenticate(self.conn, "12345678")
-
-        self.conn.set_session_password.assert_called_once_with("12345678")
-
-    def test_authenticate_empty_password(self):
-        """Test authenticating with empty password."""
-        result = self.host.authenticate(self.conn, "")
-
-        self.assertTrue(result)
-        self.conn.set_session_password.assert_called_once_with("")
-
-    def test_authenticate_verify_fails(self):
-        """Test authentication where set_password succeeds but verify fails."""
-        self.conn.get_cpu_state.side_effect = Exception("access denied")
-
-        result = self.host.authenticate(self.conn, "test")
-
-        self.assertFalse(result)
-
-
 class TestClearSession(unittest.TestCase):
     """Test SecurityMixin.clear_session()."""
 

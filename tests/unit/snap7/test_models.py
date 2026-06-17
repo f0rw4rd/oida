@@ -20,16 +20,12 @@ class TestS7CPUInfo(unittest.TestCase):
             {
                 "ModuleTypeName": "CPU 1511-1 PN",
                 "SerialNumber": "S C-B1TV0812345",
-                "ASName": "MyPLC",
                 "ModuleName": "PLC_1",
-                "Copyright": "Original Siemens Equipment",
             }
         )
         self.assertEqual(info.module_type, "CPU 1511-1 PN")
         self.assertEqual(info.serial_number, "S C-B1TV0812345")
-        self.assertEqual(info.as_name, "MyPLC")
         self.assertEqual(info.module_name, "PLC_1")
-        self.assertEqual(info.copyright, "Original Siemens Equipment")
 
     def test_create_from_empty_dict(self):
         """Test creating S7CPUInfo from an empty dict uses defaults."""
@@ -38,9 +34,7 @@ class TestS7CPUInfo(unittest.TestCase):
         info = S7CPUInfo({})
         self.assertEqual(info.module_type, "Unknown")
         self.assertEqual(info.serial_number, "Unknown")
-        self.assertEqual(info.as_name, "Unknown")
         self.assertEqual(info.module_name, "Unknown")
-        self.assertEqual(info.copyright, "")
 
     def test_missing_keys_use_defaults(self):
         """Test that missing keys fall back to default values."""
@@ -49,14 +43,13 @@ class TestS7CPUInfo(unittest.TestCase):
         info = S7CPUInfo({"ModuleTypeName": "CPU 315-2 DP"})
         self.assertEqual(info.module_type, "CPU 315-2 DP")
         self.assertEqual(info.serial_number, "Unknown")
-        self.assertEqual(info.copyright, "")
 
     def test_access_attributes(self):
         """Test that all attributes are accessible."""
         from oida.protocols.snap7.models import S7CPUInfo
 
-        info = S7CPUInfo({"ModuleTypeName": "X", "ASName": "Y"})
-        attrs = ["module_type", "serial_number", "as_name", "module_name", "copyright"]
+        info = S7CPUInfo({"ModuleTypeName": "X"})
+        attrs = ["module_type", "serial_number", "module_name"]
         for attr in attrs:
             self.assertTrue(hasattr(info, attr))
 
@@ -72,17 +65,6 @@ class TestS7FirmwareVersionFromOrderCode(unittest.TestCase):
         self.assertEqual(v.major, 4)
         self.assertEqual(v.minor, 1)
         self.assertEqual(v.patch, 3)
-        self.assertEqual(v.series, "")
-
-    def test_from_order_code_with_series(self):
-        """Test from_order_code with series string."""
-        from oida.protocols.snap7.models import S7FirmwareVersion
-
-        v = S7FirmwareVersion.from_order_code(2, 9, 0, series="S7-1500")
-        self.assertEqual(v.major, 2)
-        self.assertEqual(v.minor, 9)
-        self.assertEqual(v.patch, 0)
-        self.assertEqual(v.series, "S7-1500")
 
     def test_from_order_code_zeros(self):
         """Test from_order_code with all zeros."""
@@ -159,14 +141,6 @@ class TestS7FirmwareVersionFromString(unittest.TestCase):
 
         self.assertIsNone(S7FirmwareVersion.from_string(None))
 
-    def test_from_string_with_series(self):
-        """Test from_string preserves series argument."""
-        from oida.protocols.snap7.models import S7FirmwareVersion
-
-        v = S7FirmwareVersion.from_string("V3.2.1", series="S7-300")
-        self.assertIsNotNone(v)
-        self.assertEqual(v.series, "S7-300")
-
     def test_from_string_with_whitespace(self):
         """Test from_string handles leading/trailing whitespace."""
         from oida.protocols.snap7.models import S7FirmwareVersion
@@ -182,53 +156,13 @@ class TestS7FirmwareVersionFromString(unittest.TestCase):
         self.assertIsNone(S7FirmwareVersion.from_string("4"))
 
 
-class TestS7FirmwareVersionComparison(unittest.TestCase):
-    """Test S7FirmwareVersion comparison operators."""
+class TestS7FirmwareVersionEquality(unittest.TestCase):
+    """Test S7FirmwareVersion equality."""
 
     def _make(self, major, minor, patch):
         from oida.protocols.snap7.models import S7FirmwareVersion
 
         return S7FirmwareVersion(major, minor, patch)
-
-    def test_lt_major(self):
-        """Test less-than by major version."""
-        self.assertTrue(self._make(1, 0, 0) < self._make(2, 0, 0))
-
-    def test_lt_minor(self):
-        """Test less-than by minor version."""
-        self.assertTrue(self._make(2, 0, 0) < self._make(2, 1, 0))
-
-    def test_lt_patch(self):
-        """Test less-than by patch version."""
-        self.assertTrue(self._make(2, 1, 0) < self._make(2, 1, 1))
-
-    def test_not_lt_equal(self):
-        """Test not less-than when equal."""
-        self.assertFalse(self._make(2, 1, 0) < self._make(2, 1, 0))
-
-    def test_le_equal(self):
-        """Test less-than-or-equal when equal."""
-        self.assertTrue(self._make(2, 1, 0) <= self._make(2, 1, 0))
-
-    def test_le_less(self):
-        """Test less-than-or-equal when less."""
-        self.assertTrue(self._make(1, 0, 0) <= self._make(2, 0, 0))
-
-    def test_gt_major(self):
-        """Test greater-than by major version."""
-        self.assertTrue(self._make(3, 0, 0) > self._make(2, 0, 0))
-
-    def test_gt_patch(self):
-        """Test greater-than by patch version."""
-        self.assertTrue(self._make(2, 0, 5) > self._make(2, 0, 4))
-
-    def test_ge_equal(self):
-        """Test greater-than-or-equal when equal."""
-        self.assertTrue(self._make(4, 1, 3) >= self._make(4, 1, 3))
-
-    def test_ge_greater(self):
-        """Test greater-than-or-equal when greater."""
-        self.assertTrue(self._make(4, 2, 0) >= self._make(4, 1, 9))
 
     def test_eq_same_version(self):
         """Test equality of same version."""
@@ -247,10 +181,6 @@ class TestS7FirmwareVersionComparison(unittest.TestCase):
     def test_zero_versions_equal(self):
         """Test zero versions are equal."""
         self.assertEqual(self._make(0, 0, 0), self._make(0, 0, 0))
-
-    def test_large_version_numbers(self):
-        """Test comparison with large version numbers."""
-        self.assertTrue(self._make(100, 200, 300) > self._make(100, 200, 299))
 
 
 class TestS7FirmwareVersionStringRepresentation(unittest.TestCase):
@@ -271,35 +201,19 @@ class TestS7FirmwareVersionStringRepresentation(unittest.TestCase):
         self.assertEqual(str(v), "V0.0.0")
 
     def test_repr(self):
-        """Test __repr__ includes class name and series."""
+        """Test __repr__ includes class name and version fields."""
         from oida.protocols.snap7.models import S7FirmwareVersion
 
-        v = S7FirmwareVersion(4, 1, 3, series="S7-1500")
+        v = S7FirmwareVersion(4, 1, 3)
         r = repr(v)
         self.assertIn("S7FirmwareVersion", r)
         self.assertIn("4", r)
         self.assertIn("1", r)
         self.assertIn("3", r)
-        self.assertIn("S7-1500", r)
-
-    def test_repr_empty_series(self):
-        """Test __repr__ with empty series."""
-        from oida.protocols.snap7.models import S7FirmwareVersion
-
-        v = S7FirmwareVersion(2, 0, 0)
-        r = repr(v)
-        self.assertIn("series=''", r)
 
 
 class TestS7FirmwareVersionDataclass(unittest.TestCase):
     """Test S7FirmwareVersion as a dataclass."""
-
-    def test_default_series(self):
-        """Test that series defaults to empty string."""
-        from oida.protocols.snap7.models import S7FirmwareVersion
-
-        v = S7FirmwareVersion(1, 0, 0)
-        self.assertEqual(v.series, "")
 
     def test_hash_not_implemented(self):
         """Test that dataclass with eq=True but no frozen makes hash None."""

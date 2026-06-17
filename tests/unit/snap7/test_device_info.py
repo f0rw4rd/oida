@@ -193,7 +193,7 @@ class TestGetFirmwareVersion(unittest.TestCase):
         oc.V1 = 2
         oc.V2 = 9
         oc.V3 = 0
-        oc.Code = b"6ES7 511-1AK02-0AB0"
+        oc.OrderCode = b"6ES7 511-1AK02-0AB0"
         self.conn.get_order_code.return_value = oc
         # Method 3 CPU info
         cpu = Mock()
@@ -242,7 +242,7 @@ class TestGetFirmwareVersion(unittest.TestCase):
         oc.V1 = 4
         oc.V2 = 1
         oc.V3 = 3
-        oc.Code = b"6ES7 214-1AG40-0XB0\x00\x00"
+        oc.OrderCode = b"6ES7 214-1AG40-0XB0\x00\x00"
         self.conn.get_order_code.return_value = oc
         cpu = Mock()
         cpu.ModuleTypeName = "CPU 1214C"
@@ -255,12 +255,12 @@ class TestGetFirmwareVersion(unittest.TestCase):
         self.assertNotIn("\x00", result["order_code"])
 
     def test_order_code_string_attribute(self):
-        """Test order code when Code attribute is string (not bytes)."""
+        """Test order code when OrderCode attribute is string (not bytes)."""
         oc = Mock()
         oc.V1 = 1
         oc.V2 = 0
         oc.V3 = 0
-        oc.Code = "6ES7 315-2EH14-0AB0"
+        oc.OrderCode = "6ES7 315-2EH14-0AB0"
         self.conn.get_order_code.return_value = oc
         cpu = Mock()
         cpu.ModuleTypeName = "CPU 315"
