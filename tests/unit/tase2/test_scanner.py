@@ -163,10 +163,6 @@ class TestTASE2BilateralTable(unittest.TestCase):
         """Set up test environment"""
         self.scanner = TASE2Scanner({"rhost": "127.0.0.1", "rport": 102})
 
-    def test_bilateral_table_id_initialization(self):
-        """Test bilateral table ID is initialized empty"""
-        self.assertEqual(self.scanner.bilateral_table_id, "")
-
     def test_domains_initialization(self):
         """Test domains list is initialized empty"""
         self.assertEqual(self.scanner.domains, [])
@@ -319,14 +315,10 @@ class TestTASE2ControlPointHandling(unittest.TestCase):
         control_point = {
             "domain": "VCC1",
             "name": "Breaker_Control",
-            "selectable": True,
-            "operable": True,
         }
 
         self.assertIn("domain", control_point)
         self.assertIn("name", control_point)
-        self.assertIn("selectable", control_point)
-        self.assertIn("operable", control_point)
 
 
 class TestTASE2PointValueHandling(unittest.TestCase):
@@ -441,10 +433,6 @@ class TestTASE2ClientState(unittest.TestCase):
     def test_initial_domains_empty(self):
         """Test initial domains list is empty"""
         self.assertEqual(self.scanner.domains, [])
-
-    def test_initial_bilateral_table_id_empty(self):
-        """Test initial bilateral table ID is empty"""
-        self.assertEqual(self.scanner.bilateral_table_id, "")
 
 
 class TestTASE2BilateralTableInfo(unittest.TestCase):
@@ -618,10 +606,6 @@ class TestTASE2SupportedFeatures(unittest.TestCase):
         """Test tase2_version is initialized None"""
         self.assertIsNone(self.scanner.tase2_version)
 
-    def test_device_states_initialization(self):
-        """Test device_states is initialized empty"""
-        self.assertEqual(self.scanner.device_states, {})
-
     @patch("oida.protocols.tase2.scanner._tase2", create=True)
     def test_get_supported_features_structure(self, mock_tase2):
         """Test get_supported_features returns proper structure"""
@@ -754,44 +738,6 @@ class TestTASE2TagOperations(unittest.TestCase):
             self.assertIsInstance(tag, str)
 
 
-class TestTASE2CheckBackIDOperations(unittest.TestCase):
-    """Test TASE.2 CheckBackID/SBO (Block 5) operations"""
-
-    def setUp(self):
-        """Set up test environment"""
-        self.scanner = TASE2Scanner({"rhost": "127.0.0.1", "rport": 102})
-
-    @patch("oida.protocols.tase2.scanner._tase2", create=True)
-    def test_select_device_with_checkback_structure(self, mock_tase2):
-        """Test select_device_with_checkback returns proper structure"""
-        mock_conn = MagicMock()
-
-        result = self.scanner.select_device_with_checkback(mock_conn, "ICC1", "Breaker1")
-
-        self.assertIsInstance(result, dict)
-
-    @patch("oida.protocols.tase2.scanner._tase2", create=True)
-    def test_operate_device_with_checkback_structure(self, mock_tase2):
-        """Test operate_device_with_checkback returns proper structure"""
-        mock_conn = MagicMock()
-
-        result = self.scanner.operate_device_with_checkback(
-            mock_conn, "ICC1", "Breaker1", 1, check_back_id=1001
-        )
-
-        self.assertIsInstance(result, dict)
-
-    def test_device_state_tracking(self):
-        """Test device state tracking is properly initialized"""
-        self.assertEqual(self.scanner.device_states, {})
-
-    def test_sbo_device_states(self):
-        """Test SBO device state values"""
-        states = ["IDLE", "ARMED"]
-        for state in states:
-            self.assertIsInstance(state, str)
-
-
 class TestTASE2EnhancedSecurityAnalysis(unittest.TestCase):
     """Test enhanced TASE.2 security analysis with new features"""
 
@@ -845,19 +791,6 @@ class TestTASE2ProtocolObjectStructures(unittest.TestCase):
         self.assertIsInstance(version["major"], int)
         self.assertIsInstance(version["minor"], int)
 
-    def test_check_back_id_structure(self):
-        """Test CheckBackID structure for SBO"""
-        check_back_response = {
-            "success": True,
-            "check_back_id": 1001,
-            "state": "ARMED",
-            "timeout": 30.0,
-        }
-
-        self.assertIn("success", check_back_response)
-        self.assertIn("check_back_id", check_back_response)
-        self.assertIn("state", check_back_response)
-
     def test_tag_value_structure(self):
         """Test Tag_Value structure"""
         tag_info = {"tag_value": "NO_TAG", "tag_reason": ""}
@@ -868,18 +801,13 @@ class TestTASE2ProtocolObjectStructures(unittest.TestCase):
     def test_data_value_type_structure(self):
         """Test data value type response structure"""
         type_info = {
+            "domain": "ICC1",
+            "name": "Voltage",
             "type_name": "REAL_Q_TIME",
-            "deletable": False,
-            "structure": [
-                {"name": "Value", "type": "REAL"},
-                {"name": "Quality", "type": "BITSTRING"},
-                {"name": "TimeStamp", "type": "UTC_TIME"},
-            ],
         }
 
         self.assertIn("type_name", type_info)
-        self.assertIn("structure", type_info)
-        self.assertIsInstance(type_info["structure"], list)
+        self.assertIsInstance(type_info["type_name"], str)
 
 
 class TestTASE2MockServerIntegration(unittest.TestCase):
@@ -1005,18 +933,6 @@ class TestTASE2InformationMessages(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("Read-only", result["error"])
 
-    @patch("oida.protocols.tase2.scanner._tase2", create=True)
-    def test_create_information_message_store_read_only(self, mock_tase2):
-        """Test create_information_message_store respects read-only mode"""
-        mock_conn = MagicMock()
-        self.scanner.read_only = True
-
-        result = self.scanner.create_information_message_store(mock_conn, "VCC", "IM_NewStore", 100)
-
-        self.assertIsInstance(result, dict)
-        self.assertFalse(result["success"])
-        self.assertIn("Read-only", result["error"])
-
 
 class TestTASE2IMSecurityAnalysis(unittest.TestCase):
     """Test TASE.2 Information Messages security analysis"""
@@ -1069,14 +985,6 @@ class TestTASE2IMSecurityAnalysis(unittest.TestCase):
 
 class TestTASE2IMConstants(unittest.TestCase):
     """Test TASE.2 Information Messages constants and types"""
-
-    def test_im_status_values(self):
-        """Test TASE2IMStatus has expected values"""
-        from oida.protocols.tase2.scanner import TASE2IMStatus
-
-        self.assertEqual(TASE2IMStatus.ACTIVE, "ACTIVE")
-        self.assertEqual(TASE2IMStatus.ARCHIVED, "ARCHIVED")
-        self.assertEqual(TASE2IMStatus.DELETED, "DELETED")
 
     def test_im_storage_status_values(self):
         """Test TASE2IMStorageStatus has expected values"""

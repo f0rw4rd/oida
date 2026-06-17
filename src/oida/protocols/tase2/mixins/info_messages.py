@@ -59,7 +59,7 @@ class InfoMessagesMixin(_ScannerBase):
         - scope: VCC (server-wide) or ICC (bilateral-specific)
 
         Uses get_info_buffers() (pyiec61850-ng >= 1.6.0.9) for structured
-        buffer info, falling back to variable scanning.
+        buffer info.
 
         Args:
             connection: Active TASE.2 connection
@@ -69,7 +69,7 @@ class InfoMessagesMixin(_ScannerBase):
             List of IM store info dicts with name, info_reference, local_reference,
             scope, max_messages, current_count, storage_status
         """
-        from ..scanner import TASE2IMScope
+        from ..scanner import TASE2IMScope, TASE2IMStorageStatus
 
         stores = []
 
@@ -78,17 +78,24 @@ class InfoMessagesMixin(_ScannerBase):
             scope = TASE2IMScope.VCC if domain.upper().startswith("VCC") else TASE2IMScope.ICC
 
             for buf in buffers:
+                # InformationBuffer exposes name/domain/max_size/entry_count/messages.
+                # Derive storage_status from capacity since the library has no such
+                # field; FULL when at capacity, otherwise AVAILABLE for writes.
+                if buf.max_size and buf.entry_count >= buf.max_size:
+                    storage_status = TASE2IMStorageStatus.FULL
+                else:
+                    storage_status = TASE2IMStorageStatus.AVAILABLE
+
                 # Key names must match the consumers (_analyze_im_security /
-                # nxc print_host_info), which read max_messages / current_count
-                # / storage_status. The old max_size/entry_count keys had no
-                # reader, so the IM-store security heuristics never fired.
+                # nxc list_im_stores), which read max_messages / current_count
+                # / storage_status.
                 stores.append(
                     {
                         "domain": domain,
                         "name": buf.name,
                         "max_messages": buf.max_size,
                         "current_count": buf.entry_count,
-                        "storage_status": getattr(buf, "storage_status", ""),
+                        "storage_status": storage_status,
                         "scope": scope,
                     }
                 )
@@ -109,7 +116,7 @@ class InfoMessagesMixin(_ScannerBase):
         - local_reference: Local Reference for this message
 
         Uses get_info_messages() (pyiec61850-ng >= 1.6.0.9) for structured
-        message info, falling back to older APIs and manual reads.
+        message info.
 
         Args:
             connection: Active TASE.2 connection
@@ -117,8 +124,8 @@ class InfoMessagesMixin(_ScannerBase):
             store: IM store name
 
         Returns:
-            List of message info dicts with id, info_reference, local_reference,
-            time, size, status, originator, priority
+            List of message info dicts with message_id, info_ref, local_ref,
+            size, time_created
         """
         messages = []
 
@@ -127,12 +134,11 @@ class InfoMessagesMixin(_ScannerBase):
             for msg in raw_messages:
                 messages.append(
                     {
+                        "message_id": str(msg.msg_id),
                         "info_ref": msg.info_ref,
                         "local_ref": msg.local_ref,
-                        "msg_id": msg.msg_id,
                         "size": msg.size,
-                        "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
-                        "text": msg.text,
+                        "time_created": msg.timestamp.isoformat() if msg.timestamp else None,
                     }
                 )
 
@@ -150,8 +156,7 @@ class InfoMessagesMixin(_ScannerBase):
         Per IEC 60870-6-503, message includes info_reference and local_reference
         for bilateral table access control.
 
-        Prefers get_info_message_by_ref() (pyiec61850-ng >= 1.6.0.9), falls back
-        to read_im_message() (older API), then manual variable reads.
+        Uses get_info_message_by_ref() (pyiec61850-ng >= 1.6.0.9).
 
         Args:
             connection: Active TASE.2 connection
@@ -160,7 +165,7 @@ class InfoMessagesMixin(_ScannerBase):
             message_id: Message ID to read
 
         Returns:
-            Dict with message content, info_reference, local_reference, metadata, and any error
+            Dict with message content, info_ref, local_ref, time_created, and any error
         """
         result = {
             "domain": domain,
@@ -169,7 +174,7 @@ class InfoMessagesMixin(_ScannerBase):
             "info_ref": 0,
             "local_ref": 0,
             "content": None,
-            "timestamp": None,
+            "time_created": None,
             "error": None,
         }
 
@@ -181,7 +186,7 @@ class InfoMessagesMixin(_ScannerBase):
                 result["info_ref"] = msg.info_ref
                 result["local_ref"] = msg.local_ref
                 result["message_id"] = str(msg.msg_id)
-                result["timestamp"] = msg.timestamp.isoformat() if msg.timestamp else None
+                result["time_created"] = msg.timestamp.isoformat() if msg.timestamp else None
                 self.logger.display(f"Read message {message_id} from {domain}/{store}")
         except Exception as e:
             result["error"] = str(e)
@@ -209,7 +214,7 @@ class InfoMessagesMixin(_ScannerBase):
             Dict with type info, info_reference, local_reference, scope,
             field definitions, max capacity
         """
-        from ..scanner import TASE2IMScope
+        from ..scanner import TASE2IMScope, TASE2IMStorageStatus
 
         scope = TASE2IMScope.VCC if domain.upper().startswith("VCC") else TASE2IMScope.ICC
         attributes = {
@@ -226,7 +231,10 @@ class InfoMessagesMixin(_ScannerBase):
                 if buf.name == store:
                     attributes["max_messages"] = buf.max_size
                     attributes["current_count"] = buf.entry_count
-                    attributes["storage_status"] = getattr(buf, "storage_status", "")
+                    if buf.max_size and buf.entry_count >= buf.max_size:
+                        attributes["storage_status"] = TASE2IMStorageStatus.FULL
+                    else:
+                        attributes["storage_status"] = TASE2IMStorageStatus.AVAILABLE
                     break
 
         except Exception as e:
@@ -242,7 +250,6 @@ class InfoMessagesMixin(_ScannerBase):
         store: str,
         content: str,
         priority: int = 5,
-        originator: str = "",
         info_reference: str = "",
         local_reference: str = "",
     ) -> Dict[str, Any]:
@@ -258,7 +265,6 @@ class InfoMessagesMixin(_ScannerBase):
             store: IM store name
             content: Message content (text or base64 for binary)
             priority: Message priority 1-9 (1=highest)
-            originator: Source identifier
             info_reference: Information Reference (defaults to store name)
             local_reference: Local Reference for client identification
 
@@ -334,39 +340,6 @@ class InfoMessagesMixin(_ScannerBase):
         # pyiec61850-ng does not expose IM message deletion
         result["error"] = "IM message deletion not supported by pyiec61850-ng"
         self.logger.debug(f"IM delete not available for {domain}/{store}/{message_id}")
-
-        return result
-
-    def create_information_message_store(
-        self, connection: Any, domain: str, name: str, max_messages: int = 100
-    ) -> Dict[str, Any]:
-        """
-        Create a new Information Message store.
-
-        Args:
-            connection: Active TASE.2 connection
-            domain: Domain name
-            name: New store name
-            max_messages: Maximum messages the store can hold
-
-        Returns:
-            Dict with success and any error
-        """
-        result = {
-            "domain": domain,
-            "name": name,
-            "success": False,
-            "error": None,
-        }
-
-        if self.read_only:
-            result["error"] = "Read-only mode - cannot create stores"
-            self.logger.warning("Cannot create IM store in read-only mode")
-            return result
-
-        # pyiec61850-ng does not expose IM store creation
-        result["error"] = "IM store creation not supported by pyiec61850-ng"
-        self.logger.debug(f"IM store creation not available for {domain}/{name}")
 
         return result
 
