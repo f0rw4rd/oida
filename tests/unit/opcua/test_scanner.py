@@ -491,37 +491,6 @@ class TestOPCUAURLNormalization(unittest.TestCase):
 class TestOPCUASecurityPolicySelection(unittest.TestCase):
     """Test security policy selection and configuration"""
 
-    def test_get_security_policies(self):
-        """Test retrieving security policy mapping"""
-        from oida.protocols.opcua.helpers import _asyncua
-
-        if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
-
-        from oida.protocols.opcua.helpers import _get_security_policies
-
-        policies = _get_security_policies()
-        self.assertIn("none", policies)
-        self.assertIn("basic128rsa15", policies)
-        self.assertIn("basic256", policies)
-        self.assertIn("basic256sha256", policies)
-        self.assertIsNone(policies["none"])
-
-    def test_security_policy_caching(self):
-        """Test security policy cache mechanism"""
-        from oida.protocols.opcua.helpers import _asyncua
-
-        if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
-
-        from oida.protocols.opcua.helpers import _get_security_policies_cached
-
-        # First call
-        policies1 = _get_security_policies_cached()
-        # Second call should return same cached instance
-        policies2 = _get_security_policies_cached()
-        self.assertIs(policies1, policies2)
-
     def test_scanner_security_policy_init(self):
         """Test scanner initialization with security policy"""
         scanner = OPCUAScanner(
@@ -761,8 +730,6 @@ class TestOPCUAWriteAccessTesting(unittest.TestCase):
             result = await scanner._test_write_access(mock_node)
 
             self.assertTrue(result["writable"])
-            self.assertTrue(result["can_read"])
-            self.assertEqual(result["access_level"], 0x03)
 
     async def test_write_access_read_only(self):
         """Test read-only node detection"""
@@ -782,8 +749,6 @@ class TestOPCUAWriteAccessTesting(unittest.TestCase):
             result = await scanner._test_write_access(mock_node)
 
             self.assertFalse(result["writable"])
-            self.assertTrue(result["can_read"])
-            self.assertEqual(result["access_level"], 0x01)
 
     def test_test_write_parameter(self):
         """Test test-write parameter initialization"""

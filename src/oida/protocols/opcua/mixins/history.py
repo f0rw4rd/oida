@@ -30,7 +30,6 @@ class HistoryMixin:
                     self.logger.warning(f"Node {node_id} does not have historizing enabled")
             except Exception as e:
                 self.logger.debug("read history failed: %s", e)
-                pass
 
             # Parse time range
             end_time = datetime.now(timezone.utc)
@@ -53,11 +52,15 @@ class HistoryMixin:
                     return
 
             max_values = getattr(self.args, "history_max", 100)
+            raw_mode = getattr(self.args, "history_raw", False)
 
             self.logger.display(f"Reading historical data from {node_name.Name} ({node_id})")
             self.logger.display(f"  Time range: {start_time.isoformat()} to {end_time.isoformat()}")
+            if raw_mode:
+                self.logger.debug("Reading raw history points (--history-raw)")
 
-            # Read history
+            # Read history. read_raw_history() is the only history access asyncua
+            # exposes; --history-raw makes that explicit.
             try:
                 history_result = await node.read_raw_history(
                     starttime=start_time,
@@ -164,14 +167,11 @@ class HistoryMixin:
                                     )
                             except Exception as e:
                                 self.logger.debug("search failed: %s", e)
-                                pass
                         await search(child, depth + 1)
                     except Exception as e:
                         self.logger.debug("search failed: %s", e)
-                        pass
             except Exception as e:
                 self.logger.debug("search failed: %s", e)
-                pass
 
         await search(objects)
 

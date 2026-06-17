@@ -109,33 +109,6 @@ class opcua(
         # Run async workflow
         asyncio.run(self._async_proto_flow())
 
-    # Flags that trigger specific operations (used for dispatch)
-    _OPERATION_FLAGS = [
-        "call_method",
-        "subscribe",
-        "subscribe_events",
-        "find_servers",
-        "find_servers_on_network",
-        "test_subscription_limits",
-        "scan_writable",
-        "fuzz",
-        "fuzz_node",
-        "fuzz_method",
-        "node_id",
-        "dump",
-        "dump_all",
-        "dump_methods",
-        "dump_write",
-        "dump_namespaces",
-        "dump_history",
-        "dump_files",
-        "get_endpoints",
-        "write_value",
-        "history_read",
-        "read_file",
-        "write_file",
-    ]
-
     # Asyncua loggers to suppress during discovery/auth
     _ASYNCUA_LOGGERS = [
         "asyncua",
@@ -386,10 +359,6 @@ class opcua(
                 else:
                     await method()
                 break  # Mutually exclusive
-
-    def _has_any_operation_flag(self) -> bool:
-        """Check if any operation flag is set"""
-        return any(getattr(self.args, flag, None) for flag in self._OPERATION_FLAGS)
 
     async def _async_proto_flow(self):
         """Async OPC UA scanning workflow"""

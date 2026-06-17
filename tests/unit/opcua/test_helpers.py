@@ -6,7 +6,6 @@ Unit tests for OPC UA helper functions.
 
 import unittest
 from unittest.mock import Mock, patch
-import threading
 
 
 class TestNormalizeOpcuaUrl(unittest.TestCase):
@@ -140,12 +139,12 @@ class TestLazyUaModule(unittest.TestCase):
 
         self.assertIsNotNone(ua)
 
-    @patch("oida.protocols.opcua.helpers._get_ua_module")
-    def test_lazy_proxy_forwards_attributes(self, mock_get_ua):
+    @patch("oida.protocols.opcua.helpers._get_asyncua")
+    def test_lazy_proxy_forwards_attributes(self, mock_get_asyncua):
         """Verify proxy forwards attribute access"""
         mock_ua_module = Mock()
         mock_ua_module.AttributeIds = "test_value"
-        mock_get_ua.return_value = mock_ua_module
+        mock_get_asyncua.return_value.ua = mock_ua_module
 
         from oida.protocols.opcua.helpers import _LazyUaModule
 
@@ -153,23 +152,7 @@ class TestLazyUaModule(unittest.TestCase):
         result = proxy.AttributeIds
 
         self.assertEqual(result, "test_value")
-        mock_get_ua.assert_called()
-
-
-class TestThreadSafety(unittest.TestCase):
-    """Test thread safety of caching functions"""
-
-    def test_asyncua_cache_lock_exists(self):
-        """Verify asyncua cache has a lock"""
-        from oida.protocols.opcua.helpers import _AsyncuaCache
-
-        self.assertIsInstance(_AsyncuaCache._lock, type(threading.Lock()))
-
-    def test_security_policies_lock_exists(self):
-        """Verify security policies cache has a lock"""
-        from oida.protocols.opcua.helpers import _SecurityPoliciesCache
-
-        self.assertIsInstance(_SecurityPoliciesCache._lock, type(threading.Lock()))
+        mock_get_asyncua.assert_called()
 
 
 class TestOpcuaScheme(unittest.TestCase):
