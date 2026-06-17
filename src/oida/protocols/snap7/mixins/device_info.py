@@ -142,8 +142,8 @@ class DeviceInfoMixin(_ScannerBase):
             version = S7FirmwareVersion.from_order_code(oc.V1, oc.V2, oc.V3)
             result["version"] = version
             result["version_str"] = str(version)
-            # Decode order code, handle bytes or string and different attribute names
-            code = getattr(oc, "Code", getattr(oc, "OrderCode", None))
+            # Decode order code (python-snap7 S7OrderCode exposes OrderCode)
+            code = getattr(oc, "OrderCode", None)
             if code is not None:
                 if isinstance(code, bytes):
                     code = code.decode("ascii", errors="ignore")
@@ -216,15 +216,15 @@ class DeviceInfoMixin(_ScannerBase):
         # Check for SoftPLC/Virtual PLC indicators in module name
         if "SOFTPLC" in code or "PLCSIM" in code:
             return "SoftPLC"
-        if "OPC" in code or "IECP" in code.replace("_", "") or "IE_CP" in code:
+        if "OPC" in code or "IECP" in code.replace("_", ""):
             return "S7-CP"
 
         # LOGO! modules (6ED1)
-        if code.startswith("6ED1") or "6ED1" in code:
+        if "6ED1" in code:
             return "LOGO!"
 
         # Communication processors (6GK7) - CP343, CP443, etc.
-        if code.startswith("6GK7") or "6GK7" in code:
+        if "6GK7" in code:
             return "S7-CP"
 
         # S7 modules (6ES7)

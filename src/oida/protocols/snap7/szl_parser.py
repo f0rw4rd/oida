@@ -189,11 +189,11 @@ class SZLParser:
         result = {"szl_id": "0x0132", "index": index}
         try:
             if index == 4 and len(data) >= 12:
-                result["sch_schal"] = data[2] if len(data) > 2 else 0
-                result["sch_par"] = data[4] if len(data) > 4 else 0
-                result["sch_rel"] = data[6] if len(data) > 6 else 0
-                result["bart_sch"] = data[8] if len(data) > 8 else 0
-                result["anl_sch"] = data[10] if len(data) > 10 else 0
+                result["sch_schal"] = data[2]
+                result["sch_par"] = data[4]
+                result["sch_rel"] = data[6]
+                result["bart_sch"] = data[8]
+                result["anl_sch"] = data[10]
                 result["protection_level"] = max(
                     result["sch_schal"], result["sch_par"], result["sch_rel"]
                 )

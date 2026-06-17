@@ -54,12 +54,6 @@ class SecurityMixin(_ScannerBase):
             if all_zero:
                 level = 0
                 desc = "Indeterminate (CPU did not expose protection SZL)"
-            elif not has_protection:
-                # Shouldn't be reachable now that all_zero short-circuits,
-                # but kept for symmetry if individual fields ever become
-                # negative/False sentinel values.
-                level = 1
-                desc = "No protection - Full access"
             elif protection_info["sch_schal"] == 0:
                 level = 2
                 desc = "Read access - Write protected"
@@ -105,9 +99,7 @@ class SecurityMixin(_ScannerBase):
         self.logger.debug("Detecting PUT/GET access for series=%s...", series)
         result = {
             "enabled": None,
-            "method": "memory_read_test",
             "details": "",
-            "security_risk": False,
         }
 
         # Only relevant for S7-1200/1500
@@ -128,7 +120,6 @@ class SecurityMixin(_ScannerBase):
 
                 # If we get here, read succeeded -> PUT/GET is ENABLED
                 result["enabled"] = True
-                result["security_risk"] = True
                 result["details"] = "PUT/GET ENABLED - Memory read succeeded"
 
                 self.logger.warning("PUT/GET communication is ENABLED")
@@ -160,29 +151,12 @@ class SecurityMixin(_ScannerBase):
     # Password Authentication Methods
     # =========================================================================
 
-    def authenticate(self, connection: Any, password: str) -> bool:
-        """Attempt password authentication"""
-        try:
-            # S7 passwords are max 8 chars
-            if len(password) > 8:
-                password = password[:8]
-
-            connection.set_session_password(password)
-            # Verify by attempting a protected operation
-            connection.get_cpu_state()
-            self.logger.success("Authentication successful")
-            return True
-        except Exception as e:
-            self.logger.debug(f"Authentication failed: {e}")
-            return False
-
     def clear_session(self, connection: Any) -> None:
         """Clear password session (logout)"""
         try:
             connection.clear_session_password()
         except Exception as e:
-            self.logger.debug("clear session failed: %s", e)
-            pass  # Session clear may fail on some PLCs, ignore
+            self.logger.debug("clear session failed: %s", e)  # ignore; may fail on some PLCs
 
     def bruteforce_password(
         self,

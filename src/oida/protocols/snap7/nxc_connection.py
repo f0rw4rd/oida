@@ -76,50 +76,6 @@ class s7(NetworkConnection):
         else:
             self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
 
-    def enum_host_info(self):
-        """Enumerate Siemens S7 device information"""
-        if not self.conn:
-            return
-
-        self.logger.debug("Enumerating device information...")
-        try:
-            cpu_info = self.scanner._get_cpu_info(self.conn)
-            plc_status = self.scanner._get_plc_status(self.conn)
-            self.results["data"]["device_info"] = {
-                "cpu_info": cpu_info,
-                "plc_status": plc_status,
-            }
-        except Exception as e:
-            self.logger.warning(f"Device enumeration failed: {e}")
-            self.results["data"]["device_info"] = {
-                "connected": True,
-                "enum_error": str(e),
-            }
-
-    def print_host_info(self):
-        """Display Siemens S7 device information"""
-        if getattr(self.args, "quiet", False):
-            return
-
-        info = self.results["data"].get("device_info", {})
-        port = getattr(self.args, "port", 102)
-        cpu_info = info.get("cpu_info", {})
-        plc_status = info.get("plc_status", {})
-
-        if cpu_info.get("module_type"):
-            self.logger.success(f"Siemens S7: {self.host}:{port}")
-            self.logger.display(f"    Module: {cpu_info.get('module_type', 'Unknown')}")
-            if cpu_info.get("s7_series"):
-                self.logger.display(f"    Series: {cpu_info['s7_series']}")
-            if cpu_info.get("module_name"):
-                self.logger.display(f"    Name: {cpu_info['module_name']}")
-            if cpu_info.get("serial_number"):
-                self.logger.display(f"    Serial: {cpu_info['serial_number']}")
-            if plc_status.get("status"):
-                self.logger.display(f"    Status: {plc_status['status']}")
-        else:
-            self.logger.display(f"Siemens S7: {self.host}:{port}")
-
     def _execute_scan(self):
         """Execute Snap7 scanning (security analysis + discovery)."""
         self.logger.debug("Executing scan")
@@ -190,7 +146,7 @@ class s7(NetworkConnection):
         ]
         for attr in action_attrs:
             val = getattr(self.args, attr, None)
-            if val is True or (val is not None and val is not False):
+            if val is not None and val is not False:
                 return True
         return False
 
@@ -306,19 +262,19 @@ class s7(NetworkConnection):
 
         # Memory read operations
         if getattr(self.args, "read_inputs", None):
-            return self._action_read_memory("read_inputs", "inputs", "read_inputs")
+            return self._action_read_memory("read_inputs", "inputs")
 
         if getattr(self.args, "read_outputs", None):
-            return self._action_read_memory("read_outputs", "outputs", "read_outputs")
+            return self._action_read_memory("read_outputs", "outputs")
 
         if getattr(self.args, "read_markers", None):
-            return self._action_read_memory("read_markers", "markers", "read_markers")
+            return self._action_read_memory("read_markers", "markers")
 
         if getattr(self.args, "read_timers", None):
-            return self._action_read_memory("read_timers", "timers", "read_timers")
+            return self._action_read_memory("read_timers", "timers")
 
         if getattr(self.args, "read_counters", None):
-            return self._action_read_memory("read_counters", "counters", "read_counters")
+            return self._action_read_memory("read_counters", "counters")
 
         if getattr(self.args, "read_db", None):
             return self._action_read_db()
@@ -337,27 +293,27 @@ class s7(NetworkConnection):
         if getattr(self.args, "write_markers", None):
             if not self._require_confirm("write_markers"):
                 return None
-            return self._action_write_memory("write_markers", "M", "write_markers")
+            return self._action_write_memory("write_markers", "M")
 
         if getattr(self.args, "write_outputs", None):
             if not self._require_confirm("write_outputs"):
                 return None
-            return self._action_write_memory("write_outputs", "Q", "write_outputs")
+            return self._action_write_memory("write_outputs", "Q")
 
         if getattr(self.args, "write_inputs", None):
             if not self._require_confirm("write_inputs"):
                 return None
-            return self._action_write_memory("write_inputs", "I", "write_inputs")
+            return self._action_write_memory("write_inputs", "I")
 
         if getattr(self.args, "write_timers", None):
             if not self._require_confirm("write_timers"):
                 return None
-            return self._action_write_memory("write_timers", "T", "write_timers")
+            return self._action_write_memory("write_timers", "T")
 
         if getattr(self.args, "write_counters", None):
             if not self._require_confirm("write_counters"):
                 return None
-            return self._action_write_memory("write_counters", "C", "write_counters")
+            return self._action_write_memory("write_counters", "C")
 
         if getattr(self.args, "db_fill", None):
             if not self._require_confirm("db_fill"):
@@ -480,11 +436,11 @@ class s7(NetworkConnection):
         self.logger.display(f"Deleting {block_type}{block_num}...")
         return self.scanner.delete_block(self.conn, block_type, block_num)
 
-    def _action_read_memory(self, arg_name: str, area_name: str, method_name: str):
+    def _action_read_memory(self, arg_name: str, area_name: str):
         """Handle memory read actions (inputs, outputs, markers, timers, counters)"""
         start, size = self._parse_range(getattr(self.args, arg_name))
         self.logger.display(f"Reading {area_name} {start}:{size}...")
-        return getattr(self.scanner, method_name)(self.conn, start, size)
+        return getattr(self.scanner, arg_name)(self.conn, start, size)
 
     def _action_read_db(self):
         """Handle --read-db action"""
@@ -509,7 +465,7 @@ class s7(NetworkConnection):
         self.logger.display(f"Writing {len(data)} bytes to DB{db}...")
         return self.scanner.write_db_area(self.conn, db, start, data)
 
-    def _action_write_memory(self, arg_name: str, prefix: str, method_name: str):
+    def _action_write_memory(self, arg_name: str, prefix: str):
         """Handle memory write actions (markers, outputs, inputs, timers, counters)"""
         parts = getattr(self.args, arg_name).split(":")
         if len(parts) != 2:
@@ -519,7 +475,7 @@ class s7(NetworkConnection):
         start, hex_data = int(parts[0]), parts[1]
         data = bytes.fromhex(hex_data)
         self.logger.display(f"Writing {len(data)} bytes to {prefix}{start}...")
-        return getattr(self.scanner, method_name)(self.conn, start, data)
+        return getattr(self.scanner, arg_name)(self.conn, start, data)
 
     def _action_db_fill(self):
         """Handle --db-fill action"""
@@ -734,100 +690,59 @@ class s7(NetworkConnection):
                     self.logger.debug(f"DB{db_num} not accessible: {e}")
         return targets
 
-    def _fuzz_memory(self, iterations: int) -> None:
-        """Fuzz memory areas (markers, outputs)"""
+    def _fuzz_area(self, area, size: int, label: str, iterations: int) -> None:
+        """Fuzz a single S7 memory area: read original, write mutations, restore."""
         import time
         from ...utils.fuzzer import fuzz
 
+        try:
+            self.conn.read_area(area, 0, 0, size)  # Test read
+
+            def read_area():
+                return bytes(self.conn.read_area(area, 0, 0, size))
+
+            def write_area(data):
+                try:
+                    write_data = data[:size].ljust(size, b"\x00")
+                    self.conn.write_area(area, 0, 0, bytearray(write_data))
+                    return True
+                except Exception as e:
+                    self.logger.debug(f"write_area({label}) failed: {e}")
+                    return False
+
+            original = read_area()
+            successful, failed, anomalies, crashes = 0, 0, 0, 0
+
+            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc)
+                try:
+                    if write_area(payload):
+                        successful += 1
+                        readback = read_area()
+                        if readback != payload and readback != original:
+                            anomalies += 1
+                    else:
+                        failed += 1
+                except Exception:
+                    crashes += 1
+                time.sleep(0.1)
+
+            if original:
+                write_area(original)
+
+            status = "+" if crashes == 0 and anomalies == 0 else "!"
+            self.logger.display(
+                f"  [{status}] {label}: {successful + failed} tests, "
+                f"{successful} writes, {anomalies} anomalies, {crashes} crashes"
+            )
+
+        except Exception as e:
+            self.logger.debug(f"{label} area not accessible: {e}")
+
+    def _fuzz_memory(self, iterations: int) -> None:
+        """Fuzz memory areas (markers, outputs)"""
         self.logger.display("Fuzzing memory areas (M, Q)...")
-
-        # Fuzz markers area (M0-M9)
-        try:
-            self.conn.read_area(S7MemoryArea.MK, 0, 0, 10)  # Test read
-
-            def read_m():
-                return bytes(self.conn.read_area(S7MemoryArea.MK, 0, 0, 10))
-
-            def write_m(data):
-                try:
-                    write_data = data[:10].ljust(10, b"\x00")
-                    self.conn.write_area(S7MemoryArea.MK, 0, 0, bytearray(write_data))
-                    return True
-                except Exception as e:
-                    self.logger.debug(f"write_area(MK) failed: {e}")
-                    return False
-
-            original = read_m()
-            successful, failed, anomalies, crashes = 0, 0, 0, 0
-
-            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
-                try:
-                    if write_m(payload):
-                        successful += 1
-                        readback = read_m()
-                        if readback != payload and readback != original:
-                            anomalies += 1
-                    else:
-                        failed += 1
-                except Exception:
-                    crashes += 1
-                time.sleep(0.1)
-
-            if original:
-                write_m(original)
-
-            status = "+" if crashes == 0 and anomalies == 0 else "!"
-            self.logger.display(
-                f"  [{status}] M:0-9: {successful + failed} tests, "
-                f"{successful} writes, {anomalies} anomalies, {crashes} crashes"
-            )
-
-        except Exception as e:
-            self.logger.debug(f"Markers area not accessible: {e}")
-
-        # Fuzz outputs area (Q0-Q7)
-        try:
-            self.conn.read_area(S7MemoryArea.PA, 0, 0, 8)  # Test read
-
-            def read_q():
-                return bytes(self.conn.read_area(S7MemoryArea.PA, 0, 0, 8))
-
-            def write_q(data):
-                try:
-                    write_data = data[:8].ljust(8, b"\x00")
-                    self.conn.write_area(S7MemoryArea.PA, 0, 0, bytearray(write_data))
-                    return True
-                except Exception as e:
-                    self.logger.debug(f"write_area(PA) failed: {e}")
-                    return False
-
-            original = read_q()
-            successful, failed, anomalies, crashes = 0, 0, 0, 0
-
-            for payload, _desc in fuzz(original, count=iterations):  # fuzz() yields (bytes, desc) tuples
-                try:
-                    if write_q(payload):
-                        successful += 1
-                        readback = read_q()
-                        if readback != payload and readback != original:
-                            anomalies += 1
-                    else:
-                        failed += 1
-                except Exception:
-                    crashes += 1
-                time.sleep(0.1)
-
-            if original:
-                write_q(original)
-
-            status = "+" if crashes == 0 and anomalies == 0 else "!"
-            self.logger.display(
-                f"  [{status}] Q:0-7: {successful + failed} tests, "
-                f"{successful} writes, {anomalies} anomalies, {crashes} crashes"
-            )
-
-        except Exception as e:
-            self.logger.debug(f"Outputs area not accessible: {e}")
+        self._fuzz_area(S7MemoryArea.MK, 10, "M:0-9", iterations)
+        self._fuzz_area(S7MemoryArea.PA, 8, "Q:0-7", iterations)
 
     def cleanup(self):
         """Cleanup Snap7 connection"""
@@ -843,12 +758,9 @@ class s7(NetworkConnection):
 
     @staticmethod
     def check_dependencies() -> bool:
-        try:
-            scanner = Snap7Scanner.__new__(Snap7Scanner)
-            return scanner.check_dependencies()
-        except Exception as e:
-            logger.debug(f"Failed to get scanner: {e}")
-            return False
+        from .scanner import _snap7
+
+        return _snap7.is_available
 
 
 # Module-level alias for loader discovery
