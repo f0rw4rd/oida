@@ -675,7 +675,12 @@ class ADSFuzzer(BaseFuzzer):
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         DWord("Data_Length", 12, endian="<", fuzzable=False),
                         DWord("Error_Code", 0, endian="<", fuzzable=False),
-                        DWord("Invoke_ID", 1, endian="<", fuzzable=False),
+                        # Dynamic invoke ID so each sent request carries a unique
+                        # value (real ADS clients increment it); rendered via
+                        # original_value() even though not fuzzed.
+                        DynamicDWord(
+                            "Invoke_ID", lambda: self._next_invoke_id(), endian="<", fuzzable=False
+                        ),
                         # Minimal valid params for most commands
                         DWord("IndexGroup", ADSIndexGroups.MEMORYBYTE, endian="<", fuzzable=False),
                         DWord("IndexOffset", 0, endian="<", fuzzable=False),
