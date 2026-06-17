@@ -603,7 +603,7 @@ class TestUDSScan:
                     "bus-type": "virtual",
                 }
             )
-            sessions = scanner.uds_session_scan(mock_bus, 0x7E0, 0x7E8)
+            sessions = scanner.uds_session_scan(mock_bus, 0x7E0)
 
         assert isinstance(sessions, list)
         # Session 0x01 should be detected
@@ -639,7 +639,7 @@ class TestUDSScan:
                     "bus-type": "virtual",
                 }
             )
-            dids = scanner.uds_did_scan(mock_bus, 0x7E0, 0x7E8, did_range=(0xF190, 0xF190))
+            dids = scanner.uds_did_scan(mock_bus, 0x7E0, did_range=(0xF190, 0xF190))
 
         assert isinstance(dids, dict)
 
@@ -682,7 +682,7 @@ class TestUDSScan:
                 }
             )
             seeds = scanner.uds_security_seed_collect(
-                mock_bus, 0x7E0, 0x7E8, security_level=0x01, count=2
+                mock_bus, 0x7E0, security_level=0x01, count=2
             )
 
         assert isinstance(seeds, list)
@@ -721,7 +721,7 @@ class TestUDSScan:
                 }
             )
             routines = scanner.uds_routine_scan(
-                mock_bus, 0x7E0, 0x7E8, routine_range=(0x0000, 0x0005)
+                mock_bus, 0x7E0, routine_range=(0x0000, 0x0005)
             )
 
         assert isinstance(routines, list)
