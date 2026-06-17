@@ -28,7 +28,6 @@ from ...utils.lazy_import import lazy_import
 from .mixins import DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin
 
 _hartip = lazy_import("hartip", "HART")
-_fuzzer = lazy_import("oida.utils.fuzzer", "fuzzer")
 
 from .hartip import (
     HARTIPClient,
@@ -137,7 +136,6 @@ class HARTDeviceInfo:
     software_revision: int = 0
     hardware_revision: int = 0
     physical_signaling_code: int = 0
-    flags: int = 0
     unique_id: bytes = b""
     tag: str = ""
     long_tag: str = ""
@@ -174,21 +172,6 @@ class HARTDeviceInfo:
             return "high"
         else:
             return "medium"
-
-    def get_lock_state_name(self) -> str:
-        if self.lock_state == LockState.UNLOCKED:
-            return "Unlocked"
-        elif self.lock_state == LockState.LOCKED:
-            return "Locked"
-        elif self.lock_state == LockState.PERMANENTLY_LOCKED:
-            return "Permanently Locked"
-        elif self.lock_state == LockState.NOT_SUPPORTED:
-            return "Not Supported"
-        else:
-            return "Unknown"
-
-    def is_locked(self) -> bool:
-        return self.lock_state in [LockState.LOCKED, LockState.PERMANENTLY_LOCKED]
 
 
 @dataclass
@@ -236,7 +219,6 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
         self.timeout = float(args.get("timeout", 5))
         self.transport = args.get("protocol", "udp").lower()
         self.poll_address = int(args.get("poll-addr", 0))
-        self.debug = args.get("debug", False)
 
         # HART-IP v2 TLS/PSK settings
         self.psk_identity = args.get("psk-identity")
@@ -320,9 +302,12 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
         self.client = None
 
     def discover(self, connection: Any = None) -> Dict[str, Any]:
-        """Perform device discovery.
+        """Perform device discovery (BaseScanner abstract contract).
 
-        Returns device identification and basic information.
+        Returns device identification and basic information. The NXC path
+        (nxc_connection.hart) drives scanning directly via the mixin reads;
+        this concrete implementation satisfies the BaseScanner.discover()
+        abstractmethod and backs the traditional Layer-1 scanner usage.
         """
         client = connection or self.client
         if not client:
@@ -337,11 +322,8 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
             if device_info:
                 result.device_info = device_info
 
-            variables = self.read_all_variables(client)
-            result.variables = variables
-
-            output_info = self.read_output_info(client)
-            result.output_info = output_info
+            result.variables = self.read_all_variables(client)
+            result.output_info = self.read_output_info(client)
 
             wireless_info = self.detect_wirelesshart(device_info, client)
             if wireless_info.get("is_wireless") and device_info:
@@ -356,27 +338,23 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
             if device_info:
                 # Only treat the device as "unlocked" when we definitively read
                 # UNLOCKED — otherwise (LOCKED / PERMANENTLY_LOCKED / UNKNOWN)
-                # don't emit the HART-SEC-003 "lock not enabled" finding, which
-                # previously fired for every HART 6+ device because device_locked
-                # was never passed.
+                # don't emit the HART-SEC-003 "lock not enabled" finding.
                 device_locked = device_info.lock_state != LockState.UNLOCKED
-                protocol_findings = analyze_protocol_security(
-                    device_info.protocol_revision,
-                    device_info.write_protected,
-                    device_locked=device_locked,
+                result.security_findings.extend(
+                    analyze_protocol_security(
+                        device_info.protocol_revision,
+                        device_info.write_protected,
+                        device_locked=device_locked,
+                    )
                 )
-                result.security_findings.extend(protocol_findings)
 
         except Exception as e:
             result.errors.append(str(e))
 
         return self._result_to_dict(result)
 
-    # --- Methods provided by mixins: DeviceInfoMixin, SecurityMixin,
-    #     EnumerationMixin, FuzzMixin ---
-
     def _result_to_dict(self, result: HARTScanResult) -> Dict[str, Any]:
-        """Convert HARTScanResult to dictionary"""
+        """Convert HARTScanResult to dictionary."""
         device_info_dict = None
         if result.device_info:
             device_info_dict = {
@@ -430,28 +408,5 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
             "errors": result.errors,
         }
 
-
-# Module-level functions for compatibility
-def metadata() -> Dict[str, Any]:
-    """Return protocol metadata"""
-    return {
-        "name": "HART",
-        "description": "HART (Highway Addressable Remote Transducer) Protocol Scanner",
-        "default_port": HARTIP_UDP_PORT,
-        "transport": ["udp", "tcp", "tls"],
-        "version": "3.0.0",
-    }
-
-
-def run(args: Dict[str, Any]) -> Dict[str, Any]:
-    """Run HART scanner with provided arguments."""
-    scanner = HARTScanner(args)
-
-    try:
-        conn = scanner.connect()
-        if not conn:
-            return {"error": "Connection failed"}
-
-        return scanner.discover(conn)
-    finally:
-        scanner.disconnect()
+    # --- Methods provided by mixins: DeviceInfoMixin, SecurityMixin,
+    #     EnumerationMixin, FuzzMixin ---

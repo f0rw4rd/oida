@@ -45,7 +45,6 @@ from oida.protocols.hart.scanner import (
     HARTDeviceInfo,
     HARTVariable,
     HARTScanResult,
-    metadata,
     LockState,
     PhysicalSignaling,
     analyze_protocol_security,
@@ -314,18 +313,7 @@ class TestHARTDataClasses:
 
 
 class TestMetadata:
-    """Tests for module metadata"""
-
-    def test_metadata(self):
-        """Test metadata function"""
-        meta = metadata()
-
-        assert meta["name"] == "HART"
-        assert meta["default_port"] == 5094
-        assert "udp" in meta["transport"]
-        assert "tcp" in meta["transport"]
-        assert "tls" in meta["transport"]
-        assert meta["version"] == "3.0.0"
+    """Tests for module constants and lookups"""
 
     def test_manufacturers(self):
         """Test manufacturer lookup - using official FieldComm Group IDs"""
@@ -537,30 +525,6 @@ class TestDeviceLock:
         """Test HARTDeviceInfo has lock_state field"""
         info = HARTDeviceInfo()
         assert info.lock_state == LockState.UNKNOWN
-
-    def test_device_info_get_lock_state_name(self):
-        """Test lock state name helper"""
-        info = HARTDeviceInfo()
-        info.lock_state = LockState.UNLOCKED
-        assert info.get_lock_state_name() == "Unlocked"
-
-        info.lock_state = LockState.LOCKED
-        assert info.get_lock_state_name() == "Locked"
-
-        info.lock_state = LockState.PERMANENTLY_LOCKED
-        assert info.get_lock_state_name() == "Permanently Locked"
-
-    def test_device_info_is_locked(self):
-        """Test is_locked helper"""
-        info = HARTDeviceInfo()
-        info.lock_state = LockState.UNLOCKED
-        assert not info.is_locked()
-
-        info.lock_state = LockState.LOCKED
-        assert info.is_locked()
-
-        info.lock_state = LockState.PERMANENTLY_LOCKED
-        assert info.is_locked()
 
     def test_central_credentials_has_hart(self):
         """Test that central credentials database includes HART"""
