@@ -246,7 +246,7 @@ Examples:
     history_group.add_argument(
         "--history-raw",
         action="store_true",
-        help="Read raw historical data (default: aggregated)",
+        help="Read raw historical data points (the only supported history mode)",
     )
 
     # File Transfer (--read-file, --write-file, --file-output)

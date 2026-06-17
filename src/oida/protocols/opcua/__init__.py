@@ -11,69 +11,29 @@ All components have been refactored into smaller, focused modules:
 - scanner.py: OPCUAScanner class (traditional scanner pattern)
 - nxc_connection.py: opcua class (NXC-style callable)
 
-This __init__.py maintains backward compatibility by re-exporting all components.
+The package root re-exports only the names reached through it: the L1
+``OPCUAScanner``, the NXC-style ``opcua`` callable (resolved by the protocol
+loader via ``getattr(module, "opcua")``), and the ``asyncua`` patch anchor
+plus its accessor. Everything else is imported directly from the submodules.
 """
 
-# Re-export from helpers
+# Re-export from helpers (asyncua is the mock.patch anchor used by the scanner
+# tests via oida.protocols.opcua.asyncua).
 from .helpers import (
     asyncua,
-    ua,
-    _asyncua,
     _get_asyncua,
-    _get_client_class,
-    _get_ua_module,
-    _get_bad_user_access_denied,
-    _get_security_policies,
-    _get_security_policies_cached,
-    _normalize_opcua_url,
-    _parse_opcua_url,
-    _LazyUaModule,
-    OPCUA_SCHEME,
-    DANGEROUS_KEYWORDS,
-)
-
-# Re-export from handlers
-from .handlers import (
-    DataChangeHandler,
-    EventHandler,
 )
 
 # Re-export from scanner
-from .scanner import (
-    OPCUAScanner,
-    protocol_options,
-    metadata,
-    run,
-)
+from .scanner import OPCUAScanner
 
-# Re-export from nxc_connection
+# Re-export from nxc_connection (loader resolves the protocol class by name)
 from .nxc_connection import opcua
 
 # Define __all__ for explicit exports
 __all__ = [
-    # Lazy imports and helpers
     "asyncua",
-    "ua",
-    "_asyncua",
     "_get_asyncua",
-    "_get_client_class",
-    "_get_ua_module",
-    "_get_bad_user_access_denied",
-    "_get_security_policies",
-    "_get_security_policies_cached",
-    "_normalize_opcua_url",
-    "_parse_opcua_url",
-    "_LazyUaModule",
-    "OPCUA_SCHEME",
-    "DANGEROUS_KEYWORDS",
-    # Handlers
-    "DataChangeHandler",
-    "EventHandler",
-    # Scanner
     "OPCUAScanner",
-    "protocol_options",
-    "metadata",
-    "run",
-    # NXC-style callable
     "opcua",
 ]
