@@ -3,7 +3,6 @@ SNMP OID constants and vendor mappings.
 
 Contains:
 - SNMP_OIDS: Standard MIB-2 system OIDs (RFC 1213)
-- SNMP_TABLES: Table OIDs for SNMP walking
 - VENDOR_OIDS: Enterprise OID -> vendor name mappings
 - VENDOR_SPECIFIC_OIDS: Vendor-specific OID sets for extra device info
 - WINDOWS_SERVICE_OIDS: Windows service enumeration OIDs
@@ -26,41 +25,6 @@ SNMP_OIDS = {
     "tcpInSegs": ".1.3.6.1.2.1.6.10.0",  # TCP segments received
     "tcpOutSegs": ".1.3.6.1.2.1.6.11.0",  # TCP segments sent
     "tcpRetransSegs": ".1.3.6.1.2.1.6.12.0",  # TCP retransmissions
-}
-
-# Table OIDs for walking
-SNMP_TABLES = {
-    # Interface tables (MIB-2 interfaces)
-    "ifPhysAddress": ".1.3.6.1.2.1.2.2.1.6",  # Interface MACs
-    "ifDescr": ".1.3.6.1.2.1.2.2.1.2",  # Interface descriptions
-    "ifSpeed": ".1.3.6.1.2.1.2.2.1.5",  # Interface speeds
-    "ifType": ".1.3.6.1.2.1.2.2.1.3",  # Interface types
-    "ifOperStatus": ".1.3.6.1.2.1.2.2.1.8",  # Interface operational status
-    # IP tables
-    "ipAdEntAddr": ".1.3.6.1.2.1.4.20.1.1",  # IP addresses
-    "ipAdEntNetMask": ".1.3.6.1.2.1.4.20.1.3",  # IP netmasks
-    "ipRouteTable": ".1.3.6.1.2.1.4.21.1",  # IP routing table
-    "ipNetToMediaTable": ".1.3.6.1.2.1.4.22.1",  # ARP table
-    # ARP table (legacy alias)
-    "arpTable": ".1.3.6.1.2.1.4.22.1",  # ARP table (ipNetToMedia)
-    # MAC address / forwarding tables
-    "macTable": ".1.3.6.1.2.1.17.4.3.1",  # MAC address table (CAM)
-    "dot1dTpFdbTable": ".1.3.6.1.2.1.17.4.3.1",  # Bridge forwarding DB
-    # TCP/UDP connection tables
-    "tcpConnTable": ".1.3.6.1.2.1.6.13.1",  # TCP connections (IPv4)
-    "tcpConnectionTable": ".1.3.6.1.2.1.6.19.1",  # TCP connections (IPv4+IPv6)
-    "udpTable": ".1.3.6.1.2.1.7.5.1",  # UDP listeners (IPv4)
-    "udpEndpointTable": ".1.3.6.1.2.1.7.7.1",  # UDP endpoints (IPv4+IPv6)
-    # LLDP tables (IEEE 802.1AB)
-    "lldpLocPortTable": ".1.0.8802.1.1.2.1.3.7.1",  # Local port info
-    "lldpRemTable": ".1.0.8802.1.1.2.1.4.1.1",  # Remote device info
-    "lldpRemSysName": ".1.0.8802.1.1.2.1.4.1.1.9",  # Remote system name
-    "lldpRemSysDesc": ".1.0.8802.1.1.2.1.4.1.1.10",  # Remote system desc
-    "lldpRemPortId": ".1.0.8802.1.1.2.1.4.1.1.7",  # Remote port ID
-    "lldpRemChassisId": ".1.0.8802.1.1.2.1.4.1.1.5",  # Remote chassis ID
-    # VLAN tables
-    "dot1qVlanTable": ".1.3.6.1.2.1.17.7.1.4.2.1",  # 802.1Q VLANs
-    "vmVlan": ".1.3.6.1.4.1.9.9.68.1.2.2.1.2",  # Cisco VLAN membership
 }
 
 # Walk lists (auto-built from VENDOR_OIDS below)
@@ -484,7 +448,6 @@ VENDOR_SPECIFIC_OIDS = {
 VACM_OIDS = {
     "vacmAccessReadViewName": ".1.3.6.1.6.3.16.1.4.1.5",
     "vacmAccessWriteViewName": ".1.3.6.1.6.3.16.1.4.1.6",
-    "vacmAccessNotifyViewName": ".1.3.6.1.6.3.16.1.4.1.7",
 }
 
 # HOST-RESOURCES-MIB (RFC 2790)
@@ -602,17 +565,13 @@ CREDENTIAL_OIDS = {
 # IPv6 address table OIDs (RFC 4293 ipAddressTable)
 IPV6_ENUM_OIDS = {
     "ipAddressIfIndex": ".1.3.6.1.2.1.4.34.1.3",  # maps addr type+bytes → ifIndex
-    "ipAddressType": ".1.3.6.1.2.1.4.34.1.4",  # unicast(1), anycast(2), broadcast(3)
-    "ipAddressPrefix": ".1.3.6.1.2.1.4.34.1.5",  # pointer to prefix origin row
 }
 
 # NET-SNMP Extend OIDs (nsExtendObjects)
 NETSNMP_EXTEND_OIDS = {
     "nsExtendCommand": ".1.3.6.1.4.1.8072.1.3.2.2.1.2",  # command path
     "nsExtendArgs": ".1.3.6.1.4.1.8072.1.3.2.2.1.3",  # arguments
-    "nsExtendInput": ".1.3.6.1.4.1.8072.1.3.2.2.1.4",  # stdin input
     "nsExtendExecType": ".1.3.6.1.4.1.8072.1.3.2.2.1.6",  # exec(1) or shell(2)
-    "nsExtendRunType": ".1.3.6.1.4.1.8072.1.3.2.2.1.7",  # run-on-read(1), set(2)
     "nsExtendStorage": ".1.3.6.1.4.1.8072.1.3.2.2.1.8",  # permanent(4)/volatile(2)
     "nsExtendStatus": ".1.3.6.1.4.1.8072.1.3.2.2.1.9",  # row status
     "nsExtendOutput1Line": ".1.3.6.1.4.1.8072.1.3.2.3.1.1",  # first line of output
