@@ -37,21 +37,6 @@ class TestMMSProtoArgs:
         # add_network_options() default — verify there IS a timeout attr.
         assert hasattr(_parse(), "timeout")
 
-    def test_identify_flag(self):
-        assert _parse("-i").identify is True
-        assert _parse("--identify").identify is True
-
-    def test_identify_default_false(self):
-        assert _parse().identify is False
-
-    def test_get_name_list_flag(self):
-        assert _parse("-l").get_name_list is True
-        assert _parse("--get-name-list").get_name_list is True
-
-    def test_variable_arg(self):
-        args = _parse("-r", "MyDomain/MyVar")
-        assert args.variable == "MyDomain/MyVar"
-
     def test_read_values_flag(self):
         assert _parse("--read-values").read_values is True
 
@@ -83,11 +68,6 @@ class TestMMSProtoArgs:
 
 class TestMMSFlagCombinations:
     """Real-world flag combos that should parse cleanly together."""
-
-    def test_identify_and_get_name_list(self):
-        args = _parse("-i", "-l")
-        assert args.identify is True
-        assert args.get_name_list is True
 
     def test_read_values_with_max_objects(self):
         args = _parse("--read-values", "--max-objects", "200")

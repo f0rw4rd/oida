@@ -39,8 +39,6 @@ class FingerprintMatch:
     hardware_rev: Optional[str] = None
     config_rev: Optional[str] = None
     custom: Dict[str, str] = field(default_factory=dict)
-    raw_attributes: Dict[str, Any] = field(default_factory=dict)
-    match_confidence: float = 1.0
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -48,7 +46,6 @@ class FingerprintMatch:
             "fingerprint": self.fingerprint_name,
             "vendor_id": self.vendor_id,
             "device_type": self.device_type,
-            "confidence": self.match_confidence,
         }
         if self.vendor:
             result["vendor"] = self.vendor
@@ -112,7 +109,6 @@ class FingerprintMatcher:
 
     def __init__(self):
         self.rules: List[FingerprintRule] = []
-        self.loaded_files: List[str] = []
 
     def load_fingerprints(self, filepath: str) -> bool:
         """
@@ -144,17 +140,11 @@ class FingerprintMatcher:
 
             # Sort by priority (lower = higher priority)
             self.rules.sort(key=lambda r: r.priority)
-            self.loaded_files.append(str(full_path))
             return True
 
         except Exception as e:
             logger.error(f"Error loading fingerprints from {filepath}: {e}")
             return False
-
-    def add_rule(self, rule: FingerprintRule) -> None:
-        """Add a fingerprint rule"""
-        self.rules.append(rule)
-        self.rules.sort(key=lambda r: r.priority)
 
     def get_matching_rules(self, domain_name: str) -> List[FingerprintRule]:
         """
@@ -242,8 +232,6 @@ class FingerprintMatcher:
         for field_name, attr_spec in rule.attributes.items():
             value = self._read_attribute(attr_spec, read_func, domain)
             if value is not None:
-                match.raw_attributes[field_name] = value
-
                 # Map to known fields
                 if field_name == "vendor":
                     match.vendor = value
@@ -288,9 +276,6 @@ class FingerprintMatcher:
             return read_func(domain, attr_spec)
 
         elif isinstance(attr_spec, dict):
-            if "default" in attr_spec:
-                return attr_spec["default"]
-
             attr_path = attr_spec.get("attribute")
             if not attr_path:
                 return None
@@ -338,11 +323,3 @@ class FingerprintMatcher:
                     return self.extract_attributes(rule, read_func, domain)
 
         return None
-
-
-# Convenience function for loading default fingerprints
-def load_mms_fingerprints() -> FingerprintMatcher:
-    """Load the default MMS/IEC 61850 fingerprints"""
-    matcher = FingerprintMatcher()
-    matcher.load_fingerprints("mms_fingerprints.json")
-    return matcher
