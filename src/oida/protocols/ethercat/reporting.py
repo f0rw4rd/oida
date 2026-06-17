@@ -50,13 +50,6 @@ class ReportingMixin(_ScannerBase):
         if writable_objects > 0:
             analysis["issues"].append(f"{writable_objects} readable SDO objects found")
 
-        # Check fuzzing results for vulnerabilities
-        fuzzing_results = results.get("fuzzing_results", {})
-        if fuzzing_results.get("crashes_detected", 0) > 0:
-            analysis["issues"].append(
-                f"Fuzzing caused {fuzzing_results['crashes_detected']} crashes"
-            )
-
         # Overall security assessment (EtherCAT is inherently insecure).
         # assess_protocol_security() returns its own "issues" key; updating
         # blindly used to clobber all the EtherCAT-specific findings above, so
