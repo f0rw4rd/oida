@@ -52,7 +52,6 @@ def parse_sii_header(data: bytes) -> Dict[str, Any]:
 
     Returns:
         Dict with parsed header fields including:
-        - pdi_control, pdi_config: PDI configuration
         - vendor_id, product_code, revision, serial_number: Identity
         - mailbox offsets and sizes (bootstrap and standard)
         - mailbox_protocol_flags: Supported protocols (AoE, EoE, CoE, FoE, SoE, VoE)
@@ -63,10 +62,6 @@ def parse_sii_header(data: bytes) -> Dict[str, Any]:
 
     header = {
         # PDI Configuration (bytes 0x00-0x09)
-        "pdi_control": struct.unpack_from("<H", data, 0x00)[0],
-        "pdi_config": struct.unpack_from("<H", data, 0x02)[0],
-        "sync_impulse_len": struct.unpack_from("<H", data, 0x04)[0],
-        "extended_pdi_config": struct.unpack_from("<H", data, 0x06)[0],
         "station_alias": struct.unpack_from("<H", data, 0x08)[0],
         # CRC at byte 0x0E (word 7, high byte)
         "crc": data[0x0E],
@@ -172,11 +167,7 @@ def parse_general_category(data: bytes, strings: List[str]) -> Dict[str, Any]:
         "name_idx": data[3],
         # data[4] is reserved
         "coe_details": data[5],
-        "foe_details": data[6],
-        "eoe_details": data[7],
-        "soe_channels": data[8],
-        "ds402_channels": data[9],
-        "sysman_class": data[10],
+        # data[6:11] are foe/eoe/soe/ds402/sysman detail bytes (not surfaced)
         "flags": data[11],
         "current_on_ebus_ma": struct.unpack_from("<h", data, 12)[0],  # signed int16
         # data[14:16] reserved
@@ -242,8 +233,6 @@ def parse_syncmanager_category(data: bytes) -> List[Dict[str, Any]]:
         start = struct.unpack_from("<H", data, i)[0]
         length = struct.unpack_from("<H", data, i + 2)[0]
         control = data[i + 4]
-        status = data[i + 5]
-        enable = data[i + 6]
         sm_type = data[i + 7]
 
         # Parse control byte
@@ -257,14 +246,10 @@ def parse_syncmanager_category(data: bytes) -> List[Dict[str, Any]]:
         sms.append(
             {
                 "start": f"0x{start:04X}",
-                "start_int": start,
                 "length": length,
                 "control": f"0x{control:02X}",
                 "control_flags": ctrl_flags,
-                "status": status,
-                "enable": enable,
                 "type": SM_TYPES.get(sm_type, f"unknown_{sm_type}"),
-                "type_code": sm_type,
             }
         )
 
@@ -329,11 +314,9 @@ def parse_pdo_category(data: bytes, strings: List[str]) -> List[Dict[str, Any]]:
             entries.append(
                 {
                     "index": f"0x{entry_index:04X}",
-                    "index_int": entry_index,
                     "subindex": subindex,
                     "name": entry_name,
                     "data_type": COE_DATA_TYPES.get(data_type, f"type_{data_type}"),
-                    "data_type_code": data_type,
                     "bit_length": bit_length,
                 }
             )
@@ -341,7 +324,6 @@ def parse_pdo_category(data: bytes, strings: List[str]) -> List[Dict[str, Any]]:
         pdos.append(
             {
                 "index": f"0x{pdo_index:04X}",
-                "index_int": pdo_index,
                 "name": pdo_name,
                 "sm": sm_index,
                 "dc_sync": dc_sync,
@@ -381,12 +363,7 @@ def parse_dc_category(data: bytes, strings: List[str]) -> Dict[str, Any]:
 
     return {
         "cycle_time0_ns": struct.unpack_from("<I", data, 0)[0],
-        "shift_time0_ns": struct.unpack_from("<I", data, 4)[0],
-        "shift_time1": struct.unpack_from("<H", data, 8)[0],
-        "sync1_cycle_factor": struct.unpack_from("<H", data, 10)[0],
-        "assign_activate": assign_activate,
         "assign_activate_mode": dc_modes.get(assign_activate, f"mode_0x{assign_activate:04X}"),
-        "sync0_cycle_factor": struct.unpack_from("<H", data, 14)[0],
         "name": strings[name_idx] if 0 < name_idx < len(strings) else "",
         "description": strings[desc_idx] if 0 < desc_idx < len(strings) else "",
     }

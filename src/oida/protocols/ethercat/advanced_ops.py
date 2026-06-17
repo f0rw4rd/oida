@@ -53,17 +53,12 @@ class AdvancedOpsMixin(_ScannerBase):
             # AL Status registers
             al_status_data = read_reg(0x0130, 2)
             al_code_data = read_reg(0x0134, 2)
-            al_control_data = read_reg(0x0120, 2)
 
             if al_status_data:
                 al_status = struct.unpack("<H", al_status_data)[0]
-                base_state = al_status & 0x0F
-                error = bool(al_status & 0x10)
                 slave_data["al_status"] = {
                     "raw": f"0x{al_status:04X}",
                     "state": self._get_slave_state_name(al_status),
-                    "base_state": base_state,
-                    "error_flag": error,
                 }
 
             if al_code_data:
@@ -72,10 +67,6 @@ class AdvancedOpsMixin(_ScannerBase):
                     "raw": f"0x{al_code:04X}",
                     "meaning": self._get_al_status_error(al_code),
                 }
-
-            if al_control_data:
-                al_ctrl = struct.unpack("<H", al_control_data)[0]
-                slave_data["al_control"] = f"0x{al_ctrl:04X}"
 
             # SyncManager configuration
             slave_data["sync_managers"] = []
@@ -176,11 +167,8 @@ class AdvancedOpsMixin(_ScannerBase):
 
             # Watchdog config
             wd_div = read_reg(0x0420, 2)
-            wd_pdo = read_reg(0x0442, 2)
             if wd_div:
                 slave_data["watchdog_divider"] = struct.unpack("<H", wd_div)[0]
-            if wd_pdo and len(wd_pdo) >= 2:
-                slave_data["watchdog_pdo_timeout"] = struct.unpack("<H", wd_pdo)[0]
 
             results[i + 1] = slave_data
 

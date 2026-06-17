@@ -321,13 +321,10 @@ class CoeOpsMixin(_ScannerBase):
             val = int.from_bytes(data, "little")
             return ("UINT64", f"0x{val:016X}")
         else:
-            # Try to decode as string
-            try:
-                text = data.decode("utf-8", errors="ignore").rstrip("\x00")
-                if text and all(c.isprintable() or c.isspace() for c in text):
-                    return (f"STRING[{size}]", f'"{text}"')
-            except Exception as e:
-                self.logger.debug(f"EtherCAT CoE: SDO value UTF-8 decode failed: {e}")
+            # Try to decode as string (errors="ignore" never raises)
+            text = data.decode("utf-8", errors="ignore").rstrip("\x00")
+            if text and all(c.isprintable() or c.isspace() for c in text):
+                return (f"STRING[{size}]", f'"{text}"')
             # Fall back to hex for unknown types
             return (f"BYTES[{size}]", data_hex[:32] + ("..." if len(data_hex) > 32 else ""))
 
@@ -396,15 +393,11 @@ class CoeOpsMixin(_ScannerBase):
                     f"  0x{index:04X}:{subindex} = {data.hex()} (value: {result['value']})"
                 )
             else:
-                # Try as string
-                try:
-                    text = data.decode("utf-8", errors="ignore").rstrip("\x00")
-                    if text.isprintable():
-                        result["text"] = text
-                        self.logger.success(f'  0x{index:04X}:{subindex} = "{text}"')
-                    else:
-                        self.logger.success(f"  0x{index:04X}:{subindex} = {data.hex()}")
-                except Exception:
+                # Try as string (errors="ignore" never raises)
+                text = data.decode("utf-8", errors="ignore").rstrip("\x00")
+                if text.isprintable():
+                    self.logger.success(f'  0x{index:04X}:{subindex} = "{text}"')
+                else:
                     self.logger.success(f"  0x{index:04X}:{subindex} = {data.hex()}")
 
         except Exception as e:

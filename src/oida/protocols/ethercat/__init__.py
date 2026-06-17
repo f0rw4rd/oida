@@ -34,9 +34,6 @@ from .reporting import ReportingMixin
 # Lazy imports - only load when actually used
 _pysoem = lazy_import("pysoem", "EtherCAT")
 
-# Module-level exports for test compatibility
-pysoem = None
-
 
 def _get_pysoem():
     """Get pysoem module, raising DependencyError if not available."""
