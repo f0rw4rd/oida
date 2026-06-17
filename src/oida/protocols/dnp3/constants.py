@@ -22,8 +22,6 @@ _FLAG_BITS: List[Tuple[int, str]] = [
 
 def _decode_flags(flags_val: int) -> str:
     """Decode DNP3 quality flags bitmask into abbreviated string."""
-    if not isinstance(flags_val, int):
-        return str(flags_val)
     parts = [abbr for mask, abbr in _FLAG_BITS if flags_val & mask]
     return ",".join(parts) if parts else "0"
 

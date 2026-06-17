@@ -58,70 +58,16 @@ class dnp3(NetworkConnection):
         """Build scanner args dict, mapping CLI attribute names to scanner parameter names."""
         args_dict = self._convert_args_to_dict()
 
-        # Map CLI arg names (hyphenated by _convert_args_to_dict) to scanner parameter names.
-        # _convert_args_to_dict converts underscores to hyphens, so keys here must match.
+        # Map CLI arg names (hyphenated by _convert_args_to_dict) to scanner parameter
+        # names. _convert_args_to_dict stores both hyphen and underscore forms and the
+        # scanner reads hyphenated keys directly, so only genuine renames belong here.
         mapping = {
             "master-addr": "master-address",
             "outstation-addr": "outstation-address",
             "class-poll": "read-class",
-            "skip-device-attrs": "skip-device-attrs",
             "dump-attrs": "device-attributes",
             "bo-sbo": "sbo",
             "bo-direct": "control",
-            # control-code stays as-is (scanner reads it directly)
-            "cold-restart": "cold-restart",
-            "warm-restart": "warm-restart",
-            "time-sync": "time-sync",
-            "tls-cert": "tls-cert",
-            "tls-key": "tls-key",
-            "read-variation": "read-variation",
-            "scan-range": "scan-range",
-            # Analog output features
-            "ao-direct": "ao-direct",
-            "ao-sbo": "ao-sbo",
-            "ao-value": "ao-value",
-            "ao-type": "ao-type",
-            # File operations
-            "list-dir": "list-dir",
-            "read-file": "read-file",
-            "file-info": "file-info",
-            "save-file": "save-file",
-            "delete-file": "delete-file",
-            "write-file": "write-file",
-            "write-data": "write-data",
-            "file-auth": "file-auth",
-            # Point enumeration
-            "enumerate-points": "enumerate-points",
-            # Unsolicited response control
-            "enable-unsol": "enable-unsol",
-            "disable-unsol": "disable-unsol",
-            # Dead band configuration
-            "write-deadband": "write-deadband",
-            "deadband-type": "deadband-type",
-            # Freeze operations
-            "freeze-immediate": "freeze-immediate",
-            "freeze-clear": "freeze-clear",
-            "freeze-at-time": "freeze-at-time",
-            "freeze-no-ack": "freeze-no-ack",
-            # Application control
-            "stop-app": "stop-app",
-            "start-app": "start-app",
-            "init-data": "init-data",
-            "init-app": "init-app",
-            # Configuration management
-            "save-config": "save-config",
-            "activate-config": "activate-config",
-            # Diagnostic operations
-            "no-ack": "no-ack",
-            "delay-measure": "delay-measure",
-            # Security statistics
-            "security-stats": "security-stats",
-            # Transport options (pass through directly, no rename needed)
-            # transport, serial-device, baud, data-bits, stop-bits, parity
-            # SA options (pass through directly)
-            # sa, sa-user, sa-key
-            # Channel retry (pass through directly)
-            # retry-min, retry-max, no-reconnect
         }
 
         for attr_name, scanner_key in mapping.items():
@@ -130,9 +76,9 @@ class dnp3(NetworkConnection):
                 args_dict[scanner_key] = value
 
         # Map restart flags to restart mode
-        if args_dict.get("cold-restart") or args_dict.get("cold_restart"):
+        if args_dict.get("cold-restart"):
             args_dict["restart"] = "cold"
-        elif args_dict.get("warm-restart") or args_dict.get("warm_restart"):
+        elif args_dict.get("warm-restart"):
             args_dict["restart"] = "warm"
 
         return args_dict
