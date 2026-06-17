@@ -151,7 +151,6 @@ class GOOSEScanner(SerialScanner):
 
         # Discovered GOOSE messages
         self.goose_sources = {}  # MAC -> list of messages
-        self.gocb_info = []  # GoCB enumeration results
 
         # Active GooseSubscriber for cleanup
         self._goose_subscriber = None
@@ -311,16 +310,24 @@ class GOOSEScanner(SerialScanner):
         def on_message(msg):
             """Callback invoked by GooseSubscriber for each received GOOSE message."""
             try:
-                # Extract src_mac from the raw subscriber before converting.
-                # GooseSubscriber_getSrcMac fills a 6-byte buffer with the
-                # source MAC of the last received frame.
+                # Extract the L2 / link-layer fields the high-level
+                # GooseMessage does not carry (src/dst MAC, VLAN, test flag)
+                # from the raw subscriber before converting. The getters fill
+                # buffers / return scalars for the last received frame.
                 try:
                     if sub._subscriber is not None:
-                        mac_buf = bytearray(6)
-                        _pyiec61850_raw.GooseSubscriber_getSrcMac(sub._subscriber, mac_buf)
-                        msg.src_mac = bytes(mac_buf)
+                        raw_sub = sub._subscriber
+                        src_buf = bytearray(6)
+                        _pyiec61850_raw.GooseSubscriber_getSrcMac(raw_sub, src_buf)
+                        msg.src_mac = bytes(src_buf)
+                        dst_buf = bytearray(6)
+                        _pyiec61850_raw.GooseSubscriber_getDstMac(raw_sub, dst_buf)
+                        msg.dst_mac = bytes(dst_buf)
+                        msg.vlan_id = _pyiec61850_raw.GooseSubscriber_getVlanId(raw_sub)
+                        msg.vlan_prio = _pyiec61850_raw.GooseSubscriber_getVlanPrio(raw_sub)
+                        msg.is_test = bool(_pyiec61850_raw.GooseSubscriber_isTest(raw_sub))
                 except Exception as e:
-                    logger.debug(f"if sub._subscriber is not None:: {e}")
+                    logger.debug(f"raw subscriber field extraction failed: {e}")
 
                 msg_info = self._goose_message_to_dict(msg)
                 messages.append(msg_info)
@@ -412,10 +419,21 @@ class GOOSEScanner(SerialScanner):
         if msg.data_set:
             info["dataset_name"] = msg.data_set
 
-        # src_mac is set dynamically on the GooseMessage in on_message()
+        # src_mac / dst_mac / vlan / is_test are set dynamically on the
+        # GooseMessage in on_message() from the raw subscriber, since the
+        # high-level GooseMessage does not carry L2 / link-layer fields.
         src_mac = getattr(msg, "src_mac", None)
         if src_mac:
             info["src_mac"] = self._format_mac(src_mac)
+        dst_mac = getattr(msg, "dst_mac", None)
+        if dst_mac:
+            info["dst_mac"] = self._format_mac(dst_mac)
+        vlan_id = getattr(msg, "vlan_id", None)
+        if vlan_id is not None:
+            info["vlan_id"] = vlan_id
+        vlan_prio = getattr(msg, "vlan_prio", None)
+        if vlan_prio is not None:
+            info["vlan_prio"] = vlan_prio
 
         info["appid"] = msg.app_id
         info["st_num"] = msg.st_num
@@ -425,16 +443,9 @@ class GOOSEScanner(SerialScanner):
         info["needs_commission"] = msg.needs_commissioning
         info["time_allowed_to_live"] = msg.time_allowed_to_live
         info["dataset_size"] = msg.num_data_set_entries
-        # IEC 61850-8-1 §A.5 GOOSE PDU 'test' boolean flag. Was never
-        # populated, so _display_msg's `if msg.get("is_test"):` warning
-        # and _check_test_simulation_flag's `[m for m in messages if
-        # m.get("is_test")]` block were dead code. Pyiec61850 exposes
-        # the field as either 'is_test' (newer) or 'test' (legacy);
-        # accept both.
-        is_test = getattr(msg, "is_test", None)
-        if is_test is None:
-            is_test = getattr(msg, "test", None)
-        info["is_test"] = bool(is_test) if is_test is not None else False
+        # IEC 61850-8-1 §A.5 GOOSE PDU 'test' boolean flag, extracted from
+        # the raw subscriber in on_message() (GooseSubscriber_isTest).
+        info["is_test"] = bool(getattr(msg, "is_test", False))
 
         if msg.values:
             info["dataset_values"] = msg.values
@@ -502,17 +513,14 @@ class GOOSEScanner(SerialScanner):
         return d
 
     def _format_mac(self, mac_data: Any) -> str:
-        """Format MAC address bytes to string."""
-        try:
-            if isinstance(mac_data, (bytes, bytearray)):
-                return ":".join(f"{b:02X}" for b in mac_data[:6])
-            elif isinstance(mac_data, str):
-                return mac_data
-            elif hasattr(mac_data, "__len__") and len(mac_data) >= 6:
-                return ":".join(f"{mac_data[i]:02X}" for i in range(6))
-            return str(mac_data)
-        except Exception:
-            return str(mac_data)
+        """Format MAC address bytes to a colon-separated hex string.
+
+        Callers always pass bytes (from the raw subscriber MAC buffers);
+        anything else falls back to str().
+        """
+        if isinstance(mac_data, (bytes, bytearray)):
+            return ":".join(f"{b:02X}" for b in mac_data[:6])
+        return str(mac_data)
 
     def _display_goose_message(self, msg: Dict[str, Any], is_new: bool = False) -> None:
         """Display a captured GOOSE message in NXC style."""

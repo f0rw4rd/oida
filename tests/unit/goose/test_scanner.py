@@ -218,7 +218,6 @@ class TestGOOSEScannerInit(unittest.TestCase):
         self.assertEqual(scanner.mms_port, 102)
         self.assertEqual(scanner.interface, "eth0")
         self.assertEqual(scanner.goose_sources, {})
-        self.assertEqual(scanner.gocb_info, [])
         self.assertIsNone(scanner._goose_subscriber)
 
     def test_custom_timeout(self):
@@ -829,12 +828,12 @@ class TestFormatMac(unittest.TestCase):
         result = scanner._format_mac(mac)
         self.assertEqual(result, "01:0C:CD:01:00:01")
 
-    def test_format_indexable(self):
-        """Test formatting indexable (list) MAC address."""
+    def test_format_non_bytes_fallback(self):
+        """Test non-bytes input falls back to str() (caller always passes bytes)."""
         scanner = _make_scanner()
         mac = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]
         result = scanner._format_mac(mac)
-        self.assertEqual(result, "01:02:03:04:05:06")
+        self.assertEqual(result, str(mac))
 
     def test_format_short_bytes(self):
         """Test formatting bytes shorter than 6 (truncated)."""
