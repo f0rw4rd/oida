@@ -57,8 +57,6 @@ class TopicDiscoveryMixin:
 
         if sys_topics:
             version = broker_info.get("version", "unknown")
-            # Clean up version string (remove test markers like INSECURE)
-            version = version.replace(" (INSECURE)", "").replace("(INSECURE)", "").strip()
             self.logger.display(
                 f"$SYS enumeration complete: {len(sys_topics)} topics (broker: {version})"
             )
@@ -85,7 +83,6 @@ class TopicDiscoveryMixin:
                 qos=msg.qos,
                 retain=msg.retain,
             )
-            self.messages.append(mqtt_msg)
 
             if msg.topic not in messages_by_topic:
                 messages_by_topic[msg.topic] = []
@@ -259,15 +256,6 @@ class TopicDiscoveryMixin:
             found_topics.add(msg.topic)
             message_count += 1
             self.topics_discovered.add(msg.topic)
-
-            # Store message
-            mqtt_msg = MQTTMessage(
-                topic=msg.topic,
-                payload=msg.payload,
-                qos=msg.qos,
-                retain=msg.retain,
-            )
-            self.messages.append(mqtt_msg)
 
         conn.on_message = on_message
         conn.loop_start()

@@ -37,8 +37,6 @@ class AuthMixin:
                 "CRITICAL",
                 "Broker allows connections without credentials (CVE-2017-7650 style)",
             )
-
-        if success:
             self.logger.security_finding(
                 "Anonymous access",
                 category="ACCESS_CONTROL",
@@ -118,7 +116,6 @@ class AuthMixin:
 
             if self._test_credentials(user, passwd):
                 results["valid"].append({"username": user, "password": passwd})
-                self.valid_credentials.append((user, passwd))
                 self.logger.security_finding(
                     "Default credentials",
                     category="ACCESS_CONTROL",
