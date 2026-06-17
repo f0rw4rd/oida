@@ -44,9 +44,10 @@ class DiscoveryMixin:
         try:
             Client = _get_client_class()
             if gds_url:
-                # Connect to specific GDS endpoint
-                gds_client = Client(gds_url)
-                gds_client.timeout = getattr(self.args, "timeout", 5)
+                # Connect to specific GDS endpoint. asyncua reads `timeout` only
+                # from the constructor (no settable descriptor), so assigning
+                # gds_client.timeout afterwards was a silent no-op.
+                gds_client = Client(gds_url, timeout=getattr(self.args, "timeout", 5))
                 await gds_client.connect()
                 servers = await gds_client.find_servers_on_network()
                 await gds_client.disconnect()
@@ -268,7 +269,6 @@ class DiscoveryMixin:
                 display_cert_info(self.logger, server_cert, self.results.get("data"))
             except Exception as e:
                 logger.debug("show endpoints summary failed: %s", e)
-                pass
 
         # Collect security issues
         issues = []
@@ -307,7 +307,7 @@ class DiscoveryMixin:
         # Test if server accepts untrusted client certificates (only with --test-cert-trust)
         # This is a security vulnerability - servers should validate client certs
         if getattr(self.args, "test_cert_trust", False):
-            has_secure_endpoints = has_sign_only or any(
+            has_secure_endpoints = any(
                 ep_mode in ("Sign", "SignAndEncrypt")
                 for ep_mode in [
                     ep.SecurityMode.name

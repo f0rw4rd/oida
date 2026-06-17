@@ -26,11 +26,11 @@ class TestFuzzBoolFix(unittest.TestCase):
 class TestDurationArgNameFix(unittest.TestCase):
     def test_subscription_reads_duration_attr(self):
         src = _read("src/oida/protocols/opcua/mixins/subscriptions.py")
-        # Patched to read args.duration (argparse dest) with
-        # subscribe_duration as back-compat fallback.
+        # Reads args.duration (the argparse dest) rather than the
+        # never-existing subscribe_duration dest.
         # Whitespace-tolerant check — ruff format may flow this differently.
         self.assertIn('getattr(self.args, "duration", None)', src.replace("\n", " ").replace("  ", " ").replace("  ", " ").replace("  ", " "))
-        self.assertIn('"subscribe_duration"', src)
+        self.assertNotIn("subscribe_duration", src)
 
 
 class TestPolicyNoneUpgradeWarning(unittest.TestCase):

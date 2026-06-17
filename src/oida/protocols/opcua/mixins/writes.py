@@ -74,10 +74,17 @@ class WritesMixin:
             if dt_lower == "boolean":
                 return value_str.lower() in ("true", "1", "yes", "on")
 
-            # Integer types
-            if dt_lower in ("int16", "int32", "int64", "sbyte"):
-                return int(value_str)
-            if dt_lower in ("uint16", "uint32", "uint64", "byte"):
+            # Integer types (signed and unsigned both parse via int())
+            if dt_lower in (
+                "int16",
+                "int32",
+                "int64",
+                "sbyte",
+                "uint16",
+                "uint32",
+                "uint64",
+                "byte",
+            ):
                 return int(value_str)
 
             # Float types

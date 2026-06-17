@@ -6,93 +6,40 @@ Provides method discovery, invocation, and argument parsing functionality.
 
 from typing import Dict, List
 
-from ..helpers import _get_asyncua, ua, DANGEROUS_KEYWORDS
+from ..helpers import _get_asyncua
+
+# OPC UA namespace-0 built-in DataType NodeId identifiers -> type names.
+BUILTIN_TYPE_NAMES = {
+    1: "Boolean",
+    2: "SByte",
+    3: "Byte",
+    4: "Int16",
+    5: "UInt16",
+    6: "Int32",
+    7: "UInt32",
+    8: "Int64",
+    9: "UInt64",
+    10: "Float",
+    11: "Double",
+    12: "String",
+    13: "DateTime",
+    14: "Guid",
+    15: "ByteString",
+    16: "XmlElement",
+    17: "NodeId",
+    18: "ExpandedNodeId",
+    19: "StatusCode",
+    20: "QualifiedName",
+    21: "LocalizedText",
+    22: "ExtensionObject",
+    23: "DataValue",
+    24: "Variant",
+    25: "DiagnosticInfo",
+}
 
 
 class MethodsMixin:
     """Mixin providing OPC UA method operations."""
-
-    async def _discover_methods(self):
-        """Discover all callable methods in address space with executability check"""
-        self.logger.display("Discovering methods...")
-
-        methods_found = []
-
-        async def search_methods(node, depth=0):
-            if depth > 5:
-                return
-
-            try:
-                children = await node.get_children()
-                for child in children:
-                    try:
-                        node_class = await child.read_node_class()
-                        if node_class.name == "Method":
-                            name = await child.read_browse_name()
-                            method_info = {
-                                "node_id": str(child.nodeid),
-                                "name": name.Name,
-                            }
-
-                            # Check Executable/UserExecutable attributes
-                            can_anyone = True
-                            can_user = True
-                            try:
-                                executable = await child.read_attribute(ua.AttributeIds.Executable)
-                                user_executable = await child.read_attribute(
-                                    ua.AttributeIds.UserExecutable
-                                )
-                                can_anyone = executable.Value.Value
-                                can_user = user_executable.Value.Value
-                                method_info["executable"] = can_anyone
-                                method_info["user_executable"] = can_user
-                            except Exception as e:
-                                self.logger.debug(
-                                    f"Failed to get executable: {e}"
-                                )  # Some servers don't support these attributes
-
-                            # Check for dangerous methods
-                            is_dangerous = any(kw in name.Name.lower() for kw in DANGEROUS_KEYWORDS)
-
-                            # Build status prefix
-                            if can_user:
-                                status = "[CALLABLE]"
-                                log_fn = self.logger.success
-                            elif can_anyone:
-                                status = "[RESTRICTED]"
-                                log_fn = self.logger.warning
-                            else:
-                                status = "[DISABLED]"
-                                log_fn = self.logger.display
-
-                            # Log with danger indicator
-                            if is_dangerous:
-                                self.logger.warning(
-                                    f"[!] DANGEROUS {status} {name.Name} ({child.nodeid})"
-                                )
-                            else:
-                                log_fn(f"{status} {name.Name} ({child.nodeid})")
-
-                            methods_found.append(method_info)
-
-                        # Recurse into non-method nodes
-                        await search_methods(child, depth + 1)
-
-                    except Exception as e:
-                        self.logger.debug(f"Error checking child: {e}")
-
-            except Exception as e:
-                self.logger.debug(f"Error getting children: {e}")
-
-        # Start from objects node
-        objects = self._client.get_objects_node()
-        await search_methods(objects)
-
-        if methods_found:
-            self.logger.display(f"Found {len(methods_found)} methods")
-        else:
-            self.logger.display("Methods: None discovered in address space")
-        self.results["data"]["methods"] = methods_found
 
     async def _invoke_method(self, method_node_id: str):
         """Invoke an OPC UA method"""
@@ -263,36 +210,8 @@ class MethodsMixin:
             if hasattr(arg, "DataType"):
                 # DataType is a NodeId, resolve to name
                 dt_id = arg.DataType
-                # Common built-in type mappings
-                builtin_types = {
-                    1: "Boolean",
-                    2: "SByte",
-                    3: "Byte",
-                    4: "Int16",
-                    5: "UInt16",
-                    6: "Int32",
-                    7: "UInt32",
-                    8: "Int64",
-                    9: "UInt64",
-                    10: "Float",
-                    11: "Double",
-                    12: "String",
-                    13: "DateTime",
-                    14: "Guid",
-                    15: "ByteString",
-                    16: "XmlElement",
-                    17: "NodeId",
-                    18: "ExpandedNodeId",
-                    19: "StatusCode",
-                    20: "QualifiedName",
-                    21: "LocalizedText",
-                    22: "ExtensionObject",
-                    23: "DataValue",
-                    24: "Variant",
-                    25: "DiagnosticInfo",
-                }
                 if hasattr(dt_id, "Identifier") and dt_id.NamespaceIndex == 0:
-                    arg_info["data_type"] = builtin_types.get(dt_id.Identifier, str(dt_id))
+                    arg_info["data_type"] = BUILTIN_TYPE_NAMES.get(dt_id.Identifier, str(dt_id))
                 else:
                     arg_info["data_type"] = str(dt_id)
             if hasattr(arg, "Description") and arg.Description:
@@ -377,10 +296,6 @@ class MethodsMixin:
                         for arg in value:
                             arg_info = {
                                 "name": arg.Name if hasattr(arg, "Name") else "unknown",
-                                "data_type": str(arg.DataType)
-                                if hasattr(arg, "DataType")
-                                else "unknown",
-                                "value_rank": arg.ValueRank if hasattr(arg, "ValueRank") else -1,
                             }
                             # Map common data types
                             dt_id = (
@@ -398,30 +313,4 @@ class MethodsMixin:
 
     def _get_type_name(self, type_id: int) -> str:
         """Map OPC UA type ID to type name."""
-        type_names = {
-            1: "Boolean",
-            2: "SByte",
-            3: "Byte",
-            4: "Int16",
-            5: "UInt16",
-            6: "Int32",
-            7: "UInt32",
-            8: "Int64",
-            9: "UInt64",
-            10: "Float",
-            11: "Double",
-            12: "String",
-            13: "DateTime",
-            14: "Guid",
-            15: "ByteString",
-            17: "NodeId",
-            18: "ExpandedNodeId",
-            19: "StatusCode",
-            20: "QualifiedName",
-            21: "LocalizedText",
-            22: "ExtensionObject",
-            23: "DataValue",
-            24: "Variant",
-            25: "DiagnosticInfo",
-        }
-        return type_names.get(type_id, f"Unknown({type_id})")
+        return BUILTIN_TYPE_NAMES.get(type_id, f"Unknown({type_id})")
