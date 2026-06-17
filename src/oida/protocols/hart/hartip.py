@@ -98,11 +98,11 @@ try:
         get_parser,
     )
 
-    HARTIP_AVAILABLE = True
 except ImportError:  # pragma: no cover — gated by .[hart] extra
-    HARTIP_AVAILABLE = False
     # Assign None so module loads; check_dependencies() in scanner/nxc handles
-    # the actual install hint via lazy_import("hartip", "HART").
+    # the actual install hint via lazy_import("hartip", "HART"). No caller
+    # touches these names without first gating on _hartip.is_available, so
+    # plain None bindings (not callable stubs) are sufficient for re-export.
     HARTIPClient = HARTIPResponse = HARTIPHeader = HARTPdu = None  # type: ignore
     Device = DeviceInfo = Variable = None  # type: ignore
     HARTCommand = HARTResponseCode = HARTIPMessageType = HARTIPStatus = None  # type: ignore
@@ -113,33 +113,18 @@ except ImportError:  # pragma: no cover — gated by .[hart] extra
     MANUFACTURERS = UNITS = COMMAND_REGISTRY = {}  # type: ignore
     HARTIP_TCP_PORT = HARTIP_UDP_PORT = 5094
 
-    def _hartip_unavailable_str(*_args, **_kw):  # type: ignore
-        return ""
-
-    def _hartip_unavailable_list(*_args, **_kw):  # type: ignore
-        return []
-
-    def _hartip_unavailable_dict(*_args, **_kw):  # type: ignore
-        return {}
-
-    def _hartip_unavailable_bytes(*_args, **_kw):  # type: ignore
-        return b""
-
-    def _hartip_unavailable_none(*_args, **_kw):  # type: ignore
-        return None
-
-    get_vendor_name = get_unit_name = get_command_name = _hartip_unavailable_str  # type: ignore
-    get_device_type_name = get_physical_signaling_name = _hartip_unavailable_str  # type: ignore
-    get_alarm_selection_name = get_transfer_function_name = _hartip_unavailable_str  # type: ignore
-    get_write_protect_name = _hartip_unavailable_str  # type: ignore
-    decode_device_status = decode_extended_device_status = _hartip_unavailable_list  # type: ignore
-    decode_comm_error_flags = decode_cmd0_flags = _hartip_unavailable_list  # type: ignore
-    pack_ascii = unpack_ascii = _hartip_unavailable_bytes  # type: ignore
-    probe_server_version = _hartip_unavailable_none  # type: ignore
-    parse_cmd0 = parse_cmd1 = parse_cmd2 = parse_cmd3 = _hartip_unavailable_dict  # type: ignore
-    parse_cmd12 = parse_cmd13 = parse_cmd15 = _hartip_unavailable_dict  # type: ignore
-    parse_cmd20 = parse_cmd48 = parse_response = _hartip_unavailable_dict  # type: ignore
-    get_parser = _hartip_unavailable_none  # type: ignore
+    get_vendor_name = get_unit_name = get_command_name = None  # type: ignore
+    get_device_type_name = get_physical_signaling_name = None  # type: ignore
+    get_alarm_selection_name = get_transfer_function_name = None  # type: ignore
+    get_write_protect_name = None  # type: ignore
+    decode_device_status = decode_extended_device_status = None  # type: ignore
+    decode_comm_error_flags = decode_cmd0_flags = None  # type: ignore
+    pack_ascii = unpack_ascii = None  # type: ignore
+    probe_server_version = None  # type: ignore
+    parse_cmd0 = parse_cmd1 = parse_cmd2 = parse_cmd3 = None  # type: ignore
+    parse_cmd12 = parse_cmd13 = parse_cmd15 = None  # type: ignore
+    parse_cmd20 = parse_cmd48 = parse_response = None  # type: ignore
+    get_parser = None  # type: ignore
 
 __all__ = [
     # Core classes

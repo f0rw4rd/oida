@@ -15,10 +15,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -248,7 +244,7 @@ class EnumerationMixin(_ScannerBase):
                     probe_client.close()
 
             except Exception as e:
-                logger.debug(f"Failed to get probe_client: {e}")
+                self.logger.debug(f"Failed to get probe_client: {e}")
             return None
 
         progress = ProgressTracker(len(addresses), threshold=1.0, interval=0.5)
@@ -323,8 +319,3 @@ class EnumerationMixin(_ScannerBase):
 
         progress.finish()
         return results
-
-    def enumerate_device_specific_commands(self, start: int = 128, end: int = 253) -> List[int]:
-        """Enumerate device-specific commands (128-253)."""
-        result = self.enumerate_commands(f"{start}-{end}")
-        return result.get("supported", [])

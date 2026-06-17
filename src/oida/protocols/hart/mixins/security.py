@@ -23,7 +23,7 @@ else:
 class SecurityMixin(_ScannerBase):
     """Mixin providing security testing and authentication operations."""
 
-    def read_lock_state(self, client=None) -> int:
+    def read_lock_state(self) -> int:
         """Read device lock state (Command 76).
 
         Returns:
@@ -33,7 +33,7 @@ class SecurityMixin(_ScannerBase):
         from ..scanner import LockState
         from ..hartip import HARTResponseCode, HARTIPTimeoutError
 
-        client = client or self.client
+        client = self.client
         if not client:
             return LockState.UNKNOWN
 
@@ -55,7 +55,7 @@ class SecurityMixin(_ScannerBase):
 
         return LockState.UNKNOWN
 
-    def try_unlock(self, lock_code: str, client=None) -> bool:
+    def try_unlock(self, lock_code: str) -> bool:
         """Attempt to unlock device with given lock code.
 
         Args:
@@ -66,7 +66,7 @@ class SecurityMixin(_ScannerBase):
         """
         from ..hartip import HARTCommand, pack_ascii
 
-        client = client or self.client
+        client = self.client
         if not client:
             return False
 
@@ -86,7 +86,7 @@ class SecurityMixin(_ScannerBase):
             self.logger.debug(f"Failed to get code_padded: {e}")
             return False
 
-    def try_lock(self, lock_code: str, client=None) -> bool:
+    def try_lock(self, lock_code: str) -> bool:
         """Lock device with given lock code.
 
         Args:
@@ -97,7 +97,7 @@ class SecurityMixin(_ScannerBase):
         """
         from ..hartip import HARTCommand, pack_ascii
 
-        client = client or self.client
+        client = self.client
         if not client:
             return False
 

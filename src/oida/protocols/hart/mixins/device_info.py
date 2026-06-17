@@ -55,7 +55,6 @@ class DeviceInfoMixin(_ScannerBase):
             info.software_revision = lib_info.software_revision
             info.hardware_revision = lib_info.hardware_revision
             info.physical_signaling_code = lib_info.physical_signaling
-            info.flags = lib_info.flags
             info.unique_id = lib_info.unique_address
 
             # Derive write-protected / config-changed from flags

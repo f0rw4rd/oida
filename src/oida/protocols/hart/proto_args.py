@@ -156,11 +156,6 @@ Examples:
         metavar="RANGE",
         help="Command range to enumerate (default: 0-48)",
     )
-    scan_group.add_argument(
-        "--enumerate-device-specific",
-        action="store_true",
-        help="Enumerate device-specific commands (128-253)",
-    )
 
     # Security Options
     security_group = hart_parser.add_argument_group("Security Options")
@@ -168,16 +163,6 @@ Examples:
         "--security-analysis",
         action="store_true",
         help="Perform security analysis of the device",
-    )
-    security_group.add_argument(
-        "--probe-calibration",
-        action="store_true",
-        help="Test if calibration commands are accessible",
-    )
-    security_group.add_argument(
-        "--probe-write",
-        action="store_true",
-        help="Test if write commands are accessible",
     )
 
     # WirelessHART Options
@@ -302,15 +287,5 @@ Examples:
 
     # Standard discovery options (--quick, --discover, --full, --deep-scan)
     add_discovery_options(hart_parser)
-
-    # Scan Mode
-    mode_group = hart_parser.add_argument_group("Scan Mode")
-    mode_group.add_argument(
-        "--scan-mode",
-        type=str,
-        choices=["discovery", "enumeration", "full"],
-        default="enumeration",
-        help="Scanning mode (default: enumeration)",
-    )
 
     return hart_parser
