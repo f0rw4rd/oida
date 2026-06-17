@@ -31,7 +31,6 @@ from oida.protocols.astm.records import (
     CR,
     ENQ,
     EOT,
-    ETB,
     ETX,
     LF,
     NAK,
@@ -348,16 +347,6 @@ class TestSendFrame:
         assert result is False
         assert scanner.frame_number == 1  # Not incremented
 
-    def test_frame_intermediate(self):
-        mock_sock = _make_mock_socket([ACK])
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
-
-        scanner._send_frame("data", intermediate=True)
-
-        sent_data = mock_sock.sendall.call_args[0][0]
-        assert ETB in sent_data
-        assert ETX not in sent_data
-
     def test_frame_timeout(self):
         mock_sock = MagicMock()
         mock_sock.sendall.return_value = None
@@ -390,14 +379,13 @@ class TestReceiveFrame:
 
     def test_receive_valid_frame(self):
         scanner = _instantiate_scanner(_make_args())
-        builder = ASTMRecordBuilder()
 
         # Build a valid frame: STX + frame_num + data + ETX + checksum + CR + LF
         record_data = "H|\\^&|||OIDA"
         frame_num = b"1"
         data_bytes = record_data.encode()
         checksum_data = frame_num + data_bytes + ETX
-        checksum = builder._calculate_checksum(checksum_data)
+        checksum = scanner._calculate_checksum(checksum_data)
         frame = STX + checksum_data + checksum + CR + LF
 
         mock_sock = MagicMock()

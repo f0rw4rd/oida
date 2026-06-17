@@ -54,7 +54,11 @@ class SecurityMixin:
                     (f"{rec_type}_many_fields", f"{rec_type}|" + "|".join(["X"] * 100)),
                     (f"{rec_type}_long_field", f"{rec_type}|" + "A" * 5000),
                     (f"{rec_type}_special_chars", f"{rec_type}|<>&'\"\\/"),
-                    (f"{rec_type}_unicode", f"{rec_type}|test"),
+                    # Multibyte/non-ASCII payload: CJK, emoji, RTL override.
+                    (
+                        f"{rec_type}_unicode",
+                        f"{rec_type}|" + "\u4e2d\u6587\U0001f600\u202e",
+                    ),
                 ]
             )
 

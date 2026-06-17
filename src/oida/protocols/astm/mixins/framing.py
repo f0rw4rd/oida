@@ -53,19 +53,18 @@ class FramingMixin:
         total = sum(data) % 256
         return f"{total:02X}".encode()
 
-    def _send_frame(self, record_data: str, intermediate: bool = False) -> bool:
+    def _send_frame(self, record_data: str) -> bool:
         """Send ASTM framed data with checksum"""
         if not self.conn:
             return False
 
         try:
-            # Frame structure: STX + frame_num + data + ETX/ETB + checksum + CR + LF
+            # Frame structure: STX + frame_num + data + ETX + checksum + CR + LF
             frame_num = str(self.frame_number % 8).encode()
             data_bytes = record_data.encode("utf-8")
-            end_byte = ETB if intermediate else ETX
 
-            # Checksum covers: frame_num + data + ETX/ETB
-            checksum_data = frame_num + data_bytes + end_byte
+            # Checksum covers: frame_num + data + ETX
+            checksum_data = frame_num + data_bytes + ETX
             checksum = self._calculate_checksum(checksum_data)
 
             # Full frame
