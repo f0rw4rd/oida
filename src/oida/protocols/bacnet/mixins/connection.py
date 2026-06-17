@@ -28,19 +28,19 @@ class ConnectionMixin:
             interface = getattr(self.args, "interface", None)
             bbmd = getattr(self.args, "bbmd", None)
 
-            # Build connection kwargs
+            # Build connection kwargs. BAC0.lite's local-address parameter is
+            # 'ip' (not 'localIPAddr', which is the internal Lite attribute) —
+            # passing the latter raises TypeError and the --interface path
+            # fails silently as a generic "Failed to connect".
             kwargs = {}
             if interface:
-                kwargs["localIPAddr"] = interface
+                kwargs["ip"] = interface
             if bbmd:
-                # Parse BBMD address (IP:PORT format)
-                if ":" in bbmd:
-                    bbmd_ip, bbmd_port = bbmd.rsplit(":", 1)
-                    kwargs["bbmdAddress"] = bbmd_ip
-                    kwargs["bbmdTTL"] = 30
-                else:
-                    kwargs["bbmdAddress"] = bbmd
-                    kwargs["bbmdTTL"] = 30
+                # Parse BBMD address (IP:PORT format). BAC0 takes the BBMD as
+                # an "ip:port" string, so keep the port when one is supplied
+                # instead of discarding it.
+                kwargs["bbmdAddress"] = bbmd
+                kwargs["bbmdTTL"] = 30
 
             # Connect to BACnet network
             self.logger.display("Connecting to BACnet network...")

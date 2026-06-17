@@ -27,12 +27,8 @@ class ExportMixin:
             else:
                 return (0, 0)
 
-            obj_type = parts[0]
+            obj_type = OBJECT_TYPE_NAMES.get(parts[0], 0)
             instance = int(parts[1])
-
-            if isinstance(obj_type, str):
-                obj_type = OBJECT_TYPE_NAMES.get(obj_type, 0)
-
             return (obj_type, instance)
         if hasattr(obj_id, "objectType") and hasattr(obj_id, "objectIdentifier"):
             return (obj_id.objectType, obj_id.objectIdentifier[1])

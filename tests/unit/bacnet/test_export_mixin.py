@@ -22,7 +22,6 @@ def _create_instance(**kwargs):
     instance.devices = {}
     instance.objects = {}
     instance.bacnet = None
-    instance.host_info = {}
     return instance
 
 

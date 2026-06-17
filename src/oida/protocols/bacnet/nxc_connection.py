@@ -60,7 +60,6 @@ class bacnet(
         self.bacnet = None  # BAC0 connection
         self.devices = {}  # Discovered devices {device_id: device_info}
         self.objects = {}  # Enumerated objects {device_id: [objects]}
-        self.host_info = {}  # Host information from discovery
         super().__init__(args, db, host)
 
     def enum_host_info(self):
@@ -224,13 +223,10 @@ class bacnet(
             self.args.enum_bbmd = True
             self.args.enum_fdt = True
             self.args.enum_routers = True
-            # Dispatcher at line 443 reads args.networks (NOT
-            # enum_networks); the misnamed assignment meant the remote
-            # network discovery never triggered under the --assess-network
-            # shortcut despite the help text advertising it. Set both so
-            # other code paths reading enum_networks (if any) also work.
+            # The dispatcher reads args.networks (NOT enum_networks, which
+            # nothing consumes); a previous version set the wrong attribute so
+            # remote-network discovery never triggered under --assess-network.
             self.args.networks = True
-            self.args.enum_networks = True
 
         if getattr(self.args, "assess_access", False):
             self.args.check_anonymous = True

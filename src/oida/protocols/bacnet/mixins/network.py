@@ -141,49 +141,9 @@ class NetworkMixin:
         if not hasattr(self, "remote_networks"):
             self.remote_networks = []
 
-        # Method 1: Read router's network-number-quality-list
-        try:
-            device_id = list(self.devices.keys())[0] if self.devices else None
-            if device_id:
-                obj_id = ObjectIdentifier(("device", device_id))
-
-                request = ReadPropertyRequest(
-                    objectIdentifier=obj_id,
-                    propertyIdentifier=PropertyIdentifier("numberOfNetworkPorts"),
-                )
-                request.pduDestination = target_addr
-
-                try:
-                    response = await asyncio.wait_for(
-                        app.request(request), timeout=min(timeout, 3.0)
-                    )
-                    if response and not isinstance(
-                        response, (AbortPDU, ErrorPDU, RejectPDU, Error)
-                    ):
-                        if hasattr(response, "propertyValue") and hasattr(
-                            response.propertyValue, "tagList"
-                        ):
-                            tags = list(response.propertyValue.tagList)
-                            for tag in tags:
-                                if (
-                                    hasattr(tag, "tag_data")
-                                    and tag.tag_data
-                                    and len(tag.tag_data) <= 4
-                                ):
-                                    num_ports = int.from_bytes(tag.tag_data, "big")
-                                    self.logger.success(f"  Router has {num_ports} network port(s)")
-                                    break
-                except asyncio.TimeoutError as e:
-                    self.logger.debug(f"bacpypes3 discover networks failed: {e}")
-                    pass
-                except BaseException as e:
-                    self.logger.debug(f"bacpypes3 discover networks failed: {e}")
-                    pass
-
-        except BaseException as e:
-            self.logger.debug(f"Network port read error: {e}")
-
-        # Method 2: Probe for network-port objects (type 56)
+        # Probe for network-port objects (type 56). The port count is derived
+        # from the objects we actually find — bacpypes3 has no
+        # 'numberOfNetworkPorts' PropertyIdentifier to read directly.
         self.logger.display("  Probing for network-port objects...")
         network_ports = []
 
@@ -625,21 +585,14 @@ class NetworkMixin:
         # ══════════════════════════════════════════════════════════════════════
         self.logger.display("  Phase 1: Reading router network port configuration...")
 
-        device_obj_id = ObjectIdentifier(("device", device_id))
         network_ports = []  # list of dicts with port metadata
         mstp_ports = []  # subset that are MS/TP type
         security_findings = []
 
-        # Determine how many network ports the device has
-        num_ports = await _read_uint(device_obj_id, "numberOfNetworkPorts", target_addr)
-        if num_ports is not None:
-            self.logger.display(f"    Device reports {num_ports} network port(s)")
-        else:
-            num_ports = 0
-            self.logger.display("    Could not read numberOfNetworkPorts, probing instances...")
-
-        # Probe network-port object instances (type 56)
-        max_probe = max(num_ports + 2, 10) if num_ports else 10
+        # bacpypes3 has no 'numberOfNetworkPorts' PropertyIdentifier, so probe
+        # a fixed window of network-port object instances (type 56) directly.
+        self.logger.display("    Probing network-port object instances...")
+        max_probe = 10
         for port_instance in range(1, max_probe + 1):
             port_obj_id = ObjectIdentifier(("networkPort", port_instance))
 
@@ -677,7 +630,6 @@ class NetworkMixin:
                 "networkTypeName": net_type_str,
                 "networkNumber": net_number,
                 "macAddress": mac_display,
-                "macRaw": mac_raw,
             }
 
             # Read MS/TP-specific properties if this is an MS/TP port (type 2)
@@ -685,22 +637,16 @@ class NetworkMixin:
                 max_master = await _read_uint(port_obj_id, "maxMaster", target_addr)
                 max_info_frames = await _read_uint(port_obj_id, "maxInfoFrames", target_addr)
                 slave_proxy = await _read_bool(port_obj_id, "slaveProxyEnable", target_addr)
-                manual_slave_binding = await _read_bytes(
-                    port_obj_id, "manualSlaveAddressBinding", target_addr
-                )
                 auto_slave_discovery = await _read_bool(
                     port_obj_id, "autoSlaveDiscovery", target_addr
                 )
-                slave_poll_timeout = await _read_uint(port_obj_id, "slavePollTimeout", target_addr)
 
                 port_info.update(
                     {
                         "maxMaster": max_master,
                         "maxInfoFrames": max_info_frames,
                         "slaveProxyEnable": slave_proxy,
-                        "manualSlaveAddressBinding": manual_slave_binding,
                         "autoSlaveDiscovery": auto_slave_discovery,
-                        "slavePollTimeout": slave_poll_timeout,
                     }
                 )
                 mstp_ports.append(port_info)
@@ -726,7 +672,6 @@ class NetworkMixin:
                     mif = port.get("maxInfoFrames")
                     sp = port.get("slaveProxyEnable")
                     asd = port.get("autoSlaveDiscovery")
-                    spt = port.get("slavePollTimeout")
                     details = []
                     if mm is not None:
                         details.append(f"maxMaster={mm}")
@@ -736,8 +681,6 @@ class NetworkMixin:
                         details.append(f"slaveProxy={'enabled' if sp else 'disabled'}")
                     if asd is not None:
                         details.append(f"autoSlaveDiscovery={'enabled' if asd else 'disabled'}")
-                    if spt is not None:
-                        details.append(f"slavePollTimeout={spt}ms")
                     if details:
                         self.logger.display(f"        MS/TP config: {', '.join(details)}")
         else:
@@ -895,8 +838,6 @@ class NetworkMixin:
                                 "maxApduLengthAccepted": max_apdu,
                                 "segmentationSupported": seg_supported,
                                 "vendorId": vendor_id,
-                                "routerPort": mstp_port["instance"],
-                                "routerAddress": str(target_addr),
                             }
 
                             all_mstp_devices[(net_num, mac_addr)] = device_info
