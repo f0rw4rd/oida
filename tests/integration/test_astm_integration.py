@@ -220,6 +220,11 @@ def _instantiate_astm_nxc(args, mock_sock=None):
     return instance
 
 
+def _astm_checksum(data: bytes) -> bytes:
+    """ASTM modulus-256 checksum as 2 uppercase hex chars (matches FramingMixin)."""
+    return f"{sum(data) % 256:02X}".encode()
+
+
 def _build_server_header_frame(
     sender_name="COBAS_8000",
     vendor="Roche",
@@ -240,7 +245,7 @@ def _build_server_header_frame(
     data_bytes = header.encode("utf-8")
     end_byte = ETX
     checksum_data = frame_num + data_bytes + end_byte
-    checksum = builder._calculate_checksum(checksum_data)
+    checksum = _astm_checksum(checksum_data)
     return STX + checksum_data + checksum + CR + LF
 
 
@@ -1979,12 +1984,11 @@ class TestASTMFraming:
 
         assert instance.results["success"] is True
         # Build a valid frame to receive
-        builder = ASTMRecordBuilder()
         record = "H|\\^&|||OIDA"
         frame_num = b"1"
         data_bytes = record.encode("utf-8")
         checksum_data = frame_num + data_bytes + ETX
-        checksum = builder._calculate_checksum(checksum_data)
+        checksum = _astm_checksum(checksum_data)
         frame = STX + checksum_data + checksum + CR + LF
 
         recv_sock = _make_mock_socket([frame])
