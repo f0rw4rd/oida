@@ -17,56 +17,6 @@ from ....utils import SecurityAnalyzer
 class SecurityMixin:
     """Mixin providing security operations."""
 
-    async def _test_bcu_auth(self, knx: "XKNX", address: str, key_hex: str) -> Dict[str, Any]:
-        """Test BCU authentication with a key"""
-        self.logger.debug(f"BCU auth test: device={address}")
-        result = {
-            "address": address,
-            "key": key_hex,
-            "success": False,
-            "auth_level": None,
-            "error": None,
-        }
-
-        try:
-            # Parse key
-            key = int(key_hex, 16)
-            self.logger.display(f"Testing BCU auth on {address} with key 0x{key:08X}")
-
-            addr = _xknx_cls.IndividualAddress(address)
-            mgmt = knx.management
-
-            async with mgmt.connection(addr) as p2p:
-                try:
-                    resp = await p2p.request(
-                        _xknx_cls.AuthorizeRequest(key), _xknx_cls.AuthorizeResponse
-                    )
-                    if resp and resp.payload:
-                        level = resp.payload.level
-                        result["auth_level"] = level
-
-                        # Level 3 and 15 typically indicate no access
-                        if level != 3 and level != 15:
-                            result["success"] = True
-                            self.logger.display(
-                                f"  AUTH SUCCESS! Key 0x{key:08X} grants level {level}"
-                            )
-                        else:
-                            self.logger.display(f"  Auth failed: level {level} (no access)")
-
-                except Exception as e:
-                    result["error"] = str(e)
-                    self.logger.debug(f"  Auth request failed: {e}")
-
-        except ValueError as e:
-            result["error"] = f"Invalid key format: {e}"
-            self.logger.fail(result["error"])
-        except Exception as e:
-            result["error"] = str(e)
-            self.logger.fail(f"Error testing BCU auth: {e}")
-
-        return result
-
     async def _brute_bcu_auth(
         self,
         knx: "XKNX",
@@ -165,40 +115,17 @@ class SecurityMixin:
 
     async def _write_bcu_key(self, knx: "XKNX", address: str, key_arg: str) -> Dict[str, Any]:
         """Write BCU key (DANGEROUS operation) - NOT IMPLEMENTED"""
-        result = {
-            "address": address,
-            "key_arg": key_arg,
-            "success": False,
-            "new_level": None,
-            "error": None,
-        }
-
-        # Notify user immediately that this feature is not available
+        # Notify user that this feature is not available (KeyWriteRequest APCI
+        # is not exposed by xknx, so there is no way to implement it yet).
         self.logger.fail("BCU key writing is NOT IMPLEMENTED in current xknx version")
         self.logger.display("This feature requires custom APCI implementation (KeyWriteRequest)")
 
-        try:
-            # Parse KEY:LEVEL format for validation only
-            parts = key_arg.split(":")
-            if len(parts) != 2:
-                result["error"] = "Expected format: KEY:LEVEL (e.g., 'FFFFFFFF:0')"
-                return result
-
-            key = int(parts[0], 16)
-            level = int(parts[1])
-
-            self.logger.debug(f"Requested key: 0x{key:08X} level: {level} for {address}")
-
-            # Feature not available
-            result["error"] = "KeyWriteRequest not implemented - requires custom APCI"
-
-        except ValueError as e:
-            result["error"] = f"Invalid key/level format: {e}"
-        except Exception as e:
-            result["error"] = str(e)
-            self.logger.fail(f"Error writing BCU key: {e}")
-
-        return result
+        return {
+            "address": address,
+            "key_arg": key_arg,
+            "success": False,
+            "error": "KeyWriteRequest not implemented - requires custom APCI",
+        }
 
     async def _test_read_access(self, knx: "XKNX", devices: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Test read access to devices"""
@@ -231,7 +158,7 @@ class SecurityMixin:
                                 _xknx_cls.MemoryRead(address=mem_addr, count=2),
                                 _xknx_cls.MemoryResponse,
                             )
-                            data = resp.data if resp else None
+                            data = resp.payload.data if resp and resp.payload else None
                             if data:
                                 device_results["readable_addresses"].append(
                                     {
@@ -287,7 +214,7 @@ class SecurityMixin:
                                 _xknx_cls.MemoryRead(address=mem_addr, count=1),
                                 _xknx_cls.MemoryResponse,
                             )
-                            original_data = resp.data if resp else None
+                            original_data = resp.payload.data if resp and resp.payload else None
                             if original_data:
                                 # Write the same value back via MemoryWrite APCI.
                                 await p2p.request(
@@ -328,9 +255,6 @@ class SecurityMixin:
 
         # Add KNX specific security concerns
         analysis["concerns"] = []
-
-        # Get target for security reporting
-        host, port = self.get_target_info()
 
         # Report no encryption
         self.logger.security_finding("No encryption", detail="KNX protocol does not use encryption")

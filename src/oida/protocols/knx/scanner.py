@@ -10,11 +10,9 @@ Uses mixin classes for feature-specific operations:
 """
 
 import asyncio
-import warnings
 from typing import Dict, List, Any, TYPE_CHECKING
 
-# Suppress xknx asyncio warnings without using logging module
-warnings.filterwarnings("ignore", message=".*Future exception was never retrieved.*")
+# xknx asyncio warning suppression is configured once in this package's __init__.
 
 from ...utils import (
     create_protocol_module,
@@ -67,17 +65,9 @@ class KNXScanner(
 
     def __init__(self, args: Dict[str, Any], logger=None):
         super().__init__(args)
-        self.interface = args.get("interface", "")
         self.test_read = parse_bool(args.get("test-read", True))
         self.test_write = parse_bool(args.get("test-write", False))
         self.test_routing = parse_bool(args.get("test-routing", False))
-
-        # Address scanning options
-        self.auto_addr = parse_bool(args.get("auto-addr", False))
-        self.addr_min = int(args.get("addr-min", 0))
-        self.addr_max = int(args.get("addr-max", 255))
-        self.device_range = args.get("device-range", "1.1.1-1.1.255")
-        self.wordlist_path = args.get("wordlist-path", "")
 
         # Timeout settings
         self.discovery_timeout = int(args.get("discovery-timeout", 5))
@@ -88,8 +78,6 @@ class KNXScanner(
 
         # Internal state
         self.knx_instance = None
-        self.discovered_devices = []
-        self.device_info = {}
 
     # ========================================================================
     def get_protocol_name(self) -> str:
@@ -98,7 +86,8 @@ class KNXScanner(
     def get_default_port(self) -> int:
         return 3671
 
-    def check_dependencies(self) -> bool:
+    @staticmethod
+    def check_dependencies() -> bool:
         return _xknx.is_available
 
     def connect(self) -> Any:
@@ -531,10 +520,10 @@ class KNXScanner(
                 addresses.append(device_range.strip())
 
         except Exception:
+            # Abort on a malformed range rather than silently scanning a
+            # hardcoded 255-address fallback the caller never asked for.
             self.logger.fail(f"Invalid device range format: {device_range}")
-            # Fallback to default range
-            for i in range(1, 256):
-                addresses.append(f"1.1.{i}")
+            return []
 
         return addresses
 

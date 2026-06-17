@@ -31,10 +31,6 @@ from .ets import (
     display_knxproj_data,
 )
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 class knx(NetworkConnection):
     """NXC-style KNX scanner (callable)."""
@@ -46,7 +42,6 @@ class knx(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "KNX"
         self.default_port = 3671
-        self._scan_results = None
         # Set port before super().__init__() which calls proto_flow()
         self.port = getattr(args, "port", None) or self.default_port
         super().__init__(args, db, host)
@@ -425,7 +420,6 @@ class knx(NetworkConnection):
         self.logger.display("Executing scan...")
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
-        self._scan_results = scan_results
         self.logger.debug(f"Scan completed, result keys: {list(scan_results.keys())}")
 
     def cleanup(self):
@@ -517,9 +511,4 @@ class knx(NetworkConnection):
     @staticmethod
     def check_dependencies() -> bool:
         """Check if KNX dependencies are available."""
-        try:
-            scanner = KNXScanner.__new__(KNXScanner)
-            return scanner.check_dependencies()
-        except Exception as e:
-            logger.debug(f"Failed to get scanner: {e}")
-            return False
+        return KNXScanner.check_dependencies()

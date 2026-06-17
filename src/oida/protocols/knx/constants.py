@@ -34,8 +34,6 @@ class _xknx_cls:
     IndividualAddress = None
     Telegram = None
     GroupAddress = None
-    tpci = None
-    P2PConnection = None
     nm_individual_address_check = None
     dm_restart = None
     # APCI classes
@@ -55,10 +53,8 @@ class _xknx_cls:
     ADCRead = None
     ADCResponse = None
     GroupValueWrite = None
-    GroupValueRead = None
     AuthorizeRequest = None
     AuthorizeResponse = None
-    Restart = None
     IndividualAddressSerialRead = None
     IndividualAddressSerialResponse = None
     MemoryExtendedRead = None
@@ -82,7 +78,7 @@ def _ensure_xknx_classes():
         if _xknx_cls.loaded:
             return  # Already loaded by another thread
 
-        # Get core classes from helpers
+        # Get core classes from helpers (tpci is unpacked elsewhere directly)
         (
             _xknx_cls.XKNX,
             _xknx_cls.ConnectionConfig,
@@ -91,13 +87,8 @@ def _ensure_xknx_classes():
             _xknx_cls.IndividualAddress,
             _xknx_cls.Telegram,
             _xknx_cls.GroupAddress,
-            _xknx_cls.tpci,
+            _,
         ) = _get_xknx_classes()
-
-        # Get P2P connection (optional)
-        from .helpers import _get_p2p_connection
-
-        _xknx_cls.P2PConnection = _get_p2p_connection()
 
         # Get management procedures
         _get_xknx()
@@ -127,10 +118,8 @@ def _ensure_xknx_classes():
         _xknx_cls.ADCRead = apci["ADCRead"]
         _xknx_cls.ADCResponse = apci["ADCResponse"]
         _xknx_cls.GroupValueWrite = apci["GroupValueWrite"]
-        _xknx_cls.GroupValueRead = apci["GroupValueRead"]
         _xknx_cls.AuthorizeRequest = apci["AuthorizeRequest"]
         _xknx_cls.AuthorizeResponse = apci["AuthorizeResponse"]
-        _xknx_cls.Restart = apci["Restart"]
         _xknx_cls.IndividualAddressSerialRead = apci["IndividualAddressSerialRead"]
         _xknx_cls.IndividualAddressSerialResponse = apci["IndividualAddressSerialResponse"]
 
@@ -145,36 +134,6 @@ protocol_options: Dict[str, Dict[str, Any]] = {
     "interface": {
         "type": "string",
         "description": "Network interface for KNX communication",
-        "required": False,
-        "default": "",
-    },
-    "auto-addr": {
-        "type": "bool",
-        "description": "Automatically scan for individual addresses",
-        "required": False,
-        "default": False,
-    },
-    "addr-min": {
-        "type": "int",
-        "description": "Minimum address for scanning",
-        "required": False,
-        "default": 0,
-    },
-    "addr-max": {
-        "type": "int",
-        "description": "Maximum address for scanning",
-        "required": False,
-        "default": 255,
-    },
-    "device-range": {
-        "type": "string",
-        "description": "Device address range to scan (e.g., 1.1.1-1.1.255)",
-        "required": False,
-        "default": "1.1.1-1.1.255",
-    },
-    "wordlist-path": {
-        "type": "string",
-        "description": "Path to wordlist file for password attacks",
         "required": False,
         "default": "",
     },

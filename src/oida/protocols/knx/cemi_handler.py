@@ -6,7 +6,7 @@ for parallel device discovery.
 
 import asyncio
 from datetime import datetime
-from typing import Dict, Set, List, Any, Callable, Optional, TYPE_CHECKING
+from typing import Dict, Set, List, Any, TYPE_CHECKING
 
 from .helpers import (
     _get_cemi_classes,
@@ -34,14 +34,11 @@ class CustomCEMIHandler:
         """
         self.xknx = xknx_instance
         self.is_in_discovery = False
-        self._original_handler = None
         self.logger = logger
-        self.alive_bus_members: Set[str] = set()
 
     async def fast_bus_discovery(
         self,
         bus_range: str,
-        callback: Optional[Callable[[str], None]] = None,
         timeout: int = 5,
         listen_time: int = 0,
     ) -> Dict[str, Any]:
@@ -52,7 +49,6 @@ class CustomCEMIHandler:
 
         Args:
             bus_range: Address range to scan (e.g., "1.1.1-1.1.255")
-            callback: Optional callback for each found device
             timeout: Seconds to wait for responses (default: 5)
             listen_time: Additional seconds to listen for traffic after scan (0 = disabled)
 
@@ -62,10 +58,9 @@ class CustomCEMIHandler:
         self.logger.debug(
             f"fast_bus_discovery: range={bus_range}, timeout={timeout}s, listen={listen_time}s"
         )
-        self.alive_bus_members.clear()
 
-        # Get required classes
-        _, CEMIFrame, CEMIMessageCode = _get_cemi_classes()
+        # Get required classes (CEMIFrame is unused here)
+        _, _, CEMIMessageCode = _get_cemi_classes()
         _, _, _, _, _, Telegram, _, tpci = _get_xknx_classes()
 
         self.is_in_discovery = True
@@ -102,9 +97,6 @@ class CustomCEMIHandler:
                     src_addr = str(cemi.data.src_addr)
                     if src_addr in pending_probes and src_addr not in found_devices:
                         found_devices.add(src_addr)
-                        self.alive_bus_members.add(src_addr)
-                        if callback:
-                            callback(src_addr)
                         self.logger.success(f"Found device: {src_addr}")
 
             intercepting._intercept_cb = _on_cemi
