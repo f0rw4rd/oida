@@ -97,13 +97,11 @@ class HostEnumerationMixin(_ScannerBase):
         transport,
         context,
         columns: Dict[str, str],
-        max_entries: int = 2000,
     ) -> Dict[str, Dict]:
         """Walk multi-column SNMP table, correlate rows by OID index suffix.
 
         Args:
             columns: {"col_name": "base_oid", ...}
-            max_entries: Maximum rows to collect
 
         Returns:
             {index_suffix: {col_name: value, ...}, ...}
@@ -115,7 +113,7 @@ class HostEnumerationMixin(_ScannerBase):
         # enum_limit caps the number of distinct rows (index suffixes) for the
         # WHOLE table, not per column -- otherwise a wide table multiplies the cap
         # by the column count and the row dict grows unbounded across columns.
-        limit = self.enum_limit if self.enum_limit > 0 else max_entries
+        limit = self.enum_limit if self.enum_limit > 0 else 2000
         sentinels = (rfc1905.NoSuchObject, rfc1905.NoSuchInstance, rfc1905.EndOfMibView)
 
         for col_name, base_oid in columns.items():
@@ -700,7 +698,7 @@ class HostEnumerationMixin(_ScannerBase):
         rows = await self._walk_table(engine, auth_data, transport, context, columns)
 
         routes = []
-        for idx, data in rows.items():
+        for _, data in rows.items():
             type_int = int(data.get("type", "0")) if data.get("type", "").isdigit() else 0
             routes.append(
                 {
@@ -1005,7 +1003,7 @@ class HostEnumerationMixin(_ScannerBase):
         rows = await self._walk_table(engine, auth_data, transport, context, columns)
 
         shares = []
-        for idx, data in rows.items():
+        for _, data in rows.items():
             shares.append(
                 {
                     "name": data.get("name", ""),
@@ -1425,7 +1423,7 @@ class HostEnumerationMixin(_ScannerBase):
         rows = await self._walk_table(engine, auth_data, transport, context, columns)
 
         services = []
-        for idx, data in rows.items():
+        for _, data in rows.items():
             installed_int = (
                 int(data.get("installed", "0")) if data.get("installed", "").isdigit() else 0
             )

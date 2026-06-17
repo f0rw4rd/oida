@@ -50,13 +50,13 @@ class RawQueryMixin(_ScannerBase):
                 oid = ObjectIdentity(mib, obj_name)
 
             for src in self.mib_sources:
-                oid = oid.addAsn1MibSource(src)
+                oid = oid.add_asn1_mib_source(src)
             return oid
 
         # Bare name -- try as-is, with custom MIB sources
         oid = ObjectIdentity(oid_str)
         for src in self.mib_sources:
-            oid = oid.addAsn1MibSource(src)
+            oid = oid.add_asn1_mib_source(src)
         return oid
 
     def _get_mib_view(self, engine):
@@ -79,8 +79,8 @@ class RawQueryMixin(_ScannerBase):
             mib_view = self._get_mib_view(engine)
             oid = ObjectIdentity(oid_str)
             for src in self.mib_sources:
-                oid = oid.addAsn1MibSource(src)
-            oid.resolveWithMib(mib_view)
+                oid = oid.add_asn1_mib_source(src)
+            oid.resolve_with_mib(mib_view)
             name = oid.prettyPrint()
             # Skip if it just echoes back the numeric form
             if not name or name == oid_str or name.startswith("1.3."):
@@ -158,38 +158,23 @@ class RawQueryMixin(_ScannerBase):
 
     async def _raw_walk(self, engine, auth_data, transport, context, oid_str: str) -> List[Dict]:
         """Walk an OID subtree, returning list of {oid, name, type, value}."""
-        from pysnmp.hlapi.asyncio import ObjectType, walk_cmd
+        from pysnmp.hlapi.asyncio import ObjectType, bulk_walk_cmd, walk_cmd
 
         oid = self._make_oid(oid_str)
         entries = []
         max_entries = 10000
 
         if self.use_bulk and self.version in ("2c", "3"):
-            import importlib
-
-            _mod = importlib.import_module("pysnmp.hlapi.asyncio")
-            bulk_walk = getattr(_mod, "bulk_walk_cmd", None)
-            if bulk_walk is not None:
-                walker = bulk_walk(
-                    engine,
-                    auth_data,
-                    transport,
-                    context,
-                    0,
-                    25,  # nonRepeaters, maxRepetitions
-                    ObjectType(oid),
-                    lexicographicMode=False,
-                )
-            else:
-                self.logger.debug("bulk_walk_cmd unavailable, falling back to walk_cmd")
-                walker = walk_cmd(
-                    engine,
-                    auth_data,
-                    transport,
-                    context,
-                    ObjectType(oid),
-                    lexicographicMode=False,
-                )
+            walker = bulk_walk_cmd(
+                engine,
+                auth_data,
+                transport,
+                context,
+                0,
+                25,  # nonRepeaters, maxRepetitions
+                ObjectType(oid),
+                lexicographicMode=False,
+            )
         else:
             walker = walk_cmd(
                 engine,

@@ -22,7 +22,6 @@ from ...utils import (
     create_protocol_module,
 )
 from ...utils.lazy_import import lazy_import
-from ...utils.ics_logger import get_module_logger
 from ...utils.export_utils import export_table, configure as configure_export
 
 from .constants import (
@@ -39,8 +38,6 @@ from .mixins import (
     RawQueryMixin,
     HostEnumerationMixin,
 )
-
-logger = get_module_logger(__name__)
 
 _pysnmp = lazy_import("pysnmp", "SNMP")
 
@@ -240,7 +237,6 @@ class SNMPScanner(
         context = ContextData()
 
         # Test reachability with sysDescr GET
-        self._last_error = None
         self.logger.debug(
             f"Connecting to {self.host}:{self.port} (v={self.version}, timeout={self.timeout})"
         )
@@ -258,11 +254,9 @@ class SNMPScanner(
                 ObjectType(ObjectIdentity(SNMP_OIDS["sysDescr"])),
             )
             if error_indication:
-                self._last_error = str(error_indication)
                 self.logger.debug(f"SNMP reachability test failed: {error_indication}")
                 return None
             if error_status:
-                self._last_error = str(error_status)
                 self.logger.debug(f"SNMP error status: {error_status}")
                 return None
             return transport
@@ -608,7 +602,9 @@ class SNMPScanner(
 
         if self.version == "3":
             if not self.username:
-                self._last_error = "SNMPv3 requires credentials -- use -C user:authpass:privpass"
+                self.logger.warning(
+                    "SNMPv3 requires credentials -- use -C user:authpass:privpass"
+                )
                 return None
             from pysnmp.hlapi.asyncio import UsmUserData
 
@@ -735,43 +731,3 @@ class SNMPScanner(
 metadata, run = create_protocol_module(
     SNMPScanner, dependencies_check_func=lambda: not _pysnmp.is_available
 )
-
-
-def scan_targets(targets, **kwargs):
-    """Multi-target scan for discovery integration.
-
-    Args:
-        targets: List of IP addresses to scan
-        **kwargs: SNMP parameters (community, version, port, timeout, etc.)
-
-    Returns:
-        Dict mapping IP -> result dict
-    """
-    results = {}
-    for target in targets:
-        args = {
-            "host": target,
-            "port": kwargs.get("port", 161),
-            "timeout": kwargs.get("timeout", 2),
-            "community": kwargs.get("community", "public"),
-            "snmp_version": kwargs.get("version", "2c"),
-            "snmp_user": kwargs.get("username", ""),
-            "snmp_auth_protocol": kwargs.get("auth_protocol", "SHA"),
-            "snmp_auth_pass": kwargs.get("auth_pass", ""),
-            "snmp_priv_protocol": kwargs.get("priv_protocol", "AES128"),
-            "snmp_priv_pass": kwargs.get("priv_pass", ""),
-            "snmp_security_level": kwargs.get("security_level", "authPriv"),
-        }
-        try:
-            scanner = SNMPScanner(args)
-            connection = scanner.connect()
-            if connection:
-                result = scanner.discover(connection)
-                if result:
-                    results[target] = result
-                scanner.disconnect(connection)
-        except Exception as e:
-            logger.debug(f"SNMP scan failed for {target}: {e}")
-
-    logger.info(f"SNMP found {len(results)} devices from {len(targets)} targets")
-    return results
