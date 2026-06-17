@@ -25,9 +25,18 @@ class DiscoveryMixin(_ScannerBase):
     # Phase 1: Protocol Discovery Methods
     # =========================================================================
 
-    def get_supported_features(self, connection: Any) -> Dict[str, bool]:
+    def get_supported_features(
+        self, connection: Any, blocks: Any = None, display: bool = True
+    ) -> Dict[str, bool]:
         """
         Read Supported_Features bitmap from server via get_server_blocks().
+
+        Args:
+            connection: Active TASE.2 connection
+            blocks: Optional pre-fetched get_server_blocks() result, to avoid a
+                second round trip when the caller already has it.
+            display: When False, derive the feature map silently (the caller is
+                already rendering the conformance-block table itself).
 
         Returns:
             Dictionary mapping block keys to support status
@@ -41,7 +50,8 @@ class DiscoveryMixin(_ScannerBase):
         }
 
         try:
-            blocks = connection.get_server_blocks()
+            if blocks is None:
+                blocks = connection.get_server_blocks()
             if blocks:
                 for block_num, block_info in blocks.items():
                     key = f"block{block_num}"
@@ -49,13 +59,14 @@ class DiscoveryMixin(_ScannerBase):
                         supported = block_info.get("supported", False)
                         features[key] = bool(supported) if supported is not None else False
 
-                self.logger.display("Supported Features (Conformance Blocks):")
-                for block_num, block_info in blocks.items():
-                    key = f"block{block_num}"
-                    if key in features:
-                        status = "YES" if features[key] else "NO"
-                        name = block_info.get("name", f"Block {block_num}")
-                        self.logger.display(f"  Block {block_num} ({name}): {status}")
+                if display:
+                    self.logger.display("Supported Features (Conformance Blocks):")
+                    for block_num, block_info in blocks.items():
+                        key = f"block{block_num}"
+                        if key in features:
+                            status = "YES" if features[key] else "NO"
+                            name = block_info.get("name", f"Block {block_num}")
+                            self.logger.display(f"  Block {block_num} ({name}): {status}")
 
         except Exception as e:
             self.logger.debug(f"Error getting supported features: {e}")
@@ -63,7 +74,7 @@ class DiscoveryMixin(_ScannerBase):
         self.supported_features = features
         return features
 
-    def _enumerate_server_blocks(self, connection: Any) -> Dict[str, Any]:
+    def _enumerate_server_blocks(self, connection: Any, blocks: Any = None) -> Dict[str, Any]:
         """
         Enumerate TASE.2 server conformance blocks (Block 1-5).
 
@@ -94,7 +105,8 @@ class DiscoveryMixin(_ScannerBase):
         }
 
         try:
-            blocks = connection.get_server_blocks()
+            if blocks is None:
+                blocks = connection.get_server_blocks()
 
             if not blocks:
                 self.logger.display("Server block information not available")
@@ -115,8 +127,6 @@ class DiscoveryMixin(_ScannerBase):
                     block_results["total_supported"] += 1
                 elif supported is False:
                     status_str = "NOT SUPPORTED"
-                elif supported is None:
-                    status_str = "UNKNOWN"
                 else:
                     status_str = "UNKNOWN"
 
@@ -180,6 +190,13 @@ class DiscoveryMixin(_ScannerBase):
 
             for domain in domain_list:
                 domain_type = "VCC" if domain.is_vcc else "ICC"
+
+                # Honour the --discover-vcc / --discover-icc gating
+                if domain.is_vcc and not self.discover_vcc:
+                    continue
+                if not domain.is_vcc and not self.discover_icc:
+                    continue
+
                 domain_info = {
                     "name": domain.name,
                     "type": domain_type,

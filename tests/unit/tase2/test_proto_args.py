@@ -26,17 +26,21 @@ class TestTASE2ProtoArgs:
         args = _parse("--remote-ap-title", "1.1.999.2")
         assert args.remote_ap_title == "1.1.999.2"
 
-    def test_discover_vcc_flag(self):
-        assert _parse("--discover-vcc").discover_vcc is True
+    def test_discover_vcc_default_and_disable(self):
+        assert _parse().discover_vcc is True
+        assert _parse("--no-discover-vcc").discover_vcc is False
 
-    def test_discover_icc_flag(self):
-        assert _parse("--discover-icc").discover_icc is True
+    def test_discover_icc_default_and_disable(self):
+        assert _parse().discover_icc is True
+        assert _parse("--no-discover-icc").discover_icc is False
 
-    def test_analyze_blt_flag(self):
-        assert _parse("--analyze-blt").analyze_blt is True
+    def test_analyze_blt_default_and_disable(self):
+        assert _parse().analyze_blt is True
+        assert _parse("--no-analyze-blt").analyze_blt is False
 
-    def test_enumerate_points_flag(self):
-        assert _parse("--enumerate-points").enumerate_points is True
+    def test_enumerate_points_default_and_disable(self):
+        assert _parse().enumerate_points is True
+        assert _parse("--no-enumerate-points").enumerate_points is False
 
     def test_max_points_default(self):
         assert hasattr(_parse(), "max_points")
