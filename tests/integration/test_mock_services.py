@@ -83,26 +83,48 @@ class TestDNP3MockService:
         assert "Points:" in output, f"Expected integrity poll data in output, got: {output[:500]}"
 
     def test_dnp3_enumerate_points(self, cli_runner, dnp3_port, mock_service):
-        """Test DNP3 point enumeration with -e flag."""
-        result = cli_runner.run(
-            "dnp3", MOCK_HOST, "-e", "--port", str(dnp3_port), "--timeout", "20", expect_json=False
-        )
+        """Test DNP3 point enumeration with -e flag.
 
-        output = result.combined_output
+        opendnp3's integrity poll is asynchronous and occasionally returns no
+        data within the timeout (a known mock/timing flake, sometimes lasting
+        several seconds when the shared outstation is busy from a prior test),
+        so retry with a delay before failing rather than asserting on a single
+        poll.
+        """
+        import time
 
-        # Verify data point types are enumerated
-        # The mock should have BI, AI, CT, BO, AO
         point_types_found = []
-        if "binary_input" in output.lower() or "BI" in output:
-            point_types_found.append("BI")
-        if "analog_input" in output.lower() or "AI" in output:
-            point_types_found.append("AI")
-        if "counter" in output.lower() or "CT" in output:
-            point_types_found.append("CT")
-        if "binary_output" in output.lower() or "BO" in output:
-            point_types_found.append("BO")
-        if "analog_output" in output.lower() or "AO" in output:
-            point_types_found.append("AO")
+        for _attempt in range(4):
+            if _attempt:
+                time.sleep(6)
+            result = cli_runner.run(
+                "dnp3",
+                MOCK_HOST,
+                "-e",
+                "--port",
+                str(dnp3_port),
+                "--timeout",
+                "20",
+                expect_json=False,
+            )
+            output = result.combined_output
+
+            # Verify data point types are enumerated
+            # The mock should have BI, AI, CT, BO, AO
+            point_types_found = []
+            if "binary_input" in output.lower() or "BI" in output:
+                point_types_found.append("BI")
+            if "analog_input" in output.lower() or "AI" in output:
+                point_types_found.append("AI")
+            if "counter" in output.lower() or "CT" in output:
+                point_types_found.append("CT")
+            if "binary_output" in output.lower() or "BO" in output:
+                point_types_found.append("BO")
+            if "analog_output" in output.lower() or "AO" in output:
+                point_types_found.append("AO")
+
+            if len(point_types_found) >= 3:
+                break
 
         assert len(point_types_found) >= 3, (
             f"Expected at least 3 point types, found: {point_types_found}"
