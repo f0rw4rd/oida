@@ -6,7 +6,6 @@ Handles device state dump, diff comparison, and monitor loop.
 
 import asyncio
 import json
-import yaml
 from datetime import datetime
 from pathlib import Path
 from ..constants import CONTROL_POINT_TYPES
@@ -115,17 +114,11 @@ class StateMixin:
 
         # Output dump
         output_path = getattr(self.args, "output", None)
-        output_format = getattr(self.args, "format", "json")
 
         if output_path:
-            dump_file = Path(output_path)
-            if output_format == "json" or dump_file.suffix == ".json":
-                dump_file = dump_file.with_suffix(".json")
-                dump_file.write_text(json.dumps(dump_data, indent=2, default=str))
-            elif output_format == "yaml":
-                dump_file = dump_file.with_suffix(".yaml")
-                dump_file.write_text(yaml.dump(dump_data, default_flow_style=False))
-
+            # --format only offers json (cli.py choices); always write JSON.
+            dump_file = Path(output_path).with_suffix(".json")
+            dump_file.write_text(json.dumps(dump_data, indent=2, default=str))
             self.logger.success(f"Dump saved to {dump_file}")
         else:
             for device_id, device_dump in dump_data["devices"].items():

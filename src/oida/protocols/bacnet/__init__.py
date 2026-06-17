@@ -33,7 +33,6 @@ from .nxc_connection import bacnet
 
 # Re-export constants used by tests and external code
 from .constants import (
-    _is_bac0_available,
     CONTROL_POINT_TYPES,
     OBJECT_TYPE_NAMES,
     OBJECT_TYPES,
@@ -46,13 +45,4 @@ __all__ = [
     "OBJECT_TYPE_NAMES",
     "CONTROL_POINT_TYPES",
     "VENDORS",
-    "BAC0_AVAILABLE",
 ]
-
-
-def __getattr__(name: str):
-    """Module-level lazy attribute access for deferred imports."""
-    if name == "BAC0_AVAILABLE":
-        # Return BAC0 availability lazily to avoid importing at module load
-        return _is_bac0_available()
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

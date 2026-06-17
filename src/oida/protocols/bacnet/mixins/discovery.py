@@ -5,7 +5,6 @@ Handles device discovery via Who-Is, direct reads, and device identification.
 """
 
 import asyncio
-import struct
 from typing import Any, Dict, List, Optional
 
 from ..constants import (
@@ -132,8 +131,6 @@ class DiscoveryMixin:
 
     async def _bacpypes3_discover_device(self, app, target_addr, timeout: float) -> Optional[int]:
         """Discover device ID by probing common IDs"""
-        from ..constants import _load_bacpypes3
-
         types = _load_bacpypes3()
         ReadPropertyRequest = types["ReadPropertyRequest"]
         ObjectIdentifier = types["ObjectIdentifier"]
@@ -192,8 +189,6 @@ class DiscoveryMixin:
         self, app, target_addr, device_id: int, timeout: float
     ) -> Dict[str, Any]:
         """Read device properties using bacpypes3"""
-        from ..constants import _load_bacpypes3
-
         types = _load_bacpypes3()
         ReadPropertyRequest = types["ReadPropertyRequest"]
         ObjectIdentifier = types["ObjectIdentifier"]
@@ -262,7 +257,6 @@ class DiscoveryMixin:
                                         )
                                     except (ValueError, TypeError) as e:
                                         self.logger.debug(f"bacpypes3 read properties failed: {e}")
-                                        pass
                             except BaseException as e:
                                 self.logger.debug(f"bacpypes3 read properties failed: {e}")
                                 try:
@@ -270,7 +264,6 @@ class DiscoveryMixin:
                                     results[result_key] = str(value) if value else ""
                                 except BaseException as e:
                                     self.logger.debug(f"bacpypes3 read properties failed: {e}")
-                                    pass
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 read properties failed: {e}")
                 continue
@@ -288,6 +281,9 @@ class DiscoveryMixin:
         ReadPropertyRequest = types["ReadPropertyRequest"]
         ObjectIdentifier = types["ObjectIdentifier"]
         PropertyIdentifier = types["PropertyIdentifier"]
+        CharacterString = types["CharacterString"]
+        Unsigned = types["Unsigned"]
+        Real = types["Real"]
         AbortPDU = types["AbortPDU"]
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
@@ -310,24 +306,19 @@ class DiscoveryMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
-                    if hasattr(response, "propertyValue") and hasattr(
-                        response.propertyValue, "tagList"
-                    ):
-                        tags = list(response.propertyValue.tagList)
-                        for tag in tags:
-                            if hasattr(tag, "tag_data") and tag.tag_data and len(tag.tag_data) <= 4:
-                                vendor_id = int.from_bytes(tag.tag_data, "big")
-                                vendor_name = VENDORS.get(vendor_id, f"Unknown ({vendor_id})")
-                                break
+                    pv = getattr(response, "propertyValue", None)
+                    if pv is not None and hasattr(pv, "cast_out"):
+                        try:
+                            vendor_id = int(pv.cast_out(Unsigned))
+                            vendor_name = VENDORS.get(vendor_id, f"Unknown ({vendor_id})")
+                        except BaseException as e:
+                            self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-                pass
             except BaseException as e:
                 self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-                pass
         except BaseException as e:
             self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-            pass
 
         self.logger.display(f"  Vendor: {vendor_name} (ID: {vendor_id})")
 
@@ -402,20 +393,14 @@ class DiscoveryMixin:
                         response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                     ):
                         obj_name = f"type{obj_type_num}:{instance}"
-                        if hasattr(response, "propertyValue") and hasattr(
-                            response.propertyValue, "tagList"
-                        ):
-                            tags = list(response.propertyValue.tagList)
-                            for tag in tags:
-                                if hasattr(tag, "tag_data") and tag.tag_data:
-                                    try:
-                                        obj_name = tag.tag_data.decode(
-                                            "utf-8", errors="replace"
-                                        ).strip()
-                                    except Exception as e:
-                                        self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-                                        obj_name = f"type{obj_type_num}:{instance} (hex: {tag.tag_data.hex()})"
-                                    break
+                        pv = getattr(response, "propertyValue", None)
+                        if pv is not None and hasattr(pv, "cast_out"):
+                            try:
+                                decoded = pv.cast_out(CharacterString)
+                                if decoded:
+                                    obj_name = str(decoded).strip()
+                            except BaseException as e:
+                                self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
 
                         proprietary_objects.append(
                             {
@@ -525,53 +510,32 @@ class DiscoveryMixin:
                     if response and not isinstance(
                         response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                     ):
-                        # Extract value from response
+                        # Extract value from response. propertyValue is an
+                        # untyped Any for proprietary properties, so try each
+                        # plausible primitive via cast_out.
                         raw_value = None
                         display_value = f"(property {prop_id} present)"
 
-                        if hasattr(response, "propertyValue") and hasattr(
-                            response.propertyValue, "tagList"
-                        ):
-                            tags = list(response.propertyValue.tagList)
-                            for tag in tags:
-                                if hasattr(tag, "tag_data") and tag.tag_data:
-                                    data = tag.tag_data
-                                    # Try to interpret the value
-                                    if len(data) < 4:
-                                        try:
-                                            int_val = int.from_bytes(data, "big")
-                                            display_value = str(int_val)
-                                            raw_value = str(int_val)
-                                        except Exception as e:
-                                            self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-                                            display_value = data.hex()
-                                            raw_value = data.hex()
-                                    elif len(data) == 4:
-                                        try:
-                                            float_val = struct.unpack(">f", data)[0]
-                                            display_value = str(float_val)
-                                            raw_value = str(float_val)
-                                        except Exception as e:
-                                            self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-                                            display_value = data.hex()
-                                            raw_value = data.hex()
-                                    else:
-                                        # Likely a string
-                                        try:
-                                            str_val = data.decode("utf-8", errors="replace").strip()
-                                            if str_val and all(
-                                                c.isprintable() or c.isspace() for c in str_val
-                                            ):
-                                                display_value = f"'{str_val}'"
-                                                raw_value = str_val
-                                            else:
-                                                display_value = f"hex:{data.hex()}"
-                                                raw_value = data.hex()
-                                        except Exception as e:
-                                            self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-                                            display_value = f"hex:{data.hex()}"
-                                            raw_value = data.hex()
-                                    break
+                        pv = getattr(response, "propertyValue", None)
+                        if pv is not None and hasattr(pv, "cast_out"):
+                            for cast_type in (CharacterString, Real, Unsigned):
+                                try:
+                                    decoded = pv.cast_out(cast_type)
+                                except BaseException as e:
+                                    self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
+                                    continue
+                                if decoded is None:
+                                    continue
+                                if cast_type is CharacterString:
+                                    str_val = str(decoded).strip()
+                                    if not str_val:
+                                        continue
+                                    display_value = f"'{str_val}'"
+                                    raw_value = str_val
+                                else:
+                                    display_value = str(decoded)
+                                    raw_value = str(decoded)
+                                break
 
                         prop_finding = {
                             "object": obj_label,

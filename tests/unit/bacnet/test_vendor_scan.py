@@ -22,8 +22,13 @@ def _create_instance(**kwargs):
     }
     instance.objects = {}
     instance.bacnet = Mock()
-    instance.host_info = {}
     return instance
+
+
+# Sentinel primitive-data types so cast_out can dispatch on identity.
+_CharacterString = type("CharacterString", (), {})
+_Unsigned = type("Unsigned", (), {})
+_Real = type("Real", (), {})
 
 
 def _get_mock_types():
@@ -37,6 +42,9 @@ def _get_mock_types():
         "ReadPropertyRequest": Mock(return_value=Mock()),
         "ObjectIdentifier": Mock(return_value=Mock()),
         "PropertyIdentifier": Mock(return_value=Mock()),
+        "CharacterString": _CharacterString,
+        "Unsigned": _Unsigned,
+        "Real": _Real,
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
         "RejectPDU": RejectPDU,
@@ -44,26 +52,33 @@ def _get_mock_types():
     }
 
 
-def _make_uint_response(value):
-    """Create a mock response with an unsigned integer tag."""
-    tag = Mock()
-    tag.tag_data = value.to_bytes(max(1, (value.bit_length() + 7) // 8), "big")
+def _make_response(value, value_type):
+    """Build a response whose propertyValue.cast_out(value_type) returns value.
+
+    cast_out raises for any other primitive type, mirroring bacpypes3's
+    behaviour when the wire encoding doesn't match the requested type.
+    """
+
+    def cast_out(cast_type):
+        if cast_type is value_type:
+            return value
+        raise ValueError("type mismatch")
+
     pv = Mock()
-    pv.tagList = [tag]
+    pv.cast_out = cast_out
     resp = Mock()
     resp.propertyValue = pv
     return resp
+
+
+def _make_uint_response(value):
+    """Create a mock response that decodes as an unsigned integer."""
+    return _make_response(value, _Unsigned)
 
 
 def _make_string_response(text):
-    """Create a mock response with a string tag."""
-    tag = Mock()
-    tag.tag_data = text.encode("utf-8")
-    pv = Mock()
-    pv.tagList = [tag]
-    resp = Mock()
-    resp.propertyValue = pv
-    return resp
+    """Create a mock response that decodes as a character string."""
+    return _make_response(text, _CharacterString)
 
 
 class TestVendorScan(unittest.TestCase):

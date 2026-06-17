@@ -5,7 +5,6 @@ Handles property read/write operations and present value reading.
 """
 
 import asyncio
-import struct
 from typing import Any, Dict, Optional
 
 from ..constants import (
@@ -234,13 +233,6 @@ class PropertiesMixin:
                             value = pv.cast_out(CharacterString)
                         except BaseException as e:
                             self.logger.debug(f"bacpypes3 read single property failed: {e}")
-                            pass
-                    if value is None and hasattr(pv, "tagList"):
-                        tags = list(pv.tagList)
-                        if tags:
-                            tag = tags[0]
-                            if hasattr(tag, "tag_data"):
-                                value = tag.tag_data.hex()
                     if value is None:
                         value = str(pv)
                     self.logger.success(f"{obj_type}:{instance}:{prop} = {value}")
@@ -313,15 +305,6 @@ class PropertiesMixin:
                                     except BaseException as e:
                                         self.logger.debug(f"bacpypes3 read prese failed: {e}")
                                         continue
-
-                            if value is None and hasattr(pv, "tagList"):
-                                tags = list(pv.tagList)
-                                if tags and hasattr(tags[0], "tag_data"):
-                                    data = tags[0].tag_data
-                                    if len(data) == 4:
-                                        value = struct.unpack(">f", data)[0]
-                                    elif len(data) <= 4:
-                                        value = int.from_bytes(data, "big")
 
                             if value is not None:
                                 self.logger.display(f"  {type_name}:{instance} = {value}")
@@ -440,7 +423,8 @@ class PropertiesMixin:
         """Read multiple properties in a single request using ReadPropertyMultiple.
 
         RPM is 10-100x faster than individual ReadProperty calls for bulk
-        property enumeration. Falls back to single reads on error.
+        property enumeration. Devices that abort RPM stop the probe with a
+        tip to use --values (single reads) instead.
         """
         types = _load_bacpypes3()
         ReadPropertyMultipleRequest = types["ReadPropertyMultipleRequest"]
@@ -560,12 +544,12 @@ class PropertiesMixin:
                         else:
                             self.logger.display(f"  {type_name}:{instance} - RPM response received")
                     else:
-                        # RPM not supported, log and continue
-                        if isinstance(response, (AbortPDU,)):
+                        # RPM not supported by this device.
+                        if isinstance(response, AbortPDU):
                             self.logger.debug(
-                                "RPM not supported by device (abort). Falling back to single reads."
+                                "RPM not supported by device (abort); stopping RPM probe. "
+                                "Use --values for single reads."
                             )
-                            # Fall back to single reads for remaining
                             total_failed += 1
                             break
                         total_failed += 1
