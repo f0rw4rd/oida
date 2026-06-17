@@ -461,12 +461,11 @@ class EnumerationMixin(_ScannerBase):
             # Enumerate all slots
             all_readable: list = []
             write_only_indices: list = []
-            all_results: dict = {}
             access_stats: Dict[str, int] = {"RO": 0, "RW": 0, "W": 0}
             total_ops = 0
 
             for slot, subslot in slots_to_scan:
-                readable, failed, results, ops = self._probe_slot(
+                readable, failed, _results, ops = self._probe_slot(
                     con,
                     slot,
                     subslot,
@@ -476,16 +475,13 @@ class EnumerationMixin(_ScannerBase):
                     access_stats,
                 )
                 all_readable.extend(readable)
-                all_results.update(results)
                 total_ops += ops
 
                 if options["detect_write_only"]:
                     wo = self._detect_write_only_indices(con, slot, subslot, failed, access_stats)
                     write_only_indices.extend(wo)
-                    all_results.update(dict(wo))
 
             self.logger.display("")
-            device.indices = all_results
 
             # Build and display results
             all_indices = sorted(all_readable + write_only_indices)

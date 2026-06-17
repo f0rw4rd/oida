@@ -19,13 +19,18 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
     protocol_name = "PROFINET"
     default_port = 0  # Layer 2 protocol
 
+    @staticmethod
+    def _arg_from(args: Any, name: str, default: Any = None) -> Any:
+        """Get an argument from args (argparse namespace or dict)."""
+        if hasattr(args, name):
+            return getattr(args, name, default)
+        if isinstance(args, dict):
+            return args.get(name, default)
+        return default
+
     def _arg(self, name: str, default: Any = None) -> Any:
         """Get argument value from args (namespace or dict)."""
-        if hasattr(self.args, name):
-            return getattr(self.args, name, default)
-        if isinstance(self.args, dict):
-            return self.args.get(name, default)
-        return default
+        return self._arg_from(self.args, name, default)
 
     @staticmethod
     def _parse_slot_arg(slot_str: str) -> tuple:
@@ -46,14 +51,10 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             return (None, None)
 
     def __init__(self, args, db, host):
-        # Check if RPC-only mode (target is IP, not interface)
-        self.rpc_only = (
-            getattr(args, "rpc_only", False)
-            if hasattr(args, "rpc_only")
-            else args.get("rpc_only", False)
-            if isinstance(args, dict)
-            else False
-        )
+        # Check if RPC-only mode (target is IP, not interface).
+        # self.args is not set until super().__init__(), so read off the raw
+        # args via the static helper here.
+        self.rpc_only = self._arg_from(args, "rpc_only", False)
 
         if self.rpc_only:
             self.target_ip = host
@@ -62,25 +63,13 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             self.interface = host
             self.target_ip = None
 
-        self.timeout = float(
-            getattr(args, "timeout", 3.0)
-            if hasattr(args, "timeout")
-            else args.get("timeout", 3.0)
-            if isinstance(args, dict)
-            else 3.0
-        )
+        self.timeout = float(self._arg_from(args, "timeout", 3.0))
         self.discovered_devices: Dict[str, ProfinetDevice] = {}
         self._my_mac = None
         self._gsdml: Optional[GSDMLDevice] = None
 
         # Load GSDML if provided
-        gsdml_path = (
-            getattr(args, "gsdml", None)
-            if hasattr(args, "gsdml")
-            else args.get("gsdml", None)
-            if isinstance(args, dict)
-            else None
-        )
+        gsdml_path = self._arg_from(args, "gsdml", None)
         if gsdml_path:
             self._gsdml = parse_gsdml(gsdml_path)
 
@@ -151,11 +140,6 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
                 self.vendor_low = vendor & 0xFF
                 self.device_high = (dev_id >> 8) & 0xFF
                 self.device_low = dev_id & 0xFF
-                self.vendor_id = vendor
-                self.device_id = dev_id
-                self.device_type = ""
-                self.device_roles = []
-                self.vendor_name = ""
 
         mock_desc = MockDCPDesc(self.target_ip, vendor_id, device_id)
         device._dcp_desc = mock_desc
@@ -214,7 +198,7 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
 
             fuzz_mode = self._arg("fuzz", None)
             if fuzz_mode:
-                self._handle_fuzz(device, con)
+                self._handle_fuzz(con)
         finally:
             con.close()
 
@@ -284,7 +268,6 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         Returns:
             OIDA ProfinetDevice instance
         """
-        from datetime import datetime
         from ...utils.vendor_maps import profinet_vendor_map
 
         info = pn_dev._info  # DCPDeviceDescription
@@ -311,9 +294,6 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             device_roles=getattr(info, "device_roles", []),
             device_instance=getattr(info, "device_instance", (0, 0)),
             alias_name=getattr(info, "alias_name", ""),
-            supported_options=getattr(info, "supported_options", []),
-            first_seen=datetime.now().isoformat(),
-            last_seen=datetime.now().isoformat(),
             _dcp_desc=info,
             _pn_device=pn_dev,
         )
