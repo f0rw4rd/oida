@@ -8,7 +8,6 @@ Handles custom/raw function code operations:
 
 from __future__ import annotations
 
-import struct
 from typing import Any, Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -102,8 +101,8 @@ class ScannerCustomFCMixin(_ScannerBase):
 
             # Register the custom response class with the client
             # This tells pymodbus how to decode responses with this FC
-            if hasattr(client, "register"):
-                client.register(CustomFCResponse)
+            # (pymodbus >=3.12, our pin, always exposes client.register).
+            client.register(CustomFCResponse)
 
             # Create and execute request
             request = CustomFCRequest(payload, dev_id=unit_id)
@@ -130,24 +129,9 @@ class ScannerCustomFCMixin(_ScannerBase):
                 result["success"] = True
                 return result
 
-            # Extract response payload from our custom response class
-            if hasattr(response, "raw_data"):
-                result["response_payload"] = response.raw_data
-            elif hasattr(response, "encode"):
-                try:
-                    result["response_payload"] = response.encode()
-                except Exception as e:
-                    self.logger.debug(f"Failed to encode response: {e}")
-
-            # Also try standard response attributes
-            if not result["response_payload"]:
-                if hasattr(response, "registers"):
-                    reg_bytes = b""
-                    for reg in response.registers:
-                        reg_bytes += struct.pack(">H", reg)
-                    result["response_payload"] = reg_bytes
-                elif hasattr(response, "bits"):
-                    result["response_payload"] = bytes(response.bits)
+            # The registered CustomFCResponse.decode() always sets raw_data, so
+            # that is the only payload source on the registered-decoder path.
+            result["response_payload"] = getattr(response, "raw_data", b"")
 
             result["success"] = True
 

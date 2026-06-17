@@ -200,31 +200,12 @@ class ScannerIdentificationMixin(_ScannerBase):
 
         objects = {}
 
-        # Handle pymodbus response format
+        # pymodbus 3.x ReadDeviceInformationResponse exposes .information
         if hasattr(result, "information"):
-            # pymodbus 3.x format
             for obj_id, value in result.information.items():
                 obj_name = MEI_OBJECT_NAMES.get(obj_id, f"Object_{obj_id:02X}")
                 if isinstance(value, bytes):
-                    try:
-                        objects[obj_name] = value.decode("utf-8", errors="replace").strip("\x00")
-                    except Exception as e:
-                        self.logger.debug("parse mei response failed: %s", e)
-                        objects[obj_name] = value.hex()
-                else:
-                    objects[obj_name] = str(value)
-        elif hasattr(result, "objects"):
-            # Alternative format
-            for obj in result.objects:
-                obj_id = obj.get("object_id", 0)
-                value = obj.get("value", b"")
-                obj_name = MEI_OBJECT_NAMES.get(obj_id, f"Object_{obj_id:02X}")
-                if isinstance(value, bytes):
-                    try:
-                        objects[obj_name] = value.decode("utf-8", errors="replace").strip("\x00")
-                    except Exception as e:
-                        self.logger.debug("parse mei response failed: %s", e)
-                        objects[obj_name] = value.hex()
+                    objects[obj_name] = value.decode("utf-8", errors="replace").strip("\x00")
                 else:
                     objects[obj_name] = str(value)
 
@@ -291,13 +272,9 @@ class ScannerIdentificationMixin(_ScannerBase):
                     identifier = result.identifier
                     if isinstance(identifier, bytes) and len(identifier) >= 1:
                         clean_id = identifier.rstrip(b"\xff\x00")
-                        try:
-                            id_str = clean_id.decode("ascii", errors="ignore").strip()
-                            if id_str and id_str.isprintable():
-                                info["identifier"] = id_str
-                        except Exception as e:
-                            self.logger.debug("read server id failed: %s", e)
-                            pass
+                        id_str = clean_id.decode("ascii", errors="ignore").strip()
+                        if id_str and id_str.isprintable():
+                            info["identifier"] = id_str
 
                         info["identifier_hex"] = identifier.hex()
                         info["server_id"] = identifier[0]
@@ -307,15 +284,9 @@ class ScannerIdentificationMixin(_ScannerBase):
                             additional = identifier[1:].rstrip(b"\xff\x00")
                             if additional:
                                 info["additional_data_hex"] = additional.hex()
-                                try:
-                                    ascii_str = additional.decode("ascii", errors="ignore").strip(
-                                        "\x00"
-                                    )
-                                    if ascii_str and ascii_str.isprintable():
-                                        info["additional_data_ascii"] = ascii_str
-                                except Exception as e:
-                                    self.logger.debug("read server id failed: %s", e)
-                                    pass
+                                ascii_str = additional.decode("ascii", errors="ignore").strip("\x00")
+                                if ascii_str and ascii_str.isprintable():
+                                    info["additional_data_ascii"] = ascii_str
 
                 if hasattr(result, "status"):
                     info["run_status"] = "Running" if result.status else "Stopped"
@@ -404,13 +375,9 @@ class ScannerIdentificationMixin(_ScannerBase):
                         offset += obj_len
 
                         obj_name = MEI_OBJECT_NAMES.get(obj_id, f"Object_{obj_id:02X}")
-                        try:
-                            all_objects[obj_name] = obj_value.decode(
-                                "utf-8", errors="replace"
-                            ).strip("\x00")
-                        except Exception as e:
-                            self.logger.debug("read mei raw failed: %s", e)
-                            all_objects[obj_name] = obj_value.hex()
+                        all_objects[obj_name] = obj_value.decode("utf-8", errors="replace").strip(
+                            "\x00"
+                        )
 
                     # Check for pagination
                     if more_follows and next_object_id > current_object_id:

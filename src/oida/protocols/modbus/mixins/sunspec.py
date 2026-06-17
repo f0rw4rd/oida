@@ -19,11 +19,10 @@ from __future__ import annotations
 
 import json
 import math
-import struct
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from ..decoder import REGISTERS_PER_TYPE
+from ..decoder import REGISTERS_PER_TYPE, ModbusDecoder
 
 import logging
 
@@ -67,7 +66,7 @@ def _load_sunspec_maps() -> Dict[int, dict]:
             if model_id is not None:
                 maps[model_id] = data
         except (json.JSONDecodeError, KeyError, OSError) as e:
-            logger.debug(f"with open(json_file, r) as f:: {e}")
+            logger.debug("Failed to load SunSpec map %s: %s", json_file, e)
             continue
 
     return maps
@@ -110,62 +109,44 @@ def _is_not_implemented(value: Any, dtype: str) -> bool:
     return value == sentinel
 
 
+# SunSpec accumulator / scale-factor aliases map onto the standard integer
+# types the ModbusDecoder already understands. SunSpec is always big-endian.
+_SUNSPEC_TYPE_ALIASES = {
+    "sunssf": "i16",
+    "acc16": "u16",
+    "acc32": "u32",
+    "acc64": "u64",
+    "string": "str",
+}
+
+_sunspec_decoder = ModbusDecoder(byte_order="big", word_order="big")
+
+
 def _raw_regs_to_value(regs: List[int], dtype: str) -> Optional[Any]:
     """
-    Convert raw register list to a typed value without using pymodbus decoder.
+    Convert a raw register list to a typed scalar value.
 
-    This is a lightweight converter for the SunSpec model walking phase
-    where we only need simple integer conversions.
+    Thin wrapper over :class:`ModbusDecoder` (big/big, as SunSpec mandates)
+    that folds the SunSpec-specific aliases (sunssf, acc16/32/64) onto the
+    base integer types.
 
     Args:
         regs: List of 16-bit unsigned register values
-        dtype: Data type (u16, i16, u32, i32, str, etc.)
+        dtype: Data type (u16, i16, u32, i32, str, sunssf, acc32, etc.)
 
     Returns:
-        Decoded value, or None on failure
+        Decoded value, or None on failure / insufficient registers.
     """
     if not regs:
         return None
 
+    decode_type = _SUNSPEC_TYPE_ALIASES.get(dtype, dtype)
     try:
-        if dtype in ("u16", "sunssf", "acc16"):
-            return regs[0]
-        elif dtype == "i16":
-            v = regs[0]
-            return v - 65536 if v > 32767 else v
-        elif dtype in ("u32", "acc32"):
-            if len(regs) < 2:
-                return None
-            return (regs[0] << 16) | regs[1]
-        elif dtype == "i32":
-            if len(regs) < 2:
-                return None
-            v = (regs[0] << 16) | regs[1]
-            return v - 0x100000000 if v > 0x7FFFFFFF else v
-        elif dtype in ("u64", "acc64"):
-            if len(regs) < 4:
-                return None
-            return (regs[0] << 48) | (regs[1] << 32) | (regs[2] << 16) | regs[3]
-        elif dtype == "i64":
-            if len(regs) < 4:
-                return None
-            v = (regs[0] << 48) | (regs[1] << 32) | (regs[2] << 16) | regs[3]
-            return v - (1 << 64) if v > (1 << 63) - 1 else v
-        elif dtype == "f32":
-            if len(regs) < 2:
-                return None
-            raw_bytes = struct.pack(">HH", regs[0], regs[1])
-            return struct.unpack(">f", raw_bytes)[0]
-        elif dtype in ("str", "string"):
-            raw_bytes = b""
-            for r in regs:
-                raw_bytes += struct.pack(">H", r)
-            return raw_bytes.decode("ascii", errors="replace").rstrip("\x00").strip()
-        else:
-            return regs[0]
-    except (struct.error, ValueError, IndexError) as e:
-        logger.debug(f"Operation failed: {e}")
-        return None
+        decoded = _sunspec_decoder.decode(regs, decode_type)
+    except ValueError:
+        # Unknown SunSpec type — fall back to the raw first register.
+        return regs[0]
+    return decoded[0]["value"] if decoded else None
 
 
 class SunSpecMixin(_ScannerBase):
@@ -730,7 +711,7 @@ class SunSpecMixin(_ScannerBase):
                 continue
 
             registers = model_data.get("registers", {})
-            for reg_name, (expected_access, impact) in ctrl_regs.items():
+            for reg_name, impact in ctrl_regs.items():
                 reg_info = registers.get(reg_name)
                 if reg_info is None:
                     continue

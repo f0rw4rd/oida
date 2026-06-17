@@ -142,8 +142,6 @@ def convert_solarman_yaml(filepath: Path) -> Optional[Dict[str, Any]]:
 
     # Process parameter groups
     for group in data.get("parameters", []):
-        group.get("group", "")
-
         for item in group.get("items", []):
             name = item.get("name", "")
             if not name:

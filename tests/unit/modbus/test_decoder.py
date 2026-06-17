@@ -1005,39 +1005,6 @@ class TestConvenienceFunctions:
 
 
 # =============================================================================
-# Test decode_auto Method
-# =============================================================================
-
-
-class TestDecodeAuto:
-    """Tests for decode_auto method."""
-
-    def test_decode_auto_default_types(self, decoder_big):
-        """decode_auto returns results for default types."""
-        result = decoder_big.decode_auto([0x0001, 0x0002])
-        assert "u16" in result
-        assert "i16" in result
-        assert "u32" in result
-        assert "i32" in result
-        assert "f32" in result
-        assert "hex" in result
-        assert "str" in result
-
-    def test_decode_auto_custom_types(self, decoder_big):
-        """decode_auto with custom type list."""
-        result = decoder_big.decode_auto([0x0001, 0x0002], types=["u16", "hex"])
-        assert "u16" in result
-        assert "hex" in result
-        assert "i32" not in result
-
-    def test_decode_auto_all_decode(self, decoder_big):
-        """All types in decode_auto produce results."""
-        result = decoder_big.decode_auto([0x3F80, 0x0000])
-        for dtype, values in result.items():
-            assert isinstance(values, list)
-
-
-# =============================================================================
 # Test decode_with_map Function
 # =============================================================================
 

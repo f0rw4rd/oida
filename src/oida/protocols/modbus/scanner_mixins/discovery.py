@@ -80,7 +80,8 @@ class ScannerDiscoveryMixin(_ScannerBase):
                 all_errors_identical = all(v == error_values[0] for v in error_values)
 
             # Gateway detected: device responds identically to all sampled unit IDs
-            if all_responses_identical and len(sample_responses) >= 3:
+            # (all_responses_identical is only set True when >= 3 samples were collected)
+            if all_responses_identical:
                 self.logger.debug("Gateway/bridge mode detected: device responds to all unit IDs")
                 first_unit = min(sample_responses.keys())
                 return {
