@@ -16,7 +16,7 @@ Supports:
 import time
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Set, Tuple
+from typing import Dict, List, Any, Set
 
 from ...utils import (
     register_protocol,
@@ -342,39 +342,12 @@ class MQTTMessage:
     qos: int
     retain: bool
     timestamp: float = field(default_factory=time.time)
-    # MQTT 5.0 properties
-    content_type: str = ""
-    correlation_id: str = ""
-    response_topic: str = ""
-    user_properties: List[Tuple[str, str]] = field(default_factory=list)
-    message_expiry: int = 0
 
     def payload_str(self) -> str:
         try:
             return self.payload.decode("utf-8")
         except (UnicodeDecodeError, AttributeError):
             return self.payload.hex()
-
-    def to_dict(self) -> dict:
-        d = {
-            "topic": self.topic,
-            "payload": self.payload_str(),
-            "qos": self.qos,
-            "retain": self.retain,
-            "timestamp": self.timestamp,
-        }
-        # Include MQTT 5.0 properties if present
-        if self.content_type:
-            d["content_type"] = self.content_type
-        if self.correlation_id:
-            d["correlation_id"] = self.correlation_id
-        if self.response_topic:
-            d["response_topic"] = self.response_topic
-        if self.user_properties:
-            d["user_properties"] = dict(self.user_properties)
-        if self.message_expiry:
-            d["message_expiry"] = self.message_expiry
-        return d
 
 
 @dataclass
@@ -570,12 +543,9 @@ class MQTTScanner(
         # Protocol version (3=3.1, 4=3.1.1, 5=5.0)
         self.protocol_version = int(args.get("protocol-version", 4))
 
-        # TLS settings
+        # TLS settings (cert/key/ca/insecure are read from self.args via
+        # build_tls_context() at connect time, not stored as attributes)
         self.use_tls = parse_bool(args.get("tls", False))
-        self.tls_cert = args.get("tls-cert") or args.get("tls_cert") or ""
-        self.tls_key = args.get("tls-key") or args.get("tls_key") or ""
-        self.tls_ca = args.get("tls-ca") or args.get("tls_ca") or ""
-        self.tls_insecure = parse_bool(args.get("tls-insecure", False))
 
         # Topic enumeration - only when -e/--enumerate is set
         self.topics_pattern = args.get("topics", "#")
@@ -621,13 +591,9 @@ class MQTTScanner(
             self.topics_list = [topics_arg] if topics_arg else ["#"]
 
         # Internal state
-        self.broker_info = {}
         self.topics_discovered: Set[str] = set()
-        self.messages: List[MQTTMessage] = []
         self.sparkplug_nodes: Dict[str, Any] = {}
-        self.valid_credentials: List[Tuple[str, str]] = []
         self.auth_result = None
-        self._connected = False
         self._stop_listen = False
 
     def get_protocol_name(self) -> str:
@@ -654,7 +620,6 @@ class MQTTScanner(
         def on_connect(cli, userdata, flags, reason_code, properties):
             connect_result["connected"] = reason_code == 0
             connect_result["reason"] = str(reason_code)
-            self._connected = reason_code == 0
 
         client.on_connect = on_connect
 

@@ -108,11 +108,11 @@ class ConnectionMixin:
         """Check if any MQTT 5.0 properties are specified."""
         return any(
             [
-                args.get("response_topic") or args.get("response-topic"),
-                args.get("correlation_id") or args.get("correlation-id"),
-                args.get("content_type") or args.get("content-type"),
-                args.get("message_expiry") or args.get("message-expiry"),
-                args.get("user_prop") or args.get("user-prop"),
+                args.get("response_topic"),
+                args.get("correlation_id"),
+                args.get("content_type"),
+                args.get("message_expiry"),
+                args.get("user_prop"),
             ]
         )
 
@@ -130,24 +130,24 @@ class ConnectionMixin:
 
         props = Properties(PacketTypes.PUBLISH)
 
-        response_topic = args.get("response_topic") or args.get("response-topic")
+        response_topic = args.get("response_topic")
         if response_topic:
             props.ResponseTopic = response_topic
 
-        correlation_id = args.get("correlation_id") or args.get("correlation-id")
+        correlation_id = args.get("correlation_id")
         if correlation_id:
             props.CorrelationData = correlation_id.encode()
 
-        content_type = args.get("content_type") or args.get("content-type")
+        content_type = args.get("content_type")
         if content_type:
             props.ContentType = content_type
             props.PayloadFormatIndicator = 1  # UTF-8
 
-        message_expiry = args.get("message_expiry") or args.get("message-expiry")
+        message_expiry = args.get("message_expiry")
         if message_expiry:
             props.MessageExpiryInterval = int(message_expiry)
 
-        user_prop = args.get("user_prop") or args.get("user-prop")
+        user_prop = args.get("user_prop")
         if user_prop:
             props.UserProperty = []
             for kv in user_prop:

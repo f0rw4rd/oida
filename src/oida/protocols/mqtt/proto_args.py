@@ -6,6 +6,8 @@ MQTT Protocol CLI Arguments
 Defines command-line arguments for the MQTT scanner.
 """
 
+import argparse
+
 from ...utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
@@ -49,7 +51,7 @@ Examples:
   oida mqtt 192.168.1.100 --listen --listen-output capture.jsonl
         """,
         parents=parents,
-        formatter_class=lambda prog: __import__("argparse").RawDescriptionHelpFormatter(
+        formatter_class=lambda prog: argparse.RawDescriptionHelpFormatter(
             prog, max_help_position=40
         ),
     )
