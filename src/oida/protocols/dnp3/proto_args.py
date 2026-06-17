@@ -432,14 +432,8 @@ Examples:
         help="Delete file on outstation (requires --confirm)",
     )
 
-    # Diagnostic/Stealth Operations
+    # Diagnostic Operations
     diag_group = dnp3_parser.add_argument_group("Diagnostic Operations")
-    diag_group.add_argument(
-        "-n",
-        "--no-ack",
-        action="store_true",
-        help="Use no-acknowledgment variants for control operations (stealth mode)",
-    )
     diag_group.add_argument(
         "-d",
         "--delay-measure",

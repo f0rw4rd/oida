@@ -107,13 +107,9 @@ class ControlMixin(_ScannerBase):
         ao_type = self.ao_type
 
         try:
-            if ao_type == "int16":
+            if ao_type in ("int16", "int32"):
                 value = int(float(value))
-            elif ao_type == "int32":
-                value = int(float(value))
-            elif ao_type == "float":
-                value = float(value)
-            elif ao_type == "double":
+            else:
                 value = float(value)
         except (ValueError, TypeError) as e:
             self.logger.fail(f"Invalid analog output value '{value}': {e}")
@@ -508,22 +504,17 @@ class ControlMixin(_ScannerBase):
     def _save_configuration(self, results: Dict[str, Any]) -> None:
         """Save current configuration to non-volatile memory.
 
-        Note: SAVE_CONFIGURATION is not available in all opendnp3 builds.
-        Falls back to PerformFunction with WRITE if unavailable.
+        DNP3 (IEEE 1815) defines no dedicated "save configuration" function
+        code, so this issues a WRITE with no object headers as a best-effort
+        request. Outstations that do not implement a save-on-WRITE behaviour
+        will reply with FUNC_NOT_SUPPORTED in the IIN.
         """
         dnp3 = self._dnp3
 
-        self.logger.debug("Sending SAVE_CONFIGURATION...")
+        self.logger.debug("Sending WRITE (save configuration)...")
 
         try:
-            func_code = getattr(dnp3.FunctionCode, "SAVE_CONFIGURATION", None)
-            if func_code is None:
-                self.logger.warning("SAVE_CONFIGURATION function code not available in library")
-                results["operations"]["save_config"] = {
-                    "success": False,
-                    "error": "Function code not available in library",
-                }
-                return
+            func_code = dnp3.FunctionCode.WRITE
 
             success = self._sync_task(
                 lambda master, config: master.PerformFunction(
@@ -547,23 +538,16 @@ class ControlMixin(_ScannerBase):
     def _activate_configuration(self, results: Dict[str, Any]) -> None:
         """Activate a pending configuration on the outstation.
 
-        Uses ACTIVATE_CONFIGURATION function code. This tells the
-        outstation to apply a previously uploaded or staged configuration,
-        commonly used after file transfer of config files.
+        Uses the ACTIVATE_CONFIG function code. This tells the outstation
+        to apply a previously uploaded or staged configuration, commonly
+        used after file transfer of config files.
         """
         dnp3 = self._dnp3
 
-        self.logger.debug("Sending ACTIVATE_CONFIGURATION...")
+        self.logger.debug("Sending ACTIVATE_CONFIG...")
 
         try:
-            func_code = getattr(dnp3.FunctionCode, "ACTIVATE_CONFIGURATION", None)
-            if func_code is None:
-                self.logger.warning("ACTIVATE_CONFIGURATION function code not available in library")
-                results["operations"]["activate_config"] = {
-                    "success": False,
-                    "error": "Function code not available in library",
-                }
-                return
+            func_code = dnp3.FunctionCode.ACTIVATE_CONFIG
 
             success = self._sync_task(
                 lambda master, config: master.PerformFunction(

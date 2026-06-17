@@ -15,7 +15,6 @@ Handles data polling and enumeration operations:
 from __future__ import annotations
 
 import re as _re
-import time
 from typing import Any, Dict, TYPE_CHECKING
 
 from ..constants import (
@@ -68,8 +67,6 @@ class PollingMixin(_ScannerBase):
             result = self._sync_scan(
                 lambda master, handler, config: master.ScanClasses(class_field, handler, config)
             )
-            # Allow data to settle
-            time.sleep(0.5)
 
             if result:
                 self._collect_data(results)
@@ -153,7 +150,6 @@ class PollingMixin(_ScannerBase):
             result = self._sync_scan(
                 lambda master, handler, config: master.ScanClasses(class_field, handler, config)
             )
-            time.sleep(0.5)
 
             if result:
                 self._collect_data(results, prefix=f"class{class_num}")
@@ -186,7 +182,6 @@ class PollingMixin(_ScannerBase):
                     _gv, handler, config
                 )
             )
-            time.sleep(0.5)
 
             if result:
                 self._collect_data(results, prefix=f"g{group}v{var}")
@@ -195,8 +190,6 @@ class PollingMixin(_ScannerBase):
                 reason = self._error_detail()
                 self.logger.warning(f"Read {var_name} failed ({reason})")
 
-        except KeyError:
-            self.logger.fail(f"Unknown variation: {variation_str}")
         except Exception as e:
             self.logger.fail(f"Variation read error: {type(e).__name__}: {e}")
 
@@ -216,7 +209,6 @@ class PollingMixin(_ScannerBase):
             result = self._sync_scan(
                 lambda master, handler, config: master.ScanAllObjects(gv_id, handler, config)
             )
-            time.sleep(0.5)
 
             if result and self._handler.string_attrs:
                 attrs = {}
@@ -337,7 +329,7 @@ class PollingMixin(_ScannerBase):
                         raw_value = int(raw_value)
                     flags = getattr(val_obj, "flags", None)
                     flags_val = getattr(flags, "value", 0) if flags else 0
-                    online = bool(flags_val & 0x01) if isinstance(flags_val, int) else False
+                    online = bool(flags_val & 0x01)
                     data[result_key].append(
                         {
                             "index": pt.index,
@@ -370,7 +362,6 @@ class PollingMixin(_ScannerBase):
                 bit = getattr(dnp3.IINBit, bit_name, None)
                 if bit is not None:
                     iin_data[bit_name.lower()] = iin.IsSet(bit)
-            data["iin"] = iin_data
             results["iin"] = iin_data
 
         results[data_key] = data
@@ -574,7 +565,6 @@ class PollingMixin(_ScannerBase):
                     ),
                     timeout=2.0,
                 )
-                time.sleep(0.1)
 
                 if result:
                     consecutive_failures = 0
@@ -652,7 +642,6 @@ class PollingMixin(_ScannerBase):
             result = self._sync_scan(
                 lambda master, handler, config: master.ScanAllObjects(gv_id, handler, config)
             )
-            time.sleep(0.5)
 
             if result:
                 stats = []
