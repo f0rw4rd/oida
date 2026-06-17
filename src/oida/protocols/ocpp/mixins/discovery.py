@@ -402,6 +402,70 @@ class DiscoveryMixin:
         except Exception as e:
             self.logger.debug(f"DataTransfer probe failed: {e}")
 
+    # Config keys that commonly expose firmware / version details.
+    _FIRMWARE_CONFIG_KEYS = [
+        "FirmwareVersion",
+        "ChargePointModel",
+        "ChargePointVendor",
+        "ChargeBoxSerialNumber",
+        "MeterSerialNumber",
+        "MeterType",
+    ]
+
+    def _handle_firmware_info(self):
+        """
+        Gather firmware / hardware details from the charge point.
+
+        Combines the BootNotification result (already captured during connect)
+        with a targeted GetConfiguration request for firmware-related keys.
+        Read-only.
+        """
+        if not self.conn:
+            return
+
+        version = self.results["data"].get("ocpp_version", "1.6") or "1.6"
+        self.logger.display("[Firmware / Hardware Info]")
+
+        info = {}
+        boot = self.results["data"].get("boot_notification", {})
+        if boot:
+            info["boot_status"] = boot.get("status")
+
+        get_config_msg = self._build_get_configuration(
+            keys=self._FIRMWARE_CONFIG_KEYS, version=version
+        )
+
+        try:
+            response = self.scanner._send_and_receive(self.conn, get_config_msg, timeout=5)
+            if response is not None:
+                msg_type, _, payload = self._parse_message(response)
+                if msg_type == MessageType.CALLRESULT:
+                    if version.startswith("2."):
+                        results = payload.get("getVariableResult", [])
+                        for r in results:
+                            name = r.get("variable", {}).get("name", "")
+                            value = r.get("attributeValue", "")
+                            if name and value:
+                                info[name] = value
+                    else:
+                        for key_info in payload.get("configurationKey", []):
+                            key = key_info.get("key", "")
+                            value = key_info.get("value", "")
+                            if key and value:
+                                info[key] = value
+                elif msg_type == MessageType.CALLERROR:
+                    error_code = payload.get("error_code", "")
+                    self.logger.debug(f"Firmware GetConfiguration: {error_code}")
+        except Exception as e:
+            self.logger.debug(f"Firmware info gathering failed: {e}")
+
+        for key, value in info.items():
+            self.logger.display(f"    {key}: {value}")
+        if not info:
+            self.logger.display("    No firmware details exposed")
+
+        self.results["data"]["firmware_info"] = info
+
     def probe_meter_values(self):
         """
         Probe MeterValues by sending a TriggerMessage requesting MeterValues.
@@ -488,8 +552,8 @@ class DiscoveryMixin:
             async def _recv():
                 try:
                     return await asyncio.wait_for(self.conn.recv(), timeout=3)
-                except asyncio.TimeoutError as e:
-                    self.logger.debug(f"Return value computation failed: {e}")
+                except asyncio.TimeoutError:
+                    self.logger.debug("No async MeterValues received within timeout")
                     return None
 
             raw = loop.run_until_complete(_recv())
@@ -1086,8 +1150,8 @@ class DiscoveryMixin:
             async def _recv():
                 try:
                     return await asyncio.wait_for(self.conn.recv(), timeout=2)
-                except asyncio.TimeoutError as e:
-                    self.logger.debug(f"Return value computation failed: {e}")
+                except asyncio.TimeoutError:
+                    self.logger.debug("No async StatusNotification received within timeout")
                     return None
 
             raw = loop.run_until_complete(_recv())

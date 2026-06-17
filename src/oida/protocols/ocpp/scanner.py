@@ -37,7 +37,6 @@ from .constants import (
     PROTOCOL_OPTIONS,
     MessageType,
     MAX_INCOMING_CALLS_PER_EXCHANGE,
-    DEFAULT_LISTEN_TIMEOUT,
     DEFAULT_HEARTBEAT_INTERVAL,
 )
 
@@ -480,8 +479,7 @@ class OCPPScanner(NetworkScanner):
         Handle an unsolicited CALL message from the server.
 
         Logs what the server tried to do and builds an appropriate CALLRESULT
-        response with safe defaults. Records the server-initiated action in
-        self._server_commands for results reporting.
+        response with safe defaults.
 
         Args:
             action: OCPP action name from the server
@@ -493,17 +491,6 @@ class OCPPScanner(NetworkScanner):
             JSON-encoded CALLRESULT string to send back, or None
         """
         self.logger.debug(f"Server-initiated CALL: {action} (id={message_id})")
-
-        # Record the command
-        if not hasattr(self, "_server_commands"):
-            self._server_commands = []
-        self._server_commands.append(
-            {
-                "action": action,
-                "message_id": message_id,
-                "payload": payload,
-            }
-        )
 
         # Build safe CALLRESULT responses for known server-initiated actions
         response_payload = self._get_default_call_response(action)
@@ -561,95 +548,6 @@ class OCPPScanner(NetworkScanner):
         }
 
         return defaults.get(action, {})
-
-    def _listen_for_commands(
-        self, connection: Any, timeout: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
-        """
-        Passively listen for server-initiated CALL messages.
-
-        Useful after BootNotification when the server might push configuration
-        changes, firmware update requests, or other commands.
-
-        Args:
-            connection: WebSocket connection
-            timeout: How long to listen (seconds, default: DEFAULT_LISTEN_TIMEOUT)
-
-        Returns:
-            List of server commands received (action, payload, message_id)
-        """
-        if not connection:
-            return []
-
-        if timeout is None:
-            timeout = DEFAULT_LISTEN_TIMEOUT
-
-        loop = getattr(self, "_event_loop", None)
-        if not loop or loop.is_closed():
-            return []
-
-        self.logger.debug(f"Passive listen for server commands: timeout={timeout}s")
-        commands = []
-
-        async def _listen():
-            import time as _time
-
-            deadline = _time.monotonic() + timeout
-
-            while _time.monotonic() < deadline:
-                remaining = deadline - _time.monotonic()
-                if remaining <= 0:
-                    break
-
-                try:
-                    raw = await asyncio.wait_for(connection.recv(), timeout=min(remaining, 2))
-                except asyncio.TimeoutError as e:
-                    self.logger.debug(f"OCPP listen: recv timed out (will retry): {e}")
-                    continue
-                except Exception as e:
-                    self.logger.debug(f"Listen recv error: {e}")
-                    break
-
-                if raw is None:
-                    continue
-
-                try:
-                    data = json.loads(raw)
-                except (json.JSONDecodeError, TypeError) as e:
-                    self.logger.debug(f"OCPP listen: JSON parse of incoming frame failed: {e}")
-                    continue
-
-                if isinstance(data, list) and len(data) >= 4 and data[0] == MessageType.CALL:
-                    action = data[2]
-                    payload = data[3]
-                    call_msg_id = str(data[1])
-
-                    response_msg = self._handle_incoming_call(
-                        action, payload, call_msg_id, connection
-                    )
-                    if response_msg:
-                        try:
-                            await connection.send(response_msg)
-                        except Exception as e:
-                            self.logger.debug(f"Failed to send response: {e}")
-
-                    commands.append(
-                        {
-                            "action": action,
-                            "message_id": call_msg_id,
-                            "payload": payload,
-                        }
-                    )
-                else:
-                    # Not a CALL, stop listening
-                    break
-
-        try:
-            loop.run_until_complete(_listen())
-        except Exception as e:
-            self.logger.debug(f"Listen error: {e}")
-
-        return commands
 
     def listen_mode(
         self,

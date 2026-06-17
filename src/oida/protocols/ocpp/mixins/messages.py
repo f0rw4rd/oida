@@ -49,34 +49,6 @@ class MessagesMixin:
         message = [MessageType.CALLRESULT, message_id, payload or {}]
         return json.dumps(message)
 
-    def _build_call_error(
-        self,
-        message_id: str,
-        error_code: str = "GenericError",
-        error_description: str = "",
-        error_details: Optional[Dict[str, Any]] = None,
-    ) -> str:
-        """
-        Build an OCPP-J CALLERROR message.
-
-        Args:
-            message_id: Original CALL message ID
-            error_code: OCPP error code string
-            error_description: Human-readable error description
-            error_details: Optional error details dictionary
-
-        Returns:
-            JSON-encoded CALLERROR message string
-        """
-        message = [
-            MessageType.CALLERROR,
-            message_id,
-            error_code,
-            error_description,
-            error_details or {},
-        ]
-        return json.dumps(message)
-
     def _parse_message(self, raw: str) -> Tuple[int, str, Any]:
         """
         Parse an OCPP-J message.
@@ -138,12 +110,17 @@ class MessagesMixin:
         Returns:
             JSON-encoded BootNotification CALL message
         """
+        args = getattr(self, "args", None)
+        vendor = getattr(args, "vendor", None)
+        model = getattr(args, "model", None)
+        vendor = vendor if isinstance(vendor, str) and vendor else "SecurityAudit"
+        model = model if isinstance(model, str) and model else "OIDA-Scanner"
         if version.startswith("2."):
             payload = {
                 "reason": "PowerUp",
                 "chargingStation": {
-                    "model": "OIDA-Scanner",
-                    "vendorName": "SecurityAudit",
+                    "model": model,
+                    "vendorName": vendor,
                     "serialNumber": "SCAN-001",
                     "firmwareVersion": "1.0.0",
                 },
@@ -151,8 +128,8 @@ class MessagesMixin:
         else:
             # OCPP 1.6
             payload = {
-                "chargePointVendor": "SecurityAudit",
-                "chargePointModel": "OIDA-Scanner",
+                "chargePointVendor": vendor,
+                "chargePointModel": model,
                 "chargePointSerialNumber": "SCAN-001",
                 "firmwareVersion": "1.0.0",
             }
