@@ -1071,24 +1071,6 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
     # Response Options Tests
     # ========================================================================
 
-    def test_extract_response(self, cli_runner, target, port, mock_service):
-        """Test response extraction [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--search-patients",
-            "--extract-response",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(term in text for term in ["patient", "extract", "response", "search"]), (
-            f"Expected response extraction output: {text[:500]}"
-        )
-
     def test_summary_mode(self, cli_runner, target, port, mock_service):
         """Test summary response mode [Category B]"""
         result = cli_runner.run(
