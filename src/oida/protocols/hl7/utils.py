@@ -240,12 +240,14 @@ def parse_ack_response(response: bytes) -> Dict[str, Any]:
         response: Raw MLLP response
 
     Returns:
-        Dictionary with server_app, server_facility, version
+        Dictionary with server_app, server_facility, version, ack_code, ack_text
     """
     result = {
         "server_app": None,
         "server_facility": None,
         "version": None,
+        "ack_code": None,
+        "ack_text": None,
     }
 
     try:
@@ -270,6 +272,14 @@ def parse_ack_response(response: bytes) -> Dict[str, Any]:
                 # MSH-12: Version ID
                 if len(fields) > 11 and fields[11]:
                     result["version"] = fields[11].split("^")[0]
+
+            elif seg_id == "MSA":
+                # MSA-1: Acknowledgment Code (AA/AE/AR/CA/CE/CR)
+                if len(fields) > 1 and fields[1]:
+                    result["ack_code"] = fields[1]
+                # MSA-3: Text Message
+                if len(fields) > 3 and fields[3]:
+                    result["ack_text"] = fields[3]
 
     except Exception as e:
         logger.debug(f"Operation failed: {e}")
