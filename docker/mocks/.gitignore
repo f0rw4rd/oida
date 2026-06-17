@@ -42,6 +42,14 @@ Thumbs.db
 !services/mqtt/certs/*.srl
 !services/http2/certs/*.crt
 !services/http2/certs/*.key
+# Shared mTLS test certs (one CA signs modbus-tls + iec104-tls + client/bogus).
+# Committed so every worktree and the mock containers trust the same CA.
+!certs/*.pem
+!certs/*.key
+!certs/modbus-tls/*.pem
+!certs/modbus-tls/*.key
+!certs/iec104-tls/*.pem
+!certs/iec104-tls/*.key
 
 # Local overrides
 docker-compose.override.yml
