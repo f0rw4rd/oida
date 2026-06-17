@@ -240,7 +240,7 @@ class UDSMixin:
 
         return result
 
-    def uds_session_scan(self, bus: Any, req_id: int, resp_id: int) -> List[int]:
+    def uds_session_scan(self, bus: Any, req_id: int) -> List[int]:
         """
         Enumerate supported diagnostic sessions on a UDS ECU.
 
@@ -250,7 +250,6 @@ class UDSMixin:
         Args:
             bus: python-can Bus instance
             req_id: ECU request arbitration ID
-            resp_id: ECU response arbitration ID
 
         Returns:
             List of supported session IDs
@@ -321,7 +320,6 @@ class UDSMixin:
         self,
         bus: Any,
         req_id: int,
-        resp_id: int,
         did_range: Optional[Tuple[int, int]] = None,
     ) -> Dict[int, bytes]:
         """
@@ -330,7 +328,6 @@ class UDSMixin:
         Args:
             bus: python-can Bus instance
             req_id: ECU request arbitration ID
-            resp_id: ECU response arbitration ID
             did_range: (start_did, end_did) range to scan.
                        Defaults to standard F-DID range 0xF180-0xF19F.
 
@@ -401,7 +398,6 @@ class UDSMixin:
         self,
         bus: Any,
         req_id: int,
-        resp_id: int,
         security_level: int = 0x01,
         count: int = 10,
     ) -> List[bytes]:
@@ -415,7 +411,6 @@ class UDSMixin:
         Args:
             bus: python-can Bus instance
             req_id: ECU request arbitration ID
-            resp_id: ECU response arbitration ID
             security_level: Odd sub-function for requestSeed (default 0x01)
             count: Number of seeds to collect
 
@@ -522,7 +517,6 @@ class UDSMixin:
         self,
         bus: Any,
         req_id: int,
-        resp_id: int,
         routine_range: Optional[Tuple[int, int]] = None,
     ) -> List[int]:
         """
@@ -534,7 +528,6 @@ class UDSMixin:
         Args:
             bus: python-can Bus instance
             req_id: ECU request arbitration ID
-            resp_id: ECU response arbitration ID
             routine_range: (start, end) routine ID range. Default 0x0000-0x00FF.
 
         Returns:
@@ -595,7 +588,6 @@ class UDSMixin:
         self,
         bus: Any,
         req_id: int,
-        resp_id: int,
         reset_type: int = 0x01,
     ) -> bool:
         """
@@ -604,7 +596,6 @@ class UDSMixin:
         Args:
             bus: python-can Bus instance
             req_id: ECU request arbitration ID
-            resp_id: ECU response arbitration ID
             reset_type: Reset sub-function (0x01=hard, 0x02=keyOffOn, 0x03=soft)
 
         Returns:

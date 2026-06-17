@@ -18,7 +18,6 @@ Functionality is split across mixin classes:
       EMCY/heartbeat monitoring, NMT state, PDO discovery, gateway detection
 """
 
-import time  # noqa: F401 - used by mixins, patched by tests
 from typing import Any, Dict
 
 from ...utils import (
@@ -198,6 +197,10 @@ class CANScanner(ISOTPMixin, TrafficMixin, UDSMixin, XCPMixin, CANopenMixin, Ser
                     ],
                     "diagnostic_sessions": r.diagnostic_sessions,
                     "vehicle_info": r.vehicle_info,
+                    "negative_responses": {
+                        f"0x{svc:02X}": f"0x{nrc:02X}"
+                        for svc, nrc in r.negative_responses.items()
+                    },
                 }
                 for r in uds_results
             ]

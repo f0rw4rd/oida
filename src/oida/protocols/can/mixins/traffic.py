@@ -9,6 +9,7 @@ Handles passive traffic sniffing and raw CAN operations:
 - Arbitration ID filter parsing
 """
 
+import time
 from typing import Any, Dict, List, Optional, Set
 
 from ....utils.export_utils import export_table
@@ -33,13 +34,6 @@ def _get_python_can():
     return _python_can
 
 
-def _get_time():
-    """Resolve time module from scanner module (for test patchability)."""
-    from ..scanner import time
-
-    return time
-
-
 class TrafficMixin:
     """Mixin providing CAN bus traffic sniffing and raw message operations."""
 
@@ -54,7 +48,6 @@ class TrafficMixin:
         Returns:
             CANTrafficStats with collected data
         """
-        time = _get_time()
         stats = CANTrafficStats()
         start_time = time.time()
         end_time = start_time + duration
@@ -77,14 +70,11 @@ class TrafficMixin:
                 continue
 
             msg_count += 1
-            ts = msg.timestamp if msg.timestamp else time.time()
 
             # Update ID counts
             if arb_id not in stats.id_counts:
                 stats.id_counts[arb_id] = 0
-                stats.id_first_seen[arb_id] = ts
             stats.id_counts[arb_id] += 1
-            stats.id_last_seen[arb_id] = ts
 
             # Track extended IDs
             if msg.is_extended_id:
@@ -266,7 +256,6 @@ class TrafficMixin:
         Returns:
             CANMessage or None if timeout
         """
-        time = _get_time()
         msg = bus.recv(timeout=timeout)
         if msg is None:
             return None

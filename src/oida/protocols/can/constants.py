@@ -10,11 +10,6 @@ CAN bus security scanning.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
 # ---------------------------------------------------------------------------
 # CAN bus frame constants
 # ---------------------------------------------------------------------------
@@ -63,10 +58,6 @@ OBD2_REQUEST_ID = 0x7DF  # Broadcast OBD-II request
 OBD2_RESPONSE_BASE = 0x7E8  # Base response ID (ECU #1)
 OBD2_RESPONSE_RANGE = (0x7E8, 0x7EF)  # Response ID range (8 ECUs)
 
-# UDS (ISO 14229) standard request/response pair offsets
-UDS_PHYSICAL_REQUEST_BASE = 0x700  # Common physical request base
-UDS_PHYSICAL_RESPONSE_OFFSET = 0x08  # Response = request + 0x08
-
 # Common UDS arbitration ID pairs (request -> response)
 COMMON_UDS_PAIRS: Dict[int, int] = {
     0x7E0: 0x7E8,  # ECU #1 (engine)
@@ -95,11 +86,6 @@ CANOPEN_RPDO4_BASE = 0x500
 CANOPEN_SDO_TX_BASE = 0x580  # SDO response base (0x581-0x5FF)
 CANOPEN_SDO_RX_BASE = 0x600  # SDO request base (0x601-0x67F)
 CANOPEN_HEARTBEAT_BASE = 0x700  # Heartbeat/node guarding (0x701-0x77F)
-
-# J1939 PGN ranges (heavy-duty vehicles, extended frame)
-J1939_PRIORITY_MASK = 0x1C000000
-J1939_PGN_MASK = 0x03FFFF00
-J1939_SOURCE_MASK = 0x000000FF
 
 # ---------------------------------------------------------------------------
 # UDS Service Identifiers (ISO 14229-1)
@@ -271,16 +257,6 @@ OBD2_PIDS: Dict[int, str] = {
     0x60: "PIDs supported [61-80]",
 }
 
-# OBD-II PIDs for vehicle info (Mode 0x09)
-OBD2_VEHICLE_INFO_PIDS: Dict[int, str] = {
-    0x00: "Mode 09 supported PIDs [01-20]",
-    0x02: "VIN (Vehicle Identification Number)",
-    0x04: "Calibration ID",
-    0x06: "Calibration verification numbers",
-    0x0A: "ECU name",
-    0x0D: "ESN (Engine Serial Number)",
-}
-
 # ---------------------------------------------------------------------------
 # ISO-TP (ISO 15765-2) frame types
 # ---------------------------------------------------------------------------
@@ -388,21 +364,16 @@ XCP_DISCONNECT_CMD = 0xFE
 XCP_GET_STATUS_CMD = 0xFD
 XCP_GET_COMM_MODE_INFO_CMD = 0xFB
 XCP_GET_ID_CMD = 0xFA
-XCP_GET_SEED_CMD = 0xF8
-XCP_UPLOAD_CMD = 0xF5
 XCP_SHORT_UPLOAD_CMD = 0xF4
 XCP_SET_MTA_CMD = 0xF6
 
 # XCP CONNECT mode byte
 XCP_CONNECT_MODE_NORMAL = 0x00
-XCP_CONNECT_MODE_USER_DEFINED = 0x01
 
 # XCP GET_ID request types
 XCP_ID_TYPE_ASCII = 0x00  # ASCII text
 XCP_ID_TYPE_ASAM_MC2_FILENAME = 0x01  # ASAM-MC2 filename without path/extension
-XCP_ID_TYPE_ASAM_MC2_FILEPATH = 0x02  # ASAM-MC2 filename with path/extension
 XCP_ID_TYPE_URL = 0x03  # URL for ASAM-MC2 file
-XCP_ID_TYPE_ASAM_MC2_UPLOAD = 0x04  # ASAM-MC2 file to upload
 
 # XCP Error Codes
 XCP_ERR: Dict[int, str] = {
@@ -481,10 +452,6 @@ CCP_CONNECT_CMD = 0x01
 CCP_DISCONNECT_CMD = 0x07
 CCP_GET_CCP_VERSION_CMD = 0x1B
 CCP_EXCHANGE_ID_CMD = 0x17
-CCP_GET_SEED_CMD = 0x12
-CCP_UNLOCK_CMD = 0x13
-CCP_UPLOAD_CMD = 0x04
-CCP_SHORT_UP_CMD = 0x0F
 CCP_SET_MTA_CMD = 0x02
 CCP_TEST_CMD = 0x05
 CCP_GET_S_STATUS_CMD = 0x0D
@@ -516,7 +483,6 @@ CCP_DTO_COMMAND_RETURN = 0xFF  # Command return message
 CCP_DTO_EVENT = 0xFE  # Event message
 
 # CCP Disconnect modes
-CCP_DISCONNECT_TEMPORARY = 0x00
 CCP_DISCONNECT_END_SESSION = 0x01
 
 # CCP default CAN IDs (these vary per A2L file, these are common defaults)
@@ -598,12 +564,9 @@ class CANTrafficStats:
     duration_seconds: float = 0.0
     messages_per_second: float = 0.0
     id_counts: Dict[int, int] = field(default_factory=dict)
-    id_first_seen: Dict[int, float] = field(default_factory=dict)
-    id_last_seen: Dict[int, float] = field(default_factory=dict)
     extended_ids: Set[int] = field(default_factory=set)
     error_frames: int = 0
     remote_frames: int = 0
-    bus_load_estimate: float = 0.0
 
     def get_top_ids(self, n: int = 20) -> List[tuple]:
         """Return the top N most frequent arbitration IDs."""
@@ -619,7 +582,6 @@ class UDSScanResult:
     response_id: int
     supported_services: List[int] = field(default_factory=list)
     diagnostic_sessions: List[int] = field(default_factory=list)
-    security_access_levels: List[int] = field(default_factory=list)
     dids_readable: List[int] = field(default_factory=list)
     vehicle_info: Dict[str, str] = field(default_factory=dict)
     negative_responses: Dict[int, int] = field(default_factory=dict)  # service -> NRC
@@ -655,8 +617,6 @@ class CCPScanResult:
     station_address: int = 0
     connected: bool = False
     ccp_version: str = ""
-    device_id: bytes = b""
-    session_status: int = 0
     error: str = ""
 
 
@@ -830,7 +790,6 @@ SDO_CCS_BLOCK_DOWNLOAD = 6  # Block download
 SDO_SCS_SEGMENT_UPLOAD = 0  # Segment upload response
 SDO_SCS_SEGMENT_DOWNLOAD = 1  # Segment download response
 SDO_SCS_INITIATE_UPLOAD = 2  # Initiate upload response
-SDO_SCS_INITIATE_DOWNLOAD = 3  # Initiate download response
 SDO_SCS_ABORT = 4  # Abort transfer
 
 # Pre-built SDO command bytes for common operations
@@ -839,8 +798,6 @@ SDO_CMD_UPLOAD_INITIATE = SDO_CCS_INITIATE_UPLOAD << 5  # 0x40
 
 # Initiate download (write) expedited 4 bytes: CCS=1, n=0, e=1, s=1
 SDO_CMD_DOWNLOAD_INITIATE_4B = (SDO_CCS_INITIATE_DOWNLOAD << 5) | 0x23  # 0x23
-SDO_CMD_DOWNLOAD_INITIATE_3B = (SDO_CCS_INITIATE_DOWNLOAD << 5) | 0x27  # 0x27
-SDO_CMD_DOWNLOAD_INITIATE_2B = (SDO_CCS_INITIATE_DOWNLOAD << 5) | 0x2B  # 0x2B
 SDO_CMD_DOWNLOAD_INITIATE_1B = (SDO_CCS_INITIATE_DOWNLOAD << 5) | 0x2F  # 0x2F
 
 # Segment upload request: CCS=3, toggle bit in bit 4
@@ -849,10 +806,6 @@ SDO_CMD_SEGMENT_UPLOAD_1 = (SDO_CCS_SEGMENT_UPLOAD << 5) | 0x10  # 0x70, toggle=
 
 # Abort command byte
 SDO_CMD_ABORT = SDO_CCS_ABORT << 5  # 0x80
-
-# Server response command bytes
-SDO_SCS_UPLOAD_INITIATE_BYTE = SDO_SCS_INITIATE_UPLOAD << 5  # 0x40 (expedited bits vary)
-SDO_SCS_DOWNLOAD_INITIATE_BYTE = SDO_SCS_INITIATE_DOWNLOAD << 5  # 0x60
 
 # Bit masks for SDO command byte
 SDO_CMD_SPECIFIER_MASK = 0xE0  # Upper 3 bits (CCS/SCS)
@@ -906,21 +859,6 @@ SDO_ABORT_CODES: Dict[int, str] = {
 
 CANOPEN_OD_DEVICE_TYPE = 0x1000  # UNSIGNED32, mandatory
 CANOPEN_OD_ERROR_REGISTER = 0x1001  # UNSIGNED8, mandatory
-CANOPEN_OD_MANUFACTURER_STATUS = 0x1002  # UNSIGNED32, optional
-CANOPEN_OD_PREDEFINED_ERROR = 0x1003  # ARRAY of UNSIGNED32, optional
-CANOPEN_OD_SYNC_COB_ID = 0x1005  # UNSIGNED32, optional
-CANOPEN_OD_COMM_CYCLE_PERIOD = 0x1006  # UNSIGNED32, optional
-CANOPEN_OD_SYNC_WINDOW_LENGTH = 0x1007  # UNSIGNED32, optional
-CANOPEN_OD_DEVICE_NAME = 0x1008  # VISIBLE_STRING, optional
-CANOPEN_OD_HW_VERSION = 0x1009  # VISIBLE_STRING, optional
-CANOPEN_OD_SW_VERSION = 0x100A  # VISIBLE_STRING, optional
-CANOPEN_OD_GUARD_TIME = 0x100C  # UNSIGNED16, optional
-CANOPEN_OD_LIFE_TIME_FACTOR = 0x100D  # UNSIGNED8, optional
-CANOPEN_OD_STORE_PARAMETERS = 0x1010  # UNSIGNED32, optional
-CANOPEN_OD_RESTORE_PARAMETERS = 0x1011  # UNSIGNED32, optional
-CANOPEN_OD_EMCY_COB_ID = 0x1014  # UNSIGNED32, optional
-CANOPEN_OD_HEARTBEAT_CONSUMER = 0x1016  # ARRAY, optional
-CANOPEN_OD_HEARTBEAT_PRODUCER = 0x1017  # UNSIGNED16, optional
 CANOPEN_OD_IDENTITY = 0x1018  # RECORD, mandatory
 
 # Identity object (0x1018) sub-indices
@@ -1063,9 +1001,6 @@ CANOPEN_ERR_REG_CURRENT = 0x02  # Bit 1: current
 CANOPEN_ERR_REG_VOLTAGE = 0x04  # Bit 2: voltage
 CANOPEN_ERR_REG_TEMPERATURE = 0x08  # Bit 3: temperature
 CANOPEN_ERR_REG_COMMUNICATION = 0x10  # Bit 4: communication error
-CANOPEN_ERR_REG_DEVICE_PROFILE = 0x20  # Bit 5: device profile specific
-CANOPEN_ERR_REG_RESERVED = 0x40  # Bit 6: reserved
-CANOPEN_ERR_REG_MANUFACTURER = 0x80  # Bit 7: manufacturer specific
 
 CANOPEN_ERR_REGISTER_BITS: Dict[int, str] = {
     0x01: "Generic error",
@@ -1133,12 +1068,9 @@ CANOPEN_EMCY_CODES: Dict[int, str] = {
 
 CANOPEN_PDO_COMM_COB_ID = 0x01  # COB-ID used by PDO
 CANOPEN_PDO_COMM_TRANSMISSION = 0x02  # Transmission type
-CANOPEN_PDO_COMM_INHIBIT_TIME = 0x03  # Inhibit time
-CANOPEN_PDO_COMM_EVENT_TIMER = 0x05  # Event timer
 
 # PDO transmission types
 CANOPEN_PDO_TRANS_SYNC_ACYCLIC = 0x00  # Synchronous (acyclic)
-CANOPEN_PDO_TRANS_SYNC_CYCLIC_BASE = 0x01  # Synchronous (cyclic, every N-th SYNC)
 CANOPEN_PDO_TRANS_RTR_SYNC = 0xFC  # RTR-only (synchronous)
 CANOPEN_PDO_TRANS_RTR_ASYNC = 0xFD  # RTR-only (asynchronous)
 CANOPEN_PDO_TRANS_ASYNC_MFR = 0xFE  # Asynchronous, manufacturer specific
@@ -1151,17 +1083,6 @@ CANOPEN_PDO_TRANS_ASYNC_PROFILE = 0xFF  # Asynchronous, device profile specific
 # A device with profile 309 in object 0x1000 is a Modbus gateway.
 
 CIA309_PROFILE_NUMBER = 309
-
-# Gateway-specific OD entries (CiA 309 defines these in manufacturer range)
-CIA309_OD_GATEWAY_CONFIG = 0x5000  # Gateway configuration base
-CIA309_OD_MODBUS_MAP_BASE = 0x5100  # Modbus register mapping base
-CIA309_OD_SLAVE_MAP_BASE = 0x5200  # CAN slave assignment base
-
-# Modbus function codes used through gateways (standard Modbus FC)
-CIA309_MODBUS_FC_READ_HOLDING = 0x03
-CIA309_MODBUS_FC_READ_INPUT = 0x04
-CIA309_MODBUS_FC_WRITE_SINGLE = 0x06
-CIA309_MODBUS_FC_WRITE_MULTIPLE = 0x10
 
 # Known gateway vendor IDs (CiA assigned) - commonly seen in the field
 CANOPEN_KNOWN_GATEWAY_VENDORS: Dict[int, str] = {
@@ -1287,9 +1208,5 @@ class CANopenSDOResponse:
     def as_string(self) -> Optional[str]:
         """Interpret data as VISIBLE_STRING."""
         if self.data and not self.error:
-            try:
-                return self.data.decode("ascii", errors="ignore").rstrip("\x00")
-            except Exception as e:
-                logger.debug(f"Return value computation failed: {e}")
-                return None
+            return self.data.decode("ascii", errors="ignore").rstrip("\x00")
         return None
