@@ -4,7 +4,7 @@ ASTM/LIS NXC Connection
 NXC-style callable class that composes mixins for ASTM scanning.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from ...connection import NetworkConnection
 from ...utils.protocol_helpers import ConnectionHelper
@@ -35,9 +35,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.record_builder: Optional[ASTMRecordBuilder] = None
-        self.all_responses: List[Dict] = []
         self.detected_analyzer: Optional[str] = None
-        self.detected_version: Optional[str] = None
         self.frame_number: int = 1
         super().__init__(args, db, host)
 
