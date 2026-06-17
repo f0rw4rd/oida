@@ -222,7 +222,7 @@ class WriteAccessMixin(_ScannerBase):
         # ASN.1 object so the write is a true identity (re-wrapping a non-string
         # type as OctetString would corrupt the value on permissive agents).
         try:
-            error_indication, error_status, error_index, _ = await set_cmd(
+            error_indication, error_status, _, _ = await set_cmd(
                 engine,
                 auth_data,
                 transport,
@@ -444,17 +444,17 @@ class WriteAccessMixin(_ScannerBase):
             transport = await UdpTransportTarget.create(
                 (self.host, self.port), timeout=self.timeout, retries=1
             )
-            error_indication, error_status, error_index, var_binds = await set_cmd(
+            error_indication, error_status, _, _ = await set_cmd(
                 engine,
                 auth_data,
                 transport,
                 context,
                 ObjectType(ObjectIdentity(oid), typed_value),
             )
-            return error_indication, error_status, error_index, var_binds
+            return error_indication, error_status
 
         try:
-            error_indication, error_status, error_index, var_binds = asyncio.run(_do_set())
+            error_indication, error_status = asyncio.run(_do_set())
         except Exception as e:
             self.logger.fail(f"SET {oid} failed: {e}")
             return {
