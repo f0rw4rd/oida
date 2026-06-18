@@ -25,11 +25,16 @@ run_lane() { echo -e "\n${BLUE}== $1 ==${NC}"; shift; "$@" || rc=1; }
 
 need_mocks() {
     echo -e "${YELLOW}Checking mocks (integration/coverage need them up)…${NC}"
-    if ! uv run python services.py status 2>/dev/null | grep -qiE "healthy|running|up"; then
-        echo -e "${YELLOW}Mocks don't look up — starting core group…${NC}"
-        uv run python services.py up core || {
-            echo -e "${RED}Could not start mocks; skipping mock-backed lanes.${NC}"; return 1; }
+    # Detect already-running mocks by container name, not by compose project:
+    # the stack may have been started from another worktree (a different project
+    # name), so `services.py status` here can miss it and then collide trying to
+    # start a second stack on the same network pool.
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qE 'mock-server|hipserver|conpot'; then
+        echo -e "${GREEN}Mocks already running — using them.${NC}"; return 0
     fi
+    echo -e "${YELLOW}No mocks detected — starting core group…${NC}"
+    uv run python services.py up core || {
+        echo -e "${RED}Could not start mocks; skipping mock-backed lanes.${NC}"; return 1; }
 }
 
 if [[ "$LANE" == "all" || "$LANE" == "unit" ]]; then
