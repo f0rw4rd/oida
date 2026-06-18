@@ -381,9 +381,16 @@ def _ids(cases):
 _MAX_PACKETS = 1000  # Cap per-listener feeds to keep unit tests fast (ethercat has 44k)
 
 
-def _load_listener(case, _retries: int = 1):
-    """Import and instantiate a listener, feed packets, return it."""
+def _load_listener(case, _retries: int = 4):
+    """Import and instantiate a listener, feed packets, return it.
+
+    tshark is spawned per call via pyshark; under heavy parallel test load
+    (``-n auto`` across the whole unit suite) tshark intermittently crashes on
+    resource contention. These crashes are transient, so retry a few times with
+    a short backoff before giving up.
+    """
     import itertools
+    import time
 
     from pyshark.capture.capture import TSharkCrashException
 
@@ -407,6 +414,7 @@ def _load_listener(case, _retries: int = 1):
         listener.feed_packets(itertools.islice(iter(cap), _MAX_PACKETS))
     except TSharkCrashException:
         if _retries > 0:
+            time.sleep(0.5)
             return _load_listener(case, _retries=_retries - 1)
         raise
     finally:
