@@ -120,25 +120,48 @@ class MDNSFuzzer(BaseFuzzer):
         return [mdns_monitor]
 
     def _create_dns_header(
-        self, name="DNS_Header", qr=0, opcode=0, aa=0, tc=0, rd=0, ra=0, z=0, rcode=0
+        self,
+        name="DNS_Header",
+        qr=0,
+        opcode=0,
+        aa=0,
+        tc=0,
+        rd=0,
+        ra=0,
+        z=0,
+        rcode=0,
+        qdcount=0,
+        ancount=0,
+        nscount=0,
+        arcount=0,
     ) -> Block:
-        """Helper method to create DNS header block with specific flag values"""
+        """Create a DNS header block.
+
+        The 16-bit flags field must be a single packed value: boofuzz renders
+        each separate ``BitField`` primitive to its own byte boundary, so eight
+        BitFields would emit eight bytes, not the two the DNS header requires.
+        We pack the flags into one big-endian Word instead. Section counts must
+        match the records the caller appends, so they are explicit parameters.
+        """
+        flags = (
+            (qr & 0x1) << 15
+            | (opcode & 0xF) << 11
+            | (aa & 0x1) << 10
+            | (tc & 0x1) << 9
+            | (rd & 0x1) << 8
+            | (ra & 0x1) << 7
+            | (z & 0x7) << 4
+            | (rcode & 0xF)
+        )
         return Block(
             name,
             children=(
                 Word("ID", 0x1234, output_format="binary", endian=">"),  # Transaction ID
-                BitField("QR", default_value=qr, width=1),  # Query/Response flag
-                BitField("Opcode", default_value=opcode, width=4),  # Operation code
-                BitField("AA", default_value=aa, width=1),  # Authoritative Answer
-                BitField("TC", default_value=tc, width=1),  # Truncation flag
-                BitField("RD", default_value=rd, width=1),  # Recursion Desired
-                BitField("RA", default_value=ra, width=1),  # Recursion Available
-                BitField("Z", default_value=z, width=3),  # Reserved (inc. AD bit)
-                BitField("Rcode", default_value=rcode, width=4),  # Response code
-                Word("QDCount", 0, output_format="binary", endian=">"),  # Question count
-                Word("ANCount", 0, output_format="binary", endian=">"),  # Answer count
-                Word("NSCount", 0, output_format="binary", endian=">"),  # Authority count
-                Word("ARCount", 0, output_format="binary", endian=">"),  # Additional count
+                Word("Flags", flags, output_format="binary", endian=">"),  # QR/Opcode/AA/.../Rcode
+                Word("QDCount", qdcount, output_format="binary", endian=">"),  # Question count
+                Word("ANCount", ancount, output_format="binary", endian=">"),  # Answer count
+                Word("NSCount", nscount, output_format="binary", endian=">"),  # Authority count
+                Word("ARCount", arcount, output_format="binary", endian=">"),  # Additional count
             ),
         )
 
@@ -328,14 +351,7 @@ class MDNSFuzzer(BaseFuzzer):
                     "QC_Header",
                     children=(
                         Word("ID", 0xABCD, output_format="binary", endian=">"),
-                        BitField("QR", default_value=1, width=1),  # Response
-                        BitField("Opcode", default_value=0, width=4),
-                        BitField("AA", default_value=1, width=1),
-                        BitField("TC", default_value=0, width=1),
-                        BitField("RD", default_value=0, width=1),
-                        BitField("RA", default_value=0, width=1),
-                        BitField("Z", default_value=0, width=3),
-                        BitField("Rcode", default_value=0, width=4),
+                        Word("Flags", 0x8400, output_format="binary", endian=">"),
                         # Section counts are now Word (fuzzable) so boofuzz
                         # mutates them — section-count lies about actual record
                         # count are a classic DNS parser bug class
@@ -390,7 +406,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("QC_PTR_Type", b"\x00\x0c"),  # PTR
                         Static("QC_PTR_Class", b"\x00\x01"),
                         Static("QC_PTR_TTL", b"\x00\x00\x01\x2c"),
-                        Static("QC_PTR_RDLength", b"\x00\x15"),
+                        Static("QC_PTR_RDLength", b"\x00\x1b"),  # auto: len(QC_PTR_RData)=27
                         Static("QC_PTR_RData", b"\x08WebShare\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
@@ -402,7 +418,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("QC_SRV_Type", b"\x00\x21"),  # SRV
                         Static("QC_SRV_Class", b"\x00\x01"),
                         Static("QC_SRV_TTL", b"\x00\x00\x01\x2c"),
-                        Static("QC_SRV_RDLength", b"\x00\x12"),
+                        Static("QC_SRV_RDLength", b"\x00\x16"),
                         Static("QC_SRV_Priority", b"\x00\x00"),
                         Static("QC_SRV_Weight", b"\x00\x00"),
                         Static("QC_SRV_Port", b"\x00\x50"),
@@ -429,7 +445,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("QC_CNAME_Type", b"\x00\x05"),  # CNAME
                         Static("QC_CNAME_Class", b"\x00\x01"),
                         Static("QC_CNAME_TTL", b"\x00\x00\x00\x78"),
-                        Static("QC_CNAME_RDLength", b"\x00\x0f"),
+                        Static("QC_CNAME_RDLength", b"\x00\x10"),  # auto: len(QC_CNAME_RData)=16
                         Static("QC_CNAME_RData", b"\x08hostname\x05local\x00"),
                     ),
                 ),
@@ -441,7 +457,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("QC_NS_Type", b"\x00\x02"),  # NS
                         Static("QC_NS_Class", b"\x00\x01"),
                         Static("QC_NS_TTL", b"\x00\x00\x00\x78"),
-                        Static("QC_NS_RDLength", b"\x00\x0c"),
+                        Static("QC_NS_RDLength", b"\x00\x0e"),  # auto: len(QC_NS_RData)=14
                         Static("QC_NS_RData", b"\x06ns-srv\x05local\x00"),
                     ),
                 ),
@@ -453,7 +469,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("QC_MX_Type", b"\x00\x0f"),  # MX
                         Static("QC_MX_Class", b"\x00\x01"),
                         Static("QC_MX_TTL", b"\x00\x00\x00\x78"),
-                        Static("QC_MX_RDLength", b"\x00\x0e"),
+                        Static("QC_MX_RDLength", b"\x00\x10"),
                         Static("QC_MX_Pref", b"\x00\x0a"),  # Preference 10
                         Static("QC_MX_RData", b"\x06mail01\x05local\x00"),
                     ),
@@ -466,7 +482,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("QC_SOA_Type", b"\x00\x06"),  # SOA
                         Static("QC_SOA_Class", b"\x00\x01"),
                         Static("QC_SOA_TTL", b"\x00\x00\x00\x78"),
-                        Static("QC_SOA_RDLength", b"\x00\x22"),
+                        Static("QC_SOA_RDLength", b"\x00\x2b"),
                         Static(
                             "QC_SOA_RData",
                             b"\x02ns\x05local\x00"
@@ -483,7 +499,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("QC_NSEC_Type", b"\x00\x2f"),  # NSEC
                         Static("QC_NSEC_Class", b"\x00\x01"),
                         Static("QC_NSEC_TTL", b"\x00\x00\x00\x78"),
-                        Static("QC_NSEC_RDLength", b"\x00\x12"),
+                        Static("QC_NSEC_RDLength", b"\x00\x18"),
                         Static(
                             "QC_NSEC_RData",
                             b"\x08hostname\x05local\x00" + b"\x00\x06\x40\x00\x00\x08\x00\x01",
@@ -637,14 +653,7 @@ class MDNSFuzzer(BaseFuzzer):
                     "Nested_Header",
                     children=(
                         Word("ID", 0x1234, output_format="binary", endian=">"),
-                        BitField("QR", default_value=0, width=1),
-                        BitField("Opcode", default_value=0, width=4),
-                        BitField("AA", default_value=0, width=1),
-                        BitField("TC", default_value=0, width=1),
-                        BitField("RD", default_value=0, width=1),
-                        BitField("RA", default_value=0, width=1),
-                        BitField("Z", default_value=0, width=3),
-                        BitField("Rcode", default_value=0, width=4),
+                        Word("Flags", 0x0000, output_format="binary", endian=">"),
                         Static("QDCount", b"\x00\x01"),
                         Static("ANCount", b"\x00\x00"),
                         Static("NSCount", b"\x00\x00"),
@@ -702,14 +711,7 @@ class MDNSFuzzer(BaseFuzzer):
                     "Variable_Header",
                     children=(
                         Word("ID", 0x1234, output_format="binary", endian=">"),
-                        BitField("QR", default_value=1, width=1),  # Response
-                        BitField("Opcode", default_value=0, width=4),
-                        BitField("AA", default_value=1, width=1),
-                        BitField("TC", default_value=0, width=1),
-                        BitField("RD", default_value=0, width=1),
-                        BitField("RA", default_value=0, width=1),
-                        BitField("Z", default_value=0, width=3),
-                        BitField("Rcode", default_value=0, width=4),
+                        Word("Flags", 0x8400, output_format="binary", endian=">"),
                         # Fuzzable record counts
                         Group(
                             "VR_QDCount",
@@ -817,14 +819,7 @@ class MDNSFuzzer(BaseFuzzer):
                     "TC_Header",
                     children=(
                         Word("ID", 0x1234, output_format="binary", endian=">"),
-                        BitField("QR", default_value=1, width=1),  # Response
-                        BitField("Opcode", default_value=0, width=4),
-                        BitField("AA", default_value=1, width=1),
-                        BitField("TC", default_value=1, width=1),  # Truncated flag set
-                        BitField("RD", default_value=0, width=1),
-                        BitField("RA", default_value=0, width=1),
-                        BitField("Z", default_value=0, width=3),
-                        BitField("Rcode", default_value=0, width=4),
+                        Word("Flags", 0x8600, output_format="binary", endian=">"),
                         Static("QDCount", b"\x00\x01"),  # 1 question
                         Static("ANCount", b"\x00\x05"),  # 5 answers claimed
                         Static("NSCount", b"\x00\x00"),
@@ -904,14 +899,7 @@ class MDNSFuzzer(BaseFuzzer):
                     "Multi_Header",
                     children=(
                         Word("ID", 0x1234, output_format="binary", endian=">"),
-                        BitField("QR", default_value=0, width=1),
-                        BitField("Opcode", default_value=0, width=4),
-                        BitField("AA", default_value=0, width=1),
-                        BitField("TC", default_value=0, width=1),
-                        BitField("RD", default_value=0, width=1),
-                        BitField("RA", default_value=0, width=1),
-                        BitField("Z", default_value=0, width=3),
-                        BitField("Rcode", default_value=0, width=4),
+                        Word("Flags", 0x0000, output_format="binary", endian=">"),
                         # Multiple questions
                         Static("QDCount", b"\x00\x03"),  # 3 questions
                         Static("ANCount", b"\x00\x00"),
@@ -971,14 +959,7 @@ class MDNSFuzzer(BaseFuzzer):
                     "Multi_Answer_Header",
                     children=(
                         Word("ID", 0x1234, output_format="binary", endian=">"),
-                        BitField("QR", default_value=1, width=1),  # Response
-                        BitField("Opcode", default_value=0, width=4),  # Standard query
-                        BitField("AA", default_value=1, width=1),  # Authoritative
-                        BitField("TC", default_value=0, width=1),  # Not truncated
-                        BitField("RD", default_value=0, width=1),  # Recursion not desired
-                        BitField("RA", default_value=0, width=1),  # Recursion not available
-                        BitField("Z", default_value=0, width=3),  # Reserved
-                        BitField("Rcode", default_value=0, width=4),  # No error
+                        Word("Flags", 0x8400, output_format="binary", endian=">"),
                         # One question, multiple answers
                         Static("QDCount", b"\x00\x01"),  # 1 question
                         Static("ANCount", b"\x00\x03"),  # 3 answers
@@ -1003,7 +984,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MA_A1_Type", b"\x00\x0c"),  # PTR
                         Static("MA_A1_Class", b"\x00\x01"),  # IN
                         Static("MA_A1_TTL", b"\x00\x00\x01\x2c"),  # TTL 300s
-                        Static("MA_A1_RDLength", b"\x00\x15"),  # Length 21
+                        Static("MA_A1_RDLength", b"\x00\x1b"),  # Length 21
                         Static("MA_A1_RData", b"\x08WebShare\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
@@ -1015,7 +996,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MA_A2_Type", b"\x00\x0c"),  # PTR
                         Static("MA_A2_Class", b"\x00\x01"),  # IN
                         Static("MA_A2_TTL", b"\x00\x00\x01\x2c"),  # TTL 300s
-                        Static("MA_A2_RDLength", b"\x00\x14"),  # Length 20
+                        Static("MA_A2_RDLength", b"\x00\x1a"),  # Length 20
                         Static("MA_A2_RData", b"\x07Printer\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
@@ -1027,7 +1008,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MA_A3_Type", b"\x00\x21"),  # SRV
                         Static("MA_A3_Class", b"\x00\x01"),  # IN
                         Static("MA_A3_TTL", b"\x00\x00\x01\x2c"),  # TTL 300s
-                        Static("MA_A3_RDLength", b"\x00\x12"),  # Length 18
+                        Static("MA_A3_RDLength", b"\x00\x16"),  # Length 18
                         Static("MA_A3_Priority", b"\x00\x00"),  # Priority 0
                         Static("MA_A3_Weight", b"\x00\x00"),  # Weight 0
                         Static("MA_A3_Port", b"\x00\x50"),  # Port 80
@@ -1045,14 +1026,7 @@ class MDNSFuzzer(BaseFuzzer):
                     "Mixed_Header",
                     children=(
                         Word("ID", 0x1234, output_format="binary", endian=">"),
-                        BitField("QR", default_value=1, width=1),  # Response
-                        BitField("Opcode", default_value=0, width=4),  # Standard query
-                        BitField("AA", default_value=1, width=1),  # Authoritative
-                        BitField("TC", default_value=0, width=1),  # Not truncated
-                        BitField("RD", default_value=0, width=1),  # Recursion not desired
-                        BitField("RA", default_value=0, width=1),  # Recursion not available
-                        BitField("Z", default_value=0, width=3),  # Reserved
-                        BitField("Rcode", default_value=0, width=4),  # No error
+                        Word("Flags", 0x8400, output_format="binary", endian=">"),
                         # Multiple entries in all sections
                         Static("QDCount", b"\x00\x01"),  # 1 question
                         Static("ANCount", b"\x00\x02"),  # 2 answers
@@ -1104,7 +1078,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MR_Auth_Type", b"\x00\x06"),  # SOA
                         Static("MR_Auth_Class", b"\x00\x01"),  # IN
                         Static("MR_Auth_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("MR_Auth_RDLength", b"\x00\x22"),  # Length 34
+                        Static("MR_Auth_RDLength", b"\x00\x2b"),  # Length 34
                         Static(
                             "MR_Auth_RData",
                             # MNAME: ns.local
@@ -1126,7 +1100,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MR_Add1_Type", b"\x00\x10"),  # TXT
                         Static("MR_Add1_Class", b"\x00\x01"),  # IN
                         Static("MR_Add1_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("MR_Add1_RDLength", b"\x00\x10"),  # Length 16
+                        Static("MR_Add1_RDLength", b"\x00\x11"),  # Length 16
                         Static("MR_Add1_RData", b"\x0fname=mycomputer\x00"),
                     ),
                 ),
@@ -1134,11 +1108,11 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "MR_Add2",
                     children=(
-                        Static("MR_Add2_Name", b"\x0c_companion-link\x04_tcp\x05local\x00"),
+                        Static("MR_Add2_Name", b"\x0f_companion-link\x04_tcp\x05local\x00"),
                         Static("MR_Add2_Type", b"\x00\x21"),  # SRV
                         Static("MR_Add2_Class", b"\x00\x01"),  # IN
                         Static("MR_Add2_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("MR_Add2_RDLength", b"\x00\x12"),  # Length 18
+                        Static("MR_Add2_RDLength", b"\x00\x16"),  # Length 18
                         Static(
                             "MR_Add2_RData",
                             # Priority, Weight, Port
@@ -1157,7 +1131,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MR_Add3_Type", b"\x00\x2f"),  # NSEC
                         Static("MR_Add3_Class", b"\x00\x01"),  # IN
                         Static("MR_Add3_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("MR_Add3_RDLength", b"\x00\x12"),  # Length 18
+                        Static("MR_Add3_RDLength", b"\x00\x18"),  # Length 18
                         Static(
                             "MR_Add3_RData",
                             # Next Domain Name
@@ -1191,7 +1165,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("ST_A_Type", b"\x00\x0c"),  # PTR
                         Static("ST_A_Class", b"\x00\x01"),  # IN
                         Static("ST_A_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("ST_A_RDLength", b"\x00\x15"),
+                        Static("ST_A_RDLength", b"\x00\x1b"),  # auto: len(ST_A_RData)=27
                         Static("ST_A_RData", b"\x08LaserJet\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
@@ -1297,7 +1271,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MKA_A1_Type", b"\x00\x0c"),  # PTR
                         Static("MKA_A1_Class", b"\x00\x01"),  # IN
                         Static("MKA_A1_TTL", b"\x00\x00\x00\x10"),  # TTL 16 seconds
-                        Static("MKA_A1_RDLength", b"\x00\x15"),
+                        Static("MKA_A1_RDLength", b"\x00\x1b"),  # auto: len(MKA_A1_RData)=27
                         Static("MKA_A1_RData", b"\x08WebShare\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
@@ -1309,7 +1283,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MKA_A2_Type", b"\x00\x0c"),  # PTR
                         Static("MKA_A2_Class", b"\x00\x01"),  # IN
                         Static("MKA_A2_TTL", b"\x00\x00\x00\x10"),  # TTL 16 seconds
-                        Static("MKA_A2_RDLength", b"\x00\x15"),
+                        Static("MKA_A2_RDLength", b"\x00\x1a"),  # auto: len(MKA_A2_RData)=26
                         Static("MKA_A2_RData", b"\x08Printer1\x05_ipp\x04_tcp\x05local\x00"),
                     ),
                 ),
