@@ -742,6 +742,52 @@ def test_tshark_validates_all_wellformed_requests(protocol_name, tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# Render integrity: every request must serialize without raising.
+# A request that can't render is a fuzzer bug (e.g. a binary value handed to a
+# string primitive) — the fuzzer would crash trying to send it, so it must
+# never be silently skipped.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("protocol_name", TESTABLE_PROTOCOLS)
+def test_all_requests_render_without_error(protocol_name):
+    """Every request in the session must serialize via render() cleanly."""
+    session = _instantiate_fuzzer(protocol_name)
+    errors = []
+    for req_name, node in _find_all_requests(session):
+        try:
+            node.render()
+        except Exception as exc:  # noqa: BLE001 - report any render failure
+            errors.append(f"{req_name}: {type(exc).__name__}: {exc}")
+    assert not errors, f"{protocol_name}: {len(errors)} request(s) fail to render: {errors}"
+
+
+# ---------------------------------------------------------------------------
+# Bidirectional guard: requests on the intentional-malformed allowlist must
+# STAY malformed. If one becomes well-formed the attack/CVE payload has been
+# silently neutralized — remove it from _INTENTIONAL_MALFORMED (and validate it
+# in the well-formed test instead).
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("entry", sorted(_INTENTIONAL_MALFORMED))
+def test_intentional_malformed_stays_malformed(entry, tmp_path):
+    """Allowlisted intentionally-malformed requests must remain malformed."""
+    protocol_name, req_name = entry.split("/", 1)
+    cfg = TSHARK_PROTOCOLS[protocol_name]
+    session = _instantiate_fuzzer(protocol_name)
+    node = dict(_find_all_requests(session)).get(req_name)
+    assert node is not None, f"{entry}: request no longer exists in the session"
+    pcap_path = str(tmp_path / f"intent_{protocol_name}_{req_name}.pcap")
+    _write_pcap(node.render(), cfg["port"], cfg["transport"], pcap_path)
+    assert _tshark_malformed(pcap_path, cfg["decode_as"]), (
+        f"{entry} is allowlisted as intentionally malformed but tshark now parses "
+        f"it cleanly — the attack/CVE payload was neutralized. Remove it from "
+        f"_INTENTIONAL_MALFORMED and validate it via the well-formed test instead."
+    )
+
+
+# ---------------------------------------------------------------------------
 # Summary report (always passes, prints overview)
 # ---------------------------------------------------------------------------
 
