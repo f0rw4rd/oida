@@ -1231,9 +1231,13 @@ class TestIEC104Integration:
         """Test --list-ports requires serial subsystem"""
         pass
 
-    @pytest.mark.skip(reason="--tls-ca registered by factory but unused by scanner code")
+    @pytest.mark.skip(
+        reason="--tls-ca IS consumed (scanner._build_tls_config -> set_ca_certificate); "
+        "consumption is unit-tested in test_scanner.py::test_tls_ca_consumed_by_build_tls_config. "
+        "Live exercise blocked by upstream c104 mbedtls TLS bug (iec104-python#64)."
+    )
     def test_tls_ca_flag(self):
-        """Test --tls-ca flag (known gap: registered but not consumed)"""
+        """--tls-ca wiring is proven by the unit test; live TLS is upstream-broken."""
         pass
 
     @pytest.mark.skip(reason="--fuzz-max-targets registered but unused in scanner")
