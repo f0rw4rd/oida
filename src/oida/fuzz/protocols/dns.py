@@ -1,6 +1,6 @@
 """DNS Protocol Fuzzer"""
 
-from boofuzz import Block, Byte, DWord, Group, Request, Static, Word
+from boofuzz import Block, Byte, Bytes, DWord, Group, Request, Static, Word
 
 from typing import List
 
@@ -1102,7 +1102,7 @@ class DNSFuzzer(BaseFuzzer):
                             "cookie_option_length", 0x0014, endian=">"
                         ),  # 20 bytes: 8 (client) + 12 (server example)
                         # Client Cookie (8 bytes - required)
-                        SmartString(
+                        Bytes(
                             "client_cookie",
                             b"\x01\x02\x03\x04\x05\x06\x07\x08",
                             size=8,
@@ -1110,7 +1110,7 @@ class DNSFuzzer(BaseFuzzer):
                             fuzzable=True,
                         ),
                         # Server Cookie (8-32 bytes - optional, using 12 for fuzzing)
-                        SmartString(
+                        Bytes(
                             "server_cookie",
                             b"\xaa\xbb\xcc\xdd\xee\xff\x00\x11\x22\x33\x44\x55",
                             size=12,
@@ -1162,7 +1162,7 @@ class DNSFuzzer(BaseFuzzer):
                         # Cookie option with client cookie only
                         Word("cookie_option_code", 0x000A, endian=">"),
                         Word("cookie_option_length", 0x0008, endian=">"),  # 8 bytes
-                        SmartString(
+                        Bytes(
                             "client_cookie",
                             b"\x11\x22\x33\x44\x55\x66\x77\x88",
                             size=8,
@@ -1225,7 +1225,7 @@ class DNSFuzzer(BaseFuzzer):
                                 b"\xff\xff",  # Maximum value
                             ],
                         ),
-                        SmartString(
+                        Bytes(
                             "malformed_cookie_data",
                             b"\xff" * 40,
                             size=40,
@@ -1408,7 +1408,7 @@ class DNSFuzzer(BaseFuzzer):
                                 b"\x02\x00",  # 512 bytes
                             ],
                         ),
-                        SmartString(
+                        Bytes(
                             "padding_data", b"\x00" * 64, size=64, max_len=512, fuzzable=True
                         ),
                     ),
@@ -1458,13 +1458,13 @@ class DNSFuzzer(BaseFuzzer):
                         # DAU - DNSSEC Algorithm Understood (code 5)
                         Word("dau_option_code", 0x0005, endian=">"),
                         Word("dau_option_length", 0x0003, endian=">"),
-                        SmartString(
+                        Bytes(
                             "dau_algorithms", b"\x08\x0d\x0e", size=3, max_len=16, fuzzable=True
                         ),  # RSA-SHA256, ECDSA P-256, Ed25519
                         # DHU - DS Hash Understood (code 6)
                         Word("dhu_option_code", 0x0006, endian=">"),
                         Word("dhu_option_length", 0x0002, endian=">"),
-                        SmartString(
+                        Bytes(
                             "dhu_hashes", b"\x02\x04", size=2, max_len=8, fuzzable=True
                         ),  # SHA-256, SHA-384
                         # N3U - NSEC3 Hash Understood (code 7)
