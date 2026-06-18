@@ -91,6 +91,7 @@ dev = [
     "pytest-docker>=3.2.5",
     "pytest-xdist>=3.8.0",
     "pytest-timeout>=2.4.0",
+    "pytest-rerunfailures>=15.0",
     "flake8>=7.3.0",
     "mypy>=1.19.1",
     "pre-commit>=4.5.1",
@@ -213,11 +214,20 @@ minversion = "6.0"
 addopts = "-ra -q --strict-markers --strict-config -m 'not network' --tb=line"
 testpaths = ["tests/unit", "tests/integration", "tests/contracts"]
 timeout = 60
-timeout_method = "thread"
+# Use the signal method, not "thread". The thread method cannot interrupt a
+# blocked socket syscall — on timeout it dumps stacks and hard-exits the whole
+# pytest process (os._exit), so a single hung test body kills the entire run
+# with no per-test report. The signal method (SIGALRM) raises into the test, so
+# one slow test fails and the run continues. Linux/main-thread only — fine here
+# (xdist workers run each test in their own main thread).
+timeout_method = "signal"
 # Don't apply the per-test timer to setup/teardown/fixtures. The
 # session-scoped docker_services fixture brings up ~67 mock containers
 # and routinely exceeds any per-test budget; without this flag it kills
-# the whole pytest session.
+# the whole pytest session. (Fixture/collection hangs are therefore still
+# possible — run in lanes per docs/TESTING.md, or pass
+# -o timeout_func_only=false when the mocks are already up so setup is just a
+# fast health-check.)
 timeout_func_only = true
 filterwarnings = [
     "error",
@@ -227,6 +237,7 @@ filterwarnings = [
 ]
 markers = [
     "smoke: fast structural tests that verify basic wiring, args, and constants (select with '-m smoke')",
+    "flaky: timing-sensitive against a shared mock; auto-retried (pytest-rerunfailures). NOT for code bugs",
     "slow: marks tests as slow running (deselect with '-m \"not slow\"')",
     "network: marks tests requiring network access",
     "auth: marks tests requiring authentication",
