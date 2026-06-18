@@ -12,17 +12,13 @@ from oida.fuzz.core.config import FuzzerConfig
 from oida.fuzz.core.connections import MockConnectionFactory
 
 
-# Protocols requiring raw sockets, serial, BLE, or optional deps -- mark xfail
-XFAIL_PROTOCOLS = {
-    "icmp",
-    "icmpv6",
-    "ipv4",
-    "ipv6",
-    "ethernet",
-    "profinet_dcp",
-    "industrial_ethernet",
-    "modbus_rtu",
-}
+# Empty: instantiation only builds the boofuzz request tree (no I/O), so it
+# never needs raw sockets / serial / root — those are only required to *send*.
+# The previous entries (icmp/icmpv6/ipv4/ipv6/ethernet/modbus_rtu) all
+# instantiate fine and now run for real; profinet_dcp/industrial_ethernet were
+# dead (not in PROTOCOL_FUZZERS). Genuinely missing optional deps are still
+# handled by the ImportError -> skip fallback below.
+XFAIL_PROTOCOLS: set[str] = set()
 
 
 def _make_config(protocol_name: str) -> FuzzerConfig:
