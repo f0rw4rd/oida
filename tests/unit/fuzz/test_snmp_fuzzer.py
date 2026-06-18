@@ -568,5 +568,153 @@ class TestSNMPCustomConfiguration:
         assert enable_set is True
 
 
+# =============================================================================
+# Test SNMPv2c Per-Request Gating (regression: coarse-key gates dropped requests)
+# =============================================================================
+
+
+class _RecordingSession:
+    """Minimal stand-in for a boofuzz Session that records connected requests."""
+
+    def __init__(self):
+        self.connected = []
+
+    def connect(self, request, *args, **kwargs):
+        self.connected.append(request.name)
+
+
+def _connected_request_names(snmpv2_config, *, enabled=None, disabled=None, enable_set=True):
+    """Run SNMPv2cFuzzer._define_protocol() with a recording session, no network."""
+    from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+
+    snmpv2_config.protocol_options = {"enable_set": enable_set}
+    if enabled is not None:
+        snmpv2_config.enabled_requests = list(enabled)
+    if disabled is not None:
+        snmpv2_config.disabled_requests = list(disabled)
+
+    fuzzer = SNMPv2cFuzzer(snmpv2_config, connection_factory=MockConnectionFactory())
+    # Inject a recording session so _define_protocol() never touches the network.
+    recorder = _RecordingSession()
+    fuzzer._session = recorder
+    fuzzer._define_protocol()
+    return recorder.connected
+
+
+class TestSNMPv2cRequestGating:
+    """Every advertised request name must be individually gated and connectable."""
+
+    def test_gate_keys_match_advertised_names(self, snmpv2_config):
+        """Default run (no enable/disable, enable_set) connects exactly the advertised names."""
+        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+
+        advertised = {r.name for r in SNMPv2cFuzzer.get_request_definitions()}
+        connected = set(_connected_request_names(snmpv2_config, enable_set=True))
+
+        # Every gate key is an advertised name, and every advertised name is gated.
+        assert connected == advertised
+
+    def test_set_request_requires_enable_set(self, snmpv2_config):
+        """SetRequest only connects when enable_set is True."""
+        connected = _connected_request_names(snmpv2_config, enable_set=False)
+        assert "SNMPv2c_SetRequest" not in connected
+        # All other advertised requests still connect.
+        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+
+        advertised = {r.name for r in SNMPv2cFuzzer.get_request_definitions()}
+        assert set(connected) == advertised - {"SNMPv2c_SetRequest"}
+
+    def test_enable_single_request_connects_only_that_request(self, snmpv2_config):
+        """--enable SNMPv2c_GetRequest connects only that request (was: zero requests)."""
+        connected = _connected_request_names(
+            snmpv2_config, enabled=["SNMPv2c_GetRequest"], enable_set=True
+        )
+        assert connected == ["SNMPv2c_GetRequest"]
+
+    def test_disable_single_request_drops_only_that_request(self, snmpv2_config):
+        """--disable SNMPv2c_Malformed drops exactly that request (was: no effect)."""
+        connected = _connected_request_names(
+            snmpv2_config, disabled=["SNMPv2c_Malformed"], enable_set=True
+        )
+        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+
+        advertised = {r.name for r in SNMPv2cFuzzer.get_request_definitions()}
+        assert "SNMPv2c_Malformed" not in connected
+        assert set(connected) == advertised - {"SNMPv2c_Malformed"}
+
+
+# =============================================================================
+# Test SNMPv3 Per-Request Gating (regression: coarse-key gates dropped requests)
+# =============================================================================
+
+
+def _connected_snmpv3_request_names(*, enabled=None, disabled=None, enable_set=True):
+    """Run SNMPv3Fuzzer._define_protocol() with a recording session, no network."""
+    from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+
+    config = FuzzerConfig(
+        target_ip="192.168.1.100",
+        target_port=161,
+        protocol_type=ProtocolType.UDP,
+    )
+    config.protocol_options = {"enable_set": enable_set}
+    if enabled is not None:
+        config.enabled_requests = list(enabled)
+    if disabled is not None:
+        config.disabled_requests = list(disabled)
+
+    fuzzer = SNMPv3Fuzzer(config, connection_factory=MockConnectionFactory())
+    # Inject a recording session so _define_protocol() never touches the network.
+    recorder = _RecordingSession()
+    fuzzer._session = recorder
+    fuzzer._define_protocol()
+    return recorder.connected
+
+
+class TestSNMPv3RequestGating:
+    """Every advertised request name must be individually gated and connectable."""
+
+    def test_gate_keys_match_advertised_names(self):
+        """Default run (no enable/disable, enable_set) connects exactly the advertised names."""
+        from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+
+        advertised = {r.name for r in SNMPv3Fuzzer.get_request_definitions()}
+        connected = set(_connected_snmpv3_request_names(enable_set=True))
+
+        # Every gate key is an advertised name, and every advertised name is gated.
+        assert connected == advertised
+
+    def test_set_request_requires_enable_set(self):
+        """SetRequest only connects when enable_set is True."""
+        connected = _connected_snmpv3_request_names(enable_set=False)
+        assert "SNMPv3_SetRequest" not in connected
+        # All other advertised requests still connect.
+        from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+
+        advertised = {r.name for r in SNMPv3Fuzzer.get_request_definitions()}
+        assert set(connected) == advertised - {"SNMPv3_SetRequest"}
+
+    def test_enable_single_request_connects_only_that_request(self):
+        """--enable SNMPv3_USMAuthFuzz connects only that request (was: zero requests)."""
+        connected = _connected_snmpv3_request_names(
+            enabled=["SNMPv3_USMAuthFuzz"], enable_set=True
+        )
+        assert connected == ["SNMPv3_USMAuthFuzz"]
+
+    def test_disable_single_request_drops_only_that_request(self):
+        """--disable SNMPv3_Malformed drops exactly that request (was: no effect)."""
+        connected = _connected_snmpv3_request_names(
+            disabled=["SNMPv3_Malformed"], enable_set=True
+        )
+        from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+
+        advertised = {r.name for r in SNMPv3Fuzzer.get_request_definitions()}
+        assert "SNMPv3_Malformed" not in connected
+        assert set(connected) == advertised - {"SNMPv3_Malformed"}
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

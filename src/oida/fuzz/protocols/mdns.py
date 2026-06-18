@@ -1459,41 +1459,69 @@ class MDNSFuzzer(BaseFuzzer):
         # =================================================================
 
         # Phase 1: Quick Feature Sweep
-        self.session.connect(quick_coverage)  # All record types in one request
+        if self.is_request_enabled("Quick_Coverage"):
+            self.session.connect(quick_coverage)  # All record types in one request
 
         # Phase 2: High-Crash Tests (move early for fast crash detection)
-        self.session.connect(malformed_header)  # Invalid header fields
-        self.session.connect(long_name)  # Buffer overflow via long names
-        self.session.connect(oversized_packet)  # UDP size limit attacks
+        if self.is_request_enabled("Malformed_Header"):
+            self.session.connect(malformed_header)  # Invalid header fields
+        if self.is_request_enabled("Long_Name"):
+            self.session.connect(long_name)  # Buffer overflow via long names
+        if self.is_request_enabled("Oversized_Packet"):
+            self.session.connect(oversized_packet)  # UDP size limit attacks
 
         # Phase 3: CVE-Targeted Operations
-        self.session.connect(invalid_compression)  # CVE-2020-8617 style pointer attack
-        self.session.connect(circular_compression)  # Infinite loop attack
-        self.session.connect(nested_compression)  # Deep recursion attack
-        self.session.connect(edns0_malformed)  # EDNS0 parsing vulnerabilities
+        if self.is_request_enabled("Invalid_Compression"):
+            self.session.connect(invalid_compression)  # CVE-2020-8617 style pointer attack
+        if self.is_request_enabled("Circular_Compression"):
+            self.session.connect(circular_compression)  # Infinite loop attack
+        if self.is_request_enabled("Nested_Compression"):
+            self.session.connect(nested_compression)  # Deep recursion attack
+        if self.is_request_enabled("EDNS0_Malformed"):
+            self.session.connect(edns0_malformed)  # EDNS0 parsing vulnerabilities
 
         # Phase 4: Boundary Attacks
-        self.session.connect(variable_records)  # Count mismatch attacks
-        self.session.connect(truncated_packet)  # TC bit with missing data
-        self.session.connect(zero_length_label)  # Zero-length label attack
+        if self.is_request_enabled("Variable_Records"):
+            self.session.connect(variable_records)  # Count mismatch attacks
+        if self.is_request_enabled("Truncated_Packet"):
+            self.session.connect(truncated_packet)  # TC bit with missing data
+        if self.is_request_enabled("Zero_Length_Label"):
+            self.session.connect(zero_length_label)  # Zero-length label attack
 
         # Phase 5: Normal Operations (comprehensive coverage)
-        self.session.connect(standard_query)  # Basic query
-        self.session.connect(zero_entry_query)  # Empty query
-        self.session.connect(multi_question_query)  # Multiple questions
-        self.session.connect(standard_response)  # Basic response
-        self.session.connect(multi_answer_response)  # Multiple answers
-        self.session.connect(mixed_records_response)  # Mixed record types
-        self.session.connect(unicast_response_query)  # QU bit test
-        self.session.connect(duplicate_records)  # Duplicate handling
-        self.session.connect(service_subtypes)  # Service subtypes
-        self.session.connect(multi_known_answer)  # Known answer suppression
-        self.session.connect(negative_response)  # NSEC negative responses
-        self.session.connect(ptr_query)  # Service discovery
-        self.session.connect(srv_query)  # Service instance details
-        self.session.connect(cache_flush_query)  # Cache flush bit
-        self.session.connect(probe_query)  # Name uniqueness probe
-        self.session.connect(goodbye_packet)  # Service termination
-        self.session.connect(edns0_packet)  # EDNS0 extensions
+        if self.is_request_enabled("Standard_Query"):
+            self.session.connect(standard_query)  # Basic query
+        if self.is_request_enabled("Zero_Entry_Query"):
+            self.session.connect(zero_entry_query)  # Empty query
+        if self.is_request_enabled("Multi_Question_Query"):
+            self.session.connect(multi_question_query)  # Multiple questions
+        if self.is_request_enabled("Standard_Response"):
+            self.session.connect(standard_response)  # Basic response
+        if self.is_request_enabled("Multi_Answer_Response"):
+            self.session.connect(multi_answer_response)  # Multiple answers
+        if self.is_request_enabled("Mixed_Records_Response"):
+            self.session.connect(mixed_records_response)  # Mixed record types
+        if self.is_request_enabled("Unicast_Response_Query"):
+            self.session.connect(unicast_response_query)  # QU bit test
+        if self.is_request_enabled("Duplicate_Records"):
+            self.session.connect(duplicate_records)  # Duplicate handling
+        if self.is_request_enabled("Service_Subtypes"):
+            self.session.connect(service_subtypes)  # Service subtypes
+        if self.is_request_enabled("Multi_Known_Answer"):
+            self.session.connect(multi_known_answer)  # Known answer suppression
+        if self.is_request_enabled("Negative_Response"):
+            self.session.connect(negative_response)  # NSEC negative responses
+        if self.is_request_enabled("PTR_Query"):
+            self.session.connect(ptr_query)  # Service discovery
+        if self.is_request_enabled("SRV_Query"):
+            self.session.connect(srv_query)  # Service instance details
+        if self.is_request_enabled("Cache_Flush_Query"):
+            self.session.connect(cache_flush_query)  # Cache flush bit
+        if self.is_request_enabled("Probe_Query"):
+            self.session.connect(probe_query)  # Name uniqueness probe
+        if self.is_request_enabled("Goodbye_Packet"):
+            self.session.connect(goodbye_packet)  # Service termination
+        if self.is_request_enabled("EDNS0_Packet"):
+            self.session.connect(edns0_packet)  # EDNS0 extensions
 
         return self.session

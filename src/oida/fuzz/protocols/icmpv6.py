@@ -1629,76 +1629,115 @@ class ICMPv6Fuzzer(BaseFuzzer):
 
         # === PHASE 1: Quick Coverage ===
         # Touches all ICMPv6 types once for rapid breadth coverage
-        self.session.connect(quick_coverage)
+        if self.is_request_enabled("ICMPv6_Quick_Coverage"):
+            self.session.connect(quick_coverage)
 
         # === PHASE 2: High-crash tests ===
         # RDNSS overflow, option length attacks, malformed packets
-        self.session.connect(rdnss_overflow)
-        self.session.connect(option_length_attack)
-        self.session.connect(malformed_icmpv6)
-        self.session.connect(corrupted_checksum)
+        if self.is_request_enabled("ICMPv6_RDNSS_Overflow"):
+            self.session.connect(rdnss_overflow)
+        if self.is_request_enabled("ICMPv6_Option_Length_Attack"):
+            self.session.connect(option_length_attack)
+        if self.is_request_enabled("ICMPv6_Malformed"):
+            self.session.connect(malformed_icmpv6)
+        if self.is_request_enabled("ICMPv6_Corrupted_Checksum"):
+            self.session.connect(corrupted_checksum)
 
         # === PHASE 3: CVE-targeted tests ===
         if enable_cve_tests:
-            self.session.connect(bad_neighbor)
-            self.session.connect(windows_ipv6_rce)
-            self.session.connect(mikrotik_rdnss)
+            if self.is_request_enabled("ICMPv6_Bad_Neighbor"):
+                self.session.connect(bad_neighbor)
+            if self.is_request_enabled("ICMPv6_Windows_IPv6_RCE"):
+                self.session.connect(windows_ipv6_rce)
+            if self.is_request_enabled("ICMPv6_MikroTik_RDNSS"):
+                self.session.connect(mikrotik_rdnss)
 
         # === PHASE 4: Boundary attacks ===
-        self.session.connect(type_boundary)
-        self.session.connect(code_boundary)
-        self.session.connect(mtu_boundary)
-        self.session.connect(prefix_boundary)
+        if self.is_request_enabled("ICMPv6_Type_Boundary"):
+            self.session.connect(type_boundary)
+        if self.is_request_enabled("ICMPv6_Code_Boundary"):
+            self.session.connect(code_boundary)
+        if self.is_request_enabled("ICMPv6_MTU_Boundary"):
+            self.session.connect(mtu_boundary)
+        if self.is_request_enabled("ICMPv6_Prefix_Boundary"):
+            self.session.connect(prefix_boundary)
 
         # === PHASE 5: Standard messages with full mutation ===
         if attack_mode == "normal":
             # Error messages
-            self.session.connect(dest_unreachable)
-            self.session.connect(packet_too_big)
-            self.session.connect(time_exceeded)
-            self.session.connect(param_problem)
+            if self.is_request_enabled("ICMPv6_Dest_Unreachable"):
+                self.session.connect(dest_unreachable)
+            if self.is_request_enabled("ICMPv6_Packet_Too_Big"):
+                self.session.connect(packet_too_big)
+            if self.is_request_enabled("ICMPv6_Time_Exceeded"):
+                self.session.connect(time_exceeded)
+            if self.is_request_enabled("ICMPv6_Parameter_Problem"):
+                self.session.connect(param_problem)
 
             # Informational
-            self.session.connect(echo_request)
-            self.session.connect(echo_reply)
+            if self.is_request_enabled("ICMPv6_Echo_Request"):
+                self.session.connect(echo_request)
+            if self.is_request_enabled("ICMPv6_Echo_Reply"):
+                self.session.connect(echo_reply)
 
             # MLD
-            self.session.connect(mld_query)
-            self.session.connect(mld_report)
+            if self.is_request_enabled("ICMPv6_MLD_Query"):
+                self.session.connect(mld_query)
+            if self.is_request_enabled("ICMPv6_MLDv2_Report"):
+                self.session.connect(mld_report)
 
             # NDP (high-value targets for NDP attacks)
-            self.session.connect(router_solicitation)
-            self.session.connect(router_advertisement)
-            self.session.connect(neighbor_solicitation)
-            self.session.connect(neighbor_advertisement)
-            self.session.connect(redirect)
+            if self.is_request_enabled("ICMPv6_Router_Solicitation"):
+                self.session.connect(router_solicitation)
+            if self.is_request_enabled("ICMPv6_Router_Advertisement"):
+                self.session.connect(router_advertisement)
+            if self.is_request_enabled("ICMPv6_Neighbor_Solicitation"):
+                self.session.connect(neighbor_solicitation)
+            if self.is_request_enabled("ICMPv6_Neighbor_Advertisement"):
+                self.session.connect(neighbor_advertisement)
+            if self.is_request_enabled("ICMPv6_Redirect"):
+                self.session.connect(redirect)
 
             # Mobile IPv6
-            self.session.connect(haad_request)
-            self.session.connect(haad_reply)
+            if self.is_request_enabled("ICMPv6_HAAD_Request"):
+                self.session.connect(haad_request)
+            if self.is_request_enabled("ICMPv6_HAAD_Reply"):
+                self.session.connect(haad_reply)
 
             # SEND
-            self.session.connect(cps)
+            if self.is_request_enabled("ICMPv6_CPS"):
+                self.session.connect(cps)
 
             # MRD
-            self.session.connect(mrd_advertisement)
+            if self.is_request_enabled("ICMPv6_MRD_Advertisement"):
+                self.session.connect(mrd_advertisement)
 
             # Node Information
-            self.session.connect(ni_query)
-            self.session.connect(ni_reply)
+            if self.is_request_enabled("ICMPv6_NI_Query"):
+                self.session.connect(ni_query)
+            if self.is_request_enabled("ICMPv6_NI_Reply"):
+                self.session.connect(ni_reply)
 
         # === PHASE 5 continued: THC-IPv6 Attack Modes ===
         # These come last as they are more specialized attacks
-        if attack_mode == "flood" or attack_mode == "normal":
+        if (attack_mode == "flood" or attack_mode == "normal") and self.is_request_enabled(
+            "ICMPv6_Flood_Router"
+        ):
             self.session.connect(flood_router)
 
-        if attack_mode == "spoof" or attack_mode == "normal":
+        if (attack_mode == "spoof" or attack_mode == "normal") and self.is_request_enabled(
+            "ICMPv6_Fake_Advertiser"
+        ):
             self.session.connect(fake_advertiser)
 
-        if attack_mode == "parasite" or attack_mode == "normal":
+        if (attack_mode == "parasite" or attack_mode == "normal") and self.is_request_enabled(
+            "ICMPv6_Parasite_NS"
+        ):
             self.session.connect(parasite_ns)
 
-        if attack_mode == "smurf" or attack_mode == "normal":
+        if (attack_mode == "smurf" or attack_mode == "normal") and self.is_request_enabled(
+            "ICMPv6_Smurf_Echo"
+        ):
             self.session.connect(smurf_echo)
 
     def setup_custom_monitors(self) -> Optional[List[BaseMonitor]]:
