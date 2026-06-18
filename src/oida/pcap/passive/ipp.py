@@ -212,12 +212,21 @@ class IPPPassiveListener(PySharkListenerBase):
             details["request_id"] = str(request_id)
 
         if is_request:
-            op_str = str(operation_id).lower()
+            # operation_id arrives as a native int in EK mode (e.g. 11) or as a
+            # hex string in XML mode (e.g. "0x000b"); normalize to the zero-padded
+            # hex key used by IPP_OPERATIONS. base 0 parses both forms.
+            try:
+                op_str = f"0x{int(str(operation_id), 0):04x}"
+            except (ValueError, TypeError):
+                op_str = str(operation_id).lower()
             op_name = IPP_OPERATIONS.get(op_str, f"op={operation_id}")
             details["operation_id"] = str(operation_id)
             details["operation_name"] = op_name
         else:
-            status_str = str(status_code).lower()
+            try:
+                status_str = f"0x{int(str(status_code), 0):04x}"
+            except (ValueError, TypeError):
+                status_str = str(status_code).lower()
             status_name = IPP_STATUS_CODES.get(status_str, f"status={status_code}")
             details["status_code"] = str(status_code)
             details["status_name"] = status_name

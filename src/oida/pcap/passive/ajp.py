@@ -395,8 +395,17 @@ class AJPPassiveListener(PySharkListenerBase):
                 if hasattr(dev, "ajp_passive_data") and dev.ajp_passive_data:
                     dev.ajp_passive_data["servlet_engine"] = servlet_engine
 
+        # HTTP response status code/message (ajp13.rstatus / ajp13.rsmsg)
+        response_status = str(self.get_field(ajp, "rstatus", "") or "")
+        response_msg = str(self.get_field(ajp, "rsmsg", "") or "")
+
         # Build detail
         detail_parts = []
+        if response_status:
+            status_label = response_status
+            if response_msg:
+                status_label += f" {response_msg}"
+            detail_parts.append(f"status={status_label}")
         if content_type:
             detail_parts.append(f"type={content_type}")
         if servlet_engine:
@@ -407,15 +416,11 @@ class AJPPassiveListener(PySharkListenerBase):
             detail_parts.append(f"auth={www_auth}")
         detail = " ".join(detail_parts)
 
-        # We don't have direct access to the status code in a simple field;
-        # tshark shows it as RSTATUS but the field name isn't standard.
-        # We rely on the overall stream context.
-        response_status = ""
-
         details: Dict[str, Any] = {
             "code": AJP_SEND_HEADERS,
             "code_name": "Send Headers",
             "response_status": response_status,
+            "response_message": response_msg,
             "num_headers": nhdr,
             "content_type": content_type,
             "content_length": content_length,
@@ -427,6 +432,8 @@ class AJPPassiveListener(PySharkListenerBase):
 
         now = datetime.now().isoformat()
         summary = "AJP Send Headers"
+        if response_status:
+            summary += f" {response_status}"
         if servlet_engine:
             summary += f" (engine={servlet_engine})"
 

@@ -32,6 +32,11 @@ class TestIPPPassiveEK:
         # Should have at least Get-Printer-Attributes and Print-Job
         ops = {ix.details.get("operation_name", "") for ix in listener.interactions}
         assert ops, f"No operation names extracted; interactions: {len(listener.interactions)}"
+        # operation_id is an int (11) in EK mode but the lookup table is keyed by
+        # hex strings ("0x000b"); a known op must resolve to its readable name and
+        # NOT fall through to the "op=<n>" numeric fallback.
+        assert "Get-Printer-Attributes" in ops, f"Known op did not resolve; ops: {ops}"
+        assert not any(o.startswith("op=") for o in ops), f"Unresolved op fallback present: {ops}"
 
     def test_ipp_response_status(self):
         """IPP responses include status code."""
@@ -46,6 +51,13 @@ class TestIPPPassiveEK:
         assert len(response_ixs) >= 1, "No IPP response interactions found"
         has_status = any(ix.details.get("status_name") for ix in response_ixs)
         assert has_status, "No response has status_name"
+        # status_code 0 (int, EK mode) must resolve via the "0x0000" key to its
+        # readable name, not fall through to the "status=0" numeric fallback.
+        statuses = {ix.details.get("status_name", "") for ix in response_ixs}
+        assert "successful-ok" in statuses, f"Known status did not resolve; statuses: {statuses}"
+        assert not any(
+            s.startswith("status=") for s in statuses
+        ), f"Unresolved status fallback present: {statuses}"
 
     def test_both_endpoints_tracked(self):
         """Both IPP server (printer) and client devices are created."""

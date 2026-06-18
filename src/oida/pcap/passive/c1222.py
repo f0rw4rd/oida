@@ -20,23 +20,23 @@ Protocol format:
 - Services: IDENT (0x20), READ (0x30), WRITE (0x40), LOGON (0x50),
   SECURITY (0x51), LOGOFF (0x52), WAIT (0x70), REGISTRATION (0x27)
 
-tshark fields used:
-- c1222.calling_ap_title: Calling Application Title (FT_BYTES)
-- c1222.called_ap_title: Called Application Title (FT_BYTES)
-- c1222.calling_ap_invocation_id: Calling AP Invocation ID (FT_UINT32)
-- c1222.called_ap_invocation_id: Called AP Invocation ID (FT_UINT32)
-- c1222.user_id: User ID for LOGON service (FT_UINT16)
-- c1222.user: Username string for LOGON (FT_STRING)
-- c1222.password: Password for LOGON (FT_STRING)
-- c1222.auth_value: Authentication value (FT_BYTES)
-- c1222.data: C12.22 message data payload (FT_BYTES)
+tshark fields used (names verified against the packet-c1222.c dissector;
+PyShark strips the "c1222." layer prefix and joins the remaining dotted
+path with underscores, so c1222.read.table is read via "read_table"):
+- c1222.calling_AP_title: Calling Application Title
+- c1222.called_AP_title: Called Application Title
+- c1222.calling_AP_invocation_id: Calling AP Invocation ID
+- c1222.called_AP_invocation_id: Called AP Invocation ID
 - c1222.cmd: Service/command code (FT_UINT8)
-- c1222.table: Table number (FT_UINT16)
-- c1222.offset: Table offset (FT_UINT24)
-- c1222.count: Byte count (FT_UINT16)
-- c1222.procedure_num: Procedure number (FT_UINT16)
-- c1222.procedure_sequence: Procedure sequence number (FT_UINT8)
-- c1222.neg_service: Negotiation service (FT_UINT8)
+- c1222.read.table / c1222.write.table: Table number (per service)
+- c1222.read.offset / c1222.write.offset: Table offset (per service)
+- c1222.read.count: READ byte count; c1222.write.size: WRITE byte count
+- c1222.logon.id: User ID for LOGON service
+- c1222.logon.user: Username string for LOGON
+- c1222.security.password: Password for SECURITY service
+- c1222.calling_authentication_value_octet_aligned: Auth value bytes
+- c1222.procedure.num: Procedure number
+- c1222.data: C12.22 message data payload
 
 Security notes:
 - WRITE services can modify meter configuration (billing, disconnect)
@@ -235,22 +235,39 @@ class C1222PassiveListener(PySharkListenerBase):
         cmd_raw = self.get_field(c1222_layer, "cmd")
         cmd_code = self._parse_int(cmd_raw, None)
 
-        # Extract table access fields
-        table_raw = self.get_field(c1222_layer, "table")
+        # Extract table access fields. The Wireshark dissector splits these
+        # by service: c1222.read.table / c1222.write.table (-> read_table /
+        # write_table after the layer prefix is stripped and dots become
+        # underscores), likewise for offset. READ uses c1222.read.count;
+        # WRITE uses c1222.write.size for the byte count.
+        table_raw = self.get_field(c1222_layer, "read_table") or self.get_field(
+            c1222_layer, "write_table"
+        )
         table_num = self._parse_int(table_raw, None)
-        offset_raw = self.get_field(c1222_layer, "offset")
+        offset_raw = self.get_field(c1222_layer, "read_offset") or self.get_field(
+            c1222_layer, "write_offset"
+        )
         offset = self._parse_int(offset_raw, None)
-        count_raw = self.get_field(c1222_layer, "count")
+        count_raw = self.get_field(c1222_layer, "read_count") or self.get_field(
+            c1222_layer, "write_size"
+        )
         count = self._parse_int(count_raw, None)
 
-        # Extract authentication fields
-        user_id_raw = self.get_field(c1222_layer, "user_id")
+        # Extract authentication fields. LOGON exposes c1222.logon.id (numeric
+        # user ID) and c1222.logon.user (username string); the password lives
+        # under the SECURITY service as c1222.security.password. The calling
+        # authentication value bytes are c1222.calling_authentication_value_-
+        # octet_aligned (FT_BYTES); the container *_element fields are FT_NONE
+        # and carry no value.
+        user_id_raw = self.get_field(c1222_layer, "logon_id")
         user_id = self._parse_int(user_id_raw, None)
-        username = str(self.get_field(c1222_layer, "user") or "")
-        password = str(self.get_field(c1222_layer, "password") or "")
-        auth_value = str(self.get_field(c1222_layer, "auth_value") or "")
+        username = str(self.get_field(c1222_layer, "logon_user") or "")
+        password = str(self.get_field(c1222_layer, "security_password") or "")
+        auth_value = str(
+            self.get_field(c1222_layer, "calling_authentication_value_octet_aligned") or ""
+        )
 
-        # Extract procedure fields
+        # Extract procedure fields (c1222.procedure.num)
         procedure_num = self.get_field(c1222_layer, "procedure_num")
 
         # Determine service name and direction

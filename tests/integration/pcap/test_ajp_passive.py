@@ -107,6 +107,25 @@ class TestAJPPassive:
             f"Expected Servlet-Engine with 'Tomcat'; got: {engines}"
         )
 
+    def test_response_status_extraction(self):
+        """HTTP response status codes (ajp13.rstatus) are extracted from Send Headers."""
+        listener, devices, result = _run_listener_test(
+            "ajp",
+            "AJPPassiveListener",
+            "ajp13",
+            "ajp/generated_ajp.pcap",
+            decode_as=AJP_DECODE_AS,
+        )
+
+        statuses = {
+            ix.details.get("response_status")
+            for ix in listener.interactions
+            if ix.details.get("response_status")
+        }
+        assert statuses, f"No response status codes extracted; interactions: {statuses}"
+        # Fixture carries 200/302/401 responses; 401 is the documented auth-issue signal.
+        assert "401" in statuses, f"Expected 401 status; got: {statuses}"
+
     def test_sensitive_path_detection(self):
         """Sensitive admin paths like /manager are flagged."""
         listener, devices, result = _run_listener_test(
