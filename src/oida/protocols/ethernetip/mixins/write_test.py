@@ -142,11 +142,15 @@ class WriteTestMixin(_ScannerBase):
         """
         from ..cip_definitions import interpret_write_error
 
-        # Write-test with error interpretation. Requires --write
-        # AND a non-empty value to write back. WITHOUT --write we have no
-        # signal at all — return "R?" to surface that to the operator
-        # rather than the silent "?" which looked like a real verdict.
-        if self.test_write and value:
+        # Write-test with error interpretation. Requires --write AND --confirm
+        # AND a non-empty value to write back. The write-test issues a LIVE CIP
+        # Set_Attribute_Single (service 0x10) to the device, so it MUST be gated
+        # on --confirm here — this is the actual mutating call site, and the
+        # scanner-level confirm check only guards the post-hoc summarizer.
+        # WITHOUT --write/--confirm we have no signal at all — return "R?" to
+        # surface that to the operator rather than the silent "?" which looked
+        # like a real verdict.
+        if self.test_write and getattr(self, "confirm", False) and value:
             success, status, _ = self._test_write_with_status(
                 conn, class_id, instance, attr_id, value
             )

@@ -701,7 +701,16 @@ class ControlMixin(_ScannerBase):
                     f"Assigning Group {group} points {start_idx}-{end_idx} to Class {target_class}"
                 )
 
-                headers = [dnp3.Header.AllObjects(60, class_variation)]
+                # DNP3 ASSIGN_CLASS pairs a class header (group 60, the target
+                # class) with a data-object header that selects *which* points
+                # get that class. AllObjects(60, var) alone has no group/range
+                # qualifier and reclassifies the entire outstation, so the
+                # parsed group/start/end were previously fiction. Follow the
+                # class header with a ranged header over the requested group.
+                headers = [
+                    dnp3.Header.AllObjects(60, class_variation),
+                    dnp3.Header.Range16(group, 0, start_idx, end_idx),
+                ]
                 success = self._sync_task(
                     lambda master, config, _h=headers: master.PerformFunction(
                         "assign_class", dnp3.FunctionCode.ASSIGN_CLASS, _h, config

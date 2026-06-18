@@ -127,8 +127,15 @@ class mms(NetworkConnection):
 
         target_id = f"mms:{reference}"
 
+        # Original typed Python value captured by read_value(); used for an
+        # end-of-run restore that reconstructs the correct MmsValue type rather
+        # than reinterpreting type-encoded bytes as a signed integer.
+        original_typed = None
+        original_typed_set = False
+
         def read_value():
             """Read value and convert to bytes for fuzzing."""
+            nonlocal original_typed, original_typed_set
             mms_value = None
             try:
                 result = _Lib.iec61850.IedConnection_readObject(
@@ -140,6 +147,9 @@ class mms(NetworkConnection):
                     return b"\x00\x00\x00\x00"
 
                 value = self.scanner._extract_mms_value(mms_value)
+                if not original_typed_set:
+                    original_typed = value
+                    original_typed_set = True
                 if isinstance(value, bool):
                     return bytes([1 if value else 0])
                 elif isinstance(value, int):
@@ -175,6 +185,30 @@ class mms(NetworkConnection):
             finally:
                 _Lib.safe_mms_value_delete(mms_value)
 
+        def restore_value(value):
+            """Restore the pre-fuzz value using its original MMS type.
+
+            Reconstructs the MmsValue from the typed Python value via
+            _create_mms_value so a float/bool/string is written back with the
+            correct type instead of being reinterpreted as a signed integer.
+            """
+            mms_value = None
+            try:
+                mms_value = self.scanner._create_mms_value(value)
+                if mms_value is None:
+                    self.logger.debug(f"Could not build MmsValue to restore {value!r}")
+                    return False
+                result = _Lib.iec61850.IedConnection_writeObject(
+                    self.conn, reference, _Lib.iec61850.IEC61850_FC_CO, mms_value
+                )
+                _, _, ok = _Lib.unpack_result(result)
+                return ok
+            except Exception as e:
+                self.logger.debug(f"Failed to restore original value: {e}")
+                return False
+            finally:
+                _Lib.safe_mms_value_delete(mms_value)
+
         original = read_value()
         successful, failed, anomalies, crashes = 0, 0, 0, 0
 
@@ -197,9 +231,13 @@ class mms(NetworkConnection):
                 self.logger.fail(f"  Crash: {e}")
             time.sleep(0.1)
 
-        if original:
-            write_value(original)
-            self.logger.debug(f"  Restored: {original.hex()}")
+        if original_typed_set and original_typed is not None:
+            if restore_value(original_typed):
+                self.logger.debug(f"  Restored original value: {original_typed!r}")
+            else:
+                self.logger.warning(
+                    f"    Failed to restore original value {original_typed!r} on {target_id}"
+                )
 
         status = "+" if crashes == 0 and anomalies == 0 else "!"
         self.logger.display(

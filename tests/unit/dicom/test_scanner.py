@@ -796,6 +796,38 @@ class TestDICOMAETBruteForce(unittest.TestCase):
         self.assertIn("aet_brute", scanner.results["data"])
         self.assertIn("valid", scanner.results["data"]["aet_brute"])
 
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    @patch("oida.protocols.dicom.AE")
+    def test_aet_brute_force_no_port_resolves_default(self, mock_ae_class):
+        """Brute force with no --port (args.port is None) targets 11112, not None.
+
+        proto_args registers --port with default=None, and the brute path
+        returns before create_conn_obj() can resolve the port, so the port
+        fallback must live in _aet_brute_force() itself.
+        """
+        self.mock_args.confirm = True
+        self.mock_args.aet_brute = True
+        self.mock_args.ae_wordlist = None
+        self.mock_args.common_ae = False
+        self.mock_args.tls = False
+        # No -p supplied -> argparse default is None (not 11112).
+        self.mock_args.port = None
+
+        mock_ae_instance = Mock()
+        mock_ae_instance.associate.return_value = MockAssociation()
+        mock_ae_class.return_value = mock_ae_instance
+
+        scanner = _make_dicom_instance(self.mock_args)
+        scanner.called_aet = "ANY"
+        scanner.logger = Mock()
+
+        scanner._aet_brute_force()
+
+        # Every associate() call must use the de-facto PACS default port.
+        self.assertTrue(mock_ae_instance.associate.called)
+        for call in mock_ae_instance.associate.call_args_list:
+            self.assertEqual(call.args[1], 11112)
+
 
 class TestDICOMSecurityAnalysis(unittest.TestCase):
     """Test DICOM security analysis functionality"""

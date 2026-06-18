@@ -18,10 +18,11 @@ from oida.protocols.ethernetip.mixins.write_test import WriteTestMixin
 
 
 class MockWriteHost(WriteTestMixin):
-    def __init__(self, read_only=False, test_write=False):
+    def __init__(self, read_only=False, test_write=False, confirm=False):
         self.logger = MagicMock()
         self.read_only = read_only
         self.test_write = test_write
+        self.confirm = confirm
         self._attr_responses = {}
 
     def _read_cip_attribute(self, conn, class_id, instance, attr_id, **kwargs):
@@ -126,16 +127,49 @@ class TestDeterminePermissionDefault(unittest.TestCase):
         self.assertEqual(result, "R?")
 
     def test_write_test_success_returns_rw(self):
-        host = MockWriteHost(test_write=True)
+        host = MockWriteHost(test_write=True, confirm=True)
         host._test_write_with_status = MagicMock(return_value=(True, 0x00, []))
         result = host._determine_permission(MagicMock(), 0x09, 1, 1, b"\x01")
         self.assertEqual(result, "RW")
 
     def test_write_test_negative_status_returns_r_question(self):
-        host = MockWriteHost(test_write=True)
+        host = MockWriteHost(test_write=True, confirm=True)
         host._test_write_with_status = MagicMock(return_value=(False, -1, []))
         result = host._determine_permission(MagicMock(), 0x01, 1, 1, b"\x01")
         self.assertEqual(result, "R?")
+
+
+# =============================================================================
+# Confirm gate on the LIVE write path (regression: write-back without --confirm)
+# =============================================================================
+
+
+class TestWriteRequiresConfirm(unittest.TestCase):
+    """--write without --confirm must NEVER issue a live Set_Attribute_Single."""
+
+    def test_no_confirm_does_not_call_write_test(self):
+        # --write set but --confirm NOT set: the live write-test must be skipped.
+        host = MockWriteHost(test_write=True, confirm=False)
+        host._test_write_with_status = MagicMock(return_value=(True, 0x00, []))
+        result = host._determine_permission(MagicMock(), 0x09, 1, 1, b"\x01")
+        host._test_write_with_status.assert_not_called()
+        self.assertEqual(result, "R?")
+
+    def test_no_confirm_does_not_send_set_attribute_single(self):
+        # Drive the real _test_write_with_status path indirectly: the write must
+        # not reach conn.generic_message (service 0x10) without --confirm.
+        host = MockWriteHost(test_write=True, confirm=False)
+        conn = MagicMock()
+        conn.generic_message = MagicMock()
+        host._determine_permission(conn, 0x09, 1, 1, b"\x01")
+        conn.generic_message.assert_not_called()
+
+    def test_confirm_allows_write_test(self):
+        # Sanity: with --confirm the write-test IS exercised.
+        host = MockWriteHost(test_write=True, confirm=True)
+        host._test_write_with_status = MagicMock(return_value=(True, 0x00, []))
+        host._determine_permission(MagicMock(), 0x09, 1, 1, b"\x01")
+        host._test_write_with_status.assert_called_once()
 
 
 if __name__ == "__main__":

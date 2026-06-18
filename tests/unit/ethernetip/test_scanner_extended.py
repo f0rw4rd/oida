@@ -421,18 +421,29 @@ class TestDeterminePermission(unittest.TestCase):
         self.assertEqual(result, "R?")
 
     def test_write_test_success(self):
-        scanner = make_scanner(write=True)
+        # Live write-test requires BOTH --write and --confirm.
+        scanner = make_scanner(write=True, confirm=True)
         scanner._test_write_with_status = MagicMock(return_value=(True, 0x00, []))
         conn = MagicMock()
         result = scanner._determine_permission(conn, 0x09, 1, 1, b"\x01")
         self.assertEqual(result, "RW")
 
     def test_write_test_read_only(self):
-        scanner = make_scanner(write=True)
+        # Live write-test requires BOTH --write and --confirm.
+        scanner = make_scanner(write=True, confirm=True)
         scanner._test_write_with_status = MagicMock(return_value=(False, 0x0E, []))
         conn = MagicMock()
         result = scanner._determine_permission(conn, 0x01, 1, 1, b"\x01")
         self.assertEqual(result, "R")
+
+    def test_write_without_confirm_skips_live_write(self):
+        # Regression: --write without --confirm must NOT issue a live write.
+        scanner = make_scanner(write=True)  # confirm defaults False
+        scanner._test_write_with_status = MagicMock(return_value=(True, 0x00, []))
+        conn = MagicMock()
+        result = scanner._determine_permission(conn, 0x09, 1, 1, b"\x01")
+        scanner._test_write_with_status.assert_not_called()
+        self.assertEqual(result, "R?")
 
 
 # =============================================================================
