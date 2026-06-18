@@ -1,10 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # Manual-only: run from the Actions tab (or `gh workflow run ci.yml`).
+  # Auto push/PR triggers were removed intentionally — CI is opt-in.
+  workflow_dispatch:
   workflow_call:  # Allow release.yml to reuse this as a pre-publish quality gate
 
 permissions:
