@@ -410,12 +410,12 @@ class DNP3Fuzzer(BaseFuzzer):
             return Request(
                 f"DNP3_{name}",
                 children=(
-                    # Start bytes (not included in CRC)
-                    Bytes(f"Start_Bytes_{name}", b"\x05\x64", fuzzable=False),
-                    # Link header block - CRC covers this
+                    # Link header block - the data-link CRC covers the start
+                    # bytes (0x0564) THROUGH the source address, per IEEE 1815.
                     Block(
                         f"Link_Header_{name}",
                         children=(
+                            Bytes(f"Start_Bytes_{name}", b"\x05\x64", fuzzable=False),
                             Byte(f"Length_{name}", length_value),
                             Byte(f"Control_{name}", control),
                             Word(f"Dest_Addr_{name}", dest_addr, endian="<"),
@@ -471,10 +471,10 @@ class DNP3Fuzzer(BaseFuzzer):
         quick_fc_coverage = Request(
             "DNP3_Quick_FC_Coverage",
             children=(
-                Bytes("Start_Bytes_QFC", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_QFC",
                     children=(
+                        Bytes("Start_Bytes_QFC", b"\x05\x64", fuzzable=False),
                         Byte("Length_QFC", 10),  # 5 + 5 user data bytes
                         Byte("Control_QFC", 0x44),
                         Word("Dest_Addr_QFC", dest_addr, endian="<"),
@@ -556,10 +556,10 @@ class DNP3Fuzzer(BaseFuzzer):
         length_overflow = Request(
             "DNP3_Length_Overflow",
             children=(
-                Bytes("Start_Bytes_LO", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_LO",
                     children=(
+                        Bytes("Start_Bytes_LO", b"\x05\x64", fuzzable=False),
                         # DNP3 Length field - oversized values to trigger buffer overflow
                         Group(
                             "Length_Overflow",
@@ -618,10 +618,10 @@ class DNP3Fuzzer(BaseFuzzer):
         control_field_attack = Request(
             "DNP3_Control_Field_Attack",
             children=(
-                Bytes("Start_Bytes_CFA", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_CFA",
                     children=(
+                        Bytes("Start_Bytes_CFA", b"\x05\x64", fuzzable=False),
                         Byte("Length_CFA", 8),
                         # Control field: DIR, PRM, FCB, FCV, FC (4 bits)
                         Group(
@@ -675,10 +675,10 @@ class DNP3Fuzzer(BaseFuzzer):
         object_count_overflow = Request(
             "DNP3_Object_Count_Overflow",
             children=(
-                Bytes("Start_Bytes_OCO", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_OCO",
                     children=(
+                        Bytes("Start_Bytes_OCO", b"\x05\x64", fuzzable=False),
                         Byte("Length_OCO", 12),
                         Byte("Control_OCO", 0x44),
                         Word("Dest_Addr_OCO", dest_addr, endian="<"),
@@ -733,10 +733,10 @@ class DNP3Fuzzer(BaseFuzzer):
         transport_attack = Request(
             "DNP3_Transport_Attack",
             children=(
-                Bytes("Start_Bytes_TA", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_TA",
                     children=(
+                        Bytes("Start_Bytes_TA", b"\x05\x64", fuzzable=False),
                         Byte("Length_TA", 8),
                         Byte("Control_TA", 0x44),
                         Word("Dest_Addr_TA", dest_addr, endian="<"),
@@ -790,10 +790,10 @@ class DNP3Fuzzer(BaseFuzzer):
         app_control_attack = Request(
             "DNP3_App_Control_Attack",
             children=(
-                Bytes("Start_Bytes_ACA", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_ACA",
                     children=(
+                        Bytes("Start_Bytes_ACA", b"\x05\x64", fuzzable=False),
                         Byte("Length_ACA", 8),
                         Byte("Control_ACA", 0x44),
                         Word("Dest_Addr_ACA", dest_addr, endian="<"),
@@ -848,10 +848,10 @@ class DNP3Fuzzer(BaseFuzzer):
         combined_mismatch = Request(
             "DNP3_Combined_Mismatch",
             children=(
-                Bytes("Start_Bytes_CM", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_CM",
                     children=(
+                        Bytes("Start_Bytes_CM", b"\x05\x64", fuzzable=False),
                         Byte("Length_CM", 8),  # Says 3 user bytes
                         Byte("Control_CM", 0x44),
                         Word("Dest_Addr_CM", dest_addr, endian="<"),
@@ -1195,10 +1195,10 @@ class DNP3Fuzzer(BaseFuzzer):
         address_boundary = Request(
             "DNP3_Address_Boundary",
             children=(
-                Bytes("Start_Bytes_AB", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_AB",
                     children=(
+                        Bytes("Start_Bytes_AB", b"\x05\x64", fuzzable=False),
                         Byte("Length_AB", 8),
                         Byte("Control_AB", 0x44),
                         # Destination address boundaries
@@ -1254,10 +1254,10 @@ class DNP3Fuzzer(BaseFuzzer):
         qualifier_boundary = Request(
             "DNP3_Qualifier_Boundary",
             children=(
-                Bytes("Start_Bytes_QB", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_QB",
                     children=(
+                        Bytes("Start_Bytes_QB", b"\x05\x64", fuzzable=False),
                         Byte("Length_QB", 14),
                         Byte("Control_QB", 0x44),
                         Word("Dest_Addr_QB", dest_addr, endian="<"),
@@ -1317,10 +1317,10 @@ class DNP3Fuzzer(BaseFuzzer):
         object_group_boundary = Request(
             "DNP3_Object_Group_Boundary",
             children=(
-                Bytes("Start_Bytes_OGB", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_OGB",
                     children=(
+                        Bytes("Start_Bytes_OGB", b"\x05\x64", fuzzable=False),
                         Byte("Length_OGB", 10),
                         Byte("Control_OGB", 0x44),
                         Word("Dest_Addr_OGB", dest_addr, endian="<"),
@@ -1570,10 +1570,10 @@ class DNP3Fuzzer(BaseFuzzer):
         malformed_fc = Request(
             "DNP3_Malformed_FC",
             children=(
-                Bytes("Start_Bytes_MFC", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_MFC",
                     children=(
+                        Bytes("Start_Bytes_MFC", b"\x05\x64", fuzzable=False),
                         Byte("Length_MFC", 8),
                         Byte("Control_MFC", 0x44),
                         Word("Dest_Addr_MFC", dest_addr, endian="<"),
@@ -1624,10 +1624,10 @@ class DNP3Fuzzer(BaseFuzzer):
         malformed_addr = Request(
             "DNP3_Malformed_Addr",
             children=(
-                Bytes("Start_Bytes_MA", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_MA",
                     children=(
+                        Bytes("Start_Bytes_MA", b"\x05\x64", fuzzable=False),
                         Byte("Length_MA", 8),
                         Byte("Control_MA", 0x44),
                         Group(
@@ -1774,10 +1774,10 @@ class DNP3Fuzzer(BaseFuzzer):
         dl_bad_crc = Request(
             "DNP3_DL_Bad_CRC",
             children=(
-                Bytes("Start_Bytes_BadCRC", b"\x05\x64", fuzzable=False),
                 Block(
                     "Link_Header_BadCRC",
                     children=(
+                        Bytes("Start_Bytes_BadCRC", b"\x05\x64", fuzzable=False),
                         Byte("Length_BadCRC", 8),
                         Byte("Control_BadCRC", 0x44),
                         Word("Dest_Addr_BadCRC", dest_addr, endian="<"),
