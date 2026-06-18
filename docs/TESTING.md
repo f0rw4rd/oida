@@ -1,5 +1,8 @@
 # Running the tests safely
 
+**TL;DR:** `./scripts/run-all-tests.sh` runs all three lanes the right way (and
+starts the mocks if needed). The rest of this doc is what it does and why.
+
 `pytest tests/` in one pass **will hang** — `tests/integration` and
 `tests/coverage` open real sockets to the Docker mocks, and the repo sets
 `timeout_func_only = true` (the 60s timeout guards only the test body, not
@@ -46,8 +49,16 @@ them **serially**.
   Re-run the single test serially before believing it (occasional offenders:
   `iec104` general-interrogation timing, BACnet UDP discovery, HART session-pool
   exhaustion).
-- To make a hang **fail fast** instead of freezing:
-  `-o timeout_func_only=false --timeout-method=signal --timeout=60`.
+- **Known timing-flaky tests auto-retry** (`pytest-rerunfailures`): they carry
+  `@pytest.mark.flaky(reruns=2, ...)` so a contention blip self-heals instead of
+  failing the lane. The marker is *only* for shared-mock timing — never use it to
+  paper over a real bug. (BACnet/HART coverage instead *skip* on a discovery
+  miss, since a retry can't help a missing-data case.)
+- A test-body hang now **fails fast** with a traceback rather than freezing the
+  run — the suite uses `timeout_method = signal`. A hang in a *fixture* or during
+  *collection* is still not timed (the Docker fixture legitimately runs >60s);
+  for those, add `-o timeout_func_only=false` when the mocks are already up so
+  setup is just a fast health-check.
 - Full lint + the 3.10/3.11/3.12 matrix runs in CI (`.github/workflows/ci.yml`,
   manual `workflow_dispatch`); PRs auto-run lint + unit/contracts on 3.12
   (`pr.yml`).
