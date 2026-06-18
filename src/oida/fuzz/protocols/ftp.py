@@ -430,6 +430,7 @@ class FTPFuzzer(StatefulFuzzer):
         # Create temporary logger for early detection
         log = get_logger("FUZZ-FTP", config.target_ip, config.target_port)
         log.display("Probing FTP server capabilities...")
+        sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5.0)
@@ -449,7 +450,6 @@ class FTPFuzzer(StatefulFuzzer):
             resp = sock.recv(1024).decode("utf-8", errors="ignore")
             if not resp.startswith("331"):
                 log.display("Login failed at USER, assuming all commands supported")
-                sock.close()
                 self.supported_features = set(["*"])
                 return
 
@@ -457,7 +457,6 @@ class FTPFuzzer(StatefulFuzzer):
             resp = sock.recv(1024).decode("utf-8", errors="ignore")
             if not resp.startswith("230"):
                 log.display("Login failed at PASS, assuming all commands supported")
-                sock.close()
                 self.supported_features = set(["*"])
                 return
 
@@ -486,11 +485,19 @@ class FTPFuzzer(StatefulFuzzer):
                 self.supported_features = set(["*"])
 
             sock.send(b"QUIT\r\n")
-            sock.close()
 
         except Exception as e:
             log.warning(f"Capability detection failed ({e}), fuzzing all commands")
             self.supported_features = set(["*"])
+        finally:
+            # Always release the probe socket — every early-return/exception
+            # path previously had to remember to close it (and the except path
+            # didn't), leaking the fd (ResourceWarning).
+            if sock is not None:
+                try:
+                    sock.close()
+                except OSError:
+                    pass
 
     def _create_socket(self):
         """Create FTP connection (consumes 220 banner on connect)."""
