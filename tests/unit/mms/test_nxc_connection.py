@@ -274,6 +274,41 @@ class TestFuzzDataObject:
         warned = " ".join(c.args[0] for c in inst.logger.warning.call_args_list)
         assert "Anomaly" in warned
 
+    def test_float_original_restored_with_typed_value_not_bogus_int(self):
+        # Regression: a non-integer object (float) must be restored to its
+        # ORIGINAL typed value via _create_mms_value, never reinterpreted as a
+        # signed integer from its packed bytes (which would corrupt the device).
+        inst = self._prep(fuzz=True, confirm=True, fuzz_iterations=1)
+        # original read = float; readbacks keep returning the same float.
+        inst.scanner._extract_mms_value.return_value = 23.4
+        sentinel_restore = MagicMock(name="restored_mms_value")
+        inst.scanner._create_mms_value.return_value = sentinel_restore
+        lib = MagicMock()
+        lib.IEC61850_FC_MX = 0
+        lib.IEC61850_FC_CO = 1
+        lib.MmsValue_newInteger.return_value = MagicMock()
+
+        with (
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "iec61850", lib),
+            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
+            patch.object(_Lib, "safe_mms_value_delete"),
+            patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
+            patch("time.sleep"),
+        ):
+            inst._fuzz_data_object("LD0/A", 1)
+
+        # Restore must go through _create_mms_value with the ORIGINAL float,
+        # so the correct MmsValue type is reconstructed.
+        inst.scanner._create_mms_value.assert_called_once_with(23.4)
+        # And the typed restore MmsValue must be the one written back last.
+        last_write = lib.IedConnection_writeObject.call_args_list[-1]
+        assert last_write.args[-1] is sentinel_restore
+        # The packed float bytes (0x41bb3333 -> 1102957363) must NEVER be
+        # written back as an integer during restore.
+        restored_ints = [c.args[0] for c in lib.MmsValue_newInteger.call_args_list]
+        assert 1102957363 not in restored_ints
+
     def test_read_value_none_returns_zero_bytes(self):
         inst = self._prep(fuzz=True, confirm=True)
         lib = MagicMock()

@@ -41,7 +41,13 @@ class EnumerationMixin(_ScannerBase):
         aet_brute_arg = getattr(self.args, "aet_brute", None)
         ae_wordlist_arg = getattr(self.args, "ae_wordlist", None)
         common_ae = getattr(self.args, "common_ae", False)
-        port = getattr(self.args, "port", self.default_port)
+        # Mirror create_conn_obj()'s port resolution: --port wins; else 2762 for
+        # --tls, else the de-facto PACS default (11112). proto_args registers
+        # --port with default=None, so getattr's default would be dead here and
+        # leave port=None on the no--p path (the brute path returns before
+        # create_conn_obj() runs, so its resolution never applies).
+        use_tls = getattr(self.args, "tls", False)
+        port = getattr(self.args, "port", None) or (2762 if use_tls else self.default_port)
         timeout = getattr(self.args, "timeout", 5)  # Shorter timeout for brute force
 
         # Load wordlist - priority: --ae-wordlist FILE > --aet-brute FILE > file fallback > defaults

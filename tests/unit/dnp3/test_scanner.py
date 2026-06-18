@@ -338,6 +338,81 @@ class TestDNP3ScannerDisconnect:
         assert scanner._chan_listener is None
 
 
+class TestDNP3AssignClass:
+    """Test ASSIGN_CLASS header construction reflects the parsed group/range.
+
+    Regression: _assign_class() previously sent only AllObjects(60, var),
+    which carries no group qualifier and no index range and therefore
+    reclassifies the entire outstation, while still echoing per-group /
+    per-range fields into results. The request must instead target the
+    parsed group over [start, end].
+    """
+
+    def _make_fake_dnp3(self, recorder):
+        """A stand-in opendnp3 module that records Header factory calls."""
+
+        class _FakeHeader:
+            @staticmethod
+            def AllObjects(group, variation):
+                recorder.append(("AllObjects", group, variation))
+                return ("AllObjects", group, variation)
+
+            @staticmethod
+            def Range16(group, variation, start, stop):
+                recorder.append(("Range16", group, variation, start, stop))
+                return ("Range16", group, variation, start, stop)
+
+        class _FakeFunctionCode:
+            ASSIGN_CLASS = "ASSIGN_CLASS"
+
+        fake = type("FakeDnp3", (), {})()
+        fake.Header = _FakeHeader
+        fake.FunctionCode = _FakeFunctionCode
+        return fake
+
+    def test_assign_class_sends_ranged_header(self):
+        scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
+        scanner.assign_class = ["1:0-9:1"]  # BI 0-9 -> Class 1
+
+        header_calls = []
+        scanner.__dict__["_dnp3"] = self._make_fake_dnp3(header_calls)
+
+        sent = {}
+
+        def fake_sync_task(task_fn, timeout=None):
+            class _FakeMaster:
+                def PerformFunction(self, name, func, headers, config):
+                    sent["name"] = name
+                    sent["func"] = func
+                    sent["headers"] = headers
+
+            task_fn(_FakeMaster(), object())
+            return True
+
+        scanner._sync_task = fake_sync_task
+
+        results = {"operations": {}}
+        scanner._assign_class(results)
+
+        # The request must carry a Range16 header targeting the parsed group
+        # over [start, end] -- not just a whole-device AllObjects(60, var).
+        headers = sent["headers"]
+        ranged = [h for h in headers if h[0] == "Range16"]
+        assert ranged, f"expected a ranged header, got {headers}"
+        # Range16(group=1, variation=0, start=0, stop=9)
+        assert ranged[0] == ("Range16", 1, 0, 0, 9)
+
+        # Class header still present: group 60, variation = class+1 = 2.
+        assert ("AllObjects", 60, 2) in headers
+
+        # results must reflect what was actually sent.
+        op = results["operations"]["assign_class"]["operations"][0]
+        assert op["group"] == 1
+        assert op["start"] == 0
+        assert op["end"] == 9
+        assert op["target_class"] == 1
+
+
 class TestNxcClass:
     """Test the NXC dnp3 class in __init__.py."""
 
@@ -1647,40 +1722,71 @@ class TestChannelRetryConfiguration:
 
 
 class TestBuildSAConfig:
-    """Test _build_sa_config helper."""
+    """Test that SA v5 credentials are actually applied to the stack config.
 
-    def test_sa_config_returns_none_when_disabled(self):
-        """Test SA config returns None when SA is disabled."""
+    Regression guard: previously ``--sa --sa-user N --sa-key <hex>`` built an
+    auth-capable MasterAuthStackConfig but never installed the user_id /
+    update_key, silently mis-reporting SA enforcement. The fix must either
+    install the credentials via the binding API, or fail loudly if the
+    installed opendnp3 binding has no SA credential API.
+    """
+
+    def _has_sa_install_api(self, scanner):
+        """Return True if the installed opendnp3 binding can carry SA creds."""
+        dnp3 = scanner._dnp3
+        cfg = dnp3.MasterAuthStackConfig()
+        auth = getattr(cfg, "auth", None)
+        if auth is None:
+            return False
+        return any(
+            getattr(auth, m, None) is not None
+            for m in ("SetUpdateKey", "AddUser", "AddUpdateKey")
+        )
+
+    def test_sa_disabled_builds_plain_master_stack_config(self):
+        """SA off -> plain MasterStackConfig (no auth wiring)."""
         scanner = DNP3Scanner({"rhost": "127.0.0.1", "rport": 20000})
-        assert scanner._build_sa_config() is None
+        cfg = scanner._build_master_stack_config()
+        assert type(cfg).__name__ == "MasterStackConfig"
 
-    def test_sa_config_returns_dict_when_enabled(self):
-        """Test SA config returns dict when SA is enabled."""
+    def test_sa_enabled_applies_credentials_or_fails_loudly(self):
+        """SA on must install creds; if the binding can't, it must raise.
+
+        It must NEVER silently return an auth-capable config with no
+        credentials installed (the original bug).
+        """
         scanner = DNP3Scanner(
             {
                 "rhost": "127.0.0.1",
                 "rport": 20000,
                 "sa": True,
                 "sa-user": 3,
+                "sa-key": "deadbeef",
             }
         )
-        config = scanner._build_sa_config()
-        assert config is not None
-        assert config["user_id"] == 3
+        if self._has_sa_install_api(scanner):
+            cfg = scanner._build_master_stack_config()
+            assert type(cfg).__name__ == "MasterAuthStackConfig"
+        else:
+            with pytest.raises(ConfigurationError) as exc:
+                scanner._build_master_stack_config()
+            assert "Secure Authentication" in str(exc.value)
 
-    def test_sa_config_includes_key(self):
-        """Test SA config includes update key when provided."""
+    def test_sa_enabled_without_key_is_not_silently_accepted(self):
+        """--sa with no --sa-key must not silently produce a no-cred config."""
         scanner = DNP3Scanner(
             {
                 "rhost": "127.0.0.1",
                 "rport": 20000,
                 "sa": True,
-                "sa-key": "deadbeef",
+                "sa-user": 1,
             }
         )
-        config = scanner._build_sa_config()
-        assert config is not None
-        assert config["update_key"] == bytes.fromhex("deadbeef")
+        # Either the binding lacks an SA API (raises) or it has one and the
+        # missing key is rejected -- either way ConfigurationError, never a
+        # silently-misconfigured auth stack.
+        with pytest.raises(ConfigurationError):
+            scanner._build_master_stack_config()
 
 
 class TestConstantsGroupNames:

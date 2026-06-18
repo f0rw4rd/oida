@@ -40,7 +40,7 @@ from ...utils import (
     ProgressTracker,
 )
 from ...utils.lazy_import import lazy_import
-from ...utils.exceptions import ICSConnectionError
+from ...utils.exceptions import ICSConnectionError, ConfigurationError
 
 from .constants import KNOWN_ATTRIBUTES, DNP3_GROUP_NAMES, protocol_options
 from .mixins import PollingMixin, ControlMixin, FileTransferMixin
@@ -563,22 +563,75 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         retry = dnp3.ChannelRetry(min_delay, max_delay)
         return retry
 
-    def _build_sa_config(self):
-        """Build Secure Authentication v5 configuration."""
-        if not self.sa_enabled:
-            return None
-        sa_config = {"user_id": self.sa_user}
+    def _apply_sa_credentials(self, stack_config):
+        """Install the SA v5 user id + update key onto a MasterAuthStackConfig.
+
+        opendnp3 exposes Secure Authentication credentials through the
+        ``auth`` member of ``MasterAuthStackConfig`` (the SA user is
+        registered via an update-key entry on that settings object). If the
+        installed binding was compiled WITHOUT SA support it has no such API,
+        in which case we must fail loudly rather than hand back an
+        auth-capable-looking config with no user/key installed -- otherwise an
+        operator would be misled into believing the outstation's SA
+        enforcement had actually been exercised.
+
+        Returns the stack_config with credentials applied.
+        Raises ConfigurationError if the binding cannot carry SA credentials.
+        """
+        auth = getattr(stack_config, "auth", None)
+        if auth is None:
+            raise ConfigurationError(
+                "DNP3 Secure Authentication (--sa) was requested but the "
+                "installed opendnp3 binding has no auth settings on "
+                "MasterAuthStackConfig; SA cannot be configured. Results "
+                "would NOT reflect real SA enforcement.",
+                protocol="DNP3",
+            )
+
+        update_key = None
         if self.sa_key:
-            sa_config["update_key"] = bytes.fromhex(self.sa_key)
-        return sa_config
+            update_key = bytes.fromhex(self.sa_key)
+
+        # Locate a credential-install API on the auth settings object. Real
+        # SA-capable builds expose one of these; the names cover the known
+        # opendnp3 / pydnp3 variants so we use whichever the binding actually
+        # ships instead of silently dropping the credentials.
+        installed = False
+        for method_name in ("SetUpdateKey", "AddUser", "AddUpdateKey"):
+            installer = getattr(auth, method_name, None)
+            if installer is None:
+                continue
+            if update_key is None:
+                raise ConfigurationError(
+                    "DNP3 Secure Authentication (--sa) requires an update key "
+                    "(--sa-key <hex>) to register user "
+                    f"{self.sa_user}; none was provided.",
+                    protocol="DNP3",
+                )
+            installer(self.sa_user, update_key)
+            installed = True
+            break
+
+        if not installed:
+            raise ConfigurationError(
+                "DNP3 Secure Authentication (--sa) was requested but the "
+                "installed opendnp3 binding exposes no API to register an SA "
+                f"user/update key (looked for SetUpdateKey/AddUser on "
+                f"{type(auth).__name__}). This binding was built without SA "
+                "credential support; SA challenge/response would NOT actually "
+                "be exercised against the outstation.",
+                protocol="DNP3",
+            )
+
+        return stack_config
 
     def _build_master_stack_config(self):
         """Build MasterStackConfig (or MasterAuthStackConfig for SA)."""
         dnp3 = self._dnp3
-        sa_config = self._build_sa_config()
 
-        if sa_config:
+        if self.sa_enabled:
             stack_config = dnp3.MasterAuthStackConfig()
+            self._apply_sa_credentials(stack_config)
         else:
             stack_config = dnp3.MasterStackConfig()
 

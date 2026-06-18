@@ -77,7 +77,13 @@ class ClassExplorerMixin(_ScannerBase):
         # Check if Parameter Object (0x0F) is available for permission detection
         param_obj_info = self._check_parameter_object(conn)
         use_param_obj = param_obj_info["available"]
-        can_detect_perms = use_param_obj or self.test_write
+
+        # The write-test permission method issues LIVE Set_Attribute_Single
+        # writes to the device, so it is only usable when BOTH --write and
+        # --confirm are set. Without --confirm we must not write-test, so the
+        # write-back fallback is unavailable and we degrade to "R?"/unknown.
+        write_test_ok = self.test_write and getattr(self, "confirm", False)
+        can_detect_perms = use_param_obj or write_test_ok
 
         # Inform user about permission detection method
         if use_param_obj:
@@ -88,15 +94,20 @@ class ClassExplorerMixin(_ScannerBase):
                 self.logger.display("  Using Parameter Object descriptors for permission detection")
             else:
                 self.logger.display("  Parameter Object has stub support only")
-                if self.test_write:
+                if write_test_ok:
                     self.logger.display("  Using write-test fallback for permission detection")
+                elif self.test_write:
+                    self.logger.warning(
+                        "  --write write-back permission test requires --confirm (live writes)"
+                    )
+                    can_detect_perms = False
                 else:
                     self.logger.warning(
                         "  Cannot detect permissions - use --write to test with write-back method"
                     )
                     can_detect_perms = False
                 use_param_obj = False  # Fall back to write testing if available
-        elif self.test_write:
+        elif write_test_ok:
             self.logger.display("Parameter Object (0x0F) not available")
             self.logger.display(
                 "  Using write-test method (Set_Attribute_Single + error code interpretation)"
@@ -104,6 +115,13 @@ class ClassExplorerMixin(_ScannerBase):
             self.logger.display(
                 "  Legend: R=read-only, RW=read/write, R?=needs auth, R*=state-dependent"
             )
+        elif self.test_write:
+            # --write requested but --confirm missing: never write-test live.
+            self.logger.warning("Parameter Object (0x0F) not available")
+            self.logger.warning(
+                "  --write write-back permission test requires --confirm (live writes)"
+            )
+            self.logger.display("  Perm column will show '???' (unknown)")
         else:
             # No 0x0F and no --write flag
             self.logger.warning("Parameter Object (0x0F) not available")
