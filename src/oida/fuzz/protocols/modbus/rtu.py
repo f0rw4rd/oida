@@ -11,7 +11,7 @@ Test ordering follows the progressive depth strategy:
 
 from typing import List
 
-from boofuzz import Block, Byte, Bytes, Group, Request, Word
+from boofuzz import Block, Byte, Bytes, Checksum, Group, Request, Word
 
 from ...core.base_fuzzer import BaseFuzzer, RequestInfo
 from ...core.config import ProtocolType
@@ -241,25 +241,32 @@ class ModbusRTUFuzzer(BaseFuzzer):
         quick_fc_coverage = Request(
             "RTU_Quick_FC_Coverage",
             children=(
-                Byte("Slave_Address", slave_addr, fuzzable=False),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr, fuzzable=False),
                         Group("Function_Code", values=rtu_function_codes),
                         Bytes("Params", b"\x00\x00\x00\x01", size=4, fuzzable=False),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         baseline_read = Request(
             "RTU_Baseline",
             children=(
-                Byte("Slave_Address", slave_addr, fuzzable=False),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr, fuzzable=False),
                         Byte(
                             "Function_Code",
                             ModbusFunctionCodes.READ_HOLDING_REGISTERS,
@@ -269,7 +276,14 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Word("Quantity", 0x0001, endian=">", fuzzable=False),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -281,10 +295,10 @@ class ModbusRTUFuzzer(BaseFuzzer):
         oversized_pdu = Request(
             "RTU_Oversized_PDU",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.WRITE_MULTIPLE_REGISTERS),
                         Word("Starting_Address", 0x0000, endian=">"),
                         Group("Excessive_Quantity", values=create_oversized_quantity_values()),
@@ -292,7 +306,14 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Bytes("Overflow_Data", b"A" * 254, size=254, max_len=4096),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -300,10 +321,10 @@ class ModbusRTUFuzzer(BaseFuzzer):
         byte_count_mismatch = Request(
             "RTU_Byte_Count_Mismatch",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.WRITE_MULTIPLE_REGISTERS),
                         Word("Starting_Address", 0x0000, endian=">"),
                         Word("Quantity", 0x0005, endian=">"),
@@ -311,7 +332,14 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Word("Insufficient_Data", 0x1234, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -319,16 +347,23 @@ class ModbusRTUFuzzer(BaseFuzzer):
         slave_address_overflow = Request(
             "RTU_Slave_Address_Overflow",
             children=(
-                Group("Slave_Address_Boundary", values=UNIT_ID_BOUNDARIES),
                 Block(
                     "PDU",
                     children=(
+                        Group("Slave_Address_Boundary", values=UNIT_ID_BOUNDARIES),
                         Byte("Function_Code", ModbusFunctionCodes.READ_HOLDING_REGISTERS),
                         Word("Starting_Address", 0x0000, endian=">"),
                         Word("Quantity", 0x0001, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -336,10 +371,10 @@ class ModbusRTUFuzzer(BaseFuzzer):
         crc_attack = Request(
             "RTU_CRC_Attack",
             children=(
-                Byte("Slave_Address", slave_addr, fuzzable=False),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr, fuzzable=False),
                         Byte(
                             "Function_Code",
                             ModbusFunctionCodes.READ_HOLDING_REGISTERS,
@@ -365,11 +400,21 @@ class ModbusRTUFuzzer(BaseFuzzer):
         frame_truncation = Request(
             "RTU_Frame_Truncation",
             children=(
-                Byte("Slave_Address", slave_addr, fuzzable=False),
                 Block(
-                    "PDU", children=(Group("Truncated_PDU", values=create_truncated_pdu_values()),)
+                    "PDU",
+                    children=(
+                        Byte("Slave_Address", slave_addr, fuzzable=False),
+                        Group("Truncated_PDU", values=create_truncated_pdu_values()),
+                    ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -380,26 +425,33 @@ class ModbusRTUFuzzer(BaseFuzzer):
         write_single = Request(
             "RTU_Write_Single",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Group("Function_Code", values=WRITE_SINGLE_FUNCTION_CODES),
                         Word("Address", 0x0000, endian=">"),
                         Word("Value", 0x0000, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         write_multiple_coils = Request(
             "RTU_Write_Multiple_Coils",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.WRITE_MULTIPLE_COILS),
                         Word("Starting_Address", 0x0000, endian=">"),
                         Word("Quantity_of_Outputs", 0x0008, endian=">"),
@@ -407,17 +459,24 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Bytes("Output_Value", b"\xff", size=1),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         write_multiple_registers = Request(
             "RTU_Write_Multiple_Registers",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.WRITE_MULTIPLE_REGISTERS),
                         Word("Starting_Address", 0x0000, endian=">"),
                         Word("Quantity_of_Registers", 0x0002, endian=">"),
@@ -425,34 +484,48 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Bytes("Register_Values", b"\x00\x0a\x01\x02", size=4),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         mask_write_register = Request(
             "RTU_Mask_Write_Register",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.MASK_WRITE_REGISTER),
                         Word("Reference_Address", 0x0004, endian=">"),
                         Word("And_Mask", 0x00F2, endian=">"),
                         Word("Or_Mask", 0x0025, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         read_write_multiple = Request(
             "RTU_Read_Write_Multiple",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.READ_WRITE_MULTIPLE_REGISTERS),
                         Word("Read_Starting_Address", 0x0000, endian=">"),
                         Word("Quantity_to_Read", 0x0001, endian=">"),
@@ -462,17 +535,24 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Word("Write_Register_Value", 0x0000, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         read_file_record = Request(
             "RTU_Read_File_Record",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.READ_FILE_RECORD),
                         Byte("Byte_Count", 0x07),
                         Byte("Reference_Type", 0x06),
@@ -481,7 +561,14 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Word("Record_Length", 0x0001, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -492,58 +579,79 @@ class ModbusRTUFuzzer(BaseFuzzer):
         address_boundary = Request(
             "RTU_Address_Boundary",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.READ_HOLDING_REGISTERS),
                         Group("Address_Boundary", values=ADDRESS_BOUNDARIES),
                         Word("Quantity", 0x0001, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         quantity_boundary = Request(
             "RTU_Quantity_Boundary",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.READ_HOLDING_REGISTERS),
                         Word("Starting_Address", 0x0000, endian=">"),
                         Group("Quantity_Boundary", values=QUANTITY_BOUNDARIES),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         coil_value_boundary = Request(
             "RTU_Coil_Value_Boundary",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.WRITE_SINGLE_COIL),
                         Word("Coil_Address", 0x0000, endian=">"),
                         Group("Coil_Value_Boundary", values=COIL_VALUE_BOUNDARIES),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         memory_overflow = Request(
             "RTU_Memory_Overflow",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.READ_HOLDING_REGISTERS),
                         Word("High_Address", 0xFFFF, endian=">"),
                         Group(
@@ -557,7 +665,14 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -568,10 +683,10 @@ class ModbusRTUFuzzer(BaseFuzzer):
         read_request = Request(
             "RTU_Standard_Read",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Group("Function_Code", values=READ_FUNCTION_CODES),
                         Block(
                             "Parameters",
@@ -582,45 +697,75 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         read_exception_status = Request(
             "RTU_Read_Exception_Status",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(Byte("Function_Code", ModbusFunctionCodes.READ_EXCEPTION_STATUS),),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         report_slave_id = Request(
             "RTU_Report_Slave_ID",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
-                    "PDU", children=(Byte("Function_Code", ModbusFunctionCodes.REPORT_SLAVE_ID),)
+                    "PDU",
+                    children=(
+                        Byte("Slave_Address", slave_addr),
+                        Byte("Function_Code", ModbusFunctionCodes.REPORT_SLAVE_ID),
+                    ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         read_fifo = Request(
             "RTU_Read_FIFO_Queue",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.READ_FIFO_QUEUE),
                         Word("FIFO_Pointer_Address", 0x04DE, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -639,26 +784,33 @@ class ModbusRTUFuzzer(BaseFuzzer):
         diagnostics = Request(
             "RTU_Diagnostics",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.DIAGNOSTICS),
                         Group("Sub_Function", values=rtu_diagnostic_codes),
                         Word("Data", 0x0000, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         read_device_id = Request(
             "RTU_Read_Device_Identification",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Byte("Function_Code", ModbusFunctionCodes.ENCAPSULATED_INTERFACE_TRANSPORT),
                         Byte("MEI_Type", ModbusMEITypes.READ_DEVICE_IDENTIFICATION),
                         Group("Read_Device_ID_Code", values=DEVICE_ID_READ_CODES),
@@ -673,22 +825,36 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
         invalid_function_codes = Request(
             "RTU_Invalid_Function_Codes",
             children=(
-                Byte("Slave_Address", slave_addr),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", slave_addr),
                         Group("Function_Code", values=INVALID_FUNCTION_CODES),
                         Word("Dummy_Data", 0x0000, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -712,7 +878,14 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Word("Value", 0xFF00, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
@@ -734,7 +907,14 @@ class ModbusRTUFuzzer(BaseFuzzer):
                         Word("Quantity", 0x0001, endian=">"),
                     ),
                 ),
-                Word("CRC", 0x0000, endian="<"),
+                Checksum(
+                    "CRC",
+                    block_name="PDU",
+                    algorithm=self._calculate_modbus_crc,
+                    length=2,
+                    endian="<",
+                    fuzzable=False,
+                ),
             ),
         )
 
