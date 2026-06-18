@@ -228,11 +228,11 @@ TEXT_PROTOCOL_LENIENT = {"ftp", "smtp"}
 EXPERT_WARNING_OK = {"modbus", "opcua", "mms", "vnc"}
 
 # Protocols with known tshark dissector issues on specific builds.
-# The DNP3 dissector is registered on tcp.port/udp.port 20000 but fails to
-# decode on tshark 4.6.x (Manjaro build) — the dissector table lookup silently
-# falls through to raw "data". This is a tshark build/platform issue, not a
-# fuzzer payload bug. Mark as xfail so CI stays green while the tshark bug exists.
-TSHARK_DISSECTOR_XFAIL = {"dnp3"}
+# (Empty: the DNP3 entry was removed once the real cause was found — the fuzzer
+# emitted a data-link CRC that omitted the start bytes 0x0564, so Wireshark
+# rejected every frame as raw "data". Fixed in dnp3.py; the dissector decodes
+# the corrected frames fine, so this test now guards that the CRC stays valid.)
+TSHARK_DISSECTOR_XFAIL = set()
 
 # Baseline request name indicators
 BASELINE_INDICATORS = {
