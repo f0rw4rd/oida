@@ -86,7 +86,7 @@ all = [
 ]
 dev = [
     "pytest>=9.0.3",
-    "pytest-cov>=7.0.0",
+    "pytest-cov>=7.1.0",
     "pytest-asyncio>=1.4.0",
     "pytest-docker>=3.2.5",
     "pytest-xdist>=3.8.0",
