@@ -83,6 +83,11 @@ EXPECTED_SURFACE: dict[str, set[str]] = {
         "device_info",
         "tags",
     },
+    "knx": {
+        "gateway",
+        "gateways",
+        "device_info",
+    },
     "snmp": {
         "sys_info",
         "vendor",

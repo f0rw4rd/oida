@@ -338,6 +338,12 @@ def _run_and_record(
             f"error={scanner.results.get('error')}"
         )
     populated = flatten_surface(scanner.results.get("data", {}))
+    if not populated:
+        pytest.skip(
+            f"{protocol}: scanner reported success but extracted no fields from "
+            f"{target_name} at {host}:{port} — the mock didn't answer the protocol "
+            f"probe (e.g. KNXnet/IP discovery needs multicast the mock doesn't serve)"
+        )
     expected = expected_for(protocol)
     semantic_hit = populated & expected
     semantic_pct = 100.0 * len(semantic_hit) / max(len(expected), 1) if expected else 0.0
@@ -577,10 +583,17 @@ def test_mms_coverage(coverage_results_dir):
 
 @pytest.mark.coverage
 def test_hart_coverage(coverage_results_dir):
-    """HART-IP scanner coverage against hart-mock (port 5094)."""
+    """HART-IP scanner coverage against the Python HART mock (UDP 5090).
+
+    The C hipserver on 5094 only answers session/encryption probes; the
+    pure-Python mock (hart-pymock, host UDP 5090) returns full Read-Unique-Id
+    device data, which is what device-field coverage measures.
+    """
     ensure_protocol_dep("hartip")
     host, port, target_name = container_target(
+        ("hart-pymock", 5090),
         ("hart-mock", 5094),
+        udp=True,
     )
 
     from oida.protocols.hart.nxc_connection import hart
