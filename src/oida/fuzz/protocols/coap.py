@@ -121,41 +121,36 @@ class CoAPFuzzer(BaseFuzzer):
             **self._timeout_overrides(recv_default=2.0),  # Wait up to 2 seconds for CoAP response
         )
 
-    def _build_uri_path_option(self, path: str) -> bytes:
+    def _build_uri_path_option(self, path: str, prev_option: int = 0) -> bytes:
         """Build CoAP Uri-Path option(s) for a given path.
 
-        Uri-Path is Option 11. For paths like '/temperature', we need to
-        encode each path segment as a separate Uri-Path option.
+        Uri-Path is Option 11. CoAP option deltas are RELATIVE to the previous
+        option number, so when Uri-Path follows another option (e.g. Observe=6
+        or If-Match=1) the first segment's delta is 11 - prev_option, not 11.
+        Passing the wrong delta shifts every following option number and tshark
+        rejects the packet as malformed.
 
         Option format: (delta << 4 | length) followed by value
-        - First option: delta=11 (Uri-Path option number)
-        - Subsequent options: delta=0 (same option number)
+        - First segment: delta = 11 - prev_option
+        - Subsequent segments: delta = 0 (same option number)
         """
         segments = [s for s in path.split("/") if s]  # Remove empty segments
         if not segments:
             return b""
 
+        first_delta = 11 - prev_option
         result = b""
         for i, segment in enumerate(segments):
             seg_bytes = segment.encode("utf-8")
             seg_len = len(seg_bytes)
+            delta = first_delta if i == 0 else 0
 
-            if i == 0:
-                # First segment: delta=11
-                if seg_len < 13:
-                    result += bytes([(11 << 4) | seg_len]) + seg_bytes
-                elif seg_len < 269:
-                    result += bytes([0xBD, seg_len - 13]) + seg_bytes
-                else:
-                    result += bytes([0xBE]) + (seg_len - 269).to_bytes(2, "big") + seg_bytes
+            if seg_len < 13:
+                result += bytes([(delta << 4) | seg_len]) + seg_bytes
+            elif seg_len < 269:
+                result += bytes([(delta << 4) | 0x0D, seg_len - 13]) + seg_bytes
             else:
-                # Subsequent segments: delta=0
-                if seg_len < 13:
-                    result += bytes([seg_len]) + seg_bytes
-                elif seg_len < 269:
-                    result += bytes([0x0D, seg_len - 13]) + seg_bytes
-                else:
-                    result += bytes([0x0E]) + (seg_len - 269).to_bytes(2, "big") + seg_bytes
+                result += bytes([(delta << 4) | 0x0E]) + (seg_len - 269).to_bytes(2, "big") + seg_bytes
 
         return result
 
@@ -596,7 +591,10 @@ class CoAPFuzzer(BaseFuzzer):
                 Static(name="observe_opt", default_value=b"\x60"),
                 Static(
                     name="uri_path",
-                    default_value=self._build_uri_path_option("sensors/temperature"),
+                    # Uri-Path follows Observe (option 6), so delta = 11 - 6
+                    default_value=self._build_uri_path_option(
+                        "sensors/temperature", prev_option=6
+                    ),
                 ),
             ),
         )
@@ -611,7 +609,8 @@ class CoAPFuzzer(BaseFuzzer):
                 Word(name="message_id", default_value=0x5005, endian=">"),
                 Word(name="token", default_value=0x3344, endian=">"),
                 Static(name="uri_path", default_value=self._build_uri_path_option("upload")),
-                Static(name="block1_opt", default_value=b"\xd1\x05\x0a"),
+                # Block1 (option 27) after Uri-Path (11): delta 16 = ext(13)+3
+                Static(name="block1_opt", default_value=b"\xd1\x03\x0a"),
                 Static(name="payload_marker", default_value=b"\xff"),
                 SmartString("block_payload", "A" * 64, max_len=1024),
             ),
@@ -660,7 +659,11 @@ class CoAPFuzzer(BaseFuzzer):
                         b"\x10",  # If-Match empty
                     ],
                 ),
-                Static(name="uri_path", default_value=self._build_uri_path_option("conditional")),
+                # Uri-Path follows If-Match (option 1), so delta = 11 - 1
+                Static(
+                    name="uri_path",
+                    default_value=self._build_uri_path_option("conditional", prev_option=1),
+                ),
                 Static(name="payload_marker", default_value=b"\xff"),
                 SmartString("cond_payload", "updated_value", max_len=128),
             ),
