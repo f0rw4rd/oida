@@ -671,9 +671,7 @@ _ALL_REQUESTS_RAW_EXCLUDE = {"ethernet", "ipv4", "ipv6", "icmp", "icmpv6"}
 # DNS shares mDNS's big-endian/flags bug; the rest are length/encoding bugs.
 _KNOWN_STRUCTURAL_BUGS = {
     "dhcp",
-    "dhcpv6",
     "coap",
-    "http",
 }
 
 
