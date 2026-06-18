@@ -1540,6 +1540,25 @@ class TestNewInitArgs(unittest.TestCase):
         scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404, "tls-ca": "/path/ca.pem"})
         self.assertEqual(scanner.tls_ca, "/path/ca.pem")
 
+    def test_tls_ca_consumed_by_build_tls_config(self):
+        """--tls-ca must flow into c104 set_ca_certificate (not just be parsed).
+
+        Guards against the recurring 'flag registered but unused by scanner'
+        false claim: the CA path is consumed in _build_tls_config().
+        """
+        scanner = IEC104Scanner(
+            {"rhost": "127.0.0.1", "rport": 2404, "tls": True, "tls-ca": "/path/ca.pem"}
+        )
+        mock_c104 = MagicMock()
+        mock_tls = MagicMock()
+        mock_c104.TransportSecurity.return_value = mock_tls
+        with patch(
+            "oida.protocols.iec104.scanner._deps._get_c104", return_value=mock_c104
+        ):
+            result = scanner._build_tls_config()
+        mock_tls.set_ca_certificate.assert_called_once_with(cert="/path/ca.pem")
+        self.assertIs(result, mock_tls)
+
     def test_t1_default(self):
         scanner = IEC104Scanner({"rhost": "127.0.0.1", "rport": 2404})
         self.assertIsNone(scanner.t1)
