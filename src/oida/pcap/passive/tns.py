@@ -419,23 +419,46 @@ class TNSPassiveListener(PySharkListenerBase):
             }
 
     def _handle_refuse(self, details: Dict[str, Any], tns_layer: Any) -> None:
-        """Extract error info from TNS Refuse packet."""
-        # tshark may put refuse reason in connect_data or raw payload
-        refuse_data = self.get_field(tns_layer, "connect_data", "")
+        """Extract error info from TNS Refuse packet.
+
+        tshark dissects Refuse (type 4) packets into dedicated fields:
+        ``tns.refuse_data`` (the DESCRIPTION/ERROR_STACK string),
+        ``tns.refuse_reason_user`` and ``tns.refuse_reason_system`` (both
+        FT_UINT8 BASE_HEX).  A Refuse packet does *not* populate
+        connect_data/accept_data, so those are only kept as a last-resort
+        fallback for malformed captures.
+        """
+        # Surface the dedicated refuse reason codes directly.
+        reason_user = self.get_field(tns_layer, "refuse_reason_user", "")
+        reason_system = self.get_field(tns_layer, "refuse_reason_system", "")
+        if reason_user not in (None, ""):
+            details["refuse_reason_user"] = str(reason_user)
+        if reason_system not in (None, ""):
+            details["refuse_reason_system"] = str(reason_system)
+
+        # Dedicated refuse_data field carries the human-readable description.
+        refuse_data = self.get_field(tns_layer, "refuse_data", "")
+        if not refuse_data:
+            # Fallback for malformed captures that misplace the reason text.
+            refuse_data = self.get_field(tns_layer, "connect_data", "")
         if not refuse_data:
             refuse_data = self.get_field(tns_layer, "accept_data", "")
         if refuse_data:
             refuse_data = str(refuse_data)
             details["refuse_data"] = refuse_data
 
-            # Extract error code
+            # Extract error code from the description string (ERR=/CODE=).
             m = RE_ERR_CODE.search(refuse_data)
             if m:
                 details["error_code"] = m.group(1).strip()
             m = RE_ERROR_CODE.search(refuse_data)
-            if m:
-                if "error_code" not in details:
-                    details["error_code"] = m.group(1).strip()
+            if m and "error_code" not in details:
+                details["error_code"] = m.group(1).strip()
+
+        # If no embedded ERR=/CODE= was found, fall back to the system reason
+        # code so the Refuse column still renders a meaningful value.
+        if "error_code" not in details and reason_system not in (None, ""):
+            details["error_code"] = str(reason_system)
 
     # -------------------------------------------------------------------------
     # Device tracking

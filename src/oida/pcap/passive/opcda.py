@@ -392,6 +392,17 @@ class OPCDAPassiveListener(PySharkListenerBase):
                     iface_ops = OPCDA_OPNUMS.get(iface_name, {})
                     op_name = iface_ops.get(opnum, f"opnum {opnum}")
 
+        # Greedy-listener guard: REQUIRED_LAYERS/DISPLAY_FILTER route EVERY
+        # DCERPC/DCOM packet here, but Microsoft DCOM is ubiquitous on Windows
+        # (WMI, IRemUnknown, IOXIDResolver, ...). Only record interactions and
+        # spawn devices for packets that actually resolve to an OPC DA
+        # interface (directly via IID, or via the IPID->interface mapping
+        # populated above from a prior OPC DA bind). Plain DCOM produces
+        # nothing. The IPID->iface tracking above is preserved so genuine OPC
+        # DA follow-up packets (IPID, no IID) still resolve and get recorded.
+        if not is_opcda:
+            return
+
         # Track OXID to IP mapping
         if oxid:
             oxid_str = str(oxid).strip()

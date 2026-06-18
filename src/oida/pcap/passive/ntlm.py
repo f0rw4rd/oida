@@ -145,8 +145,10 @@ class NTLMPassiveListener(PySharkListenerBase):
         """Initialize NTLM passive listener."""
         super().__init__(interface, timeout, nxc_logger)
 
-        # Track NTLM sessions by (client_ip, server_ip) for challenge correlation
-        self._sessions: Dict[Tuple[str, str], NTLMSession] = {}
+        # Track NTLM sessions by (client_ip, server_ip, stream_id) for challenge
+        # correlation. Including the stream id keeps concurrent handshakes on the
+        # same client/server pair from overwriting each other's challenge.
+        self._sessions: Dict[Tuple[str, str, str], NTLMSession] = {}
 
         # Extracted hashes
         self.hashes: List[NTLMHash] = []
@@ -306,6 +308,8 @@ class NTLMPassiveListener(PySharkListenerBase):
             self.logger.debug(f"if isinstance(msg_type_raw, str):: {e}")
             return
 
+        stream_id = self.get_stream_id(packet)
+
         # Record interaction
         now = datetime.now().isoformat()
         type_names = {1: "Negotiate", 2: "Challenge", 3: "Authenticate"}
@@ -321,15 +325,15 @@ class NTLMPassiveListener(PySharkListenerBase):
             flow_id=flow_id,
             src_port=src_port,
             dst_port=dst_port,
-            stream_id=self.get_stream_id(packet),
+            stream_id=stream_id,
         )
 
         if msg_type == NTLMSSP_TYPE2:
             # Server challenge - store for later correlation
-            self._process_type2(src_ip, dst_ip, fields)
+            self._process_type2(src_ip, dst_ip, fields, stream_id)
         elif msg_type == NTLMSSP_TYPE3:
             # Client response - extract hash
-            self._process_type3(src_ip, dst_ip, fields, dst_port)
+            self._process_type3(src_ip, dst_ip, fields, dst_port, stream_id)
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format a single NTLM interaction as a table row.
@@ -366,7 +370,22 @@ class NTLMPassiveListener(PySharkListenerBase):
 
         return [str(message), username, domain, detail]
 
-    def _process_type2(self, src_ip: str, dst_ip: str, fields: Dict[str, str]) -> None:
+    @staticmethod
+    def _session_key(client_ip: str, server_ip: str, stream_id: str) -> Tuple[str, str, str]:
+        """Build the session-correlation key.
+
+        Keying on the tcp/udp stream id in addition to the IP pair keeps
+        concurrent NTLM handshakes between the same client and server (multiple
+        SMB2 trees, parallel HTTP, back-to-back logons) from clobbering each
+        other's stored server challenge. When the stream id is unavailable
+        (non-TCP/UDP or odd captures) it falls back to "" so the key degrades to
+        the old IP-pair behaviour rather than dropping the session.
+        """
+        return (client_ip, server_ip, stream_id or "")
+
+    def _process_type2(
+        self, src_ip: str, dst_ip: str, fields: Dict[str, str], stream_id: str = ""
+    ) -> None:
         """Process NTLM Type 2 (Challenge) message.
 
         Extract and store the 8-byte challenge for later correlation.
@@ -385,8 +404,8 @@ class NTLMPassiveListener(PySharkListenerBase):
         if not challenge_hex:
             return
 
-        # Store in session
-        session_key = (client_ip, server_ip)
+        # Store in session (keyed per stream so concurrent handshakes don't collide)
+        session_key = self._session_key(client_ip, server_ip, stream_id)
         self._sessions[session_key] = NTLMSession(
             client_ip=client_ip,
             server_ip=server_ip,
@@ -397,7 +416,12 @@ class NTLMPassiveListener(PySharkListenerBase):
         self.logger.debug(f"NTLM Type 2: Challenge from {server_ip}: {challenge_hex}")
 
     def _process_type3(
-        self, src_ip: str, dst_ip: str, fields: Dict[str, str], server_port: int = 0
+        self,
+        src_ip: str,
+        dst_ip: str,
+        fields: Dict[str, str],
+        server_port: int = 0,
+        stream_id: str = "",
     ) -> None:
         """Process NTLM Type 3 (Authenticate) message.
 
@@ -407,8 +431,10 @@ class NTLMPassiveListener(PySharkListenerBase):
         client_ip = src_ip
         server_ip = dst_ip
 
-        # Get challenge from stored session
-        session_key = (client_ip, server_ip)
+        # Get challenge from the session for THIS stream. Keying on the stream id
+        # ensures the Type 3 is paired with the challenge from its own handshake
+        # rather than the most recent Type 2 on the client/server pair.
+        session_key = self._session_key(client_ip, server_ip, stream_id)
         session = self._sessions.get(session_key)
 
         challenge = ""

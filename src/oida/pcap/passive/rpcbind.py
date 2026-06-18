@@ -109,6 +109,11 @@ class RPCBindPassiveListener(PySharkListenerBase):
     REQUIRED_LAYERS = ("portmap", "rpc")
     PROTOCOL_COLUMNS = ("procedure", "program", "version", "port")
 
+    # Portmapper RPC program number (RFC 1833). Used to distinguish genuine
+    # portmap/rpcbind traffic from every other Sun-RPC service (NFS, mountd,
+    # nlockmgr, status, ypserv...) that also carries an `rpc` layer.
+    PORTMAPPER_PROGRAM = "100000"
+
     def __init__(
         self,
         interface: str,
@@ -118,6 +123,24 @@ class RPCBindPassiveListener(PySharkListenerBase):
         super().__init__(interface, timeout, nxc_logger)
         # Track RPC service map: server_ip -> [{"program", "version", "proto", "port"}, ...]
         self.service_map: Dict[str, List[Dict[str, Any]]] = {}
+
+    def should_process_packet(self, packet) -> bool:
+        """Only handle genuine portmap/rpcbind PDUs.
+
+        The base guard admits any packet with an `rpc` layer, but `rpc` is
+        present on EVERY Sun-RPC service (NFS, mountd, nlockmgr, status,
+        ypserv...). During pcap replay (where DISPLAY_FILTER is NOT applied)
+        that would mislabel innocuous NFS/mountd calls as Portmap operations,
+        because they reuse procedure numbers 0-5 with different meanings.
+
+        Require a real `portmap` layer; only fall back to a bare `rpc` layer
+        when it is the portmapper itself (rpc.program == 100000).
+        """
+        if hasattr(packet, "portmap"):
+            return True
+        if hasattr(packet, "rpc"):
+            return str(self.get_field(packet.rpc, "program", "") or "") == self.PORTMAPPER_PROGRAM
+        return False
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format RPCBind interaction as protocol-specific table columns."""

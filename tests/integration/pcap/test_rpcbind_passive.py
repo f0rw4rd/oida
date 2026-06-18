@@ -13,9 +13,25 @@ Tests cover:
 
 import pytest
 
-from .conftest import _run_listener_test
+from .conftest import _load_packets, _pcap_path, _run_listener_test, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
+
+
+def _feed_unfiltered(pcap_subpath: str):
+    """Feed a listener the FULL packet stream (no display filter).
+
+    Mirrors pcap-replay in production, where DISPLAY_FILTER is NOT applied and
+    every dissector sees every packet. Returns ``(listener, devices)``.
+    """
+    from oida.pcap.passive.rpcbind import RPCBindPassiveListener
+
+    _skip_unless_pyshark()
+    pcap = _pcap_path(pcap_subpath)
+    listener = RPCBindPassiveListener(interface="lo", timeout=10)
+    packets = _load_packets(pcap, display_filter=None)
+    devices = listener.feed_packets(iter(packets))
+    return listener, devices
 
 
 class TestRPCBindPassive:
@@ -210,3 +226,48 @@ class TestRPCBindPassive:
             "rpcbind/generated_rpcbind.pcap",
         )
         assert isinstance(result, dict)
+
+
+class TestRPCBindGreedyGuard:
+    """Regression: rpcbind must NOT claim non-portmapper Sun-RPC traffic.
+
+    The listener shares the pcap-replay packet stream with all other
+    dissectors. DISPLAY_FILTER ("portmap") is only applied to live capture,
+    so during replay every NFS/mountd/nlockmgr packet (which carries an `rpc`
+    layer but no `portmap` layer) reaches should_process_packet(). The old
+    guard admitted any `rpc` packet and mislabeled NFS procedures 0-5 as
+    Portmap SET/UNSET/GETPORT/DUMP/CALLIT.
+    """
+
+    def test_pure_nfs_not_processed(self):
+        """A pure-NFS capture (rpc.program=100003, no portmap) is ignored."""
+        # wireshark_nfs.cap: rpc program 100003 (NFS) only, zero portmap PDUs.
+        listener, devices = _feed_unfiltered("nfs/wireshark_nfs.cap")
+        assert listener.interactions == [], (
+            "NFS rpc traffic must not produce Portmap interactions; "
+            f"got: {[ix.operation for ix in listener.interactions]}"
+        )
+        assert devices == {}, f"NFS rpc traffic must not create rpcbind devices; got: {devices}"
+        assert listener.service_map == {}, "NFS rpc traffic must not populate the service map"
+
+    def test_real_portmap_still_processed(self):
+        """Genuine portmap PDUs (portmap layer / program 100000) still pass."""
+        listener, devices = _feed_unfiltered("rpcbind/generated_rpcbind.pcap")
+        assert listener.interactions, "Real portmap traffic must still be processed"
+        assert devices, "Real portmap traffic must still create devices"
+        # Unfiltered replay must match the count seen through the portmap
+        # display filter — i.e. no genuine portmap PDU is dropped by the guard.
+        filtered, _, _ = _run_listener_test(
+            "rpcbind",
+            "RPCBindPassiveListener",
+            "portmap",
+            "rpcbind/generated_rpcbind.pcap",
+            min_devices=0,
+            min_interactions=0,
+            check_harvest=False,
+        )
+        assert len(listener.interactions) == len(filtered.interactions), (
+            "Guard dropped genuine portmap PDUs: unfiltered replay produced "
+            f"{len(listener.interactions)} interactions vs "
+            f"{len(filtered.interactions)} via the portmap filter"
+        )

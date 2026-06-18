@@ -74,6 +74,32 @@ class TestTNSPassiveEK:
         ]
         assert len(refuse_ixs) >= 1, "No TNS Refuse interactions found"
 
+        # The Refuse packet must surface an error/reason code, not render blank.
+        # The generated pcap's Refuse carries refuse_data with ERR=12514/CODE=12514
+        # and dedicated tns.refuse_reason_user / tns.refuse_reason_system fields.
+        refuse = refuse_ixs[0]
+        d = refuse.details
+        assert d.get("error_code"), (
+            "Refuse interaction has no error_code; "
+            f"details: {d}"
+        )
+        assert d.get("error_code") == "12514", (
+            f"Expected error_code 12514 from refuse_data; got {d.get('error_code')!r}"
+        )
+        # The dedicated refuse_data description string must be captured.
+        assert "ERR=12514" in d.get("refuse_data", ""), (
+            f"refuse_data not surfaced from tns.refuse_data; got {d.get('refuse_data')!r}"
+        )
+        # Dedicated reason codes are surfaced directly (not regexed from connect_data).
+        assert d.get("refuse_reason_system"), (
+            f"refuse_reason_system not surfaced; details: {d}"
+        )
+
+        # The Refuse column must render a non-blank ERR value.
+        cols = listener._format_protocol_columns(refuse)
+        assert cols[0] == "Refuse"
+        assert cols[2], f"Refuse detail column rendered blank; cols: {cols}"
+
     def test_both_endpoints_tracked(self):
         """Both Oracle server and client devices are created."""
         listener, devices, result = _run_listener_test(
