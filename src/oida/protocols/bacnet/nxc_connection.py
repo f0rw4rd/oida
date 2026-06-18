@@ -478,4 +478,8 @@ class bacnet(
         finally:
             app.close()
 
+        # Persist discovered devices into results["data"] before export — the
+        # scan stores them in self.devices, but without this the JSON output
+        # (and results["data"]) come back empty despite a successful scan.
+        self.enum_host_info()
         self._export_results()
