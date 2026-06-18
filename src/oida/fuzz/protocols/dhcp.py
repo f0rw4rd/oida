@@ -402,7 +402,7 @@ class DHCPFuzzer(BaseFuzzer):
                         Byte("message_type", 1),
                         # Hostname Option (12) - SmartString will fuzz this
                         Byte("hostname_option", 12),
-                        Byte("hostname_length", 20),
+                        Byte("hostname_length", 8),  # auto: len("testhost")
                         SmartString("hostname", "testhost", max_len=100, fuzzable=True),
                         Byte("end_option", 255),
                     ),
@@ -443,7 +443,7 @@ class DHCPFuzzer(BaseFuzzer):
                         Byte("message_type", 1),
                         # Vendor Class Identifier (60)
                         Byte("option_60_code", 60),
-                        Byte("option_60_length", 12),
+                        Byte("option_60_length", 8),  # auto: len("MSFT 5.0")
                         SmartString("vendor_class", "MSFT 5.0", max_len=12),
                         # Vendor Specific Information (43)
                         Byte("option_43_code", 43),
@@ -601,7 +601,7 @@ class DHCPFuzzer(BaseFuzzer):
                         SmartString("circuit_id", "switch01", max_len=8, fuzzable=True),
                         # Agent Remote ID Sub-option
                         Byte("remote_id_subopt", 2),
-                        Byte("remote_id_length", 8),
+                        Byte("remote_id_length", 7),  # auto: len("port001")
                         SmartString("remote_id", "port001", max_len=8, fuzzable=True),
                         # Client FQDN (81) - RFC 4702
                         Byte("option_81_code", 81),
@@ -634,7 +634,7 @@ class DHCPFuzzer(BaseFuzzer):
                         Byte("auto_configure", 1),  # DoNotAutoConfigure
                         # Captive Portal (160) - RFC 7710
                         Byte("option_160_code", 160),
-                        Byte("option_160_length", 20),
+                        Byte("option_160_length", 19),  # len("http://portal.local")
                         SmartString(
                             "captive_portal_uri", "http://portal.local", max_len=20, fuzzable=True
                         ),
@@ -692,7 +692,7 @@ class DHCPFuzzer(BaseFuzzer):
                         Byte("zero_length", 0),
                         # Option without End
                         Byte("no_end_option", 120),
-                        Byte("no_end_length", 10),
+                        Byte("no_end_length", 16),  # auto: len("dhcp-option-data")
                         SmartString("no_end_data", "dhcp-option-data", max_len=10),
                         # No end option here
                     ),
