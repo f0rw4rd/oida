@@ -660,11 +660,13 @@ _INTENTIONAL_MALFORMED: set = {
     "dhcp/DHCP_Option_Refcount",  # CVE-2022-2928 option refcount overflow
 }
 
-# Raw L2/L3 protocols are excluded from the all-requests validator: their frames
-# carry pseudo-header checksums and embedded packets that cannot be validated
-# offline (the test's synthetic Ethernet/IP wrapper changes the addresses the
-# fuzzer's checksum was computed over). They keep baseline-only validation.
-_ALL_REQUESTS_RAW_EXCLUDE = {"ethernet", "ipv4", "ipv6", "icmp", "icmpv6"}
+# Raw L3 protocols excluded from the all-requests validator. ipv4 and icmp
+# validate cleanly offline and are NOT excluded. ipv6/ethernet/icmpv6 carry
+# content the offline harness can't fairly judge: ethernet frames carry an
+# arbitrary L3 payload (the fuzzer owns only the L2 framing), and ICMPv6 error
+# messages embed a (deliberately minimal) packet that tshark flags as malformed
+# below the icmpv6 layer the fuzzer is responsible for.
+_ALL_REQUESTS_RAW_EXCLUDE = {"ethernet", "ipv6", "icmpv6"}
 
 # Documented backlog: protocols whose NON-baseline requests still produce
 # structurally-invalid frames (verified real bugs of the same class as the
@@ -705,7 +707,11 @@ def test_tshark_validates_all_wellformed_requests(protocol_name, tmp_path):
     request is caught rather than hidden behind one clean baseline.
     """
     if protocol_name in _ALL_REQUESTS_RAW_EXCLUDE:
-        pytest.skip(f"{protocol_name}: raw L2/L3, not offline-validatable (checksum/embedded)")
+        pytest.skip(
+            f"{protocol_name}: L2/L3 framing fuzzer — requests carry arbitrary upper-layer "
+            f"payloads / embedded packets below the layer it owns, so a no-malformed-anywhere "
+            f"check doesn't apply (its baseline framing is still checked by the baseline test)"
+        )
 
     cfg = TSHARK_PROTOCOLS[protocol_name]
     session = _instantiate_fuzzer(protocol_name)
