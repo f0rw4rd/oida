@@ -163,7 +163,12 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         ("TCP_SNACK", "Selective NACK (kind=21)", "extended", "ESTABLISHED"),
         ("TCP_QuickStart", "Quick-Start (kind=27)", "extended", "SYN_SENT"),
         ("TCP_Record_Boundaries", "Record Boundaries (kind=22)", "extended", "ESTABLISHED"),
-        ("TCP_Corruption_Experienced", "Corruption Experienced (kind=23)", "extended", "ESTABLISHED"),
+        (
+            "TCP_Corruption_Experienced",
+            "Corruption Experienced (kind=23)",
+            "extended",
+            "ESTABLISHED",
+        ),
         ("TCP_ENO", "Encryption Negotiation (kind=69)", "extended", "SYN_SENT"),
         ("TCP_AccECN_Order0", "Accurate ECN Order 0 (kind=172)", "extended", "SYN_SENT"),
         ("TCP_AccECN_Order1", "Accurate ECN Order 1 (kind=173)", "extended", "ESTABLISHED"),

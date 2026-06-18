@@ -1198,6 +1198,7 @@ DATA_TYPES = {
     0x24: "GENERIC_20",
 }
 
+
 def get_vendor_name(vendor_id: int) -> str:
     """Get vendor name from manufacturer ID"""
     return VENDORS.get(vendor_id, f"Unknown ({vendor_id})")

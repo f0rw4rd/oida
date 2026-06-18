@@ -150,7 +150,9 @@ class CoAPFuzzer(BaseFuzzer):
             elif seg_len < 269:
                 result += bytes([(delta << 4) | 0x0D, seg_len - 13]) + seg_bytes
             else:
-                result += bytes([(delta << 4) | 0x0E]) + (seg_len - 269).to_bytes(2, "big") + seg_bytes
+                result += (
+                    bytes([(delta << 4) | 0x0E]) + (seg_len - 269).to_bytes(2, "big") + seg_bytes
+                )
 
         return result
 
@@ -592,9 +594,7 @@ class CoAPFuzzer(BaseFuzzer):
                 Static(
                     name="uri_path",
                     # Uri-Path follows Observe (option 6), so delta = 11 - 6
-                    default_value=self._build_uri_path_option(
-                        "sensors/temperature", prev_option=6
-                    ),
+                    default_value=self._build_uri_path_option("sensors/temperature", prev_option=6),
                 ),
             ),
         )
