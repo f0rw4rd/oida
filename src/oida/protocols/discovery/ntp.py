@@ -142,9 +142,7 @@ class NTPPassiveListener:
         time.sleep(self.timeout)
         sniffer.stop()
 
-        logger.debug(
-            f"NTP: {len(self.discovered_devices)} devices, {self.server_count} servers"
-        )
+        logger.debug(f"NTP: {len(self.discovered_devices)} devices, {self.server_count} servers")
         return self.discovered_devices
 
     def _safe_process_packet(self, packet) -> None:

@@ -540,9 +540,7 @@ class EtherCATOpsMixin:
 
         return result
 
-    def _add_route(
-        self, netid: str, ip: str, route_name: str = "route"
-    ) -> Dict[str, Any]:
+    def _add_route(self, netid: str, ip: str, route_name: str = "route") -> Dict[str, Any]:
         """Add an AMS route via SystemService (port 10000).
 
         Uses index group 0x321 (ROUTE_ADD).
@@ -2157,6 +2155,7 @@ class EtherCATOpsMixin:
                 # Read all FSoE objects
                 if port_result["fsoe_supported"]:
                     slave_conn.set_timeout(max(self.ads_timeout_ms, 3000))
+
                     def _decode(dtype, data, obj_entry):
                         """Decode raw CoE bytes into obj_entry['value'] by dtype."""
                         obj_entry["raw"] = data.hex()

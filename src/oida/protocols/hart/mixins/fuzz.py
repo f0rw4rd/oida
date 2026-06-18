@@ -64,9 +64,7 @@ class FuzzMixin(_ScannerBase):
             for base_payload in base_payloads:
                 # fuzz() yields (payload_bytes, description) tuples; unpack so
                 # payload.hex() / send_command(payload) get bytes, not a tuple.
-                for payload, _desc in fuzz(
-                    base_payload, count=iterations // len(base_payloads)
-                ):
+                for payload, _desc in fuzz(base_payload, count=iterations // len(base_payloads)):
                     try:
                         response = self.client.send_command(cmd, self.poll_address, payload)
                         cmd_stats["iterations"] += 1

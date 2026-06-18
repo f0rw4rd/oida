@@ -294,7 +294,9 @@ class ScannerIdentificationMixin(_ScannerBase):
                             additional = identifier[1:].rstrip(b"\xff\x00")
                             if additional:
                                 info["additional_data_hex"] = additional.hex()
-                                ascii_str = additional.decode("ascii", errors="ignore").strip("\x00")
+                                ascii_str = additional.decode("ascii", errors="ignore").strip(
+                                    "\x00"
+                                )
                                 if ascii_str and ascii_str.isprintable():
                                     info["additional_data_ascii"] = ascii_str
 
