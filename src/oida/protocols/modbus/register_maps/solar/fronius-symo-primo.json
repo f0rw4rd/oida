@@ -1,0 +1,346 @@
+{
+  "vendor": "Fronius",
+  "model": "Primo/Symo SnapINverter Series",
+  "description": "Fronius Primo (single-phase) and Symo (three-phase) SnapINverter series with SunSpec Modbus",
+  "version": "1.0",
+  "standard": "sunspec",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "SunSpec-compliant inverters via Datamanager 2.0. Supports integer+SF (101/103) or float (111/113) modes. Base address 40001. Unit ID configurable (default 1). F_ModelType register 216 controls float/int mode.",
+  "source": "https://manuals.fronius.com/html/4204102649/en-US.html, Fronius Modbus TCP/RTU Operating Instructions",
+  "registers": {
+    "sunspec_id": {
+      "address": 40001,
+      "type": "u32",
+      "access": "r",
+      "description": "SunSpec ID 'SunS' (0x53756e53)"
+    },
+    "common_model_id": {
+      "address": 40003,
+      "type": "u16",
+      "access": "r",
+      "description": "Common model ID (should be 1)"
+    },
+    "common_model_length": {
+      "address": 40004,
+      "type": "u16",
+      "access": "r",
+      "description": "Common model length (65 or 66)"
+    },
+    "manufacturer": {
+      "address": 40005,
+      "type": "string",
+      "length": 16,
+      "access": "r",
+      "description": "Manufacturer name (Fronius)"
+    },
+    "model": {
+      "address": 40021,
+      "type": "string",
+      "length": 16,
+      "access": "r",
+      "description": "Model name"
+    },
+    "options": {
+      "address": 40037,
+      "type": "string",
+      "length": 8,
+      "access": "r",
+      "description": "Options/software version"
+    },
+    "version": {
+      "address": 40045,
+      "type": "string",
+      "length": 8,
+      "access": "r",
+      "description": "Firmware version"
+    },
+    "serial_number": {
+      "address": 40053,
+      "type": "string",
+      "length": 16,
+      "access": "r",
+      "description": "Serial number"
+    },
+    "device_address": {
+      "address": 40069,
+      "type": "u16",
+      "access": "rw",
+      "description": "Modbus device address"
+    },
+    "inverter_model_id": {
+      "address": 40070,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter model ID (101/102/103 or 111/112/113)"
+    },
+    "inverter_model_length": {
+      "address": 40071,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter model length"
+    },
+    "ac_current": {
+      "address": 40072,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40076,
+      "unit": "A",
+      "description": "AC total current"
+    },
+    "ac_current_a": {
+      "address": 40073,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40076,
+      "unit": "A",
+      "description": "Phase A current"
+    },
+    "ac_current_b": {
+      "address": 40074,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40076,
+      "unit": "A",
+      "description": "Phase B current (3-phase only)"
+    },
+    "ac_current_c": {
+      "address": 40075,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40076,
+      "unit": "A",
+      "description": "Phase C current (3-phase only)"
+    },
+    "ac_current_sf": {
+      "address": 40076,
+      "type": "i16",
+      "access": "r",
+      "description": "Current scale factor"
+    },
+    "ac_voltage_ab": {
+      "address": 40077,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40083,
+      "unit": "V",
+      "description": "Phase A-B voltage"
+    },
+    "ac_voltage_bc": {
+      "address": 40078,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40083,
+      "unit": "V",
+      "description": "Phase B-C voltage"
+    },
+    "ac_voltage_ca": {
+      "address": 40079,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40083,
+      "unit": "V",
+      "description": "Phase C-A voltage"
+    },
+    "ac_voltage_an": {
+      "address": 40080,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40083,
+      "unit": "V",
+      "description": "Phase A-N voltage"
+    },
+    "ac_voltage_bn": {
+      "address": 40081,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40083,
+      "unit": "V",
+      "description": "Phase B-N voltage"
+    },
+    "ac_voltage_cn": {
+      "address": 40082,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40083,
+      "unit": "V",
+      "description": "Phase C-N voltage"
+    },
+    "ac_voltage_sf": {
+      "address": 40083,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage scale factor"
+    },
+    "ac_power": {
+      "address": 40084,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40085,
+      "unit": "W",
+      "description": "AC power output"
+    },
+    "ac_power_sf": {
+      "address": 40085,
+      "type": "i16",
+      "access": "r",
+      "description": "Power scale factor"
+    },
+    "ac_frequency": {
+      "address": 40086,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40087,
+      "unit": "Hz",
+      "description": "AC frequency"
+    },
+    "ac_frequency_sf": {
+      "address": 40087,
+      "type": "i16",
+      "access": "r",
+      "description": "Frequency scale factor"
+    },
+    "ac_va": {
+      "address": 40088,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40089,
+      "unit": "VA",
+      "description": "Apparent power"
+    },
+    "ac_va_sf": {
+      "address": 40089,
+      "type": "i16",
+      "access": "r",
+      "description": "VA scale factor"
+    },
+    "ac_var": {
+      "address": 40090,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40091,
+      "unit": "var",
+      "description": "Reactive power"
+    },
+    "ac_var_sf": {
+      "address": 40091,
+      "type": "i16",
+      "access": "r",
+      "description": "var scale factor"
+    },
+    "ac_pf": {
+      "address": 40092,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40093,
+      "unit": "%",
+      "description": "Power factor"
+    },
+    "ac_pf_sf": {
+      "address": 40093,
+      "type": "i16",
+      "access": "r",
+      "description": "PF scale factor"
+    },
+    "ac_energy_wh": {
+      "address": 40094,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 40096,
+      "unit": "Wh",
+      "description": "Lifetime energy production"
+    },
+    "ac_energy_wh_sf": {
+      "address": 40096,
+      "type": "i16",
+      "access": "r",
+      "description": "Energy scale factor"
+    },
+    "dc_current": {
+      "address": 40097,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40098,
+      "unit": "A",
+      "description": "DC current"
+    },
+    "dc_current_sf": {
+      "address": 40098,
+      "type": "i16",
+      "access": "r",
+      "description": "DC current scale factor"
+    },
+    "dc_voltage": {
+      "address": 40099,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40100,
+      "unit": "V",
+      "description": "DC voltage"
+    },
+    "dc_voltage_sf": {
+      "address": 40100,
+      "type": "i16",
+      "access": "r",
+      "description": "DC voltage scale factor"
+    },
+    "dc_power": {
+      "address": 40101,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40102,
+      "unit": "W",
+      "description": "DC power"
+    },
+    "dc_power_sf": {
+      "address": 40102,
+      "type": "i16",
+      "access": "r",
+      "description": "DC power scale factor"
+    },
+    "cabinet_temperature": {
+      "address": 40104,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40107,
+      "unit": "C",
+      "description": "Cabinet temperature"
+    },
+    "temperature_sf": {
+      "address": 40107,
+      "type": "i16",
+      "access": "r",
+      "description": "Temperature scale factor"
+    },
+    "operating_state": {
+      "address": 40108,
+      "type": "u16",
+      "access": "r",
+      "description": "Operating state",
+      "enum": {
+        "1": "OFF",
+        "2": "SLEEPING",
+        "3": "STARTING",
+        "4": "MPPT",
+        "5": "THROTTLED",
+        "6": "SHUTTING_DOWN",
+        "7": "FAULT",
+        "8": "STANDBY"
+      }
+    },
+    "vendor_state": {
+      "address": 40109,
+      "type": "u16",
+      "access": "r",
+      "description": "Vendor-specific state code"
+    },
+    "event1": {
+      "address": 40110,
+      "type": "u32",
+      "access": "r",
+      "description": "Event bitfield 1"
+    }
+  },
+  "_source_verified": "Verified: SunSpec registers 40001/40003/40005/40021 confirmed against Fronius Datamanager register map"
+}

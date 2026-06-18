@@ -1,0 +1,363 @@
+{
+  "vendor": "Kohler",
+  "model": "MPAC 1000",
+  "description": "Kohler MPAC 1000 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "sourcea_line_neutral_l1_l0": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea line neutral L1 l0",
+      "unit": "Volts AC"
+    },
+    "sourcea_line_neutral_l2_l0": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea line neutral L2 l0",
+      "unit": "Volts AC"
+    },
+    "sourcea_line_neutral_l3_l0": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea line neutral L3 l0",
+      "unit": "Volts AC"
+    },
+    "sourceb_line_neutral_l1_l0": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb line neutral L1 l0",
+      "unit": "Volts AC"
+    },
+    "sourceb_line_neutral_l2_l0": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb line neutral L2 l0",
+      "unit": "Volts AC"
+    },
+    "sourceb_line_neutral_l3_l0": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb line neutral L3 l0",
+      "unit": "Volts AC"
+    },
+    "sourcea_line_voltage_l1_l2": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea line voltage L1 L2",
+      "unit": "Volts AC"
+    },
+    "sourcea_line_voltage_l2_l3": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea line voltage L2 L3",
+      "unit": "Volts AC"
+    },
+    "sourcea_line_voltage_l3_l1": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea line voltage L3 L1",
+      "unit": "Volts AC"
+    },
+    "sourceb_line_voltage_l1_l2": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb line voltage L1 L2",
+      "unit": "Volts AC"
+    },
+    "sourceb_line_voltage_l2_l3": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb line voltage L2 L3",
+      "unit": "Volts AC"
+    },
+    "sourceb_line_voltage_l3_l1": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb line voltage L3 L1",
+      "unit": "Volts AC"
+    },
+    "sourcea_frequency": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea frequency",
+      "unit": "Hz"
+    },
+    "sourceb_frequency": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb frequency",
+      "unit": "Hz"
+    },
+    "sourcea_nominal_voltage": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea nominal voltage",
+      "unit": "Volts AC"
+    },
+    "sourceb_nominal_voltage": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb nominal voltage",
+      "unit": "Volts AC"
+    },
+    "sourcea_nominal_frequency": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea nominal frequency",
+      "unit": "Hz"
+    },
+    "sourceb_nominal_frequency": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb nominal frequency",
+      "unit": "Hz"
+    },
+    "sourcea_number_of_phases": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea number of phases",
+      "unit": "1 or 3"
+    },
+    "sourceb_number_of_phases": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb number of phases",
+      "unit": "1 or 3"
+    },
+    "rated_amperage": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "description": "Rated amperage",
+      "unit": "0-4000"
+    },
+    "sourcea_engine_start_time_delay_id_0x0001": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea engine start time delay (id 0x0001)",
+      "unit": "0-6 sec"
+    },
+    "sourceb_engine_start_time_delay_id_0x0002": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb engine start time delay (id 0x0002)",
+      "unit": "0-6 sec"
+    },
+    "sourcea_ext_engine_start_time_delay_id_0x0003": {
+      "address": 33,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea ext engine start time delay (id 0x0003)",
+      "unit": "0-5999 sec"
+    },
+    "sourceb_ext_engine_start_time_delay_id_0x0004": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb ext engine start time delay (id 0x0004)",
+      "unit": "0-5999 sec"
+    },
+    "sourcea_engine_cooldown_time_delay_id_0x0005": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea engine cooldown time delay (id 0x0005)",
+      "unit": "0-5999 sec"
+    },
+    "sourceb_engine_cooldown_time_delay_id_0x0006": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb engine cooldown time delay (id 0x0006)",
+      "unit": "0-5999 sec"
+    },
+    "preferred_to_standby_time_delay_id_0x0007": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Preferred to standby time delay (id 0x0007)",
+      "unit": "0-5999 sec"
+    },
+    "standby_to_preferred_time_delay_id_0x0008": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Standby to preferred time delay (id 0x0008)",
+      "unit": "0-5999 sec"
+    },
+    "off_to_preferred_time_delay_id_0x0009": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Off to preferred time delay (id 0x0009)",
+      "unit": "0-5999.9 sec"
+    },
+    "off_to_standby_time_delay_id_0x000a": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Off to standby time delay (id 0x000a)",
+      "unit": "0-5999.9 sec"
+    },
+    "acquire_standby_source_id_0x000b": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "Acquire standby source (id 0x000b)",
+      "unit": "1-5999 sec"
+    },
+    "inphase_monitor_synch_id_0x000c": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "Inphase monitor synch (id 0x000c)",
+      "unit": "1-5999 sec"
+    },
+    "sourcea_over_volt_dropout_trip_point": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea over volt dropout trip point",
+      "unit": "105 - 135) % of rated source voltage"
+    },
+    "sourcea_over_volt_pickup_trip_point": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea over volt pickup trip point",
+      "unit": "95 - 100)% of over voltage dropout point"
+    },
+    "sourcea_under_volt_pickup_trip_point": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea under volt pickup trip point",
+      "unit": "85 - 100) % of rated source voltage"
+    },
+    "sourcea_under_volt_dropout_trip_point": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea under volt dropout trip point",
+      "unit": "75 - 98) % of overvoltage pickup point"
+    },
+    "sourcea_voltage_debounce_time": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea voltage debounce time",
+      "unit": "Sec"
+    },
+    "sourceb_over_volt_dropout_trip_point": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb over volt dropout trip point",
+      "unit": "105 - 135) % of rated source voltage"
+    },
+    "sourceb_over_volt_pickup_trip_point": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb over volt pickup trip point",
+      "unit": "95 - 100)% of over voltage dropout point"
+    },
+    "sourceb_under_volt_pickup_trip_point": {
+      "address": 51,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb under volt pickup trip point",
+      "unit": "85 - 100) % of rated source voltage"
+    },
+    "sourceb_under_volt_dropout_trip_point": {
+      "address": 52,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb under volt dropout trip point",
+      "unit": "75 - 98) % of overvoltage pickup point"
+    },
+    "sourceb_voltage_debounce_time": {
+      "address": 53,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb voltage debounce time",
+      "unit": "Sec"
+    },
+    "sourcea_over_freq_dropout_trip_point": {
+      "address": 54,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea over freq dropout trip point",
+      "unit": "101 -105) % of overfreq pickup point"
+    },
+    "sourcea_over_freq_pickup_trip_point": {
+      "address": 55,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea over freq pickup trip point",
+      "unit": "105 - 120) % of rated source freq"
+    },
+    "sourcea_under_freq_dropout_trip_point": {
+      "address": 56,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea under freq dropout trip point",
+      "unit": "95 - 99) % of underfreq pickup point"
+    },
+    "sourcea_under_freq_pickup_trip_point": {
+      "address": 57,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea under freq pickup trip point",
+      "unit": "80 - 95)% of rated system frequency"
+    },
+    "sourcea_freq_dropout_time": {
+      "address": 58,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourcea freq dropout time",
+      "unit": "Sec"
+    },
+    "sourceb_over_freq_dropout_trip_point": {
+      "address": 59,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb over freq dropout trip point",
+      "unit": "101 -105) % of overfreq pickup point"
+    },
+    "sourceb_over_freq_pickup_trip_point": {
+      "address": 60,
+      "type": "u16",
+      "access": "r",
+      "description": "Sourceb over freq pickup trip point",
+      "unit": "105 - 120) % of rated source freq"
+    }
+  }
+}

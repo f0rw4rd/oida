@@ -1,0 +1,2466 @@
+{
+  "protocol": "ospf",
+  "display_filter": "ospf",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:54:47.054589+00:00",
+  "dissector_fields": {
+    "total": 341,
+    "by_type": {
+      "FT_BOOLEAN": 106,
+      "FT_BYTES": 12,
+      "FT_FLOAT": 4,
+      "FT_IPv4": 40,
+      "FT_IPv6": 4,
+      "FT_NONE": 18,
+      "FT_STRING": 2,
+      "FT_UINT16": 43,
+      "FT_UINT24": 9,
+      "FT_UINT32": 36,
+      "FT_UINT64": 1,
+      "FT_UINT8": 66
+    },
+    "fields": [
+      {
+        "name": "ospf.header",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.msg",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.packet_length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.srcrouter",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.area_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.checksum",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv_length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.instance_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.none",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.simple",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.crypt.key_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.crypt.data_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.crypt.seq_nbr",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.crypt.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.auth.unknown",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.instance_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.reserved",
+        "type": "FT_BYTES",
+        "description": "Must be zero"
+      },
+      {
+        "name": "ospf.msg.hello",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.msg.dbdesc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.msg.lsreq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.msg.lsupdate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.msg.lsack",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.network_mask",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.interface_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.hello_interval",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.router_priority",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.router_dead_interval",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.designated_router",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.backup_designated_router",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.hello.active_neighbor",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.at",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.at.auth_type",
+        "type": "FT_UINT16",
+        "description": "Identifying the type of authentication"
+      },
+      {
+        "name": "ospf.at.auth_data_len",
+        "type": "FT_UINT16",
+        "description": "The length in octets of the Authentication Trailer (AT) including both the 16-octet fixed header and the variable length message digest"
+      },
+      {
+        "name": "ospf.at.reserved",
+        "type": "FT_UINT16",
+        "description": "It SHOULD be set to 0"
+      },
+      {
+        "name": "ospf.at.sa_id",
+        "type": "FT_UINT16",
+        "description": "That maps to the authentication algorithm and the secret key used to create the message digest"
+      },
+      {
+        "name": "ospf.at.crypto_seq_nbr",
+        "type": "FT_UINT64",
+        "description": "Increasing sequence number that is used to guard against replay attacks"
+      },
+      {
+        "name": "ospf.at.auth_data",
+        "type": "FT_BYTES",
+        "description": "Variable data that is carrying the digest for the protocol packet and optional LLS data block"
+      },
+      {
+        "name": "ospf.lsa",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.age",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.donotage",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.seqnum",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.chksum",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsid_opaque_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsid_te_lsa.instance",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.router",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.router.linktype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.router.linkid",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.router.linkdata",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.router.nummetrics",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.router.metric0",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.network",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.network.netmask",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.network.attchrtr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.summary",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.asbr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.asbr.netmask",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.asext",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.asext.netmask",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.asext.fwdaddr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.asext.extrttag",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.member",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.nssa",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.attr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.opaque",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.elsa.tlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.elsa.tlv_length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.u",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.s12",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.fc",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.router",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.network",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.interprefix",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.interrouter",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.asext",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.member",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.nssa",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.link",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.intraprefix",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.elsa.intraprefix",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.opaque",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.advrouter",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.mpls",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.routerid",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.linktype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.linkid",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.local_addr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.remote_addr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.te_metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.local_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.remote_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.linkcolor",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.group",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.link_max_bw",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.bc.model_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.local_node_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.remote_node_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.mt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.mc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.n",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.p",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.l",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.dc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.o",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.options.dn",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options.grc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options.grh",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options.srs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options.tes",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options.p2plan",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options.ete",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.ri.options.host",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv_type.opaque",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.v6",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.mc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.n",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.r",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.dc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.af",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.l",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.options.at",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.dbd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.dbd.r",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.dbd.i",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.dbd.m",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.dbd.ms",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lls.ext.options",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.lls.ext.options.lr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lls.ext.options.rs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags.b",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags.v",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags.w",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags.n",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags.s",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.router.lsa.flags.h",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.router.lsa.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.router.lsa.flags.b",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.router.lsa.flags.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.router.lsa.flags.v",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.router.lsa.flags.w",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.as.external.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.as.external.flags.t",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.as.external.flags.f",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.as.external.flags.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.prefix.options",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.prefix.options.nu",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.prefix.options.la",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.prefix.options.mc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.prefix.options.p",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.dynhostname",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa_sa",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.sidlabel_range.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.range_size",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.sid_label",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.preference",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.igp_msd_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.igp_msd_value",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.remote_ipv4_address",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.local_interface_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.remote_interface_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.flex_algorithm",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fad.metric_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fad.calc_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fad.priority",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fad.subtlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fad.definition_flags",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fad.definition_flags.m",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fapm.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fapm.flags.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.fapm.metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unknown",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.tlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.subtlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.routetype",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.af",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.flags.a",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.flags.n",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx.flags.unknown",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx_range.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx_range.flags.ia",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extpfx_range.flags.unknown",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.pfxsid.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.pfxsid.flags.np",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.pfxsid.flags.m",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.pfxsid.flags.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.pfxsid.flags.v",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.pfxsid.flags.l",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.pfxsid.flags.unknown",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extlink.tlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extlink.subtlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extlink.mt_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extlink.weight",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extlink.nbr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.adjsid.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.adjsid.flags.b",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.adjsid.flags.v",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.adjsid.flags.l",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.adjsid.flags.g",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.adjsid.flags.p",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.adjsid.flags.unknown",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.sabm.length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.udabm.length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.sabm.bits",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.sabm.bits.r",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.sabm.bits.s",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.sabm.bits.f",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.sabm.bits.x",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.udabm.bits",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.application.subtlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.srlg",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_link_flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_link_flags.a",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_link_flags.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_link_reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_link_delay",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_link_delay_min",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_link_delay_max",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.unidirectional_delay_variation",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.admin_group",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extended_admin_group",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extasbr.tlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extasbr.subtlv_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.extasbr.asbr_routerid",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.faam.reserved",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv.faam.metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.grace",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.grace.period",
+        "type": "FT_UINT32",
+        "description": "The number of seconds neighbors should advertise the router as fully adjacent"
+      },
+      {
+        "name": "ospf.grace.reason",
+        "type": "FT_UINT8",
+        "description": "The reason the router is restarting"
+      },
+      {
+        "name": "ospf.grace.ip",
+        "type": "FT_IPv4",
+        "description": "The IP address of the interface originating this LSA"
+      },
+      {
+        "name": "ospf.v3.lls.ext.options.tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.ext.options",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.ext.options.lr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.ext.options.rs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.state.tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.state.scs",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.state.options",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.state.options.r",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.state.options.a",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.state.options.n",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.drop.tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.relay.tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.relay.added",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.relay.options",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.relay.options.a",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.relay.options.n",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.willingness.tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.willingness",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.rf.tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.fsf.tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.ll_id",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.lls.sequence_number",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.v2.lls.auth_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.dropped_neighbor",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.neighbor",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.request_from",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lls.full_state_for",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lls.checksum",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.lls.data_length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.db.interface_mtu",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.db.dd_sequence",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.link_state_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.ls.number_of_lsas",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.action",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.bandwidth.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.cs",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.switching_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.encoding",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.num.labels",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.interface_mtu",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.priority",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.protection_capability",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.shared_risk_link_group",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.starting",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.effective",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.bitmap",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.grid",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.n",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.switching_cap",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.encoding",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.tna_addr_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.tna_addr.ipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.tna_addr.ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.tna_addr",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsid_te_lsa.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsid.opaque_id",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.number_of_links",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.do_not_age",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.interface_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.neighbor_interface_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.neighbor_router_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.attached_router",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.destination_router_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.referenced_ls_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.forwarding_address.ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.external_route_tag",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.referenced_link_state_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.router_priority",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.link_local_interface_address.ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.referenced_advertising_router",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.asext.type",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.tos",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.prefix_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.pri",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.bc",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.minimum_lsp_bandwidth",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "ospf.mpls.sonet.sdh",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.signal_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ospf.tlv_value",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.oif.node_id",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.pad_bytes",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ospf.ls.metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.forwarding_address.ipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.link_local_interface_address.ipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.lsa.num_prefixes",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.address_prefix.ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "ospf.v3.address_prefix.ipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "ospf.reserved.not_zero",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.invalid_length",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.tos_missing",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.bc_error",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.lsa.unknown_type",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.unknown_link_subtype",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ospf.stlv.invalid_length",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 79,
+    "by_pcap": {
+      "generated_ospf.pcap": [
+        "ospf_ospf_area_id",
+        "ospf_ospf_auth_none",
+        "ospf_ospf_auth_type",
+        "ospf_ospf_checksum",
+        "ospf_ospf_header",
+        "ospf_ospf_hello",
+        "ospf_ospf_hello_active_neighbor",
+        "ospf_ospf_hello_backup_designated_router",
+        "ospf_ospf_hello_designated_router",
+        "ospf_ospf_hello_hello_interval",
+        "ospf_ospf_hello_network_mask",
+        "ospf_ospf_hello_router_dead_interval",
+        "ospf_ospf_hello_router_priority",
+        "ospf_ospf_instance_id",
+        "ospf_ospf_msg",
+        "ospf_ospf_msg_hello",
+        "ospf_ospf_packet_length",
+        "ospf_ospf_srcrouter",
+        "ospf_ospf_v2_options",
+        "ospf_ospf_v2_options_dc",
+        "ospf_ospf_v2_options_dn",
+        "ospf_ospf_v2_options_e",
+        "ospf_ospf_v2_options_l",
+        "ospf_ospf_v2_options_mc",
+        "ospf_ospf_v2_options_mt",
+        "ospf_ospf_v2_options_n",
+        "ospf_ospf_v2_options_o",
+        "ospf_ospf_version"
+      ],
+      "wireshark_ospf.cap": [
+        "ospf_ospf_advrouter",
+        "ospf_ospf_area_id",
+        "ospf_ospf_auth_none",
+        "ospf_ospf_auth_type",
+        "ospf_ospf_checksum",
+        "ospf_ospf_db_dd_sequence",
+        "ospf_ospf_db_interface_mtu",
+        "ospf_ospf_dbd",
+        "ospf_ospf_dbd_i",
+        "ospf_ospf_dbd_m",
+        "ospf_ospf_dbd_ms",
+        "ospf_ospf_dbd_r",
+        "ospf_ospf_header",
+        "ospf_ospf_hello",
+        "ospf_ospf_hello_active_neighbor",
+        "ospf_ospf_hello_backup_designated_router",
+        "ospf_ospf_hello_designated_router",
+        "ospf_ospf_hello_hello_interval",
+        "ospf_ospf_hello_network_mask",
+        "ospf_ospf_hello_router_dead_interval",
+        "ospf_ospf_hello_router_priority",
+        "ospf_ospf_instance_id",
+        "ospf_ospf_link_state_id",
+        "ospf_ospf_ls_number_of_lsas",
+        "ospf_ospf_lsa",
+        "ospf_ospf_lsa_age",
+        "ospf_ospf_lsa_asext",
+        "ospf_ospf_lsa_asext_extrttag",
+        "ospf_ospf_lsa_asext_fwdaddr",
+        "ospf_ospf_lsa_asext_netmask",
+        "ospf_ospf_lsa_asext_type",
+        "ospf_ospf_lsa_chksum",
+        "ospf_ospf_lsa_donotage",
+        "ospf_ospf_lsa_id",
+        "ospf_ospf_lsa_length",
+        "ospf_ospf_lsa_network",
+        "ospf_ospf_lsa_network_attchrtr",
+        "ospf_ospf_lsa_network_netmask",
+        "ospf_ospf_lsa_number_of_links",
+        "ospf_ospf_lsa_router",
+        "ospf_ospf_lsa_router_linkdata",
+        "ospf_ospf_lsa_router_linkid",
+        "ospf_ospf_lsa_router_linktype",
+        "ospf_ospf_lsa_router_metric0",
+        "ospf_ospf_lsa_router_nummetrics",
+        "ospf_ospf_lsa_seqnum",
+        "ospf_ospf_lsa_tos",
+        "ospf_ospf_metric",
+        "ospf_ospf_msg",
+        "ospf_ospf_msg_dbdesc",
+        "ospf_ospf_msg_hello",
+        "ospf_ospf_msg_lsack",
+        "ospf_ospf_msg_lsreq",
+        "ospf_ospf_msg_lsupdate",
+        "ospf_ospf_packet_length",
+        "ospf_ospf_srcrouter",
+        "ospf_ospf_v2_options",
+        "ospf_ospf_v2_options_dc",
+        "ospf_ospf_v2_options_dn",
+        "ospf_ospf_v2_options_e",
+        "ospf_ospf_v2_options_l",
+        "ospf_ospf_v2_options_mc",
+        "ospf_ospf_v2_options_mt",
+        "ospf_ospf_v2_options_n",
+        "ospf_ospf_v2_options_o",
+        "ospf_ospf_v2_router_lsa_flags",
+        "ospf_ospf_v2_router_lsa_flags_b",
+        "ospf_ospf_v2_router_lsa_flags_e",
+        "ospf_ospf_v2_router_lsa_flags_h",
+        "ospf_ospf_v2_router_lsa_flags_n",
+        "ospf_ospf_v2_router_lsa_flags_s",
+        "ospf_ospf_v2_router_lsa_flags_v",
+        "ospf_ospf_v2_router_lsa_flags_w",
+        "ospf_ospf_version",
+        "text"
+      ],
+      "wireshark_ospf_md5.cap": [
+        "ospf_ospf_area_id",
+        "ospf_ospf_auth_crypt_data",
+        "ospf_ospf_auth_crypt_data_length",
+        "ospf_ospf_auth_crypt_key_id",
+        "ospf_ospf_auth_crypt_seq_nbr",
+        "ospf_ospf_auth_type",
+        "ospf_ospf_checksum",
+        "ospf_ospf_header",
+        "ospf_ospf_hello",
+        "ospf_ospf_hello_active_neighbor",
+        "ospf_ospf_hello_backup_designated_router",
+        "ospf_ospf_hello_designated_router",
+        "ospf_ospf_hello_hello_interval",
+        "ospf_ospf_hello_network_mask",
+        "ospf_ospf_hello_router_dead_interval",
+        "ospf_ospf_hello_router_priority",
+        "ospf_ospf_instance_id",
+        "ospf_ospf_msg",
+        "ospf_ospf_msg_hello",
+        "ospf_ospf_packet_length",
+        "ospf_ospf_srcrouter",
+        "ospf_ospf_v2_options",
+        "ospf_ospf_v2_options_dc",
+        "ospf_ospf_v2_options_dn",
+        "ospf_ospf_v2_options_e",
+        "ospf_ospf_v2_options_l",
+        "ospf_ospf_v2_options_mc",
+        "ospf_ospf_v2_options_mt",
+        "ospf_ospf_v2_options_n",
+        "ospf_ospf_v2_options_o",
+        "ospf_ospf_version"
+      ]
+    },
+    "union": [
+      "ospf_ospf_advrouter",
+      "ospf_ospf_area_id",
+      "ospf_ospf_auth_crypt_data",
+      "ospf_ospf_auth_crypt_data_length",
+      "ospf_ospf_auth_crypt_key_id",
+      "ospf_ospf_auth_crypt_seq_nbr",
+      "ospf_ospf_auth_none",
+      "ospf_ospf_auth_type",
+      "ospf_ospf_checksum",
+      "ospf_ospf_db_dd_sequence",
+      "ospf_ospf_db_interface_mtu",
+      "ospf_ospf_dbd",
+      "ospf_ospf_dbd_i",
+      "ospf_ospf_dbd_m",
+      "ospf_ospf_dbd_ms",
+      "ospf_ospf_dbd_r",
+      "ospf_ospf_header",
+      "ospf_ospf_hello",
+      "ospf_ospf_hello_active_neighbor",
+      "ospf_ospf_hello_backup_designated_router",
+      "ospf_ospf_hello_designated_router",
+      "ospf_ospf_hello_hello_interval",
+      "ospf_ospf_hello_network_mask",
+      "ospf_ospf_hello_router_dead_interval",
+      "ospf_ospf_hello_router_priority",
+      "ospf_ospf_instance_id",
+      "ospf_ospf_link_state_id",
+      "ospf_ospf_ls_number_of_lsas",
+      "ospf_ospf_lsa",
+      "ospf_ospf_lsa_age",
+      "ospf_ospf_lsa_asext",
+      "ospf_ospf_lsa_asext_extrttag",
+      "ospf_ospf_lsa_asext_fwdaddr",
+      "ospf_ospf_lsa_asext_netmask",
+      "ospf_ospf_lsa_asext_type",
+      "ospf_ospf_lsa_chksum",
+      "ospf_ospf_lsa_donotage",
+      "ospf_ospf_lsa_id",
+      "ospf_ospf_lsa_length",
+      "ospf_ospf_lsa_network",
+      "ospf_ospf_lsa_network_attchrtr",
+      "ospf_ospf_lsa_network_netmask",
+      "ospf_ospf_lsa_number_of_links",
+      "ospf_ospf_lsa_router",
+      "ospf_ospf_lsa_router_linkdata",
+      "ospf_ospf_lsa_router_linkid",
+      "ospf_ospf_lsa_router_linktype",
+      "ospf_ospf_lsa_router_metric0",
+      "ospf_ospf_lsa_router_nummetrics",
+      "ospf_ospf_lsa_seqnum",
+      "ospf_ospf_lsa_tos",
+      "ospf_ospf_metric",
+      "ospf_ospf_msg",
+      "ospf_ospf_msg_dbdesc",
+      "ospf_ospf_msg_hello",
+      "ospf_ospf_msg_lsack",
+      "ospf_ospf_msg_lsreq",
+      "ospf_ospf_msg_lsupdate",
+      "ospf_ospf_packet_length",
+      "ospf_ospf_srcrouter",
+      "ospf_ospf_v2_options",
+      "ospf_ospf_v2_options_dc",
+      "ospf_ospf_v2_options_dn",
+      "ospf_ospf_v2_options_e",
+      "ospf_ospf_v2_options_l",
+      "ospf_ospf_v2_options_mc",
+      "ospf_ospf_v2_options_mt",
+      "ospf_ospf_v2_options_n",
+      "ospf_ospf_v2_options_o",
+      "ospf_ospf_v2_router_lsa_flags",
+      "ospf_ospf_v2_router_lsa_flags_b",
+      "ospf_ospf_v2_router_lsa_flags_e",
+      "ospf_ospf_v2_router_lsa_flags_h",
+      "ospf_ospf_v2_router_lsa_flags_n",
+      "ospf_ospf_v2_router_lsa_flags_s",
+      "ospf_ospf_v2_router_lsa_flags_v",
+      "ospf_ospf_v2_router_lsa_flags_w",
+      "ospf_ospf_version",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 23,
+    "fields": [
+      "area_id",
+      "auth_crypt_data",
+      "auth_crypt_data_length",
+      "auth_crypt_key_id",
+      "auth_crypt_seq_nbr",
+      "auth_data",
+      "auth_none",
+      "auth_type",
+      "checksum",
+      "db_dd_sequence",
+      "db_interface_mtu",
+      "hello_active_neighbor",
+      "hello_backup_designated_router",
+      "hello_designated_router",
+      "hello_hello_interval",
+      "hello_network_mask",
+      "hello_router_dead_interval",
+      "hello_router_priority",
+      "instance_id",
+      "msg",
+      "srcrouter",
+      "v2_options",
+      "version"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "78/341 (22%)",
+    "pcap_vs_extracted": "22/78 (28%)",
+    "t1_extracted": "10/10 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "ospf_ospf_packet_length",
+        "field": "ospf.packet_length",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "generated_ospf.pcap",
+          "wireshark_ospf.cap",
+          "wireshark_ospf_md5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_msg_hello",
+        "field": "ospf.msg.hello",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "generated_ospf.pcap",
+          "wireshark_ospf.cap",
+          "wireshark_ospf_md5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_msg_dbdesc",
+        "field": "ospf.msg.dbdesc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_msg_lsreq",
+        "field": "ospf.msg.lsreq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_msg_lsupdate",
+        "field": "ospf.msg.lsupdate",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_msg_lsack",
+        "field": "ospf.msg.lsack",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa",
+        "field": "ospf.lsa",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_age",
+        "field": "ospf.lsa.age",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_donotage",
+        "field": "ospf.lsa.donotage",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_id",
+        "field": "ospf.lsa.id",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_seqnum",
+        "field": "ospf.lsa.seqnum",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_chksum",
+        "field": "ospf.lsa.chksum",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_length",
+        "field": "ospf.lsa.length",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_router",
+        "field": "ospf.lsa.router",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_router_linktype",
+        "field": "ospf.lsa.router.linktype",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_router_linkid",
+        "field": "ospf.lsa.router.linkid",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_router_linkdata",
+        "field": "ospf.lsa.router.linkdata",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_router_nummetrics",
+        "field": "ospf.lsa.router.nummetrics",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_router_metric0",
+        "field": "ospf.lsa.router.metric0",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_network",
+        "field": "ospf.lsa.network",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_network_netmask",
+        "field": "ospf.lsa.network.netmask",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_network_attchrtr",
+        "field": "ospf.lsa.network.attchrtr",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_asext",
+        "field": "ospf.lsa.asext",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_asext_netmask",
+        "field": "ospf.lsa.asext.netmask",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_asext_fwdaddr",
+        "field": "ospf.lsa.asext.fwdaddr",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_asext_extrttag",
+        "field": "ospf.lsa.asext.extrttag",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_advrouter",
+        "field": "ospf.advrouter",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_dbd",
+        "field": "ospf.dbd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_dbd_r",
+        "field": "ospf.dbd.r",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_dbd_i",
+        "field": "ospf.dbd.i",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_dbd_m",
+        "field": "ospf.dbd.m",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_dbd_ms",
+        "field": "ospf.dbd.ms",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags",
+        "field": "ospf.v2.router.lsa.flags",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags_b",
+        "field": "ospf.v2.router.lsa.flags.b",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags_e",
+        "field": "ospf.v2.router.lsa.flags.e",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags_v",
+        "field": "ospf.v2.router.lsa.flags.v",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags_w",
+        "field": "ospf.v2.router.lsa.flags.w",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags_n",
+        "field": "ospf.v2.router.lsa.flags.n",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags_s",
+        "field": "ospf.v2.router.lsa.flags.s",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_v2_router_lsa_flags_h",
+        "field": "ospf.v2.router.lsa.flags.h",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_link_state_id",
+        "field": "ospf.link_state_id",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_ls_number_of_lsas",
+        "field": "ospf.ls.number_of_lsas",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_number_of_links",
+        "field": "ospf.lsa.number_of_links",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_asext_type",
+        "field": "ospf.lsa.asext.type",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_lsa_tos",
+        "field": "ospf.lsa.tos",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ospf_ospf_metric",
+        "field": "ospf.metric",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ospf.cap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 34,
+      "t1_in_pcap": 10,
+      "t1_covered": 10,
+      "t2_total": 251,
+      "t2_in_pcap": 58,
+      "t2_covered": 12,
+      "t3_skipped": 56,
+      "t4_ignored": 0
+    }
+  }
+}

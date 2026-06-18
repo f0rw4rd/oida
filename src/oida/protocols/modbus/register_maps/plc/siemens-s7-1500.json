@@ -1,0 +1,51 @@
+{
+  "vendor": "Siemens",
+  "model": "S7-1500",
+  "description": "Siemens S7-1500 PLC Modbus register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 255,
+  "notes": "CRITICAL: NO native system registers exposed via Modbus. Only user-defined data in MB_HOLD_REG exposed. Max holding registers: Array[0..65535] of Word. Requires TCON_IP_v4 structure for connection.",
+  "source": "SIOS 102020340",
+  "registers": {
+    "example_db_word_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Example: DB.DBW0 mapped to 40001 (user must create)"
+    },
+    "example_real_value": {
+      "address": 100,
+      "type": "f32",
+      "access": "rw",
+      "description": "Example: 32-bit float at 40101-40102 (user must create and map)"
+    }
+  },
+  "extended_info": {
+    "mb_server_configuration": {
+      "max_holding_registers": "Array [0..65535] of Word (vs 4999 for S7-1200)",
+      "tcon_ip_v4_structure": {
+        "InterfaceID": "HW_ANY - Hardware ID of PROFINET interface",
+        "ID": "CONN_OUC 1-4095 - Connection reference",
+        "ConnectionType": "BYTE 11 (0x0B) for TCP",
+        "ActiveEstablished": "BOOL False for server (passive)",
+        "RemoteAddress": "ARRAY[1..4] of BYTE - Client IP (0.0.0.0 = accept any)",
+        "LocalPort": "UINT 502 default"
+      }
+    },
+    "cycle_time_access": {
+      "instruction": "RT_INFO",
+      "location": "Extended Instructions -> Diagnostics",
+      "returns": "OB1 cycle time, OB execution times, communication processing time",
+      "modbus_exposure": "Must copy RT_INFO results to holding register DB for Modbus access"
+    },
+    "configuration_requirements": [
+      "Use TCON_IP_v4 structure for connection description",
+      "ConnectionType = 11, ActiveEstablished = False for TCP server",
+      "Data block must use Standard access mode (not Optimized)",
+      "MB_UNIT_ID in instance DB static section (default 255)"
+    ]
+  },
+  "_source_verified": "Verified: MB_SERVER/MB_CLIENT confirmed; same SIOS 102020340 document covers S7-1200/1500"
+}

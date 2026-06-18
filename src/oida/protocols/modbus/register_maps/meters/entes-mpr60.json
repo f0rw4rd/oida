@@ -1,0 +1,357 @@
+{
+  "vendor": "Entes",
+  "model": "MPR 60 / MPR 63",
+  "description": "Entes MPR 60 / MPR 63 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: MPR 60, MPR 63",
+  "registers": {
+    "voltage_ln1": {
+      "address": 16384,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage LN1",
+      "unit": "V"
+    },
+    "voltage_ln2": {
+      "address": 16386,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage LN2",
+      "unit": "V"
+    },
+    "voltage_ln3": {
+      "address": 16388,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage LN3",
+      "unit": "V"
+    },
+    "current_ln1": {
+      "address": 16390,
+      "type": "u32",
+      "access": "r",
+      "description": "Current LN1",
+      "unit": "A"
+    },
+    "current_ln2": {
+      "address": 16392,
+      "type": "u32",
+      "access": "r",
+      "description": "Current LN2",
+      "unit": "A"
+    },
+    "current_ln3": {
+      "address": 16394,
+      "type": "u32",
+      "access": "r",
+      "description": "Current LN3",
+      "unit": "A"
+    },
+    "total_current": {
+      "address": 16396,
+      "type": "u32",
+      "access": "r",
+      "description": "Total current",
+      "unit": "A"
+    },
+    "active_power_l1": {
+      "address": 16398,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power L1",
+      "unit": "W"
+    },
+    "active_power_l2": {
+      "address": 16400,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power L2",
+      "unit": "W"
+    },
+    "active_power_l3": {
+      "address": 16402,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power L3",
+      "unit": "W"
+    },
+    "reactive_power_l1": {
+      "address": 16404,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power L1",
+      "unit": "VAr"
+    },
+    "reactive_power_l2": {
+      "address": 16406,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power L2",
+      "unit": "VAr"
+    },
+    "reactive_power_l3": {
+      "address": 16408,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power L3",
+      "unit": "VAr"
+    },
+    "apparent_power_l1": {
+      "address": 16410,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power L1",
+      "unit": "VA"
+    },
+    "apparent_power_l2": {
+      "address": 16412,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power L2",
+      "unit": "VA"
+    },
+    "apparent_power_l3": {
+      "address": 16414,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power L3",
+      "unit": "VA"
+    },
+    "power_factor_l1": {
+      "address": 16416,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor L1"
+    },
+    "power_factor_l2": {
+      "address": 16418,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor L2"
+    },
+    "power_factor_l3": {
+      "address": 16420,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor L3"
+    },
+    "cos_l1": {
+      "address": 16422,
+      "type": "i32",
+      "access": "r",
+      "description": "Cos L1"
+    },
+    "cos_l2": {
+      "address": 16424,
+      "type": "i32",
+      "access": "r",
+      "description": "Cos L2"
+    },
+    "cos_l3": {
+      "address": 16426,
+      "type": "i32",
+      "access": "r",
+      "description": "Cos L3"
+    },
+    "voltage_l12": {
+      "address": 16428,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L12",
+      "unit": "V"
+    },
+    "voltage_l23": {
+      "address": 16430,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L23",
+      "unit": "V"
+    },
+    "voltage_l31": {
+      "address": 16432,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L31",
+      "unit": "V"
+    },
+    "voltage_ln": {
+      "address": 16434,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage ln",
+      "unit": "V"
+    },
+    "voltage_ll": {
+      "address": 16436,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage ll",
+      "unit": "V"
+    },
+    "frequency": {
+      "address": 16438,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "total_active_power": {
+      "address": 16440,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "total_reactive_power": {
+      "address": 16442,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "VAr"
+    },
+    "total_apparent_power": {
+      "address": 16444,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "thd_v1": {
+      "address": 16446,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd V1",
+      "unit": "%"
+    },
+    "thd_v2": {
+      "address": 16448,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd V2",
+      "unit": "%"
+    },
+    "thd_v3": {
+      "address": 16450,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd V3",
+      "unit": "%"
+    },
+    "thd_v3p": {
+      "address": 16452,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd v3p",
+      "unit": "%"
+    },
+    "thd_i1": {
+      "address": 16454,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd I1",
+      "unit": "%"
+    },
+    "thd_i2": {
+      "address": 16456,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd I2",
+      "unit": "%"
+    },
+    "thd_i3": {
+      "address": 16458,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd I3",
+      "unit": "%"
+    },
+    "thd_i3p": {
+      "address": 16460,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd i3p",
+      "unit": "%"
+    },
+    "voltage_high_ln1": {
+      "address": 16462,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage high LN1",
+      "unit": "V"
+    },
+    "voltage_high_ln2": {
+      "address": 16464,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage high LN2",
+      "unit": "V"
+    },
+    "voltage_high_ln3": {
+      "address": 16466,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage high LN3",
+      "unit": "V"
+    },
+    "voltage_low_ln1": {
+      "address": 16468,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage low LN1",
+      "unit": "V"
+    },
+    "voltage_low_ln2": {
+      "address": 16470,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage low LN2",
+      "unit": "V"
+    },
+    "voltage_low_ln3": {
+      "address": 16472,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage low LN3",
+      "unit": "V"
+    },
+    "demand_current_high_l1": {
+      "address": 16474,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current high L1",
+      "unit": "A"
+    },
+    "demand_current_high_l2": {
+      "address": 16476,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current high L2",
+      "unit": "A"
+    },
+    "demand_current_high_l3": {
+      "address": 16478,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current high L3",
+      "unit": "A"
+    },
+    "demand_current_low_l1": {
+      "address": 16480,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current low L1",
+      "unit": "A"
+    },
+    "demand_current_low_l2": {
+      "address": 16482,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current low L2",
+      "unit": "A"
+    }
+  }
+}

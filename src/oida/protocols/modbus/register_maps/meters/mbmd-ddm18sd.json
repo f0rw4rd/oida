@@ -1,0 +1,68 @@
+{
+  "vendor": "DDM",
+  "model": "DDM18SD",
+  "description": "Imported from mbmd (ddm18sd)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/ddm18sd.go",
+  "registers": {
+    "voltage": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage",
+      "function_code": 4
+    },
+    "current": {
+      "address": 8,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current",
+      "function_code": 4
+    },
+    "power": {
+      "address": 18,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power",
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 26,
+      "type": "f32",
+      "access": "ro",
+      "description": "Reactive power",
+      "function_code": 4
+    },
+    "cosphi": {
+      "address": 42,
+      "type": "f32",
+      "access": "ro",
+      "description": "Power factor",
+      "function_code": 4
+    },
+    "frequency": {
+      "address": 54,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency",
+      "function_code": 4
+    },
+    "sum": {
+      "address": 256,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kWh",
+      "function_code": 4
+    },
+    "reactive_sum": {
+      "address": 1024,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kVArh",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: DDM18SD single-phase DIN rail meter confirmed; mbmd source ddm18sd.go verified"
+}

@@ -1,0 +1,271 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oida"
+dynamic = ["version"]
+description = "OIDA - OT/ICS Dynamic Assessment Framework"
+readme = "README.md"
+license = {text = "AGPL-3.0-or-later"}
+authors = [
+    {name = "OIDA Team", email = "contact@oida.dev"}
+]
+maintainers = [
+    {name = "f0rw4rd", email = "forward@oida.dev"}
+]
+keywords = ["ics", "scada", "industrial", "security", "pentesting", "modbus", "opcua", "ethercat"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Topic :: Security",
+    "Topic :: System :: Networking", 
+    "Topic :: Software Development :: Testing",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "tqdm>=4.67.3",
+    "manuf2>=2.0.2",
+    "pyserial>=3.5",
+    "termcolor>=3.3.0",
+]
+
+[project.optional-dependencies]
+# ── Per-protocol extras (extra name = protocol directory name) ──
+ads = ["pyads>=3.5.2"]
+bacnet = ["BAC0>=2025.9.15", "PyYAML>=6.0.3"]
+can = ["python-can>=4.6.1"]
+coap = ["aiocoap>=0.4.11", "DTLSSocket>=0.2.3; sys_platform != 'win32'", "cbor2>=5.4"]
+dicom = ["pynetdicom>=3.0.4", "pydicom>=3.0.1"]
+discovery = ["zeroconf>=0.148.0", "scapy>=2.7.0", "netifaces>=0.11.0", "profinet-py>=0.6.1", "defusedxml>=0.7.1"]
+dnp3 = ["yadnp3>=3.2.1.1"]
+ethercat = ["pysoem>=1.1.13; sys_platform != 'win32'"]
+ethernetip = ["pycomm3>=1.2.16"]
+fhir = ["fhirclient>=4.4.0", "requests>=2.32.5"]
+goose = ["pyiec61850-ng>=1.6.1.1"]
+hart = ["hartip-py>=0.3.0"]
+hl7 = ["hl7apy>=1.3.5"]
+iec104 = ["c104>=2.2.1"]
+knx = ["xknx>=3.15.0", "xknxproject>=3.8.2"]
+mms = ["pyiec61850-ng>=1.6.1.1"]
+modbus = ["pymodbus>=3.12.0", "PyYAML>=6.0.3"]
+mqtt = ["paho-mqtt>=2.1.0"]
+opcua = ["asyncua>=1.1.8"]
+pcap = ["pyshark @ git+https://github.com/f0rw4rd/pyshark.git@ek-fixes#subdirectory=src"]
+profinet = ["profinet-py>=0.6.1"]
+snap7 = ["python-snap7>=2.0.2"]
+snmp = ["pysnmp>=7.1.22"]
+tase2 = ["pyiec61850-ng>=1.6.1.1"]
+astm = []
+ocpp = ["websockets>=16.0"]
+# ── Non-protocol extras ──
+fuzz = ["boofuzz>=0.4.0", "sqlalchemy>=2.0.0", "pyasn1>=0.6.2", "crc>=7.1.0", "h2>=4.3.0", "scapy>=2.7.0"]
+all = [
+    "oida[ads,astm,bacnet,can,coap,dicom,discovery,dnp3,ethercat]",
+    "oida[ethernetip,fhir,goose,hart,hl7,iec104,knx,mms]",
+    "oida[modbus,mqtt,ocpp,opcua,pcap,profinet,snap7,snmp,tase2,fuzz]",
+]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-docker>=3.2.5",
+    "pytest-xdist>=3.8.0",
+    "pytest-timeout>=2.4.0",
+    "black>=26.1.0",
+    "flake8>=7.3.0",
+    "mypy>=1.19.1",
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.1",
+    "vulture>=2.14",
+    "bandit>=1.9.3",
+]
+docs = [
+    "sphinx>=9.1.0",
+    "sphinx-rtd-theme>=3.1.0",
+    "myst-parser>=5.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/f0rw4rd/oida"
+"Bug Reports" = "https://github.com/f0rw4rd/oida/issues"
+"Source" = "https://github.com/f0rw4rd/oida"
+"Documentation" = "https://github.com/f0rw4rd/oida/blob/main/README.md"
+
+[project.scripts]
+oida = "oida.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+oida = ["data/*.json", "data/*.csv", "data/**/*.txt", "data/**/*.json", "configs/*.yml", "configs/*.yaml", "protocols/modbus/register_maps/*.json", "protocols/modbus/register_maps/**/*.json"]
+
+[tool.setuptools.dynamic]
+version = {attr = "oida.__version__"}
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".vulture_whitelist.py"]
+
+[tool.ruff.lint]
+ignore = [
+    # Module-level imports not at top: required for optional dependency patterns,
+    # environment setup before imports, and lazy loading architecture
+    "E402",
+    # Shadowing builtins: variable/argument names like `id`, `type` in protocol code
+    "A001", "A002",
+    # URL open audit: this is a security testing tool that intentionally opens URLs
+    "S310",
+    # XML parsing: security tool that intentionally parses untrusted XML
+    "S314", "S318",
+    # Enum duplicate values: intentional in protocol constant enums
+    "PIE796",
+    # __eq__ without __hash__: Construct adapter pattern
+    "PLW1641",
+    # Abstract base class without abstract methods: service layer pattern
+    "B024",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files: allow bare except, type() comparisons, star imports, unused imports
+# for try/except ImportError availability checks
+"tests/**" = ["E722", "E721", "F403", "F811", "F601"]
+"tests/unit/modbus/*.py" = ["F401"]
+"tests/unit/fuzz/test_transformers.py" = ["F401"]
+# Mock servers and utility scripts: allow unused imports/vars, bare except
+"docker/mocks/**" = ["F401", "F841", "E722"]
+"scripts/**" = ["F841", "F401", "E722"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scapy.*"
+follow_imports = "skip"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --strict-config -m 'not network' --tb=line"
+testpaths = ["tests/unit", "tests/integration"]
+timeout = 15
+timeout_method = "thread"
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+markers = [
+    "smoke: fast structural tests that verify basic wiring, args, and constants (select with '-m smoke')",
+    "slow: marks tests as slow running (deselect with '-m \"not slow\"')",
+    "network: marks tests requiring network access",
+    "auth: marks tests requiring authentication",
+    "fuzz: marks fuzzing tests (potentially dangerous)",
+    "security: marks security analysis tests",
+    "integration: marks integration tests (deselect with '-m \"not integration\"')",
+    "modbus: Modbus protocol tests",
+    "opcua: OPC UA protocol tests",
+    "ethernetip: EtherNet/IP protocol tests",
+    "ads: Beckhoff ADS protocol tests",
+    "snap7: Siemens S7 protocol tests",
+    "iec101: IEC 101 serial protocol tests",
+    "iec104: IEC 104 protocol tests",
+    "mms: MMS/IEC 61850 protocol tests",
+    "knx: KNX protocol tests",
+    "mqtt: MQTT protocol tests",
+    "hl7: HL7 protocol tests",
+    "dicom: DICOM protocol tests",
+    "astm: ASTM/LIS protocol tests",
+    "dnp3: DNP3 protocol tests",
+    "bacnet: BACnet protocol tests",
+    "tase2: TASE.2/ICCP protocol tests",
+    "discovery: Discovery protocol tests",
+    "hart: HART protocol tests",
+    "profinet: PROFINET protocol tests",
+    "lldp: LLDP protocol tests",
+    "snmp: SNMP protocol tests",
+    "http2: HTTP/2 protocol tests",
+    "ocpp: OCPP protocol tests",
+    "fhir: FHIR protocol tests",
+    "containers: marks tests requiring specific Docker containers",
+    "binary: PyInstaller binary smoke tests (requires dist/oida)",
+    "integration_fuzzers: integration tests for fuzz protocol definitions",
+]
+
+[tool.coverage.run]
+source = ["oida"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+    "*/constants.py",
+    "*/const.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "^[A-Z_]+ = \\{",
+    "^[A-Z_]+: Dict",
+]
+
+[tool.bandit]
+# Security testing tool: these are inherent to its purpose
+skips = [
+    "B104", "B105", "B106", "B107",
+    "B110", "B112",
+    "B310", "B311", "B314", "B318",
+    "B404", "B405", "B408",
+    "B603", "B607",
+]

@@ -1,0 +1,356 @@
+{
+  "vendor": "Lovato Electric",
+  "model": "DMK 40",
+  "description": "Lovato Electric DMK 40 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "l1_phase_voltage": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "l3_phase_voltage": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase voltage",
+      "unit": "V"
+    },
+    "total_phase_voltage": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Total phase voltage",
+      "unit": "V"
+    },
+    "l1_l2_phase_to_phase_voltage": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 L2 phase to phase voltage",
+      "unit": "V"
+    },
+    "l2_l3_phase_to_phase_voltage": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 L3 phase to phase voltage",
+      "unit": "V"
+    },
+    "l3_l1_phase_to_phase_voltage": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 L1 phase to phase voltage",
+      "unit": "V"
+    },
+    "equivalent_line_voltage": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Equivalent line voltage",
+      "unit": "V"
+    },
+    "l1_phase_current": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase current",
+      "unit": "A"
+    },
+    "l2_phase_current": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase current",
+      "unit": "A"
+    },
+    "l3_phase_current": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase current",
+      "unit": "A"
+    },
+    "equivalent_current0": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "Equivalent current0",
+      "unit": "A"
+    },
+    "total_active_power": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "total_reactive_power": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "Var"
+    },
+    "total_apparent_power": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "total_power_factor0": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "Total power factor0"
+    },
+    "active_energy_import": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy (import)",
+      "unit": "Wh"
+    },
+    "active_energy_export": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy (export)",
+      "unit": "Wh"
+    },
+    "reactive_energy_import": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy (import)",
+      "unit": "Varh"
+    },
+    "reactive_energy_export": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy (export)",
+      "unit": "Varh"
+    },
+    "l1_phase_active_power": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase active power",
+      "unit": "W"
+    },
+    "l2_phase_active_power": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase active power",
+      "unit": "W"
+    },
+    "l3_phase_active_power": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase active power",
+      "unit": "W"
+    },
+    "l1_phase_reactive_power": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase reactive power",
+      "unit": "Var"
+    },
+    "l2_phase_reactive_power": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase reactive power",
+      "unit": "Var"
+    },
+    "l3_phase_reactive_power": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase reactive power",
+      "unit": "Var"
+    },
+    "l1_phase_apparent_power": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase apparent power",
+      "unit": "VA"
+    },
+    "l2_phase_apparent_power": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase apparent power",
+      "unit": "VA"
+    },
+    "l3_phase_apparent_power": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase apparent power",
+      "unit": "VA"
+    },
+    "l1_power_factor": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 power factor"
+    },
+    "l2_power_factor": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 power factor"
+    },
+    "l3_power_factor": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 power factor"
+    },
+    "l1_cost": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 cost"
+    },
+    "l2_cost": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 cost"
+    },
+    "l3_cost": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 cost"
+    },
+    "frequency": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "average_l1_phase_voltage": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L1 phase voltage",
+      "unit": "V"
+    },
+    "average_l2_phase_voltage": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L2 phase voltage",
+      "unit": "V"
+    },
+    "average_l3_phase_voltage": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L3 phase voltage",
+      "unit": "V"
+    },
+    "average_total_phase_voltage": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "Average total phase voltage",
+      "unit": "V"
+    },
+    "average_l1_l2_phase_to_phase_voltage": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L1 L2 phase to phase voltage",
+      "unit": "V"
+    },
+    "average_l2_l3_phase_to_phase_voltage": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L2 L3 phase to phase voltage",
+      "unit": "V"
+    },
+    "average_l3_l1_phase_to_phase_voltage": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L3 L1 phase to phase voltage",
+      "unit": "V"
+    },
+    "average_equivalent_line_voltage": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "Average equivalent line voltage",
+      "unit": "V"
+    },
+    "average_l1_phase_current": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L1 phase current",
+      "unit": "A"
+    },
+    "average_l2_phase_current": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L2 phase current",
+      "unit": "A"
+    },
+    "average_l3_phase_current": {
+      "address": 94,
+      "type": "u32",
+      "access": "r",
+      "description": "Average L3 phase current",
+      "unit": "A"
+    },
+    "average_equivalent_current0": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "Average equivalent current0",
+      "unit": "A"
+    },
+    "average_total_active_power": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "description": "Average total active power",
+      "unit": "W"
+    },
+    "average_total_reactive_power": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "Average total reactive power",
+      "unit": "Var"
+    }
+  }
+}

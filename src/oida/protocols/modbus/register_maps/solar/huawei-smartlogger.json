@@ -1,0 +1,149 @@
+{
+  "vendor": "HuaweiSmartLogger",
+  "model": "HuaweiSmartLogger",
+  "description": "Imported from nymea-plugins-modbus (huawei)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/huawei/smartlogger-registers.json",
+  "registers": {
+    "inverterTotalActivePower": {
+      "address": 40525,
+      "type": "i32",
+      "access": "ro",
+      "description": "Total active output power of all inverters",
+      "unit": "W"
+    },
+    "inverterTotalEnergyProduced": {
+      "address": 40560,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total energy yield produced by all inverters",
+      "unit": "kWh"
+    },
+    "meterVoltagePhaseA": {
+      "address": 32260,
+      "type": "u32",
+      "access": "ro",
+      "description": "Voltage phase A",
+      "unit": "V"
+    },
+    "meterVoltagePhaseB": {
+      "address": 32262,
+      "type": "u32",
+      "access": "ro",
+      "description": "Voltage phase B",
+      "unit": "V"
+    },
+    "meterVoltagePhaseC": {
+      "address": 32264,
+      "type": "u32",
+      "access": "ro",
+      "description": "Voltage phase C",
+      "unit": "V"
+    },
+    "meterData1Dummy0": {
+      "address": 32266,
+      "type": "u16",
+      "access": "ro",
+      "description": "none"
+    },
+    "meterCurrentPhaseA": {
+      "address": 32272,
+      "type": "i32",
+      "access": "ro",
+      "description": "Current phase A",
+      "unit": "A"
+    },
+    "meterCurrentPhaseB": {
+      "address": 32274,
+      "type": "i32",
+      "access": "ro",
+      "description": "Current phase B",
+      "unit": "A"
+    },
+    "meterCurrentPhaseC": {
+      "address": 32276,
+      "type": "i32",
+      "access": "ro",
+      "description": "Current phase C",
+      "unit": "A"
+    },
+    "meterActivePower": {
+      "address": 32278,
+      "type": "i32",
+      "access": "ro",
+      "description": "Total active output power of all inverters",
+      "unit": "W"
+    },
+    "meterData1Dummy2": {
+      "address": 32280,
+      "type": "u16",
+      "access": "ro",
+      "description": "none"
+    },
+    "meterPowerPhaseA": {
+      "address": 32335,
+      "type": "i32",
+      "access": "ro",
+      "description": "Active power phase A",
+      "unit": "kW"
+    },
+    "meterPowerPhaseB": {
+      "address": 32337,
+      "type": "i32",
+      "access": "ro",
+      "description": "Active power phase B",
+      "unit": "W"
+    },
+    "meterPowerPhaseC": {
+      "address": 32339,
+      "type": "i32",
+      "access": "ro",
+      "description": "Active power phase C",
+      "unit": "W"
+    },
+    "meterTotalActiveElectricity": {
+      "address": 32341,
+      "type": "i64",
+      "access": "ro",
+      "description": "Total active electricity",
+      "unit": "kWh"
+    },
+    "meterTotalReactiveElectricity": {
+      "address": 32345,
+      "type": "i64",
+      "access": "ro",
+      "description": "Total reactive electricity",
+      "unit": "kvarh"
+    },
+    "meterNegativeActiveElectricity": {
+      "address": 32349,
+      "type": "i64",
+      "access": "ro",
+      "description": "Negatoive active electricity",
+      "unit": "kWh"
+    },
+    "meterNegativeReactiveElectricity": {
+      "address": 32353,
+      "type": "i64",
+      "access": "ro",
+      "description": "Negative reactive electricity",
+      "unit": "kvarh"
+    },
+    "meterPositiveActiveElectricity": {
+      "address": 32357,
+      "type": "i64",
+      "access": "ro",
+      "description": "Positive active electricity",
+      "unit": "kWh"
+    },
+    "meterPositiveReactiveElectricity": {
+      "address": 32361,
+      "type": "i64",
+      "access": "ro",
+      "description": "Positive reactive electricity",
+      "unit": "kvarh"
+    }
+  },
+  "_source_verified": "Verified: Imported from nymea-plugins-modbus; registers 40525/40560 match Huawei SmartLogger ModBus Interface Definitions"
+}

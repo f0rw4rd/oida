@@ -1,0 +1,87 @@
+# REAL CVE-2018-5740 - Actual vulnerable BIND 9.11.5-P4
+#
+# This builds the real BIND at the vulnerable version.
+# CVE-2018-5740: Assertion failure via deny-answer-aliases
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential autoconf automake libtool pkg-config \
+    libssl-dev libcap-dev libuv1-dev python3 dnsutils \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Clone BIND9 and checkout vulnerable version
+RUN git clone https://gitlab.isc.org/isc-projects/bind9.git && \
+    cd bind9 && \
+    git checkout v9_11_5-P4 && \
+    ./configure --prefix=/usr \
+                --sysconfdir=/etc/bind \
+                --localstatedir=/var \
+                --with-openssl \
+                --enable-threads \
+                --disable-linux-caps \
+                CFLAGS="-g -O0 -fno-stack-protector" && \
+    make -j$(nproc) && \
+    make install
+
+# Create directories and configuration
+RUN mkdir -p /etc/bind /var/cache/bind /var/run/named && \
+    cat > /etc/bind/named.conf << 'EOF'
+options {
+    directory "/var/cache/bind";
+    listen-on port 5056 { any; };
+    listen-on-v6 { none; };
+    allow-query { any; };
+    recursion yes;
+    dnssec-validation no;
+    deny-answer-aliases { "exploit.local"; };
+};
+
+zone "test.local" {
+    type master;
+    file "/etc/bind/db.test.local";
+};
+
+zone "exploit.local" {
+    type master;
+    file "/etc/bind/db.exploit.local";
+};
+
+logging {
+    channel stderr_log { stderr; severity debug; print-time yes; };
+    category default { stderr_log; };
+};
+EOF
+
+RUN cat > /etc/bind/db.test.local << 'EOF'
+$TTL 86400
+@   IN  SOA ns1.test.local. admin.test.local. ( 2024010101 3600 1800 604800 86400 )
+    IN  NS  ns1.test.local.
+ns1 IN  A   127.0.0.1
+www IN  A   192.168.1.1
+EOF
+
+RUN cat > /etc/bind/db.exploit.local << 'EOF'
+$TTL 86400
+@   IN  SOA ns1.exploit.local. admin.exploit.local. ( 2024010101 3600 1800 604800 86400 )
+    IN  NS  ns1.exploit.local.
+ns1 IN  A   127.0.0.1
+trigger IN  CNAME www.test.local.
+EOF
+
+RUN cat > /start.sh << 'SCRIPT'
+#!/bin/sh
+echo "=============================================="
+echo "  REAL BIND 9.11.5-P4 - CVE-2018-5740"
+echo "  Port: 5056/udp"
+echo "  Vuln: Assertion failure via deny-answer-aliases"
+echo "=============================================="
+exec /usr/sbin/named -g -c /etc/bind/named.conf
+SCRIPT
+RUN chmod +x /start.sh
+
+EXPOSE 5056/tcp
+EXPOSE 5056/udp
+CMD ["/start.sh"]

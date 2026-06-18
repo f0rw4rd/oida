@@ -1,0 +1,7 @@
+services:
+  iec104-server:
+    build: .
+    container_name: iec104-mock-server
+    ports:
+      - "2405:2404"
+    restart: unless-stopped

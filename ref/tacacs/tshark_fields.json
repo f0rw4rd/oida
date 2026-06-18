@@ -1,0 +1,605 @@
+{
+  "protocol": "tacacs",
+  "display_filter": "tacacs or tacplus",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:58:48.011766+00:00",
+  "dissector_fields": {
+    "total": 85,
+    "by_type": {
+      "FT_BOOLEAN": 8,
+      "FT_BYTES": 1,
+      "FT_IPv4": 1,
+      "FT_NONE": 3,
+      "FT_STRING": 6,
+      "FT_STRINGZ": 12,
+      "FT_UINT16": 12,
+      "FT_UINT32": 4,
+      "FT_UINT8": 38
+    },
+    "fields": [
+      {
+        "name": "tacacs.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacacs.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacacs.nonce",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacacs.userlen",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacacs.passlen",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacacs.response",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacacs.reason",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacacs.result1",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "tacacs.destaddr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "tacacs.destport",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacacs.line",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacacs.result2",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "tacacs.result3",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacacs.username",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "tacacs.password",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "tacplus.response",
+        "type": "FT_BOOLEAN",
+        "description": "true if TACACS+ response"
+      },
+      {
+        "name": "tacplus.request",
+        "type": "FT_BOOLEAN",
+        "description": "true if TACACS+ request"
+      },
+      {
+        "name": "tacplus.majvers",
+        "type": "FT_UINT8",
+        "description": "Major version number"
+      },
+      {
+        "name": "tacplus.minvers",
+        "type": "FT_UINT8",
+        "description": "Minor version number"
+      },
+      {
+        "name": "tacplus.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.seqno",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.flags.unencrypted",
+        "type": "FT_BOOLEAN",
+        "description": "Is payload unencrypted? (deprecated)"
+      },
+      {
+        "name": "tacplus.flags.singleconn",
+        "type": "FT_BOOLEAN",
+        "description": "Is this a single connection?"
+      },
+      {
+        "name": "tacplus.acct.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.acct.flags.more",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "tacplus.acct.flags.start",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "tacplus.acct.flags.stop",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "tacplus.acct.flags.watchdog",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "tacplus.session_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "tacplus.packet_len",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "tacplus.auth_password",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.port",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.remote_address",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.chap.challenge",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.chap.response",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.mschap.challenge",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.mschap.response",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.arap.nas_challenge",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.arap.remote_challenge",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.arap.remote_response",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.privilege_level",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.authentication_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.service",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.user_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.user",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.port_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.address_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.arg_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.arg_value",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "tacplus.chap.id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.mschap.id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.authen_action",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_req_cont.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_req_cont.user_length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_req_cont.data_length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_req_cont.user",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_rep.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_rep.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_rep.server_msg_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_rep.server_msg",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_authen_rep_server.data_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_author_req.auth_method",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_author_req.arg_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_author_rep.auth_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_author_rep_server.msg_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_author_rep_server.data_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_author_rep.arg_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.acct.auth_method",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.acct.arg_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_acct.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_acct.msg_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_acct.data_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_acct.server_msg",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "tacplus.body_acct.data",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "tacplus.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "tacplus.ascii_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.password_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.chap_data_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.mschap_data_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.arap_data_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.data_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "tacplus.packet_len.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "tacplus.flags.unencrypted.deprecated",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "tacplus.bogus_data",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 24,
+    "by_pcap": {
+      "generated_tacacs.pcap": [
+        "_ws_expert",
+        "tacplus_tacplus_address_len",
+        "tacplus_tacplus_auth_password",
+        "tacplus_tacplus_authen_action",
+        "tacplus_tacplus_authentication_type",
+        "tacplus_tacplus_flags",
+        "tacplus_tacplus_flags_singleconn",
+        "tacplus_tacplus_flags_unencrypted",
+        "tacplus_tacplus_majvers",
+        "tacplus_tacplus_minvers",
+        "tacplus_tacplus_packet_len",
+        "tacplus_tacplus_password_length",
+        "tacplus_tacplus_port",
+        "tacplus_tacplus_port_len",
+        "tacplus_tacplus_privilege_level",
+        "tacplus_tacplus_remote_address",
+        "tacplus_tacplus_request",
+        "tacplus_tacplus_seqno",
+        "tacplus_tacplus_service",
+        "tacplus_tacplus_session_id",
+        "tacplus_tacplus_type",
+        "tacplus_tacplus_user",
+        "tacplus_tacplus_user_len",
+        "text"
+      ]
+    },
+    "union": [
+      "_ws_expert",
+      "tacplus_tacplus_address_len",
+      "tacplus_tacplus_auth_password",
+      "tacplus_tacplus_authen_action",
+      "tacplus_tacplus_authentication_type",
+      "tacplus_tacplus_flags",
+      "tacplus_tacplus_flags_singleconn",
+      "tacplus_tacplus_flags_unencrypted",
+      "tacplus_tacplus_majvers",
+      "tacplus_tacplus_minvers",
+      "tacplus_tacplus_packet_len",
+      "tacplus_tacplus_password_length",
+      "tacplus_tacplus_port",
+      "tacplus_tacplus_port_len",
+      "tacplus_tacplus_privilege_level",
+      "tacplus_tacplus_remote_address",
+      "tacplus_tacplus_request",
+      "tacplus_tacplus_seqno",
+      "tacplus_tacplus_service",
+      "tacplus_tacplus_session_id",
+      "tacplus_tacplus_type",
+      "tacplus_tacplus_user",
+      "tacplus_tacplus_user_len",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 18,
+    "fields": [
+      "address_len",
+      "auth_password",
+      "authen_action",
+      "authentication_type",
+      "flags_unencrypted",
+      "majvers",
+      "minvers",
+      "password",
+      "password_length",
+      "port",
+      "privilege_level",
+      "remote_address",
+      "seqno",
+      "service",
+      "session_id",
+      "user",
+      "user_len",
+      "username"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "22/85 (25%)",
+    "pcap_vs_extracted": "18/22 (81%)",
+    "t1_extracted": "14/12 (116%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "tacplus_tacplus_request",
+        "field": "tacplus.request",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "generated_tacacs.pcap"
+        ],
+        "description": "true if TACACS+ request"
+      },
+      {
+        "ek_name": "tacplus_tacplus_type",
+        "field": "tacplus.type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "generated_tacacs.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "tacplus_tacplus_flags",
+        "field": "tacplus.flags",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "generated_tacacs.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "tacplus_tacplus_flags_singleconn",
+        "field": "tacplus.flags.singleconn",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "generated_tacacs.pcap"
+        ],
+        "description": "Is this a single connection?"
+      },
+      {
+        "ek_name": "tacplus_tacplus_packet_len",
+        "field": "tacplus.packet_len",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "generated_tacacs.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "tacplus_tacplus_port_len",
+        "field": "tacplus.port_len",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "generated_tacacs.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 40,
+      "t1_in_pcap": 12,
+      "t1_covered": 14,
+      "t2_total": 42,
+      "t2_in_pcap": 10,
+      "t2_covered": 4,
+      "t3_skipped": 3,
+      "t4_ignored": 0
+    }
+  }
+}

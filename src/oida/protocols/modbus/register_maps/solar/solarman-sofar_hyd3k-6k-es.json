@@ -1,0 +1,774 @@
+{
+  "vendor": "Sofar",
+  "model": "Hyd3K-6K-Es",
+  "description": "Imported from Home Assistant Solarman (sofar_hyd3k-6k-es.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/sofar_hyd3k-6k-es.yaml",
+  "registers": {
+    "pv_instant_generated_pw": {
+      "address": 533,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV Instant Generated PW",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "pv1_power": {
+      "address": 594,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "pv2_power": {
+      "address": 597,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "pv1_voltage": {
+      "address": 592,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 595,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 593,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "pv2_current": {
+      "address": 596,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "daily_production": {
+      "address": 536,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "total_production": {
+      "address": 541,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production",
+      "unit": "kWh"
+    },
+    "total_generation_time": {
+      "address": 581,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total generation time",
+      "unit": "h"
+    },
+    "today_generation_time": {
+      "address": 579,
+      "type": "u16",
+      "access": "ro",
+      "description": "Today generation time",
+      "unit": "min"
+    },
+    "today_grid_return": {
+      "address": 537,
+      "type": "u16",
+      "access": "ro",
+      "description": "Today Grid Return",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "today_grid_consumption": {
+      "address": 538,
+      "type": "u16",
+      "access": "ro",
+      "description": "Today Grid Consumption",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "today_power_consumption": {
+      "address": 539,
+      "type": "u16",
+      "access": "ro",
+      "description": "Today Power Consumption",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "total_grid_return": {
+      "address": 543,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Grid Return",
+      "unit": "kWh"
+    },
+    "total_grid_consumption": {
+      "address": 545,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Grid Consumption",
+      "unit": "kWh"
+    },
+    "total_power_consumption": {
+      "address": 547,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Power Consumption",
+      "unit": "kWh"
+    },
+    "power_consumption": {
+      "address": 531,
+      "type": "u16",
+      "access": "ro",
+      "description": "Power Consumption",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "grid_frequency": {
+      "address": 524,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "grid_voltage": {
+      "address": 518,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_current": {
+      "address": 519,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "battery_voltage": {
+      "address": 526,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "battery_charge_discharge_current": {
+      "address": 527,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Charge / Discharge current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "battery_percentage": {
+      "address": 528,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Percentage",
+      "unit": "%"
+    },
+    "battery_temperature": {
+      "address": 529,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Temperature",
+      "unit": "°C"
+    },
+    "battery_daily_charge": {
+      "address": 548,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Daily Charge",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "battery_total_energy_charged": {
+      "address": 551,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Total Energy Charged",
+      "unit": "kWh"
+    },
+    "battery_total_energy_dischaged": {
+      "address": 553,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Total Energy Dischaged",
+      "unit": "kWh"
+    },
+    "battery_cicles": {
+      "address": 556,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Cicles",
+      "unit": "Charges"
+    },
+    "battery_power": {
+      "address": 567,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "battery_type": {
+      "address": 4272,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Type"
+    },
+    "battery_capacity": {
+      "address": 4273,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Capacity",
+      "unit": "Ah"
+    },
+    "battery_daily_discharge": {
+      "address": 549,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Daily Discharge",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "battery_total_charge": {
+      "address": 551,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery Total Charge",
+      "unit": "kWh"
+    },
+    "battery_total_discharge": {
+      "address": 553,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery Total Discharge",
+      "unit": "kWh"
+    },
+    "max_charge_voltage": {
+      "address": 4275,
+      "type": "u16",
+      "access": "ro",
+      "description": "Max Charge Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "max_charge_current": {
+      "address": 4276,
+      "type": "u16",
+      "access": "ro",
+      "description": "Max Charge Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "over_voltage_protection": {
+      "address": 4277,
+      "type": "u16",
+      "access": "ro",
+      "description": "Over Voltage Protection",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "min_discharge_voltage": {
+      "address": 4278,
+      "type": "u16",
+      "access": "ro",
+      "description": "Min Discharge Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "max_discharge_current": {
+      "address": 4279,
+      "type": "u16",
+      "access": "ro",
+      "description": "Max Discharge Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "undervoltage_protection": {
+      "address": 4280,
+      "type": "u16",
+      "access": "ro",
+      "description": "Undervoltage Protection",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "discharge_depth": {
+      "address": 4281,
+      "type": "u16",
+      "access": "ro",
+      "description": "Discharge Depth",
+      "unit": "%"
+    },
+    "periods_of_discharge_time": {
+      "address": 4282,
+      "type": "u16",
+      "access": "ro",
+      "description": "Periods Of Discharge Time",
+      "unit": "h"
+    },
+    "empty_battery_voltage": {
+      "address": 4283,
+      "type": "u16",
+      "access": "ro",
+      "description": "Empty Battery Voltage",
+      "unit": "V",
+      "scale": 0.01
+    },
+    "full_battery_voltage": {
+      "address": 4284,
+      "type": "u16",
+      "access": "ro",
+      "description": "Full Battery Voltage",
+      "unit": "V",
+      "scale": 0.01
+    },
+    "inverter_status": {
+      "address": 512,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter status",
+      "enum": {
+        "0": "Stand-by",
+        "1": "Self-Checking",
+        "2": "Normal",
+        "3": "Discharging Check State",
+        "4": "Discharging State",
+        "5": "EPS State",
+        "6": "Fault State",
+        "7": "Permanent State"
+      }
+    },
+    "inverter_module_temperature": {
+      "address": 569,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter module temperature",
+      "unit": "°C"
+    },
+    "inverter_inner_temperature": {
+      "address": 568,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter inner temperature",
+      "unit": "°C"
+    },
+    "inverter_bus_voltage": {
+      "address": 557,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter bus voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "countdown_time": {
+      "address": 554,
+      "type": "u16",
+      "access": "ro",
+      "description": "Countdown time",
+      "unit": "s"
+    },
+    "communication_board_inner_message": {
+      "address": 578,
+      "type": "u16",
+      "access": "ro",
+      "description": "Communication Board inner message"
+    },
+    "insulation_of_pv1_to_ground": {
+      "address": 582,
+      "type": "u16",
+      "access": "ro",
+      "description": "Insulation of PV1+ to ground"
+    },
+    "insulation_of_pv2_to_ground": {
+      "address": 583,
+      "type": "u16",
+      "access": "ro",
+      "description": "Insulation of PV2+ to ground"
+    },
+    "insulation_of_pv_to_ground": {
+      "address": 584,
+      "type": "u16",
+      "access": "ro",
+      "description": "Insulation of PV- to ground"
+    },
+    "country": {
+      "address": 570,
+      "type": "u16",
+      "access": "ro",
+      "description": "Country",
+      "enum": {
+        "0": "Germany",
+        "1": "CEI0-21 Internal",
+        "2": "Australia",
+        "3": "Spain RD1699",
+        "4": "Turkey",
+        "5": "Denmark",
+        "6": "Greece",
+        "7": "Netherland",
+        "8": "Belgium",
+        "9": "UK-G59",
+        "10": "China",
+        "11": "France",
+        "12": "Poland",
+        "13": "Germany BDEW",
+        "14": "Germany VDE0126",
+        "15": "Italy CEI0-16",
+        "16": "UK-G83",
+        "17": "Greece Islands",
+        "18": "EU EN50438",
+        "19": "EU EN61727",
+        "20": "Korea",
+        "21": "Sweden",
+        "22": "Europe General",
+        "23": "CEI0-21 External",
+        "24": "Cyprus",
+        "25": "India",
+        "26": "Philippines",
+        "27": "New Zeland",
+        "28": "Reserve",
+        "29": "Reserve"
+      }
+    },
+    "inverter_alert_message": {
+      "address": 555,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter alert message",
+      "enum": {
+        "0": "No error",
+        "1": "ID01 The power grid voltage is too high",
+        "2": "ID02 The power grid voltage is too low",
+        "3": "ID03 The power grid frequency is too high",
+        "4": "ID04 The power grid frequency is too low",
+        "5": "ID05 The battery voltage is too high",
+        "7": "ID07 GridLVRT fault",
+        "8": "ID08 The PV voltage is too high",
+        "9": "ID09 LLCBus voltage is too high and has triggered hardware protection",
+        "10": "ID10 Boost voltage is too high and has triggered hardware protection",
+        "11": "ID11 BuckBoost current is too high and has triggered hardware protection",
+        "12": "ID12 The battery current is too high and has triggered hardware protection",
+        "13": "ID13 The GFCI sampling value between the master DSP and slave DSP is not consistent",
+        "14": "ID14 The PV current is too high and has triggered hardware protection",
+        "15": "ID15 The grid current is too high and has triggered hardware protection",
+        "16": "ID16 Input current is not balanced",
+        "17": "ID17 Grid current sampling error",
+        "18": "ID18 DCI sampling error",
+        "19": "ID19 Grid voltage sampling error",
+        "20": "ID20 GFCI sampling error",
+        "21": "ID21 Master chip fault",
+        "22": "ID22 Auxiliary voltage error",
+        "25": "ID25 LLCBus voltage is too high",
+        "26": "ID26 Bus voltage is too high and has triggered software protection",
+        "27": "ID27 Battery current is too high",
+        "28": "ID28 The DCI is too high",
+        "29": "ID29 The grid current is too high",
+        "30": "ID30 Bunk current is too high",
+        "31": "ID31 The output current is too high",
+        "32": "ID32 The input current is too high",
+        "33": "ID33 Incorrect input mode",
+        "48": "ID48 The GFCI sampling value between the master DSP and slave DSP is not consistent",
+        "49": "ID49 The grid voltage sampling value between the master DSP and slave DSP is no consistent",
+        "50": "ID50 The grid frequency sampling value between the master DSP and slave DSP is no consistent",
+        "51": "ID51 The DCI sampling value between the master DSP and slave DSP is no consistent",
+        "52": "ID52 HYD-ES inverter can't communicate with Lithium battery BMS correctly",
+        "53": "ID53 SPI communication fault",
+        "54": "ID54 SCI communication fault",
+        "55": "ID55 Relays fault",
+        "56": "ID56 Insulation resistance is too low",
+        "57": "ID57 Battery temperature is too high",
+        "58": "ID58 Heat sink temperature is too high",
+        "59": "ID59 Environment temperature is too high",
+        "60": "ID60 PE connectFault",
+        "65": "ID65 The grid current is too high and has caused unrecoverable hardware fault",
+        "66": "ID66 The bus voltage is too high and has caused unrecoverable fault",
+        "67": "ID67 Unrecoverable fault of battery overcurrent in EPS mode",
+        "68": "ID68 The input current is unbalanced and has triggered an unrecoverable fault",
+        "70": "ID70 The grid current is too high and has triggered an unrecoverable fault",
+        "73": "ID73 The input current is too high and has triggered an unrecoverable fault",
+        "74": "ID74 Incorrect input mode",
+        "75": "ID75 Unrecoverable EEPROM write",
+        "76": "ID76 Unrecoverable EEPROM read",
+        "77": "ID77 Relay has triggered permanent fault",
+        "81": "ID81 Internal temperature is too high",
+        "82": "ID82 AC frequency is too high",
+        "83": "ID83 Remote power derate",
+        "84": "ID84 Switch OFF HYD series inverter remotely",
+        "85": "ID85 SOC <= 1 - DOD or Low battery voltage",
+        "86": "ID86 Battery voltage is too low and caused HYD series inverter to switch OFF",
+        "94": "ID94 Software version is not consistent",
+        "95": "ID95 The communication board EEPROM is faulty",
+        "96": "ID96 RTC clock chip fault",
+        "98": "ID98 SD card fault",
+        "100": "ID100 Battery overcurrent discharging protection",
+        "101": "ID101 Discharging short circuit protection",
+        "102": "ID102 Battery high voltage protection",
+        "103": "ID103 Battery low voltage protection",
+        "104": "ID104 Battery high temperature protection while discharging",
+        "105": "ID105 Battery high temperature protection while charging",
+        "106": "ID106 Battery low temperature protection while discharging",
+        "107": "ID107 Battery low temperature protection while charging"
+      }
+    },
+    "fault_1": {
+      "address": 513,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 1",
+      "enum": {
+        "0": "No error",
+        "1": "ID01 Grid Over Voltage Protection",
+        "2": "ID02 Grid Under Voltage Protection",
+        "4": "ID03 Grid Over Frequency Protection",
+        "8": "ID04 Grid Under Frequency Protection",
+        "16": "ID05 Battery Over Voltage",
+        "32": "ID06",
+        "64": "ID07",
+        "128": "ID08",
+        "256": "ID09 LLCBus Over Voltage Hardware",
+        "512": "ID10 Bus Over Voltage Hardware",
+        "1024": "ID11 BuckBoost over Current Hardware",
+        "2048": "ID12 Battery over Current Hardware",
+        "4096": "ID13",
+        "8192": "ID14",
+        "16384": "ID15 Output Current Hardware",
+        "32768": "ID16"
+      }
+    },
+    "fault_2": {
+      "address": 514,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 2",
+      "enum": {
+        "0": "No error",
+        "1": "ID17 Grid current sampling error",
+        "2": "ID18 DCI sampling error",
+        "4": "ID19 Grid voltage sampling error",
+        "8": "ID20",
+        "16": "ID21 Main chip fault",
+        "32": "ID22 Hardware auxiliary power fault",
+        "64": "ID23",
+        "128": "ID24",
+        "256": "ID25 LLCBus Over Current protection",
+        "512": "ID26 Bus over voltage protection",
+        "1024": "ID27 Battery Over Current protection",
+        "2048": "ID28 Dci Over Current Protection",
+        "4096": "ID29 Output over current software",
+        "8192": "ID30 Buck Over Current",
+        "16384": "ID31 Output over current protection",
+        "32768": "ID32 The input current is too high"
+      }
+    },
+    "fault_3": {
+      "address": 515,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 3",
+      "enum": {
+        "0": "No error",
+        "1": "ID33 Reserved",
+        "2": "ID34 Reserved",
+        "4": "ID35 Reserved",
+        "8": "ID36 Reserved",
+        "16": "ID37 Reserved",
+        "32": "ID38 Reserved",
+        "64": "ID39 Reserved",
+        "128": "ID40 Reserved",
+        "256": "ID41 Reserved",
+        "512": "ID42 Reserved",
+        "1024": "ID43 Reserved",
+        "2048": "ID44 Reserved",
+        "4096": "ID45 Reserved",
+        "8192": "ID46 Reserved",
+        "16384": "ID47 Reserved",
+        "32768": "ID48 Reserved"
+      }
+    },
+    "fault_4": {
+      "address": 516,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 4",
+      "enum": {
+        "0": "No error",
+        "1": "ID49 Grid voltage sampling value between master and slave DSP vary widely",
+        "2": "ID50 Grid frequency sampling value between master and slave DSP vary widely",
+        "4": "ID51 DCI sampling value between master and slave DSP vary widely",
+        "8": "ID52 GFCI sampling value between master and slave DSP vary widely",
+        "16": "ID53 Communication failure between master and slave DSP failure",
+        "32": "ID53 Communication failure between slave and communication board",
+        "64": "ID55 Relay fault",
+        "128": "ID56",
+        "256": "ID57 Inverter temp is too high",
+        "512": "ID58 Boost temp is too high",
+        "1024": "ID59 Environment temp is too high",
+        "2048": "ID60",
+        "4096": "ID61 Reserved",
+        "8192": "ID62 Reserved",
+        "16384": "ID63 Reserved",
+        "32768": "ID64 Reserved"
+      }
+    },
+    "fault_5": {
+      "address": 517,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 5",
+      "enum": {
+        "0": "No error",
+        "1": "ID65 Grid current is too high and causes unrecoverable fault",
+        "2": "ID66 Bus voltage is too high and causes unrecoverable fault",
+        "4": "ID67 EPS Mode Battery Over current,and has cause unrecoverable fault",
+        "8": "ID68",
+        "16": "ID69",
+        "32": "ID70 The Output current is too high,and has cause unrecoverable fault",
+        "64": "ID71",
+        "128": "ID72 Reserved",
+        "256": "ID73 Reserved",
+        "512": "ID74",
+        "1024": "ID75 Error writing from EEPROM",
+        "2048": "ID76 Error reading to EEPROM",
+        "4096": "ID77 Relay fauilure causes unrecoverable fault",
+        "8192": "ID78 Reserved",
+        "16384": "ID79 Reserved",
+        "32768": "ID80 Reserved"
+      }
+    },
+    "buck_current": {
+      "address": 559,
+      "type": "u16",
+      "access": "ro",
+      "description": "Buck Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "grid_r_voltage": {
+      "address": 560,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid R Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_r_current": {
+      "address": 561,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid R Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "generation_current": {
+      "address": 566,
+      "type": "u16",
+      "access": "ro",
+      "description": "Generation Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "charge_discharge_power": {
+      "address": 525,
+      "type": "i16",
+      "access": "ro",
+      "description": "Charge / Discharge Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "feed_in_out_power": {
+      "address": 530,
+      "type": "i16",
+      "access": "ro",
+      "description": "Feed in / out power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "inputoutput_power": {
+      "address": 532,
+      "type": "i16",
+      "access": "ro",
+      "description": "Input/Output Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "energy_management_model": {
+      "address": 4274,
+      "type": "u16",
+      "access": "ro",
+      "description": "Energy Management Model"
+    },
+    "dci_current": {
+      "address": 571,
+      "type": "u16",
+      "access": "ro",
+      "description": "DCI Current",
+      "unit": "mA"
+    },
+    "dci_voltage": {
+      "address": 572,
+      "type": "u16",
+      "access": "ro",
+      "description": "DCI Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_s_voltage": {
+      "address": 562,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid S Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_s_current": {
+      "address": 563,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid S Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "grid_t_voltage": {
+      "address": 564,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid T voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_t_current": {
+      "address": 565,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid T current",
+      "unit": "A",
+      "scale": 0.01
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed; Sofar HYD 3K-6K-ES user manual on ManualsLib"
+}

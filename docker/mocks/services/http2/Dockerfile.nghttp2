@@ -1,0 +1,45 @@
+# HTTP/2 nghttp2 Server
+# Industry-standard HTTP/2 implementation with frame-level logging
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nghttp2-server \
+    nghttp2-client \
+    openssl \
+    curl \
+    procps \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy startup script and document root
+COPY start_nghttpd.sh /app/
+COPY document_root/ /app/www/
+
+RUN chmod +x /app/start_nghttpd.sh
+
+# Create directories
+RUN mkdir -p /app/certs /var/log/http2 /app/www
+
+# Generate self-signed certs (will be overwritten if mounted)
+RUN openssl req -x509 -newkey rsa:2048 \
+    -keyout /app/certs/server.key \
+    -out /app/certs/server.crt \
+    -days 365 -nodes \
+    -subj "/CN=http2-nghttp2/O=OIDA Mock/C=US"
+
+# Create default index.html
+RUN echo '{"server": "nghttpd", "protocol": "HTTP/2"}' > /app/www/index.html
+
+# Expose ports
+EXPOSE 8080 8443
+
+# Environment defaults
+ENV HTTP2_VERBOSE=true \
+    HTTP2_HEXDUMP=false \
+    HTTP2_LOG_FRAMES=true \
+    TZ=UTC
+
+CMD ["/app/start_nghttpd.sh"]

@@ -1,0 +1,352 @@
+{
+  "vendor": "Entes",
+  "model": "EMM",
+  "description": "Entes EMM power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_l2_n": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L2 N",
+      "unit": "V"
+    },
+    "voltage_l3_n": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L3 N",
+      "unit": "V"
+    },
+    "voltage_l1_l2": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L1 L2",
+      "unit": "V"
+    },
+    "voltage_l2_l3": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L2 L3",
+      "unit": "V"
+    },
+    "voltage_l3_l1": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L3 L1",
+      "unit": "V"
+    },
+    "current_l1": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L1",
+      "unit": "mA"
+    },
+    "current_l2": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L2",
+      "unit": "mA"
+    },
+    "current_l3": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L3",
+      "unit": "mA"
+    },
+    "neutral_current_il1_il2_il3": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current = IL1+IL2+IL3",
+      "unit": "mA"
+    },
+    "measured_frequency": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Measured frequency",
+      "unit": "Hz"
+    },
+    "active_power_l1_n": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L1 N",
+      "unit": "W"
+    },
+    "active_power_l2_n": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L2 N",
+      "unit": "W"
+    },
+    "active_power_l3_n": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3 N",
+      "unit": "W"
+    },
+    "total_import_active_power": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import active power",
+      "unit": "W"
+    },
+    "total_export_active_power": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Total export active power",
+      "unit": "W"
+    },
+    "total_active_power": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "reactive_power_l1": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L1",
+      "unit": "VAr"
+    },
+    "reactive_power_l2": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L2",
+      "unit": "VAr"
+    },
+    "reactive_power_l3": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3",
+      "unit": "VAr"
+    },
+    "quadrant_1_total_reactive_power": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 1 total reactive power",
+      "unit": "VAr"
+    },
+    "quadrant_2_total_reactive_power": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 2 total reactive power",
+      "unit": "VAr"
+    },
+    "quadrant_3_total_reactive_power": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 3 total reactive power",
+      "unit": "VAr"
+    },
+    "quadrant_4_total_reactive_power": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 4 total reactive power",
+      "unit": "VAr"
+    },
+    "total_reactive_power": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "VAr"
+    },
+    "apperant_power_l1_n": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Apperant power L1 N",
+      "unit": "VAr"
+    },
+    "apparent_power_l2_n": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L2 N",
+      "unit": "VAr"
+    },
+    "apparent_power_l3_n": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3 N",
+      "unit": "VAr"
+    },
+    "total_import_apperant_power": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import apperant power",
+      "unit": "VA"
+    },
+    "total_export_apperant_power": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Total export apperant power",
+      "unit": "VA"
+    },
+    "total_apperant_power": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apperant power",
+      "unit": "VA"
+    },
+    "power_factor_l1": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor L1"
+    },
+    "power_factor_l2": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor L2"
+    },
+    "power_factor_l3": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor L3"
+    },
+    "power_factor_total_import": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor total import"
+    },
+    "power_factor_total_export": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor total export"
+    },
+    "power_factor_total": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor total"
+    },
+    "cosphi_l1": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "CosPhi L1"
+    },
+    "cosphi_l2": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "CosPhi L2"
+    },
+    "cosphi_l3": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "CosPhi L3"
+    },
+    "cos_phi_cos_l1_cos_l2_cos_l3": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Cos phi = COS_L1 + COS_L2 + COS_L3"
+    },
+    "rotation_field_1_right_0_none_1_left": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Rotation field; 1=right, 0=none, 1=left"
+    },
+    "voltage_unbalance": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance",
+      "unit": "%"
+    },
+    "l1_phase_voltage_angle": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 phase voltage angle",
+      "unit": "Angle"
+    },
+    "l2_phase_voltage_angle": {
+      "address": 108,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 phase voltage angle",
+      "unit": "Angle"
+    },
+    "l3_phase_voltage_angle": {
+      "address": 110,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 phase voltage angle",
+      "unit": "Angle"
+    },
+    "l1_phase_current_angle": {
+      "address": 114,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 phase current angle",
+      "unit": "Angle"
+    },
+    "l2_phase_current_angle": {
+      "address": 116,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 phase current angle",
+      "unit": "Angle"
+    },
+    "l3_phase_current_angle": {
+      "address": 118,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 phase current angle",
+      "unit": "Angle"
+    },
+    "internal_temp": {
+      "address": 128,
+      "type": "f32",
+      "access": "r",
+      "description": "Internal temp",
+      "unit": "DC"
+    },
+    "hour_meter_non_resetable": {
+      "address": 130,
+      "type": "u32",
+      "access": "r",
+      "description": "Hour meter (Non resetable)",
+      "unit": "h/1000"
+    }
+  }
+}

@@ -1,0 +1,182 @@
+{
+  "vendor": "Omron",
+  "model": "CP1L/CP1H/CP1E Series",
+  "description": "Omron CP1 Series compact PLC Modbus register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: CP1L-EM/EL models have built-in Ethernet with Modbus TCP support. CP1E requires CP1W-CIF11 serial option board for Modbus RTU. Memory areas map to configurable Modbus address ranges via CX-Programmer.",
+  "source": "Omron CP1L/H/E Programming Manual (W451), CP1W-EIP21 Manual (W510)",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "area": "CIO area bits"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "area": "CIO input area bits"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "area": "DM area words"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "area": "CIO area words"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "area": "CIO area bits"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "DM area words"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils",
+      "area": "CIO area bits"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "DM area words"
+    }
+  ],
+  "registers": {
+    "dm0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data memory D0 (holding register 40001)",
+      "notes": "omron_address=D0"
+    },
+    "dm100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data memory D100",
+      "notes": "omron_address=D100"
+    },
+    "dm0_dword": {
+      "address": 0,
+      "type": "u32",
+      "access": "rw",
+      "description": "32-bit DWORD at D0 (high word at D0, low word at D1 - big-endian)",
+      "notes": "omron_address=D0-D1"
+    },
+    "cio0": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "CIO area word 0 (input register 30001)",
+      "notes": "omron_address=CIO 0"
+    }
+  },
+  "coils": {
+    "cio0_0": {
+      "address": 0,
+      "access": "rw",
+      "description": "CIO bit 0.00",
+      "notes": "omron_address=CIO 0.00"
+    },
+    "cio0_15": {
+      "address": 15,
+      "access": "rw",
+      "description": "CIO bit 0.15",
+      "notes": "omron_address=CIO 0.15"
+    },
+    "w0_0": {
+      "address": 512,
+      "access": "rw",
+      "description": "Work area bit W0.00 (configurable mapping)",
+      "notes": "omron_address=W0.00"
+    }
+  },
+  "discrete_inputs": {
+    "input_0_0": {
+      "address": 0,
+      "access": "r",
+      "description": "Input bit 0.00",
+      "notes": "omron_address=CIO 0.00"
+    }
+  },
+  "extended_info": {
+    "cp1_models": {
+      "CP1L-EM": {
+        "ethernet": "built-in",
+        "modbus_tcp": true,
+        "io_points": "10-60",
+        "program_capacity": "10K steps"
+      },
+      "CP1L-EL": {
+        "ethernet": "built-in",
+        "modbus_tcp": true,
+        "io_points": "10-60",
+        "program_capacity": "5K steps"
+      },
+      "CP1L-M": {
+        "ethernet": "option (CP1W-EIP21)",
+        "modbus_rtu": "CP1W-CIF11 serial option",
+        "io_points": "10-60",
+        "program_capacity": "10K steps"
+      },
+      "CP1H-X": {
+        "ethernet": "option",
+        "modbus_rtu": "CP1W-CIF11/CIF12",
+        "io_points": "40",
+        "program_capacity": "20K steps",
+        "special": "Pulse I/O"
+      },
+      "CP1E": {
+        "ethernet": "no",
+        "modbus_rtu": "CP1W-CIF11 serial option",
+        "io_points": "10-60",
+        "program_capacity": "2K-10K steps"
+      }
+    },
+    "memory_areas": {
+      "CIO": {
+        "range": "CIO 0 - CIO 6143",
+        "description": "Core I/O area (includes I/O, work bits)",
+        "modbus_mapping": "Configurable"
+      },
+      "W": {
+        "range": "W0 - W511",
+        "description": "Work area",
+        "modbus_mapping": "Configurable"
+      },
+      "H": {
+        "range": "H0 - H511",
+        "description": "Holding area (retentive)",
+        "modbus_mapping": "Configurable"
+      },
+      "D": {
+        "range": "D0 - D32767",
+        "description": "Data memory",
+        "modbus_mapping": "Default holding registers"
+      },
+      "E": {
+        "range": "E0_0 - E18_32767",
+        "description": "Extended data memory (banks)",
+        "modbus_mapping": "Configurable"
+      }
+    },
+    "configuration_requirements": [
+      "Use CX-Programmer for device configuration",
+      "Set Modbus TCP settings via Built-in EtherNet/IP Settings",
+      "Configure memory area to Modbus address mapping",
+      "Default Unit ID is typically 1"
+    ],
+    "32bit_note": "For 32-bit DWORD values, high word occupies lower register address (big-endian word order)"
+  },
+  "_source_verified": "Verified: CP1L-EM/EL Modbus TCP confirmed; CP1W-CIF11 RS-485 option board confirmed"
+}

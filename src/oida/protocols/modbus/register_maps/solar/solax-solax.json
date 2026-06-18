@@ -1,0 +1,585 @@
+{
+  "vendor": "Solax",
+  "model": "Solax",
+  "description": "Imported from nymea-plugins-modbus (solax)",
+  "byte_order": "little",
+  "word_order": "little",
+  "source": "nymea-plugins-modbus/solax/solax-registers.json",
+  "registers": {
+    "totalEnergyProduced": {
+      "address": 82,
+      "type": "i32",
+      "access": "ro",
+      "description": "Inverter total energy AC port",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "serialNumber": {
+      "address": 0,
+      "type": "str",
+      "access": "ro",
+      "description": "Serial number"
+    },
+    "factoryName": {
+      "address": 7,
+      "type": "str",
+      "access": "ro",
+      "description": "Factory name"
+    },
+    "moduleName": {
+      "address": 14,
+      "type": "str",
+      "access": "ro",
+      "description": "Module name"
+    },
+    "firmwareVersion": {
+      "address": 125,
+      "type": "u16",
+      "access": "ro",
+      "description": "Firmware version"
+    },
+    "hardwareVerrsion": {
+      "address": 126,
+      "type": "u16",
+      "access": "ro",
+      "description": "Hardware version"
+    },
+    "inverterVoltage": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter voltage (X1)",
+      "unit": "V",
+      "function_code": 4
+    },
+    "inverterCurrent": {
+      "address": 1,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter current (X1)",
+      "unit": "A",
+      "function_code": 4
+    },
+    "inverterPower": {
+      "address": 2,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter power (X1)",
+      "unit": "W",
+      "function_code": 4
+    },
+    "pvVoltage1": {
+      "address": 3,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV voltage 1 (Hybrid)",
+      "unit": "V",
+      "function_code": 4
+    },
+    "pvVoltage2": {
+      "address": 4,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV voltage 2 (Hybrid)",
+      "unit": "V",
+      "function_code": 4
+    },
+    "pvCurrent1": {
+      "address": 5,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV current 1 (Hybrid)",
+      "unit": "A",
+      "function_code": 4
+    },
+    "pvCurrent2": {
+      "address": 6,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV current 2 (Hybrid)",
+      "unit": "A",
+      "function_code": 4
+    },
+    "inverterFrequency": {
+      "address": 7,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter frequency (X1)",
+      "unit": "Hz",
+      "function_code": 4
+    },
+    "temperature": {
+      "address": 8,
+      "type": "i16",
+      "access": "ro",
+      "description": "Radiator temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "runMode": {
+      "address": 9,
+      "type": "u16",
+      "access": "ro",
+      "description": "Run mode",
+      "function_code": 4
+    },
+    "powerDc1": {
+      "address": 10,
+      "type": "u16",
+      "access": "ro",
+      "description": "Power DC 1 (Hybrid)",
+      "unit": "W",
+      "function_code": 4
+    },
+    "powerDc2": {
+      "address": 11,
+      "type": "u16",
+      "access": "ro",
+      "description": "Power DC 2 (Hybrid)",
+      "unit": "W",
+      "function_code": 4
+    },
+    "batteryVoltage": {
+      "address": 20,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery voltage (Charge 1)",
+      "unit": "V",
+      "function_code": 4
+    },
+    "batteryCurrent": {
+      "address": 21,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery current (Charge 1)",
+      "unit": "A",
+      "function_code": 4
+    },
+    "batteryPower": {
+      "address": 22,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery power (Charge 1)",
+      "unit": "W",
+      "function_code": 4
+    },
+    "batteryConnected": {
+      "address": 23,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery connected (0 disconnected, 1 connected)",
+      "function_code": 4
+    },
+    "batteryTemperature": {
+      "address": 24,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "batteryCapacity": {
+      "address": 28,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery capacity",
+      "unit": "%",
+      "function_code": 4
+    },
+    "batteryEnergyOut": {
+      "address": 29,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery output energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "bmsWarning": {
+      "address": 31,
+      "type": "u16",
+      "access": "ro",
+      "description": "BMS warning",
+      "function_code": 4
+    },
+    "batteryEnergyOutToday": {
+      "address": 32,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery output energy today",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "batteryEnergyIn": {
+      "address": 33,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery input energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "batteryEnergyInToday": {
+      "address": 35,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery input energy today",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "meterPower": {
+      "address": 70,
+      "type": "i32",
+      "access": "ro",
+      "description": "Meter power (+ returned, - aquired)",
+      "unit": "W",
+      "function_code": 4
+    },
+    "meterTotalEnergyProduced": {
+      "address": 72,
+      "type": "i32",
+      "access": "ro",
+      "description": "Meter total energy returned",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "meterTotalEnergyConsumend": {
+      "address": 74,
+      "type": "i32",
+      "access": "ro",
+      "description": "Meter total energy consumed",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "gridVoltageR": {
+      "address": 106,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid voltage R L1",
+      "unit": "V",
+      "function_code": 4
+    },
+    "gridCurrentR": {
+      "address": 107,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid current R L1",
+      "unit": "A",
+      "function_code": 4
+    },
+    "gridPowerR": {
+      "address": 108,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid power R L1",
+      "unit": "W",
+      "function_code": 4
+    },
+    "gridFrequencyR": {
+      "address": 109,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid frequency R L1",
+      "unit": "Hz",
+      "function_code": 4
+    },
+    "gridVoltageS": {
+      "address": 110,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid voltage S L2",
+      "unit": "V",
+      "function_code": 4
+    },
+    "gridCurrentS": {
+      "address": 111,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid current S L2",
+      "unit": "A",
+      "function_code": 4
+    },
+    "gridPowerS": {
+      "address": 112,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid power S L2",
+      "unit": "W",
+      "function_code": 4
+    },
+    "gridFrequencyS": {
+      "address": 113,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid frequency S L2",
+      "unit": "Hz",
+      "function_code": 4
+    },
+    "gridVoltageT": {
+      "address": 114,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid voltage T L3",
+      "unit": "V",
+      "function_code": 4
+    },
+    "gridCurrentT": {
+      "address": 115,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid current T L3",
+      "unit": "A",
+      "function_code": 4
+    },
+    "gridPowerT": {
+      "address": 116,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid power T L3",
+      "unit": "W",
+      "function_code": 4
+    },
+    "gridFrequencyT": {
+      "address": 117,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid frequency T L3",
+      "unit": "Hz",
+      "function_code": 4
+    },
+    "epsVoltageR": {
+      "address": 118,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS voltage R L1",
+      "unit": "V",
+      "function_code": 4
+    },
+    "epsCurrentR": {
+      "address": 119,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS current R L1",
+      "unit": "A",
+      "function_code": 4
+    },
+    "epsPowerActiveR": {
+      "address": 120,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS power R L1",
+      "unit": "W",
+      "function_code": 4
+    },
+    "epsPowerSR": {
+      "address": 121,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS power S R L1",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "epsVoltageS": {
+      "address": 122,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS voltage S L2",
+      "unit": "V",
+      "function_code": 4
+    },
+    "epsCurrentS": {
+      "address": 123,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS current S L2",
+      "unit": "A",
+      "function_code": 4
+    },
+    "epsPowerS": {
+      "address": 124,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS power S L2",
+      "unit": "W",
+      "function_code": 4
+    },
+    "epsPowerSS": {
+      "address": 125,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS power S S L1",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "epsVoltageT": {
+      "address": 126,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS voltage T L3",
+      "unit": "V",
+      "function_code": 4
+    },
+    "epsCurrentT": {
+      "address": 127,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS current T L3",
+      "unit": "A",
+      "function_code": 4
+    },
+    "epsPowerT": {
+      "address": 128,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS power T L3",
+      "unit": "W",
+      "function_code": 4
+    },
+    "epsPowerST": {
+      "address": 129,
+      "type": "u16",
+      "access": "ro",
+      "description": "EPS power S T L1",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "meter2Power": {
+      "address": 168,
+      "type": "i32",
+      "access": "ro",
+      "description": "Meter 2 power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "meter2EnergyProduced": {
+      "address": 170,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter 2 energy produced",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "meter2EnergyConsumed": {
+      "address": 172,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter 2 energy consumed",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "meter2EnergyProducedToday": {
+      "address": 174,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter 2 energy produced today",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "meter2EnergyConsumedToday": {
+      "address": 176,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter 2 energy consumed today",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "meter2PowerR": {
+      "address": 178,
+      "type": "i32",
+      "access": "ro",
+      "description": "Meter 2 power R L1",
+      "unit": "W",
+      "function_code": 4
+    },
+    "meter2PowerS": {
+      "address": 180,
+      "type": "i32",
+      "access": "ro",
+      "description": "Meter 2 power S L2",
+      "unit": "W",
+      "function_code": 4
+    },
+    "meter2PowerT": {
+      "address": 182,
+      "type": "i32",
+      "access": "ro",
+      "description": "Meter 2 power T L3",
+      "unit": "W",
+      "function_code": 4
+    },
+    "meter1ComState": {
+      "address": 184,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter 1 communication state (0 error, 1 normal)",
+      "function_code": 4
+    },
+    "meter2ComState": {
+      "address": 185,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter 2 communication state (0 error, 1 normal)",
+      "function_code": 4
+    },
+    "batteryVoltage2": {
+      "address": 194,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery voltage 2 (Charge 1)",
+      "unit": "V",
+      "function_code": 4
+    },
+    "batteryCurrent2": {
+      "address": 195,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery current 2 (Charge 1)",
+      "unit": "A",
+      "function_code": 4
+    },
+    "batteryPower2": {
+      "address": 196,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery power 2 (Charge 1)",
+      "unit": "W",
+      "function_code": 4
+    },
+    "batteryConnected2": {
+      "address": 197,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery connected 2 (0 disconnected, 1 connected)",
+      "function_code": 4
+    },
+    "batteryTemperature2": {
+      "address": 198,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery temperature 2",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "batteryCapacity2": {
+      "address": 199,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery capacity 2",
+      "unit": "%",
+      "function_code": 4
+    }
+  },
+  "enums": {
+    "RunMode": {
+      "0": "WaitMode",
+      "1": "CheckMode",
+      "2": "NormalMode",
+      "3": "FaultMode",
+      "4": "PermanentFaultMode",
+      "5": "UpdateMode",
+      "6": "EpsCheckMode",
+      "7": "EpsMode",
+      "8": "SelfTest",
+      "9": "IdleMode"
+    }
+  },
+  "_source_verified": "Verified: Imported from nymea-plugins-modbus/solax/solax-registers.json; registers 82/0/7/14/125 match upstream"
+}

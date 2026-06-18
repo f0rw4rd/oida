@@ -1,0 +1,212 @@
+"""
+EtherNet/IP Security Analysis Mixin
+
+Handles security analysis and finding reporting:
+- Analyze security configuration (CIP Security, TLS, authentication)
+- Evaluate controller mode security implications
+- Report findings (identity, tags, topology, vulnerabilities)
+- Override security printing for inline display
+"""
+
+from __future__ import annotations
+
+from typing import Any, Dict, TYPE_CHECKING
+
+from ....utils import SecurityAnalyzer
+
+if TYPE_CHECKING:
+    from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
+else:
+    _ScannerBase = object
+
+
+class SecurityAnalysisMixin(_ScannerBase):
+    """Mixin providing security analysis and reporting for EtherNet/IP."""
+
+    def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze security configuration"""
+        # Check if CIP Security is implemented (from detailed security dump)
+        security = results.get("security") or {}
+        cip_sec = security.get("cip_security") or {}
+
+        # Determine if security is actually enabled (not just accessible)
+        # State 0 = Factory Default (not enabled), State 1+ = configured
+        cip_state_raw = cip_sec.get("state_raw", 0)
+        has_cip_security = cip_sec.get("accessible", False) and cip_state_raw > 0
+
+        # Check for TLS support in EIP Security
+        eip_sec = security.get("eip_security") or {}
+        has_tls = eip_sec.get("capabilities_raw", 0) > 0
+
+        # Check authentication methods from password_auth
+        auth_methods = []
+        if security.get("password_auth"):
+            auth_methods.append("password")
+        certs = security.get("certificates") or {}
+        if certs.get("installed_certificates", 0) > 0:
+            auth_methods.append("certificate")
+
+        host, port = self.get_target_info()
+
+        analysis = SecurityAnalyzer.assess_protocol_security(
+            {
+                "authentication": len(auth_methods) > 0,
+                "authorization": False,  # No built-in authorization
+                "encryption": has_tls,
+                "integrity_check": has_cip_security,
+                "access_control": len(results.get("write_test_results", {})) == 0,
+            }
+        )
+
+        # Add EtherNet/IP specific security concerns
+        analysis["concerns"] = []
+
+        # CIP Security concerns
+        if not has_cip_security:
+            # Check if it's "not supported" vs "not configured"
+            if cip_sec.get("accessible"):
+                analysis["concerns"].append(
+                    "CIP Security not configured (Factory Default) - no authentication/encryption"
+                )
+                self.logger.security_finding(
+                    "No authentication", detail="CIP Security in Factory Default state"
+                )
+            else:
+                analysis["concerns"].append(
+                    "CIP Security not supported - no authentication/encryption"
+                )
+                self.logger.security_finding(
+                    "No authentication", detail="CIP Security not supported"
+                )
+
+        if not has_tls:
+            analysis["concerns"].append("TLS/DTLS not supported - traffic is unencrypted")
+            self.logger.security_finding(
+                "No encryption", detail="TLS/DTLS not supported on port 2221"
+            )
+
+        # Controller mode security concerns
+        controller_mode = results.get("controller_mode", {})
+        if controller_mode:
+            mode = controller_mode.get("mode", "")
+            keyswitch = controller_mode.get("keyswitch", "")
+
+            # Check if controller is in an editable mode (PROGRAM or TEST)
+            if controller_mode.get("is_editable"):
+                analysis["concerns"].append(
+                    f"Controller in editable mode ({mode}) - program can be modified"
+                )
+                self.logger.security_finding(
+                    "Insecure configuration", detail=f"Controller in editable mode: {mode}"
+                )
+
+            # Check if keyswitch is in REMOTE position (mode changeable via software)
+            if controller_mode.get("is_remote"):
+                analysis["concerns"].append(
+                    f"Remote keyswitch position ({keyswitch}) - mode can be changed via software"
+                )
+                # This is a configuration concern but may be intentional
+                self.logger.debug("Remote keyswitch - software mode changes possible")
+
+            # Check if controller is faulted
+            if controller_mode.get("is_faulted"):
+                analysis["concerns"].append("Controller has active fault condition")
+                self.logger.security_finding(
+                    "Insecure configuration",
+                    detail="Controller in faulted state - may indicate safety issue",
+                )
+
+        # Identity status-based concerns
+        identity = results.get("identity", {})
+        if identity.get("status_faulted"):
+            if "Controller has active fault" not in str(analysis.get("concerns", [])):
+                analysis["concerns"].append(
+                    f"Device has active fault (status: 0x{identity.get('status', 0):04X})"
+                )
+
+        # Writable attributes
+        if results.get("write_test_results"):
+            writable_count = sum(len(attrs) for attrs in results["write_test_results"].values())
+            if writable_count > 0:
+                analysis["concerns"].append(f"{writable_count} writable attributes found")
+                self.logger.security_finding(
+                    "Writable access", detail=f"{writable_count} CIP attributes are writable"
+                )
+
+        # Dangerous tags
+        dangerous_tags = results.get("dangerous_tags", [])
+        if dangerous_tags:
+            high_risk = [t for t in dangerous_tags if t.get("risk") == "high"]
+            if high_risk:
+                analysis["concerns"].append(
+                    f"{len(high_risk)} HIGH-RISK safety tags accessible (ESTOP, SAFETY, EMERGENCY)"
+                )
+                tag_names = ", ".join([t["tag"] for t in high_risk[:3]])
+                self.logger.fail(f"DANGER: {len(high_risk)} safety-critical tags accessible")
+                self.logger.security_finding(
+                    "Insecure configuration", detail=f"Safety-critical tags accessible: {tag_names}"
+                )
+            else:
+                analysis["concerns"].append(
+                    f"{len(dangerous_tags)} potentially dangerous tags accessible"
+                )
+                tag_names = ", ".join([t["tag"] for t in dangerous_tags[:3]])
+                self.logger.security_finding(
+                    "Insecure configuration",
+                    detail=f"Potentially dangerous tags accessible: {tag_names}",
+                )
+
+        # Fuzz results
+        if results.get("fuzz_results"):
+            crash_count = sum(
+                sum(attr.get("crashes", 0) for attr in class_results.values())
+                for class_results in results["fuzz_results"].values()
+            )
+            if crash_count > 0:
+                analysis["concerns"].append(f"{crash_count} potential crashes during fuzzing")
+
+        return analysis
+
+    def _report_findings(self, results: Dict[str, Any]) -> None:
+        """Report scanner findings"""
+        host, port = self.get_target_info()
+
+        # Report host and service
+        self.report_host_info(host)
+        self.report_service_info(host, port=port, name="ethernetip", proto="tcp")
+
+        # Note: Device identity and CIP Security status already displayed
+        # in _list_identity() and _detect_cip_security()
+
+        # Report dangerous tags
+        dangerous_tags = results.get("dangerous_tags", [])
+        if dangerous_tags:
+            high_risk = [t for t in dangerous_tags if t.get("risk") == "high"]
+            if high_risk:
+                self.logger.fail(f"DANGER: {len(high_risk)} safety-critical tags accessible:")
+                for t in high_risk[:3]:
+                    self.logger.fail(f"  - {t['tag']}")
+
+        # Report broadcast discovery results
+        broadcast_devices = results.get("broadcast_devices", [])
+        if broadcast_devices:
+            self.logger.display(f"Broadcast Discovery: {len(broadcast_devices)} device(s) found")
+            for dev in broadcast_devices:
+                self.logger.display(
+                    f"  - {dev.get('ip_address')}: {dev.get('vendor_name')} {dev.get('product_name')}"
+                )
+
+        # Report chassis topology / communication ports
+        topology = results.get("chassis_topology", {})
+        ports = topology.get("ports", [])
+        if ports:
+            port_types = [p.get("type", "Unknown") for p in ports]
+            self.logger.display(f"Communication Ports: {', '.join(port_types)}")
+
+        # Report security concerns
+        security_analysis = results.get("security_analysis", {})
+        for concern in security_analysis.get("concerns", []):
+            self.report_vulnerability(host, "enip_security", description=concern)
+
+    def _print_security_findings(self) -> None:
+        """Override to disable end-of-scan security report (findings printed inline)."""

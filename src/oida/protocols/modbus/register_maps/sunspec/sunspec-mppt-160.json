@@ -1,0 +1,238 @@
+{
+  "vendor": "SunSpec",
+  "model": "Multiple MPPT Extension Model 160",
+  "description": "SunSpec Model 160 - Multiple MPPT Inverter Extension for DC string-level monitoring",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 160,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 160 provides per-string DC measurements. Model length = 8 + (N * 20) where N is number of MPPT modules. Each module block is 20 registers. Addresses include 2-register header.",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00160.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (160 = MPPT extension)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length = 8 + (N * 20)"
+    },
+    "dca_sf": {
+      "address": 2,
+      "type": "i16",
+      "access": "r",
+      "description": "DC Current scale factor (DCA_SF)"
+    },
+    "dcv_sf": {
+      "address": 3,
+      "type": "i16",
+      "access": "r",
+      "description": "DC Voltage scale factor (DCV_SF)"
+    },
+    "dcw_sf": {
+      "address": 4,
+      "type": "i16",
+      "access": "r",
+      "description": "DC Power scale factor (DCW_SF)"
+    },
+    "dcwh_sf": {
+      "address": 5,
+      "type": "i16",
+      "access": "r",
+      "description": "DC Energy scale factor (DCWH_SF)"
+    },
+    "evt": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "Global MPPT events bitfield (Evt)",
+      "bitfield": {
+        "0": "GROUND_FAULT",
+        "1": "INPUT_OVER_VOLTAGE",
+        "3": "DC_DISCONNECT",
+        "5": "CABINET_OPEN",
+        "6": "MANUAL_SHUTDOWN",
+        "7": "OVER_TEMP",
+        "12": "BLOWN_FUSE",
+        "13": "UNDER_TEMP",
+        "14": "MEMORY_LOSS",
+        "15": "ARC_DETECTION",
+        "20": "TEST_FAILED",
+        "21": "INPUT_UNDER_VOLTAGE",
+        "22": "INPUT_OVER_CURRENT"
+      }
+    },
+    "n_mod": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of MPPT modules (N)"
+    },
+    "timestamp_period": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "unit": "s",
+      "description": "Timestamp period (TmsPer)"
+    },
+    "mppt1_id": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "MPPT 1 Input ID"
+    },
+    "mppt1_id_string": {
+      "address": 11,
+      "type": "string",
+      "length": 8,
+      "access": "r",
+      "description": "MPPT 1 Input ID String (8 registers)"
+    },
+    "mppt1_dc_current": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 2,
+      "unit": "A",
+      "description": "MPPT 1 DC Current (DCA)"
+    },
+    "mppt1_dc_voltage": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 3,
+      "unit": "V",
+      "description": "MPPT 1 DC Voltage (DCV)"
+    },
+    "mppt1_dc_power": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 4,
+      "unit": "W",
+      "description": "MPPT 1 DC Power (DCW)"
+    },
+    "mppt1_dc_energy": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 5,
+      "unit": "Wh",
+      "description": "MPPT 1 Lifetime DC Energy (DCWH)"
+    },
+    "mppt1_timestamp": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "MPPT 1 Timestamp (Tms)"
+    },
+    "mppt1_temperature": {
+      "address": 26,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "description": "MPPT 1 Temperature (Tmp)"
+    },
+    "mppt1_state": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "MPPT 1 Operating State (DCSt)",
+      "enum": {
+        "1": "OFF",
+        "2": "SLEEPING",
+        "3": "STARTING",
+        "4": "MPPT",
+        "5": "THROTTLED",
+        "6": "SHUTTING_DOWN",
+        "7": "FAULT",
+        "8": "STANDBY",
+        "9": "TEST"
+      }
+    },
+    "mppt1_events": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "MPPT 1 Event flags (DCEvt)"
+    },
+    "mppt2_id": {
+      "address": 30,
+      "type": "u16",
+      "access": "r",
+      "description": "MPPT 2 Input ID"
+    },
+    "mppt2_id_string": {
+      "address": 31,
+      "type": "string",
+      "length": 8,
+      "access": "r",
+      "description": "MPPT 2 Input ID String (8 registers)"
+    },
+    "mppt2_dc_current": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 2,
+      "unit": "A",
+      "description": "MPPT 2 DC Current (DCA)"
+    },
+    "mppt2_dc_voltage": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 3,
+      "unit": "V",
+      "description": "MPPT 2 DC Voltage (DCV)"
+    },
+    "mppt2_dc_power": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 4,
+      "unit": "W",
+      "description": "MPPT 2 DC Power (DCW)"
+    },
+    "mppt2_dc_energy": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 5,
+      "unit": "Wh",
+      "description": "MPPT 2 Lifetime DC Energy (DCWH)"
+    },
+    "mppt2_timestamp": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "description": "MPPT 2 Timestamp (Tms)"
+    },
+    "mppt2_temperature": {
+      "address": 46,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "description": "MPPT 2 Temperature (Tmp)"
+    },
+    "mppt2_state": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "MPPT 2 Operating State (DCSt)"
+    },
+    "mppt2_events": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "MPPT 2 Event flags (DCEvt)"
+    }
+  },
+  "_source_verified": "Verified: Model 160 register offsets confirmed against official sunspec/models/smdx/smdx_00160.xml"
+}

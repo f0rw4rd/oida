@@ -1,0 +1,313 @@
+{
+  "vendor": "Masibus",
+  "model": "PM 2160 3 P 3 W",
+  "description": "Masibus PM 2160 3 P 3 W power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "1_2_pf": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Pf"
+    },
+    "3_2_pf": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Pf"
+    },
+    "a_pf": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "A. Pf"
+    },
+    "vrms_12": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Vrms 12"
+    },
+    "vrms_3_1": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Vrms 3*1"
+    },
+    "vrms_2_3": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Vrms 2*3"
+    },
+    "a_vrms": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "A vrms"
+    },
+    "1_irms": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "1. Irms"
+    },
+    "3_irms": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "3. Irms"
+    },
+    "a_irms": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "A. Irms"
+    },
+    "1_2_watt": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Watt"
+    },
+    "3_2_watt": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Watt"
+    },
+    "s_watt": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "S. Watt"
+    },
+    "1_2_var": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Var"
+    },
+    "3_2_var": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Var"
+    },
+    "s_var": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "S. Var"
+    },
+    "1_2_va": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Va"
+    },
+    "3_2_va": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Va"
+    },
+    "s_va": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "S. Va"
+    },
+    "1_2_wh_import": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Wh import"
+    },
+    "3_2_wh_import": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Wh import"
+    },
+    "t_wh_import": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "T. Wh import"
+    },
+    "1_2_wh_export": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Wh export"
+    },
+    "3_2_wh_export": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Wh export"
+    },
+    "t_wh_export": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "T. Wh export"
+    },
+    "1_2_varh_import": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Varh import"
+    },
+    "3_2_varh_import": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Varh import"
+    },
+    "t_varh_import": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "T. Varh import"
+    },
+    "1_2_varh_export": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Varh export"
+    },
+    "3_2_varh_export": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Varh export"
+    },
+    "t_varh_export": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "T. Varh export"
+    },
+    "1_2_vah": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Vah"
+    },
+    "3_2_vah": {
+      "address": 94,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Vah"
+    },
+    "t_vah": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "T. Vah"
+    },
+    "rising_demand": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "description": "Rising demand"
+    },
+    "real_date": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "Real date"
+    },
+    "real_time": {
+      "address": 102,
+      "type": "u32",
+      "access": "r",
+      "description": "Real time"
+    },
+    "maximum_demand": {
+      "address": 104,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand"
+    },
+    "md_date": {
+      "address": 106,
+      "type": "u32",
+      "access": "r",
+      "description": "Md date"
+    },
+    "md_time": {
+      "address": 108,
+      "type": "u32",
+      "access": "r",
+      "description": "Md time"
+    },
+    "1_2_phase_angle": {
+      "address": 110,
+      "type": "u32",
+      "access": "r",
+      "description": "1 2. Phase angle"
+    },
+    "3_2_phase_angle": {
+      "address": 114,
+      "type": "u32",
+      "access": "r",
+      "description": "3 2. Phase angle"
+    },
+    "v_unbalance": {
+      "address": 116,
+      "type": "u32",
+      "access": "r",
+      "description": "V. Unbalance"
+    },
+    "1_unbalance": {
+      "address": 118,
+      "type": "u32",
+      "access": "r",
+      "description": "1. Unbalance"
+    },
+    "frequency": {
+      "address": 2000,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "1_vrms": {
+      "address": 2002,
+      "type": "u32",
+      "access": "r",
+      "description": "1. Vrms"
+    },
+    "2_vrms": {
+      "address": 2004,
+      "type": "u32",
+      "access": "r",
+      "description": "2. Vrms"
+    },
+    "3_vrms": {
+      "address": 2006,
+      "type": "u32",
+      "access": "r",
+      "description": "3. Vrms"
+    },
+    "a_vrms_2008": {
+      "address": 2008,
+      "type": "u32",
+      "access": "r",
+      "description": "A. Vrms"
+    },
+    "1_irms_2010": {
+      "address": 2010,
+      "type": "u32",
+      "access": "r",
+      "description": "1. Irms"
+    }
+  }
+}

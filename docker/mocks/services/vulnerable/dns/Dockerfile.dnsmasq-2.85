@@ -1,0 +1,81 @@
+# dnsmasq 2.85 - CVE-2020-25681, CVE-2020-25682, CVE-2020-25683, CVE-2020-25684
+# DNSpooq vulnerabilities - Buffer overflow and cache poisoning
+# Reference: https://www.jsof-tech.com/disclosures/dnspooq/
+#
+# VULNERABLE: Multiple vulnerabilities in DNS forwarding and cache
+# - CVE-2020-25681: Heap-based buffer overflow in sort_rrset()
+# - CVE-2020-25682: Buffer overflow in extract_name()
+# - CVE-2020-25683: Heap-based buffer overflow in get_rdata()
+# - CVE-2020-25684: Loose query validation allows cache poisoning
+#
+# For authorized security testing only
+
+FROM alpine:3.12
+
+# Install build dependencies
+RUN apk add --no-cache \
+    build-base \
+    linux-headers \
+    git \
+    netcat-openbsd
+
+# Clone and build vulnerable dnsmasq 2.85
+WORKDIR /build
+RUN git clone --depth 1 --branch v2.85 https://thekelleys.org.uk/git/dnsmasq.git
+
+WORKDIR /build/dnsmasq
+RUN make -j$(nproc) install PREFIX=/usr
+
+# Create configuration
+RUN mkdir -p /etc/dnsmasq.d && \
+    cat > /etc/dnsmasq.conf << 'EOF'
+# dnsmasq 2.85 - Vulnerable configuration for DNSpooq testing
+# WARNING: This configuration is intentionally vulnerable
+
+# Listen on all interfaces
+listen-address=0.0.0.0
+bind-interfaces
+
+# DNS settings
+port=53
+
+# Enable DNSSEC (vulnerable to overflow in DNSSEC validation)
+dnssec
+dnssec-check-unsigned
+
+# Use upstream DNS for forwarding
+server=8.8.8.8
+server=8.8.4.4
+
+# Cache settings
+cache-size=10000
+neg-ttl=3600
+
+# Logging
+log-queries
+log-facility=-
+
+# Local records
+address=/test.local/127.0.0.1
+address=/dnspooq.local/192.168.1.100
+
+# DHCP disabled
+no-dhcp-interface=*
+EOF
+
+# Startup script
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+echo "Starting dnsmasq 2.85 (DNSpooq CVE-2020-25681/82/83/84 vulnerable)"
+echo "WARNING: This server is intentionally vulnerable for security testing"
+exec /usr/sbin/dnsmasq --no-daemon --log-facility=- --keep-in-foreground
+EOF
+RUN chmod +x /start.sh
+
+EXPOSE 53/tcp
+EXPOSE 53/udp
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD nc -zu localhost 53 || exit 1
+
+CMD ["/start.sh"]

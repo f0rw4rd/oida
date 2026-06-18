@@ -1,0 +1,17 @@
+FROM debian:bookworm-slim
+
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends \
+       libcoap3-bin \
+       python3-minimal \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY coap/libcoap_cert_entrypoint.sh /app/
+COPY coap/certs/ /app/certs/
+
+RUN chmod +x /app/libcoap_cert_entrypoint.sh
+
+EXPOSE 5683/udp 5684/udp
+
+ENTRYPOINT ["/app/libcoap_cert_entrypoint.sh"]

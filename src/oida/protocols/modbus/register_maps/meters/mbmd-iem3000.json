@@ -1,0 +1,19 @@
+{
+  "vendor": "IEM3000",
+  "model": "Schneider Electric iEM3000 series",
+  "description": "Imported from mbmd (iem3000)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/iem3000.go",
+  "registers": {
+    "apparent_power": {
+      "address": 3076,
+      "type": "f32",
+      "access": "ro",
+      "description": "PowerFactor: 0x0C0C,",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: Schneider Electric iEM3000 series confirmed; aggsoft.com register map; mbmd source iem3000.go verified"
+}

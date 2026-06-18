@@ -1,0 +1,352 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "PM 800",
+  "description": "Schneider Electric PM 800 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ethernet_physical_connection": {
+      "address": 628,
+      "type": "i32",
+      "access": "r",
+      "description": "Ethernet physical connection"
+    },
+    "baud_rate": {
+      "address": 629,
+      "type": "i32",
+      "access": "r",
+      "description": "Baud rate"
+    },
+    "parity": {
+      "address": 630,
+      "type": "i32",
+      "access": "r",
+      "description": "Parity"
+    },
+    "wire_mode": {
+      "address": 631,
+      "type": "i32",
+      "access": "r",
+      "description": "Wire mode"
+    },
+    "port_protocol_mode": {
+      "address": 632,
+      "type": "i32",
+      "access": "r",
+      "description": "Port protocol mode"
+    },
+    "pm8ecc_reset_counter": {
+      "address": 633,
+      "type": "i32",
+      "access": "r",
+      "description": "PM8ECC reset counter"
+    },
+    "frame_type": {
+      "address": 634,
+      "type": "i32",
+      "access": "r",
+      "description": "Frame type"
+    },
+    "current_phase_a": {
+      "address": 1100,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, phase A",
+      "unit": "Amps/Scale"
+    },
+    "current_phase_b": {
+      "address": 1101,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, phase B",
+      "unit": "Amps/Scale"
+    },
+    "current_phase_c": {
+      "address": 1102,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, phase C",
+      "unit": "Amps/Scale"
+    },
+    "current_neutral": {
+      "address": 1103,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, neutral",
+      "unit": "Amps/Scale"
+    },
+    "current_ground": {
+      "address": 1104,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, ground",
+      "unit": "Amps/Scale"
+    },
+    "current_3_phase_average": {
+      "address": 1105,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, 3 phase average",
+      "unit": "Amps/Scale"
+    },
+    "current_unbalance_phase_a": {
+      "address": 1107,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, unbalance, phase A",
+      "unit": "%"
+    },
+    "current_unbalance_phase_b": {
+      "address": 1108,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, unbalance, phase B",
+      "unit": "%"
+    },
+    "current_unbalance_phase_c": {
+      "address": 1109,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, unbalance, phase C",
+      "unit": "%"
+    },
+    "current_unbalance_max": {
+      "address": 1110,
+      "type": "i32",
+      "access": "r",
+      "description": "Current, unbalance, max",
+      "unit": "%"
+    },
+    "voltage_a_b": {
+      "address": 1120,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, A B",
+      "unit": "Volts/Scale"
+    },
+    "voltage_b_c": {
+      "address": 1121,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, B C",
+      "unit": "Volts/Scale"
+    },
+    "voltage_c_a": {
+      "address": 1122,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, C A",
+      "unit": "Volts/Scale"
+    },
+    "voltage_l_l_average": {
+      "address": 1123,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, L L average",
+      "unit": "Volts/Scale"
+    },
+    "voltage_a_n": {
+      "address": 1124,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, A N",
+      "unit": "Volts/Scale"
+    },
+    "voltage_b_n": {
+      "address": 1125,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, B N",
+      "unit": "Volts/Scale"
+    },
+    "voltage_c_n": {
+      "address": 1126,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, C N",
+      "unit": "Volts/Scale"
+    },
+    "voltage_n_r": {
+      "address": 1127,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, N R",
+      "unit": "Volts/Scale"
+    },
+    "voltage_l_n_average": {
+      "address": 1128,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, L N average",
+      "unit": "Volts/Scale"
+    },
+    "voltage_unbalance_a_b": {
+      "address": 1129,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, A B",
+      "unit": "%"
+    },
+    "voltage_unbalance_b_c": {
+      "address": 1130,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, B C",
+      "unit": "%"
+    },
+    "voltage_unbalance_c_a": {
+      "address": 1131,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, C A",
+      "unit": "%"
+    },
+    "voltage_unbalance_max_l_l": {
+      "address": 1132,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, max L L",
+      "unit": "%"
+    },
+    "voltage_unbalance_a_n": {
+      "address": 1133,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, A N",
+      "unit": "%"
+    },
+    "voltage_unbalance_b_n": {
+      "address": 1134,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, B N",
+      "unit": "%"
+    },
+    "voltage_unbalance_c_n": {
+      "address": 1135,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, C N",
+      "unit": "%"
+    },
+    "voltage_unbalance_max_l_n": {
+      "address": 1136,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage, unbalance, max L N",
+      "unit": "%"
+    },
+    "real_power_phase_a": {
+      "address": 1140,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power, phase A",
+      "unit": "kW/Scale"
+    },
+    "real_power_phase_b": {
+      "address": 1141,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power, phase B",
+      "unit": "kW/Scale"
+    },
+    "real_power_phase_c": {
+      "address": 1142,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power, phase C",
+      "unit": "kW/Scale"
+    },
+    "real_power_total": {
+      "address": 1143,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power, total",
+      "unit": "kW/Scale"
+    },
+    "reactive_power_phase_a": {
+      "address": 1144,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power, phase A",
+      "unit": "kVAr/Scale"
+    },
+    "reactive_power_phase_b": {
+      "address": 1145,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power, phase B",
+      "unit": "kVAr/Scale"
+    },
+    "reactive_power_phase_c": {
+      "address": 1146,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power, phase C",
+      "unit": "kVAr/Scale"
+    },
+    "reactive_power_total": {
+      "address": 1147,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power, total",
+      "unit": "kVAr/Scale"
+    },
+    "apparent_power_phase_a": {
+      "address": 1148,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power, phase A",
+      "unit": "kVA/Scale"
+    },
+    "apparent_power_phase_b": {
+      "address": 1149,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power, phase B",
+      "unit": "kVA/Scale"
+    },
+    "apparent_power_phase_c": {
+      "address": 1150,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power, phase C",
+      "unit": "kVA/Scale"
+    },
+    "apparent_power_total": {
+      "address": 1151,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power, total",
+      "unit": "kVA/Scale"
+    },
+    "true_power_factor_phase_a": {
+      "address": 1160,
+      "type": "i32",
+      "access": "r",
+      "description": "True power factor, phase A"
+    },
+    "true_power_factor_phase_b": {
+      "address": 1161,
+      "type": "i32",
+      "access": "r",
+      "description": "True power factor, phase B"
+    },
+    "true_power_factor_phase_c": {
+      "address": 1162,
+      "type": "i32",
+      "access": "r",
+      "description": "True power factor, phase C"
+    },
+    "true_power_factor_total": {
+      "address": 1163,
+      "type": "i32",
+      "access": "r",
+      "description": "True power factor, total"
+    }
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "version": "1.0",
+  "description": "IEC 61850 MMS device fingerprints for enhanced version detection",
+  "fingerprints": [
+    {
+      "name": "MiCOM Protection Relays",
+      "vendor_id": "micom",
+      "domain_pattern": ".*(CONTROL|Control).*",
+      "verify": {
+        "LPHD1$DC$PhyNam$hwRev$vendor": "MiCOM"
+      },
+      "attributes": {
+        "vendor": "LPHD1$DC$PhyNam$hwRev$vendor",
+        "model": "LPHD1$DC$PhyNam$hwRev$model",
+        "serial": "LPHD1$DC$PhyNam$hwRev$serNum",
+        "firmware": "LPHD1$DC$PhyNam$hwRev$swRev"
+      }
+    },
+    {
+      "name": "SEL Protection Relays",
+      "vendor_id": "sel",
+      "domain_pattern": ".*",
+      "verify": {
+        "LLN0$DC$NamPlt$vendor": "SEL"
+      },
+      "attributes": {
+        "vendor": "LLN0$DC$NamPlt$vendor",
+        "model": {
+          "attribute": "LLN0$DC$NamPlt$swRev",
+          "regex": "FID=([^\"]+)"
+        },
+        "firmware": {
+          "attribute": "LLN0$DC$NamPlt$swRev",
+          "regex": "FID=SEL-[0-9]*-(R[0-9]*-V[0-9]*)-"
+        }
+      },
+      "device_type": "Protection Relay"
+    },
+    {
+      "name": "Siemens SIPROTEC 7xxx",
+      "vendor_id": "siemens",
+      "domain_pattern": "(SIPApplication|MST___.*).*",
+      "verify": {
+        "LPHD0$DC$PhyNam$vendor": "SIEMENS"
+      },
+      "attributes": {
+        "vendor": "LPHD0$DC$PhyNam$vendor",
+        "model": "LPHD0$DC$PhyNam$model",
+        "serial": "LPHD0$DC$PhyNam$serNum",
+        "firmware": "LPHD0$DC$PhyNam$swRev",
+        "hardware_rev": "LPHD0$DC$PhyNam$hwRev"
+      },
+      "custom": {
+        "order_number": "LPHD0$DC$PhyNam$hwRev"
+      },
+      "device_type": "Protection Relay"
+    },
+    {
+      "name": "Siemens Generic IED",
+      "vendor_id": "siemens_generic",
+      "domain_pattern": ".*",
+      "verify": {
+        "LPHD0$DC$PhyNam$vendor": "SIEMENS",
+        "LPHD0$DC$PhyNam$model": "^7.*"
+      },
+      "attributes": {
+        "vendor": "LPHD0$DC$PhyNam$vendor",
+        "model": "LPHD0$DC$PhyNam$model",
+        "serial": "LPHD0$DC$PhyNam$serNum",
+        "firmware": "LPHD0$DC$PhyNam$swRev"
+      },
+      "device_type": "IED"
+    },
+    {
+      "name": "ABB IED",
+      "vendor_id": "abb",
+      "domain_pattern": ".*",
+      "verify": {
+        "LLN0$DC$NamPlt$vendor": "ABB"
+      },
+      "attributes": {
+        "vendor": "LLN0$DC$NamPlt$vendor",
+        "model": "LLN0$DC$NamPlt$d",
+        "firmware": "LLN0$DC$NamPlt$swRev",
+        "config_rev": "LLN0$DC$NamPlt$configRev"
+      },
+      "device_type": "IED"
+    },
+    {
+      "name": "GE Multilin",
+      "vendor_id": "ge",
+      "domain_pattern": ".*",
+      "verify": {
+        "LLN0$DC$NamPlt$vendor": "GE"
+      },
+      "attributes": {
+        "vendor": "LLN0$DC$NamPlt$vendor",
+        "model": "LLN0$DC$NamPlt$d",
+        "firmware": "LLN0$DC$NamPlt$swRev"
+      },
+      "device_type": "Protection Relay"
+    },
+    {
+      "name": "Generic IEC 61850 (LLN0)",
+      "vendor_id": "generic_lln0",
+      "domain_pattern": ".*",
+      "priority": 100,
+      "attributes": {
+        "vendor": "LLN0$DC$NamPlt$vendor",
+        "model": "LLN0$DC$NamPlt$d",
+        "firmware": "LLN0$DC$NamPlt$swRev",
+        "config_rev": "LLN0$DC$NamPlt$configRev"
+      },
+      "device_type": "IED"
+    },
+    {
+      "name": "Generic IEC 61850 (LPHD)",
+      "vendor_id": "generic_lphd",
+      "domain_pattern": ".*",
+      "priority": 101,
+      "attributes": {
+        "vendor": "LPHD1$DC$PhyNam$vendor",
+        "model": "LPHD1$DC$PhyNam$model",
+        "serial": "LPHD1$DC$PhyNam$serNum",
+        "firmware": "LPHD1$DC$PhyNam$swRev"
+      },
+      "device_type": "IED"
+    }
+  ]
+}

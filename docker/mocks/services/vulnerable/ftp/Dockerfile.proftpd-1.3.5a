@@ -1,0 +1,63 @@
+# Vulnerable ProFTPD 1.3.5a - CVE-2019-12815 (mod_copy bypass)
+# Arbitrary file copy via SITE CPFR/CPTO bypass
+#
+# FOR SECURITY TESTING PURPOSES ONLY
+
+FROM debian:bullseye-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and build vulnerable ProFTPD 1.3.5a
+WORKDIR /tmp
+RUN wget -q ftp://ftp.proftpd.org/distrib/source/proftpd-1.3.5a.tar.gz && \
+    tar xzf proftpd-1.3.5a.tar.gz && \
+    cd proftpd-1.3.5a && \
+    ./configure --with-modules=mod_copy && \
+    make && \
+    make install && \
+    cd / && rm -rf /tmp/proftpd*
+
+# Create FTP directories and user
+RUN useradd -m -s /bin/bash ftpuser && \
+    echo "ftpuser:ftpuser" | chpasswd && \
+    mkdir -p /var/ftp/pub /var/ftp/incoming && \
+    chmod 755 /var/ftp/pub && \
+    chmod 777 /var/ftp/incoming && \
+    echo "Confidential: CVE-2019-12815 test" > /root/secret.txt
+
+# Vulnerable configuration
+RUN mkdir -p /usr/local/etc && \
+    echo "ServerName \"ProFTPD 1.3.5a Vulnerable\"" > /usr/local/etc/proftpd.conf && \
+    echo "ServerType standalone" >> /usr/local/etc/proftpd.conf && \
+    echo "DefaultServer on" >> /usr/local/etc/proftpd.conf && \
+    echo "Port 21" >> /usr/local/etc/proftpd.conf && \
+    echo "Umask 022" >> /usr/local/etc/proftpd.conf && \
+    echo "MaxInstances 30" >> /usr/local/etc/proftpd.conf && \
+    echo "User nobody" >> /usr/local/etc/proftpd.conf && \
+    echo "Group nogroup" >> /usr/local/etc/proftpd.conf && \
+    echo "AllowOverwrite on" >> /usr/local/etc/proftpd.conf && \
+    echo "<Anonymous /var/ftp>" >> /usr/local/etc/proftpd.conf && \
+    echo "  User ftp" >> /usr/local/etc/proftpd.conf && \
+    echo "  Group ftp" >> /usr/local/etc/proftpd.conf && \
+    echo "  UserAlias anonymous ftp" >> /usr/local/etc/proftpd.conf && \
+    echo "  MaxClients 10" >> /usr/local/etc/proftpd.conf && \
+    echo "  <Directory /var/ftp/incoming>" >> /usr/local/etc/proftpd.conf && \
+    echo "    <Limit WRITE>" >> /usr/local/etc/proftpd.conf && \
+    echo "      AllowAll" >> /usr/local/etc/proftpd.conf && \
+    echo "    </Limit>" >> /usr/local/etc/proftpd.conf && \
+    echo "  </Directory>" >> /usr/local/etc/proftpd.conf && \
+    echo "</Anonymous>" >> /usr/local/etc/proftpd.conf
+
+RUN useradd -M -s /bin/false ftp || true
+
+EXPOSE 21
+
+LABEL oida.cve="CVE-2019-12815"
+LABEL oida.protocol="ftp"
+LABEL oida.severity="critical"
+LABEL oida.description="ProFTPD mod_copy arbitrary file copy"
+
+CMD ["/usr/local/sbin/proftpd", "-n", "-c", "/usr/local/etc/proftpd.conf"]

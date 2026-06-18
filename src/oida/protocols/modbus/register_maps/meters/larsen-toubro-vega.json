@@ -1,0 +1,349 @@
+{
+  "vendor": "Larsen & Toubro",
+  "model": "TOUBRO VEGA",
+  "description": "Larsen & Toubro TOUBRO VEGA power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_lower_limit_vl_9_6_lt_vl_lt_vu": {
+      "address": 256,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage lower limit (vl) (9.6&lt;vl&lt;vu)"
+    },
+    "voltage_upper_limit_vu_vl_lt_vu_lt_264": {
+      "address": 257,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage upper limit (vu) (vl&lt;vu&lt;264)"
+    },
+    "current_lower_limit_cl_0_1_lt_cl_lt_cu": {
+      "address": 258,
+      "type": "u16",
+      "access": "r",
+      "description": "Current lower limit (cl) (0.1&lt;cl&lt;cu)"
+    },
+    "current_upper_limit_cu_cl_lt_cu_lt_5_867": {
+      "address": 259,
+      "type": "u16",
+      "access": "r",
+      "description": "Current upper limit (cu) (cl&lt;cu&lt;5.867)"
+    },
+    "frequency_lower_limit_fl_40_lt_fl_lt_fu": {
+      "address": 260,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency lower limit (fl) (40&lt;fl&lt;fu)"
+    },
+    "frequency_upper_limit_fu_fl_lt_fu_lt_70": {
+      "address": 261,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency upper limit (fu) (fl&lt;fu&lt;70)"
+    },
+    "y_phase_voltage": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Y phase voltage"
+    },
+    "b_phase_voltage": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "B phase voltage"
+    },
+    "r_phase_current": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "R phase current"
+    },
+    "y_phase_current": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Y phase current"
+    },
+    "b_phase_current": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "B phase current"
+    },
+    "active_power_r_phase": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power R phase"
+    },
+    "active_power_r_phase_14": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Active power R phase"
+    },
+    "active_power_y_phase": {
+      "address": 15,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power Y phase"
+    },
+    "active_power_y_phase_17": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Active power Y phase"
+    },
+    "active_power_b_phase": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power B phase"
+    },
+    "active_power_b_phase_20": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Active power B phase"
+    },
+    "reactive_power_r_phase": {
+      "address": 21,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power R phase"
+    },
+    "reactive_power_r_phase_23": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power R phase"
+    },
+    "reactive_power_y_phase": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power Y phase"
+    },
+    "reactive_power_y_phase_26": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power Y phase"
+    },
+    "reactive_power_b_phase": {
+      "address": 27,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power B phase"
+    },
+    "reactive_power_b_phase_29": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power B phase"
+    },
+    "apparent_power_r_phase": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power R phase"
+    },
+    "apparent_power_r_phase_32": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power R phase"
+    },
+    "apparent_power_y_phase": {
+      "address": 33,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power Y phase"
+    },
+    "apparent_power_y_phase_35": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power Y phase"
+    },
+    "apparent_power_b_phase": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power B phase"
+    },
+    "apparent_power_b_phase_38": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power B phase"
+    },
+    "power_factor_r_phase": {
+      "address": 39,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor R phase"
+    },
+    "power_factor_y_phase": {
+      "address": 41,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor Y phase"
+    },
+    "power_factor_b_phase": {
+      "address": 43,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor B phase"
+    },
+    "total_active_power": {
+      "address": 45,
+      "type": "u32",
+      "access": "r",
+      "description": "Total active power"
+    },
+    "total_active_power_47": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Total active power"
+    },
+    "total_reactive_power": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "Total reactive power"
+    },
+    "total_reactive_power_50": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Total reactive power"
+    },
+    "total_apparent_power": {
+      "address": 51,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "total_apparent_power_53": {
+      "address": 53,
+      "type": "u16",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "total_power_factor": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "line_frequency": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "Line frequency"
+    },
+    "ry_line_voltage": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "Ry line voltage"
+    },
+    "yb_line_voltage": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "Yb line voltage"
+    },
+    "br_line_voltage": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "Br line voltage"
+    },
+    "average_phase_voltage": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "Average phase voltage"
+    },
+    "average_phase_current": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "Average phase current"
+    },
+    "r_phase_voltage_harmonic": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "R phase voltage harmonic"
+    },
+    "y_phase_voltage_harmonic": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "Y phase voltage harmonic"
+    },
+    "b_phase_voltage_harmonic": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "B phase voltage harmonic"
+    },
+    "r_phase_current_harmonic": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "R phase current harmonic"
+    },
+    "y_phase_current_harmonic": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "Y phase current harmonic"
+    },
+    "b_phase_current_harmonic": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "B phase current harmonic"
+    },
+    "phase_difference_r_voltage_and_current": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase difference R voltage and current"
+    },
+    "phase_difference_y_voltage_and_current": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase difference Y voltage and current"
+    },
+    "phase_difference_b_voltage_and_current": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase difference B voltage and current"
+    },
+    "voltage_unbalance_r_phase": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage unbalance R phase"
+    },
+    "voltage_unbalance_y_phase": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage unbalance Y phase"
+    }
+  }
+}

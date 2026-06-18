@@ -1,0 +1,149 @@
+{
+  "vendor": "Delta Electronics",
+  "model": "DVP Series",
+  "description": "Delta DVP Series PLC Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: Delta uses OCTAL numbering for X/Y I/O devices with HEX Modbus addresses. Word order is LOW-WORD FIRST for 32-bit values (address n = bits 15-0, n+1 = bits 31-16). Model ranges differ significantly.",
+  "source": "DELTA_IA-PLC_DVP-PLC_PM_EN (DVP Programming Manual), DVP Communication Protocol Ver 1.0",
+  "registers": {
+    "d0": {
+      "address": 4096,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D0",
+      "notes": "hex_address=0x1000, dvp_device=D0"
+    },
+    "d0_dword": {
+      "address": 4096,
+      "type": "u32",
+      "access": "rw",
+      "description": "32-bit at D0 (low word at 0x1000, high word at 0x1001)",
+      "notes": "hex_address=0x1000, dvp_device=D0-D1"
+    },
+    "d100": {
+      "address": 4196,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D100",
+      "notes": "hex_address=0x1064, dvp_device=D100"
+    },
+    "d1120_protocol": {
+      "address": 5216,
+      "type": "u16",
+      "access": "rw",
+      "description": "RS-485 protocol configuration",
+      "notes": "hex_address=0x1460, dvp_device=D1120"
+    },
+    "d1121_address": {
+      "address": 5217,
+      "type": "u16",
+      "access": "rw",
+      "description": "Modbus slave address",
+      "notes": "hex_address=0x1461, dvp_device=D1121"
+    }
+  },
+  "coils": {
+    "s0": {
+      "address": 0,
+      "access": "rw",
+      "description": "Status bit S0",
+      "notes": "hex_address=0x0000, dvp_device=S0"
+    },
+    "y0": {
+      "address": 1280,
+      "access": "rw",
+      "description": "Output Y0 (octal Y0)",
+      "notes": "hex_address=0x0500, dvp_device=Y0"
+    },
+    "m0": {
+      "address": 2048,
+      "access": "rw",
+      "description": "Internal relay M0",
+      "notes": "hex_address=0x0800, dvp_device=M0"
+    },
+    "m1143_rtu_mode": {
+      "address": 3191,
+      "access": "rw",
+      "description": "RTU mode select (ON = RTU, OFF = ASCII)",
+      "notes": "hex_address=0x0C77, dvp_device=M1143"
+    }
+  },
+  "discrete_inputs": {
+    "x0": {
+      "address": 1024,
+      "access": "r",
+      "description": "Input X0 (octal X0)",
+      "notes": "hex_address=0x0400, dvp_device=X0"
+    }
+  },
+  "extended_info": {
+    "addressing": {
+      "note": "Octal I/O numbering (X/Y) with hexadecimal Modbus addresses",
+      "32bit_word_order": "Low word first (address n = bits 15-0, n+1 = bits 31-16)"
+    },
+    "default_serial_config": {
+      "baud": 9600,
+      "data_bits_ascii": 7,
+      "data_bits_rtu": 8,
+      "parity": "EVEN",
+      "stop_bits": 1,
+      "address": 1
+    },
+    "configuration_registers": {
+      "D1120": "RS-485 protocol settings (baud, parity, data bits)",
+      "D1121": "Slave address",
+      "D1129": "Communication timeout (ms)",
+      "M1143": "ASCII/RTU mode selection (ON = RTU)"
+    },
+    "model_ranges": {
+      "ES_EX_SS": {
+        "d_range": "D0-D599",
+        "description": "Limited data register range"
+      },
+      "SA_SX_SC": {
+        "d_range": "D0-D4999",
+        "description": "Extended data register range"
+      },
+      "EH3_SV2": {
+        "d_range": "D0-D11999",
+        "description": "Maximum data register range"
+      }
+    },
+    "memory_mapping": {
+      "S_status": {
+        "range": "0-1023",
+        "dvp_hex": "0000-03FF",
+        "modbus_decimal": "000001-001024",
+        "type": "coil"
+      },
+      "X_input": {
+        "range_octal": "0-377",
+        "dvp_hex": "0400-04FF",
+        "modbus_decimal": "001025-001280",
+        "type": "discrete_input"
+      },
+      "Y_output": {
+        "range_octal": "0-377",
+        "dvp_hex": "0500-05FF",
+        "modbus_decimal": "001281-001536",
+        "type": "coil"
+      },
+      "M_internal": {
+        "range": "0-1279",
+        "dvp_hex": "0800-0DFF",
+        "modbus_decimal": "002049-003584",
+        "type": "coil"
+      },
+      "D_data_register": {
+        "range": "0-4999",
+        "dvp_hex": "1000-2387",
+        "modbus_decimal": "404097+",
+        "type": "holding_register"
+      }
+    }
+  },
+  "_source_verified": "Verified: D0 at address 0x1000 confirmed; Delta DVP Modbus address table verified via multiple sources"
+}

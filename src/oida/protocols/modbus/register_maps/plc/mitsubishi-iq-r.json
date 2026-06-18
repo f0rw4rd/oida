@@ -1,0 +1,207 @@
+{
+  "vendor": "Mitsubishi Electric",
+  "model": "MELSEC iQ-R Series",
+  "description": "Mitsubishi MELSEC iQ-R PLC Modbus register map for RJ71EN71/RnENCPU modules",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: iQ-R requires RJ71EN71 Ethernet module or RnENCPU built-in Ethernet. For 32-bit values: LOW-WORD FIRST (register N = low word, N+1 = high word). Device mapping fully configurable via GX Works3. Global label support allows symbolic access.",
+  "source": "Mitsubishi MELSEC iQ-R Ethernet User's Manual (SH-081260ENG)",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "area": "Bit devices (M, B, etc.)"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "area": "Bit devices (X input)"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "area": "Word devices (D, W, etc.)"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "area": "Word devices (input mapping)"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "area": "Bit devices"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "Word devices"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils",
+      "area": "Bit devices"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "Word devices"
+    }
+  ],
+  "registers": {
+    "d0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D0 (holding register 40001)",
+      "notes": "iqr_device=D0"
+    },
+    "d0_dword": {
+      "address": 0,
+      "type": "u32",
+      "access": "rw",
+      "description": "32-bit DWORD at D0 (D0 = low word, D1 = high word)",
+      "notes": "iqr_device=D0-D1"
+    },
+    "d100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D100",
+      "notes": "iqr_device=D100"
+    },
+    "w0": {
+      "address": 1000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Link register W0 (configurable mapping)",
+      "notes": "iqr_device=W0"
+    },
+    "zr0": {
+      "address": 2000,
+      "type": "u16",
+      "access": "rw",
+      "description": "File register ZR0 (extended memory)",
+      "notes": "iqr_device=ZR0"
+    }
+  },
+  "coils": {
+    "m0": {
+      "address": 0,
+      "access": "rw",
+      "description": "Internal relay M0",
+      "notes": "iqr_device=M0"
+    },
+    "m100": {
+      "address": 100,
+      "access": "rw",
+      "description": "Internal relay M100",
+      "notes": "iqr_device=M100"
+    },
+    "b0": {
+      "address": 1000,
+      "access": "rw",
+      "description": "Link relay B0",
+      "notes": "iqr_device=B0"
+    }
+  },
+  "discrete_inputs": {
+    "x0": {
+      "address": 0,
+      "access": "r",
+      "description": "Input X0",
+      "notes": "iqr_device=X0"
+    },
+    "x10": {
+      "address": 16,
+      "access": "r",
+      "description": "Input X10 (hexadecimal numbering)",
+      "notes": "iqr_device=X10"
+    }
+  },
+  "extended_info": {
+    "ethernet_modules": {
+      "RJ71EN71": {
+        "description": "Ethernet interface module",
+        "max_connections": 32,
+        "protocols": [
+          "Modbus TCP",
+          "MELSOFT",
+          "SLMP",
+          "Socket"
+        ]
+      },
+      "RnENCPU": {
+        "description": "CPU with built-in Ethernet (R00ENCPU, R04ENCPU, etc.)",
+        "max_connections": 16,
+        "protocols": [
+          "Modbus TCP",
+          "MELSOFT",
+          "SLMP"
+        ]
+      }
+    },
+    "configuration_path": "GX Works3 -> Navigation -> Parameter -> Module Parameter -> RJ71EN71 -> Application Settings -> Predefined Protocol",
+    "32bit_word_order": "Low-word first (register N = low word, N+1 = high word)",
+    "device_capacity": {
+      "D_data_register": {
+        "range": "D0-D1048575",
+        "description": "1M+ points depending on CPU"
+      },
+      "M_internal_relay": {
+        "range": "M0-M1048575",
+        "description": "1M+ points depending on CPU"
+      },
+      "W_link_register": {
+        "range": "W0-W7FFFF",
+        "description": "512K points (hex addressing)"
+      },
+      "ZR_file_register": {
+        "range": "ZR0-ZR16777215",
+        "description": "Extended file register area"
+      }
+    },
+    "default_device_allocation": {
+      "coils_rw": {
+        "modbus_range": "0-8191",
+        "iqr_device": "M0-M8191",
+        "note": "Configurable via GX Works3"
+      },
+      "discrete_inputs": {
+        "modbus_range": "0-8191",
+        "iqr_device": "X0-X1FFF",
+        "note": "Hex input numbering"
+      },
+      "holding_registers": {
+        "modbus_range": "0-65535",
+        "iqr_device": "D0-D65535",
+        "note": "Configurable via GX Works3"
+      }
+    },
+    "global_label_support": {
+      "enabled": true,
+      "description": "iQ-R supports global labels for symbolic device access",
+      "configuration": "Define labels in GX Works3 global label editor"
+    },
+    "cpu_models": [
+      "R00CPU",
+      "R01CPU",
+      "R02CPU",
+      "R04CPU",
+      "R08CPU",
+      "R16CPU",
+      "R32CPU",
+      "R64CPU",
+      "R120CPU",
+      "R00ENCPU",
+      "R04ENCPU",
+      "R08ENCPU",
+      "R16ENCPU",
+      "R32ENCPU",
+      "R120ENCPU"
+    ]
+  },
+  "_source_verified": "Verified: RJ71EN71 Modbus TCP module confirmed; SH-081260ENG document verified"
+}

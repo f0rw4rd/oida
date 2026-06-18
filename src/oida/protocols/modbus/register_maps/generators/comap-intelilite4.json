@@ -1,0 +1,197 @@
+{
+  "vendor": "ComAp",
+  "model": "InteliLite 4",
+  "description": "ComAp InteliLite 4 genset controller. Single controller model with Modbus TCP support.",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/victronenergy/dbus-modbus-client",
+  "notes": "Holding register access only (no input registers). The controller identifies itself via a text string at registers 1307-1322 (16 registers, but only first 12 characters are meaningful). Serial number is not available via Modbus; the custom name (registers 3000-3007) is used as device identifier instead. Register hole maximum is 0 (no gaps allowed in read groups). Power registers use scale factor 0.001 (raw value in kW). Invalid values: 0x8000 for u16 signed registers, -0x8000 for s16, 0x80000000 for u32.",
+  "registers": {
+    "engine_speed": {
+      "address": 1004,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine speed",
+      "unit": "RPM",
+      "invalid": 32768
+    },
+    "engine_coolant_temperature": {
+      "address": 1006,
+      "type": "i16",
+      "access": "r",
+      "description": "Engine coolant temperature",
+      "unit": "C",
+      "invalid": -32768
+    },
+    "engine_oil_pressure": {
+      "address": 1008,
+      "type": "i16",
+      "access": "r",
+      "scale": 10,
+      "description": "Engine oil pressure. Raw value divided by 10 for kPa.",
+      "unit": "kPa",
+      "invalid": -32768
+    },
+    "engine_operating_hours": {
+      "address": 1013,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.002778,
+      "description": "Total engine operating hours. Raw value in 1/360 hour increments, multiply by 10 for seconds.",
+      "unit": "s",
+      "invalid": 2147483648
+    },
+    "ac_total_power": {
+      "address": 1020,
+      "type": "i16",
+      "access": "r",
+      "scale": 1000,
+      "description": "Generator total active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_l1_power": {
+      "address": 1021,
+      "type": "i16",
+      "access": "r",
+      "scale": 1000,
+      "description": "Generator L1 phase active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_l2_power": {
+      "address": 1022,
+      "type": "i16",
+      "access": "r",
+      "scale": 1000,
+      "description": "Generator L2 phase active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_l3_power": {
+      "address": 1023,
+      "type": "i16",
+      "access": "r",
+      "scale": 1000,
+      "description": "Generator L3 phase active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_frequency": {
+      "address": 1036,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator AC output frequency",
+      "unit": "Hz"
+    },
+    "ac_l1_voltage": {
+      "address": 1037,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L1 phase voltage",
+      "unit": "V"
+    },
+    "ac_l2_voltage": {
+      "address": 1038,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L2 phase voltage",
+      "unit": "V"
+    },
+    "ac_l3_voltage": {
+      "address": 1039,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L3 phase voltage",
+      "unit": "V"
+    },
+    "ac_l1_current": {
+      "address": 1043,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L1 phase current",
+      "unit": "A"
+    },
+    "ac_l2_current": {
+      "address": 1044,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L2 phase current",
+      "unit": "A"
+    },
+    "ac_l3_current": {
+      "address": 1045,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L3 phase current",
+      "unit": "A"
+    },
+    "starter_voltage": {
+      "address": 1053,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Starter battery voltage",
+      "unit": "V"
+    },
+    "fuel_level": {
+      "address": 1055,
+      "type": "u16",
+      "access": "r",
+      "description": "Fuel tank level. Invalid value 0x8000 indicates no sensor connected.",
+      "unit": "%",
+      "invalid": 32768
+    },
+    "ac_energy_forward": {
+      "address": 1263,
+      "type": "u32",
+      "access": "r",
+      "description": "Total generated energy",
+      "unit": "kWh"
+    },
+    "status_code": {
+      "address": 1298,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine status code: 0=Init, 1=Ready, 2=Not ready, 3=Prestart, 4=Cranking, 5=Pause, 6=Starting, 7=Running, 8=Loaded, 9=Unloading, 10=Cooling, 11=Stop, 12=Shutdown, 13=Ventilate, 14=Emergency manual, 15=Soft loading, 16=WaitStop, 17=Venting"
+    },
+    "nr_of_phases": {
+      "address": 1301,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase configuration: 0=single, 1-2=split, 3-7=three phase"
+    },
+    "controller_identifier": {
+      "address": 1307,
+      "type": "string",
+      "length": 16,
+      "access": "r",
+      "description": "Controller identification string. Must read all 16 registers; only first 12 characters are meaningful."
+    },
+    "firmware_version": {
+      "address": 1323,
+      "type": "string",
+      "length": 8,
+      "access": "r",
+      "description": "Firmware version string"
+    },
+    "remote_start_mode": {
+      "address": 1382,
+      "type": "u16",
+      "access": "r",
+      "description": "Operating mode: 0=OFF, 1=MANUAL, 2=AUTO, 3=TEST. Remote start enabled when mode is AUTO (2)."
+    },
+    "custom_name": {
+      "address": 3000,
+      "type": "string",
+      "length": 8,
+      "access": "r",
+      "description": "Controller custom name. Used as device unique identifier since serial number is not available via Modbus."
+    },
+    "start_stop_coil": {
+      "address": 4700,
+      "type": "coil",
+      "access": "rw",
+      "description": "Remote start/stop coil. Write True to start, False to stop. See ComAp global manual page 204."
+    }
+  }
+}

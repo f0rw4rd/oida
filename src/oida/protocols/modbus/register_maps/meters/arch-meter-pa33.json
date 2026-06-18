@@ -1,0 +1,370 @@
+{
+  "vendor": "Arch",
+  "model": "METER PA 33",
+  "description": "Arch METER PA 33 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_ratio": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter ratio"
+    },
+    "pt_ratio": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "description": "Pt ratio"
+    },
+    "ct_ratio": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Ct ratio"
+    },
+    "wiring_mode": {
+      "address": 4106,
+      "type": "u16",
+      "access": "r",
+      "description": "Wiring mode"
+    },
+    "s_s_t_voltage": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "S(s t) voltage",
+      "unit": "Volt"
+    },
+    "t_t_r_voltage": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "T(t r) voltage",
+      "unit": "Volt"
+    },
+    "r_current": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "R current",
+      "unit": "A"
+    },
+    "s_current": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "S current",
+      "unit": "A"
+    },
+    "t_current": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "T current",
+      "unit": "A"
+    },
+    "frequency": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "pf": {
+      "address": 7,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf",
+      "unit": "PF"
+    },
+    "kw": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Kw",
+      "unit": "kW"
+    },
+    "kvar": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvar",
+      "unit": "kvar"
+    },
+    "kwh": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Kwh",
+      "unit": "kWh"
+    },
+    "kvarh": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvarh",
+      "unit": "kvarh"
+    },
+    "v_a": {
+      "address": 4352,
+      "type": "f32",
+      "access": "r",
+      "description": "V a"
+    },
+    "i_a": {
+      "address": 4354,
+      "type": "f32",
+      "access": "r",
+      "description": "I a",
+      "unit": "Amp"
+    },
+    "kw_a": {
+      "address": 4356,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw_a",
+      "unit": "kW"
+    },
+    "kvar_a": {
+      "address": 4358,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar a",
+      "unit": "kvar"
+    },
+    "kva_a": {
+      "address": 4360,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva_a",
+      "unit": "kVA"
+    },
+    "pf_a": {
+      "address": 4362,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf a"
+    },
+    "kwh_a": {
+      "address": 4364,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh_a"
+    },
+    "kvarh_a": {
+      "address": 4366,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh_a"
+    },
+    "kvah_a": {
+      "address": 4368,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah_a"
+    },
+    "v_b": {
+      "address": 4370,
+      "type": "f32",
+      "access": "r",
+      "description": "V b"
+    },
+    "i_b": {
+      "address": 4372,
+      "type": "f32",
+      "access": "r",
+      "description": "I_b",
+      "unit": "Amp"
+    },
+    "kw_b": {
+      "address": 4374,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw b",
+      "unit": "kW"
+    },
+    "kvar_b": {
+      "address": 4376,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar b",
+      "unit": "kvar"
+    },
+    "kva_b": {
+      "address": 4378,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva_b",
+      "unit": "kVA"
+    },
+    "pf_b": {
+      "address": 4380,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf_b"
+    },
+    "kwh_b": {
+      "address": 4382,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh b"
+    },
+    "kvarh_b": {
+      "address": 4384,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh b"
+    },
+    "kvah_b": {
+      "address": 4386,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah_b"
+    },
+    "v_c": {
+      "address": 4388,
+      "type": "f32",
+      "access": "r",
+      "description": "V_c",
+      "unit": "Volt"
+    },
+    "i_c": {
+      "address": 4390,
+      "type": "f32",
+      "access": "r",
+      "description": "I c",
+      "unit": "Amp"
+    },
+    "kw_c": {
+      "address": 4392,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw c",
+      "unit": "kW"
+    },
+    "kvar_c": {
+      "address": 4394,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar c",
+      "unit": "kvar"
+    },
+    "kva_c": {
+      "address": 4396,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva c",
+      "unit": "kVA"
+    },
+    "pf_c": {
+      "address": 4398,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf_c"
+    },
+    "kwh_c": {
+      "address": 4400,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh c"
+    },
+    "kvarh_c": {
+      "address": 4402,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh c"
+    },
+    "v_avg_v_d": {
+      "address": 4406,
+      "type": "f32",
+      "access": "r",
+      "description": "V_avg(v_d)",
+      "unit": "Volt"
+    },
+    "i_avg_i_d": {
+      "address": 4408,
+      "type": "f32",
+      "access": "r",
+      "description": "I avg(i d)",
+      "unit": "Amp"
+    },
+    "kw_tot_kw_d": {
+      "address": 4410,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw_tot(kw_d)",
+      "unit": "kW"
+    },
+    "kvar_tot_kvar_d": {
+      "address": 4412,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar_tot(kvar_d)",
+      "unit": "kvar"
+    },
+    "kva_tot_kva_d": {
+      "address": 4414,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva tot(kva d)",
+      "unit": "kVA"
+    },
+    "pf_tot_pf_d": {
+      "address": 4416,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf tot(pf d)"
+    },
+    "kwh_tot_kwh_d": {
+      "address": 4418,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh tot(kwh d)"
+    },
+    "kvarh_totkvarh_d": {
+      "address": 4420,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh totkvarh d)"
+    },
+    "kvah_tot_kvah_d": {
+      "address": 4422,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah tot(kvah d)"
+    },
+    "v_a_4608": {
+      "address": 4608,
+      "type": "u32",
+      "access": "r",
+      "description": "V_a",
+      "unit": "Volt"
+    },
+    "i_a_4610": {
+      "address": 4610,
+      "type": "u32",
+      "access": "r",
+      "description": "I_a",
+      "unit": "A"
+    },
+    "kw_a_4612": {
+      "address": 4612,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw_a",
+      "unit": "kW"
+    },
+    "kvar_a_4614": {
+      "address": 4614,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar a",
+      "unit": "kvar"
+    }
+  }
+}

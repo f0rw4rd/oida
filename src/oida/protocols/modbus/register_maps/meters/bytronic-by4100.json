@@ -1,0 +1,351 @@
+{
+  "vendor": "Bytronic",
+  "model": "BY 4100",
+  "description": "Bytronic BY 4100 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "famiglia_strumento": {
+      "address": 512,
+      "type": "u32",
+      "access": "r",
+      "description": "Famiglia strumento"
+    },
+    "versione": {
+      "address": 513,
+      "type": "u32",
+      "access": "r",
+      "description": "Versione"
+    },
+    "k_rms_factor": {
+      "address": 514,
+      "type": "u32",
+      "access": "r",
+      "description": "K_RMS_FACTOR"
+    },
+    "valore_calibrazione_fondoscala_i1": {
+      "address": 515,
+      "type": "u32",
+      "access": "r",
+      "description": "Valore calibrazione fondoscala I1"
+    },
+    "valore_calibrazione_fondoscala_i2": {
+      "address": 516,
+      "type": "u32",
+      "access": "r",
+      "description": "Valore calibrazione fondoscala I2"
+    },
+    "valore_calibrazione_fondoscala_i3": {
+      "address": 517,
+      "type": "u32",
+      "access": "r",
+      "description": "Valore calibrazione fondoscala I3"
+    },
+    "valore_calibrazione_fondoscala_v1": {
+      "address": 518,
+      "type": "u32",
+      "access": "r",
+      "description": "Valore calibrazione fondoscala V1"
+    },
+    "valore_calibrazione_fondoscala_v2": {
+      "address": 519,
+      "type": "u32",
+      "access": "r",
+      "description": "Valore calibrazione fondoscala V2"
+    },
+    "valore_calibrazione_fondoscala_v3": {
+      "address": 520,
+      "type": "u32",
+      "access": "r",
+      "description": "Valore calibrazione fondoscala V3"
+    },
+    "valore_calibrazione_frequenzimetro": {
+      "address": 521,
+      "type": "u32",
+      "access": "r",
+      "description": "Valore calibrazione frequenzimetro"
+    },
+    "media_misura_frequenzimetro": {
+      "address": 523,
+      "type": "u32",
+      "access": "r",
+      "description": "Media misura frequenzimetro"
+    },
+    "tensione_v1": {
+      "address": 526,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione V1",
+      "unit": "Volt"
+    },
+    "tensione_v2": {
+      "address": 527,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione V2",
+      "unit": "Volt"
+    },
+    "tensione_v3": {
+      "address": 528,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione V3",
+      "unit": "Volt"
+    },
+    "tensione_v12": {
+      "address": 529,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione V12",
+      "unit": "Volt"
+    },
+    "tensione_v23": {
+      "address": 530,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione V23",
+      "unit": "Volt"
+    },
+    "tensione_v31": {
+      "address": 531,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione V31",
+      "unit": "Volt"
+    },
+    "tensione_media_trifase": {
+      "address": 532,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione media trifase",
+      "unit": "Volt"
+    },
+    "tensione_asimmetria_fasi": {
+      "address": 533,
+      "type": "u32",
+      "access": "r",
+      "description": "Tensione asimmetria fasi",
+      "unit": "Volt"
+    },
+    "corrente_i1": {
+      "address": 534,
+      "type": "u32",
+      "access": "r",
+      "description": "Corrente I1",
+      "unit": "Amp"
+    },
+    "corrente_i2": {
+      "address": 535,
+      "type": "u32",
+      "access": "r",
+      "description": "Corrente I2",
+      "unit": "Amp"
+    },
+    "corrente_i3": {
+      "address": 536,
+      "type": "u32",
+      "access": "r",
+      "description": "Corrente I3",
+      "unit": "Amp"
+    },
+    "corrente_media": {
+      "address": 537,
+      "type": "u32",
+      "access": "r",
+      "description": "Corrente media",
+      "unit": "Amp"
+    },
+    "corrente_nel_neutro": {
+      "address": 538,
+      "type": "u32",
+      "access": "r",
+      "description": "Corrente nel neutro",
+      "unit": "Amp"
+    },
+    "misura_frequenza": {
+      "address": 540,
+      "type": "u32",
+      "access": "r",
+      "description": "Misura frequenza",
+      "unit": "Hz"
+    },
+    "fattore_di_potenza_fase_1": {
+      "address": 541,
+      "type": "u32",
+      "access": "r",
+      "description": "Fattore di potenza fase 1",
+      "unit": "Cos"
+    },
+    "fattore_di_potenza_fase_2": {
+      "address": 542,
+      "type": "u32",
+      "access": "r",
+      "description": "Fattore di potenza fase 2",
+      "unit": "Cos"
+    },
+    "fattore_di_potenza_fase_3": {
+      "address": 543,
+      "type": "u32",
+      "access": "r",
+      "description": "Fattore di potenza fase 3",
+      "unit": "Cos"
+    },
+    "fattore_di_potenza_totale": {
+      "address": 544,
+      "type": "u32",
+      "access": "r",
+      "description": "Fattore di potenza totale",
+      "unit": "Cos"
+    },
+    "potenza_attiva_fase_1": {
+      "address": 546,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza attiva fase 1",
+      "unit": "W"
+    },
+    "potenza_attiva_fase_2": {
+      "address": 548,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza attiva fase 2",
+      "unit": "W"
+    },
+    "potenza_attiva_fase_3": {
+      "address": 550,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza attiva fase 3",
+      "unit": "W"
+    },
+    "potenza_attiva_totale": {
+      "address": 552,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza attiva totale",
+      "unit": "W"
+    },
+    "potenza_reattiva_fase_1": {
+      "address": 554,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza reattiva fase 1",
+      "unit": "var"
+    },
+    "potenza_reattiva_fase_2": {
+      "address": 556,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza reattiva fase 2",
+      "unit": "var"
+    },
+    "potenza_reattiva_fase_3": {
+      "address": 558,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza reattiva fase 3",
+      "unit": "var"
+    },
+    "potenza_reattiva_totale": {
+      "address": 560,
+      "type": "i32",
+      "access": "r",
+      "description": "Potenza reattiva totale",
+      "unit": "var"
+    },
+    "potenza_apparente_fase_1": {
+      "address": 562,
+      "type": "u32",
+      "access": "r",
+      "description": "Potenza apparente fase 1",
+      "unit": "VA"
+    },
+    "potenza_apparente_fase_2": {
+      "address": 564,
+      "type": "u32",
+      "access": "r",
+      "description": "Potenza apparente fase 2",
+      "unit": "VA"
+    },
+    "potenza_apparente_fase_3": {
+      "address": 566,
+      "type": "u32",
+      "access": "r",
+      "description": "Potenza apparente fase 3",
+      "unit": "VA"
+    },
+    "potenza_apparente_totale": {
+      "address": 568,
+      "type": "u32",
+      "access": "r",
+      "description": "Potenza apparente totale",
+      "unit": "VA"
+    },
+    "energia_attiva_consumata": {
+      "address": 570,
+      "type": "u32",
+      "access": "r",
+      "description": "Energia attiva consumata",
+      "unit": "kWh"
+    },
+    "energia_attiva_prodotta": {
+      "address": 572,
+      "type": "u32",
+      "access": "r",
+      "description": "Energia attiva prodotta",
+      "unit": "kWh"
+    },
+    "energia_reattiva_totale": {
+      "address": 574,
+      "type": "u32",
+      "access": "r",
+      "description": "Energia reattiva totale",
+      "unit": "kvarh"
+    },
+    "ore_del_contaore_totale": {
+      "address": 576,
+      "type": "u32",
+      "access": "r",
+      "description": "Ore del contaore TOTALE",
+      "unit": "h"
+    },
+    "minuti_del_contaore_totale": {
+      "address": 578,
+      "type": "u32",
+      "access": "r",
+      "description": "Minuti del contaore TOTALE",
+      "unit": "min"
+    },
+    "ore_del_contaore_parziale": {
+      "address": 579,
+      "type": "u32",
+      "access": "r",
+      "description": "Ore del contaore PARZIALE",
+      "unit": "h"
+    },
+    "minuti_del_contaore_parziale": {
+      "address": 581,
+      "type": "u32",
+      "access": "r",
+      "description": "Minuti del contaore PARZIALE",
+      "unit": "min"
+    },
+    "secondi_dei_contaore": {
+      "address": 582,
+      "type": "u32",
+      "access": "r",
+      "description": "Secondi dei contaore",
+      "unit": "sec"
+    },
+    "display_0_nor_1_copertina_2_progmode": {
+      "address": 586,
+      "type": "u32",
+      "access": "r",
+      "description": "Display: 0=Nor 1=Copertina 2 = ProgMode"
+    }
+  }
+}

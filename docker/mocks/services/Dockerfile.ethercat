@@ -1,0 +1,60 @@
+# EtherCAT Mock Slave - Docker Build
+#
+# Builds the software-based EtherCAT slave emulator from ethercat_slave.c.
+# Uses raw AF_PACKET sockets for Layer 2 (EtherType 0x88A4) communication.
+#
+# Two operating modes:
+#   1. Host networking:  --network=host --cap-add NET_RAW --cap-add NET_ADMIN
+#      Slave listens on a real host interface (e.g., eth0).
+#      Scanner runs on host: oida ethercat eth0
+#
+#   2. Veth-pair mode:   ETHERCAT_CREATE_VETH=1  (default in compose)
+#      Entrypoint creates a veth pair (ecat0 <-> ecat1) inside the container.
+#      Slave listens on ecat0; scanner targets ecat1 from the same netns.
+#      Used for self-contained Docker testing without real EtherCAT hardware.
+#
+# Build:  docker build -f Dockerfile.ethercat -t ethercat-slave .
+# Run:    docker run --cap-add NET_RAW --cap-add NET_ADMIN \
+#           -e ETHERCAT_CREATE_VETH=1 ethercat-slave
+
+# --- Build stage ---
+FROM debian:bookworm-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY ethercat_slave.c .
+
+RUN gcc -Wall -Wextra -O2 -std=c99 -D_GNU_SOURCE \
+    -o ethercat_slave ethercat_slave.c -lm \
+    && strip ethercat_slave
+
+# --- Runtime stage ---
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    iproute2 \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /build/ethercat_slave /usr/local/bin/ethercat_slave
+RUN chmod +x /usr/local/bin/ethercat_slave
+
+# Copy entrypoint and healthcheck
+COPY ethercat/entrypoint.sh /entrypoint.sh
+COPY ethercat/healthcheck.sh /healthcheck.sh
+RUN chmod +x /entrypoint.sh /healthcheck.sh
+
+# EtherCAT uses EtherType 0x88A4 (Layer 2) - no TCP/UDP ports to expose.
+# CAP_NET_RAW required for AF_PACKET sockets.
+# CAP_NET_ADMIN required for veth pair creation and interface management.
+
+# Environment variables for configuration
+ENV ETHERCAT_INTERFACE="eth0"
+ENV ETHERCAT_POSITION="1"
+ENV ETHERCAT_VERBOSITY="1"
+ENV ETHERCAT_CREATE_VETH="0"
+
+ENTRYPOINT ["/entrypoint.sh"]

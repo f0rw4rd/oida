@@ -1,0 +1,363 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "EM 6400 NG PM 2100 PM 2200",
+  "description": "Schneider Electric EM 6400 NG PM 2100 PM 2200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "active_energy_delivered_into_load": {
+      "address": 2699,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy delivered (into load)",
+      "unit": "kWh"
+    },
+    "active_energy_received_out_of_load": {
+      "address": 2701,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy received (out of load)",
+      "unit": "kWh"
+    },
+    "active_energy_delivered_received": {
+      "address": 2703,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy delivered + received",
+      "unit": "kWh"
+    },
+    "active_energy_delivered_received_2705": {
+      "address": 2705,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy delivered received",
+      "unit": "kWh"
+    },
+    "reactive_energy_delivered": {
+      "address": 2707,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy delivered",
+      "unit": "kVARh"
+    },
+    "reactive_energy_received": {
+      "address": 2709,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy received",
+      "unit": "kVARh"
+    },
+    "reactive_energy_delivered_received": {
+      "address": 2711,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy delivered + received",
+      "unit": "kVARh"
+    },
+    "reactive_energy_delivered_received_2713": {
+      "address": 2713,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy delivered received",
+      "unit": "kVARh"
+    },
+    "apparent_energy_delivered": {
+      "address": 2715,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy delivered",
+      "unit": "kVAh"
+    },
+    "apparent_energy_received": {
+      "address": 2717,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy received",
+      "unit": "kVAh"
+    },
+    "apparent_energy_delivered_received": {
+      "address": 2719,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy delivered + received",
+      "unit": "kVAh"
+    },
+    "apparent_energy_delivered_received_2721": {
+      "address": 2721,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy delivered received",
+      "unit": "kVAh"
+    },
+    "current_a": {
+      "address": 2999,
+      "type": "f32",
+      "access": "r",
+      "description": "Current A",
+      "unit": "A"
+    },
+    "current_b": {
+      "address": 3001,
+      "type": "f32",
+      "access": "r",
+      "description": "Current B",
+      "unit": "A"
+    },
+    "current_c": {
+      "address": 3003,
+      "type": "f32",
+      "access": "r",
+      "description": "Current C",
+      "unit": "A"
+    },
+    "current_n": {
+      "address": 3005,
+      "type": "f32",
+      "access": "r",
+      "description": "Current N",
+      "unit": "A"
+    },
+    "current_g": {
+      "address": 3007,
+      "type": "f32",
+      "access": "r",
+      "description": "Current G",
+      "unit": "A"
+    },
+    "current_avg": {
+      "address": 3009,
+      "type": "f32",
+      "access": "r",
+      "description": "Current avg",
+      "unit": "A"
+    },
+    "current_unbalance_a": {
+      "address": 3011,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance A",
+      "unit": "%"
+    },
+    "current_unbalance_b": {
+      "address": 3013,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance B",
+      "unit": "%"
+    },
+    "current_unbalance_c": {
+      "address": 3015,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance C",
+      "unit": "%"
+    },
+    "current_unbalance_worst": {
+      "address": 3017,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance worst",
+      "unit": "%"
+    },
+    "voltage_a_b": {
+      "address": 3019,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage A B",
+      "unit": "V"
+    },
+    "voltage_b_c": {
+      "address": 3021,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage B C",
+      "unit": "V"
+    },
+    "voltage_c_a": {
+      "address": 3023,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage C A",
+      "unit": "V"
+    },
+    "voltage_l_l_avg": {
+      "address": 3025,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L L avg",
+      "unit": "V"
+    },
+    "voltage_a_n": {
+      "address": 3027,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage A N",
+      "unit": "V"
+    },
+    "voltage_b_n": {
+      "address": 3029,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage B N",
+      "unit": "V"
+    },
+    "voltage_c_n": {
+      "address": 3031,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage C N",
+      "unit": "V"
+    },
+    "voltage_l_n_avg": {
+      "address": 3035,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L N avg",
+      "unit": "V"
+    },
+    "voltage_unbalance_a_b": {
+      "address": 3037,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance A B",
+      "unit": "%"
+    },
+    "voltage_unbalance_b_c": {
+      "address": 3039,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance B C",
+      "unit": "%"
+    },
+    "voltage_unbalance_c_a": {
+      "address": 3041,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance C A",
+      "unit": "%"
+    },
+    "voltage_unbalance_l_l_worst": {
+      "address": 3043,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance L L worst",
+      "unit": "%"
+    },
+    "voltage_unbalance_a_n": {
+      "address": 3045,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance A N",
+      "unit": "%"
+    },
+    "voltage_unbalance_b_n": {
+      "address": 3047,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance B N",
+      "unit": "%"
+    },
+    "voltage_unbalance_c_n": {
+      "address": 3049,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance C N",
+      "unit": "%"
+    },
+    "voltage_unbalance_l_n_worst": {
+      "address": 3051,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance L N worst",
+      "unit": "%"
+    },
+    "active_power_a": {
+      "address": 3053,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power A",
+      "unit": "kW"
+    },
+    "active_power_b": {
+      "address": 3055,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power B",
+      "unit": "kW"
+    },
+    "active_power_c": {
+      "address": 3057,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power C",
+      "unit": "kW"
+    },
+    "active_power_total": {
+      "address": 3059,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power total",
+      "unit": "kW"
+    },
+    "reactive_power_a": {
+      "address": 3061,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power A",
+      "unit": "kVAR"
+    },
+    "reactive_power_b": {
+      "address": 3063,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power B",
+      "unit": "kVAR"
+    },
+    "reactive_power_c": {
+      "address": 3065,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power C",
+      "unit": "kVAR"
+    },
+    "reactive_power_total": {
+      "address": 3067,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power total",
+      "unit": "kVAR"
+    },
+    "apparent_power_a": {
+      "address": 3069,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power A",
+      "unit": "kVA"
+    },
+    "apparent_power_b": {
+      "address": 3071,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power B",
+      "unit": "kVA"
+    },
+    "apparent_power_c": {
+      "address": 3073,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power C",
+      "unit": "kVA"
+    },
+    "apparent_power_total": {
+      "address": 3075,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power total",
+      "unit": "kVA"
+    }
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "protocol": "rip",
+  "display_filter": "rip",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:55:55.563067+00:00",
+  "dissector_fields": {
+    "total": 18,
+    "by_type": {
+      "FT_BYTES": 1,
+      "FT_IPv4": 3,
+      "FT_NONE": 1,
+      "FT_STRING": 2,
+      "FT_UINT16": 6,
+      "FT_UINT32": 1,
+      "FT_UINT8": 4
+    },
+    "fields": [
+      {
+        "name": "rip.command",
+        "type": "FT_UINT8",
+        "description": "What type of RIP Command is this"
+      },
+      {
+        "name": "rip.version",
+        "type": "FT_UINT8",
+        "description": "Version of the RIP protocol"
+      },
+      {
+        "name": "rip.routing_domain",
+        "type": "FT_UINT16",
+        "description": "RIPv2 Routing Domain"
+      },
+      {
+        "name": "rip.ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "rip.netmask",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "rip.next_hop",
+        "type": "FT_IPv4",
+        "description": "Next Hop router for this route"
+      },
+      {
+        "name": "rip.metric",
+        "type": "FT_UINT16",
+        "description": "Metric for this route"
+      },
+      {
+        "name": "rip.auth.type",
+        "type": "FT_UINT16",
+        "description": "Type of authentication"
+      },
+      {
+        "name": "rip.auth.passwd",
+        "type": "FT_STRING",
+        "description": "Authentication password"
+      },
+      {
+        "name": "rip.family",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "rip.route_tag",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "rip.zero_padding",
+        "type": "FT_STRING",
+        "description": "Authentication password"
+      },
+      {
+        "name": "rip.digest_offset",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "rip.key_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rip.auth_data_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rip.seq_num",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "rip.authentication_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "rip.unknown_address_family",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 9,
+    "by_pcap": {
+      "generated_rip.pcap": [
+        "rip_rip_command",
+        "rip_rip_family",
+        "rip_rip_ip",
+        "rip_rip_metric",
+        "rip_rip_netmask",
+        "rip_rip_next_hop",
+        "rip_rip_route_tag",
+        "rip_rip_version",
+        "text"
+      ],
+      "wireshark_rip_v1.pcap": [
+        "rip_rip_command",
+        "rip_rip_family",
+        "rip_rip_ip",
+        "rip_rip_metric",
+        "rip_rip_version",
+        "text"
+      ]
+    },
+    "union": [
+      "rip_rip_command",
+      "rip_rip_family",
+      "rip_rip_ip",
+      "rip_rip_metric",
+      "rip_rip_netmask",
+      "rip_rip_next_hop",
+      "rip_rip_route_tag",
+      "rip_rip_version",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 10,
+    "fields": [
+      "auth_passwd",
+      "auth_type",
+      "authentication_data",
+      "command",
+      "ip",
+      "metric",
+      "netmask",
+      "next_hop",
+      "route_tag",
+      "version"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "8/18 (44%)",
+    "pcap_vs_extracted": "10/8 (125%)",
+    "t1_extracted": "5/2 (250%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "rip_rip_family",
+        "field": "rip.family",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "generated_rip.pcap",
+          "wireshark_rip_v1.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 8,
+      "t1_in_pcap": 2,
+      "t1_covered": 5,
+      "t2_total": 9,
+      "t2_in_pcap": 6,
+      "t2_covered": 5,
+      "t3_skipped": 1,
+      "t4_ignored": 0
+    }
+  }
+}

@@ -1,0 +1,2243 @@
+{
+  "vendor": "Huawei",
+  "model": "SUN2000",
+  "description": "Huawei SUN2000 solar inverters with LUNA2000 battery, EMMA, SDongle, and SmartLogger support",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Comprehensive register map from huawei-solar-lib. Large address space starting at 30000. Values use gain factors (divide raw value by gain). Supports up to 24 PV strings. Update rate ~5s.",
+  "source": "https://github.com/wlcrs/huawei-solar-lib",
+  "registers": {
+    "model_name": {
+      "address": 30000,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Device model name"
+    },
+    "serial_number": {
+      "address": 30015,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Device serial number"
+    },
+    "pn": {
+      "address": 30025,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Part number"
+    },
+    "firmware_version": {
+      "address": 30035,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Firmware version"
+    },
+    "software_version": {
+      "address": 30050,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Software version"
+    },
+    "protocol_version_modbus": {
+      "address": 30068,
+      "type": "u32",
+      "access": "r",
+      "description": "Modbus protocol version"
+    },
+    "model_id": {
+      "address": 30070,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID code"
+    },
+    "nb_pv_strings": {
+      "address": 30071,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of PV string inputs"
+    },
+    "nb_mpp_tracks": {
+      "address": 30072,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of MPP trackers"
+    },
+    "rated_power": {
+      "address": 30073,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Rated power"
+    },
+    "p_max": {
+      "address": 30075,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Maximum active power"
+    },
+    "s_max": {
+      "address": 30077,
+      "type": "u32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Maximum apparent power"
+    },
+    "q_max_out": {
+      "address": 30079,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "Maximum output reactive power"
+    },
+    "q_max_in": {
+      "address": 30081,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "Maximum input reactive power"
+    },
+    "p_max_real": {
+      "address": 30083,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Real maximum active power"
+    },
+    "s_max_real": {
+      "address": 30085,
+      "type": "u32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Real maximum apparent power"
+    },
+    "product_sales_area": {
+      "address": 30105,
+      "type": "string",
+      "length": 2,
+      "access": "r",
+      "description": "Product sales area code"
+    },
+    "product_software_number": {
+      "address": 30107,
+      "type": "u16",
+      "access": "r",
+      "description": "Product software number"
+    },
+    "product_software_version_number": {
+      "address": 30108,
+      "type": "u16",
+      "access": "r",
+      "description": "Product software version number"
+    },
+    "grid_standard_code_protocol_version": {
+      "address": 30109,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid standard code protocol version"
+    },
+    "unique_id_of_the_software": {
+      "address": 30110,
+      "type": "u16",
+      "access": "r",
+      "description": "Unique ID of the software"
+    },
+    "number_of_packages_to_be_upgraded": {
+      "address": 30111,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of packages to be upgraded"
+    },
+    "hardware_functional_unit_conf_id": {
+      "address": 30206,
+      "type": "u16",
+      "access": "r",
+      "description": "Hardware functional unit configuration ID"
+    },
+    "subdevice_support_flag": {
+      "address": 30207,
+      "type": "u32",
+      "access": "r",
+      "description": "Subdevice support flag"
+    },
+    "subdevice_in_position_flag": {
+      "address": 30209,
+      "type": "u32",
+      "access": "r",
+      "description": "Subdevice in position flag"
+    },
+    "feature_mask_1": {
+      "address": 30211,
+      "type": "u32",
+      "access": "r",
+      "description": "Feature mask 1"
+    },
+    "feature_mask_2": {
+      "address": 30213,
+      "type": "u32",
+      "access": "r",
+      "description": "Feature mask 2"
+    },
+    "feature_mask_3": {
+      "address": 30215,
+      "type": "u32",
+      "access": "r",
+      "description": "Feature mask 3"
+    },
+    "feature_mask_4": {
+      "address": 30217,
+      "type": "u32",
+      "access": "r",
+      "description": "Feature mask 4"
+    },
+    "realtime_max_active_capability": {
+      "address": 30366,
+      "type": "i32",
+      "access": "r",
+      "description": "Realtime maximum active capability"
+    },
+    "realtime_max_inductive_reactive_capacity": {
+      "address": 30368,
+      "type": "i32",
+      "access": "r",
+      "description": "Realtime maximum inductive reactive capacity"
+    },
+    "offering_name_of_southbound_device_1": {
+      "address": 30561,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Offering name of southbound device 1"
+    },
+    "offering_name_of_southbound_device_2": {
+      "address": 30576,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Offering name of southbound device 2"
+    },
+    "offering_name_of_southbound_device_3": {
+      "address": 30591,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Offering name of southbound device 3"
+    },
+    "hardware_version": {
+      "address": 31000,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Hardware version"
+    },
+    "monitoring_board_sn": {
+      "address": 31015,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Monitoring board serial number"
+    },
+    "monitoring_software_version": {
+      "address": 31025,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Monitoring software version"
+    },
+    "master_dsp_version": {
+      "address": 31040,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Master DSP version"
+    },
+    "slave_dsp_version": {
+      "address": 31055,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Slave DSP version"
+    },
+    "cpld_version": {
+      "address": 31070,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "CPLD version"
+    },
+    "afci_version": {
+      "address": 31085,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "AFCI version"
+    },
+    "builtin_pid_version": {
+      "address": 31100,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Built-in PID version"
+    },
+    "dc_mbus_version": {
+      "address": 31115,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "DC MBUS version"
+    },
+    "el_module_version": {
+      "address": 31130,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "EL module version"
+    },
+    "afci_2_version": {
+      "address": 31145,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "AFCI 2 version"
+    },
+    "regkey": {
+      "address": 31200,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Registration key"
+    },
+    "state_1": {
+      "address": 32000,
+      "type": "u16",
+      "access": "r",
+      "description": "State bitfield 1"
+    },
+    "state_2": {
+      "address": 32002,
+      "type": "u16",
+      "access": "r",
+      "description": "State bitfield 2"
+    },
+    "state_3": {
+      "address": 32003,
+      "type": "u32",
+      "access": "r",
+      "description": "State bitfield 3"
+    },
+    "alarm_1": {
+      "address": 32008,
+      "type": "u16",
+      "access": "r",
+      "description": "Alarm bitfield 1"
+    },
+    "alarm_2": {
+      "address": 32009,
+      "type": "u16",
+      "access": "r",
+      "description": "Alarm bitfield 2"
+    },
+    "alarm_3": {
+      "address": 32010,
+      "type": "u16",
+      "access": "r",
+      "description": "Alarm bitfield 3"
+    },
+    "pv_01_voltage": {
+      "address": 32016,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 1 voltage"
+    },
+    "pv_01_current": {
+      "address": 32017,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 1 current"
+    },
+    "pv_02_voltage": {
+      "address": 32018,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 2 voltage"
+    },
+    "pv_02_current": {
+      "address": 32019,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 2 current"
+    },
+    "pv_03_voltage": {
+      "address": 32020,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 3 voltage"
+    },
+    "pv_03_current": {
+      "address": 32021,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 3 current"
+    },
+    "pv_04_voltage": {
+      "address": 32022,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 4 voltage"
+    },
+    "pv_04_current": {
+      "address": 32023,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 4 current"
+    },
+    "pv_05_voltage": {
+      "address": 32024,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 5 voltage"
+    },
+    "pv_05_current": {
+      "address": 32025,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 5 current"
+    },
+    "pv_06_voltage": {
+      "address": 32026,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 6 voltage"
+    },
+    "pv_06_current": {
+      "address": 32027,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 6 current"
+    },
+    "pv_07_voltage": {
+      "address": 32028,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 7 voltage"
+    },
+    "pv_07_current": {
+      "address": 32029,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 7 current"
+    },
+    "pv_08_voltage": {
+      "address": 32030,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 8 voltage"
+    },
+    "pv_08_current": {
+      "address": 32031,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 8 current"
+    },
+    "pv_09_voltage": {
+      "address": 32032,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 9 voltage"
+    },
+    "pv_09_current": {
+      "address": 32033,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 9 current"
+    },
+    "pv_10_voltage": {
+      "address": 32034,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 10 voltage"
+    },
+    "pv_10_current": {
+      "address": 32035,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 10 current"
+    },
+    "pv_11_voltage": {
+      "address": 32036,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 11 voltage"
+    },
+    "pv_11_current": {
+      "address": 32037,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 11 current"
+    },
+    "pv_12_voltage": {
+      "address": 32038,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 12 voltage"
+    },
+    "pv_12_current": {
+      "address": 32039,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 12 current"
+    },
+    "pv_13_voltage": {
+      "address": 32040,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 13 voltage"
+    },
+    "pv_13_current": {
+      "address": 32041,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 13 current"
+    },
+    "pv_14_voltage": {
+      "address": 32042,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 14 voltage"
+    },
+    "pv_14_current": {
+      "address": 32043,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 14 current"
+    },
+    "pv_15_voltage": {
+      "address": 32044,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 15 voltage"
+    },
+    "pv_15_current": {
+      "address": 32045,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 15 current"
+    },
+    "pv_16_voltage": {
+      "address": 32046,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 16 voltage"
+    },
+    "pv_16_current": {
+      "address": 32047,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 16 current"
+    },
+    "pv_17_voltage": {
+      "address": 32048,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 17 voltage"
+    },
+    "pv_17_current": {
+      "address": 32049,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 17 current"
+    },
+    "pv_18_voltage": {
+      "address": 32050,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 18 voltage"
+    },
+    "pv_18_current": {
+      "address": 32051,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 18 current"
+    },
+    "pv_19_voltage": {
+      "address": 32052,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 19 voltage"
+    },
+    "pv_19_current": {
+      "address": 32053,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 19 current"
+    },
+    "pv_20_voltage": {
+      "address": 32054,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 20 voltage"
+    },
+    "pv_20_current": {
+      "address": 32055,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 20 current"
+    },
+    "pv_21_voltage": {
+      "address": 32056,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 21 voltage"
+    },
+    "pv_21_current": {
+      "address": 32057,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 21 current"
+    },
+    "pv_22_voltage": {
+      "address": 32058,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 22 voltage"
+    },
+    "pv_22_current": {
+      "address": 32059,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 22 current"
+    },
+    "pv_23_voltage": {
+      "address": 32060,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 23 voltage"
+    },
+    "pv_23_current": {
+      "address": 32061,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 23 current"
+    },
+    "pv_24_voltage": {
+      "address": 32062,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV string 24 voltage"
+    },
+    "pv_24_current": {
+      "address": 32063,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "PV string 24 current"
+    },
+    "input_power": {
+      "address": 32064,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total DC input power"
+    },
+    "line_voltage_a_b": {
+      "address": 32066,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Line voltage A-B"
+    },
+    "line_voltage_b_c": {
+      "address": 32067,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Line voltage B-C"
+    },
+    "line_voltage_c_a": {
+      "address": 32068,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Line voltage C-A"
+    },
+    "phase_a_voltage": {
+      "address": 32069,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase A voltage"
+    },
+    "phase_b_voltage": {
+      "address": 32070,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase B voltage"
+    },
+    "phase_c_voltage": {
+      "address": 32071,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase C voltage"
+    },
+    "phase_a_current": {
+      "address": 32072,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase A current"
+    },
+    "phase_b_current": {
+      "address": 32074,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase B current"
+    },
+    "phase_c_current": {
+      "address": 32076,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase C current"
+    },
+    "day_active_power_peak": {
+      "address": 32078,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Peak active power of current day"
+    },
+    "active_power": {
+      "address": 32080,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active power output"
+    },
+    "reactive_power": {
+      "address": 32082,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "Reactive power output"
+    },
+    "power_factor": {
+      "address": 32084,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power factor"
+    },
+    "grid_frequency": {
+      "address": 32085,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Grid frequency"
+    },
+    "efficiency": {
+      "address": 32086,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.01,
+      "description": "Inverter efficiency"
+    },
+    "internal_temperature": {
+      "address": 32087,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Internal temperature"
+    },
+    "insulation_resistance": {
+      "address": 32088,
+      "type": "u16",
+      "access": "r",
+      "unit": "MOhm",
+      "scale": 0.001,
+      "description": "Insulation resistance to ground"
+    },
+    "device_status": {
+      "address": 32089,
+      "type": "u16",
+      "access": "r",
+      "description": "Device status",
+      "enum": {
+        "0": "STANDBY_INIT",
+        "1": "STANDBY_INSULATION",
+        "2": "STANDBY_IRRADIATION",
+        "3": "STANDBY_GRID_DETECTING",
+        "256": "STARTING",
+        "512": "ON_GRID",
+        "513": "GRID_CONNECTED_POWER_LIMITED",
+        "514": "GRID_CONNECTED_SELF_DERATING",
+        "515": "OFF_GRID_RUNNING",
+        "768": "SHUTDOWN_UNEXPECTED",
+        "769": "SHUTDOWN_COMMANDED",
+        "1025": "GRID_SCHEDULING",
+        "1280": "SPOT_CHECK_READY",
+        "1281": "SPOT_CHECKING",
+        "1536": "INSPECTING",
+        "1792": "AFCI_SELF_CHECK",
+        "2048": "IV_SCANNING",
+        "2304": "DC_INPUT_DETECTION",
+        "40960": "STANDBY_NO_IRRADIATION"
+      }
+    },
+    "fault_code": {
+      "address": 32090,
+      "type": "u16",
+      "access": "r",
+      "description": "Fault code (0 = no fault)"
+    },
+    "startup_time": {
+      "address": 32091,
+      "type": "u32",
+      "access": "r",
+      "description": "Startup time (Unix timestamp)"
+    },
+    "shutdown_time": {
+      "address": 32093,
+      "type": "u32",
+      "access": "r",
+      "description": "Shutdown time (Unix timestamp)"
+    },
+    "active_power_fast": {
+      "address": 32095,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active power (fast update)"
+    },
+    "accumulated_yield_energy": {
+      "address": 32106,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Accumulated energy yield"
+    },
+    "total_dc_input_power": {
+      "address": 32108,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total DC input power accumulated"
+    },
+    "current_electricity_generation_statistics_time": {
+      "address": 32110,
+      "type": "u32",
+      "access": "r",
+      "description": "Current electricity generation statistics time (Unix timestamp)"
+    },
+    "hourly_yield_energy": {
+      "address": 32112,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Hourly energy yield"
+    },
+    "daily_yield_energy": {
+      "address": 32114,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Daily energy yield"
+    },
+    "monthly_yield_energy": {
+      "address": 32116,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Monthly energy yield"
+    },
+    "yearly_yield_energy": {
+      "address": 32118,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Yearly energy yield"
+    },
+    "latest_active_alarm_sn": {
+      "address": 32172,
+      "type": "u32",
+      "access": "r",
+      "description": "Latest active alarm serial number"
+    },
+    "latest_historical_alarm_sn": {
+      "address": 32174,
+      "type": "u32",
+      "access": "r",
+      "description": "Latest historical alarm serial number"
+    },
+    "total_bus_voltage": {
+      "address": 32176,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Total bus voltage"
+    },
+    "max_pv_voltage": {
+      "address": 32177,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Maximum PV voltage"
+    },
+    "min_pv_voltage": {
+      "address": 32178,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Minimum PV voltage"
+    },
+    "average_pv_negative_voltage_to_ground": {
+      "address": 32179,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Average PV negative voltage to ground"
+    },
+    "min_pv_negative_voltage_to_ground": {
+      "address": 32180,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Minimum PV negative voltage to ground"
+    },
+    "max_pv_negative_voltage_to_ground": {
+      "address": 32181,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Maximum PV negative voltage to ground"
+    },
+    "inverter_to_pe_voltage_tolerance": {
+      "address": 32182,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "description": "Inverter to PE voltage tolerance"
+    },
+    "iso_feature_information": {
+      "address": 32183,
+      "type": "u16",
+      "access": "r",
+      "description": "ISO feature information"
+    },
+    "builtin_pid_running_status": {
+      "address": 32190,
+      "type": "u16",
+      "access": "r",
+      "description": "Built-in PID running status"
+    },
+    "pv_negative_voltage_to_ground": {
+      "address": 32191,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV negative voltage to ground"
+    },
+    "cumulative_dc_energy_yield_mppt1": {
+      "address": 32212,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT1"
+    },
+    "cumulative_dc_energy_yield_mppt2": {
+      "address": 32214,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT2"
+    },
+    "cumulative_dc_energy_yield_mppt3": {
+      "address": 32216,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT3"
+    },
+    "cumulative_dc_energy_yield_mppt4": {
+      "address": 32218,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT4"
+    },
+    "cumulative_dc_energy_yield_mppt5": {
+      "address": 32220,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT5"
+    },
+    "cumulative_dc_energy_yield_mppt6": {
+      "address": 32222,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT6"
+    },
+    "cumulative_dc_energy_yield_mppt7": {
+      "address": 32224,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT7"
+    },
+    "cumulative_dc_energy_yield_mppt8": {
+      "address": 32226,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT8"
+    },
+    "cumulative_dc_energy_yield_mppt9": {
+      "address": 32228,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT9"
+    },
+    "cumulative_dc_energy_yield_mppt10": {
+      "address": 32230,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Cumulative DC energy yield MPPT10"
+    },
+    "capbank_running_time": {
+      "address": 35000,
+      "type": "u32",
+      "access": "r",
+      "unit": "hour",
+      "scale": 0.1,
+      "description": "Capacitor bank running time (SUN2000MA only)"
+    },
+    "internal_fan_1_running_time": {
+      "address": 35002,
+      "type": "u32",
+      "access": "r",
+      "unit": "hour",
+      "scale": 0.1,
+      "description": "Internal fan 1 running time (SUN2000MA only)"
+    },
+    "inv_module_a_temp": {
+      "address": 35021,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Inverter module A temperature (SUN2000MA only)"
+    },
+    "inv_module_b_temp": {
+      "address": 35022,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Inverter module B temperature (SUN2000MA only)"
+    },
+    "inv_module_c_temp": {
+      "address": 35023,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Inverter module C temperature (SUN2000MA only)"
+    },
+    "anti_reverse_module_1_temp": {
+      "address": 35024,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Anti-reverse module 1 temperature (SUN2000MA only)"
+    },
+    "output_board_relay_ambient_temp_max": {
+      "address": 35025,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Output board relay ambient temperature max (SUN2000MA only)"
+    },
+    "anti_reverse_module_2_temp": {
+      "address": 35027,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Anti-reverse module 2 temperature (SUN2000MA only)"
+    },
+    "dc_terminal_1_2_max_temp": {
+      "address": 35028,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "DC terminal 1/2 max temperature (SUN2000MA only)"
+    },
+    "ac_terminal_1_2_3_max_temp": {
+      "address": 35029,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "AC terminal 1/2/3 max temperature (SUN2000MA only)"
+    },
+    "phase_a_dc_component_dci": {
+      "address": 35038,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase A DC component DCI (SUN2000MA only)"
+    },
+    "phase_b_dc_component_dci": {
+      "address": 35039,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase B DC component DCI (SUN2000MA only)"
+    },
+    "phase_c_dc_component_dci": {
+      "address": 35040,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase C DC component DCI (SUN2000MA only)"
+    },
+    "leakage_current_rcd": {
+      "address": 35041,
+      "type": "i16",
+      "access": "r",
+      "unit": "mA",
+      "description": "Leakage current RCD (SUN2000MA only)"
+    },
+    "positive_bus_voltage": {
+      "address": 35042,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Positive bus voltage (SUN2000MA only)"
+    },
+    "negative_bus_voltage": {
+      "address": 35043,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Negative bus voltage (SUN2000MA only)"
+    },
+    "bus_negative_voltage_to_ground": {
+      "address": 35044,
+      "type": "i16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Bus negative voltage to ground (SUN2000MA only)"
+    },
+    "active_power_adjustment_mode": {
+      "address": 35300,
+      "type": "u16",
+      "access": "r",
+      "description": "Active power adjustment mode"
+    },
+    "active_power_adjustment_value": {
+      "address": 35301,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power adjustment value"
+    },
+    "active_power_adjustment_command": {
+      "address": 35303,
+      "type": "u16",
+      "access": "r",
+      "description": "Active power adjustment command"
+    },
+    "nb_optimizers": {
+      "address": 37200,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of optimizers"
+    },
+    "nb_online_optimizers": {
+      "address": 37201,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of online optimizers"
+    },
+    "storage_unit_1_running_status": {
+      "address": 37000,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 running status"
+    },
+    "storage_unit_1_charge_discharge_power": {
+      "address": 37001,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage unit 1 charge/discharge power (positive=charge)"
+    },
+    "storage_unit_1_bus_voltage": {
+      "address": 37003,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Storage unit 1 bus voltage"
+    },
+    "storage_unit_1_state_of_capacity": {
+      "address": 37004,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage unit 1 state of capacity (SOC)"
+    },
+    "storage_unit_1_working_mode_b": {
+      "address": 37006,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 working mode B"
+    },
+    "storage_unit_1_rated_charge_power": {
+      "address": 37007,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage unit 1 rated charge power"
+    },
+    "storage_unit_1_rated_discharge_power": {
+      "address": 37009,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage unit 1 rated discharge power"
+    },
+    "storage_unit_1_fault_id": {
+      "address": 37014,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 fault ID"
+    },
+    "storage_unit_1_current_day_charge_capacity": {
+      "address": 37015,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 1 current day charge capacity"
+    },
+    "storage_unit_1_current_day_discharge_capacity": {
+      "address": 37017,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 1 current day discharge capacity"
+    },
+    "storage_unit_1_bus_current": {
+      "address": 37021,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Storage unit 1 bus current"
+    },
+    "storage_unit_1_battery_temperature": {
+      "address": 37022,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Storage unit 1 battery temperature"
+    },
+    "storage_unit_1_remaining_charge_dis_charge_time": {
+      "address": 37025,
+      "type": "u16",
+      "access": "r",
+      "unit": "min",
+      "description": "Storage unit 1 remaining charge/discharge time"
+    },
+    "storage_unit_1_dcdc_version": {
+      "address": 37026,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Storage unit 1 DCDC version"
+    },
+    "storage_unit_1_bms_version": {
+      "address": 37036,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Storage unit 1 BMS version"
+    },
+    "storage_maximum_charge_power": {
+      "address": 37046,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage maximum charge power"
+    },
+    "storage_maximum_discharge_power": {
+      "address": 37048,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage maximum discharge power"
+    },
+    "storage_unit_1_serial_number": {
+      "address": 37052,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Storage unit 1 serial number"
+    },
+    "storage_unit_1_total_charge": {
+      "address": 37066,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 1 total charge"
+    },
+    "storage_unit_1_total_discharge": {
+      "address": 37068,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 1 total discharge"
+    },
+    "meter_status": {
+      "address": 37100,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter status"
+    },
+    "grid_a_voltage": {
+      "address": 37101,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid A voltage"
+    },
+    "grid_b_voltage": {
+      "address": 37103,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid B voltage"
+    },
+    "grid_c_voltage": {
+      "address": 37105,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid C voltage"
+    },
+    "active_grid_a_current": {
+      "address": 37107,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Active grid A current"
+    },
+    "active_grid_b_current": {
+      "address": 37109,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Active grid B current"
+    },
+    "active_grid_c_current": {
+      "address": 37111,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Active grid C current"
+    },
+    "power_meter_active_power": {
+      "address": 37113,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Power meter active power"
+    },
+    "power_meter_reactive_power": {
+      "address": 37115,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "Power meter reactive power"
+    },
+    "active_grid_power_factor": {
+      "address": 37117,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Active grid power factor"
+    },
+    "active_grid_frequency": {
+      "address": 37118,
+      "type": "i16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Active grid frequency"
+    },
+    "grid_exported_energy": {
+      "address": 37119,
+      "type": "i32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Grid exported energy (absolute value)"
+    },
+    "grid_accumulated_energy": {
+      "address": 37121,
+      "type": "i32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Grid accumulated energy"
+    },
+    "grid_accumulated_reactive_power": {
+      "address": 37123,
+      "type": "i32",
+      "access": "r",
+      "unit": "kvarh",
+      "scale": 0.01,
+      "description": "Grid accumulated reactive power"
+    },
+    "meter_type": {
+      "address": 37125,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter type"
+    },
+    "active_grid_a_b_voltage": {
+      "address": 37126,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Active grid A-B voltage"
+    },
+    "active_grid_b_c_voltage": {
+      "address": 37128,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Active grid B-C voltage"
+    },
+    "active_grid_c_a_voltage": {
+      "address": 37130,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Active grid C-A voltage"
+    },
+    "active_grid_a_power": {
+      "address": 37132,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active grid A power"
+    },
+    "active_grid_b_power": {
+      "address": 37134,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active grid B power"
+    },
+    "active_grid_c_power": {
+      "address": 37136,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active grid C power"
+    },
+    "meter_type_check": {
+      "address": 37138,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter type check"
+    },
+    "storage_unit_2_serial_number": {
+      "address": 37700,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Storage unit 2 serial number"
+    },
+    "storage_unit_2_state_of_capacity": {
+      "address": 37738,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage unit 2 state of capacity (SOC)"
+    },
+    "storage_unit_2_running_status": {
+      "address": 37741,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 2 running status"
+    },
+    "storage_unit_2_charge_discharge_power": {
+      "address": 37743,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage unit 2 charge/discharge power"
+    },
+    "storage_unit_2_current_day_charge_capacity": {
+      "address": 37746,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 2 current day charge capacity"
+    },
+    "storage_unit_2_current_day_discharge_capacity": {
+      "address": 37748,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 2 current day discharge capacity"
+    },
+    "storage_unit_2_bus_voltage": {
+      "address": 37750,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Storage unit 2 bus voltage"
+    },
+    "storage_unit_2_bus_current": {
+      "address": 37751,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Storage unit 2 bus current"
+    },
+    "storage_unit_2_battery_temperature": {
+      "address": 37752,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Storage unit 2 battery temperature"
+    },
+    "storage_unit_2_total_charge": {
+      "address": 37753,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 2 total charge"
+    },
+    "storage_unit_2_total_discharge": {
+      "address": 37755,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage unit 2 total discharge"
+    },
+    "storage_rated_capacity": {
+      "address": 37758,
+      "type": "u32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Storage rated capacity"
+    },
+    "storage_state_of_capacity": {
+      "address": 37760,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage state of capacity (SOC)"
+    },
+    "storage_running_status": {
+      "address": 37762,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage running status"
+    },
+    "storage_bus_voltage": {
+      "address": 37763,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Storage bus voltage"
+    },
+    "storage_bus_current": {
+      "address": 37764,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Storage bus current"
+    },
+    "storage_charge_discharge_power": {
+      "address": 37765,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage charge/discharge power"
+    },
+    "storage_total_charge": {
+      "address": 37780,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage total charge"
+    },
+    "storage_total_discharge": {
+      "address": 37782,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage total discharge"
+    },
+    "storage_current_day_charge_capacity": {
+      "address": 37784,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage current day charge capacity"
+    },
+    "storage_current_day_discharge_capacity": {
+      "address": 37786,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Storage current day discharge capacity"
+    },
+    "storage_unit_2_software_version": {
+      "address": 37799,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Storage unit 2 software version"
+    },
+    "storage_unit_1_software_version": {
+      "address": 37814,
+      "type": "string",
+      "length": 15,
+      "access": "r",
+      "description": "Storage unit 1 software version"
+    },
+    "system_time": {
+      "address": 40000,
+      "type": "u32",
+      "access": "r",
+      "description": "System time (Unix timestamp)"
+    },
+    "q_u_characteristic_curve_model": {
+      "address": 40037,
+      "type": "u16",
+      "access": "rw",
+      "description": "Q-U characteristic curve model"
+    },
+    "q_u_scheduling_trigger_power_percentage": {
+      "address": 40038,
+      "type": "i16",
+      "access": "rw",
+      "description": "Q-U scheduling trigger power percentage"
+    },
+    "power_factor_2": {
+      "address": 40122,
+      "type": "i16",
+      "access": "rw",
+      "scale": 0.001,
+      "description": "Power factor setting"
+    },
+    "reactive_power_compensation": {
+      "address": 40123,
+      "type": "i16",
+      "access": "rw",
+      "scale": 0.001,
+      "description": "Reactive power compensation"
+    },
+    "reactive_power_adjustment_time": {
+      "address": 40124,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Reactive power adjustment time"
+    },
+    "active_power_percentage_derating": {
+      "address": 40125,
+      "type": "i16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Active power percentage derating"
+    },
+    "active_power_fixed_value_derating": {
+      "address": 40126,
+      "type": "u32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Active power fixed value derating"
+    },
+    "reactive_power_compensation_at_night": {
+      "address": 40128,
+      "type": "i16",
+      "access": "rw",
+      "scale": 0.001,
+      "description": "Reactive power compensation at night"
+    },
+    "fixed_reactive_power_at_night": {
+      "address": 40129,
+      "type": "i32",
+      "access": "rw",
+      "unit": "var",
+      "description": "Fixed reactive power at night"
+    },
+    "characteristic_curve_reactive_power_adjustment_time": {
+      "address": 40196,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Characteristic curve reactive power adjustment time"
+    },
+    "percent_apparent_power": {
+      "address": 40197,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Percent apparent power"
+    },
+    "q_u_scheduling_exit_power_percentage": {
+      "address": 40198,
+      "type": "i16",
+      "access": "rw",
+      "unit": "%",
+      "description": "Q-U scheduling exit power percentage"
+    },
+    "startup": {
+      "address": 40200,
+      "type": "u16",
+      "access": "w",
+      "description": "Startup command"
+    },
+    "shutdown": {
+      "address": 40201,
+      "type": "u16",
+      "access": "w",
+      "description": "Shutdown command"
+    },
+    "grid_code": {
+      "address": 42000,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid code"
+    },
+    "mppt_multimodal_scanning": {
+      "address": 42054,
+      "type": "u16",
+      "access": "rw",
+      "description": "MPPT multimodal scanning enable"
+    },
+    "mppt_scanning_interval": {
+      "address": 42055,
+      "type": "u16",
+      "access": "rw",
+      "unit": "min",
+      "description": "MPPT scanning interval"
+    },
+    "mppt_predicted_power": {
+      "address": 42056,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "MPPT predicted power"
+    },
+    "maximum_active_power": {
+      "address": 42178,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Maximum active power"
+    },
+    "daylight_saving_time": {
+      "address": 42900,
+      "type": "u16",
+      "access": "rw",
+      "description": "Daylight saving time enable"
+    },
+    "time_zone": {
+      "address": 43006,
+      "type": "i16",
+      "access": "rw",
+      "unit": "min",
+      "description": "Time zone offset in minutes"
+    },
+    "wlan_wakeup": {
+      "address": 45052,
+      "type": "i16",
+      "access": "rw",
+      "description": "WLAN wakeup"
+    },
+    "storage_unit_1_product_model": {
+      "address": 47000,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 product model"
+    },
+    "storage_working_mode_a": {
+      "address": 47004,
+      "type": "i16",
+      "access": "r",
+      "description": "Storage working mode A"
+    },
+    "storage_time_of_use_price": {
+      "address": 47027,
+      "type": "i16",
+      "access": "r",
+      "description": "Storage time of use price enable"
+    },
+    "storage_lcoe": {
+      "address": 47069,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Storage LCOE"
+    },
+    "storage_maximum_charging_power": {
+      "address": 47075,
+      "type": "u32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Storage maximum charging power"
+    },
+    "storage_maximum_discharging_power": {
+      "address": 47077,
+      "type": "u32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Storage maximum discharging power"
+    },
+    "storage_power_limit_grid_tied_point": {
+      "address": 47079,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage power limit grid tied point"
+    },
+    "storage_charging_cutoff_capacity": {
+      "address": 47081,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage charging cutoff capacity"
+    },
+    "storage_discharging_cutoff_capacity": {
+      "address": 47082,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage discharging cutoff capacity"
+    },
+    "storage_forced_charging_and_discharging_period": {
+      "address": 47083,
+      "type": "u16",
+      "access": "rw",
+      "unit": "min",
+      "description": "Storage forced charging and discharging period"
+    },
+    "storage_forced_charging_and_discharging_power": {
+      "address": 47084,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Storage forced charging and discharging power"
+    },
+    "storage_working_mode_settings": {
+      "address": 47086,
+      "type": "u16",
+      "access": "rw",
+      "description": "Storage working mode settings"
+    },
+    "storage_charge_from_grid_function": {
+      "address": 47087,
+      "type": "u16",
+      "access": "rw",
+      "description": "Storage charge from grid function enable"
+    },
+    "storage_grid_charge_cutoff_state_of_charge": {
+      "address": 47088,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage grid charge cutoff state of charge"
+    },
+    "storage_unit_2_product_model": {
+      "address": 47089,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 2 product model"
+    },
+    "storage_forcible_charge_discharge_write": {
+      "address": 47100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Storage forcible charge/discharge write"
+    },
+    "storage_forcible_charge_discharge_soc": {
+      "address": 47101,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage forcible charge/discharge SOC"
+    },
+    "storage_backup_power_state_of_charge": {
+      "address": 47102,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage backup power state of charge"
+    },
+    "storage_unit_1_no": {
+      "address": 47107,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 number"
+    },
+    "storage_unit_2_no": {
+      "address": 47108,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 2 number"
+    },
+    "storage_power_of_charge_from_grid": {
+      "address": 47242,
+      "type": "u32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Storage power of charge from grid"
+    },
+    "storage_maximum_power_of_charge_from_grid": {
+      "address": 47244,
+      "type": "u32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Storage maximum power of charge from grid"
+    },
+    "storage_forcible_charge_discharge_setting_mode": {
+      "address": 47246,
+      "type": "u16",
+      "access": "rw",
+      "description": "Storage forcible charge/discharge setting mode"
+    },
+    "storage_forcible_charge_power": {
+      "address": 47247,
+      "type": "u32",
+      "access": "rw",
+      "description": "Storage forcible charge power"
+    },
+    "storage_forcible_discharge_power": {
+      "address": 47249,
+      "type": "u32",
+      "access": "rw",
+      "description": "Storage forcible discharge power"
+    },
+    "storage_excess_pv_energy_use_in_tou": {
+      "address": 47299,
+      "type": "u16",
+      "access": "rw",
+      "description": "Storage excess PV energy use in TOU"
+    },
+    "active_power_control_mode": {
+      "address": 47415,
+      "type": "u16",
+      "access": "rw",
+      "description": "Active power control mode"
+    },
+    "maximum_feed_grid_power_watt": {
+      "address": 47416,
+      "type": "i32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Maximum feed grid power in watts"
+    },
+    "maximum_feed_grid_power_percent": {
+      "address": 47418,
+      "type": "i16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Maximum feed grid power in percent"
+    },
+    "remote_charge_discharge_control_mode": {
+      "address": 47589,
+      "type": "i16",
+      "access": "rw",
+      "description": "Remote charge/discharge control mode"
+    },
+    "dongle_plant_maximum_charge_from_grid_power": {
+      "address": 47590,
+      "type": "u32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Dongle plant maximum charge from grid power"
+    },
+    "backup_switch_to_off_grid": {
+      "address": 47604,
+      "type": "u16",
+      "access": "rw",
+      "description": "Backup switch to off-grid"
+    },
+    "backup_voltage_independent_operation": {
+      "address": 47605,
+      "type": "u16",
+      "access": "rw",
+      "description": "Backup voltage independent operation"
+    },
+    "default_maximum_feed_in_power": {
+      "address": 47675,
+      "type": "i32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Default maximum feed-in power"
+    },
+    "default_active_power_change_gradient": {
+      "address": 47677,
+      "type": "u32",
+      "access": "r",
+      "unit": "%/s",
+      "scale": 0.001,
+      "description": "Default active power change gradient"
+    },
+    "storage_unit_1_pack_1_no": {
+      "address": 47750,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 pack 1 number"
+    },
+    "storage_unit_1_pack_2_no": {
+      "address": 47751,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 pack 2 number"
+    },
+    "storage_unit_1_pack_3_no": {
+      "address": 47752,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 1 pack 3 number"
+    },
+    "storage_unit_2_pack_1_no": {
+      "address": 47753,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 2 pack 1 number"
+    },
+    "storage_unit_2_pack_2_no": {
+      "address": 47754,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 2 pack 2 number"
+    },
+    "storage_unit_2_pack_3_no": {
+      "address": 47755,
+      "type": "u16",
+      "access": "r",
+      "description": "Storage unit 2 pack 3 number"
+    },
+    "storage_capacity_control_mode": {
+      "address": 47954,
+      "type": "u16",
+      "access": "rw",
+      "description": "Storage capacity control mode"
+    },
+    "storage_capacity_control_soc_peak_shaving": {
+      "address": 47955,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Storage capacity control SOC peak shaving"
+    },
+    "sun2000_emma": {
+      "address": 48020,
+      "type": "u16",
+      "access": "rw",
+      "description": "SUN2000 EMMA enable"
+    }
+  },
+  "_source_verified": "Verified: Huawei SUN2000 Modbus Interface Definitions V3.0; registers 30000-30071 confirmed. Source: github.com/wlcrs/huawei-solar-lib"
+}

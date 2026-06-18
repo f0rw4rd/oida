@@ -1,0 +1,355 @@
+{
+  "vendor": "Lovato Electric",
+  "model": "RGK 800",
+  "description": "Lovato Electric RGK 800 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "l1_phase_voltage_mains": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage mains",
+      "unit": "V"
+    },
+    "l2_phase_voltage_mains": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage mains",
+      "unit": "V"
+    },
+    "l3_phase_voltage_mains": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase voltage mains",
+      "unit": "V"
+    },
+    "l1_phase_voltage_generator": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage generator",
+      "unit": "V"
+    },
+    "l2_phase_voltage_generator": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage generator",
+      "unit": "V"
+    },
+    "l3_phase_voltage_generator": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase voltage generator",
+      "unit": "V"
+    },
+    "l1_current": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "A"
+    },
+    "l2_current": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "A"
+    },
+    "l3_current": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "A"
+    },
+    "neutral_current": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "l1_l2_voltage_mains": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 L2 voltage mains",
+      "unit": "V"
+    },
+    "l2_l3_voltage_mains": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 L3 voltage mains",
+      "unit": "V"
+    },
+    "l3_l1_voltage_mains": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 L1 voltage mains",
+      "unit": "V"
+    },
+    "l1_l2_voltage_generator": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 L2 voltage generator",
+      "unit": "V"
+    },
+    "l2_l3_voltage_generator": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 L3 voltage generator",
+      "unit": "V"
+    },
+    "l3_l1_voltage_generator": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 L1 voltage generator",
+      "unit": "V"
+    },
+    "l1_active_power_mains": {
+      "address": 34,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 active power mains",
+      "unit": "W"
+    },
+    "l2_active_power_mains": {
+      "address": 36,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 active power mains",
+      "unit": "W"
+    },
+    "l3_active_power_mains": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 active power mains",
+      "unit": "W"
+    },
+    "l1_active_power_generator": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 active power generator",
+      "unit": "W"
+    },
+    "l2_active_power_generator": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 active power generator",
+      "unit": "W"
+    },
+    "l3_active_power_generator": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 active power generator",
+      "unit": "W"
+    },
+    "l1_reactive_power_mains": {
+      "address": 46,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 reactive power mains",
+      "unit": "Var"
+    },
+    "l2_reactive_power_mains": {
+      "address": 48,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 reactive power mains",
+      "unit": "Var"
+    },
+    "l3_reactive_power_mains": {
+      "address": 50,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 reactive power mains",
+      "unit": "Var"
+    },
+    "l1_reactive_power_generator": {
+      "address": 52,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 reactive power generator",
+      "unit": "Var"
+    },
+    "l2_reactive_power_generator": {
+      "address": 54,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 reactive power generator",
+      "unit": "Var"
+    },
+    "l3_reactive_power_generator": {
+      "address": 56,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 reactive power generator",
+      "unit": "Var"
+    },
+    "l1_apparent_power_mains": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 apparent power mains",
+      "unit": "VA"
+    },
+    "l2_apparent_power_mains": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 apparent power mains",
+      "unit": "VA"
+    },
+    "l3_apparent_power_mains": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 apparent power mains",
+      "unit": "VA"
+    },
+    "l1_apparent_power_generator": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 apparent power generator",
+      "unit": "VA"
+    },
+    "l2_apparent_power_generator": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 apparent power generator",
+      "unit": "VA"
+    },
+    "l3_apparent_power_generator": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 apparent power generator",
+      "unit": "VA"
+    },
+    "l1_power_factor_mains": {
+      "address": 70,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 power factor mains"
+    },
+    "l2_power_factor_mains": {
+      "address": 72,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 power factor mains"
+    },
+    "l3_power_factor_mains": {
+      "address": 74,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 power factor mains"
+    },
+    "l1_power_factor_generator": {
+      "address": 76,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 power factor generator"
+    },
+    "l2_power_factor_generator": {
+      "address": 78,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 power factor generator"
+    },
+    "l3_power_factor_generator": {
+      "address": 80,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 power factor generator"
+    },
+    "eqv_phase_voltage_mains": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. phase voltage mains",
+      "unit": "V"
+    },
+    "eqv_phase_to_phase_voltage_mains": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. phase to phase voltage mains",
+      "unit": "V"
+    },
+    "frequency_mains": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency mains",
+      "unit": "Hz"
+    },
+    "eqv_phase_voltage_generator": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. phase voltage generator",
+      "unit": "V"
+    },
+    "eqv_phase_to_phase_voltage_generator": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. phase to phase voltage generator",
+      "unit": "V"
+    },
+    "frequency_generator": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency generator",
+      "unit": "Hz"
+    },
+    "eqv_power_factor_mains": {
+      "address": 94,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv power factor mains"
+    },
+    "eqv_power_factor_generator": {
+      "address": 100,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv power factor generator"
+    },
+    "eqv_active_power_mains": {
+      "address": 106,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv. active power mains",
+      "unit": "W"
+    },
+    "eqv_reactive_power_mains": {
+      "address": 108,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv. reactive power mains",
+      "unit": "Var"
+    }
+  }
+}

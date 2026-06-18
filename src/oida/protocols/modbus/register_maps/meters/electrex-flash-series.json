@@ -1,0 +1,359 @@
+{
+  "vendor": "Electrex",
+  "model": "FLASH 96 / FLASH D",
+  "description": "Electrex FLASH 96 / FLASH D power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: FLASH 96, FLASH D",
+  "registers": {
+    "phase_to_neutral_voltage_thd": {
+      "address": 200,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, thd",
+      "unit": "%"
+    },
+    "phase_to_neutral_voltage_thd_202": {
+      "address": 202,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, thd",
+      "unit": "%"
+    },
+    "phase_to_neutral_voltage_thd_204": {
+      "address": 204,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, thd",
+      "unit": "%"
+    },
+    "line_current_thd": {
+      "address": 206,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current, thd",
+      "unit": "%"
+    },
+    "line_current_thd_208": {
+      "address": 208,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current, thd",
+      "unit": "%"
+    },
+    "line_current_thd_210": {
+      "address": 210,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current, thd",
+      "unit": "%"
+    },
+    "voltage_input_frequency": {
+      "address": 212,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage input frequency",
+      "unit": "Hz"
+    },
+    "phase_to_neutral_voltage_rms_amplitude": {
+      "address": 214,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_rms_amplitude_216": {
+      "address": 216,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_rms_amplitude_218": {
+      "address": 218,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_rms_amplitude": {
+      "address": 220,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_rms_amplitude_222": {
+      "address": 222,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_rms_amplitude_224": {
+      "address": 224,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, rms amplitude",
+      "unit": "V"
+    },
+    "line_current_rms_amplitude": {
+      "address": 226,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current, rms amplitude",
+      "unit": "A"
+    },
+    "line_current_rms_amplitude_228": {
+      "address": 228,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current, rms amplitude",
+      "unit": "A"
+    },
+    "line_current_rms_amplitude_230": {
+      "address": 230,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current, rms amplitude",
+      "unit": "A"
+    },
+    "neutral_current_rms_amplitude": {
+      "address": 232,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current, rms amplitude",
+      "unit": "A"
+    },
+    "phase_active_power": {
+      "address": 234,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (+/)",
+      "unit": "W"
+    },
+    "phase_active_power_236": {
+      "address": 236,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (+/)",
+      "unit": "W"
+    },
+    "phase_active_power_238": {
+      "address": 238,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (+/)",
+      "unit": "W"
+    },
+    "phase_reactive_power": {
+      "address": 240,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (+/)",
+      "unit": "var"
+    },
+    "phase_reactive_power_242": {
+      "address": 242,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (+/)",
+      "unit": "var"
+    },
+    "phase_reactive_power_244": {
+      "address": 244,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (+/)",
+      "unit": "var"
+    },
+    "phase_apparent_power": {
+      "address": 246,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power",
+      "unit": "VA"
+    },
+    "phase_apparent_power_248": {
+      "address": 248,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power",
+      "unit": "VA"
+    },
+    "phase_apparent_power_250": {
+      "address": 250,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power",
+      "unit": "VA"
+    },
+    "phase_power_factor": {
+      "address": 252,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor (+/)"
+    },
+    "phase_power_factor_254": {
+      "address": 254,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor (+/)"
+    },
+    "phase_power_factor_256": {
+      "address": 256,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor (+/)"
+    },
+    "phase_voltage_mean_thd": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage, mean thd",
+      "unit": "%"
+    },
+    "line_current_mean_thd": {
+      "address": 260,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current, mean thd",
+      "unit": "%"
+    },
+    "phase_to_neutral_mean_voltage_rms_amplitude": {
+      "address": 262,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral mean voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_mean_voltage_rms_amplitude": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase mean voltage, rms amplitude",
+      "unit": "V"
+    },
+    "three_phase_current_rms_amplitude": {
+      "address": 266,
+      "type": "f32",
+      "access": "r",
+      "description": "Three phase current, rms amplitude",
+      "unit": "A"
+    },
+    "total_active_power": {
+      "address": 268,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power (+/)",
+      "unit": "W"
+    },
+    "total_reactive_power": {
+      "address": 270,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power (+/)",
+      "unit": "var"
+    },
+    "total_apparent_power": {
+      "address": 272,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "total_power_factor": {
+      "address": 274,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor (+/)"
+    },
+    "total_import_active_power_avg": {
+      "address": 276,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import active power, avg",
+      "unit": "W"
+    },
+    "total_avg": {
+      "address": 278,
+      "type": "f32",
+      "access": "r",
+      "description": "Total avg",
+      "unit": "import"
+    },
+    "total_import_capacitive_power_avg": {
+      "address": 280,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import capacitive power, avg",
+      "unit": "var"
+    },
+    "total_avg_282": {
+      "address": 282,
+      "type": "f32",
+      "access": "r",
+      "description": "Total avg",
+      "unit": "import"
+    },
+    "total_export_active_power_avg": {
+      "address": 284,
+      "type": "f32",
+      "access": "r",
+      "description": "Total export active power, avg",
+      "unit": "W"
+    },
+    "total_avg_286": {
+      "address": 286,
+      "type": "f32",
+      "access": "r",
+      "description": "Total avg",
+      "unit": "export"
+    },
+    "total_export_capacitive_power_avg": {
+      "address": 288,
+      "type": "f32",
+      "access": "r",
+      "description": "Total export capacitive power, avg",
+      "unit": "var"
+    },
+    "total_avg_290": {
+      "address": 290,
+      "type": "f32",
+      "access": "r",
+      "description": "Total avg",
+      "unit": "export"
+    },
+    "total_import_active_power_md": {
+      "address": 292,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import active power, md",
+      "unit": "W"
+    },
+    "total_md": {
+      "address": 294,
+      "type": "f32",
+      "access": "r",
+      "description": "Total md",
+      "unit": "import"
+    },
+    "total_import_capacitive_power_md": {
+      "address": 296,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import capacitive power, md",
+      "unit": "var"
+    },
+    "total_md_298": {
+      "address": 298,
+      "type": "f32",
+      "access": "r",
+      "description": "Total md",
+      "unit": "import"
+    }
+  }
+}

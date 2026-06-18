@@ -1,0 +1,348 @@
+{
+  "vendor": "Electro Industries",
+  "model": "INDUSTRIES SHARK 250",
+  "description": "Electro Industries INDUSTRIES SHARK 250 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v_a_n": {
+      "address": 1000,
+      "type": "f32",
+      "access": "r",
+      "description": "V A N",
+      "unit": "V"
+    },
+    "v_b_n": {
+      "address": 1002,
+      "type": "f32",
+      "access": "r",
+      "description": "V B N",
+      "unit": "V"
+    },
+    "v_c_n": {
+      "address": 1004,
+      "type": "f32",
+      "access": "r",
+      "description": "V C N",
+      "unit": "V"
+    },
+    "v_a_b": {
+      "address": 1006,
+      "type": "f32",
+      "access": "r",
+      "description": "V A B",
+      "unit": "V"
+    },
+    "v_b_c": {
+      "address": 1008,
+      "type": "f32",
+      "access": "r",
+      "description": "V B C",
+      "unit": "V"
+    },
+    "v_c_a": {
+      "address": 1010,
+      "type": "f32",
+      "access": "r",
+      "description": "V C A",
+      "unit": "V"
+    },
+    "i_a": {
+      "address": 1012,
+      "type": "f32",
+      "access": "r",
+      "description": "I A",
+      "unit": "A"
+    },
+    "i_b": {
+      "address": 1014,
+      "type": "f32",
+      "access": "r",
+      "description": "I B",
+      "unit": "A"
+    },
+    "i_c": {
+      "address": 1016,
+      "type": "f32",
+      "access": "r",
+      "description": "I C",
+      "unit": "A"
+    },
+    "w_total": {
+      "address": 1018,
+      "type": "f32",
+      "access": "r",
+      "description": "W, total",
+      "unit": "W"
+    },
+    "var_total": {
+      "address": 1020,
+      "type": "f32",
+      "access": "r",
+      "description": "Var, total",
+      "unit": "VA"
+    },
+    "va_total": {
+      "address": 1022,
+      "type": "f32",
+      "access": "r",
+      "description": "Va, total",
+      "unit": "VA"
+    },
+    "pf_total": {
+      "address": 1024,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf, total"
+    },
+    "frequency": {
+      "address": 1026,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "i_neutral": {
+      "address": 1028,
+      "type": "f32",
+      "access": "r",
+      "description": "I neutral",
+      "unit": "A"
+    },
+    "w_phase_a": {
+      "address": 1030,
+      "type": "f32",
+      "access": "r",
+      "description": "W, phase A",
+      "unit": "W"
+    },
+    "w_phase_b": {
+      "address": 1032,
+      "type": "f32",
+      "access": "r",
+      "description": "W, phase B",
+      "unit": "W"
+    },
+    "w_phase_c": {
+      "address": 1034,
+      "type": "f32",
+      "access": "r",
+      "description": "W, phase C",
+      "unit": "W"
+    },
+    "var_phase_a": {
+      "address": 1036,
+      "type": "f32",
+      "access": "r",
+      "description": "Var, phase A",
+      "unit": "VA"
+    },
+    "var_phase_b": {
+      "address": 1038,
+      "type": "f32",
+      "access": "r",
+      "description": "Var, phase B",
+      "unit": "VA"
+    },
+    "var_phase_c": {
+      "address": 1040,
+      "type": "f32",
+      "access": "r",
+      "description": "Var, phase C",
+      "unit": "VA"
+    },
+    "va_phase_a": {
+      "address": 1042,
+      "type": "f32",
+      "access": "r",
+      "description": "Va, phase A",
+      "unit": "VA"
+    },
+    "va_phase_b": {
+      "address": 1044,
+      "type": "f32",
+      "access": "r",
+      "description": "Va, phase B",
+      "unit": "VA"
+    },
+    "va_phase_c": {
+      "address": 1046,
+      "type": "f32",
+      "access": "r",
+      "description": "Va, phase C",
+      "unit": "VA"
+    },
+    "pf_phase_a": {
+      "address": 1048,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf, phase A"
+    },
+    "pf_phase_b": {
+      "address": 1050,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf, phase B"
+    },
+    "pf_phase_c": {
+      "address": 1052,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf, phase C"
+    },
+    "symmetrical_component_magnitude_0_sequence_component": {
+      "address": 1054,
+      "type": "f32",
+      "access": "r",
+      "description": "Symmetrical component magnitude, 0 sequence component",
+      "unit": "V"
+    },
+    "symmetrical_component_magnitude_positive_sequence": {
+      "address": 1056,
+      "type": "f32",
+      "access": "r",
+      "description": "Symmetrical component magnitude, positive sequence",
+      "unit": "V"
+    },
+    "symmetrical_component_magnitude_negative_sequence_component": {
+      "address": 1058,
+      "type": "f32",
+      "access": "r",
+      "description": "Symmetrical component magnitude, negative sequence component",
+      "unit": "V"
+    },
+    "symmetrical_component_phase_zero_sequence_component": {
+      "address": 1060,
+      "type": "i16",
+      "access": "r",
+      "description": "Symmetrical component phase, zero sequence component"
+    },
+    "symmetrical_component_phase_positive_sequence_component": {
+      "address": 1061,
+      "type": "i16",
+      "access": "r",
+      "description": "Symmetrical component phase, positive sequence component"
+    },
+    "symmetrical_component_phase_negative_sequence_component": {
+      "address": 1062,
+      "type": "i16",
+      "access": "r",
+      "description": "Symmetrical component phase, negative sequence component"
+    },
+    "voltage_unbalance_zero_sequence_component_component": {
+      "address": 1063,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, zero sequence component component"
+    },
+    "voltage_unbalance_negative_sequence_component": {
+      "address": 1064,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, negative sequence component"
+    },
+    "current_unbalance": {
+      "address": 1065,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance"
+    },
+    "quadrant_indicator": {
+      "address": 1066,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant indicator"
+    },
+    "q_total": {
+      "address": 1067,
+      "type": "f32",
+      "access": "r",
+      "description": "Q total"
+    },
+    "q_phase_a": {
+      "address": 1069,
+      "type": "f32",
+      "access": "r",
+      "description": "Q phase A"
+    },
+    "q_phase_b": {
+      "address": 1071,
+      "type": "f32",
+      "access": "r",
+      "description": "Q phase B"
+    },
+    "q_phase_c": {
+      "address": 1073,
+      "type": "f32",
+      "access": "r",
+      "description": "Q phase C"
+    },
+    "wh_q1_q4": {
+      "address": 1500,
+      "type": "i32",
+      "access": "r",
+      "description": "Wh, (q1+q4)",
+      "unit": "Wh"
+    },
+    "wh_q2_q3": {
+      "address": 1502,
+      "type": "i32",
+      "access": "r",
+      "description": "Wh, (q2+q3)",
+      "unit": "Wh"
+    },
+    "wh_net": {
+      "address": 1504,
+      "type": "i32",
+      "access": "r",
+      "description": "Wh, net",
+      "unit": "Wh"
+    },
+    "wh_total": {
+      "address": 1506,
+      "type": "i32",
+      "access": "r",
+      "description": "Wh, total",
+      "unit": "Wh"
+    },
+    "varh_q1_q2": {
+      "address": 1508,
+      "type": "i32",
+      "access": "r",
+      "description": "Varh, (q1+q2)",
+      "unit": "VARh"
+    },
+    "varh_q3_q4": {
+      "address": 1510,
+      "type": "i32",
+      "access": "r",
+      "description": "Varh, (q3+q4)",
+      "unit": "VARh"
+    },
+    "varh_net": {
+      "address": 1512,
+      "type": "i32",
+      "access": "r",
+      "description": "Varh, net",
+      "unit": "VARh"
+    },
+    "varh_total": {
+      "address": 1514,
+      "type": "i32",
+      "access": "r",
+      "description": "Varh, total",
+      "unit": "VARh"
+    },
+    "vah_total": {
+      "address": 1516,
+      "type": "i32",
+      "access": "r",
+      "description": "Vah, total",
+      "unit": "VA"
+    }
+  }
+}

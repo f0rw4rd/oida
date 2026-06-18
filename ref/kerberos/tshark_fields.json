@@ -1,0 +1,3511 @@
+{
+  "protocol": "kerberos",
+  "display_filter": "kerberos",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:51:27.312403+00:00",
+  "dissector_fields": {
+    "total": 366,
+    "by_type": {
+      "FT_ABSOLUTE_TIME": 14,
+      "FT_BOOLEAN": 100,
+      "FT_BYTES": 56,
+      "FT_FRAMENUM": 2,
+      "FT_INT32": 21,
+      "FT_IPv4": 1,
+      "FT_IPv6": 1,
+      "FT_NONE": 84,
+      "FT_RELATIVE_TIME": 1,
+      "FT_STRING": 19,
+      "FT_UINT16": 12,
+      "FT_UINT32": 53,
+      "FT_UINT64": 1,
+      "FT_UINT8": 1
+    },
+    "fields": [
+      {
+        "name": "kerberos.response_to",
+        "type": "FT_FRAMENUM",
+        "description": "This packet is a response to the packet in this frame"
+      },
+      {
+        "name": "kerberos.response_in",
+        "type": "FT_FRAMENUM",
+        "description": "The response to this packet is in this packet"
+      },
+      {
+        "name": "kerberos.time",
+        "type": "FT_RELATIVE_TIME",
+        "description": "Time between Request and Response for Kerberos KDC requests"
+      },
+      {
+        "name": "kerberos.rm.reserved",
+        "type": "FT_BOOLEAN",
+        "description": "Record mark reserved bit"
+      },
+      {
+        "name": "kerberos.rm.length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.provsrv_location",
+        "type": "FT_STRING",
+        "description": "PacketCable PROV SRV Location"
+      },
+      {
+        "name": "kerberos.pw_salt",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.smb.nt_status",
+        "type": "FT_UINT32",
+        "description": "NT Status code"
+      },
+      {
+        "name": "kerberos.ext_error.reserved",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ext_error.flags",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.addr_ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "kerberos.addr_ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "kerberos.addr_nb",
+        "type": "FT_STRING",
+        "description": "NetBIOS Address and type"
+      },
+      {
+        "name": "kerberos.gssapi.len",
+        "type": "FT_UINT32",
+        "description": "Length of GSSAPI Bnd field"
+      },
+      {
+        "name": "kerberos.gssapi.bdn",
+        "type": "FT_BYTES",
+        "description": "GSSAPI Bnd field"
+      },
+      {
+        "name": "kerberos.gssapi.checksum.flags.deleg",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.checksum.flags.mutual",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.checksum.flags.replay",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.checksum.flags.sequence",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.checksum.flags.conf",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.checksum.flags.integ",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.checksum.flags.dce-style",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.dlgopt",
+        "type": "FT_UINT16",
+        "description": "GSSAPI DlgOpt"
+      },
+      {
+        "name": "kerberos.gssapi.dlglen",
+        "type": "FT_UINT16",
+        "description": "GSSAPI DlgLen"
+      },
+      {
+        "name": "kerberos.midl_blob_len",
+        "type": "FT_UINT64",
+        "description": "Length of NDR encoded data that follows"
+      },
+      {
+        "name": "kerberos.midl.fill_bytes",
+        "type": "FT_UINT32",
+        "description": "Just some fill bytes"
+      },
+      {
+        "name": "kerberos.midl.version",
+        "type": "FT_UINT8",
+        "description": "Version of pickling"
+      },
+      {
+        "name": "kerberos.midl.hdr_len",
+        "type": "FT_UINT16",
+        "description": "Length of header"
+      },
+      {
+        "name": "kerberos.pac.signature.type",
+        "type": "FT_INT32",
+        "description": "PAC Signature Type"
+      },
+      {
+        "name": "kerberos.pac.signature.signature",
+        "type": "FT_BYTES",
+        "description": "A PAC signature blob"
+      },
+      {
+        "name": "kerberos.pac.entries",
+        "type": "FT_UINT32",
+        "description": "Number of W2k PAC entries"
+      },
+      {
+        "name": "kerberos.pac.version",
+        "type": "FT_UINT32",
+        "description": "Version of PAC structures"
+      },
+      {
+        "name": "kerberos.pac.type",
+        "type": "FT_UINT32",
+        "description": "Type of W2k PAC entry"
+      },
+      {
+        "name": "kerberos.pac.size",
+        "type": "FT_UINT32",
+        "description": "Size of W2k PAC entry"
+      },
+      {
+        "name": "kerberos.pac.offset",
+        "type": "FT_UINT32",
+        "description": "Offset to W2k PAC entry"
+      },
+      {
+        "name": "kerberos.pac.clientid",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "ClientID Timestamp"
+      },
+      {
+        "name": "kerberos.pac.namelen",
+        "type": "FT_UINT16",
+        "description": "Length of client name"
+      },
+      {
+        "name": "kerberos.pac.name",
+        "type": "FT_STRING",
+        "description": "Name of the Client in the PAC structure"
+      },
+      {
+        "name": "kerberos.pac_logon_info",
+        "type": "FT_BYTES",
+        "description": "PAC_LOGON_INFO structure"
+      },
+      {
+        "name": "kerberos.pac_credential_data",
+        "type": "FT_BYTES",
+        "description": "PAC_CREDENTIAL_DATA structure"
+      },
+      {
+        "name": "kerberos.pac_credential_info",
+        "type": "FT_BYTES",
+        "description": "PAC_CREDENTIAL_INFO structure"
+      },
+      {
+        "name": "kerberos.pac_credential_info.version",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac_credential_info.etype",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac_server_checksum",
+        "type": "FT_BYTES",
+        "description": "PAC_SERVER_CHECKSUM structure"
+      },
+      {
+        "name": "kerberos.pac_privsvr_checksum",
+        "type": "FT_BYTES",
+        "description": "PAC_PRIVSVR_CHECKSUM structure"
+      },
+      {
+        "name": "kerberos.pac_client_info_type",
+        "type": "FT_BYTES",
+        "description": "PAC_CLIENT_INFO_TYPE structure"
+      },
+      {
+        "name": "kerberos.pac_s4u_delegation_info",
+        "type": "FT_BYTES",
+        "description": "PAC_S4U_DELEGATION_INFO structure"
+      },
+      {
+        "name": "kerberos.pac_upn_dns_info",
+        "type": "FT_BYTES",
+        "description": "UPN_DNS_INFO structure"
+      },
+      {
+        "name": "kerberos.pac.upn.flags",
+        "type": "FT_UINT32",
+        "description": "UPN flags"
+      },
+      {
+        "name": "kerberos.pac.upn.flags.upn_constructed",
+        "type": "FT_BOOLEAN",
+        "description": "Is the UPN Name constructed?"
+      },
+      {
+        "name": "kerberos.pac.upn.flags.has_sam_name_and_sid",
+        "type": "FT_BOOLEAN",
+        "description": "Are SAM_NAME and SID included?"
+      },
+      {
+        "name": "kerberos.pac.upn.upn_offset",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.upn_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.upn_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.dns_offset",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.dns_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.dns_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.samaccountname_offset",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.samaccountname_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.samaccountname",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.objectsid_offset",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.upn.objectsid_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac_client_claims_info",
+        "type": "FT_BYTES",
+        "description": "PAC_CLIENT_CLAIMS_INFO structure"
+      },
+      {
+        "name": "kerberos.pac_device_info",
+        "type": "FT_BYTES",
+        "description": "PAC_DEVICE_INFO structure"
+      },
+      {
+        "name": "kerberos.pac_device_claims_info",
+        "type": "FT_BYTES",
+        "description": "PAC_DEVICE_CLAIMS_INFO structure"
+      },
+      {
+        "name": "kerberos.pac_ticket_checksum",
+        "type": "FT_BYTES",
+        "description": "PAC_TICKET_CHECKSUM structure"
+      },
+      {
+        "name": "kerberos.pac_attributes_info",
+        "type": "FT_BYTES",
+        "description": "PAC_ATTRIBUTES_INFO structure"
+      },
+      {
+        "name": "kerberos.pac.attributes_info.length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.attributes_info.flags",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.pac.attributes.flags.pac_was_requested",
+        "type": "FT_BOOLEAN",
+        "description": "Was a PAC requested?"
+      },
+      {
+        "name": "kerberos.pac.attributes.flags.pac_was_given_implicitly",
+        "type": "FT_BOOLEAN",
+        "description": "Was PAC given implicitly?"
+      },
+      {
+        "name": "kerberos.pac_requester_sid",
+        "type": "FT_BYTES",
+        "description": "PAC_REQUESTER_SID structure"
+      },
+      {
+        "name": "kerberos.pac_full_checksum",
+        "type": "FT_BYTES",
+        "description": "PAC_FULL_CHECKSUM structure"
+      },
+      {
+        "name": "kerberos.supported_entypes",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.des-cbc-crc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.des-cbc-md5",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.rc4-hmac",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.aes128-cts-hmac-sha1-96",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.aes256-cts-hmac-sha1-96",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.aes256-cts-hmac-sha1-96-sk",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.fast-supported",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.compound-identity-supported",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.claims-supported",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.supported_entypes.resource-sid-compression-disabled",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ad_ap_options",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ad_ap_options.cbt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ad_ap_options.unverified_target_name",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ad_target_principal",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "krb5.key_hidden_item",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.MessageType",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.Flags",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.ServiceTicketLength",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.TicketGrantingTicketLength",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.ServiceTicket",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.TicketGrantingTicket",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.FLAG_ALLOW_EXPIRED_TICKET",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KERB_TICKET_LOGON.FLAG_REDIRECTED",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KrbFastResponse_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.strengthen_key_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.finished_element",
+        "type": "FT_NONE",
+        "description": "KrbFastFinished"
+      },
+      {
+        "name": "kerberos.fast_options",
+        "type": "FT_BYTES",
+        "description": "FastOptions"
+      },
+      {
+        "name": "kerberos.FastOptions.reserved",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.hide.client.names",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit5",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit6",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit7",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit8",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit9",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit10",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit11",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit12",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit13",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit14",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.spare.bit15",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.FastOptions.kdc.follow.referrals",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ticket_checksum_element",
+        "type": "FT_NONE",
+        "description": "Checksum"
+      },
+      {
+        "name": "kerberos.patimestamp",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.pausec",
+        "type": "FT_UINT32",
+        "description": "Microseconds"
+      },
+      {
+        "name": "kerberos.ticket_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.authenticator_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.encTicketPart_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.as_req_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.as_rep_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.tgs_req_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.tgs_rep_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ap_req_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ap_rep_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.krb_safe_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.krb_priv_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.krb_cred_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.encASRepPart_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.encTGSRepPart_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.encAPRepPart_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.encKrbPrivPart_element",
+        "type": "FT_NONE",
+        "description": "ENC_KRB_PRIV_PART"
+      },
+      {
+        "name": "kerberos.encKrbCredPart_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.krb_error_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.name_type",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.name_string",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_KerberosString"
+      },
+      {
+        "name": "kerberos.KerberosString",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "kerberos.cname_string",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_CNameString"
+      },
+      {
+        "name": "kerberos.CNameString",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "kerberos.sname_string",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_SNameString"
+      },
+      {
+        "name": "kerberos.SNameString",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "kerberos.addr_type",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.address",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.HostAddress_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.AuthorizationData_item_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ad_type",
+        "type": "FT_INT32",
+        "description": "AUTHDATA_TYPE"
+      },
+      {
+        "name": "kerberos.ad_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.padata_type",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.padata_value",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.keytype",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.keyvalue",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.cksumtype",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.checksum",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.etype",
+        "type": "FT_INT32",
+        "description": "ENCTYPE"
+      },
+      {
+        "name": "kerberos.kvno",
+        "type": "FT_UINT32",
+        "description": "UInt32"
+      },
+      {
+        "name": "kerberos.encryptedTicketData_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedTicketData_cipher"
+      },
+      {
+        "name": "kerberos.encryptedAuthorizationData_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedAuthorizationData_cipher"
+      },
+      {
+        "name": "kerberos.encryptedAuthenticator_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedAuthenticator_cipher"
+      },
+      {
+        "name": "kerberos.encryptedKDCREPData_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedKDCREPData_cipher"
+      },
+      {
+        "name": "kerberos.encryptedAPREPData_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedAPREPData_cipher"
+      },
+      {
+        "name": "kerberos.encryptedKrbPrivData_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedKrbPrivData_cipher"
+      },
+      {
+        "name": "kerberos.encryptedKrbCredData_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedKrbCredData_cipher"
+      },
+      {
+        "name": "kerberos.tkt_vno",
+        "type": "FT_UINT32",
+        "description": "INTEGER_5"
+      },
+      {
+        "name": "kerberos.realm",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "kerberos.sname_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.ticket_enc_part_element",
+        "type": "FT_NONE",
+        "description": "EncryptedTicketData"
+      },
+      {
+        "name": "kerberos.flags",
+        "type": "FT_BYTES",
+        "description": "TicketFlags"
+      },
+      {
+        "name": "kerberos.encTicketPart_key_element",
+        "type": "FT_NONE",
+        "description": "T_encTicketPart_key"
+      },
+      {
+        "name": "kerberos.crealm",
+        "type": "FT_STRING",
+        "description": "Realm"
+      },
+      {
+        "name": "kerberos.cname_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.transited_element",
+        "type": "FT_NONE",
+        "description": "TransitedEncoding"
+      },
+      {
+        "name": "kerberos.authtime",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.starttime",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.endtime",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.renew_till",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.caddr",
+        "type": "FT_UINT32",
+        "description": "HostAddresses"
+      },
+      {
+        "name": "kerberos.authorization_data",
+        "type": "FT_UINT32",
+        "description": "AuthorizationData"
+      },
+      {
+        "name": "kerberos.tr_type",
+        "type": "FT_INT32",
+        "description": "Int32"
+      },
+      {
+        "name": "kerberos.contents",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.pvno",
+        "type": "FT_UINT32",
+        "description": "INTEGER_5"
+      },
+      {
+        "name": "kerberos.msg_type",
+        "type": "FT_INT32",
+        "description": "MESSAGE_TYPE"
+      },
+      {
+        "name": "kerberos.rEQ_SEQUENCE_OF_PA_DATA",
+        "type": "FT_UINT32",
+        "description": "T_rEQ_SEQUENCE_OF_PA_DATA"
+      },
+      {
+        "name": "kerberos.PA_DATA_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.req_body_element",
+        "type": "FT_NONE",
+        "description": "KDC_REQ_BODY"
+      },
+      {
+        "name": "kerberos.kdc_options",
+        "type": "FT_BYTES",
+        "description": "KDCOptions"
+      },
+      {
+        "name": "kerberos.from",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.till",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.rtime",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.nonce",
+        "type": "FT_UINT32",
+        "description": "UInt32"
+      },
+      {
+        "name": "kerberos.kdc-req-body.etype",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_ENCTYPE"
+      },
+      {
+        "name": "kerberos.ENCTYPE",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.addresses",
+        "type": "FT_UINT32",
+        "description": "HostAddresses"
+      },
+      {
+        "name": "kerberos.enc_authorization_data_element",
+        "type": "FT_NONE",
+        "description": "EncryptedAuthorizationData"
+      },
+      {
+        "name": "kerberos.additional_tickets",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_Ticket"
+      },
+      {
+        "name": "kerberos.Ticket_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.rEP_SEQUENCE_OF_PA_DATA",
+        "type": "FT_UINT32",
+        "description": "T_rEP_SEQUENCE_OF_PA_DATA"
+      },
+      {
+        "name": "kerberos.kDC_REP_enc_part_element",
+        "type": "FT_NONE",
+        "description": "EncryptedKDCREPData"
+      },
+      {
+        "name": "kerberos.encKDCRepPart_key_element",
+        "type": "FT_NONE",
+        "description": "T_encKDCRepPart_key"
+      },
+      {
+        "name": "kerberos.last_req",
+        "type": "FT_UINT32",
+        "description": "LastReq"
+      },
+      {
+        "name": "kerberos.key_expiration",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.srealm",
+        "type": "FT_STRING",
+        "description": "Realm"
+      },
+      {
+        "name": "kerberos.encrypted_pa_data",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.LastReq_item_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.lr_type",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.lr_value",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.ap_options",
+        "type": "FT_BYTES",
+        "description": "APOptions"
+      },
+      {
+        "name": "kerberos.authenticator_enc_part_element",
+        "type": "FT_NONE",
+        "description": "EncryptedAuthenticator"
+      },
+      {
+        "name": "kerberos.authenticator_vno",
+        "type": "FT_UINT32",
+        "description": "INTEGER_5"
+      },
+      {
+        "name": "kerberos.cksum_element",
+        "type": "FT_NONE",
+        "description": "Checksum"
+      },
+      {
+        "name": "kerberos.cusec",
+        "type": "FT_UINT32",
+        "description": "Microseconds"
+      },
+      {
+        "name": "kerberos.ctime",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.authenticator_subkey_element",
+        "type": "FT_NONE",
+        "description": "T_authenticator_subkey"
+      },
+      {
+        "name": "kerberos.seq_number",
+        "type": "FT_UINT32",
+        "description": "UInt32"
+      },
+      {
+        "name": "kerberos.aP_REP_enc_part_element",
+        "type": "FT_NONE",
+        "description": "EncryptedAPREPData"
+      },
+      {
+        "name": "kerberos.encAPRepPart_subkey_element",
+        "type": "FT_NONE",
+        "description": "T_encAPRepPart_subkey"
+      },
+      {
+        "name": "kerberos.safe_body_element",
+        "type": "FT_NONE",
+        "description": "KRB_SAFE_BODY"
+      },
+      {
+        "name": "kerberos.kRB_SAFE_BODY_user_data",
+        "type": "FT_BYTES",
+        "description": "T_kRB_SAFE_BODY_user_data"
+      },
+      {
+        "name": "kerberos.timestamp",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.usec",
+        "type": "FT_UINT32",
+        "description": "Microseconds"
+      },
+      {
+        "name": "kerberos.s_address_element",
+        "type": "FT_NONE",
+        "description": "HostAddress"
+      },
+      {
+        "name": "kerberos.r_address_element",
+        "type": "FT_NONE",
+        "description": "HostAddress"
+      },
+      {
+        "name": "kerberos.kRB_PRIV_enc_part_element",
+        "type": "FT_NONE",
+        "description": "EncryptedKrbPrivData"
+      },
+      {
+        "name": "kerberos.encKrbPrivPart_user_data",
+        "type": "FT_BYTES",
+        "description": "T_encKrbPrivPart_user_data"
+      },
+      {
+        "name": "kerberos.tickets",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_Ticket"
+      },
+      {
+        "name": "kerberos.kRB_CRED_enc_part_element",
+        "type": "FT_NONE",
+        "description": "EncryptedKrbCredData"
+      },
+      {
+        "name": "kerberos.ticket_info",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_KrbCredInfo"
+      },
+      {
+        "name": "kerberos.KrbCredInfo_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.krbCredInfo_key_element",
+        "type": "FT_NONE",
+        "description": "T_krbCredInfo_key"
+      },
+      {
+        "name": "kerberos.prealm",
+        "type": "FT_STRING",
+        "description": "Realm"
+      },
+      {
+        "name": "kerberos.pname_element",
+        "type": "FT_NONE",
+        "description": "PrincipalName"
+      },
+      {
+        "name": "kerberos.stime",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "KerberosTime"
+      },
+      {
+        "name": "kerberos.susec",
+        "type": "FT_UINT32",
+        "description": "Microseconds"
+      },
+      {
+        "name": "kerberos.error_code",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.e_text",
+        "type": "FT_STRING",
+        "description": "KerberosString"
+      },
+      {
+        "name": "kerberos.e_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.e_checksum_element",
+        "type": "FT_NONE",
+        "description": "Checksum"
+      },
+      {
+        "name": "kerberos.pA_ENC_TIMESTAMP_cipher",
+        "type": "FT_BYTES",
+        "description": "T_pA_ENC_TIMESTAMP_cipher"
+      },
+      {
+        "name": "kerberos.info_salt",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.ETYPE_INFO_ENTRY_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.info2_salt",
+        "type": "FT_STRING",
+        "description": "KerberosString"
+      },
+      {
+        "name": "kerberos.s2kparams",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.ETYPE_INFO2_ENTRY_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.server_name_element",
+        "type": "FT_NONE",
+        "description": "PrincipalName"
+      },
+      {
+        "name": "kerberos.include_pac",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "kerberos.name_element",
+        "type": "FT_NONE",
+        "description": "PrincipalName"
+      },
+      {
+        "name": "kerberos.auth",
+        "type": "FT_STRING",
+        "description": "GeneralString"
+      },
+      {
+        "name": "kerberos.user_id_element",
+        "type": "FT_NONE",
+        "description": "S4UUserID"
+      },
+      {
+        "name": "kerberos.checksum_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.subject_certificate",
+        "type": "FT_BYTES",
+        "description": "T_subject_certificate"
+      },
+      {
+        "name": "kerberos.options",
+        "type": "FT_BYTES",
+        "description": "BIT_STRING"
+      },
+      {
+        "name": "kerberos.restriction_type",
+        "type": "FT_INT32",
+        "description": "Int32"
+      },
+      {
+        "name": "kerberos.restriction",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.kerbKeyListRep.key_element",
+        "type": "FT_NONE",
+        "description": "PA_KERB_KEY_LIST_REP_item"
+      },
+      {
+        "name": "kerberos.srppa_group",
+        "type": "FT_INT32",
+        "description": "KRB5_SRP_GROUP"
+      },
+      {
+        "name": "kerberos.salt",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.iterations",
+        "type": "FT_UINT32",
+        "description": "UInt32"
+      },
+      {
+        "name": "kerberos.groups",
+        "type": "FT_UINT32",
+        "description": "SET_OF_KRB5_SRP_PA"
+      },
+      {
+        "name": "kerberos.KRB5_SRP_PA_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.group",
+        "type": "FT_UINT32",
+        "description": "UInt32"
+      },
+      {
+        "name": "kerberos.a",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.AD_AUTHENTICATION_INDICATOR_item",
+        "type": "FT_STRING",
+        "description": "UTF8String"
+      },
+      {
+        "name": "kerberos.elements",
+        "type": "FT_UINT32",
+        "description": "AuthorizationData"
+      },
+      {
+        "name": "kerberos.kdc_verifier_element",
+        "type": "FT_NONE",
+        "description": "Verifier_MAC"
+      },
+      {
+        "name": "kerberos.svc_verifier_element",
+        "type": "FT_NONE",
+        "description": "Verifier_MAC"
+      },
+      {
+        "name": "kerberos.other_verifiers",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_SIZE_1_MAX_OF_Verifier"
+      },
+      {
+        "name": "kerberos.Verifier",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.mac_element",
+        "type": "FT_NONE",
+        "description": "Verifier_MAC"
+      },
+      {
+        "name": "kerberos.identifier_element",
+        "type": "FT_NONE",
+        "description": "PrincipalName"
+      },
+      {
+        "name": "kerberos.enctype",
+        "type": "FT_INT32",
+        "description": "Int32"
+      },
+      {
+        "name": "kerberos.newpasswd",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.targname_element",
+        "type": "FT_NONE",
+        "description": "PrincipalName"
+      },
+      {
+        "name": "kerberos.targrealm",
+        "type": "FT_STRING",
+        "description": "Realm"
+      },
+      {
+        "name": "kerberos.pa_type",
+        "type": "FT_INT32",
+        "description": "PADATA_TYPE"
+      },
+      {
+        "name": "kerberos.pa_hint",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.pa_value",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.armor_type",
+        "type": "FT_INT32",
+        "description": "KrbFastArmorTypes"
+      },
+      {
+        "name": "kerberos.armor_value",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "kerberos.armored_data_request_element",
+        "type": "FT_NONE",
+        "description": "KrbFastArmoredReq"
+      },
+      {
+        "name": "kerberos.encryptedKrbFastReq_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedKrbFastReq_cipher"
+      },
+      {
+        "name": "kerberos.armor_element",
+        "type": "FT_NONE",
+        "description": "KrbFastArmor"
+      },
+      {
+        "name": "kerberos.req_checksum_element",
+        "type": "FT_NONE",
+        "description": "Checksum"
+      },
+      {
+        "name": "kerberos.enc_fast_req_element",
+        "type": "FT_NONE",
+        "description": "EncryptedKrbFastReq"
+      },
+      {
+        "name": "kerberos.armored_data_reply_element",
+        "type": "FT_NONE",
+        "description": "KrbFastArmoredRep"
+      },
+      {
+        "name": "kerberos.encryptedKrbFastResponse_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedKrbFastResponse_cipher"
+      },
+      {
+        "name": "kerberos.enc_fast_rep_element",
+        "type": "FT_NONE",
+        "description": "EncryptedKrbFastResponse"
+      },
+      {
+        "name": "kerberos.encryptedChallenge_cipher",
+        "type": "FT_BYTES",
+        "description": "T_encryptedChallenge_cipher"
+      },
+      {
+        "name": "kerberos.cipher",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.SPAKEGroup",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "kerberos.spake_group",
+        "type": "FT_INT32",
+        "description": "SPAKEGroup"
+      },
+      {
+        "name": "kerberos.pubkey",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.factors",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_SIZE_1_MAX_OF_SPAKESecondFactor"
+      },
+      {
+        "name": "kerberos.SPAKESecondFactor_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.type",
+        "type": "FT_INT32",
+        "description": "SPAKESecondFactorType"
+      },
+      {
+        "name": "kerberos.data",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "kerberos.factor_element",
+        "type": "FT_NONE",
+        "description": "EncryptedSpakeResponseData"
+      },
+      {
+        "name": "kerberos.support_element",
+        "type": "FT_NONE",
+        "description": "SPAKESupport"
+      },
+      {
+        "name": "kerberos.challenge_element",
+        "type": "FT_NONE",
+        "description": "SPAKEChallenge"
+      },
+      {
+        "name": "kerberos.response_element",
+        "type": "FT_NONE",
+        "description": "SPAKEResponse"
+      },
+      {
+        "name": "kerberos.encdata_element",
+        "type": "FT_NONE",
+        "description": "EncryptedSpakeData"
+      },
+      {
+        "name": "kerberos.APOptions.reserved",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.APOptions.use.session.key",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.APOptions.mutual.required",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.reserved",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.forwardable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.forwarded",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.proxiable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.proxy",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.may.postdate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.postdated",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.invalid",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.renewable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.initial",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.pre.authent",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.hw.authent",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.transited.policy.checked",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.ok.as.delegate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.unused",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.enc.pa.rep",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.TicketFlags.anonymous",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.reserved",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.forwardable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.forwarded",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.proxiable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.proxy",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.allow.postdate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.postdated",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused7",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.renewable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused9",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused10",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.opt.hardware.auth",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused12",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused13",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.constrained.delegation",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.canonicalize",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.request.anonymous",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused17",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused18",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused19",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused20",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused21",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused22",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused23",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused24",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused25",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.disable.transited.check",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.renewable.ok",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.enc.tkt.in.skey",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.unused29",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.renew",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.KDCOptions.validate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.PAC.OPTIONS.FLAGS.claims",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.PAC.OPTIONS.FLAGS.branch.aware",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.PAC.OPTIONS.FLAGS.forward.to.full.dc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.PAC.OPTIONS.FLAGS.resource.based.constrained.delegation",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "kerberos.missing_keytype",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.decrypted_keytype",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.learnt_keytype",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.address.unknown",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "kerberos.gssapi.dlglen.error",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 217,
+    "by_pcap": {
+      "bruteshark_kerberos_tcp.pcap": [
+        "ber_ber_64bit_uint_as_bytes",
+        "ber_ber_bitstring_padding",
+        "cms_cms_Attribute_element",
+        "cms_cms_CertificateChoices",
+        "cms_cms_ContentType",
+        "cms_cms_DigestAlgorithmIdentifier_element",
+        "cms_cms_MessageDigest",
+        "cms_cms_SignedData_element",
+        "cms_cms_SignerInfo_element",
+        "cms_cms_attrType",
+        "cms_cms_attrValues",
+        "cms_cms_certificate_element",
+        "cms_cms_certificates",
+        "cms_cms_contentType",
+        "cms_cms_digestAlgorithm_element",
+        "cms_cms_digestAlgorithms",
+        "cms_cms_eContent",
+        "cms_cms_eContentType",
+        "cms_cms_encapContentInfo_element",
+        "cms_cms_issuer",
+        "cms_cms_issuerAndSerialNumber_element",
+        "cms_cms_serialNumber",
+        "cms_cms_sid",
+        "cms_cms_signatureAlgorithm_element",
+        "cms_cms_signatureValue",
+        "cms_cms_signedAttrs",
+        "cms_cms_signerInfos",
+        "cms_cms_version",
+        "kerberos_kerberos_APOptions_mutual_required",
+        "kerberos_kerberos_APOptions_reserved",
+        "kerberos_kerberos_APOptions_use_session_key",
+        "kerberos_kerberos_CNameString",
+        "kerberos_kerberos_ENCTYPE",
+        "kerberos_kerberos_ETYPE_INFO2_ENTRY_element",
+        "kerberos_kerberos_KDCOptions_allow_postdate",
+        "kerberos_kerberos_KDCOptions_canonicalize",
+        "kerberos_kerberos_KDCOptions_constrained_delegation",
+        "kerberos_kerberos_KDCOptions_disable_transited_check",
+        "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+        "kerberos_kerberos_KDCOptions_forwardable",
+        "kerberos_kerberos_KDCOptions_forwarded",
+        "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+        "kerberos_kerberos_KDCOptions_postdated",
+        "kerberos_kerberos_KDCOptions_proxiable",
+        "kerberos_kerberos_KDCOptions_proxy",
+        "kerberos_kerberos_KDCOptions_renew",
+        "kerberos_kerberos_KDCOptions_renewable",
+        "kerberos_kerberos_KDCOptions_renewable_ok",
+        "kerberos_kerberos_KDCOptions_request_anonymous",
+        "kerberos_kerberos_KDCOptions_reserved",
+        "kerberos_kerberos_KDCOptions_unused10",
+        "kerberos_kerberos_KDCOptions_unused12",
+        "kerberos_kerberos_KDCOptions_unused13",
+        "kerberos_kerberos_KDCOptions_unused17",
+        "kerberos_kerberos_KDCOptions_unused18",
+        "kerberos_kerberos_KDCOptions_unused19",
+        "kerberos_kerberos_KDCOptions_unused20",
+        "kerberos_kerberos_KDCOptions_unused21",
+        "kerberos_kerberos_KDCOptions_unused22",
+        "kerberos_kerberos_KDCOptions_unused23",
+        "kerberos_kerberos_KDCOptions_unused24",
+        "kerberos_kerberos_KDCOptions_unused25",
+        "kerberos_kerberos_KDCOptions_unused29",
+        "kerberos_kerberos_KDCOptions_unused7",
+        "kerberos_kerberos_KDCOptions_unused9",
+        "kerberos_kerberos_KDCOptions_validate",
+        "kerberos_kerberos_KerberosString",
+        "kerberos_kerberos_PA_DATA_element",
+        "kerberos_kerberos_SNameString",
+        "kerberos_kerberos_ap_options",
+        "kerberos_kerberos_ap_req_element",
+        "kerberos_kerberos_armor_element",
+        "kerberos_kerberos_armor_type",
+        "kerberos_kerberos_armor_value",
+        "kerberos_kerberos_armored_data_reply_element",
+        "kerberos_kerberos_armored_data_request_element",
+        "kerberos_kerberos_as_rep_element",
+        "kerberos_kerberos_as_req_element",
+        "kerberos_kerberos_authenticator_enc_part_element",
+        "kerberos_kerberos_checksum",
+        "kerberos_kerberos_cksumtype",
+        "kerberos_kerberos_cname_element",
+        "kerberos_kerberos_cname_string",
+        "kerberos_kerberos_crealm",
+        "kerberos_kerberos_ctime",
+        "kerberos_kerberos_e_data",
+        "kerberos_kerberos_e_text",
+        "kerberos_kerberos_enc_fast_rep_element",
+        "kerberos_kerberos_enc_fast_req_element",
+        "kerberos_kerberos_encryptedAuthenticator_cipher",
+        "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "kerberos_kerberos_encryptedKrbFastReq_cipher",
+        "kerberos_kerberos_encryptedKrbFastResponse_cipher",
+        "kerberos_kerberos_encryptedTicketData_cipher",
+        "kerberos_kerberos_error_code",
+        "kerberos_kerberos_etype",
+        "kerberos_kerberos_info2_salt",
+        "kerberos_kerberos_kDC_REP_enc_part_element",
+        "kerberos_kerberos_kdc-req-body_etype",
+        "kerberos_kerberos_kdc_options",
+        "kerberos_kerberos_krb_error_element",
+        "kerberos_kerberos_kvno",
+        "kerberos_kerberos_msg_type",
+        "kerberos_kerberos_name_string",
+        "kerberos_kerberos_name_type",
+        "kerberos_kerberos_nonce",
+        "kerberos_kerberos_padata_type",
+        "kerberos_kerberos_padata_value",
+        "kerberos_kerberos_pvno",
+        "kerberos_kerberos_rEP_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_realm",
+        "kerberos_kerberos_req_body_element",
+        "kerberos_kerberos_req_checksum_element",
+        "kerberos_kerberos_response_to",
+        "kerberos_kerberos_rm_length",
+        "kerberos_kerberos_rm_reserved",
+        "kerberos_kerberos_sname_element",
+        "kerberos_kerberos_sname_string",
+        "kerberos_kerberos_stime",
+        "kerberos_kerberos_susec",
+        "kerberos_kerberos_ticket_element",
+        "kerberos_kerberos_ticket_enc_part_element",
+        "kerberos_kerberos_till",
+        "kerberos_kerberos_time",
+        "kerberos_kerberos_tkt_vno",
+        "pkinit_pkinit_AlgorithmIdentifier_element",
+        "pkinit_pkinit_AuthPack_element",
+        "pkinit_pkinit_ExternalPrincipalIdentifier_element",
+        "pkinit_pkinit_KDCDHKeyInfo_element",
+        "pkinit_pkinit_KDFAlgorithmId_element",
+        "pkinit_pkinit_KRB5PrincipalName_element",
+        "pkinit_pkinit_clientPublicValue_element",
+        "pkinit_pkinit_cusec",
+        "pkinit_pkinit_dhInfo_element",
+        "pkinit_pkinit_dhNonce",
+        "pkinit_pkinit_dhSignedData_element",
+        "pkinit_pkinit_issuerAndSerialNumber_element",
+        "pkinit_pkinit_kdf_element",
+        "pkinit_pkinit_kdf_id",
+        "pkinit_pkinit_paChecksum",
+        "pkinit_pkinit_paNonce",
+        "pkinit_pkinit_pkAuthenticator_element",
+        "pkinit_pkinit_signedAuthPack_element",
+        "pkinit_pkinit_subjectKeyIdentifier",
+        "pkinit_pkinit_subjectName",
+        "pkinit_pkinit_subjectPublicKey",
+        "pkinit_pkinit_supportedCMSTypes",
+        "pkinit_pkinit_supportedKDFs",
+        "pkinit_pkinit_trustedCertifiers",
+        "pkixalgs_pkixalgs_DomainParameters_element",
+        "pkixalgs_pkixalgs_g",
+        "pkixalgs_pkixalgs_modulus",
+        "pkixalgs_pkixalgs_publicExponent",
+        "text",
+        "x509af_x509af_Extension_element",
+        "x509af_x509af_algorithmIdentifier_element",
+        "x509af_x509af_algorithm_element",
+        "x509af_x509af_algorithm_id",
+        "x509af_x509af_encrypted",
+        "x509af_x509af_extension_id",
+        "x509af_x509af_extensions",
+        "x509af_x509af_issuer",
+        "x509af_x509af_notAfter",
+        "x509af_x509af_notBefore",
+        "x509af_x509af_rdnSequence",
+        "x509af_x509af_serialNumber",
+        "x509af_x509af_signature_element",
+        "x509af_x509af_signedCertificate_element",
+        "x509af_x509af_subject",
+        "x509af_x509af_subjectPublicKey",
+        "x509af_x509af_subjectPublicKeyInfo_element",
+        "x509af_x509af_subjectPublicKey_dh",
+        "x509af_x509af_subjectPublicKey_rsa",
+        "x509af_x509af_utcTime",
+        "x509af_x509af_validity_element",
+        "x509af_x509af_version",
+        "x509ce_x509ce_AuthorityKeyIdentifier_element",
+        "x509ce_x509ce_BasicConstraintsSyntax_element",
+        "x509ce_x509ce_GeneralName",
+        "x509ce_x509ce_GeneralNames",
+        "x509ce_x509ce_KeyPurposeIDs",
+        "x509ce_x509ce_KeyPurposeId",
+        "x509ce_x509ce_KeyUsage",
+        "x509ce_x509ce_KeyUsage_cRLSign",
+        "x509ce_x509ce_KeyUsage_contentCommitment",
+        "x509ce_x509ce_KeyUsage_dataEncipherment",
+        "x509ce_x509ce_KeyUsage_decipherOnly",
+        "x509ce_x509ce_KeyUsage_digitalSignature",
+        "x509ce_x509ce_KeyUsage_encipherOnly",
+        "x509ce_x509ce_KeyUsage_keyAgreement",
+        "x509ce_x509ce_KeyUsage_keyCertSign",
+        "x509ce_x509ce_KeyUsage_keyEncipherment",
+        "x509ce_x509ce_SubjectKeyIdentifier",
+        "x509ce_x509ce_keyIdentifier",
+        "x509ce_x509ce_otherName_element",
+        "x509ce_x509ce_type_id",
+        "x509if_x509if_RDNSequence_item",
+        "x509if_x509if_RelativeDistinguishedName_item_element",
+        "x509if_x509if_oid",
+        "x509if_x509if_rdnSequence",
+        "x509sat_x509sat_CountryName",
+        "x509sat_x509sat_DirectoryString",
+        "x509sat_x509sat_uTF8String"
+      ],
+      "bruteshark_kerberos_udp.pcap": [
+        "_ws_expert",
+        "ber_ber_bitstring_padding",
+        "kerberos_kerberos_APOptions_mutual_required",
+        "kerberos_kerberos_APOptions_reserved",
+        "kerberos_kerberos_APOptions_use_session_key",
+        "kerberos_kerberos_CNameString",
+        "kerberos_kerberos_ENCTYPE",
+        "kerberos_kerberos_ETYPE_INFO2_ENTRY_element",
+        "kerberos_kerberos_KDCOptions_allow_postdate",
+        "kerberos_kerberos_KDCOptions_canonicalize",
+        "kerberos_kerberos_KDCOptions_constrained_delegation",
+        "kerberos_kerberos_KDCOptions_disable_transited_check",
+        "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+        "kerberos_kerberos_KDCOptions_forwardable",
+        "kerberos_kerberos_KDCOptions_forwarded",
+        "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+        "kerberos_kerberos_KDCOptions_postdated",
+        "kerberos_kerberos_KDCOptions_proxiable",
+        "kerberos_kerberos_KDCOptions_proxy",
+        "kerberos_kerberos_KDCOptions_renew",
+        "kerberos_kerberos_KDCOptions_renewable",
+        "kerberos_kerberos_KDCOptions_renewable_ok",
+        "kerberos_kerberos_KDCOptions_request_anonymous",
+        "kerberos_kerberos_KDCOptions_reserved",
+        "kerberos_kerberos_KDCOptions_unused10",
+        "kerberos_kerberos_KDCOptions_unused12",
+        "kerberos_kerberos_KDCOptions_unused13",
+        "kerberos_kerberos_KDCOptions_unused17",
+        "kerberos_kerberos_KDCOptions_unused18",
+        "kerberos_kerberos_KDCOptions_unused19",
+        "kerberos_kerberos_KDCOptions_unused20",
+        "kerberos_kerberos_KDCOptions_unused21",
+        "kerberos_kerberos_KDCOptions_unused22",
+        "kerberos_kerberos_KDCOptions_unused23",
+        "kerberos_kerberos_KDCOptions_unused24",
+        "kerberos_kerberos_KDCOptions_unused25",
+        "kerberos_kerberos_KDCOptions_unused29",
+        "kerberos_kerberos_KDCOptions_unused7",
+        "kerberos_kerberos_KDCOptions_unused9",
+        "kerberos_kerberos_KDCOptions_validate",
+        "kerberos_kerberos_PA_DATA_element",
+        "kerberos_kerberos_SNameString",
+        "kerberos_kerberos_ap_options",
+        "kerberos_kerberos_ap_req_element",
+        "kerberos_kerberos_armored_data_reply_element",
+        "kerberos_kerberos_armored_data_request_element",
+        "kerberos_kerberos_as_rep_element",
+        "kerberos_kerberos_as_req_element",
+        "kerberos_kerberos_authenticator_enc_part_element",
+        "kerberos_kerberos_checksum",
+        "kerberos_kerberos_cksumtype",
+        "kerberos_kerberos_cname_element",
+        "kerberos_kerberos_cname_string",
+        "kerberos_kerberos_crealm",
+        "kerberos_kerberos_ctime",
+        "kerberos_kerberos_e_data",
+        "kerberos_kerberos_e_text",
+        "kerberos_kerberos_enc_fast_rep_element",
+        "kerberos_kerberos_enc_fast_req_element",
+        "kerberos_kerberos_encryptedAuthenticator_cipher",
+        "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "kerberos_kerberos_encryptedKrbFastReq_cipher",
+        "kerberos_kerberos_encryptedKrbFastResponse_cipher",
+        "kerberos_kerberos_encryptedTicketData_cipher",
+        "kerberos_kerberos_error_code",
+        "kerberos_kerberos_etype",
+        "kerberos_kerberos_info2_salt",
+        "kerberos_kerberos_kDC_REP_enc_part_element",
+        "kerberos_kerberos_kdc-req-body_etype",
+        "kerberos_kerberos_kdc_options",
+        "kerberos_kerberos_krb_error_element",
+        "kerberos_kerberos_kvno",
+        "kerberos_kerberos_msg_type",
+        "kerberos_kerberos_name_type",
+        "kerberos_kerberos_nonce",
+        "kerberos_kerberos_pA_ENC_TIMESTAMP_cipher",
+        "kerberos_kerberos_padata_type",
+        "kerberos_kerberos_padata_value",
+        "kerberos_kerberos_pvno",
+        "kerberos_kerberos_rEP_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_realm",
+        "kerberos_kerberos_req_body_element",
+        "kerberos_kerberos_req_checksum_element",
+        "kerberos_kerberos_response_to",
+        "kerberos_kerberos_rm_length",
+        "kerberos_kerberos_rm_reserved",
+        "kerberos_kerberos_rtime",
+        "kerberos_kerberos_sname_element",
+        "kerberos_kerberos_sname_string",
+        "kerberos_kerberos_stime",
+        "kerberos_kerberos_susec",
+        "kerberos_kerberos_tgs_rep_element",
+        "kerberos_kerberos_tgs_req_element",
+        "kerberos_kerberos_ticket_element",
+        "kerberos_kerberos_ticket_enc_part_element",
+        "kerberos_kerberos_till",
+        "kerberos_kerberos_time",
+        "kerberos_kerberos_tkt_vno",
+        "text"
+      ],
+      "bruteshark_kerberos_v5_tcp.pcap": [
+        "ber_ber_64bit_uint_as_bytes",
+        "ber_ber_bitstring_padding",
+        "cms_cms_Attribute_element",
+        "cms_cms_CertificateChoices",
+        "cms_cms_ContentType",
+        "cms_cms_DigestAlgorithmIdentifier_element",
+        "cms_cms_MessageDigest",
+        "cms_cms_SignedData_element",
+        "cms_cms_SignerInfo_element",
+        "cms_cms_attrType",
+        "cms_cms_attrValues",
+        "cms_cms_certificate_element",
+        "cms_cms_certificates",
+        "cms_cms_contentType",
+        "cms_cms_digestAlgorithm_element",
+        "cms_cms_digestAlgorithms",
+        "cms_cms_eContent",
+        "cms_cms_eContentType",
+        "cms_cms_encapContentInfo_element",
+        "cms_cms_issuer",
+        "cms_cms_issuerAndSerialNumber_element",
+        "cms_cms_serialNumber",
+        "cms_cms_sid",
+        "cms_cms_signatureAlgorithm_element",
+        "cms_cms_signatureValue",
+        "cms_cms_signedAttrs",
+        "cms_cms_signerInfos",
+        "cms_cms_version",
+        "kerberos_kerberos_APOptions_mutual_required",
+        "kerberos_kerberos_APOptions_reserved",
+        "kerberos_kerberos_APOptions_use_session_key",
+        "kerberos_kerberos_CNameString",
+        "kerberos_kerberos_ENCTYPE",
+        "kerberos_kerberos_ETYPE_INFO2_ENTRY_element",
+        "kerberos_kerberos_KDCOptions_allow_postdate",
+        "kerberos_kerberos_KDCOptions_canonicalize",
+        "kerberos_kerberos_KDCOptions_constrained_delegation",
+        "kerberos_kerberos_KDCOptions_disable_transited_check",
+        "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+        "kerberos_kerberos_KDCOptions_forwardable",
+        "kerberos_kerberos_KDCOptions_forwarded",
+        "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+        "kerberos_kerberos_KDCOptions_postdated",
+        "kerberos_kerberos_KDCOptions_proxiable",
+        "kerberos_kerberos_KDCOptions_proxy",
+        "kerberos_kerberos_KDCOptions_renew",
+        "kerberos_kerberos_KDCOptions_renewable",
+        "kerberos_kerberos_KDCOptions_renewable_ok",
+        "kerberos_kerberos_KDCOptions_request_anonymous",
+        "kerberos_kerberos_KDCOptions_reserved",
+        "kerberos_kerberos_KDCOptions_unused10",
+        "kerberos_kerberos_KDCOptions_unused12",
+        "kerberos_kerberos_KDCOptions_unused13",
+        "kerberos_kerberos_KDCOptions_unused17",
+        "kerberos_kerberos_KDCOptions_unused18",
+        "kerberos_kerberos_KDCOptions_unused19",
+        "kerberos_kerberos_KDCOptions_unused20",
+        "kerberos_kerberos_KDCOptions_unused21",
+        "kerberos_kerberos_KDCOptions_unused22",
+        "kerberos_kerberos_KDCOptions_unused23",
+        "kerberos_kerberos_KDCOptions_unused24",
+        "kerberos_kerberos_KDCOptions_unused25",
+        "kerberos_kerberos_KDCOptions_unused29",
+        "kerberos_kerberos_KDCOptions_unused7",
+        "kerberos_kerberos_KDCOptions_unused9",
+        "kerberos_kerberos_KDCOptions_validate",
+        "kerberos_kerberos_KerberosString",
+        "kerberos_kerberos_PA_DATA_element",
+        "kerberos_kerberos_SNameString",
+        "kerberos_kerberos_ap_options",
+        "kerberos_kerberos_ap_req_element",
+        "kerberos_kerberos_armor_element",
+        "kerberos_kerberos_armor_type",
+        "kerberos_kerberos_armor_value",
+        "kerberos_kerberos_armored_data_reply_element",
+        "kerberos_kerberos_armored_data_request_element",
+        "kerberos_kerberos_as_rep_element",
+        "kerberos_kerberos_as_req_element",
+        "kerberos_kerberos_authenticator_enc_part_element",
+        "kerberos_kerberos_checksum",
+        "kerberos_kerberos_cksumtype",
+        "kerberos_kerberos_cname_element",
+        "kerberos_kerberos_cname_string",
+        "kerberos_kerberos_crealm",
+        "kerberos_kerberos_ctime",
+        "kerberos_kerberos_e_data",
+        "kerberos_kerberos_e_text",
+        "kerberos_kerberos_enc_fast_rep_element",
+        "kerberos_kerberos_enc_fast_req_element",
+        "kerberos_kerberos_encryptedAuthenticator_cipher",
+        "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "kerberos_kerberos_encryptedKrbFastReq_cipher",
+        "kerberos_kerberos_encryptedKrbFastResponse_cipher",
+        "kerberos_kerberos_encryptedTicketData_cipher",
+        "kerberos_kerberos_error_code",
+        "kerberos_kerberos_etype",
+        "kerberos_kerberos_info2_salt",
+        "kerberos_kerberos_kDC_REP_enc_part_element",
+        "kerberos_kerberos_kdc-req-body_etype",
+        "kerberos_kerberos_kdc_options",
+        "kerberos_kerberos_krb_error_element",
+        "kerberos_kerberos_kvno",
+        "kerberos_kerberos_msg_type",
+        "kerberos_kerberos_name_string",
+        "kerberos_kerberos_name_type",
+        "kerberos_kerberos_nonce",
+        "kerberos_kerberos_padata_type",
+        "kerberos_kerberos_padata_value",
+        "kerberos_kerberos_pvno",
+        "kerberos_kerberos_rEP_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_realm",
+        "kerberos_kerberos_req_body_element",
+        "kerberos_kerberos_req_checksum_element",
+        "kerberos_kerberos_response_to",
+        "kerberos_kerberos_rm_length",
+        "kerberos_kerberos_rm_reserved",
+        "kerberos_kerberos_sname_element",
+        "kerberos_kerberos_sname_string",
+        "kerberos_kerberos_stime",
+        "kerberos_kerberos_susec",
+        "kerberos_kerberos_ticket_element",
+        "kerberos_kerberos_ticket_enc_part_element",
+        "kerberos_kerberos_till",
+        "kerberos_kerberos_time",
+        "kerberos_kerberos_tkt_vno",
+        "pkinit_pkinit_AlgorithmIdentifier_element",
+        "pkinit_pkinit_AuthPack_element",
+        "pkinit_pkinit_ExternalPrincipalIdentifier_element",
+        "pkinit_pkinit_KDCDHKeyInfo_element",
+        "pkinit_pkinit_KDFAlgorithmId_element",
+        "pkinit_pkinit_KRB5PrincipalName_element",
+        "pkinit_pkinit_clientPublicValue_element",
+        "pkinit_pkinit_cusec",
+        "pkinit_pkinit_dhInfo_element",
+        "pkinit_pkinit_dhNonce",
+        "pkinit_pkinit_dhSignedData_element",
+        "pkinit_pkinit_issuerAndSerialNumber_element",
+        "pkinit_pkinit_kdf_element",
+        "pkinit_pkinit_kdf_id",
+        "pkinit_pkinit_paChecksum",
+        "pkinit_pkinit_paNonce",
+        "pkinit_pkinit_pkAuthenticator_element",
+        "pkinit_pkinit_signedAuthPack_element",
+        "pkinit_pkinit_subjectKeyIdentifier",
+        "pkinit_pkinit_subjectName",
+        "pkinit_pkinit_subjectPublicKey",
+        "pkinit_pkinit_supportedCMSTypes",
+        "pkinit_pkinit_supportedKDFs",
+        "pkinit_pkinit_trustedCertifiers",
+        "pkixalgs_pkixalgs_DomainParameters_element",
+        "pkixalgs_pkixalgs_g",
+        "pkixalgs_pkixalgs_modulus",
+        "pkixalgs_pkixalgs_publicExponent",
+        "text",
+        "x509af_x509af_Extension_element",
+        "x509af_x509af_algorithmIdentifier_element",
+        "x509af_x509af_algorithm_element",
+        "x509af_x509af_algorithm_id",
+        "x509af_x509af_encrypted",
+        "x509af_x509af_extension_id",
+        "x509af_x509af_extensions",
+        "x509af_x509af_issuer",
+        "x509af_x509af_notAfter",
+        "x509af_x509af_notBefore",
+        "x509af_x509af_rdnSequence",
+        "x509af_x509af_serialNumber",
+        "x509af_x509af_signature_element",
+        "x509af_x509af_signedCertificate_element",
+        "x509af_x509af_subject",
+        "x509af_x509af_subjectPublicKey",
+        "x509af_x509af_subjectPublicKeyInfo_element",
+        "x509af_x509af_subjectPublicKey_dh",
+        "x509af_x509af_subjectPublicKey_rsa",
+        "x509af_x509af_utcTime",
+        "x509af_x509af_validity_element",
+        "x509af_x509af_version",
+        "x509ce_x509ce_AuthorityKeyIdentifier_element",
+        "x509ce_x509ce_BasicConstraintsSyntax_element",
+        "x509ce_x509ce_GeneralName",
+        "x509ce_x509ce_GeneralNames",
+        "x509ce_x509ce_KeyPurposeIDs",
+        "x509ce_x509ce_KeyPurposeId",
+        "x509ce_x509ce_KeyUsage",
+        "x509ce_x509ce_KeyUsage_cRLSign",
+        "x509ce_x509ce_KeyUsage_contentCommitment",
+        "x509ce_x509ce_KeyUsage_dataEncipherment",
+        "x509ce_x509ce_KeyUsage_decipherOnly",
+        "x509ce_x509ce_KeyUsage_digitalSignature",
+        "x509ce_x509ce_KeyUsage_encipherOnly",
+        "x509ce_x509ce_KeyUsage_keyAgreement",
+        "x509ce_x509ce_KeyUsage_keyCertSign",
+        "x509ce_x509ce_KeyUsage_keyEncipherment",
+        "x509ce_x509ce_SubjectKeyIdentifier",
+        "x509ce_x509ce_keyIdentifier",
+        "x509ce_x509ce_otherName_element",
+        "x509ce_x509ce_type_id",
+        "x509if_x509if_RDNSequence_item",
+        "x509if_x509if_RelativeDistinguishedName_item_element",
+        "x509if_x509if_oid",
+        "x509if_x509if_rdnSequence",
+        "x509sat_x509sat_CountryName",
+        "x509sat_x509sat_DirectoryString",
+        "x509sat_x509sat_uTF8String"
+      ],
+      "bruteshark_kerberos_v5_udp.pcap": [
+        "_ws_expert",
+        "ber_ber_bitstring_padding",
+        "kerberos_kerberos_APOptions_mutual_required",
+        "kerberos_kerberos_APOptions_reserved",
+        "kerberos_kerberos_APOptions_use_session_key",
+        "kerberos_kerberos_CNameString",
+        "kerberos_kerberos_ENCTYPE",
+        "kerberos_kerberos_ETYPE_INFO2_ENTRY_element",
+        "kerberos_kerberos_KDCOptions_allow_postdate",
+        "kerberos_kerberos_KDCOptions_canonicalize",
+        "kerberos_kerberos_KDCOptions_constrained_delegation",
+        "kerberos_kerberos_KDCOptions_disable_transited_check",
+        "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+        "kerberos_kerberos_KDCOptions_forwardable",
+        "kerberos_kerberos_KDCOptions_forwarded",
+        "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+        "kerberos_kerberos_KDCOptions_postdated",
+        "kerberos_kerberos_KDCOptions_proxiable",
+        "kerberos_kerberos_KDCOptions_proxy",
+        "kerberos_kerberos_KDCOptions_renew",
+        "kerberos_kerberos_KDCOptions_renewable",
+        "kerberos_kerberos_KDCOptions_renewable_ok",
+        "kerberos_kerberos_KDCOptions_request_anonymous",
+        "kerberos_kerberos_KDCOptions_reserved",
+        "kerberos_kerberos_KDCOptions_unused10",
+        "kerberos_kerberos_KDCOptions_unused12",
+        "kerberos_kerberos_KDCOptions_unused13",
+        "kerberos_kerberos_KDCOptions_unused17",
+        "kerberos_kerberos_KDCOptions_unused18",
+        "kerberos_kerberos_KDCOptions_unused19",
+        "kerberos_kerberos_KDCOptions_unused20",
+        "kerberos_kerberos_KDCOptions_unused21",
+        "kerberos_kerberos_KDCOptions_unused22",
+        "kerberos_kerberos_KDCOptions_unused23",
+        "kerberos_kerberos_KDCOptions_unused24",
+        "kerberos_kerberos_KDCOptions_unused25",
+        "kerberos_kerberos_KDCOptions_unused29",
+        "kerberos_kerberos_KDCOptions_unused7",
+        "kerberos_kerberos_KDCOptions_unused9",
+        "kerberos_kerberos_KDCOptions_validate",
+        "kerberos_kerberos_PA_DATA_element",
+        "kerberos_kerberos_SNameString",
+        "kerberos_kerberos_ap_options",
+        "kerberos_kerberos_ap_req_element",
+        "kerberos_kerberos_armored_data_reply_element",
+        "kerberos_kerberos_armored_data_request_element",
+        "kerberos_kerberos_as_rep_element",
+        "kerberos_kerberos_as_req_element",
+        "kerberos_kerberos_authenticator_enc_part_element",
+        "kerberos_kerberos_checksum",
+        "kerberos_kerberos_cksumtype",
+        "kerberos_kerberos_cname_element",
+        "kerberos_kerberos_cname_string",
+        "kerberos_kerberos_crealm",
+        "kerberos_kerberos_ctime",
+        "kerberos_kerberos_e_data",
+        "kerberos_kerberos_e_text",
+        "kerberos_kerberos_enc_fast_rep_element",
+        "kerberos_kerberos_enc_fast_req_element",
+        "kerberos_kerberos_encryptedAuthenticator_cipher",
+        "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "kerberos_kerberos_encryptedKrbFastReq_cipher",
+        "kerberos_kerberos_encryptedKrbFastResponse_cipher",
+        "kerberos_kerberos_encryptedTicketData_cipher",
+        "kerberos_kerberos_error_code",
+        "kerberos_kerberos_etype",
+        "kerberos_kerberos_info2_salt",
+        "kerberos_kerberos_kDC_REP_enc_part_element",
+        "kerberos_kerberos_kdc-req-body_etype",
+        "kerberos_kerberos_kdc_options",
+        "kerberos_kerberos_krb_error_element",
+        "kerberos_kerberos_kvno",
+        "kerberos_kerberos_msg_type",
+        "kerberos_kerberos_name_type",
+        "kerberos_kerberos_nonce",
+        "kerberos_kerberos_pA_ENC_TIMESTAMP_cipher",
+        "kerberos_kerberos_padata_type",
+        "kerberos_kerberos_padata_value",
+        "kerberos_kerberos_pvno",
+        "kerberos_kerberos_rEP_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_realm",
+        "kerberos_kerberos_req_body_element",
+        "kerberos_kerberos_req_checksum_element",
+        "kerberos_kerberos_response_to",
+        "kerberos_kerberos_rm_length",
+        "kerberos_kerberos_rm_reserved",
+        "kerberos_kerberos_rtime",
+        "kerberos_kerberos_sname_element",
+        "kerberos_kerberos_sname_string",
+        "kerberos_kerberos_stime",
+        "kerberos_kerberos_susec",
+        "kerberos_kerberos_tgs_rep_element",
+        "kerberos_kerberos_tgs_req_element",
+        "kerberos_kerberos_ticket_element",
+        "kerberos_kerberos_ticket_enc_part_element",
+        "kerberos_kerberos_till",
+        "kerberos_kerberos_time",
+        "kerberos_kerberos_tkt_vno",
+        "text"
+      ],
+      "bruteshark_kerberos_v5_udp2.pcap": [
+        "_ws_expert",
+        "ber_ber_bitstring_padding",
+        "kerberos_kerberos_APOptions_mutual_required",
+        "kerberos_kerberos_APOptions_reserved",
+        "kerberos_kerberos_APOptions_use_session_key",
+        "kerberos_kerberos_CNameString",
+        "kerberos_kerberos_ENCTYPE",
+        "kerberos_kerberos_HostAddress_element",
+        "kerberos_kerberos_KDCOptions_allow_postdate",
+        "kerberos_kerberos_KDCOptions_canonicalize",
+        "kerberos_kerberos_KDCOptions_constrained_delegation",
+        "kerberos_kerberos_KDCOptions_disable_transited_check",
+        "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+        "kerberos_kerberos_KDCOptions_forwardable",
+        "kerberos_kerberos_KDCOptions_forwarded",
+        "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+        "kerberos_kerberos_KDCOptions_postdated",
+        "kerberos_kerberos_KDCOptions_proxiable",
+        "kerberos_kerberos_KDCOptions_proxy",
+        "kerberos_kerberos_KDCOptions_renew",
+        "kerberos_kerberos_KDCOptions_renewable",
+        "kerberos_kerberos_KDCOptions_renewable_ok",
+        "kerberos_kerberos_KDCOptions_request_anonymous",
+        "kerberos_kerberos_KDCOptions_reserved",
+        "kerberos_kerberos_KDCOptions_unused10",
+        "kerberos_kerberos_KDCOptions_unused12",
+        "kerberos_kerberos_KDCOptions_unused13",
+        "kerberos_kerberos_KDCOptions_unused17",
+        "kerberos_kerberos_KDCOptions_unused18",
+        "kerberos_kerberos_KDCOptions_unused19",
+        "kerberos_kerberos_KDCOptions_unused20",
+        "kerberos_kerberos_KDCOptions_unused21",
+        "kerberos_kerberos_KDCOptions_unused22",
+        "kerberos_kerberos_KDCOptions_unused23",
+        "kerberos_kerberos_KDCOptions_unused24",
+        "kerberos_kerberos_KDCOptions_unused25",
+        "kerberos_kerberos_KDCOptions_unused29",
+        "kerberos_kerberos_KDCOptions_unused7",
+        "kerberos_kerberos_KDCOptions_unused9",
+        "kerberos_kerberos_KDCOptions_validate",
+        "kerberos_kerberos_PA_DATA_element",
+        "kerberos_kerberos_SNameString",
+        "kerberos_kerberos_addr_nb",
+        "kerberos_kerberos_addr_type",
+        "kerberos_kerberos_addresses",
+        "kerberos_kerberos_ap_options",
+        "kerberos_kerberos_ap_req_element",
+        "kerberos_kerberos_as_rep_element",
+        "kerberos_kerberos_as_req_element",
+        "kerberos_kerberos_authenticator_enc_part_element",
+        "kerberos_kerberos_cname_element",
+        "kerberos_kerberos_cname_string",
+        "kerberos_kerberos_crealm",
+        "kerberos_kerberos_encryptedAuthenticator_cipher",
+        "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "kerberos_kerberos_encryptedTicketData_cipher",
+        "kerberos_kerberos_etype",
+        "kerberos_kerberos_include_pac",
+        "kerberos_kerberos_kDC_REP_enc_part_element",
+        "kerberos_kerberos_kdc-req-body_etype",
+        "kerberos_kerberos_kdc_options",
+        "kerberos_kerberos_kvno",
+        "kerberos_kerberos_msg_type",
+        "kerberos_kerberos_name_type",
+        "kerberos_kerberos_nonce",
+        "kerberos_kerberos_pA_ENC_TIMESTAMP_cipher",
+        "kerberos_kerberos_padata_type",
+        "kerberos_kerberos_padata_value",
+        "kerberos_kerberos_pvno",
+        "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_realm",
+        "kerberos_kerberos_req_body_element",
+        "kerberos_kerberos_response_to",
+        "kerberos_kerberos_rtime",
+        "kerberos_kerberos_sname_element",
+        "kerberos_kerberos_sname_string",
+        "kerberos_kerberos_tgs_rep_element",
+        "kerberos_kerberos_tgs_req_element",
+        "kerberos_kerberos_ticket_element",
+        "kerberos_kerberos_ticket_enc_part_element",
+        "kerberos_kerberos_till",
+        "kerberos_kerberos_time",
+        "kerberos_kerberos_tkt_vno",
+        "text"
+      ],
+      "wireshark_krb816.cap": [
+        "_ws_expert",
+        "ber_ber_bitstring_padding",
+        "kerberos_kerberos_APOptions_mutual_required",
+        "kerberos_kerberos_APOptions_reserved",
+        "kerberos_kerberos_APOptions_use_session_key",
+        "kerberos_kerberos_CNameString",
+        "kerberos_kerberos_ENCTYPE",
+        "kerberos_kerberos_ETYPE_INFO_ENTRY_element",
+        "kerberos_kerberos_HostAddress_element",
+        "kerberos_kerberos_KDCOptions_allow_postdate",
+        "kerberos_kerberos_KDCOptions_canonicalize",
+        "kerberos_kerberos_KDCOptions_constrained_delegation",
+        "kerberos_kerberos_KDCOptions_disable_transited_check",
+        "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+        "kerberos_kerberos_KDCOptions_forwardable",
+        "kerberos_kerberos_KDCOptions_forwarded",
+        "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+        "kerberos_kerberos_KDCOptions_postdated",
+        "kerberos_kerberos_KDCOptions_proxiable",
+        "kerberos_kerberos_KDCOptions_proxy",
+        "kerberos_kerberos_KDCOptions_renew",
+        "kerberos_kerberos_KDCOptions_renewable",
+        "kerberos_kerberos_KDCOptions_renewable_ok",
+        "kerberos_kerberos_KDCOptions_request_anonymous",
+        "kerberos_kerberos_KDCOptions_reserved",
+        "kerberos_kerberos_KDCOptions_unused10",
+        "kerberos_kerberos_KDCOptions_unused12",
+        "kerberos_kerberos_KDCOptions_unused13",
+        "kerberos_kerberos_KDCOptions_unused17",
+        "kerberos_kerberos_KDCOptions_unused18",
+        "kerberos_kerberos_KDCOptions_unused19",
+        "kerberos_kerberos_KDCOptions_unused20",
+        "kerberos_kerberos_KDCOptions_unused21",
+        "kerberos_kerberos_KDCOptions_unused22",
+        "kerberos_kerberos_KDCOptions_unused23",
+        "kerberos_kerberos_KDCOptions_unused24",
+        "kerberos_kerberos_KDCOptions_unused25",
+        "kerberos_kerberos_KDCOptions_unused29",
+        "kerberos_kerberos_KDCOptions_unused7",
+        "kerberos_kerberos_KDCOptions_unused9",
+        "kerberos_kerberos_KDCOptions_validate",
+        "kerberos_kerberos_PA_DATA_element",
+        "kerberos_kerberos_SNameString",
+        "kerberos_kerberos_addr_nb",
+        "kerberos_kerberos_addr_type",
+        "kerberos_kerberos_addresses",
+        "kerberos_kerberos_ap_options",
+        "kerberos_kerberos_ap_req_element",
+        "kerberos_kerberos_as_rep_element",
+        "kerberos_kerberos_as_req_element",
+        "kerberos_kerberos_authenticator_enc_part_element",
+        "kerberos_kerberos_cname_element",
+        "kerberos_kerberos_cname_string",
+        "kerberos_kerberos_crealm",
+        "kerberos_kerberos_e_data",
+        "kerberos_kerberos_encryptedAuthenticator_cipher",
+        "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "kerberos_kerberos_encryptedTicketData_cipher",
+        "kerberos_kerberos_error_code",
+        "kerberos_kerberos_etype",
+        "kerberos_kerberos_include_pac",
+        "kerberos_kerberos_info_salt",
+        "kerberos_kerberos_kDC_REP_enc_part_element",
+        "kerberos_kerberos_kdc-req-body_etype",
+        "kerberos_kerberos_kdc_options",
+        "kerberos_kerberos_krb_error_element",
+        "kerberos_kerberos_kvno",
+        "kerberos_kerberos_msg_type",
+        "kerberos_kerberos_name_type",
+        "kerberos_kerberos_nonce",
+        "kerberos_kerberos_pA_ENC_TIMESTAMP_cipher",
+        "kerberos_kerberos_padata_type",
+        "kerberos_kerberos_padata_value",
+        "kerberos_kerberos_pvno",
+        "kerberos_kerberos_pw_salt",
+        "kerberos_kerberos_rEP_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_realm",
+        "kerberos_kerberos_req_body_element",
+        "kerberos_kerberos_response_to",
+        "kerberos_kerberos_rtime",
+        "kerberos_kerberos_sname_element",
+        "kerberos_kerberos_sname_string",
+        "kerberos_kerberos_stime",
+        "kerberos_kerberos_susec",
+        "kerberos_kerberos_tgs_rep_element",
+        "kerberos_kerberos_tgs_req_element",
+        "kerberos_kerberos_ticket_element",
+        "kerberos_kerberos_ticket_enc_part_element",
+        "kerberos_kerberos_till",
+        "kerberos_kerberos_time",
+        "kerberos_kerberos_tkt_vno",
+        "text"
+      ],
+      "wireshark_krb_delegation.cap": [
+        "_ws_expert",
+        "ber_ber_bitstring_padding",
+        "kerberos_kerberos_APOptions_mutual_required",
+        "kerberos_kerberos_APOptions_reserved",
+        "kerberos_kerberos_APOptions_use_session_key",
+        "kerberos_kerberos_CNameString",
+        "kerberos_kerberos_ENCTYPE",
+        "kerberos_kerberos_HostAddress_element",
+        "kerberos_kerberos_KDCOptions_allow_postdate",
+        "kerberos_kerberos_KDCOptions_canonicalize",
+        "kerberos_kerberos_KDCOptions_constrained_delegation",
+        "kerberos_kerberos_KDCOptions_disable_transited_check",
+        "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+        "kerberos_kerberos_KDCOptions_forwardable",
+        "kerberos_kerberos_KDCOptions_forwarded",
+        "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+        "kerberos_kerberos_KDCOptions_postdated",
+        "kerberos_kerberos_KDCOptions_proxiable",
+        "kerberos_kerberos_KDCOptions_proxy",
+        "kerberos_kerberos_KDCOptions_renew",
+        "kerberos_kerberos_KDCOptions_renewable",
+        "kerberos_kerberos_KDCOptions_renewable_ok",
+        "kerberos_kerberos_KDCOptions_request_anonymous",
+        "kerberos_kerberos_KDCOptions_reserved",
+        "kerberos_kerberos_KDCOptions_unused10",
+        "kerberos_kerberos_KDCOptions_unused12",
+        "kerberos_kerberos_KDCOptions_unused13",
+        "kerberos_kerberos_KDCOptions_unused17",
+        "kerberos_kerberos_KDCOptions_unused18",
+        "kerberos_kerberos_KDCOptions_unused19",
+        "kerberos_kerberos_KDCOptions_unused20",
+        "kerberos_kerberos_KDCOptions_unused21",
+        "kerberos_kerberos_KDCOptions_unused22",
+        "kerberos_kerberos_KDCOptions_unused23",
+        "kerberos_kerberos_KDCOptions_unused24",
+        "kerberos_kerberos_KDCOptions_unused25",
+        "kerberos_kerberos_KDCOptions_unused29",
+        "kerberos_kerberos_KDCOptions_unused7",
+        "kerberos_kerberos_KDCOptions_unused9",
+        "kerberos_kerberos_KDCOptions_validate",
+        "kerberos_kerberos_PA_DATA_element",
+        "kerberos_kerberos_SNameString",
+        "kerberos_kerberos_addr_nb",
+        "kerberos_kerberos_addr_type",
+        "kerberos_kerberos_addresses",
+        "kerberos_kerberos_ap_options",
+        "kerberos_kerberos_ap_req_element",
+        "kerberos_kerberos_as_rep_element",
+        "kerberos_kerberos_as_req_element",
+        "kerberos_kerberos_authenticator_enc_part_element",
+        "kerberos_kerberos_cname_element",
+        "kerberos_kerberos_cname_string",
+        "kerberos_kerberos_crealm",
+        "kerberos_kerberos_encryptedAuthenticator_cipher",
+        "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "kerberos_kerberos_encryptedTicketData_cipher",
+        "kerberos_kerberos_etype",
+        "kerberos_kerberos_include_pac",
+        "kerberos_kerberos_kDC_REP_enc_part_element",
+        "kerberos_kerberos_kdc-req-body_etype",
+        "kerberos_kerberos_kdc_options",
+        "kerberos_kerberos_kvno",
+        "kerberos_kerberos_msg_type",
+        "kerberos_kerberos_name_type",
+        "kerberos_kerberos_nonce",
+        "kerberos_kerberos_pA_ENC_TIMESTAMP_cipher",
+        "kerberos_kerberos_padata_type",
+        "kerberos_kerberos_padata_value",
+        "kerberos_kerberos_pvno",
+        "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+        "kerberos_kerberos_realm",
+        "kerberos_kerberos_req_body_element",
+        "kerberos_kerberos_response_to",
+        "kerberos_kerberos_rtime",
+        "kerberos_kerberos_sname_element",
+        "kerberos_kerberos_sname_string",
+        "kerberos_kerberos_tgs_rep_element",
+        "kerberos_kerberos_tgs_req_element",
+        "kerberos_kerberos_ticket_element",
+        "kerberos_kerberos_ticket_enc_part_element",
+        "kerberos_kerberos_till",
+        "kerberos_kerberos_time",
+        "kerberos_kerberos_tkt_vno",
+        "text"
+      ]
+    },
+    "union": [
+      "_ws_expert",
+      "ber_ber_64bit_uint_as_bytes",
+      "ber_ber_bitstring_padding",
+      "cms_cms_Attribute_element",
+      "cms_cms_CertificateChoices",
+      "cms_cms_ContentType",
+      "cms_cms_DigestAlgorithmIdentifier_element",
+      "cms_cms_MessageDigest",
+      "cms_cms_SignedData_element",
+      "cms_cms_SignerInfo_element",
+      "cms_cms_attrType",
+      "cms_cms_attrValues",
+      "cms_cms_certificate_element",
+      "cms_cms_certificates",
+      "cms_cms_contentType",
+      "cms_cms_digestAlgorithm_element",
+      "cms_cms_digestAlgorithms",
+      "cms_cms_eContent",
+      "cms_cms_eContentType",
+      "cms_cms_encapContentInfo_element",
+      "cms_cms_issuer",
+      "cms_cms_issuerAndSerialNumber_element",
+      "cms_cms_serialNumber",
+      "cms_cms_sid",
+      "cms_cms_signatureAlgorithm_element",
+      "cms_cms_signatureValue",
+      "cms_cms_signedAttrs",
+      "cms_cms_signerInfos",
+      "cms_cms_version",
+      "kerberos_kerberos_APOptions_mutual_required",
+      "kerberos_kerberos_APOptions_reserved",
+      "kerberos_kerberos_APOptions_use_session_key",
+      "kerberos_kerberos_CNameString",
+      "kerberos_kerberos_ENCTYPE",
+      "kerberos_kerberos_ETYPE_INFO2_ENTRY_element",
+      "kerberos_kerberos_ETYPE_INFO_ENTRY_element",
+      "kerberos_kerberos_HostAddress_element",
+      "kerberos_kerberos_KDCOptions_allow_postdate",
+      "kerberos_kerberos_KDCOptions_canonicalize",
+      "kerberos_kerberos_KDCOptions_constrained_delegation",
+      "kerberos_kerberos_KDCOptions_disable_transited_check",
+      "kerberos_kerberos_KDCOptions_enc_tkt_in_skey",
+      "kerberos_kerberos_KDCOptions_forwardable",
+      "kerberos_kerberos_KDCOptions_forwarded",
+      "kerberos_kerberos_KDCOptions_opt_hardware_auth",
+      "kerberos_kerberos_KDCOptions_postdated",
+      "kerberos_kerberos_KDCOptions_proxiable",
+      "kerberos_kerberos_KDCOptions_proxy",
+      "kerberos_kerberos_KDCOptions_renew",
+      "kerberos_kerberos_KDCOptions_renewable",
+      "kerberos_kerberos_KDCOptions_renewable_ok",
+      "kerberos_kerberos_KDCOptions_request_anonymous",
+      "kerberos_kerberos_KDCOptions_reserved",
+      "kerberos_kerberos_KDCOptions_unused10",
+      "kerberos_kerberos_KDCOptions_unused12",
+      "kerberos_kerberos_KDCOptions_unused13",
+      "kerberos_kerberos_KDCOptions_unused17",
+      "kerberos_kerberos_KDCOptions_unused18",
+      "kerberos_kerberos_KDCOptions_unused19",
+      "kerberos_kerberos_KDCOptions_unused20",
+      "kerberos_kerberos_KDCOptions_unused21",
+      "kerberos_kerberos_KDCOptions_unused22",
+      "kerberos_kerberos_KDCOptions_unused23",
+      "kerberos_kerberos_KDCOptions_unused24",
+      "kerberos_kerberos_KDCOptions_unused25",
+      "kerberos_kerberos_KDCOptions_unused29",
+      "kerberos_kerberos_KDCOptions_unused7",
+      "kerberos_kerberos_KDCOptions_unused9",
+      "kerberos_kerberos_KDCOptions_validate",
+      "kerberos_kerberos_KerberosString",
+      "kerberos_kerberos_PA_DATA_element",
+      "kerberos_kerberos_SNameString",
+      "kerberos_kerberos_addr_nb",
+      "kerberos_kerberos_addr_type",
+      "kerberos_kerberos_addresses",
+      "kerberos_kerberos_ap_options",
+      "kerberos_kerberos_ap_req_element",
+      "kerberos_kerberos_armor_element",
+      "kerberos_kerberos_armor_type",
+      "kerberos_kerberos_armor_value",
+      "kerberos_kerberos_armored_data_reply_element",
+      "kerberos_kerberos_armored_data_request_element",
+      "kerberos_kerberos_as_rep_element",
+      "kerberos_kerberos_as_req_element",
+      "kerberos_kerberos_authenticator_enc_part_element",
+      "kerberos_kerberos_checksum",
+      "kerberos_kerberos_cksumtype",
+      "kerberos_kerberos_cname_element",
+      "kerberos_kerberos_cname_string",
+      "kerberos_kerberos_crealm",
+      "kerberos_kerberos_ctime",
+      "kerberos_kerberos_e_data",
+      "kerberos_kerberos_e_text",
+      "kerberos_kerberos_enc_fast_rep_element",
+      "kerberos_kerberos_enc_fast_req_element",
+      "kerberos_kerberos_encryptedAuthenticator_cipher",
+      "kerberos_kerberos_encryptedKDCREPData_cipher",
+      "kerberos_kerberos_encryptedKrbFastReq_cipher",
+      "kerberos_kerberos_encryptedKrbFastResponse_cipher",
+      "kerberos_kerberos_encryptedTicketData_cipher",
+      "kerberos_kerberos_error_code",
+      "kerberos_kerberos_etype",
+      "kerberos_kerberos_include_pac",
+      "kerberos_kerberos_info2_salt",
+      "kerberos_kerberos_info_salt",
+      "kerberos_kerberos_kDC_REP_enc_part_element",
+      "kerberos_kerberos_kdc-req-body_etype",
+      "kerberos_kerberos_kdc_options",
+      "kerberos_kerberos_krb_error_element",
+      "kerberos_kerberos_kvno",
+      "kerberos_kerberos_msg_type",
+      "kerberos_kerberos_name_string",
+      "kerberos_kerberos_name_type",
+      "kerberos_kerberos_nonce",
+      "kerberos_kerberos_pA_ENC_TIMESTAMP_cipher",
+      "kerberos_kerberos_padata_type",
+      "kerberos_kerberos_padata_value",
+      "kerberos_kerberos_pvno",
+      "kerberos_kerberos_pw_salt",
+      "kerberos_kerberos_rEP_SEQUENCE_OF_PA_DATA",
+      "kerberos_kerberos_rEQ_SEQUENCE_OF_PA_DATA",
+      "kerberos_kerberos_realm",
+      "kerberos_kerberos_req_body_element",
+      "kerberos_kerberos_req_checksum_element",
+      "kerberos_kerberos_response_to",
+      "kerberos_kerberos_rm_length",
+      "kerberos_kerberos_rm_reserved",
+      "kerberos_kerberos_rtime",
+      "kerberos_kerberos_sname_element",
+      "kerberos_kerberos_sname_string",
+      "kerberos_kerberos_stime",
+      "kerberos_kerberos_susec",
+      "kerberos_kerberos_tgs_rep_element",
+      "kerberos_kerberos_tgs_req_element",
+      "kerberos_kerberos_ticket_element",
+      "kerberos_kerberos_ticket_enc_part_element",
+      "kerberos_kerberos_till",
+      "kerberos_kerberos_time",
+      "kerberos_kerberos_tkt_vno",
+      "pkinit_pkinit_AlgorithmIdentifier_element",
+      "pkinit_pkinit_AuthPack_element",
+      "pkinit_pkinit_ExternalPrincipalIdentifier_element",
+      "pkinit_pkinit_KDCDHKeyInfo_element",
+      "pkinit_pkinit_KDFAlgorithmId_element",
+      "pkinit_pkinit_KRB5PrincipalName_element",
+      "pkinit_pkinit_clientPublicValue_element",
+      "pkinit_pkinit_cusec",
+      "pkinit_pkinit_dhInfo_element",
+      "pkinit_pkinit_dhNonce",
+      "pkinit_pkinit_dhSignedData_element",
+      "pkinit_pkinit_issuerAndSerialNumber_element",
+      "pkinit_pkinit_kdf_element",
+      "pkinit_pkinit_kdf_id",
+      "pkinit_pkinit_paChecksum",
+      "pkinit_pkinit_paNonce",
+      "pkinit_pkinit_pkAuthenticator_element",
+      "pkinit_pkinit_signedAuthPack_element",
+      "pkinit_pkinit_subjectKeyIdentifier",
+      "pkinit_pkinit_subjectName",
+      "pkinit_pkinit_subjectPublicKey",
+      "pkinit_pkinit_supportedCMSTypes",
+      "pkinit_pkinit_supportedKDFs",
+      "pkinit_pkinit_trustedCertifiers",
+      "pkixalgs_pkixalgs_DomainParameters_element",
+      "pkixalgs_pkixalgs_g",
+      "pkixalgs_pkixalgs_modulus",
+      "pkixalgs_pkixalgs_publicExponent",
+      "text",
+      "x509af_x509af_Extension_element",
+      "x509af_x509af_algorithmIdentifier_element",
+      "x509af_x509af_algorithm_element",
+      "x509af_x509af_algorithm_id",
+      "x509af_x509af_encrypted",
+      "x509af_x509af_extension_id",
+      "x509af_x509af_extensions",
+      "x509af_x509af_issuer",
+      "x509af_x509af_notAfter",
+      "x509af_x509af_notBefore",
+      "x509af_x509af_rdnSequence",
+      "x509af_x509af_serialNumber",
+      "x509af_x509af_signature_element",
+      "x509af_x509af_signedCertificate_element",
+      "x509af_x509af_subject",
+      "x509af_x509af_subjectPublicKey",
+      "x509af_x509af_subjectPublicKeyInfo_element",
+      "x509af_x509af_subjectPublicKey_dh",
+      "x509af_x509af_subjectPublicKey_rsa",
+      "x509af_x509af_utcTime",
+      "x509af_x509af_validity_element",
+      "x509af_x509af_version",
+      "x509ce_x509ce_AuthorityKeyIdentifier_element",
+      "x509ce_x509ce_BasicConstraintsSyntax_element",
+      "x509ce_x509ce_GeneralName",
+      "x509ce_x509ce_GeneralNames",
+      "x509ce_x509ce_KeyPurposeIDs",
+      "x509ce_x509ce_KeyPurposeId",
+      "x509ce_x509ce_KeyUsage",
+      "x509ce_x509ce_KeyUsage_cRLSign",
+      "x509ce_x509ce_KeyUsage_contentCommitment",
+      "x509ce_x509ce_KeyUsage_dataEncipherment",
+      "x509ce_x509ce_KeyUsage_decipherOnly",
+      "x509ce_x509ce_KeyUsage_digitalSignature",
+      "x509ce_x509ce_KeyUsage_encipherOnly",
+      "x509ce_x509ce_KeyUsage_keyAgreement",
+      "x509ce_x509ce_KeyUsage_keyCertSign",
+      "x509ce_x509ce_KeyUsage_keyEncipherment",
+      "x509ce_x509ce_SubjectKeyIdentifier",
+      "x509ce_x509ce_keyIdentifier",
+      "x509ce_x509ce_otherName_element",
+      "x509ce_x509ce_type_id",
+      "x509if_x509if_RDNSequence_item",
+      "x509if_x509if_RelativeDistinguishedName_item_element",
+      "x509if_x509if_oid",
+      "x509if_x509if_rdnSequence",
+      "x509sat_x509sat_CountryName",
+      "x509sat_x509sat_DirectoryString",
+      "x509sat_x509sat_uTF8String"
+    ]
+  },
+  "extracted_fields": {
+    "total": 14,
+    "fields": [
+      "addr_nb",
+      "addresses",
+      "checksum",
+      "cname_string",
+      "encryptedAuthenticator_cipher",
+      "error_code",
+      "kdc-req-body.etype",
+      "kdc-req-body_etype",
+      "name_string",
+      "padata_type",
+      "padata_value",
+      "rEP_SEQUENCE_OF_PA_DATA",
+      "rEQ_SEQUENCE_OF_PA_DATA",
+      "sname_string"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "110/366 (30%)",
+    "pcap_vs_extracted": "13/110 (11%)",
+    "t1_extracted": "11/11 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "kerberos_kerberos_name_type",
+        "field": "kerberos.name_type",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_CNameString",
+        "field": "kerberos.CNameString",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_SNameString",
+        "field": "kerberos.SNameString",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_etype",
+        "field": "kerberos.etype",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "ENCTYPE"
+      },
+      {
+        "ek_name": "kerberos_kerberos_kvno",
+        "field": "kerberos.kvno",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "UInt32"
+      },
+      {
+        "ek_name": "kerberos_kerberos_encryptedTicketData_cipher",
+        "field": "kerberos.encryptedTicketData_cipher",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "T_encryptedTicketData_cipher"
+      },
+      {
+        "ek_name": "kerberos_kerberos_encryptedKDCREPData_cipher",
+        "field": "kerberos.encryptedKDCREPData_cipher",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "T_encryptedKDCREPData_cipher"
+      },
+      {
+        "ek_name": "kerberos_kerberos_tkt_vno",
+        "field": "kerberos.tkt_vno",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "INTEGER_5"
+      },
+      {
+        "ek_name": "kerberos_kerberos_realm",
+        "field": "kerberos.realm",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_crealm",
+        "field": "kerberos.crealm",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "Realm"
+      },
+      {
+        "ek_name": "kerberos_kerberos_pvno",
+        "field": "kerberos.pvno",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "INTEGER_5"
+      },
+      {
+        "ek_name": "kerberos_kerberos_msg_type",
+        "field": "kerberos.msg_type",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "MESSAGE_TYPE"
+      },
+      {
+        "ek_name": "kerberos_kerberos_kdc_options",
+        "field": "kerberos.kdc_options",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "KDCOptions"
+      },
+      {
+        "ek_name": "kerberos_kerberos_till",
+        "field": "kerberos.till",
+        "type": "FT_ABSOLUTE_TIME",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "KerberosTime"
+      },
+      {
+        "ek_name": "kerberos_kerberos_nonce",
+        "field": "kerberos.nonce",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "UInt32"
+      },
+      {
+        "ek_name": "kerberos_kerberos_ENCTYPE",
+        "field": "kerberos.ENCTYPE",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_ap_options",
+        "field": "kerberos.ap_options",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "APOptions"
+      },
+      {
+        "ek_name": "kerberos_kerberos_rtime",
+        "field": "kerberos.rtime",
+        "type": "FT_ABSOLUTE_TIME",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "KerberosTime"
+      },
+      {
+        "ek_name": "kerberos_kerberos_stime",
+        "field": "kerberos.stime",
+        "type": "FT_ABSOLUTE_TIME",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "wireshark_krb816.cap"
+        ],
+        "description": "KerberosTime"
+      },
+      {
+        "ek_name": "kerberos_kerberos_susec",
+        "field": "kerberos.susec",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "wireshark_krb816.cap"
+        ],
+        "description": "Microseconds"
+      },
+      {
+        "ek_name": "kerberos_kerberos_e_data",
+        "field": "kerberos.e_data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "wireshark_krb816.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_pA_ENC_TIMESTAMP_cipher",
+        "field": "kerberos.pA_ENC_TIMESTAMP_cipher",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap",
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "T_pA_ENC_TIMESTAMP_cipher"
+      },
+      {
+        "ek_name": "kerberos_kerberos_rm_length",
+        "field": "kerberos.rm.length",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_cksumtype",
+        "field": "kerberos.cksumtype",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_ctime",
+        "field": "kerberos.ctime",
+        "type": "FT_ABSOLUTE_TIME",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap"
+        ],
+        "description": "KerberosTime"
+      },
+      {
+        "ek_name": "kerberos_kerberos_e_text",
+        "field": "kerberos.e_text",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap"
+        ],
+        "description": "KerberosString"
+      },
+      {
+        "ek_name": "kerberos_kerberos_info2_salt",
+        "field": "kerberos.info2_salt",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap"
+        ],
+        "description": "KerberosString"
+      },
+      {
+        "ek_name": "kerberos_kerberos_encryptedKrbFastReq_cipher",
+        "field": "kerberos.encryptedKrbFastReq_cipher",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap"
+        ],
+        "description": "T_encryptedKrbFastReq_cipher"
+      },
+      {
+        "ek_name": "kerberos_kerberos_encryptedKrbFastResponse_cipher",
+        "field": "kerberos.encryptedKrbFastResponse_cipher",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_udp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap",
+          "bruteshark_kerberos_v5_udp.pcap"
+        ],
+        "description": "T_encryptedKrbFastResponse_cipher"
+      },
+      {
+        "ek_name": "kerberos_kerberos_addr_type",
+        "field": "kerberos.addr_type",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_include_pac",
+        "field": "kerberos.include_pac",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_v5_udp2.pcap",
+          "wireshark_krb816.cap",
+          "wireshark_krb_delegation.cap"
+        ],
+        "description": "BOOLEAN"
+      },
+      {
+        "ek_name": "kerberos_kerberos_KerberosString",
+        "field": "kerberos.KerberosString",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_armor_type",
+        "field": "kerberos.armor_type",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap"
+        ],
+        "description": "KrbFastArmorTypes"
+      },
+      {
+        "ek_name": "kerberos_kerberos_armor_value",
+        "field": "kerberos.armor_value",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_kerberos_tcp.pcap",
+          "bruteshark_kerberos_v5_tcp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_pw_salt",
+        "field": "kerberos.pw_salt",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_krb816.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "kerberos_kerberos_info_salt",
+        "field": "kerberos.info_salt",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_krb816.cap"
+        ],
+        "description": "OCTET_STRING"
+      }
+    ],
+    "summary": {
+      "t1_total": 48,
+      "t1_in_pcap": 11,
+      "t1_covered": 11,
+      "t2_total": 171,
+      "t2_in_pcap": 38,
+      "t2_covered": 2,
+      "t3_skipped": 144,
+      "t4_ignored": 3
+    }
+  }
+}

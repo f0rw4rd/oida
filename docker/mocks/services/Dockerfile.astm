@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# No additional dependencies needed for basic ASTM server
+# The server uses only Python standard library
+
+COPY astm_server.py /app/
+
+EXPOSE 1394
+
+ENV PYTHONUNBUFFERED=1
+ENV ASTM_PORT=1394
+ENV ASTM_ANALYZER=COBAS_8000
+ENV ASTM_ACCEPT_ALL=true
+
+CMD ["python3", "astm_server.py"]

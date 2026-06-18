@@ -1,0 +1,5566 @@
+{
+  "protocol": "ethercat",
+  "display_filter": "ecat",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:49:48.161212+00:00",
+  "dissector_fields": {
+    "total": 469,
+    "by_type": {
+      "FT_BOOLEAN": 175,
+      "FT_BYTES": 15,
+      "FT_UINT16": 96,
+      "FT_UINT32": 93,
+      "FT_UINT64": 9,
+      "FT_UINT8": 81
+    },
+    "fields": [
+      {
+        "name": "ecat.sub",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.cnt",
+        "type": "FT_UINT16",
+        "description": "The working counter is increased once for each addressed device if at least one byte/bit of the data was successfully read and/or written by that device, it is increased once for every operation made by that device - read/write/read and write"
+      },
+      {
+        "name": "ecat.sub1.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.cnt",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.cmd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.idx",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.adp",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.ado",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.lad",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.int",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.dc.dif.da",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.dc.dif.bd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.dc.dif.cb",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.dc.dif.cd",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.dc.dif.ba",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub1.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub2.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub3.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub4.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub5.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub6.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub7.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub8.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub9.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.sub10.dc.dif.ca",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.subframe.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.subframe.reserved",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.subframe.circulating",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.subframe.more",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.subframe.pad_bytes",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.revision",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.build",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.fmmucnt",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.smcnt",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dpram",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ports",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.fmmurestrict",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.smaddrrestrict",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.dcsupport",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.dc64support",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.ebuslowjitter",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.ebusextlinkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.miiextlinkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.features.crcext",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.physaddr",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.physaddr2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl1.killnonecat",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl1.port0extlinkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl1.port1extlinkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl1.port2extlinkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl1.port3extlinkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlcrtl2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlcrtl2.port0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlcrtl2.port1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlcrtl2.port2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlcrtl2.port3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl3.fifosize",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl3.lowebusjit",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl4",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlctrl4.2ndaddress",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1.operation",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1.pdiwatchdog",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1.enhlinkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1.physlink.port0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1.physlink.port1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1.physlink.port2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus1.physlink.port3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus2.port0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus2.port1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus2.port2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dlstatus2.port3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.regprotect",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.accessprotect",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.resetecat",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.resetpdi",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.regphysrwoffs",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alctrl",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alctrl.ctrl",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alctrl.errack",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alctrl.id",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alstatus",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alstatus.status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alstatus.err",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alstatus.id",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.alstatuscode",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl1.pdi",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.devemul",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.enhlnkdetect",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.dcsyncout",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.dcsyncin",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.enhlnkdetect0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.enhlnkdetect1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.enhlnkdetect2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdictrl2.enhlnkdetect3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.latchevt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.escstatevt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.alstatevt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm0irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm1irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm2irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm3irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm4irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm5irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm6irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.ecat_mask.sm7irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.alctrl",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.latchin",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sync0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sync1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.smchg",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.eepromcmdpen",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm5",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm6",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiL.sm7",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irqmask.pdiH",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.latchevt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.escstatevt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.alstatevt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm0irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm1irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm2irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm3irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm4irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm5irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm6irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.ecat.sm7irq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.alctrl",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.latchin",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sync0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sync1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.smchg",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.eepromcmdpen",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm5",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm6",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi1.sm7",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.irq.pdi2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc0",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc1",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc3",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc0.frame",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc0.rx",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc1.frame",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc1.rx",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc2.frame",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc2.rx",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc3.frame",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc3.rx",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc.fwd0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc.fwd1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc.fwd2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.crc.fwd3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.processuniterr",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.pdierr",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.linklost0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.linklost1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.linklost2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.linklost3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.wd.divisor",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.wd.timepdi",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.wd.timesm",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.wd.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.wd.status.pdwatchdog",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.wd.cntsm",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.wd.cntpdi",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.eeprom.assign",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.eeprom.assign.ctrl",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.eeprom.assign.pdiaccess",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.eeprom.assign.status",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.wraccess",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.eepromemul",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.8bacc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.2bacc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.rdacc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.wracc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.reloadacc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.crcerr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.lderr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.cmderr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.wrerr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.ctrlstat.busy",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.addrl",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.addrh",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.data0",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.data1",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.data2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.data3",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.ctrlstat",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.ctrlstat.wracc1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.ctrlstat.offsphy",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.ctrlstat.rdacc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.ctrlstat.wracc2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.ctrlstat.wrerr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.ctrlstat.busy",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.addr",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.addr.phyaddr",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.addr.mioaddr",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.data",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.access",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.access.ecatacc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.access.pdiacc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.access.forcereset",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status0.physlink",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status0.link",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status0.linkstatuserr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status0.readerr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status0.linkpartnererr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status0.phycfgupdated",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status1.physlink",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status1.link",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status1.linkstatuserr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status1.readerr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status1.linkpartnererr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status1.phycfgupdated",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status2.physlink",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status2.link",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status2.linkstatuserr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status2.readerr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status2.linkpartnererr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status2.phycfgupdated",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status3.physlink",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status3.link",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status3.linkstatuserr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status3.readerr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status3.linkpartnererr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.mio.status3.phycfgupdated",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.lstart",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.llen",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.lstartbit",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.lendbit",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.pstart",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.pstartbit",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.typeread",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.typewrite",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.activate",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.fmmu.activate0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.start",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.ctrlstatus",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.opmode",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.access",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.irq.ecat",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.irq.pdi",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.wdt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.irq.write",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.irq.read",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.1bufstate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.3bufstate",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.smenable",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.enable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.repeatreq",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.latchsmchg.ecat",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.latchsmchg.pdi",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.deactivate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.syncman.repeatack",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.recv0",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.recv1",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.recv2",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.recv3",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.systime",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.systimeL",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.systimeH",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.recvtime64",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.systimeoffs",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.systimeoffsl",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.systimeoffsh",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.systimedelay",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.ctrlerr",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.speedstart",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.speeddiff",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.fltdepth.systimediff",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.fltdepth.speedcnt",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.cycunitctrl",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.cycunitctrl.access_cyclic",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.cycunitctrl.access_latch0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.cycunitctrl.access_latch1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.enablecyclic",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.gen_sync0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.gen_sync1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.autoactivation",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.stimeext",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.stimecheck",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.hlfrange",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activation.dblrange",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.cycimpuls",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activationstat",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activationstat.sync0pend",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activationstat.sync1pend",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.activationstat.stimeoutofrange",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.sync0.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.sync0.status.triggered",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.sync1.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.sync1.status.triggered",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.starttime0",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.starttime1",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.cyctime0",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.cyctime1",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.ctrl",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.ctrl.pos",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.ctrl.neg",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.ctrl",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.ctrl.pos",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.ctrl.neg",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.status.eventpos",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.status.eventneg",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.status.pinstate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.status.eventpos",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.status.eventneg",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.status.pinstate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.pos",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch0.neg",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.pos",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.latch1.neg",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.rcvsyncmanchg",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.pdismstart",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ecat.reg.dc.pdismchg",
+        "type": "FT_UINT32",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 226,
+    "by_pcap": {
+      "cisagov_ethercat_example.pcap": [
+        "ecat_ecat_ado",
+        "ecat_ecat_adp",
+        "ecat_ecat_cmd",
+        "ecat_ecat_cnt",
+        "ecat_ecat_data",
+        "ecat_ecat_fmmu",
+        "ecat_ecat_fmmu_activate",
+        "ecat_ecat_fmmu_activate0",
+        "ecat_ecat_fmmu_lendbit",
+        "ecat_ecat_fmmu_llen",
+        "ecat_ecat_fmmu_lstart",
+        "ecat_ecat_fmmu_lstartbit",
+        "ecat_ecat_fmmu_pstart",
+        "ecat_ecat_fmmu_pstartbit",
+        "ecat_ecat_fmmu_type",
+        "ecat_ecat_fmmu_typeread",
+        "ecat_ecat_fmmu_typewrite",
+        "ecat_ecat_idx",
+        "ecat_ecat_int",
+        "ecat_ecat_lad",
+        "ecat_ecat_reg_addrh",
+        "ecat_ecat_reg_addrl",
+        "ecat_ecat_reg_alctrl",
+        "ecat_ecat_reg_alctrl_ctrl",
+        "ecat_ecat_reg_alctrl_errack",
+        "ecat_ecat_reg_alctrl_id",
+        "ecat_ecat_reg_alstatus",
+        "ecat_ecat_reg_alstatus_err",
+        "ecat_ecat_reg_alstatus_id",
+        "ecat_ecat_reg_alstatus_status",
+        "ecat_ecat_reg_alstatuscode",
+        "ecat_ecat_reg_build",
+        "ecat_ecat_reg_crc0",
+        "ecat_ecat_reg_crc0_frame",
+        "ecat_ecat_reg_crc0_rx",
+        "ecat_ecat_reg_crc1",
+        "ecat_ecat_reg_crc1_frame",
+        "ecat_ecat_reg_crc1_rx",
+        "ecat_ecat_reg_crc2",
+        "ecat_ecat_reg_crc2_frame",
+        "ecat_ecat_reg_crc2_rx",
+        "ecat_ecat_reg_crc3",
+        "ecat_ecat_reg_crc3_frame",
+        "ecat_ecat_reg_crc3_rx",
+        "ecat_ecat_reg_ctrlstat",
+        "ecat_ecat_reg_ctrlstat_2bacc",
+        "ecat_ecat_reg_ctrlstat_8bacc",
+        "ecat_ecat_reg_ctrlstat_busy",
+        "ecat_ecat_reg_ctrlstat_cmderr",
+        "ecat_ecat_reg_ctrlstat_crcerr",
+        "ecat_ecat_reg_ctrlstat_eepromemul",
+        "ecat_ecat_reg_ctrlstat_lderr",
+        "ecat_ecat_reg_ctrlstat_rdacc",
+        "ecat_ecat_reg_ctrlstat_reloadacc",
+        "ecat_ecat_reg_ctrlstat_wracc",
+        "ecat_ecat_reg_ctrlstat_wraccess",
+        "ecat_ecat_reg_ctrlstat_wrerr",
+        "ecat_ecat_reg_data0",
+        "ecat_ecat_reg_data1",
+        "ecat_ecat_reg_dc_activation",
+        "ecat_ecat_reg_dc_activation_autoactivation",
+        "ecat_ecat_reg_dc_activation_dblrange",
+        "ecat_ecat_reg_dc_activation_enablecyclic",
+        "ecat_ecat_reg_dc_activation_gen_sync0",
+        "ecat_ecat_reg_dc_activation_gen_sync1",
+        "ecat_ecat_reg_dc_activation_hlfrange",
+        "ecat_ecat_reg_dc_activation_stimecheck",
+        "ecat_ecat_reg_dc_activation_stimeext",
+        "ecat_ecat_reg_dc_ctrlerr",
+        "ecat_ecat_reg_dc_fltdepth_speedcnt",
+        "ecat_ecat_reg_dc_fltdepth_systimediff",
+        "ecat_ecat_reg_dc_recvtime64",
+        "ecat_ecat_reg_dc_speedstart",
+        "ecat_ecat_reg_dc_systime",
+        "ecat_ecat_reg_dc_systimeH",
+        "ecat_ecat_reg_dc_systimeL",
+        "ecat_ecat_reg_dc_systimedelay",
+        "ecat_ecat_reg_dc_systimeoffs",
+        "ecat_ecat_reg_dc_systimeoffsh",
+        "ecat_ecat_reg_dc_systimeoffsl",
+        "ecat_ecat_reg_dlcrtl2",
+        "ecat_ecat_reg_dlcrtl2_port0",
+        "ecat_ecat_reg_dlcrtl2_port1",
+        "ecat_ecat_reg_dlcrtl2_port2",
+        "ecat_ecat_reg_dlcrtl2_port3",
+        "ecat_ecat_reg_dlctrl3",
+        "ecat_ecat_reg_dlctrl3_fifosize",
+        "ecat_ecat_reg_dlctrl3_lowebusjit",
+        "ecat_ecat_reg_dlctrl4",
+        "ecat_ecat_reg_dlctrl4_2ndaddress",
+        "ecat_ecat_reg_dlstatus1",
+        "ecat_ecat_reg_dlstatus1_enhlinkdetect",
+        "ecat_ecat_reg_dlstatus1_operation",
+        "ecat_ecat_reg_dlstatus1_pdiwatchdog",
+        "ecat_ecat_reg_dlstatus1_physlink_port0",
+        "ecat_ecat_reg_dlstatus1_physlink_port1",
+        "ecat_ecat_reg_dlstatus1_physlink_port2",
+        "ecat_ecat_reg_dlstatus1_physlink_port3",
+        "ecat_ecat_reg_dlstatus2",
+        "ecat_ecat_reg_dlstatus2_port0",
+        "ecat_ecat_reg_dlstatus2_port1",
+        "ecat_ecat_reg_dlstatus2_port2",
+        "ecat_ecat_reg_dlstatus2_port3",
+        "ecat_ecat_reg_dpram",
+        "ecat_ecat_reg_features",
+        "ecat_ecat_reg_features_crcext",
+        "ecat_ecat_reg_features_dc64support",
+        "ecat_ecat_reg_features_dcsupport",
+        "ecat_ecat_reg_features_ebusextlinkdetect",
+        "ecat_ecat_reg_features_ebuslowjitter",
+        "ecat_ecat_reg_features_fmmurestrict",
+        "ecat_ecat_reg_features_miiextlinkdetect",
+        "ecat_ecat_reg_features_smaddrrestrict",
+        "ecat_ecat_reg_fmmucnt",
+        "ecat_ecat_reg_irqmask_ecat_mask",
+        "ecat_ecat_reg_irqmask_ecat_mask_alstatevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_escstatevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_latchevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm0irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm1irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm2irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm3irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm4irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm5irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm6irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm7irq",
+        "ecat_ecat_reg_physaddr",
+        "ecat_ecat_reg_ports",
+        "ecat_ecat_reg_revision",
+        "ecat_ecat_reg_smcnt",
+        "ecat_ecat_reg_type",
+        "ecat_ecat_sub1_ado",
+        "ecat_ecat_sub1_adp",
+        "ecat_ecat_sub1_cmd",
+        "ecat_ecat_sub1_cnt",
+        "ecat_ecat_sub1_data",
+        "ecat_ecat_sub1_idx",
+        "ecat_ecat_sub1_lad",
+        "ecat_ecat_sub2_ado",
+        "ecat_ecat_sub2_adp",
+        "ecat_ecat_sub2_cmd",
+        "ecat_ecat_sub2_cnt",
+        "ecat_ecat_sub2_data",
+        "ecat_ecat_sub2_idx",
+        "ecat_ecat_sub2_lad",
+        "ecat_ecat_sub3_ado",
+        "ecat_ecat_sub3_adp",
+        "ecat_ecat_sub3_cmd",
+        "ecat_ecat_sub3_cnt",
+        "ecat_ecat_sub3_data",
+        "ecat_ecat_sub3_idx",
+        "ecat_ecat_sub3_lad",
+        "ecat_ecat_sub4_ado",
+        "ecat_ecat_sub4_adp",
+        "ecat_ecat_sub4_cmd",
+        "ecat_ecat_sub4_cnt",
+        "ecat_ecat_sub4_data",
+        "ecat_ecat_sub4_idx",
+        "ecat_ecat_sub4_lad",
+        "ecat_ecat_sub5_ado",
+        "ecat_ecat_sub5_adp",
+        "ecat_ecat_sub5_cmd",
+        "ecat_ecat_sub5_cnt",
+        "ecat_ecat_sub5_idx",
+        "ecat_ecat_sub6_ado",
+        "ecat_ecat_sub6_adp",
+        "ecat_ecat_sub6_cmd",
+        "ecat_ecat_sub6_cnt",
+        "ecat_ecat_sub6_idx",
+        "ecat_ecat_sub7_ado",
+        "ecat_ecat_sub7_adp",
+        "ecat_ecat_sub7_cmd",
+        "ecat_ecat_sub7_cnt",
+        "ecat_ecat_sub7_idx",
+        "ecat_ecat_sub8_ado",
+        "ecat_ecat_sub8_adp",
+        "ecat_ecat_sub8_cmd",
+        "ecat_ecat_sub8_cnt",
+        "ecat_ecat_sub8_idx",
+        "ecat_ecat_subframe_circulating",
+        "ecat_ecat_subframe_length",
+        "ecat_ecat_subframe_more",
+        "ecat_ecat_subframe_reserved",
+        "ecat_ecat_syncman",
+        "ecat_ecat_syncman_1bufstate",
+        "ecat_ecat_syncman_3bufstate",
+        "ecat_ecat_syncman_access",
+        "ecat_ecat_syncman_ctrlstatus",
+        "ecat_ecat_syncman_deactivate",
+        "ecat_ecat_syncman_enable",
+        "ecat_ecat_syncman_irq_ecat",
+        "ecat_ecat_syncman_irq_pdi",
+        "ecat_ecat_syncman_irq_read",
+        "ecat_ecat_syncman_irq_write",
+        "ecat_ecat_syncman_latchsmchg_ecat",
+        "ecat_ecat_syncman_latchsmchg_pdi",
+        "ecat_ecat_syncman_len",
+        "ecat_ecat_syncman_opmode",
+        "ecat_ecat_syncman_repeatack",
+        "ecat_ecat_syncman_repeatreq",
+        "ecat_ecat_syncman_smenable",
+        "ecat_ecat_syncman_start",
+        "ecat_ecat_syncman_wdt",
+        "ecat_mailbox",
+        "text"
+      ],
+      "emreekin_ethercat_bootup.pcap": [
+        "ecat_ecat_ado",
+        "ecat_ecat_adp",
+        "ecat_ecat_cmd",
+        "ecat_ecat_cnt",
+        "ecat_ecat_data",
+        "ecat_ecat_fmmu",
+        "ecat_ecat_fmmu_activate",
+        "ecat_ecat_fmmu_activate0",
+        "ecat_ecat_fmmu_lendbit",
+        "ecat_ecat_fmmu_llen",
+        "ecat_ecat_fmmu_lstart",
+        "ecat_ecat_fmmu_lstartbit",
+        "ecat_ecat_fmmu_pstart",
+        "ecat_ecat_fmmu_pstartbit",
+        "ecat_ecat_fmmu_type",
+        "ecat_ecat_fmmu_typeread",
+        "ecat_ecat_fmmu_typewrite",
+        "ecat_ecat_idx",
+        "ecat_ecat_int",
+        "ecat_ecat_lad",
+        "ecat_ecat_reg_addrh",
+        "ecat_ecat_reg_addrl",
+        "ecat_ecat_reg_alctrl",
+        "ecat_ecat_reg_alctrl_ctrl",
+        "ecat_ecat_reg_alctrl_errack",
+        "ecat_ecat_reg_alctrl_id",
+        "ecat_ecat_reg_alstatus",
+        "ecat_ecat_reg_alstatus_err",
+        "ecat_ecat_reg_alstatus_id",
+        "ecat_ecat_reg_alstatus_status",
+        "ecat_ecat_reg_build",
+        "ecat_ecat_reg_crc0",
+        "ecat_ecat_reg_crc0_frame",
+        "ecat_ecat_reg_crc0_rx",
+        "ecat_ecat_reg_crc1",
+        "ecat_ecat_reg_crc1_frame",
+        "ecat_ecat_reg_crc1_rx",
+        "ecat_ecat_reg_crc2",
+        "ecat_ecat_reg_crc2_frame",
+        "ecat_ecat_reg_crc2_rx",
+        "ecat_ecat_reg_crc3",
+        "ecat_ecat_reg_crc3_frame",
+        "ecat_ecat_reg_crc3_rx",
+        "ecat_ecat_reg_ctrlstat",
+        "ecat_ecat_reg_ctrlstat_2bacc",
+        "ecat_ecat_reg_ctrlstat_8bacc",
+        "ecat_ecat_reg_ctrlstat_busy",
+        "ecat_ecat_reg_ctrlstat_cmderr",
+        "ecat_ecat_reg_ctrlstat_crcerr",
+        "ecat_ecat_reg_ctrlstat_eepromemul",
+        "ecat_ecat_reg_ctrlstat_lderr",
+        "ecat_ecat_reg_ctrlstat_rdacc",
+        "ecat_ecat_reg_ctrlstat_reloadacc",
+        "ecat_ecat_reg_ctrlstat_wracc",
+        "ecat_ecat_reg_ctrlstat_wraccess",
+        "ecat_ecat_reg_ctrlstat_wrerr",
+        "ecat_ecat_reg_data0",
+        "ecat_ecat_reg_data1",
+        "ecat_ecat_reg_dc_activation",
+        "ecat_ecat_reg_dc_activation_autoactivation",
+        "ecat_ecat_reg_dc_activation_dblrange",
+        "ecat_ecat_reg_dc_activation_enablecyclic",
+        "ecat_ecat_reg_dc_activation_gen_sync0",
+        "ecat_ecat_reg_dc_activation_gen_sync1",
+        "ecat_ecat_reg_dc_activation_hlfrange",
+        "ecat_ecat_reg_dc_activation_stimecheck",
+        "ecat_ecat_reg_dc_activation_stimeext",
+        "ecat_ecat_reg_dc_ctrlerr",
+        "ecat_ecat_reg_dc_recvtime64",
+        "ecat_ecat_reg_dc_systime",
+        "ecat_ecat_reg_dc_systimeH",
+        "ecat_ecat_reg_dc_systimeL",
+        "ecat_ecat_reg_dc_systimedelay",
+        "ecat_ecat_reg_dc_systimeoffs",
+        "ecat_ecat_reg_dc_systimeoffsh",
+        "ecat_ecat_reg_dc_systimeoffsl",
+        "ecat_ecat_reg_dlcrtl2",
+        "ecat_ecat_reg_dlcrtl2_port0",
+        "ecat_ecat_reg_dlcrtl2_port1",
+        "ecat_ecat_reg_dlcrtl2_port2",
+        "ecat_ecat_reg_dlcrtl2_port3",
+        "ecat_ecat_reg_dlctrl4",
+        "ecat_ecat_reg_dlctrl4_2ndaddress",
+        "ecat_ecat_reg_dpram",
+        "ecat_ecat_reg_features",
+        "ecat_ecat_reg_features_crcext",
+        "ecat_ecat_reg_features_dc64support",
+        "ecat_ecat_reg_features_dcsupport",
+        "ecat_ecat_reg_features_ebusextlinkdetect",
+        "ecat_ecat_reg_features_ebuslowjitter",
+        "ecat_ecat_reg_features_fmmurestrict",
+        "ecat_ecat_reg_features_miiextlinkdetect",
+        "ecat_ecat_reg_features_smaddrrestrict",
+        "ecat_ecat_reg_fmmucnt",
+        "ecat_ecat_reg_irqmask_ecat_mask",
+        "ecat_ecat_reg_irqmask_ecat_mask_alstatevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_escstatevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_latchevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm0irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm1irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm2irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm3irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm4irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm5irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm6irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm7irq",
+        "ecat_ecat_reg_pdictrl1",
+        "ecat_ecat_reg_pdictrl1_pdi",
+        "ecat_ecat_reg_pdictrl2",
+        "ecat_ecat_reg_pdictrl2_dcsyncin",
+        "ecat_ecat_reg_pdictrl2_dcsyncout",
+        "ecat_ecat_reg_pdictrl2_devemul",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect0",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect1",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect2",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect3",
+        "ecat_ecat_reg_physaddr",
+        "ecat_ecat_reg_ports",
+        "ecat_ecat_reg_revision",
+        "ecat_ecat_reg_smcnt",
+        "ecat_ecat_reg_type",
+        "ecat_ecat_sub10_ado",
+        "ecat_ecat_sub10_adp",
+        "ecat_ecat_sub10_cmd",
+        "ecat_ecat_sub10_cnt",
+        "ecat_ecat_sub10_idx",
+        "ecat_ecat_sub1_ado",
+        "ecat_ecat_sub1_adp",
+        "ecat_ecat_sub1_cmd",
+        "ecat_ecat_sub1_cnt",
+        "ecat_ecat_sub1_data",
+        "ecat_ecat_sub1_idx",
+        "ecat_ecat_sub1_lad",
+        "ecat_ecat_sub2_ado",
+        "ecat_ecat_sub2_adp",
+        "ecat_ecat_sub2_cmd",
+        "ecat_ecat_sub2_cnt",
+        "ecat_ecat_sub2_data",
+        "ecat_ecat_sub2_idx",
+        "ecat_ecat_sub3_ado",
+        "ecat_ecat_sub3_adp",
+        "ecat_ecat_sub3_cmd",
+        "ecat_ecat_sub3_cnt",
+        "ecat_ecat_sub3_data",
+        "ecat_ecat_sub3_idx",
+        "ecat_ecat_sub4_ado",
+        "ecat_ecat_sub4_adp",
+        "ecat_ecat_sub4_cmd",
+        "ecat_ecat_sub4_cnt",
+        "ecat_ecat_sub4_data",
+        "ecat_ecat_sub4_idx",
+        "ecat_ecat_sub5_ado",
+        "ecat_ecat_sub5_adp",
+        "ecat_ecat_sub5_cmd",
+        "ecat_ecat_sub5_cnt",
+        "ecat_ecat_sub5_idx",
+        "ecat_ecat_sub6_ado",
+        "ecat_ecat_sub6_adp",
+        "ecat_ecat_sub6_cmd",
+        "ecat_ecat_sub6_cnt",
+        "ecat_ecat_sub6_idx",
+        "ecat_ecat_sub7_ado",
+        "ecat_ecat_sub7_adp",
+        "ecat_ecat_sub7_cmd",
+        "ecat_ecat_sub7_cnt",
+        "ecat_ecat_sub7_idx",
+        "ecat_ecat_sub8_ado",
+        "ecat_ecat_sub8_adp",
+        "ecat_ecat_sub8_cmd",
+        "ecat_ecat_sub8_cnt",
+        "ecat_ecat_sub8_idx",
+        "ecat_ecat_sub9_ado",
+        "ecat_ecat_sub9_adp",
+        "ecat_ecat_sub9_cmd",
+        "ecat_ecat_sub9_cnt",
+        "ecat_ecat_sub9_idx",
+        "ecat_ecat_subframe_circulating",
+        "ecat_ecat_subframe_length",
+        "ecat_ecat_subframe_more",
+        "ecat_ecat_subframe_reserved",
+        "ecat_ecat_syncman",
+        "ecat_ecat_syncman_1bufstate",
+        "ecat_ecat_syncman_3bufstate",
+        "ecat_ecat_syncman_access",
+        "ecat_ecat_syncman_ctrlstatus",
+        "ecat_ecat_syncman_deactivate",
+        "ecat_ecat_syncman_enable",
+        "ecat_ecat_syncman_irq_ecat",
+        "ecat_ecat_syncman_irq_pdi",
+        "ecat_ecat_syncman_irq_read",
+        "ecat_ecat_syncman_irq_write",
+        "ecat_ecat_syncman_latchsmchg_ecat",
+        "ecat_ecat_syncman_latchsmchg_pdi",
+        "ecat_ecat_syncman_len",
+        "ecat_ecat_syncman_opmode",
+        "ecat_ecat_syncman_repeatack",
+        "ecat_ecat_syncman_repeatreq",
+        "ecat_ecat_syncman_smenable",
+        "ecat_ecat_syncman_start",
+        "ecat_ecat_syncman_wdt",
+        "ecat_mailbox",
+        "text"
+      ],
+      "emreekin_ethercat_valve.pcap": [],
+      "wireshark_ethercat_bootup.cap": [
+        "ecat_ecat_ado",
+        "ecat_ecat_adp",
+        "ecat_ecat_cmd",
+        "ecat_ecat_cnt",
+        "ecat_ecat_data",
+        "ecat_ecat_fmmu",
+        "ecat_ecat_fmmu_activate",
+        "ecat_ecat_fmmu_activate0",
+        "ecat_ecat_fmmu_lendbit",
+        "ecat_ecat_fmmu_llen",
+        "ecat_ecat_fmmu_lstart",
+        "ecat_ecat_fmmu_lstartbit",
+        "ecat_ecat_fmmu_pstart",
+        "ecat_ecat_fmmu_pstartbit",
+        "ecat_ecat_fmmu_type",
+        "ecat_ecat_fmmu_typeread",
+        "ecat_ecat_fmmu_typewrite",
+        "ecat_ecat_idx",
+        "ecat_ecat_int",
+        "ecat_ecat_lad",
+        "ecat_ecat_reg_addrh",
+        "ecat_ecat_reg_addrl",
+        "ecat_ecat_reg_alctrl",
+        "ecat_ecat_reg_alctrl_ctrl",
+        "ecat_ecat_reg_alctrl_errack",
+        "ecat_ecat_reg_alctrl_id",
+        "ecat_ecat_reg_alstatus",
+        "ecat_ecat_reg_alstatus_err",
+        "ecat_ecat_reg_alstatus_id",
+        "ecat_ecat_reg_alstatus_status",
+        "ecat_ecat_reg_build",
+        "ecat_ecat_reg_crc0",
+        "ecat_ecat_reg_crc0_frame",
+        "ecat_ecat_reg_crc0_rx",
+        "ecat_ecat_reg_crc1",
+        "ecat_ecat_reg_crc1_frame",
+        "ecat_ecat_reg_crc1_rx",
+        "ecat_ecat_reg_crc2",
+        "ecat_ecat_reg_crc2_frame",
+        "ecat_ecat_reg_crc2_rx",
+        "ecat_ecat_reg_crc3",
+        "ecat_ecat_reg_crc3_frame",
+        "ecat_ecat_reg_crc3_rx",
+        "ecat_ecat_reg_ctrlstat",
+        "ecat_ecat_reg_ctrlstat_2bacc",
+        "ecat_ecat_reg_ctrlstat_8bacc",
+        "ecat_ecat_reg_ctrlstat_busy",
+        "ecat_ecat_reg_ctrlstat_cmderr",
+        "ecat_ecat_reg_ctrlstat_crcerr",
+        "ecat_ecat_reg_ctrlstat_eepromemul",
+        "ecat_ecat_reg_ctrlstat_lderr",
+        "ecat_ecat_reg_ctrlstat_rdacc",
+        "ecat_ecat_reg_ctrlstat_reloadacc",
+        "ecat_ecat_reg_ctrlstat_wracc",
+        "ecat_ecat_reg_ctrlstat_wraccess",
+        "ecat_ecat_reg_ctrlstat_wrerr",
+        "ecat_ecat_reg_data0",
+        "ecat_ecat_reg_data1",
+        "ecat_ecat_reg_dc_activation",
+        "ecat_ecat_reg_dc_activation_autoactivation",
+        "ecat_ecat_reg_dc_activation_dblrange",
+        "ecat_ecat_reg_dc_activation_enablecyclic",
+        "ecat_ecat_reg_dc_activation_gen_sync0",
+        "ecat_ecat_reg_dc_activation_gen_sync1",
+        "ecat_ecat_reg_dc_activation_hlfrange",
+        "ecat_ecat_reg_dc_activation_stimecheck",
+        "ecat_ecat_reg_dc_activation_stimeext",
+        "ecat_ecat_reg_dc_ctrlerr",
+        "ecat_ecat_reg_dc_recvtime64",
+        "ecat_ecat_reg_dc_systime",
+        "ecat_ecat_reg_dc_systimeH",
+        "ecat_ecat_reg_dc_systimeL",
+        "ecat_ecat_reg_dc_systimedelay",
+        "ecat_ecat_reg_dc_systimeoffs",
+        "ecat_ecat_reg_dc_systimeoffsh",
+        "ecat_ecat_reg_dc_systimeoffsl",
+        "ecat_ecat_reg_dlcrtl2",
+        "ecat_ecat_reg_dlcrtl2_port0",
+        "ecat_ecat_reg_dlcrtl2_port1",
+        "ecat_ecat_reg_dlcrtl2_port2",
+        "ecat_ecat_reg_dlcrtl2_port3",
+        "ecat_ecat_reg_dlctrl4",
+        "ecat_ecat_reg_dlctrl4_2ndaddress",
+        "ecat_ecat_reg_dpram",
+        "ecat_ecat_reg_features",
+        "ecat_ecat_reg_features_crcext",
+        "ecat_ecat_reg_features_dc64support",
+        "ecat_ecat_reg_features_dcsupport",
+        "ecat_ecat_reg_features_ebusextlinkdetect",
+        "ecat_ecat_reg_features_ebuslowjitter",
+        "ecat_ecat_reg_features_fmmurestrict",
+        "ecat_ecat_reg_features_miiextlinkdetect",
+        "ecat_ecat_reg_features_smaddrrestrict",
+        "ecat_ecat_reg_fmmucnt",
+        "ecat_ecat_reg_irqmask_ecat_mask",
+        "ecat_ecat_reg_irqmask_ecat_mask_alstatevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_escstatevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_latchevt",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm0irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm1irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm2irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm3irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm4irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm5irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm6irq",
+        "ecat_ecat_reg_irqmask_ecat_mask_sm7irq",
+        "ecat_ecat_reg_pdictrl1",
+        "ecat_ecat_reg_pdictrl1_pdi",
+        "ecat_ecat_reg_pdictrl2",
+        "ecat_ecat_reg_pdictrl2_dcsyncin",
+        "ecat_ecat_reg_pdictrl2_dcsyncout",
+        "ecat_ecat_reg_pdictrl2_devemul",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect0",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect1",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect2",
+        "ecat_ecat_reg_pdictrl2_enhlnkdetect3",
+        "ecat_ecat_reg_physaddr",
+        "ecat_ecat_reg_ports",
+        "ecat_ecat_reg_revision",
+        "ecat_ecat_reg_smcnt",
+        "ecat_ecat_reg_type",
+        "ecat_ecat_sub10_ado",
+        "ecat_ecat_sub10_adp",
+        "ecat_ecat_sub10_cmd",
+        "ecat_ecat_sub10_cnt",
+        "ecat_ecat_sub10_idx",
+        "ecat_ecat_sub1_ado",
+        "ecat_ecat_sub1_adp",
+        "ecat_ecat_sub1_cmd",
+        "ecat_ecat_sub1_cnt",
+        "ecat_ecat_sub1_data",
+        "ecat_ecat_sub1_idx",
+        "ecat_ecat_sub1_lad",
+        "ecat_ecat_sub2_ado",
+        "ecat_ecat_sub2_adp",
+        "ecat_ecat_sub2_cmd",
+        "ecat_ecat_sub2_cnt",
+        "ecat_ecat_sub2_data",
+        "ecat_ecat_sub2_idx",
+        "ecat_ecat_sub3_ado",
+        "ecat_ecat_sub3_adp",
+        "ecat_ecat_sub3_cmd",
+        "ecat_ecat_sub3_cnt",
+        "ecat_ecat_sub3_data",
+        "ecat_ecat_sub3_idx",
+        "ecat_ecat_sub4_ado",
+        "ecat_ecat_sub4_adp",
+        "ecat_ecat_sub4_cmd",
+        "ecat_ecat_sub4_cnt",
+        "ecat_ecat_sub4_data",
+        "ecat_ecat_sub4_idx",
+        "ecat_ecat_sub5_ado",
+        "ecat_ecat_sub5_adp",
+        "ecat_ecat_sub5_cmd",
+        "ecat_ecat_sub5_cnt",
+        "ecat_ecat_sub5_idx",
+        "ecat_ecat_sub6_ado",
+        "ecat_ecat_sub6_adp",
+        "ecat_ecat_sub6_cmd",
+        "ecat_ecat_sub6_cnt",
+        "ecat_ecat_sub6_idx",
+        "ecat_ecat_sub7_ado",
+        "ecat_ecat_sub7_adp",
+        "ecat_ecat_sub7_cmd",
+        "ecat_ecat_sub7_cnt",
+        "ecat_ecat_sub7_idx",
+        "ecat_ecat_sub8_ado",
+        "ecat_ecat_sub8_adp",
+        "ecat_ecat_sub8_cmd",
+        "ecat_ecat_sub8_cnt",
+        "ecat_ecat_sub8_idx",
+        "ecat_ecat_sub9_ado",
+        "ecat_ecat_sub9_adp",
+        "ecat_ecat_sub9_cmd",
+        "ecat_ecat_sub9_cnt",
+        "ecat_ecat_sub9_idx",
+        "ecat_ecat_subframe_circulating",
+        "ecat_ecat_subframe_length",
+        "ecat_ecat_subframe_more",
+        "ecat_ecat_subframe_reserved",
+        "ecat_ecat_syncman",
+        "ecat_ecat_syncman_1bufstate",
+        "ecat_ecat_syncman_3bufstate",
+        "ecat_ecat_syncman_access",
+        "ecat_ecat_syncman_ctrlstatus",
+        "ecat_ecat_syncman_deactivate",
+        "ecat_ecat_syncman_enable",
+        "ecat_ecat_syncman_irq_ecat",
+        "ecat_ecat_syncman_irq_pdi",
+        "ecat_ecat_syncman_irq_read",
+        "ecat_ecat_syncman_irq_write",
+        "ecat_ecat_syncman_latchsmchg_ecat",
+        "ecat_ecat_syncman_latchsmchg_pdi",
+        "ecat_ecat_syncman_len",
+        "ecat_ecat_syncman_opmode",
+        "ecat_ecat_syncman_repeatack",
+        "ecat_ecat_syncman_repeatreq",
+        "ecat_ecat_syncman_smenable",
+        "ecat_ecat_syncman_start",
+        "ecat_ecat_syncman_wdt",
+        "ecat_mailbox",
+        "text"
+      ]
+    },
+    "union": [
+      "ecat_ecat_ado",
+      "ecat_ecat_adp",
+      "ecat_ecat_cmd",
+      "ecat_ecat_cnt",
+      "ecat_ecat_data",
+      "ecat_ecat_fmmu",
+      "ecat_ecat_fmmu_activate",
+      "ecat_ecat_fmmu_activate0",
+      "ecat_ecat_fmmu_lendbit",
+      "ecat_ecat_fmmu_llen",
+      "ecat_ecat_fmmu_lstart",
+      "ecat_ecat_fmmu_lstartbit",
+      "ecat_ecat_fmmu_pstart",
+      "ecat_ecat_fmmu_pstartbit",
+      "ecat_ecat_fmmu_type",
+      "ecat_ecat_fmmu_typeread",
+      "ecat_ecat_fmmu_typewrite",
+      "ecat_ecat_idx",
+      "ecat_ecat_int",
+      "ecat_ecat_lad",
+      "ecat_ecat_reg_addrh",
+      "ecat_ecat_reg_addrl",
+      "ecat_ecat_reg_alctrl",
+      "ecat_ecat_reg_alctrl_ctrl",
+      "ecat_ecat_reg_alctrl_errack",
+      "ecat_ecat_reg_alctrl_id",
+      "ecat_ecat_reg_alstatus",
+      "ecat_ecat_reg_alstatus_err",
+      "ecat_ecat_reg_alstatus_id",
+      "ecat_ecat_reg_alstatus_status",
+      "ecat_ecat_reg_alstatuscode",
+      "ecat_ecat_reg_build",
+      "ecat_ecat_reg_crc0",
+      "ecat_ecat_reg_crc0_frame",
+      "ecat_ecat_reg_crc0_rx",
+      "ecat_ecat_reg_crc1",
+      "ecat_ecat_reg_crc1_frame",
+      "ecat_ecat_reg_crc1_rx",
+      "ecat_ecat_reg_crc2",
+      "ecat_ecat_reg_crc2_frame",
+      "ecat_ecat_reg_crc2_rx",
+      "ecat_ecat_reg_crc3",
+      "ecat_ecat_reg_crc3_frame",
+      "ecat_ecat_reg_crc3_rx",
+      "ecat_ecat_reg_ctrlstat",
+      "ecat_ecat_reg_ctrlstat_2bacc",
+      "ecat_ecat_reg_ctrlstat_8bacc",
+      "ecat_ecat_reg_ctrlstat_busy",
+      "ecat_ecat_reg_ctrlstat_cmderr",
+      "ecat_ecat_reg_ctrlstat_crcerr",
+      "ecat_ecat_reg_ctrlstat_eepromemul",
+      "ecat_ecat_reg_ctrlstat_lderr",
+      "ecat_ecat_reg_ctrlstat_rdacc",
+      "ecat_ecat_reg_ctrlstat_reloadacc",
+      "ecat_ecat_reg_ctrlstat_wracc",
+      "ecat_ecat_reg_ctrlstat_wraccess",
+      "ecat_ecat_reg_ctrlstat_wrerr",
+      "ecat_ecat_reg_data0",
+      "ecat_ecat_reg_data1",
+      "ecat_ecat_reg_dc_activation",
+      "ecat_ecat_reg_dc_activation_autoactivation",
+      "ecat_ecat_reg_dc_activation_dblrange",
+      "ecat_ecat_reg_dc_activation_enablecyclic",
+      "ecat_ecat_reg_dc_activation_gen_sync0",
+      "ecat_ecat_reg_dc_activation_gen_sync1",
+      "ecat_ecat_reg_dc_activation_hlfrange",
+      "ecat_ecat_reg_dc_activation_stimecheck",
+      "ecat_ecat_reg_dc_activation_stimeext",
+      "ecat_ecat_reg_dc_ctrlerr",
+      "ecat_ecat_reg_dc_fltdepth_speedcnt",
+      "ecat_ecat_reg_dc_fltdepth_systimediff",
+      "ecat_ecat_reg_dc_recvtime64",
+      "ecat_ecat_reg_dc_speedstart",
+      "ecat_ecat_reg_dc_systime",
+      "ecat_ecat_reg_dc_systimeH",
+      "ecat_ecat_reg_dc_systimeL",
+      "ecat_ecat_reg_dc_systimedelay",
+      "ecat_ecat_reg_dc_systimeoffs",
+      "ecat_ecat_reg_dc_systimeoffsh",
+      "ecat_ecat_reg_dc_systimeoffsl",
+      "ecat_ecat_reg_dlcrtl2",
+      "ecat_ecat_reg_dlcrtl2_port0",
+      "ecat_ecat_reg_dlcrtl2_port1",
+      "ecat_ecat_reg_dlcrtl2_port2",
+      "ecat_ecat_reg_dlcrtl2_port3",
+      "ecat_ecat_reg_dlctrl3",
+      "ecat_ecat_reg_dlctrl3_fifosize",
+      "ecat_ecat_reg_dlctrl3_lowebusjit",
+      "ecat_ecat_reg_dlctrl4",
+      "ecat_ecat_reg_dlctrl4_2ndaddress",
+      "ecat_ecat_reg_dlstatus1",
+      "ecat_ecat_reg_dlstatus1_enhlinkdetect",
+      "ecat_ecat_reg_dlstatus1_operation",
+      "ecat_ecat_reg_dlstatus1_pdiwatchdog",
+      "ecat_ecat_reg_dlstatus1_physlink_port0",
+      "ecat_ecat_reg_dlstatus1_physlink_port1",
+      "ecat_ecat_reg_dlstatus1_physlink_port2",
+      "ecat_ecat_reg_dlstatus1_physlink_port3",
+      "ecat_ecat_reg_dlstatus2",
+      "ecat_ecat_reg_dlstatus2_port0",
+      "ecat_ecat_reg_dlstatus2_port1",
+      "ecat_ecat_reg_dlstatus2_port2",
+      "ecat_ecat_reg_dlstatus2_port3",
+      "ecat_ecat_reg_dpram",
+      "ecat_ecat_reg_features",
+      "ecat_ecat_reg_features_crcext",
+      "ecat_ecat_reg_features_dc64support",
+      "ecat_ecat_reg_features_dcsupport",
+      "ecat_ecat_reg_features_ebusextlinkdetect",
+      "ecat_ecat_reg_features_ebuslowjitter",
+      "ecat_ecat_reg_features_fmmurestrict",
+      "ecat_ecat_reg_features_miiextlinkdetect",
+      "ecat_ecat_reg_features_smaddrrestrict",
+      "ecat_ecat_reg_fmmucnt",
+      "ecat_ecat_reg_irqmask_ecat_mask",
+      "ecat_ecat_reg_irqmask_ecat_mask_alstatevt",
+      "ecat_ecat_reg_irqmask_ecat_mask_escstatevt",
+      "ecat_ecat_reg_irqmask_ecat_mask_latchevt",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm0irq",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm1irq",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm2irq",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm3irq",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm4irq",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm5irq",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm6irq",
+      "ecat_ecat_reg_irqmask_ecat_mask_sm7irq",
+      "ecat_ecat_reg_pdictrl1",
+      "ecat_ecat_reg_pdictrl1_pdi",
+      "ecat_ecat_reg_pdictrl2",
+      "ecat_ecat_reg_pdictrl2_dcsyncin",
+      "ecat_ecat_reg_pdictrl2_dcsyncout",
+      "ecat_ecat_reg_pdictrl2_devemul",
+      "ecat_ecat_reg_pdictrl2_enhlnkdetect",
+      "ecat_ecat_reg_pdictrl2_enhlnkdetect0",
+      "ecat_ecat_reg_pdictrl2_enhlnkdetect1",
+      "ecat_ecat_reg_pdictrl2_enhlnkdetect2",
+      "ecat_ecat_reg_pdictrl2_enhlnkdetect3",
+      "ecat_ecat_reg_physaddr",
+      "ecat_ecat_reg_ports",
+      "ecat_ecat_reg_revision",
+      "ecat_ecat_reg_smcnt",
+      "ecat_ecat_reg_type",
+      "ecat_ecat_sub10_ado",
+      "ecat_ecat_sub10_adp",
+      "ecat_ecat_sub10_cmd",
+      "ecat_ecat_sub10_cnt",
+      "ecat_ecat_sub10_idx",
+      "ecat_ecat_sub1_ado",
+      "ecat_ecat_sub1_adp",
+      "ecat_ecat_sub1_cmd",
+      "ecat_ecat_sub1_cnt",
+      "ecat_ecat_sub1_data",
+      "ecat_ecat_sub1_idx",
+      "ecat_ecat_sub1_lad",
+      "ecat_ecat_sub2_ado",
+      "ecat_ecat_sub2_adp",
+      "ecat_ecat_sub2_cmd",
+      "ecat_ecat_sub2_cnt",
+      "ecat_ecat_sub2_data",
+      "ecat_ecat_sub2_idx",
+      "ecat_ecat_sub2_lad",
+      "ecat_ecat_sub3_ado",
+      "ecat_ecat_sub3_adp",
+      "ecat_ecat_sub3_cmd",
+      "ecat_ecat_sub3_cnt",
+      "ecat_ecat_sub3_data",
+      "ecat_ecat_sub3_idx",
+      "ecat_ecat_sub3_lad",
+      "ecat_ecat_sub4_ado",
+      "ecat_ecat_sub4_adp",
+      "ecat_ecat_sub4_cmd",
+      "ecat_ecat_sub4_cnt",
+      "ecat_ecat_sub4_data",
+      "ecat_ecat_sub4_idx",
+      "ecat_ecat_sub4_lad",
+      "ecat_ecat_sub5_ado",
+      "ecat_ecat_sub5_adp",
+      "ecat_ecat_sub5_cmd",
+      "ecat_ecat_sub5_cnt",
+      "ecat_ecat_sub5_idx",
+      "ecat_ecat_sub6_ado",
+      "ecat_ecat_sub6_adp",
+      "ecat_ecat_sub6_cmd",
+      "ecat_ecat_sub6_cnt",
+      "ecat_ecat_sub6_idx",
+      "ecat_ecat_sub7_ado",
+      "ecat_ecat_sub7_adp",
+      "ecat_ecat_sub7_cmd",
+      "ecat_ecat_sub7_cnt",
+      "ecat_ecat_sub7_idx",
+      "ecat_ecat_sub8_ado",
+      "ecat_ecat_sub8_adp",
+      "ecat_ecat_sub8_cmd",
+      "ecat_ecat_sub8_cnt",
+      "ecat_ecat_sub8_idx",
+      "ecat_ecat_sub9_ado",
+      "ecat_ecat_sub9_adp",
+      "ecat_ecat_sub9_cmd",
+      "ecat_ecat_sub9_cnt",
+      "ecat_ecat_sub9_idx",
+      "ecat_ecat_subframe_circulating",
+      "ecat_ecat_subframe_length",
+      "ecat_ecat_subframe_more",
+      "ecat_ecat_subframe_reserved",
+      "ecat_ecat_syncman",
+      "ecat_ecat_syncman_1bufstate",
+      "ecat_ecat_syncman_3bufstate",
+      "ecat_ecat_syncman_access",
+      "ecat_ecat_syncman_ctrlstatus",
+      "ecat_ecat_syncman_deactivate",
+      "ecat_ecat_syncman_enable",
+      "ecat_ecat_syncman_irq_ecat",
+      "ecat_ecat_syncman_irq_pdi",
+      "ecat_ecat_syncman_irq_read",
+      "ecat_ecat_syncman_irq_write",
+      "ecat_ecat_syncman_latchsmchg_ecat",
+      "ecat_ecat_syncman_latchsmchg_pdi",
+      "ecat_ecat_syncman_len",
+      "ecat_ecat_syncman_opmode",
+      "ecat_ecat_syncman_repeatack",
+      "ecat_ecat_syncman_repeatreq",
+      "ecat_ecat_syncman_smenable",
+      "ecat_ecat_syncman_start",
+      "ecat_ecat_syncman_wdt",
+      "ecat_mailbox",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 41,
+    "fields": [
+      "ado",
+      "adp",
+      "cmd",
+      "cnt",
+      "ecat_mailbox_coe_abortcode",
+      "ecat_mailbox_coe_dsoldata",
+      "ecat_mailbox_coe_sdodata",
+      "ecat_mailbox_coe_sdoidx",
+      "ecat_mailbox_coe_sdolength",
+      "ecat_mailbox_coe_sdoreq",
+      "ecat_mailbox_coe_sdores",
+      "ecat_mailbox_coe_sdosub",
+      "ecat_mailbox_coe_type",
+      "ecat_mailbox_foe_errcode",
+      "ecat_mailbox_foe_errtext",
+      "ecat_mailbox_foe_filelength",
+      "ecat_mailbox_foe_filename",
+      "ecat_mailbox_foe_opmode",
+      "ecat_mailbox_foe_packetno",
+      "ecat_mailbox_soe_header_driveno",
+      "ecat_mailbox_soe_header_error",
+      "ecat_mailbox_soe_idn",
+      "ecat_mailbox_soe_opcode",
+      "ecat_mailbox_type",
+      "lad",
+      "reg_alstatus",
+      "reg_alstatus_status",
+      "reg_alstatuscode",
+      "reg_build",
+      "reg_dc_activation_enablecyclic",
+      "reg_dlstatus1",
+      "reg_dlstatus2",
+      "reg_dlstatus2_port0",
+      "reg_dlstatus2_port1",
+      "reg_dlstatus2_port2",
+      "reg_dlstatus2_port3",
+      "reg_revision",
+      "reg_type",
+      "subframe_length",
+      "syncman_ctrlstatus",
+      "syncman_enable"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "224/469 (47%)",
+    "pcap_vs_extracted": "21/224 (9%)",
+    "t1_extracted": "14/14 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "ecat_ecat_sub1_data",
+        "field": "ecat.sub1.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub2_data",
+        "field": "ecat.sub2.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub3_data",
+        "field": "ecat.sub3.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub4_data",
+        "field": "ecat.sub4.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_data",
+        "field": "ecat.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub1_cnt",
+        "field": "ecat.sub1.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub2_cnt",
+        "field": "ecat.sub2.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub3_cnt",
+        "field": "ecat.sub3.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub4_cnt",
+        "field": "ecat.sub4.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub5_cnt",
+        "field": "ecat.sub5.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub6_cnt",
+        "field": "ecat.sub6.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub7_cnt",
+        "field": "ecat.sub7.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub8_cnt",
+        "field": "ecat.sub8.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub1_cmd",
+        "field": "ecat.sub1.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub2_cmd",
+        "field": "ecat.sub2.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub3_cmd",
+        "field": "ecat.sub3.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub4_cmd",
+        "field": "ecat.sub4.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub5_cmd",
+        "field": "ecat.sub5.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub6_cmd",
+        "field": "ecat.sub6.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub7_cmd",
+        "field": "ecat.sub7.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub8_cmd",
+        "field": "ecat.sub8.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_idx",
+        "field": "ecat.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub1_idx",
+        "field": "ecat.sub1.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub2_idx",
+        "field": "ecat.sub2.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub3_idx",
+        "field": "ecat.sub3.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub4_idx",
+        "field": "ecat.sub4.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub5_idx",
+        "field": "ecat.sub5.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub6_idx",
+        "field": "ecat.sub6.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub7_idx",
+        "field": "ecat.sub7.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub8_idx",
+        "field": "ecat.sub8.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub1_adp",
+        "field": "ecat.sub1.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub2_adp",
+        "field": "ecat.sub2.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub3_adp",
+        "field": "ecat.sub3.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub4_adp",
+        "field": "ecat.sub4.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub5_adp",
+        "field": "ecat.sub5.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub6_adp",
+        "field": "ecat.sub6.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub7_adp",
+        "field": "ecat.sub7.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub8_adp",
+        "field": "ecat.sub8.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub1_ado",
+        "field": "ecat.sub1.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub2_ado",
+        "field": "ecat.sub2.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub3_ado",
+        "field": "ecat.sub3.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub4_ado",
+        "field": "ecat.sub4.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub5_ado",
+        "field": "ecat.sub5.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub6_ado",
+        "field": "ecat.sub6.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub7_ado",
+        "field": "ecat.sub7.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub8_ado",
+        "field": "ecat.sub8.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub1_lad",
+        "field": "ecat.sub1.lad",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_int",
+        "field": "ecat.int",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_subframe_reserved",
+        "field": "ecat.subframe.reserved",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_subframe_circulating",
+        "field": "ecat.subframe.circulating",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_subframe_more",
+        "field": "ecat.subframe.more",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_fmmucnt",
+        "field": "ecat.reg.fmmucnt",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_smcnt",
+        "field": "ecat.reg.smcnt",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dpram",
+        "field": "ecat.reg.dpram",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ports",
+        "field": "ecat.reg.ports",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_features",
+        "field": "ecat.reg.features",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_physaddr",
+        "field": "ecat.reg.physaddr",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlcrtl2",
+        "field": "ecat.reg.dlcrtl2",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlcrtl2_port0",
+        "field": "ecat.reg.dlcrtl2.port0",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlcrtl2_port1",
+        "field": "ecat.reg.dlcrtl2.port1",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlcrtl2_port2",
+        "field": "ecat.reg.dlcrtl2.port2",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlcrtl2_port3",
+        "field": "ecat.reg.dlcrtl2.port3",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlctrl4",
+        "field": "ecat.reg.dlctrl4",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlctrl4_2ndaddress",
+        "field": "ecat.reg.dlctrl4.2ndaddress",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_alctrl",
+        "field": "ecat.reg.alctrl",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_alctrl_ctrl",
+        "field": "ecat.reg.alctrl.ctrl",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_alctrl_errack",
+        "field": "ecat.reg.alctrl.errack",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_alctrl_id",
+        "field": "ecat.reg.alctrl.id",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_alstatus_err",
+        "field": "ecat.reg.alstatus.err",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_alstatus_id",
+        "field": "ecat.reg.alstatus.id",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask",
+        "field": "ecat.reg.irqmask.ecat_mask",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_latchevt",
+        "field": "ecat.reg.irqmask.ecat_mask.latchevt",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_escstatevt",
+        "field": "ecat.reg.irqmask.ecat_mask.escstatevt",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_alstatevt",
+        "field": "ecat.reg.irqmask.ecat_mask.alstatevt",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm0irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm0irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm1irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm1irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm2irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm2irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm3irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm3irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm4irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm4irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm5irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm5irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm6irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm6irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_irqmask_ecat_mask_sm7irq",
+        "field": "ecat.reg.irqmask.ecat_mask.sm7irq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc0",
+        "field": "ecat.reg.crc0",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc1",
+        "field": "ecat.reg.crc1",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc2",
+        "field": "ecat.reg.crc2",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc3",
+        "field": "ecat.reg.crc3",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc0_frame",
+        "field": "ecat.reg.crc0.frame",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc0_rx",
+        "field": "ecat.reg.crc0.rx",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc1_frame",
+        "field": "ecat.reg.crc1.frame",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc1_rx",
+        "field": "ecat.reg.crc1.rx",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc2_frame",
+        "field": "ecat.reg.crc2.frame",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc2_rx",
+        "field": "ecat.reg.crc2.rx",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc3_frame",
+        "field": "ecat.reg.crc3.frame",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_crc3_rx",
+        "field": "ecat.reg.crc3.rx",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat",
+        "field": "ecat.reg.ctrlstat",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_wraccess",
+        "field": "ecat.reg.ctrlstat.wraccess",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_eepromemul",
+        "field": "ecat.reg.ctrlstat.eepromemul",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_8bacc",
+        "field": "ecat.reg.ctrlstat.8bacc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_2bacc",
+        "field": "ecat.reg.ctrlstat.2bacc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_rdacc",
+        "field": "ecat.reg.ctrlstat.rdacc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_wracc",
+        "field": "ecat.reg.ctrlstat.wracc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_reloadacc",
+        "field": "ecat.reg.ctrlstat.reloadacc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_crcerr",
+        "field": "ecat.reg.ctrlstat.crcerr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_lderr",
+        "field": "ecat.reg.ctrlstat.lderr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_cmderr",
+        "field": "ecat.reg.ctrlstat.cmderr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_wrerr",
+        "field": "ecat.reg.ctrlstat.wrerr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_ctrlstat_busy",
+        "field": "ecat.reg.ctrlstat.busy",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_addrl",
+        "field": "ecat.reg.addrl",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_addrh",
+        "field": "ecat.reg.addrh",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_data0",
+        "field": "ecat.reg.data0",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_data1",
+        "field": "ecat.reg.data1",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu",
+        "field": "ecat.fmmu",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_lstart",
+        "field": "ecat.fmmu.lstart",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_llen",
+        "field": "ecat.fmmu.llen",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_lstartbit",
+        "field": "ecat.fmmu.lstartbit",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_lendbit",
+        "field": "ecat.fmmu.lendbit",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_pstart",
+        "field": "ecat.fmmu.pstart",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_pstartbit",
+        "field": "ecat.fmmu.pstartbit",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_type",
+        "field": "ecat.fmmu.type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_typeread",
+        "field": "ecat.fmmu.typeread",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_typewrite",
+        "field": "ecat.fmmu.typewrite",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_activate",
+        "field": "ecat.fmmu.activate",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_fmmu_activate0",
+        "field": "ecat.fmmu.activate0",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman",
+        "field": "ecat.syncman",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_start",
+        "field": "ecat.syncman.start",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_len",
+        "field": "ecat.syncman.len",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_opmode",
+        "field": "ecat.syncman.opmode",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_access",
+        "field": "ecat.syncman.access",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_irq_ecat",
+        "field": "ecat.syncman.irq.ecat",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_irq_pdi",
+        "field": "ecat.syncman.irq.pdi",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_wdt",
+        "field": "ecat.syncman.wdt",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_irq_write",
+        "field": "ecat.syncman.irq.write",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_irq_read",
+        "field": "ecat.syncman.irq.read",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_1bufstate",
+        "field": "ecat.syncman.1bufstate",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_3bufstate",
+        "field": "ecat.syncman.3bufstate",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_smenable",
+        "field": "ecat.syncman.smenable",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_repeatreq",
+        "field": "ecat.syncman.repeatreq",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_latchsmchg_ecat",
+        "field": "ecat.syncman.latchsmchg.ecat",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_latchsmchg_pdi",
+        "field": "ecat.syncman.latchsmchg.pdi",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_deactivate",
+        "field": "ecat.syncman.deactivate",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_syncman_repeatack",
+        "field": "ecat.syncman.repeatack",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_systime",
+        "field": "ecat.reg.dc.systime",
+        "type": "FT_UINT64",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_systimeL",
+        "field": "ecat.reg.dc.systimeL",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_systimeH",
+        "field": "ecat.reg.dc.systimeH",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_recvtime64",
+        "field": "ecat.reg.dc.recvtime64",
+        "type": "FT_UINT64",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_systimeoffs",
+        "field": "ecat.reg.dc.systimeoffs",
+        "type": "FT_UINT64",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_systimeoffsl",
+        "field": "ecat.reg.dc.systimeoffsl",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_systimeoffsh",
+        "field": "ecat.reg.dc.systimeoffsh",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_systimedelay",
+        "field": "ecat.reg.dc.systimedelay",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_ctrlerr",
+        "field": "ecat.reg.dc.ctrlerr",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation",
+        "field": "ecat.reg.dc.activation",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation_gen_sync0",
+        "field": "ecat.reg.dc.activation.gen_sync0",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation_gen_sync1",
+        "field": "ecat.reg.dc.activation.gen_sync1",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation_autoactivation",
+        "field": "ecat.reg.dc.activation.autoactivation",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation_stimeext",
+        "field": "ecat.reg.dc.activation.stimeext",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation_stimecheck",
+        "field": "ecat.reg.dc.activation.stimecheck",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation_hlfrange",
+        "field": "ecat.reg.dc.activation.hlfrange",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_activation_dblrange",
+        "field": "ecat.reg.dc.activation.dblrange",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap",
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub9_cnt",
+        "field": "ecat.sub9.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub10_cnt",
+        "field": "ecat.sub10.cnt",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub9_cmd",
+        "field": "ecat.sub9.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub10_cmd",
+        "field": "ecat.sub10.cmd",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub9_idx",
+        "field": "ecat.sub9.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub10_idx",
+        "field": "ecat.sub10.idx",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub9_adp",
+        "field": "ecat.sub9.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub10_adp",
+        "field": "ecat.sub10.adp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub9_ado",
+        "field": "ecat.sub9.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub10_ado",
+        "field": "ecat.sub10.ado",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl1",
+        "field": "ecat.reg.pdictrl1",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl1_pdi",
+        "field": "ecat.reg.pdictrl1.pdi",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2",
+        "field": "ecat.reg.pdictrl2",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_devemul",
+        "field": "ecat.reg.pdictrl2.devemul",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_enhlnkdetect",
+        "field": "ecat.reg.pdictrl2.enhlnkdetect",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_dcsyncout",
+        "field": "ecat.reg.pdictrl2.dcsyncout",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_dcsyncin",
+        "field": "ecat.reg.pdictrl2.dcsyncin",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_enhlnkdetect0",
+        "field": "ecat.reg.pdictrl2.enhlnkdetect0",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_enhlnkdetect1",
+        "field": "ecat.reg.pdictrl2.enhlnkdetect1",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_enhlnkdetect2",
+        "field": "ecat.reg.pdictrl2.enhlnkdetect2",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_pdictrl2_enhlnkdetect3",
+        "field": "ecat.reg.pdictrl2.enhlnkdetect3",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_ethercat_bootup.pcap",
+          "wireshark_ethercat_bootup.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub2_lad",
+        "field": "ecat.sub2.lad",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub3_lad",
+        "field": "ecat.sub3.lad",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_sub4_lad",
+        "field": "ecat.sub4.lad",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlctrl3",
+        "field": "ecat.reg.dlctrl3",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlctrl3_fifosize",
+        "field": "ecat.reg.dlctrl3.fifosize",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlctrl3_lowebusjit",
+        "field": "ecat.reg.dlctrl3.lowebusjit",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlstatus1_operation",
+        "field": "ecat.reg.dlstatus1.operation",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlstatus1_pdiwatchdog",
+        "field": "ecat.reg.dlstatus1.pdiwatchdog",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlstatus1_enhlinkdetect",
+        "field": "ecat.reg.dlstatus1.enhlinkdetect",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlstatus1_physlink_port0",
+        "field": "ecat.reg.dlstatus1.physlink.port0",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlstatus1_physlink_port1",
+        "field": "ecat.reg.dlstatus1.physlink.port1",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlstatus1_physlink_port2",
+        "field": "ecat.reg.dlstatus1.physlink.port2",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dlstatus1_physlink_port3",
+        "field": "ecat.reg.dlstatus1.physlink.port3",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_speedstart",
+        "field": "ecat.reg.dc.speedstart",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_fltdepth_systimediff",
+        "field": "ecat.reg.dc.fltdepth.systimediff",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ecat_ecat_reg_dc_fltdepth_speedcnt",
+        "field": "ecat.reg.dc.fltdepth.speedcnt",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_ethercat_example.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 23,
+      "t1_in_pcap": 14,
+      "t1_covered": 14,
+      "t2_total": 438,
+      "t2_in_pcap": 202,
+      "t2_covered": 7,
+      "t3_skipped": 8,
+      "t4_ignored": 0
+    }
+  }
+}

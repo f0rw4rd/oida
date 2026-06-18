@@ -1,0 +1,124 @@
+# OpENer Extended - Full CIP Object Support for Testing
+# Includes: Assembly, Parameter, File, Port, Vendor-Specific, and CIP Security
+# https://github.com/EIPStackGroup/OpENer
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    libcap-dev \
+    netcat-openbsd \
+    ca-certificates \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone OpENer repository
+RUN git clone --depth 1 https://github.com/EIPStackGroup/OpENer.git /opener
+
+# Copy custom application with extended CIP objects
+COPY opener/custom_application.c /opener/source/src/ports/POSIX/sample_application/sampleapplication.c
+
+# Create custom opener_user_conf.h with extended features
+RUN cat > /opener/source/src/ports/POSIX/sample_application/opener_user_conf.h << 'EOF'
+/*******************************************************************************
+ * OpENer Extended Configuration for MSF-ICS Testing
+ ******************************************************************************/
+#ifndef OPENER_USER_CONF_H_
+#define OPENER_USER_CONF_H_
+
+/* Required base includes */
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <stdint.h>
+
+/* Type definitions needed before other headers */
+typedef uint8_t CipOctet;
+typedef uint8_t CipByte;
+typedef uint8_t EipByte;
+
+/* Ethernet buffer size */
+#define PC_OPENER_ETHERNET_BUFFER_SIZE 1500
+
+/* Device Identity */
+#define OPENER_DEVICE_VENDOR_ID 1
+#define OPENER_DEVICE_TYPE 0x0C
+#define OPENER_DEVICE_PRODUCT_CODE 0x4321
+#define OPENER_DEVICE_MAJOR_REVISION 2
+#define OPENER_DEVICE_MINOR_REVISION 5
+#define OPENER_DEVICE_NAME "OpENer Extended"
+#define OPENER_DEVICE_SERIAL_NUMBER 0xDEADBEEF
+
+/* CIP Connection settings - required by cipclass3connection.c */
+#define OPENER_CIP_NUM_EXLUSIVE_OWNER_CONNS 2
+#define OPENER_CIP_NUM_INPUT_ONLY_CONNS 1
+#define OPENER_CIP_NUM_LISTEN_ONLY_CONNS 1
+#define OPENER_CIP_NUM_EXPLICIT_CONNS 4
+
+/* Session settings - required by generic_networkhandler.h */
+#define OPENER_NUMBER_OF_SUPPORTED_SESSIONS 20
+
+/* Extended objects - enable all for testing */
+#define OPENER_CIP_NUM_INPUT_ONLY_CONNS_PER_CON_PATH 3
+#define OPENER_CIP_NUM_LISTEN_ONLY_CONNS_PER_CON_PATH 3
+
+/* Enable extended features */
+#define OPENER_PRODUCED_CONNECTION_BUFFER_SIZE 512
+#define OPENER_CONSUMED_CONNECTION_BUFFER_SIZE 512
+
+/* Ethernet Link - minimal config to avoid build issues */
+#define OPENER_ETHLINK_CNTRS_ENABLE 0
+#define OPENER_ETHLINK_IFACE_CTRL_ENABLE 0
+#define OPENER_ETHLINK_LABEL_ENABLE 0
+#define OPENER_ETHLINK_INSTANCE_CNT 1
+
+/* Encapsulation timeout */
+#define OPENER_EIP_ENCAPSULATION_INACTIVITY_TIMEOUT 120
+
+/* QoS Support */
+#define OPENER_DSCP_URGENT 55
+#define OPENER_DSCP_SCHEDULED 47
+#define OPENER_DSCP_HIGH 43
+#define OPENER_DSCP_LOW 31
+#define OPENER_DSCP_EXPLICIT 27
+
+/* Timer tick in milliseconds */
+#define kOpenerTimerTickInMilliSeconds 10
+
+/* Application-specific connectable objects */
+#define OPENER_CIP_NUM_APPLICATION_SPECIFIC_CONNECTABLE_OBJECTS 0
+
+/* Trace macros - required for build */
+#define OPENER_TRACE_LEVEL 3
+#define LOG_TRACE(format, ...) fprintf(stderr, format, ##__VA_ARGS__)
+#define OPENER_ASSERT(assertion) assert(assertion)
+
+#endif /* OPENER_USER_CONF_H_ */
+EOF
+
+# Relax compiler flags - OpENer uses -Werror which breaks build
+# Completely remove all -Werror variants from CMake files
+RUN find /opener -type f \( -name "CMakeLists.txt" -o -name "*.cmake" \) \
+    -exec sed -i 's/-Werror[^ ]*//g' {} \;
+
+# Build OpENer for POSIX (Linux) with extended features
+WORKDIR /opener/bin/posix
+# Run setup, then patch CMakeCache to suppress warnings, then rebuild
+RUN ./setup_posix.sh && \
+    sed -i 's/CMAKE_C_FLAGS:STRING=/CMAKE_C_FLAGS:STRING=-w /g' CMakeCache.txt && \
+    cmake . && \
+    make -j$(nproc)
+
+# Expose EtherNet/IP ports
+# 44818 - TCP/UDP for explicit messaging
+# 2222 - UDP for implicit (I/O) messaging
+EXPOSE 44818/tcp 44818/udp 2222/udp
+
+# Run OpENer on eth0 interface
+ENTRYPOINT ["./src/ports/POSIX/OpENer"]
+CMD ["eth0"]

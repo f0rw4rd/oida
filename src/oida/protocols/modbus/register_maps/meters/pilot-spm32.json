@@ -1,0 +1,352 @@
+{
+  "vendor": "Pilot",
+  "model": "SPM 32",
+  "description": "Pilot SPM 32 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "vb_ph_n": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Vb (ph n)",
+      "unit": "V"
+    },
+    "vc_ph_n": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Vc (ph n)",
+      "unit": "V"
+    },
+    "vab_ph_ph": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Vab (ph ph)",
+      "unit": "V"
+    },
+    "vbc_ph_ph": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Vbc (ph ph)",
+      "unit": "V"
+    },
+    "vca_ph_ph": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Vca (ph ph)",
+      "unit": "V"
+    },
+    "ia": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Ia",
+      "unit": "A"
+    },
+    "ib": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Ib",
+      "unit": "A"
+    },
+    "ic": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Ic",
+      "unit": "A"
+    },
+    "neutral_current": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "total_active_power": {
+      "address": 10,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "total_reactive_power": {
+      "address": 12,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "var"
+    },
+    "total_power_factor": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "phase_a_active_power": {
+      "address": 15,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A active power",
+      "unit": "W"
+    },
+    "phase_b_active_power": {
+      "address": 16,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B active power",
+      "unit": "W"
+    },
+    "phase_c_active_power": {
+      "address": 17,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C active power",
+      "unit": "W"
+    },
+    "phase_a_reactive_power": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A reactive power",
+      "unit": "var"
+    },
+    "phase_b_reactive_power": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B reactive power",
+      "unit": "var"
+    },
+    "phase_c_reactive_power": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C reactive power",
+      "unit": "var"
+    },
+    "phase_a_power_factor": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor": {
+      "address": 23,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "frequency": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "total_kwh": {
+      "address": 25,
+      "type": "u32",
+      "access": "r",
+      "description": "Total kwh",
+      "unit": "kWh"
+    },
+    "total_kvarh": {
+      "address": 27,
+      "type": "u32",
+      "access": "r",
+      "description": "Total kvarh",
+      "unit": "kvarh"
+    },
+    "import_kwh": {
+      "address": 29,
+      "type": "u32",
+      "access": "r",
+      "description": "Import. kwh",
+      "unit": "kWh"
+    },
+    "export_kwh": {
+      "address": 31,
+      "type": "u32",
+      "access": "r",
+      "description": "Export. kwh",
+      "unit": "kWh"
+    },
+    "import_kvarh": {
+      "address": 33,
+      "type": "u32",
+      "access": "r",
+      "description": "Import kvarh",
+      "unit": "kvarh"
+    },
+    "export_kvarh": {
+      "address": 35,
+      "type": "u32",
+      "access": "r",
+      "description": "Export. kvarh",
+      "unit": "kvarh"
+    },
+    "digital_input_on_off_status": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input (on off status)"
+    },
+    "relay_status": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Relay status"
+    },
+    "alarm_status": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Alarm status"
+    },
+    "ct_ratio": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Ct ratio"
+    },
+    "pt_ratio": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "Pt ratio"
+    },
+    "average_voltage_ph_n": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "Average voltage (ph n)",
+      "unit": "V"
+    },
+    "average_voltage_ph_ph": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "description": "Average voltage (ph ph)",
+      "unit": "V"
+    },
+    "average_current": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Average current",
+      "unit": "A"
+    },
+    "current_unbalance_rate": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance rate"
+    },
+    "phase_a_apparent_power": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A apparent power",
+      "unit": "VA"
+    },
+    "phase_b_apparent_power": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B apparent power",
+      "unit": "VA"
+    },
+    "phase_c_apparent_power": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C apparent power",
+      "unit": "VA"
+    },
+    "total_apparent_power": {
+      "address": 49,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "total_apparent_energy": {
+      "address": 51,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent energy",
+      "unit": "kVAh"
+    },
+    "demand_for_ia": {
+      "address": 700,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand for ia",
+      "unit": "A"
+    },
+    "demand_for_ib": {
+      "address": 701,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand for ib",
+      "unit": "A"
+    },
+    "demand_for_ic": {
+      "address": 702,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand for ic",
+      "unit": "A"
+    },
+    "demand_for_pa": {
+      "address": 703,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand for pa",
+      "unit": "W"
+    },
+    "demand_for_pb": {
+      "address": 704,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand for pb",
+      "unit": "W"
+    },
+    "demand_for_pc": {
+      "address": 705,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand for pc",
+      "unit": "W"
+    },
+    "demand_for_ptot_low": {
+      "address": 706,
+      "type": "i32",
+      "access": "r",
+      "description": "Demand for ptot (low)",
+      "unit": "W"
+    },
+    "max_demand_for_ia": {
+      "address": 708,
+      "type": "u16",
+      "access": "r",
+      "description": "Max. demand for ia",
+      "unit": "A"
+    }
+  }
+}

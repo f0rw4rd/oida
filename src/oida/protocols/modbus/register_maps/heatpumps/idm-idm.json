@@ -1,0 +1,128 @@
+{
+  "vendor": "Idm",
+  "model": "Idm",
+  "description": "Imported from nymea-plugins-modbus (idm)",
+  "byte_order": "little",
+  "word_order": "little",
+  "source": "nymea-plugins-modbus/idm/idm-registers.json",
+  "registers": {
+    "currentPvSurplus": {
+      "address": 74,
+      "type": "f32",
+      "access": "rw",
+      "description": "Current PV surplus ",
+      "unit": "kW"
+    },
+    "currentPvProduction": {
+      "address": 78,
+      "type": "f32",
+      "access": "rw",
+      "description": "Current PV production ",
+      "unit": "kW"
+    },
+    "outdoorTemperature": {
+      "address": 1000,
+      "type": "f32",
+      "access": "ro",
+      "description": "Outdoor temperature",
+      "unit": "°C"
+    },
+    "heatStorageTemperature": {
+      "address": 1008,
+      "type": "f32",
+      "access": "ro",
+      "description": "Heat storage temperature",
+      "unit": "°C"
+    },
+    "targetHotWaterTemperature": {
+      "address": 1032,
+      "type": "u16",
+      "access": "ro",
+      "description": "Target hot water temperature",
+      "unit": "°C"
+    },
+    "roomTemperature": {
+      "address": 1364,
+      "type": "f32",
+      "access": "ro",
+      "description": "Room temperature",
+      "unit": "°C"
+    },
+    "roomTemperatureTargetHeatingEco": {
+      "address": 1415,
+      "type": "f32",
+      "access": "rw",
+      "description": "Room target temperature",
+      "unit": "°C"
+    },
+    "heatPumpOperatingMode": {
+      "address": 1090,
+      "type": "u16",
+      "access": "ro",
+      "description": "Heat pump operation mode"
+    },
+    "currentPowerConsumption": {
+      "address": 4122,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current power consumption",
+      "unit": "kW"
+    },
+    "currentFaultNumber": {
+      "address": 1004,
+      "type": "u16",
+      "access": "ro",
+      "description": "Current fault number"
+    },
+    "systemOperationMode": {
+      "address": 1005,
+      "type": "u16",
+      "access": "ro",
+      "description": "Operation mode"
+    },
+    "smartGridStatus": {
+      "address": 1006,
+      "type": "u16",
+      "access": "ro",
+      "description": "Smart grid status"
+    },
+    "energyHeating": {
+      "address": 1750,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy heating",
+      "unit": "kWh"
+    },
+    "energyCooling": {
+      "address": 1752,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy cooling",
+      "unit": "kWh"
+    },
+    "energyHotWater": {
+      "address": 1754,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy hot water",
+      "unit": "kWh"
+    }
+  },
+  "enums": {
+    "SystemOperationMode": {
+      "0": "Standby",
+      "1": "Automatic",
+      "2": "Absent",
+      "4": "WarmWaterOnly",
+      "5": "HeatingCoolingOnly"
+    },
+    "HeatPumpOperationMode": {
+      "0": "Off",
+      "1": "Heating",
+      "2": "Cooling",
+      "4": "HotWater",
+      "8": "Defrost"
+    }
+  },
+  "_source_verified": "Verified: IDM Navigator 2.0 Modbus TCP confirmed; HA integrations kodebach/hacs-idm-heatpump exist"
+}

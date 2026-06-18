@@ -1,0 +1,313 @@
+{
+  "vendor": "Landis+Gyr",
+  "model": "GYR E 650 GATEWAY METER 2",
+  "description": "Landis+Gyr GYR E 650 GATEWAY METER 2 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "hours_format_hhmmss": {
+      "address": 40215,
+      "type": "i16",
+      "access": "r",
+      "description": "Hours: format hhmmss"
+    },
+    "data_format_aammgg": {
+      "address": 40217,
+      "type": "i16",
+      "access": "r",
+      "description": "Data format aammgg"
+    },
+    "meter_serial_number_read_by_dlms": {
+      "address": 40219,
+      "type": "i16",
+      "access": "r",
+      "description": "Meter serial number (read by dlms)"
+    },
+    "reset_meter_count": {
+      "address": 40221,
+      "type": "f32",
+      "access": "r",
+      "description": "Reset meter count"
+    },
+    "total_active_energy_a": {
+      "address": 40223,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy a+"
+    },
+    "total_active_energy_previous_month_a": {
+      "address": 40225,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy previous month A +"
+    },
+    "total_active_energy_slot_1_a": {
+      "address": 40227,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 1 a+"
+    },
+    "total_active_energy_slot_1_previous_month_a": {
+      "address": 40229,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 1 previous month A +"
+    },
+    "total_active_energy_slot_2_a": {
+      "address": 40231,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 2 a+"
+    },
+    "total_active_energy_slot_2_previous_month_a": {
+      "address": 40233,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 2 previous month A +"
+    },
+    "total_active_energy_slot_3_a": {
+      "address": 40235,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 3 a+"
+    },
+    "total_active_energy_slot_3_previous_month_a": {
+      "address": 40237,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 3 previous month A +"
+    },
+    "total_active_energy_slot_4_a": {
+      "address": 40239,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 4 a+"
+    },
+    "total_active_energy_slot_4_previous_month_a": {
+      "address": 40241,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 4 previous month A +"
+    },
+    "total_active_energy_a_40243": {
+      "address": 40243,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy A"
+    },
+    "total_active_energy_previous_month_a_40245": {
+      "address": 40245,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy previous month A"
+    },
+    "total_active_energy_slot_1_a_40247": {
+      "address": 40247,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 1 A"
+    },
+    "total_active_energy_slot_1_previous_month_a_40249": {
+      "address": 40249,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 1 previous month A"
+    },
+    "total_active_energy_slot_2_a_40251": {
+      "address": 40251,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 2 A"
+    },
+    "total_active_energy_slot_2_previous_month_a_40253": {
+      "address": 40253,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 2 previous month A"
+    },
+    "total_active_energy_slot_3_a_40255": {
+      "address": 40255,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 3 A"
+    },
+    "total_active_energy_slot_3_previous_month_a_40257": {
+      "address": 40257,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 3 previous month A"
+    },
+    "total_active_energy_slot_4_a_40259": {
+      "address": 40259,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 4 A"
+    },
+    "total_active_energy_slot_4_previous_month_a_40261": {
+      "address": 40261,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy slot 4 previous month A"
+    },
+    "reactive_total_energy_q1": {
+      "address": 40263,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy Q1"
+    },
+    "reactive_total_energy_previous_month_q1": {
+      "address": 40265,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy previous month Q1"
+    },
+    "reactive_total_energy_slot_1_q1": {
+      "address": 40267,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 1 Q1"
+    },
+    "reactive_total_energy_slot_1_previous_month_q1": {
+      "address": 40269,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 1 previous month Q1"
+    },
+    "reactive_total_energy_slot_2_q1": {
+      "address": 40271,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 2 Q1"
+    },
+    "reactive_total_energy_slot_2_previous_month_q1": {
+      "address": 40273,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 2 previous month Q1"
+    },
+    "reactive_total_energy_slot_3_q1": {
+      "address": 40275,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 3 Q1"
+    },
+    "reactive_total_energy_slot_3_previous_month_q1": {
+      "address": 40277,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 3 previous month Q1"
+    },
+    "reactive_total_energy_slot_4_q1": {
+      "address": 40279,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 4 Q1"
+    },
+    "reactive_total_energy_slot_4_previous_month_q1": {
+      "address": 40281,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 4 previous month Q1"
+    },
+    "reactive_total_energy_q2": {
+      "address": 40283,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy Q2"
+    },
+    "reactive_total_energy_previous_month_q2": {
+      "address": 40285,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy previous month Q2"
+    },
+    "reactive_total_energy_slot_1_q2": {
+      "address": 40287,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 1 Q2"
+    },
+    "reactive_total_energy_slot_1_previous_month_q2": {
+      "address": 40289,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 1 previous month Q2"
+    },
+    "reactive_total_energy_slot_2_q2": {
+      "address": 40291,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 2 Q2"
+    },
+    "reactive_total_energy_slot_2_previous_month_q2": {
+      "address": 40293,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 2 previous month Q2"
+    },
+    "reactive_total_energy_slot_3_q2": {
+      "address": 40295,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 3 Q2"
+    },
+    "reactive_total_energy_slot_3_previous_month_q2": {
+      "address": 40297,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 3 previous month Q2"
+    },
+    "reactive_total_energy_slot_4_q2": {
+      "address": 40299,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 4 Q2"
+    },
+    "reactive_total_energy_slot_4_previous_month_q2": {
+      "address": 40301,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 4 previous month Q2"
+    },
+    "reactive_total_energy_q3": {
+      "address": 40303,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy Q3"
+    },
+    "reactive_total_energy_previous_month_q3": {
+      "address": 40305,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy previous month Q3"
+    },
+    "reactive_total_energy_slot_1_q3": {
+      "address": 40307,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 1 Q3"
+    },
+    "reactive_total_energy_slot_1_previous_month_q3": {
+      "address": 40309,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 1 previous month Q3"
+    },
+    "reactive_total_energy_slot_2_q3": {
+      "address": 40311,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 2 Q3"
+    },
+    "reactive_total_energy_slot_2_previous_month_q3": {
+      "address": 40313,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy slot 2 previous month Q3"
+    }
+  }
+}

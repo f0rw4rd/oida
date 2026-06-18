@@ -1,0 +1,357 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "IEM 3000",
+  "description": "Schneider Electric IEM 3000 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "digital_input_control_mode": {
+      "address": 7274,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input control mode"
+    },
+    "digital_input_status_only_bit_1_is_used_bit": {
+      "address": 8905,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input status (only bit 1 is used): bit"
+    },
+    "digital_output_control_mode_status": {
+      "address": 9673,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital output control mode status"
+    },
+    "i1_phase_1_current": {
+      "address": 3000,
+      "type": "f32",
+      "access": "r",
+      "description": "I1: phase 1 current",
+      "unit": "A"
+    },
+    "i2_phase_2_current": {
+      "address": 3002,
+      "type": "f32",
+      "access": "r",
+      "description": "I2: phase 2 current",
+      "unit": "A"
+    },
+    "i3_phase_3_current": {
+      "address": 3004,
+      "type": "f32",
+      "access": "r",
+      "description": "I3: phase 3 current",
+      "unit": "A"
+    },
+    "currentavg": {
+      "address": 3010,
+      "type": "f32",
+      "access": "r",
+      "description": "Currentavg",
+      "unit": "A"
+    },
+    "voltage_l1_l2": {
+      "address": 3020,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L1 L2",
+      "unit": "V"
+    },
+    "voltage_l2_l3": {
+      "address": 3022,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L2 L3",
+      "unit": "V"
+    },
+    "voltage_l3_l1": {
+      "address": 3024,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L3 L1",
+      "unit": "V"
+    },
+    "voltage_ll_avg": {
+      "address": 3026,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage ll avg",
+      "unit": "V"
+    },
+    "voltage_l1_n": {
+      "address": 3028,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L1 N",
+      "unit": "V"
+    },
+    "voltage_l2_n": {
+      "address": 3030,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L2 N",
+      "unit": "V"
+    },
+    "voltage_l3_n": {
+      "address": 3032,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L3 N",
+      "unit": "V"
+    },
+    "voltage_ln_avg": {
+      "address": 3036,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage ln avg",
+      "unit": "V"
+    },
+    "active_power_phase_1": {
+      "address": 3054,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase 1",
+      "unit": "kW"
+    },
+    "active_power_phase_2": {
+      "address": 3056,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase 2",
+      "unit": "kW"
+    },
+    "active_power_phase_3": {
+      "address": 3058,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase 3",
+      "unit": "kW"
+    },
+    "total_active_power": {
+      "address": 3060,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "kW"
+    },
+    "total_reactive_power_not_applicable_for_iem3150_iem3250_iem3350": {
+      "address": 3068,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power not applicable for iem3150 / iem3250 / iem3350",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_not_applicable_for_iem3150_iem3250_iem3350": {
+      "address": 3076,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power not applicable for iem3150 / iem3250 / iem3350",
+      "unit": "kVA"
+    },
+    "total_power_factor_1_lt_pf": {
+      "address": 3084,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor: 1 &lt; pf"
+    },
+    "frequency": {
+      "address": 3110,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "multitariffs_energy_active_rate_0_multi_tariff_disabled_1_to_4_rate_a_to_rate_d_not_applicable_for_iem3150_iem3250_iem3350_note_you_can_only_set_the_tariff_using_this_method_if_the_tariff_mode_is_set_to_by_communication": {
+      "address": 4191,
+      "type": "u16",
+      "access": "r",
+      "description": "Multitariffs energy active rate 0: multi tariff disabled 1 to 4: rate A to rate D not applicable for iem3150 / iem3250 / iem3350 note: you can only set the tariff using this method if the tariff mode is set to by communication"
+    },
+    "total_active_energy_import": {
+      "address": 3204,
+      "type": "i64",
+      "access": "r",
+      "description": "Total active energy import",
+      "unit": "Wh"
+    },
+    "total_active_energy_export_not_applicable_for_iem3150_iem3250_iem3350": {
+      "address": 3208,
+      "type": "i64",
+      "access": "r",
+      "description": "Total active energy export not applicable for iem3150 / iem3250 / iem3350",
+      "unit": "Wh"
+    },
+    "total_reactive_energy_import_not_applicable_for_iem3150_iem3250_iem3350": {
+      "address": 3220,
+      "type": "i64",
+      "access": "r",
+      "description": "Total reactive energy import not applicable for iem3150 / iem3250 / iem3350",
+      "unit": "VARh"
+    },
+    "total_reactive_energy_export_not_applicable_for_iem3150_iem3250_iem3350": {
+      "address": 3224,
+      "type": "i64",
+      "access": "r",
+      "description": "Total reactive energy export not applicable for iem3150 / iem3250 / iem3350",
+      "unit": "VARh"
+    },
+    "partial_active_energy_import": {
+      "address": 3256,
+      "type": "i64",
+      "access": "r",
+      "description": "Partial active energy import",
+      "unit": "Wh"
+    },
+    "partial_reactive_energy_import_not_applicable_for_iem3150_iem3250_iem3350": {
+      "address": 3272,
+      "type": "i64",
+      "access": "r",
+      "description": "Partial reactive energy import not applicable for iem3150 / iem3250 / iem3350",
+      "unit": "VARh"
+    },
+    "active_energy_import_phase1": {
+      "address": 3518,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy import phase1",
+      "unit": "Wh"
+    },
+    "active_energy_import_phase_2": {
+      "address": 3522,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy import phase 2",
+      "unit": "Wh"
+    },
+    "active_energy_import_phase_3": {
+      "address": 3526,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy import phase 3",
+      "unit": "Wh"
+    },
+    "input_metering_accumulation_not_applicable_for_iem3150_iem3250_iem3350": {
+      "address": 3558,
+      "type": "i64",
+      "access": "r",
+      "description": "Input metering accumulation not applicable for iem3150 / iem3250 / iem3350",
+      "unit": "Unit"
+    },
+    "demand_method": {
+      "address": 3701,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand method"
+    },
+    "demand_interval_duration": {
+      "address": 3702,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand interval duration",
+      "unit": "Minute"
+    },
+    "active_power_demand": {
+      "address": 3766,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power demand",
+      "unit": "kW"
+    },
+    "active_power_peak_demand": {
+      "address": 3770,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power peak demand",
+      "unit": "kW"
+    },
+    "reactive_power_demand": {
+      "address": 3782,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power demand",
+      "unit": "kVAR"
+    },
+    "reactive_power_peak_demand": {
+      "address": 3786,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power peak demand",
+      "unit": "kVAR"
+    },
+    "apparent_power_demand": {
+      "address": 3798,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power demand",
+      "unit": "kVA"
+    },
+    "apparent_power_peak_demand": {
+      "address": 3802,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power peak demand",
+      "unit": "kVA"
+    },
+    "current_i1_demand": {
+      "address": 3814,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I1 demand",
+      "unit": "A"
+    },
+    "current_i1_peak_demand": {
+      "address": 3818,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I1 peak demand",
+      "unit": "A"
+    },
+    "current_i2_demand": {
+      "address": 3830,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I2 demand",
+      "unit": "A"
+    },
+    "current_i2_peak_demand": {
+      "address": 3834,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I2 peak demand",
+      "unit": "A"
+    },
+    "current_i3_demand": {
+      "address": 3846,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I3 demand",
+      "unit": "A"
+    },
+    "current_i3_peak_demand": {
+      "address": 3850,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I3 peak demand",
+      "unit": "A"
+    },
+    "current_avg_demand": {
+      "address": 3878,
+      "type": "f32",
+      "access": "r",
+      "description": "Current avg demand",
+      "unit": "A"
+    },
+    "current_avg_peak_demand": {
+      "address": 3882,
+      "type": "f32",
+      "access": "r",
+      "description": "Current avg peak demand",
+      "unit": "A"
+    }
+  }
+}

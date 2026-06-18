@@ -1,0 +1,761 @@
+{
+  "protocol": "cdp",
+  "display_filter": "cdp",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:41:22.583746+00:00",
+  "dissector_fields": {
+    "total": 89,
+    "by_type": {
+      "FT_BOOLEAN": 16,
+      "FT_BYTES": 7,
+      "FT_ETHER": 2,
+      "FT_IPv4": 7,
+      "FT_IPv6": 1,
+      "FT_NONE": 3,
+      "FT_STRING": 6,
+      "FT_STRINGZ": 7,
+      "FT_UINT16": 17,
+      "FT_UINT24": 1,
+      "FT_UINT32": 9,
+      "FT_UINT8": 13
+    },
+    "fields": [
+      {
+        "name": "cdp.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.ttl",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.checksum",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.checksum.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.tlv.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.tlv.len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz.tlv.type",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz.tlv.len",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.deviceid",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "cdp.platform",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "cdp.portid",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.router",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.trans_bridge",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.src_bridge",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.switch",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.host",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.igmp_capable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.repeater",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.voip_phone",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.remote",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.cvta",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.capabilities.mac_relay",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.spare_poe_tlv",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.spare_poe_tlv.poe",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.spare_poe_tlv.spare_pair_arch",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.spare_poe_tlv.req_spare_pair_poe",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.spare_poe_tlv.pse_spare_pair_poe",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.number_of_addresses",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.odr_default_gateway",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "cdp.ip_prefix",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "cdp.oui",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "cdp.protocol_id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.master_ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.sub_version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.unknown",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.commander_mac",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.switch_mac",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "cdp.cluster.management_vlan",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.hello.unknown",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "cdp.vtp_management_domain",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "cdp.native_vlan",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.duplex",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "cdp.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "cdp.voice_vlan",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.power_consumption",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.mtu",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.trust_bitmap",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.untrusted_port_cos",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.system_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "cdp.system_object_identifier",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "cdp.location.unknown",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.location",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "cdp.request_id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.management_id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.power_requested",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.power_available",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.encrypted_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "cdp.seen_sequence",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.sequence_number",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "cdp.model_number",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "cdp.unknown_pad",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.hardware_version_id",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "cdp.system_serial_number",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_unknown_values",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "cdp.len_tlv_table",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.num_tlvs_table",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.protocol",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "cdp.protocol_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.protocol_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "cdp.address",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "cdp.address_length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.unknown_field",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz.ip_address",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz.ipv6_address",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.ip_address",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.backup_server_port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.backup_server_ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.name",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.domain",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_reply_to.role",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "cdp.software_version",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "cdp.invalid_data",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "cdp.nrgyz_tlv.length.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "cdp.bad_checksum",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 54,
+    "by_pcap": {
+      "filtered_cdp.pcap": [
+        "cdp_cdp_address_length",
+        "cdp_cdp_capabilities",
+        "cdp_cdp_capabilities_cvta",
+        "cdp_cdp_capabilities_host",
+        "cdp_cdp_capabilities_igmp_capable",
+        "cdp_cdp_capabilities_mac_relay",
+        "cdp_cdp_capabilities_remote",
+        "cdp_cdp_capabilities_repeater",
+        "cdp_cdp_capabilities_router",
+        "cdp_cdp_capabilities_src_bridge",
+        "cdp_cdp_capabilities_switch",
+        "cdp_cdp_capabilities_trans_bridge",
+        "cdp_cdp_capabilities_voip_phone",
+        "cdp_cdp_checksum",
+        "cdp_cdp_checksum_status",
+        "cdp_cdp_cluster_commander_mac",
+        "cdp_cdp_cluster_ip",
+        "cdp_cdp_cluster_management_vlan",
+        "cdp_cdp_cluster_master_ip",
+        "cdp_cdp_cluster_status",
+        "cdp_cdp_cluster_sub_version",
+        "cdp_cdp_cluster_switch_mac",
+        "cdp_cdp_cluster_unknown",
+        "cdp_cdp_cluster_version",
+        "cdp_cdp_deviceid",
+        "cdp_cdp_duplex",
+        "cdp_cdp_management_id",
+        "cdp_cdp_native_vlan",
+        "cdp_cdp_nrgyz_ip_address",
+        "cdp_cdp_nrgyz_ipv6_address",
+        "cdp_cdp_number_of_addresses",
+        "cdp_cdp_oui",
+        "cdp_cdp_platform",
+        "cdp_cdp_portid",
+        "cdp_cdp_power_available",
+        "cdp_cdp_protocol",
+        "cdp_cdp_protocol_id",
+        "cdp_cdp_protocol_length",
+        "cdp_cdp_protocol_type",
+        "cdp_cdp_request_id",
+        "cdp_cdp_software_version",
+        "cdp_cdp_spare_poe_tlv",
+        "cdp_cdp_spare_poe_tlv_poe",
+        "cdp_cdp_spare_poe_tlv_pse_spare_pair_poe",
+        "cdp_cdp_spare_poe_tlv_req_spare_pair_poe",
+        "cdp_cdp_spare_poe_tlv_spare_pair_arch",
+        "cdp_cdp_tlv_len",
+        "cdp_cdp_tlv_type",
+        "cdp_cdp_trust_bitmap",
+        "cdp_cdp_ttl",
+        "cdp_cdp_untrusted_port_cos",
+        "cdp_cdp_version",
+        "cdp_cdp_vtp_management_domain",
+        "text"
+      ]
+    },
+    "union": [
+      "cdp_cdp_address_length",
+      "cdp_cdp_capabilities",
+      "cdp_cdp_capabilities_cvta",
+      "cdp_cdp_capabilities_host",
+      "cdp_cdp_capabilities_igmp_capable",
+      "cdp_cdp_capabilities_mac_relay",
+      "cdp_cdp_capabilities_remote",
+      "cdp_cdp_capabilities_repeater",
+      "cdp_cdp_capabilities_router",
+      "cdp_cdp_capabilities_src_bridge",
+      "cdp_cdp_capabilities_switch",
+      "cdp_cdp_capabilities_trans_bridge",
+      "cdp_cdp_capabilities_voip_phone",
+      "cdp_cdp_checksum",
+      "cdp_cdp_checksum_status",
+      "cdp_cdp_cluster_commander_mac",
+      "cdp_cdp_cluster_ip",
+      "cdp_cdp_cluster_management_vlan",
+      "cdp_cdp_cluster_master_ip",
+      "cdp_cdp_cluster_status",
+      "cdp_cdp_cluster_sub_version",
+      "cdp_cdp_cluster_switch_mac",
+      "cdp_cdp_cluster_unknown",
+      "cdp_cdp_cluster_version",
+      "cdp_cdp_deviceid",
+      "cdp_cdp_duplex",
+      "cdp_cdp_management_id",
+      "cdp_cdp_native_vlan",
+      "cdp_cdp_nrgyz_ip_address",
+      "cdp_cdp_nrgyz_ipv6_address",
+      "cdp_cdp_number_of_addresses",
+      "cdp_cdp_oui",
+      "cdp_cdp_platform",
+      "cdp_cdp_portid",
+      "cdp_cdp_power_available",
+      "cdp_cdp_protocol",
+      "cdp_cdp_protocol_id",
+      "cdp_cdp_protocol_length",
+      "cdp_cdp_protocol_type",
+      "cdp_cdp_request_id",
+      "cdp_cdp_software_version",
+      "cdp_cdp_spare_poe_tlv",
+      "cdp_cdp_spare_poe_tlv_poe",
+      "cdp_cdp_spare_poe_tlv_pse_spare_pair_poe",
+      "cdp_cdp_spare_poe_tlv_req_spare_pair_poe",
+      "cdp_cdp_spare_poe_tlv_spare_pair_arch",
+      "cdp_cdp_tlv_len",
+      "cdp_cdp_tlv_type",
+      "cdp_cdp_trust_bitmap",
+      "cdp_cdp_ttl",
+      "cdp_cdp_untrusted_port_cos",
+      "cdp_cdp_version",
+      "cdp_cdp_vtp_management_domain",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 30,
+    "fields": [
+      "capabilities",
+      "cluster_commander_mac",
+      "cluster_ip",
+      "cluster_management_vlan",
+      "cluster_master_ip",
+      "cluster_status",
+      "cluster_sub_version",
+      "cluster_switch_mac",
+      "cluster_version",
+      "deviceid",
+      "duplex",
+      "management_id",
+      "native_vlan",
+      "nrgyz_ip_address",
+      "nrgyz_ipv6_address",
+      "platform",
+      "portid",
+      "power_available",
+      "request_id",
+      "software_version",
+      "spare_poe_tlv",
+      "spare_poe_tlv_poe",
+      "spare_poe_tlv_pse_spare_pair_poe",
+      "spare_poe_tlv_req_spare_pair_poe",
+      "spare_poe_tlv_spare_pair_arch",
+      "trust_bitmap",
+      "ttl",
+      "untrusted_port_cos",
+      "version",
+      "vtp_management_domain"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "53/89 (59%)",
+    "pcap_vs_extracted": "30/53 (56%)",
+    "t1_extracted": "9/14 (64%)",
+    "t1_gaps": [
+      {
+        "ek_name": "cdp_cdp_checksum",
+        "field": "cdp.checksum",
+        "type": "FT_UINT16",
+        "tier": "T1",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_checksum_status",
+        "field": "cdp.checksum.status",
+        "type": "FT_UINT8",
+        "tier": "T1",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_number_of_addresses",
+        "field": "cdp.number_of_addresses",
+        "type": "FT_UINT32",
+        "tier": "T1",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_protocol_id",
+        "field": "cdp.protocol_id",
+        "type": "FT_UINT16",
+        "tier": "T1",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_address_length",
+        "field": "cdp.address_length",
+        "type": "FT_UINT16",
+        "tier": "T1",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "t2_consider": [
+      {
+        "ek_name": "cdp_cdp_tlv_type",
+        "field": "cdp.tlv.type",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_tlv_len",
+        "field": "cdp.tlv.len",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_oui",
+        "field": "cdp.oui",
+        "type": "FT_UINT24",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_cluster_unknown",
+        "field": "cdp.cluster.unknown",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_protocol",
+        "field": "cdp.protocol",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_protocol_type",
+        "field": "cdp.protocol_type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "cdp_cdp_protocol_length",
+        "field": "cdp.protocol_length",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_cdp.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 22,
+      "t1_in_pcap": 14,
+      "t1_covered": 9,
+      "t2_total": 53,
+      "t2_in_pcap": 28,
+      "t2_covered": 21,
+      "t3_skipped": 14,
+      "t4_ignored": 0
+    }
+  }
+}

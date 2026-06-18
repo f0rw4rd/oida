@@ -1,0 +1,349 @@
+{
+  "vendor": "Kael",
+  "model": "VARKOMBI 18 PC TFT",
+  "description": "Kael VARKOMBI 18 PC TFT power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "company_code": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Company code"
+    },
+    "product_code": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Product code"
+    },
+    "barcode_check": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Barcode check"
+    },
+    "program_communication_version": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Program communication version"
+    },
+    "user_define_number_h": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "User define number H"
+    },
+    "user_define_number_l": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "User define number L"
+    },
+    "current_transformer_ratio": {
+      "address": 4096,
+      "type": "u16",
+      "access": "r",
+      "description": "Current transformer ratio"
+    },
+    "device_working_information_bits": {
+      "address": 4097,
+      "type": "u16",
+      "access": "r",
+      "description": "Device working information bits"
+    },
+    "input_voltage_phase1": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "Input voltage phase1",
+      "unit": "Volt"
+    },
+    "input_voltage_phase2": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "description": "Input voltage phase2",
+      "unit": "Volt"
+    },
+    "input_voltage_phase3": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Input voltage phase3",
+      "unit": "Volt"
+    },
+    "input_current_phase1": {
+      "address": 4101,
+      "type": "u16",
+      "access": "r",
+      "description": "Input current phase1",
+      "unit": "Amp"
+    },
+    "input_current_phase2": {
+      "address": 4102,
+      "type": "u16",
+      "access": "r",
+      "description": "Input current phase2",
+      "unit": "Amp"
+    },
+    "input_current_phase3": {
+      "address": 4103,
+      "type": "u16",
+      "access": "r",
+      "description": "Input current phase3",
+      "unit": "Amp"
+    },
+    "input_active_power_phase1": {
+      "address": 4104,
+      "type": "u16",
+      "access": "r",
+      "description": "Input active power phase1",
+      "unit": "watt"
+    },
+    "input_active_power_phase2": {
+      "address": 4105,
+      "type": "u16",
+      "access": "r",
+      "description": "Input active power phase2",
+      "unit": "watt"
+    },
+    "input_active_power_phase3": {
+      "address": 4106,
+      "type": "u16",
+      "access": "r",
+      "description": "Input active power phase3",
+      "unit": "watt"
+    },
+    "input_reactive_power_phase1": {
+      "address": 4107,
+      "type": "i16",
+      "access": "r",
+      "description": "Input reactive power phase1",
+      "unit": "Var"
+    },
+    "input_reactive_power_phase2": {
+      "address": 4108,
+      "type": "i16",
+      "access": "r",
+      "description": "Input reactive power phase2",
+      "unit": "Var"
+    },
+    "input_reactive_power_phase3": {
+      "address": 4109,
+      "type": "i16",
+      "access": "r",
+      "description": "Input reactive power phase3",
+      "unit": "Var"
+    },
+    "input_appearent_power_phase1": {
+      "address": 4110,
+      "type": "u16",
+      "access": "r",
+      "description": "Input appearent power phase1",
+      "unit": "VA"
+    },
+    "input_appearent_power_phase2": {
+      "address": 4111,
+      "type": "u16",
+      "access": "r",
+      "description": "Input appearent power phase2",
+      "unit": "VA"
+    },
+    "input_appearent_power_phase3": {
+      "address": 4112,
+      "type": "u16",
+      "access": "r",
+      "description": "Input appearent power phase3",
+      "unit": "VA"
+    },
+    "cos_phase1": {
+      "address": 4113,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phase1",
+      "unit": "0.001"
+    },
+    "cos_phase2": {
+      "address": 4114,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phase2",
+      "unit": "0.001"
+    },
+    "cos_phase3": {
+      "address": 4115,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phase3",
+      "unit": "0.001"
+    },
+    "sum_cos": {
+      "address": 4116,
+      "type": "i16",
+      "access": "r",
+      "description": "SUM cos",
+      "unit": "0.001"
+    },
+    "tan_1_phase1": {
+      "address": 4117,
+      "type": "i16",
+      "access": "r",
+      "description": "Tan 1 phase1",
+      "unit": "0.01"
+    },
+    "tan_2_phase2": {
+      "address": 4118,
+      "type": "i16",
+      "access": "r",
+      "description": "Tan 2 phase2",
+      "unit": "0.01"
+    },
+    "tan_3_phase3": {
+      "address": 4119,
+      "type": "i16",
+      "access": "r",
+      "description": "Tan 3 phase3",
+      "unit": "0.01"
+    },
+    "sum_tan": {
+      "address": 4120,
+      "type": "i16",
+      "access": "r",
+      "description": "SUM tan",
+      "unit": "0.01"
+    },
+    "total_active_power": {
+      "address": 4121,
+      "type": "u16",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "watt"
+    },
+    "total_inductive_power": {
+      "address": 4122,
+      "type": "u16",
+      "access": "r",
+      "description": "Total inductive power",
+      "unit": "Var"
+    },
+    "total_capacitive_power": {
+      "address": 4123,
+      "type": "u16",
+      "access": "r",
+      "description": "Total capacitive power",
+      "unit": "Var"
+    },
+    "sum_reactive_power": {
+      "address": 4124,
+      "type": "i16",
+      "access": "r",
+      "description": "SUM reactive power",
+      "unit": "Var"
+    },
+    "sum_appearent_power": {
+      "address": 4125,
+      "type": "u16",
+      "access": "r",
+      "description": "SUM appearent power",
+      "unit": "VA"
+    },
+    "frequency": {
+      "address": 4126,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "temperature": {
+      "address": 4127,
+      "type": "i16",
+      "access": "r",
+      "description": "Temperature",
+      "unit": "CD"
+    },
+    "phase_alarms_output_bits_for_phase1": {
+      "address": 4128,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase alarms output bits for phase1"
+    },
+    "phase_alarms_output_bits_for_phase2": {
+      "address": 4129,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase alarms output bits for phase2"
+    },
+    "phase_alarms_output_bits_for_phase3": {
+      "address": 4130,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase alarms output bits for phase3"
+    },
+    "step_protection_types": {
+      "address": 4132,
+      "type": "u16",
+      "access": "r",
+      "description": "Step protection types"
+    },
+    "warnings_for_voltage_and_no_current": {
+      "address": 4133,
+      "type": "u16",
+      "access": "r",
+      "description": "Warnings for voltage and no current"
+    },
+    "voltage1_zerocrossoverangle": {
+      "address": 4134,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage1 ZeroCrossOverAngle",
+      "unit": "Degree"
+    },
+    "current1_zerocrossoverangle": {
+      "address": 4135,
+      "type": "u16",
+      "access": "r",
+      "description": "Current1 ZeroCrossOverAngle",
+      "unit": "Degree"
+    },
+    "voltage2_zerocrossoverangle": {
+      "address": 4136,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage2 ZeroCrossOverAngle",
+      "unit": "Degree"
+    },
+    "current2_zerocrossoverangle": {
+      "address": 4137,
+      "type": "u16",
+      "access": "r",
+      "description": "Current2 ZeroCrossOverAngle",
+      "unit": "Degree"
+    },
+    "voltage3_zerocrossoverangle": {
+      "address": 4138,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage3 ZeroCrossOverAngle",
+      "unit": "Degree"
+    },
+    "current3_zerocrossoverangle": {
+      "address": 4139,
+      "type": "u16",
+      "access": "r",
+      "description": "Current3 ZeroCrossOverAngle",
+      "unit": "Degree"
+    },
+    "the_steps_that_are_running_17_0_steps_31_alarm_30_fan": {
+      "address": 4140,
+      "type": "u32",
+      "access": "r",
+      "description": "The steps that are running 17 0 steps, 31 alarm , 30 fan"
+    }
+  }
+}

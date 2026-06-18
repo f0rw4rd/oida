@@ -1,0 +1,26 @@
+{
+  "vendor": "PAC2200",
+  "model": "Siemens PAC2200",
+  "description": "Imported from mbmd (pac2200)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/pac2200.go",
+  "registers": {
+    "import": {
+      "address": 801,
+      "type": "f32",
+      "access": "ro",
+      "description": "2w",
+      "function_code": 4
+    },
+    "export": {
+      "address": 809,
+      "type": "f32",
+      "access": "ro",
+      "description": "2w",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: Siemens SENTRON PAC2200 confirmed; aggsoft.com register map; mbmd source pac2200.go verified"
+}

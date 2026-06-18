@@ -1,0 +1,313 @@
+{
+  "vendor": "Trinity",
+  "model": "GOBLIN",
+  "description": "Trinity GOBLIN power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "vln_r": {
+      "address": 199,
+      "type": "u32",
+      "access": "r",
+      "description": "Vln R"
+    },
+    "vin_y": {
+      "address": 201,
+      "type": "u32",
+      "access": "r",
+      "description": "Vin Y"
+    },
+    "vin_b": {
+      "address": 203,
+      "type": "u32",
+      "access": "r",
+      "description": "Vin B"
+    },
+    "vin_avg": {
+      "address": 205,
+      "type": "u32",
+      "access": "r",
+      "description": "Vin avg"
+    },
+    "vii_ry": {
+      "address": 207,
+      "type": "u32",
+      "access": "r",
+      "description": "Vii ry"
+    },
+    "vii_yb": {
+      "address": 209,
+      "type": "u32",
+      "access": "r",
+      "description": "Vii yb"
+    },
+    "vii_br": {
+      "address": 211,
+      "type": "u32",
+      "access": "r",
+      "description": "Vii br"
+    },
+    "vii_avg": {
+      "address": 213,
+      "type": "u32",
+      "access": "r",
+      "description": "Vii avg"
+    },
+    "ir": {
+      "address": 215,
+      "type": "u32",
+      "access": "r",
+      "description": "Ir"
+    },
+    "iy": {
+      "address": 217,
+      "type": "u32",
+      "access": "r",
+      "description": "Iy"
+    },
+    "lb": {
+      "address": 219,
+      "type": "u32",
+      "access": "r",
+      "description": "Lb"
+    },
+    "lavg": {
+      "address": 221,
+      "type": "u32",
+      "access": "r",
+      "description": "Lavg"
+    },
+    "i_neutral": {
+      "address": 223,
+      "type": "u32",
+      "access": "r",
+      "description": "I neutral"
+    },
+    "hz": {
+      "address": 229,
+      "type": "u32",
+      "access": "r",
+      "description": "Hz"
+    },
+    "system_pf": {
+      "address": 231,
+      "type": "i32",
+      "access": "r",
+      "description": "System pf"
+    },
+    "pfr": {
+      "address": 233,
+      "type": "i32",
+      "access": "r",
+      "description": "Pfr"
+    },
+    "pfy": {
+      "address": 235,
+      "type": "i32",
+      "access": "r",
+      "description": "Pfy"
+    },
+    "pfb": {
+      "address": 237,
+      "type": "i32",
+      "access": "r",
+      "description": "Pfb"
+    },
+    "system_kw": {
+      "address": 239,
+      "type": "u32",
+      "access": "r",
+      "description": "System kw"
+    },
+    "system_kvar": {
+      "address": 241,
+      "type": "i32",
+      "access": "r",
+      "description": "System kvar"
+    },
+    "system_kva": {
+      "address": 243,
+      "type": "u32",
+      "access": "r",
+      "description": "System kva"
+    },
+    "kwr": {
+      "address": 245,
+      "type": "u32",
+      "access": "r",
+      "description": "Kwr"
+    },
+    "kwy": {
+      "address": 247,
+      "type": "u32",
+      "access": "r",
+      "description": "Kwy"
+    },
+    "kwb": {
+      "address": 249,
+      "type": "u32",
+      "access": "r",
+      "description": "Kwb"
+    },
+    "kvar_r": {
+      "address": 251,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvar r"
+    },
+    "kvar_y": {
+      "address": 253,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvar y"
+    },
+    "kvar_b": {
+      "address": 255,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvar b"
+    },
+    "kva_r": {
+      "address": 257,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva r"
+    },
+    "kva_y": {
+      "address": 259,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva y"
+    },
+    "kva_b": {
+      "address": 261,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva b"
+    },
+    "kw_demand": {
+      "address": 263,
+      "type": "u32",
+      "access": "r",
+      "description": "Kw demand"
+    },
+    "md_kw": {
+      "address": 265,
+      "type": "u32",
+      "access": "r",
+      "description": "Md kw"
+    },
+    "md_kva": {
+      "address": 269,
+      "type": "u32",
+      "access": "r",
+      "description": "Md kva"
+    },
+    "sys_kwh": {
+      "address": 275,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys kwh"
+    },
+    "sys_kvarh": {
+      "address": 277,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys kvarh"
+    },
+    "sys_kvarh_lg": {
+      "address": 279,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys. Kvarh lg"
+    },
+    "sys_kvarh_ld": {
+      "address": 281,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys. Kvarh ld"
+    },
+    "sys_kvah": {
+      "address": 283,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys kvah"
+    },
+    "3rd_hvr": {
+      "address": 285,
+      "type": "u32",
+      "access": "r",
+      "description": "3rd hvr"
+    },
+    "sth_hvr": {
+      "address": 287,
+      "type": "u32",
+      "access": "r",
+      "description": "Sth hvr"
+    },
+    "7th_hvr": {
+      "address": 289,
+      "type": "u32",
+      "access": "r",
+      "description": "7th hvr"
+    },
+    "8th_hvr": {
+      "address": 291,
+      "type": "u32",
+      "access": "r",
+      "description": "8th hvr"
+    },
+    "9th_hvr": {
+      "address": 293,
+      "type": "u32",
+      "access": "r",
+      "description": "9th hvr"
+    },
+    "11th_hvr": {
+      "address": 295,
+      "type": "u32",
+      "access": "r",
+      "description": "11th hvr"
+    },
+    "15th_hvr": {
+      "address": 297,
+      "type": "u32",
+      "access": "r",
+      "description": "15th hvr"
+    },
+    "thd_hvr": {
+      "address": 299,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd hvr"
+    },
+    "3rd_hlr": {
+      "address": 301,
+      "type": "u32",
+      "access": "r",
+      "description": "3rd hlr"
+    },
+    "sth_hlr": {
+      "address": 303,
+      "type": "u32",
+      "access": "r",
+      "description": "Sth hlr"
+    },
+    "7th_hlr": {
+      "address": 305,
+      "type": "u32",
+      "access": "r",
+      "description": "7th hlr"
+    },
+    "8th_hlr": {
+      "address": 307,
+      "type": "u32",
+      "access": "r",
+      "description": "8th hlr"
+    }
+  }
+}

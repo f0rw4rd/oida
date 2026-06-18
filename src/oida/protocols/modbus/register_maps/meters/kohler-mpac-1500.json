@@ -1,0 +1,362 @@
+{
+  "vendor": "Kohler",
+  "model": "MPAC 1500",
+  "description": "Kohler MPAC 1500 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "source_n_line_neutral_l1l0": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Source N line neutral l1l0",
+      "unit": "Volts AC"
+    },
+    "source_n_line_neutral_l2_l0": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Source N line neutral L2 l0",
+      "unit": "Volts AC"
+    },
+    "source_n_line_neutral_l3l0": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Source N line neutral l3l0",
+      "unit": "Volts AC"
+    },
+    "source_e_line_neutral_l1_l0": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Source E line neutral L1 l0",
+      "unit": "Volts AC"
+    },
+    "source_e_lineneutral_l2l0": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Source E lineneutral l2l0",
+      "unit": "Volts AC"
+    },
+    "source_e_line_neutral_l3_l0": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Source E line neutral L3 l0",
+      "unit": "Volts AC"
+    },
+    "source_n_line_voltage_l1_l2": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Source N line voltage L1 L2",
+      "unit": "Volts AC"
+    },
+    "source_n_line_voltage_l2_l3": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Source N line voltage L2 L3",
+      "unit": "Volts AC"
+    },
+    "source_n_line_voltage_l3_l1": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Source N line voltage L3 L1",
+      "unit": "Volts AC"
+    },
+    "source_e_line_voltage_l1_l2": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Source E line voltage L1 L2",
+      "unit": "Volts AC"
+    },
+    "source_e_line_voltage_l2l3": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Source E line voltage l2l3",
+      "unit": "Volts AC"
+    },
+    "source_e_line_voltage_l3_l1": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Source E line voltage L3 L1",
+      "unit": "Volts AC"
+    },
+    "source_n_frequency": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Source N frequency",
+      "unit": "Hz"
+    },
+    "source_e_frequency": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Source E frequency",
+      "unit": "Hz"
+    },
+    "current_l1": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Current L1",
+      "unit": "Amps"
+    },
+    "current_l2": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Current L2",
+      "unit": "Amps"
+    },
+    "current_l3": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Current L3",
+      "unit": "Amps"
+    },
+    "closed_transition_in_phase_degree_delta": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Closed transition in phase degree delta",
+      "unit": "Degrees"
+    },
+    "closed_programmed_transition_override_mode": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Closed programmed transition override mode",
+      "unit": "0 = Auto Override, 1 = Non-Automatic"
+    },
+    "password_for_writing_register_40042": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Password for writing register 40042",
+      "unit": "0-32768"
+    },
+    "synchronous_voltage_phase_angle": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Synchronous voltage phase angle",
+      "unit": "0-10 degrees"
+    },
+    "synchronous_voltage_differential": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "Synchronous voltage differential",
+      "unit": "0%-5%"
+    },
+    "synchronous_frequency_differential": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "Synchronous frequency differential",
+      "unit": "0.0Hz.-0.3Hz."
+    },
+    "service_entrance_type": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "description": "Service entrance type",
+      "unit": "0 = None; 1 = Insulated Case Circuit Breaker, 2 = Molded Case Circuit Breaker, 3 = Contactor"
+    },
+    "phase_rotation_actual": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase rotation actual",
+      "unit": "0 = disabled; 1 = ABC; 2 = CBA"
+    },
+    "phase_rotation_expected": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase rotation expected",
+      "unit": "0 = disabled; 1 = ABC; 2 = CBA"
+    },
+    "nominal_normal_voltage": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal normal voltage",
+      "unit": "Volts AC"
+    },
+    "nominal_emergency_voltage": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal emergency voltage",
+      "unit": "Volts AC"
+    },
+    "nominal_normal_frequency": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal normal frequency",
+      "unit": "Hz"
+    },
+    "nominal_emergency_frequency": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal emergency frequency",
+      "unit": "Hz"
+    },
+    "normal_number_of_phases": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Normal number of phases",
+      "unit": "1 or 3"
+    },
+    "emergency_number_of_phases": {
+      "address": 51,
+      "type": "u16",
+      "access": "r",
+      "description": "Emergency number of phases",
+      "unit": "1 or 3"
+    },
+    "rated_amperage": {
+      "address": 52,
+      "type": "u16",
+      "access": "r",
+      "description": "Rated amperage",
+      "unit": "04000"
+    },
+    "password_for_writing_register_40057": {
+      "address": 57,
+      "type": "u16",
+      "access": "r",
+      "description": "Password for writing register 40057",
+      "unit": "0 32768"
+    },
+    "normal_engine_start_time_delay": {
+      "address": 58,
+      "type": "u16",
+      "access": "r",
+      "description": "Normal engine start time delay",
+      "unit": "0-10 sec"
+    },
+    "emergency_engine_start_time_delay": {
+      "address": 59,
+      "type": "u16",
+      "access": "r",
+      "description": "Emergency engine start time delay",
+      "unit": "010 sec"
+    },
+    "normal_ext_engine_start_time_delay": {
+      "address": 60,
+      "type": "u16",
+      "access": "r",
+      "description": "Normal ext. Engine start time delay",
+      "unit": "0-3600 sec"
+    },
+    "emergency_ext_engine_start_time_delay": {
+      "address": 61,
+      "type": "u16",
+      "access": "r",
+      "description": "Emergency ext. Engine start time delay",
+      "unit": "03600 sec"
+    },
+    "normal_engine_cooldown": {
+      "address": 62,
+      "type": "u16",
+      "access": "r",
+      "description": "Normal engine cooldown",
+      "unit": "0-3600 sec"
+    },
+    "emergency_engine_cooldown": {
+      "address": 63,
+      "type": "u16",
+      "access": "r",
+      "description": "Emergency engine cooldown",
+      "unit": "03600 sec"
+    },
+    "standby_to_preferred": {
+      "address": 64,
+      "type": "u16",
+      "access": "r",
+      "description": "Standby to preferred",
+      "unit": "0-3600 sec"
+    },
+    "preferred_to_standby": {
+      "address": 65,
+      "type": "u16",
+      "access": "r",
+      "description": "Preferred to standby",
+      "unit": "03600 sec"
+    },
+    "off_preferred_to_standby_prog_transition": {
+      "address": 66,
+      "type": "u16",
+      "access": "r",
+      "description": "Off (preferred to standby prog. Transition)",
+      "unit": "0-3600 sec"
+    },
+    "off_standby_to_preferred_prog_transition": {
+      "address": 67,
+      "type": "u16",
+      "access": "r",
+      "description": "Off (standby to preferred prog. Transition)",
+      "unit": "03600 sec"
+    },
+    "fail_to_acquire_preferred": {
+      "address": 68,
+      "type": "u16",
+      "access": "r",
+      "description": "Fail to acquire preferred",
+      "unit": "1 -3600 sec"
+    },
+    "fail_to_acquire_standby": {
+      "address": 69,
+      "type": "u16",
+      "access": "r",
+      "description": "Fail to acquire standby",
+      "unit": "13600 sec"
+    },
+    "fail_to_synchronize": {
+      "address": 70,
+      "type": "u16",
+      "access": "r",
+      "description": "Fail to synchronize",
+      "unit": "1 -3600 sec"
+    },
+    "fail_to_synch_enable": {
+      "address": 71,
+      "type": "u16",
+      "access": "r",
+      "description": "Fail to synch. Enable",
+      "unit": "0 = disabled; 1 = enabled"
+    },
+    "active_time_delay": {
+      "address": 74,
+      "type": "u16",
+      "access": "r",
+      "description": "Active time delay"
+    },
+    "active_time_delay_remaining": {
+      "address": 75,
+      "type": "u16",
+      "access": "r",
+      "description": "Active time delay remaining",
+      "unit": "Seconds"
+    }
+  }
+}

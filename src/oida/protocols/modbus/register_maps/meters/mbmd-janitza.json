@@ -1,0 +1,166 @@
+{
+  "vendor": "Janitza",
+  "model": "B-Series meters (B23)",
+  "description": "Imported from mbmd (janitza)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/janitza.go",
+  "registers": {
+    "voltage_l1": {
+      "address": 19000,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 line to neutral volts",
+      "function_code": 3
+    },
+    "voltage_l2": {
+      "address": 19002,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 line to neutral volts",
+      "function_code": 3
+    },
+    "voltage_l3": {
+      "address": 19004,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 line to neutral volts",
+      "function_code": 3
+    },
+    "current_l1": {
+      "address": 19012,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 current",
+      "function_code": 3
+    },
+    "current_l2": {
+      "address": 19014,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 current",
+      "function_code": 3
+    },
+    "current_l3": {
+      "address": 19016,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 current",
+      "function_code": 3
+    },
+    "power_l1": {
+      "address": 19020,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 active power",
+      "function_code": 3
+    },
+    "power_l2": {
+      "address": 19022,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 active power",
+      "function_code": 3
+    },
+    "power_l3": {
+      "address": 19024,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 active power",
+      "function_code": 3
+    },
+    "power": {
+      "address": 19026,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power",
+      "function_code": 3
+    },
+    "import_l1": {
+      "address": 19062,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 import kWh",
+      "function_code": 3
+    },
+    "import_l2": {
+      "address": 19064,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 import kWh",
+      "function_code": 3
+    },
+    "import_l3": {
+      "address": 19066,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 import kWh",
+      "function_code": 3
+    },
+    "import": {
+      "address": 19068,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 3
+    },
+    "export_l1": {
+      "address": 19070,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 export kWh",
+      "function_code": 3
+    },
+    "export_l2": {
+      "address": 19072,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 export kWh",
+      "function_code": 3
+    },
+    "export_l3": {
+      "address": 19074,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 export kWh",
+      "function_code": 3
+    },
+    "export": {
+      "address": 19076,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 3
+    },
+    "cosphi_l1": {
+      "address": 19044,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 power factor",
+      "function_code": 3
+    },
+    "cosphi_l2": {
+      "address": 19046,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 power factor",
+      "function_code": 3
+    },
+    "cosphi_l3": {
+      "address": 19048,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 power factor",
+      "function_code": 3
+    },
+    "frequency": {
+      "address": 19050,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency of supply voltages",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: Janitza B23 register 0x4A38 for VoltageL1 confirmed in mbmd janitza.go"
+}

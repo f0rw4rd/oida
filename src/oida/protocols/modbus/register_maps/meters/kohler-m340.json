@@ -1,0 +1,313 @@
+{
+  "vendor": "Kohler",
+  "model": "M 340",
+  "description": "Kohler M 340 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "system_time": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "System time"
+    },
+    "day_of_week": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Day of week"
+    },
+    "month": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Month"
+    },
+    "day": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Day"
+    },
+    "year": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Year"
+    },
+    "week_of_month": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Week of month"
+    },
+    "time_not_in_normal_since_reset": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Time not in normal since reset"
+    },
+    "time_not_in_normal": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Time not in normal"
+    },
+    "time_in_emergency": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Time in emergency"
+    },
+    "days_of_operation": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Days of operation"
+    },
+    "transfers": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Transfers"
+    },
+    "month_in_operation": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Month in operation"
+    },
+    "day_in_operation": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "Day in operation"
+    },
+    "year_in_operation": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Year in operation"
+    },
+    "voltage_a_b_normal": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A B normal"
+    },
+    "voltage_b_c_normal": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage B C normal"
+    },
+    "voltage_ca_normal": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage ca normal"
+    },
+    "freq_ac_normal": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq. Ac normal"
+    },
+    "voltage_a_b_emerg": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A B emerg"
+    },
+    "voltage_b_c_emerg": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage B C emerg"
+    },
+    "voltage_ca_emerg": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage ca emerg"
+    },
+    "freq_ac_emerg": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq. Ac emerg"
+    },
+    "exerciser_time_remaining": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "description": "Exerciser time remaining"
+    },
+    "month_of_last_exercise": {
+      "address": 30,
+      "type": "u16",
+      "access": "r",
+      "description": "Month of last exercise"
+    },
+    "day_of_last_exercise": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "Day of last exercise"
+    },
+    "year_of_last_exercise": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Year of last exercise"
+    },
+    "time_of_last_outage": {
+      "address": 33,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of last outage"
+    },
+    "month_of_last_outage": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Month of last outage"
+    },
+    "day_of_last_outage": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Day of last outage"
+    },
+    "year_of_last_outage": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Year of last outage"
+    },
+    "duration_of_last_outage": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Duration of last outage"
+    },
+    "history_event_1_code": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #1 code"
+    },
+    "history_event_2_code": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #2 code"
+    },
+    "history_event_2_month": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #2 month"
+    },
+    "history_event_2_day": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #2 day"
+    },
+    "history_event_2_year": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #2 year"
+    },
+    "history_event_3_code": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #3 code"
+    },
+    "history_event_3_month": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #3 month"
+    },
+    "history_event_3_day": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #3 day"
+    },
+    "history_event_3_year": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #3 year"
+    },
+    "history_event_4_code": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #4 code"
+    },
+    "history_event_4_month": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #4 month"
+    },
+    "history_event_4_day": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #4 day"
+    },
+    "history_event_4_year": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "History event #4 year"
+    },
+    "alert_code": {
+      "address": 51,
+      "type": "u16",
+      "access": "r",
+      "description": "Alert code"
+    },
+    "off_to_emergency_time_delay": {
+      "address": 77,
+      "type": "u16",
+      "access": "r",
+      "description": "Off to emergency time delay"
+    },
+    "off_to_normal_time_delay": {
+      "address": 78,
+      "type": "u16",
+      "access": "r",
+      "description": "Off to normal time delay"
+    },
+    "engine_start_time_delay": {
+      "address": 79,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine start time delay"
+    },
+    "normal_to_emerg_time_delay": {
+      "address": 80,
+      "type": "u16",
+      "access": "r",
+      "description": "Normal to emerg. Time delay"
+    },
+    "emerg_to_normal_time_delay": {
+      "address": 81,
+      "type": "u16",
+      "access": "r",
+      "description": "Emerg. To normal time delay"
+    }
+  }
+}

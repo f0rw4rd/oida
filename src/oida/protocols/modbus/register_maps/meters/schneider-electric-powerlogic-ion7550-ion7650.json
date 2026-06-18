@@ -1,0 +1,334 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "ION 7550 ION 7650",
+  "description": "Schneider Electric ION 7550 ION 7650 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "i_a_amp_freq_unbal": {
+      "address": 149,
+      "type": "u16",
+      "access": "r",
+      "description": "I a, Amp/freq/unbal"
+    },
+    "i_b_amp_freq_unbal": {
+      "address": 150,
+      "type": "u16",
+      "access": "r",
+      "description": "I b, Amp/freq/unbal"
+    },
+    "i_c_amp_freq_unbal": {
+      "address": 151,
+      "type": "u16",
+      "access": "r",
+      "description": "I c, Amp/freq/unbal"
+    },
+    "i_4_amp_freq_unbal": {
+      "address": 152,
+      "type": "u16",
+      "access": "r",
+      "description": "I 4, Amp/freq/unbal"
+    },
+    "i_5_amp_freq_unbal": {
+      "address": 153,
+      "type": "u16",
+      "access": "r",
+      "description": "I 5, Amp/freq/unbal"
+    },
+    "i_avg_amp_freq_unbal": {
+      "address": 154,
+      "type": "u16",
+      "access": "r",
+      "description": "I avg, Amp/freq/unbal"
+    },
+    "i_avg_mn_amp_freq_unbal": {
+      "address": 155,
+      "type": "u16",
+      "access": "r",
+      "description": "I avg mn, Amp/freq/unbal"
+    },
+    "i_avg_mx_amp_freq_unbal": {
+      "address": 156,
+      "type": "u16",
+      "access": "r",
+      "description": "I avg mx, Amp/freq/unbal"
+    },
+    "i_avg_mean_amp_freq_unbal": {
+      "address": 157,
+      "type": "u16",
+      "access": "r",
+      "description": "I avg mean, Amp/freq/unbal"
+    },
+    "freq_amp_freq_unbal": {
+      "address": 158,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq, Amp/freq/unbal"
+    },
+    "freq_mn_amp_freq_unbal": {
+      "address": 159,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq mn, Amp/freq/unbal"
+    },
+    "freq_mx_amp_freq_unbal": {
+      "address": 160,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq mx, Amp/freq/unbal"
+    },
+    "freq_mean_amp_freq_unbal": {
+      "address": 161,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq mean, Amp/freq/unbal"
+    },
+    "v_unbal_amp_freq_unbal": {
+      "address": 162,
+      "type": "u16",
+      "access": "r",
+      "description": "V unbal, Amp/freq/unbal",
+      "unit": "V"
+    },
+    "i_unbal_amp_freq_unbal": {
+      "address": 163,
+      "type": "u16",
+      "access": "r",
+      "description": "I unbal, Amp/freq/unbal"
+    },
+    "phase_rev_amp_freq_unbal": {
+      "address": 164,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Rev, Amp/freq/unbal"
+    },
+    "vln_a_volts": {
+      "address": 165,
+      "type": "u32",
+      "access": "r",
+      "description": "Vln a, Volts"
+    },
+    "vln_b_volts": {
+      "address": 167,
+      "type": "u32",
+      "access": "r",
+      "description": "Vln b, Volts"
+    },
+    "vln_c_volts": {
+      "address": 169,
+      "type": "u32",
+      "access": "r",
+      "description": "Vln c, Volts"
+    },
+    "vln_avg_volts": {
+      "address": 171,
+      "type": "u32",
+      "access": "r",
+      "description": "Vln avg, Volts"
+    },
+    "vln_avg_mx_volts": {
+      "address": 173,
+      "type": "u32",
+      "access": "r",
+      "description": "Vln avg mx, Volts"
+    },
+    "vll_ab_volts": {
+      "address": 177,
+      "type": "u32",
+      "access": "r",
+      "description": "Vll ab, Volts"
+    },
+    "vll_bc_volts": {
+      "address": 179,
+      "type": "u32",
+      "access": "r",
+      "description": "Vll bc, Volts"
+    },
+    "vll_ca_volts": {
+      "address": 181,
+      "type": "u32",
+      "access": "r",
+      "description": "Vll ca, Volts"
+    },
+    "vll_avg_volts": {
+      "address": 183,
+      "type": "u32",
+      "access": "r",
+      "description": "Vll avg, Volts"
+    },
+    "vll_avg_mx_volts": {
+      "address": 185,
+      "type": "u32",
+      "access": "r",
+      "description": "Vll avg mx, Volts"
+    },
+    "vll_avg_mean_volts": {
+      "address": 187,
+      "type": "u32",
+      "access": "r",
+      "description": "Vll avg mean, Volts"
+    },
+    "kw_a_kw_kvar_kva": {
+      "address": 197,
+      "type": "i32",
+      "access": "r",
+      "description": "kW a, kW/kVAr/kVA",
+      "unit": "kW"
+    },
+    "kw_b_kw_kvar_kva": {
+      "address": 199,
+      "type": "i32",
+      "access": "r",
+      "description": "kW b, kW/kVAr/kVA",
+      "unit": "kW"
+    },
+    "kw_c_kw_kvar_kva": {
+      "address": 201,
+      "type": "i32",
+      "access": "r",
+      "description": "kW c, kW/kVAr/kVA",
+      "unit": "kW"
+    },
+    "kw_tot_kw_kvar_kva": {
+      "address": 203,
+      "type": "i32",
+      "access": "r",
+      "description": "kW tot, kW/kVAr/kVA",
+      "unit": "kW"
+    },
+    "kw_tot_mx_kw_kvar_kva": {
+      "address": 205,
+      "type": "i32",
+      "access": "r",
+      "description": "kW tot mx, kW/kVAr/kVA",
+      "unit": "kW"
+    },
+    "kvar_a_kw_kvar_kva": {
+      "address": 207,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR a, kW/kVAr/kVA",
+      "unit": "kVAR"
+    },
+    "kvar_b_kw_kvar_kva": {
+      "address": 209,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR b, kW/kVAr/kVA",
+      "unit": "kVAR"
+    },
+    "kvar_c_kw_kvar_kva": {
+      "address": 211,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR c, kW/kVAr/kVA",
+      "unit": "kVAR"
+    },
+    "kvar_tot_kw_kvar_kva": {
+      "address": 213,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR tot, kW/kVAr/kVA",
+      "unit": "kVAR"
+    },
+    "kvar_tot_mx_kw_kvar_kva": {
+      "address": 215,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR tot mx, kW/kVAr/kVA",
+      "unit": "kVAR"
+    },
+    "kva_a_kw_kvar_kva": {
+      "address": 217,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA a, kW/kVAr/kVA",
+      "unit": "kVA"
+    },
+    "kva_b_kw_kvar_kva": {
+      "address": 219,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA b, kW/kVAr/kVA",
+      "unit": "kVA"
+    },
+    "kva_c_kw_kvar_kva": {
+      "address": 221,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA c, kW/kVAr/kVA",
+      "unit": "kVA"
+    },
+    "kva_tot_kw_kvar_kva": {
+      "address": 223,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA tot, kW/kVAr/kVA",
+      "unit": "kVA"
+    },
+    "kva_tot_mx_kw_kvar_kva": {
+      "address": 225,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA tot mx, kW/kVAr/kVA",
+      "unit": "kVA"
+    },
+    "kwh_del_kwh_kvarh": {
+      "address": 229,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh del, kWh/kVArh",
+      "unit": "kWh"
+    },
+    "kwh_rec_kwh_kvarh": {
+      "address": 231,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh rec, kWh/kVArh",
+      "unit": "kWh"
+    },
+    "kvarh_del_kwh_kvarh": {
+      "address": 233,
+      "type": "i32",
+      "access": "r",
+      "description": "kVARh del, kWh/kVArh",
+      "unit": "kVARh"
+    },
+    "kvarh_rec_kwh_kvarh": {
+      "address": 235,
+      "type": "i32",
+      "access": "r",
+      "description": "kVARh rec, kWh/kVArh",
+      "unit": "kVARh"
+    },
+    "kvah_del_rec_kwh_kvarh": {
+      "address": 237,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAh del+rec, kWh/kVArh",
+      "unit": "kVArh"
+    },
+    "pf_sign_a_pf_thd_kfactor": {
+      "address": 261,
+      "type": "i16",
+      "access": "r",
+      "description": "PF sign a, PF/THD/Kfactor"
+    },
+    "pf_sign_b_pf_thd_kfactor": {
+      "address": 262,
+      "type": "i16",
+      "access": "r",
+      "description": "PF sign b, PF/THD/Kfactor"
+    },
+    "pf_sign_c_pf_thd_kfactor": {
+      "address": 263,
+      "type": "i16",
+      "access": "r",
+      "description": "PF sign c, PF/THD/Kfactor"
+    }
+  }
+}

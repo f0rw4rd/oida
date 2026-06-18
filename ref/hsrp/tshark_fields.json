@@ -1,0 +1,505 @@
+{
+  "protocol": "hsrp",
+  "display_filter": "hsrp",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:50:26.194623+00:00",
+  "dissector_fields": {
+    "total": 42,
+    "by_type": {
+      "FT_BYTES": 1,
+      "FT_ETHER": 1,
+      "FT_IPv4": 3,
+      "FT_IPv6": 1,
+      "FT_NONE": 1,
+      "FT_STRING": 2,
+      "FT_UINT16": 8,
+      "FT_UINT32": 5,
+      "FT_UINT8": 20
+    },
+    "fields": [
+      {
+        "name": "hsrp.version",
+        "type": "FT_UINT8",
+        "description": "The version of the HSRP messages"
+      },
+      {
+        "name": "hsrp.opcode",
+        "type": "FT_UINT8",
+        "description": "The type of message contained in this packet"
+      },
+      {
+        "name": "hsrp.state",
+        "type": "FT_UINT8",
+        "description": "The current state of the router sending the message"
+      },
+      {
+        "name": "hsrp.hellotime",
+        "type": "FT_UINT8",
+        "description": "The approximate period between the Hello messages that the router sends"
+      },
+      {
+        "name": "hsrp.holdtime",
+        "type": "FT_UINT8",
+        "description": "Time that the current Hello message should be considered valid"
+      },
+      {
+        "name": "hsrp.priority",
+        "type": "FT_UINT8",
+        "description": "Used to elect the active and standby routers. Numerically higher priority wins vote"
+      },
+      {
+        "name": "hsrp.group",
+        "type": "FT_UINT8",
+        "description": "This field identifies the standby group"
+      },
+      {
+        "name": "hsrp.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hsrp.auth_data",
+        "type": "FT_STRING",
+        "description": "Contains a clear-text 8 character reused password"
+      },
+      {
+        "name": "hsrp.virt_ip",
+        "type": "FT_IPv4",
+        "description": "The virtual IP address used by this group"
+      },
+      {
+        "name": "hsrp.adv.tlvtype",
+        "type": "FT_UINT16",
+        "description": "Advertisement tlv type"
+      },
+      {
+        "name": "hsrp.adv.tlvlength",
+        "type": "FT_UINT16",
+        "description": "Advertisement tlv length"
+      },
+      {
+        "name": "hsrp.adv.state",
+        "type": "FT_UINT8",
+        "description": "Advertisement tlv length"
+      },
+      {
+        "name": "hsrp.adv.reserved1",
+        "type": "FT_UINT8",
+        "description": "Advertisement tlv length"
+      },
+      {
+        "name": "hsrp.adv.activegrp",
+        "type": "FT_UINT16",
+        "description": "Advertisement active group count"
+      },
+      {
+        "name": "hsrp.adv.passivegrp",
+        "type": "FT_UINT16",
+        "description": "Advertisement passive group count"
+      },
+      {
+        "name": "hsrp.adv.reserved2",
+        "type": "FT_UINT32",
+        "description": "Advertisement tlv length"
+      },
+      {
+        "name": "hsrp2.version",
+        "type": "FT_UINT8",
+        "description": "The version of the HSRP messages"
+      },
+      {
+        "name": "hsrp2.opcode",
+        "type": "FT_UINT8",
+        "description": "The type of message contained in this packet"
+      },
+      {
+        "name": "hsrp2.state",
+        "type": "FT_UINT8",
+        "description": "The current state of the router sending the message"
+      },
+      {
+        "name": "hsrp2.group_state_tlv",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hsrp2.interface_state_tlv",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hsrp2.text_auth_tlv",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hsrp2.md5_auth_tlv",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hsrp2.ipversion",
+        "type": "FT_UINT8",
+        "description": "The IP protocol version used in this hsrp message"
+      },
+      {
+        "name": "hsrp2.group",
+        "type": "FT_UINT16",
+        "description": "This field identifies the standby group"
+      },
+      {
+        "name": "hsrp2.identifier",
+        "type": "FT_ETHER",
+        "description": "BIA value of a sender interface"
+      },
+      {
+        "name": "hsrp2.hellotime",
+        "type": "FT_UINT32",
+        "description": "The approximate period between the Hello messages that the router sends"
+      },
+      {
+        "name": "hsrp2.holdtime",
+        "type": "FT_UINT32",
+        "description": "Time that the current Hello message should be considered valid"
+      },
+      {
+        "name": "hsrp2.priority",
+        "type": "FT_UINT32",
+        "description": "Used to elect the active and standby routers. Numerically higher priority wins vote"
+      },
+      {
+        "name": "hsrp2.auth_data",
+        "type": "FT_STRING",
+        "description": "Contains a clear-text 8 character reused password"
+      },
+      {
+        "name": "hsrp2.virt_ip",
+        "type": "FT_IPv4",
+        "description": "The virtual IP address used by this group"
+      },
+      {
+        "name": "hsrp2.virt_ip_v6",
+        "type": "FT_IPv6",
+        "description": "The virtual IPv6 address used by this group"
+      },
+      {
+        "name": "hsrp2.active_groups",
+        "type": "FT_UINT16",
+        "description": "Active group number which becomes the active router myself"
+      },
+      {
+        "name": "hsrp2.passive_groups",
+        "type": "FT_UINT16",
+        "description": "Standby group number which doesn't become the active router myself"
+      },
+      {
+        "name": "hsrp2.md5_algorithm",
+        "type": "FT_UINT8",
+        "description": "Hash Algorithm used by this group"
+      },
+      {
+        "name": "hsrp2.md5_padding",
+        "type": "FT_UINT8",
+        "description": "Must be zero"
+      },
+      {
+        "name": "hsrp2.md5_flags",
+        "type": "FT_UINT16",
+        "description": "Undefined"
+      },
+      {
+        "name": "hsrp.md5_ip_address",
+        "type": "FT_IPv4",
+        "description": "IP Address of the sender interface"
+      },
+      {
+        "name": "hsrp2.md5_key_id",
+        "type": "FT_UINT32",
+        "description": "This field contains Key chain ID"
+      },
+      {
+        "name": "hsrp2.md5_auth_data",
+        "type": "FT_BYTES",
+        "description": "MD5 digest string is contained."
+      },
+      {
+        "name": "hsrp.unknown_tlv",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 38,
+    "by_pcap": {
+      "filtered_hsrp.pcap": [
+        "hsrp_hsrp2_active_groups",
+        "hsrp_hsrp2_group",
+        "hsrp_hsrp2_group_state_tlv",
+        "hsrp_hsrp2_hellotime",
+        "hsrp_hsrp2_holdtime",
+        "hsrp_hsrp2_identifier",
+        "hsrp_hsrp2_interface_state_tlv",
+        "hsrp_hsrp2_ipversion",
+        "hsrp_hsrp2_md5_algorithm",
+        "hsrp_hsrp2_md5_auth_data",
+        "hsrp_hsrp2_md5_auth_tlv",
+        "hsrp_hsrp2_md5_flags",
+        "hsrp_hsrp2_md5_key_id",
+        "hsrp_hsrp2_md5_padding",
+        "hsrp_hsrp2_opcode",
+        "hsrp_hsrp2_passive_groups",
+        "hsrp_hsrp2_priority",
+        "hsrp_hsrp2_state",
+        "hsrp_hsrp2_version",
+        "hsrp_hsrp2_virt_ip",
+        "hsrp_hsrp_adv_activegrp",
+        "hsrp_hsrp_adv_passivegrp",
+        "hsrp_hsrp_adv_reserved1",
+        "hsrp_hsrp_adv_reserved2",
+        "hsrp_hsrp_adv_state",
+        "hsrp_hsrp_adv_tlvlength",
+        "hsrp_hsrp_adv_tlvtype",
+        "hsrp_hsrp_auth_data",
+        "hsrp_hsrp_group",
+        "hsrp_hsrp_hellotime",
+        "hsrp_hsrp_holdtime",
+        "hsrp_hsrp_md5_ip_address",
+        "hsrp_hsrp_opcode",
+        "hsrp_hsrp_priority",
+        "hsrp_hsrp_reserved",
+        "hsrp_hsrp_state",
+        "hsrp_hsrp_version",
+        "hsrp_hsrp_virt_ip"
+      ]
+    },
+    "union": [
+      "hsrp_hsrp2_active_groups",
+      "hsrp_hsrp2_group",
+      "hsrp_hsrp2_group_state_tlv",
+      "hsrp_hsrp2_hellotime",
+      "hsrp_hsrp2_holdtime",
+      "hsrp_hsrp2_identifier",
+      "hsrp_hsrp2_interface_state_tlv",
+      "hsrp_hsrp2_ipversion",
+      "hsrp_hsrp2_md5_algorithm",
+      "hsrp_hsrp2_md5_auth_data",
+      "hsrp_hsrp2_md5_auth_tlv",
+      "hsrp_hsrp2_md5_flags",
+      "hsrp_hsrp2_md5_key_id",
+      "hsrp_hsrp2_md5_padding",
+      "hsrp_hsrp2_opcode",
+      "hsrp_hsrp2_passive_groups",
+      "hsrp_hsrp2_priority",
+      "hsrp_hsrp2_state",
+      "hsrp_hsrp2_version",
+      "hsrp_hsrp2_virt_ip",
+      "hsrp_hsrp_adv_activegrp",
+      "hsrp_hsrp_adv_passivegrp",
+      "hsrp_hsrp_adv_reserved1",
+      "hsrp_hsrp_adv_reserved2",
+      "hsrp_hsrp_adv_state",
+      "hsrp_hsrp_adv_tlvlength",
+      "hsrp_hsrp_adv_tlvtype",
+      "hsrp_hsrp_auth_data",
+      "hsrp_hsrp_group",
+      "hsrp_hsrp_hellotime",
+      "hsrp_hsrp_holdtime",
+      "hsrp_hsrp_md5_ip_address",
+      "hsrp_hsrp_opcode",
+      "hsrp_hsrp_priority",
+      "hsrp_hsrp_reserved",
+      "hsrp_hsrp_state",
+      "hsrp_hsrp_version",
+      "hsrp_hsrp_virt_ip"
+    ]
+  },
+  "extracted_fields": {
+    "total": 35,
+    "fields": [
+      "active_groups",
+      "addr_type",
+      "auth_data",
+      "group",
+      "hellotime",
+      "holdtime",
+      "hsrp2_active_groups",
+      "hsrp2_auth_data",
+      "hsrp2_group",
+      "hsrp2_hellotime",
+      "hsrp2_holdtime",
+      "hsrp2_identifier",
+      "hsrp2_ipversion",
+      "hsrp2_md5_algorithm",
+      "hsrp2_md5_auth_data",
+      "hsrp2_md5_auth_tlv",
+      "hsrp2_md5_key_id",
+      "hsrp2_opcode",
+      "hsrp2_passive_groups",
+      "hsrp2_priority",
+      "hsrp2_state",
+      "hsrp2_version",
+      "hsrp2_virt_ip",
+      "hsrp_data",
+      "identifier",
+      "md5_algorithm",
+      "md5_auth_data",
+      "md5_key_id",
+      "opcode",
+      "passive_groups",
+      "priority",
+      "state",
+      "version",
+      "virt_ip",
+      "virtual_ip"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "38/42 (90%)",
+    "pcap_vs_extracted": "26/38 (68%)",
+    "t1_extracted": "12/11 (109%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "hsrp_hsrp_reserved",
+        "field": "hsrp.reserved",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hsrp_hsrp_adv_tlvtype",
+        "field": "hsrp.adv.tlvtype",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Advertisement tlv type"
+      },
+      {
+        "ek_name": "hsrp_hsrp_adv_tlvlength",
+        "field": "hsrp.adv.tlvlength",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Advertisement tlv length"
+      },
+      {
+        "ek_name": "hsrp_hsrp_adv_state",
+        "field": "hsrp.adv.state",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Advertisement tlv length"
+      },
+      {
+        "ek_name": "hsrp_hsrp_adv_reserved1",
+        "field": "hsrp.adv.reserved1",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Advertisement tlv length"
+      },
+      {
+        "ek_name": "hsrp_hsrp_adv_activegrp",
+        "field": "hsrp.adv.activegrp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Advertisement active group count"
+      },
+      {
+        "ek_name": "hsrp_hsrp_adv_passivegrp",
+        "field": "hsrp.adv.passivegrp",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Advertisement passive group count"
+      },
+      {
+        "ek_name": "hsrp_hsrp_adv_reserved2",
+        "field": "hsrp.adv.reserved2",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Advertisement tlv length"
+      },
+      {
+        "ek_name": "hsrp2_hsrp2_group_state_tlv",
+        "field": "hsrp2.group_state_tlv",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hsrp2_hsrp2_interface_state_tlv",
+        "field": "hsrp2.interface_state_tlv",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hsrp2_hsrp2_md5_padding",
+        "field": "hsrp2.md5_padding",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Must be zero"
+      },
+      {
+        "ek_name": "hsrp2_hsrp2_md5_flags",
+        "field": "hsrp2.md5_flags",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "Undefined"
+      },
+      {
+        "ek_name": "hsrp_hsrp_md5_ip_address",
+        "field": "hsrp.md5_ip_address",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_hsrp.pcap"
+        ],
+        "description": "IP Address of the sender interface"
+      }
+    ],
+    "summary": {
+      "t1_total": 13,
+      "t1_in_pcap": 11,
+      "t1_covered": 12,
+      "t2_total": 28,
+      "t2_in_pcap": 27,
+      "t2_covered": 14,
+      "t3_skipped": 1,
+      "t4_ignored": 0
+    }
+  }
+}

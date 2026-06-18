@@ -1,0 +1,437 @@
+{
+  "vendor": "ABB",
+  "model": "ACS880",
+  "description": "ABB ACS880 Industrial Drive Modbus TCP/RTU register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "ACS880 supports ABB Drives profile and PROFIdrive profiles. Control Word at register 51, Status Word at register 4. Speed reference +/-20000 = +/-100% of Par 46.01 scaling. Requires FENA-01/FMBT-21 module for Modbus TCP.",
+  "source": "https://www.manualslib.com/manual/1652328/Abb-Acs880.html, https://library.e.abb.com/public/4cc8232fa00c47e18685645c3b6b0f2d/LVD-EOTN142U-EN.pdf",
+  "security_notes": {
+    "protocol_clarification": "Stuxnet (2010) targeted VFDs via PROFIBUS, NOT Modbus. No documented real-world Modbus-based VFD attacks exist. ACS880 is widely deployed in critical infrastructure.",
+    "theoretical_attack_vectors": [
+      "Control word manipulation for motor start/stop/direction (register 51)",
+      "Speed reference modification (register 52, +/-20000 scaling)",
+      "Parameter tampering via holding registers",
+      "Torque limit bypass"
+    ],
+    "documented_modbus_attacks": "None. VFD attacks in Stuxnet used Profibus protocol.",
+    "defensive_use": "Monitor registers 51 (control word), 52 (speed ref), 4 (status) for unauthorized changes",
+    "mitre_techniques": [
+      "T0855",
+      "T0831",
+      "T0836"
+    ]
+  },
+  "control_commands": {
+    "run_forward": {
+      "register": 51,
+      "value": "0x047F",
+      "description": "Start motor forward (ABB Drives profile)"
+    },
+    "run_reverse": {
+      "register": 51,
+      "value": "0x0C7F",
+      "description": "Start motor reverse"
+    },
+    "stop_ramp": {
+      "register": 51,
+      "value": "0x047E",
+      "description": "Stop with ramp"
+    },
+    "stop_coast": {
+      "register": 51,
+      "value": "0x0476",
+      "description": "Coast stop"
+    },
+    "fault_reset": {
+      "register": 51,
+      "value": "0x04FF",
+      "description": "Reset fault"
+    },
+    "emergency_stop": {
+      "register": 51,
+      "value": "0x0472",
+      "description": "Emergency stop"
+    }
+  },
+  "holding_registers": {
+    "control_word": {
+      "address": 51,
+      "type": "u16",
+      "access": "rw",
+      "description": "Control Word (ABB Drives profile)",
+      "bits": {
+        "0": "Reserved",
+        "1": "OFF2/Coast (1=normal)",
+        "2": "OFF3/Quick stop (1=normal)",
+        "3": "ON/Run (1=run)",
+        "4": "Ramp out enable (1=enable)",
+        "5": "Ramp hold (1=normal)",
+        "6": "Ramp in enable (1=enable)",
+        "7": "Fault reset (rising edge)",
+        "8": "Reserved",
+        "9": "Reserved",
+        "10": "Control word enable (1=valid)",
+        "11": "Direction (1=reverse)"
+      }
+    },
+    "speed_reference": {
+      "address": 52,
+      "type": "s16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.005,
+      "description": "Speed Reference REF1 (+/-20000 = +/-100%)",
+      "min": -20000,
+      "max": 20000
+    },
+    "reference_2": {
+      "address": 53,
+      "type": "s16",
+      "access": "rw",
+      "description": "Reference 2 (REF2)"
+    },
+    "data_in_3": {
+      "address": 54,
+      "type": "s16",
+      "access": "rw",
+      "description": "Fieldbus Data IN 3"
+    },
+    "data_in_4": {
+      "address": 55,
+      "type": "s16",
+      "access": "rw",
+      "description": "Fieldbus Data IN 4"
+    },
+    "data_in_5": {
+      "address": 56,
+      "type": "s16",
+      "access": "rw",
+      "description": "Fieldbus Data IN 5"
+    },
+    "data_in_6": {
+      "address": 57,
+      "type": "s16",
+      "access": "rw",
+      "description": "Fieldbus Data IN 6"
+    },
+    "par_01_11_motor_nom_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "rw",
+      "unit": "V",
+      "description": "01.11 Motor Nominal Voltage"
+    },
+    "par_01_12_motor_nom_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "rw",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "01.12 Motor Nominal Current"
+    },
+    "par_01_13_motor_nom_frequency": {
+      "address": 113,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "01.13 Motor Nominal Frequency"
+    },
+    "par_01_14_motor_nom_speed": {
+      "address": 114,
+      "type": "u16",
+      "access": "rw",
+      "unit": "rpm",
+      "description": "01.14 Motor Nominal Speed"
+    },
+    "par_01_15_motor_nom_power": {
+      "address": 115,
+      "type": "u16",
+      "access": "rw",
+      "unit": "kW",
+      "scale": 0.1,
+      "description": "01.15 Motor Nominal Power"
+    },
+    "par_20_01_run_enable": {
+      "address": 2001,
+      "type": "u16",
+      "access": "rw",
+      "description": "20.01 Run Enable Source"
+    },
+    "par_20_02_ext1_run_start": {
+      "address": 2002,
+      "type": "u16",
+      "access": "rw",
+      "description": "20.02 EXT1 Run/Start Source"
+    },
+    "par_20_03_ext1_direction": {
+      "address": 2003,
+      "type": "u16",
+      "access": "rw",
+      "description": "20.03 EXT1 Direction Source"
+    },
+    "par_22_11_speed_ref1_source": {
+      "address": 2211,
+      "type": "u16",
+      "access": "rw",
+      "description": "22.11 Speed Reference 1 Source"
+    },
+    "par_28_11_min_speed": {
+      "address": 2811,
+      "type": "s16",
+      "access": "rw",
+      "unit": "rpm",
+      "description": "28.11 Minimum Speed"
+    },
+    "par_28_12_max_speed": {
+      "address": 2812,
+      "type": "s16",
+      "access": "rw",
+      "unit": "rpm",
+      "description": "28.12 Maximum Speed"
+    },
+    "par_28_21_accel_time_1": {
+      "address": 2821,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.1,
+      "description": "28.21 Acceleration Time 1"
+    },
+    "par_28_22_decel_time_1": {
+      "address": 2822,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.1,
+      "description": "28.22 Deceleration Time 1"
+    },
+    "par_30_11_motor_torque_limit": {
+      "address": 3011,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "30.11 Motoring Torque Limit"
+    },
+    "par_30_12_gen_torque_limit": {
+      "address": 3012,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "30.12 Generating Torque Limit"
+    },
+    "par_46_01_speed_scaling": {
+      "address": 4601,
+      "type": "u16",
+      "access": "rw",
+      "unit": "rpm",
+      "description": "46.01 Speed Scaling - reference for +/-20000"
+    },
+    "par_51_01_modbus_address": {
+      "address": 5101,
+      "type": "u16",
+      "access": "rw",
+      "description": "51.01 Modbus Node Address (1-247)"
+    },
+    "par_51_02_modbus_baud_rate": {
+      "address": 5102,
+      "type": "u16",
+      "access": "rw",
+      "description": "51.02 Modbus Baud Rate",
+      "enum": {
+        "0": "9600",
+        "1": "19200",
+        "2": "38400",
+        "3": "57600",
+        "4": "115200"
+      }
+    },
+    "par_51_03_modbus_parity": {
+      "address": 5103,
+      "type": "u16",
+      "access": "rw",
+      "description": "51.03 Modbus Parity",
+      "enum": {
+        "0": "None",
+        "1": "Odd",
+        "2": "Even"
+      }
+    }
+  },
+  "input_registers": {
+    "status_word": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Status Word (ABB Drives profile)",
+      "bits": {
+        "0": "Ready to switch on",
+        "1": "Ready to operate",
+        "2": "Operation enabled",
+        "3": "Fault",
+        "4": "OFF2 inactive",
+        "5": "OFF3 inactive",
+        "6": "Switching on inhibited",
+        "7": "Alarm active",
+        "8": "At setpoint",
+        "9": "Remote control",
+        "10": "Above limit",
+        "11": "Below limit",
+        "12": "Reserved",
+        "13": "Reserved",
+        "14": "Direction",
+        "15": "Reserved"
+      }
+    },
+    "actual_speed": {
+      "address": 5,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.005,
+      "description": "Actual Speed ACT1 (+/-20000 = +/-100%)"
+    },
+    "data_out_3": {
+      "address": 6,
+      "type": "s16",
+      "access": "r",
+      "description": "Fieldbus Data OUT 3"
+    },
+    "data_out_4": {
+      "address": 7,
+      "type": "s16",
+      "access": "r",
+      "description": "Fieldbus Data OUT 4"
+    },
+    "data_out_5": {
+      "address": 8,
+      "type": "s16",
+      "access": "r",
+      "description": "Fieldbus Data OUT 5"
+    },
+    "data_out_6": {
+      "address": 9,
+      "type": "s16",
+      "access": "r",
+      "description": "Fieldbus Data OUT 6"
+    },
+    "output_frequency": {
+      "address": 101,
+      "type": "s16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "01.01 Output Frequency"
+    },
+    "motor_speed": {
+      "address": 102,
+      "type": "s16",
+      "access": "r",
+      "unit": "rpm",
+      "description": "01.02 Motor Speed"
+    },
+    "motor_current": {
+      "address": 107,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "01.07 Motor Current"
+    },
+    "motor_torque": {
+      "address": 108,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "01.08 Motor Torque"
+    },
+    "motor_power": {
+      "address": 109,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "01.09 Motor Power"
+    },
+    "dc_voltage": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "description": "01.10 DC Voltage"
+    },
+    "drive_temperature": {
+      "address": 141,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "description": "01.41 Drive Temperature"
+    },
+    "active_fault_code": {
+      "address": 501,
+      "type": "u16",
+      "access": "r",
+      "description": "05.01 Active Fault Code"
+    },
+    "fault_word_1": {
+      "address": 511,
+      "type": "u16",
+      "access": "r",
+      "description": "05.11 Fault Word 1"
+    },
+    "alarm_word_1": {
+      "address": 531,
+      "type": "u16",
+      "access": "r",
+      "description": "05.31 Alarm Word 1"
+    }
+  },
+  "fault_codes": {
+    "2001": "Overcurrent",
+    "2002": "Motor overtemperature",
+    "2003": "Earth fault",
+    "2004": "Short circuit",
+    "2005": "DC bus overvoltage",
+    "2006": "DC bus undervoltage",
+    "2007": "Motor stall",
+    "2008": "Motor phase loss",
+    "2009": "Drive overtemperature",
+    "2010": "Supply phase loss",
+    "3001": "Control board failure",
+    "3002": "IGBT fault",
+    "3003": "Internal communication",
+    "3004": "Encoder fault",
+    "4001": "External fault 1",
+    "4002": "External fault 2",
+    "5001": "Modbus communication",
+    "5002": "Fieldbus timeout"
+  },
+  "extended_info": {
+    "scaling": {
+      "speed_reference": "+/-20000 = +/-100% of Par 46.01",
+      "percentage": "0.1% resolution",
+      "frequency": "0.1 Hz resolution"
+    },
+    "profiles": {
+      "abb_drives": "Default profile with Control Word at 51",
+      "profidrive": "IEC 61800-7 compatible"
+    },
+    "modules": {
+      "fena_01": "EtherNet/IP + Modbus TCP adapter",
+      "fmbt_21": "Modbus TCP adapter"
+    },
+    "models": {
+      "acs880_01": "Single drive, 0.55-2600 kW",
+      "acs880_04": "Cabinet-built drive",
+      "acs880_07": "Regenerative drive",
+      "acs880_17": "Crane drive"
+    }
+  },
+  "_source_verified": "Verified: Control word at register 51, speed reference at 52 confirmed against official ABB firmware manual"
+}

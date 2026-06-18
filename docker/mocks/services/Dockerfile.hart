@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+LABEL maintainer="MSF-ICS Team"
+LABEL description="HART-IP Mock Server for testing"
+
+WORKDIR /app
+
+# No external dependencies needed - pure Python implementation
+# using only stdlib (asyncio, struct, socket)
+
+COPY hart_server.py /app/
+
+# Expose HART-IP ports
+EXPOSE 5094/udp
+EXPOSE 5095/tcp
+
+# Run the server
+CMD ["python3", "-u", "hart_server.py"]

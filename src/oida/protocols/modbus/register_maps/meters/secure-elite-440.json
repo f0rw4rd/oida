@@ -1,0 +1,357 @@
+{
+  "vendor": "Secure Meters",
+  "model": "ELITE 440",
+  "description": "Secure Meters ELITE 440 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_to_neutral_voltage_v1": {
+      "address": 99,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage (V1)",
+      "unit": "Volt"
+    },
+    "phase_to_neutral_voltage_v2": {
+      "address": 101,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage (V2)",
+      "unit": "Volt"
+    },
+    "phase_to_neutral_voltage_v3": {
+      "address": 103,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage (V3)",
+      "unit": "Volt"
+    },
+    "average_voltage": {
+      "address": 105,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage",
+      "unit": "Volt"
+    },
+    "voltage_v12": {
+      "address": 107,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage (v12)",
+      "unit": "Volt"
+    },
+    "voltage_v23": {
+      "address": 109,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage (v23)",
+      "unit": "Volt"
+    },
+    "voltage_v31": {
+      "address": 111,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage (v31)",
+      "unit": "Volt"
+    },
+    "phase_line_current_l1": {
+      "address": 113,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase line current (L1)",
+      "unit": "Ampere"
+    },
+    "phase_line_current_l2": {
+      "address": 115,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase line current (L2)",
+      "unit": "Ampere"
+    },
+    "phase_line_current_l3": {
+      "address": 117,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase line current (L3)",
+      "unit": "Ampere"
+    },
+    "neutral_line_current_ln": {
+      "address": 119,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral line current (ln)",
+      "unit": "Ampere"
+    },
+    "phase_active_current_i1": {
+      "address": 121,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active current (I1)",
+      "unit": "Ampere"
+    },
+    "phase_active_current_i2": {
+      "address": 123,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active current (I2)",
+      "unit": "Ampere"
+    },
+    "phase_active_current_i3": {
+      "address": 125,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active current (I3)",
+      "unit": "Ampere"
+    },
+    "phase_reactive_current_r1": {
+      "address": 127,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive current (R1)",
+      "unit": "Ampere"
+    },
+    "phase_reactive_current_r2": {
+      "address": 129,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive current (R2)",
+      "unit": "Ampere"
+    },
+    "phase_reactive_current_r3": {
+      "address": 131,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive current (R3)",
+      "unit": "Ampere"
+    },
+    "power_factor_q1": {
+      "address": 133,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor (Q1)"
+    },
+    "power_factor_q2": {
+      "address": 135,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor (Q2)"
+    },
+    "power_factor_q3": {
+      "address": 137,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor (Q3)"
+    },
+    "avg_power_factor_qa": {
+      "address": 139,
+      "type": "f32",
+      "access": "r",
+      "description": "Avg power factor (qa)"
+    },
+    "phase_active_power_kt1": {
+      "address": 141,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (kt1)",
+      "unit": "kW"
+    },
+    "phase_active_power_kt2": {
+      "address": 143,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (kt2)",
+      "unit": "kW"
+    },
+    "phase_active_power_kt3": {
+      "address": 145,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (kt3)",
+      "unit": "kW"
+    },
+    "phase_active_power_kt": {
+      "address": 147,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (kt)",
+      "unit": "KW"
+    },
+    "phase_reactive_power_kv1": {
+      "address": 149,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (kv1)",
+      "unit": "kVAr"
+    },
+    "phase_reactive_power_kv2": {
+      "address": 151,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (kv2)",
+      "unit": "kVAr"
+    },
+    "phase_reactive_power_kv3": {
+      "address": 153,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (kv3)",
+      "unit": "kVAr"
+    },
+    "phase_reactive_power_kv": {
+      "address": 155,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (kv)",
+      "unit": "kVAr"
+    },
+    "phase_apparent_power_ka1": {
+      "address": 157,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power (ka1)",
+      "unit": "kVA"
+    },
+    "phase_apparent_power_ka2": {
+      "address": 159,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power (ka2)",
+      "unit": "kVA"
+    },
+    "phase_apparent_power_ka3": {
+      "address": 161,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power (ka3)",
+      "unit": "kVA"
+    },
+    "phase_apparent_power_ka": {
+      "address": 163,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power (ka)",
+      "unit": "kVA"
+    },
+    "ph_ang_a12": {
+      "address": 165,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph ang (a12)",
+      "unit": "Degree"
+    },
+    "ph_ang_a23": {
+      "address": 167,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph ang (a23)",
+      "unit": "Degree"
+    },
+    "ph_ang_a31": {
+      "address": 169,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph ang (a31)",
+      "unit": "Degree"
+    },
+    "frequency_hz_fq": {
+      "address": 171,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency hz (fq)",
+      "unit": "Hz"
+    },
+    "meter_real_time_rt": {
+      "address": 173,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter real time (rt)",
+      "unit": "Seconds"
+    },
+    "meter_temperature": {
+      "address": 175,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter temperature",
+      "unit": "Degree Centi"
+    },
+    "r_phase_voltage_total_harmonic_distortion": {
+      "address": 177,
+      "type": "f32",
+      "access": "r",
+      "description": "R phase voltage total harmonic distortion",
+      "unit": "%"
+    },
+    "y_phase_voltage_total_harmonic_distortion": {
+      "address": 179,
+      "type": "f32",
+      "access": "r",
+      "description": "Y phase voltage total harmonic distortion",
+      "unit": "%"
+    },
+    "b_phase_voltage_total_harmonic_distortion": {
+      "address": 181,
+      "type": "f32",
+      "access": "r",
+      "description": "B phase voltage total harmonic distortion",
+      "unit": "%"
+    },
+    "r_phase_current_total_harmonic_distortion": {
+      "address": 183,
+      "type": "f32",
+      "access": "r",
+      "description": "R phase current total harmonic distortion",
+      "unit": "%"
+    },
+    "y_phase_current_total_harmonic_distortion": {
+      "address": 185,
+      "type": "f32",
+      "access": "r",
+      "description": "Y phase current total harmonic distortion",
+      "unit": "%"
+    },
+    "b_phase_current_total_harmonic_distortion": {
+      "address": 187,
+      "type": "f32",
+      "access": "r",
+      "description": "B phase current total harmonic distortion",
+      "unit": "%"
+    },
+    "r_phase_power_total_harmonic_distortion": {
+      "address": 189,
+      "type": "f32",
+      "access": "r",
+      "description": "R phase power total harmonic distortion",
+      "unit": "%"
+    },
+    "y_phase_power_total_harmonic_distortion": {
+      "address": 191,
+      "type": "f32",
+      "access": "r",
+      "description": "Y phase power total harmonic distortion",
+      "unit": "%"
+    },
+    "b_phase_power_total_harmonic_distortion": {
+      "address": 193,
+      "type": "f32",
+      "access": "r",
+      "description": "B phase power total harmonic distortion",
+      "unit": "%"
+    },
+    "active_total_import": {
+      "address": 199,
+      "type": "f32",
+      "access": "r",
+      "description": "Active total import"
+    },
+    "active_total_export": {
+      "address": 201,
+      "type": "f32",
+      "access": "r",
+      "description": "Active total export"
+    }
+  }
+}

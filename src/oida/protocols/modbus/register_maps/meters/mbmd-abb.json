@@ -1,0 +1,196 @@
+{
+  "vendor": "ABB",
+  "model": "A/B-Series meters",
+  "description": "Imported from mbmd (abb)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/abb.go",
+  "registers": {
+    "voltage_l1": {
+      "address": 23296,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 1 line to neutral volts",
+      "function_code": 3,
+      "scale": 0.1
+    },
+    "voltage_l2": {
+      "address": 23298,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 2 line to neutral volts",
+      "function_code": 3,
+      "scale": 0.1
+    },
+    "voltage_l3": {
+      "address": 23300,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 3 line to neutral volts",
+      "function_code": 3,
+      "scale": 0.1
+    },
+    "current_l1": {
+      "address": 23308,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 1 current",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "current_l2": {
+      "address": 23310,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 2 current",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "current_l3": {
+      "address": 23312,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 3 current",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "power": {
+      "address": 23316,
+      "type": "s32",
+      "access": "ro",
+      "description": "Total system power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "power_l1": {
+      "address": 23318,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 1 active power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "power_l2": {
+      "address": 23320,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 2 active power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "power_l3": {
+      "address": 23322,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 3 active power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "import_l1": {
+      "address": 21600,
+      "type": "u64",
+      "access": "ro",
+      "description": "L1 import kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "import_l2": {
+      "address": 21604,
+      "type": "u64",
+      "access": "ro",
+      "description": "L2 import kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "import_l3": {
+      "address": 21608,
+      "type": "u64",
+      "access": "ro",
+      "description": "L3 import kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "import": {
+      "address": 20480,
+      "type": "u64",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "export_l1": {
+      "address": 21612,
+      "type": "u64",
+      "access": "ro",
+      "description": "L1 export kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "export_l2": {
+      "address": 21616,
+      "type": "u64",
+      "access": "ro",
+      "description": "L2 export kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "export_l3": {
+      "address": 21620,
+      "type": "u64",
+      "access": "ro",
+      "description": "L3 export kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "export": {
+      "address": 20484,
+      "type": "u64",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "cosphi": {
+      "address": 23354,
+      "type": "s16",
+      "access": "ro",
+      "description": "Total system power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "cosphi_l1": {
+      "address": 23355,
+      "type": "s16",
+      "access": "ro",
+      "description": "Phase 1 power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "cosphi_l2": {
+      "address": 23356,
+      "type": "s16",
+      "access": "ro",
+      "description": "Phase 2 power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "cosphi_l3": {
+      "address": 23357,
+      "type": "s16",
+      "access": "ro",
+      "description": "Phase 3 power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "frequency": {
+      "address": 23340,
+      "type": "u16",
+      "access": "ro",
+      "description": "Frequency of supply voltages",
+      "function_code": 3,
+      "scale": 0.01
+    }
+  },
+  "_source_verified": "Verified: ABB B21/B23/B24 meters confirmed; register 0x5B00 for VoltageL1 verified in mbmd abb.go"
+}

@@ -1,0 +1,57 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "Modicon M340",
+  "description": "Schneider Electric Modicon M340 PLC register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: Word order is LITTLE-ENDIAN for 32-bit values. For 0x12345678: %MW0=0x5678 (low), %MW1=0x1234 (high). No single system status register - status distributed across %S bits and %SW words. Addresses are configurable via %SW138-141.",
+  "source": "35012676 Processors Setup Manual, Unity Pro System Bits Reference, Open Modbus TCP Specification Appendix B.2.2",
+  "mei_expected": {
+    "vendor_name": "Schneider Electric",
+    "supported_objects": [
+      "0x00 Vendor Name",
+      "0x01 Product Code",
+      "0x02 Major/Minor Revision"
+    ]
+  },
+  "registers": {
+    "mw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW0 (at 40001)",
+      "notes": "iec_address=%MW0"
+    },
+    "mw1": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW1 (at 40002)",
+      "notes": "iec_address=%MW1"
+    },
+    "md0": {
+      "address": 0,
+      "type": "u32",
+      "access": "rw",
+      "description": "Memory double %MD0 (spans %MW0-%MW1, LITTLE-ENDIAN word order)",
+      "notes": "iec_address=%MD0"
+    }
+  },
+  "extended_info": {
+    "memory_mapping": {
+      "%MW0": "40001 (IEC 1-based addressing)",
+      "%MW_formula": "Modbus Address = 40001 + %MW number",
+      "%M0": "00001 (Coils)",
+      "%MD0": "%MW0 + %MW1 (occupies 2 consecutive words, little-endian)"
+    },
+    "configuration_requirements": [
+      "Unity Pro / EcoStruxure Machine Expert for programming",
+      "Use Topological addressing for direct %M/%MW access via Modbus",
+      "I/O Scanning supports only FC 3, 16, 23",
+      "Set %SW138-141 initial values to configure Modbus address offsets"
+    ]
+  },
+  "_source_verified": "Verified: Modicon M340 Modbus TCP confirmed; document 35012676 setup manual verified"
+}

@@ -1,0 +1,625 @@
+{
+  "vendor": "Deye",
+  "model": "Hybrid",
+  "description": "Imported from Home Assistant Solarman (deye_hybrid.yaml)",
+  "byte_order": "big",
+  "word_order": "little",
+  "source": "home_assistant_solarman/deye_hybrid.yaml",
+  "registers": {
+    "pv1_power": {
+      "address": 186,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Power",
+      "unit": "W"
+    },
+    "pv2_power": {
+      "address": 187,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Power",
+      "unit": "W"
+    },
+    "pv1_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 110,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv2_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "daily_production": {
+      "address": 108,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_production": {
+      "address": 96,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "microinverter_power": {
+      "address": 166,
+      "type": "u16",
+      "access": "ro",
+      "description": "Micro-inverter Power",
+      "unit": "W"
+    },
+    "total_battery_charge": {
+      "address": 72,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Battery Charge",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_battery_discharge": {
+      "address": 74,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Battery Discharge",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "daily_battery_charge": {
+      "address": 70,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Battery Charge",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "daily_battery_discharge": {
+      "address": 71,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Battery Discharge",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_status": {
+      "address": 189,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Status",
+      "enum": {
+        "0": "Charge",
+        "1": "Stand-by",
+        "2": "Discharge"
+      }
+    },
+    "battery_power": {
+      "address": 190,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Power",
+      "unit": "W"
+    },
+    "battery_voltage": {
+      "address": 183,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.01
+    },
+    "battery_soc": {
+      "address": 184,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery SOC",
+      "unit": "%"
+    },
+    "battery_current": {
+      "address": 191,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "battery_temperature": {
+      "address": 182,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Temperature",
+      "unit": "°C",
+      "scale": 0.1,
+      "offset": -1000
+    },
+    "total_grid_power": {
+      "address": 169,
+      "type": "i16",
+      "access": "ro",
+      "description": "Total Grid Power",
+      "unit": "W"
+    },
+    "grid_voltage_l1": {
+      "address": 150,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage L1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_current_l1": {
+      "address": 160,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Current L1",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "grid_voltage_l2": {
+      "address": 151,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage L2",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_current_l2": {
+      "address": 161,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Current L2",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "internal_ct_l1_power": {
+      "address": 167,
+      "type": "i16",
+      "access": "ro",
+      "description": "Internal CT L1 Power",
+      "unit": "W"
+    },
+    "internal_ct_l2_power": {
+      "address": 168,
+      "type": "i16",
+      "access": "ro",
+      "description": "Internal CT L2 Power",
+      "unit": "W"
+    },
+    "external_ct_l1_power": {
+      "address": 170,
+      "type": "i16",
+      "access": "ro",
+      "description": "External CT L1 Power",
+      "unit": "W"
+    },
+    "external_ct_l2_power": {
+      "address": 171,
+      "type": "i16",
+      "access": "ro",
+      "description": "External CT L2 Power",
+      "unit": "W"
+    },
+    "daily_energy_bought": {
+      "address": 76,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Energy Bought",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_energy_bought": {
+      "address": 78,
+      "type": "u16",
+      "access": "ro",
+      "description": "Total Energy Bought",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "daily_energy_sold": {
+      "address": 77,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Energy Sold",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_energy_sold": {
+      "address": 81,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Energy Sold",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_grid_production": {
+      "address": 63,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Grid Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_load_power": {
+      "address": 178,
+      "type": "u16",
+      "access": "ro",
+      "description": "Total Load Power",
+      "unit": "W"
+    },
+    "load_l1_power": {
+      "address": 176,
+      "type": "u16",
+      "access": "ro",
+      "description": "Load L1 Power",
+      "unit": "W"
+    },
+    "load_l2_power": {
+      "address": 177,
+      "type": "u16",
+      "access": "ro",
+      "description": "Load L2 Power",
+      "unit": "W"
+    },
+    "load_voltage": {
+      "address": 157,
+      "type": "u16",
+      "access": "ro",
+      "description": "Load Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "daily_load_consumption": {
+      "address": 84,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Load Consumption",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_load_consumption": {
+      "address": 85,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Load Consumption",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "smartload_enable_status": {
+      "address": 195,
+      "type": "u16",
+      "access": "ro",
+      "description": "SmartLoad Enable Status",
+      "enum": {
+        "0": "OFF",
+        "1": "ON"
+      }
+    },
+    "running_status": {
+      "address": 59,
+      "type": "u16",
+      "access": "ro",
+      "description": "Running Status",
+      "enum": {
+        "0": "Stand-by",
+        "1": "Self-checking",
+        "2": "Normal",
+        "3": "FAULT"
+      }
+    },
+    "total_power": {
+      "address": 175,
+      "type": "i16",
+      "access": "ro",
+      "description": "Total Power",
+      "unit": "W"
+    },
+    "grid_frequency": {
+      "address": 79,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "current_l1": {
+      "address": 164,
+      "type": "i16",
+      "access": "ro",
+      "description": "Current L1",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "current_l2": {
+      "address": 165,
+      "type": "i16",
+      "access": "ro",
+      "description": "Current L2",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "inverter_l1_power": {
+      "address": 173,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter L1 Power",
+      "unit": "W"
+    },
+    "inverter_l2_power": {
+      "address": 174,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter L2 Power",
+      "unit": "W"
+    },
+    "load_frequency": {
+      "address": 192,
+      "type": "u16",
+      "access": "ro",
+      "description": "Load Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "dc_temperature": {
+      "address": 90,
+      "type": "i16",
+      "access": "ro",
+      "description": "DC Temperature",
+      "unit": "°C",
+      "scale": 0.1,
+      "offset": -1000
+    },
+    "ac_temperature": {
+      "address": 91,
+      "type": "i16",
+      "access": "ro",
+      "description": "AC Temperature",
+      "unit": "°C",
+      "scale": 0.1,
+      "offset": -1000
+    },
+    "inverter_id": {
+      "address": 3,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter ID"
+    },
+    "communication_board_version_no": {
+      "address": 14,
+      "type": "u16",
+      "access": "ro",
+      "description": "Communication Board Version No."
+    },
+    "control_board_version_no": {
+      "address": 13,
+      "type": "u16",
+      "access": "ro",
+      "description": "Control Board Version No."
+    },
+    "gridconnected_status": {
+      "address": 194,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid-connected Status",
+      "enum": {
+        "0": "Off-Grid",
+        "1": "On-Grid"
+      }
+    },
+    "genconnected_status": {
+      "address": 166,
+      "type": "u16",
+      "access": "ro",
+      "description": "Gen-connected Status",
+      "enum": {
+        "0": "none",
+        "1": "On"
+      }
+    },
+    "gen_power": {
+      "address": 166,
+      "type": "u16",
+      "access": "ro",
+      "description": "Gen Power",
+      "unit": "W"
+    },
+    "work_mode": {
+      "address": 244,
+      "type": "u32",
+      "access": "ro",
+      "description": "Work Mode",
+      "enum": {
+        "0": "Selling First",
+        "1": "Zero-Export to Load&Solar Sell",
+        "2": "Zero-Export to Home&Solar Sell",
+        "3": "Zero-Export to Load",
+        "4": "Zero-Export to Home"
+      }
+    },
+    "alert": {
+      "address": 101,
+      "type": "str",
+      "access": "ro",
+      "description": "Alert"
+    },
+    "time_of_use_time_1": {
+      "address": 250,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of use Time 1"
+    },
+    "time_of_use_time_2": {
+      "address": 251,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of use Time 2"
+    },
+    "time_of_use_time_3": {
+      "address": 252,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Time 3"
+    },
+    "time_of_use_time_4": {
+      "address": 253,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Time 4"
+    },
+    "time_of_use_time_5": {
+      "address": 254,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Time 5"
+    },
+    "time_of_use_time_6": {
+      "address": 255,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Time 6"
+    },
+    "time_of_use_power_1": {
+      "address": 256,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Power 1"
+    },
+    "time_of_use_power_2": {
+      "address": 257,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Power 2"
+    },
+    "time_of_use_power_3": {
+      "address": 258,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Power 3"
+    },
+    "time_of_use_power_4": {
+      "address": 259,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Power 4"
+    },
+    "time_of_use_power_5": {
+      "address": 260,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Power 5"
+    },
+    "time_of_use_power_6": {
+      "address": 261,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Power 6"
+    },
+    "time_of_use_soc_1": {
+      "address": 268,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use SOC 1"
+    },
+    "time_of_use_soc_2": {
+      "address": 269,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use SOC 2"
+    },
+    "time_of_use_soc_3": {
+      "address": 270,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use SOC 3"
+    },
+    "time_of_use_soc_4": {
+      "address": 271,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use SOC 4"
+    },
+    "time_of_use_soc_5": {
+      "address": 272,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use SOC 5"
+    },
+    "time_of_use_soc_6": {
+      "address": 273,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use SOC 6"
+    },
+    "time_of_use_enable_1": {
+      "address": 274,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Enable 1"
+    },
+    "time_of_use_enable_2": {
+      "address": 275,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Enable 2"
+    },
+    "time_of_use_enable_3": {
+      "address": 276,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Enable 3"
+    },
+    "time_of_use_enable_4": {
+      "address": 277,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Enable 4"
+    },
+    "time_of_use_enable_5": {
+      "address": 278,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Enable 5"
+    },
+    "time_of_use_enable_6": {
+      "address": 279,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of Use Enable 6"
+    },
+    "time_of_use": {
+      "address": 248,
+      "type": "u16",
+      "access": "ro",
+      "description": "Time of use",
+      "enum": {
+        "0": "Disable",
+        "1": "Enable"
+      }
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed at StephanJoubert/home_assistant_solarman; Deye hybrid protocol documented"
+}

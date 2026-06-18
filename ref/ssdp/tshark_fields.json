@@ -1,0 +1,92 @@
+{
+  "protocol": "ssdp",
+  "display_filter": "ssdp",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:58:43.288985+00:00",
+  "dissector_fields": {
+    "total": 0,
+    "by_type": {},
+    "fields": []
+  },
+  "pcap_fields": {
+    "total": 13,
+    "by_pcap": {
+      "filtered_ssdp.pcap": [
+        "http_http_cache_control",
+        "http_http_host",
+        "http_http_location",
+        "http_http_notification",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "http_http_server",
+        "http_http_unknown_header",
+        "text"
+      ],
+      "ssdp.pcap": [
+        "http_http_host",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "text"
+      ]
+    },
+    "union": [
+      "http_http_cache_control",
+      "http_http_host",
+      "http_http_location",
+      "http_http_notification",
+      "http_http_request",
+      "http_http_request_full_uri",
+      "http_http_request_line",
+      "http_http_request_method",
+      "http_http_request_uri",
+      "http_http_request_version",
+      "http_http_server",
+      "http_http_unknown_header",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 14,
+    "fields": [
+      "http",
+      "http_cache_control",
+      "http_location",
+      "http_request_line",
+      "http_request_method",
+      "http_response_code",
+      "http_server",
+      "location",
+      "nt",
+      "nts",
+      "server",
+      "ssdp",
+      "st",
+      "usn"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "0/0",
+    "pcap_vs_extracted": "0/0",
+    "t1_extracted": "0/0",
+    "t1_gaps": [],
+    "t2_consider": [],
+    "summary": {
+      "t1_total": 0,
+      "t1_in_pcap": 0,
+      "t1_covered": 0,
+      "t2_total": 0,
+      "t2_in_pcap": 0,
+      "t2_covered": 0,
+      "t3_skipped": 0,
+      "t4_ignored": 0
+    }
+  }
+}

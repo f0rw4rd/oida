@@ -1,0 +1,313 @@
+{
+  "vendor": "Carlo Gavazzi",
+  "model": "WM 14 CPT A",
+  "description": "Carlo Gavazzi WM 14 CPT A power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v_l2_n": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "V L2 N"
+    },
+    "v_l3_n": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "V L3 N"
+    },
+    "v_l1_l2": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "V L1 L2"
+    },
+    "v_l2_l3": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "V L2 L3"
+    },
+    "v_l3_l1": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "V L3 L1"
+    },
+    "a_l1": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "A L1"
+    },
+    "a_l2": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "A L2"
+    },
+    "a_l3": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "A L3"
+    },
+    "a_n": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "A N"
+    },
+    "w_l1": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "W L1"
+    },
+    "w_l2": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "W L2"
+    },
+    "w_l3": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "W L3"
+    },
+    "va_l1": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Va L1"
+    },
+    "va_l2": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Va L2"
+    },
+    "va_l3": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Va L3"
+    },
+    "var_l1": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Var L1"
+    },
+    "var_l2": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Var L2"
+    },
+    "var_l3": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Var L3"
+    },
+    "phase_sequence": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase sequence"
+    },
+    "pf_l1": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L1"
+    },
+    "pf_l2": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L2"
+    },
+    "pf_l3": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L3"
+    },
+    "v_l_n": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "V L N"
+    },
+    "v_l_l": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "V L L"
+    },
+    "w": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "W"
+    },
+    "va": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Va"
+    },
+    "var": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Var"
+    },
+    "pf": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf"
+    },
+    "hz": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Hz"
+    },
+    "asymmetry_l_n": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Asymmetry L N"
+    },
+    "asymmetry_l_l": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Asymmetry L L"
+    },
+    "a_max": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "A max"
+    },
+    "a_max_dmd": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "A max dmd"
+    },
+    "a_l1_max": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "A L1 max"
+    },
+    "a_l2_max": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "A L2 max"
+    },
+    "a_l3_max": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "A L3 max"
+    },
+    "w_l1_max": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "W L1 max"
+    },
+    "w_l2_max": {
+      "address": 108,
+      "type": "f32",
+      "access": "r",
+      "description": "W L2 max"
+    },
+    "w_l3_max": {
+      "address": 110,
+      "type": "f32",
+      "access": "r",
+      "description": "W L3 max"
+    },
+    "w_max_dmd": {
+      "address": 112,
+      "type": "f32",
+      "access": "r",
+      "description": "W max dmd"
+    },
+    "va_max_dmd": {
+      "address": 114,
+      "type": "f32",
+      "access": "r",
+      "description": "Va max dmd"
+    },
+    "v_l1_max": {
+      "address": 134,
+      "type": "f32",
+      "access": "r",
+      "description": "V L1 max"
+    },
+    "v_l2_max": {
+      "address": 136,
+      "type": "f32",
+      "access": "r",
+      "description": "V L2 max"
+    },
+    "v_l3_max": {
+      "address": 138,
+      "type": "f32",
+      "access": "r",
+      "description": "V L3 max"
+    },
+    "pf_l1_min": {
+      "address": 116,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L1 min"
+    },
+    "pf_l2_min": {
+      "address": 118,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L2 min"
+    },
+    "pf_l3_min": {
+      "address": 120,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L3 min"
+    },
+    "a_l1_min": {
+      "address": 122,
+      "type": "f32",
+      "access": "r",
+      "description": "A L1 min"
+    },
+    "a_l2_min": {
+      "address": 124,
+      "type": "f32",
+      "access": "r",
+      "description": "A L2 min"
+    },
+    "a_l3_min": {
+      "address": 126,
+      "type": "f32",
+      "access": "r",
+      "description": "A L3 min"
+    }
+  }
+}

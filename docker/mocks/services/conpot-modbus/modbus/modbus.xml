@@ -1,0 +1,83 @@
+<modbus enabled="True" host="0.0.0.0" port="5020">
+    <device_info>
+        <VendorName>Schneider Electric</VendorName>
+        <ProductCode>BMXP342020</ProductCode>
+        <MajorMinorRevision>3.40</MajorMinorRevision>
+    </device_info>
+    <mode>tcp</mode>
+    <delay>0</delay>
+    <slaves>
+        <slave id="0">
+            <blocks>
+                <block name="coilBlock">
+                    <type>COILS</type>
+                    <starting_address>1</starting_address>
+                    <size>128</size>
+                    <content>coilBlock</content>
+                </block>
+                <block name="discreteBlock">
+                    <type>DISCRETE_INPUTS</type>
+                    <starting_address>10001</starting_address>
+                    <size>64</size>
+                    <content>discreteBlock</content>
+                </block>
+                <block name="inputRegBlock">
+                    <type>ANALOG_INPUTS</type>
+                    <starting_address>30001</starting_address>
+                    <size>32</size>
+                    <content>inputRegBlock</content>
+                </block>
+                <block name="holdingRegBlock">
+                    <type>HOLDING_REGISTERS</type>
+                    <starting_address>40001</starting_address>
+                    <size>100</size>
+                    <content>holdingRegBlock</content>
+                </block>
+            </blocks>
+        </slave>
+        <slave id="1">
+            <blocks>
+                <block name="coilBlock">
+                    <type>COILS</type>
+                    <starting_address>1</starting_address>
+                    <size>128</size>
+                    <content>coilBlock</content>
+                </block>
+                <block name="discreteBlock">
+                    <type>DISCRETE_INPUTS</type>
+                    <starting_address>10001</starting_address>
+                    <size>64</size>
+                    <content>discreteBlock</content>
+                </block>
+                <block name="inputRegBlock">
+                    <type>ANALOG_INPUTS</type>
+                    <starting_address>30001</starting_address>
+                    <size>32</size>
+                    <content>inputRegBlock</content>
+                </block>
+                <block name="holdingRegBlock">
+                    <type>HOLDING_REGISTERS</type>
+                    <starting_address>40001</starting_address>
+                    <size>100</size>
+                    <content>holdingRegBlock</content>
+                </block>
+            </blocks>
+        </slave>
+        <slave id="255">
+            <blocks>
+                <block name="coilBlock">
+                    <type>COILS</type>
+                    <starting_address>1</starting_address>
+                    <size>128</size>
+                    <content>coilBlock</content>
+                </block>
+                <block name="discreteBlock">
+                    <type>DISCRETE_INPUTS</type>
+                    <starting_address>10001</starting_address>
+                    <size>64</size>
+                    <content>discreteBlock</content>
+                </block>
+            </blocks>
+        </slave>
+    </slaves>
+</modbus>

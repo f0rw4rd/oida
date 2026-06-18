@@ -1,0 +1,313 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "PM 1000 PM 1200",
+  "description": "Schneider Electric PM 1000 PM 1200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "current_average_a": {
+      "address": 3913,
+      "type": "f32",
+      "access": "r",
+      "description": "Current average (A)"
+    },
+    "current_phase_1_a1": {
+      "address": 3929,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 1 (A1)"
+    },
+    "current_phase_2_a2": {
+      "address": 3943,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 2 (A2)"
+    },
+    "current_phase_3_a3": {
+      "address": 3957,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 3 (A3)"
+    },
+    "line_to_line_average_voltage_vll": {
+      "address": 3909,
+      "type": "f32",
+      "access": "r",
+      "description": "Line to line average voltage (VLL)"
+    },
+    "line_to_neutral_voltage_vln": {
+      "address": 3911,
+      "type": "f32",
+      "access": "r",
+      "description": "Line to neutral voltage (VLN)"
+    },
+    "voltage_phase_1_to_phase_2_v12": {
+      "address": 3925,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage phase 1 to phase 2 (V12)"
+    },
+    "voltage_phase_2_to_phase_3_v23": {
+      "address": 3939,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage phase 2 to phase 3 (V23)"
+    },
+    "voltage_phase_3_to_phase_1_v31": {
+      "address": 3953,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage phase 3 to phase 1 (V31)"
+    },
+    "voltage_phase_1_to_neutral_v1": {
+      "address": 3927,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage phase 1 to neutral (V1)"
+    },
+    "voltage_phase_2_to_neutral_v2": {
+      "address": 3941,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage phase 2 to neutral (V2)"
+    },
+    "voltage_phase_3_to_neutral_v3": {
+      "address": 3955,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage phase 3 to neutral (V3)"
+    },
+    "active_power_total_w": {
+      "address": 3903,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, total (W)"
+    },
+    "active_power_phase_1_w1": {
+      "address": 3919,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, phase 1 (W1)"
+    },
+    "active_power_phase_2_w2": {
+      "address": 3933,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, phase 2 (W2)"
+    },
+    "active_power_phase_3_w3": {
+      "address": 3947,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, phase 3 (W3)"
+    },
+    "reactive_power_total_var": {
+      "address": 3905,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, total (VAR)"
+    },
+    "reactive_power_phase_1_var1": {
+      "address": 3921,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase 1 (VAR1)"
+    },
+    "reactive_power_phase_2_var2": {
+      "address": 3935,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase 2 (VAR2)"
+    },
+    "reactive_power_phase3_var3": {
+      "address": 3949,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase3 (VAR3)"
+    },
+    "apparent_power_total_va": {
+      "address": 3901,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, total (VA)"
+    },
+    "apparent_power_phase_1_va1": {
+      "address": 3917,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase 1 (VA1)"
+    },
+    "apparent_power_phase_2_va2": {
+      "address": 3931,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase 2 (VA2)"
+    },
+    "apparent_power_phase_3_va3": {
+      "address": 3945,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase 3 (VA3)"
+    },
+    "power_factor_average_pf": {
+      "address": 3907,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor average (PF)"
+    },
+    "power_factor_phase_1_pf1": {
+      "address": 3923,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase 1 (PF1)"
+    },
+    "power_factor_phase_2_pf2": {
+      "address": 3937,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase 2 (PF2)"
+    },
+    "power_factor_phase_3_pf3": {
+      "address": 3951,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase 3 (PF3)"
+    },
+    "frequency_hz_f": {
+      "address": 3915,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency, hz (F)"
+    },
+    "voltage_thd_phase_1_v1": {
+      "address": 3861,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage THD, phase 1 (%V1)"
+    },
+    "voltage_thd_phase_2_v2": {
+      "address": 3863,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage THD, phase 2 (%V2)"
+    },
+    "voltage_thd_phase_3_v3": {
+      "address": 3865,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage THD, phase 3 (%V3)"
+    },
+    "current_thd_phase_1_a1": {
+      "address": 3867,
+      "type": "f32",
+      "access": "r",
+      "description": "Current THD, phase 1 (%A1)"
+    },
+    "current_thd_phase_2_a2": {
+      "address": 3869,
+      "type": "f32",
+      "access": "r",
+      "description": "Current THD, phase 2 (%A2)"
+    },
+    "current_thd_phase_3_a3": {
+      "address": 3871,
+      "type": "f32",
+      "access": "r",
+      "description": "Current THD, phase 3 (%A3)"
+    },
+    "forward_apparent_energy_fwdvah": {
+      "address": 3959,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward apparent energy (FwdVAh)"
+    },
+    "forward_active_energy_fwdwh": {
+      "address": 3961,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward active energy (FwdWh)"
+    },
+    "forward_reactive_inductive_energy_fwdvarh": {
+      "address": 3963,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward reactive inductive energy (FwdVARh)"
+    },
+    "forward_reactive_capacitive_energy_fwdvarh": {
+      "address": 3965,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward reactive capacitive energy (FwdVARh)"
+    },
+    "reverse_apparent_energy_revvah": {
+      "address": 3967,
+      "type": "f32",
+      "access": "r",
+      "description": "Reverse apparent energy (RevVAh)"
+    },
+    "reverse_active_energy_revwh": {
+      "address": 3969,
+      "type": "f32",
+      "access": "r",
+      "description": "Reverse active energy (RevWh)"
+    },
+    "reverse_reactive_inductive_energy_revvarh": {
+      "address": 3971,
+      "type": "f32",
+      "access": "r",
+      "description": "Reverse reactive inductive energy (RevVARh)"
+    },
+    "reverse_reactive_capacitive_energy_revvarh": {
+      "address": 3973,
+      "type": "f32",
+      "access": "r",
+      "description": "Reverse reactive capacitive energy (RevVARh)"
+    },
+    "on_hours_on_hrs": {
+      "address": 3993,
+      "type": "i32",
+      "access": "r",
+      "description": "On hours (On hrs)"
+    },
+    "forward_run_seconds_fwdrun_secs": {
+      "address": 3995,
+      "type": "i32",
+      "access": "r",
+      "description": "Forward run seconds (FwdRun secs)"
+    },
+    "reverse_run_seconds_revrun_secs": {
+      "address": 3997,
+      "type": "i32",
+      "access": "r",
+      "description": "Reverse run seconds (RevRun secs)"
+    },
+    "number_of_power_interruptions_intr": {
+      "address": 3999,
+      "type": "i32",
+      "access": "r",
+      "description": "Number of power interruptions (Intr)"
+    },
+    "present_demand_present_demand": {
+      "address": 3975,
+      "type": "f32",
+      "access": "r",
+      "description": "Present demand (Present demand)"
+    },
+    "rising_demand_rising_demand": {
+      "address": 3977,
+      "type": "f32",
+      "access": "r",
+      "description": "Rising demand (Rising demand)"
+    },
+    "maximum_demand_max_md": {
+      "address": 3979,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum demand (Max MD)"
+    }
+  }
+}

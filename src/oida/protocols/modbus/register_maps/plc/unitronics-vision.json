@@ -1,0 +1,140 @@
+{
+  "vendor": "Unitronics",
+  "model": "Vision/Samba",
+  "description": "Unitronics Vision/Samba PLC Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: Uses pointer offset system for Modbus addressing. 32-bit operands (5100+) occupy TWO consecutive registers - vector length must be doubled. ODD addresses in 32-bit ranges (5101, 5103, etc.) return Error #2.",
+  "source": "VisiLogic Help Documentation (MODBUS Help Rev 2/12/04)",
+  "registers": {
+    "mi0": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory Integer 0 (40001 + 0 + 0)",
+      "notes": "operand=MI 0"
+    },
+    "si0": {
+      "address": 4001,
+      "type": "u16",
+      "access": "rw",
+      "description": "System Integer 0 (40001 + 4000 + 0)",
+      "notes": "operand=SI 0"
+    },
+    "ml0": {
+      "address": 5101,
+      "type": "i32",
+      "access": "rw",
+      "description": "Memory Long 0 (40001 + 5100 + 0, occupies 2 registers)",
+      "notes": "operand=ML 0"
+    },
+    "mf0": {
+      "address": 7701,
+      "type": "f32",
+      "access": "rw",
+      "description": "Memory Float 0 (40001 + 7700 + 0, occupies 2 registers)",
+      "notes": "operand=MF 0"
+    },
+    "mf12_example": {
+      "address": 7713,
+      "type": "f32",
+      "access": "rw",
+      "description": "Memory Float 12 (40001 + 7700 + 12 = 47713)",
+      "notes": "operand=MF 12"
+    }
+  },
+  "coils": {
+    "mb0": {
+      "address": 1,
+      "type": "coil",
+      "access": "rw",
+      "description": "Memory Bit 0",
+      "notes": "operand=MB 0"
+    },
+    "input0": {
+      "address": 4001,
+      "type": "coil",
+      "access": "r",
+      "description": "Input 0 (READ-ONLY)",
+      "notes": "operand=I 0"
+    },
+    "output0": {
+      "address": 5001,
+      "type": "coil",
+      "access": "rw",
+      "description": "Output 0",
+      "notes": "operand=O 0"
+    }
+  },
+  "extended_info": {
+    "default_tcp": {
+      "socket": 2,
+      "port": 502
+    },
+    "address_formula": "SCADA Address = 40001 + Pointer Offset + Operand Number",
+    "register_offsets_fc03_fc16": {
+      "MI": {
+        "offset": 0,
+        "range": "0-4095",
+        "size": "16-bit",
+        "description": "Memory Integers"
+      },
+      "SI": {
+        "offset": 4000,
+        "range": "0-511",
+        "size": "16-bit",
+        "description": "System Integers"
+      },
+      "ML": {
+        "offset": 5100,
+        "range": "0-255",
+        "size": "32-bit",
+        "description": "Memory Longs (2 registers each)"
+      },
+      "SL": {
+        "offset": 6100,
+        "range": "0-55",
+        "size": "32-bit",
+        "description": "System Longs (2 registers each)"
+      },
+      "MF": {
+        "offset": 7700,
+        "range": "0-255",
+        "size": "32-bit",
+        "description": "Memory Floats (2 registers each)"
+      }
+    },
+    "coil_offsets_fc01_fc15": {
+      "MB_0_2999": {
+        "offset": 0,
+        "range": "0-2999",
+        "access": "rw",
+        "description": "Memory Bits 0-2999"
+      },
+      "I": {
+        "offset": 4000,
+        "access": "r",
+        "description": "Inputs (READ-ONLY)"
+      },
+      "O": {
+        "offset": 5000,
+        "access": "rw",
+        "description": "Outputs"
+      },
+      "MB_3000_4095": {
+        "offset": 8000,
+        "range": "3000-4095",
+        "access": "rw",
+        "description": "Memory Bits 3000-4095"
+      }
+    },
+    "critical_warnings": [
+      "32-bit addresses (5100+) occupy 2 consecutive registers",
+      "Odd addresses in 32-bit ranges (5101, 5103, etc.) return Error #2",
+      "Vector length must be doubled for 32-bit operands"
+    ]
+  },
+  "_source_verified": "Verified: MI/SI/ML Modbus pointer offsets confirmed via Unitronics Support Forum"
+}

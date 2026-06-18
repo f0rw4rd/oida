@@ -1,0 +1,363 @@
+{
+  "vendor": "Eaton",
+  "model": "IQ 250 IQ 260 POWER METER",
+  "description": "Eaton IQ 250 IQ 260 POWER METER power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "amps_a_average": {
+      "address": 1999,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps a, average",
+      "unit": "amps"
+    },
+    "amps_b_average": {
+      "address": 2001,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps b, average",
+      "unit": "amps"
+    },
+    "amps_c_average": {
+      "address": 2003,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps c, average",
+      "unit": "amps"
+    },
+    "positive_watts_3_ph_average": {
+      "address": 2005,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive watts, 3 ph, average",
+      "unit": "watts"
+    },
+    "positive_vars_3_ph_average": {
+      "address": 2007,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive vars, 3 ph, average",
+      "unit": "VARs"
+    },
+    "negative_watts_3_ph_average": {
+      "address": 2009,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative watts, 3 ph, average",
+      "unit": "watts"
+    },
+    "negative_vars_3_ph_average": {
+      "address": 2011,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative vars, 3 ph, average",
+      "unit": "VARs"
+    },
+    "vas_3_ph_average": {
+      "address": 2013,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, 3 ph, average",
+      "unit": "VAs"
+    },
+    "positive_pf_3_ph_average": {
+      "address": 2015,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive pf, 3 ph, average",
+      "unit": "none"
+    },
+    "negative_pf_3_pf_average": {
+      "address": 2017,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative pf, 3 pf, average",
+      "unit": "none"
+    },
+    "neutral_current_average": {
+      "address": 2019,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current, average",
+      "unit": "amps"
+    },
+    "positive_watts_phase_a_average": {
+      "address": 2021,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive watts, phase a, average",
+      "unit": "watts"
+    },
+    "positive_watts_phase_b_average": {
+      "address": 2023,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive watts, phase b, average",
+      "unit": "watts"
+    },
+    "positive_watts_phase_c_average": {
+      "address": 2025,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive watts, phase c, average",
+      "unit": "watts"
+    },
+    "positive_vars_phase_a_average": {
+      "address": 2027,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive vars, phase a, average",
+      "unit": "VARs"
+    },
+    "positive_vars_phase_b_average": {
+      "address": 2029,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive vars, phase b, average",
+      "unit": "VARs"
+    },
+    "positive_vars_phase_c_average": {
+      "address": 2031,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive vars, phase c, average",
+      "unit": "VARs"
+    },
+    "negative_watts_phase_a_average": {
+      "address": 2033,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative watts, phase a, average",
+      "unit": "watts"
+    },
+    "negative_watts_phase_b_average": {
+      "address": 2035,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative watts, phase b, average",
+      "unit": "watts"
+    },
+    "negative_watts_phase_c_average": {
+      "address": 2037,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative watts, phase c, average",
+      "unit": "watts"
+    },
+    "negative_vars_phase_a_average": {
+      "address": 2039,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative vars, phase a, average",
+      "unit": "VARs"
+    },
+    "negative_vars_phase_b_average": {
+      "address": 2041,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative vars, phase b, average",
+      "unit": "VARs"
+    },
+    "negative_vars_phase_c_average": {
+      "address": 2043,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative vars, phase c, average",
+      "unit": "VARs"
+    },
+    "vas_phase_a_average": {
+      "address": 2045,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, phase a, average",
+      "unit": "VAs"
+    },
+    "vas_phase_b_average": {
+      "address": 2047,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, phase b, average",
+      "unit": "VAs"
+    },
+    "vas_phase_c_average": {
+      "address": 2049,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, phase c, average",
+      "unit": "VAs"
+    },
+    "positive_pf_phase_a_average": {
+      "address": 2051,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive pf, phase a, average",
+      "unit": "none"
+    },
+    "positive_pf_phase_b_average": {
+      "address": 2053,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive pf, phase b, average",
+      "unit": "none"
+    },
+    "positive_pf_phase_c_average": {
+      "address": 2055,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive pf, phase c, average",
+      "unit": "none"
+    },
+    "negative_pf_phase_a_average": {
+      "address": 2057,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative pf, phase a, average",
+      "unit": "none"
+    },
+    "negative_pf_phase_b_average": {
+      "address": 2059,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative pf, phase b, average",
+      "unit": "none"
+    },
+    "negative_pf_phase_c_average": {
+      "address": 2061,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative pf, phase c, average",
+      "unit": "none"
+    },
+    "watts_3_ph_total": {
+      "address": 2999,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, 3 ph total",
+      "unit": "watts"
+    },
+    "vars_3_ph_total": {
+      "address": 3001,
+      "type": "f32",
+      "access": "r",
+      "description": "Vars, 3 ph total",
+      "unit": "VARs"
+    },
+    "vas_3_ph_total": {
+      "address": 3003,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, 3 ph total",
+      "unit": "VAs"
+    },
+    "power_factor_3_ph_total": {
+      "address": 3005,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, 3 ph total",
+      "unit": "none"
+    },
+    "watts_phase_a": {
+      "address": 3007,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, phase a",
+      "unit": "watts"
+    },
+    "watts_phase_b": {
+      "address": 3009,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, phase b",
+      "unit": "watts"
+    },
+    "watts_phase_c": {
+      "address": 3011,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, phase c",
+      "unit": "watts"
+    },
+    "vars_phase_a": {
+      "address": 3013,
+      "type": "f32",
+      "access": "r",
+      "description": "Vars, phase a",
+      "unit": "VARs"
+    },
+    "vars_phase_c": {
+      "address": 3017,
+      "type": "f32",
+      "access": "r",
+      "description": "Vars, phase c",
+      "unit": "VARs"
+    },
+    "vas_phase_a": {
+      "address": 3019,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, phase a",
+      "unit": "VAs"
+    },
+    "vas_phase_b": {
+      "address": 3021,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, phase b",
+      "unit": "VAs"
+    },
+    "vas_phase_c": {
+      "address": 3023,
+      "type": "f32",
+      "access": "r",
+      "description": "Vas, phase c",
+      "unit": "VAs"
+    },
+    "power_factor_phase_a": {
+      "address": 3025,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase a",
+      "unit": "none"
+    },
+    "power_factor_phase_b": {
+      "address": 3027,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase b",
+      "unit": "none"
+    },
+    "power_factor_phase_c": {
+      "address": 3029,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase c",
+      "unit": "none"
+    },
+    "w_hours_received": {
+      "address": 3031,
+      "type": "i32",
+      "access": "r",
+      "description": "W hours, received",
+      "unit": "Wh per energy format"
+    },
+    "w_hours_delivered": {
+      "address": 3033,
+      "type": "i32",
+      "access": "r",
+      "description": "W hours, delivered",
+      "unit": "Wh per energy format"
+    },
+    "w_hours_net": {
+      "address": 3035,
+      "type": "i32",
+      "access": "r",
+      "description": "W hours, net",
+      "unit": "Wh per energy format"
+    }
+  }
+}

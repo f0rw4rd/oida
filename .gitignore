@@ -1,0 +1,100 @@
+# Claude Code worktrees
+.claude/worktrees/
+
+# Fuzz session / test databases (root-level scratch)
+oida_fuzz_session.db
+fuzzer_session.db
+http_cli_test.db
+modbus_crash_test.db
+test_fuzz_session.db
+# Fuzzer crash dumps
+/crashes/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+/logs/
+/output/
+/dumps/
+/exports/
+/codesys/
+
+# Reference materials (binaries)
+reference/codesys/dlls/
+reference/codesys/pcaps/
+*.dll
+
+# Generated reports and external libs
+code_quality_reports/
+libs/
+
+# Credentials and keys
+*.key
+*.pem
+*.p12
+*.pfx
+credentials/
+secrets/
+reference/

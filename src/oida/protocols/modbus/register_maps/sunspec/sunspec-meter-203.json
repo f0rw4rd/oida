@@ -1,0 +1,591 @@
+{
+  "vendor": "SunSpec",
+  "model": "Meter Model 203 (Three-Phase Wye Integer)",
+  "description": "SunSpec Model 203 - Three Phase Wye-Connect AC Meter with Integer + Scale Factor format",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 203,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 203 = Three-phase Wye (ABCN) meter. Model length is 105 registers. Most common meter model for commercial installations. Addresses include 2-register header.",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00203.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (203 = three-phase wye meter)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length (105 registers)"
+    },
+    "ac_current": {
+      "address": 2,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "Total AC Current (A)"
+    },
+    "ac_current_a": {
+      "address": 3,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "Phase A Current (AphA)"
+    },
+    "ac_current_b": {
+      "address": 4,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "Phase B Current (AphB)"
+    },
+    "ac_current_c": {
+      "address": 5,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "Phase C Current (AphC)"
+    },
+    "ac_current_sf": {
+      "address": 6,
+      "type": "i16",
+      "access": "r",
+      "description": "Current scale factor (A_SF)"
+    },
+    "ac_voltage_ln": {
+      "address": 7,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Average Line to Neutral Voltage (PhV)"
+    },
+    "ac_voltage_an": {
+      "address": 8,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Phase A to Neutral Voltage (PhVphA)"
+    },
+    "ac_voltage_bn": {
+      "address": 9,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Phase B to Neutral Voltage (PhVphB)"
+    },
+    "ac_voltage_cn": {
+      "address": 10,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Phase C to Neutral Voltage (PhVphC)"
+    },
+    "ac_voltage_ll": {
+      "address": 11,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Average Line to Line Voltage (PPV)"
+    },
+    "ac_voltage_ab": {
+      "address": 12,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Phase A-B Voltage (PhVphAB)"
+    },
+    "ac_voltage_bc": {
+      "address": 13,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Phase B-C Voltage (PhVphBC)"
+    },
+    "ac_voltage_ca": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "V",
+      "description": "Phase C-A Voltage (PhVphCA)"
+    },
+    "ac_voltage_sf": {
+      "address": 15,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage scale factor (V_SF)"
+    },
+    "frequency": {
+      "address": 16,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 17,
+      "unit": "Hz",
+      "description": "AC Frequency (Hz)"
+    },
+    "frequency_sf": {
+      "address": 17,
+      "type": "i16",
+      "access": "r",
+      "description": "Frequency scale factor (Hz_SF)"
+    },
+    "watts": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 22,
+      "unit": "W",
+      "description": "Total Real Power (W)"
+    },
+    "watts_a": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 22,
+      "unit": "W",
+      "description": "Phase A Real Power (WphA)"
+    },
+    "watts_b": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 22,
+      "unit": "W",
+      "description": "Phase B Real Power (WphB)"
+    },
+    "watts_c": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 22,
+      "unit": "W",
+      "description": "Phase C Real Power (WphC)"
+    },
+    "watts_sf": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Real power scale factor (W_SF)"
+    },
+    "va": {
+      "address": 23,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 27,
+      "unit": "VA",
+      "description": "Total Apparent Power (VA)"
+    },
+    "va_a": {
+      "address": 24,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 27,
+      "unit": "VA",
+      "description": "Phase A Apparent Power (VAphA)"
+    },
+    "va_b": {
+      "address": 25,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 27,
+      "unit": "VA",
+      "description": "Phase B Apparent Power (VAphB)"
+    },
+    "va_c": {
+      "address": 26,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 27,
+      "unit": "VA",
+      "description": "Phase C Apparent Power (VAphC)"
+    },
+    "va_sf": {
+      "address": 27,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power scale factor (VA_SF)"
+    },
+    "var": {
+      "address": 28,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 32,
+      "unit": "var",
+      "description": "Total Reactive Power (VAR)"
+    },
+    "var_a": {
+      "address": 29,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 32,
+      "unit": "var",
+      "description": "Phase A Reactive Power (VARphA)"
+    },
+    "var_b": {
+      "address": 30,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 32,
+      "unit": "var",
+      "description": "Phase B Reactive Power (VARphB)"
+    },
+    "var_c": {
+      "address": 31,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 32,
+      "unit": "var",
+      "description": "Phase C Reactive Power (VARphC)"
+    },
+    "var_sf": {
+      "address": 32,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power scale factor (VAR_SF)"
+    },
+    "pf": {
+      "address": 33,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "%",
+      "description": "Total Power Factor (PF)"
+    },
+    "pf_a": {
+      "address": 34,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "%",
+      "description": "Phase A Power Factor (PFphA)"
+    },
+    "pf_b": {
+      "address": 35,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "%",
+      "description": "Phase B Power Factor (PFphB)"
+    },
+    "pf_c": {
+      "address": 36,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "%",
+      "description": "Phase C Power Factor (PFphC)"
+    },
+    "pf_sf": {
+      "address": 37,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor scale factor (PF_SF)"
+    },
+    "wh_export": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Total Real Energy Exported (TotWhExp)"
+    },
+    "wh_export_a": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Phase A Real Energy Exported (TotWhExpPhA)"
+    },
+    "wh_export_b": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Phase B Real Energy Exported (TotWhExpPhB)"
+    },
+    "wh_export_c": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Phase C Real Energy Exported (TotWhExpPhC)"
+    },
+    "wh_import": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Total Real Energy Imported (TotWhImp)"
+    },
+    "wh_import_a": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Phase A Real Energy Imported (TotWhImpPhA)"
+    },
+    "wh_import_b": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Phase B Real Energy Imported (TotWhImpPhB)"
+    },
+    "wh_import_c": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "Wh",
+      "description": "Phase C Real Energy Imported (TotWhImpPhC)"
+    },
+    "wh_sf": {
+      "address": 54,
+      "type": "i16",
+      "access": "r",
+      "description": "Real energy scale factor (TotWh_SF)"
+    },
+    "vah_export": {
+      "address": 55,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Total Apparent Energy Exported (TotVAhExp)"
+    },
+    "vah_export_a": {
+      "address": 57,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Phase A Apparent Energy Exported (TotVAhExpPhA)"
+    },
+    "vah_export_b": {
+      "address": 59,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Phase B Apparent Energy Exported (TotVAhExpPhB)"
+    },
+    "vah_export_c": {
+      "address": 61,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Phase C Apparent Energy Exported (TotVAhExpPhC)"
+    },
+    "vah_import": {
+      "address": 63,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Total Apparent Energy Imported (TotVAhImp)"
+    },
+    "vah_import_a": {
+      "address": 65,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Phase A Apparent Energy Imported (TotVAhImpPhA)"
+    },
+    "vah_import_b": {
+      "address": 67,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Phase B Apparent Energy Imported (TotVAhImpPhB)"
+    },
+    "vah_import_c": {
+      "address": 69,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 71,
+      "unit": "VAh",
+      "description": "Phase C Apparent Energy Imported (TotVAhImpPhC)"
+    },
+    "vah_sf": {
+      "address": 71,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent energy scale factor (TotVAh_SF)"
+    },
+    "varh_import_q1": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Reactive Energy Q1 Imported (TotVArhImpQ1)"
+    },
+    "varh_import_q1_a": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase A Reactive Energy Q1 Imported (TotVArhImpQ1phA)"
+    },
+    "varh_import_q1_b": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase B Reactive Energy Q1 Imported (TotVArhImpQ1phB)"
+    },
+    "varh_import_q1_c": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase C Reactive Energy Q1 Imported (TotVArhImpQ1phC)"
+    },
+    "varh_import_q2": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Reactive Energy Q2 Imported (TotVArhImpQ2)"
+    },
+    "varh_import_q2_a": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase A Reactive Energy Q2 Imported (TotVArhImpQ2phA)"
+    },
+    "varh_import_q2_b": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase B Reactive Energy Q2 Imported (TotVArhImpQ2phB)"
+    },
+    "varh_import_q2_c": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase C Reactive Energy Q2 Imported (TotVArhImpQ2phC)"
+    },
+    "varh_export_q3": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Reactive Energy Q3 Exported (TotVArhExpQ3)"
+    },
+    "varh_export_q3_a": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase A Reactive Energy Q3 Exported (TotVArhExpQ3phA)"
+    },
+    "varh_export_q3_b": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase B Reactive Energy Q3 Exported (TotVArhExpQ3phB)"
+    },
+    "varh_export_q3_c": {
+      "address": 94,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase C Reactive Energy Q3 Exported (TotVArhExpQ3phC)"
+    },
+    "varh_export_q4": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Reactive Energy Q4 Exported (TotVArhExpQ4)"
+    },
+    "varh_export_q4_a": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase A Reactive Energy Q4 Exported (TotVArhExpQ4phA)"
+    },
+    "varh_export_q4_b": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase B Reactive Energy Q4 Exported (TotVArhExpQ4phB)"
+    },
+    "varh_export_q4_c": {
+      "address": 102,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 104,
+      "unit": "varh",
+      "description": "Phase C Reactive Energy Q4 Exported (TotVArhExpQ4phC)"
+    },
+    "varh_sf": {
+      "address": 104,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive energy scale factor (TotVArh_SF)"
+    },
+    "evt": {
+      "address": 105,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter event flags (Evt)",
+      "bitfield": {
+        "2": "POWER_FAILURE",
+        "3": "UNDER_VOLTAGE",
+        "4": "LOW_PF",
+        "5": "OVER_CURRENT",
+        "6": "OVER_VOLTAGE",
+        "7": "MISSING_SENSOR"
+      }
+    }
+  },
+  "_source_verified": "Verified: Model 203 register offsets confirmed against official sunspec/models/smdx/smdx_00203.xml"
+}

@@ -1,0 +1,87 @@
+{
+  "vendor": "Beckhoff",
+  "model": "BK9000/BK9050/BK9100 Bus Coupler",
+  "description": "Beckhoff Ethernet TCP/IP Bus Coupler with Modbus TCP support",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_port": 502,
+  "source": "Beckhoff InfoSys BK9000 documentation",
+  "notes": {
+    "input_offset": "0x0000 - Read inputs from address 0",
+    "output_offset": "0x0800 - Write outputs with 0x800 offset",
+    "process_image": "Auto-assigned based on connected KL terminals",
+    "digital_first": "Digital terminals mapped before analog in process image"
+  },
+  "registers": {
+    "digital_input_0": {
+      "address": 0,
+      "type": "coil",
+      "access": "ro",
+      "function_code": 2,
+      "description": "First digital input bit (KL1xxx terminals)"
+    },
+    "digital_output_0": {
+      "address": 0,
+      "type": "coil",
+      "access": "rw",
+      "function_code": 5,
+      "description": "First digital output bit (KL2xxx terminals)"
+    },
+    "analog_input_word_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "function_code": 4,
+      "description": "First analog input word (KL3xxx terminals)"
+    },
+    "analog_output_word_0": {
+      "address": 2048,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 6,
+      "description": "First analog output word with 0x800 offset (KL4xxx terminals)"
+    },
+    "watchdog_time": {
+      "address": 4384,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 6,
+      "description": "Watchdog timeout in ms (0x1120)"
+    },
+    "watchdog_type": {
+      "address": 4386,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 6,
+      "description": "Watchdog trigger type (0x1122): 0=write only"
+    }
+  },
+  "address_ranges": {
+    "digital_inputs": {
+      "start": 0,
+      "end": 255,
+      "function_code": 2,
+      "description": "Digital input coils (bit access)"
+    },
+    "digital_outputs": {
+      "start": 0,
+      "end": 255,
+      "function_code": 5,
+      "description": "Digital output coils (bit access)"
+    },
+    "analog_inputs": {
+      "start": 0,
+      "end": 127,
+      "function_code": 4,
+      "description": "Analog input registers (word access)"
+    },
+    "analog_outputs": {
+      "start": 2048,
+      "end": 2175,
+      "function_code": 6,
+      "description": "Analog output registers with 0x800 offset"
+    }
+  },
+  "_source_verified": "Verified: Bus Coupler with Modbus TCP confirmed at beckhoff.com product page"
+}

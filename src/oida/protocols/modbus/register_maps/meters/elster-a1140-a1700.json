@@ -1,0 +1,313 @@
+{
+  "vendor": "Elster",
+  "model": "A 1140 A 1700",
+  "description": "Elster A 1140 A 1700 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "va": {
+      "address": 1,
+      "type": "f32",
+      "access": "r",
+      "description": "Va"
+    },
+    "vb": {
+      "address": 3,
+      "type": "f32",
+      "access": "r",
+      "description": "Vb"
+    },
+    "vc": {
+      "address": 5,
+      "type": "f32",
+      "access": "r",
+      "description": "Vc"
+    },
+    "la": {
+      "address": 7,
+      "type": "f32",
+      "access": "r",
+      "description": "La"
+    },
+    "lb": {
+      "address": 9,
+      "type": "f32",
+      "access": "r",
+      "description": "Lb"
+    },
+    "ic": {
+      "address": 11,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic"
+    },
+    "pa": {
+      "address": 13,
+      "type": "f32",
+      "access": "r",
+      "description": "Pa"
+    },
+    "pb": {
+      "address": 15,
+      "type": "f32",
+      "access": "r",
+      "description": "Pb"
+    },
+    "pc": {
+      "address": 17,
+      "type": "f32",
+      "access": "r",
+      "description": "Pc"
+    },
+    "qa": {
+      "address": 19,
+      "type": "f32",
+      "access": "r",
+      "description": "Qa"
+    },
+    "ob": {
+      "address": 21,
+      "type": "f32",
+      "access": "r",
+      "description": "Ob"
+    },
+    "qc": {
+      "address": 23,
+      "type": "f32",
+      "access": "r",
+      "description": "Qc"
+    },
+    "so": {
+      "address": 25,
+      "type": "f32",
+      "access": "r",
+      "description": "So"
+    },
+    "sb": {
+      "address": 27,
+      "type": "f32",
+      "access": "r",
+      "description": "Sb"
+    },
+    "sc": {
+      "address": 29,
+      "type": "f32",
+      "access": "r",
+      "description": "Sc"
+    },
+    "pfa": {
+      "address": 31,
+      "type": "f32",
+      "access": "r",
+      "description": "Pfa"
+    },
+    "pfb": {
+      "address": 33,
+      "type": "f32",
+      "access": "r",
+      "description": "Pfb"
+    },
+    "pfc": {
+      "address": 35,
+      "type": "f32",
+      "access": "r",
+      "description": "Pfc"
+    },
+    "psum": {
+      "address": 37,
+      "type": "f32",
+      "access": "r",
+      "description": "Psum"
+    },
+    "qsum": {
+      "address": 39,
+      "type": "f32",
+      "access": "r",
+      "description": "QSUM"
+    },
+    "ssum": {
+      "address": 41,
+      "type": "f32",
+      "access": "r",
+      "description": "SSUM"
+    },
+    "pfsum": {
+      "address": 43,
+      "type": "f32",
+      "access": "r",
+      "description": "pfsUM"
+    },
+    "freqa": {
+      "address": 45,
+      "type": "f32",
+      "access": "r",
+      "description": "Freqa"
+    },
+    "freqb": {
+      "address": 47,
+      "type": "f32",
+      "access": "r",
+      "description": "Freqb"
+    },
+    "freqc": {
+      "address": 49,
+      "type": "f32",
+      "access": "r",
+      "description": "Freqc"
+    },
+    "kwhtotalexport": {
+      "address": 53,
+      "type": "i32",
+      "access": "r",
+      "description": "kWhTotalExport"
+    },
+    "kvarhimportlag": {
+      "address": 55,
+      "type": "i32",
+      "access": "r",
+      "description": "kVarhImportLag"
+    },
+    "kvarhimportlead": {
+      "address": 57,
+      "type": "i32",
+      "access": "r",
+      "description": "kVarhImportLead"
+    },
+    "kvarhexportlag": {
+      "address": 59,
+      "type": "i32",
+      "access": "r",
+      "description": "kVarhExportLag"
+    },
+    "vahtotal": {
+      "address": 63,
+      "type": "i32",
+      "access": "r",
+      "description": "VAhTotal"
+    },
+    "cust1": {
+      "address": 65,
+      "type": "i32",
+      "access": "r",
+      "description": "Cust1"
+    },
+    "cust2": {
+      "address": 67,
+      "type": "i32",
+      "access": "r",
+      "description": "Cust2"
+    },
+    "cust3": {
+      "address": 69,
+      "type": "i32",
+      "access": "r",
+      "description": "Cust3"
+    },
+    "tou1": {
+      "address": 71,
+      "type": "i32",
+      "access": "r",
+      "description": "TOU1"
+    },
+    "tou2": {
+      "address": 73,
+      "type": "i32",
+      "access": "r",
+      "description": "TOU2"
+    },
+    "tou3": {
+      "address": 75,
+      "type": "i32",
+      "access": "r",
+      "description": "TOU3"
+    },
+    "tou4": {
+      "address": 77,
+      "type": "i32",
+      "access": "r",
+      "description": "TOU4"
+    },
+    "histtoul": {
+      "address": 79,
+      "type": "i32",
+      "access": "r",
+      "description": "HistTOUl"
+    },
+    "histtou2": {
+      "address": 81,
+      "type": "i32",
+      "access": "r",
+      "description": "HistTOU2"
+    },
+    "histtou3": {
+      "address": 83,
+      "type": "i32",
+      "access": "r",
+      "description": "HistTOU3"
+    },
+    "histtou4": {
+      "address": 85,
+      "type": "i32",
+      "access": "r",
+      "description": "HistTOU4"
+    },
+    "lastenergyread": {
+      "address": 95,
+      "type": "u16",
+      "access": "r",
+      "description": "LastEnergyRead"
+    },
+    "lastinstread": {
+      "address": 96,
+      "type": "u16",
+      "access": "r",
+      "description": "LastInstRead"
+    },
+    "hist_kwhtotalimport": {
+      "address": 97,
+      "type": "i32",
+      "access": "r",
+      "description": "HIST kWhTotalImport"
+    },
+    "hist_kwhtotalexport": {
+      "address": 99,
+      "type": "i32",
+      "access": "r",
+      "description": "HIST kWhTotalExport"
+    },
+    "hist_kvarhimportlag": {
+      "address": 101,
+      "type": "i32",
+      "access": "r",
+      "description": "HIST kVarhImportLag"
+    },
+    "hist_kvarhimportlead": {
+      "address": 103,
+      "type": "i32",
+      "access": "r",
+      "description": "HIST kVarhImportLead"
+    },
+    "hist_kvarhexportlag": {
+      "address": 105,
+      "type": "i32",
+      "access": "r",
+      "description": "HIST kVarhExportLag"
+    },
+    "hist_kvarhexportlead": {
+      "address": 107,
+      "type": "i32",
+      "access": "r",
+      "description": "HIST kVarhExportLead"
+    },
+    "hist_vah_total": {
+      "address": 109,
+      "type": "i32",
+      "access": "r",
+      "description": "HIST VAh Total"
+    }
+  }
+}

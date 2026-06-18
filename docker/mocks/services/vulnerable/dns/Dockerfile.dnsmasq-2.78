@@ -1,0 +1,59 @@
+# dnsmasq 2.78 - CVE-2017-14491 (Heap-based Buffer Overflow)
+# Heap-based buffer overflow in DNS response processing
+# Reference: https://security.googleblog.com/2017/10/behind-masq-yet-more-dns-and-dhcp.html
+#
+# VULNERABLE: Crafted DNS response with oversized data causes heap overflow
+# Part of the "DNSpooq" family of vulnerabilities
+#
+# For authorized security testing only
+
+FROM alpine:3.7
+
+# Install dnsmasq 2.78 from Alpine 3.7 repos (known vulnerable version)
+RUN apk add --no-cache 'dnsmasq~=2.78' netcat-openbsd
+
+# Create configuration for vulnerable dnsmasq
+RUN cat > /etc/dnsmasq.conf << 'EOF'
+# dnsmasq 2.78 - Vulnerable configuration for CVE-2017-14491 testing
+# WARNING: This configuration is intentionally vulnerable
+
+# Listen on all interfaces
+listen-address=0.0.0.0
+bind-interfaces
+
+# DNS settings
+port=53
+no-resolv
+no-hosts
+
+# Cache settings (vulnerable to cache poisoning)
+cache-size=1000
+
+# Log queries for debugging
+log-queries
+log-facility=-
+
+# Local DNS records for testing
+address=/test.local/127.0.0.1
+address=/vuln.local/192.168.1.1
+
+# DHCP disabled for DNS-only testing
+no-dhcp-interface=*
+EOF
+
+# Create startup script
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+echo "Starting dnsmasq 2.78 (CVE-2017-14491 vulnerable)"
+echo "WARNING: This server is intentionally vulnerable for security testing"
+exec dnsmasq --no-daemon --log-facility=- --keep-in-foreground
+EOF
+RUN chmod +x /start.sh
+
+EXPOSE 53/tcp
+EXPOSE 53/udp
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD nc -zu localhost 53 || exit 1
+
+CMD ["/start.sh"]

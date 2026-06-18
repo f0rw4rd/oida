@@ -1,0 +1,352 @@
+{
+  "vendor": "SolarX",
+  "model": "POWER HYBRID X 1 HYBRID X 3 X 1 AC",
+  "description": "SolarX POWER HYBRID X 1 HYBRID X 3 X 1 AC power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "grid_current_x1": {
+      "address": 1,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid current (X1)",
+      "unit": "V"
+    },
+    "grid_power_x1": {
+      "address": 2,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid power (X1)",
+      "unit": "W"
+    },
+    "pv_voltage1_hybrid": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Pv voltage1 (Hybrid)",
+      "unit": "V"
+    },
+    "pv_voltage2_hybrid": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Pv voltage2 (Hybrid)",
+      "unit": "V"
+    },
+    "pv_current1_hybrid": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Pv current1 (Hybrid)",
+      "unit": "A"
+    },
+    "pv_current2_hybrid": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Pv current2 (Hybrid)",
+      "unit": "A"
+    },
+    "grid_frequency_x1": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid frequency (X1)",
+      "unit": "Hz"
+    },
+    "temperature": {
+      "address": 8,
+      "type": "i16",
+      "access": "r",
+      "description": "Temperature"
+    },
+    "run_mode": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Run mode"
+    },
+    "powerdc1_hybrid": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Powerdc1 (Hybrid)",
+      "unit": "W"
+    },
+    "powerdc2_hybrid": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Powerdc2 (Hybrid)",
+      "unit": "W"
+    },
+    "temper_fault_value": {
+      "address": 12,
+      "type": "i16",
+      "access": "r",
+      "description": "Temper fault value"
+    },
+    "pv1volt_fault_value": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Pv1Volt fault value",
+      "unit": "V"
+    },
+    "pv2volt_fault_value": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Pv2Volt fault value",
+      "unit": "V"
+    },
+    "gfci_fault_value": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Gfci fault value",
+      "unit": "mA"
+    },
+    "grid_volt_fault_value": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid volt fault value",
+      "unit": "V"
+    },
+    "grid_freq_fault_value_t": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid freq fault value T",
+      "unit": "Hz"
+    },
+    "dci_fault_value": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Dci fault value",
+      "unit": "mA"
+    },
+    "time_count_down": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "Time count down",
+      "unit": "ms"
+    },
+    "bat_voltage_charge1": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "Bat voltage charge1",
+      "unit": "V"
+    },
+    "bat_current_charge1": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Bat current charge1",
+      "unit": "A"
+    },
+    "batpower_charge1": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Batpower charge1",
+      "unit": "W"
+    },
+    "bms_connect_state": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS connect state"
+    },
+    "temperature_bat": {
+      "address": 24,
+      "type": "i16",
+      "access": "r",
+      "description": "Temperature bat"
+    },
+    "battery_capacity": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery capacity",
+      "unit": "%"
+    },
+    "output_energy_charge_lsb": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "description": "Output energy Charge.LSB",
+      "unit": "KWh"
+    },
+    "output_energy_charge_msb": {
+      "address": 30,
+      "type": "u16",
+      "access": "r",
+      "description": "Output energy Charge.MSB",
+      "unit": "KWh"
+    },
+    "bms_warning_lsb": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS warning LSB"
+    },
+    "output_energy_charge_today": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Output energy charge today",
+      "unit": "KWh"
+    },
+    "input_energy_charge_lsb": {
+      "address": 33,
+      "type": "u16",
+      "access": "r",
+      "description": "Input energy Charge.LSB",
+      "unit": "KWh"
+    },
+    "input_energy_charge_msb": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Input energy Charge.MSB",
+      "unit": "KWh"
+    },
+    "input_energy_charge_today": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Input energy charge today",
+      "unit": "KWh"
+    },
+    "bms_charge_max_current": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS charge max current",
+      "unit": "A"
+    },
+    "bms_discharge_max_current": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS discharge max current",
+      "unit": "A"
+    },
+    "bms_warning_msb": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS warning MSB"
+    },
+    "inv_fault_message_lsb": {
+      "address": 64,
+      "type": "u16",
+      "access": "r",
+      "description": "Inv fault Message.LSB"
+    },
+    "inv_fault_message_msb": {
+      "address": 65,
+      "type": "u16",
+      "access": "r",
+      "description": "Inv fault Message.MSB"
+    },
+    "mgr_fault_message": {
+      "address": 67,
+      "type": "u16",
+      "access": "r",
+      "description": "Mgr fault message"
+    },
+    "feedin_power_meter": {
+      "address": 70,
+      "type": "i32",
+      "access": "r",
+      "description": "Feedin power (meter)",
+      "unit": "w"
+    },
+    "feedin_energy_total_meter": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "Feedin energy total (meter)",
+      "unit": "kwh"
+    },
+    "consum_energy_total_meter": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "Consum energy total (meter)",
+      "unit": "kwh"
+    },
+    "eps_volt_x1": {
+      "address": 76,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS volt (X1)",
+      "unit": "V"
+    },
+    "eps_current_x1": {
+      "address": 77,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS current (X1)",
+      "unit": "A"
+    },
+    "eps_power_x1": {
+      "address": 78,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS power (X1)",
+      "unit": "VA"
+    },
+    "eps_frequency_x1": {
+      "address": 79,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS frequency (X1)",
+      "unit": "Hz"
+    },
+    "etoday_togrid": {
+      "address": 80,
+      "type": "u16",
+      "access": "r",
+      "description": "Etoday togrid",
+      "unit": "kwh"
+    },
+    "etotal_togrid": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Etotal togrid",
+      "unit": "kwh"
+    },
+    "lock_state": {
+      "address": 84,
+      "type": "u16",
+      "access": "r",
+      "description": "Lock state"
+    },
+    "bus_volt": {
+      "address": 102,
+      "type": "u16",
+      "access": "r",
+      "description": "Bus volt",
+      "unit": "V"
+    },
+    "w_dcv_fault_val": {
+      "address": 103,
+      "type": "u16",
+      "access": "r",
+      "description": "W dcv fault val",
+      "unit": "V"
+    }
+  }
+}

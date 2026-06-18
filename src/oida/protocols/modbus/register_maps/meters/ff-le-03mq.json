@@ -1,0 +1,359 @@
+{
+  "vendor": "F&F",
+  "model": "LE 03 MQ",
+  "description": "F&F LE 03 MQ power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "l2_l_n_phase_voltage": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 (L n) phase voltage",
+      "unit": "V"
+    },
+    "l3_l_n_phase_voltage": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 (L n) phase voltage",
+      "unit": "V"
+    },
+    "l1_current_strength": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 current strength",
+      "unit": "A"
+    },
+    "l2_current_strength": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 current strength",
+      "unit": "A"
+    },
+    "l3_current_strength": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 current strength",
+      "unit": "A"
+    },
+    "l1_active_power": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 active power",
+      "unit": "W"
+    },
+    "l2_active_power": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 active power",
+      "unit": "W"
+    },
+    "l3_active_power": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 active power",
+      "unit": "W"
+    },
+    "l1_apparent_power": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 apparent power",
+      "unit": "VA"
+    },
+    "l2_apparent_power": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 apparent power",
+      "unit": "VA"
+    },
+    "l3_apparent_power": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 apparent power",
+      "unit": "VA"
+    },
+    "l1_reactive_power": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 reactive power",
+      "unit": "Var"
+    },
+    "l2_reactive_power": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 reactive power",
+      "unit": "Var"
+    },
+    "l3_reactive_power": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 reactive power",
+      "unit": "Var"
+    },
+    "l1_power_factor": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 power factor"
+    },
+    "l2_power_factor": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 power factor"
+    },
+    "l3_power_factor": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 power factor"
+    },
+    "l1_phase_angle": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 phase angle",
+      "unit": "Degrees"
+    },
+    "l2_phase_angle": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 phase angle",
+      "unit": "Degrees"
+    },
+    "l3_phase_angle": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 phase angle",
+      "unit": "Degrees"
+    },
+    "average_phase_voltage_among_phase_and_neutral_wire": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Average phase voltage among phase and neutral wire",
+      "unit": "V"
+    },
+    "average_line_current": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line current",
+      "unit": "A"
+    },
+    "sum_of_phase_currents": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of phase currents",
+      "unit": "A"
+    },
+    "total_system_power": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system power",
+      "unit": "W"
+    },
+    "total_system_volt_amps": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system volt amps",
+      "unit": "VA"
+    },
+    "total_system_var": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system var",
+      "unit": "Var"
+    },
+    "total_system_power_factor_1": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system power factor (*1)"
+    },
+    "total_system_phase_angle": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system phase angle",
+      "unit": "Degrees"
+    },
+    "frequency_of_supply_voltages": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency of supply voltages",
+      "unit": "Hz"
+    },
+    "imported_active_energy": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Imported active energy",
+      "unit": "kWh/ MWh"
+    },
+    "exported_active_energy": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Exported active energy",
+      "unit": "kWH/ MWh"
+    },
+    "imported_reactive_energy": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Imported reactive energy",
+      "unit": "kVarh/ MVarh"
+    },
+    "exported_reactive_energy": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Exported reactive energy",
+      "unit": "kVarh/ MVarh"
+    },
+    "apparent_power": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power",
+      "unit": "kVah/ MVAh"
+    },
+    "ah_since_last_reset": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Ah since last reset",
+      "unit": "Ah/kAh"
+    },
+    "total_system_power_demand_2": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system power demand (*2)",
+      "unit": "W"
+    },
+    "maximum_total_system_power_demand_2": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum total system power demand (*2)",
+      "unit": "W"
+    },
+    "total_system_va_demand_2": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system VA demand (*2)",
+      "unit": "VA"
+    },
+    "maximum_total_system_va_demand": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum total system VA demand",
+      "unit": "VA"
+    },
+    "neutral_current_demand": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current demand",
+      "unit": "A"
+    },
+    "maximum_neutral_current_demand": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum neutral current demand",
+      "unit": "A"
+    },
+    "l1_l2_interphase_voltage": {
+      "address": 200,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 L2 interphase voltage",
+      "unit": "W"
+    },
+    "l2_l3_interphase_voltage": {
+      "address": 202,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 L3 interphase voltage",
+      "unit": "W"
+    },
+    "l3_l1_interphase_voltage": {
+      "address": 204,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 L1 interphase voltage",
+      "unit": "W"
+    },
+    "average_interphase_voltage": {
+      "address": 206,
+      "type": "f32",
+      "access": "r",
+      "description": "Average interphase voltage",
+      "unit": "W"
+    },
+    "neutral_current": {
+      "address": 224,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "phase_1_l_n_volts_thd": {
+      "address": 234,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 L/N volts THD",
+      "unit": "%"
+    },
+    "phase_2_l_n_volts_thd": {
+      "address": 236,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 L/N volts THD",
+      "unit": "%"
+    },
+    "phase_3_l_n_volts_thd": {
+      "address": 238,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 L/N volts THD",
+      "unit": "%"
+    },
+    "phase_1_current_thd": {
+      "address": 240,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current THD",
+      "unit": "%"
+    }
+  }
+}

@@ -1,0 +1,363 @@
+{
+  "vendor": "CEWE",
+  "model": "PROMETER 100",
+  "description": "CEWE PROMETER 100 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_primary_voltage": {
+      "address": 1012,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter primary voltage",
+      "unit": "Volt"
+    },
+    "meter_secondary_voltage": {
+      "address": 1014,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter secondary voltage",
+      "unit": "Volt"
+    },
+    "meter_primary_current": {
+      "address": 1016,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter primary current",
+      "unit": "Amp"
+    },
+    "meter_secondary_current": {
+      "address": 1018,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter secondary current",
+      "unit": "Amp"
+    },
+    "meter_maximum_current": {
+      "address": 1020,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter maximum current",
+      "unit": "Amp"
+    },
+    "meter_type_0_ht3_1_ht4_2_lt_3ct_4w": {
+      "address": 1022,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter type: 0 HT3, 1 HT4, 2 LT 3CT 4W",
+      "unit": "NA"
+    },
+    "phase_voltage_l1": {
+      "address": 1100,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage L1",
+      "unit": "Volt"
+    },
+    "phase_voltage_l2": {
+      "address": 1102,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage L2",
+      "unit": "Volt"
+    },
+    "phase_voltage_l3": {
+      "address": 1104,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage L3",
+      "unit": "Volt"
+    },
+    "phase_to_phase_voltage_l1_l2": {
+      "address": 1106,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage L1 L2",
+      "unit": "Volt"
+    },
+    "phase_to_phase_voltage_l2_l3": {
+      "address": 1108,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage L2 L3",
+      "unit": "Volt"
+    },
+    "phase_to_phase_voltage_l3_l1": {
+      "address": 1110,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage L3 L1",
+      "unit": "Volt"
+    },
+    "line_current_l1": {
+      "address": 1112,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current L1",
+      "unit": "Amp"
+    },
+    "line_current_l2": {
+      "address": 1114,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current L2",
+      "unit": "Amp"
+    },
+    "line_current_l3": {
+      "address": 1116,
+      "type": "f32",
+      "access": "r",
+      "description": "Line current L3",
+      "unit": "Amp"
+    },
+    "three_phase_average_voltages_of_vnominal": {
+      "address": 1118,
+      "type": "f32",
+      "access": "r",
+      "description": "Three phase average voltages % of vnominal",
+      "unit": "%"
+    },
+    "all_phase_power_factor": {
+      "address": 1120,
+      "type": "f32",
+      "access": "r",
+      "description": "All phase power factor",
+      "unit": "NA"
+    },
+    "frequency_hz": {
+      "address": 1122,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency hz",
+      "unit": "Hz"
+    },
+    "all_phase_active_power_total": {
+      "address": 1124,
+      "type": "f32",
+      "access": "r",
+      "description": "All phase active power (Total)",
+      "unit": "KW"
+    },
+    "all_phase_reactive_power": {
+      "address": 1126,
+      "type": "f32",
+      "access": "r",
+      "description": "All phase reactive power",
+      "unit": "KVAr"
+    },
+    "all_phase_apparent_power": {
+      "address": 1128,
+      "type": "f32",
+      "access": "r",
+      "description": "All phase apparent power",
+      "unit": "KVA"
+    },
+    "all_phase_active_power_fundamental": {
+      "address": 1130,
+      "type": "f32",
+      "access": "r",
+      "description": "All phase active power (Fundamental)",
+      "unit": "KW"
+    },
+    "phase_symmetry_voltage_l1": {
+      "address": 1200,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase symmetry voltage L1",
+      "unit": "Degree"
+    },
+    "phase_symmetry_voltage_l2": {
+      "address": 1202,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase symmetry voltage L2",
+      "unit": "Degree"
+    },
+    "phase_symmetry_voltage_l3": {
+      "address": 1204,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase symmetry voltage L3",
+      "unit": "Degree"
+    },
+    "phase_symmetry_current_l1": {
+      "address": 1206,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase symmetry current L1",
+      "unit": "Degree"
+    },
+    "phase_symmetry_current_l2": {
+      "address": 1208,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase symmetry current L2",
+      "unit": "Degree"
+    },
+    "phase_symmetry_current_l3": {
+      "address": 1210,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase symmetry current L3",
+      "unit": "Degree"
+    },
+    "thd_voltage_l1": {
+      "address": 1212,
+      "type": "f32",
+      "access": "r",
+      "description": "THD voltage L1",
+      "unit": "%"
+    },
+    "thd_voltage_l2": {
+      "address": 1214,
+      "type": "f32",
+      "access": "r",
+      "description": "THD voltage L2",
+      "unit": "%"
+    },
+    "thd_voltage_l3": {
+      "address": 1216,
+      "type": "f32",
+      "access": "r",
+      "description": "THD voltage L3",
+      "unit": "%"
+    },
+    "thd_current_l1": {
+      "address": 1218,
+      "type": "f32",
+      "access": "r",
+      "description": "THD current L1",
+      "unit": "%"
+    },
+    "thd_current_l2": {
+      "address": 1220,
+      "type": "f32",
+      "access": "r",
+      "description": "THD current L2",
+      "unit": "%"
+    },
+    "thd_current_l3": {
+      "address": 1222,
+      "type": "f32",
+      "access": "r",
+      "description": "THD current L3",
+      "unit": "%"
+    },
+    "thd_power_l1": {
+      "address": 1224,
+      "type": "f32",
+      "access": "r",
+      "description": "THD power L1",
+      "unit": "%"
+    },
+    "thd_power_l2": {
+      "address": 1226,
+      "type": "f32",
+      "access": "r",
+      "description": "THD power L2",
+      "unit": "%"
+    },
+    "thd_power_l3": {
+      "address": 1228,
+      "type": "f32",
+      "access": "r",
+      "description": "THD power L3",
+      "unit": "%"
+    },
+    "active_power_l1_t": {
+      "address": 1300,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L1(T)",
+      "unit": "kW"
+    },
+    "active_power_l2_t": {
+      "address": 1302,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L2(T)",
+      "unit": "kW"
+    },
+    "active_power_l3_t": {
+      "address": 1304,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3(T)",
+      "unit": "kW"
+    },
+    "active_power_l1_f": {
+      "address": 1306,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L1(F)",
+      "unit": "kW"
+    },
+    "active_power_l2_f": {
+      "address": 1308,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L2(F)",
+      "unit": "kW"
+    },
+    "active_power_l3_f": {
+      "address": 1310,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3(F)",
+      "unit": "kW"
+    },
+    "reactive_power_l1": {
+      "address": 1312,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L1",
+      "unit": "kVAr"
+    },
+    "reactive_power_l2": {
+      "address": 1314,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L2",
+      "unit": "kVAr"
+    },
+    "reactive_power_l3": {
+      "address": 1316,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3",
+      "unit": "kVAr"
+    },
+    "apparent_power_l1": {
+      "address": 1318,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L1",
+      "unit": "kVA"
+    },
+    "apparent_power_l2": {
+      "address": 1320,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L2",
+      "unit": "kVA"
+    },
+    "apparent_power_l3": {
+      "address": 1322,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3",
+      "unit": "kVA"
+    },
+    "power_factor_l1": {
+      "address": 1324,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor L1",
+      "unit": "NA"
+    }
+  }
+}

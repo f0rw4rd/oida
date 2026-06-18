@@ -1,0 +1,255 @@
+{
+  "protocol": "sv",
+  "display_filter": "sv",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:58:46.841769+00:00",
+  "dissector_fields": {
+    "total": 39,
+    "by_type": {
+      "FT_BOOLEAN": 12,
+      "FT_BYTES": 3,
+      "FT_INT32": 3,
+      "FT_NONE": 5,
+      "FT_STRING": 3,
+      "FT_UINT16": 4,
+      "FT_UINT32": 8,
+      "FT_UINT64": 1
+    },
+    "fields": [
+      {
+        "name": "sv.appid",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sv.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sv.reserve1",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sv.reserve1.s_bit",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.reserve2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_value",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.validity",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.overflow",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.outofrange",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.badreference",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.oscillatory",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.failure",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.olddata",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.inconsistent",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.inaccurate",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.source",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.test",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.operatorblocked",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.meas_quality.derived",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sv.gmidentity",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "sv.gmidentity_manuf",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "sv.savPdu_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sv.noASDU",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_65535"
+      },
+      {
+        "name": "sv.seqASDU",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_ASDU"
+      },
+      {
+        "name": "sv.ASDU_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sv.svID",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "sv.datSet",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "sv.smpCnt",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sv.confRev",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_4294967295"
+      },
+      {
+        "name": "sv.refrTm",
+        "type": "FT_STRING",
+        "description": "UtcTime"
+      },
+      {
+        "name": "sv.smpSynch",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "sv.smpRate",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_65535"
+      },
+      {
+        "name": "sv.seqData",
+        "type": "FT_BYTES",
+        "description": "Data"
+      },
+      {
+        "name": "sv.smpMod",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "sv.gmidData",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "sv.malformed.utctime",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sv.zero_pdu",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sv.malformed.gmidentity",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 0,
+    "by_pcap": {},
+    "union": []
+  },
+  "extracted_fields": {
+    "total": 12,
+    "fields": [
+      "appid",
+      "confRev",
+      "datSet",
+      "meas_quality_validity",
+      "meas_value",
+      "noASDU",
+      "reserve1_s_bit",
+      "smpCnt",
+      "smpMod",
+      "smpRate",
+      "smpSynch",
+      "svID"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "0/39 (0%)",
+    "pcap_vs_extracted": "0/0",
+    "t1_extracted": "3/4",
+    "t1_gaps": [],
+    "t2_consider": [],
+    "summary": {
+      "t1_total": 4,
+      "t1_in_pcap": 0,
+      "t1_covered": 3,
+      "t2_total": 30,
+      "t2_in_pcap": 0,
+      "t2_covered": 9,
+      "t3_skipped": 5,
+      "t4_ignored": 0
+    }
+  }
+}

@@ -1,0 +1,363 @@
+{
+  "vendor": "Mikro",
+  "model": "DPM 680",
+  "description": "Mikro DPM 680 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "device_type_sub": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Device type sub",
+      "unit": "x0000"
+    },
+    "version_number_main": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Version number main",
+      "unit": "x0000 ; 0x0002"
+    },
+    "version_number_sub": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Version number sub",
+      "unit": "x0000 ; 0x0000"
+    },
+    "parity_selection": {
+      "address": 1001,
+      "type": "u16",
+      "access": "r",
+      "description": "Parity selection",
+      "unit": "=none, 1 stop bit 1=none, 2 stop bit 2=odd, 1 stop bit 3=even, 1 stop bit"
+    },
+    "baudrate_selection": {
+      "address": 1002,
+      "type": "u16",
+      "access": "r",
+      "description": "Baudrate selection",
+      "unit": "=300 2=600 3=1200 4=2400 5=4800 6=9600 7=19200 8=38400"
+    },
+    "ip_address": {
+      "address": 1003,
+      "type": "u16",
+      "access": "r",
+      "description": "Ip address",
+      "unit": "x00 | 0x00 ; 0x00 | 0x00"
+    },
+    "subnet_mask": {
+      "address": 1005,
+      "type": "u16",
+      "access": "r",
+      "description": "Subnet mask",
+      "unit": "x00 | 0x00 ; 0x00 | 0x00"
+    },
+    "real_energy": {
+      "address": 4000,
+      "type": "i64",
+      "access": "r",
+      "description": "Real energy",
+      "unit": "Wh"
+    },
+    "apparent_energy": {
+      "address": 4004,
+      "type": "i64",
+      "access": "r",
+      "description": "Apparent energy",
+      "unit": "VAh"
+    },
+    "reactive_energy": {
+      "address": 4008,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy",
+      "unit": "VArh"
+    },
+    "total_real_power": {
+      "address": 4012,
+      "type": "i32",
+      "access": "r",
+      "description": "Total real power",
+      "unit": "W"
+    },
+    "total_apparent_power": {
+      "address": 4014,
+      "type": "i32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "total_reactive_power": {
+      "address": 4016,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "VAr"
+    },
+    "total_power_factor": {
+      "address": 4018,
+      "type": "u16",
+      "access": "r",
+      "description": "Total power factor",
+      "unit": "1"
+    },
+    "frequency": {
+      "address": 4019,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "instantaneous_current_a": {
+      "address": 4020,
+      "type": "u32",
+      "access": "r",
+      "description": "Instantaneous current A",
+      "unit": "A"
+    },
+    "instantaneous_current_b": {
+      "address": 4022,
+      "type": "u32",
+      "access": "r",
+      "description": "Instantaneous current B",
+      "unit": "A"
+    },
+    "instantaneous_current_c": {
+      "address": 4024,
+      "type": "u32",
+      "access": "r",
+      "description": "Instantaneous current C",
+      "unit": "A"
+    },
+    "instantaneous_current_n": {
+      "address": 4026,
+      "type": "u32",
+      "access": "r",
+      "description": "Instantaneous current N",
+      "unit": "A"
+    },
+    "voltage_line_ab": {
+      "address": 4028,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage line ab",
+      "unit": "V"
+    },
+    "voltage_line_bc": {
+      "address": 4030,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage line bc",
+      "unit": "V"
+    },
+    "voltage_line_ac": {
+      "address": 4032,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage line ac",
+      "unit": "V"
+    },
+    "voltage_phase_an": {
+      "address": 4034,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage phase an",
+      "unit": "V"
+    },
+    "voltage_phase_bn": {
+      "address": 4036,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage phase bn",
+      "unit": "V"
+    },
+    "voltage_phase_cn": {
+      "address": 4038,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage phase cn",
+      "unit": "V"
+    },
+    "real_power_a": {
+      "address": 4040,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power A",
+      "unit": "W"
+    },
+    "real_power_b": {
+      "address": 4042,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power B",
+      "unit": "W"
+    },
+    "real_power_c": {
+      "address": 4044,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power C",
+      "unit": "W"
+    },
+    "apparent_power_a": {
+      "address": 4046,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power A",
+      "unit": "VA"
+    },
+    "apparent_power_b": {
+      "address": 4048,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power B",
+      "unit": "VA"
+    },
+    "apparent_power_c": {
+      "address": 4050,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power C",
+      "unit": "VA"
+    },
+    "reactive_power_a": {
+      "address": 4052,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power A",
+      "unit": "VAr"
+    },
+    "reactive_power_b": {
+      "address": 4054,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power B",
+      "unit": "VAr"
+    },
+    "reactive_power_c": {
+      "address": 4056,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power C",
+      "unit": "VAr"
+    },
+    "current_demand_a": {
+      "address": 4058,
+      "type": "u32",
+      "access": "r",
+      "description": "Current demand A",
+      "unit": "Arms"
+    },
+    "current_demand_b": {
+      "address": 4060,
+      "type": "u32",
+      "access": "r",
+      "description": "Current demand B",
+      "unit": "Arms"
+    },
+    "current_demand_c": {
+      "address": 4062,
+      "type": "u32",
+      "access": "r",
+      "description": "Current demand C",
+      "unit": "Arms"
+    },
+    "real_power_demand": {
+      "address": 4064,
+      "type": "i32",
+      "access": "r",
+      "description": "Real power demand",
+      "unit": "W"
+    },
+    "reactive_power_demand": {
+      "address": 4066,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power demand",
+      "unit": "VAr"
+    },
+    "apparent_power_demand": {
+      "address": 4068,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power demand",
+      "unit": "VA"
+    },
+    "positive_sequence_current": {
+      "address": 4070,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive sequence current",
+      "unit": "A"
+    },
+    "negative_sequence_current": {
+      "address": 4072,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative sequence current",
+      "unit": "A"
+    },
+    "zero_sequence_current": {
+      "address": 4074,
+      "type": "u32",
+      "access": "r",
+      "description": "Zero sequence current",
+      "unit": "A"
+    },
+    "positive_sequence_phase_voltage": {
+      "address": 4076,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive sequence phase voltage",
+      "unit": "V"
+    },
+    "negative_sequence_phase_voltage": {
+      "address": 4078,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative sequence phase voltage",
+      "unit": "V"
+    },
+    "zero_sequence_phase_voltage": {
+      "address": 4080,
+      "type": "u32",
+      "access": "r",
+      "description": "Zero sequence phase voltage",
+      "unit": "V"
+    },
+    "current_thd_a": {
+      "address": 4082,
+      "type": "u16",
+      "access": "r",
+      "description": "Current thd A",
+      "unit": "%"
+    },
+    "current_thd_b": {
+      "address": 4083,
+      "type": "u16",
+      "access": "r",
+      "description": "Current thd B",
+      "unit": "%"
+    },
+    "current_thd_c": {
+      "address": 4084,
+      "type": "u16",
+      "access": "r",
+      "description": "Current thd C",
+      "unit": "%"
+    },
+    "voltage_thd_a": {
+      "address": 4085,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage thd A",
+      "unit": "%"
+    }
+  }
+}

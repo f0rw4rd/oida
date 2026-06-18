@@ -1,0 +1,267 @@
+{
+  "vendor": "Sungrow",
+  "model": "SG/SH Series String Inverters",
+  "description": "Sungrow grid-tied and hybrid string inverters with Modbus TCP/RTU",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Based on Communication Protocol V1.1.37. Modbus TCP port 502. RTU: 9600 baud 8N1. Input registers (FC04) for real-time data. Holding registers (FC03) for settings.",
+  "source": "https://github.com/bohdan-s/Sungrow-Inverter (Protocol V1.1.37 PDF)",
+  "registers": {
+    "nominal_output_power": {
+      "address": 5000,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Nominal active power output"
+    },
+    "daily_output_energy": {
+      "address": 5003,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily output energy"
+    },
+    "total_output_energy": {
+      "address": 5004,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Total output energy"
+    },
+    "total_running_time": {
+      "address": 5006,
+      "type": "u32",
+      "access": "r",
+      "unit": "h",
+      "description": "Total running time"
+    },
+    "internal_temperature": {
+      "address": 5008,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Internal temperature"
+    },
+    "mppt1_voltage": {
+      "address": 5011,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT1 DC voltage"
+    },
+    "mppt1_current": {
+      "address": 5012,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT1 DC current"
+    },
+    "mppt2_voltage": {
+      "address": 5013,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT2 DC voltage"
+    },
+    "mppt2_current": {
+      "address": 5014,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT2 DC current"
+    },
+    "total_dc_power": {
+      "address": 5017,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total DC power"
+    },
+    "phase_a_voltage": {
+      "address": 5019,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase A voltage"
+    },
+    "phase_b_voltage": {
+      "address": 5020,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase B voltage"
+    },
+    "phase_c_voltage": {
+      "address": 5021,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase C voltage"
+    },
+    "phase_a_current": {
+      "address": 5022,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase A current"
+    },
+    "phase_b_current": {
+      "address": 5023,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase B current"
+    },
+    "phase_c_current": {
+      "address": 5024,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase C current"
+    },
+    "total_active_power": {
+      "address": 5031,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total active power output"
+    },
+    "reactive_power": {
+      "address": 5033,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "Reactive power"
+    },
+    "power_factor": {
+      "address": 5035,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power factor"
+    },
+    "grid_frequency": {
+      "address": 5036,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Grid frequency"
+    },
+    "system_state": {
+      "address": 5038,
+      "type": "u16",
+      "access": "r",
+      "description": "System state",
+      "enum": {
+        "2": "STOP",
+        "16": "STANDBY",
+        "32": "INITIAL_STANDBY",
+        "64": "STARTUP",
+        "128": "MPPT",
+        "256": "FAULT",
+        "512": "STANDBY_FAULT",
+        "768": "MAINTENANCE_CHECK",
+        "1024": "FORCED_SHUTDOWN",
+        "2048": "OFF_GRID",
+        "8192": "DERATING"
+      }
+    },
+    "fault_code": {
+      "address": 5045,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault code"
+    },
+    "meter_power": {
+      "address": 5083,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Power meter reading (+ = export)"
+    },
+    "meter_a_phase_power": {
+      "address": 5085,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Phase A power meter"
+    },
+    "meter_b_phase_power": {
+      "address": 5087,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Phase B power meter"
+    },
+    "meter_c_phase_power": {
+      "address": 5089,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Phase C power meter"
+    },
+    "load_power": {
+      "address": 5091,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total load power"
+    },
+    "export_power": {
+      "address": 5093,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Export power to grid"
+    },
+    "daily_import_energy": {
+      "address": 5095,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily import energy from grid"
+    },
+    "total_import_energy": {
+      "address": 5096,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total import energy from grid"
+    },
+    "daily_export_energy": {
+      "address": 5099,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily export energy to grid"
+    },
+    "total_export_energy": {
+      "address": 5100,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total export energy to grid"
+    }
+  },
+  "_source_verified": "Verified: Registers 5011-5038 confirmed against Sungrow Communication Protocol V1.1.37"
+}

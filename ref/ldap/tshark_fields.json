@@ -1,0 +1,1690 @@
+{
+  "protocol": "ldap",
+  "display_filter": "ldap",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:51:36.011495+00:00",
+  "dissector_fields": {
+    "total": 209,
+    "by_type": {
+      "FT_BOOLEAN": 46,
+      "FT_BYTES": 18,
+      "FT_FRAMENUM": 2,
+      "FT_GUID": 2,
+      "FT_INT32": 2,
+      "FT_IPv4": 2,
+      "FT_NONE": 47,
+      "FT_RELATIVE_TIME": 1,
+      "FT_STRING": 37,
+      "FT_STRINGZ": 3,
+      "FT_UINT16": 5,
+      "FT_UINT32": 44
+    },
+    "fields": [
+      {
+        "name": "ldap.sasl_buffer_length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.response_in",
+        "type": "FT_FRAMENUM",
+        "description": "The response to this LDAP request is in this frame"
+      },
+      {
+        "name": "ldap.response_to",
+        "type": "FT_FRAMENUM",
+        "description": "This is a response to the LDAP request in this frame"
+      },
+      {
+        "name": "ldap.time",
+        "type": "FT_RELATIVE_TIME",
+        "description": "The time between the Call and the Reply"
+      },
+      {
+        "name": "mscldap.netlogon.opcode",
+        "type": "FT_UINT16",
+        "description": "LDAP ping operation code"
+      },
+      {
+        "name": "mscldap.netlogon.ipaddress.family",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mscldap.netlogon.ipaddress.ipv4",
+        "type": "FT_IPv4",
+        "description": "IP Address"
+      },
+      {
+        "name": "mscldap.netlogon.ipaddress.port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mscldap.netlogon.ipaddress.zero",
+        "type": "FT_BYTES",
+        "description": "MUST be set to zero"
+      },
+      {
+        "name": "mscldap.netlogon.ipaddress",
+        "type": "FT_IPv4",
+        "description": "Domain Controller IP Address"
+      },
+      {
+        "name": "mscldap.netlogon.lm_token",
+        "type": "FT_UINT16",
+        "description": "MUST be set to 0xFFFF"
+      },
+      {
+        "name": "mscldap.netlogon.nt_token",
+        "type": "FT_UINT16",
+        "description": "MUST be set to 0xFFFF"
+      },
+      {
+        "name": "mscldap.netlogon.flags",
+        "type": "FT_UINT32",
+        "description": "Netlogon flags describing the DC properties"
+      },
+      {
+        "name": "mscldap.ntver.flags",
+        "type": "FT_UINT32",
+        "description": "NETLOGON_NT_VERSION Options Bits"
+      },
+      {
+        "name": "mscldap.domain.guid",
+        "type": "FT_GUID",
+        "description": "Value of the NC's GUID attribute"
+      },
+      {
+        "name": "mscldap.forest",
+        "type": "FT_STRING",
+        "description": "DNS name of the forest"
+      },
+      {
+        "name": "mscldap.domain",
+        "type": "FT_STRING",
+        "description": "DNS name of the NC"
+      },
+      {
+        "name": "mscldap.hostname",
+        "type": "FT_STRING",
+        "description": "DNS name of server"
+      },
+      {
+        "name": "mscldap.nb_domain",
+        "type": "FT_STRINGZ",
+        "description": "NetBIOS name of the NC"
+      },
+      {
+        "name": "mscldap.nb_hostname",
+        "type": "FT_STRINGZ",
+        "description": "NetBIOS name of the server"
+      },
+      {
+        "name": "mscldap.username",
+        "type": "FT_STRINGZ",
+        "description": "User specified in client's request"
+      },
+      {
+        "name": "mscldap.sitename",
+        "type": "FT_STRING",
+        "description": "Site name of the server"
+      },
+      {
+        "name": "mscldap.clientsitename",
+        "type": "FT_STRING",
+        "description": "Site name of the client"
+      },
+      {
+        "name": "mscldap.nextclosestsitename",
+        "type": "FT_STRING",
+        "description": "Name of the site that is closest by cost to ClientSiteName without being equal"
+      },
+      {
+        "name": "ldap.sid",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mscldap.ntver.searchflags.v1",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.v5",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.v5ex",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.v5ep",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.vcs",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.vnt4",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.vpdc",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.vip",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.vl",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.ntver.searchflags.vgc",
+        "type": "FT_BOOLEAN",
+        "description": "See section 6.3.1.1 of MS-ADTS specification"
+      },
+      {
+        "name": "mscldap.netlogon.flags.pdc",
+        "type": "FT_BOOLEAN",
+        "description": "Is this DC a PDC or not?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.gc",
+        "type": "FT_BOOLEAN",
+        "description": "Does this dc service as a GLOBAL CATALOGUE?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.ldap",
+        "type": "FT_BOOLEAN",
+        "description": "Does this DC act as an LDAP server?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.ds",
+        "type": "FT_BOOLEAN",
+        "description": "Does this dc provide DS services?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.kdc",
+        "type": "FT_BOOLEAN",
+        "description": "Does this dc act as a KDC?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.timeserv",
+        "type": "FT_BOOLEAN",
+        "description": "Does this dc provide time services (ntp) ?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.closest",
+        "type": "FT_BOOLEAN",
+        "description": "Is this the closest dc?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.writable",
+        "type": "FT_BOOLEAN",
+        "description": "Is this dc writable?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.good_timeserv",
+        "type": "FT_BOOLEAN",
+        "description": "Is this a Good Time Server? (i.e. does it have a hardware clock)"
+      },
+      {
+        "name": "mscldap.netlogon.flags.ndnc",
+        "type": "FT_BOOLEAN",
+        "description": "Is this an NDNC dc?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.rodc",
+        "type": "FT_BOOLEAN",
+        "description": "Is this an read only dc?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.writabledc",
+        "type": "FT_BOOLEAN",
+        "description": "Is this an writable dc (Windows 2008)?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.dnsname",
+        "type": "FT_BOOLEAN",
+        "description": "Does the server have a dns name (Windows 2008)?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.defaultnc",
+        "type": "FT_BOOLEAN",
+        "description": "Is this the default NC (Windows 2008)?"
+      },
+      {
+        "name": "mscldap.netlogon.flags.forestnc",
+        "type": "FT_BOOLEAN",
+        "description": "Is the NC the default forest root(Windows 2008)?"
+      },
+      {
+        "name": "ldap.guid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_CREATE_CHILD",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_DELETE_CHILD",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_LIST",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_SELF_WRITE",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_READ_PROP",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_WRITE_PROP",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_DELETE_TREE",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_LIST_OBJECT",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.AccessMask.ADS_CONTROL_ACCESS",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.LDAPMessage_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.object_security_flag",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.ancestor_first_flag",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.public_data_only_flag",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.incremental_value_flag",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.oid",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.gssapi_encrypted_payload",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.SearchControlValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.SortKeyList",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.SortResult_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.DirSyncControlValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.PasswdModifyRequestValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.CancelRequestValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.SyncRequestValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.SyncStateValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.SyncDoneValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.SyncInfoValue",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.PasswordPolicyResponseValue_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.messageID",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.protocolOp",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.controls",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.bindRequest_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.bindResponse_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.unbindRequest_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.searchRequest_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.searchResEntry_element",
+        "type": "FT_NONE",
+        "description": "SearchResultEntry"
+      },
+      {
+        "name": "ldap.searchResDone_element",
+        "type": "FT_NONE",
+        "description": "SearchResultDone"
+      },
+      {
+        "name": "ldap.searchResRef",
+        "type": "FT_UINT32",
+        "description": "SearchResultReference"
+      },
+      {
+        "name": "ldap.modifyRequest_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.modifyResponse_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.addRequest_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.addResponse_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.delRequest",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.delResponse_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.modDNRequest_element",
+        "type": "FT_NONE",
+        "description": "ModifyDNRequest"
+      },
+      {
+        "name": "ldap.modDNResponse_element",
+        "type": "FT_NONE",
+        "description": "ModifyDNResponse"
+      },
+      {
+        "name": "ldap.compareRequest_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.compareResponse_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.abandonRequest",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.extendedReq_element",
+        "type": "FT_NONE",
+        "description": "ExtendedRequest"
+      },
+      {
+        "name": "ldap.extendedResp_element",
+        "type": "FT_NONE",
+        "description": "ExtendedResponse"
+      },
+      {
+        "name": "ldap.intermediateResponse_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.AttributeDescription",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.attributeDesc",
+        "type": "FT_STRING",
+        "description": "AttributeDescription"
+      },
+      {
+        "name": "ldap.assertionValue",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.type",
+        "type": "FT_STRING",
+        "description": "AttributeDescription"
+      },
+      {
+        "name": "ldap.vals",
+        "type": "FT_UINT32",
+        "description": "SET_OF_AttributeValue"
+      },
+      {
+        "name": "ldap.AttributeValue",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.resultCode",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.matchedDN",
+        "type": "FT_STRING",
+        "description": "LDAPDN"
+      },
+      {
+        "name": "ldap.errorMessage",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.referral",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.LDAPURL",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.Control_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.controlType",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.criticality",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "ldap.controlValue",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.version",
+        "type": "FT_UINT32",
+        "description": "INTEGER_1_127"
+      },
+      {
+        "name": "ldap.name",
+        "type": "FT_STRING",
+        "description": "LDAPDN"
+      },
+      {
+        "name": "ldap.authentication",
+        "type": "FT_UINT32",
+        "description": "AuthenticationChoice"
+      },
+      {
+        "name": "ldap.simple",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.sasl_element",
+        "type": "FT_NONE",
+        "description": "SaslCredentials"
+      },
+      {
+        "name": "ldap.ntlmsspNegotiate",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.ntlmsspAuth",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.mechanism",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.credentials",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.bindResponse_resultCode",
+        "type": "FT_UINT32",
+        "description": "BindResponse_resultCode"
+      },
+      {
+        "name": "ldap.bindResponse_matchedDN",
+        "type": "FT_STRING",
+        "description": "T_bindResponse_matchedDN"
+      },
+      {
+        "name": "ldap.serverSaslCreds",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.baseObject",
+        "type": "FT_STRING",
+        "description": "LDAPDN"
+      },
+      {
+        "name": "ldap.scope",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.derefAliases",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.sizeLimit",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_maxInt"
+      },
+      {
+        "name": "ldap.timeLimit",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_maxInt"
+      },
+      {
+        "name": "ldap.typesOnly",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "ldap.filter",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.searchRequest_attributes",
+        "type": "FT_UINT32",
+        "description": "AttributeDescriptionList"
+      },
+      {
+        "name": "ldap.and",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.and_item",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.or",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.or_item",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.not",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.equalityMatch_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.substrings_element",
+        "type": "FT_NONE",
+        "description": "SubstringFilter"
+      },
+      {
+        "name": "ldap.greaterOrEqual_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.lessOrEqual_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.present",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.approxMatch_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.extensibleMatch_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.substringFilter_substrings",
+        "type": "FT_UINT32",
+        "description": "T_substringFilter_substrings"
+      },
+      {
+        "name": "ldap.substringFilter_substrings_item",
+        "type": "FT_UINT32",
+        "description": "T_substringFilter_substrings_item"
+      },
+      {
+        "name": "ldap.initial",
+        "type": "FT_STRING",
+        "description": "LDAPString"
+      },
+      {
+        "name": "ldap.any",
+        "type": "FT_STRING",
+        "description": "LDAPString"
+      },
+      {
+        "name": "ldap.final",
+        "type": "FT_STRING",
+        "description": "LDAPString"
+      },
+      {
+        "name": "ldap.matchingRule",
+        "type": "FT_STRING",
+        "description": "MatchingRuleId"
+      },
+      {
+        "name": "ldap.matchValue",
+        "type": "FT_STRING",
+        "description": "AssertionValue"
+      },
+      {
+        "name": "ldap.dnAttributes",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "ldap.objectName",
+        "type": "FT_STRING",
+        "description": "LDAPDN"
+      },
+      {
+        "name": "ldap.searchResultEntry_attributes",
+        "type": "FT_UINT32",
+        "description": "PartialAttributeList"
+      },
+      {
+        "name": "ldap.PartialAttributeList_item_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.object",
+        "type": "FT_STRING",
+        "description": "LDAPDN"
+      },
+      {
+        "name": "ldap.modifyRequest_modification",
+        "type": "FT_UINT32",
+        "description": "ModifyRequest_modification"
+      },
+      {
+        "name": "ldap.modifyRequest_modification_item_element",
+        "type": "FT_NONE",
+        "description": "T_modifyRequest_modification_item"
+      },
+      {
+        "name": "ldap.operation",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.modification_element",
+        "type": "FT_NONE",
+        "description": "AttributeTypeAndValues"
+      },
+      {
+        "name": "ldap.entry",
+        "type": "FT_STRING",
+        "description": "LDAPDN"
+      },
+      {
+        "name": "ldap.attributes",
+        "type": "FT_UINT32",
+        "description": "AttributeList"
+      },
+      {
+        "name": "ldap.AttributeList_item_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.newrdn",
+        "type": "FT_STRING",
+        "description": "RelativeLDAPDN"
+      },
+      {
+        "name": "ldap.deleteoldrdn",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "ldap.newSuperior",
+        "type": "FT_STRING",
+        "description": "LDAPDN"
+      },
+      {
+        "name": "ldap.ava_element",
+        "type": "FT_NONE",
+        "description": "AttributeValueAssertion"
+      },
+      {
+        "name": "ldap.requestName",
+        "type": "FT_STRING",
+        "description": "LDAPOID"
+      },
+      {
+        "name": "ldap.requestValue",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.extendedResponse_resultCode",
+        "type": "FT_UINT32",
+        "description": "ExtendedResponse_resultCode"
+      },
+      {
+        "name": "ldap.responseName",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "ldap.response",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "ldap.intermediateResponse_responseValue",
+        "type": "FT_BYTES",
+        "description": "T_intermediateResponse_responseValue"
+      },
+      {
+        "name": "ldap.size",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "ldap.cookie",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "ldap.SortKeyList_item_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.attributeType",
+        "type": "FT_STRING",
+        "description": "AttributeDescription"
+      },
+      {
+        "name": "ldap.orderingRule",
+        "type": "FT_STRING",
+        "description": "MatchingRuleId"
+      },
+      {
+        "name": "ldap.reverseOrder",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "ldap.sortResult",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.flags",
+        "type": "FT_UINT32",
+        "description": "DirSyncFlags"
+      },
+      {
+        "name": "ldap.maxBytes",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "ldap.userIdentity",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "ldap.oldPasswd",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "ldap.newPasswd",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "ldap.cancelID",
+        "type": "FT_UINT32",
+        "description": "MessageID"
+      },
+      {
+        "name": "ldap.mode",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.reloadHint",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "ldap.state",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.entryUUID",
+        "type": "FT_BYTES",
+        "description": "SyncUUID"
+      },
+      {
+        "name": "ldap.refreshDeletes",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "ldap.newcookie",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "ldap.refreshDelete_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.refreshDone",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "ldap.refreshPresent_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.syncIdSet_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.syncUUIDs",
+        "type": "FT_UINT32",
+        "description": "SET_OF_SyncUUID"
+      },
+      {
+        "name": "ldap.SyncUUID",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "ldap.warning",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.timeBeforeExpiration",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_maxInt"
+      },
+      {
+        "name": "ldap.graceAuthNsRemaining",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_maxInt"
+      },
+      {
+        "name": "ldap.error",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "ldap.exceeded_filter_length",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "ldap.too_many_filter_elements",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 60,
+    "by_pcap": {
+      "credslayer_ldap_simpleauth.pcap": [
+        "ldap_ldap_AttributeDescription",
+        "ldap_ldap_LDAPMessage_element",
+        "ldap_ldap_and",
+        "ldap_ldap_and_item",
+        "ldap_ldap_assertionValue",
+        "ldap_ldap_attributeDesc",
+        "ldap_ldap_authentication",
+        "ldap_ldap_baseObject",
+        "ldap_ldap_bindRequest_element",
+        "ldap_ldap_bindResponse_element",
+        "ldap_ldap_bindResponse_resultCode",
+        "ldap_ldap_derefAliases",
+        "ldap_ldap_equalityMatch_element",
+        "ldap_ldap_errorMessage",
+        "ldap_ldap_filter",
+        "ldap_ldap_matchedDN",
+        "ldap_ldap_messageID",
+        "ldap_ldap_name",
+        "ldap_ldap_present",
+        "ldap_ldap_protocolOp",
+        "ldap_ldap_response_to",
+        "ldap_ldap_scope",
+        "ldap_ldap_searchRequest_attributes",
+        "ldap_ldap_searchRequest_element",
+        "ldap_ldap_simple",
+        "ldap_ldap_sizeLimit",
+        "ldap_ldap_time",
+        "ldap_ldap_timeLimit",
+        "ldap_ldap_typesOnly",
+        "ldap_ldap_version",
+        "text"
+      ],
+      "wireshark_ldap_dirsync.cap": [
+        "gss-api",
+        "ldap_ldap_Control_element",
+        "ldap_ldap_DirSyncControlValue_element",
+        "ldap_ldap_LDAPMessage_element",
+        "ldap_ldap_authentication",
+        "ldap_ldap_baseObject",
+        "ldap_ldap_bindRequest_element",
+        "ldap_ldap_bindResponse_element",
+        "ldap_ldap_bindResponse_resultCode",
+        "ldap_ldap_controlType",
+        "ldap_ldap_controlValue",
+        "ldap_ldap_controls",
+        "ldap_ldap_cookie",
+        "ldap_ldap_credentials",
+        "ldap_ldap_criticality",
+        "ldap_ldap_derefAliases",
+        "ldap_ldap_errorMessage",
+        "ldap_ldap_filter",
+        "ldap_ldap_flags",
+        "ldap_ldap_matchedDN",
+        "ldap_ldap_maxBytes",
+        "ldap_ldap_mechanism",
+        "ldap_ldap_messageID",
+        "ldap_ldap_name",
+        "ldap_ldap_present",
+        "ldap_ldap_protocolOp",
+        "ldap_ldap_response_to",
+        "ldap_ldap_resultCode",
+        "ldap_ldap_sasl_buffer_length",
+        "ldap_ldap_sasl_element",
+        "ldap_ldap_scope",
+        "ldap_ldap_searchRequest_attributes",
+        "ldap_ldap_searchRequest_element",
+        "ldap_ldap_searchResDone_element",
+        "ldap_ldap_serverSaslCreds",
+        "ldap_ldap_sizeLimit",
+        "ldap_ldap_time",
+        "ldap_ldap_timeLimit",
+        "ldap_ldap_typesOnly",
+        "ldap_ldap_unbindRequest_element",
+        "ldap_ldap_version",
+        "spnego",
+        "text"
+      ],
+      "wireshark_ldap_krb5.cap": [
+        "gss-api",
+        "ldap_ldap_AttributeDescription",
+        "ldap_ldap_LDAPMessage_element",
+        "ldap_ldap_authentication",
+        "ldap_ldap_baseObject",
+        "ldap_ldap_bindRequest_element",
+        "ldap_ldap_bindResponse_element",
+        "ldap_ldap_bindResponse_resultCode",
+        "ldap_ldap_credentials",
+        "ldap_ldap_derefAliases",
+        "ldap_ldap_errorMessage",
+        "ldap_ldap_filter",
+        "ldap_ldap_gssapi_encrypted_payload",
+        "ldap_ldap_matchedDN",
+        "ldap_ldap_mechanism",
+        "ldap_ldap_messageID",
+        "ldap_ldap_name",
+        "ldap_ldap_present",
+        "ldap_ldap_protocolOp",
+        "ldap_ldap_response_to",
+        "ldap_ldap_sasl_buffer_length",
+        "ldap_ldap_sasl_element",
+        "ldap_ldap_scope",
+        "ldap_ldap_searchRequest_attributes",
+        "ldap_ldap_searchRequest_element",
+        "ldap_ldap_serverSaslCreds",
+        "ldap_ldap_sizeLimit",
+        "ldap_ldap_time",
+        "ldap_ldap_timeLimit",
+        "ldap_ldap_typesOnly",
+        "ldap_ldap_version",
+        "spnego",
+        "text"
+      ],
+      "wireshark_ldap_search.pcap": [
+        "ldap_ldap_LDAPMessage_element",
+        "ldap_ldap_and",
+        "ldap_ldap_and_item",
+        "ldap_ldap_any",
+        "ldap_ldap_assertionValue",
+        "ldap_ldap_attributeDesc",
+        "ldap_ldap_authentication",
+        "ldap_ldap_baseObject",
+        "ldap_ldap_bindRequest_element",
+        "ldap_ldap_bindResponse_element",
+        "ldap_ldap_bindResponse_resultCode",
+        "ldap_ldap_derefAliases",
+        "ldap_ldap_equalityMatch_element",
+        "ldap_ldap_errorMessage",
+        "ldap_ldap_filter",
+        "ldap_ldap_matchedDN",
+        "ldap_ldap_messageID",
+        "ldap_ldap_name",
+        "ldap_ldap_protocolOp",
+        "ldap_ldap_response_to",
+        "ldap_ldap_resultCode",
+        "ldap_ldap_scope",
+        "ldap_ldap_searchRequest_attributes",
+        "ldap_ldap_searchRequest_element",
+        "ldap_ldap_searchResDone_element",
+        "ldap_ldap_simple",
+        "ldap_ldap_sizeLimit",
+        "ldap_ldap_substringFilter_substrings",
+        "ldap_ldap_substringFilter_substrings_item",
+        "ldap_ldap_substrings_element",
+        "ldap_ldap_time",
+        "ldap_ldap_timeLimit",
+        "ldap_ldap_type",
+        "ldap_ldap_typesOnly",
+        "ldap_ldap_unbindRequest_element",
+        "ldap_ldap_version",
+        "text"
+      ],
+      "wireshark_ldap_ssl.pcapng": [
+        "ldap_ldap_LDAPMessage_element",
+        "ldap_ldap_errorMessage",
+        "ldap_ldap_extendedReq_element",
+        "ldap_ldap_extendedResp_element",
+        "ldap_ldap_extendedResponse_resultCode",
+        "ldap_ldap_matchedDN",
+        "ldap_ldap_messageID",
+        "ldap_ldap_protocolOp",
+        "ldap_ldap_requestName",
+        "ldap_ldap_response_to",
+        "ldap_ldap_time"
+      ]
+    },
+    "union": [
+      "gss-api",
+      "ldap_ldap_AttributeDescription",
+      "ldap_ldap_Control_element",
+      "ldap_ldap_DirSyncControlValue_element",
+      "ldap_ldap_LDAPMessage_element",
+      "ldap_ldap_and",
+      "ldap_ldap_and_item",
+      "ldap_ldap_any",
+      "ldap_ldap_assertionValue",
+      "ldap_ldap_attributeDesc",
+      "ldap_ldap_authentication",
+      "ldap_ldap_baseObject",
+      "ldap_ldap_bindRequest_element",
+      "ldap_ldap_bindResponse_element",
+      "ldap_ldap_bindResponse_resultCode",
+      "ldap_ldap_controlType",
+      "ldap_ldap_controlValue",
+      "ldap_ldap_controls",
+      "ldap_ldap_cookie",
+      "ldap_ldap_credentials",
+      "ldap_ldap_criticality",
+      "ldap_ldap_derefAliases",
+      "ldap_ldap_equalityMatch_element",
+      "ldap_ldap_errorMessage",
+      "ldap_ldap_extendedReq_element",
+      "ldap_ldap_extendedResp_element",
+      "ldap_ldap_extendedResponse_resultCode",
+      "ldap_ldap_filter",
+      "ldap_ldap_flags",
+      "ldap_ldap_gssapi_encrypted_payload",
+      "ldap_ldap_matchedDN",
+      "ldap_ldap_maxBytes",
+      "ldap_ldap_mechanism",
+      "ldap_ldap_messageID",
+      "ldap_ldap_name",
+      "ldap_ldap_present",
+      "ldap_ldap_protocolOp",
+      "ldap_ldap_requestName",
+      "ldap_ldap_response_to",
+      "ldap_ldap_resultCode",
+      "ldap_ldap_sasl_buffer_length",
+      "ldap_ldap_sasl_element",
+      "ldap_ldap_scope",
+      "ldap_ldap_searchRequest_attributes",
+      "ldap_ldap_searchRequest_element",
+      "ldap_ldap_searchResDone_element",
+      "ldap_ldap_serverSaslCreds",
+      "ldap_ldap_simple",
+      "ldap_ldap_sizeLimit",
+      "ldap_ldap_substringFilter_substrings",
+      "ldap_ldap_substringFilter_substrings_item",
+      "ldap_ldap_substrings_element",
+      "ldap_ldap_time",
+      "ldap_ldap_timeLimit",
+      "ldap_ldap_type",
+      "ldap_ldap_typesOnly",
+      "ldap_ldap_unbindRequest_element",
+      "ldap_ldap_version",
+      "spnego",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 12,
+    "fields": [
+      "ldap.authentication",
+      "ldap.bindResponse_resultCode",
+      "ldap.credentials",
+      "ldap.errorMessage",
+      "ldap.extendedResponse_resultCode",
+      "ldap.maxBytes",
+      "ldap.messageID",
+      "ldap.name",
+      "ldap.requestName",
+      "ldap.resultCode",
+      "ldap.version",
+      "text"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "57/209 (27%)",
+    "pcap_vs_extracted": "11/57 (19%)",
+    "t1_extracted": "11/11 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "ldap_ldap_protocolOp",
+        "field": "ldap.protocolOp",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap",
+          "wireshark_ldap_ssl.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_matchedDN",
+        "field": "ldap.matchedDN",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap",
+          "wireshark_ldap_ssl.pcapng"
+        ],
+        "description": "LDAPDN"
+      },
+      {
+        "ek_name": "ldap_ldap_baseObject",
+        "field": "ldap.baseObject",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "LDAPDN"
+      },
+      {
+        "ek_name": "ldap_ldap_scope",
+        "field": "ldap.scope",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_derefAliases",
+        "field": "ldap.derefAliases",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_sizeLimit",
+        "field": "ldap.sizeLimit",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "INTEGER_0_maxInt"
+      },
+      {
+        "ek_name": "ldap_ldap_timeLimit",
+        "field": "ldap.timeLimit",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "INTEGER_0_maxInt"
+      },
+      {
+        "ek_name": "ldap_ldap_typesOnly",
+        "field": "ldap.typesOnly",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "BOOLEAN"
+      },
+      {
+        "ek_name": "ldap_ldap_filter",
+        "field": "ldap.filter",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_searchRequest_attributes",
+        "field": "ldap.searchRequest_attributes",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "AttributeDescriptionList"
+      },
+      {
+        "ek_name": "ldap_ldap_present",
+        "field": "ldap.present",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_sasl_buffer_length",
+        "field": "ldap.sasl_buffer_length",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_AttributeDescription",
+        "field": "ldap.AttributeDescription",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_krb5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_attributeDesc",
+        "field": "ldap.attributeDesc",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "AttributeDescription"
+      },
+      {
+        "ek_name": "ldap_ldap_assertionValue",
+        "field": "ldap.assertionValue",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_simple",
+        "field": "ldap.simple",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_mechanism",
+        "field": "ldap.mechanism",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_serverSaslCreds",
+        "field": "ldap.serverSaslCreds",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap",
+          "wireshark_ldap_krb5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_and",
+        "field": "ldap.and",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_and_item",
+        "field": "ldap.and_item",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_ldap_simpleauth.pcap",
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_gssapi_encrypted_payload",
+        "field": "ldap.gssapi_encrypted_payload",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_krb5.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_controls",
+        "field": "ldap.controls",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_type",
+        "field": "ldap.type",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "AttributeDescription"
+      },
+      {
+        "ek_name": "ldap_ldap_controlType",
+        "field": "ldap.controlType",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_criticality",
+        "field": "ldap.criticality",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap"
+        ],
+        "description": "BOOLEAN"
+      },
+      {
+        "ek_name": "ldap_ldap_controlValue",
+        "field": "ldap.controlValue",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "ldap_ldap_substringFilter_substrings",
+        "field": "ldap.substringFilter_substrings",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "T_substringFilter_substrings"
+      },
+      {
+        "ek_name": "ldap_ldap_substringFilter_substrings_item",
+        "field": "ldap.substringFilter_substrings_item",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "T_substringFilter_substrings_item"
+      },
+      {
+        "ek_name": "ldap_ldap_any",
+        "field": "ldap.any",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_search.pcap"
+        ],
+        "description": "LDAPString"
+      },
+      {
+        "ek_name": "ldap_ldap_cookie",
+        "field": "ldap.cookie",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap"
+        ],
+        "description": "OCTET_STRING"
+      },
+      {
+        "ek_name": "ldap_ldap_flags",
+        "field": "ldap.flags",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_ldap_dirsync.cap"
+        ],
+        "description": "DirSyncFlags"
+      }
+    ],
+    "summary": {
+      "t1_total": 45,
+      "t1_in_pcap": 11,
+      "t1_covered": 11,
+      "t2_total": 113,
+      "t2_in_pcap": 31,
+      "t2_covered": 0,
+      "t3_skipped": 48,
+      "t4_ignored": 3
+    }
+  }
+}

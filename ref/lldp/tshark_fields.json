@@ -1,0 +1,3590 @@
+{
+  "protocol": "lldp",
+  "display_filter": "lldp",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:51:41.615288+00:00",
+  "dissector_fields": {
+    "total": 424,
+    "by_type": {
+      "FT_BOOLEAN": 125,
+      "FT_BYTES": 15,
+      "FT_ETHER": 7,
+      "FT_FLOAT": 4,
+      "FT_GUID": 7,
+      "FT_IPv4": 12,
+      "FT_IPv6": 4,
+      "FT_NONE": 8,
+      "FT_OID": 1,
+      "FT_STRING": 18,
+      "FT_STRINGZ": 3,
+      "FT_STRINGZPAD": 7,
+      "FT_SYSTEM_ID": 1,
+      "FT_UINT16": 66,
+      "FT_UINT24": 13,
+      "FT_UINT32": 25,
+      "FT_UINT40": 2,
+      "FT_UINT8": 106
+    },
+    "fields": [
+      {
+        "name": "lldp.tlv.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.other",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.repeater",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.bridge",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.wlan_access_pt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.router",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.telephone",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.docsis_cable_device",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.station_only",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.cvlan",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.svlan",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system_cap.tpmr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system.name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.system.desc",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.other",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.repeater",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.bridge",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.wlan_access_pt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.router",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.telephone",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.docsis_cable_device",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.station_only",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.cvlan",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.svlan",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv.enable_system_cap.tpmr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.chassis.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.chassis.id",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.chassis.id.mac",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "lldp.chassis.id.ip4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.chassis.id.ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "lldp.port.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.port.id",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.port.desc",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.port.id.mac",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "lldp.network_address.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.port.id.ip4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.port.id.ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "lldp.time_to_live",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.pdu_type",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "lldp.mgn.address.len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.mgn.address.subtype",
+        "type": "FT_UINT8",
+        "description": "Undefined"
+      },
+      {
+        "name": "lldp.mgn.addr.ip4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.mgn.addr.ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "lldp.mgn.addr.hex",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.mgn.interface.subtype",
+        "type": "FT_UINT8",
+        "description": "Undefined"
+      },
+      {
+        "name": "lldp.mgn.interface.number",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.mgn.obj.len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.mgn.obj.id",
+        "type": "FT_OID",
+        "description": ""
+      },
+      {
+        "name": "lldp.orgtlv.oui",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.proto",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.version",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.dcbx.max_version",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.dcbx.control.seq",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.control.ack",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.enabled",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.willing",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.error",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio0",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio1",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio3",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio4",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio5",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio6",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.pgid_prio7",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per4",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per5",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per6",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.per7",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pg.numtcs",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio5",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio6",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.prio7",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.pfc.numtcs",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.app.proto",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.app.sf",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.app.oui",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.app.prio",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.feature.llink.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.port_and_vlan_id_flag",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.port_and_vlan_id_flag.supported",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.port_and_vlan_id_flag.enabled",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.port_vlan.id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.port_proto_vlan.id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.vlan.id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.vlan.name_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.vlan.name",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.proto.id_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.proto.id",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.aggregation_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.aggregation_status.cap",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.aggregation_status.enabled",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.aggregation_status.porttype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1.aggregated_port_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio5",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio6",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.cnpv.prio7",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio0",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio1",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio3",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio5",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio6",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qau.ready.prio7",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.ieee.willing",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.cbs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.maxtcs",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa0",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa1",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa2",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa3",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa4",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa5",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa6",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.ets.tsa7",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.dcbx.ieee.pfc.mbc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.ieee.pfc.numtcs",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.ieee.app.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.ieee.app.prio",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.dcbx.iee.app.sf",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mac_phy_auto_neg_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mac_phy_auto_neg_status.supported",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mac_phy_auto_neg_status.enabled",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_tfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_t",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_xfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_x",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_bpause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_spause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_apause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_pause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_t2fd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_t2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_txfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_tx",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_t4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.10base_tfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.10base_t",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.other",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_tfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_t",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_xfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_x",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_bpause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_spause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_apause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_pause",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_t2fd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_t2",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_txfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_tx",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_t4",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.10base_tfd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.10base_t",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.other",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.pmd_mau_type",
+        "type": "FT_UINT16",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_support",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_support.port_class",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_support.supported",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_support.enabled",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_support.pse_pairs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_pse_pair",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_class",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_type",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_source",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_priority",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_power_pd4pid",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_pde_requested",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.mdi_pse_allocated",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_ds_pd_requested_power_value_mode_a",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_ds_pd_requested_power_value_mode_b",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_ds_pse_allocated_power_value_alt_a",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_ds_pse_allocated_power_value_alt_b",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_power_status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_pse_powering_status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_pd_powered_status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_pse_power_pairs_ext",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_ds_pwr_class_ext_a",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_ds_pwr_class_ext_b",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_pwr_class_ext_",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_system_setup",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_power_type_ext",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_power.pd_load",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_pse_maximum_available_power_value",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_autoclass",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_pse_autoclass_support",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_autoclass_completed",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_autoclass_request",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_autoclass_reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_power_down",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_power_down_request",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.bt_power_down_time",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.aggregation_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.aggregation_status.cap",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.aggregation_status.enabled",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.aggregated_port_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.max_frame_size",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.eee.transmit",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.eee.receive",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.eee.fallback_receive",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.eee.echo_transmit",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3.eee.echo_receive",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_support_caps",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_support_caps.std",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_support_caps.rr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_support_caps.rte",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_support_caps.ecp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_support_caps.vdp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_configure_caps",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_configure_caps.std",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_configure_caps.rr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_configure_caps.rte",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_configure_caps.ecp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_configure_caps.vdp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_supported_vsi",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_configured_vsi",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_1qbg.evb_retrans_timer",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3br.eac",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3br.aec.support",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3br.aec.enable",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3br.aec.active",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3br.aec.addfragsize",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.ieee.802_3br.aec.reserved",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.caps",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.caps.llpd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.caps.network_policy",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.caps.location_id",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.caps.mdi_pse",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.caps.mid_pd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.caps.inventory",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.subtype.class",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.media.app_type",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.media.policy_flag",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.tag_flag",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.vlan_id",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.l2_prio",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.dscp",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.data_format",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.lat_resolution",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.latitude",
+        "type": "FT_UINT40",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.long_resolution",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.longitude",
+        "type": "FT_UINT40",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.alt_type",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.media.loc.alt_resolution",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.altitude",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.ver",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.loc.datum",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.civic.length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.civic.what",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.media.civic.country",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.civic.type",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.media.civic.addr_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.civic.value",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.ecs",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.power.type",
+        "type": "FT_UINT8",
+        "description": "Unknown"
+      },
+      {
+        "name": "lldp.media.power.source",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.power.prio",
+        "type": "FT_UINT8",
+        "description": "Reserved"
+      },
+      {
+        "name": "lldp.media.power.value",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.hardware",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.firmware",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.software",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.sn",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.manufacturer",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.model",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "lldp.media.asset",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.subtype",
+        "type": "FT_UINT8",
+        "description": "PROFINET Subtype"
+      },
+      {
+        "name": "lldp.profinet.port_rx_delay_local",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.port_rx_delay_remote",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.port_tx_delay_local",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.port_tx_delay_remote",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.cable_delay_local",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.rtc2_port_status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.rtc3_port_status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.rtc3_port_status.fragmentation",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.rtc3_port_status.reserved",
+        "type": "FT_UINT16",
+        "description": "reserved"
+      },
+      {
+        "name": "lldp.profinet.rtc3_port_status.preambleLength",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.mrp_domain_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.mrpic_domain_id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.mrpic_role",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.mrpic_micposition",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.nme_domain_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.nme_management_addr",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.nme_management_addr_str_length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.nme_management_addr_subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.nme_name_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.nme_parameter_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.time_domain_number",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.time_domain_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.time_domain_master_identity",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.mrrt_port_status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.cm_mac_add",
+        "type": "FT_ETHER",
+        "description": "CMResponderMacAdd or CMInitiatorMacAdd"
+      },
+      {
+        "name": "lldp.profinet.master_source_address",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.subdomain_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.ir_data_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "lldp.profinet.length_of_period_valid",
+        "type": "FT_UINT32",
+        "description": "Length field is valid/invalid"
+      },
+      {
+        "name": "lldp.profinet.length_of_period_length",
+        "type": "FT_UINT32",
+        "description": "Duration of a cycle in nanoseconds"
+      },
+      {
+        "name": "lldp.profinet.red_period_begin_valid",
+        "type": "FT_UINT32",
+        "description": "Offset field is valid/invalid"
+      },
+      {
+        "name": "lldp.profinet.red_period_begin_offset",
+        "type": "FT_UINT32",
+        "description": "RT_CLASS_3 period, offset to cycle begin in nanoseconds"
+      },
+      {
+        "name": "lldp.profinet.orange_period_begin_valid",
+        "type": "FT_UINT32",
+        "description": "Offset field is valid/invalid"
+      },
+      {
+        "name": "lldp.profinet.orange_period_begin_offset",
+        "type": "FT_UINT32",
+        "description": "RT_CLASS_2 period, offset to cycle begin in nanoseconds"
+      },
+      {
+        "name": "lldp.profinet.green_period_begin_valid",
+        "type": "FT_UINT32",
+        "description": "Offset field is valid/invalid"
+      },
+      {
+        "name": "lldp.profinet.green_period_begin_offset",
+        "type": "FT_UINT32",
+        "description": "Unrestricted period, offset to cycle begin in nanoseconds"
+      },
+      {
+        "name": "lldp.cisco.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.upoe",
+        "type": "FT_UINT8",
+        "description": "PSE/PD Capabilities"
+      },
+      {
+        "name": "lldp.cisco.upoe.supported",
+        "type": "FT_BOOLEAN",
+        "description": "UPOE (4-pair POE) Supported"
+      },
+      {
+        "name": "lldp.cisco.upoe.altb_detection_required",
+        "type": "FT_BOOLEAN",
+        "description": "ALT-B pair Detection/Classification Required"
+      },
+      {
+        "name": "lldp.cisco.upoe.pd_altb_desired",
+        "type": "FT_BOOLEAN",
+        "description": "PD ALT-B Pair Desired"
+      },
+      {
+        "name": "lldp.cisco.upoe.pse_altb_oper",
+        "type": "FT_BOOLEAN",
+        "description": "PSE ALT-B Pair Operational State"
+      },
+      {
+        "name": "lldp.cisco.portstate",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.noderole",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.nodeid",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.spinelevel",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.podid",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.fabricname",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.apiclist",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.apicid",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.apicipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.apicuuid",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.nodeip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.portrole",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.version",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.fabricvlan",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.serialno",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.model",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.nodename",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.portmode",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.authcookie",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.apicmode",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.cisco.fabricd",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.tlv_subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.group",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.identifier",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.transceiver_vendor_product_revision",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.single_mode",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.multi_mode_50",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.multi_mode_62_5",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.tx_current_output_power",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.rx_current_input_power",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.rx_input_snr",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.lineloss",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.mac_trace_request",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.trace_mac_address",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.requesters_mac_address",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.maximum_depth",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.mac_trace_reply",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.answering_mac_address",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.actual_depth",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.name_of_replying_device",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.outgoing_port_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.ipv4_address_of_replying_device",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.end_of_trace",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.ipv6_address_of_replying_device",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.incoming_port_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.trace_identifier",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.invalid_object_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.hytec.unknown_identifier_content",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.poe",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.callserver",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.cnaserver",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.fileserver",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.dot1q",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.ipphone",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.ipphone.ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.ipphone.mask",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.avaya.ipphone.gateway",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "lldp.iana.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.iana.mudurl",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.onos.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.onos.chassis",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.onos.port",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "lldp.onos.ttl",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "lldp.unknown_subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.unknown_subtype.content",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.subtype.content_remaining",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.hmac_sha_digest",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.element_type",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.state",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.mgnt_vlan",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.vlan",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.rsvd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.system_id",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.status",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya_ap.i_sid",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya.fabric.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya.fabric.fabric_connect",
+        "type": "FT_BOOLEAN",
+        "description": "Fabric Connect aka auto-sense"
+      },
+      {
+        "name": "lldp.extreme_avaya.fabric.numbvlans",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya.fabric.bvlanid",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya.fabric.sysidlength",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "lldp.extreme_avaya.fabric.sysid",
+        "type": "FT_SYSTEM_ID",
+        "description": ""
+      },
+      {
+        "name": "lldp.incorrect_length",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "lldp.excess_length",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "lldp.excess_tlv",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "lldp.bad_type",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "lldp.tlv_deprecated",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 132,
+    "by_pcap": {
+      "filtered_lldp.pcap": [
+        "lldp_lldp_chassis_id_mac",
+        "lldp_lldp_chassis_subtype",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_enabled",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_supported",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_x",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_xfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2fd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t4",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_tx",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_txfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_apause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_bpause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_pause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_spause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_x",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_xfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2fd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t4",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_tx",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_txfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_apause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_bpause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_pause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_spause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_other",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_other",
+        "lldp_lldp_ieee_802_3_pmd_mau_type",
+        "lldp_lldp_ieee_802_3_subtype",
+        "lldp_lldp_mgn_addr_ip4",
+        "lldp_lldp_mgn_addr_ip6",
+        "lldp_lldp_mgn_address_len",
+        "lldp_lldp_mgn_address_subtype",
+        "lldp_lldp_mgn_interface_number",
+        "lldp_lldp_mgn_interface_subtype",
+        "lldp_lldp_mgn_obj_len",
+        "lldp_lldp_orgtlv_oui",
+        "lldp_lldp_pdu_type",
+        "lldp_lldp_port_desc",
+        "lldp_lldp_port_id",
+        "lldp_lldp_port_subtype",
+        "lldp_lldp_time_to_live",
+        "lldp_lldp_tlv_enable_system_cap",
+        "lldp_lldp_tlv_enable_system_cap_bridge",
+        "lldp_lldp_tlv_enable_system_cap_cvlan",
+        "lldp_lldp_tlv_enable_system_cap_docsis_cable_device",
+        "lldp_lldp_tlv_enable_system_cap_other",
+        "lldp_lldp_tlv_enable_system_cap_repeater",
+        "lldp_lldp_tlv_enable_system_cap_router",
+        "lldp_lldp_tlv_enable_system_cap_station_only",
+        "lldp_lldp_tlv_enable_system_cap_svlan",
+        "lldp_lldp_tlv_enable_system_cap_telephone",
+        "lldp_lldp_tlv_enable_system_cap_tpmr",
+        "lldp_lldp_tlv_enable_system_cap_wlan_access_pt",
+        "lldp_lldp_tlv_len",
+        "lldp_lldp_tlv_system_cap",
+        "lldp_lldp_tlv_system_cap_bridge",
+        "lldp_lldp_tlv_system_cap_cvlan",
+        "lldp_lldp_tlv_system_cap_docsis_cable_device",
+        "lldp_lldp_tlv_system_cap_other",
+        "lldp_lldp_tlv_system_cap_repeater",
+        "lldp_lldp_tlv_system_cap_router",
+        "lldp_lldp_tlv_system_cap_station_only",
+        "lldp_lldp_tlv_system_cap_svlan",
+        "lldp_lldp_tlv_system_cap_telephone",
+        "lldp_lldp_tlv_system_cap_tpmr",
+        "lldp_lldp_tlv_system_cap_wlan_access_pt",
+        "lldp_lldp_tlv_system_desc",
+        "lldp_lldp_tlv_system_name",
+        "lldp_lldp_tlv_type",
+        "text"
+      ],
+      "wireshark_lldp_detailed.pcap": [
+        "_ws_expert",
+        "lldp_lldp_chassis_id_mac",
+        "lldp_lldp_chassis_subtype",
+        "lldp_lldp_ieee_802_1_port_and_vlan_id_flag",
+        "lldp_lldp_ieee_802_1_port_and_vlan_id_flag_enabled",
+        "lldp_lldp_ieee_802_1_port_and_vlan_id_flag_supported",
+        "lldp_lldp_ieee_802_1_port_proto_vlan_id",
+        "lldp_lldp_ieee_802_1_port_vlan_id",
+        "lldp_lldp_ieee_802_1_proto_id_length",
+        "lldp_lldp_ieee_802_1_subtype",
+        "lldp_lldp_ieee_802_1_vlan_id",
+        "lldp_lldp_ieee_802_1_vlan_name",
+        "lldp_lldp_ieee_802_1_vlan_name_len",
+        "lldp_lldp_ieee_802_3_aggregated_port_id",
+        "lldp_lldp_ieee_802_3_aggregation_status",
+        "lldp_lldp_ieee_802_3_aggregation_status_cap",
+        "lldp_lldp_ieee_802_3_aggregation_status_enabled",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_enabled",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_supported",
+        "lldp_lldp_ieee_802_3_max_frame_size",
+        "lldp_lldp_ieee_802_3_mdi_power_class",
+        "lldp_lldp_ieee_802_3_mdi_power_support",
+        "lldp_lldp_ieee_802_3_mdi_power_support_enabled",
+        "lldp_lldp_ieee_802_3_mdi_power_support_port_class",
+        "lldp_lldp_ieee_802_3_mdi_power_support_pse_pairs",
+        "lldp_lldp_ieee_802_3_mdi_power_support_supported",
+        "lldp_lldp_ieee_802_3_mdi_pse_pair",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_x",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_xfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2fd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t4",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_tx",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_txfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_apause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_bpause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_pause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_spause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_x",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_xfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2fd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t4",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_tx",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_txfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_apause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_bpause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_pause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_spause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_other",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_other",
+        "lldp_lldp_ieee_802_3_pmd_mau_type",
+        "lldp_lldp_ieee_802_3_subtype",
+        "lldp_lldp_mgn_addr_hex",
+        "lldp_lldp_mgn_address_len",
+        "lldp_lldp_mgn_address_subtype",
+        "lldp_lldp_mgn_interface_number",
+        "lldp_lldp_mgn_interface_subtype",
+        "lldp_lldp_mgn_obj_len",
+        "lldp_lldp_orgtlv_oui",
+        "lldp_lldp_pdu_type",
+        "lldp_lldp_port_desc",
+        "lldp_lldp_port_id",
+        "lldp_lldp_port_subtype",
+        "lldp_lldp_time_to_live",
+        "lldp_lldp_tlv_enable_system_cap",
+        "lldp_lldp_tlv_enable_system_cap_bridge",
+        "lldp_lldp_tlv_enable_system_cap_cvlan",
+        "lldp_lldp_tlv_enable_system_cap_docsis_cable_device",
+        "lldp_lldp_tlv_enable_system_cap_other",
+        "lldp_lldp_tlv_enable_system_cap_repeater",
+        "lldp_lldp_tlv_enable_system_cap_router",
+        "lldp_lldp_tlv_enable_system_cap_station_only",
+        "lldp_lldp_tlv_enable_system_cap_svlan",
+        "lldp_lldp_tlv_enable_system_cap_telephone",
+        "lldp_lldp_tlv_enable_system_cap_tpmr",
+        "lldp_lldp_tlv_enable_system_cap_wlan_access_pt",
+        "lldp_lldp_tlv_len",
+        "lldp_lldp_tlv_system_cap",
+        "lldp_lldp_tlv_system_cap_bridge",
+        "lldp_lldp_tlv_system_cap_cvlan",
+        "lldp_lldp_tlv_system_cap_docsis_cable_device",
+        "lldp_lldp_tlv_system_cap_other",
+        "lldp_lldp_tlv_system_cap_repeater",
+        "lldp_lldp_tlv_system_cap_router",
+        "lldp_lldp_tlv_system_cap_station_only",
+        "lldp_lldp_tlv_system_cap_svlan",
+        "lldp_lldp_tlv_system_cap_telephone",
+        "lldp_lldp_tlv_system_cap_tpmr",
+        "lldp_lldp_tlv_system_cap_wlan_access_pt",
+        "lldp_lldp_tlv_system_desc",
+        "lldp_lldp_tlv_system_name",
+        "lldp_lldp_tlv_type",
+        "text"
+      ],
+      "wireshark_lldp_minimal.pcap": [
+        "lldp_lldp_chassis_id_mac",
+        "lldp_lldp_chassis_subtype",
+        "lldp_lldp_pdu_type",
+        "lldp_lldp_port_id",
+        "lldp_lldp_port_subtype",
+        "lldp_lldp_time_to_live",
+        "lldp_lldp_tlv_len",
+        "lldp_lldp_tlv_type",
+        "text"
+      ],
+      "wireshark_lldpmed_civicloc.pcap": [
+        "lldp_lldp_chassis_id_mac",
+        "lldp_lldp_chassis_subtype",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_enabled",
+        "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_supported",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_x",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_xfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2fd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t4",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_tx",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_txfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_apause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_bpause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_pause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_spause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_x",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_xfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2fd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t4",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_tx",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_txfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_t",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_tfd",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_apause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_bpause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_pause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_spause",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_other",
+        "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_other",
+        "lldp_lldp_ieee_802_3_pmd_mau_type",
+        "lldp_lldp_ieee_802_3_subtype",
+        "lldp_lldp_media_app_type",
+        "lldp_lldp_media_civic_addr_length",
+        "lldp_lldp_media_civic_country",
+        "lldp_lldp_media_civic_length",
+        "lldp_lldp_media_civic_type",
+        "lldp_lldp_media_civic_value",
+        "lldp_lldp_media_civic_what",
+        "lldp_lldp_media_dscp",
+        "lldp_lldp_media_l2_prio",
+        "lldp_lldp_media_loc_data_format",
+        "lldp_lldp_media_policy_flag",
+        "lldp_lldp_media_power_prio",
+        "lldp_lldp_media_power_source",
+        "lldp_lldp_media_power_type",
+        "lldp_lldp_media_power_value",
+        "lldp_lldp_media_subtype",
+        "lldp_lldp_media_subtype_caps",
+        "lldp_lldp_media_subtype_caps_inventory",
+        "lldp_lldp_media_subtype_caps_llpd",
+        "lldp_lldp_media_subtype_caps_location_id",
+        "lldp_lldp_media_subtype_caps_mdi_pse",
+        "lldp_lldp_media_subtype_caps_mid_pd",
+        "lldp_lldp_media_subtype_caps_network_policy",
+        "lldp_lldp_media_subtype_class",
+        "lldp_lldp_media_tag_flag",
+        "lldp_lldp_media_vlan_id",
+        "lldp_lldp_mgn_addr_ip4",
+        "lldp_lldp_mgn_address_len",
+        "lldp_lldp_mgn_address_subtype",
+        "lldp_lldp_mgn_interface_number",
+        "lldp_lldp_mgn_interface_subtype",
+        "lldp_lldp_mgn_obj_len",
+        "lldp_lldp_orgtlv_oui",
+        "lldp_lldp_pdu_type",
+        "lldp_lldp_port_desc",
+        "lldp_lldp_port_id",
+        "lldp_lldp_port_subtype",
+        "lldp_lldp_time_to_live",
+        "lldp_lldp_tlv_enable_system_cap",
+        "lldp_lldp_tlv_enable_system_cap_bridge",
+        "lldp_lldp_tlv_enable_system_cap_cvlan",
+        "lldp_lldp_tlv_enable_system_cap_docsis_cable_device",
+        "lldp_lldp_tlv_enable_system_cap_other",
+        "lldp_lldp_tlv_enable_system_cap_repeater",
+        "lldp_lldp_tlv_enable_system_cap_router",
+        "lldp_lldp_tlv_enable_system_cap_station_only",
+        "lldp_lldp_tlv_enable_system_cap_svlan",
+        "lldp_lldp_tlv_enable_system_cap_telephone",
+        "lldp_lldp_tlv_enable_system_cap_tpmr",
+        "lldp_lldp_tlv_enable_system_cap_wlan_access_pt",
+        "lldp_lldp_tlv_len",
+        "lldp_lldp_tlv_system_cap",
+        "lldp_lldp_tlv_system_cap_bridge",
+        "lldp_lldp_tlv_system_cap_cvlan",
+        "lldp_lldp_tlv_system_cap_docsis_cable_device",
+        "lldp_lldp_tlv_system_cap_other",
+        "lldp_lldp_tlv_system_cap_repeater",
+        "lldp_lldp_tlv_system_cap_router",
+        "lldp_lldp_tlv_system_cap_station_only",
+        "lldp_lldp_tlv_system_cap_svlan",
+        "lldp_lldp_tlv_system_cap_telephone",
+        "lldp_lldp_tlv_system_cap_tpmr",
+        "lldp_lldp_tlv_system_cap_wlan_access_pt",
+        "lldp_lldp_tlv_system_desc",
+        "lldp_lldp_tlv_system_name",
+        "lldp_lldp_tlv_type",
+        "text"
+      ]
+    },
+    "union": [
+      "_ws_expert",
+      "lldp_lldp_chassis_id_mac",
+      "lldp_lldp_chassis_subtype",
+      "lldp_lldp_ieee_802_1_port_and_vlan_id_flag",
+      "lldp_lldp_ieee_802_1_port_and_vlan_id_flag_enabled",
+      "lldp_lldp_ieee_802_1_port_and_vlan_id_flag_supported",
+      "lldp_lldp_ieee_802_1_port_proto_vlan_id",
+      "lldp_lldp_ieee_802_1_port_vlan_id",
+      "lldp_lldp_ieee_802_1_proto_id_length",
+      "lldp_lldp_ieee_802_1_subtype",
+      "lldp_lldp_ieee_802_1_vlan_id",
+      "lldp_lldp_ieee_802_1_vlan_name",
+      "lldp_lldp_ieee_802_1_vlan_name_len",
+      "lldp_lldp_ieee_802_3_aggregated_port_id",
+      "lldp_lldp_ieee_802_3_aggregation_status",
+      "lldp_lldp_ieee_802_3_aggregation_status_cap",
+      "lldp_lldp_ieee_802_3_aggregation_status_enabled",
+      "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status",
+      "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_enabled",
+      "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_supported",
+      "lldp_lldp_ieee_802_3_max_frame_size",
+      "lldp_lldp_ieee_802_3_mdi_power_class",
+      "lldp_lldp_ieee_802_3_mdi_power_support",
+      "lldp_lldp_ieee_802_3_mdi_power_support_enabled",
+      "lldp_lldp_ieee_802_3_mdi_power_support_port_class",
+      "lldp_lldp_ieee_802_3_mdi_power_support_pse_pairs",
+      "lldp_lldp_ieee_802_3_mdi_power_support_supported",
+      "lldp_lldp_ieee_802_3_mdi_pse_pair",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_t",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_tfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_x",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_xfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2fd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t4",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_tx",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_txfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_t",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_tfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_apause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_bpause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_pause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_spause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_t",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_tfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_x",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_xfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2fd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t4",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_tx",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_txfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_t",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_tfd",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_apause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_bpause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_pause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_spause",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_other",
+      "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_other",
+      "lldp_lldp_ieee_802_3_pmd_mau_type",
+      "lldp_lldp_ieee_802_3_subtype",
+      "lldp_lldp_media_app_type",
+      "lldp_lldp_media_civic_addr_length",
+      "lldp_lldp_media_civic_country",
+      "lldp_lldp_media_civic_length",
+      "lldp_lldp_media_civic_type",
+      "lldp_lldp_media_civic_value",
+      "lldp_lldp_media_civic_what",
+      "lldp_lldp_media_dscp",
+      "lldp_lldp_media_l2_prio",
+      "lldp_lldp_media_loc_data_format",
+      "lldp_lldp_media_policy_flag",
+      "lldp_lldp_media_power_prio",
+      "lldp_lldp_media_power_source",
+      "lldp_lldp_media_power_type",
+      "lldp_lldp_media_power_value",
+      "lldp_lldp_media_subtype",
+      "lldp_lldp_media_subtype_caps",
+      "lldp_lldp_media_subtype_caps_inventory",
+      "lldp_lldp_media_subtype_caps_llpd",
+      "lldp_lldp_media_subtype_caps_location_id",
+      "lldp_lldp_media_subtype_caps_mdi_pse",
+      "lldp_lldp_media_subtype_caps_mid_pd",
+      "lldp_lldp_media_subtype_caps_network_policy",
+      "lldp_lldp_media_subtype_class",
+      "lldp_lldp_media_tag_flag",
+      "lldp_lldp_media_vlan_id",
+      "lldp_lldp_mgn_addr_hex",
+      "lldp_lldp_mgn_addr_ip4",
+      "lldp_lldp_mgn_addr_ip6",
+      "lldp_lldp_mgn_address_len",
+      "lldp_lldp_mgn_address_subtype",
+      "lldp_lldp_mgn_interface_number",
+      "lldp_lldp_mgn_interface_subtype",
+      "lldp_lldp_mgn_obj_len",
+      "lldp_lldp_orgtlv_oui",
+      "lldp_lldp_pdu_type",
+      "lldp_lldp_port_desc",
+      "lldp_lldp_port_id",
+      "lldp_lldp_port_subtype",
+      "lldp_lldp_time_to_live",
+      "lldp_lldp_tlv_enable_system_cap",
+      "lldp_lldp_tlv_enable_system_cap_bridge",
+      "lldp_lldp_tlv_enable_system_cap_cvlan",
+      "lldp_lldp_tlv_enable_system_cap_docsis_cable_device",
+      "lldp_lldp_tlv_enable_system_cap_other",
+      "lldp_lldp_tlv_enable_system_cap_repeater",
+      "lldp_lldp_tlv_enable_system_cap_router",
+      "lldp_lldp_tlv_enable_system_cap_station_only",
+      "lldp_lldp_tlv_enable_system_cap_svlan",
+      "lldp_lldp_tlv_enable_system_cap_telephone",
+      "lldp_lldp_tlv_enable_system_cap_tpmr",
+      "lldp_lldp_tlv_enable_system_cap_wlan_access_pt",
+      "lldp_lldp_tlv_len",
+      "lldp_lldp_tlv_system_cap",
+      "lldp_lldp_tlv_system_cap_bridge",
+      "lldp_lldp_tlv_system_cap_cvlan",
+      "lldp_lldp_tlv_system_cap_docsis_cable_device",
+      "lldp_lldp_tlv_system_cap_other",
+      "lldp_lldp_tlv_system_cap_repeater",
+      "lldp_lldp_tlv_system_cap_router",
+      "lldp_lldp_tlv_system_cap_station_only",
+      "lldp_lldp_tlv_system_cap_svlan",
+      "lldp_lldp_tlv_system_cap_telephone",
+      "lldp_lldp_tlv_system_cap_tpmr",
+      "lldp_lldp_tlv_system_cap_wlan_access_pt",
+      "lldp_lldp_tlv_system_desc",
+      "lldp_lldp_tlv_system_name",
+      "lldp_lldp_tlv_type",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 47,
+    "fields": [
+      "chassis_id",
+      "chassis_id_mac",
+      "chassis_subtype",
+      "ieee_802_1_port_and_vlan_id_flag_enabled",
+      "ieee_802_1_port_proto_vlan_id",
+      "ieee_802_1_port_vlan_id",
+      "ieee_802_1_vlan_id",
+      "ieee_802_1_vlan_name",
+      "ieee_802_3_aggregated_port_id",
+      "ieee_802_3_aggregation_status",
+      "ieee_802_3_aggregation_status_enabled",
+      "ieee_802_3_mac_phy_auto_neg_status",
+      "ieee_802_3_mac_phy_auto_neg_status_enabled",
+      "ieee_802_3_max_frame_size",
+      "ieee_802_3_mdi_power_support_enabled",
+      "mgn_addr_ip4",
+      "mgn_addr_ip6",
+      "mgn_address_len",
+      "mgn_address_subtype",
+      "port_desc",
+      "port_id",
+      "port_subtype",
+      "time_to_live",
+      "tlv_enable_system_cap_bridge",
+      "tlv_enable_system_cap_cvlan",
+      "tlv_enable_system_cap_docsis_cable_device",
+      "tlv_enable_system_cap_other",
+      "tlv_enable_system_cap_repeater",
+      "tlv_enable_system_cap_router",
+      "tlv_enable_system_cap_station_only",
+      "tlv_enable_system_cap_svlan",
+      "tlv_enable_system_cap_telephone",
+      "tlv_enable_system_cap_tpmr",
+      "tlv_enable_system_cap_wlan_access_pt",
+      "tlv_system_cap_bridge",
+      "tlv_system_cap_cvlan",
+      "tlv_system_cap_docsis_cable_device",
+      "tlv_system_cap_other",
+      "tlv_system_cap_repeater",
+      "tlv_system_cap_router",
+      "tlv_system_cap_station_only",
+      "tlv_system_cap_svlan",
+      "tlv_system_cap_telephone",
+      "tlv_system_cap_tpmr",
+      "tlv_system_cap_wlan_access_pt",
+      "tlv_system_desc",
+      "tlv_system_name"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "130/424 (30%)",
+    "pcap_vs_extracted": "47/130 (36%)",
+    "t1_extracted": "27/26 (103%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "lldp_lldp_tlv_type",
+        "field": "lldp.tlv.type",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldp_minimal.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_tlv_len",
+        "field": "lldp.tlv.len",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldp_minimal.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_tlv_system_cap",
+        "field": "lldp.tlv.system_cap",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_tlv_enable_system_cap",
+        "field": "lldp.tlv.enable_system_cap",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_mgn_interface_subtype",
+        "field": "lldp.mgn.interface.subtype",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Undefined"
+      },
+      {
+        "ek_name": "lldp_lldp_mgn_interface_number",
+        "field": "lldp.mgn.interface.number",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_mgn_obj_len",
+        "field": "lldp.mgn.obj.len",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_orgtlv_oui",
+        "field": "lldp.orgtlv.oui",
+        "type": "FT_UINT24",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_subtype",
+        "field": "lldp.ieee.802_3.subtype",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_mac_phy_auto_neg_status_supported",
+        "field": "lldp.ieee.802_3.mac_phy_auto_neg_status.supported",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_tfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_tfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_t",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_t",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_xfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_xfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_1000base_x",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.1000base_x",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_bpause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_bpause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_spause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_spause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_apause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_apause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_fdx_pause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.fdx_pause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2fd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_t2fd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t2",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_t2",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_txfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_txfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_tx",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_tx",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_100base_t4",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.100base_t4",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_tfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.10base_tfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_10base_t",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.10base_t",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_other",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps.other",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_tfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_tfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_t",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_t",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_xfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_xfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_1000base_x",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.1000base_x",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_bpause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_bpause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_spause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_spause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_apause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_apause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_fdx_pause",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.fdx_pause",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2fd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_t2fd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t2",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_t2",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_txfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_txfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_tx",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_tx",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_100base_t4",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.100base_t4",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_tfd",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.10base_tfd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_10base_t",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.10base_t",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_auto_neg_advertised_caps_inv_other",
+        "field": "lldp.ieee.802_3.pmd_auto_neg_advertised_caps_inv.other",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_pmd_mau_type",
+        "field": "lldp.ieee.802_3.pmd_mau_type",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_lldp.pcap",
+          "wireshark_lldp_detailed.pcap",
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Unknown"
+      },
+      {
+        "ek_name": "lldp_lldp_mgn_addr_hex",
+        "field": "lldp.mgn.addr.hex",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_1_subtype",
+        "field": "lldp.ieee.802_1.subtype",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_1_port_and_vlan_id_flag",
+        "field": "lldp.ieee.802_1.port_and_vlan_id_flag",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_1_port_and_vlan_id_flag_supported",
+        "field": "lldp.ieee.802_1.port_and_vlan_id_flag.supported",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_1_vlan_name_len",
+        "field": "lldp.ieee.802_1.vlan.name_len",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_1_proto_id_length",
+        "field": "lldp.ieee.802_1.proto.id_length",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_mdi_power_support",
+        "field": "lldp.ieee.802_3.mdi_power_support",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_mdi_power_support_port_class",
+        "field": "lldp.ieee.802_3.mdi_power_support.port_class",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_mdi_power_support_supported",
+        "field": "lldp.ieee.802_3.mdi_power_support.supported",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_mdi_power_support_pse_pairs",
+        "field": "lldp.ieee.802_3.mdi_power_support.pse_pairs",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_mdi_pse_pair",
+        "field": "lldp.ieee.802_3.mdi_pse_pair",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_mdi_power_class",
+        "field": "lldp.ieee.802_3.mdi_power_class",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_ieee_802_3_aggregation_status_cap",
+        "field": "lldp.ieee.802_3.aggregation_status.cap",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldp_detailed.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype",
+        "field": "lldp.media.subtype",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_caps",
+        "field": "lldp.media.subtype.caps",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_caps_llpd",
+        "field": "lldp.media.subtype.caps.llpd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_caps_network_policy",
+        "field": "lldp.media.subtype.caps.network_policy",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_caps_location_id",
+        "field": "lldp.media.subtype.caps.location_id",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_caps_mdi_pse",
+        "field": "lldp.media.subtype.caps.mdi_pse",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_caps_mid_pd",
+        "field": "lldp.media.subtype.caps.mid_pd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_caps_inventory",
+        "field": "lldp.media.subtype.caps.inventory",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_subtype_class",
+        "field": "lldp.media.subtype.class",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Unknown"
+      },
+      {
+        "ek_name": "lldp_lldp_media_app_type",
+        "field": "lldp.media.app_type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Unknown"
+      },
+      {
+        "ek_name": "lldp_lldp_media_policy_flag",
+        "field": "lldp.media.policy_flag",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_tag_flag",
+        "field": "lldp.media.tag_flag",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_vlan_id",
+        "field": "lldp.media.vlan_id",
+        "type": "FT_UINT24",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_l2_prio",
+        "field": "lldp.media.l2_prio",
+        "type": "FT_UINT24",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_dscp",
+        "field": "lldp.media.dscp",
+        "type": "FT_UINT24",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_loc_data_format",
+        "field": "lldp.media.loc.data_format",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_civic_length",
+        "field": "lldp.media.civic.length",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_civic_what",
+        "field": "lldp.media.civic.what",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Unknown"
+      },
+      {
+        "ek_name": "lldp_lldp_media_civic_country",
+        "field": "lldp.media.civic.country",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_civic_type",
+        "field": "lldp.media.civic.type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Unknown"
+      },
+      {
+        "ek_name": "lldp_lldp_media_civic_addr_length",
+        "field": "lldp.media.civic.addr_length",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_civic_value",
+        "field": "lldp.media.civic.value",
+        "type": "FT_STRINGZ",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_power_type",
+        "field": "lldp.media.power.type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Unknown"
+      },
+      {
+        "ek_name": "lldp_lldp_media_power_source",
+        "field": "lldp.media.power.source",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "lldp_lldp_media_power_prio",
+        "field": "lldp.media.power.prio",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": "Reserved"
+      },
+      {
+        "ek_name": "lldp_lldp_media_power_value",
+        "field": "lldp.media.power.value",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_lldpmed_civicloc.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 68,
+      "t1_in_pcap": 26,
+      "t1_covered": 27,
+      "t2_total": 348,
+      "t2_in_pcap": 103,
+      "t2_covered": 20,
+      "t3_skipped": 8,
+      "t4_ignored": 0
+    }
+  }
+}

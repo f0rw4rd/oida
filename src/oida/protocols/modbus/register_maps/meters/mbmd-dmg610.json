@@ -1,0 +1,236 @@
+{
+  "vendor": "DMG610",
+  "model": "Lovato DMG610",
+  "description": "Imported from mbmd (dmg610)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/dmg610.go",
+  "registers": {
+    "frequency": {
+      "address": 49,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency",
+      "function_code": 4
+    },
+    "current_l1": {
+      "address": 7,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 Current",
+      "function_code": 4
+    },
+    "current_l2": {
+      "address": 9,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 Current",
+      "function_code": 4
+    },
+    "current_l3": {
+      "address": 11,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 Current",
+      "function_code": 4
+    },
+    "voltage_l1": {
+      "address": 1,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 Phase Voltage",
+      "function_code": 4
+    },
+    "voltage_l2": {
+      "address": 3,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 Phase Voltage",
+      "function_code": 4
+    },
+    "voltage_l3": {
+      "address": 5,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 Phase Voltage",
+      "function_code": 4
+    },
+    "power_l1": {
+      "address": 19,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 Active Power",
+      "function_code": 4
+    },
+    "power_l2": {
+      "address": 21,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 Active Power",
+      "function_code": 4
+    },
+    "power_l3": {
+      "address": 23,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 Active Power",
+      "function_code": 4
+    },
+    "reactive_power_l1": {
+      "address": 25,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 Reactive Power",
+      "function_code": 4
+    },
+    "reactive_power_l2": {
+      "address": 27,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 Reactive Power",
+      "function_code": 4
+    },
+    "reactive_power_l3": {
+      "address": 29,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 Reactive Power",
+      "function_code": 4
+    },
+    "apparent_power_l1": {
+      "address": 31,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 Apparent Power",
+      "function_code": 4
+    },
+    "apparent_power_l2": {
+      "address": 33,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 Apparent Power",
+      "function_code": 4
+    },
+    "apparent_power_l3": {
+      "address": 35,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 Apparent Power",
+      "function_code": 4
+    },
+    "power": {
+      "address": 57,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active Power",
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 59,
+      "type": "f32",
+      "access": "ro",
+      "description": "Reactive Power",
+      "function_code": 4
+    },
+    "apparent_power": {
+      "address": 61,
+      "type": "f32",
+      "access": "ro",
+      "description": "Apparent Power",
+      "function_code": 4
+    },
+    "t_h_d_l1": {
+      "address": 83,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 Voltage Thd",
+      "function_code": 4
+    },
+    "t_h_d_l2": {
+      "address": 85,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 Voltage Thd",
+      "function_code": 4
+    },
+    "t_h_d_l3": {
+      "address": 87,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 Voltage Thd",
+      "function_code": 4
+    },
+    "import": {
+      "address": 6943,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total imp. Active Energy",
+      "function_code": 4
+    },
+    "import_l1": {
+      "address": 7711,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energia attiva L1 importata",
+      "function_code": 4
+    },
+    "import_l2": {
+      "address": 7751,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energia attiva L2 importata",
+      "function_code": 4
+    },
+    "import_l3": {
+      "address": 7791,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energia attiva L3 importata",
+      "function_code": 4
+    },
+    "export": {
+      "address": 6947,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total exported Active Energy",
+      "function_code": 4
+    },
+    "export_l1": {
+      "address": 7715,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energia attiva L1 esportata",
+      "function_code": 4
+    },
+    "export_l2": {
+      "address": 7755,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energia attiva L2 esportata",
+      "function_code": 4
+    },
+    "export_l3": {
+      "address": 7795,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energia attiva L3 esportata",
+      "function_code": 4
+    },
+    "reactive_import": {
+      "address": 6951,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total imp. Reactive Energy",
+      "function_code": 4
+    },
+    "reactive_export": {
+      "address": 6955,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total exp. Reactive Energy",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: Lovato DMG610 confirmed; mbmd source dmg610.go verified"
+}

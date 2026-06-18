@@ -1,0 +1,207 @@
+{
+  "vendor": "EVC04",
+  "model": "EVC04",
+  "description": "Imported from nymea-plugins-modbus (vestel)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/vestel/evc04-registers.json",
+  "registers": {
+    "serialNumber": {
+      "address": 100,
+      "type": "u16",
+      "access": "ro",
+      "description": "Serial number",
+      "function_code": 4
+    },
+    "chargepointId": {
+      "address": 130,
+      "type": "u16",
+      "access": "ro",
+      "description": "Chargepoint ID",
+      "function_code": 4
+    },
+    "brand": {
+      "address": 190,
+      "type": "u16",
+      "access": "ro",
+      "description": "Brand",
+      "function_code": 4
+    },
+    "model": {
+      "address": 210,
+      "type": "u16",
+      "access": "ro",
+      "description": "Model",
+      "function_code": 4
+    },
+    "firmwareVersion": {
+      "address": 230,
+      "type": "u16",
+      "access": "ro",
+      "description": "Firmware version",
+      "function_code": 4
+    },
+    "time": {
+      "address": 294,
+      "type": "u32",
+      "access": "ro",
+      "description": "Wallbox time",
+      "function_code": 4
+    },
+    "maxChargePointPower": {
+      "address": 400,
+      "type": "u32",
+      "access": "ro",
+      "description": "Max power of Chargepoint",
+      "unit": "W",
+      "function_code": 4
+    },
+    "numPhases": {
+      "address": 404,
+      "type": "u16",
+      "access": "ro",
+      "description": "Number of Phases",
+      "function_code": 4
+    },
+    "chargepointState": {
+      "address": 1000,
+      "type": "u16",
+      "access": "ro",
+      "description": "Chargepoint State",
+      "function_code": 4
+    },
+    "chargingState": {
+      "address": 1001,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charging State",
+      "function_code": 4
+    },
+    "cableState": {
+      "address": 1004,
+      "type": "u16",
+      "access": "ro",
+      "description": "Cable state",
+      "function_code": 4
+    },
+    "activePowerTotal": {
+      "address": 1020,
+      "type": "u32",
+      "access": "ro",
+      "description": "Active Power Total",
+      "unit": "W",
+      "function_code": 4
+    },
+    "meterReading": {
+      "address": 1036,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter reading",
+      "unit": "1/10 kWh",
+      "function_code": 4
+    },
+    "sessionMaxCurrent": {
+      "address": 1100,
+      "type": "u16",
+      "access": "ro",
+      "description": "Session max current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "evseMinCurrent": {
+      "address": 1102,
+      "type": "u16",
+      "access": "ro",
+      "description": "EVSE min current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "evseMaxCurrent": {
+      "address": 1104,
+      "type": "u16",
+      "access": "ro",
+      "description": "EVSE max current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "cableMaxCurrent": {
+      "address": 1106,
+      "type": "u16",
+      "access": "ro",
+      "description": "Cable max current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "sessionEnergy": {
+      "address": 1502,
+      "type": "u32",
+      "access": "ro",
+      "description": "Session energy",
+      "unit": "Wh",
+      "function_code": 4
+    },
+    "sessionDuration": {
+      "address": 1508,
+      "type": "u32",
+      "access": "ro",
+      "description": "Session duration",
+      "unit": "s",
+      "function_code": 4
+    },
+    "failsafeCurrent": {
+      "address": 2000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Failsafe current",
+      "unit": "A"
+    },
+    "failsafeTimeout": {
+      "address": 2002,
+      "type": "u16",
+      "access": "rw",
+      "description": "Failsafe timeout",
+      "unit": "s"
+    },
+    "chargingCurrent": {
+      "address": 5004,
+      "type": "u16",
+      "access": "rw",
+      "description": "Dynamic charging current",
+      "unit": "A"
+    },
+    "aliveRegister": {
+      "address": 6000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Alive register"
+    }
+  },
+  "enums": {
+    "ChargePointState": {
+      "0": "Available",
+      "1": "Preparing",
+      "2": "Charging",
+      "3": "SuspendedEVSE",
+      "4": "SuspendedEV",
+      "5": "Finishing",
+      "6": "Reserved",
+      "7": "Unavailable",
+      "8": "Faulted"
+    },
+    "ChargingState": {
+      "0": "NotCharging",
+      "1": "Charging"
+    },
+    "NumPhases": {
+      "0": "1",
+      "1": "3"
+    },
+    "CableState": {
+      "0": "NotConnected",
+      "1": "CableConnectedVehicleNotConnected",
+      "2": "CableConnectedVehicleConnected",
+      "3": "CableConnectedVehicleConnectedCableLocked"
+    }
+  },
+  "_source_verified": "Verified: Vestel EVC04 Modbus TCP Specification v1.8 confirmed; nymea-plugins-modbus source verified"
+}

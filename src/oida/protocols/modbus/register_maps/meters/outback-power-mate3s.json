@@ -1,0 +1,340 @@
+{
+  "vendor": "Outback Power",
+  "model": "POWER MATE 3 S",
+  "description": "Outback Power POWER MATE 3 S power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ac_current": {
+      "address": 40520,
+      "type": "u16",
+      "access": "r",
+      "description": "AC Current",
+      "unit": "A"
+    },
+    "phase_a_current": {
+      "address": 40521,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A Current",
+      "unit": "A"
+    },
+    "phase_b_current": {
+      "address": 40522,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B Current",
+      "unit": "A"
+    },
+    "phase_c_current": {
+      "address": 40523,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C Current",
+      "unit": "A"
+    },
+    "scale_factor_a_sf": {
+      "address": 40524,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [A_SF]"
+    },
+    "phase_voltage_ab": {
+      "address": 40525,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage AB",
+      "unit": "V"
+    },
+    "phase_voltage_bc": {
+      "address": 40526,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage BC",
+      "unit": "V"
+    },
+    "phase_voltage_ca": {
+      "address": 40527,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage CA",
+      "unit": "V"
+    },
+    "phase_voltage_an": {
+      "address": 40528,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage AN",
+      "unit": "V"
+    },
+    "phase_voltage_bn": {
+      "address": 40529,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage BN",
+      "unit": "V"
+    },
+    "phase_voltage_cn": {
+      "address": 40530,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage CN",
+      "unit": "V"
+    },
+    "scale_factor_v_sf": {
+      "address": 40531,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [V_SF]"
+    },
+    "ac_power": {
+      "address": 40532,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Power",
+      "unit": "W"
+    },
+    "scale_factor_w_sf": {
+      "address": 40533,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [W_SF]"
+    },
+    "line_frequency": {
+      "address": 40534,
+      "type": "u16",
+      "access": "r",
+      "description": "Line Frequency",
+      "unit": "Hz"
+    },
+    "scale_factor_hz_sf": {
+      "address": 40535,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [HZ_SF]"
+    },
+    "ac_apparent_power": {
+      "address": 40536,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Apparent Power",
+      "unit": "VA"
+    },
+    "scale_factor_va_sf": {
+      "address": 40537,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [VA_SF]"
+    },
+    "ac_reactive_power": {
+      "address": 40538,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Reactive Power",
+      "unit": "var"
+    },
+    "scale_factor_var_sf": {
+      "address": 40539,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [VAR_SF]"
+    },
+    "ac_power_factor": {
+      "address": 40540,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Power Factor",
+      "unit": "Pct"
+    },
+    "scale_factor_pf_sf": {
+      "address": 40541,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [PF_SF]"
+    },
+    "ac_energy": {
+      "address": 40542,
+      "type": "u32",
+      "access": "r",
+      "description": "AC Energy",
+      "unit": "Wh"
+    },
+    "scale_factor_wh_sf": {
+      "address": 40544,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [WH_SF]"
+    },
+    "dc_current": {
+      "address": 40545,
+      "type": "u16",
+      "access": "r",
+      "description": "DC Current",
+      "unit": "A"
+    },
+    "scale_factor_dca_sf": {
+      "address": 40546,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCA_SF]"
+    },
+    "dc_voltage": {
+      "address": 40547,
+      "type": "u16",
+      "access": "r",
+      "description": "DC Voltage",
+      "unit": "V"
+    },
+    "scale_factor_dcv_sf": {
+      "address": 40548,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCV_SF]"
+    },
+    "dc_power": {
+      "address": 40549,
+      "type": "i16",
+      "access": "r",
+      "description": "DC Power",
+      "unit": "W"
+    },
+    "scale_factor_dcw_sf": {
+      "address": 40550,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCW_SF]"
+    },
+    "cabinet_temperature": {
+      "address": 40551,
+      "type": "i16",
+      "access": "r",
+      "description": "Cabinet Temperature",
+      "unit": "C"
+    },
+    "heat_sink_temperature": {
+      "address": 40552,
+      "type": "i16",
+      "access": "r",
+      "description": "Heat Sink Temperature",
+      "unit": "C"
+    },
+    "transformer_temperature": {
+      "address": 40553,
+      "type": "i16",
+      "access": "r",
+      "description": "Transformer Temperature",
+      "unit": "C"
+    },
+    "other_temperature": {
+      "address": 40554,
+      "type": "i16",
+      "access": "r",
+      "description": "Other Temperature",
+      "unit": "C"
+    },
+    "scale_factor_tmp_sf": {
+      "address": 40555,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [TMP_SF]"
+    },
+    "enumerated_value_operating_state": {
+      "address": 40556,
+      "type": "u16",
+      "access": "r",
+      "description": "Enumerated value. Operating state"
+    },
+    "vendor_specific_operating_state_code": {
+      "address": 40557,
+      "type": "u16",
+      "access": "r",
+      "description": "Vendor specific operating state code"
+    },
+    "bitmask_value_event_fields": {
+      "address": 40558,
+      "type": "u32",
+      "access": "r",
+      "description": "Bitmask value. Event fields"
+    },
+    "reserved_for_future_use": {
+      "address": 40560,
+      "type": "u32",
+      "access": "r",
+      "description": "Reserved for future use"
+    },
+    "vendor_defined_events": {
+      "address": 40562,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "vendor_defined_events_40564": {
+      "address": 40564,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "vendor_defined_events_40566": {
+      "address": 40566,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "vendor_defined_events_40568": {
+      "address": 40568,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "type_of_der_device_default_value_is_4_to_indicate_pv_device": {
+      "address": 40630,
+      "type": "u16",
+      "access": "r",
+      "description": "Type of DER device. Default value is 4 to indicate PV device."
+    },
+    "continuous_power_output_capability_of_the_inverter": {
+      "address": 40631,
+      "type": "u16",
+      "access": "r",
+      "description": "Continuous power output capability of the inverter.",
+      "unit": "W"
+    },
+    "scale_factor": {
+      "address": 40632,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor"
+    },
+    "continuous_volt_ampere_capability_of_the_inverter": {
+      "address": 40633,
+      "type": "u16",
+      "access": "r",
+      "description": "Continuous Volt Ampere capability of the inverter.",
+      "unit": "VA"
+    },
+    "scale_factor_40634": {
+      "address": 40634,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor"
+    },
+    "continuous_var_capability_of_the_inverter_in_quadrant_1": {
+      "address": 40635,
+      "type": "i16",
+      "access": "r",
+      "description": "Continuous VAR capability of the inverter in quadrant 1.",
+      "unit": "var"
+    },
+    "continuous_var_capability_of_the_inverter_in_quadrant_2": {
+      "address": 40636,
+      "type": "i16",
+      "access": "r",
+      "description": "Continuous VAR capability of the inverter in quadrant 2.",
+      "unit": "var"
+    }
+  }
+}

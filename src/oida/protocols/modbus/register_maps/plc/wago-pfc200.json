@@ -1,0 +1,255 @@
+{
+  "vendor": "WAGO",
+  "model": "PFC200",
+  "description": "WAGO PFC200 (750-8202, 750-8206, 750-8212, 750-8216) Modbus TCP register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: PFC200 is a Linux-based controller with e!COCKPIT/CODESYS programming. Process image at 0x0000, configuration/status at 0x1000+, NOVRAM at 0x3000+. Supports MEI Device Identification (FC 43/14). Multiple Modbus TCP servers can be configured.",
+  "source": "WAGO PFC200 Manual, WAGO Modbus Protocol Documentation",
+  "models": {
+    "750-8202": {
+      "description": "PFC200 2nd Gen, 2x Ethernet 100Mbit",
+      "notes": "cpu=Cortex-A8 @ 600MHz, memory=256MB RAM, 256MB Flash"
+    },
+    "750-8206": {
+      "description": "PFC200 2nd Gen, 2x Ethernet 100Mbit + RS-232/485",
+      "notes": "cpu=Cortex-A8 @ 600MHz, memory=256MB RAM, 256MB Flash"
+    },
+    "750-8212": {
+      "description": "PFC200 2nd Gen, 2x Ethernet Gigabit",
+      "notes": "cpu=Cortex-A8 @ 600MHz, memory=512MB RAM, 512MB Flash"
+    },
+    "750-8216": {
+      "description": "PFC200 2nd Gen, 4x Ethernet Gigabit",
+      "notes": "cpu=Cortex-A8 @ 600MHz, memory=512MB RAM, 512MB Flash"
+    }
+  },
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "area": "Process image digital outputs"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "area": "Process image digital inputs"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "area": "Process image outputs, Config, NOVRAM"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "area": "Process image analog inputs"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "area": "Process image digital outputs"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "Process image outputs, Config, NOVRAM"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils",
+      "area": "Process image digital outputs"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "Process image outputs, Config, NOVRAM"
+    },
+    {
+      "code": "23",
+      "function": "Read/Write Multiple Registers",
+      "area": "Combined read/write"
+    },
+    {
+      "code": "43/14",
+      "function": "Read Device Identification",
+      "area": "MEI"
+    }
+  ],
+  "registers": {
+    "process_input_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "Process image input word 0 (analog input channel 0)"
+    },
+    "process_input_1": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "Process image input word 1"
+    },
+    "process_output_0": {
+      "address": 512,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "Process image output word 0 (analog output channel 0)",
+      "notes": "hex_address=0x0200"
+    },
+    "process_output_1": {
+      "address": 513,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "Process image output word 1",
+      "notes": "hex_address=0x0201"
+    },
+    "watchdog_timeout": {
+      "address": 4096,
+      "type": "u16",
+      "access": "rw",
+      "unit": "ms",
+      "description": "Watchdog timeout (0 = disabled, 1-65535 ms)",
+      "notes": "hex_address=0x1000"
+    },
+    "watchdog_trigger": {
+      "address": 4097,
+      "type": "u16",
+      "access": "rw",
+      "description": "Write any value to trigger/reset watchdog",
+      "notes": "hex_address=0x1001"
+    },
+    "module_count": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of installed I/O modules",
+      "notes": "hex_address=0x1002"
+    },
+    "module_diagnostics": {
+      "address": 8192,
+      "type": "u16",
+      "access": "r",
+      "description": "Module diagnostic status word",
+      "notes": "hex_address=0x2000"
+    },
+    "format_check": {
+      "address": 8194,
+      "type": "u16",
+      "access": "r",
+      "description": "Format check register for process image verification",
+      "notes": "hex_address=0x2002"
+    },
+    "output_pi_size": {
+      "address": 8196,
+      "type": "u16",
+      "access": "r",
+      "unit": "words",
+      "description": "Output process image size in words",
+      "notes": "hex_address=0x2004"
+    },
+    "input_pi_size": {
+      "address": 8197,
+      "type": "u16",
+      "access": "r",
+      "unit": "words",
+      "description": "Input process image size in words",
+      "notes": "hex_address=0x2005"
+    },
+    "novram_user_0": {
+      "address": 12288,
+      "type": "u16",
+      "access": "rw",
+      "description": "NOVRAM user register 0 (retentive storage)",
+      "notes": "hex_address=0x3000"
+    },
+    "novram_user_99": {
+      "address": 12387,
+      "type": "u16",
+      "access": "rw",
+      "description": "NOVRAM user register 99 (retentive storage)",
+      "notes": "hex_address=0x3063"
+    }
+  },
+  "coils": {
+    "digital_output_0": {
+      "address": 512,
+      "access": "rw",
+      "description": "Digital output bit 0",
+      "notes": "hex_address=0x0200"
+    },
+    "digital_output_1": {
+      "address": 513,
+      "access": "rw",
+      "description": "Digital output bit 1",
+      "notes": "hex_address=0x0201"
+    },
+    "digital_output_255": {
+      "address": 767,
+      "access": "rw",
+      "description": "Digital output bit 255 (max process image)",
+      "notes": "hex_address=0x02FF"
+    }
+  },
+  "discrete_inputs": {
+    "digital_input_0": {
+      "address": 0,
+      "access": "r",
+      "description": "Digital input bit 0"
+    },
+    "digital_input_1": {
+      "address": 1,
+      "access": "r",
+      "description": "Digital input bit 1"
+    },
+    "digital_input_255": {
+      "address": 255,
+      "access": "r",
+      "description": "Digital input bit 255 (max process image)",
+      "notes": "hex_address=0x00FF"
+    }
+  },
+  "extended_info": {
+    "memory_layout": {
+      "0x0000-0x01FF": "Process image inputs (FC 4 input registers)",
+      "0x0200-0x03FF": "Process image outputs (FC 3/6/16 holding registers)",
+      "0x1000": "Watchdog timeout configuration",
+      "0x1001": "Watchdog trigger",
+      "0x1002-0x1FFF": "Configuration area",
+      "0x2000-0x2FFF": "Module diagnostics and status",
+      "0x3000-0x5FFF": "NOVRAM / Retentive user registers"
+    },
+    "codesys_integration": {
+      "programming_tool": "e!COCKPIT or CODESYS",
+      "runtime": "CODESYS Control for PFC",
+      "modbus_library": "WAGO Modbus libraries available",
+      "variable_mapping": "Variables can be mapped to additional Modbus addresses via CODESYS"
+    },
+    "linux_features": {
+      "os": "Linux-based (customized)",
+      "web_server": "Built-in configuration web interface",
+      "ssh": "SSH access available",
+      "scripting": "Shell scripting support"
+    },
+    "mei_device_id": {
+      "supported": true,
+      "objects": [
+        "0x00 Vendor Name: WAGO",
+        "0x01 Product Code",
+        "0x02 Major/Minor Revision"
+      ]
+    },
+    "configuration_requirements": [
+      "Configure Modbus TCP server via e!COCKPIT or web interface",
+      "Process image addresses depend on installed I/O modules",
+      "Use Web-Based Management (WBM) for basic configuration",
+      "CODESYS programming for advanced applications"
+    ]
+  },
+  "_source_verified": "Verified: PFC200 750-8202/750-8206 Linux-based controller confirmed; CODESYS/e!COCKPIT verified"
+}

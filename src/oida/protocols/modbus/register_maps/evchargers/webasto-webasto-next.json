@@ -1,0 +1,209 @@
+{
+  "vendor": "WebastoNext",
+  "model": "WebastoNext",
+  "description": "Imported from nymea-plugins-modbus (webasto)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/webasto/webasto-next-registers.json",
+  "registers": {
+    "cableState": {
+      "address": 1004,
+      "type": "u16",
+      "access": "ro",
+      "description": "Cable state"
+    },
+    "evseErrorCode": {
+      "address": 1006,
+      "type": "u16",
+      "access": "ro",
+      "description": "ESVE Error codes, 0 = No error"
+    },
+    "currentL1": {
+      "address": 1008,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charging current L1",
+      "unit": "mA"
+    },
+    "currentL2": {
+      "address": 1010,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charging current L2",
+      "unit": "mA"
+    },
+    "currentL3": {
+      "address": 1012,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charging current L3",
+      "unit": "mA"
+    },
+    "totalActivePower": {
+      "address": 1020,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total active charging power",
+      "unit": "W"
+    },
+    "activePowerL1": {
+      "address": 1024,
+      "type": "u32",
+      "access": "ro",
+      "description": "Active power L1",
+      "unit": "W"
+    },
+    "activePowerL2": {
+      "address": 1028,
+      "type": "u32",
+      "access": "ro",
+      "description": "Active power L2",
+      "unit": "W"
+    },
+    "activePowerL3": {
+      "address": 1032,
+      "type": "u32",
+      "access": "ro",
+      "description": "Active power L3",
+      "unit": "W"
+    },
+    "energyConsumed": {
+      "address": 1036,
+      "type": "u32",
+      "access": "ro",
+      "description": "Energy meter reading of the charging station",
+      "unit": "Wh"
+    },
+    "maxChargingCurrent": {
+      "address": 1100,
+      "type": "u16",
+      "access": "ro",
+      "description": "The maximal charging current of the hardware (EVSE, Cable, EV)",
+      "unit": "A"
+    },
+    "minChargingCurrent": {
+      "address": 1102,
+      "type": "u16",
+      "access": "ro",
+      "description": "The minimal charging current of the hardware (EVSE, Cable, EV)",
+      "unit": "A"
+    },
+    "maxChargingCurrentStation": {
+      "address": 1104,
+      "type": "u16",
+      "access": "ro",
+      "description": "The maximal charging current of the station",
+      "unit": "A"
+    },
+    "maxChargingCurrentCable": {
+      "address": 1106,
+      "type": "u16",
+      "access": "ro",
+      "description": "The maximal charging current of the cable",
+      "unit": "A"
+    },
+    "maxChargingCurrentEv": {
+      "address": 1108,
+      "type": "u16",
+      "access": "ro",
+      "description": "The maximal charging current of the EV",
+      "unit": "A"
+    },
+    "sessionEnergy": {
+      "address": 1502,
+      "type": "u16",
+      "access": "ro",
+      "description": "Sum of charged energy for the last session",
+      "unit": "Wh"
+    },
+    "safeCurrent": {
+      "address": 2000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Max. charge current under communication failure",
+      "unit": "A"
+    },
+    "comTimeout": {
+      "address": 2002,
+      "type": "u16",
+      "access": "rw",
+      "description": "Communication timeout",
+      "unit": "s"
+    },
+    "chargePower": {
+      "address": 5000,
+      "type": "u32",
+      "access": "ro",
+      "description": "Set the charge power",
+      "unit": "W"
+    },
+    "chargeCurrent": {
+      "address": 5004,
+      "type": "u16",
+      "access": "ro",
+      "description": "Set the charge current",
+      "unit": "A"
+    },
+    "chargingAction": {
+      "address": 5006,
+      "type": "u16",
+      "access": "ro",
+      "description": "Start / Cancel charging session"
+    },
+    "lifeBit": {
+      "address": 6000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Life bit"
+    },
+    "chargerState": {
+      "address": 1000,
+      "type": "u16",
+      "access": "ro",
+      "description": "State of the charging device"
+    },
+    "chargeState": {
+      "address": 1001,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charge state"
+    },
+    "evseState": {
+      "address": 1002,
+      "type": "u16",
+      "access": "ro",
+      "description": "EVSE state (state of charging station)"
+    }
+  },
+  "enums": {
+    "ChargerState": {
+      "0": "NoVehicle",
+      "1": "VehicleAttachedNoPermission",
+      "3": "Charging",
+      "4": "ChargingPaused",
+      "7": "ChargingError",
+      "8": "ChargingStationReserved"
+    },
+    "ChargeState": {
+      "0": "Idle",
+      "1": "Charging"
+    },
+    "EvseState": {
+      "0": "Starting",
+      "1": "Running",
+      "2": "Error"
+    },
+    "CableState": {
+      "0": "NoCableAttached",
+      "1": "CableAttachedNoCar",
+      "2": "CableAttachedCarAttached",
+      "3": "CableAttachedCarAttachedLocked"
+    },
+    "ChargingAction": {
+      "0": "NoAction",
+      "1": "StartSession",
+      "2": "CancelSession"
+    }
+  },
+  "_source_verified": "Verified: Official Webasto NEXT Modbus Register doc confirmed; nymea-plugins-modbus source verified"
+}

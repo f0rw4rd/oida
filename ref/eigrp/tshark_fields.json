@@ -1,0 +1,1194 @@
+{
+  "protocol": "eigrp",
+  "display_filter": "eigrp",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:46:08.432031+00:00",
+  "dissector_fields": {
+    "total": 140,
+    "by_type": {
+      "FT_BOOLEAN": 16,
+      "FT_BYTES": 4,
+      "FT_ETHER": 2,
+      "FT_GUID": 1,
+      "FT_IPXNET": 2,
+      "FT_IPv4": 6,
+      "FT_IPv6": 4,
+      "FT_NONE": 12,
+      "FT_UINT16": 33,
+      "FT_UINT24": 2,
+      "FT_UINT32": 29,
+      "FT_UINT64": 2,
+      "FT_UINT8": 27
+    },
+    "fields": [
+      {
+        "name": "eigrp.version",
+        "type": "FT_UINT8",
+        "description": "Version - Version of EIGRP packet format"
+      },
+      {
+        "name": "eigrp.opcode",
+        "type": "FT_UINT8",
+        "description": "Opcode - Operation code indicating the message type"
+      },
+      {
+        "name": "eigrp.flags",
+        "type": "FT_UINT32",
+        "description": "Flag - Initialization bit and is used in establishing a new neighbor relationship"
+      },
+      {
+        "name": "eigrp.seq",
+        "type": "FT_UINT32",
+        "description": "Sequence number -- used to send messages reliably"
+      },
+      {
+        "name": "eigrp.ack",
+        "type": "FT_UINT32",
+        "description": "Acknowledge number -- used to send messages reliably"
+      },
+      {
+        "name": "eigrp.vrid",
+        "type": "FT_UINT16",
+        "description": "Virtual Router ID - For each Virtual Router, there is a separate topology table and routing/service table; even for matching AS. This field allows the gateway to select which set router to use."
+      },
+      {
+        "name": "eigrp.as",
+        "type": "FT_UINT16",
+        "description": "Autonomous system number - Each AS has a separate topology table which for a give routing/service table. A gateway can participate in more than one AS. This field allows the gateway toselect which set of topology tables to use."
+      },
+      {
+        "name": "eigrp.flags.init",
+        "type": "FT_BOOLEAN",
+        "description": "Init - tells the neighbor to send its full topology table"
+      },
+      {
+        "name": "eigrp.flags.condrecv",
+        "type": "FT_BOOLEAN",
+        "description": "Conditionally Received the next packet if address was in listed in the previous HELLO"
+      },
+      {
+        "name": "eigrp.flags.restart",
+        "type": "FT_BOOLEAN",
+        "description": "Restart flag - Set in the HELLO and the initial UPDATE packets during the nsf signaling period."
+      },
+      {
+        "name": "eigrp.flags.eot",
+        "type": "FT_BOOLEAN",
+        "description": "End-of-Table - Marks the end of the start-up UPDATES indicating the complete topology database has been sent to a new peer"
+      },
+      {
+        "name": "eigrp.tlv_type",
+        "type": "FT_UINT16",
+        "description": "TLV Type"
+      },
+      {
+        "name": "eigrp.tlv.len",
+        "type": "FT_UINT16",
+        "description": "TLV Length"
+      },
+      {
+        "name": "eigrp.par.k1",
+        "type": "FT_UINT8",
+        "description": "Bandwidth/Throughput Coefficient"
+      },
+      {
+        "name": "eigrp.par.k2",
+        "type": "FT_UINT8",
+        "description": "Load Coefficient"
+      },
+      {
+        "name": "eigrp.par.k3",
+        "type": "FT_UINT8",
+        "description": "Delay/Latency Coefficient"
+      },
+      {
+        "name": "eigrp.par.k4",
+        "type": "FT_UINT8",
+        "description": "Reliability Coefficient"
+      },
+      {
+        "name": "eigrp.par.k5",
+        "type": "FT_UINT8",
+        "description": "Reliability Coefficient"
+      },
+      {
+        "name": "eigrp.par.k6",
+        "type": "FT_UINT8",
+        "description": "Extended Metric Coefficient"
+      },
+      {
+        "name": "eigrp.par.holdtime",
+        "type": "FT_UINT16",
+        "description": "How long to ignore lost HELLO's"
+      },
+      {
+        "name": "eigrp.auth.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.auth.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.auth.keyid",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.auth.keyseq",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.auth.digest",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "eigrp.seq.addrlen",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.seq.ipv4addr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "eigrp.seq.ipv6addr",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "eigrp.next_mcast_seq",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.stub_options",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.stub_options.connected",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.stub_options.static",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.stub_options.summary",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.stub_options.redist",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.stub_options.leakmap",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.stub_options.recvonly",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.tid",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.afi",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.old_metric.delay",
+        "type": "FT_UINT32",
+        "description": "delay, in 39.1 nanosec interments"
+      },
+      {
+        "name": "eigrp.old_metric.bw",
+        "type": "FT_UINT32",
+        "description": "bandwidth, in units of 1 Kbit/sec"
+      },
+      {
+        "name": "eigrp.old_metric.mtu",
+        "type": "FT_UINT24",
+        "description": "MTU, in octets"
+      },
+      {
+        "name": "eigrp.old_metric.hopcount",
+        "type": "FT_UINT8",
+        "description": "Number of hops to destination"
+      },
+      {
+        "name": "eigrp.old_metric.rel",
+        "type": "FT_UINT8",
+        "description": "percent packets successfully tx/rx"
+      },
+      {
+        "name": "eigrp.old_metric.load",
+        "type": "FT_UINT8",
+        "description": "percent of channel occupied"
+      },
+      {
+        "name": "eigrp.old_metric.intag",
+        "type": "FT_UINT8",
+        "description": "Internal Route Tag"
+      },
+      {
+        "name": "eigrp.tidlist",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.tidlist.flags",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.tidlist.len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.routerid",
+        "type": "FT_IPv4",
+        "description": "Router ID of injecting router"
+      },
+      {
+        "name": "eigrp.old_metric.tag",
+        "type": "FT_UINT32",
+        "description": "route tag"
+      },
+      {
+        "name": "eigrp.metric.flags.srcwd",
+        "type": "FT_BOOLEAN",
+        "description": "Route Source Withdraw"
+      },
+      {
+        "name": "eigrp.metric.flags.cd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.metric.flags.active",
+        "type": "FT_BOOLEAN",
+        "description": "Route is currently in active state"
+      },
+      {
+        "name": "eigrp.metric.flags.repl",
+        "type": "FT_BOOLEAN",
+        "description": "Route is replicated from different tableid"
+      },
+      {
+        "name": "eigrp.extdata.origrid",
+        "type": "FT_IPv4",
+        "description": "Router ID of redistributing router"
+      },
+      {
+        "name": "eigrp.extdata.as",
+        "type": "FT_UINT32",
+        "description": "Autonomous System of redistributing protocol"
+      },
+      {
+        "name": "eigrp.extdata.tag",
+        "type": "FT_UINT32",
+        "description": "Administrative Route Tag"
+      },
+      {
+        "name": "eigrp.extdata.metric",
+        "type": "FT_UINT32",
+        "description": "Metric reported by redistributing protocol"
+      },
+      {
+        "name": "eigrp.extdata.reserved",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extdata.ipx_delay",
+        "type": "FT_UINT16",
+        "description": "Delay reported by redistributing protocol"
+      },
+      {
+        "name": "eigrp.extdata.ipx_metric",
+        "type": "FT_UINT16",
+        "description": "Delay reported by redistributing protocol"
+      },
+      {
+        "name": "eigrp.extdata.proto",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.opaque.flag.ext",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.opaque.flag.cd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "eigrp.metric.offset",
+        "type": "FT_UINT8",
+        "description": "Number of 16bit words to reach the start of thedestination/attribute information"
+      },
+      {
+        "name": "eigrp.metric.priority",
+        "type": "FT_UINT8",
+        "description": "Priority of the prefix for ordering transmission"
+      },
+      {
+        "name": "eigrp.metric.reliability",
+        "type": "FT_UINT8",
+        "description": "percent packets successfully tx/rx"
+      },
+      {
+        "name": "eigrp.metric.load",
+        "type": "FT_UINT8",
+        "description": "percent of channel occupied"
+      },
+      {
+        "name": "eigrp.metric.mtu",
+        "type": "FT_UINT24",
+        "description": "MTU, in octets"
+      },
+      {
+        "name": "eigrp.metric.hopcount",
+        "type": "FT_UINT8",
+        "description": "Number of hops to destination"
+      },
+      {
+        "name": "eigrp.metric.reserved",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.attr.opcode",
+        "type": "FT_UINT8",
+        "description": "Opcode - Operation code indicating the attribute type"
+      },
+      {
+        "name": "eigrp.attr.offset",
+        "type": "FT_UINT8",
+        "description": "Number of 2 byte words of data"
+      },
+      {
+        "name": "eigrp.attr.scaled",
+        "type": "FT_UINT32",
+        "description": "Metric calculated from legacy TLVs"
+      },
+      {
+        "name": "eigrp.attr.tag",
+        "type": "FT_UINT32",
+        "description": "Tag assigned by admin for dest"
+      },
+      {
+        "name": "eigrp.attr.jitter",
+        "type": "FT_UINT32",
+        "description": "Variation in path delay"
+      },
+      {
+        "name": "eigrp.attr.qenergy",
+        "type": "FT_UINT32",
+        "description": "Non-Active energy usage along path"
+      },
+      {
+        "name": "eigrp.attr.energy",
+        "type": "FT_UINT32",
+        "description": "Active energy usage along path"
+      },
+      {
+        "name": "eigrp.ipv4.nexthop",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipv4.prefixlen",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipv6.nexthop",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipv6.prefixlen",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipx.nexthop_net",
+        "type": "FT_IPXNET",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipx.nexthop_host",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipx.routerid",
+        "type": "FT_ETHER",
+        "description": "Router ID of redistributing router"
+      },
+      {
+        "name": "eigrp.ipx.dest",
+        "type": "FT_IPXNET",
+        "description": ""
+      },
+      {
+        "name": "eigrp.atalk.routerid",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.service",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.subservice",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.guid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.type",
+        "type": "FT_UINT16",
+        "description": "SAF Message Data Type"
+      },
+      {
+        "name": "eigrp.saf.data.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.sequence",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.reachability.afi",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.reachability.port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.reachability.protocol",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.reachability.addr_ipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.reachability.addr_ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "eigrp.saf.data.reachability.addr_hex",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "eigrp.nullpad",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipx_address",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "eigrp.release_version",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.tlv_version",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipv4.destination",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "eigrp.ipv6.destination",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "eigrp.appletalk_cable_range",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.nexthop_address",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.cable_range",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.metric.delay",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "eigrp.metric.bandwidth",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "eigrp.checksum",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.checksum.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.metric.comm_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.flag",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.tag",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.res",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.rid",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.as",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.sdly",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.rel",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.hop",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.sbw",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.load",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.mtu",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.xas",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.xrid",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.xproto",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "eigrp.extcomm.xmetric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "eigrp.peer_termination",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.auth.length.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.auth.type.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.seq.addrlen.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.peer_termination_graceful",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.prefixlen.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.unreachable",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.tlv_type.unknown",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.afi.unknown",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.checksum.bad",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.tlv.len.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "eigrp.tlv.truncated",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 64,
+    "by_pcap": {
+      "generated_eigrp.pcap": [
+        "_ws_expert",
+        "eigrp_eigrp_ack",
+        "eigrp_eigrp_as",
+        "eigrp_eigrp_checksum",
+        "eigrp_eigrp_checksum_status",
+        "eigrp_eigrp_flags",
+        "eigrp_eigrp_flags_condrecv",
+        "eigrp_eigrp_flags_eot",
+        "eigrp_eigrp_flags_init",
+        "eigrp_eigrp_flags_restart",
+        "eigrp_eigrp_opcode",
+        "eigrp_eigrp_par_holdtime",
+        "eigrp_eigrp_par_k1",
+        "eigrp_eigrp_par_k2",
+        "eigrp_eigrp_par_k3",
+        "eigrp_eigrp_par_k4",
+        "eigrp_eigrp_par_k5",
+        "eigrp_eigrp_par_k6",
+        "eigrp_eigrp_seq",
+        "eigrp_eigrp_tlv_len",
+        "eigrp_eigrp_tlv_type",
+        "eigrp_eigrp_version",
+        "eigrp_eigrp_vrid",
+        "text"
+      ],
+      "wireshark_eigrp_ipv6_auth.pcap": [
+        "_ws_expert",
+        "eigrp_eigrp_ack",
+        "eigrp_eigrp_as",
+        "eigrp_eigrp_auth_digest",
+        "eigrp_eigrp_auth_keyid",
+        "eigrp_eigrp_auth_keyseq",
+        "eigrp_eigrp_auth_length",
+        "eigrp_eigrp_auth_type",
+        "eigrp_eigrp_checksum",
+        "eigrp_eigrp_checksum_status",
+        "eigrp_eigrp_flags",
+        "eigrp_eigrp_flags_condrecv",
+        "eigrp_eigrp_flags_eot",
+        "eigrp_eigrp_flags_init",
+        "eigrp_eigrp_flags_restart",
+        "eigrp_eigrp_nullpad",
+        "eigrp_eigrp_opcode",
+        "eigrp_eigrp_par_holdtime",
+        "eigrp_eigrp_par_k1",
+        "eigrp_eigrp_par_k2",
+        "eigrp_eigrp_par_k3",
+        "eigrp_eigrp_par_k4",
+        "eigrp_eigrp_par_k5",
+        "eigrp_eigrp_par_k6",
+        "eigrp_eigrp_release_version",
+        "eigrp_eigrp_seq",
+        "eigrp_eigrp_tlv_len",
+        "eigrp_eigrp_tlv_type",
+        "eigrp_eigrp_tlv_version",
+        "eigrp_eigrp_version",
+        "eigrp_eigrp_vrid",
+        "text"
+      ],
+      "wireshark_eigrp_ipv6_stub.pcap": [
+        "_ws_expert",
+        "eigrp_eigrp_ack",
+        "eigrp_eigrp_as",
+        "eigrp_eigrp_checksum",
+        "eigrp_eigrp_checksum_status",
+        "eigrp_eigrp_flags",
+        "eigrp_eigrp_flags_condrecv",
+        "eigrp_eigrp_flags_eot",
+        "eigrp_eigrp_flags_init",
+        "eigrp_eigrp_flags_restart",
+        "eigrp_eigrp_opcode",
+        "eigrp_eigrp_par_holdtime",
+        "eigrp_eigrp_par_k1",
+        "eigrp_eigrp_par_k2",
+        "eigrp_eigrp_par_k3",
+        "eigrp_eigrp_par_k4",
+        "eigrp_eigrp_par_k5",
+        "eigrp_eigrp_par_k6",
+        "eigrp_eigrp_release_version",
+        "eigrp_eigrp_seq",
+        "eigrp_eigrp_stub_options",
+        "eigrp_eigrp_stub_options_connected",
+        "eigrp_eigrp_stub_options_leakmap",
+        "eigrp_eigrp_stub_options_recvonly",
+        "eigrp_eigrp_stub_options_redist",
+        "eigrp_eigrp_stub_options_static",
+        "eigrp_eigrp_stub_options_summary",
+        "eigrp_eigrp_tlv_len",
+        "eigrp_eigrp_tlv_type",
+        "eigrp_eigrp_tlv_version",
+        "eigrp_eigrp_version",
+        "eigrp_eigrp_vrid",
+        "text"
+      ],
+      "wireshark_eigrp_ipv6_updates.pcap": [
+        "_ws_expert",
+        "eigrp_eigrp_ack",
+        "eigrp_eigrp_as",
+        "eigrp_eigrp_checksum",
+        "eigrp_eigrp_checksum_status",
+        "eigrp_eigrp_extdata_as",
+        "eigrp_eigrp_extdata_metric",
+        "eigrp_eigrp_extdata_origrid",
+        "eigrp_eigrp_extdata_proto",
+        "eigrp_eigrp_extdata_reserved",
+        "eigrp_eigrp_extdata_tag",
+        "eigrp_eigrp_flags",
+        "eigrp_eigrp_flags_condrecv",
+        "eigrp_eigrp_flags_eot",
+        "eigrp_eigrp_flags_init",
+        "eigrp_eigrp_flags_restart",
+        "eigrp_eigrp_ipv6_destination",
+        "eigrp_eigrp_ipv6_nexthop",
+        "eigrp_eigrp_ipv6_prefixlen",
+        "eigrp_eigrp_metric_flags_active",
+        "eigrp_eigrp_metric_flags_cd",
+        "eigrp_eigrp_metric_flags_repl",
+        "eigrp_eigrp_metric_flags_srcwd",
+        "eigrp_eigrp_next_mcast_seq",
+        "eigrp_eigrp_old_metric_bw",
+        "eigrp_eigrp_old_metric_delay",
+        "eigrp_eigrp_old_metric_hopcount",
+        "eigrp_eigrp_old_metric_intag",
+        "eigrp_eigrp_old_metric_load",
+        "eigrp_eigrp_old_metric_mtu",
+        "eigrp_eigrp_old_metric_rel",
+        "eigrp_eigrp_opaque_flag_cd",
+        "eigrp_eigrp_opaque_flag_ext",
+        "eigrp_eigrp_opcode",
+        "eigrp_eigrp_par_holdtime",
+        "eigrp_eigrp_par_k1",
+        "eigrp_eigrp_par_k2",
+        "eigrp_eigrp_par_k3",
+        "eigrp_eigrp_par_k4",
+        "eigrp_eigrp_par_k5",
+        "eigrp_eigrp_par_k6",
+        "eigrp_eigrp_release_version",
+        "eigrp_eigrp_seq",
+        "eigrp_eigrp_seq_addrlen",
+        "eigrp_eigrp_seq_ipv6addr",
+        "eigrp_eigrp_tlv_len",
+        "eigrp_eigrp_tlv_type",
+        "eigrp_eigrp_tlv_version",
+        "eigrp_eigrp_version",
+        "eigrp_eigrp_vrid",
+        "text"
+      ],
+      "wireshark_eigrp_neighbors.cap": [
+        "eigrp_eigrp_ack",
+        "eigrp_eigrp_as",
+        "eigrp_eigrp_checksum",
+        "eigrp_eigrp_checksum_status",
+        "eigrp_eigrp_flags",
+        "eigrp_eigrp_flags_condrecv",
+        "eigrp_eigrp_flags_eot",
+        "eigrp_eigrp_flags_init",
+        "eigrp_eigrp_flags_restart",
+        "eigrp_eigrp_opcode",
+        "eigrp_eigrp_par_holdtime",
+        "eigrp_eigrp_par_k1",
+        "eigrp_eigrp_par_k2",
+        "eigrp_eigrp_par_k3",
+        "eigrp_eigrp_par_k4",
+        "eigrp_eigrp_par_k5",
+        "eigrp_eigrp_par_k6",
+        "eigrp_eigrp_release_version",
+        "eigrp_eigrp_seq",
+        "eigrp_eigrp_tlv_len",
+        "eigrp_eigrp_tlv_type",
+        "eigrp_eigrp_tlv_version",
+        "eigrp_eigrp_version",
+        "eigrp_eigrp_vrid",
+        "text"
+      ]
+    },
+    "union": [
+      "_ws_expert",
+      "eigrp_eigrp_ack",
+      "eigrp_eigrp_as",
+      "eigrp_eigrp_auth_digest",
+      "eigrp_eigrp_auth_keyid",
+      "eigrp_eigrp_auth_keyseq",
+      "eigrp_eigrp_auth_length",
+      "eigrp_eigrp_auth_type",
+      "eigrp_eigrp_checksum",
+      "eigrp_eigrp_checksum_status",
+      "eigrp_eigrp_extdata_as",
+      "eigrp_eigrp_extdata_metric",
+      "eigrp_eigrp_extdata_origrid",
+      "eigrp_eigrp_extdata_proto",
+      "eigrp_eigrp_extdata_reserved",
+      "eigrp_eigrp_extdata_tag",
+      "eigrp_eigrp_flags",
+      "eigrp_eigrp_flags_condrecv",
+      "eigrp_eigrp_flags_eot",
+      "eigrp_eigrp_flags_init",
+      "eigrp_eigrp_flags_restart",
+      "eigrp_eigrp_ipv6_destination",
+      "eigrp_eigrp_ipv6_nexthop",
+      "eigrp_eigrp_ipv6_prefixlen",
+      "eigrp_eigrp_metric_flags_active",
+      "eigrp_eigrp_metric_flags_cd",
+      "eigrp_eigrp_metric_flags_repl",
+      "eigrp_eigrp_metric_flags_srcwd",
+      "eigrp_eigrp_next_mcast_seq",
+      "eigrp_eigrp_nullpad",
+      "eigrp_eigrp_old_metric_bw",
+      "eigrp_eigrp_old_metric_delay",
+      "eigrp_eigrp_old_metric_hopcount",
+      "eigrp_eigrp_old_metric_intag",
+      "eigrp_eigrp_old_metric_load",
+      "eigrp_eigrp_old_metric_mtu",
+      "eigrp_eigrp_old_metric_rel",
+      "eigrp_eigrp_opaque_flag_cd",
+      "eigrp_eigrp_opaque_flag_ext",
+      "eigrp_eigrp_opcode",
+      "eigrp_eigrp_par_holdtime",
+      "eigrp_eigrp_par_k1",
+      "eigrp_eigrp_par_k2",
+      "eigrp_eigrp_par_k3",
+      "eigrp_eigrp_par_k4",
+      "eigrp_eigrp_par_k5",
+      "eigrp_eigrp_par_k6",
+      "eigrp_eigrp_release_version",
+      "eigrp_eigrp_seq",
+      "eigrp_eigrp_seq_addrlen",
+      "eigrp_eigrp_seq_ipv6addr",
+      "eigrp_eigrp_stub_options",
+      "eigrp_eigrp_stub_options_connected",
+      "eigrp_eigrp_stub_options_leakmap",
+      "eigrp_eigrp_stub_options_recvonly",
+      "eigrp_eigrp_stub_options_redist",
+      "eigrp_eigrp_stub_options_static",
+      "eigrp_eigrp_stub_options_summary",
+      "eigrp_eigrp_tlv_len",
+      "eigrp_eigrp_tlv_type",
+      "eigrp_eigrp_tlv_version",
+      "eigrp_eigrp_version",
+      "eigrp_eigrp_vrid",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 55,
+    "fields": [
+      "ack",
+      "acknowledge",
+      "as",
+      "auth.digest",
+      "auth.keyid",
+      "auth.keyseq",
+      "auth.length",
+      "auth.type",
+      "auth_digest",
+      "auth_keyid",
+      "auth_keyseq",
+      "auth_length",
+      "auth_type",
+      "checksum",
+      "checksum_status",
+      "extdata_as",
+      "extdata_metric",
+      "extdata_origrid",
+      "extdata_proto",
+      "extdata_tag",
+      "flags",
+      "flags_condrecv",
+      "flags_eot",
+      "flags_init",
+      "flags_restart",
+      "ip_int_dest",
+      "ip_int_prefix_len",
+      "ipv6_destination",
+      "ipv6_nexthop",
+      "ipv6_prefixlen",
+      "old_metric_bw",
+      "old_metric_delay",
+      "old_metric_hopcount",
+      "old_metric_load",
+      "old_metric_mtu",
+      "old_metric_rel",
+      "opcode",
+      "par_holdtime",
+      "par_k1",
+      "par_k2",
+      "par_k3",
+      "par_k4",
+      "par_k5",
+      "par_k6",
+      "release_version",
+      "seq",
+      "sequence",
+      "sw_version_eigrp_major",
+      "sw_version_eigrp_minor",
+      "sw_version_ios_major",
+      "sw_version_ios_minor",
+      "tlv_type",
+      "tlv_version",
+      "version",
+      "vrid"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "62/140 (44%)",
+    "pcap_vs_extracted": "42/62 (67%)",
+    "t1_extracted": "16/16 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "eigrp_eigrp_tlv_len",
+        "field": "eigrp.tlv.len",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "generated_eigrp.pcap",
+          "wireshark_eigrp_ipv6_auth.pcap",
+          "wireshark_eigrp_ipv6_stub.pcap",
+          "wireshark_eigrp_ipv6_updates.pcap",
+          "wireshark_eigrp_neighbors.cap"
+        ],
+        "description": "TLV Length"
+      },
+      {
+        "ek_name": "eigrp_eigrp_seq_addrlen",
+        "field": "eigrp.seq.addrlen",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_seq_ipv6addr",
+        "field": "eigrp.seq.ipv6addr",
+        "type": "FT_IPv6",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_next_mcast_seq",
+        "field": "eigrp.next_mcast_seq",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_stub_options",
+        "field": "eigrp.stub_options",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_stub.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_old_metric_intag",
+        "field": "eigrp.old_metric.intag",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": "Internal Route Tag"
+      },
+      {
+        "ek_name": "eigrp_eigrp_metric_flags_srcwd",
+        "field": "eigrp.metric.flags.srcwd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": "Route Source Withdraw"
+      },
+      {
+        "ek_name": "eigrp_eigrp_metric_flags_cd",
+        "field": "eigrp.metric.flags.cd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_metric_flags_active",
+        "field": "eigrp.metric.flags.active",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": "Route is currently in active state"
+      },
+      {
+        "ek_name": "eigrp_eigrp_metric_flags_repl",
+        "field": "eigrp.metric.flags.repl",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": "Route is replicated from different tableid"
+      },
+      {
+        "ek_name": "eigrp_eigrp_extdata_reserved",
+        "field": "eigrp.extdata.reserved",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_opaque_flag_ext",
+        "field": "eigrp.opaque.flag.ext",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_opaque_flag_cd",
+        "field": "eigrp.opaque.flag.cd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_updates.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "eigrp_eigrp_nullpad",
+        "field": "eigrp.nullpad",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_eigrp_ipv6_auth.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 27,
+      "t1_in_pcap": 16,
+      "t1_covered": 16,
+      "t2_total": 95,
+      "t2_in_pcap": 40,
+      "t2_covered": 26,
+      "t3_skipped": 18,
+      "t4_ignored": 0
+    }
+  }
+}

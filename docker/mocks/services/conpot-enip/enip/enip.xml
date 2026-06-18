@@ -1,0 +1,135 @@
+<enip enabled="True" host="0.0.0.0" port="44818">
+    <device_info>
+        <!-- Vendor ID 1 = Rockwell Automation/Allen-Bradley (CIP Vol 1, Table 5-2) -->
+        <VendorId>1</VendorId>
+        <!-- Product Name: ControlLogix 5571 processor -->
+        <ProductName>1756-L71/B LOGIX5571</ProductName>
+        <!-- Device Type 14 = Programmable Logic Controller (CIP Vol 1, Table 5-1) -->
+        <DeviceType>14</DeviceType>
+        <!-- Serial Number (unique device identifier) -->
+        <SerialNumber>12648430</SerialNumber>
+        <!-- Product Revision: major.minor encoded as (major * 256 + minor) = 30.11 -->
+        <ProductRevision>7691</ProductRevision>
+        <!-- Product Code: ControlLogix 5571 -->
+        <ProductCode>55</ProductCode>
+    </device_info>
+
+    <mode>tcp</mode>
+    <latency>0.1</latency>
+    <timeout>20</timeout>
+
+    <!-- Tags simulating a typical industrial control system -->
+    <tags>
+        <!-- Digital I/O tags -->
+        <tag name="DI_MotorRunning">
+            <type>SINT</type>
+            <size>1</size>
+            <value>1</value>
+            <addr>22/1/1</addr>
+        </tag>
+        <tag name="DI_PumpRunning">
+            <type>SINT</type>
+            <size>1</size>
+            <value>0</value>
+            <addr>22/1/2</addr>
+        </tag>
+        <tag name="DI_ValveOpen">
+            <type>SINT</type>
+            <size>1</size>
+            <value>1</value>
+            <addr>22/1/3</addr>
+        </tag>
+        <tag name="DI_EmergencyStop">
+            <type>SINT</type>
+            <size>1</size>
+            <value>0</value>
+            <addr>22/1/4</addr>
+        </tag>
+        <tag name="DO_StartMotor">
+            <type>SINT</type>
+            <size>1</size>
+            <value>0</value>
+            <addr>22/1/5</addr>
+        </tag>
+        <tag name="DO_OpenValve">
+            <type>SINT</type>
+            <size>1</size>
+            <value>0</value>
+            <addr>22/1/6</addr>
+        </tag>
+
+        <!-- Analog I/O tags -->
+        <tag name="AI_Temperature">
+            <type>REAL</type>
+            <size>4</size>
+            <value>25.5</value>
+            <addr>22/1/10</addr>
+        </tag>
+        <tag name="AI_Pressure">
+            <type>REAL</type>
+            <size>4</size>
+            <value>101.325</value>
+            <addr>22/1/11</addr>
+        </tag>
+        <tag name="AI_FlowRate">
+            <type>REAL</type>
+            <size>4</size>
+            <value>15.7</value>
+            <addr>22/1/12</addr>
+        </tag>
+        <tag name="AI_Level">
+            <type>REAL</type>
+            <size>4</size>
+            <value>75.2</value>
+            <addr>22/1/13</addr>
+        </tag>
+        <tag name="AO_SpeedSetpoint">
+            <type>REAL</type>
+            <size>4</size>
+            <value>1500.0</value>
+            <addr>22/1/14</addr>
+        </tag>
+        <tag name="AO_TempSetpoint">
+            <type>REAL</type>
+            <size>4</size>
+            <value>25.0</value>
+            <addr>22/1/15</addr>
+        </tag>
+
+        <!-- System counters -->
+        <tag name="SYS_CycleCount">
+            <type>DINT</type>
+            <size>4</size>
+            <value>0</value>
+            <addr>22/1/20</addr>
+        </tag>
+        <tag name="SYS_ErrorCount">
+            <type>DINT</type>
+            <size>4</size>
+            <value>0</value>
+            <addr>22/1/21</addr>
+        </tag>
+
+        <!-- SCADA bulk data array -->
+        <tag name="SCADA">
+            <type>DINT</type>
+            <size>4</size>
+            <value>0</value>
+            <addr>22/1/30</addr>
+        </tag>
+
+        <!-- String tags -->
+        <tag name="DeviceName">
+            <type>SSTRING</type>
+            <size>32</size>
+            <value>OIDA-PLC-001</value>
+            <addr>22/1/40</addr>
+        </tag>
+        <tag name="FirmwareVersion">
+            <type>SSTRING</type>
+            <size>32</size>
+            <value>30.011</value>
+            <addr>22/1/41</addr>
+        </tag>
+    </tags>
+</enip>

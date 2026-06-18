@@ -1,0 +1,17 @@
+{
+  "name": "hl7-node-mock",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js HL7 v2 MLLP mock server for OIDA testing",
+  "main": "hl7_node_server.js",
+  "scripts": {
+    "start": "node hl7_node_server.js"
+  },
+  "dependencies": {
+    "node-hl7-server": "^3.3.0",
+    "node-hl7-client": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.15.0"
+  }
+}

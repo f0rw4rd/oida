@@ -1,0 +1,313 @@
+{
+  "vendor": "Elmeasure",
+  "model": "MPS 8000 MPU 5110",
+  "description": "Elmeasure MPS 8000 MPU 5110 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "watts_total": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts total"
+    },
+    "watts_r_phase": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts R phase"
+    },
+    "watts_y_phase": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts Y phase"
+    },
+    "watts_b_phase": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts B phase"
+    },
+    "var_total": {
+      "address": 108,
+      "type": "f32",
+      "access": "r",
+      "description": "Var total"
+    },
+    "var_r_phase": {
+      "address": 110,
+      "type": "f32",
+      "access": "r",
+      "description": "Var R phase"
+    },
+    "var_y_phase": {
+      "address": 112,
+      "type": "f32",
+      "access": "r",
+      "description": "Var Y phase"
+    },
+    "var_b_phase": {
+      "address": 114,
+      "type": "f32",
+      "access": "r",
+      "description": "Var B phase"
+    },
+    "pf_avg_inst": {
+      "address": 116,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf avg(inst)"
+    },
+    "pf_r_phase": {
+      "address": 118,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf R phase"
+    },
+    "pf_y_phase": {
+      "address": 120,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf Y phase"
+    },
+    "pf_b_phase": {
+      "address": 122,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf B phase"
+    },
+    "va_total": {
+      "address": 124,
+      "type": "f32",
+      "access": "r",
+      "description": "Va total"
+    },
+    "va_r_phase": {
+      "address": 126,
+      "type": "f32",
+      "access": "r",
+      "description": "Va R phase"
+    },
+    "va_y_phase": {
+      "address": 128,
+      "type": "f32",
+      "access": "r",
+      "description": "Va Y phase"
+    },
+    "va_b_phase": {
+      "address": 130,
+      "type": "f32",
+      "access": "r",
+      "description": "Va B phase"
+    },
+    "vll_average": {
+      "address": 132,
+      "type": "f32",
+      "access": "r",
+      "description": "Vll average"
+    },
+    "vry_phase": {
+      "address": 134,
+      "type": "f32",
+      "access": "r",
+      "description": "Vry phase"
+    },
+    "vyb_phase": {
+      "address": 136,
+      "type": "f32",
+      "access": "r",
+      "description": "Vyb phase"
+    },
+    "vbr_phase": {
+      "address": 138,
+      "type": "f32",
+      "access": "r",
+      "description": "Vbr phase"
+    },
+    "vln_average": {
+      "address": 140,
+      "type": "f32",
+      "access": "r",
+      "description": "Vln average"
+    },
+    "v_r_phase": {
+      "address": 142,
+      "type": "f32",
+      "access": "r",
+      "description": "V R phase"
+    },
+    "v_y_phase": {
+      "address": 144,
+      "type": "f32",
+      "access": "r",
+      "description": "V Y phase"
+    },
+    "v_b_phase": {
+      "address": 146,
+      "type": "f32",
+      "access": "r",
+      "description": "V B phase"
+    },
+    "current_average": {
+      "address": 148,
+      "type": "f32",
+      "access": "r",
+      "description": "Current average"
+    },
+    "current_r_phase": {
+      "address": 150,
+      "type": "f32",
+      "access": "r",
+      "description": "Current R phase"
+    },
+    "current_y_phase": {
+      "address": 152,
+      "type": "f32",
+      "access": "r",
+      "description": "Current Y phase"
+    },
+    "current_b_phase": {
+      "address": 154,
+      "type": "f32",
+      "access": "r",
+      "description": "Current B phase"
+    },
+    "frequency": {
+      "address": 156,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "wh_received": {
+      "address": 158,
+      "type": "f32",
+      "access": "r",
+      "description": "Wh received"
+    },
+    "vah_received": {
+      "address": 160,
+      "type": "f32",
+      "access": "r",
+      "description": "Vah received"
+    },
+    "varh_ind_received": {
+      "address": 162,
+      "type": "f32",
+      "access": "r",
+      "description": "Varh ind. Received"
+    },
+    "varh_cap_received": {
+      "address": 164,
+      "type": "f32",
+      "access": "r",
+      "description": "Varh cap. Received"
+    },
+    "pf_average_received": {
+      "address": 174,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf average received"
+    },
+    "amps_hours_received": {
+      "address": 176,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps hours received"
+    },
+    "neutral_current": {
+      "address": 182,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "voltage_r_harmonics": {
+      "address": 184,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage R harmonics"
+    },
+    "voltage_y_harmonics": {
+      "address": 186,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage Y harmonics"
+    },
+    "voltage_b_harmonics": {
+      "address": 188,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage B harmonics"
+    },
+    "current_r_harmonics": {
+      "address": 190,
+      "type": "f32",
+      "access": "r",
+      "description": "Current R harmonics"
+    },
+    "current_y_harmonics": {
+      "address": 192,
+      "type": "f32",
+      "access": "r",
+      "description": "Current Y harmonics"
+    },
+    "current_b_harmonics": {
+      "address": 194,
+      "type": "f32",
+      "access": "r",
+      "description": "Current B harmonics"
+    },
+    "rpm": {
+      "address": 214,
+      "type": "f32",
+      "access": "r",
+      "description": "Rpm"
+    },
+    "load_hours_received": {
+      "address": 216,
+      "type": "u32",
+      "access": "r",
+      "description": "Load hours received"
+    },
+    "no_of_interruptions": {
+      "address": 220,
+      "type": "u32",
+      "access": "r",
+      "description": "No of interruptions"
+    },
+    "on_hours_in_seconds": {
+      "address": 230,
+      "type": "u32",
+      "access": "r",
+      "description": "On hours ( in seconds)"
+    },
+    "voltage_r_phase_angle": {
+      "address": 232,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage R phase angle"
+    },
+    "voltage_y_phase_angle": {
+      "address": 234,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage Y phase angle"
+    },
+    "voltage_b_phase_angle": {
+      "address": 236,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage B phase angle"
+    },
+    "current_r_phase_angle": {
+      "address": 238,
+      "type": "f32",
+      "access": "r",
+      "description": "Current R phase angle"
+    }
+  }
+}

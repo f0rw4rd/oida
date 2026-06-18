@@ -1,0 +1,113 @@
+<bacnet enabled="True" host="0.0.0.0" port="47808">
+    <device_info>
+        <device_name>SystemName</device_name>
+        <device_identifier>36113</device_identifier>
+        <vendor_name>Alerton Technologies, Inc.</vendor_name>
+        <vendor_identifier>15</vendor_identifier>
+        <max_apdu_length_accepted>1024</max_apdu_length_accepted>
+        <segmentation_supported>segmentedBoth</segmentation_supported>
+        <model_name>VAV-DD Controller</model_name>
+        <firmware_revision>3.2.1</firmware_revision>
+        <application_software_version>3.2.1</application_software_version>
+        <protocol_version>1</protocol_version>
+        <protocol_revision>14</protocol_revision>
+        <description>Alerton VAV-DD BACnet/IP Controller</description>
+        <location>OIDA Test Lab Building A</location>
+    </device_info>
+    <object_list>
+        <!-- Zone Temperature Sensor -->
+        <object name="objectAnalogInput1">
+            <properties>
+                <object_identifier>1</object_identifier>
+                <object_name>Zone 1 Temperature</object_name>
+                <object_type>Analog Input</object_type>
+                <present_value>72.5</present_value>
+                <units>degrees-fahrenheit</units>
+            </properties>
+        </object>
+        <!-- Zone Humidity Sensor -->
+        <object name="objectAnalogInput2">
+            <properties>
+                <object_identifier>2</object_identifier>
+                <object_name>Zone 1 Humidity</object_name>
+                <object_type>Analog Input</object_type>
+                <present_value>45.2</present_value>
+                <units>percent-relative-humidity</units>
+            </properties>
+        </object>
+        <!-- Discharge Air Temperature -->
+        <object name="objectAnalogInput3">
+            <properties>
+                <object_identifier>3</object_identifier>
+                <object_name>Discharge Air Temp</object_name>
+                <object_type>Analog Input</object_type>
+                <present_value>55.0</present_value>
+                <units>degrees-fahrenheit</units>
+            </properties>
+        </object>
+        <!-- Zone Temperature Setpoint -->
+        <object name="objectAnalogValue1">
+            <properties>
+                <object_identifier>10</object_identifier>
+                <object_name>Zone 1 Setpoint</object_name>
+                <object_type>Analog Value</object_type>
+                <present_value>72.0</present_value>
+                <units>degrees-fahrenheit</units>
+            </properties>
+        </object>
+        <!-- Damper Position Output -->
+        <object name="objectAnalogOutput1">
+            <properties>
+                <object_identifier>20</object_identifier>
+                <object_name>Damper Position</object_name>
+                <object_type>Analog Output</object_type>
+                <present_value>50.0</present_value>
+                <units>percent</units>
+            </properties>
+        </object>
+        <!-- Occupancy Sensor -->
+        <object name="objectBinaryInput1">
+            <properties>
+                <object_identifier>12</object_identifier>
+                <object_name>Occupancy Sensor</object_name>
+                <object_type>Binary Input</object_type>
+            </properties>
+        </object>
+        <!-- Fan Status -->
+        <object name="objectBinaryInput2">
+            <properties>
+                <object_identifier>13</object_identifier>
+                <object_name>Fan Status</object_name>
+                <object_type>Binary Input</object_type>
+            </properties>
+        </object>
+        <!-- Heating Valve Command -->
+        <object name="objectBinaryOutput1">
+            <properties>
+                <object_identifier>30</object_identifier>
+                <object_name>Heating Valve</object_name>
+                <object_type>Binary Output</object_type>
+            </properties>
+        </object>
+        <!-- HVAC Mode Selector -->
+        <object name="objectMultiState1">
+            <properties>
+                <object_identifier>40</object_identifier>
+                <object_name>HVAC Mode</object_name>
+                <object_type>Multi-State Value</object_type>
+                <present_value>2</present_value>
+            </properties>
+        </object>
+        <!-- Access Door -->
+        <object name="objectDoor">
+            <properties>
+                <object_identifier>16</object_identifier>
+                <object_name>Server Room Door</object_name>
+                <object_type>Access Door</object_type>
+                <present_value>0</present_value>
+                <out_of_service>True</out_of_service>
+                <maintenance_required>2</maintenance_required>
+            </properties>
+        </object>
+    </object_list>
+</bacnet>

@@ -1,0 +1,313 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "SEPAM 40",
+  "description": "Schneider Electric SEPAM 40 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_current_i1": {
+      "address": 275,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current I1"
+    },
+    "phase_current_i2": {
+      "address": 276,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current I2"
+    },
+    "phase_current_i3": {
+      "address": 277,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current I3"
+    },
+    "residual_current_i0_sum": {
+      "address": 278,
+      "type": "u16",
+      "access": "r",
+      "description": "Residual current i0 sum"
+    },
+    "residual_current_measured": {
+      "address": 279,
+      "type": "u16",
+      "access": "r",
+      "description": "Residual current measured"
+    },
+    "average_phase_current_im1": {
+      "address": 280,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current IM1"
+    },
+    "average_phase_current_im2": {
+      "address": 281,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current IM2"
+    },
+    "average_phase_current_im3": {
+      "address": 282,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current IM3"
+    },
+    "peak_demand_phase_current_im1": {
+      "address": 283,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak demand phase current IM1"
+    },
+    "peak_demand_phase_current_im2": {
+      "address": 284,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak demand phase current IM2"
+    },
+    "peak_demand_phase_current_im3": {
+      "address": 285,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak demand phase current IM3"
+    },
+    "phase_to_phase_voltage_u21": {
+      "address": 286,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U21"
+    },
+    "phase_to_phase_voltage_u32": {
+      "address": 287,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U32"
+    },
+    "phase_to_phase_voltage_u13": {
+      "address": 288,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U13"
+    },
+    "phase_to_neutral_voltage_v1": {
+      "address": 289,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage V1"
+    },
+    "phase_to_neutral_voltage_v2": {
+      "address": 290,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage V2"
+    },
+    "phase_to_neutral_voltage_v3": {
+      "address": 291,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage V3"
+    },
+    "residual_voltage_v0": {
+      "address": 292,
+      "type": "u16",
+      "access": "r",
+      "description": "Residual voltage v0"
+    },
+    "positive_sequence_voltage_vd": {
+      "address": 293,
+      "type": "u16",
+      "access": "r",
+      "description": "Positive sequence voltage vd"
+    },
+    "negative_sequence_voltage_vi": {
+      "address": 294,
+      "type": "u16",
+      "access": "r",
+      "description": "Negative sequence voltage vi"
+    },
+    "frequency": {
+      "address": 295,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "active_power_p": {
+      "address": 296,
+      "type": "i16",
+      "access": "r",
+      "description": "Active power P"
+    },
+    "reactive_power_q": {
+      "address": 297,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power Q"
+    },
+    "apparent_power_s": {
+      "address": 298,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power S"
+    },
+    "peak_demand_active_power_pm": {
+      "address": 299,
+      "type": "i16",
+      "access": "r",
+      "description": "Peak demand active power pm"
+    },
+    "peak_demand_reactive_power_qm": {
+      "address": 300,
+      "type": "i16",
+      "access": "r",
+      "description": "Peak demand reactive power qm"
+    },
+    "power_factor_cos": {
+      "address": 301,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor cos"
+    },
+    "positive_active_energy_ea": {
+      "address": 302,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive active energy ea+"
+    },
+    "negative_active_energy_ea": {
+      "address": 304,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative active energy ea"
+    },
+    "positive_reactive_energy_er": {
+      "address": 306,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive reactive energy er+"
+    },
+    "negative_reactive_energy_er": {
+      "address": 308,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative reactive energy er"
+    },
+    "phase_current_i1_310": {
+      "address": 310,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current I1"
+    },
+    "phase_current_i2_311": {
+      "address": 311,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current I2"
+    },
+    "phase_current_i3_312": {
+      "address": 312,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current I3"
+    },
+    "residual_current_i0_sum_313": {
+      "address": 313,
+      "type": "u16",
+      "access": "r",
+      "description": "Residual current i0 sum"
+    },
+    "residual_current_measured_314": {
+      "address": 314,
+      "type": "u16",
+      "access": "r",
+      "description": "Residual current measured"
+    },
+    "average_phase_current_im1_315": {
+      "address": 315,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current IM1"
+    },
+    "average_phase_current_im2_316": {
+      "address": 316,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current IM2"
+    },
+    "average_phase_current_im3_317": {
+      "address": 317,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current IM3"
+    },
+    "peak_demand_phase_current_im1_318": {
+      "address": 318,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak demand phase current IM1"
+    },
+    "peak_demand_phase_current_im2_319": {
+      "address": 319,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak demand phase current IM2"
+    },
+    "peak_demand_phase_current_im3_320": {
+      "address": 320,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak demand phase current IM3"
+    },
+    "phase_to_phase_voltage_u21_321": {
+      "address": 321,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U21"
+    },
+    "phase_to_phase_voltage_u32_322": {
+      "address": 322,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U32"
+    },
+    "phase_to_phase_voltage_u13_323": {
+      "address": 323,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U13"
+    },
+    "phase_to_neutral_voltage_v1_324": {
+      "address": 324,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage V1"
+    },
+    "phase_to_neutral_voltage_v2_325": {
+      "address": 325,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage V2"
+    },
+    "phase_to_neutral_voltage_v3_326": {
+      "address": 326,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage V3"
+    },
+    "residual_voltage_v0_327": {
+      "address": 327,
+      "type": "u16",
+      "access": "r",
+      "description": "Residual voltage v0"
+    },
+    "positive_sequence_voltage_vd_328": {
+      "address": 328,
+      "type": "u16",
+      "access": "r",
+      "description": "Positive sequence voltage vd"
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "vendor": "Beckhoff",
+  "model": "CX8090/CX8095/CX9020 Embedded PC",
+  "description": "Beckhoff Embedded PC with ARM processor and Modbus TCP server",
+  "version": "1.0",
+  "byte_order": "little",
+  "word_order": "little",
+  "default_port": 502,
+  "source": "Beckhoff InfoSys CX8090 documentation",
+  "notes": {
+    "ads_port_tc2": "801 for TwinCAT2 PLC1, 811 for PLC2",
+    "ads_port_tc3": "851 for TwinCAT3 PLC1",
+    "default_mapping": "Uses TcModbusSrv.xml configuration file",
+    "configurator": "TwinCAT Modbus TCP Configurator for customization"
+  },
+  "registers": {
+    "physical_input_ix0": {
+      "address": 0,
+      "type": "coil",
+      "access": "ro",
+      "function_code": 2,
+      "description": "Physical input %IX0.0 via ADS IndexGroup 0xF021",
+      "notes": "ads_index_group=0xF021, ads_index_offset=0"
+    },
+    "physical_output_qx0": {
+      "address": 0,
+      "type": "coil",
+      "access": "rw",
+      "function_code": 1,
+      "description": "Physical output %QX0.0 via ADS IndexGroup 0xF031",
+      "notes": "ads_index_group=0xF031, ads_index_offset=0"
+    },
+    "physical_input_iw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "function_code": 4,
+      "description": "Physical input register %IW0 via ADS IndexGroup 0xF020",
+      "notes": "ads_index_group=0xF020, ads_index_offset=0"
+    },
+    "plc_memory_mw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "PLC memory %MW0 via ADS IndexGroup 0x4020",
+      "notes": "ads_index_group=0x4020, ads_index_offset=0"
+    },
+    "plc_memory_0x3000": {
+      "address": 12288,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "Modbus 0x3000 mapped to PLC memory area"
+    },
+    "mb_input_coils_32768": {
+      "address": 32768,
+      "type": "coil",
+      "access": "ro",
+      "function_code": 2,
+      "description": "PLC variable .mb_Input_Coils[0] (ARRAY[0..255] OF BOOL)"
+    },
+    "mb_output_coils_32768": {
+      "address": 32768,
+      "type": "coil",
+      "access": "rw",
+      "function_code": 1,
+      "description": "PLC variable .mb_Output_Coils[0] (ARRAY[0..255] OF BOOL)"
+    },
+    "mb_input_registers_32768": {
+      "address": 32768,
+      "type": "u16",
+      "access": "ro",
+      "function_code": 4,
+      "description": "PLC variable .mb_Input_Registers[0] (ARRAY[0..255] OF WORD)"
+    },
+    "mb_output_registers_32768": {
+      "address": 32768,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "PLC variable .mb_Output_Registers[0] (ARRAY[0..255] OF WORD)"
+    }
+  },
+  "address_ranges": {
+    "physical_input_coils": {
+      "start": 0,
+      "end": 32767,
+      "function_code": 2,
+      "ads_group": "0xF021"
+    },
+    "physical_output_coils": {
+      "start": 0,
+      "end": 32767,
+      "function_code": 1,
+      "ads_group": "0xF031"
+    },
+    "plc_input_coils": {
+      "start": 32768,
+      "end": 33023,
+      "function_code": 2,
+      "description": ".mb_Input_Coils"
+    },
+    "plc_output_coils": {
+      "start": 32768,
+      "end": 65535,
+      "function_code": 1,
+      "description": ".mb_Output_Coils"
+    },
+    "physical_input_registers": {
+      "start": 0,
+      "end": 32767,
+      "function_code": 4,
+      "ads_group": "0xF020"
+    },
+    "plc_holding_registers": {
+      "start": 0,
+      "end": 32767,
+      "function_code": 3,
+      "ads_group": "0x4020"
+    },
+    "plc_input_registers": {
+      "start": 32768,
+      "end": 65535,
+      "function_code": 4,
+      "description": ".mb_Input_Registers"
+    },
+    "plc_output_registers": {
+      "start": 32768,
+      "end": 65535,
+      "function_code": 3,
+      "description": ".mb_Output_Registers"
+    }
+  },
+  "_source_verified": "Verified: ARM9 embedded PC with Modbus TCP confirmed; ADS IndexGroup mapping verified"
+}

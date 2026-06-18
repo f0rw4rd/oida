@@ -1,0 +1,363 @@
+{
+  "vendor": "Socomec",
+  "model": "DIRIS U 30",
+  "description": "Socomec DIRIS U 30 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "inst_measurement_network_date_of_last_instance": {
+      "address": 36864,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Date of last instance",
+      "unit": "s"
+    },
+    "inst_measurement_network_integration_time": {
+      "address": 36866,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Integration time",
+      "unit": "s"
+    },
+    "inst_measurement_network_system_ph_n_voltage": {
+      "address": 36867,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. System ph N voltage",
+      "unit": "V"
+    },
+    "inst_measurement_network_system_ph_ph_voltage": {
+      "address": 36869,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. System ph ph voltage",
+      "unit": "V"
+    },
+    "inst_measurement_network_frequency": {
+      "address": 36871,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Frequency",
+      "unit": "Hz"
+    },
+    "inst_measurement_network_ph_n_voltage_v1": {
+      "address": 36873,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Ph N voltage : V1",
+      "unit": "V"
+    },
+    "inst_measurement_network_ph_n_voltage_v2": {
+      "address": 36875,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Ph N voltage : V2",
+      "unit": "V"
+    },
+    "inst_measurement_network_ph_n_voltage_v3": {
+      "address": 36877,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Ph N voltage : V3",
+      "unit": "V"
+    },
+    "inst_measurement_network_ph_n_voltage_vn": {
+      "address": 36879,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Ph N voltage : vn",
+      "unit": "V"
+    },
+    "inst_measurement_network_ph_ph_voltage_u12": {
+      "address": 36881,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Ph ph voltage : U12",
+      "unit": "V"
+    },
+    "inst_measurement_network_ph_ph_voltage_u23": {
+      "address": 36883,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Ph ph voltage : U23",
+      "unit": "V"
+    },
+    "inst_measurement_network_ph_ph_voltage_u31": {
+      "address": 36885,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Ph ph voltage : U31",
+      "unit": "V"
+    },
+    "inst_measurement_network_vdir": {
+      "address": 36887,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Vdir",
+      "unit": "V"
+    },
+    "inst_measurement_network_vinv": {
+      "address": 36889,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Vinv",
+      "unit": "V"
+    },
+    "inst_measurement_network_vhom": {
+      "address": 36891,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Vhom",
+      "unit": "V"
+    },
+    "inst_measurement_network_vnb": {
+      "address": 36893,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Vnb",
+      "unit": "%"
+    },
+    "inst_measurement_network_udir": {
+      "address": 36894,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Udir",
+      "unit": "V"
+    },
+    "inst_measurement_network_uinv": {
+      "address": 36896,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Uinv",
+      "unit": "V"
+    },
+    "inst_measurement_network_unb": {
+      "address": 36898,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Unb",
+      "unit": "%"
+    },
+    "inst_measurement_network_vnba": {
+      "address": 36899,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Vnba",
+      "unit": "%"
+    },
+    "inst_measurement_network_unba": {
+      "address": 36900,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Network. Unba",
+      "unit": "%"
+    },
+    "avg_measurement_network_date_of_last_instance": {
+      "address": 36992,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Date of last instance",
+      "unit": "s"
+    },
+    "avg_measurement_network_integration_time": {
+      "address": 36994,
+      "type": "u16",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Integration time",
+      "unit": "s"
+    },
+    "avg_measurement_network_system_ph_n_voltage": {
+      "address": 36995,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. System ph N voltage",
+      "unit": "V"
+    },
+    "avg_measurement_network_system_ph_ph_voltage": {
+      "address": 36997,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. System ph ph voltage",
+      "unit": "V"
+    },
+    "avg_measurement_network_frequency": {
+      "address": 36999,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Frequency",
+      "unit": "Hz"
+    },
+    "avg_measurement_network_ph_n_voltage_v1": {
+      "address": 37001,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Ph N voltage : V1",
+      "unit": "V"
+    },
+    "avg_measurement_network_ph_n_voltage_v2": {
+      "address": 37003,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Ph N voltage : V2",
+      "unit": "V"
+    },
+    "avg_measurement_network_ph_n_voltage_v3": {
+      "address": 37005,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Ph N voltage : V3",
+      "unit": "V"
+    },
+    "avg_measurement_network_ph_n_voltage_vn": {
+      "address": 37007,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Ph N voltage : vn",
+      "unit": "V"
+    },
+    "avg_measurement_network_ph_ph_voltage_u12": {
+      "address": 37009,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Ph ph voltage : U12",
+      "unit": "V"
+    },
+    "avg_measurement_network_ph_ph_voltage_u23": {
+      "address": 37011,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Ph ph voltage : U23",
+      "unit": "V"
+    },
+    "avg_measurement_network_ph_ph_voltage_u31": {
+      "address": 37013,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Ph ph voltage : U31",
+      "unit": "V"
+    },
+    "avg_measurement_network_vdir": {
+      "address": 37015,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Vdir",
+      "unit": "V"
+    },
+    "avg_measurement_network_vinv": {
+      "address": 37017,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Vinv",
+      "unit": "V"
+    },
+    "avg_measurement_network_vhom": {
+      "address": 37019,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Vhom",
+      "unit": "V"
+    },
+    "avg_measurement_network_vnb": {
+      "address": 37021,
+      "type": "u16",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Vnb",
+      "unit": "%"
+    },
+    "avg_measurement_network_udir": {
+      "address": 37022,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Udir",
+      "unit": "V"
+    },
+    "avg_measurement_network_uinv": {
+      "address": 37024,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Uinv",
+      "unit": "V"
+    },
+    "avg_measurement_network_unb": {
+      "address": 37026,
+      "type": "u16",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Unb",
+      "unit": "%"
+    },
+    "avg_measurement_network_vnba": {
+      "address": 37027,
+      "type": "u16",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Vnba",
+      "unit": "%"
+    },
+    "avg_measurement_network_unba": {
+      "address": 37028,
+      "type": "u16",
+      "access": "r",
+      "description": "Avg. Measurement. Network. Unba",
+      "unit": "%"
+    },
+    "inst_fundamental_measurement_network_date_of_last_instance": {
+      "address": 37120,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Date of last instance",
+      "unit": "s"
+    },
+    "inst_fundamental_measurement_network_integration_time": {
+      "address": 37122,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Integration time",
+      "unit": "s"
+    },
+    "inst_fundamental_measurement_network_ph_n_voltage_v1h1": {
+      "address": 37123,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Ph N voltage: v1h1",
+      "unit": "V"
+    },
+    "inst_fundamental_measurement_network_ph_n_voltage_v2h1": {
+      "address": 37125,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Ph N voltage: v2h1",
+      "unit": "V"
+    },
+    "inst_fundamental_measurement_network_ph_n_voltage_v3h1": {
+      "address": 37127,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Ph N voltage: v3h1",
+      "unit": "V"
+    },
+    "inst_fundamental_measurement_network_ph_n_voltage_vnh1": {
+      "address": 37129,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Ph N voltage: vnh1",
+      "unit": "V"
+    },
+    "inst_fundamental_measurement_network_ph_n_voltage_phase_phv1h1": {
+      "address": 37131,
+      "type": "i16",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Ph N voltage phase: phv1h1",
+      "unit": "?"
+    },
+    "inst_fundamental_measurement_network_ph_n_voltage_phase_phv2h1": {
+      "address": 37132,
+      "type": "i16",
+      "access": "r",
+      "description": "Inst. Fundamental measurement. Network. Ph N voltage phase: phv2h1",
+      "unit": "?"
+    }
+  }
+}

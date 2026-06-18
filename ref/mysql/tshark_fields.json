@@ -1,0 +1,2548 @@
+{
+  "protocol": "mysql",
+  "display_filter": "mysql",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:53:41.133150+00:00",
+  "dissector_fields": {
+    "total": 275,
+    "by_type": {
+      "FT_ABSOLUTE_TIME": 1,
+      "FT_BOOLEAN": 76,
+      "FT_BYTES": 13,
+      "FT_DOUBLE": 1,
+      "FT_FLOAT": 1,
+      "FT_FRAMENUM": 3,
+      "FT_INT16": 2,
+      "FT_INT32": 4,
+      "FT_INT64": 1,
+      "FT_INT8": 8,
+      "FT_NONE": 22,
+      "FT_STRING": 22,
+      "FT_STRINGZ": 20,
+      "FT_UINT16": 19,
+      "FT_UINT24": 8,
+      "FT_UINT32": 22,
+      "FT_UINT64": 20,
+      "FT_UINT8": 32
+    },
+    "fields": [
+      {
+        "name": "mysql.packet_length",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.packet_number",
+        "type": "FT_UINT8",
+        "description": "Packet Number (now called: Sequence ID)"
+      },
+      {
+        "name": "mysql.request",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.command",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.response_code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.error_code",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.error.message",
+        "type": "FT_STRING",
+        "description": "Error string in case of MySQL error message"
+      },
+      {
+        "name": "mysql.sqlstate",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.message",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.server_greeting",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.protocol",
+        "type": "FT_UINT8",
+        "description": "Protocol Version"
+      },
+      {
+        "name": "mysql.version",
+        "type": "FT_STRINGZ",
+        "description": "MySQL Version"
+      },
+      {
+        "name": "mysql.session_track",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.data",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.data.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.sysvar.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.sysvar.name",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.sysvar.value",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.schema.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.schema",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.state_change",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.gtids.encoding",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.gtids.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.gtids",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.transaction_characteristics.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.transaction_characteristics",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.transaction_state.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.session_track.transaction_state",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.server",
+        "type": "FT_UINT16",
+        "description": "MySQL Capabilities"
+      },
+      {
+        "name": "mysql.caps.client",
+        "type": "FT_UINT16",
+        "description": "MySQL Capabilities"
+      },
+      {
+        "name": "mysql.caps.lp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.fr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.lf",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.cd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.ns",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.cp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.ob",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.li",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.is",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.cu",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.ia",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.sl",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.ii",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.ta",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.rs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.sc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.extcaps.server",
+        "type": "FT_UINT16",
+        "description": "MySQL Extended Capabilities"
+      },
+      {
+        "name": "mysql.extcaps.client",
+        "type": "FT_UINT16",
+        "description": "MySQL Extended Capabilities"
+      },
+      {
+        "name": "mysql.caps.ms",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.mr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.pm",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.pa",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.ca",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.ep",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.session_track",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.deprecate_eof",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.optional_metadata",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.compress_zsd",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.query_attrs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.mf_auth",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.cap_ext",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.vc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.caps.unused",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.login_request",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.max_packet",
+        "type": "FT_UINT32",
+        "description": "MySQL Max packet"
+      },
+      {
+        "name": "mysql.collation",
+        "type": "FT_UINT16",
+        "description": "MySQL Collation"
+      },
+      {
+        "name": "mariadb.collation",
+        "type": "FT_UINT16",
+        "description": "MariaDB Collation"
+      },
+      {
+        "name": "mysql.table_name",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.user",
+        "type": "FT_STRINGZ",
+        "description": "Login Username"
+      },
+      {
+        "name": "mysql.schema",
+        "type": "FT_STRING",
+        "description": "Login Schema"
+      },
+      {
+        "name": "mysql.client_auth_plugin",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.connattrs",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.connattrs.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.connattrs.attr",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.connattrs.name.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.connattrs.name",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.connattrs.value.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.connattrs.value",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.compression.zstd_level",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.extmeta_data",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.extmeta",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.extmeta.length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.extmeta.key",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.extmeta.type",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.extmeta.format",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.salt",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.salt2",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.auth_plugin.length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.auth_plugin",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.thread_id",
+        "type": "FT_UINT32",
+        "description": "MySQL Thread ID"
+      },
+      {
+        "name": "mysql.server_language",
+        "type": "FT_UINT8",
+        "description": "MySQL Charset"
+      },
+      {
+        "name": "mariadb.server_language",
+        "type": "FT_UINT8",
+        "description": "MySQL Charset"
+      },
+      {
+        "name": "mysql.server_status",
+        "type": "FT_UINT16",
+        "description": "MySQL Status"
+      },
+      {
+        "name": "mysql.stat.it",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.ac",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.mr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.mu",
+        "type": "FT_BOOLEAN",
+        "description": "Multi query / Unused with MySQL >= 5.6"
+      },
+      {
+        "name": "mysql.stat.bi",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.ni",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.cr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.lr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.dr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.bs",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.mc",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.session_state_changed",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.query_was_slow",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.ps_out_params",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.stat.trans_readonly",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.refresh",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.grants",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.log",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.tables",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.hosts",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.status",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.threads",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.slave",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.rfsh.master",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.unused",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.passwd",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.payload",
+        "type": "FT_BYTES",
+        "description": "Additional Payload"
+      },
+      {
+        "name": "mysql.affected_rows",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.insert_id",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.warnings",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.stmt_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.query",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.shutdown",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.option",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.param",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.param_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.num_params",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.num_rows",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec_flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.new_parameter_bound_flag",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec_iter",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.position",
+        "type": "FT_UINT32",
+        "description": "Position to start at"
+      },
+      {
+        "name": "mysql.binlog.position8",
+        "type": "FT_UINT64",
+        "description": "Position to start at"
+      },
+      {
+        "name": "mysql.binlog.flags",
+        "type": "FT_UINT16",
+        "description": "(currently not used; always 0)"
+      },
+      {
+        "name": "mysql.binlog.server_id",
+        "type": "FT_UINT32",
+        "description": "server_id of the slave"
+      },
+      {
+        "name": "mysql.binlog.slave_hostname_length",
+        "type": "FT_UINT8",
+        "description": "slave_hostname field length"
+      },
+      {
+        "name": "mysql.binlog.slave_hostname",
+        "type": "FT_STRING",
+        "description": "slave_hostname"
+      },
+      {
+        "name": "mysql.binlog.slave_user_length",
+        "type": "FT_UINT8",
+        "description": "slave_hostname field length"
+      },
+      {
+        "name": "mysql.binlog.slave_user",
+        "type": "FT_STRING",
+        "description": "slave_user"
+      },
+      {
+        "name": "mysql.binlog.slave_password_length",
+        "type": "FT_UINT8",
+        "description": "slave_password field length"
+      },
+      {
+        "name": "mysql.binlog.slave_password",
+        "type": "FT_STRING",
+        "description": "slave_password"
+      },
+      {
+        "name": "mysql.binlog.slave_mysql_port",
+        "type": "FT_UINT16",
+        "description": "slave's mysql port"
+      },
+      {
+        "name": "mysql.binlog.replication_rank",
+        "type": "FT_UINT32",
+        "description": "ignored"
+      },
+      {
+        "name": "mysql.binlog.master_id",
+        "type": "FT_UINT32",
+        "description": "master_id of the slave"
+      },
+      {
+        "name": "mysql.binlog.file_name",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.file_name_length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.gtid_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.gtid_data_length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.event_header.timestamp",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.event_header.event_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.event_header.server_id",
+        "type": "FT_UINT32",
+        "description": "server-id of the originating mysql-server"
+      },
+      {
+        "name": "mysql.binlog.event_header.event_size",
+        "type": "FT_UINT32",
+        "description": "size of the event (header, post-header, body)"
+      },
+      {
+        "name": "mysql.binlog.event_header.log_position",
+        "type": "FT_UINT32",
+        "description": "position of the next event"
+      },
+      {
+        "name": "mysql.binlog.event_header.flags",
+        "type": "FT_UINT16",
+        "description": "flag"
+      },
+      {
+        "name": "mysql.binlog.event_checksum",
+        "type": "FT_UINT32",
+        "description": "binlog event checksum"
+      },
+      {
+        "name": "mysql.binlog.event_heartbeat_v2",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.event_heartbeat_v2_otw",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.event_heartbeat_v2_otw_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.hb_event.filename",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.binlog.hb_event.log_position",
+        "type": "FT_UINT64",
+        "description": "position of the next event"
+      },
+      {
+        "name": "mysql.binlog.semisync.flag",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.clone.command_code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.clone.response_code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.eof",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.num_fields",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.metadata_follows",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.extra",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.field.catalog",
+        "type": "FT_STRING",
+        "description": "Field: catalog"
+      },
+      {
+        "name": "mysql.field.db",
+        "type": "FT_STRING",
+        "description": "Field: database"
+      },
+      {
+        "name": "mysql.field.table",
+        "type": "FT_STRING",
+        "description": "Field: table"
+      },
+      {
+        "name": "mysql.field.org_table",
+        "type": "FT_STRING",
+        "description": "Field: original table"
+      },
+      {
+        "name": "mysql.field.name",
+        "type": "FT_STRING",
+        "description": "Field: name"
+      },
+      {
+        "name": "mysql.field.org_name",
+        "type": "FT_STRING",
+        "description": "Field: original name"
+      },
+      {
+        "name": "mysql.field.charsetnr",
+        "type": "FT_UINT16",
+        "description": "Field: charset number"
+      },
+      {
+        "name": "mysql.field.length",
+        "type": "FT_UINT32",
+        "description": "Field: length"
+      },
+      {
+        "name": "mysql.field.type",
+        "type": "FT_UINT8",
+        "description": "Field: type"
+      },
+      {
+        "name": "mysql.field.flags",
+        "type": "FT_UINT16",
+        "description": "Field: flags"
+      },
+      {
+        "name": "mysql.field.flags.not_null",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag not null"
+      },
+      {
+        "name": "mysql.field.flags.primary_key",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag primary key"
+      },
+      {
+        "name": "mysql.field.flags.unique_key",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag unique key"
+      },
+      {
+        "name": "mysql.field.flags.multiple_key",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag multiple key"
+      },
+      {
+        "name": "mysql.field.flags.blob",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag blob"
+      },
+      {
+        "name": "mysql.field.flags.unsigned",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag unsigned"
+      },
+      {
+        "name": "mysql.field.flags.zero_fill",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag zero fill"
+      },
+      {
+        "name": "mysql.row.nullbuffer",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.field.flags.enum",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag enum"
+      },
+      {
+        "name": "mysql.field.flags.auto_increment",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag auto increment"
+      },
+      {
+        "name": "mysql.field.flags.timestamp",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag timestamp"
+      },
+      {
+        "name": "mysql.field.flags.set",
+        "type": "FT_BOOLEAN",
+        "description": "Field: flag set"
+      },
+      {
+        "name": "mysql.field.decimals",
+        "type": "FT_UINT8",
+        "description": "Field: decimals"
+      },
+      {
+        "name": "mysql.field.default",
+        "type": "FT_STRING",
+        "description": "Field: default"
+      },
+      {
+        "name": "mysql.row.text",
+        "type": "FT_STRING",
+        "description": "Field: row packet text"
+      },
+      {
+        "name": "mysql.exec_param",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.unsigned",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.longlong",
+        "type": "FT_INT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.unsigned_longlong",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.bit.length",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.bit",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.blob.length",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.blob",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.geometry.length",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.geometry",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.json.length",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.string.length",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.string",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.double",
+        "type": "FT_DOUBLE",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.datetime.length",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.year",
+        "type": "FT_INT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.month",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.day",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.hour",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.minute",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.second",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.secondb",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.int24",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.long",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.unsigned_long",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.tiny",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.unsigned_tiny",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.short",
+        "type": "FT_INT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.unsigned_short",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.float",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.null",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.time.length",
+        "type": "FT_INT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.time.sign",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.exec.field.time.days",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.auth_switch_request.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.auth_switch_request.name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.auth_switch_request.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.auth_switch_response.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.hf_mysql_sha2_auth.name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.hf_mysql_pubkey",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "mysql.hf_mysql_sha2_response",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.compressed_packet_length",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.compressed_packet_number",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mysql.compressed_packet_length_uncompressed",
+        "type": "FT_UINT24",
+        "description": ""
+      },
+      {
+        "name": "mysql.load_data.filename",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "mysql.load_data.payload",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mariadb.caps.pr",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.caps.cm",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.caps.bo",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.caps.em",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.caps.me",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.caps.bu",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.extcaps.server",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mariadb.extcaps.client",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mariadb.bulk.flag.autoid",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.bulk.flag.sendtypes",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mariadb.bulk.flags",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "mariadb.bulk.paramtypesg",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mariadb.bulk.indicators",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "mariadb.bulk.row_nr",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragments",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment.overlap",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment.overlap.conflicts",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment.multiple_tails",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment.too_long_fragment",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment.error",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment.count",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.reassembled.in",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "mysql.reassembled.length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "mysql.fragment.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "mysql.dissector_incomplete",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.streamed_param",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.prepare_response_needed",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.command.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.unknown_response",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.invalid_length",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "mysql.uncompress_failure",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 87,
+    "by_pcap": {
+      "credslayer_mysql.pcap": [
+        "mysql_mariadb_caps_bo",
+        "mysql_mariadb_caps_bu",
+        "mysql_mariadb_caps_cm",
+        "mysql_mariadb_caps_em",
+        "mysql_mariadb_caps_me",
+        "mysql_mariadb_caps_pr",
+        "mysql_mariadb_collation",
+        "mysql_mariadb_extcaps_server",
+        "mysql_mariadb_server_language",
+        "mysql_mysql_affected_rows",
+        "mysql_mysql_auth_plugin_length",
+        "mysql_mysql_caps_ca",
+        "mysql_mysql_caps_cap_ext",
+        "mysql_mysql_caps_cd",
+        "mysql_mysql_caps_client",
+        "mysql_mysql_caps_compress_zsd",
+        "mysql_mysql_caps_cp",
+        "mysql_mysql_caps_cu",
+        "mysql_mysql_caps_deprecate_eof",
+        "mysql_mysql_caps_ep",
+        "mysql_mysql_caps_fr",
+        "mysql_mysql_caps_ia",
+        "mysql_mysql_caps_ii",
+        "mysql_mysql_caps_is",
+        "mysql_mysql_caps_lf",
+        "mysql_mysql_caps_li",
+        "mysql_mysql_caps_lp",
+        "mysql_mysql_caps_mf_auth",
+        "mysql_mysql_caps_mr",
+        "mysql_mysql_caps_ms",
+        "mysql_mysql_caps_ns",
+        "mysql_mysql_caps_ob",
+        "mysql_mysql_caps_optional_metadata",
+        "mysql_mysql_caps_pa",
+        "mysql_mysql_caps_pm",
+        "mysql_mysql_caps_query_attrs",
+        "mysql_mysql_caps_rs",
+        "mysql_mysql_caps_sc",
+        "mysql_mysql_caps_server",
+        "mysql_mysql_caps_session_track",
+        "mysql_mysql_caps_sl",
+        "mysql_mysql_caps_ta",
+        "mysql_mysql_caps_unused",
+        "mysql_mysql_caps_vc",
+        "mysql_mysql_command",
+        "mysql_mysql_extcaps_client",
+        "mysql_mysql_extcaps_server",
+        "mysql_mysql_insert_id",
+        "mysql_mysql_login_request",
+        "mysql_mysql_max_packet",
+        "mysql_mysql_packet_length",
+        "mysql_mysql_packet_number",
+        "mysql_mysql_passwd",
+        "mysql_mysql_protocol",
+        "mysql_mysql_query",
+        "mysql_mysql_request",
+        "mysql_mysql_response_code",
+        "mysql_mysql_salt",
+        "mysql_mysql_salt2",
+        "mysql_mysql_schema",
+        "mysql_mysql_server_greeting",
+        "mysql_mysql_server_status",
+        "mysql_mysql_stat_ac",
+        "mysql_mysql_stat_bi",
+        "mysql_mysql_stat_bs",
+        "mysql_mysql_stat_cr",
+        "mysql_mysql_stat_dr",
+        "mysql_mysql_stat_it",
+        "mysql_mysql_stat_lr",
+        "mysql_mysql_stat_mc",
+        "mysql_mysql_stat_mr",
+        "mysql_mysql_stat_mu",
+        "mysql_mysql_stat_ni",
+        "mysql_mysql_stat_ps_out_params",
+        "mysql_mysql_stat_query_was_slow",
+        "mysql_mysql_stat_session_state_changed",
+        "mysql_mysql_stat_trans_readonly",
+        "mysql_mysql_table_name",
+        "mysql_mysql_thread_id",
+        "mysql_mysql_unused",
+        "mysql_mysql_user",
+        "mysql_mysql_version",
+        "mysql_mysql_warnings"
+      ],
+      "credslayer_mysql2.pcap": [
+        "mysql_mysql_affected_rows",
+        "mysql_mysql_auth_plugin",
+        "mysql_mysql_auth_plugin_length",
+        "mysql_mysql_caps_ca",
+        "mysql_mysql_caps_cap_ext",
+        "mysql_mysql_caps_cd",
+        "mysql_mysql_caps_client",
+        "mysql_mysql_caps_compress_zsd",
+        "mysql_mysql_caps_cp",
+        "mysql_mysql_caps_cu",
+        "mysql_mysql_caps_deprecate_eof",
+        "mysql_mysql_caps_ep",
+        "mysql_mysql_caps_fr",
+        "mysql_mysql_caps_ia",
+        "mysql_mysql_caps_ii",
+        "mysql_mysql_caps_is",
+        "mysql_mysql_caps_lf",
+        "mysql_mysql_caps_li",
+        "mysql_mysql_caps_lp",
+        "mysql_mysql_caps_mf_auth",
+        "mysql_mysql_caps_mr",
+        "mysql_mysql_caps_ms",
+        "mysql_mysql_caps_ns",
+        "mysql_mysql_caps_ob",
+        "mysql_mysql_caps_optional_metadata",
+        "mysql_mysql_caps_pa",
+        "mysql_mysql_caps_pm",
+        "mysql_mysql_caps_query_attrs",
+        "mysql_mysql_caps_rs",
+        "mysql_mysql_caps_sc",
+        "mysql_mysql_caps_server",
+        "mysql_mysql_caps_session_track",
+        "mysql_mysql_caps_sl",
+        "mysql_mysql_caps_ta",
+        "mysql_mysql_caps_unused",
+        "mysql_mysql_caps_vc",
+        "mysql_mysql_client_auth_plugin",
+        "mysql_mysql_collation",
+        "mysql_mysql_command",
+        "mysql_mysql_extcaps_client",
+        "mysql_mysql_extcaps_server",
+        "mysql_mysql_insert_id",
+        "mysql_mysql_login_request",
+        "mysql_mysql_max_packet",
+        "mysql_mysql_packet_length",
+        "mysql_mysql_packet_number",
+        "mysql_mysql_passwd",
+        "mysql_mysql_protocol",
+        "mysql_mysql_query",
+        "mysql_mysql_request",
+        "mysql_mysql_response_code",
+        "mysql_mysql_salt",
+        "mysql_mysql_salt2",
+        "mysql_mysql_server_greeting",
+        "mysql_mysql_server_language",
+        "mysql_mysql_server_status",
+        "mysql_mysql_stat_ac",
+        "mysql_mysql_stat_bi",
+        "mysql_mysql_stat_bs",
+        "mysql_mysql_stat_cr",
+        "mysql_mysql_stat_dr",
+        "mysql_mysql_stat_it",
+        "mysql_mysql_stat_lr",
+        "mysql_mysql_stat_mc",
+        "mysql_mysql_stat_mr",
+        "mysql_mysql_stat_mu",
+        "mysql_mysql_stat_ni",
+        "mysql_mysql_stat_ps_out_params",
+        "mysql_mysql_stat_query_was_slow",
+        "mysql_mysql_stat_session_state_changed",
+        "mysql_mysql_stat_trans_readonly",
+        "mysql_mysql_thread_id",
+        "mysql_mysql_unused",
+        "mysql_mysql_user",
+        "mysql_mysql_version",
+        "mysql_mysql_warnings"
+      ],
+      "wireshark_mysql_complete.pcap": [
+        "mysql_mariadb_caps_bo",
+        "mysql_mariadb_caps_bu",
+        "mysql_mariadb_caps_cm",
+        "mysql_mariadb_caps_em",
+        "mysql_mariadb_caps_me",
+        "mysql_mariadb_caps_pr",
+        "mysql_mariadb_collation",
+        "mysql_mariadb_extcaps_server",
+        "mysql_mariadb_server_language",
+        "mysql_mysql_affected_rows",
+        "mysql_mysql_auth_plugin_length",
+        "mysql_mysql_caps_ca",
+        "mysql_mysql_caps_cap_ext",
+        "mysql_mysql_caps_cd",
+        "mysql_mysql_caps_client",
+        "mysql_mysql_caps_compress_zsd",
+        "mysql_mysql_caps_cp",
+        "mysql_mysql_caps_cu",
+        "mysql_mysql_caps_deprecate_eof",
+        "mysql_mysql_caps_ep",
+        "mysql_mysql_caps_fr",
+        "mysql_mysql_caps_ia",
+        "mysql_mysql_caps_ii",
+        "mysql_mysql_caps_is",
+        "mysql_mysql_caps_lf",
+        "mysql_mysql_caps_li",
+        "mysql_mysql_caps_lp",
+        "mysql_mysql_caps_mf_auth",
+        "mysql_mysql_caps_mr",
+        "mysql_mysql_caps_ms",
+        "mysql_mysql_caps_ns",
+        "mysql_mysql_caps_ob",
+        "mysql_mysql_caps_optional_metadata",
+        "mysql_mysql_caps_pa",
+        "mysql_mysql_caps_pm",
+        "mysql_mysql_caps_query_attrs",
+        "mysql_mysql_caps_rs",
+        "mysql_mysql_caps_sc",
+        "mysql_mysql_caps_server",
+        "mysql_mysql_caps_session_track",
+        "mysql_mysql_caps_sl",
+        "mysql_mysql_caps_ta",
+        "mysql_mysql_caps_unused",
+        "mysql_mysql_caps_vc",
+        "mysql_mysql_command",
+        "mysql_mysql_extcaps_client",
+        "mysql_mysql_extcaps_server",
+        "mysql_mysql_insert_id",
+        "mysql_mysql_login_request",
+        "mysql_mysql_max_packet",
+        "mysql_mysql_packet_length",
+        "mysql_mysql_packet_number",
+        "mysql_mysql_passwd",
+        "mysql_mysql_protocol",
+        "mysql_mysql_query",
+        "mysql_mysql_request",
+        "mysql_mysql_response_code",
+        "mysql_mysql_salt",
+        "mysql_mysql_salt2",
+        "mysql_mysql_schema",
+        "mysql_mysql_server_greeting",
+        "mysql_mysql_server_status",
+        "mysql_mysql_stat_ac",
+        "mysql_mysql_stat_bi",
+        "mysql_mysql_stat_bs",
+        "mysql_mysql_stat_cr",
+        "mysql_mysql_stat_dr",
+        "mysql_mysql_stat_it",
+        "mysql_mysql_stat_lr",
+        "mysql_mysql_stat_mc",
+        "mysql_mysql_stat_mr",
+        "mysql_mysql_stat_mu",
+        "mysql_mysql_stat_ni",
+        "mysql_mysql_stat_ps_out_params",
+        "mysql_mysql_stat_query_was_slow",
+        "mysql_mysql_stat_session_state_changed",
+        "mysql_mysql_stat_trans_readonly",
+        "mysql_mysql_table_name",
+        "mysql_mysql_thread_id",
+        "mysql_mysql_unused",
+        "mysql_mysql_user",
+        "mysql_mysql_version",
+        "mysql_mysql_warnings"
+      ]
+    },
+    "union": [
+      "mysql_mariadb_caps_bo",
+      "mysql_mariadb_caps_bu",
+      "mysql_mariadb_caps_cm",
+      "mysql_mariadb_caps_em",
+      "mysql_mariadb_caps_me",
+      "mysql_mariadb_caps_pr",
+      "mysql_mariadb_collation",
+      "mysql_mariadb_extcaps_server",
+      "mysql_mariadb_server_language",
+      "mysql_mysql_affected_rows",
+      "mysql_mysql_auth_plugin",
+      "mysql_mysql_auth_plugin_length",
+      "mysql_mysql_caps_ca",
+      "mysql_mysql_caps_cap_ext",
+      "mysql_mysql_caps_cd",
+      "mysql_mysql_caps_client",
+      "mysql_mysql_caps_compress_zsd",
+      "mysql_mysql_caps_cp",
+      "mysql_mysql_caps_cu",
+      "mysql_mysql_caps_deprecate_eof",
+      "mysql_mysql_caps_ep",
+      "mysql_mysql_caps_fr",
+      "mysql_mysql_caps_ia",
+      "mysql_mysql_caps_ii",
+      "mysql_mysql_caps_is",
+      "mysql_mysql_caps_lf",
+      "mysql_mysql_caps_li",
+      "mysql_mysql_caps_lp",
+      "mysql_mysql_caps_mf_auth",
+      "mysql_mysql_caps_mr",
+      "mysql_mysql_caps_ms",
+      "mysql_mysql_caps_ns",
+      "mysql_mysql_caps_ob",
+      "mysql_mysql_caps_optional_metadata",
+      "mysql_mysql_caps_pa",
+      "mysql_mysql_caps_pm",
+      "mysql_mysql_caps_query_attrs",
+      "mysql_mysql_caps_rs",
+      "mysql_mysql_caps_sc",
+      "mysql_mysql_caps_server",
+      "mysql_mysql_caps_session_track",
+      "mysql_mysql_caps_sl",
+      "mysql_mysql_caps_ta",
+      "mysql_mysql_caps_unused",
+      "mysql_mysql_caps_vc",
+      "mysql_mysql_client_auth_plugin",
+      "mysql_mysql_collation",
+      "mysql_mysql_command",
+      "mysql_mysql_extcaps_client",
+      "mysql_mysql_extcaps_server",
+      "mysql_mysql_insert_id",
+      "mysql_mysql_login_request",
+      "mysql_mysql_max_packet",
+      "mysql_mysql_packet_length",
+      "mysql_mysql_packet_number",
+      "mysql_mysql_passwd",
+      "mysql_mysql_protocol",
+      "mysql_mysql_query",
+      "mysql_mysql_request",
+      "mysql_mysql_response_code",
+      "mysql_mysql_salt",
+      "mysql_mysql_salt2",
+      "mysql_mysql_schema",
+      "mysql_mysql_server_greeting",
+      "mysql_mysql_server_language",
+      "mysql_mysql_server_status",
+      "mysql_mysql_stat_ac",
+      "mysql_mysql_stat_bi",
+      "mysql_mysql_stat_bs",
+      "mysql_mysql_stat_cr",
+      "mysql_mysql_stat_dr",
+      "mysql_mysql_stat_it",
+      "mysql_mysql_stat_lr",
+      "mysql_mysql_stat_mc",
+      "mysql_mysql_stat_mr",
+      "mysql_mysql_stat_mu",
+      "mysql_mysql_stat_ni",
+      "mysql_mysql_stat_ps_out_params",
+      "mysql_mysql_stat_query_was_slow",
+      "mysql_mysql_stat_session_state_changed",
+      "mysql_mysql_stat_trans_readonly",
+      "mysql_mysql_table_name",
+      "mysql_mysql_thread_id",
+      "mysql_mysql_unused",
+      "mysql_mysql_user",
+      "mysql_mysql_version",
+      "mysql_mysql_warnings"
+    ]
+  },
+  "extracted_fields": {
+    "total": 22,
+    "fields": [
+      "affected_rows",
+      "auth_plugin",
+      "auth_plugin_length",
+      "client_auth_plugin",
+      "command",
+      "error_code",
+      "error_string",
+      "insert_id",
+      "packet_number",
+      "passwd",
+      "protocol",
+      "query",
+      "response_code",
+      "salt",
+      "salt2",
+      "schema",
+      "server_status",
+      "table_name",
+      "thread_id",
+      "user",
+      "version",
+      "warnings"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "87/275 (31%)",
+    "pcap_vs_extracted": "21/87 (24%)",
+    "t1_extracted": "13/12 (108%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "mysql_mysql_packet_length",
+        "field": "mysql.packet_length",
+        "type": "FT_UINT24",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_server",
+        "field": "mysql.caps.server",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "MySQL Capabilities"
+      },
+      {
+        "ek_name": "mysql_mysql_caps_client",
+        "field": "mysql.caps.client",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "MySQL Capabilities"
+      },
+      {
+        "ek_name": "mysql_mysql_caps_lp",
+        "field": "mysql.caps.lp",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_fr",
+        "field": "mysql.caps.fr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_lf",
+        "field": "mysql.caps.lf",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_cd",
+        "field": "mysql.caps.cd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ns",
+        "field": "mysql.caps.ns",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_cp",
+        "field": "mysql.caps.cp",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ob",
+        "field": "mysql.caps.ob",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_li",
+        "field": "mysql.caps.li",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_is",
+        "field": "mysql.caps.is",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_cu",
+        "field": "mysql.caps.cu",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ia",
+        "field": "mysql.caps.ia",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_sl",
+        "field": "mysql.caps.sl",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ii",
+        "field": "mysql.caps.ii",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ta",
+        "field": "mysql.caps.ta",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_rs",
+        "field": "mysql.caps.rs",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_sc",
+        "field": "mysql.caps.sc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_extcaps_server",
+        "field": "mysql.extcaps.server",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "MySQL Extended Capabilities"
+      },
+      {
+        "ek_name": "mysql_mysql_extcaps_client",
+        "field": "mysql.extcaps.client",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "MySQL Extended Capabilities"
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ms",
+        "field": "mysql.caps.ms",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_mr",
+        "field": "mysql.caps.mr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_pm",
+        "field": "mysql.caps.pm",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_pa",
+        "field": "mysql.caps.pa",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ca",
+        "field": "mysql.caps.ca",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_ep",
+        "field": "mysql.caps.ep",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_session_track",
+        "field": "mysql.caps.session_track",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_deprecate_eof",
+        "field": "mysql.caps.deprecate_eof",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_optional_metadata",
+        "field": "mysql.caps.optional_metadata",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_compress_zsd",
+        "field": "mysql.caps.compress_zsd",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_query_attrs",
+        "field": "mysql.caps.query_attrs",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_mf_auth",
+        "field": "mysql.caps.mf_auth",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_cap_ext",
+        "field": "mysql.caps.cap_ext",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_vc",
+        "field": "mysql.caps.vc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_caps_unused",
+        "field": "mysql.caps.unused",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_max_packet",
+        "field": "mysql.max_packet",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "MySQL Max packet"
+      },
+      {
+        "ek_name": "mysql_mysql_stat_it",
+        "field": "mysql.stat.it",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_ac",
+        "field": "mysql.stat.ac",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_mr",
+        "field": "mysql.stat.mr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_mu",
+        "field": "mysql.stat.mu",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "Multi query / Unused with MySQL >= 5.6"
+      },
+      {
+        "ek_name": "mysql_mysql_stat_bi",
+        "field": "mysql.stat.bi",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_ni",
+        "field": "mysql.stat.ni",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_cr",
+        "field": "mysql.stat.cr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_lr",
+        "field": "mysql.stat.lr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_dr",
+        "field": "mysql.stat.dr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_bs",
+        "field": "mysql.stat.bs",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_mc",
+        "field": "mysql.stat.mc",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_session_state_changed",
+        "field": "mysql.stat.session_state_changed",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_query_was_slow",
+        "field": "mysql.stat.query_was_slow",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_ps_out_params",
+        "field": "mysql.stat.ps_out_params",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_stat_trans_readonly",
+        "field": "mysql.stat.trans_readonly",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_unused",
+        "field": "mysql.unused",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "credslayer_mysql2.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mariadb_mariadb_collation",
+        "field": "mariadb.collation",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "MariaDB Collation"
+      },
+      {
+        "ek_name": "mariadb_mariadb_server_language",
+        "field": "mariadb.server_language",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": "MySQL Charset"
+      },
+      {
+        "ek_name": "mariadb_mariadb_caps_pr",
+        "field": "mariadb.caps.pr",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mariadb_mariadb_caps_cm",
+        "field": "mariadb.caps.cm",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mariadb_mariadb_caps_bo",
+        "field": "mariadb.caps.bo",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mariadb_mariadb_caps_em",
+        "field": "mariadb.caps.em",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mariadb_mariadb_caps_me",
+        "field": "mariadb.caps.me",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mariadb_mariadb_caps_bu",
+        "field": "mariadb.caps.bu",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mariadb_mariadb_extcaps_server",
+        "field": "mariadb.extcaps.server",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql.pcap",
+          "wireshark_mysql_complete.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "mysql_mysql_collation",
+        "field": "mysql.collation",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql2.pcap"
+        ],
+        "description": "MySQL Collation"
+      },
+      {
+        "ek_name": "mysql_mysql_server_language",
+        "field": "mysql.server_language",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_mysql2.pcap"
+        ],
+        "description": "MySQL Charset"
+      }
+    ],
+    "summary": {
+      "t1_total": 44,
+      "t1_in_pcap": 12,
+      "t1_covered": 13,
+      "t2_total": 206,
+      "t2_in_pcap": 72,
+      "t2_covered": 8,
+      "t3_skipped": 22,
+      "t4_ignored": 3
+    }
+  }
+}

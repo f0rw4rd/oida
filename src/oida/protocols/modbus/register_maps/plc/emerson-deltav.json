@@ -1,0 +1,78 @@
+{
+  "vendor": "Emerson",
+  "model": "DeltaV",
+  "description": "Emerson DeltaV DCS Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: DeltaV uses LITTLE-ENDIAN word order for 32-bit values (LSW first, MSW second). This differs from many devices. VIM2 handles byte manipulation automatically; serial cards require manual manipulation in control strategy.",
+  "source": "VIM2 User Manual (MYNAH/Emerson, IOD-4111), Manual Supplement 00809-0300-4570 Rev BA",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers"
+    }
+  ],
+  "registers": {
+    "example_16bit": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Example 16-bit value at offset 0 (40001)"
+    },
+    "example_float": {
+      "address": 0,
+      "type": "f32",
+      "access": "rw",
+      "description": "Example 32-bit float (LSW at addr 0, MSW at addr 1)"
+    }
+  },
+  "extended_info": {
+    "word_order_detail": "When DeltaV reads a 32-bit register, it assigns the 16-bit word in the first Modbus register to the LSB data and the second to the MSB",
+    "vim2_specifications": {
+      "total_datasets": 128,
+      "datasets_per_config": "16 datasets x 2 ports x 4 cards",
+      "virtual_slots": "57-64",
+      "devices_per_port_eioc": 256,
+      "values_per_block": 100
+    },
+    "dataset_limits": {
+      "16bit_integers": 100,
+      "32bit_floats": 50
+    },
+    "address_scheme": {
+      "note": "Start addresses specified as offset without leading prefix",
+      "example": "Register 40001 = Start address 0 for Holding Registers"
+    }
+  },
+  "_source_verified": "Verified: DeltaV VIM2 Modbus TCP interface confirmed at emerson.com and modbus.org"
+}

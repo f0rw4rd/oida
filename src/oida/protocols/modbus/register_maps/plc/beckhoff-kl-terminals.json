@@ -1,0 +1,335 @@
+{
+  "vendor": "Beckhoff",
+  "model": "KL Bus Terminals",
+  "description": "Beckhoff KL-series Bus Terminal register mapping for analog and special function terminals",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "Beckhoff InfoSys KL terminal documentation",
+  "notes": {
+    "process_data": "Channel data in process image (status/control bytes + data words)",
+    "register_comm": "Configuration via register communication (R0-R63 per channel)",
+    "code_word": "Register 31 = 0x1235 to enable write access to protected registers",
+    "feature_register": "R32 controls data format (two's complement, Siemens format, etc.)"
+  },
+  "registers": {
+    "kl3xxx_channel_0_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "description": "KL3xxx analog input channel 0 status byte (SB0) - low byte of word"
+    },
+    "kl3xxx_channel_0_data": {
+      "address": 1,
+      "type": "i16",
+      "access": "ro",
+      "description": "KL3xxx analog input channel 0 data word (12-16 bit depending on model)"
+    },
+    "kl4xxx_channel_0_control": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "KL4xxx analog output channel 0 control byte (CB0) - low byte of word"
+    },
+    "kl4xxx_channel_0_data": {
+      "address": 1,
+      "type": "i16",
+      "access": "rw",
+      "description": "KL4xxx analog output channel 0 data word"
+    }
+  },
+  "extended_info": {
+    "terminal_types": {
+      "KL1xxx": "Digital input terminals (1-16 channels)",
+      "KL2xxx": "Digital output terminals (1-16 channels)",
+      "KL3xxx": "Analog input terminals (voltage, current, temperature)",
+      "KL4xxx": "Analog output terminals (voltage, current)",
+      "KL5xxx": "Incremental encoder interfaces",
+      "KL6xxx": "Serial communication terminals (RS232, RS485)"
+    },
+    "register_communication": {
+      "R0": "Channel-specific register 0 (varies by terminal type)",
+      "R8": "Manufacturer scaling (some terminals)",
+      "R9": "User scaling offset",
+      "R10": "User scaling gain",
+      "R16": "Analog signal type/range selection",
+      "R17": "Filter settings",
+      "R31": "Code word register (write 0x1235 to enable protected writes)",
+      "R32": "Feature register - data format selection",
+      "R33": "Feature register 2",
+      "R34": "Diagnostics",
+      "R35": "Hardware version",
+      "R36": "Firmware version",
+      "R37": "Serial number low",
+      "R38": "Serial number high"
+    },
+    "analog_terminal_models": {
+      "KL3001": {
+        "type": "input",
+        "range": "-10V to +10V",
+        "resolution": "12-bit"
+      },
+      "KL3002": {
+        "type": "input",
+        "range": "-10V to +10V",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL3011": {
+        "type": "input",
+        "range": "0-20mA",
+        "resolution": "12-bit"
+      },
+      "KL3012": {
+        "type": "input",
+        "range": "0-20mA",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL3021": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "12-bit"
+      },
+      "KL3022": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL3041": {
+        "type": "input",
+        "range": "0-20mA",
+        "resolution": "12-bit"
+      },
+      "KL3042": {
+        "type": "input",
+        "range": "0-20mA",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL3051": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "12-bit"
+      },
+      "KL3052": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL3061": {
+        "type": "input",
+        "range": "0-10V",
+        "resolution": "12-bit"
+      },
+      "KL3062": {
+        "type": "input",
+        "range": "0-10V",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL3102": {
+        "type": "input",
+        "range": "-10V to +10V",
+        "resolution": "16-bit",
+        "channels": 2
+      },
+      "KL3112": {
+        "type": "input",
+        "range": "0-20mA",
+        "resolution": "16-bit",
+        "channels": 2
+      },
+      "KL3122": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "16-bit",
+        "channels": 2
+      },
+      "KL3152": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "16-bit",
+        "channels": 2
+      },
+      "KL3162": {
+        "type": "input",
+        "range": "0-10V",
+        "resolution": "16-bit",
+        "channels": 2
+      },
+      "KL3201": {
+        "type": "input",
+        "range": "PT100 RTD",
+        "resolution": "16-bit"
+      },
+      "KL3202": {
+        "type": "input",
+        "range": "PT100 RTD",
+        "resolution": "16-bit",
+        "channels": 2
+      },
+      "KL3204": {
+        "type": "input",
+        "range": "PT100 RTD",
+        "resolution": "16-bit",
+        "channels": 4
+      },
+      "KL3312": {
+        "type": "input",
+        "range": "Thermocouple",
+        "resolution": "16-bit",
+        "channels": 2
+      },
+      "KL3314": {
+        "type": "input",
+        "range": "Thermocouple",
+        "resolution": "16-bit",
+        "channels": 4
+      },
+      "KL3404": {
+        "type": "input",
+        "range": "-10V to +10V",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL3408": {
+        "type": "input",
+        "range": "-10V to +10V",
+        "resolution": "12-bit",
+        "channels": 8
+      },
+      "KL3454": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL3458": {
+        "type": "input",
+        "range": "4-20mA",
+        "resolution": "12-bit",
+        "channels": 8
+      },
+      "KL3464": {
+        "type": "input",
+        "range": "0-10V",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL3468": {
+        "type": "input",
+        "range": "0-10V",
+        "resolution": "12-bit",
+        "channels": 8
+      },
+      "KL4001": {
+        "type": "output",
+        "range": "0-10V",
+        "resolution": "12-bit"
+      },
+      "KL4002": {
+        "type": "output",
+        "range": "0-10V",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL4004": {
+        "type": "output",
+        "range": "0-10V",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL4011": {
+        "type": "output",
+        "range": "0-20mA",
+        "resolution": "12-bit"
+      },
+      "KL4012": {
+        "type": "output",
+        "range": "0-20mA",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL4021": {
+        "type": "output",
+        "range": "4-20mA",
+        "resolution": "12-bit"
+      },
+      "KL4022": {
+        "type": "output",
+        "range": "4-20mA",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL4031": {
+        "type": "output",
+        "range": "-10V to +10V",
+        "resolution": "12-bit"
+      },
+      "KL4032": {
+        "type": "output",
+        "range": "-10V to +10V",
+        "resolution": "12-bit",
+        "channels": 2
+      },
+      "KL4034": {
+        "type": "output",
+        "range": "-10V to +10V",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL4404": {
+        "type": "output",
+        "range": "0-10V",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL4408": {
+        "type": "output",
+        "range": "0-10V",
+        "resolution": "12-bit",
+        "channels": 8
+      },
+      "KL4414": {
+        "type": "output",
+        "range": "0-20mA",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL4418": {
+        "type": "output",
+        "range": "0-20mA",
+        "resolution": "12-bit",
+        "channels": 8
+      },
+      "KL4424": {
+        "type": "output",
+        "range": "4-20mA",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL4428": {
+        "type": "output",
+        "range": "4-20mA",
+        "resolution": "12-bit",
+        "channels": 8
+      },
+      "KL4434": {
+        "type": "output",
+        "range": "-10V to +10V",
+        "resolution": "12-bit",
+        "channels": 4
+      },
+      "KL4438": {
+        "type": "output",
+        "range": "-10V to +10V",
+        "resolution": "12-bit",
+        "channels": 8
+      }
+    }
+  },
+  "_source_verified": "Verified: KL register communication R0-R63 and code word 0x1235 confirmed in Beckhoff InfoSys"
+}

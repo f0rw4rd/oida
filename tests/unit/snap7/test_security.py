@@ -1,0 +1,439 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Unit tests for Snap7 SecurityMixin.
+
+Source: src/oida/protocols/snap7/mixins/security.py
+"""
+
+import unittest
+from unittest.mock import Mock, patch
+
+from oida.protocols.snap7.mixins.security import SecurityMixin
+
+
+class MockSecurityHost(SecurityMixin):
+    """Mock host class providing attributes the SecurityMixin expects."""
+
+    def __init__(self):
+        self.logger = Mock()
+        self.timeout = 5
+        self.host = "192.168.1.100"
+        self.port = 102
+        self.args = {}
+        self.password = ""
+        self.read_only = True
+        self.read_values = False
+        self.max_dbs = 100
+        self.interface = "eth0"
+
+    def get_target_info(self):
+        return (self.host, self.port)
+
+    def report_credential(self, *a, **kw):
+        pass
+
+    def report_host_info(self, *a, **kw):
+        pass
+
+    def report_service_info(self, *a, **kw):
+        pass
+
+    def report_vulnerability(self, *a, **kw):
+        pass
+
+    # DeviceInfoMixin stub (needed by _analyze_security indirectly)
+    def _identify_series_from_order_code(self, code):
+        return "Unknown"
+
+
+class TestCheckProtectionLevel(unittest.TestCase):
+    """Test SecurityMixin._check_protection_level()."""
+
+    def setUp(self):
+        self.host = MockSecurityHost()
+        self.conn = Mock()
+
+    def test_no_protection(self):
+        """Test protection level 1 - no protection."""
+        protection = Mock()
+        protection.sch_schal = 0
+        protection.sch_par = 0
+        protection.sch_rel = 0
+        protection.bart_sch = 0
+        protection.anl_sch = 0
+        self.conn.get_protection.return_value = protection
+
+        result = self.host._check_protection_level(self.conn)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result["level"], 1)
+        self.assertFalse(result["has_protection"])
+        self.assertIn("No protection", result["description"])
+
+    def test_write_protection(self):
+        """Test protection level 2 - write protected, sch_schal is 0."""
+        protection = Mock()
+        protection.sch_schal = 0
+        protection.sch_par = 1
+        protection.sch_rel = 0
+        protection.bart_sch = 0
+        protection.anl_sch = 0
+        self.conn.get_protection.return_value = protection
+
+        result = self.host._check_protection_level(self.conn)
+
+        self.assertEqual(result["level"], 2)
+        self.assertTrue(result["has_protection"])
+        self.assertIn("Write protected", result["description"])
+
+    def test_full_protection(self):
+        """Test protection level 3 - full protection with password."""
+        protection = Mock()
+        protection.sch_schal = 3
+        protection.sch_par = 2
+        protection.sch_rel = 1
+        protection.bart_sch = 0
+        protection.anl_sch = 0
+        self.conn.get_protection.return_value = protection
+
+        result = self.host._check_protection_level(self.conn)
+
+        self.assertEqual(result["level"], 3)
+        self.assertTrue(result["has_protection"])
+        self.assertIn("Password required", result["description"])
+
+    def test_exception_returns_none(self):
+        """Test that exception returns None."""
+        self.conn.get_protection.side_effect = Exception("access denied")
+
+        result = self.host._check_protection_level(self.conn)
+
+        self.assertIsNone(result)
+
+    def test_protection_fields_in_result(self):
+        """Test that all protection fields are included in result."""
+        protection = Mock()
+        protection.sch_schal = 1
+        protection.sch_par = 2
+        protection.sch_rel = 3
+        protection.bart_sch = 4
+        protection.anl_sch = 5
+        self.conn.get_protection.return_value = protection
+
+        result = self.host._check_protection_level(self.conn)
+
+        fields = result["fields"]
+        self.assertEqual(fields["sch_schal"], 1)
+        self.assertEqual(fields["sch_par"], 2)
+        self.assertEqual(fields["sch_rel"], 3)
+        self.assertEqual(fields["bart_sch"], 4)
+        self.assertEqual(fields["anl_sch"], 5)
+
+
+class TestAuthenticate(unittest.TestCase):
+    """Test SecurityMixin.authenticate()."""
+
+    def setUp(self):
+        self.host = MockSecurityHost()
+        self.conn = Mock()
+
+    def test_authenticate_success(self):
+        """Test successful authentication."""
+        result = self.host.authenticate(self.conn, "password")
+
+        self.assertTrue(result)
+        self.conn.set_session_password.assert_called_once_with("password")
+        self.conn.get_cpu_state.assert_called_once()
+
+    def test_authenticate_failure(self):
+        """Test authentication failure."""
+        self.conn.set_session_password.side_effect = Exception("wrong password")
+
+        result = self.host.authenticate(self.conn, "wrong")
+
+        self.assertFalse(result)
+
+    def test_authenticate_truncates_long_password(self):
+        """Test password > 8 chars is truncated to 8."""
+        self.host.authenticate(self.conn, "verylongpassword123")
+
+        self.conn.set_session_password.assert_called_once_with("verylong")
+
+    def test_authenticate_8_char_password(self):
+        """Test exactly 8-char password is not truncated."""
+        self.host.authenticate(self.conn, "12345678")
+
+        self.conn.set_session_password.assert_called_once_with("12345678")
+
+    def test_authenticate_empty_password(self):
+        """Test authenticating with empty password."""
+        result = self.host.authenticate(self.conn, "")
+
+        self.assertTrue(result)
+        self.conn.set_session_password.assert_called_once_with("")
+
+    def test_authenticate_verify_fails(self):
+        """Test authentication where set_password succeeds but verify fails."""
+        self.conn.get_cpu_state.side_effect = Exception("access denied")
+
+        result = self.host.authenticate(self.conn, "test")
+
+        self.assertFalse(result)
+
+
+class TestClearSession(unittest.TestCase):
+    """Test SecurityMixin.clear_session()."""
+
+    def setUp(self):
+        self.host = MockSecurityHost()
+        self.conn = Mock()
+
+    def test_clear_session_success(self):
+        """Test successful session clear."""
+        self.host.clear_session(self.conn)
+
+        self.conn.clear_session_password.assert_called_once()
+
+    def test_clear_session_exception_ignored(self):
+        """Test exception during clear is silently ignored."""
+        self.conn.clear_session_password.side_effect = Exception("not supported")
+
+        # Should not raise
+        self.host.clear_session(self.conn)
+
+
+class TestTestNullPassword(unittest.TestCase):
+    """Test SecurityMixin.test_null_password()."""
+
+    def setUp(self):
+        self.host = MockSecurityHost()
+        self.conn = Mock()
+
+    def test_vulnerable_empty_password_accepted(self):
+        """Test null password vulnerability detected."""
+        result = self.host.test_null_password(self.conn)
+
+        self.assertTrue(result["success"])
+        self.assertTrue(result["vulnerable"])
+        self.assertEqual(result["password"], "")
+        self.host.logger.success.assert_called()
+
+    def test_not_vulnerable_empty_rejected(self):
+        """Test PLC rejects empty password."""
+        self.conn.set_session_password.side_effect = Exception("refused")
+
+        result = self.host.test_null_password(self.conn)
+
+        self.assertFalse(result["success"])
+        self.assertFalse(result["vulnerable"])
+
+    def test_not_vulnerable_verify_fails(self):
+        """Test PLC accepts set_session_password but verify fails."""
+        self.conn.get_cpu_state.side_effect = Exception("access denied")
+
+        result = self.host.test_null_password(self.conn)
+
+        self.assertFalse(result["success"])
+        self.assertFalse(result["vulnerable"])
+
+
+class TestAnalyzeSecurity(unittest.TestCase):
+    """Test SecurityMixin._analyze_security()."""
+
+    def setUp(self):
+        self.host = MockSecurityHost()
+
+    def test_protection_level_1_no_protection(self):
+        """Test security analysis with no protection (level 1)."""
+        results = {"protection_level": {"level": 1}, "data_blocks": [], "memory_areas": {}}
+
+        analysis = self.host._analyze_security(results)
+
+        self.assertIn("concerns", analysis)
+        concern_texts = " ".join(analysis["concerns"])
+        self.assertIn("No protection", concern_texts)
+
+    def test_protection_level_2_write_protected(self):
+        """Test security analysis with write protection (level 2)."""
+        results = {"protection_level": {"level": 2}, "data_blocks": [], "memory_areas": {}}
+
+        analysis = self.host._analyze_security(results)
+
+        concern_texts = " ".join(analysis["concerns"])
+        self.assertIn("Write protection", concern_texts)
+
+    def test_protection_level_3_full(self):
+        """Test security analysis with full protection (level 3)."""
+        results = {"protection_level": {"level": 3}, "data_blocks": [], "memory_areas": {}}
+
+        analysis = self.host._analyze_security(results)
+
+        # Level 3 should have no protection-related concerns
+        protection_concerns = [c for c in analysis["concerns"] if "protection" in c.lower()]
+        self.assertEqual(len(protection_concerns), 0)
+
+    def test_data_blocks_present(self):
+        """Test security analysis reports accessible data blocks."""
+        results = {
+            "protection_level": {"level": 3},
+            "data_blocks": [{"number": 1}, {"number": 2}, {"number": 3}],
+            "memory_areas": {},
+        }
+
+        analysis = self.host._analyze_security(results)
+
+        concern_texts = " ".join(analysis["concerns"])
+        self.assertIn("3 data blocks", concern_texts)
+
+    def test_writable_areas(self):
+        """Test security analysis reports writable memory areas."""
+        results = {
+            "protection_level": {"level": 3},
+            "data_blocks": [],
+            "memory_areas": {
+                "M": {"writable": True},
+                "Q": {"writable": True},
+                "I": {"writable": False},
+            },
+        }
+
+        analysis = self.host._analyze_security(results)
+
+        concern_texts = " ".join(analysis["concerns"])
+        self.assertIn("Writable", concern_texts)
+
+    def test_protection_level_none(self):
+        """Test security analysis when protection_level is None (defaults to 3)."""
+        results = {"protection_level": None, "data_blocks": [], "memory_areas": {}}
+
+        analysis = self.host._analyze_security(results)
+
+        # Default to most restrictive: no protection-level concerns
+        protection_concerns = [c for c in analysis["concerns"] if "No protection" in c]
+        self.assertEqual(len(protection_concerns), 0)
+
+    def test_protection_level_int(self):
+        """Test security analysis when protection_level is an int (not dict)."""
+        results = {"protection_level": 1, "data_blocks": [], "memory_areas": {}}
+
+        analysis = self.host._analyze_security(results)
+
+        concern_texts = " ".join(analysis["concerns"])
+        self.assertIn("No protection", concern_texts)
+
+    def test_password_set_marks_authentication(self):
+        """Test that having a password marks authentication as present."""
+        self.host.password = "secret"
+        results = {"protection_level": {"level": 3}, "data_blocks": [], "memory_areas": {}}
+
+        analysis = self.host._analyze_security(results)
+
+        # Should not crash; authentication key used internally
+        self.assertIsNotNone(analysis)
+
+
+class TestTestWriteAccess(unittest.TestCase):
+    """Test SecurityMixin._test_write_access()."""
+
+    def setUp(self):
+        self.host = MockSecurityHost()
+        self.conn = Mock()
+
+    def test_markers_writable(self):
+        """Test markers area is writable."""
+        self.conn.read_area.return_value = bytes([0x42])
+        self.conn.write_area.return_value = None
+
+        result = self.host._test_write_access(self.conn)
+
+        self.assertIn("markers", result["writable_areas"])
+        self.assertFalse(result["read_only"])
+
+    def test_outputs_writable(self):
+        """Test outputs area is writable (markers write fails)."""
+
+        # Markers: read ok, write fails
+        def read_side_effect(area, *args):
+            return bytes([0x00])
+
+        def write_side_effect(area, *args):
+            from oida.protocols.snap7.constants import S7MemoryArea
+
+            if area == S7MemoryArea.MK:
+                raise Exception("access denied")
+
+        self.conn.read_area.side_effect = read_side_effect
+        self.conn.write_area.side_effect = write_side_effect
+
+        result = self.host._test_write_access(self.conn)
+
+        self.assertIn("outputs", result["writable_areas"])
+        self.assertNotIn("markers", result["writable_areas"])
+        self.assertFalse(result["read_only"])
+
+    def test_both_fail_read_only(self):
+        """Test both areas fail write -> read_only=True."""
+        self.conn.read_area.side_effect = Exception("access denied")
+
+        result = self.host._test_write_access(self.conn)
+
+        self.assertEqual(result["writable_areas"], [])
+        self.assertTrue(result["read_only"])
+
+    def test_both_writable(self):
+        """Test both markers and outputs are writable."""
+        self.conn.read_area.return_value = bytes([0x00])
+        self.conn.write_area.return_value = None
+
+        result = self.host._test_write_access(self.conn)
+
+        self.assertIn("markers", result["writable_areas"])
+        self.assertIn("outputs", result["writable_areas"])
+        self.assertFalse(result["read_only"])
+
+    def test_read_succeeds_write_fails(self):
+        """Test read succeeds but write fails for both areas."""
+        self.conn.read_area.return_value = bytes([0x00])
+        self.conn.write_area.side_effect = Exception("write protected")
+
+        result = self.host._test_write_access(self.conn)
+
+        self.assertEqual(result["writable_areas"], [])
+        self.assertTrue(result["read_only"])
+
+
+class TestDetectPutGetAccess(unittest.TestCase):
+    """Test SecurityMixin._detect_put_get_access()."""
+
+    def setUp(self):
+        self.host = MockSecurityHost()
+        self.conn = Mock()
+
+    @patch("oida.protocols.snap7.scanner._suppress_snap7_logging")
+    @patch("oida.protocols.snap7.scanner._get_snap7_client")
+    def test_not_applicable_series(self, mock_client, mock_suppress):
+        """Test PUT/GET not applicable for non-1200/1500 series."""
+        result = self.host._detect_put_get_access(self.conn, series="S7-300")
+
+        self.assertIsNone(result["enabled"])
+        self.assertIn("not applicable", result["details"])
+
+    def test_no_connection(self):
+        """Test PUT/GET with no active connection."""
+        self.conn.get_connected.return_value = False
+
+        result = self.host._detect_put_get_access(self.conn, series="S7-1500")
+
+        self.assertIsNone(result["enabled"])
+        self.assertIn("No active connection", result["details"])
+
+    def test_null_connection(self):
+        """Test PUT/GET with None connection."""
+        result = self.host._detect_put_get_access(None, series="S7-1500")
+
+        self.assertIsNone(result["enabled"])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,336 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "PVSCL 20 E",
+  "description": "Schneider Electric PVSCL 20 E power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ac_current": {
+      "address": 40070,
+      "type": "u16",
+      "access": "r",
+      "description": "AC Current",
+      "unit": "A"
+    },
+    "phase_a_current": {
+      "address": 40071,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A Current",
+      "unit": "A"
+    },
+    "phase_b_current": {
+      "address": 40072,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B Current",
+      "unit": "A"
+    },
+    "phase_c_current": {
+      "address": 40073,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C Current",
+      "unit": "A"
+    },
+    "scale_factor_a_sf": {
+      "address": 40074,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [A_SF]"
+    },
+    "phase_voltage_ab": {
+      "address": 40075,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage AB",
+      "unit": "V"
+    },
+    "phase_voltage_bc": {
+      "address": 40076,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage BC",
+      "unit": "V"
+    },
+    "phase_voltage_ca": {
+      "address": 40077,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage CA",
+      "unit": "V"
+    },
+    "phase_voltage_an": {
+      "address": 40078,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage AN",
+      "unit": "V"
+    },
+    "phase_voltage_bn": {
+      "address": 40079,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage BN",
+      "unit": "V"
+    },
+    "phase_voltage_cn": {
+      "address": 40080,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Voltage CN",
+      "unit": "V"
+    },
+    "scale_factor_v_sf": {
+      "address": 40081,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [V_SF]"
+    },
+    "ac_power": {
+      "address": 40082,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Power",
+      "unit": "W"
+    },
+    "scale_factor_w_sf": {
+      "address": 40083,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [W_SF]"
+    },
+    "line_frequency": {
+      "address": 40084,
+      "type": "u16",
+      "access": "r",
+      "description": "Line Frequency",
+      "unit": "Hz"
+    },
+    "scale_factor_hz_sf": {
+      "address": 40085,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [HZ_SF]"
+    },
+    "ac_apparent_power": {
+      "address": 40086,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Apparent Power",
+      "unit": "VA"
+    },
+    "scale_factor_va_sf": {
+      "address": 40087,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [VA_SF]"
+    },
+    "ac_reactive_power": {
+      "address": 40088,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Reactive Power",
+      "unit": "var"
+    },
+    "scale_factor_var_sf": {
+      "address": 40089,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [VAR_SF]"
+    },
+    "ac_power_factor": {
+      "address": 40090,
+      "type": "i16",
+      "access": "r",
+      "description": "AC Power Factor",
+      "unit": "Pct"
+    },
+    "scale_factor_pf_sf": {
+      "address": 40091,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [PF_SF]"
+    },
+    "ac_energy": {
+      "address": 40092,
+      "type": "u32",
+      "access": "r",
+      "description": "AC Energy",
+      "unit": "Wh"
+    },
+    "scale_factor_wh_sf": {
+      "address": 40094,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [WH_SF]"
+    },
+    "dc_current": {
+      "address": 40095,
+      "type": "u16",
+      "access": "r",
+      "description": "DC Current",
+      "unit": "A"
+    },
+    "scale_factor_dca_sf": {
+      "address": 40096,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCA_SF]"
+    },
+    "dc_voltage": {
+      "address": 40097,
+      "type": "u16",
+      "access": "r",
+      "description": "DC Voltage",
+      "unit": "V"
+    },
+    "scale_factor_dcv_sf": {
+      "address": 40098,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCV_SF]"
+    },
+    "dc_power": {
+      "address": 40099,
+      "type": "i16",
+      "access": "r",
+      "description": "DC Power",
+      "unit": "W"
+    },
+    "scale_factor_dcw_sf": {
+      "address": 40100,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCW_SF]"
+    },
+    "cabinet_temperature": {
+      "address": 40101,
+      "type": "i16",
+      "access": "r",
+      "description": "Cabinet Temperature",
+      "unit": "C"
+    },
+    "heat_sink_temperature": {
+      "address": 40102,
+      "type": "i16",
+      "access": "r",
+      "description": "Heat Sink Temperature",
+      "unit": "C"
+    },
+    "transformer_temperature": {
+      "address": 40103,
+      "type": "i16",
+      "access": "r",
+      "description": "Transformer Temperature",
+      "unit": "C"
+    },
+    "other_temperature": {
+      "address": 40104,
+      "type": "i16",
+      "access": "r",
+      "description": "Other Temperature",
+      "unit": "C"
+    },
+    "scale_factor_tmp_sf": {
+      "address": 40105,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [TMP_SF]"
+    },
+    "enumerated_value_operating_state": {
+      "address": 40106,
+      "type": "u16",
+      "access": "r",
+      "description": "Enumerated value. Operating state"
+    },
+    "vendor_specific_operating_state_code": {
+      "address": 40107,
+      "type": "u16",
+      "access": "r",
+      "description": "Vendor specific operating state code"
+    },
+    "bitmask_value_event_fields": {
+      "address": 40108,
+      "type": "u32",
+      "access": "r",
+      "description": "Bitmask value. Event fields"
+    },
+    "reserved_for_future_use": {
+      "address": 40110,
+      "type": "u32",
+      "access": "r",
+      "description": "Reserved for future use"
+    },
+    "vendor_defined_events": {
+      "address": 40112,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "vendor_defined_events_40114": {
+      "address": 40114,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "vendor_defined_events_40116": {
+      "address": 40116,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "vendor_defined_events_40118": {
+      "address": 40118,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor defined events"
+    },
+    "scale_factor_dca_sf_40122": {
+      "address": 40122,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCA_SF]"
+    },
+    "scale_factor_dcv_sf_40123": {
+      "address": 40123,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCV_SF]"
+    },
+    "scale_factor_dcw_sf_40124": {
+      "address": 40124,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCW_SF]"
+    },
+    "scale_factor_dcwh_sf": {
+      "address": 40125,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor [DCWH_SF]"
+    },
+    "evt": {
+      "address": 40126,
+      "type": "u32",
+      "access": "r",
+      "description": "EVT"
+    },
+    "n": {
+      "address": 40128,
+      "type": "i16",
+      "access": "r",
+      "description": "N"
+    },
+    "tmsper": {
+      "address": 40129,
+      "type": "u16",
+      "access": "r",
+      "description": "TMSPER"
+    }
+  }
+}

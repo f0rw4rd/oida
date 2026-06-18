@@ -1,0 +1,337 @@
+{
+  "vendor": "ELNet",
+  "model": "GR PQ LT LTP MC PIC LTE LTC",
+  "description": "ELNet GR PQ LT LTP MC PIC LTE LTC power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_line_2": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage line 2"
+    },
+    "voltage_line_3": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage line 3"
+    },
+    "voltage_between_line_1_and_line_2": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage between line 1 and line 2"
+    },
+    "voltage_between_line_2_and_line_3": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage between line 2 and line 3"
+    },
+    "voltage_between_line_3_and_line_1": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage between line 3 and line 1"
+    },
+    "current_in_line_1": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Current in line 1"
+    },
+    "current_in_line_2": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Current in line 2"
+    },
+    "current_in_line_3": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Current in line 3"
+    },
+    "active_power_line_1": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power line 1",
+      "unit": "Watt"
+    },
+    "active_power_line_2": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power line 2",
+      "unit": "Watt"
+    },
+    "active_power_line_3": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power line 3",
+      "unit": "watt"
+    },
+    "combined_active_power_line_1_2_3": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Combined active power line 1+2 +3",
+      "unit": "watt"
+    },
+    "apparent_power_line_1": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power line 1",
+      "unit": "VA"
+    },
+    "apparent_power_line_2": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power line 2",
+      "unit": "VA"
+    },
+    "apparent_power_line_3": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power line 3",
+      "unit": "VA"
+    },
+    "combined_apparent_power_line_1_2_3": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Combined apparent power line 1+2+3"
+    },
+    "reactive_power_line_1": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power line 1",
+      "unit": "VAR"
+    },
+    "reactive_power_line_2": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power line 2",
+      "unit": "VAR"
+    },
+    "reactive_power_line_3": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power line 3",
+      "unit": "VAR"
+    },
+    "combined_reactive_power_line_1_2_3": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Combined reactive power line 1+2+3"
+    },
+    "power_factor_line_1": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor line 1",
+      "unit": "PF"
+    },
+    "power_factor_line_2": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor line 2",
+      "unit": "PF"
+    },
+    "power_factor_line_3": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor line 3",
+      "unit": "PF"
+    },
+    "combined_power_factor_for_line_1_2_3": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Combined power factor for line 1+2+3"
+    },
+    "frequency_line_1": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency line 1",
+      "unit": "Hrz"
+    },
+    "frequency_line_2": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency line 2",
+      "unit": "Hrz"
+    },
+    "frequency_line_3": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency line 3",
+      "unit": "Hrz"
+    },
+    "current_neutral_line": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Current neutral line"
+    },
+    "power_factor_line_1_58": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor line 1",
+      "unit": "L and C"
+    },
+    "power_factor_line_2_60": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor line 2",
+      "unit": "L and C"
+    },
+    "power_factor_line_3_62": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor line 3",
+      "unit": "L and C"
+    },
+    "combined_power_factor_for_line_1_2_3_64": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Combined power factor for line 1+2+3",
+      "unit": "L and C"
+    },
+    "total_current_in_line_1_2_3": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Total current in line 1+2+3"
+    },
+    "tou_taoz_rate": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Tou (taoz) rate"
+    },
+    "active_total_energy": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Active total energy",
+      "unit": "Wh"
+    },
+    "reactive_total_energy": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive total energy",
+      "unit": "VARh"
+    },
+    "apparent_total_energy": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent total energy",
+      "unit": "Vah"
+    },
+    "date_time": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Date time",
+      "unit": "Win Format"
+    },
+    "time_from_01_01_2000_in_seconds": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Time from 01 01 2000 in seconds"
+    },
+    "address": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Address"
+    },
+    "baud_rate": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "Baud rate"
+    },
+    "parity": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Parity"
+    },
+    "current_transformer_ratio": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "Current transformer ratio"
+    },
+    "timed_average_voltage": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "Timed average voltage"
+    },
+    "timed_average_current": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Timed average current"
+    },
+    "timed_average_power": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Timed average power"
+    },
+    "timed_avaerge_frequqncy": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Timed avaerge frequqncy"
+    },
+    "thd_for_volts_line_1": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd for volts line 1"
+    },
+    "thd_for_volts_line_2": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd for volts line 2"
+    },
+    "thd_for_volts_line_3": {
+      "address": 108,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd for volts line 3"
+    }
+  }
+}

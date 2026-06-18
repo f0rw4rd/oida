@@ -1,0 +1,363 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "EM 4200",
+  "description": "Schneider Electric EM 4200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "total_instantaneous_real_power_3_phase_total": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Total instantaneous real power (3 phase total)",
+      "unit": "kW"
+    },
+    "total_instantaneous_reactive_power_3_phase_total": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Total instantaneous reactive power (3 phase total)",
+      "unit": "kVAR"
+    },
+    "total_instantaneous_apparent_power_3_phase_total": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Total instantaneous apparent power (3 phase total)",
+      "unit": "kVA"
+    },
+    "total_power_factor_total_kw_total_kva": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Total power factor (total kw / total kva)",
+      "unit": "Ratio"
+    },
+    "voltage_line_to_line_average_of_phases": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, line to line, average of phases",
+      "unit": "Volt"
+    },
+    "voltage_line_to_neutral_average_of_phases": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, line to neutral, average of phases",
+      "unit": "Volt"
+    },
+    "current_average_of_phases": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, average of phases",
+      "unit": "Amp"
+    },
+    "real_power_l1": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, L1",
+      "unit": "kW"
+    },
+    "real_power_l2": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, L2",
+      "unit": "kW"
+    },
+    "real_power_l3": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, L3",
+      "unit": "kW"
+    },
+    "power_factor_l1": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Power factor, L1",
+      "unit": "Ratio"
+    },
+    "power_factor_l2": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Power factor, L2",
+      "unit": "Ratio"
+    },
+    "power_factor_l3": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Power factor, L3",
+      "unit": "Ratio"
+    },
+    "voltage_l1_l2": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L1 L2",
+      "unit": "Volt"
+    },
+    "voltage_l2_l3": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L2 L3",
+      "unit": "Volt"
+    },
+    "voltage_l3_l1": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L3 L1",
+      "unit": "Volt"
+    },
+    "voltage_l1_n": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L1 N",
+      "unit": "Volt"
+    },
+    "voltage_l2_n": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L2 N",
+      "unit": "Volt"
+    },
+    "voltage_l3_n": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L3 N",
+      "unit": "Volt"
+    },
+    "current_instantaneous_l1": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, instantaneous, L1",
+      "unit": "Amp"
+    },
+    "current_instantaneous_l2": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, instantaneous, L2",
+      "unit": "Amp"
+    },
+    "current_instantaneous_l3": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, instantaneous, L3",
+      "unit": "Amp"
+    },
+    "present_demand_sub_interval": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Present demand sub interval",
+      "unit": "kW"
+    },
+    "minimum_demand": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Minimum demand",
+      "unit": "kW"
+    },
+    "maximum_demand": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "Maximum demand",
+      "unit": "kW"
+    },
+    "present_demand": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Present demand",
+      "unit": "kW"
+    },
+    "peak_demand": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak demand",
+      "unit": "kW"
+    },
+    "ct_size_100_300_etc": {
+      "address": 30,
+      "type": "u16",
+      "access": "r",
+      "description": "Ct size (100, 300, etc.)",
+      "unit": "Amps"
+    },
+    "count_of_kwh_resets": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "Count of kwh resets",
+      "unit": "Count"
+    },
+    "count_of_peak_demand_resets": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Count of peak demand resets",
+      "unit": "Count"
+    },
+    "count_of_sub_intervals": {
+      "address": 33,
+      "type": "u16",
+      "access": "r",
+      "description": "Count of sub intervals",
+      "unit": "Count"
+    },
+    "count_of_number_readings_in_present_sub_interval": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Count of number readings in present sub interval",
+      "unit": "Count"
+    },
+    "system_type_see_manual": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "System type: see manual",
+      "unit": "integer"
+    },
+    "sub_interval_length_sets_the_length_of_a_sub_interval_value_is_the_number_of_seconds_times_5_for_example_15_minutes_is_4500_for_sync_to_comms_set_this_to_zero": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Sub interval length: sets the length of a sub interval. value is the number of seconds times 5 (for example, 15 minutes is 4500). for sync to comms, set this to zero",
+      "unit": "integer"
+    },
+    "number_of_sub_intervals_per_demand_interval_sets_the_number_of_sub_intervals_that_make_a_single_demand_interval_legal_values_are_1_to_6_for_block_demand_set_this_to_1": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of sub intervals per demand interval. sets the number of sub intervals that make a single demand interval. legal values are 1 to 6. for block demand, set this to 1",
+      "unit": "integer"
+    },
+    "command": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Command",
+      "unit": "bit map"
+    },
+    "real_energy_consumption": {
+      "address": 256,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy consumption",
+      "unit": "kWh"
+    },
+    "real_energy_consumption_redundant": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy consumption (redundant)",
+      "unit": "kWh"
+    },
+    "total_instantaneous_real_power": {
+      "address": 260,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous real power",
+      "unit": "kW"
+    },
+    "total_instantaneous_reactive_power": {
+      "address": 262,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous reactive power",
+      "unit": "kVAR"
+    },
+    "total_instantaneous_apparent_power": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous apparent power",
+      "unit": "kVA"
+    },
+    "total_power_factor_total_kw_total_kva_266": {
+      "address": 266,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor (total kw / total kva)",
+      "unit": "Ratio"
+    },
+    "voltage_line_to_line_average_of_3_phases": {
+      "address": 268,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, line to line, average of 3 phases",
+      "unit": "Volt"
+    },
+    "voltage_line_to_neutral_average_of_3_phases": {
+      "address": 270,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, line to neutral, average of 3 phases",
+      "unit": "Volt"
+    },
+    "current_average_of_3_phases": {
+      "address": 272,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, average of 3 phases",
+      "unit": "Amp"
+    },
+    "real_power_l1_274": {
+      "address": 274,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, L1",
+      "unit": "kW"
+    },
+    "real_power_l2_276": {
+      "address": 276,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, L2",
+      "unit": "kW"
+    },
+    "real_power_l3_278": {
+      "address": 278,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, L3",
+      "unit": "kW"
+    },
+    "power_factor_l1_280": {
+      "address": 280,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, L1",
+      "unit": "Ratio"
+    },
+    "power_factor_l2_282": {
+      "address": 282,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, L2",
+      "unit": "Ratio"
+    }
+  }
+}

@@ -1,0 +1,63 @@
+# dnsmasq 2.83 - CVE-2020-25682 (DNSSEC Heap Buffer Overflow)
+# Heap buffer overflow in DNSSEC signature validation (DNSpooq)
+# Reference: https://nvd.nist.gov/vuln/detail/CVE-2020-25682
+#
+# VULNERABLE: Crafted DNSSEC response causes heap buffer overflow
+# Part of the "DNSpooq" vulnerability set
+#
+# For authorized security testing only
+
+FROM alpine:3.13
+
+# dnsmasq 2.83 is in Alpine 3.13 repos
+RUN apk add --no-cache dnsmasq netcat-openbsd
+
+# Create vulnerable configuration with DNSSEC enabled
+RUN cat > /etc/dnsmasq.conf << 'EOF'
+# dnsmasq 2.83 - Vulnerable configuration for CVE-2020-25682 testing
+# WARNING: This configuration is intentionally vulnerable
+
+# Listen on all interfaces
+listen-address=0.0.0.0
+bind-interfaces
+
+# DNS settings
+port=53
+no-resolv
+no-hosts
+
+# Enable DNSSEC (required for vulnerability)
+dnssec
+dnssec-check-unsigned
+
+# Use Google DNS as upstream (for DNSSEC testing)
+server=8.8.8.8
+server=8.8.4.4
+
+# Cache settings (vulnerable to cache poisoning)
+cache-size=1000
+
+# Log queries for debugging
+log-queries
+log-facility=-
+
+# Local DNS records
+address=/test.local/127.0.0.1
+address=/dnspooq.local/192.168.1.1
+EOF
+
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+echo "Starting dnsmasq 2.83 (CVE-2020-25682 vulnerable)"
+echo "WARNING: DNSSEC heap buffer overflow vulnerability active"
+exec dnsmasq --no-daemon --log-facility=- --keep-in-foreground
+EOF
+RUN chmod +x /start.sh
+
+EXPOSE 53/tcp
+EXPOSE 53/udp
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD nc -zu localhost 53 || exit 1
+
+CMD ["/start.sh"]

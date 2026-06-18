@@ -1,0 +1,313 @@
+{
+  "vendor": "Elspec",
+  "model": "EQC ACR",
+  "description": "Elspec EQC ACR power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "fault": {
+      "address": 8448,
+      "type": "f32",
+      "access": "r",
+      "description": "Fault"
+    },
+    "frequency": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "voltage_l2": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L2"
+    },
+    "voltage_l3": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L3"
+    },
+    "voltage": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage"
+    },
+    "voltage_l12": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L12"
+    },
+    "voltage_l23": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L23"
+    },
+    "voltage_l31": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L31"
+    },
+    "voltage_14": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage"
+    },
+    "current_l1_mains": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L1 (mains)"
+    },
+    "current_l2_mains": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L2 (mains)"
+    },
+    "current_l3_mains": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L3 (mains)"
+    },
+    "current_mains": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Current (mains)"
+    },
+    "current_l1_caps": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L1 (caps)"
+    },
+    "current_l2_caps": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L2 (caps)"
+    },
+    "current_l3_caps": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L3 (caps)"
+    },
+    "current_caps": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Current (caps)"
+    },
+    "current_l1_load": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L1 (load)"
+    },
+    "current_l2_load": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L2 (load)"
+    },
+    "current_l3_load": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L3 (load)"
+    },
+    "current_load": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Current (load)"
+    },
+    "active_power_l1_mains": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L1 (mains)"
+    },
+    "active_power_l2_mains": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L2 (mains)"
+    },
+    "active_power_l3_mains": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3 (mains)"
+    },
+    "active_power_l3_mains_56": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3 (mains)"
+    },
+    "reactive_power_l1_mains": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L1 (mains)"
+    },
+    "reactive_power_l2_mains": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L2 (mains)"
+    },
+    "reactive_power_l3_mains": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3 (mains)"
+    },
+    "reactive_power_l3_mains_64": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3 (mains)"
+    },
+    "apparent_power_l1_mains": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L1 (mains)"
+    },
+    "apparent_power_l2_mains": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L2 (mains)"
+    },
+    "apparent_power_l3_mains": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3 (mains)"
+    },
+    "apparent_power_l3_mains_72": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3 (mains)"
+    },
+    "reactive_power_l1_caps": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L1 (caps)"
+    },
+    "reactive_power_l2_caps": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L2 (caps)"
+    },
+    "reactive_power_l3_caps": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3 (caps)"
+    },
+    "reactive_power_l3_caps_94": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3 (caps)"
+    },
+    "active_power_l1_load": {
+      "address": 110,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L1 (load)"
+    },
+    "active_power_l2_load": {
+      "address": 112,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L2 (load)"
+    },
+    "active_power_l3_load": {
+      "address": 114,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3 (load)"
+    },
+    "active_power_l3_load_116": {
+      "address": 116,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3 (load)"
+    },
+    "reactive_power_l1_load": {
+      "address": 118,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L1 (load)"
+    },
+    "reactive_power_l2_load": {
+      "address": 120,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L2 (load)"
+    },
+    "reactive_power_l3_load": {
+      "address": 122,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3 (load)"
+    },
+    "reactive_power_l3_load_124": {
+      "address": 124,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3 (load)"
+    },
+    "apparent_power_l1_load": {
+      "address": 126,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L1 (load)"
+    },
+    "apparent_power_l2_load": {
+      "address": 128,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L2 (load)"
+    },
+    "apparent_power_l3_load": {
+      "address": 130,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3 (load)"
+    },
+    "apparent_power_l3_load_132": {
+      "address": 132,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3 (load)"
+    },
+    "power_factor_mains": {
+      "address": 140,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor (mains)"
+    }
+  }
+}

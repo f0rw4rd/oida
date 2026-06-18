@@ -1,0 +1,313 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "ION 6200",
+  "description": "Schneider Electric ION 6200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "firmware_revision": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Firmware revision"
+    },
+    "oem_identification": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Oem identification"
+    },
+    "meter_options": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter options"
+    },
+    "meter_power_ups": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "# meter power ups"
+    },
+    "peak_demand_resets": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "# peak demand resets"
+    },
+    "meter_on_time": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter on time"
+    },
+    "flash_erase_cycles": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "# flash erase cycles"
+    },
+    "device_type": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Device type"
+    },
+    "demand_interval_down_counter": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand interval down counter"
+    },
+    "vln_a": {
+      "address": 99,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln a"
+    },
+    "vln_b": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln b"
+    },
+    "vln_c": {
+      "address": 101,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln c"
+    },
+    "vln_avg": {
+      "address": 102,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln avg"
+    },
+    "vll_ab": {
+      "address": 103,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll ab"
+    },
+    "vll_bc": {
+      "address": 104,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll bc"
+    },
+    "vll_ca": {
+      "address": 105,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll ca"
+    },
+    "vll_avg": {
+      "address": 106,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll avg"
+    },
+    "i_a": {
+      "address": 107,
+      "type": "u16",
+      "access": "r",
+      "description": "I a"
+    },
+    "i_b": {
+      "address": 108,
+      "type": "u16",
+      "access": "r",
+      "description": "I b"
+    },
+    "i_c": {
+      "address": 109,
+      "type": "u16",
+      "access": "r",
+      "description": "I c"
+    },
+    "i_avg": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "description": "I avg"
+    },
+    "i_demand": {
+      "address": 111,
+      "type": "u16",
+      "access": "r",
+      "description": "I demand"
+    },
+    "i_peak_demand": {
+      "address": 112,
+      "type": "u16",
+      "access": "r",
+      "description": "I peak demand"
+    },
+    "i4": {
+      "address": 113,
+      "type": "u16",
+      "access": "r",
+      "description": "I4"
+    },
+    "frequency": {
+      "address": 114,
+      "type": "i16",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "pf_sign_total": {
+      "address": 115,
+      "type": "i16",
+      "access": "r",
+      "description": "PF sign total"
+    },
+    "pf_sign_a": {
+      "address": 116,
+      "type": "i16",
+      "access": "r",
+      "description": "PF sign a"
+    },
+    "pf_sign_b": {
+      "address": 117,
+      "type": "i16",
+      "access": "r",
+      "description": "PF sign b"
+    },
+    "pf_sign_c": {
+      "address": 118,
+      "type": "i16",
+      "access": "r",
+      "description": "PF sign c"
+    },
+    "kw_total": {
+      "address": 119,
+      "type": "i16",
+      "access": "r",
+      "description": "kW total"
+    },
+    "kvar_total": {
+      "address": 120,
+      "type": "i16",
+      "access": "r",
+      "description": "kVAR total"
+    },
+    "kva_total": {
+      "address": 121,
+      "type": "i16",
+      "access": "r",
+      "description": "kVA total"
+    },
+    "kw_a": {
+      "address": 122,
+      "type": "i16",
+      "access": "r",
+      "description": "kW a"
+    },
+    "kw_b": {
+      "address": 123,
+      "type": "i16",
+      "access": "r",
+      "description": "kW b"
+    },
+    "kw_c": {
+      "address": 124,
+      "type": "i16",
+      "access": "r",
+      "description": "kW c"
+    },
+    "kvar_a": {
+      "address": 125,
+      "type": "i16",
+      "access": "r",
+      "description": "kVAR a"
+    },
+    "kvar_b": {
+      "address": 126,
+      "type": "i16",
+      "access": "r",
+      "description": "kVAR b"
+    },
+    "kvar_c": {
+      "address": 127,
+      "type": "i16",
+      "access": "r",
+      "description": "kVAR c"
+    },
+    "kva_a": {
+      "address": 128,
+      "type": "i16",
+      "access": "r",
+      "description": "kVA a"
+    },
+    "kva_b": {
+      "address": 129,
+      "type": "i16",
+      "access": "r",
+      "description": "kVA b"
+    },
+    "kva_c": {
+      "address": 130,
+      "type": "i16",
+      "access": "r",
+      "description": "kVA c"
+    },
+    "kw_demand": {
+      "address": 131,
+      "type": "i16",
+      "access": "r",
+      "description": "kW demand"
+    },
+    "kw_peak_demand": {
+      "address": 132,
+      "type": "i16",
+      "access": "r",
+      "description": "kW peak demand"
+    },
+    "kvar_demand": {
+      "address": 133,
+      "type": "i16",
+      "access": "r",
+      "description": "kVAR demand"
+    },
+    "kva_demand": {
+      "address": 134,
+      "type": "i16",
+      "access": "r",
+      "description": "kVA demand"
+    },
+    "kvar_peak_demand": {
+      "address": 135,
+      "type": "i16",
+      "access": "r",
+      "description": "kVAR peak demand"
+    },
+    "kva_peak_demand": {
+      "address": 136,
+      "type": "i16",
+      "access": "r",
+      "description": "kVA peak demand"
+    },
+    "kwh_del": {
+      "address": 137,
+      "type": "u32",
+      "access": "r",
+      "description": "kWh del"
+    },
+    "kwh_rec": {
+      "address": 139,
+      "type": "u32",
+      "access": "r",
+      "description": "kWh rec"
+    },
+    "kvarh_del": {
+      "address": 141,
+      "type": "u32",
+      "access": "r",
+      "description": "kVARh del"
+    }
+  }
+}

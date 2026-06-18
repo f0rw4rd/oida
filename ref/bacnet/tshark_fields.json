@@ -1,0 +1,1185 @@
+{
+  "protocol": "bacnet",
+  "display_filter": "bacapp",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:41:17.130737+00:00",
+  "dissector_fields": {
+    "total": 72,
+    "by_type": {
+      "FT_BOOLEAN": 12,
+      "FT_BYTES": 3,
+      "FT_DOUBLE": 2,
+      "FT_FRAMENUM": 3,
+      "FT_INT64": 1,
+      "FT_IPv4": 1,
+      "FT_IPv6": 1,
+      "FT_NONE": 5,
+      "FT_STRING": 4,
+      "FT_UINT16": 3,
+      "FT_UINT32": 16,
+      "FT_UINT64": 1,
+      "FT_UINT8": 20
+    },
+    "fields": [
+      {
+        "name": "bacapp.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.pduflags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.segmented_request",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.more_segments",
+        "type": "FT_BOOLEAN",
+        "description": "More Segments Follow"
+      },
+      {
+        "name": "bacapp.SA",
+        "type": "FT_BOOLEAN",
+        "description": "Segmented Response accepted"
+      },
+      {
+        "name": "bacapp.max_adpu_size",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.response_segments",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.objectIdentifier",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.deviceIdentifier",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.objectType",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.object_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "bacapp.instance_number",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.property_identifier",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.vendor_identifier",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "bacapp.restart_reason",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.invoke_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.sequence_number",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.window_size",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.confirmed_service",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.unconfirmed_service",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.NAK",
+        "type": "FT_BOOLEAN",
+        "description": "negative ACK"
+      },
+      {
+        "name": "bacapp.SRV",
+        "type": "FT_BOOLEAN",
+        "description": "Server"
+      },
+      {
+        "name": "bacapp.event_type",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.notify_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.error_class",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.error_code",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.null",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.boolean",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.uint",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.int",
+        "type": "FT_INT64",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.real",
+        "type": "FT_DOUBLE",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.double",
+        "type": "FT_DOUBLE",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.octet_string",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.char_string",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.bit_string",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "bacapp.present_value.enum_index",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.who_is.low_limit",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.who_is.high_limit",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.reject_reason",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.abort_reason",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.application_tag_number",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.context_tag_number",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.extended_tag_number",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.named_tag",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.string_character_set",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.code_page",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "bacapp.tag_class",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.LVT",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.processId",
+        "type": "FT_UINT32",
+        "description": "Process Identifier"
+      },
+      {
+        "name": "bacapp.to_state",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.from_state",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.IPV4",
+        "type": "FT_IPv4",
+        "description": "IP-Address"
+      },
+      {
+        "name": "bacapp.IPV6",
+        "type": "FT_IPv6",
+        "description": "IP-Address"
+      },
+      {
+        "name": "bacapp.Port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "bacapp.mac_address_broadcast",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "bacapp.reserved_ashrea",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "bacapp.unused_bits",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "bacapp.bit",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.complete_bitstring",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragments",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragment",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragment.overlap",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragment.overlap.conflicts",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragment.multiple_tails",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragment.too_long_fragment",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragment.error",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "bacapp.fragment.count",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.reassembled.in",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "bacapp.reassembled.length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "bacapp.bad_length",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "bacapp.bad_tag",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "bacapp.bad_opening_tag",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 46,
+    "by_pcap": {
+      "automayt_bacnet_exception_schedule_1.pcapng": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_present_value_uint",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "text"
+      ],
+      "automayt_bacnet_exception_schedule_2.pcapng": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_present_value_real",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "text"
+      ],
+      "automayt_bacnet_sched_rpm.pcapng": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_bit",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_error_class",
+        "bacapp_bacapp_error_code",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_object_name",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_present_value_null",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_string_character_set",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unused_bits",
+        "text"
+      ],
+      "cisagov_bacnet_errors.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_SRV",
+        "bacapp_bacapp_abort_reason",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_bit",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_deviceIdentifier",
+        "bacapp_bacapp_error_class",
+        "bacapp_bacapp_error_code",
+        "bacapp_bacapp_event_type",
+        "bacapp_bacapp_from_state",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_notify_type",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_object_name",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_present_value_real",
+        "bacapp_bacapp_processId",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_reject_reason",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_string_character_set",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_to_state",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_unused_bits",
+        "bacapp_bacapp_vendor_identifier",
+        "text"
+      ],
+      "cisagov_bacnet_example.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_error_class",
+        "bacapp_bacapp_error_code",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_object_name",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_present_value_real",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_string_character_set",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_vendor_identifier",
+        "text"
+      ],
+      "cisagov_bacnet_segmented.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_NAK",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_SRV",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_code_page",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_object_name",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_sequence_number",
+        "bacapp_bacapp_string_character_set",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_vendor_identifier",
+        "bacapp_bacapp_window_size",
+        "text"
+      ],
+      "cisagov_bacnet_services.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_NAK",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_SRV",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_bit",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_error_class",
+        "bacapp_bacapp_error_code",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_object_name",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_present_value_enum_index",
+        "bacapp_bacapp_present_value_null",
+        "bacapp_bacapp_present_value_real",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_sequence_number",
+        "bacapp_bacapp_string_character_set",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_unused_bits",
+        "bacapp_bacapp_vendor_identifier",
+        "bacapp_bacapp_who_is_high_limit",
+        "bacapp_bacapp_who_is_low_limit",
+        "bacapp_bacapp_window_size",
+        "text"
+      ],
+      "filtered_bacnet.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_vendor_identifier",
+        "text"
+      ],
+      "iti_bacnet_test.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_object_name",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_string_character_set",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "text"
+      ],
+      "ndpi_bacnet.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_error_class",
+        "bacapp_bacapp_error_code",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_vendor_identifier",
+        "bacapp_bacapp_who_is_high_limit",
+        "bacapp_bacapp_who_is_low_limit",
+        "text"
+      ],
+      "raw_bacnet.pcap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_vendor_identifier",
+        "text"
+      ],
+      "wireshark_bacnet_arcnet.cap": [
+        "bacapp_bacapp_LVT",
+        "bacapp_bacapp_SA",
+        "bacapp_bacapp_application_tag_number",
+        "bacapp_bacapp_bit",
+        "bacapp_bacapp_confirmed_service",
+        "bacapp_bacapp_context_tag_number",
+        "bacapp_bacapp_error_class",
+        "bacapp_bacapp_error_code",
+        "bacapp_bacapp_instance_number",
+        "bacapp_bacapp_invoke_id",
+        "bacapp_bacapp_max_adpu_size",
+        "bacapp_bacapp_more_segments",
+        "bacapp_bacapp_named_tag",
+        "bacapp_bacapp_objectIdentifier",
+        "bacapp_bacapp_objectType",
+        "bacapp_bacapp_object_name",
+        "bacapp_bacapp_pduflags",
+        "bacapp_bacapp_property_identifier",
+        "bacapp_bacapp_response_segments",
+        "bacapp_bacapp_segmented_request",
+        "bacapp_bacapp_string_character_set",
+        "bacapp_bacapp_tag_class",
+        "bacapp_bacapp_type",
+        "bacapp_bacapp_unconfirmed_service",
+        "bacapp_bacapp_unused_bits",
+        "bacapp_bacapp_vendor_identifier",
+        "text"
+      ],
+      "wireshark_bacnet_arcnet_classic.cap": []
+    },
+    "union": [
+      "bacapp_bacapp_LVT",
+      "bacapp_bacapp_NAK",
+      "bacapp_bacapp_SA",
+      "bacapp_bacapp_SRV",
+      "bacapp_bacapp_abort_reason",
+      "bacapp_bacapp_application_tag_number",
+      "bacapp_bacapp_bit",
+      "bacapp_bacapp_code_page",
+      "bacapp_bacapp_confirmed_service",
+      "bacapp_bacapp_context_tag_number",
+      "bacapp_bacapp_deviceIdentifier",
+      "bacapp_bacapp_error_class",
+      "bacapp_bacapp_error_code",
+      "bacapp_bacapp_event_type",
+      "bacapp_bacapp_from_state",
+      "bacapp_bacapp_instance_number",
+      "bacapp_bacapp_invoke_id",
+      "bacapp_bacapp_max_adpu_size",
+      "bacapp_bacapp_more_segments",
+      "bacapp_bacapp_named_tag",
+      "bacapp_bacapp_notify_type",
+      "bacapp_bacapp_objectIdentifier",
+      "bacapp_bacapp_objectType",
+      "bacapp_bacapp_object_name",
+      "bacapp_bacapp_pduflags",
+      "bacapp_bacapp_present_value_enum_index",
+      "bacapp_bacapp_present_value_null",
+      "bacapp_bacapp_present_value_real",
+      "bacapp_bacapp_present_value_uint",
+      "bacapp_bacapp_processId",
+      "bacapp_bacapp_property_identifier",
+      "bacapp_bacapp_reject_reason",
+      "bacapp_bacapp_response_segments",
+      "bacapp_bacapp_segmented_request",
+      "bacapp_bacapp_sequence_number",
+      "bacapp_bacapp_string_character_set",
+      "bacapp_bacapp_tag_class",
+      "bacapp_bacapp_to_state",
+      "bacapp_bacapp_type",
+      "bacapp_bacapp_unconfirmed_service",
+      "bacapp_bacapp_unused_bits",
+      "bacapp_bacapp_vendor_identifier",
+      "bacapp_bacapp_who_is_high_limit",
+      "bacapp_bacapp_who_is_low_limit",
+      "bacapp_bacapp_window_size",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 20,
+    "fields": [
+      "abort_reason",
+      "confirmed_service",
+      "deviceIdentifier",
+      "error_class",
+      "error_code",
+      "instance_number",
+      "invoke_id",
+      "objectIdentifier",
+      "objectType",
+      "object_name",
+      "processId",
+      "property_identifier",
+      "reject_reason",
+      "sequence_number",
+      "unconfirmed_service",
+      "vendor_identifier",
+      "who_is.high_limit",
+      "who_is.low_limit",
+      "who_is_high_limit",
+      "who_is_low_limit"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "45/72 (62%)",
+    "pcap_vs_extracted": "18/45 (40%)",
+    "t1_extracted": "14/14 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "bacapp_bacapp_type",
+        "field": "bacapp.type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "filtered_bacnet.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "raw_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_application_tag_number",
+        "field": "bacapp.application_tag_number",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "filtered_bacnet.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "raw_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_tag_class",
+        "field": "bacapp.tag_class",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "filtered_bacnet.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "raw_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_LVT",
+        "field": "bacapp.LVT",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "filtered_bacnet.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "raw_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_pduflags",
+        "field": "bacapp.pduflags",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_segmented_request",
+        "field": "bacapp.segmented_request",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_more_segments",
+        "field": "bacapp.more_segments",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": "More Segments Follow"
+      },
+      {
+        "ek_name": "bacapp_bacapp_context_tag_number",
+        "field": "bacapp.context_tag_number",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_named_tag",
+        "field": "bacapp.named_tag",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng",
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_SA",
+        "field": "bacapp.SA",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": "Segmented Response accepted"
+      },
+      {
+        "ek_name": "bacapp_bacapp_max_adpu_size",
+        "field": "bacapp.max_adpu_size",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_response_segments",
+        "field": "bacapp.response_segments",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "ndpi_bacnet.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_string_character_set",
+        "field": "bacapp.string_character_set",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap",
+          "iti_bacnet_test.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_present_value_real",
+        "field": "bacapp.present_value.real",
+        "type": "FT_DOUBLE",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_2.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_example.pcap",
+          "cisagov_bacnet_services.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_unused_bits",
+        "field": "bacapp.unused_bits",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_services.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_bit",
+        "field": "bacapp.bit",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_services.pcap",
+          "wireshark_bacnet_arcnet.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_SRV",
+        "field": "bacapp.SRV",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_errors.pcap",
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap"
+        ],
+        "description": "Server"
+      },
+      {
+        "ek_name": "bacapp_bacapp_window_size",
+        "field": "bacapp.window_size",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_NAK",
+        "field": "bacapp.NAK",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_segmented.pcap",
+          "cisagov_bacnet_services.pcap"
+        ],
+        "description": "negative ACK"
+      },
+      {
+        "ek_name": "bacapp_bacapp_present_value_null",
+        "field": "bacapp.present_value.null",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_sched_rpm.pcapng",
+          "cisagov_bacnet_services.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_event_type",
+        "field": "bacapp.event_type",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_errors.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_notify_type",
+        "field": "bacapp.notify_type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_errors.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_present_value_uint",
+        "field": "bacapp.present_value.uint",
+        "type": "FT_UINT64",
+        "tier": "T2",
+        "seen_in": [
+          "automayt_bacnet_exception_schedule_1.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_present_value_enum_index",
+        "field": "bacapp.present_value.enum_index",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_services.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_code_page",
+        "field": "bacapp.code_page",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_segmented.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_to_state",
+        "field": "bacapp.to_state",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_errors.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "bacapp_bacapp_from_state",
+        "field": "bacapp.from_state",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_bacnet_errors.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 15,
+      "t1_in_pcap": 14,
+      "t1_covered": 14,
+      "t2_total": 49,
+      "t2_in_pcap": 31,
+      "t2_covered": 4,
+      "t3_skipped": 5,
+      "t4_ignored": 3
+    }
+  }
+}

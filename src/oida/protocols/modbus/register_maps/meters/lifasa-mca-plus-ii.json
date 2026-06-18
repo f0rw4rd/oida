@@ -1,0 +1,354 @@
+{
+  "vendor": "Lifasa",
+  "model": "MASTER CONTROL VAR / MASTER CONTROL VAR FAST / MCA PLUS II",
+  "description": "Lifasa MASTER CONTROL VAR / MASTER CONTROL VAR FAST / MCA PLUS II power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: MASTER CONTROL VAR, MASTER CONTROL VAR FAST, MCA PLUS II",
+  "registers": {
+    "l1_current": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "mA"
+    },
+    "l1_active_power": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 active power",
+      "unit": "W"
+    },
+    "l1_inductive_reactive_power": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 inductive reactive power",
+      "unit": "varL"
+    },
+    "l1_capacitive_reactive_power": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 capacitive reactive power",
+      "unit": "varC"
+    },
+    "l1_reactive_power": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 reactive power",
+      "unit": "var"
+    },
+    "l1_apparent_power": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 apparent power",
+      "unit": "VA"
+    },
+    "l1_reactive_power_consumed": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 reactive power consumed",
+      "unit": "var"
+    },
+    "l1_reactive_power_generated": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 reactive power generated",
+      "unit": "var"
+    },
+    "l1_power_factor": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 power factor"
+    },
+    "l1_cos": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 cos"
+    },
+    "l1_kw_sign": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 kW sign",
+      "unit": "+1 or -1"
+    },
+    "l1_kvar_sign": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 kvar sign",
+      "unit": "+1 or -1"
+    },
+    "l2_phase_voltage": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "l2_current": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "mA"
+    },
+    "l2_active_power": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 active power",
+      "unit": "W"
+    },
+    "l2_inductive_reactive_power": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 inductive reactive power",
+      "unit": "varL"
+    },
+    "l2_capacitive_reactive_power": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 capacitive reactive power",
+      "unit": "varC"
+    },
+    "l2_reactive_power": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 reactive power",
+      "unit": "var"
+    },
+    "l2_apparent_power": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 apparent power",
+      "unit": "VA"
+    },
+    "l2_reactive_power_consumed": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 reactive power consumed",
+      "unit": "var"
+    },
+    "l2_reactive_power_generated": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 reactive power generated",
+      "unit": "var"
+    },
+    "l2_power_factor": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 power factor"
+    },
+    "l2_cos": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 cos"
+    },
+    "l2_kw_sign": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 kW sign",
+      "unit": "+1 or -1"
+    },
+    "l2_kvar_sign": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 kvar sign",
+      "unit": "+1 or -1"
+    },
+    "l3_phase_voltage": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase voltage",
+      "unit": "V"
+    },
+    "l3_current": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "mA"
+    },
+    "l3_active_power": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 active power",
+      "unit": "W"
+    },
+    "l3_inductive_reactive_power": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 inductive reactive power",
+      "unit": "varL"
+    },
+    "l3_capacitive_reactive_power": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 capacitive reactive power",
+      "unit": "varC"
+    },
+    "l3_reactive_power": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 reactive power",
+      "unit": "var"
+    },
+    "l3_apparent_power": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 apparent power",
+      "unit": "VA"
+    },
+    "l3_reactive_power_consumed": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 reactive power consumed",
+      "unit": "var"
+    },
+    "l3_reactive_power_generated": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 reactive power generated",
+      "unit": "var"
+    },
+    "l3_power_factor": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 power factor"
+    },
+    "l3_cos": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 cos"
+    },
+    "l3_kw_sign": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 kW sign",
+      "unit": "+1 or -1"
+    },
+    "l3_kvar_sign": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 kvar sign",
+      "unit": "+1 or -1"
+    },
+    "three_phase_voltage": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase voltage",
+      "unit": "V"
+    },
+    "three_phase_current": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase current",
+      "unit": "mA"
+    },
+    "three_phase_active_power": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase active power",
+      "unit": "W"
+    },
+    "three_phase_inductive_power": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase inductive power",
+      "unit": "varL"
+    },
+    "three_phase_capacitive_power": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase capacitive power",
+      "unit": "varC"
+    },
+    "three_phase_reactive_power": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase reactive power",
+      "unit": "var"
+    },
+    "three_phase_apparent_power": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase apparent power",
+      "unit": "VA"
+    },
+    "three_phase_reactive_power_consumed": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase reactive power consumed",
+      "unit": "var"
+    },
+    "three_phase_reactive_power_generated": {
+      "address": 94,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase reactive power generated",
+      "unit": "var"
+    },
+    "three_phase_power_factor": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase power factor"
+    },
+    "three_phase_cos": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase cos"
+    },
+    "three_phase_kw_sign": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase kW sign"
+    }
+  }
+}

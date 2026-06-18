@@ -1,0 +1,75 @@
+{
+  "vendor": "DZG",
+  "model": "DZG Metering GmbH DVH4013 meters",
+  "description": "Imported from mbmd (dzg)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/dzg.go",
+  "registers": {
+    "import_power": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "0x0000 - parameters",
+      "function_code": 3
+    },
+    "import": {
+      "address": 16384,
+      "type": "f32",
+      "access": "ro",
+      "description": "0x4000 - energy",
+      "function_code": 3
+    },
+    "export": {
+      "address": 16640,
+      "type": "f32",
+      "access": "ro",
+      "description": "0x.1.. - reverse",
+      "function_code": 3
+    },
+    "export_l3": {
+      "address": 16736,
+      "type": "f32",
+      "access": "ro",
+      "description": "ImportPower:   0x8000, // 0x8000 - demand(power)",
+      "function_code": 3
+    },
+    "import_power_l1": {
+      "address": 32800,
+      "type": "f32",
+      "access": "ro",
+      "description": "ImportPowerL2: 0x8040,",
+      "function_code": 3
+    },
+    "import_power_l3": {
+      "address": 32864,
+      "type": "f32",
+      "access": "ro",
+      "description": "ExportPower:   0x8100, // 0x.1.. - reverse",
+      "function_code": 3
+    },
+    "export_power_l1": {
+      "address": 33056,
+      "type": "f32",
+      "access": "ro",
+      "description": "ExportPowerL2: 0x8140,",
+      "function_code": 3
+    },
+    "export_power_l3": {
+      "address": 33120,
+      "type": "f32",
+      "access": "ro",
+      "description": "ImportPower:0x0014, // exception '2' (illegal data address)",
+      "function_code": 3
+    },
+    "export_power": {
+      "address": 22,
+      "type": "f32",
+      "access": "ro",
+      "description": "exception '2' (illegal data address)",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: DZG DVH4013 three-phase meter confirmed; mbmd source dzg.go verified"
+}

@@ -1,0 +1,327 @@
+{
+  "vendor": "Generic",
+  "model": "VFD",
+  "description": "Generic Variable Frequency Drive register map. Common registers found across most VFD vendors (ABB, Siemens, Danfoss, Schneider, Yaskawa).",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Most VFDs follow a similar register structure. Speed reference is typically +/-10000 or +/-20000 for +/-100%. Addresses vary by vendor - adjust as needed.",
+  "source": "Composite from common VFD Modbus profiles",
+  "registers": {
+    "control_word": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Control word - motor start/stop/direction",
+      "bits": {
+        "0": "RUN/STOP",
+        "1": "DIRECTION",
+        "2": "COAST_STOP",
+        "3": "QUICK_STOP",
+        "4": "ENABLE_RAMP",
+        "5": "RAMP_HOLD",
+        "6": "FAULT_RESET",
+        "7": "ENABLE_OPERATION"
+      }
+    },
+    "speed_reference": {
+      "address": 1,
+      "type": "i16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.01,
+      "description": "Speed reference (-100% to +100%)",
+      "min": -100,
+      "max": 100
+    },
+    "status_word": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Drive status word",
+      "bits": {
+        "0": "READY_TO_SWITCH_ON",
+        "1": "SWITCHED_ON",
+        "2": "OPERATION_ENABLED",
+        "3": "FAULT",
+        "4": "VOLTAGE_ENABLED",
+        "5": "QUICK_STOP",
+        "6": "SWITCH_ON_DISABLED",
+        "7": "WARNING"
+      }
+    },
+    "output_frequency": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Actual output frequency"
+    },
+    "output_current": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Output motor current"
+    },
+    "output_voltage": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Output motor voltage"
+    },
+    "dc_bus_voltage": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "DC bus voltage"
+    },
+    "output_power": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "unit": "kW",
+      "scale": 0.01,
+      "description": "Output power"
+    },
+    "output_torque": {
+      "address": 8,
+      "type": "i16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Output torque (% of rated)"
+    },
+    "motor_rpm": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "unit": "RPM",
+      "description": "Motor speed in RPM"
+    },
+    "drive_temperature": {
+      "address": 10,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Drive heatsink temperature"
+    },
+    "motor_temperature": {
+      "address": 11,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Motor temperature (if sensor connected)"
+    },
+    "fault_code": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Active fault code",
+      "enum": {
+        "0": "NO_FAULT",
+        "1": "OVERCURRENT",
+        "2": "OVERVOLTAGE",
+        "3": "UNDERVOLTAGE",
+        "4": "OVERTEMPERATURE",
+        "5": "MOTOR_OVERLOAD",
+        "6": "GROUND_FAULT",
+        "7": "PHASE_LOSS",
+        "8": "COMMUNICATION_LOSS",
+        "9": "ENCODER_FAULT",
+        "10": "EXTERNAL_FAULT"
+      }
+    },
+    "warning_code": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Active warning code"
+    },
+    "run_hours": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "unit": "h",
+      "description": "Total drive run hours"
+    },
+    "kwh_counter": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Total energy consumed"
+    },
+    "max_frequency": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Maximum output frequency",
+      "min": 0,
+      "max": 600
+    },
+    "min_frequency": {
+      "address": 101,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Minimum output frequency",
+      "min": 0,
+      "max": 600
+    },
+    "acceleration_time": {
+      "address": 102,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.1,
+      "description": "Acceleration time (0 to max frequency)",
+      "min": 0,
+      "max": 3000
+    },
+    "deceleration_time": {
+      "address": 103,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.1,
+      "description": "Deceleration time (max frequency to 0)",
+      "min": 0,
+      "max": 3000
+    },
+    "motor_rated_voltage": {
+      "address": 110,
+      "type": "u16",
+      "access": "rw",
+      "unit": "V",
+      "description": "Motor rated voltage"
+    },
+    "motor_rated_current": {
+      "address": 111,
+      "type": "u16",
+      "access": "rw",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Motor rated current"
+    },
+    "motor_rated_frequency": {
+      "address": 112,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Motor rated frequency"
+    },
+    "motor_rated_speed": {
+      "address": 113,
+      "type": "u16",
+      "access": "rw",
+      "unit": "RPM",
+      "description": "Motor rated speed"
+    },
+    "motor_rated_power": {
+      "address": 114,
+      "type": "u16",
+      "access": "rw",
+      "unit": "kW",
+      "scale": 0.01,
+      "description": "Motor rated power"
+    },
+    "torque_limit_motoring": {
+      "address": 120,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Torque limit in motoring direction",
+      "min": 0,
+      "max": 300
+    },
+    "torque_limit_generating": {
+      "address": 121,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Torque limit in generating direction",
+      "min": 0,
+      "max": 300
+    },
+    "current_limit": {
+      "address": 122,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Current limit (% of rated)",
+      "min": 0,
+      "max": 200
+    },
+    "preset_speed_1": {
+      "address": 200,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Preset speed 1"
+    },
+    "preset_speed_2": {
+      "address": 201,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Preset speed 2"
+    },
+    "preset_speed_3": {
+      "address": 202,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Preset speed 3"
+    },
+    "preset_speed_4": {
+      "address": 203,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Preset speed 4"
+    }
+  },
+  "coils": {
+    "run_command": {
+      "address": 0,
+      "access": "rw",
+      "description": "Run/Stop command"
+    },
+    "direction_command": {
+      "address": 1,
+      "access": "rw",
+      "description": "Forward/Reverse direction"
+    },
+    "fault_reset": {
+      "address": 2,
+      "access": "rw",
+      "description": "Reset active fault"
+    },
+    "external_fault": {
+      "address": 3,
+      "access": "rw",
+      "description": "External fault input"
+    }
+  }
+}

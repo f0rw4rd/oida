@@ -1,0 +1,266 @@
+{
+  "vendor": "Pylontech",
+  "model": "Force H2",
+  "description": "Pylontech Force H2 high-voltage battery system with Modbus RTU",
+  "version": "1.1",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "RTU 9600 baud 8N1. Device info at 4096-4111 (strings). Battery data at 5123+. Cell voltages at 5376+. Scale factors: voltage 0.1V, current 0.01A, temperature 0.1C, cell voltage 0.001V.",
+  "source": "https://gist.github.com/nagisa/435bdf783e4b13b8e810106b0852081e, Pylontech Force H2 Modbus Protocol",
+  "registers": {
+    "brand_name": {
+      "address": 4096,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Brand name"
+    },
+    "device_name": {
+      "address": 4101,
+      "type": "string",
+      "length": 10,
+      "access": "r",
+      "description": "Device name"
+    },
+    "firmware_version": {
+      "address": 4106,
+      "type": "u16",
+      "access": "r",
+      "description": "Firmware version"
+    },
+    "software_version": {
+      "address": 4107,
+      "type": "u16",
+      "access": "r",
+      "description": "Software version"
+    },
+    "pack_voltage": {
+      "address": 5123,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Total pack voltage"
+    },
+    "pack_current": {
+      "address": 5125,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Pack current (positive=charging)"
+    },
+    "pack_temperature": {
+      "address": 5126,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Pack temperature"
+    },
+    "pack_soc": {
+      "address": 5127,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of charge"
+    },
+    "cycle_count": {
+      "address": 5128,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of charge cycles"
+    },
+    "max_charge_voltage": {
+      "address": 5129,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Maximum charge voltage"
+    },
+    "max_charge_current": {
+      "address": 5131,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Maximum charge current"
+    },
+    "min_discharge_voltage": {
+      "address": 5132,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Minimum discharge voltage"
+    },
+    "max_discharge_current": {
+      "address": 5134,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Maximum discharge current"
+    },
+    "cell_voltage_max": {
+      "address": 5136,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Maximum cell voltage"
+    },
+    "cell_voltage_min": {
+      "address": 5137,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Minimum cell voltage"
+    },
+    "cell_voltage_max_id": {
+      "address": 5138,
+      "type": "u16",
+      "access": "r",
+      "description": "Cell ID with maximum voltage"
+    },
+    "cell_voltage_min_id": {
+      "address": 5139,
+      "type": "u16",
+      "access": "r",
+      "description": "Cell ID with minimum voltage"
+    },
+    "temp_max": {
+      "address": 5140,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Maximum temperature"
+    },
+    "temp_min": {
+      "address": 5141,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Minimum temperature"
+    },
+    "temp_max_id": {
+      "address": 5142,
+      "type": "u16",
+      "access": "r",
+      "description": "Sensor ID with maximum temperature"
+    },
+    "temp_min_id": {
+      "address": 5143,
+      "type": "u16",
+      "access": "r",
+      "description": "Sensor ID with minimum temperature"
+    },
+    "pack_soh": {
+      "address": 5152,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of health"
+    },
+    "module_0_voltage": {
+      "address": 5248,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Module 0 voltage"
+    },
+    "module_0_current": {
+      "address": 5250,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Module 0 current"
+    },
+    "module_0_soc": {
+      "address": 5252,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Module 0 SOC"
+    },
+    "module_0_soh": {
+      "address": 5253,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Module 0 SOH"
+    },
+    "cell_voltage_1": {
+      "address": 5376,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 1 voltage"
+    },
+    "cell_voltage_2": {
+      "address": 5377,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 2 voltage"
+    },
+    "cell_voltage_3": {
+      "address": 5378,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 3 voltage"
+    },
+    "cell_voltage_4": {
+      "address": 5379,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 4 voltage"
+    },
+    "cell_voltage_5": {
+      "address": 5380,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 5 voltage"
+    },
+    "cell_voltage_6": {
+      "address": 5381,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 6 voltage"
+    },
+    "cell_voltage_7": {
+      "address": 5382,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 7 voltage"
+    },
+    "cell_voltage_8": {
+      "address": 5383,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Pack 0 Module 0 Cell 8 voltage"
+    }
+  },
+  "_source_verified": "Verified: Registers confirmed against Solarman Modbus RTU gist; brand_name at 4096, pack_voltage at 5123"
+}

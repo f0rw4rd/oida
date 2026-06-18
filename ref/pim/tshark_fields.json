@@ -1,0 +1,952 @@
+{
+  "protocol": "pim",
+  "display_filter": "pim",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T16:13:49.447570+00:00",
+  "dissector_fields": {
+    "total": 115,
+    "by_type": {
+      "FT_BOOLEAN": 17,
+      "FT_BYTES": 3,
+      "FT_IPv4": 15,
+      "FT_IPv6": 13,
+      "FT_NONE": 5,
+      "FT_STRING": 2,
+      "FT_UINT16": 14,
+      "FT_UINT32": 9,
+      "FT_UINT8": 37
+    },
+    "fields": [
+      {
+        "name": "pim.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.df_elect.subtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.df_elect.rsvd",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.igmp_type",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "pim.code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.cksum",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pim.cksum.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.res_bytes",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "pim.subtype_type13",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.flag_bits_type13",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.option",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "pim.optiontype",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pim.optionlength",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pim.optionvalue",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "pim.register_flag",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.register_flag.border",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.register_flag.null_register",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.mode",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.holdtime",
+        "type": "FT_UINT16",
+        "description": "The amount of time a receiver must keep the neighbor reachable, in seconds."
+      },
+      {
+        "name": "pim.numgroups",
+        "type": "FT_UINT16",
+        "description": "Number of multicast group sets contained in the message."
+      },
+      {
+        "name": "pim.numjoins",
+        "type": "FT_UINT16",
+        "description": "Number of joined sources."
+      },
+      {
+        "name": "pim.numprunes",
+        "type": "FT_UINT16",
+        "description": "Number of pruned sources."
+      },
+      {
+        "name": "pim.t",
+        "type": "FT_BOOLEAN",
+        "description": "Specifies the ability of the sending router to disable joins suppression."
+      },
+      {
+        "name": "pim.propagation_delay",
+        "type": "FT_UINT16",
+        "description": "Units are milli-seconds"
+      },
+      {
+        "name": "pim.override_interval",
+        "type": "FT_UINT16",
+        "description": "Units are milli-seconds"
+      },
+      {
+        "name": "pim.dr_priority",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.generation_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.state_refresh_version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.state_refresh_interval",
+        "type": "FT_UINT8",
+        "description": "Units in seconds."
+      },
+      {
+        "name": "pim.state_refresh_reserved",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pim.rpt",
+        "type": "FT_BOOLEAN",
+        "description": "Set to 1 for assert(*,G) messages and 0 for assert(S,G) messages."
+      },
+      {
+        "name": "pim.metric_pref",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.prune_indicator",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.prune_now",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.assert_override",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.ip_version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.dummy_header",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "pim.source",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.group",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.group_mask",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.group_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.upstream_neighbor",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.upstream_neighbor_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.join_ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.join_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.prune_ip",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.prune_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.address_list",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.address_list_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.bsr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.bsr_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.rp",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.rp_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.originator",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.originator_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.group_address",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_winner_ip4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_winner_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_win_metric_pref",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_win_metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_offering_ip4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_offering_ip6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_off_metric_pref",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_off_metric",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pim.bidir_offering_interval",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pim.fragment_tag",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pim.hash_mask_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.bsr_priority",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.rp_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.frp_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.priority",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.prefix_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.src_flags.a",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.src_flags.s",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.src_flags.w",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.src_flags.r",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.src_flags.rsv",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.mask_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.addr_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.ttl",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.interval",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.addr_address_family",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.addr_encoding_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.unicast",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.unicast_ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.attribute_transport_mode",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.rloc",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "pim.rloc_ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "pim.group_set",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "pim.group_addr.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.group_addr.flags.b",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.group_addr.flags.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.group_addr.flags.z",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.source_addr.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.source_addr.flags.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.source_addr.flags.s",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.source_addr.flags.w",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.source_addr.flags.r",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ja",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ja.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ja.flags.f",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ja.flags.e",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ja.flags.attr_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ja.length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "pim.source_ja.value",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "pim.srccount",
+        "type": "FT_UINT16",
+        "description": "Number of sources."
+      },
+      {
+        "name": "pim.srcholdtime",
+        "type": "FT_UINT16",
+        "description": "The amount of time a receiver must keep the source reachable, in seconds."
+      },
+      {
+        "name": "pim.transitivetype",
+        "type": "FT_BOOLEAN",
+        "description": "Set to 1 if this type is to be forwarded even if a router does not support it."
+      },
+      {
+        "name": "pim.pfmnoforwardbit",
+        "type": "FT_BOOLEAN",
+        "description": "When set, this bit means that the PFM message is not to be forwarded."
+      },
+      {
+        "name": "pim.packedregstoppbit",
+        "type": "FT_BOOLEAN",
+        "description": "RP is indicating Register-Packing capability (RFC9465)."
+      },
+      {
+        "name": "pim.bad_checksum",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "pim.unsupported_address_family",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 39,
+    "by_pcap": {
+      "generated_pim.pcap": [
+        "_ws_expert",
+        "pim_pim_cksum",
+        "pim_pim_cksum_status",
+        "pim_pim_dr_priority",
+        "pim_pim_generation_id",
+        "pim_pim_holdtime",
+        "pim_pim_option",
+        "pim_pim_optionlength",
+        "pim_pim_optiontype",
+        "pim_pim_res_bytes",
+        "pim_pim_type",
+        "pim_pim_version",
+        "text"
+      ],
+      "wireshark_pim_register.cap": [
+        "pim_pim_addr_address_family",
+        "pim_pim_addr_encoding_type",
+        "pim_pim_cksum",
+        "pim_pim_cksum_status",
+        "pim_pim_group_addr_flags",
+        "pim_pim_group_addr_flags_b",
+        "pim_pim_group_addr_flags_reserved",
+        "pim_pim_group_addr_flags_z",
+        "pim_pim_group_ip6",
+        "pim_pim_group_set",
+        "pim_pim_holdtime",
+        "pim_pim_ip_version",
+        "pim_pim_join_ip6",
+        "pim_pim_mask_len",
+        "pim_pim_numgroups",
+        "pim_pim_numjoins",
+        "pim_pim_numprunes",
+        "pim_pim_option",
+        "pim_pim_optionlength",
+        "pim_pim_optiontype",
+        "pim_pim_prune_ip6",
+        "pim_pim_register_flag",
+        "pim_pim_register_flag_border",
+        "pim_pim_register_flag_null_register",
+        "pim_pim_res_bytes",
+        "pim_pim_source_addr_flags",
+        "pim_pim_source_addr_flags_r",
+        "pim_pim_source_addr_flags_reserved",
+        "pim_pim_source_addr_flags_s",
+        "pim_pim_source_addr_flags_w",
+        "pim_pim_source_ip6",
+        "pim_pim_type",
+        "pim_pim_unicast_ipv6",
+        "pim_pim_upstream_neighbor_ip6",
+        "pim_pim_version",
+        "text"
+      ]
+    },
+    "union": [
+      "_ws_expert",
+      "pim_pim_addr_address_family",
+      "pim_pim_addr_encoding_type",
+      "pim_pim_cksum",
+      "pim_pim_cksum_status",
+      "pim_pim_dr_priority",
+      "pim_pim_generation_id",
+      "pim_pim_group_addr_flags",
+      "pim_pim_group_addr_flags_b",
+      "pim_pim_group_addr_flags_reserved",
+      "pim_pim_group_addr_flags_z",
+      "pim_pim_group_ip6",
+      "pim_pim_group_set",
+      "pim_pim_holdtime",
+      "pim_pim_ip_version",
+      "pim_pim_join_ip6",
+      "pim_pim_mask_len",
+      "pim_pim_numgroups",
+      "pim_pim_numjoins",
+      "pim_pim_numprunes",
+      "pim_pim_option",
+      "pim_pim_optionlength",
+      "pim_pim_optiontype",
+      "pim_pim_prune_ip6",
+      "pim_pim_register_flag",
+      "pim_pim_register_flag_border",
+      "pim_pim_register_flag_null_register",
+      "pim_pim_res_bytes",
+      "pim_pim_source_addr_flags",
+      "pim_pim_source_addr_flags_r",
+      "pim_pim_source_addr_flags_reserved",
+      "pim_pim_source_addr_flags_s",
+      "pim_pim_source_addr_flags_w",
+      "pim_pim_source_ip6",
+      "pim_pim_type",
+      "pim_pim_unicast_ipv6",
+      "pim_pim_upstream_neighbor_ip6",
+      "pim_pim_version",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 18,
+    "fields": [
+      "addr_address_family",
+      "address_list_ip4",
+      "cksum_status",
+      "dr_priority",
+      "generation_id",
+      "group",
+      "group_ip6",
+      "holdtime",
+      "ip_version",
+      "numgroups",
+      "numjoins",
+      "numprunes",
+      "register_flag",
+      "register_flag_border",
+      "register_flag_null_register",
+      "upstream_neighbor",
+      "upstream_neighbor_ip6",
+      "version"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "37/115 (32%)",
+    "pcap_vs_extracted": "17/37 (45%)",
+    "t1_extracted": "5/5 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "pim_pim_type",
+        "field": "pim.type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "generated_pim.pcap",
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_cksum",
+        "field": "pim.cksum",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "generated_pim.pcap",
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_res_bytes",
+        "field": "pim.res_bytes",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "generated_pim.pcap",
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_optiontype",
+        "field": "pim.optiontype",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "generated_pim.pcap",
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_optionlength",
+        "field": "pim.optionlength",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "generated_pim.pcap",
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_source_ip6",
+        "field": "pim.source_ip6",
+        "type": "FT_IPv6",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_join_ip6",
+        "field": "pim.join_ip6",
+        "type": "FT_IPv6",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_prune_ip6",
+        "field": "pim.prune_ip6",
+        "type": "FT_IPv6",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_mask_len",
+        "field": "pim.mask_len",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_addr_encoding_type",
+        "field": "pim.addr_encoding_type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_unicast_ipv6",
+        "field": "pim.unicast_ipv6",
+        "type": "FT_IPv6",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_group_set",
+        "field": "pim.group_set",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_group_addr_flags",
+        "field": "pim.group_addr.flags",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_group_addr_flags_b",
+        "field": "pim.group_addr.flags.b",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_group_addr_flags_reserved",
+        "field": "pim.group_addr.flags.reserved",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_group_addr_flags_z",
+        "field": "pim.group_addr.flags.z",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_source_addr_flags",
+        "field": "pim.source_addr.flags",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_source_addr_flags_reserved",
+        "field": "pim.source_addr.flags.reserved",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_source_addr_flags_s",
+        "field": "pim.source_addr.flags.s",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_source_addr_flags_w",
+        "field": "pim.source_addr.flags.w",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "pim_pim_source_addr_flags_r",
+        "field": "pim.source_addr.flags.r",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pim_register.cap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 7,
+      "t1_in_pcap": 5,
+      "t1_covered": 5,
+      "t2_total": 103,
+      "t2_in_pcap": 31,
+      "t2_covered": 12,
+      "t3_skipped": 5,
+      "t4_ignored": 0
+    }
+  }
+}

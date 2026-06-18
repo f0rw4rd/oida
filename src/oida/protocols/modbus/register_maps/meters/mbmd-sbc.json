@@ -1,0 +1,138 @@
+{
+  "vendor": "SBC",
+  "model": "Saia Burgess Controls ALE3 meters",
+  "description": "Imported from mbmd (sbc)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/sbc.go",
+  "registers": {
+    "import": {
+      "address": 28,
+      "type": "f32",
+      "access": "ro",
+      "description": "double, scaler 100",
+      "function_code": 3
+    },
+    "export": {
+      "address": 32,
+      "type": "f32",
+      "access": "ro",
+      "description": "double, scaler 100",
+      "function_code": 3
+    },
+    "partial_import": {
+      "address": 30,
+      "type": "f32",
+      "access": "ro",
+      "description": "double, scaler 100",
+      "function_code": 3
+    },
+    "partial_export": {
+      "address": 34,
+      "type": "f32",
+      "access": "ro",
+      "description": "double, scaler 100",
+      "function_code": 3
+    },
+    "current_l1": {
+      "address": 37,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 10",
+      "function_code": 3
+    },
+    "power_l1": {
+      "address": 38,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "reactive_power_l1": {
+      "address": 39,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "cosphi_l1": {
+      "address": 40,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "current_l2": {
+      "address": 42,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 10",
+      "function_code": 3
+    },
+    "power_l2": {
+      "address": 43,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "reactive_power_l2": {
+      "address": 44,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "cosphi_l2": {
+      "address": 45,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "current_l3": {
+      "address": 47,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 10",
+      "function_code": 3
+    },
+    "power_l3": {
+      "address": 48,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "reactive_power_l3": {
+      "address": 49,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "cosphi_l3": {
+      "address": 50,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "power": {
+      "address": 51,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    },
+    "reactive_power": {
+      "address": 52,
+      "type": "f32",
+      "access": "ro",
+      "description": "scaler 100",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: Saia Burgess Controls ALE3 confirmed; official datasheet at sbc-support.com; mbmd source sbc.go verified"
+}

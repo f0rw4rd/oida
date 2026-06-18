@@ -1,0 +1,357 @@
+{
+  "vendor": "Veris",
+  "model": "E 34",
+  "description": "Veris E 34 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "total_kwh_msw": {
+      "address": 10101,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kwh (msw)",
+      "unit": "kWh"
+    },
+    "total_kw": {
+      "address": 10109,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kw",
+      "unit": "kW"
+    },
+    "total_kva": {
+      "address": 10113,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kva",
+      "unit": "kVA"
+    },
+    "total_pf": {
+      "address": 10115,
+      "type": "f32",
+      "access": "r",
+      "description": "Total pf",
+      "unit": "PF"
+    },
+    "average_current": {
+      "address": 10119,
+      "type": "f32",
+      "access": "r",
+      "description": "Average current",
+      "unit": "Amperes"
+    },
+    "present_kw_demand": {
+      "address": 10121,
+      "type": "f32",
+      "access": "r",
+      "description": "Present kw demand",
+      "unit": "kW"
+    },
+    "present_current_demand": {
+      "address": 10127,
+      "type": "f32",
+      "access": "r",
+      "description": "Present current demand",
+      "unit": "Amperes"
+    },
+    "max_kw_demand": {
+      "address": 10129,
+      "type": "f32",
+      "access": "r",
+      "description": "Max kw demand",
+      "unit": "kW"
+    },
+    "max_current_demand": {
+      "address": 10135,
+      "type": "f32",
+      "access": "r",
+      "description": "Max current demand",
+      "unit": "Amperes"
+    },
+    "max_kw": {
+      "address": 10137,
+      "type": "f32",
+      "access": "r",
+      "description": "Max kw",
+      "unit": "kW"
+    },
+    "max_current": {
+      "address": 10143,
+      "type": "f32",
+      "access": "r",
+      "description": "Max current",
+      "unit": "Amperes"
+    },
+    "voltage_l_l_average_of_3_phases": {
+      "address": 10145,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L l, average of 3 phases",
+      "unit": "Volts"
+    },
+    "voltage_l_n_average_of_3_phases": {
+      "address": 10147,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L n, average of 3 phases",
+      "unit": "Volts"
+    },
+    "frequency_derived_from_phase_a": {
+      "address": 10149,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency (derived from phase a)",
+      "unit": "Hertz"
+    },
+    "thd_current_weighted_average_of_3_phases": {
+      "address": 10151,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd current, weighted average of 3 phases"
+    },
+    "thd_voltage_l_l_weighted_average_of_3_phases": {
+      "address": 10153,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd voltage L l, weighted average of 3 phases"
+    },
+    "thd_voltage_l_n_weighted_average_of_3_phases": {
+      "address": 10155,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd voltage L n, weighted average of 3 phases"
+    },
+    "snapshot_kwh_msw": {
+      "address": 10157,
+      "type": "f32",
+      "access": "r",
+      "description": "Snapshot kwh (msw)",
+      "unit": "kWh"
+    },
+    "kwh_msw": {
+      "address": 10301,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh (msw)",
+      "unit": "kWh"
+    },
+    "kw": {
+      "address": 10309,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw",
+      "unit": "kW"
+    },
+    "kva": {
+      "address": 10313,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva",
+      "unit": "kVA"
+    },
+    "pf": {
+      "address": 10315,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf",
+      "unit": "PF"
+    },
+    "current_angle": {
+      "address": 10317,
+      "type": "f32",
+      "access": "r",
+      "description": "Current angle",
+      "unit": "degrees-angular"
+    },
+    "current": {
+      "address": 10319,
+      "type": "f32",
+      "access": "r",
+      "description": "Current",
+      "unit": "Amperes"
+    },
+    "present_kw_demand_10321": {
+      "address": 10321,
+      "type": "f32",
+      "access": "r",
+      "description": "Present kw demand",
+      "unit": "kW"
+    },
+    "present_current_demand_10327": {
+      "address": 10327,
+      "type": "f32",
+      "access": "r",
+      "description": "Present current demand",
+      "unit": "Amperes"
+    },
+    "max_kw_demand_10329": {
+      "address": 10329,
+      "type": "f32",
+      "access": "r",
+      "description": "Max kw demand",
+      "unit": "kW"
+    },
+    "max_current_demand_10335": {
+      "address": 10335,
+      "type": "f32",
+      "access": "r",
+      "description": "Max current demand",
+      "unit": "Amperes"
+    },
+    "max_kw_10337": {
+      "address": 10337,
+      "type": "f32",
+      "access": "r",
+      "description": "Max kw",
+      "unit": "kW"
+    },
+    "max_current_10343": {
+      "address": 10343,
+      "type": "f32",
+      "access": "r",
+      "description": "Max current",
+      "unit": "Amperes"
+    },
+    "voltage_l_l": {
+      "address": 10345,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L L",
+      "unit": "Volts"
+    },
+    "voltage_l_n": {
+      "address": 10347,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L N",
+      "unit": "Volts"
+    },
+    "frequency_derived_from_phase_a_10349": {
+      "address": 10349,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency (derived from phase a)",
+      "unit": "Hertz"
+    },
+    "thd_current": {
+      "address": 10351,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd current"
+    },
+    "thd_voltage_l_l": {
+      "address": 10353,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd voltage L L"
+    },
+    "thd_voltage_l_n": {
+      "address": 10355,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd voltage L N"
+    },
+    "kwh_snapshot_msw": {
+      "address": 10357,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh snapshot (msw)",
+      "unit": "kWh"
+    },
+    "kwh_msw_10501": {
+      "address": 10501,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh (msw)",
+      "unit": "kWh"
+    },
+    "kw_10509": {
+      "address": 10509,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw",
+      "unit": "kW"
+    },
+    "kva_10513": {
+      "address": 10513,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva",
+      "unit": "kVA"
+    },
+    "pf_10515": {
+      "address": 10515,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf",
+      "unit": "PF"
+    },
+    "current_angle_10517": {
+      "address": 10517,
+      "type": "f32",
+      "access": "r",
+      "description": "Current angle",
+      "unit": "degrees-angular"
+    },
+    "current_10519": {
+      "address": 10519,
+      "type": "f32",
+      "access": "r",
+      "description": "Current",
+      "unit": "Amperes"
+    },
+    "present_kw_demand_10521": {
+      "address": 10521,
+      "type": "f32",
+      "access": "r",
+      "description": "Present kw demand",
+      "unit": "kW"
+    },
+    "present_current_demand_10527": {
+      "address": 10527,
+      "type": "f32",
+      "access": "r",
+      "description": "Present current demand",
+      "unit": "Amperes"
+    },
+    "max_kw_demand_10529": {
+      "address": 10529,
+      "type": "f32",
+      "access": "r",
+      "description": "Max kw demand",
+      "unit": "kW"
+    },
+    "max_current_demand_10535": {
+      "address": 10535,
+      "type": "f32",
+      "access": "r",
+      "description": "Max current demand",
+      "unit": "Amperes"
+    },
+    "max_kw_10537": {
+      "address": 10537,
+      "type": "f32",
+      "access": "r",
+      "description": "Max kw",
+      "unit": "kW"
+    },
+    "max_current_10543": {
+      "address": 10543,
+      "type": "f32",
+      "access": "r",
+      "description": "Max current",
+      "unit": "Amperes"
+    },
+    "voltage_l_l_10545": {
+      "address": 10545,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L L",
+      "unit": "Volts"
+    }
+  }
+}

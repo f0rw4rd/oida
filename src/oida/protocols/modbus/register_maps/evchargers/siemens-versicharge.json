@@ -1,0 +1,106 @@
+{
+  "vendor": "Siemens",
+  "model": "VersiCharge",
+  "device_type": "EV Charger",
+  "description": "Siemens VersiCharge AC Wallbox with Modbus TCP interface",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "default_port": 502,
+  "function_code": 3,
+  "notes": "Modbus port must be enabled via Sifinity Go app. Minimum poll rate 2s, timeout 5s. Firmware v2.128+ removed pause command. OCPP mode limits Modbus to read-only.",
+  "source": "Siemens versicharge_wallbox_modBus_map_en-US.pdf, EVCC evcc-io/evcc discussions",
+  "holding_registers": {
+    "charger_status": {
+      "address": 1601,
+      "type": "i16",
+      "access": "r",
+      "description": "Charger status: 1=Power on, 2=Connected, 3=Charging"
+    },
+    "pause_control": {
+      "address": 1629,
+      "type": "u16",
+      "access": "rw",
+      "description": "Pause/Resume charging: 1=Pause, 2=Resume (removed in FW 2.128+)"
+    },
+    "max_current": {
+      "address": 1633,
+      "type": "u16",
+      "access": "rw",
+      "unit": "A",
+      "description": "Maximum charging current limit"
+    },
+    "phase_switching": {
+      "address": 1642,
+      "type": "u16",
+      "access": "rw",
+      "description": "Phase configuration: 0=Single-phase, 1=Three-phase"
+    },
+    "current_l1": {
+      "address": 1647,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "description": "Phase 1 charging current"
+    },
+    "current_l2": {
+      "address": 1648,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "description": "Phase 2 charging current"
+    },
+    "current_l3": {
+      "address": 1649,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "description": "Phase 3 charging current"
+    },
+    "voltage_l1_l2": {
+      "address": 1655,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "description": "Line voltage L1-L2 (3-phase only)"
+    },
+    "power_apparent_total": {
+      "address": 1673,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Total apparent power (sum of all phases)"
+    },
+    "energy_session": {
+      "address": 1692,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.0001,
+      "unit": "kWh",
+      "description": "Energy delivered in current charging session"
+    },
+    "modbus_address": {
+      "address": 1826,
+      "type": "u16",
+      "access": "rw",
+      "description": "Modbus RTU device address (default: 2)"
+    }
+  },
+  "enums": {
+    "charger_status": {
+      "1": "Power on (no vehicle)",
+      "2": "Connected (not charging)",
+      "3": "Charging"
+    },
+    "pause_control": {
+      "1": "Pause charging",
+      "2": "Resume charging"
+    },
+    "phase_switching": {
+      "0": "Single-phase",
+      "1": "Three-phase"
+    }
+  },
+  "_source_verified": "Verified: Official Siemens ModBus Map PDF (doc 109814359) confirmed; registers 1601/1629/1633 verified"
+}

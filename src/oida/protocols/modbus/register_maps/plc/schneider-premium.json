@@ -1,0 +1,45 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "Premium TSX P57",
+  "description": "Schneider Electric Premium PLC register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: Word order is LITTLE-ENDIAN for 32-bit values. Same system words as M340. Uses XWAY profile for Modbus TCP messaging.",
+  "source": "Unity Pro documentation, Unity Pro System Bits Reference",
+  "registers": {
+    "mw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW0",
+      "notes": "iec_address=%MW0"
+    },
+    "md0": {
+      "address": 0,
+      "type": "f32",
+      "access": "rw",
+      "description": "Memory double %MD0 (REAL, LITTLE-ENDIAN word order)",
+      "notes": "iec_address=%MD0"
+    }
+  },
+  "extended_info": {
+    "memory_mapping": {
+      "%I.x": "1xxxx (Digital input)",
+      "%Q.x": "0xxxx (Digital output)",
+      "%IW.x": "3xxxx (Analog input)",
+      "%QW.x": "4xxxx (Analog output)",
+      "%M": "0xxxx (Internal coil)",
+      "%MW": "4xxxx (Holding register)"
+    },
+    "configuration_requirements": [
+      "Create Ethernet network in Communication folder",
+      "Enable XWAY profile in messaging tab",
+      "XWAY address format: network.station (e.g., 1.101)",
+      "Station numbers 100-163 reserved for Modbus TCP messaging",
+      "For Modbus Plus: Use MBP_MSTR or MSTR function blocks with TSX MBP 100 PCMCIA"
+    ]
+  },
+  "_source_verified": "Verified: Premium TSX P57 integrated Modbus TCP confirmed via Schneider docs and forums"
+}

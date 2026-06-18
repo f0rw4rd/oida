@@ -1,0 +1,369 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "Modicon M251 (TM251)",
+  "description": "Schneider Modicon M251/TM251 Logic Controller Modbus TCP register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 255,
+  "notes": "M251 supports dual Ethernet ports with embedded Modbus TCP server. No configuration required for basic Modbus server functionality. Accessible in RUN, STOP, and EMPTY states.",
+  "source": "https://product-help.schneider-electric.com/Machine%20Expert/V1.1/en/m251prg/m251prg/Ethernet_Configuration/Ethernet_Configuration-11.htm",
+  "security_notes": {
+    "protocol_clarification": "PIPEDREAM/Incontroller (2022) targeted M251 primarily via CODESYS protocol (UDP/1740), NOT Modbus. The M251 uses EcoStruxure Machine Expert which implements Codesys. Modbus TCP server is secondary attack surface.",
+    "modbus_attack_vectors": [
+      "Memory read via FC3/FC4 for reconnaissance",
+      "Memory write via FC6/FC16 for data manipulation",
+      "I/O control via Slave Device mapped registers"
+    ],
+    "documented_modbus_attacks": "No documented real-world Modbus-only attacks on M251. PIPEDREAM used Codesys for primary attack vector.",
+    "mitre_techniques": [
+      "T0801",
+      "T0802",
+      "T0861"
+    ]
+  },
+  "function_codes": {
+    "01": "Read Coils (%M/%Q bits)",
+    "02": "Read Discrete Inputs (%I/%M bits)",
+    "03": "Read Holding Registers (%MW)",
+    "04": "Read Input Registers (%IW)",
+    "05": "Write Single Coil (%M/%Q bit)",
+    "06": "Write Single Register (%MW/%QW)",
+    "15": "Write Multiple Coils (%M/%Q bits)",
+    "16": "Write Multiple Registers (%MW/%QW)",
+    "23": "Read/Write Multiple Registers"
+  },
+  "coils": {
+    "m0": {
+      "address": 0,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M0 (Coil 00001)"
+    },
+    "m1": {
+      "address": 1,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M1"
+    },
+    "m2": {
+      "address": 2,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M2"
+    },
+    "m3": {
+      "address": 3,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M3"
+    },
+    "m4": {
+      "address": 4,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M4"
+    },
+    "m5": {
+      "address": 5,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M5"
+    },
+    "m6": {
+      "address": 6,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M6"
+    },
+    "m7": {
+      "address": 7,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M7"
+    },
+    "q0_0": {
+      "address": 16384,
+      "type": "bool",
+      "access": "rw",
+      "description": "Physical output %Q0.0 (via Slave Device config)"
+    },
+    "q0_1": {
+      "address": 16385,
+      "type": "bool",
+      "access": "rw",
+      "description": "Physical output %Q0.1"
+    },
+    "q0_2": {
+      "address": 16386,
+      "type": "bool",
+      "access": "rw",
+      "description": "Physical output %Q0.2"
+    },
+    "q0_3": {
+      "address": 16387,
+      "type": "bool",
+      "access": "rw",
+      "description": "Physical output %Q0.3"
+    }
+  },
+  "discrete_inputs": {
+    "i0_0": {
+      "address": 16384,
+      "type": "bool",
+      "access": "r",
+      "description": "Physical input %I0.0 (via Slave Device config)"
+    },
+    "i0_1": {
+      "address": 16385,
+      "type": "bool",
+      "access": "r",
+      "description": "Physical input %I0.1"
+    },
+    "i0_2": {
+      "address": 16386,
+      "type": "bool",
+      "access": "r",
+      "description": "Physical input %I0.2"
+    },
+    "i0_3": {
+      "address": 16387,
+      "type": "bool",
+      "access": "r",
+      "description": "Physical input %I0.3"
+    }
+  },
+  "holding_registers": {
+    "mw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW0 (HR 40001)"
+    },
+    "mw1": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW1"
+    },
+    "mw2": {
+      "address": 2,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW2"
+    },
+    "mw3": {
+      "address": 3,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW3"
+    },
+    "mw4": {
+      "address": 4,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW4"
+    },
+    "mw5": {
+      "address": 5,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW5"
+    },
+    "mw6": {
+      "address": 6,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW6"
+    },
+    "mw7": {
+      "address": 7,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW7"
+    },
+    "mw8": {
+      "address": 8,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW8"
+    },
+    "mw9": {
+      "address": 9,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW9"
+    },
+    "mw10": {
+      "address": 10,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW10"
+    },
+    "mw100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW100 - Typical user data area"
+    },
+    "mw200": {
+      "address": 200,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW200"
+    },
+    "mw500": {
+      "address": 500,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW500"
+    },
+    "mw1000": {
+      "address": 1000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW1000"
+    },
+    "qw0": {
+      "address": 16384,
+      "type": "u16",
+      "access": "rw",
+      "description": "Output word %QW0 (via Slave Device config)"
+    },
+    "qw1": {
+      "address": 16385,
+      "type": "u16",
+      "access": "rw",
+      "description": "Output word %QW1"
+    },
+    "qw2": {
+      "address": 16386,
+      "type": "u16",
+      "access": "rw",
+      "description": "Output word %QW2"
+    },
+    "qw3": {
+      "address": 16387,
+      "type": "u16",
+      "access": "rw",
+      "description": "Output word %QW3"
+    }
+  },
+  "input_registers": {
+    "iw0": {
+      "address": 16384,
+      "type": "u16",
+      "access": "r",
+      "description": "Input word %IW0 (via Slave Device config)"
+    },
+    "iw1": {
+      "address": 16385,
+      "type": "u16",
+      "access": "r",
+      "description": "Input word %IW1"
+    },
+    "iw2": {
+      "address": 16386,
+      "type": "u16",
+      "access": "r",
+      "description": "Input word %IW2"
+    },
+    "iw3": {
+      "address": 16387,
+      "type": "u16",
+      "access": "r",
+      "description": "Input word %IW3"
+    }
+  },
+  "system_words": {
+    "sw0_watchdog": {
+      "address": 60000,
+      "type": "u16",
+      "access": "rw",
+      "unit": "ms",
+      "description": "%SW0 - Watchdog period (default 250ms)"
+    },
+    "sw6_scan_time": {
+      "address": 60006,
+      "type": "u16",
+      "access": "r",
+      "unit": "ms",
+      "description": "%SW6 - Current scan time"
+    },
+    "sw7_max_scan": {
+      "address": 60007,
+      "type": "u16",
+      "access": "r",
+      "unit": "ms",
+      "description": "%SW7 - Maximum scan time"
+    },
+    "sw8_min_scan": {
+      "address": 60008,
+      "type": "u16",
+      "access": "r",
+      "unit": "ms",
+      "description": "%SW8 - Minimum scan time"
+    },
+    "sw49_run_stop": {
+      "address": 60049,
+      "type": "u16",
+      "access": "r",
+      "description": "%SW49 - Controller state (0=STOP, 1=RUN)"
+    }
+  },
+  "address_mapping": {
+    "coils_00001": {
+      "plc_address": "%M0",
+      "modbus_offset": 0,
+      "modbus_address": "00001",
+      "description": "Internal memory bits"
+    },
+    "coils_slave": {
+      "plc_address": "%Q0.0",
+      "modbus_offset": 16384,
+      "modbus_address": "16385",
+      "description": "Physical outputs (Slave Device mode)"
+    },
+    "holding_40001": {
+      "plc_address": "%MW0",
+      "modbus_offset": 0,
+      "modbus_address": "40001",
+      "description": "Memory words"
+    },
+    "holding_slave": {
+      "plc_address": "%QW0",
+      "modbus_offset": 16384,
+      "modbus_address": "56385",
+      "description": "Output words (Slave Device mode)"
+    }
+  },
+  "configuration": {
+    "embedded_server": {
+      "description": "No configuration required - always available",
+      "unit_id": 255,
+      "states": [
+        "RUN",
+        "STOP",
+        "EMPTY"
+      ]
+    },
+    "slave_device": {
+      "description": "Optional Modbus TCP Slave Device for I/O access",
+      "unit_id_range": "1-247",
+      "io_mapping": "Configurable in EcoStruxure Machine Expert"
+    }
+  },
+  "extended_info": {
+    "ethernet_ports": {
+      "ethernet_1": "Primary Modbus TCP server",
+      "ethernet_2": "Secondary (if available on model)"
+    },
+    "time_consistency": "Single word (2 bytes) per transaction",
+    "concurrent_connections": "Up to 8 simultaneous Modbus TCP connections",
+    "models": {
+      "tm251mese": "Standard M251 with dual Ethernet",
+      "tm251mesc": "Compact M251 with CANopen"
+    }
+  },
+  "_source_verified": "Verified: M251 embedded Modbus TCP server confirmed; TM251MESE dual Ethernet verified"
+}

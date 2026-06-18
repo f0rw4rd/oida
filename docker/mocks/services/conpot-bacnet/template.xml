@@ -1,0 +1,25 @@
+<core>
+    <template>
+        <entity name="unit">VAV-DD</entity>
+        <entity name="vendor">Alerton</entity>
+        <entity name="description">Alerton VAV-DD BACnet/IP Controller for HVAC zone control</entity>
+        <entity name="protocols">bacnet</entity>
+        <entity name="creator">OIDA ICS Testing Framework</entity>
+    </template>
+    <databus>
+        <key_value_mappings>
+            <key name="FacilityName">
+                <value type="value">"OIDA Test Plant"</value>
+            </key>
+            <key name="SystemName">
+                <value type="value">"Alerton VAV Controller"</value>
+            </key>
+            <key name="SystemDescription">
+                <value type="value">"Alerton, VAV-DD, BACnet/IP Controller"</value>
+            </key>
+            <key name="empty">
+                <value type="value">""</value>
+            </key>
+        </key_value_mappings>
+    </databus>
+</core>

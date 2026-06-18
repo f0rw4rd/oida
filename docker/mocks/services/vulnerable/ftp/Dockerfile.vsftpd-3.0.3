@@ -1,0 +1,46 @@
+# Vulnerable vsftpd 3.0.3 - CVE-2021-3618 (ALPACA Attack)
+# TLS session confusion allowing cross-protocol attacks
+#
+# FOR SECURITY TESTING PURPOSES ONLY
+
+FROM debian:bullseye-slim
+
+RUN apt-get update && apt-get install -y \
+    vsftpd \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Generate self-signed cert
+RUN mkdir -p /etc/vsftpd/ssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/vsftpd/ssl/vsftpd.key \
+    -out /etc/vsftpd/ssl/vsftpd.crt \
+    -subj "/CN=ftp.vulnerable.local"
+
+# Create FTP user
+RUN useradd -m ftpuser && echo "ftpuser:ftpuser" | chpasswd
+
+# Vulnerable configuration - TLS enabled but misconfigured
+RUN echo "listen=YES" > /etc/vsftpd.conf && \
+    echo "listen_ipv6=NO" >> /etc/vsftpd.conf && \
+    echo "anonymous_enable=YES" >> /etc/vsftpd.conf && \
+    echo "local_enable=YES" >> /etc/vsftpd.conf && \
+    echo "write_enable=YES" >> /etc/vsftpd.conf && \
+    echo "ssl_enable=YES" >> /etc/vsftpd.conf && \
+    echo "rsa_cert_file=/etc/vsftpd/ssl/vsftpd.crt" >> /etc/vsftpd.conf && \
+    echo "rsa_private_key_file=/etc/vsftpd/ssl/vsftpd.key" >> /etc/vsftpd.conf && \
+    echo "allow_anon_ssl=YES" >> /etc/vsftpd.conf && \
+    echo "force_local_data_ssl=NO" >> /etc/vsftpd.conf && \
+    echo "force_local_logins_ssl=NO" >> /etc/vsftpd.conf && \
+    echo "seccomp_sandbox=NO" >> /etc/vsftpd.conf && \
+    echo "pasv_min_port=30000" >> /etc/vsftpd.conf && \
+    echo "pasv_max_port=30100" >> /etc/vsftpd.conf
+
+EXPOSE 21 30000-30100
+
+LABEL oida.cve="CVE-2021-3618"
+LABEL oida.protocol="ftp"
+LABEL oida.severity="high"
+LABEL oida.description="vsftpd ALPACA TLS cross-protocol attack"
+
+CMD ["/usr/sbin/vsftpd", "/etc/vsftpd.conf"]

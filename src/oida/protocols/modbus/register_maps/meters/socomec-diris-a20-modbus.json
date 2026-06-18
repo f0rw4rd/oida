@@ -1,0 +1,335 @@
+{
+  "vendor": "Socomec",
+  "model": "DIRIS A 20 MODBUS",
+  "description": "Socomec DIRIS A 20 MODBUS power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_1_current": {
+      "address": 768,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 current"
+    },
+    "phase_2_current": {
+      "address": 770,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 current"
+    },
+    "phase_3_current": {
+      "address": 772,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 current"
+    },
+    "neutral_current": {
+      "address": 774,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "phase_to_phase_voltage_u12": {
+      "address": 776,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage U12",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_u23": {
+      "address": 778,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage U23",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_u31": {
+      "address": 780,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage U31",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_1": {
+      "address": 782,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 1",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_2": {
+      "address": 784,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 2",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_3": {
+      "address": 786,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 3",
+      "unit": "V"
+    },
+    "frequency": {
+      "address": 788,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "e_active_power": {
+      "address": 790,
+      "type": "u32",
+      "access": "r",
+      "description": "E active power",
+      "unit": "kW"
+    },
+    "e_reactive_power": {
+      "address": 792,
+      "type": "u32",
+      "access": "r",
+      "description": "E reactive power",
+      "unit": "kvar"
+    },
+    "e_apparent_power": {
+      "address": 794,
+      "type": "u32",
+      "access": "r",
+      "description": "E apparent power",
+      "unit": "kVA"
+    },
+    "e_power_factor": {
+      "address": 796,
+      "type": "u32",
+      "access": "r",
+      "description": "E power factor"
+    },
+    "average_value_i1_max": {
+      "address": 838,
+      "type": "u32",
+      "access": "r",
+      "description": "Average value I1 max"
+    },
+    "average_value_i2_max": {
+      "address": 840,
+      "type": "u32",
+      "access": "r",
+      "description": "Average value I2 max"
+    },
+    "average_value_i3_max": {
+      "address": 842,
+      "type": "u32",
+      "access": "r",
+      "description": "Average value I3 max"
+    },
+    "e_active_power_max": {
+      "address": 844,
+      "type": "u32",
+      "access": "r",
+      "description": "E active power + max",
+      "unit": "kW"
+    },
+    "active_energy": {
+      "address": 856,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy +"
+    },
+    "reactive_energy": {
+      "address": 858,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy +"
+    },
+    "average_value_in_max": {
+      "address": 916,
+      "type": "u32",
+      "access": "r",
+      "description": "Average value in max"
+    },
+    "phase_1_current_1792": {
+      "address": 1792,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 current"
+    },
+    "phase_2_current_1793": {
+      "address": 1793,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 current"
+    },
+    "phase_3_current_1794": {
+      "address": 1794,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 current"
+    },
+    "neutral_current_1795": {
+      "address": 1795,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "phase_to_phase_voltage_u12_1796": {
+      "address": 1796,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U12",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_u23_1797": {
+      "address": 1797,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U23",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_u31_1798": {
+      "address": 1798,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage U31",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_1_1799": {
+      "address": 1799,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 1",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_2_1800": {
+      "address": 1800,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 2",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_3_1801": {
+      "address": 1801,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 3",
+      "unit": "V"
+    },
+    "frequency_1802": {
+      "address": 1802,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "e_active_power_1803": {
+      "address": 1803,
+      "type": "u16",
+      "access": "r",
+      "description": "E active power",
+      "unit": "kW"
+    },
+    "e_reactive_power_1804": {
+      "address": 1804,
+      "type": "u16",
+      "access": "r",
+      "description": "E reactive power",
+      "unit": "kvar"
+    },
+    "e_apparent_power_1805": {
+      "address": 1805,
+      "type": "u16",
+      "access": "r",
+      "description": "E apparent power",
+      "unit": "kVA"
+    },
+    "e_power_factor_1806": {
+      "address": 1806,
+      "type": "u16",
+      "access": "r",
+      "description": "E power factor"
+    },
+    "average_value_i1_max_1827": {
+      "address": 1827,
+      "type": "u16",
+      "access": "r",
+      "description": "Average value I1 max"
+    },
+    "average_value_i2_max_1828": {
+      "address": 1828,
+      "type": "u16",
+      "access": "r",
+      "description": "Average value I2 max"
+    },
+    "average_value_i3_max_1829": {
+      "address": 1829,
+      "type": "u16",
+      "access": "r",
+      "description": "Average value I3 max"
+    },
+    "e_active_power_average_value_max": {
+      "address": 1830,
+      "type": "u16",
+      "access": "r",
+      "description": "E active power + average value max",
+      "unit": "kW"
+    },
+    "active_power_lt_10_000": {
+      "address": 1835,
+      "type": "u16",
+      "access": "r",
+      "description": "Active power + &lt; 10 000"
+    },
+    "active_power": {
+      "address": 1836,
+      "type": "i16",
+      "access": "r",
+      "description": "Active power +"
+    },
+    "reactive_power_lt_10_000": {
+      "address": 1837,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power + &lt; 10 000"
+    },
+    "reactive_power": {
+      "address": 1838,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power +"
+    },
+    "average_value_in_max_1891": {
+      "address": 1891,
+      "type": "u16",
+      "access": "r",
+      "description": "Average value in max"
+    },
+    "phase_1_current_2816": {
+      "address": 2816,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 current"
+    },
+    "phase_2_current_2817": {
+      "address": 2817,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 current"
+    },
+    "phase_2_current_2818": {
+      "address": 2818,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 current"
+    },
+    "neutral_current_2819": {
+      "address": 2819,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current"
+    }
+  }
+}

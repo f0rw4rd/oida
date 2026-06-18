@@ -1,0 +1,103 @@
+{
+  "vendor": "SDM120",
+  "model": "Eastron SDM120",
+  "description": "Imported from mbmd (sdm120)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/sdm120.go",
+  "registers": {
+    "voltage": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "Line to neutral volts",
+      "function_code": 4
+    },
+    "current": {
+      "address": 6,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current",
+      "function_code": 4
+    },
+    "power": {
+      "address": 12,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power",
+      "function_code": 4
+    },
+    "apparent_power": {
+      "address": 18,
+      "type": "f32",
+      "access": "ro",
+      "description": "Apparent power",
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 24,
+      "type": "f32",
+      "access": "ro",
+      "description": "Reactive power",
+      "function_code": 4
+    },
+    "cosphi": {
+      "address": 30,
+      "type": "f32",
+      "access": "ro",
+      "description": "Power factor",
+      "function_code": 4
+    },
+    "frequency": {
+      "address": 70,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency of supply voltage",
+      "function_code": 4
+    },
+    "import": {
+      "address": 72,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 4
+    },
+    "export": {
+      "address": 74,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 4
+    },
+    "reactive_import": {
+      "address": 76,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kVArh",
+      "function_code": 4
+    },
+    "reactive_export": {
+      "address": 78,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kVArh",
+      "function_code": 4
+    },
+    "sum": {
+      "address": 342,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kWh",
+      "function_code": 4
+    },
+    "reactive_sum": {
+      "address": 344,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kVArh",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: Eastron SDM120 registers 0/6/12 confirmed in mbmd sdm120.go; matches official Eastron docs"
+}

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- KNX Datapoints for Mock Server Testing -->
+<datapoints>
+	<!-- Switching datapoints (1.001) -->
+	<datapoint stateBased="true" name="Light_Living" dptID="1.001">
+		<knxAddress type="group">1/0/1</knxAddress>
+	</datapoint>
+	<datapoint stateBased="true" name="Light_Kitchen" dptID="1.001">
+		<knxAddress type="group">1/0/2</knxAddress>
+	</datapoint>
+	<datapoint stateBased="true" name="Light_Bedroom" dptID="1.001">
+		<knxAddress type="group">1/0/3</knxAddress>
+	</datapoint>
+
+	<!-- Dimming datapoints (5.001) - 0-100% -->
+	<datapoint stateBased="true" name="Dimmer_Living" dptID="5.001">
+		<knxAddress type="group">1/1/1</knxAddress>
+	</datapoint>
+	<datapoint stateBased="true" name="Dimmer_Kitchen" dptID="5.001">
+		<knxAddress type="group">1/1/2</knxAddress>
+	</datapoint>
+
+	<!-- Temperature values (9.001) -->
+	<datapoint stateBased="true" name="Temp_Living" dptID="9.001">
+		<knxAddress type="group">2/0/1</knxAddress>
+	</datapoint>
+	<datapoint stateBased="true" name="Temp_Kitchen" dptID="9.001">
+		<knxAddress type="group">2/0/2</knxAddress>
+	</datapoint>
+	<datapoint stateBased="true" name="Temp_Outdoor" dptID="9.001">
+		<knxAddress type="group">2/0/3</knxAddress>
+	</datapoint>
+
+	<!-- Setpoint temperature (9.001) -->
+	<datapoint stateBased="true" name="Setpoint_Living" dptID="9.001">
+		<knxAddress type="group">2/1/1</knxAddress>
+	</datapoint>
+
+	<!-- Blinds/Shutters position (5.001) -->
+	<datapoint stateBased="true" name="Blinds_Living" dptID="5.001">
+		<knxAddress type="group">3/0/1</knxAddress>
+	</datapoint>
+	<datapoint stateBased="true" name="Blinds_Kitchen" dptID="5.001">
+		<knxAddress type="group">3/0/2</knxAddress>
+	</datapoint>
+
+	<!-- HVAC mode (20.102) -->
+	<datapoint stateBased="true" name="HVAC_Mode" dptID="20.102">
+		<knxAddress type="group">4/0/1</knxAddress>
+	</datapoint>
+
+	<!-- Scene control (17.001) -->
+	<datapoint stateBased="true" name="Scene_Control" dptID="17.001">
+		<knxAddress type="group">5/0/1</knxAddress>
+	</datapoint>
+
+	<!-- Counter (13.001) - 4 byte signed -->
+	<datapoint stateBased="true" name="Energy_Counter" dptID="13.001">
+		<knxAddress type="group">6/0/1</knxAddress>
+	</datapoint>
+
+	<!-- Text/String (16.001) - 14 character ASCII -->
+	<datapoint stateBased="true" name="Display_Text" dptID="16.001">
+		<knxAddress type="group">7/0/1</knxAddress>
+	</datapoint>
+</datapoints>

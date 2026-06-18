@@ -1,0 +1,335 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "SEPAM 60",
+  "description": "Schneider Electric SEPAM 60 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_current_i1": {
+      "address": 512,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase current I1"
+    },
+    "phase_current_i2": {
+      "address": 514,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase current I2"
+    },
+    "phase_current_i3": {
+      "address": 516,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase current I3"
+    },
+    "residual_current_i0": {
+      "address": 518,
+      "type": "u32",
+      "access": "r",
+      "description": "Residual current i0"
+    },
+    "residual_current_i0_520": {
+      "address": 520,
+      "type": "u32",
+      "access": "r",
+      "description": "Residual current i0"
+    },
+    "demand_current_im1": {
+      "address": 522,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current IM1"
+    },
+    "demand_current_im2": {
+      "address": 524,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current IM2"
+    },
+    "demand_current_im3": {
+      "address": 526,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current IM3"
+    },
+    "peak_demand_current_im1": {
+      "address": 528,
+      "type": "u32",
+      "access": "r",
+      "description": "Peak demand current IM1"
+    },
+    "peak_demand_current_im2": {
+      "address": 530,
+      "type": "u32",
+      "access": "r",
+      "description": "Peak demand current IM2"
+    },
+    "peak_demand_current_im3": {
+      "address": 532,
+      "type": "u32",
+      "access": "r",
+      "description": "Peak demand current IM3"
+    },
+    "phase_to_phase_voltage_u21": {
+      "address": 534,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage U21"
+    },
+    "phase_to_phase_voltage_u32": {
+      "address": 536,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage U32"
+    },
+    "phase_to_phase_voltage_u13": {
+      "address": 538,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage U13"
+    },
+    "phase_to_neutral_voltage_v1": {
+      "address": 540,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage V1"
+    },
+    "phase_to_neutral_voltage_v2": {
+      "address": 542,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage V2"
+    },
+    "phase_to_neutral_voltage_v3": {
+      "address": 544,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage V3"
+    },
+    "residual_voltage_v0": {
+      "address": 546,
+      "type": "u32",
+      "access": "r",
+      "description": "Residual voltage v0"
+    },
+    "positive_sequence_voltage_vd": {
+      "address": 548,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive sequence voltage vd"
+    },
+    "negative_sequence_voltage_vi": {
+      "address": 550,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative sequence voltage vi"
+    },
+    "frequency_f": {
+      "address": 552,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency f",
+      "unit": "Hz"
+    },
+    "active_power_p": {
+      "address": 554,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power P",
+      "unit": "kW"
+    },
+    "power_factor_cos": {
+      "address": 560,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor cos"
+    },
+    "peak_demand_active_power_pm": {
+      "address": 562,
+      "type": "i32",
+      "access": "r",
+      "description": "Peak demand active power PM",
+      "unit": "kW"
+    },
+    "peak_demand_reactive_power_qm": {
+      "address": 564,
+      "type": "i32",
+      "access": "r",
+      "description": "Peak demand reactive power QM",
+      "unit": "kvar"
+    },
+    "active_power_p_phase_1": {
+      "address": 566,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power P phase 1",
+      "unit": "kW"
+    },
+    "active_power_p_phase_2": {
+      "address": 568,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power P phase 2",
+      "unit": "kW"
+    },
+    "active_power_p_phase_3": {
+      "address": 570,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power P phase 3",
+      "unit": "kW"
+    },
+    "reactive_power_q_phase_1": {
+      "address": 572,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power Q phase 1",
+      "unit": "kvar"
+    },
+    "reactive_power_q_phase_2": {
+      "address": 574,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power Q phase 2",
+      "unit": "kvar"
+    },
+    "reactive_power_q_phase_3": {
+      "address": 576,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power Q phase 3",
+      "unit": "kvar"
+    },
+    "apparent_power_s_phase_1": {
+      "address": 578,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power S phase 1",
+      "unit": "kVA"
+    },
+    "apparent_power_s_phase_2": {
+      "address": 580,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power S phase 2",
+      "unit": "kVA"
+    },
+    "apparent_power_s_phase_3": {
+      "address": 582,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power S phase 3",
+      "unit": "kVA"
+    },
+    "positive_active_energy_ea": {
+      "address": 584,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive active energy ea+",
+      "unit": "kW"
+    },
+    "negative_active_energy_ea": {
+      "address": 586,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative active energy ea",
+      "unit": "kW"
+    },
+    "positive_reactive_energy_er": {
+      "address": 588,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive reactive energy er+",
+      "unit": "kvar"
+    },
+    "negative_reactive_energy_er": {
+      "address": 590,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative reactive energy er",
+      "unit": "kvar"
+    },
+    "ext_positive_active_energy_ea": {
+      "address": 592,
+      "type": "u32",
+      "access": "r",
+      "description": "Ext. positive active energy ea+",
+      "unit": "kW"
+    },
+    "ext_negative_active_energy_ea": {
+      "address": 594,
+      "type": "u32",
+      "access": "r",
+      "description": "Ext. negative active energy ea",
+      "unit": "kW"
+    },
+    "ext_positive_reactive_energy_er": {
+      "address": 596,
+      "type": "u32",
+      "access": "r",
+      "description": "Ext. positive reactive energy er+",
+      "unit": "kvar"
+    },
+    "ext_negative_reactive_energy_er": {
+      "address": 598,
+      "type": "u32",
+      "access": "r",
+      "description": "Ext. negative reactive energy er",
+      "unit": "kvar"
+    },
+    "neutral_point_voltage_vnt": {
+      "address": 600,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral point voltage vnt"
+    },
+    "number_of_operations": {
+      "address": 616,
+      "type": "u32",
+      "access": "r",
+      "description": "Number of operations"
+    },
+    "tripping_current_phase_1_itrip1": {
+      "address": 618,
+      "type": "u32",
+      "access": "r",
+      "description": "Tripping current phase 1 itrip1"
+    },
+    "tripping_current_phase_2_itrip2": {
+      "address": 620,
+      "type": "u32",
+      "access": "r",
+      "description": "Tripping current phase 2 itrip2"
+    },
+    "tripping_current_phase_3_itrip3": {
+      "address": 622,
+      "type": "u32",
+      "access": "r",
+      "description": "Tripping current phase 3 itrip3"
+    },
+    "tripping_current_calculated_i0_itrip0": {
+      "address": 624,
+      "type": "u32",
+      "access": "r",
+      "description": "Tripping current calculated i0 itrip0"
+    },
+    "number_of_operations_636": {
+      "address": 636,
+      "type": "u32",
+      "access": "r",
+      "description": "Number of operations"
+    },
+    "impedance_zd": {
+      "address": 650,
+      "type": "u32",
+      "access": "r",
+      "description": "Impedance Zd",
+      "unit": "MOhm"
+    }
+  }
+}

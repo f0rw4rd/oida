@@ -1,0 +1,509 @@
+{
+  "vendor": "ORNO3p",
+  "model": "ORNO WE-516 & WE-517",
+  "description": "Imported from mbmd (orno3p)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/orno3p.go",
+  "registers": {
+    "frequency": {
+      "address": 20,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, Hz",
+      "function_code": 3
+    },
+    "voltage_l1": {
+      "address": 14,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, V",
+      "function_code": 3
+    },
+    "current_l1": {
+      "address": 22,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, A",
+      "function_code": 3
+    },
+    "power_l1": {
+      "address": 30,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kW",
+      "function_code": 3
+    },
+    "reactive_power_l1": {
+      "address": 38,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kvar",
+      "function_code": 3
+    },
+    "apparent_power_l1": {
+      "address": 46,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kva",
+      "function_code": 3
+    },
+    "cosphi_l1": {
+      "address": 54,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, XX,X(literal)",
+      "function_code": 3
+    },
+    "voltage_l2": {
+      "address": 16,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, V",
+      "function_code": 3
+    },
+    "current_l2": {
+      "address": 24,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, A",
+      "function_code": 3
+    },
+    "power_l2": {
+      "address": 32,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kW",
+      "function_code": 3
+    },
+    "reactive_power_l2": {
+      "address": 40,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kvar",
+      "function_code": 3
+    },
+    "apparent_power_l2": {
+      "address": 48,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kva",
+      "function_code": 3
+    },
+    "cosphi_l2": {
+      "address": 56,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, XX,X(literal)",
+      "function_code": 3
+    },
+    "voltage_l3": {
+      "address": 18,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, V",
+      "function_code": 3
+    },
+    "current_l3": {
+      "address": 26,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, A",
+      "function_code": 3
+    },
+    "power_l3": {
+      "address": 34,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kW",
+      "function_code": 3
+    },
+    "reactive_power_l3": {
+      "address": 42,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kvar",
+      "function_code": 3
+    },
+    "apparent_power_l3": {
+      "address": 50,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kva",
+      "function_code": 3
+    },
+    "cosphi_l3": {
+      "address": 58,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, XX,X(literal)",
+      "function_code": 3
+    },
+    "power": {
+      "address": 28,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kW",
+      "function_code": 3
+    },
+    "reactive_power": {
+      "address": 36,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kvar",
+      "function_code": 3
+    },
+    "apparent_power": {
+      "address": 44,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, kva",
+      "function_code": 3
+    },
+    "cosphi": {
+      "address": 52,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, XX,X(literal)",
+      "function_code": 3
+    },
+    "sum": {
+      "address": 256,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "sum_l1": {
+      "address": 258,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "sum_l2": {
+      "address": 260,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "sum_l3": {
+      "address": 262,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import": {
+      "address": 264,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import_l1": {
+      "address": 266,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import_l2": {
+      "address": 268,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import_l3": {
+      "address": 270,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export": {
+      "address": 272,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export_l1": {
+      "address": 274,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export_l2": {
+      "address": 276,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export_l3": {
+      "address": 278,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "reactive_sum": {
+      "address": 280,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_sum_l1": {
+      "address": 282,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_sum_l2": {
+      "address": 284,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_sum_l3": {
+      "address": 286,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import": {
+      "address": 288,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import_l1": {
+      "address": 290,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import_l2": {
+      "address": 292,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import_l3": {
+      "address": 294,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export": {
+      "address": 296,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export_l1": {
+      "address": 298,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export_l2": {
+      "address": 300,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export_l3": {
+      "address": 302,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "sum_t1": {
+      "address": 304,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import_t1": {
+      "address": 306,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export_t1": {
+      "address": 308,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "reactive_sum_t1": {
+      "address": 310,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import_t1": {
+      "address": 312,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export_t1": {
+      "address": 314,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "sum_t2": {
+      "address": 316,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import_t2": {
+      "address": 318,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export_t2": {
+      "address": 320,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "reactive_sum_t2": {
+      "address": 322,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import_t2": {
+      "address": 324,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export_t2": {
+      "address": 326,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "sum_t3": {
+      "address": 328,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import_t3": {
+      "address": 330,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export_t3": {
+      "address": 332,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "reactive_sum_t3": {
+      "address": 350,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import_t3": {
+      "address": 336,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export_t3": {
+      "address": 338,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "sum_t4": {
+      "address": 340,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "import_t4": {
+      "address": 342,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "export_t4": {
+      "address": 344,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kwh",
+      "function_code": 3
+    },
+    "reactive_sum_t4": {
+      "address": 346,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_import_t4": {
+      "address": 348,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    },
+    "reactive_export_t4": {
+      "address": 350,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, kvarh",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: ORNO OR-WE-516/517 MID certified; mbmd issue #127 tracks support; mbmd source orno3p.go verified"
+}

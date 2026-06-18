@@ -1,0 +1,354 @@
+{
+  "vendor": "Enerdis",
+  "model": "ENERIUM 30",
+  "description": "Enerdis ENERIUM 30 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v1": {
+      "address": 1280,
+      "type": "u32",
+      "access": "r",
+      "description": "V1",
+      "unit": "V"
+    },
+    "v2": {
+      "address": 1282,
+      "type": "u32",
+      "access": "r",
+      "description": "V2",
+      "unit": "V"
+    },
+    "v3": {
+      "address": 1284,
+      "type": "u32",
+      "access": "r",
+      "description": "V3",
+      "unit": "V"
+    },
+    "u12": {
+      "address": 1288,
+      "type": "u32",
+      "access": "r",
+      "description": "U12",
+      "unit": "V"
+    },
+    "u23": {
+      "address": 1290,
+      "type": "u32",
+      "access": "r",
+      "description": "U23",
+      "unit": "V"
+    },
+    "u31": {
+      "address": 1292,
+      "type": "u32",
+      "access": "r",
+      "description": "U31",
+      "unit": "V"
+    },
+    "i1": {
+      "address": 1294,
+      "type": "u32",
+      "access": "r",
+      "description": "I1",
+      "unit": "A"
+    },
+    "i2": {
+      "address": 1296,
+      "type": "u32",
+      "access": "r",
+      "description": "I2",
+      "unit": "A"
+    },
+    "i3": {
+      "address": 1298,
+      "type": "u32",
+      "access": "r",
+      "description": "I3",
+      "unit": "A"
+    },
+    "in": {
+      "address": 1300,
+      "type": "u32",
+      "access": "r",
+      "description": "In",
+      "unit": "A"
+    },
+    "p1": {
+      "address": 1302,
+      "type": "i32",
+      "access": "r",
+      "description": "P1",
+      "unit": "W"
+    },
+    "p2": {
+      "address": 1304,
+      "type": "i32",
+      "access": "r",
+      "description": "P2",
+      "unit": "W"
+    },
+    "p3": {
+      "address": 1306,
+      "type": "i32",
+      "access": "r",
+      "description": "P3",
+      "unit": "W"
+    },
+    "pt": {
+      "address": 1308,
+      "type": "i32",
+      "access": "r",
+      "description": "Pt",
+      "unit": "W"
+    },
+    "q1": {
+      "address": 1310,
+      "type": "i32",
+      "access": "r",
+      "description": "Q1",
+      "unit": "var"
+    },
+    "q2": {
+      "address": 1312,
+      "type": "i32",
+      "access": "r",
+      "description": "Q2",
+      "unit": "var"
+    },
+    "q3": {
+      "address": 1314,
+      "type": "i32",
+      "access": "r",
+      "description": "Q3",
+      "unit": "var"
+    },
+    "qt": {
+      "address": 1316,
+      "type": "i32",
+      "access": "r",
+      "description": "Qt",
+      "unit": "var"
+    },
+    "s1": {
+      "address": 1318,
+      "type": "u32",
+      "access": "r",
+      "description": "S1",
+      "unit": "VA"
+    },
+    "s2": {
+      "address": 1320,
+      "type": "u32",
+      "access": "r",
+      "description": "S2",
+      "unit": "VA"
+    },
+    "s3": {
+      "address": 1322,
+      "type": "u32",
+      "access": "r",
+      "description": "S3",
+      "unit": "VA"
+    },
+    "st": {
+      "address": 1324,
+      "type": "u32",
+      "access": "r",
+      "description": "St",
+      "unit": "VA"
+    },
+    "fp1": {
+      "address": 1326,
+      "type": "i16",
+      "access": "r",
+      "description": "FP1"
+    },
+    "quadrant_fp1": {
+      "address": 1327,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant FP1"
+    },
+    "fp2": {
+      "address": 1328,
+      "type": "i16",
+      "access": "r",
+      "description": "FP2"
+    },
+    "quadrant_fp2": {
+      "address": 1329,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant FP2"
+    },
+    "fp3": {
+      "address": 1330,
+      "type": "i16",
+      "access": "r",
+      "description": "FP3"
+    },
+    "quadrant_fp3": {
+      "address": 1331,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant FP3"
+    },
+    "fpt": {
+      "address": 1332,
+      "type": "i16",
+      "access": "r",
+      "description": "Fpt"
+    },
+    "quadrant_fpt": {
+      "address": 1333,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, fpt"
+    },
+    "frequency": {
+      "address": 1348,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "total_tan_phi": {
+      "address": 1350,
+      "type": "i32",
+      "access": "r",
+      "description": "Total tan phi"
+    },
+    "minima_of_pt_receiver": {
+      "address": 2832,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of pt receiver",
+      "unit": "W"
+    },
+    "minima_of_pt_generator": {
+      "address": 2836,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of pt generator",
+      "unit": "W"
+    },
+    "minima_of_st": {
+      "address": 3140,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of st",
+      "unit": "VA"
+    },
+    "maxima_of_v1": {
+      "address": 2868,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of V1",
+      "unit": "V"
+    },
+    "maxima_of_v2": {
+      "address": 2872,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of V2",
+      "unit": "V"
+    },
+    "maxima_of_v3": {
+      "address": 2876,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of V3",
+      "unit": "V"
+    },
+    "maxima_of_vt": {
+      "address": 2880,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of vt",
+      "unit": "V"
+    },
+    "maxima_of_u12": {
+      "address": 2884,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of U12",
+      "unit": "V"
+    },
+    "maxima_of_u23": {
+      "address": 2888,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of U23",
+      "unit": "V"
+    },
+    "maxima_of_u31": {
+      "address": 2892,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of U31",
+      "unit": "V"
+    },
+    "maxima_dofi1": {
+      "address": 2896,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima dofi1",
+      "unit": "A"
+    },
+    "maxima_of_i2": {
+      "address": 2900,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of I2",
+      "unit": "A"
+    },
+    "maxima_of_i3": {
+      "address": 2904,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of I3",
+      "unit": "A"
+    },
+    "maxima_of_in": {
+      "address": 2908,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of in",
+      "unit": "A"
+    },
+    "maxima_of_pt_receiver": {
+      "address": 2936,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of pt receiver",
+      "unit": "W"
+    },
+    "maxima_of_pt_generator": {
+      "address": 2940,
+      "type": "u32",
+      "access": "r",
+      "description": "Maxima of pt generator",
+      "unit": "W"
+    },
+    "maxima_of_qt_receiver": {
+      "address": 2968,
+      "type": "i32",
+      "access": "r",
+      "description": "Maxima of qt receiver",
+      "unit": "var"
+    },
+    "maxima_of_qt_generator": {
+      "address": 2972,
+      "type": "i32",
+      "access": "r",
+      "description": "Maxima of qt generator",
+      "unit": "var"
+    }
+  }
+}

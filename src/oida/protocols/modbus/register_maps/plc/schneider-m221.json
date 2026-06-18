@@ -1,0 +1,334 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "Modicon M221 (TM221)",
+  "description": "Schneider Modicon M221/TM221 Logic Controller Modbus TCP register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 255,
+  "notes": "M221 uses zero-based addressing. Physical I/O (%I/%Q) cannot be accessed directly via Modbus - only %M and %MW registers. High word first (big-endian) for 32-bit values.",
+  "source": "https://www.se.com/us/en/faqs/FA308725/, https://infoneva.com/en/knowledge/confirming-modbus-tcp-offset-data-schneider-m221",
+  "security_notes": {
+    "protocol_clarification": "PIPEDREAM/Incontroller (2022) targeted M221 primarily via CODESYS protocol (UDP/1740), NOT Modbus. However, M221 does expose a Modbus TCP server that can be used for reconnaissance and data manipulation.",
+    "modbus_attack_vectors": [
+      "Memory read via FC3/FC4 for reconnaissance",
+      "Memory write via FC6/FC16 for data manipulation",
+      "Coil write via FC5/FC15 for output control"
+    ],
+    "documented_modbus_attacks": "No documented real-world Modbus-only attacks on M221. PIPEDREAM used Codesys for primary attack vector.",
+    "mitre_techniques": [
+      "T0801",
+      "T0802",
+      "T0861"
+    ]
+  },
+  "function_codes": {
+    "01": "Read Coils (%M bits)",
+    "02": "Read Discrete Inputs (%M bits)",
+    "03": "Read Holding Registers (%MW)",
+    "04": "Read Input Registers (%MW)",
+    "05": "Write Single Coil (%M bit)",
+    "06": "Write Single Register (%MW)",
+    "15": "Write Multiple Coils (%M bits)",
+    "16": "Write Multiple Registers (%MW)"
+  },
+  "coils": {
+    "m0": {
+      "address": 0,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M0 (Coil 00001)"
+    },
+    "m1": {
+      "address": 1,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M1"
+    },
+    "m2": {
+      "address": 2,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M2"
+    },
+    "m3": {
+      "address": 3,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M3"
+    },
+    "m4": {
+      "address": 4,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M4"
+    },
+    "m5": {
+      "address": 5,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M5"
+    },
+    "m6": {
+      "address": 6,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M6"
+    },
+    "m7": {
+      "address": 7,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M7"
+    },
+    "m8": {
+      "address": 8,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M8"
+    },
+    "m9": {
+      "address": 9,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M9"
+    },
+    "m10": {
+      "address": 10,
+      "type": "bool",
+      "access": "rw",
+      "description": "Internal bit %M10"
+    },
+    "m_system_start": {
+      "address": 256,
+      "type": "bool",
+      "access": "r",
+      "description": "%M256 - System bit: Always ON in RUN"
+    },
+    "m_first_scan": {
+      "address": 257,
+      "type": "bool",
+      "access": "r",
+      "description": "%M257 - System bit: First scan after powerup"
+    }
+  },
+  "holding_registers": {
+    "mw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW0 (HR 40001)"
+    },
+    "mw1": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW1"
+    },
+    "mw2": {
+      "address": 2,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW2"
+    },
+    "mw3": {
+      "address": 3,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW3"
+    },
+    "mw4": {
+      "address": 4,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW4"
+    },
+    "mw5": {
+      "address": 5,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW5"
+    },
+    "mw6": {
+      "address": 6,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW6"
+    },
+    "mw7": {
+      "address": 7,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW7"
+    },
+    "mw8": {
+      "address": 8,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW8"
+    },
+    "mw9": {
+      "address": 9,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW9"
+    },
+    "mw10": {
+      "address": 10,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW10"
+    },
+    "md0_low": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory double word %MD0 - High word (big-endian)"
+    },
+    "md0_high": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory double word %MD0 - Low word"
+    },
+    "md2_low": {
+      "address": 2,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory double word %MD2 - High word"
+    },
+    "md2_high": {
+      "address": 3,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory double word %MD2 - Low word"
+    },
+    "mw_system_scan_time": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "unit": "ms",
+      "description": "%SW6 - Current scan time in milliseconds"
+    },
+    "mw_system_max_scan": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "unit": "ms",
+      "description": "%SW7 - Maximum scan time since power-on"
+    },
+    "mw_system_min_scan": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "unit": "ms",
+      "description": "%SW8 - Minimum scan time since power-on"
+    },
+    "mw_watchdog_period": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "unit": "ms",
+      "description": "%SW0 - Watchdog period (10-1500ms, default 250ms)"
+    },
+    "mw100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW100 - Typical user data area start"
+    },
+    "mw200": {
+      "address": 200,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW200"
+    },
+    "mw500": {
+      "address": 500,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW500"
+    },
+    "mw1000": {
+      "address": 1000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW1000"
+    }
+  },
+  "input_registers": {
+    "iw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Input register %MW0 (same as holding, IR 30001)"
+    },
+    "iw1": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Input register %MW1"
+    },
+    "iw2": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Input register %MW2"
+    },
+    "iw3": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Input register %MW3"
+    },
+    "iw4": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Input register %MW4"
+    }
+  },
+  "address_mapping": {
+    "coils_00001": {
+      "plc_address": "%M0",
+      "modbus_offset": 0,
+      "modbus_address": "00001",
+      "description": "Internal bits start"
+    },
+    "holding_40001": {
+      "plc_address": "%MW0",
+      "modbus_offset": 0,
+      "modbus_address": "40001",
+      "description": "Holding registers start"
+    },
+    "input_30001": {
+      "plc_address": "%MW0",
+      "modbus_offset": 0,
+      "modbus_address": "30001",
+      "description": "Input registers (same data as holding)"
+    }
+  },
+  "extended_info": {
+    "memory_limits": {
+      "description": "M221 memory varies by model",
+      "tm221ce16r": {
+        "mw_range": "0-999",
+        "m_range": "0-511"
+      },
+      "tm221ce24r": {
+        "mw_range": "0-999",
+        "m_range": "0-511"
+      },
+      "tm221ce40r": {
+        "mw_range": "0-1999",
+        "m_range": "0-1023"
+      }
+    },
+    "io_mapping_note": "Physical I/O (%I/%Q) must be mapped to %M/%MW in the application to be accessible via Modbus",
+    "word_overlap": {
+      "description": "%MD and %MW share address space",
+      "example": "%MD0 occupies %MW0 and %MW1"
+    }
+  },
+  "_source_verified": "Verified: M221 Modbus TCP server confirmed; FAQ FA308725 and FA273024 at se.com verified"
+}

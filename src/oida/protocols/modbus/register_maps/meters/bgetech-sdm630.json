@@ -1,0 +1,163 @@
+{
+  "vendor": "Sdm630",
+  "model": "Sdm630",
+  "description": "Imported from nymea-plugins-modbus (bgetech)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/bgetech/sdm630-registers.json",
+  "registers": {
+    "totalCurrentPower": {
+      "address": 52,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "voltagePhaseA": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase L1",
+      "unit": "V",
+      "function_code": 4
+    },
+    "voltagePhaseB": {
+      "address": 2,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase L2",
+      "unit": "V",
+      "function_code": 4
+    },
+    "voltagePhaseC": {
+      "address": 4,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase L3",
+      "unit": "V",
+      "function_code": 4
+    },
+    "currentPhaseA": {
+      "address": 6,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase L1",
+      "unit": "A",
+      "function_code": 4
+    },
+    "currentPhaseB": {
+      "address": 8,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase L2",
+      "unit": "A",
+      "function_code": 4
+    },
+    "currentPhaseC": {
+      "address": 10,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase L3",
+      "unit": "A",
+      "function_code": 4
+    },
+    "powerPhaseA": {
+      "address": 12,
+      "type": "f32",
+      "access": "ro",
+      "description": "Power phase L1",
+      "unit": "W",
+      "function_code": 4
+    },
+    "powerPhaseB": {
+      "address": 14,
+      "type": "f32",
+      "access": "ro",
+      "description": "Power phase L2",
+      "unit": "W",
+      "function_code": 4
+    },
+    "powerPhaseC": {
+      "address": 16,
+      "type": "f32",
+      "access": "ro",
+      "description": "Power phase L3",
+      "unit": "W",
+      "function_code": 4
+    },
+    "frequency": {
+      "address": 70,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency",
+      "unit": "Hz",
+      "function_code": 4
+    },
+    "totalEnergyConsumed": {
+      "address": 72,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total energy consumed",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "totalEnergyProduced": {
+      "address": 74,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total energy produced",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "energyProducedPhaseA": {
+      "address": 346,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy produced phase A",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "energyProducedPhaseB": {
+      "address": 348,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy produced phase B",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "energyProducedPhaseC": {
+      "address": 350,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy produced phase C",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "energyConsumedPhaseA": {
+      "address": 352,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy consumed phase A",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "energyConsumedPhaseB": {
+      "address": 354,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy consumed phase B",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "energyConsumedPhaseC": {
+      "address": 356,
+      "type": "f32",
+      "access": "ro",
+      "description": "Energy consumed phase C",
+      "unit": "kWh",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: Imported from nymea-plugins-modbus; B+G E-Tech SDM630 (Eastron rebrand) registers match SDM630 protocol"
+}

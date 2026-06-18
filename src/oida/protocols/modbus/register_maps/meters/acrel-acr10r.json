@@ -1,0 +1,331 @@
+{
+  "vendor": "Acrel",
+  "model": "ACR 10 R",
+  "description": "Acrel ACR 10 R power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "communication_speed": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Communication speed",
+      "unit": "bps"
+    },
+    "communication_check_mod": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Communication check mod"
+    },
+    "wiring_mode": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Wiring mode",
+      "unit": "wire"
+    },
+    "secondary_side_rated_voltage_ue": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Secondary side rated voltage ue",
+      "unit": "V"
+    },
+    "secondary_side_rated_current_value_ie": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Secondary side rated current value ie",
+      "unit": "A"
+    },
+    "primary_side_rated_voltage_pu": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Primary side rated voltage PU",
+      "unit": "kV"
+    },
+    "backlight_delay_time": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Backlight delay time"
+    },
+    "relay_1_delay_time": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Relay 1 delay time",
+      "unit": "second"
+    },
+    "voltage_primary_side_and": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage primary side and"
+    },
+    "primary_side_and_secondary_side_coefficient_of_current": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Primary side and secondary side coefficient of current"
+    },
+    "power_primary_and_secondary_side_coefficients": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Power, primary and secondary side coefficients"
+    },
+    "first_channel_switching_input": {
+      "address": 53,
+      "type": "u16",
+      "access": "r",
+      "description": "First channel switching input"
+    },
+    "first_channel_switching_output": {
+      "address": 61,
+      "type": "u16",
+      "access": "r",
+      "description": "First channel switching output"
+    },
+    "second_channel_switching_output": {
+      "address": 62,
+      "type": "u16",
+      "access": "r",
+      "description": "Second channel switching output"
+    },
+    "third_channel_switching_output": {
+      "address": 63,
+      "type": "u16",
+      "access": "r",
+      "description": "Third channel switching output"
+    },
+    "fourth_channel_switching_output": {
+      "address": 64,
+      "type": "u16",
+      "access": "r",
+      "description": "Fourth channel switching output"
+    },
+    "second": {
+      "address": 133,
+      "type": "u16",
+      "access": "r",
+      "description": "Second"
+    },
+    "neutral_current": {
+      "address": 242,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "phase_voltage_uan": {
+      "address": 243,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage uan"
+    },
+    "phase_voltage_ubn": {
+      "address": 244,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage ubn"
+    },
+    "phase_voltage_ucn": {
+      "address": 245,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage ucn"
+    },
+    "line_voltage_uab": {
+      "address": 246,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage uab"
+    },
+    "line_voltage_ubc": {
+      "address": 247,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage ubc"
+    },
+    "line_voltage_uca": {
+      "address": 248,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage uca"
+    },
+    "phase_current_ia": {
+      "address": 249,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current ia"
+    },
+    "phase_current_ib": {
+      "address": 250,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current ib"
+    },
+    "phase_current_ic": {
+      "address": 251,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current ic"
+    },
+    "frequency_f": {
+      "address": 252,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency F"
+    },
+    "phase_a_active_power_pa": {
+      "address": 253,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase A active power pa",
+      "unit": "W"
+    },
+    "phase_b_active_power_pb": {
+      "address": 255,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase B active power pb",
+      "unit": "W"
+    },
+    "phase_c_active_power_pc": {
+      "address": 257,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase C active power pc",
+      "unit": "W"
+    },
+    "total_active_power_ptotal": {
+      "address": 259,
+      "type": "u32",
+      "access": "r",
+      "description": "Total.Active power PTotal",
+      "unit": "W"
+    },
+    "phase_a_reactive_power_qa": {
+      "address": 261,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase A reactive power qa",
+      "unit": "var"
+    },
+    "phase_b_reactive_power_qb": {
+      "address": 263,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase B reactive power qb",
+      "unit": "var"
+    },
+    "phase_c_reactive_power_qc": {
+      "address": 265,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase C reactive power qc",
+      "unit": "var"
+    },
+    "totalreactive_power_qtotal": {
+      "address": 267,
+      "type": "u32",
+      "access": "r",
+      "description": "TotalReactive power QTotal",
+      "unit": "var"
+    },
+    "phase_a_apparent_powersa": {
+      "address": 269,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase A apparent powerSa",
+      "unit": "VA"
+    },
+    "phase_b_apparent_powersb": {
+      "address": 271,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase B apparent powerSb",
+      "unit": "VA"
+    },
+    "phase_c_apparent_powersc": {
+      "address": 273,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase C apparent powerSc",
+      "unit": "VA"
+    },
+    "totalapparent_power_stotal": {
+      "address": 275,
+      "type": "u32",
+      "access": "r",
+      "description": "TotalApparent power STotal",
+      "unit": "VA"
+    },
+    "phase_a_power_factor": {
+      "address": 277,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor": {
+      "address": 278,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor": {
+      "address": 279,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "total_power_factor": {
+      "address": 280,
+      "type": "u16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "phase_a_current_k_factor": {
+      "address": 287,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A current K factor"
+    },
+    "phase_b_current_k_factor": {
+      "address": 288,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B current K factor"
+    },
+    "phase_c_current_k_factor": {
+      "address": 289,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C current K factor"
+    },
+    "unbalance_factor_of_voltage": {
+      "address": 299,
+      "type": "u16",
+      "access": "r",
+      "description": "Unbalance factor of voltage"
+    },
+    "unbalance_factor_of_current": {
+      "address": 300,
+      "type": "u16",
+      "access": "r",
+      "description": "Unbalance factor of current"
+    },
+    "maximum_demand": {
+      "address": 301,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand"
+    }
+  }
+}

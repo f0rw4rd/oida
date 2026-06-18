@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir asyncua cryptography
+
+# Copy the enhanced OPC UA server
+COPY opcua_server.py /app/
+
+# Expose OPC UA port
+EXPOSE 4840
+
+# Run the server
+CMD ["python3", "opcua_server.py"]

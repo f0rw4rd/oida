@@ -1,0 +1,313 @@
+{
+  "vendor": "GE",
+  "model": "EPM 7000 EPM 7100",
+  "description": "GE EPM 7000 EPM 7100 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_serialnumber": {
+      "address": 8,
+      "type": "str",
+      "access": "r",
+      "description": "Meter SerialNumber"
+    },
+    "meter_type": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter type"
+    },
+    "firmware_version": {
+      "address": 17,
+      "type": "str",
+      "access": "r",
+      "description": "Firmware version"
+    },
+    "map_version": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "Map version"
+    },
+    "meterconfiguration": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "MeterConfiguration"
+    },
+    "asic_version": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "ASIC version"
+    },
+    "boot_firmware_version": {
+      "address": 22,
+      "type": "str",
+      "access": "r",
+      "description": "Boot Firmware Version"
+    },
+    "option_slot_1usage": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Option slot 1Usage"
+    },
+    "option_slot_2usage": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Option slot 2Usage"
+    },
+    "meter_type_name": {
+      "address": 26,
+      "type": "str",
+      "access": "r",
+      "description": "Meter type name"
+    },
+    "integer_readings_block_occupies_these_registers_see_below": {
+      "address": 278,
+      "type": "u16",
+      "access": "r",
+      "description": "Integer readings block occupies these registers, see below"
+    },
+    "volts_b_n": {
+      "address": 279,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts B N"
+    },
+    "volts_c_n": {
+      "address": 280,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts C N"
+    },
+    "volts_a_b": {
+      "address": 281,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts A B"
+    },
+    "volts_b_c": {
+      "address": 282,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts B C"
+    },
+    "volts_c_a": {
+      "address": 283,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts C A"
+    },
+    "amps_a": {
+      "address": 284,
+      "type": "u16",
+      "access": "r",
+      "description": "Amps A"
+    },
+    "amps_b": {
+      "address": 285,
+      "type": "u16",
+      "access": "r",
+      "description": "Amps B"
+    },
+    "amps_c": {
+      "address": 286,
+      "type": "u16",
+      "access": "r",
+      "description": "Amps C"
+    },
+    "vars_3_ph_total": {
+      "address": 289,
+      "type": "i16",
+      "access": "r",
+      "description": "VARs, 3 Ph total"
+    },
+    "vas_3_ph_total": {
+      "address": 290,
+      "type": "u16",
+      "access": "r",
+      "description": "VAs, 3 Ph total"
+    },
+    "power_factor_3_phtotal": {
+      "address": 291,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor, 3 Phtotal"
+    },
+    "watts_phase_b": {
+      "address": 294,
+      "type": "i16",
+      "access": "r",
+      "description": "Watts, phase B"
+    },
+    "watts_phase_c": {
+      "address": 295,
+      "type": "i16",
+      "access": "r",
+      "description": "Watts, phase C"
+    },
+    "vars_phase_a": {
+      "address": 296,
+      "type": "i16",
+      "access": "r",
+      "description": "VARs, phase A"
+    },
+    "vars_phase_b": {
+      "address": 297,
+      "type": "i16",
+      "access": "r",
+      "description": "VARs, phase B"
+    },
+    "vars_phase_c": {
+      "address": 298,
+      "type": "i16",
+      "access": "r",
+      "description": "VARs, phase C"
+    },
+    "vas_phase_a": {
+      "address": 299,
+      "type": "u16",
+      "access": "r",
+      "description": "VAs, phase A"
+    },
+    "vas_phase_b": {
+      "address": 300,
+      "type": "u16",
+      "access": "r",
+      "description": "VAs, phase B"
+    },
+    "power_factor_phase_b": {
+      "address": 303,
+      "type": "i16",
+      "access": "r",
+      "description": "Power Factor,Phase B"
+    },
+    "power_factor_phase_c": {
+      "address": 304,
+      "type": "i16",
+      "access": "r",
+      "description": "Power Factor,Phase C"
+    },
+    "volts_a_n": {
+      "address": 999,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts A N"
+    },
+    "volts_b_n_1001": {
+      "address": 1001,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts B N"
+    },
+    "volts_c_n_1003": {
+      "address": 1003,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts C N"
+    },
+    "volts_a_b_1005": {
+      "address": 1005,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts A B"
+    },
+    "volts_b_c_1007": {
+      "address": 1007,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts B C"
+    },
+    "volts_c_a_1009": {
+      "address": 1009,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts C A"
+    },
+    "amps_a_1011": {
+      "address": 1011,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps A"
+    },
+    "amps_b_1013": {
+      "address": 1013,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps B"
+    },
+    "amps_c_1015": {
+      "address": 1015,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps C"
+    },
+    "watts_3_ph_total": {
+      "address": 1017,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, 3 Ph total"
+    },
+    "vars_3_ph_total_1019": {
+      "address": 1019,
+      "type": "f32",
+      "access": "r",
+      "description": "VARs, 3 Ph total"
+    },
+    "vas_3_ph_total_1021": {
+      "address": 1021,
+      "type": "f32",
+      "access": "r",
+      "description": "VAs, 3 Ph total"
+    },
+    "power_factor_3_phtotal_1023": {
+      "address": 1023,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, 3 Phtotal"
+    },
+    "frequency": {
+      "address": 1025,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "neutral_current": {
+      "address": 1027,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "watts_phase_a": {
+      "address": 1029,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, phase A"
+    },
+    "watts_phase_b_1031": {
+      "address": 1031,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, phase B"
+    },
+    "watts_phase_c_1033": {
+      "address": 1033,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts, phase C"
+    },
+    "vars_phase_a_1035": {
+      "address": 1035,
+      "type": "f32",
+      "access": "r",
+      "description": "VARs, phase A"
+    }
+  }
+}

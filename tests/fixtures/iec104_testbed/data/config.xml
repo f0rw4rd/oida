@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    IEC 104 Test Server Configuration
+    This is a sample configuration file for testing file transfer
+-->
+<IEC104Config version="1.0">
+    <General>
+        <StationName>TEST_RTU_001</StationName>
+        <Manufacturer>MSF-ICS Test</Manufacturer>
+        <Model>Virtual RTU</Model>
+        <FirmwareVersion>1.0.0</FirmwareVersion>
+        <SerialNumber>TESTBED-2024-001</SerialNumber>
+    </General>
+
+    <Network>
+        <LocalAddress>0.0.0.0</LocalAddress>
+        <Port>2404</Port>
+        <MaxConnections>5</MaxConnections>
+        <Timeout>30</Timeout>
+    </Network>
+
+    <Protocol>
+        <CommonAddress>1</CommonAddress>
+        <CauseOfTransmissionSize>2</CauseOfTransmissionSize>
+        <CommonAddressSize>2</CommonAddressSize>
+        <IOASize>3</IOASize>
+        <T0>30</T0>
+        <T1>15</T1>
+        <T2>10</T2>
+        <T3>20</T3>
+        <K>12</K>
+        <W>8</W>
+    </Protocol>
+
+    <DataPoints>
+        <SinglePoints start="100" count="20"/>
+        <DoublePoints start="200" count="10"/>
+        <StepPositions start="300" count="5"/>
+        <Bitstrings start="400" count="5"/>
+        <MeasuredNormalized start="500" count="20"/>
+        <MeasuredScaled start="600" count="20"/>
+        <MeasuredFloat start="700" count="20"/>
+        <IntegratedTotals start="800" count="10"/>
+    </DataPoints>
+
+    <Security>
+        <Authentication>none</Authentication>
+        <Encryption>none</Encryption>
+        <AccessControl>false</AccessControl>
+    </Security>
+</IEC104Config>

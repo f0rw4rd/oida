@@ -1,0 +1,358 @@
+{
+  "vendor": "Phoenix Contact",
+  "model": "EEM EM 3 XX EM 325 EM 355 EM 375 EM 327 EM 357 EM 377",
+  "description": "Phoenix Contact EEM EM 3 XX EM 325 EM 355 EM 375 EM 327 EM 357 EM 377 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "conductor_voltage_to_n_u1": {
+      "address": 4096,
+      "type": "f32",
+      "access": "r",
+      "description": "Conductor voltage to N U1",
+      "unit": "V"
+    },
+    "conductor_voltage_to_n_u2": {
+      "address": 4098,
+      "type": "f32",
+      "access": "r",
+      "description": "Conductor voltage to N U2",
+      "unit": "V"
+    },
+    "conductor_voltage_to_n_u3": {
+      "address": 4100,
+      "type": "f32",
+      "access": "r",
+      "description": "Conductor voltage to N U3",
+      "unit": "V"
+    },
+    "conductor_voltage_to_conductor_u12": {
+      "address": 4102,
+      "type": "f32",
+      "access": "r",
+      "description": "Conductor voltage to conductor U12",
+      "unit": "V"
+    },
+    "conductor_voltage_to_conductor_u23": {
+      "address": 4104,
+      "type": "f32",
+      "access": "r",
+      "description": "Conductor voltage to conductor U23",
+      "unit": "V"
+    },
+    "conductor_voltage_to_conductor_u31": {
+      "address": 4106,
+      "type": "f32",
+      "access": "r",
+      "description": "Conductor voltage to conductor U31",
+      "unit": "V"
+    },
+    "external_conductor_voltage_system": {
+      "address": 4108,
+      "type": "f32",
+      "access": "r",
+      "description": "External conductor voltage system",
+      "unit": "V"
+    },
+    "current_in_conductor_i1": {
+      "address": 4110,
+      "type": "f32",
+      "access": "r",
+      "description": "Current in conductor I1",
+      "unit": "A"
+    },
+    "current_in_conductor_i2": {
+      "address": 4112,
+      "type": "f32",
+      "access": "r",
+      "description": "Current in conductor I2",
+      "unit": "A"
+    },
+    "current_in_conductor_i3": {
+      "address": 4114,
+      "type": "f32",
+      "access": "r",
+      "description": "Current in conductor I3",
+      "unit": "A"
+    },
+    "current_in_conductor_in": {
+      "address": 4116,
+      "type": "f32",
+      "access": "r",
+      "description": "Current in conductor in",
+      "unit": "A"
+    },
+    "system_current": {
+      "address": 4118,
+      "type": "f32",
+      "access": "r",
+      "description": "System current",
+      "unit": "A"
+    },
+    "power_factor_phase_1": {
+      "address": 4120,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase 1 +/"
+    },
+    "power_factor_phase_2": {
+      "address": 4122,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase 2 +/"
+    },
+    "power_factor_phase_3": {
+      "address": 4124,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase 3 +/"
+    },
+    "system_power_factor": {
+      "address": 4126,
+      "type": "f32",
+      "access": "r",
+      "description": "System power factor"
+    },
+    "active_power_phase_1": {
+      "address": 4128,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase 1 +/",
+      "unit": "W"
+    },
+    "active_power_phase_2": {
+      "address": 4130,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase 2 +/",
+      "unit": "W"
+    },
+    "active_power_phase_3": {
+      "address": 4132,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase 3 +/",
+      "unit": "W"
+    },
+    "total_active_power": {
+      "address": 4134,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power +/",
+      "unit": "W"
+    },
+    "apparent_power_phase_1": {
+      "address": 4136,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase 1",
+      "unit": "VA"
+    },
+    "apparent_power_phase_2": {
+      "address": 4138,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase 2",
+      "unit": "VA"
+    },
+    "apparent_power_phase_3": {
+      "address": 4140,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase 3",
+      "unit": "VA"
+    },
+    "total_apparent_power": {
+      "address": 4142,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power +/",
+      "unit": "VA"
+    },
+    "reactive_power_phase_1": {
+      "address": 4144,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase 1 +/",
+      "unit": "var"
+    },
+    "reactive_power_phase_2": {
+      "address": 4146,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase 2 +/",
+      "unit": "var"
+    },
+    "reactive_power_phase_3": {
+      "address": 4148,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase 3 +/",
+      "unit": "var"
+    },
+    "total_reactive_power": {
+      "address": 4150,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power +/",
+      "unit": "var"
+    },
+    "frequency": {
+      "address": 4152,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "phase_sequence_0_123": {
+      "address": 4154,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase sequence 0.123"
+    },
+    "total_active_energy_procurement_l1": {
+      "address": 4352,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy procurement L1",
+      "unit": "Wh"
+    },
+    "total_active_energy_procurement_l2": {
+      "address": 4354,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy procurement L2",
+      "unit": "Wh"
+    },
+    "total_active_energy_procurement_l3": {
+      "address": 4356,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy procurement L3",
+      "unit": "Wh"
+    },
+    "total_active_energy_procurement_sum": {
+      "address": 4358,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy procurement sum",
+      "unit": "Wh"
+    },
+    "total_active_energy_supply_l1": {
+      "address": 4360,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy supply L1",
+      "unit": "Wh"
+    },
+    "total_active_energy_supply_l2": {
+      "address": 4362,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy supply L2",
+      "unit": "Wh"
+    },
+    "total_active_energy_supply_l3": {
+      "address": 4364,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy supply L3",
+      "unit": "Wh"
+    },
+    "total_active_energy_supply_sum": {
+      "address": 4366,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy supply sum",
+      "unit": "Wh"
+    },
+    "total_inductive_apparent_energy_procurement_l1": {
+      "address": 4368,
+      "type": "f32",
+      "access": "r",
+      "description": "Total inductive apparent energy procurement L1",
+      "unit": "VAh"
+    },
+    "total_inductive_apparent_energy_procurement_l2": {
+      "address": 4370,
+      "type": "f32",
+      "access": "r",
+      "description": "Total inductive apparent energy procurement L2",
+      "unit": "VAh"
+    },
+    "total_inductive_apparent_energy_procurement_l3": {
+      "address": 4372,
+      "type": "f32",
+      "access": "r",
+      "description": "Total inductive apparent energy procurement L3",
+      "unit": "VAh"
+    },
+    "total_inductive_apparent_energy_supply_l1": {
+      "address": 4376,
+      "type": "f32",
+      "access": "r",
+      "description": "Total inductive apparent energy supply L1",
+      "unit": "VAh"
+    },
+    "total_inductive_apparent_energy_supply_l2": {
+      "address": 4378,
+      "type": "f32",
+      "access": "r",
+      "description": "Total inductive apparent energy supply L2",
+      "unit": "VAh"
+    },
+    "total_inductive_apparent_energy_supply_l3": {
+      "address": 4380,
+      "type": "f32",
+      "access": "r",
+      "description": "Total inductive apparent energy supply L3",
+      "unit": "VAh"
+    },
+    "total_inductive_apparent_energy_supply_sum": {
+      "address": 4382,
+      "type": "f32",
+      "access": "r",
+      "description": "Total inductive apparent energy supply sum",
+      "unit": "VAh"
+    },
+    "total_capacitive_apparent_energy_procurement_l1": {
+      "address": 4384,
+      "type": "f32",
+      "access": "r",
+      "description": "Total capacitive apparent energy procurement L1",
+      "unit": "VAh"
+    },
+    "total_capacitive_apparent_energy_procurement_l2": {
+      "address": 4386,
+      "type": "f32",
+      "access": "r",
+      "description": "Total capacitive apparent energy procurement L2",
+      "unit": "VAh"
+    },
+    "total_capacitive_apparent_energy_procurement_l3": {
+      "address": 4388,
+      "type": "f32",
+      "access": "r",
+      "description": "Total capacitive apparent energy procurement L3",
+      "unit": "VAh"
+    },
+    "total_capacitive_apparent_energy_procurement_sum": {
+      "address": 4390,
+      "type": "f32",
+      "access": "r",
+      "description": "Total capacitive apparent energy procurement sum",
+      "unit": "VAh"
+    },
+    "total_capacitive_apparent_energy_supply_l1": {
+      "address": 4392,
+      "type": "f32",
+      "access": "r",
+      "description": "Total capacitive apparent energy supply L1",
+      "unit": "VAh"
+    }
+  }
+}

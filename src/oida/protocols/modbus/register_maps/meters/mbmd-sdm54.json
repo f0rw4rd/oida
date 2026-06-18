@@ -1,0 +1,383 @@
+{
+  "vendor": "SDM54",
+  "model": "Eastron SDM54",
+  "description": "Imported from mbmd (sdm54)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/sdm54.go",
+  "registers": {
+    "voltage_l1": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 line to neutral volts",
+      "function_code": 4
+    },
+    "voltage_l2": {
+      "address": 2,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 line to neutral volts",
+      "function_code": 4
+    },
+    "voltage_l3": {
+      "address": 4,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 line to neutral volts",
+      "function_code": 4
+    },
+    "current_l1": {
+      "address": 6,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 current",
+      "function_code": 4
+    },
+    "current_l2": {
+      "address": 8,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 current",
+      "function_code": 4
+    },
+    "current_l3": {
+      "address": 10,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 current",
+      "function_code": 4
+    },
+    "power_l1": {
+      "address": 12,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 active power",
+      "function_code": 4
+    },
+    "power_l2": {
+      "address": 14,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 active power",
+      "function_code": 4
+    },
+    "power_l3": {
+      "address": 16,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 active power",
+      "function_code": 4
+    },
+    "apparent_power_l1": {
+      "address": 18,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 apparent power",
+      "function_code": 4
+    },
+    "apparent_power_l2": {
+      "address": 20,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 apparent power",
+      "function_code": 4
+    },
+    "apparent_power_l3": {
+      "address": 22,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 apparent power",
+      "function_code": 4
+    },
+    "reactive_power_l1": {
+      "address": 24,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 reactive power",
+      "function_code": 4
+    },
+    "reactive_power_l2": {
+      "address": 26,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 reactive power",
+      "function_code": 4
+    },
+    "reactive_power_l3": {
+      "address": 28,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 reactive power",
+      "function_code": 4
+    },
+    "cosphi_l1": {
+      "address": 30,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 power factor",
+      "function_code": 4
+    },
+    "cosphi_l2": {
+      "address": 32,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 power factor",
+      "function_code": 4
+    },
+    "cosphi_l3": {
+      "address": 34,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 power factor",
+      "function_code": 4
+    },
+    "power": {
+      "address": 52,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power",
+      "function_code": 4
+    },
+    "apparent_power": {
+      "address": 56,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system volt amps.",
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 60,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system VAr",
+      "function_code": 4
+    },
+    "cosphi": {
+      "address": 62,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power factor",
+      "function_code": 4
+    },
+    "phase_angle": {
+      "address": 66,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system phase angle",
+      "function_code": 4
+    },
+    "frequency": {
+      "address": 70,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency of supply voltages",
+      "function_code": 4
+    },
+    "import": {
+      "address": 72,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 4
+    },
+    "export": {
+      "address": 74,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 4
+    },
+    "t_h_d_l1": {
+      "address": 234,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 L/N volts THD",
+      "function_code": 4
+    },
+    "t_h_d_l2": {
+      "address": 236,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 L/N volts THD",
+      "function_code": 4
+    },
+    "t_h_d_l3": {
+      "address": 238,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 L/N volts THD",
+      "function_code": 4
+    },
+    "t_h_d": {
+      "address": 248,
+      "type": "f32",
+      "access": "ro",
+      "description": "Average line to neutral volts THD",
+      "function_code": 4
+    },
+    "sum": {
+      "address": 342,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kWh",
+      "function_code": 4
+    },
+    "reactive_sum": {
+      "address": 344,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kVArh",
+      "function_code": 4
+    },
+    "import_l1": {
+      "address": 346,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 import kWh",
+      "function_code": 4
+    },
+    "import_l2": {
+      "address": 348,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 import kWh",
+      "function_code": 4
+    },
+    "import_l3": {
+      "address": 350,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 import kWh",
+      "function_code": 4
+    },
+    "export_l1": {
+      "address": 352,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 export kWh",
+      "function_code": 4
+    },
+    "export_l2": {
+      "address": 354,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 export kWh",
+      "function_code": 4
+    },
+    "export_l3": {
+      "address": 356,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 export kWh",
+      "function_code": 4
+    },
+    "sum_l1": {
+      "address": 358,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 total kWh",
+      "function_code": 4
+    },
+    "sum_l2": {
+      "address": 360,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 total kWh",
+      "function_code": 4
+    },
+    "sum_l3": {
+      "address": 362,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 total kWh",
+      "function_code": 4
+    },
+    "sum_t1": {
+      "address": 4876,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 1 total kWh",
+      "function_code": 4
+    },
+    "sum_t2": {
+      "address": 4878,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 2 total kWh",
+      "function_code": 4
+    },
+    "import_t1": {
+      "address": 4884,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 1 import kWh",
+      "function_code": 4
+    },
+    "import_t2": {
+      "address": 4886,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 2 import kWh",
+      "function_code": 4
+    },
+    "export_t1": {
+      "address": 4892,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 1 export kWh",
+      "function_code": 4
+    },
+    "export_t2": {
+      "address": 4894,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 2 export kWh",
+      "function_code": 4
+    },
+    "reactive_sum_t1": {
+      "address": 4900,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 1 total kVArh",
+      "function_code": 4
+    },
+    "reactive_sum_t2": {
+      "address": 4902,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 2 total kVArh",
+      "function_code": 4
+    },
+    "reactive_import_t1": {
+      "address": 4908,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 1 import kVArh",
+      "function_code": 4
+    },
+    "reactive_import_t2": {
+      "address": 4910,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 2 import kVArh",
+      "function_code": 4
+    },
+    "reactive_export_t1": {
+      "address": 4916,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 1 export kVArh",
+      "function_code": 4
+    },
+    "reactive_export_t2": {
+      "address": 4918,
+      "type": "f32",
+      "access": "ro",
+      "description": "Tariff 2 export kVArh",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: Eastron SDM54 three-phase meter confirmed; mbmd source sdm54.go verified"
+}

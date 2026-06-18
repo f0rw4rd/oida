@@ -1,0 +1,363 @@
+{
+  "vendor": "SmartProcess",
+  "model": "SMARTRAIL X 835",
+  "description": "SmartProcess SMARTRAIL X 835 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_2_line_to_neutral_volts": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 line to neutral volts",
+      "unit": "Volts"
+    },
+    "phase_3_line_to_neutral_volts": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 line to neutral volts",
+      "unit": "Volts"
+    },
+    "phase_1_current": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 current",
+      "unit": "Amps"
+    },
+    "phase_2_current": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 current",
+      "unit": "Amps"
+    },
+    "phase_3_current": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 current",
+      "unit": "Amps"
+    },
+    "phase_1_power": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 power",
+      "unit": "Watts"
+    },
+    "phase_2_power": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 power",
+      "unit": "Watts"
+    },
+    "phase_3_power": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 power",
+      "unit": "Watts"
+    },
+    "phase_1_volt_amps": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 volt amps",
+      "unit": "VoltAmps"
+    },
+    "phase_2_volt_amps": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 volt amps",
+      "unit": "VoltAmps"
+    },
+    "phase_3_volt_amps": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 volt amps",
+      "unit": "VoltAmps"
+    },
+    "phase_1_volt_amps_reactive": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 volt amps reactive",
+      "unit": "VAr"
+    },
+    "phase_2_volt_amps_reactive": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 volt amps reactive",
+      "unit": "VAr"
+    },
+    "phase_3_volt_amps_reactive": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 volt amps reactive",
+      "unit": "VAr"
+    },
+    "phase_1_power_factor_1": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 power factor (1)",
+      "unit": "None"
+    },
+    "phase_2_power_factor_1": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 power factor (1)",
+      "unit": "None"
+    },
+    "phase_3_power_factor_1": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 power factor (1)",
+      "unit": "None"
+    },
+    "phase_1_phase_angle": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 phase angle",
+      "unit": "Degrees"
+    },
+    "phase_2_phase_angle": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 phase angle",
+      "unit": "Degrees"
+    },
+    "phase_3_phase_angle": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 phase angle",
+      "unit": "Degrees"
+    },
+    "average_line_to_neutral_volts": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "Average line to neutral volts",
+      "unit": "Volts"
+    },
+    "average_line_current": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "description": "Average line current",
+      "unit": "Amps"
+    },
+    "sum_of_line_currents": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "Sum of line currents",
+      "unit": "Amps"
+    },
+    "total_system_power": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Total system power",
+      "unit": "Watts"
+    },
+    "total_system_volt_amps": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "Total system volt amps",
+      "unit": "VA"
+    },
+    "total_system_var": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "Total system VAr",
+      "unit": "VAr"
+    },
+    "total_system_power_factor_1": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "Total system power factor (1)",
+      "unit": "None"
+    },
+    "total_system_phase_angle": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "Total system phase angle",
+      "unit": "Degrees"
+    },
+    "frequency_of_supply_voltages": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency of supply voltages",
+      "unit": "Hz"
+    },
+    "import_wh_since_last_reset_2": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "Import wh since last reset (2)",
+      "unit": "kWh/MWh"
+    },
+    "export_wh_since_last_reset_2": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "Export wh since last reset (2)",
+      "unit": "kWh/MWh"
+    },
+    "import_varh_since_last_reset_2": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "Import VArh since last reset (2)",
+      "unit": "kVArh/MVArh"
+    },
+    "export_varh_since_last_reset_2": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "Export VArh since last reset (2)",
+      "unit": "kVArh/MVArh"
+    },
+    "vah_since_last_reset_2": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "VAh since last reset (2)",
+      "unit": "kVAh/MVAh"
+    },
+    "ah_since_last_reset_3": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Ah since last reset (3)",
+      "unit": "Ah/kAh"
+    },
+    "total_system_power_demand_4": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Total system power demand (4)",
+      "unit": "Watts"
+    },
+    "maximum_total_system_power_demand_4": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum total system power demand (4)",
+      "unit": "Watts"
+    },
+    "total_system_va_demand": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "Total system VA demand",
+      "unit": "VA"
+    },
+    "maximum_total_system_va_demand": {
+      "address": 102,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum total system VA demand",
+      "unit": "VA"
+    },
+    "neutral_current_demand": {
+      "address": 104,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current demand",
+      "unit": "Amps"
+    },
+    "maximum_neutral_current_demand": {
+      "address": 106,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum neutral current demand",
+      "unit": "Amps"
+    },
+    "line_1_to_line_2_volts": {
+      "address": 200,
+      "type": "u32",
+      "access": "r",
+      "description": "Line 1 to line 2 volts",
+      "unit": "Volts"
+    },
+    "line_2_to_line_3_volts": {
+      "address": 202,
+      "type": "u32",
+      "access": "r",
+      "description": "Line 2 to line 3 volts",
+      "unit": "Volts"
+    },
+    "line_3_to_line_1_volts": {
+      "address": 204,
+      "type": "u32",
+      "access": "r",
+      "description": "Line 3 to line 1 volts",
+      "unit": "Volts"
+    },
+    "average_line_to_line_volts": {
+      "address": 206,
+      "type": "u32",
+      "access": "r",
+      "description": "Average line to line volts",
+      "unit": "Volts"
+    },
+    "neutral_current": {
+      "address": 224,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "Amps"
+    },
+    "phase_1_l_n_volts_thd": {
+      "address": 234,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 L/N volts THD",
+      "unit": "%"
+    },
+    "phase_2_l_n_volts_thd": {
+      "address": 236,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 L/N volts THD",
+      "unit": "%"
+    },
+    "phase_3_l_n_volts_thd": {
+      "address": 238,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 L/N volts THD",
+      "unit": "%"
+    },
+    "phase_1_current_thd": {
+      "address": 240,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 current THD",
+      "unit": "%"
+    }
+  }
+}
