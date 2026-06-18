@@ -1833,7 +1833,7 @@ class HTTPFuzzer(BaseFuzzer):
                         # First chunk with fuzzed size
                         SmartString(
                             "Chunk1-Size",
-                            "10",
+                            "a",  # hex length of the 10-byte "0123456789" chunk data
                             max_len=20,
                             fuzzable=True,
                             context=StringContext.NUMERIC,

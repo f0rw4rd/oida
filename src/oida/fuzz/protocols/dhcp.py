@@ -1514,7 +1514,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         ),
                         # Domain Search List Option (24)
                         Word("option_24_code", 24, endian=">"),
-                        Word("option_24_length", 20, endian=">"),
+                        Word("option_24_length", 23, endian=">"),
                         SmartString(
                             "domain_search",
                             "\x07example\x03com\x00\x04test\x03org\x00",
@@ -1527,7 +1527,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         DWord("refresh_time", 86400, endian=">"),
                         # FQDN Option (39)
                         Word("option_39_code", 39, endian=">"),
-                        Word("option_39_length", 20, endian=">"),
+                        Word("option_39_length", 21, endian=">"),
                         Byte("fqdn_flags", 0x01),  # S flag
                         SmartString(
                             "client_fqdn",
@@ -1537,7 +1537,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         ),
                         # Authentication Option (11)
                         Word("option_11_code", 11, endian=">"),
-                        Word("option_11_length", 20, endian=">"),
+                        Word("option_11_length", 19, endian=">"),
                         Byte("auth_protocol", 1),
                         Byte("auth_algorithm", 1),
                         Byte("rdm", 0),
@@ -1545,7 +1545,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         SmartString("auth_info", "\xde\xad\xbe\xef\xca\xfe\xba\xbe", max_len=8),
                         # Remote Identifier Option (37)
                         Word("option_37_code", 37, endian=">"),
-                        Word("option_37_length", 8, endian=">"),
+                        Word("option_37_length", 10, endian=">"),
                         DWord("enterprise_number", 9, endian=">"),
                         SmartString("remote_id", "port01", max_len=4, fuzzable=True),
                     ),
