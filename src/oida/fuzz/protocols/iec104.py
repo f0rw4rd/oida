@@ -700,6 +700,9 @@ def create_info_object_integrated_totals(ioa: int, counter_value: int):
         children=(
             Bytes("ioa", ioa.to_bytes(3, "little"), size=3, fuzzable=True),
             DWord("counter", counter_value, endian="<", fuzzable=True),
+            # BCR sequence-notation octet (SQ/CY/CA/IV + sequence number).
+            # Omitting it leaves the binary counter reading one octet short.
+            Byte("sequence", 0x00, fuzzable=True),
         ),
     )
 
@@ -744,8 +747,9 @@ def create_info_object_setpoint_normalized(ioa: int, value: int, ql: int, se: in
         children=(
             Bytes("ioa", ioa.to_bytes(3, "little"), size=3, fuzzable=True),
             Word("nva", value, endian="<", signed=True, fuzzable=True),
-            Byte("ql", ql, fuzzable=True),
-            Byte("se", se, fuzzable=True),
+            # QOS is a single octet: bit 7 = S/E (select/execute), bits 0-6 = QL.
+            # Emitting ql and se as two bytes over-runs the ASDU by one octet.
+            Byte("qos", ((se & 0x01) << 7) | (ql & 0x7F), fuzzable=True),
         ),
     )
 
@@ -757,8 +761,9 @@ def create_info_object_setpoint_scaled(ioa: int, value: int, ql: int, se: int):
         children=(
             Bytes("ioa", ioa.to_bytes(3, "little"), size=3, fuzzable=True),
             Word("sva", value, endian="<", signed=True, fuzzable=True),
-            Byte("ql", ql, fuzzable=True),
-            Byte("se", se, fuzzable=True),
+            # QOS is a single octet: bit 7 = S/E (select/execute), bits 0-6 = QL.
+            # Emitting ql and se as two bytes over-runs the ASDU by one octet.
+            Byte("qos", ((se & 0x01) << 7) | (ql & 0x7F), fuzzable=True),
         ),
     )
 
@@ -775,20 +780,25 @@ def create_info_object_setpoint_float(ioa: int, value: float, ql: int, se: int):
                 endian="<",
                 fuzzable=True,
             ),
-            Byte("ql", ql, fuzzable=True),
-            Byte("se", se, fuzzable=True),
+            # QOS is a single octet: bit 7 = S/E (select/execute), bits 0-6 = QL.
+            # Emitting ql and se as two bytes over-runs the ASDU by one octet.
+            Byte("qos", ((se & 0x01) << 7) | (ql & 0x7F), fuzzable=True),
         ),
     )
 
 
-def create_info_object_bitstring_command(ioa: int, bitstring: int, se: int):
-    """Create bitstring command information object"""
+def create_info_object_bitstring_command(ioa: int, bitstring: int, se: int = 0):
+    """Create bitstring command (C_BO_NA_1) information object.
+
+    The info element is BSI (32-bit binary state, 4 octets) only — C_BO carries
+    no qualifier octet, so the trailing byte was over-running the ASDU. ``se`` is
+    accepted but ignored for call-site compatibility.
+    """
     return Block(
         "info_object",
         children=(
             Bytes("ioa", ioa.to_bytes(3, "little"), size=3, fuzzable=True),
             DWord("bitstring", bitstring, endian="<", fuzzable=True),
-            Byte("se", se, fuzzable=True),
         ),
     )
 
@@ -858,9 +868,13 @@ def create_info_object_parameter(ioa: int, value: int, quality: int, kind: int, 
         children=(
             Bytes("ioa", ioa.to_bytes(3, "little"), size=3, fuzzable=True),
             Word("value", value, endian="<", signed=True, fuzzable=True),
-            Byte("quality", quality, fuzzable=True),
-            Byte("kind", kind, fuzzable=True),
-            Byte("change", change, fuzzable=True),
+            # QPM is a single octet: KPA (bits 0-5) + LPC (bit 6) + POP (bit 7).
+            # Emitting quality/kind/change as three bytes over-runs the ASDU.
+            Byte(
+                "qpm",
+                (kind & 0x3F) | ((change & 0x01) << 6) | ((quality & 0x01) << 7),
+                fuzzable=True,
+            ),
         ),
     )
 
@@ -1859,9 +1873,8 @@ class IEC104Fuzzer(StatefulFuzzer):
                             endian="<",
                             fuzzable=True,
                         ),
-                        Byte("quality", 0x00, fuzzable=True),
-                        Byte("kind", 0x01, fuzzable=True),
-                        Byte("change", 0x01, fuzzable=True),
+                        # QPM is a single octet (KPA + LPC + POP), not three.
+                        Byte("qpm", (0x01 & 0x3F) | (0x01 << 6), fuzzable=True),
                     ),
                 ),
             )
