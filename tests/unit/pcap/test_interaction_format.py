@@ -381,18 +381,29 @@ def _ids(cases):
 _MAX_PACKETS = 1000  # Cap per-listener feeds to keep unit tests fast (ethercat has 44k)
 
 
-def _load_listener(case, _retries: int = 4):
+def _load_listener(case, _retries: int = 2):
     """Import and instantiate a listener, feed packets, return it.
 
-    tshark is spawned per call via pyshark; under heavy parallel test load
-    (``-n auto`` across the whole unit suite) tshark intermittently crashes on
-    resource contention. These crashes are transient, so retry a few times with
-    a short backoff before giving up.
+    pyshark drives tshark over asyncio. After a FileCapture closes its event
+    loop, Python 3.11's ``get_event_loop()`` will not recreate one, so a
+    subsequent capture in the same (xdist) worker raises ``RuntimeError: There
+    is no current event loop``. Install a fresh loop before each capture to make
+    the helper safe to call repeatedly in one process. tshark itself can also
+    crash transiently under heavy parallel load, so retry a couple of times.
     """
+    import asyncio
     import itertools
     import time
 
     from pyshark.capture.capture import TSharkCrashException
+
+    # pyshark calls asyncio.get_event_loop(); guarantee a live loop exists.
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
     mod = importlib.import_module(f"oida.pcap.passive.{case['module']}")
     cls = getattr(mod, case["cls"])
@@ -412,8 +423,9 @@ def _load_listener(case, _retries: int = 4):
     )
     try:
         listener.feed_packets(itertools.islice(iter(cap), _MAX_PACKETS))
-    except TSharkCrashException:
+    except (TSharkCrashException, RuntimeError):
         if _retries > 0:
+            asyncio.set_event_loop(asyncio.new_event_loop())
             time.sleep(0.5)
             return _load_listener(case, _retries=_retries - 1)
         raise
