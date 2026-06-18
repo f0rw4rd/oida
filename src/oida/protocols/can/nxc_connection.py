@@ -914,6 +914,11 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_send(self, spec: str) -> None:
         """Handle sending a single raw CAN frame."""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--send injects raw frames onto the bus (can drive actuators) — requires --confirm"
+            )
+            return
         try:
             parts = spec.split("#", 1)
             arb_id = int(parts[0].strip(), 0)
@@ -937,6 +942,12 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_send_file(self, filepath: str) -> None:
         """Handle sending CAN frames from a file."""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--send-file injects raw frames onto the bus (can drive actuators) — "
+                "requires --confirm"
+            )
+            return
         filepath = os.path.realpath(filepath)
         try:
             with open(filepath) as f:
@@ -957,6 +968,12 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_replay(self, filepath: str) -> None:
         """Handle replaying CAN traffic from a log file."""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--replay re-sends every captured frame onto the bus (incl. write/diagnostic "
+                "commands) — requires --confirm"
+            )
+            return
         can_mod = _python_can()
 
         speed = float(getattr(self.args, "replay_speed", 1.0))

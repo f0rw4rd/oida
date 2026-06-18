@@ -40,7 +40,15 @@ Examples:
     add_target_argument(coap_parser, help_text="Target IP or hostname")
 
     # Network options (--port, --timeout)
-    add_network_options(coap_parser, default_port=5683)
+    # Register --port with default=None (not 5683) so the connection layer can
+    # resolve the effective port at runtime: plain CoAP -> 5683, DTLS -> 5684.
+    # With a concrete default, args.port would never be None and every DTLS
+    # `... or DEFAULT_DTLS_PORT` fallback would be dead, targeting cleartext 5683.
+    add_network_options(
+        coap_parser,
+        default_port=None,
+        port_help="Target port (default: 5683 for CoAP, 5684 for DTLS/CoAPs)",
+    )
 
     # Discovery options
     # Resource enumeration via /.well-known/core runs unconditionally on every

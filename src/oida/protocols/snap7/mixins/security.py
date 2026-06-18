@@ -51,14 +51,25 @@ class SecurityMixin(_ScannerBase):
             has_protection = any(protection_info.values())
             all_zero = all(v == 0 for v in protection_info.values())
 
+            # In the S7 protection encoding the field value IS the
+            # protection level (1 = no protection / full read+write without
+            # password, 2 = write-protected, 3 = read/write protected).
+            # Mirror SZLParser._parse_0x0132: take the strongest level
+            # advertised across the protection-relevant fields.
+            level = max(
+                protection_info["sch_schal"],
+                protection_info["sch_par"],
+                protection_info["sch_rel"],
+            )
+
             if all_zero:
                 level = 0
                 desc = "Indeterminate (CPU did not expose protection SZL)"
-            elif protection_info["sch_schal"] == 0:
-                level = 2
+            elif level <= 1:
+                desc = "No protection - Full read/write access"
+            elif level == 2:
                 desc = "Read access - Write protected"
             else:
-                level = 3
                 desc = "Full protection - Password required"
 
             self.logger.display(f"Protection Level: {level} - {desc}")

@@ -38,9 +38,29 @@ class coap(NetworkConnection):
     def __init__(self, args, db, host):
         self.scanner = None
         self._scan_results = None
+        # Capture the user-supplied port (None when -p is omitted) BEFORE
+        # super().__init__() — NetworkConnection.__init__ clobbers args.port
+        # with self.default_port (5683) whenever it is falsy, which would
+        # otherwise make every DTLS `... or DEFAULT_DTLS_PORT` fallback dead.
+        self._user_port = getattr(args, "port", None)
         # Set port before super().__init__() which calls proto_flow()
-        self.port = getattr(args, "port", None) or self.default_port
+        self.port = self._user_port or self.default_port
         super().__init__(args, db, host)
+
+    def _resolve_dtls_port(self):
+        """Effective DTLS port: explicit -p wins, else DEFAULT_DTLS_PORT (5684).
+
+        ``_user_port`` is the port the user actually passed (None when -p is
+        omitted), captured in __init__ before NetworkConnection clobbers
+        args.port. Fall back to args.port for instances built without __init__.
+        """
+        _missing = object()
+        user_port = getattr(self, "_user_port", _missing)
+        if user_port is _missing:
+            # Instance built without __init__ (e.g. unit-test mocks): fall back
+            # to args.port, which such tests set explicitly.
+            user_port = getattr(getattr(self, "args", None), "port", None)
+        return user_port or DEFAULT_DTLS_PORT
 
     def proto_flow(self):
         """Main CoAP scanning workflow."""
@@ -135,7 +155,7 @@ class coap(NetworkConnection):
         instead of silently failing against cleartext 5683.
         """
         self.scanner._scheme = "coaps"
-        dtls_port = getattr(self.args, "port", None) or DEFAULT_DTLS_PORT
+        dtls_port = self._resolve_dtls_port()
         self.scanner.args["rport"] = dtls_port
         self.port = dtls_port
 
@@ -388,7 +408,7 @@ class coap(NetworkConnection):
 
     def _try_dtls_cert(self, cert_path, key_path, ca_path):
         """Attempt DTLS connection with certificate authentication."""
-        dtls_port = getattr(self.args, "port", None) or DEFAULT_DTLS_PORT
+        dtls_port = self._resolve_dtls_port()
         timeout = getattr(self.args, "timeout", 5) or 5
 
         self.logger.info("Trying DTLS certificate authentication")
@@ -410,7 +430,7 @@ class coap(NetworkConnection):
 
     def _try_dtls_rpk(self, rpk_path):
         """Attempt DTLS connection with Raw Public Key authentication."""
-        dtls_port = getattr(self.args, "port", None) or DEFAULT_DTLS_PORT
+        dtls_port = self._resolve_dtls_port()
         timeout = getattr(self.args, "timeout", 5) or 5
 
         self.logger.info("Trying DTLS RPK authentication")
@@ -450,7 +470,7 @@ class coap(NetworkConnection):
             self.logger.debug("No PSK key provided, skipping DTLS bruteforce")
             return False
 
-        dtls_port = getattr(self.args, "port", None) or DEFAULT_DTLS_PORT
+        dtls_port = self._resolve_dtls_port()
         timeout = getattr(self.args, "timeout", 5) or 5
 
         combinations = [(ident, key) for ident in identities for key in keys]

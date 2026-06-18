@@ -181,8 +181,15 @@ class TestDiscoverActions:
         res = s.discover(conn)
         assert res["key_write"]["error"] == "Missing --confirm flag"
 
+    def test_group_write_requires_confirm(self, fake_xknx):
+        s = make_scanner({"group-write": "1/2/3:01", "confirm": False})
+        conn = make_conn()
+        res = s.discover(conn)
+        assert res["group_write"]["error"] == "Missing --confirm flag"
+        conn.telegrams.put.assert_not_awaited()
+
     def test_group_write_action(self, fake_xknx):
-        s = make_scanner({"group-write": "1/2/3:01"})
+        s = make_scanner({"group-write": "1/2/3:01", "confirm": True})
         conn = make_conn()
         res = s.discover(conn)
         assert res["group_write"]["success"] is True

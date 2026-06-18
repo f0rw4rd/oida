@@ -4321,5 +4321,61 @@ class TestCANopenImports(unittest.TestCase):
         self.assertTrue(callable(getattr(scanner, "canopen_modbus_register_map", None)))
 
 
+class TestNXCConfirmGate(unittest.TestCase):
+    """Live-bus injection handlers must be gated on --confirm."""
+
+    def _make_conn(self, confirm):
+        from oida.protocols.can.nxc_connection import can as NXCConnection
+
+        # Build a bare instance: __init__ triggers proto_flow / real I/O, so
+        # bypass it and stub only the attributes the send/replay handlers touch.
+        conn = object.__new__(NXCConnection)
+        conn.args = MagicMock(confirm=confirm, replay_speed=1.0)
+        conn.logger = MagicMock()
+        conn.scanner = MagicMock()
+        conn.scanner.send_message.return_value = True
+        conn.scanner.recv_message.return_value = None
+        conn.conn = MagicMock()
+        return conn
+
+    def test_send_skipped_without_confirm(self):
+        conn = self._make_conn(confirm=False)
+        conn._handle_send("0x123#DEADBEEF")
+        conn.scanner.send_message.assert_not_called()
+        conn.logger.fail.assert_called_once()
+
+    def test_send_runs_with_confirm(self):
+        conn = self._make_conn(confirm=True)
+        conn._handle_send("0x123#DEADBEEF")
+        conn.scanner.send_message.assert_called_once()
+
+    def test_send_file_skipped_without_confirm(self):
+        import tempfile
+
+        conn = self._make_conn(confirm=False)
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+            f.write("0x123#DEADBEEF\n")
+            path = f.name
+        conn._handle_send_file(path)
+        conn.scanner.send_message.assert_not_called()
+        conn.logger.fail.assert_called_once()
+
+    def test_replay_skipped_without_confirm(self):
+        import tempfile
+
+        conn = self._make_conn(confirm=False)
+        with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False) as f:
+            f.write("(1234567890.123456) vcan0 123#DEADBEEF\n")
+            path = f.name
+        with patch.object(
+            __import__("oida.protocols.can.nxc_connection", fromlist=["_python_can"]),
+            "_python_can",
+        ):
+            conn._handle_replay(path)
+        conn.scanner.send_message.assert_not_called()
+        conn.conn.send.assert_not_called()
+        conn.logger.fail.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()

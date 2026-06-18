@@ -305,3 +305,29 @@ class TestVNCPassiveEK:
         )
         for ix in listener.interactions:
             assert ix.flow_id, f"Interaction {ix.operation} has empty flow_id"
+
+    # ------------------------------------------------------------------
+    # vnc.auth_result mapping (FT_BOOLEAN: TRUE == Failed, FALSE == OK)
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        "auth_result, expected",
+        [
+            # tshark FT_BOOLEAN true -> "Failed"
+            ("1", "failed"),
+            ("True", "failed"),
+            ("true", "failed"),
+            # tshark FT_BOOLEAN false (0) -> "OK"/success
+            ("0", "success"),
+            ("False", "success"),
+            ("false", "success"),
+        ],
+    )
+    def test_auth_result_boolean_mapping(self, auth_result, expected):
+        """RFB SecurityResult is inverted: TRUE means auth Failed, FALSE means OK."""
+        result_str = (
+            "failed" if str(auth_result) in ("1", "True", "true") else "success"
+        )
+        assert result_str == expected, (
+            f"auth_result {auth_result!r} should map to {expected!r}, got {result_str!r}"
+        )

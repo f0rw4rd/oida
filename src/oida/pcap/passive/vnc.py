@@ -351,7 +351,11 @@ class VNCPassiveListener(PySharkListenerBase):
         # Track auth result
         auth_result = self.get_field(vnc, "auth_result")
         if auth_result is not None:
-            result_str = "success" if auth_result in ("1", "True") else "failed"
+            # RFB SecurityResult: tshark FT_BOOLEAN where TRUE means Failed,
+            # FALSE (0) means OK/success. Invert accordingly.
+            result_str = (
+                "failed" if str(auth_result) in ("1", "True", "true") else "success"
+            )
             self._record_interaction(
                 now,
                 src_ip,

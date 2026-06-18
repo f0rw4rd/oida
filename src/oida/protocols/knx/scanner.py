@@ -304,11 +304,15 @@ class KNXScanner(
                 individual_addr = self.args.get("individual-address", "1.1.1")
                 results["adc_read"] = await self._read_adc(knx, individual_addr, adc_channel)
 
-            # Group write
+            # Group write (dangerous - requires confirm)
             group_write_arg = self.args.get("group-write")
             if group_write_arg:
-                ga, value = self._parse_group_write(group_write_arg)
-                results["group_write"] = await self._write_group_value(knx, ga, value)
+                if self.args.get("confirm"):
+                    ga, value = self._parse_group_write(group_write_arg)
+                    results["group_write"] = await self._write_group_value(knx, ga, value)
+                else:
+                    self.logger.fail("--group-write requires --confirm flag (DANGEROUS operation)")
+                    results["group_write"] = {"error": "Missing --confirm flag"}
 
             # Device restart
             if self.args.get("restart"):

@@ -457,6 +457,70 @@ class TestProtoArgs(unittest.TestCase):
         args = main_parser.parse_args(["coap", "127.0.0.1", "-u", "my-client"])
         assert args.psk_identity == "my-client"
 
+    def test_port_defaults_to_none(self):
+        """--port must default to None so DTLS can resolve to 5684 at runtime.
+
+        Regression: when --port defaulted to 5683, args.port was never None and
+        every DTLS `... or DEFAULT_DTLS_PORT` fallback was dead, so DTLS hammered
+        the cleartext port 5683 instead of 5684.
+        """
+        import argparse
+        from oida.protocols.coap.proto_args import proto_args
+
+        parent = argparse.ArgumentParser(add_help=False)
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        proto_args(subparsers, [parent])
+
+        # No -p -> None (NOT 5683)
+        args = main_parser.parse_args(["coap", "127.0.0.1"])
+        assert args.port is None
+
+        # Explicit -p still parses normally
+        args = main_parser.parse_args(["coap", "127.0.0.1", "-p", "1234"])
+        assert args.port == 1234
+
+
+class TestDTLSPortResolution(unittest.TestCase):
+    """End-to-end: the effective DTLS port must be 5684 by default, -p wins."""
+
+    def _build_instance(self, argv):
+        """Drive the real coap.__init__ (proto_flow/_resolve_host patched)."""
+        import argparse
+        from oida.protocols.coap.proto_args import proto_args
+        from oida.protocols.coap import coap as CoAPClass
+
+        parent = argparse.ArgumentParser(add_help=False)
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        proto_args(subparsers, [parent])
+        args = main_parser.parse_args(argv)
+
+        with (
+            patch.object(CoAPClass, "proto_flow", lambda self: None),
+            patch.object(CoAPClass, "_resolve_host", lambda self, host: host),
+        ):
+            return CoAPClass(args, None, "127.0.0.1")
+
+    def test_default_dtls_port_is_5684(self):
+        """No -p: DTLS resolves to 5684 even though NetworkConnection sets args.port=5683."""
+        inst = self._build_instance(["coap", "127.0.0.1", "-D"])
+        # NetworkConnection clobbers args.port to default_port (5683); the
+        # user-supplied port was captured as None before that.
+        assert inst._user_port is None
+        assert inst._resolve_dtls_port() == 5684
+
+    def test_default_plain_port_is_5683(self):
+        """No -p: plain CoAP still resolves to 5683."""
+        inst = self._build_instance(["coap", "127.0.0.1"])
+        assert inst.port == 5683
+
+    def test_explicit_port_wins_for_dtls(self):
+        """Explicit -p overrides the DTLS default."""
+        inst = self._build_instance(["coap", "127.0.0.1", "-D", "-p", "15684"])
+        assert inst._user_port == 15684
+        assert inst._resolve_dtls_port() == 15684
+
 
 # ---------------------------------------------------------------------------
 # Credential Parsing Integration Tests
