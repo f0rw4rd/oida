@@ -656,6 +656,8 @@ _INTENTIONAL_MALFORMED_KEYWORDS = (
 _INTENTIONAL_MALFORMED: set = {
     "dns/DNS_No_Null_Term",  # deliberately omits the QNAME root label
     "dns/DNS_EDNS0_OPTIONS",  # CVE-2020-8616 oversized-option overflow
+    "dhcp/DHCP_OPTION_CHAIN",  # option-chain parser overflow attack
+    "dhcp/DHCP_Option_Refcount",  # CVE-2022-2928 option refcount overflow
 }
 
 # Raw L2/L3 protocols are excluded from the all-requests validator: their frames
@@ -669,9 +671,9 @@ _ALL_REQUESTS_RAW_EXCLUDE = {"ethernet", "ipv4", "ipv6", "icmp", "icmpv6"}
 # DNP3/RTU CRC and mDNS endianness bugs). xfail'd here so the validator ships
 # green and these are tracked; remove a protocol once its requests are fixed.
 # DNS shares mDNS's big-endian/flags bug; the rest are length/encoding bugs.
-_KNOWN_STRUCTURAL_BUGS = {
-    "dhcp",
-}
+# Empty: all protocols whose well-formed requests previously produced malformed
+# frames have been fixed (dns, bacnet, dhcp, dhcpv6, coap, http, iec104, mqtt).
+_KNOWN_STRUCTURAL_BUGS: set = set()
 
 
 def _is_wellformed_request(protocol_name: str, req_name: str) -> bool:
