@@ -1,0 +1,348 @@
+{
+  "vendor": "Herholdt Controls",
+  "model": "ECSEM ECSAN ECSPM / ECS / M 1 PRO M 3 PRO",
+  "description": "Herholdt Controls ECSEM ECSAN ECSPM / ECS / M 1 PRO M 3 PRO power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: ECSEM ECSAN ECSPM, ECS, M 1 PRO M 3 PRO",
+  "registers": {
+    "device_type": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "description": "Device type"
+    },
+    "firmware_version": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Firmware version"
+    },
+    "range_overflow_alarm": {
+      "address": 4101,
+      "type": "u16",
+      "access": "r",
+      "description": "Range overflow alarm"
+    },
+    "running_tariff": {
+      "address": 4102,
+      "type": "u32",
+      "access": "r",
+      "description": "Running tariff"
+    },
+    "pid_bytes_1_and_2": {
+      "address": 4104,
+      "type": "u16",
+      "access": "r",
+      "description": "PID bytes 1 and 2"
+    },
+    "pid_bytes_3_and_4": {
+      "address": 4105,
+      "type": "u16",
+      "access": "r",
+      "description": "PID bytes 3 and 4"
+    },
+    "pid_bytes_5_and_6": {
+      "address": 4106,
+      "type": "u16",
+      "access": "r",
+      "description": "PID bytes 5 and 6"
+    },
+    "pid_bytes_7_and_8": {
+      "address": 4107,
+      "type": "u16",
+      "access": "r",
+      "description": "PID bytes 7 and 8"
+    },
+    "pid_bytes_9_and_10": {
+      "address": 4108,
+      "type": "u16",
+      "access": "r",
+      "description": "PID bytes 9 and 10"
+    },
+    "pid_bytes_11_and_12": {
+      "address": 4109,
+      "type": "u16",
+      "access": "r",
+      "description": "PID bytes 11 and 12"
+    },
+    "pid_bytes_13_and_14": {
+      "address": 4110,
+      "type": "u16",
+      "access": "r",
+      "description": "PID bytes 13 and 14"
+    },
+    "active_energy_1st_phase_t1_imp": {
+      "address": 4119,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 1st phase T1, imp",
+      "unit": "kWh"
+    },
+    "active_energy_2nd_phase_t1_imp": {
+      "address": 4123,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 2nd phase T1, imp",
+      "unit": "kWh"
+    },
+    "active_energy_3rd_phase_t1_imp": {
+      "address": 4127,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 3rd phase T1, imp",
+      "unit": "kWh"
+    },
+    "active_energy_sum_t1_imp": {
+      "address": 4131,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy sum T1, imp",
+      "unit": "kWh"
+    },
+    "active_energy_1st_phase_t2_imp": {
+      "address": 4135,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 1st phase T2, imp",
+      "unit": "kWh"
+    },
+    "active_energy_2nd_phase_t2_imp": {
+      "address": 4139,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 2nd phase T2, imp",
+      "unit": "kWh"
+    },
+    "active_energy_3rd_phase_t2_imp": {
+      "address": 4143,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 3rd phase T2, imp",
+      "unit": "kWh"
+    },
+    "active_energy_sum_t2_imp": {
+      "address": 4147,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy sum T2, imp",
+      "unit": "kWh"
+    },
+    "active_power_1st_phase": {
+      "address": 4151,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power 1st phase"
+    },
+    "active_power_2nd_phase": {
+      "address": 4153,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power 2nd phase"
+    },
+    "active_power_3rd_phase": {
+      "address": 4155,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power 3rd phase"
+    },
+    "active_power_sum": {
+      "address": 4157,
+      "type": "i64",
+      "access": "r",
+      "description": "Active power sum"
+    },
+    "active_energy_1st_phase_t1_exp": {
+      "address": 4161,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 1st phase T1, exp",
+      "unit": "kWh"
+    },
+    "active_energy_2nd_phase_t1_exp": {
+      "address": 4165,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 2nd phase T1, exp",
+      "unit": "kWh"
+    },
+    "active_energy_3rd_phase_t1_exp": {
+      "address": 4169,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 3rd phase T1, exp",
+      "unit": "kWh"
+    },
+    "active_energy_sum_t1_exp": {
+      "address": 4173,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy sum T1, exp",
+      "unit": "kWh"
+    },
+    "active_energy_1st_phase_t2_exp": {
+      "address": 4177,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 1st phase T2, exp",
+      "unit": "kWh"
+    },
+    "active_energy_2nd_phase_t2_exp": {
+      "address": 4181,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 2nd phase T2, exp",
+      "unit": "kWh"
+    },
+    "active_energy_3rd_phase_t2_exp": {
+      "address": 4185,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy 3rd phase T2, exp",
+      "unit": "kWh"
+    },
+    "active_energy_sum_t2_exp": {
+      "address": 4189,
+      "type": "i64",
+      "access": "r",
+      "description": "Active energy sum T2, exp",
+      "unit": "kWh"
+    },
+    "reactive_energy_1st_phase_t1_imp": {
+      "address": 4193,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 1st phase T1, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_2nd_phase_t1_imp": {
+      "address": 4197,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 2nd phase T1, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_3rd_phase_t1_imp": {
+      "address": 4201,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 3rd phase T1, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_sum_t1_imp": {
+      "address": 4205,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy sum T1, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_1st_phase_t2_imp": {
+      "address": 4209,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 1st phase T2, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_2nd_phase_t2_imp": {
+      "address": 4213,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 2nd phase T2, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_3rd_phase_t2_imp": {
+      "address": 4217,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 3rd phase T2, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_sum_t2_imp": {
+      "address": 4221,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy sum T2, imp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_1st_phase_t1_exp": {
+      "address": 4225,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 1st phase T1, exp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_2nd_phase_t1_exp": {
+      "address": 4229,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 2nd phase T1, exp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_3rd_phase_t1_exp": {
+      "address": 4233,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 3rd phase T1, exp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_sum_t1_exp": {
+      "address": 4237,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy sum T1, exp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_1st_phase_t2_exp": {
+      "address": 4241,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 1st phase T2, exp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_2nd_phase_t2_exp": {
+      "address": 4245,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 2nd phase T2, exp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_3rd_phase_t2_exp": {
+      "address": 4249,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy 3rd phase T2, exp",
+      "unit": "kvarh"
+    },
+    "reactive_energy_sum_t2_exp": {
+      "address": 4253,
+      "type": "i64",
+      "access": "r",
+      "description": "Reactive energy sum T2, exp",
+      "unit": "kvarh"
+    },
+    "reactive_power_1st_phase": {
+      "address": 4257,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power 1st phase",
+      "unit": "kvar"
+    },
+    "reactive_power_2nd_phase": {
+      "address": 4259,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power 2nd phase",
+      "unit": "kvar"
+    },
+    "reactive_power_3rd_phase": {
+      "address": 4261,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power 3rd phase",
+      "unit": "kvar"
+    }
+  }
+}

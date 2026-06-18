@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HTTP/2 Fuzzing Testbed</title>
+</head>
+<body>
+    <h1>HTTP/2 Fuzzing Testbed - nghttp2</h1>
+    <p>This server is configured for HTTP/2 protocol fuzzing with frame-level logging.</p>
+    <h2>Endpoints</h2>
+    <ul>
+        <li><a href="/">/</a> - This page</li>
+        <li><code>/echo</code> - Echo request (Python server only)</li>
+        <li><code>/status/{code}</code> - Return specific status code (Python server only)</li>
+        <li><code>/.well-known/h2/state</code> - Server state (Python server only)</li>
+        <li><code>/.well-known/h2/frames</code> - Frame events (Python server only)</li>
+        <li><code>/.well-known/h2/errors</code> - Protocol errors (Python server only)</li>
+    </ul>
+    <h2>Server Info</h2>
+    <pre>
+Server: nghttpd (nghttp2)
+Protocol: HTTP/2
+Ports: 8443 (TLS), 8080 (h2c)
+    </pre>
+</body>
+</html>

@@ -1,0 +1,313 @@
+{
+  "vendor": "Carlo Gavazzi",
+  "model": "WM 30 WM 40",
+  "description": "Carlo Gavazzi WM 30 WM 40 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "communication_module_firmware_version_only_in_case_mceth_or_mcbacip_modules": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Communication module firmware version (only in case mceth or mcbacip modules)"
+    },
+    "analogue_output_module_firmware_version_position_1_only_in_case_moa2_or_mov2_modules": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Analogue output module firmware version (position 1 only in case moa2 or mov2 modules)"
+    },
+    "advanced_six_channel_digital_inputs_four_channel_outputs_module_firmware_version_only_in_case_mfi6r4_or_mfi6o6": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Advanced six channel digital inputs + four channel outputs module firmware version (only in case mfi6r4 or mfi6o6)"
+    },
+    "process_module_only_in_case_matp_or_matpn": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Process module (only in case matp or matpn)"
+    },
+    "analogue_output_module_firmware_version_position_2_only_in_case_moa2_or_mov2_modules": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Analogue output module firmware version (position 2 only in case moa2 or mov2 modules)"
+    },
+    "carlo_gavazzi_controls_identification_code": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Carlo gavazzi controls identification code"
+    },
+    "letter_1_from_sx_letter_2_from_sx": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Letter 1 (from sx) letter 2 (from sx)"
+    },
+    "letter_3_from_sx_letter_4_from_sx": {
+      "address": 33,
+      "type": "u16",
+      "access": "r",
+      "description": "Letter 3 (from sx) letter 4 (from sx)"
+    },
+    "letter_5_from_sx_letter_6_from_sx": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Letter 5 (from sx) letter 6 (from sx)"
+    },
+    "letter_7_from_sx_letter_8_from_sx": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Letter 7 (from sx) letter 8 (from sx)"
+    },
+    "letter_9_from_sx_letter_10_from_sx": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Letter 9 (from sx) letter 10 (from sx)"
+    },
+    "letter_11_from_sx_letter_12_from_sx": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Letter 11 (from sx) letter 12 (from sx)"
+    },
+    "letter_13_from_sx": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Letter 13 (from sx)"
+    },
+    "v_l1_n": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "V L1 N"
+    },
+    "v_l2_n": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "V L2 N"
+    },
+    "v_l3_n": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "V L3 N"
+    },
+    "v_l_n": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "V L N"
+    },
+    "v_l1_l2": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "V L1 L2"
+    },
+    "v_l2_l3": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "V L2 L3"
+    },
+    "v_l3_l1": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "V L3 L1"
+    },
+    "v_l_l": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "V L L"
+    },
+    "a_l1": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "A L1"
+    },
+    "a_l2": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "A L2"
+    },
+    "a_l3": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "A L3"
+    },
+    "a_n": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "A N"
+    },
+    "w_l1": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "W L1"
+    },
+    "w_l2": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "W L2"
+    },
+    "w_l3": {
+      "address": 108,
+      "type": "f32",
+      "access": "r",
+      "description": "W L3"
+    },
+    "w": {
+      "address": 110,
+      "type": "f32",
+      "access": "r",
+      "description": "W"
+    },
+    "va_l1": {
+      "address": 112,
+      "type": "f32",
+      "access": "r",
+      "description": "Va L1"
+    },
+    "va_l2": {
+      "address": 114,
+      "type": "f32",
+      "access": "r",
+      "description": "Va L2"
+    },
+    "va_l3": {
+      "address": 116,
+      "type": "f32",
+      "access": "r",
+      "description": "Va L3"
+    },
+    "va": {
+      "address": 118,
+      "type": "f32",
+      "access": "r",
+      "description": "Va"
+    },
+    "var_l1": {
+      "address": 120,
+      "type": "f32",
+      "access": "r",
+      "description": "Var L1"
+    },
+    "var_l2": {
+      "address": 122,
+      "type": "f32",
+      "access": "r",
+      "description": "Var L2"
+    },
+    "var_l3": {
+      "address": 124,
+      "type": "f32",
+      "access": "r",
+      "description": "Var L3"
+    },
+    "var": {
+      "address": 126,
+      "type": "f32",
+      "access": "r",
+      "description": "Var"
+    },
+    "pf_l1": {
+      "address": 128,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L1"
+    },
+    "pf_l2": {
+      "address": 130,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L2"
+    },
+    "pf_l3": {
+      "address": 132,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf L3"
+    },
+    "pf": {
+      "address": 134,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf"
+    },
+    "hz": {
+      "address": 136,
+      "type": "f32",
+      "access": "r",
+      "description": "Hz"
+    },
+    "asymmetry_l_n": {
+      "address": 138,
+      "type": "f32",
+      "access": "r",
+      "description": "Asymmetry L N"
+    },
+    "asymmetry_l_l": {
+      "address": 140,
+      "type": "f32",
+      "access": "r",
+      "description": "Asymmetry L L"
+    },
+    "phase_sequence": {
+      "address": 142,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase sequence"
+    },
+    "k_factor_l1": {
+      "address": 144,
+      "type": "f32",
+      "access": "r",
+      "description": "K factor L1"
+    },
+    "k_factor_l2": {
+      "address": 146,
+      "type": "f32",
+      "access": "r",
+      "description": "K factor L2"
+    },
+    "k_factor_l3": {
+      "address": 148,
+      "type": "f32",
+      "access": "r",
+      "description": "K factor L3"
+    },
+    "temperature": {
+      "address": 150,
+      "type": "f32",
+      "access": "r",
+      "description": "Temperature"
+    },
+    "analogue_input": {
+      "address": 152,
+      "type": "f32",
+      "access": "r",
+      "description": "Analogue input"
+    }
+  }
+}

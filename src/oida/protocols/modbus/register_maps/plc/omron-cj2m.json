@@ -1,0 +1,229 @@
+{
+  "vendor": "Omron",
+  "model": "CJ2M Series",
+  "description": "Omron CJ2M modular PLC Modbus register map with CJ1W-ETN21 Ethernet module",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: CJ1W-ETN21 Ethernet module REQUIRED for Modbus TCP. FC 0F (Write Multiple Coils) is NOT supported. For 32-bit DWORD, high word occupies lower register address. CJ2M-CPU3x models have built-in EtherNet/IP but NOT Modbus TCP.",
+  "source": "Omron CJ2 CPU Unit Operation Manual (W473), CJ1W-ETN21 Manual (W420)",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "notes": "pdu_range=0-65535, memory=CIO 0.00 - CIO 4095.15"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "notes": "pdu_range=0-5119, memory=CIO 0.00 - CIO 319.15"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "notes": "pdu_range=0-32767, memory=D0 - D32767"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "notes": "pdu_range=0-6143, memory=CIO 0 - CIO 6143"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "area": "CIO bits"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "D area"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "D area"
+    }
+  ],
+  "registers": {
+    "d0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data memory D0 (holding register 40001)",
+      "notes": "omron_address=D0"
+    },
+    "d100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data memory D100",
+      "notes": "omron_address=D100"
+    },
+    "d0_dword": {
+      "address": 0,
+      "type": "u32",
+      "access": "rw",
+      "description": "32-bit DWORD at D0 (D0 = high word, D1 = low word)",
+      "notes": "omron_address=D0-D1"
+    },
+    "cio0": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "CIO area word 0 (input register 30001)",
+      "notes": "omron_address=CIO 0"
+    },
+    "cio100": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "CIO area word 100",
+      "notes": "omron_address=CIO 100"
+    },
+    "h0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Holding area H0 (configurable mapping)",
+      "notes": "omron_address=H0"
+    },
+    "e0_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Extended data memory bank 0, address 0",
+      "notes": "omron_address=E0_0"
+    }
+  },
+  "coils": {
+    "cio0_0": {
+      "address": 0,
+      "access": "rw",
+      "description": "CIO bit 0.00",
+      "notes": "omron_address=CIO 0.00"
+    },
+    "cio0_15": {
+      "address": 15,
+      "access": "rw",
+      "description": "CIO bit 0.15",
+      "notes": "omron_address=CIO 0.15"
+    },
+    "w0_0": {
+      "address": 4096,
+      "access": "rw",
+      "description": "Work area bit W0.00",
+      "notes": "omron_address=W0.00"
+    }
+  },
+  "discrete_inputs": {
+    "cio_input_0_0": {
+      "address": 0,
+      "access": "r",
+      "description": "CIO input bit 0.00",
+      "notes": "omron_address=CIO 0.00 (input area)"
+    }
+  },
+  "extended_info": {
+    "ethernet_module": "CJ1W-ETN21",
+    "not_supported": {
+      "fc0f": "Write Multiple Coils (FC 15) is NOT supported"
+    },
+    "32bit_note": "For 32-bit DWORD values, high word occupies lower register address (big-endian word order)",
+    "memory_mapping": {
+      "coils": {
+        "pdu_address": "0-65535",
+        "omron_memory": "CIO 0.00 - CIO 4095.15",
+        "bits_per_word": 16,
+        "access": "rw"
+      },
+      "discrete_inputs": {
+        "pdu_address": "0-5119",
+        "omron_memory": "CIO 0.00 - CIO 319.15",
+        "access": "r"
+      },
+      "holding_registers": {
+        "pdu_address": "0-32767",
+        "omron_memory": "D0 - D32767",
+        "access": "rw"
+      },
+      "input_registers": {
+        "pdu_address": "0-6143",
+        "omron_memory": "CIO 0 - CIO 6143",
+        "access": "r"
+      }
+    },
+    "cj2m_models": {
+      "CJ2M-CPU11": {
+        "program_capacity": "5K steps",
+        "dm_size": "32K words",
+        "em_banks": 1
+      },
+      "CJ2M-CPU12": {
+        "program_capacity": "10K steps",
+        "dm_size": "32K words",
+        "em_banks": 1
+      },
+      "CJ2M-CPU13": {
+        "program_capacity": "20K steps",
+        "dm_size": "32K words",
+        "em_banks": 3
+      },
+      "CJ2M-CPU14": {
+        "program_capacity": "30K steps",
+        "dm_size": "32K words",
+        "em_banks": 6
+      },
+      "CJ2M-CPU15": {
+        "program_capacity": "60K steps",
+        "dm_size": "32K words",
+        "em_banks": 13
+      },
+      "CJ2M-CPU31": {
+        "program_capacity": "20K steps",
+        "dm_size": "160K words",
+        "em_banks": 25,
+        "ethernet": "built-in EtherNet/IP (NOT Modbus)"
+      },
+      "CJ2M-CPU32": {
+        "program_capacity": "30K steps",
+        "dm_size": "160K words",
+        "em_banks": 25,
+        "ethernet": "built-in EtherNet/IP (NOT Modbus)"
+      },
+      "CJ2M-CPU33": {
+        "program_capacity": "60K steps",
+        "dm_size": "160K words",
+        "em_banks": 25,
+        "ethernet": "built-in EtherNet/IP (NOT Modbus)"
+      },
+      "CJ2M-CPU34": {
+        "program_capacity": "100K steps",
+        "dm_size": "160K words",
+        "em_banks": 25,
+        "ethernet": "built-in EtherNet/IP (NOT Modbus)"
+      },
+      "CJ2M-CPU35": {
+        "program_capacity": "150K steps",
+        "dm_size": "160K words",
+        "em_banks": 25,
+        "ethernet": "built-in EtherNet/IP (NOT Modbus)"
+      }
+    },
+    "status_counters": {
+      "A202": "Exception response count",
+      "A203": "Read request count",
+      "A204": "Write request count",
+      "A205": "Socket error count"
+    },
+    "configuration_requirements": [
+      "Insert CJ1W-ETN21 module in CJ2M rack",
+      "Configure Modbus TCP settings via CX-Programmer",
+      "Set IP address, subnet mask, gateway",
+      "Configure memory area mapping if needed"
+    ]
+  },
+  "_source_verified": "Verified: CJ1W-ETN21 Ethernet module required for Modbus TCP; manual W421 confirmed at omron.eu"
+}

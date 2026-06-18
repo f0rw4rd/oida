@@ -1,0 +1,215 @@
+{
+  "vendor": "SunSpec",
+  "model": "Immediate Controls Model 123",
+  "description": "SunSpec Model 123 - Immediate inverter controls for connect/disconnect, power limiting, and reactive power",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 123,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 123 = Immediate Controls. Model length is 24 registers. Contains writable registers for grid operator curtailment: connect/disconnect, active power limiting (WMaxLimPct), power factor setpoints, reactive power control. Security-critical for DER management. Addresses include 2-register header (ID+Length).",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00123.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (123 = Immediate Controls)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length (24 registers)"
+    },
+    "conn_win_tms": {
+      "address": 2,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Time window for connect/disconnect (Conn_WinTms)"
+    },
+    "conn_rvrt_tms": {
+      "address": 3,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Timeout for connect/disconnect revert (Conn_RvrtTms)"
+    },
+    "conn": {
+      "address": 4,
+      "type": "u16",
+      "access": "rw",
+      "description": "Connect/disconnect inverter (Conn)",
+      "enum": {
+        "0": "DISCONNECT",
+        "1": "CONNECT"
+      }
+    },
+    "w_max_lim_pct": {
+      "address": 5,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 23,
+      "unit": "% WMax",
+      "description": "Active power limit as % of WMax (WMaxLimPct)"
+    },
+    "w_max_lim_pct_win_tms": {
+      "address": 6,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Time window for power limit change (WMaxLimPct_WinTms)"
+    },
+    "w_max_lim_pct_rvrt_tms": {
+      "address": 7,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Timeout for power limit revert (WMaxLimPct_RvrtTms)"
+    },
+    "w_max_lim_pct_rmp_tms": {
+      "address": 8,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Ramp time for power limit transition (WMaxLimPct_RmpTms)"
+    },
+    "w_max_lim_ena": {
+      "address": 9,
+      "type": "u16",
+      "access": "rw",
+      "description": "Enable active power limit (WMaxLim_Ena)",
+      "enum": {
+        "0": "DISABLED",
+        "1": "ENABLED"
+      }
+    },
+    "out_pf_set": {
+      "address": 10,
+      "type": "i16",
+      "access": "rw",
+      "scale_factor_register": 24,
+      "unit": "cos()",
+      "description": "Output power factor setpoint (OutPFSet)"
+    },
+    "out_pf_set_win_tms": {
+      "address": 11,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Time window for PF change (OutPFSet_WinTms)"
+    },
+    "out_pf_set_rvrt_tms": {
+      "address": 12,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Timeout for PF revert (OutPFSet_RvrtTms)"
+    },
+    "out_pf_set_rmp_tms": {
+      "address": 13,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Ramp time for PF transition (OutPFSet_RmpTms)"
+    },
+    "out_pf_set_ena": {
+      "address": 14,
+      "type": "u16",
+      "access": "rw",
+      "description": "Enable power factor setpoint (OutPFSet_Ena)",
+      "enum": {
+        "0": "DISABLED",
+        "1": "ENABLED"
+      }
+    },
+    "var_w_max_pct": {
+      "address": 15,
+      "type": "i16",
+      "access": "rw",
+      "scale_factor_register": 25,
+      "unit": "% WMax",
+      "description": "Reactive power as % of WMax (VArWMaxPct)"
+    },
+    "var_max_pct": {
+      "address": 16,
+      "type": "i16",
+      "access": "rw",
+      "scale_factor_register": 25,
+      "unit": "% VArMax",
+      "description": "Reactive power as % of VArMax (VArMaxPct)"
+    },
+    "var_aval_pct": {
+      "address": 17,
+      "type": "i16",
+      "access": "rw",
+      "scale_factor_register": 25,
+      "unit": "% VArAval",
+      "description": "Reactive power as % of available (VArAvalPct)"
+    },
+    "var_pct_win_tms": {
+      "address": 18,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Time window for VAr change (VArPct_WinTms)"
+    },
+    "var_pct_rvrt_tms": {
+      "address": 19,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Timeout for VAr revert (VArPct_RvrtTms)"
+    },
+    "var_pct_rmp_tms": {
+      "address": 20,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Ramp time for VAr transition (VArPct_RmpTms)"
+    },
+    "var_pct_mod": {
+      "address": 21,
+      "type": "u16",
+      "access": "rw",
+      "description": "Reactive power control mode (VArPct_Mod)",
+      "enum": {
+        "1": "WMax",
+        "2": "VArMax",
+        "3": "VArAval"
+      }
+    },
+    "var_pct_ena": {
+      "address": 22,
+      "type": "u16",
+      "access": "rw",
+      "description": "Enable reactive power control (VArPct_Ena)",
+      "enum": {
+        "0": "DISABLED",
+        "1": "ENABLED"
+      }
+    },
+    "w_max_lim_pct_sf": {
+      "address": 23,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for WMaxLimPct (WMaxLimPct_SF)"
+    },
+    "out_pf_set_sf": {
+      "address": 24,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for OutPFSet (OutPFSet_SF)"
+    },
+    "var_pct_sf": {
+      "address": 25,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for VArPct (VArPct_SF)"
+    }
+  },
+  "_source_verified": "Verified: Model 123 register offsets confirmed against official sunspec/models/smdx/smdx_00123.xml"
+}

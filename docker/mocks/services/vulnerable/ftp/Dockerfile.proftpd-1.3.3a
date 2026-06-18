@@ -1,0 +1,80 @@
+# ProFTPD 1.3.3a - CVE-2010-4221 (Telnet IAC Stack Buffer Overflow)
+# Stack-based buffer overflow in pr_netio_telnet_gets function
+# Reference: https://www.exploit-db.com/exploits/16851
+#
+# VULNERABLE: Sending large number of Telnet IAC (0xFF) commands causes stack overflow
+# Affects: ProFTPD 1.3.2rc3 through 1.3.3b
+#
+# For authorized security testing only
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and compile vulnerable ProFTPD 1.3.3a
+WORKDIR /tmp
+RUN wget -q http://ftp.riken.jp/net/ProFTPD/historic/source/proftpd-1.3.3a.tar.bz2 \
+    && tar xjf proftpd-1.3.3a.tar.bz2 \
+    && cd proftpd-1.3.3a \
+    && ./configure --prefix=/usr/local \
+        CFLAGS="-fno-stack-protector -z execstack -no-pie -g" \
+    && make -j$(nproc) \
+    && make install \
+    && cd / && rm -rf /tmp/*
+
+# Create FTP user for anonymous access
+RUN useradd -m -d /var/ftp -s /bin/false ftpuser \
+    && mkdir -p /var/ftp/pub \
+    && echo "Test file for CVE-2010-4221" > /var/ftp/pub/readme.txt \
+    && chown -R ftpuser:ftpuser /var/ftp
+
+# Create proftpd configuration
+RUN mkdir -p /usr/local/etc
+RUN cat > /usr/local/etc/proftpd.conf << 'EOF'
+# ProFTPD 1.3.3a - Vulnerable configuration for CVE-2010-4221 testing
+ServerName "ProFTPD 1.3.3a Vulnerable"
+ServerType standalone
+Port 2121
+DefaultServer on
+Umask 022
+
+# Run without chroot for testing
+DefaultRoot ~
+
+# Allow anonymous access
+<Anonymous /var/ftp>
+  User ftpuser
+  Group ftpuser
+  UserAlias anonymous ftpuser
+  MaxClients 10
+  <Directory *>
+    <Limit WRITE>
+      DenyAll
+    </Limit>
+  </Directory>
+</Anonymous>
+
+# Logging
+TransferLog /var/log/proftpd.log
+SystemLog /var/log/proftpd.log
+EOF
+
+# Create startup script
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+echo "Starting ProFTPD 1.3.3a (CVE-2010-4221 vulnerable)"
+echo "WARNING: This server is intentionally vulnerable for security testing"
+exec /usr/local/sbin/proftpd -n -c /usr/local/etc/proftpd.conf
+EOF
+RUN chmod +x /start.sh
+
+EXPOSE 2121
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD nc -zv localhost 2121 || exit 1
+
+CMD ["/start.sh"]

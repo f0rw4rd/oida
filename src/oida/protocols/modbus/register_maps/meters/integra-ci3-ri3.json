@@ -1,0 +1,363 @@
+{
+  "vendor": "Integra",
+  "model": "CI 3 RI 3",
+  "description": "Integra CI 3 RI 3 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v1": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "V1",
+      "unit": "V"
+    },
+    "v2": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "V2",
+      "unit": "V"
+    },
+    "v3": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "V3",
+      "unit": "V"
+    },
+    "a1": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "A1",
+      "unit": "A"
+    },
+    "a2": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "A2",
+      "unit": "A"
+    },
+    "a3": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "A3",
+      "unit": "A"
+    },
+    "kp1": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Kp1",
+      "unit": "kW"
+    },
+    "kp2": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Kp2",
+      "unit": "kW"
+    },
+    "kp3": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Kp3",
+      "unit": "kW"
+    },
+    "kva1": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Kva1",
+      "unit": "kVA"
+    },
+    "kva2": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Kva2",
+      "unit": "kVA"
+    },
+    "kva3": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Kva3",
+      "unit": "kVA"
+    },
+    "kvar1": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvar1",
+      "unit": "kVAr"
+    },
+    "kvar2": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvar2",
+      "unit": "kVAr"
+    },
+    "kvar3": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvar3",
+      "unit": "kVAr"
+    },
+    "pa1": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "Pa1",
+      "unit": "Degree"
+    },
+    "pa2": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Pa2",
+      "unit": "Degree"
+    },
+    "pa3": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Pa3",
+      "unit": "Degree"
+    },
+    "an": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "An",
+      "unit": "A"
+    },
+    "v12": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "V12",
+      "unit": "V"
+    },
+    "v23": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "V23",
+      "unit": "V"
+    },
+    "v31": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "V31",
+      "unit": "V"
+    },
+    "vlnavg": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "Vlnavg",
+      "unit": "V"
+    },
+    "aavg": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Aavg",
+      "unit": "A"
+    },
+    "asum": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Asum",
+      "unit": "A"
+    },
+    "vllavg": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "description": "Vllavg",
+      "unit": "V"
+    },
+    "kpsum": {
+      "address": 30,
+      "type": "u16",
+      "access": "r",
+      "description": "Kpsum",
+      "unit": "kW"
+    },
+    "kvasum": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvasum",
+      "unit": "kVA"
+    },
+    "kvarsum": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvarsum",
+      "unit": "kVAr"
+    },
+    "patot": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Patot",
+      "unit": "Degree"
+    },
+    "freq": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq",
+      "unit": "Hz"
+    },
+    "lo_egy_imp_pow": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Lo_egy_imp_pow",
+      "unit": "kWh"
+    },
+    "hi_egy_imp_pow": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Hi_egy_imp_pow",
+      "unit": "MWh"
+    },
+    "lo_egy_exp_pow": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Lo_egy_exp_pow",
+      "unit": "kWh"
+    },
+    "hi_egy_exp_pow": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Hi_egy_exp_pow",
+      "unit": "MWh"
+    },
+    "lo_egy_imp_var": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Lo_egy_imp_var",
+      "unit": "kVArh"
+    },
+    "hi_egy_imp_var": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "Hi_egy_imp_var",
+      "unit": "MVArh"
+    },
+    "lo_egy_exp_var": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "Lo_egy_exp_var",
+      "unit": "kVArh"
+    },
+    "hi_egy_exp_var": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "description": "Hi_egy_exp_var",
+      "unit": "MVArh"
+    },
+    "lo_egy_va": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Lo_egy_va",
+      "unit": "kAh"
+    },
+    "hi_egy_va": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Hi_egy_va",
+      "unit": "MVAh"
+    },
+    "lo_egy_amp": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Lo_egy_amp",
+      "unit": "Ah"
+    },
+    "hi_egy_amp": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Hi_egy_amp",
+      "unit": "kAh"
+    },
+    "kpsum_dmd": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Kpsum_dmd",
+      "unit": "kW"
+    },
+    "kpsum_max_dmd": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "Kpsum_max_dmd",
+      "unit": "kW"
+    },
+    "kvasum_dmd": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvasum_dmd",
+      "unit": "kVA"
+    },
+    "kvasum_max_dmd": {
+      "address": 51,
+      "type": "u16",
+      "access": "r",
+      "description": "Kvasum_max_dmd",
+      "unit": "kVA"
+    },
+    "a1_dmd": {
+      "address": 52,
+      "type": "u16",
+      "access": "r",
+      "description": "A1_dmd",
+      "unit": "A"
+    },
+    "a1_max_dmd": {
+      "address": 53,
+      "type": "u16",
+      "access": "r",
+      "description": "A1_max_dmd",
+      "unit": "A"
+    },
+    "a2_dmd": {
+      "address": 54,
+      "type": "u16",
+      "access": "r",
+      "description": "A2_dmd",
+      "unit": "A"
+    }
+  }
+}

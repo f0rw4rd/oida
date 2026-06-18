@@ -1,0 +1,425 @@
+{
+  "protocol": "iec104",
+  "display_filter": "iec60870_104",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:51:10.178417+00:00",
+  "dissector_fields": {
+    "total": 6,
+    "by_type": {
+      "FT_BYTES": 1,
+      "FT_UINT32": 4,
+      "FT_UINT8": 1
+    },
+    "fields": [
+      {
+        "name": "iec60870_104.apdulen",
+        "type": "FT_UINT8",
+        "description": "APDU Len"
+      },
+      {
+        "name": "iec60870_104.type",
+        "type": "FT_UINT32",
+        "description": "APCI type"
+      },
+      {
+        "name": "iec60870_104.utype",
+        "type": "FT_UINT32",
+        "description": "Apci U type"
+      },
+      {
+        "name": "iec60870_104.tx",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "iec60870_104.rx",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "iec60870_104.data",
+        "type": "FT_BYTES",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 9,
+    "by_pcap": {
+      "emreekin_iec104_baselines.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_deneme.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_deneme2.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_data",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_ip_value.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_local_value.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_logfile.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_short.pcap": [],
+      "emreekin_iec104_type33.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_data",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type50.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type58_59.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type59.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_data",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type60.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type61.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type62.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type63.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_data",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type63_1.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "emreekin_iec104_type64.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "eset_industroyer2_sample1.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "eset_industroyer2_sample2.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "iti_090813_diverse.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "iti_java_rmi_and_iec.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "iti_test_dissect_iec104.pcap": [
+        "_ws_expert",
+        "_ws_malformed",
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_data",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "ndpi_iec104.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "wireshark_iec104.pcap": [
+        "iec60870_104_iec60870_104_apdulen",
+        "iec60870_104_iec60870_104_rx",
+        "iec60870_104_iec60870_104_tx",
+        "iec60870_104_iec60870_104_type",
+        "iec60870_104_iec60870_104_utype",
+        "iec60870_asdu_iec60870_asdu_start"
+      ],
+      "wireshark_iec104_sq.pcapng": []
+    },
+    "union": [
+      "_ws_expert",
+      "_ws_malformed",
+      "iec60870_104_iec60870_104_apdulen",
+      "iec60870_104_iec60870_104_data",
+      "iec60870_104_iec60870_104_rx",
+      "iec60870_104_iec60870_104_tx",
+      "iec60870_104_iec60870_104_type",
+      "iec60870_104_iec60870_104_utype",
+      "iec60870_asdu_iec60870_asdu_start"
+    ]
+  },
+  "extracted_fields": {
+    "total": 16,
+    "fields": [
+      "addr",
+      "bcr",
+      "bcr_count",
+      "causetx",
+      "coi_r",
+      "dco_on",
+      "dco_se",
+      "diq_dpi",
+      "float",
+      "rco_se",
+      "rco_up",
+      "sco_on",
+      "sco_se",
+      "siq_spi",
+      "typeid",
+      "utype"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "6/6 (100%)",
+    "pcap_vs_extracted": "1/6 (16%)",
+    "t1_extracted": "0/0",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "iec60870_104_iec60870_104_apdulen",
+        "field": "iec60870_104.apdulen",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_iec104_baselines.pcap",
+          "emreekin_iec104_deneme.pcap",
+          "emreekin_iec104_deneme2.pcap",
+          "emreekin_iec104_ip_value.pcap",
+          "emreekin_iec104_local_value.pcap",
+          "emreekin_iec104_logfile.pcap",
+          "emreekin_iec104_type33.pcap",
+          "emreekin_iec104_type50.pcap",
+          "emreekin_iec104_type58_59.pcap",
+          "emreekin_iec104_type59.pcap",
+          "emreekin_iec104_type60.pcap",
+          "emreekin_iec104_type61.pcap",
+          "emreekin_iec104_type62.pcap",
+          "emreekin_iec104_type63.pcap",
+          "emreekin_iec104_type63_1.pcap",
+          "emreekin_iec104_type64.pcap",
+          "eset_industroyer2_sample1.pcap",
+          "eset_industroyer2_sample2.pcap",
+          "iti_090813_diverse.pcap",
+          "iti_java_rmi_and_iec.pcap",
+          "iti_test_dissect_iec104.pcap",
+          "ndpi_iec104.pcap",
+          "wireshark_iec104.pcap"
+        ],
+        "description": "APDU Len"
+      },
+      {
+        "ek_name": "iec60870_104_iec60870_104_type",
+        "field": "iec60870_104.type",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_iec104_baselines.pcap",
+          "emreekin_iec104_deneme.pcap",
+          "emreekin_iec104_deneme2.pcap",
+          "emreekin_iec104_ip_value.pcap",
+          "emreekin_iec104_local_value.pcap",
+          "emreekin_iec104_logfile.pcap",
+          "emreekin_iec104_type33.pcap",
+          "emreekin_iec104_type50.pcap",
+          "emreekin_iec104_type58_59.pcap",
+          "emreekin_iec104_type59.pcap",
+          "emreekin_iec104_type60.pcap",
+          "emreekin_iec104_type61.pcap",
+          "emreekin_iec104_type62.pcap",
+          "emreekin_iec104_type63.pcap",
+          "emreekin_iec104_type63_1.pcap",
+          "emreekin_iec104_type64.pcap",
+          "eset_industroyer2_sample1.pcap",
+          "eset_industroyer2_sample2.pcap",
+          "iti_090813_diverse.pcap",
+          "iti_java_rmi_and_iec.pcap",
+          "iti_test_dissect_iec104.pcap",
+          "ndpi_iec104.pcap",
+          "wireshark_iec104.pcap"
+        ],
+        "description": "APCI type"
+      },
+      {
+        "ek_name": "iec60870_104_iec60870_104_tx",
+        "field": "iec60870_104.tx",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_iec104_baselines.pcap",
+          "emreekin_iec104_deneme.pcap",
+          "emreekin_iec104_deneme2.pcap",
+          "emreekin_iec104_ip_value.pcap",
+          "emreekin_iec104_local_value.pcap",
+          "emreekin_iec104_logfile.pcap",
+          "emreekin_iec104_type33.pcap",
+          "emreekin_iec104_type50.pcap",
+          "emreekin_iec104_type58_59.pcap",
+          "emreekin_iec104_type59.pcap",
+          "emreekin_iec104_type60.pcap",
+          "emreekin_iec104_type61.pcap",
+          "emreekin_iec104_type62.pcap",
+          "emreekin_iec104_type63.pcap",
+          "emreekin_iec104_type63_1.pcap",
+          "emreekin_iec104_type64.pcap",
+          "eset_industroyer2_sample1.pcap",
+          "eset_industroyer2_sample2.pcap",
+          "iti_090813_diverse.pcap",
+          "iti_java_rmi_and_iec.pcap",
+          "iti_test_dissect_iec104.pcap",
+          "ndpi_iec104.pcap",
+          "wireshark_iec104.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "iec60870_104_iec60870_104_rx",
+        "field": "iec60870_104.rx",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_iec104_baselines.pcap",
+          "emreekin_iec104_deneme.pcap",
+          "emreekin_iec104_deneme2.pcap",
+          "emreekin_iec104_ip_value.pcap",
+          "emreekin_iec104_local_value.pcap",
+          "emreekin_iec104_logfile.pcap",
+          "emreekin_iec104_type33.pcap",
+          "emreekin_iec104_type50.pcap",
+          "emreekin_iec104_type58_59.pcap",
+          "emreekin_iec104_type59.pcap",
+          "emreekin_iec104_type60.pcap",
+          "emreekin_iec104_type61.pcap",
+          "emreekin_iec104_type62.pcap",
+          "emreekin_iec104_type63.pcap",
+          "emreekin_iec104_type63_1.pcap",
+          "emreekin_iec104_type64.pcap",
+          "eset_industroyer2_sample1.pcap",
+          "eset_industroyer2_sample2.pcap",
+          "iti_090813_diverse.pcap",
+          "iti_java_rmi_and_iec.pcap",
+          "iti_test_dissect_iec104.pcap",
+          "ndpi_iec104.pcap",
+          "wireshark_iec104.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "iec60870_104_iec60870_104_data",
+        "field": "iec60870_104.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "emreekin_iec104_deneme2.pcap",
+          "emreekin_iec104_type33.pcap",
+          "emreekin_iec104_type59.pcap",
+          "emreekin_iec104_type63.pcap",
+          "iti_test_dissect_iec104.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 0,
+      "t1_in_pcap": 0,
+      "t1_covered": 0,
+      "t2_total": 6,
+      "t2_in_pcap": 6,
+      "t2_covered": 1,
+      "t3_skipped": 0,
+      "t4_ignored": 0
+    }
+  }
+}

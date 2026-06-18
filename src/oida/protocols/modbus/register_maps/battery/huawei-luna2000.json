@@ -1,0 +1,173 @@
+{
+  "vendor": "Huawei",
+  "model": "LUNA2000 Battery Series",
+  "description": "Huawei LUNA2000 residential battery system registers (accessed via SUN2000 inverter)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "LUNA2000 battery registers accessed through connected SUN2000 inverter. Battery data in 37xxx range. Requires Modbus TCP enabled on Smart Dongle. S0 series (5-15kWh), S1 series (7-21kWh).",
+  "source": "https://github.com/wlcrs/huawei_solar, Huawei Solar Inverter Modbus Interface Definitions V3.0",
+  "registers": {
+    "running_status": {
+      "address": 37000,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery running status",
+      "enum": {
+        "0": "OFFLINE",
+        "1": "STANDBY",
+        "2": "RUNNING",
+        "3": "FAULT",
+        "4": "SLEEP"
+      }
+    },
+    "charge_discharge_power": {
+      "address": 37001,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Charge/discharge power (positive=charging)"
+    },
+    "bus_voltage": {
+      "address": 37003,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Battery bus voltage"
+    },
+    "soc": {
+      "address": 37004,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "State of charge"
+    },
+    "working_mode": {
+      "address": 37006,
+      "type": "u16",
+      "access": "r",
+      "description": "Working mode",
+      "enum": {
+        "0": "NONE",
+        "1": "MAXIMISE_SELF_CONSUMPTION",
+        "2": "TIME_OF_USE",
+        "3": "FULLY_FED_TO_GRID"
+      }
+    },
+    "rated_capacity": {
+      "address": 37007,
+      "type": "u32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Rated capacity"
+    },
+    "soh": {
+      "address": 37009,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of health"
+    },
+    "charge_capacity_today": {
+      "address": 37015,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Charge capacity today"
+    },
+    "discharge_capacity_today": {
+      "address": 37017,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Discharge capacity today"
+    },
+    "bus_current": {
+      "address": 37021,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Battery bus current"
+    },
+    "battery_temperature": {
+      "address": 37022,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Battery temperature"
+    },
+    "remaining_charge_time": {
+      "address": 37025,
+      "type": "u16",
+      "access": "r",
+      "unit": "min",
+      "description": "Remaining charge time to full"
+    },
+    "remaining_discharge_time": {
+      "address": 37026,
+      "type": "u16",
+      "access": "r",
+      "unit": "min",
+      "description": "Remaining discharge time to empty"
+    },
+    "total_charge": {
+      "address": 37066,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total charge energy (lifetime)"
+    },
+    "total_discharge": {
+      "address": 37068,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total discharge energy (lifetime)"
+    },
+    "max_charge_power": {
+      "address": 37046,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Maximum charge power"
+    },
+    "max_discharge_power": {
+      "address": 37048,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Maximum discharge power"
+    },
+    "forced_charge_discharge_cmd": {
+      "address": 47100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Forced charge/discharge command (0=stop, 1=charge, 2=discharge)"
+    },
+    "forced_charge_discharge_power": {
+      "address": 47101,
+      "type": "u32",
+      "access": "rw",
+      "unit": "W",
+      "description": "Forced charge/discharge power setpoint"
+    },
+    "backup_power_soc": {
+      "address": 47102,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Backup power SOC reserve"
+    }
+  },
+  "_source_verified": "Verified: Register 37000 enum (0=OFFLINE..4=SLEEP) confirmed against Huawei Modbus Interface Definitions V3.0"
+}

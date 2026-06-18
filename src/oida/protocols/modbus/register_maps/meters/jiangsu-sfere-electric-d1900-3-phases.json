@@ -1,0 +1,353 @@
+{
+  "vendor": "Jiangsu",
+  "model": "SFERE ELECTRIC D 1900 3 PHASES",
+  "description": "Jiangsu SFERE ELECTRIC D 1900 3 PHASES power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "active_energy_of_this_month_total_tip_peak_level_valley": {
+      "address": 290,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy of this month [total/tip/peak/level/valley",
+      "unit": "Wh"
+    },
+    "active_energy_of_last_month_total_tip_peak_level_valley": {
+      "address": 300,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy of last month [total/tip/peak/level/valley",
+      "unit": "Wh"
+    },
+    "active_energy_of_the_month_before_last_total_tip_peak_level_valley": {
+      "address": 310,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy of the month before last [total/tip/peak/level/valley",
+      "unit": "Wh"
+    },
+    "phase_a_voltage": {
+      "address": 512,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A voltage",
+      "unit": "V"
+    },
+    "phase_b_voltage": {
+      "address": 513,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B voltage",
+      "unit": "V"
+    },
+    "phase_c_voltage": {
+      "address": 514,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C voltage",
+      "unit": "V"
+    },
+    "ab_line_voltage": {
+      "address": 515,
+      "type": "i32",
+      "access": "r",
+      "description": "Ab line voltage",
+      "unit": "V"
+    },
+    "bc_line_voltage": {
+      "address": 516,
+      "type": "i32",
+      "access": "r",
+      "description": "Bc line voltage",
+      "unit": "V"
+    },
+    "ca_line_voltage": {
+      "address": 517,
+      "type": "i32",
+      "access": "r",
+      "description": "Ca line voltage",
+      "unit": "V"
+    },
+    "phase_a_current": {
+      "address": 518,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A current",
+      "unit": "A"
+    },
+    "phase_b_current": {
+      "address": 519,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B current",
+      "unit": "A"
+    },
+    "phase_c_current": {
+      "address": 520,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C current",
+      "unit": "A"
+    },
+    "phase_a_active_power": {
+      "address": 521,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A active power",
+      "unit": "W"
+    },
+    "phase_b_active_power": {
+      "address": 522,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B active power",
+      "unit": "W"
+    },
+    "phase_c_active_power": {
+      "address": 523,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C active power",
+      "unit": "W"
+    },
+    "total_active_power": {
+      "address": 524,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "phase_a_reactive_power": {
+      "address": 525,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A reactive power",
+      "unit": "var"
+    },
+    "phase_b_reactive_power": {
+      "address": 526,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B reactive power",
+      "unit": "var"
+    },
+    "phase_c_reactive_power": {
+      "address": 527,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C reactive power",
+      "unit": "var"
+    },
+    "total_reactive_power": {
+      "address": 528,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "var"
+    },
+    "phase_a_apparent_power": {
+      "address": 529,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A apparent power",
+      "unit": "V"
+    },
+    "phase_b_apparent_power": {
+      "address": 530,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B apparent power",
+      "unit": "V"
+    },
+    "phase_c_apparent_power": {
+      "address": 531,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C apparent power",
+      "unit": "V"
+    },
+    "total_apparent_power": {
+      "address": 532,
+      "type": "i32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "V"
+    },
+    "phase_a_power_factor": {
+      "address": 533,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor": {
+      "address": 534,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor": {
+      "address": 535,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "total_power_factor": {
+      "address": 536,
+      "type": "i32",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "frequency": {
+      "address": 537,
+      "type": "i32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "phase_a_ab_line_voltage_thd": {
+      "address": 538,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A (ab line) voltage thd"
+    },
+    "phase_b_voltage_thd": {
+      "address": 539,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B voltage thd"
+    },
+    "phase_c_cb_line_voltage_thd": {
+      "address": 540,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C (cb line) voltage thd"
+    },
+    "phase_a_current_thd": {
+      "address": 541,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A current thd"
+    },
+    "phase_b_current_thd": {
+      "address": 542,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B current thd"
+    },
+    "phase_c_current_thd": {
+      "address": 543,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C current thd"
+    },
+    "phase_a_ab_line_voltage_harmonic_content": {
+      "address": 544,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A (ab line) voltage harmonic content",
+      "unit": "V"
+    },
+    "phase_b_voltage_harmonic_content": {
+      "address": 545,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B voltage harmonic content",
+      "unit": "V"
+    },
+    "phase_c_cb_line_voltage_harmonic_content": {
+      "address": 546,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C (cb line) voltage harmonic content",
+      "unit": "V"
+    },
+    "phase_a_current_harmonic_content": {
+      "address": 547,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A current harmonic content",
+      "unit": "A"
+    },
+    "phase_b_current_harmonic_content": {
+      "address": 548,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B current harmonic content",
+      "unit": "A"
+    },
+    "phase_c_current_harmonic_content": {
+      "address": 549,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C current harmonic content",
+      "unit": "A"
+    },
+    "max_phase_voltage_value": {
+      "address": 1536,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. phase voltage value",
+      "unit": "V"
+    },
+    "max_line_voltage_value": {
+      "address": 1537,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. line voltage value",
+      "unit": "V"
+    },
+    "max_current_value": {
+      "address": 1538,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. current value",
+      "unit": "A"
+    },
+    "max_active_power_value": {
+      "address": 1539,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. active power value",
+      "unit": "W"
+    },
+    "max_reactive_power_value": {
+      "address": 1540,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. reactive power value",
+      "unit": "var"
+    },
+    "max_apparent_power_value": {
+      "address": 1541,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. apparent power value",
+      "unit": "V"
+    },
+    "max_active_power_demand_value": {
+      "address": 1542,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. active power demand value",
+      "unit": "W"
+    },
+    "max_reactive_power_demand_value": {
+      "address": 1543,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. reactive power demand value",
+      "unit": "var"
+    },
+    "max_apparent_power_demand_value": {
+      "address": 1544,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. apparent power demand value",
+      "unit": "V"
+    }
+  }
+}

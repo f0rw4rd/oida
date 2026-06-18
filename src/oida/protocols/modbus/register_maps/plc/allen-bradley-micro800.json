@@ -1,0 +1,193 @@
+{
+  "vendor": "Rockwell Automation",
+  "model": "Micro800 Series",
+  "description": "Allen-Bradley Micro800 PLC Modbus register map (Micro820, Micro830, Micro850, Micro870, Micro880)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: Micro800 uses symbolic tag mapping for Modbus via Connected Components Workbench (CCW). There are NO fixed addresses - tags must be mapped to Modbus addresses in CCW. Micro810 does NOT support Modbus TCP. Micro820 has built-in Ethernet with Modbus TCP server.",
+  "source": "Rockwell Publication 2080-UM002, Connected Components Workbench Help",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "area": "Mapped BOOL tags"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "area": "Mapped BOOL input tags"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "area": "Mapped numeric tags"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "area": "Mapped input tags"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "area": "Mapped BOOL tags"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "Mapped numeric tags"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils",
+      "area": "Mapped BOOL tags"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "Mapped numeric tags"
+    }
+  ],
+  "registers": {
+    "example_int_tag": {
+      "address": 0,
+      "type": "i16",
+      "access": "rw",
+      "description": "Example: User INT tag mapped to holding register 40001 via CCW"
+    },
+    "example_dint_tag": {
+      "address": 2,
+      "type": "i32",
+      "access": "rw",
+      "description": "Example: User DINT tag mapped to registers 40003-40004"
+    },
+    "example_real_tag": {
+      "address": 4,
+      "type": "f32",
+      "access": "rw",
+      "description": "Example: User REAL tag mapped to registers 40005-40006"
+    }
+  },
+  "coils": {
+    "example_bool_tag": {
+      "address": 0,
+      "access": "rw",
+      "description": "Example: User BOOL tag mapped to coil 00001 via CCW"
+    }
+  },
+  "extended_info": {
+    "micro800_models": {
+      "Micro810": {
+        "io_points": "6DI/4DO",
+        "program_capacity": "8K bytes",
+        "ethernet": false,
+        "modbus_tcp": false,
+        "note": "No Ethernet, no Modbus TCP support"
+      },
+      "Micro820": {
+        "io_points": "12DI/7DO or 6DI/6DO (models vary)",
+        "program_capacity": "64K bytes",
+        "ethernet": true,
+        "modbus_tcp": true,
+        "modbus_server": "Built-in",
+        "max_connections": 3,
+        "note": "Embedded Ethernet with Modbus TCP server"
+      },
+      "Micro830": {
+        "io_points": "10-48 depending on base",
+        "program_capacity": "64K bytes",
+        "ethernet": "via 2080-SERIALISOL",
+        "modbus_tcp": "via plug-in",
+        "note": "Serial Modbus RTU built-in, TCP via plug-in module"
+      },
+      "Micro850": {
+        "io_points": "24-48 depending on base",
+        "program_capacity": "128K bytes",
+        "ethernet": "via 2080-SERIALISOL/plug-in",
+        "modbus_tcp": "via plug-in",
+        "note": "Higher capacity, similar communications"
+      },
+      "Micro870": {
+        "io_points": "14DI/10DO (2080-LC70-48QWB)",
+        "program_capacity": "256K bytes",
+        "ethernet": "via plug-in",
+        "modbus_tcp": true,
+        "motion": true,
+        "note": "Motion control capable"
+      },
+      "Micro880": {
+        "io_points": "Up to 132 total",
+        "program_capacity": "512K bytes",
+        "ethernet": true,
+        "modbus_tcp": true,
+        "motion": true,
+        "note": "Highest capacity Micro800"
+      }
+    },
+    "modbus_mapping": {
+      "configuration_tool": "Connected Components Workbench (CCW)",
+      "mapping_location": "Controller Properties -> Protocols -> Modbus Mapping",
+      "steps": [
+        "1. Create controller tags in CCW",
+        "2. Open Modbus Mapping configuration",
+        "3. Drag tags to Modbus address table",
+        "4. Specify starting address for each tag",
+        "5. Download to controller"
+      ],
+      "address_types": {
+        "0x_Coils": "BOOL tags (read/write)",
+        "1x_Discrete_Inputs": "BOOL input tags (read-only)",
+        "3x_Input_Registers": "Numeric input tags (read-only)",
+        "4x_Holding_Registers": "Numeric tags (read/write)"
+      }
+    },
+    "data_type_mapping": {
+      "BOOL": {
+        "registers": 1,
+        "modbus_type": "coil or 1 bit in register"
+      },
+      "SINT": {
+        "registers": 1,
+        "note": "8-bit signed, upper byte unused"
+      },
+      "INT": {
+        "registers": 1,
+        "note": "16-bit signed"
+      },
+      "DINT": {
+        "registers": 2,
+        "note": "32-bit signed"
+      },
+      "REAL": {
+        "registers": 2,
+        "note": "IEEE 754 float"
+      },
+      "STRING": {
+        "registers": "varies",
+        "note": "2 characters per register"
+      }
+    },
+    "modbus_tcp_settings": {
+      "default_port": 502,
+      "max_clients": 3,
+      "unit_id": "configurable (default 1)",
+      "timeout": "configurable"
+    },
+    "configuration_requirements": [
+      "Use Connected Components Workbench (CCW) v11+",
+      "Create tags before mapping to Modbus",
+      "Map tags to Modbus addresses in CCW Modbus Mapping",
+      "For Micro820: Enable Modbus TCP in Embedded Ethernet port settings",
+      "For Micro830/850: Install 2080-SERIALISOL for Modbus TCP via Ethernet plug-in",
+      "Download configuration to controller"
+    ],
+    "limitations": [
+      "No fixed/predefined register map - fully user-configurable",
+      "Micro810 has no Modbus TCP capability",
+      "Maximum 3 simultaneous Modbus TCP connections on Micro820"
+    ]
+  },
+  "_source_verified": "Verified: Micro820 built-in Modbus TCP confirmed; publication 2080-UM002 verified at Rockwell"
+}

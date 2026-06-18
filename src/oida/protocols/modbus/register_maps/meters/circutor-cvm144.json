@@ -1,0 +1,328 @@
+{
+  "vendor": "Circutor",
+  "model": "CVM 144",
+  "description": "Circutor CVM 144 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "current_a1": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Current A1"
+    },
+    "active_power_kw1": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power kW1"
+    },
+    "reactive_power_kvar1": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power kvar1"
+    },
+    "power_factor_pf1": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor PF1",
+      "unit": "PF"
+    },
+    "phase_voltage_v2": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase voltage V2",
+      "unit": "V"
+    },
+    "current_a2": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Current A2"
+    },
+    "active_power_kw2": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power kW2"
+    },
+    "reactive_power_kvar2": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power kvar2"
+    },
+    "power_factor_pf2": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor PF2",
+      "unit": "PF"
+    },
+    "phase_voltage_v3": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase voltage V3",
+      "unit": "V"
+    },
+    "current_a3": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "Current A3"
+    },
+    "active_power_kw3": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power kW3"
+    },
+    "reactive_power_kvar3": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power kvar3"
+    },
+    "power_factor_pf3": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor PF3",
+      "unit": "PF"
+    },
+    "three_phase_active_power_kwiii": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase active power kWIII"
+    },
+    "three_phase_inductive_power_kvarl_iii": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase inductive power kvarL III"
+    },
+    "three_phase_capacitive_power_kvarc_iii": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase capacitive power kvarC III"
+    },
+    "cos_m_iii": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "Cos M III"
+    },
+    "three_phase_power_factor_pf_iii": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase power factor PF III"
+    },
+    "frequency_l1_hz": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency (L1) hz",
+      "unit": "Hz"
+    },
+    "line_voltage_l1_l2_v12": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "Line voltage L1 L2 v12",
+      "unit": "V"
+    },
+    "line_voltage_l2_l3_v23": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "description": "Line voltage L2 L3 v23",
+      "unit": "V"
+    },
+    "line_voltage_l3_l1_v31": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "description": "Line voltage L3 L1 v31",
+      "unit": "V"
+    },
+    "thd_v1": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "%THD V1",
+      "unit": "%"
+    },
+    "thd_v2": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "%THD V2",
+      "unit": "%"
+    },
+    "thd_v3": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "%THD V3",
+      "unit": "%"
+    },
+    "thd_i1": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "%THD I1",
+      "unit": "%"
+    },
+    "thd_i2": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "%THD I2",
+      "unit": "%"
+    },
+    "thd_i3": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "%THD I3",
+      "unit": "%"
+    },
+    "active_energy_kwh": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy kWh"
+    },
+    "inductive_reactive_energy_kvarh_l": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "Inductive reactive energy kvarh L"
+    },
+    "capacitive_reactive_energy_kvarh_c": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "Capacitive reactive energy kvarh C"
+    },
+    "three_phase_apparent_power": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase apparent power"
+    },
+    "power_demand_l1": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "Power demand (L1)"
+    },
+    "three_phase_current": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase current"
+    },
+    "neutral_current": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "analog_input_1": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "Analog input 1"
+    },
+    "analog_input_2": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "Analog input 2"
+    },
+    "analog_input_3": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "Analog input 3"
+    },
+    "residual_earth_leakage_current": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "Residual (earth leakage) current"
+    },
+    "power_demand_l2": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Power demand (L2)"
+    },
+    "power_demand_l3": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Power demand (L3)"
+    },
+    "fundamental": {
+      "address": 500,
+      "type": "u32",
+      "access": "r",
+      "description": "Fundamental"
+    },
+    "harmonic_2": {
+      "address": 502,
+      "type": "u32",
+      "access": "r",
+      "description": "Harmonic 2"
+    },
+    "harmonic_3": {
+      "address": 504,
+      "type": "u32",
+      "access": "r",
+      "description": "Harmonic 3"
+    },
+    "harmonic_4": {
+      "address": 506,
+      "type": "u32",
+      "access": "r",
+      "description": "Harmonic 4"
+    },
+    "harmonic_5": {
+      "address": 508,
+      "type": "u32",
+      "access": "r",
+      "description": "Harmonic 5"
+    },
+    "harmonic_6": {
+      "address": 510,
+      "type": "u32",
+      "access": "r",
+      "description": "Harmonic 6"
+    },
+    "harmonic_7": {
+      "address": 512,
+      "type": "u32",
+      "access": "r",
+      "description": "Harmonic 7"
+    },
+    "harmonic_8": {
+      "address": 514,
+      "type": "u32",
+      "access": "r",
+      "description": "Harmonic 8"
+    }
+  }
+}

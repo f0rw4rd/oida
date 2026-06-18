@@ -1,0 +1,11 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir "aiocoap>=0.4.11" "cbor2>=5.4"
+
+COPY coap/*.py /app/
+
+EXPOSE 5683/udp
+
+CMD ["python3", "coap_server.py"]

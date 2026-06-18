@@ -1,0 +1,29 @@
+<core>
+    <template>
+        <entity name="unit">Schneider M340</entity>
+        <entity name="vendor">Schneider Electric</entity>
+        <entity name="description">Schneider Modicon M340 PLC with process I/O modules</entity>
+        <entity name="protocols">modbus_tcp</entity>
+        <entity name="creator">OIDA ICS Testing Framework</entity>
+    </template>
+    <databus>
+        <key_value_mappings>
+            <!-- Coils: 128 binary outputs (relay/valve states) -->
+            <key name="coilBlock">
+                <value type="value">[1,0,1,1,0,0,1,0, 1,1,0,0,1,0,1,1, 0,1,0,1,0,1,0,1, 1,0,0,1,1,0,0,1, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0]</value>
+            </key>
+            <!-- Discrete inputs: 64 binary inputs (sensor states) -->
+            <key name="discreteBlock">
+                <value type="value">[1,1,0,1,0,0,1,0, 0,1,1,0,1,1,0,0, 1,0,1,0,0,1,1,1, 0,0,1,1,0,0,1,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0]</value>
+            </key>
+            <!-- Input registers: 32 analog input channels (sensor readings, 16-bit) -->
+            <key name="inputRegBlock">
+                <value type="value">[1024, 2048, 512, 768, 4096, 3072, 256, 128, 900, 1100, 2500, 3500, 1234, 5678, 9012, 3456, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]</value>
+            </key>
+            <!-- Holding registers: 100 configuration/control registers -->
+            <key name="holdingRegBlock">
+                <value type="value">[1, 1, 0, 1234, 0, 0, 0, 0, 0, 0, 16802, 17039, 16585, 47186, 16968, 0, 0, 0, 0, 0, 16579, 26214, 16584, 20972, 16960, 0, 0, 0, 0, 0, 1, 20864, 0, 1000, 0, 0, 0, 0, 0, 0, 75, 50, 1, 0, 0, 0, 0, 0, 0, 0, 16880, 0, 16672, 0, 0, 0, 0, 0, 0, 0, 16320, 16384, 15872, 47186, 15360, 52429, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]</value>
+            </key>
+        </key_value_mappings>
+    </databus>
+</core>

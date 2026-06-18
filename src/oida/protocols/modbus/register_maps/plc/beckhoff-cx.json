@@ -1,0 +1,51 @@
+{
+  "vendor": "Beckhoff",
+  "model": "CX Series",
+  "description": "Beckhoff CX Embedded PC Modbus register map",
+  "version": "1.0",
+  "byte_order": "little",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "Requires TwinCAT Modbus TCP Server configuration",
+  "registers": {
+    "system_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "TwinCAT system status"
+    },
+    "plc_task_cycle": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.0001,
+      "unit": "ms",
+      "description": "PLC task cycle time"
+    },
+    "mw0": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW0"
+    },
+    "md0": {
+      "address": 200,
+      "type": "f32",
+      "access": "rw",
+      "description": "Memory double %MD0 (REAL)"
+    },
+    "inputs": {
+      "address": 300,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital inputs"
+    },
+    "outputs": {
+      "address": 400,
+      "type": "u16",
+      "access": "rw",
+      "description": "Digital outputs"
+    }
+  },
+  "_source_verified": "Verified: CX Series with TwinCAT TF6250 Modbus TCP Server confirmed via Beckhoff documentation"
+}

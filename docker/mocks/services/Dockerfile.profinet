@@ -1,0 +1,76 @@
+# PROFINET IO Device Emulation using p-net stack
+# Emulates a PROFINET IO Device that responds to DCP Identify,
+# LLDP, and basic PROFINET IO communication.
+# https://github.com/rtlabs-com/p-net (kolonialno fork for buildable version)
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    ca-certificates \
+    iproute2 \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone p-net (kolonialno fork has CMakeLists.txt and Linux port layer)
+RUN git clone --recurse-submodules --depth 1 \
+    https://github.com/kolonialno/profinet.git /p-net
+
+# Copy custom GSDML header with configurable device identity
+COPY profinet/app_gsdml_oida.h /p-net/samples/pn_dev/app_gsdml.h
+
+# Relax compiler warnings - p-net uses -Werror which can break on newer GCC
+RUN find /p-net -type f \( -name "CMakeLists.txt" -o -name "*.cmake" \) \
+    -exec sed -i 's/-Werror//g' {} \;
+
+# Build p-net for Linux with verbose logging and extra slots
+WORKDIR /p-net/build
+RUN cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+    -DPNET_MAX_AR=2 \
+    -DPNET_MAX_SLOTS=8 \
+    -DPNET_MAX_SUBSLOTS=4 \
+    -DPNET_MAX_PHYSICAL_PORTS=1 \
+    -DLOG_LEVEL=INFO \
+    -DPF_DCP_LOG=ON \
+    -DPF_LLDP_LOG=ON \
+    -DPF_RPC_LOG=ON \
+    -DPF_ALARM_LOG=ON \
+    && make -j$(nproc)
+
+# Install the binary
+RUN cp /p-net/build/pn_dev /usr/local/bin/pn_dev \
+    && chmod +x /usr/local/bin/pn_dev
+
+# Copy entrypoint script
+COPY profinet/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Copy helper scripts required by p-net sample app
+COPY profinet/set_profinet_leds /usr/local/bin/set_profinet_leds
+COPY profinet/set_network_parameters /usr/local/bin/set_network_parameters
+RUN chmod +x /usr/local/bin/set_profinet_leds /usr/local/bin/set_network_parameters \
+    && ln -sf /usr/local/bin/set_profinet_leds /usr/bin/set_profinet_leds \
+    && ln -sf /usr/local/bin/set_network_parameters /usr/bin/set_network_parameters
+
+# Create storage directory for p-net state files
+RUN mkdir -p /var/lib/pnet
+
+WORKDIR /var/lib/pnet
+
+# Environment variables for device configuration
+ENV PNET_STATION_NAME="oida-pn-device"
+ENV PNET_INTERFACE="eth0"
+ENV PNET_VERBOSITY="2"
+
+# PROFINET uses Layer 2 (raw Ethernet) - no TCP/UDP ports to expose
+# DCP uses EtherType 0x8892, LLDP uses 0x88CC
+# These require --network=host or macvlan for real L2 access
+
+ENTRYPOINT ["/entrypoint.sh"]

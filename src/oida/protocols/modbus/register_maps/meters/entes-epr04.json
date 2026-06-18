@@ -1,0 +1,358 @@
+{
+  "vendor": "Entes",
+  "model": "EPR 04",
+  "description": "Entes EPR 04 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "l1_phase_active_power": {
+      "address": 20,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 phase active power",
+      "unit": "Watt"
+    },
+    "l2_phase_active_power": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 phase active power",
+      "unit": "Watt"
+    },
+    "l3_phase_active_power": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 phase active power",
+      "unit": "Watt"
+    },
+    "l1_phase_reactive_power": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 phase reactive power",
+      "unit": "Var"
+    },
+    "l2_phase_reactive_power": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 phase reactive power",
+      "unit": "Var"
+    },
+    "l3_phase_reactive_power": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 phase reactive power",
+      "unit": "Var"
+    },
+    "l1_phase_apparent_power": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase apparent power",
+      "unit": "VA"
+    },
+    "l2_phase_apparent_power": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase apparent power",
+      "unit": "VA"
+    },
+    "l3_phase_apparent_power": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase apparent power",
+      "unit": "VA"
+    },
+    "l1_phase_cos": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 phase cos"
+    },
+    "l2_phase_cos": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 phase cos"
+    },
+    "l3_phase_cos": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 phase cos"
+    },
+    "total_import_active_power": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "Total import active power",
+      "unit": "Watt"
+    },
+    "total_export_active_power": {
+      "address": 46,
+      "type": "i32",
+      "access": "r",
+      "description": "Total export active power",
+      "unit": "Watt"
+    },
+    "total_inductive_reactive_power": {
+      "address": 48,
+      "type": "i32",
+      "access": "r",
+      "description": "Total inductive reactive power",
+      "unit": "Var"
+    },
+    "total_capacitive_reactive_power": {
+      "address": 50,
+      "type": "i32",
+      "access": "r",
+      "description": "Total capacitive reactive power",
+      "unit": "Var"
+    },
+    "total_apparent_power": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "average_inductive_cos": {
+      "address": 54,
+      "type": "i32",
+      "access": "r",
+      "description": "Average inductive cos"
+    },
+    "average_capacitive_cos": {
+      "address": 56,
+      "type": "i32",
+      "access": "r",
+      "description": "Average capacitive cos"
+    },
+    "frequency": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "import_active_energy_1": {
+      "address": 88,
+      "type": "i64",
+      "access": "r",
+      "description": "Import active energy 1",
+      "unit": "Wh"
+    },
+    "export_active_energy_1": {
+      "address": 92,
+      "type": "i64",
+      "access": "r",
+      "description": "Export active energy 1",
+      "unit": "Wh"
+    },
+    "inductive_reactive_energy_1": {
+      "address": 96,
+      "type": "i64",
+      "access": "r",
+      "description": "Inductive reactive energy 1",
+      "unit": "VArh"
+    },
+    "capacitive_reactive_energy_1": {
+      "address": 100,
+      "type": "i64",
+      "access": "r",
+      "description": "Capacitive reactive energy 1",
+      "unit": "VArh"
+    },
+    "import_active_energy_2": {
+      "address": 104,
+      "type": "i64",
+      "access": "r",
+      "description": "Import active energy 2",
+      "unit": "Wh"
+    },
+    "export_active_energy_2": {
+      "address": 108,
+      "type": "i64",
+      "access": "r",
+      "description": "Export active energy 2",
+      "unit": "Wh"
+    },
+    "inductive_reactive_energy_2": {
+      "address": 112,
+      "type": "i64",
+      "access": "r",
+      "description": "Inductive reactive energy 2",
+      "unit": "VArh"
+    },
+    "capacitive_reactive_energy_2": {
+      "address": 116,
+      "type": "i64",
+      "access": "r",
+      "description": "Capacitive reactive energy 2",
+      "unit": "VArh"
+    },
+    "l1_phase_min_active_power": {
+      "address": 136,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 phase min. active power",
+      "unit": "Watt"
+    },
+    "l2_phase_min_active_power": {
+      "address": 138,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 phase min. active power",
+      "unit": "Watt"
+    },
+    "l3_phase_min_active_power": {
+      "address": 140,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 phase min. active power",
+      "unit": "Watt"
+    },
+    "l1_phase_min_reactive_power": {
+      "address": 142,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 phase min. reactive power",
+      "unit": "Var"
+    },
+    "l2_phase_min_reactive_power": {
+      "address": 144,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 phase min. reactive power",
+      "unit": "Var"
+    },
+    "l3_phase_min_reactive_power": {
+      "address": 146,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 phase min. reactive power",
+      "unit": "Var"
+    },
+    "l1_phase_min_apparent_power": {
+      "address": 148,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase min. apparent power",
+      "unit": "VA"
+    },
+    "l2_phase_min_apparent_power": {
+      "address": 150,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase min. apparent power",
+      "unit": "VA"
+    },
+    "l3_phase_min_apparent_power": {
+      "address": 152,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase min. apparent power",
+      "unit": "VA"
+    },
+    "total_min_import_active_power": {
+      "address": 154,
+      "type": "i32",
+      "access": "r",
+      "description": "Total min. import active power",
+      "unit": "Watt"
+    },
+    "total_min_export_active_power": {
+      "address": 156,
+      "type": "i32",
+      "access": "r",
+      "description": "Total min. export active power",
+      "unit": "Watt"
+    },
+    "total_min_import_reactive_power": {
+      "address": 158,
+      "type": "i32",
+      "access": "r",
+      "description": "Total min. import reactive power",
+      "unit": "Var"
+    },
+    "total_min_export_reactive_power": {
+      "address": 160,
+      "type": "i32",
+      "access": "r",
+      "description": "Total min. export reactive power",
+      "unit": "Var"
+    },
+    "total_min_apparent_power": {
+      "address": 162,
+      "type": "u32",
+      "access": "r",
+      "description": "Total min. apparent power",
+      "unit": "VA"
+    },
+    "l1_phase_max_active_power": {
+      "address": 182,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 phase max. active power",
+      "unit": "Watt"
+    },
+    "l2_phase_max_active_power": {
+      "address": 184,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 phase max. active power",
+      "unit": "Watt"
+    },
+    "l3_phase_max_active_power": {
+      "address": 186,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 phase max. active power",
+      "unit": "Watt"
+    },
+    "l1_phase_max_reactive_power": {
+      "address": 188,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 phase max. reactive power",
+      "unit": "Var"
+    },
+    "l2_phase_max_reactive_power": {
+      "address": 190,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 phase max. reactive power",
+      "unit": "Var"
+    },
+    "l3_phase_max_reactive_power": {
+      "address": 192,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 phase max. reactive power",
+      "unit": "Var"
+    },
+    "l1_phase_max_apparent_power": {
+      "address": 194,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase max. apparent power",
+      "unit": "VA"
+    },
+    "l2_phase_max_apparent_power": {
+      "address": 196,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase max. apparent power",
+      "unit": "VA"
+    }
+  }
+}

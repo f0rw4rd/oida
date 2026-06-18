@@ -1,0 +1,354 @@
+{
+  "vendor": "Carlo Gavazzi",
+  "model": "EM 111 EM 112 ET 112",
+  "description": "Carlo Gavazzi EM 111 EM 112 ET 112 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "a": {
+      "address": 2,
+      "type": "i32",
+      "access": "r",
+      "description": "A",
+      "unit": "Ampere"
+    },
+    "w": {
+      "address": 4,
+      "type": "i32",
+      "access": "r",
+      "description": "W",
+      "unit": "Watt"
+    },
+    "va": {
+      "address": 6,
+      "type": "i32",
+      "access": "r",
+      "description": "VA",
+      "unit": "VA"
+    },
+    "var": {
+      "address": 8,
+      "type": "i32",
+      "access": "r",
+      "description": "Var",
+      "unit": "var"
+    },
+    "w_dmd": {
+      "address": 10,
+      "type": "i32",
+      "access": "r",
+      "description": "W dmd",
+      "unit": "Watt"
+    },
+    "w_dmd_peak": {
+      "address": 12,
+      "type": "i32",
+      "access": "r",
+      "description": "W dmd peak",
+      "unit": "Watt"
+    },
+    "pf": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "description": "PF",
+      "unit": "PF"
+    },
+    "hz": {
+      "address": 15,
+      "type": "i16",
+      "access": "r",
+      "description": "Hz",
+      "unit": "Hz"
+    },
+    "kwh_tot": {
+      "address": 16,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) TOT",
+      "unit": "kWh"
+    },
+    "kvarh_tot": {
+      "address": 18,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) TOT",
+      "unit": "kvarh"
+    },
+    "kwh_partial": {
+      "address": 20,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) PARTIAL",
+      "unit": "kWh"
+    },
+    "kvarh_partial": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) PARTIAL",
+      "unit": "kvarh"
+    },
+    "kwh_t1": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) T1",
+      "unit": "kWh"
+    },
+    "kwh_t2": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) T2",
+      "unit": "kWh"
+    },
+    "kwh_tot_32": {
+      "address": 32,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh ( ) TOT",
+      "unit": "kWh"
+    },
+    "kvarh_tot_34": {
+      "address": 34,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh ( ) TOT",
+      "unit": "kvarh"
+    },
+    "hour_counter": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "Hour counter",
+      "unit": "hours"
+    },
+    "a_256": {
+      "address": 256,
+      "type": "i32",
+      "access": "r",
+      "description": "A",
+      "unit": "Ampere"
+    },
+    "v_l_n": {
+      "address": 258,
+      "type": "i32",
+      "access": "r",
+      "description": "V L N",
+      "unit": "Volt"
+    },
+    "w_262": {
+      "address": 262,
+      "type": "i32",
+      "access": "r",
+      "description": "W",
+      "unit": "Watt"
+    },
+    "va_264": {
+      "address": 264,
+      "type": "i32",
+      "access": "r",
+      "description": "VA",
+      "unit": "VA"
+    },
+    "var_266": {
+      "address": 266,
+      "type": "i32",
+      "access": "r",
+      "description": "Var",
+      "unit": "var"
+    },
+    "pf_268": {
+      "address": 268,
+      "type": "i32",
+      "access": "r",
+      "description": "PF",
+      "unit": "PF"
+    },
+    "hz_272": {
+      "address": 272,
+      "type": "i32",
+      "access": "r",
+      "description": "Hz",
+      "unit": "Hz"
+    },
+    "kwh_tot_274": {
+      "address": 274,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) TOT",
+      "unit": "kWh"
+    },
+    "kvarh_tot_276": {
+      "address": 276,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) TOT",
+      "unit": "kvarh"
+    },
+    "kwh_tot_278": {
+      "address": 278,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh ( ) TOT",
+      "unit": "kWh"
+    },
+    "kvarh_tot_280": {
+      "address": 280,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh ( ) TOT",
+      "unit": "kvarh"
+    },
+    "kw_dmd": {
+      "address": 282,
+      "type": "i32",
+      "access": "r",
+      "description": "kW dmd",
+      "unit": "Watt"
+    },
+    "kw_dmd_peak": {
+      "address": 284,
+      "type": "i32",
+      "access": "r",
+      "description": "kW dmd peak",
+      "unit": "Watt"
+    },
+    "kwh_partial_328": {
+      "address": 328,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) PARTIAL",
+      "unit": "kWh"
+    },
+    "kvarh_partial_330": {
+      "address": 330,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) PARTIAL",
+      "unit": "kvarh"
+    },
+    "kwh_t1_338": {
+      "address": 338,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) T1",
+      "unit": "kWh"
+    },
+    "kwh_t2_340": {
+      "address": 340,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) T2",
+      "unit": "kWh"
+    },
+    "kwh_tot_integer_part": {
+      "address": 1024,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) TOT INTeger part",
+      "unit": "kWh"
+    },
+    "kwh_tot_decimal_part": {
+      "address": 1026,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh (+) TOT DECimal part",
+      "unit": "kWh"
+    },
+    "kvarh_tot_integer_part": {
+      "address": 1028,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) TOT INTeger part",
+      "unit": "kvarh"
+    },
+    "kvarh_tot_decimal_part": {
+      "address": 1030,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) TOT DECimal part",
+      "unit": "kvarh"
+    },
+    "kwh_tot_integer_part_1032": {
+      "address": 1032,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh ( ) TOT INTeger part"
+    },
+    "kwh_tot_decimal_part_1034": {
+      "address": 1034,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh ( ) TOT DECimal part",
+      "unit": "kWh"
+    },
+    "kvarh_tot_integer_part_1036": {
+      "address": 1036,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh ( ) TOT INTeger part",
+      "unit": "kvarh"
+    },
+    "kvarh_tot_decimal_part_1038": {
+      "address": 1038,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh ( ) TOT DECimal part",
+      "unit": "kvarh"
+    },
+    "kwh_tot_1280": {
+      "address": 1280,
+      "type": "i64",
+      "access": "r",
+      "description": "kWh (+) TOT"
+    },
+    "kvarh_tot_1284": {
+      "address": 1284,
+      "type": "i64",
+      "access": "r",
+      "description": "Kvarh (+) TOT"
+    },
+    "kwh_partial_1288": {
+      "address": 1288,
+      "type": "i64",
+      "access": "r",
+      "description": "kWh (+) partial"
+    },
+    "kvarh_partial_1292": {
+      "address": 1292,
+      "type": "i64",
+      "access": "r",
+      "description": "Kvarh (+) partial"
+    },
+    "kwh_tot_1308": {
+      "address": 1308,
+      "type": "i64",
+      "access": "r",
+      "description": "kWh ( ) TOT"
+    },
+    "kwh_partial_1312": {
+      "address": 1312,
+      "type": "i64",
+      "access": "r",
+      "description": "kWh ( ) partial"
+    },
+    "kvarh_tot_1316": {
+      "address": 1316,
+      "type": "i64",
+      "access": "r",
+      "description": "Kvarh ( ) TOT"
+    },
+    "kvarh_partial_1320": {
+      "address": 1320,
+      "type": "i64",
+      "access": "r",
+      "description": "Kvarh ( ) partial"
+    }
+  }
+}

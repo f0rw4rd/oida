@@ -1,0 +1,51 @@
+# Pure-FTPd 1.0.50 - CVE-2024-48208 (domlsd Buffer Overflow)
+# Out-of-bounds read in domlsd() function in ls.c
+# Reference: https://github.com/advisories/GHSA-rrmj-qxgv-v296
+#
+# VULNERABLE: Crafted MLSD/MLST command triggers OOB read in domlsd
+# Affects: Pure-FTPd before 1.0.52
+#
+# For authorized security testing only
+
+FROM debian:bullseye-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and compile vulnerable Pure-FTPd 1.0.50
+WORKDIR /tmp
+RUN wget -q https://github.com/jedisct1/pure-ftpd/releases/download/1.0.50/pure-ftpd-1.0.50.tar.gz \
+    && tar xzf pure-ftpd-1.0.50.tar.gz \
+    && cd pure-ftpd-1.0.50 \
+    && ./configure --prefix=/usr/local \
+        --without-privsep \
+        CFLAGS="-fno-stack-protector -fsanitize=address -g -O0" \
+        LDFLAGS="-fsanitize=address" \
+    && make -j$(nproc) \
+    && make install \
+    && cd / && rm -rf /tmp/*
+
+# Create FTP user
+RUN useradd -m -d /var/ftp -s /bin/false ftpuser \
+    && echo "ftpuser:ftpuser" | chpasswd \
+    && mkdir -p /var/ftp/pub \
+    && chown -R ftpuser:ftpuser /var/ftp
+
+# Create startup script
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+echo "Starting Pure-FTPd 1.0.50 (CVE-2024-48208 vulnerable)"
+echo "WARNING: This server is intentionally vulnerable for security testing"
+exec /usr/local/sbin/pure-ftpd -S 2126 -B -l unix -E
+EOF
+RUN chmod +x /start.sh
+
+EXPOSE 2126
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD nc -zv localhost 2126 || exit 1
+
+CMD ["/start.sh"]

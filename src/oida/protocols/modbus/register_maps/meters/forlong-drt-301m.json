@@ -1,0 +1,358 @@
+{
+  "vendor": "Forlong",
+  "model": "DRT 301 M",
+  "description": "Forlong DRT 301 M power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_l1": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L1",
+      "unit": "V"
+    },
+    "voltage_l2": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L2",
+      "unit": "V"
+    },
+    "voltage_l3": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L3",
+      "unit": "V"
+    },
+    "frequency": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "current_l1": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "Current L1",
+      "unit": "A"
+    },
+    "current_l2": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Current L2",
+      "unit": "A"
+    },
+    "current_l3": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Current L3",
+      "unit": "A"
+    },
+    "current_neutral": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Current neutral",
+      "unit": "A"
+    },
+    "power_l1": {
+      "address": 144,
+      "type": "u32",
+      "access": "r",
+      "description": "Power L1",
+      "unit": "kW"
+    },
+    "power_l2": {
+      "address": 146,
+      "type": "u32",
+      "access": "r",
+      "description": "Power L2",
+      "unit": "kW"
+    },
+    "power_l3": {
+      "address": 148,
+      "type": "u32",
+      "access": "r",
+      "description": "Power L3",
+      "unit": "kW"
+    },
+    "power_total": {
+      "address": 150,
+      "type": "u32",
+      "access": "r",
+      "description": "Power total",
+      "unit": "kW"
+    },
+    "apparent_power_l1": {
+      "address": 208,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power L1",
+      "unit": "kVA"
+    },
+    "apparent_power_l2": {
+      "address": 210,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power L2",
+      "unit": "kVA"
+    },
+    "apparent_power_l3": {
+      "address": 212,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power L3",
+      "unit": "kVA"
+    },
+    "apparent_power_total": {
+      "address": 214,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power total",
+      "unit": "kVA"
+    },
+    "reactive_power_l1": {
+      "address": 272,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power L1",
+      "unit": "kvar"
+    },
+    "reactive_power_l2": {
+      "address": 274,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power L2",
+      "unit": "kvar"
+    },
+    "reactive_power_l3": {
+      "address": 276,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power L3",
+      "unit": "kvar"
+    },
+    "reactive_power_total": {
+      "address": 278,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power total",
+      "unit": "kvar"
+    },
+    "power_factor_l1": {
+      "address": 336,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor L1"
+    },
+    "power_factor_l2": {
+      "address": 338,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor L2"
+    },
+    "power_factor_l3": {
+      "address": 340,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor L3"
+    },
+    "power_factor_total": {
+      "address": 342,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor total"
+    },
+    "import_energy": {
+      "address": 352,
+      "type": "u32",
+      "access": "r",
+      "description": "Import energy",
+      "unit": "KW"
+    },
+    "export_energy": {
+      "address": 358,
+      "type": "u32",
+      "access": "r",
+      "description": "Export energy",
+      "unit": "KW"
+    },
+    "import_energy_rate_1": {
+      "address": 2000,
+      "type": "u32",
+      "access": "r",
+      "description": "Import energy rate 1",
+      "unit": "KW"
+    },
+    "import_energy_rate_2": {
+      "address": 2002,
+      "type": "u32",
+      "access": "r",
+      "description": "Import energy rate 2",
+      "unit": "KW"
+    },
+    "import_energy_rate_3": {
+      "address": 2004,
+      "type": "u32",
+      "access": "r",
+      "description": "Import energy rate 3",
+      "unit": "KW"
+    },
+    "import_energy_rate_4": {
+      "address": 2006,
+      "type": "u32",
+      "access": "r",
+      "description": "Import energy rate 4",
+      "unit": "KW"
+    },
+    "export_energy_rate_1": {
+      "address": 2256,
+      "type": "u32",
+      "access": "r",
+      "description": "Export energy rate 1",
+      "unit": "KW"
+    },
+    "export_energy_rate_2": {
+      "address": 2258,
+      "type": "u32",
+      "access": "r",
+      "description": "Export energy rate 2",
+      "unit": "KW"
+    },
+    "export_energy_rate_3": {
+      "address": 2260,
+      "type": "u32",
+      "access": "r",
+      "description": "Export energy rate 3",
+      "unit": "KW"
+    },
+    "export_energy_rate_4": {
+      "address": 2262,
+      "type": "u32",
+      "access": "r",
+      "description": "Export energy rate 4",
+      "unit": "KW"
+    },
+    "time": {
+      "address": 61440,
+      "type": "str",
+      "access": "r",
+      "description": "Time"
+    },
+    "last_1_month_positive_energy_total": {
+      "address": 61713,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 1 month positive energy, total",
+      "unit": "kW"
+    },
+    "last_1_month_positive_energy_rate_1": {
+      "address": 61715,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 1 month positive energy, rate 1",
+      "unit": "kW"
+    },
+    "last_1_month_positive_energy_rate_2": {
+      "address": 61717,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 1 month positive energy, rate 2",
+      "unit": "kW"
+    },
+    "last_1_month_positive_energy_rate_3": {
+      "address": 61719,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 1 month positive energy, rate 3",
+      "unit": "kW"
+    },
+    "last_1_month_positive_energy_rate_4": {
+      "address": 61721,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 1 month positive energy, rate 4",
+      "unit": "kW"
+    },
+    "last_2_month_positive_energy_total": {
+      "address": 61729,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 2 month positive energy, total",
+      "unit": "kW"
+    },
+    "last_2_month_positive_energy_rate_1": {
+      "address": 61731,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 2 month positive energy, rate 1",
+      "unit": "kW"
+    },
+    "last_2_month_positive_energy_rate_2": {
+      "address": 61733,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 2 month positive energy, rate 2",
+      "unit": "kW"
+    },
+    "last_2_month_positive_energy_rate_3": {
+      "address": 61735,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 2 month positive energy, rate 3",
+      "unit": "kW"
+    },
+    "last_2_month_positive_energy_rate_4": {
+      "address": 61737,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 2 month positive energy, rate 4",
+      "unit": "kW"
+    },
+    "last_3_month_positive_energy_total": {
+      "address": 61745,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 3 month positive energy, total",
+      "unit": "kW"
+    },
+    "last_3_month_positive_energy_rate_1": {
+      "address": 61747,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 3 month positive energy, rate 1",
+      "unit": "kW"
+    },
+    "last_3_month_positive_energy_rate_2": {
+      "address": 61749,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 3 month positive energy, rate 2",
+      "unit": "kW"
+    },
+    "last_3_month_positive_energy_rate_3": {
+      "address": 61751,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 3 month positive energy, rate 3",
+      "unit": "kW"
+    },
+    "last_3_month_positive_energy_rate_4": {
+      "address": 61753,
+      "type": "u32",
+      "access": "r",
+      "description": "Last 3 month positive energy, rate 4",
+      "unit": "kW"
+    }
+  }
+}

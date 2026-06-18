@@ -1,0 +1,359 @@
+{
+  "vendor": "CEWE",
+  "model": "CDM",
+  "description": "CEWE CDM power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v1_l_n_voltage_phase_1": {
+      "address": 4096,
+      "type": "f32",
+      "access": "r",
+      "description": "V1 L N voltage phase 1",
+      "unit": "V"
+    },
+    "v2_l_n_voltage_phase_2": {
+      "address": 4098,
+      "type": "f32",
+      "access": "r",
+      "description": "V2 L N voltage phase 2",
+      "unit": "V"
+    },
+    "v3_l_n_voltage_phase_3": {
+      "address": 4100,
+      "type": "f32",
+      "access": "r",
+      "description": "V3 L N voltage phase 3",
+      "unit": "V"
+    },
+    "v12_l_l_voltage_line_12": {
+      "address": 4102,
+      "type": "f32",
+      "access": "r",
+      "description": "V12 L L voltage line 12",
+      "unit": "V"
+    },
+    "v23_l_l_voltage_line_23": {
+      "address": 4104,
+      "type": "f32",
+      "access": "r",
+      "description": "V23 L L voltage line 23",
+      "unit": "V"
+    },
+    "v31_l_l_voltage_line_31": {
+      "address": 4106,
+      "type": "f32",
+      "access": "r",
+      "description": "V31 L L voltage line 31",
+      "unit": "V"
+    },
+    "v_system_voltage": {
+      "address": 4108,
+      "type": "f32",
+      "access": "r",
+      "description": "V system voltage",
+      "unit": "V"
+    },
+    "a1_phase_1_current": {
+      "address": 4110,
+      "type": "f32",
+      "access": "r",
+      "description": "A1 phase 1 current",
+      "unit": "A"
+    },
+    "a2_phase_2_current": {
+      "address": 4112,
+      "type": "f32",
+      "access": "r",
+      "description": "A2 phase 2 current",
+      "unit": "A"
+    },
+    "a3_phase_3_current": {
+      "address": 4114,
+      "type": "f32",
+      "access": "r",
+      "description": "A3 phase 3 current",
+      "unit": "A"
+    },
+    "an_neutral_current": {
+      "address": 4116,
+      "type": "f32",
+      "access": "r",
+      "description": "An neutral current",
+      "unit": "A"
+    },
+    "a_system_current": {
+      "address": 4118,
+      "type": "f32",
+      "access": "r",
+      "description": "A system current",
+      "unit": "A"
+    },
+    "pf1_phase_1_power_factor": {
+      "address": 4120,
+      "type": "f32",
+      "access": "r",
+      "description": "PF1 phase 1 power factor"
+    },
+    "pf2_phase_2_power_factor": {
+      "address": 4122,
+      "type": "f32",
+      "access": "r",
+      "description": "PF2 phase 2 power factor"
+    },
+    "pf3_phase_3_power_factor": {
+      "address": 4124,
+      "type": "f32",
+      "access": "r",
+      "description": "PF3 phase 3 power factor"
+    },
+    "pf_system_power_factor": {
+      "address": 4126,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf system power factor"
+    },
+    "p1_phase_1_active_power": {
+      "address": 4128,
+      "type": "f32",
+      "access": "r",
+      "description": "P1 phase 1 active power",
+      "unit": "W"
+    },
+    "p2_phase_2_active_power": {
+      "address": 4130,
+      "type": "f32",
+      "access": "r",
+      "description": "P2 phase 2 active power",
+      "unit": "W"
+    },
+    "p3_phase_3_active_power": {
+      "address": 4132,
+      "type": "f32",
+      "access": "r",
+      "description": "P3 phase 3 active power",
+      "unit": "W"
+    },
+    "p_system_active_power": {
+      "address": 4134,
+      "type": "f32",
+      "access": "r",
+      "description": "P system active power",
+      "unit": "W"
+    },
+    "s1_phase_1_apparent_power": {
+      "address": 4136,
+      "type": "f32",
+      "access": "r",
+      "description": "S1 phase 1 apparent power",
+      "unit": "VA"
+    },
+    "s2_phase_2_apparent_power": {
+      "address": 4138,
+      "type": "f32",
+      "access": "r",
+      "description": "S2 phase 2 apparent power",
+      "unit": "VA"
+    },
+    "s3_phase_3_apparent_power": {
+      "address": 4140,
+      "type": "f32",
+      "access": "r",
+      "description": "S3 phase 3 apparent power",
+      "unit": "VA"
+    },
+    "s_system_apparent_power": {
+      "address": 4142,
+      "type": "f32",
+      "access": "r",
+      "description": "S system apparent power",
+      "unit": "VA"
+    },
+    "q1_phase_1_reactive_power": {
+      "address": 4144,
+      "type": "f32",
+      "access": "r",
+      "description": "Q1 phase 1 reactive power",
+      "unit": "var"
+    },
+    "q2_phase_2_reactive_power": {
+      "address": 4146,
+      "type": "f32",
+      "access": "r",
+      "description": "Q2 phase 2 reactive power",
+      "unit": "var"
+    },
+    "q3_phase_3_reactive_power": {
+      "address": 4148,
+      "type": "f32",
+      "access": "r",
+      "description": "Q3 phase 3 reactive power",
+      "unit": "var"
+    },
+    "q_system_reactive_power": {
+      "address": 4150,
+      "type": "f32",
+      "access": "r",
+      "description": "Q system reactive power",
+      "unit": "var"
+    },
+    "f_frequency": {
+      "address": 4152,
+      "type": "f32",
+      "access": "r",
+      "description": "F frequency",
+      "unit": "Hz"
+    },
+    "kwh1_phase_1_imported_active_energy": {
+      "address": 4352,
+      "type": "f32",
+      "access": "r",
+      "description": "+kwh1 phase 1 imported active energy",
+      "unit": "Wh"
+    },
+    "kwh2_phase_2_imported_active_energy": {
+      "address": 4354,
+      "type": "f32",
+      "access": "r",
+      "description": "+kwh2 phase 2 imported active energy",
+      "unit": "Wh"
+    },
+    "kwh3_phase_3_imported_active_energy": {
+      "address": 4356,
+      "type": "f32",
+      "access": "r",
+      "description": "+kwh3 phase 3 imported active energy",
+      "unit": "Wh"
+    },
+    "kwh_system_imported_active_energy": {
+      "address": 4358,
+      "type": "f32",
+      "access": "r",
+      "description": "+kwh system imported active energy",
+      "unit": "Wh"
+    },
+    "kwh1_phase_1_exported_active_energy": {
+      "address": 4360,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh1 phase 1 exported active energy",
+      "unit": "Wh"
+    },
+    "kwh2_phase_2_exported_active_energy": {
+      "address": 4362,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh2 phase 2 exported active energy",
+      "unit": "Wh"
+    },
+    "kwh3_phase_3_exported_active_energy": {
+      "address": 4364,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh3 phase 3 exported active energy",
+      "unit": "Wh"
+    },
+    "kwh_system_exported_active_energy": {
+      "address": 4366,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh system exported active energy",
+      "unit": "Wh"
+    },
+    "kvah1_l_phase_1_imported_lagging_apparent_energy": {
+      "address": 4368,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah1 L phase 1 imported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah2_l_phase_2_imported_lagging_apparent_energy": {
+      "address": 4370,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah2 L phase 2 imported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah3_l_phase_3_imported_lagging_apparent_energy": {
+      "address": 4372,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah3 L phase 3 imported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah_l_system_imported_lagging_apparent_energy": {
+      "address": 4374,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah L system imported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah1_l_phase_1_exported_lagging_apparent_energy": {
+      "address": 4376,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah1 L phase 1 exported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah2_l_phase_2_exported_lagging_apparent_energy": {
+      "address": 4378,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah2 L phase 2 exported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah3_l_phase_3_exported_lagging_apparent_energy": {
+      "address": 4380,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah3 L phase 3 exported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah_l_system_exported_lagging_apparent_energy": {
+      "address": 4382,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah L system exported lagging apparent energy",
+      "unit": "VAh"
+    },
+    "kvah1_c_phase_1_imported_leading_apparent_energy": {
+      "address": 4384,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah1 C phase 1 imported leading apparent energy",
+      "unit": "VAh"
+    },
+    "kvah2_c_phase_2_imported_leading_apparent_energy": {
+      "address": 4386,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah2 C phase 2 imported leading apparent energy",
+      "unit": "VAh"
+    },
+    "kvah3_c_phase_3_imported_leading_apparent_energy": {
+      "address": 4388,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah3 C phase 3 imported leading apparent energy",
+      "unit": "VAh"
+    },
+    "kvah_c_system_imported_leading_apparent_energy": {
+      "address": 4390,
+      "type": "f32",
+      "access": "r",
+      "description": "+kvah C system imported leading apparent energy",
+      "unit": "VAh"
+    },
+    "kvah1_c_phase_1_exported_leading_apparent_energy": {
+      "address": 4392,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah1 C phase 1 exported leading apparent energy",
+      "unit": "VAh"
+    }
+  }
+}

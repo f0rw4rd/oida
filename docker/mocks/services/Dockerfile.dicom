@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir pynetdicom>=2.0.0 pydicom>=2.4.0 numpy>=1.24.0 Pillow>=10.0.0
+
+# Copy server script
+COPY dicom_server.py /app/
+
+# Expose DICOM port
+EXPOSE 11112
+
+# Run server
+CMD ["python3", "dicom_server.py"]

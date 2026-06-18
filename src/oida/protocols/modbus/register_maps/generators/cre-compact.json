@@ -1,0 +1,218 @@
+{
+  "vendor": "CRE Technology",
+  "model": "Gensys Compact",
+  "description": "CRE Technology Gensys Compact series genset controllers. Covers Compact AMF (A56-AMF), Compact PRIME (A56-PRIME), and Compact MAINS (A56-MAINS) variants in both -00 and -10 hardware revisions.",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "source": "https://github.com/victronenergy/dbus-modbus-client",
+  "notes": "Holding register access. 32-bit registers use little-endian word order (low word first). Serial number is derived from identification registers 4-6 encoding production week, year, and sequence number. Active power registers 363-365 have variable scaling based on nominal genset power (register 2105): the power unit is 10^floor(log10(nominal_kW)). For example, a 100 kW genset uses a power unit of 100 W. Fuel tank readings are not supported as there is no reliable way to detect if a fuel sensor is connected via Modbus (firmware v2.40). Register barriers at addresses 77, 360-362, 4002-4005 prevent contiguous reads across those boundaries.",
+  "models": [
+    "Compact AMF",
+    "Gensys Compact Prime",
+    "Gensys Compact Mains"
+  ],
+  "registers": {
+    "firmware_version": {
+      "address": 0,
+      "type": "string",
+      "length": 4,
+      "access": "r",
+      "description": "Controller firmware version string"
+    },
+    "identification": {
+      "address": 4,
+      "type": "u16",
+      "count": 3,
+      "access": "r",
+      "description": "Device identification. Register 4: digit 0=platform type (0=Compact/56, 1=Enhanced/66), digits 1-2=production week, digits 3-4=production year. Register 6: digits 0-1=product family code, digits 2-4=production number."
+    },
+    "ac_l1_voltage": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L1 phase voltage",
+      "unit": "V"
+    },
+    "ac_l2_voltage": {
+      "address": 51,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L2 phase voltage",
+      "unit": "V"
+    },
+    "ac_l3_voltage": {
+      "address": 52,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L3 phase voltage",
+      "unit": "V"
+    },
+    "ac_l1_current": {
+      "address": 59,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L1 phase current",
+      "unit": "A"
+    },
+    "ac_l2_current": {
+      "address": 60,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L2 phase current",
+      "unit": "A"
+    },
+    "ac_l3_current": {
+      "address": 61,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator L3 phase current",
+      "unit": "A"
+    },
+    "ac_frequency": {
+      "address": 75,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "description": "Generator AC output frequency",
+      "unit": "Hz"
+    },
+    "engine_starts": {
+      "address": 78,
+      "type": "u16",
+      "access": "r",
+      "description": "Total engine start count"
+    },
+    "ac_energy_forward": {
+      "address": 79,
+      "type": "u32",
+      "access": "r",
+      "description": "Total generated energy. 32-bit little-endian word order.",
+      "unit": "kWh"
+    },
+    "engine_operating_hours": {
+      "address": 83,
+      "type": "u32",
+      "access": "r",
+      "scale": 3600,
+      "description": "Total engine operating hours. Raw value in hours, multiply by 3600 for seconds. 32-bit little-endian word order.",
+      "unit": "s"
+    },
+    "engine_oil_pressure": {
+      "address": 200,
+      "type": "u16",
+      "access": "r",
+      "scale": 10,
+      "description": "Engine oil pressure. Raw value multiplied by 10 for kPa.",
+      "unit": "kPa"
+    },
+    "engine_coolant_temperature": {
+      "address": 201,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Engine coolant temperature",
+      "unit": "C"
+    },
+    "engine_speed": {
+      "address": 202,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine speed",
+      "unit": "RPM"
+    },
+    "starter_voltage": {
+      "address": 204,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Starter battery voltage",
+      "unit": "V"
+    },
+    "engine_load": {
+      "address": 358,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Engine load percentage",
+      "unit": "%"
+    },
+    "ac_l1_power": {
+      "address": 363,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator L1 phase active power. Scale factor is variable based on nominal genset power (register 2105). Power unit = 10^floor(log10(nominal_kW)) watts.",
+      "unit": "W",
+      "scale_note": "dynamic"
+    },
+    "ac_l2_power": {
+      "address": 364,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator L2 phase active power. Scale factor is variable, see ac_l1_power.",
+      "unit": "W",
+      "scale_note": "dynamic"
+    },
+    "ac_l3_power": {
+      "address": 365,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator L3 phase active power. Scale factor is variable, see ac_l1_power.",
+      "unit": "W",
+      "scale_note": "dynamic"
+    },
+    "ac_total_power": {
+      "address": 369,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator total active power. Scale factor is variable, see ac_l1_power.",
+      "unit": "W",
+      "scale_note": "dynamic"
+    },
+    "nr_of_phases": {
+      "address": 2003,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase configuration: 0=single, 1=split, 2-5=three phase"
+    },
+    "nominal_power": {
+      "address": 2105,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal genset power in kW. Used to calculate power register scaling: power_unit = 10^floor(log10(value)).",
+      "unit": "kW"
+    },
+    "status_code": {
+      "address": 4001,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine status code: 0=Waiting, 2=Start, 3=Warm-up, 4=Ck speed stab, 5=Ck volt stab, 6=GE ready, 7=Opening GE, 8=Cool down, 9=Stop, 11=Rest, 12=Pre-Start, 13=Wait other eng, 14=Closing GE, 20=Starter only, 21=Ignition ON, 22=Start, 23=Ignition only, 40=Ext start seq, 255=Fault"
+    },
+    "operating_mode": {
+      "address": 4008,
+      "type": "u16",
+      "access": "r",
+      "description": "Operating mode: 0=MAN, 1=TEST, 2=AUTO. Remote start enabled when mode is AUTO (2)."
+    },
+    "remote_start_on_load": {
+      "address": 4502,
+      "type": "u16",
+      "access": "rw",
+      "description": "Remote start on load command. Write 1 to start generator in automatic mode and close generator breaker. Write 0 to stop."
+    },
+    "set_auto_mode": {
+      "address": 4513,
+      "type": "u16",
+      "access": "rw",
+      "description": "Set controller to AUTO mode. Write 1 to activate."
+    },
+    "alarm_status": {
+      "address": 4664,
+      "type": "u16",
+      "count": 2,
+      "access": "r",
+      "description": "Alarm status registers. Register 4664 word 0: shutdown alarm active (nonzero = error). Register 4664 word 1: warning alarm active (nonzero = warning)."
+    }
+  }
+}

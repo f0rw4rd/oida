@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include requirements.txt
+include requirements.in
+include REFACTORING_GUIDE.md
+include CLAUDE.md
+recursive-include msf_ics/data *.json *.csv
+recursive-include msf_ics/configs *.yml *.yaml
+recursive-include data *.json *.csv *.txt *.md
+recursive-exclude msf_ics *.pyc
+recursive-exclude msf_ics __pycache__
+global-exclude *.py[co]

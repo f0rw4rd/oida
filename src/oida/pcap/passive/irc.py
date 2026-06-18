@@ -1,0 +1,246 @@
+"""
+IRC Passive Listener for credential extraction.
+
+Passively captures IRC traffic to extract:
+- NICK commands (nickname)
+- USER commands (username, realname)
+- PASS commands (server password)
+
+IRC authentication is plaintext, making this a high-value extraction target.
+
+tshark fields:
+- irc.request.command: IRC command (NICK, USER, PASS, etc.)
+- irc.request.command_parameter: Command parameters
+
+References:
+- RFC 2812: Internet Relay Chat: Client Protocol
+- Wireshark dissector: packet-irc.c
+"""
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+
+
+@dataclass
+class IRCCredential:
+    """Extracted IRC credential."""
+
+    credential_type: str  # "plaintext" (PASS), "nick", "user"
+    value: str
+    nick: str = ""
+    username: str = ""
+    realname: str = ""
+    server_ip: str = ""
+    client_ip: str = ""
+    timestamp: str = ""
+
+    @property
+    def password(self) -> str:
+        """Alias for scanner credential loop compatibility."""
+        return self.value if self.credential_type == "plaintext" else ""
+
+    @property
+    def auth_method(self) -> str:
+        """Return auth method for scanner credential loop."""
+        return f"IRC/{self.credential_type}"
+
+    @property
+    def is_surfaceable(self) -> bool:
+        """Only PASS credentials should appear in the credential summary."""
+        return self.credential_type == "plaintext"
+
+
+class IRCPassiveListener(PySharkListenerBase):
+    """Passive IRC traffic listener for credential extraction.
+
+    Captures IRC traffic to extract:
+    - PASS commands (server/NickServ passwords)
+    - NICK commands (nicknames)
+    - USER commands (usernames)
+
+    Uses PyShark (tshark) for IRC protocol dissection.
+    """
+
+    PROTOCOL_NAME = "irc"
+    DISPLAY_FILTER = "irc"
+    REQUIRED_LAYERS = ("irc",)
+
+    PROTOCOL_COLUMNS = ("command", "parameter", "detail")
+
+    def __init__(
+        self,
+        interface: str,
+        timeout: int = 60,
+        nxc_logger: Optional[Any] = None,
+    ):
+        super().__init__(interface, timeout, nxc_logger)
+        self.credentials: List[IRCCredential] = []
+        # Track session state per client IP for correlating NICK/USER/PASS
+        self._sessions: Dict[str, Dict[str, str]] = {}
+
+    def process_packet(self, packet) -> None:
+        """Process IRC packet and extract credentials."""
+        if not hasattr(packet, "irc"):
+            return
+
+        irc = packet.irc
+        src_ip, dst_ip = self.get_ip_info(packet)
+        if not src_ip or not dst_ip:
+            return
+
+        flow_id = self.get_flow_id(packet)
+        src_port, dst_port = self.get_port_info(packet)
+
+        command = self.get_field(irc, "request_command", "") or ""
+        parameter = self.get_field(irc, "request_command_parameter", "") or ""
+
+        if not command:
+            return
+
+        command_upper = str(command).upper().strip()
+
+        # Record interaction
+        now = datetime.now().isoformat()
+        self._record_interaction(
+            now,
+            src_ip,
+            dst_ip,
+            "request",
+            f"IRC {command_upper}",
+            {"command": command_upper},
+            f"IRC {command_upper} {src_ip} -> {dst_ip}",
+            flow_id=flow_id,
+            src_port=src_port,
+            dst_port=dst_port,
+        )
+
+        # Get or create session tracker
+        if src_ip not in self._sessions:
+            self._sessions[src_ip] = {"nick": "", "user": "", "server": dst_ip}
+
+        session = self._sessions[src_ip]
+        session["server"] = dst_ip
+
+        if command_upper == "PASS" and parameter:
+            password = str(parameter).strip()
+            if password and not self._is_duplicate("plaintext", password, src_ip, dst_ip):
+                nick = session.get("nick", "")
+                cred = IRCCredential(
+                    credential_type="plaintext",
+                    value=password,
+                    nick=nick,
+                    username=nick or session.get("user", ""),
+                    server_ip=dst_ip,
+                    client_ip=src_ip,
+                    timestamp=datetime.now().isoformat(),
+                )
+                self.credentials.append(cred)
+                self._update_devices(src_ip, dst_ip)
+                self.logger.info(f"IRC PASS: {password} from {src_ip} to {dst_ip}")
+
+        elif command_upper == "NICK" and parameter:
+            nick = str(parameter).strip()
+            session["nick"] = nick
+            if nick and not self._is_duplicate("nick", nick, src_ip, dst_ip):
+                cred = IRCCredential(
+                    credential_type="nick",
+                    value=nick,
+                    nick=nick,
+                    server_ip=dst_ip,
+                    client_ip=src_ip,
+                    timestamp=datetime.now().isoformat(),
+                )
+                self.credentials.append(cred)
+                self._update_devices(src_ip, dst_ip)
+
+        elif command_upper == "USER" and parameter:
+            # USER params: <username> <mode> <unused> :<realname>
+            parts = str(parameter).strip().split(" ", 3)
+            username = parts[0] if parts else ""
+            realname = parts[3].lstrip(":") if len(parts) > 3 else ""
+            session["user"] = username
+
+            if username and not self._is_duplicate("user", username, src_ip, dst_ip):
+                cred = IRCCredential(
+                    credential_type="user",
+                    value=username,
+                    username=username,
+                    realname=realname,
+                    nick=session.get("nick", ""),
+                    server_ip=dst_ip,
+                    client_ip=src_ip,
+                    timestamp=datetime.now().isoformat(),
+                )
+                self.credentials.append(cred)
+                self._update_devices(src_ip, dst_ip)
+
+    def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
+        """Format a single interaction as a table row matching PROTOCOL_COLUMNS."""
+        command = str(ix.details.get("command", ""))
+        parameter = str(ix.details.get("parameter", ""))
+        detail = str(ix.summary)
+        return [command, parameter, detail]
+
+    def _is_duplicate(self, cred_type: str, value: str, client_ip: str, server_ip: str) -> bool:
+        """Check if credential is already recorded."""
+        for cred in self.credentials:
+            if (
+                cred.credential_type == cred_type
+                and cred.value == value
+                and cred.client_ip == client_ip
+                and cred.server_ip == server_ip
+            ):
+                return True
+        return False
+
+    def _update_devices(self, client_ip: str, server_ip: str) -> None:
+        """Update device entries."""
+        server_key = f"irc-server:{server_ip}"
+        device, is_new = self._ensure_device(
+            server_key,
+            server_ip,
+            name=f"IRC Server ({server_ip})",
+            device_type="IRC Server",
+        )
+        if is_new:
+            device.irc_passive_data = {"role": "server", "protocol": "IRC/TCP"}
+
+        client_key = f"irc-client:{client_ip}"
+        device, is_new = self._ensure_device(
+            client_key,
+            client_ip,
+            name=f"IRC Client ({client_ip})",
+            device_type="IRC Client",
+        )
+        if is_new:
+            device.irc_passive_data = {"role": "client", "protocol": "IRC/TCP"}
+
+    def get_credentials_summary(self) -> List[Dict[str, Any]]:
+        """Get summary of all extracted credentials.
+
+        Uses canonical key names for the base class harvest()
+        credential table builder.
+        """
+        result = []
+        for cred in self.credentials:
+            # For PASS credentials, username is the nick or user; value is the password
+            username = cred.nick or cred.username or cred.value
+            entry: Dict[str, Any] = {
+                "protocol": "IRC",
+                "credential_type": cred.credential_type,
+                "auth_method": f"IRC/{cred.credential_type}",
+                "username": username,
+                "password": cred.value if cred.credential_type == "plaintext" else "",
+                "server_ip": cred.server_ip,
+                "client_ip": cred.client_ip,
+                "timestamp": cred.timestamp,
+            }
+            if cred.nick:
+                entry["nick"] = cred.nick
+            if cred.realname:
+                entry["realname"] = cred.realname
+            result.append(entry)
+        return result

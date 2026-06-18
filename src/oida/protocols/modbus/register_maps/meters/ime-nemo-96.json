@@ -1,0 +1,357 @@
+{
+  "vendor": "IME",
+  "model": "NEMO 96",
+  "description": "IME NEMO 96 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_1_phase_voltage": {
+      "address": 769,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 : phase voltage",
+      "unit": "V"
+    },
+    "phase_2_phase_voltage": {
+      "address": 773,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 : phase voltage",
+      "unit": "V"
+    },
+    "phase_3_phase_voltage": {
+      "address": 777,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 : phase voltage",
+      "unit": "V"
+    },
+    "phase_1_current": {
+      "address": 781,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 : current",
+      "unit": "A"
+    },
+    "phase_2_current": {
+      "address": 785,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 : current",
+      "unit": "A"
+    },
+    "phase_3_current": {
+      "address": 789,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 : current",
+      "unit": "A"
+    },
+    "3_phase_active_power": {
+      "address": 793,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : active power",
+      "unit": "W/var/VA"
+    },
+    "3_phase_reactive_power": {
+      "address": 797,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : reactive power",
+      "unit": "W/var/VA"
+    },
+    "3_phase_apparent_power": {
+      "address": 801,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : apparent power",
+      "unit": "W/var/VA"
+    },
+    "3_phase_positive_active_energy": {
+      "address": 805,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : positive active energy",
+      "unit": "Wh"
+    },
+    "chained_voltage_l1_l2": {
+      "address": 809,
+      "type": "u32",
+      "access": "r",
+      "description": "Chained voltage : L1 L2",
+      "unit": "V"
+    },
+    "chained_voltage_l2_l3": {
+      "address": 813,
+      "type": "u32",
+      "access": "r",
+      "description": "Chained voltage : L2 L3",
+      "unit": "V"
+    },
+    "chained_voltage_l3_l1": {
+      "address": 817,
+      "type": "u32",
+      "access": "r",
+      "description": "Chained voltage : L3 L1",
+      "unit": "V"
+    },
+    "3_phase_negative_active_energy": {
+      "address": 821,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : negative active energy",
+      "unit": "Wh"
+    },
+    "frequency": {
+      "address": 825,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "operating_timer_counter": {
+      "address": 827,
+      "type": "u16",
+      "access": "r",
+      "description": "Operating timer counter"
+    },
+    "3_phase_power_factor": {
+      "address": 829,
+      "type": "u16",
+      "access": "r",
+      "description": "3 phase : power factor"
+    },
+    "3_phase_sector_of_power_factor_cap_or_ind": {
+      "address": 831,
+      "type": "u16",
+      "access": "r",
+      "description": "3 phase : sector of power factor (cap or ind)",
+      "unit": "a"
+    },
+    "voltages_sequence_diagnostic": {
+      "address": 832,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltages sequence diagnostic"
+    },
+    "output_relay_status": {
+      "address": 833,
+      "type": "u16",
+      "access": "r",
+      "description": "Output relay status",
+      "unit": "(2)"
+    },
+    "3_phase_positive_reactive_energy": {
+      "address": 835,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : positive reactive energy",
+      "unit": "Wh"
+    },
+    "3_phase_sign_of_active_power": {
+      "address": 839,
+      "type": "u16",
+      "access": "r",
+      "description": "3 phase : sign of active power",
+      "unit": "(5)"
+    },
+    "3_phase_negative_reactive_energy": {
+      "address": 840,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : negative reactive energy",
+      "unit": "Wh"
+    },
+    "3_phase_sign_of_reactive_power": {
+      "address": 844,
+      "type": "u16",
+      "access": "r",
+      "description": "3 phase : sign of reactive power",
+      "unit": "(5)"
+    },
+    "3_phase_average_power": {
+      "address": 848,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : average power",
+      "unit": "W/var/VA"
+    },
+    "3_phase_peak_maximum_demand": {
+      "address": 852,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase : peak maximum demand",
+      "unit": "W/var/VA"
+    },
+    "time_counter_for_average_power": {
+      "address": 856,
+      "type": "u16",
+      "access": "r",
+      "description": "Time counter for average power",
+      "unit": "minutes"
+    },
+    "neutral_current": {
+      "address": 857,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "phase_1_active_power": {
+      "address": 861,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 : active power",
+      "unit": "W/var/VA"
+    },
+    "phase_2_active_power": {
+      "address": 865,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 : active power",
+      "unit": "W/var/VA"
+    },
+    "phase_3_active_power": {
+      "address": 869,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 : active power",
+      "unit": "W/var/VA"
+    },
+    "phase_1_sign_of_active_power": {
+      "address": 873,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 : sign of active power",
+      "unit": "(5)"
+    },
+    "phase_2_sign_of_active_power": {
+      "address": 874,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 : sign of active power",
+      "unit": "(5)"
+    },
+    "phase_3_sign_of_active_power": {
+      "address": 875,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 : sign of active power",
+      "unit": "(5)"
+    },
+    "phase_1_reactive_power": {
+      "address": 876,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 : reactive power",
+      "unit": "W/var/VA"
+    },
+    "phase_2_reactive_power": {
+      "address": 880,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 : reactive power",
+      "unit": "W/var/VA"
+    },
+    "phase_3_reactive_power": {
+      "address": 884,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 : reactive power",
+      "unit": "W/var/VA"
+    },
+    "phase_1_sign_of_reactive_power": {
+      "address": 888,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 : sign of reactive power",
+      "unit": "(5)"
+    },
+    "phase_2_sign_of_reactive_power": {
+      "address": 889,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 : sign of reactive power",
+      "unit": "(5)"
+    },
+    "phase_3_sign_of_reactive_power": {
+      "address": 890,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 : sign of reactive power",
+      "unit": "(5)"
+    },
+    "phase_1_apparent_power": {
+      "address": 891,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 1 : apparent power",
+      "unit": "W/var/VA"
+    },
+    "phase_2_apparent_power": {
+      "address": 895,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 2 : apparent power",
+      "unit": "W/var/VA"
+    },
+    "phase_3_apparent_power": {
+      "address": 899,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase 3 : apparent power",
+      "unit": "W/var/VA"
+    },
+    "phase_1_power_factor": {
+      "address": 903,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 : power factor"
+    },
+    "phase_2_power_factor": {
+      "address": 905,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 : power factor"
+    },
+    "phase_3_power_factor": {
+      "address": 907,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 : power factor"
+    },
+    "phase_1_power_factor_sector": {
+      "address": 909,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 : power factor sector",
+      "unit": "a"
+    },
+    "phase_2_power_factor_sector": {
+      "address": 910,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 : power factor sector",
+      "unit": "a"
+    },
+    "phase_3_power_factor_sector": {
+      "address": 911,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 : power factor sector",
+      "unit": "a"
+    },
+    "phase_1_thd_v1": {
+      "address": 912,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 : thd V1",
+      "unit": "%"
+    }
+  }
+}

@@ -1,0 +1,328 @@
+{
+  "vendor": "Generic",
+  "model": "LiFePO4 BMS",
+  "description": "Generic LiFePO4 battery management system based on common Chinese BMS implementations",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Common register layout used by many LiFePO4 BMS manufacturers (JK BMS, Daly BMS, etc). RTU 9600 baud 8N1. Addresses may vary slightly between manufacturers.",
+  "source": "LiBat reference implementation, various BMS protocol documents",
+  "registers": {
+    "pack_voltage": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Total pack voltage"
+    },
+    "pack_current": {
+      "address": 1,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Pack current (positive=discharge)"
+    },
+    "soc": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of charge"
+    },
+    "soh": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of health"
+    },
+    "remaining_capacity": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "unit": "Ah",
+      "scale": 0.01,
+      "description": "Remaining capacity"
+    },
+    "full_capacity": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "unit": "Ah",
+      "scale": 0.01,
+      "description": "Full charge capacity"
+    },
+    "cycle_count": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of charge cycles"
+    },
+    "cell_count": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of cells"
+    },
+    "temp_count": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of temperature sensors"
+    },
+    "status": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS status flags",
+      "enum": {
+        "0": "IDLE",
+        "1": "CHARGING",
+        "2": "DISCHARGING",
+        "3": "CHARGE_COMPLETE",
+        "4": "PROTECTION"
+      }
+    },
+    "protection_status": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Protection status bitfield (bit0=OV, bit1=UV, bit2=OC_CHG, bit3=OC_DCHG, bit4=OT, bit5=UT)"
+    },
+    "fault_status": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Fault status bitfield"
+    },
+    "charge_mosfet": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge MOSFET status (1=ON)"
+    },
+    "discharge_mosfet": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge MOSFET status (1=ON)"
+    },
+    "balance_status": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Cell balancing active bitfield"
+    },
+    "cell_voltage_max": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Maximum cell voltage"
+    },
+    "cell_voltage_max_id": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Cell ID with max voltage"
+    },
+    "cell_voltage_min": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Minimum cell voltage"
+    },
+    "cell_voltage_min_id": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Cell ID with min voltage"
+    },
+    "cell_voltage_diff": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Max-min cell voltage difference"
+    },
+    "cell_voltage_avg": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Average cell voltage"
+    },
+    "temp_max": {
+      "address": 26,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Maximum temperature"
+    },
+    "temp_min": {
+      "address": 27,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Minimum temperature"
+    },
+    "temp_avg": {
+      "address": 28,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Average temperature"
+    },
+    "cell_voltage_1": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 1 voltage"
+    },
+    "cell_voltage_2": {
+      "address": 101,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 2 voltage"
+    },
+    "cell_voltage_3": {
+      "address": 102,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 3 voltage"
+    },
+    "cell_voltage_4": {
+      "address": 103,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 4 voltage"
+    },
+    "cell_voltage_5": {
+      "address": 104,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 5 voltage"
+    },
+    "cell_voltage_6": {
+      "address": 105,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 6 voltage"
+    },
+    "cell_voltage_7": {
+      "address": 106,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 7 voltage"
+    },
+    "cell_voltage_8": {
+      "address": 107,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 8 voltage"
+    },
+    "cell_voltage_9": {
+      "address": 108,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 9 voltage"
+    },
+    "cell_voltage_10": {
+      "address": 109,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 10 voltage"
+    },
+    "cell_voltage_11": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 11 voltage"
+    },
+    "cell_voltage_12": {
+      "address": 111,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 12 voltage"
+    },
+    "cell_voltage_13": {
+      "address": 112,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 13 voltage"
+    },
+    "cell_voltage_14": {
+      "address": 113,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 14 voltage"
+    },
+    "cell_voltage_15": {
+      "address": 114,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 15 voltage"
+    },
+    "cell_voltage_16": {
+      "address": 115,
+      "type": "u16",
+      "access": "r",
+      "unit": "mV",
+      "description": "Cell 16 voltage"
+    },
+    "temp_sensor_1": {
+      "address": 200,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 1"
+    },
+    "temp_sensor_2": {
+      "address": 201,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 2"
+    },
+    "temp_sensor_3": {
+      "address": 202,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 3"
+    },
+    "temp_sensor_4": {
+      "address": 203,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 4"
+    }
+  }
+}

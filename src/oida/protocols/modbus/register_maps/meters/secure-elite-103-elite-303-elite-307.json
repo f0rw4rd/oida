@@ -1,0 +1,336 @@
+{
+  "vendor": "Secure Meters",
+  "model": "ELITE 103 ELITE 303 ELITE 307",
+  "description": "Secure Meters ELITE 103 ELITE 303 ELITE 307 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "modbus_id_start_from_1_up_to_247": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "MODBUS ID ( start from 1 up to 247)"
+    },
+    "protocol_version_ms_byte_and_revision_ls_byte": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Protocol version (MS byte) and revision (LS byte)"
+    },
+    "modbus_baud_rate": {
+      "address": 19,
+      "type": "f32",
+      "access": "r",
+      "description": "MODBUS baud rate"
+    },
+    "metre_type_3w_4wire_info": {
+      "address": 29,
+      "type": "f32",
+      "access": "r",
+      "description": "Metre type: 3W/4Wire info"
+    },
+    "ct_primary": {
+      "address": 31,
+      "type": "f32",
+      "access": "r",
+      "description": "CT primary",
+      "unit": "Amp"
+    },
+    "ct_secondary": {
+      "address": 33,
+      "type": "f32",
+      "access": "r",
+      "description": "Ct secondary",
+      "unit": "Amp"
+    },
+    "pt_primary": {
+      "address": 35,
+      "type": "f32",
+      "access": "r",
+      "description": "PT primary",
+      "unit": "Volt"
+    },
+    "pt_secondary": {
+      "address": 37,
+      "type": "f32",
+      "access": "r",
+      "description": "PT secondary",
+      "unit": "Volt"
+    },
+    "pole_number_of_poles_for_rpm": {
+      "address": 39,
+      "type": "f32",
+      "access": "r",
+      "description": "Pole: number of poles for RPM"
+    },
+    "slip_slip_of_the_motor": {
+      "address": 41,
+      "type": "f32",
+      "access": "r",
+      "description": "Slip: slip of the motor"
+    },
+    "update_rate_display_update_rates": {
+      "address": 43,
+      "type": "f32",
+      "access": "r",
+      "description": "Update rate: display update rates"
+    },
+    "energy_reset_0x01": {
+      "address": 45,
+      "type": "f32",
+      "access": "r",
+      "description": "Energy reset : 0x01"
+    },
+    "demand_reset_0x01": {
+      "address": 47,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand reset: 0x01"
+    },
+    "demand_time": {
+      "address": 49,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand time"
+    },
+    "alert_on_off": {
+      "address": 51,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert ON/OFF"
+    },
+    "alert_threshold_high_current": {
+      "address": 55,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold high current"
+    },
+    "alert_threshold_high_pf": {
+      "address": 57,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold high PF"
+    },
+    "alert_threshold_high_frequency": {
+      "address": 59,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold high frequency"
+    },
+    "alert_threshold_high_w": {
+      "address": 61,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold high W"
+    },
+    "alert_threshold_high_var": {
+      "address": 63,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold high VAr"
+    },
+    "alert_threshold_high_va": {
+      "address": 65,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold high VA"
+    },
+    "alert_threshold_low_current": {
+      "address": 69,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold low current"
+    },
+    "alert_threshold_low_pf": {
+      "address": 71,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold low PF"
+    },
+    "alert_threshold_low_frequency": {
+      "address": 73,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold low frequency"
+    },
+    "alert_threshold_low_w": {
+      "address": 75,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold low W"
+    },
+    "alert_threshold_low_var": {
+      "address": 77,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold low VAr"
+    },
+    "alert_threshold_low_va": {
+      "address": 79,
+      "type": "f32",
+      "access": "r",
+      "description": "Alert threshold low VA"
+    },
+    "v1_r_phase_to_neutral_voltage": {
+      "address": 99,
+      "type": "f32",
+      "access": "r",
+      "description": "V1: R phase to neutral voltage",
+      "unit": "Volt"
+    },
+    "v2_y_phase_to_neutral_voltage": {
+      "address": 101,
+      "type": "f32",
+      "access": "r",
+      "description": "V2: Y phase to neutral voltage",
+      "unit": "Volt"
+    },
+    "v3_b_phase_to_neutral_voltage": {
+      "address": 103,
+      "type": "f32",
+      "access": "r",
+      "description": "V3: B phase to neutral voltage",
+      "unit": "Volt"
+    },
+    "vavg_average_voltage": {
+      "address": 105,
+      "type": "f32",
+      "access": "r",
+      "description": "Vavg: average voltage",
+      "unit": "Volt"
+    },
+    "v12_ry_voltage": {
+      "address": 107,
+      "type": "f32",
+      "access": "r",
+      "description": "V12: RY voltage",
+      "unit": "Volt"
+    },
+    "v23_yb_voltage": {
+      "address": 109,
+      "type": "f32",
+      "access": "r",
+      "description": "V23: YB voltage",
+      "unit": "Volt"
+    },
+    "v31_br_voltage": {
+      "address": 111,
+      "type": "f32",
+      "access": "r",
+      "description": "V31: BR voltage",
+      "unit": "Volt"
+    },
+    "l1_r_phase_line_current": {
+      "address": 113,
+      "type": "f32",
+      "access": "r",
+      "description": "L1: R phase line current",
+      "unit": "Amp"
+    },
+    "l2_y_phase_line_current": {
+      "address": 115,
+      "type": "f32",
+      "access": "r",
+      "description": "L2: Y phase line current",
+      "unit": "Amp"
+    },
+    "l3_b_phase_line_current": {
+      "address": 117,
+      "type": "f32",
+      "access": "r",
+      "description": "L3: B phase line current",
+      "unit": "Amp"
+    },
+    "ln_neutral_line_current": {
+      "address": 119,
+      "type": "f32",
+      "access": "r",
+      "description": "LN: neutral line current",
+      "unit": "Amp"
+    },
+    "q1_power_factor": {
+      "address": 133,
+      "type": "f32",
+      "access": "r",
+      "description": "Q1: power factor"
+    },
+    "q2_power_factor": {
+      "address": 135,
+      "type": "f32",
+      "access": "r",
+      "description": "Q2: power factor"
+    },
+    "q3_power_factor": {
+      "address": 137,
+      "type": "f32",
+      "access": "r",
+      "description": "Q3: power factor"
+    },
+    "qa_avg_power_factor": {
+      "address": 139,
+      "type": "f32",
+      "access": "r",
+      "description": "QA: avg power factor"
+    },
+    "kt1_r_phase_active_power": {
+      "address": 141,
+      "type": "f32",
+      "access": "r",
+      "description": "KT1: R phase active power",
+      "unit": "W"
+    },
+    "kt2_y_phase_active_power": {
+      "address": 143,
+      "type": "f32",
+      "access": "r",
+      "description": "KT2: Y phase active power",
+      "unit": "W"
+    },
+    "kt3_b_phase_active_power": {
+      "address": 145,
+      "type": "f32",
+      "access": "r",
+      "description": "KT3: B phase active power",
+      "unit": "W"
+    },
+    "kt_3_phase_active_power": {
+      "address": 147,
+      "type": "f32",
+      "access": "r",
+      "description": "KT: 3 phase active power",
+      "unit": "W"
+    },
+    "kv1_r_phase_reactive_power": {
+      "address": 149,
+      "type": "f32",
+      "access": "r",
+      "description": "KV1: R phase reactive power",
+      "unit": "VAr"
+    },
+    "kv2_y_phase_reactive_power": {
+      "address": 151,
+      "type": "f32",
+      "access": "r",
+      "description": "KV2: Y phase reactive power",
+      "unit": "VAr"
+    },
+    "kv3_b_phase_reactive_power": {
+      "address": 153,
+      "type": "f32",
+      "access": "r",
+      "description": "KV3: B phase reactive power",
+      "unit": "VAr"
+    },
+    "kv_3_phase_reactive_power": {
+      "address": 155,
+      "type": "f32",
+      "access": "r",
+      "description": "KV: 3 phase reactive power",
+      "unit": "VAr"
+    }
+  }
+}

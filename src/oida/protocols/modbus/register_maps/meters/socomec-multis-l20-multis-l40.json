@@ -1,0 +1,359 @@
+{
+  "vendor": "Socomec",
+  "model": "MULTIS L 20 MULTIS L 40",
+  "description": "Socomec MULTIS L 20 MULTIS L 40 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_l2": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, L2",
+      "unit": "V"
+    },
+    "voltage_l3": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, L3",
+      "unit": "V"
+    },
+    "current_l1": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "Current, L1",
+      "unit": "A"
+    },
+    "current_l2": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Current, L2",
+      "unit": "A"
+    },
+    "current_l3": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Current, L3",
+      "unit": "A"
+    },
+    "current_l_n": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Current, L N",
+      "unit": "A"
+    },
+    "voltage_l1_l2": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, L1 L2",
+      "unit": "V"
+    },
+    "voltage_l2_l3": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, L2 L3",
+      "unit": "V"
+    },
+    "voltage_l1_l3": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, L1 L3",
+      "unit": "V"
+    },
+    "active_power_l1": {
+      "address": 20,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power, L1",
+      "unit": "W"
+    },
+    "active_power_l2": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power, L2",
+      "unit": "W"
+    },
+    "active_power_l3": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power, L3",
+      "unit": "W"
+    },
+    "reactive_power_l1": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power, L1",
+      "unit": "Var"
+    },
+    "reactive_power_l2": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power, L2",
+      "unit": "Var"
+    },
+    "reactive_power_l3": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power, L3",
+      "unit": "Var"
+    },
+    "apparent_power_l1": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power, L1",
+      "unit": "Var"
+    },
+    "apparent_power_l2": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power, L2",
+      "unit": "Var"
+    },
+    "apparent_power_l3": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power, L3",
+      "unit": "Var"
+    },
+    "power_factor_l1": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor, L1"
+    },
+    "power_factor_l1_40": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor, L1"
+    },
+    "power_factor_l1_42": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor, L1"
+    },
+    "total_import_active_power": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "Total import active power",
+      "unit": "W"
+    },
+    "total_export_active_power": {
+      "address": 46,
+      "type": "i32",
+      "access": "r",
+      "description": "Total export active power",
+      "unit": "W"
+    },
+    "total_inductive_reactive_power": {
+      "address": 48,
+      "type": "i32",
+      "access": "r",
+      "description": "Total inductive reactive power",
+      "unit": "Var"
+    },
+    "total_capacitive_reactive_power": {
+      "address": 50,
+      "type": "i32",
+      "access": "r",
+      "description": "Total capacitive reactive power",
+      "unit": "Var"
+    },
+    "total_apparent_power": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "average_inductive_cosf": {
+      "address": 54,
+      "type": "i32",
+      "access": "r",
+      "description": "Average inductive CosF",
+      "unit": "Var"
+    },
+    "average_capacitive_cosf": {
+      "address": 56,
+      "type": "i32",
+      "access": "r",
+      "description": "Average capacitive CosF",
+      "unit": "Var"
+    },
+    "frequency": {
+      "address": 58,
+      "type": "i32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "voltage_angle_l1": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage angle, L1",
+      "unit": "Deg"
+    },
+    "voltage_angle_l2": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage angle, L2",
+      "unit": "Deg"
+    },
+    "voltage_angle_l3": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage angle, L3",
+      "unit": "Deg"
+    },
+    "current_angle_l1": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "Current angle, L1",
+      "unit": "Deg"
+    },
+    "current_angle_l2": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "Current angle, L2",
+      "unit": "Deg"
+    },
+    "current_angle_l3": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "Current angle, L3",
+      "unit": "Deg"
+    },
+    "digital_inputs": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Digital inputs"
+    },
+    "import_active_energy_1": {
+      "address": 86,
+      "type": "i64",
+      "access": "r",
+      "description": "Import active energy 1",
+      "unit": "Wh"
+    },
+    "export_active_energy_1": {
+      "address": 90,
+      "type": "i64",
+      "access": "r",
+      "description": "Export active energy 1",
+      "unit": "Wh"
+    },
+    "inductive_reactive_energy_1": {
+      "address": 94,
+      "type": "i64",
+      "access": "r",
+      "description": "Inductive reactive energy 1",
+      "unit": "VArh"
+    },
+    "capacitive_reactive_energy_1": {
+      "address": 98,
+      "type": "i64",
+      "access": "r",
+      "description": "Capacitive reactive energy 1",
+      "unit": "VArh"
+    },
+    "import_active_energy_2": {
+      "address": 102,
+      "type": "i64",
+      "access": "r",
+      "description": "Import active energy 2",
+      "unit": "Wh"
+    },
+    "export_active_energy_2": {
+      "address": 106,
+      "type": "i64",
+      "access": "r",
+      "description": "Export active energy 2",
+      "unit": "Wh"
+    },
+    "inductive_reactive_energy_2": {
+      "address": 110,
+      "type": "i64",
+      "access": "r",
+      "description": "Inductive reactive energy 2",
+      "unit": "VArh"
+    },
+    "capacitive_reactive_energy_2": {
+      "address": 114,
+      "type": "i64",
+      "access": "r",
+      "description": "Capacitive reactive energy 2",
+      "unit": "VArh"
+    },
+    "voltage_min_l1": {
+      "address": 118,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, min, L1",
+      "unit": "V"
+    },
+    "voltage_min_l2": {
+      "address": 120,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, min, L2",
+      "unit": "V"
+    },
+    "voltage_min_l3": {
+      "address": 122,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, min, L3",
+      "unit": "V"
+    },
+    "voltage_min_l1_l2": {
+      "address": 124,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, min, L1 L2",
+      "unit": "V"
+    },
+    "voltage_min_l2_l3": {
+      "address": 126,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, min, L2 L3",
+      "unit": "V"
+    },
+    "voltage_min_l3_l1": {
+      "address": 128,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage, min, L3 L1",
+      "unit": "V"
+    }
+  }
+}

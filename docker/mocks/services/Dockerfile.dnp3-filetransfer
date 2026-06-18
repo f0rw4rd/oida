@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+# Install FreyrSCADA dnp3protocol (C library with ctypes wrapper)
+# Provides outstation-side file transfer support (Group 70)
+RUN pip install --no-cache-dir dnp3protocol>=21.6.19
+
+COPY dnp3_filetransfer_server.py /app/
+
+WORKDIR /app
+
+EXPOSE 20000
+
+# All configuration via environment variables (see dnp3_filetransfer_server.py)
+CMD ["python3", "dnp3_filetransfer_server.py"]

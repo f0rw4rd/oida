@@ -1,0 +1,348 @@
+{
+  "vendor": "Ginlong Solis",
+  "model": "SOLIS PV",
+  "description": "Ginlong Solis SOLIS PV power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "system_time_year": {
+      "address": 3021,
+      "type": "u16",
+      "access": "r",
+      "description": "System time year",
+      "unit": "a"
+    },
+    "system_time_month": {
+      "address": 3022,
+      "type": "u16",
+      "access": "r",
+      "description": "System time month"
+    },
+    "system_time_day": {
+      "address": 3023,
+      "type": "u16",
+      "access": "r",
+      "description": "System time day",
+      "unit": "a"
+    },
+    "system_time": {
+      "address": 3024,
+      "type": "u16",
+      "access": "r",
+      "description": "System time"
+    },
+    "system_time_3025": {
+      "address": 3025,
+      "type": "u16",
+      "access": "r",
+      "description": "System time"
+    },
+    "system_time_second": {
+      "address": 3026,
+      "type": "u16",
+      "access": "r",
+      "description": "System time second"
+    },
+    "inverter_total_power_generation": {
+      "address": 3028,
+      "type": "u32",
+      "access": "r",
+      "description": "Inverter total power generation",
+      "unit": "kW"
+    },
+    "inverter_power_generation_in_the_month": {
+      "address": 3030,
+      "type": "u32",
+      "access": "r",
+      "description": "Inverter power generation in the month",
+      "unit": "kW"
+    },
+    "inverted_last_month_s_power_generation": {
+      "address": 3032,
+      "type": "u32",
+      "access": "r",
+      "description": "Inverted last month's power generation",
+      "unit": "kW"
+    },
+    "inverter_power_generation_today": {
+      "address": 3034,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter power generation today",
+      "unit": "kW"
+    },
+    "inverter_yesterday_s_power_generation": {
+      "address": 3035,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter yesterday's power generation",
+      "unit": "kW"
+    },
+    "inverter_power_generation_this_year": {
+      "address": 3036,
+      "type": "u32",
+      "access": "r",
+      "description": "Inverter power generation this year",
+      "unit": "kW"
+    },
+    "inverter_last_year_s_power_generation": {
+      "address": 3038,
+      "type": "u32",
+      "access": "r",
+      "description": "Inverter last year's power generation",
+      "unit": "kW"
+    },
+    "dc_voltage_1": {
+      "address": 3048,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc voltage 1",
+      "unit": "V"
+    },
+    "dc_current_1": {
+      "address": 3049,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc current 1",
+      "unit": "A"
+    },
+    "dc_voltage_2": {
+      "address": 3050,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc voltage 2",
+      "unit": "V"
+    },
+    "dc_current_2": {
+      "address": 3051,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc current 2",
+      "unit": "A"
+    },
+    "dc_voltage_3": {
+      "address": 3052,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc voltage 3",
+      "unit": "V"
+    },
+    "dc_current_3": {
+      "address": 3053,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc current 3",
+      "unit": "A"
+    },
+    "dc_voltage_4": {
+      "address": 3054,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc voltage 4",
+      "unit": "V"
+    },
+    "dc_current_4": {
+      "address": 3055,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc current 4",
+      "unit": "A"
+    },
+    "total_dc_output_power": {
+      "address": 3056,
+      "type": "u32",
+      "access": "r",
+      "description": "Total dc output power",
+      "unit": "W"
+    },
+    "dc_bus_voltage": {
+      "address": 3070,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc bus voltage",
+      "unit": "V"
+    },
+    "dc_bus_half_voltage": {
+      "address": 3071,
+      "type": "u16",
+      "access": "r",
+      "description": "Dc bus half voltage",
+      "unit": "V"
+    },
+    "ab_line_voltage_phase_a_voltage": {
+      "address": 3072,
+      "type": "u16",
+      "access": "r",
+      "description": "Ab line voltage / phase A voltage",
+      "unit": "V"
+    },
+    "bc_line_voltage_phase_b_voltage": {
+      "address": 3073,
+      "type": "u16",
+      "access": "r",
+      "description": "Bc line voltage / phase B voltage",
+      "unit": "V"
+    },
+    "ca_line_voltage_c_phase_voltage": {
+      "address": 3074,
+      "type": "u16",
+      "access": "r",
+      "description": "Ca line voltage / C phase voltage",
+      "unit": "V"
+    },
+    "phase_a_current": {
+      "address": 3075,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A current",
+      "unit": "A"
+    },
+    "phase_b_current": {
+      "address": 3076,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B current",
+      "unit": "A"
+    },
+    "phase_c_current": {
+      "address": 3077,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C current",
+      "unit": "A"
+    },
+    "active_power": {
+      "address": 3078,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power",
+      "unit": "W"
+    },
+    "apparent_power": {
+      "address": 3082,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power",
+      "unit": "V"
+    },
+    "national_standard": {
+      "address": 3091,
+      "type": "u16",
+      "access": "r",
+      "description": "National standard"
+    },
+    "inverter_temperature": {
+      "address": 3092,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter temperature"
+    },
+    "grid_frequency": {
+      "address": 3093,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid frequency",
+      "unit": "Hz"
+    },
+    "current_state_of_the_inverter": {
+      "address": 3094,
+      "type": "u16",
+      "access": "r",
+      "description": "Current state of the inverter"
+    },
+    "actual_power": {
+      "address": 3103,
+      "type": "u16",
+      "access": "r",
+      "description": "Actual power"
+    },
+    "actual_power_3104": {
+      "address": 3104,
+      "type": "i16",
+      "access": "r",
+      "description": "Actual power"
+    },
+    "set_the_flag_bit": {
+      "address": 3114,
+      "type": "u16",
+      "access": "r",
+      "description": "Set the flag bit"
+    },
+    "electricity_meter_total_active_power_generation": {
+      "address": 3125,
+      "type": "u32",
+      "access": "r",
+      "description": "Electricity meter total active power generation",
+      "unit": "Wh"
+    },
+    "meter_voltage": {
+      "address": 3127,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter voltage"
+    },
+    "meter_current": {
+      "address": 3128,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter current"
+    },
+    "meter_active_power": {
+      "address": 3129,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter active power"
+    },
+    "energy_storage_control_switch": {
+      "address": 3131,
+      "type": "u16",
+      "access": "r",
+      "description": "Energy storage control switch"
+    },
+    "battery_voltage": {
+      "address": 3132,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery voltage",
+      "unit": "V"
+    },
+    "battery_current": {
+      "address": 3133,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery current",
+      "unit": "A"
+    },
+    "battery_current_direction": {
+      "address": 3134,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery current direction"
+    },
+    "llcbus_voltage": {
+      "address": 3135,
+      "type": "u16",
+      "access": "r",
+      "description": "Llcbus voltage",
+      "unit": "V"
+    },
+    "bypassac_voltage": {
+      "address": 3136,
+      "type": "u16",
+      "access": "r",
+      "description": "Bypassac voltage",
+      "unit": "V"
+    },
+    "bypass_ac_current": {
+      "address": 3137,
+      "type": "u16",
+      "access": "r",
+      "description": "Bypass ac current",
+      "unit": "A"
+    }
+  }
+}

@@ -1,0 +1,639 @@
+{
+  "vendor": "Solinteg",
+  "model": "Hybrid",
+  "description": "Solinteg Hybrid inverter register map extracted from homeassistant-solax-modbus",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Solinteg hybrid inverters.",
+  "source": "https://github.com/wills106/homeassistant-solax-modbus",
+  "registers": {
+    "software_version": {
+      "address": 10011,
+      "type": "u32",
+      "access": "r",
+      "description": "Firmware"
+    },
+    "inverter_status": {
+      "address": 10105,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Status"
+    },
+    "operation_flags": {
+      "address": 10110,
+      "type": "u32",
+      "access": "r",
+      "description": "Inverter Operation Flags"
+    },
+    "fault_flags1": {
+      "address": 10112,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault Flags1"
+    },
+    "fault_flags2": {
+      "address": 10114,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault Flags2"
+    },
+    "fault_flags3": {
+      "address": 10120,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault Flags3"
+    },
+    "fault_arm_flags1": {
+      "address": 18000,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault ARM Flags1"
+    },
+    "fault_arm_flags2": {
+      "address": 18004,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault ARM Flags2"
+    },
+    "energy_generation_total": {
+      "address": 31112,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy Generation Total",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "energy_ac_generation_total": {
+      "address": 11020,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy AC Generation Total",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "energy_generation_today": {
+      "address": 31005,
+      "type": "u16",
+      "access": "r",
+      "description": "Energy Generation Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "energy_ac_generation_today": {
+      "address": 11018,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy AC Generation Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "inv_temp_r": {
+      "address": 11032,
+      "type": "u16",
+      "access": "r",
+      "description": "Inv Temperature Phase-R",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "inv_temp_s": {
+      "address": 11033,
+      "type": "u16",
+      "access": "r",
+      "description": "Inv.Temperature Phase-S",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "inv_temp_t": {
+      "address": 11034,
+      "type": "u16",
+      "access": "r",
+      "description": "Inv.Temperature Phase-T",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "inv_temperature_rad": {
+      "address": 11035,
+      "type": "u16",
+      "access": "r",
+      "description": "Inv.Temperature Radiator",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "pv_voltage_1": {
+      "address": 11038,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_1": {
+      "address": 11039,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_1": {
+      "address": 11062,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Power 1",
+      "unit": "W"
+    },
+    "pv_voltage_2": {
+      "address": 11040,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 2",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_2": {
+      "address": 11041,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_2": {
+      "address": 11064,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Power 2",
+      "unit": "W"
+    },
+    "pv_voltage_3": {
+      "address": 11042,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 3",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_3": {
+      "address": 11043,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 3",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_3": {
+      "address": 11066,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Power 3",
+      "unit": "W"
+    },
+    "pv_voltage_4": {
+      "address": 11044,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 4",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_4": {
+      "address": 11045,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 4",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_4": {
+      "address": 11068,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Power 4",
+      "unit": "W"
+    },
+    "pv_power_total": {
+      "address": 11028,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Power Total",
+      "unit": "W"
+    },
+    "grid_current_l1": {
+      "address": 11010,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_current_l2": {
+      "address": 11012,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_current_l3": {
+      "address": 11014,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L3",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_load": {
+      "address": 11016,
+      "type": "i32",
+      "access": "r",
+      "description": "AC Power",
+      "unit": "W"
+    },
+    "grid_frequency": {
+      "address": 11015,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "meter_total_activepower": {
+      "address": 33126,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter Total Energy",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "battery_voltage": {
+      "address": 30254,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "battery_current": {
+      "address": 30255,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_charge_direction": {
+      "address": 30256,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Direction"
+    },
+    "battery_soc": {
+      "address": 33000,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery SOC",
+      "unit": "%",
+      "scale": 0.01
+    },
+    "battery_soh": {
+      "address": 33001,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery SOH",
+      "unit": "%",
+      "scale": 0.01
+    },
+    "battery_temperature": {
+      "address": 33003,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "battery_firmware": {
+      "address": 32003,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Firmware"
+    },
+    "battery_hardware": {
+      "address": 32004,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Hardware"
+    },
+    "battery_rated_capacity": {
+      "address": 32007,
+      "type": "u32",
+      "access": "r",
+      "description": "Battery Rated Capacity",
+      "unit": "Wh"
+    },
+    "battery_min_cell_voltage": {
+      "address": 33015,
+      "type": "u16",
+      "access": "r",
+      "description": "Bat. Min Cell Voltage",
+      "unit": "V",
+      "scale": 0.001
+    },
+    "battery_min_cell_voltage_id": {
+      "address": 33014,
+      "type": "u16",
+      "access": "r",
+      "description": "Bat. Min Cell Voltage ID"
+    },
+    "battery_max_cell_voltage": {
+      "address": 33013,
+      "type": "u16",
+      "access": "r",
+      "description": "Bat. Max Cell Voltage",
+      "unit": "V",
+      "scale": 0.001
+    },
+    "battery_max_cell_voltage_id": {
+      "address": 33012,
+      "type": "u16",
+      "access": "r",
+      "description": "Bat. Max Cell Voltage ID"
+    },
+    "battery_charge_limit": {
+      "address": 33021,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Limit",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_discharge_limit": {
+      "address": 33023,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Discharge Limit",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_power": {
+      "address": 30258,
+      "type": "i32",
+      "access": "r",
+      "description": "Battery Power",
+      "unit": "W"
+    },
+    "battery_charge_total": {
+      "address": 31108,
+      "type": "u32",
+      "access": "r",
+      "description": "Battery Charge Total",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_charge_today": {
+      "address": 31003,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_discharge_total": {
+      "address": 31110,
+      "type": "u32",
+      "access": "r",
+      "description": "Battery Discharge Total",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_discharge_today": {
+      "address": 31004,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Discharge Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "backup_power": {
+      "address": 30230,
+      "type": "i32",
+      "access": "r",
+      "description": "Backup Power",
+      "unit": "W"
+    },
+    "grid_import_total": {
+      "address": 31104,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid Import Total",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "grid_import_today": {
+      "address": 31001,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Import Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "grid_export_total": {
+      "address": 31102,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid Export Total",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "grid_export_today": {
+      "address": 31000,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Export Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "house_energy_total": {
+      "address": 31114,
+      "type": "u32",
+      "access": "r",
+      "description": "House Energy Total",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "house_energy_today": {
+      "address": 31006,
+      "type": "u16",
+      "access": "r",
+      "description": "House Energy Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "measured_power_l1": {
+      "address": 10994,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power L1",
+      "unit": "W"
+    },
+    "measured_power_l2": {
+      "address": 10996,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power L2",
+      "unit": "W"
+    },
+    "measured_power_l3": {
+      "address": 10998,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power L3",
+      "unit": "W"
+    },
+    "measured_power": {
+      "address": 11000,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power",
+      "unit": "W"
+    },
+    "meter_grid_import_total": {
+      "address": 11004,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter Grid Import Total",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "meter_grid_export_total": {
+      "address": 11002,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter Grid Export Total",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "working_mode": {
+      "address": 50000,
+      "type": "u16",
+      "access": "r",
+      "description": "Working Mode"
+    },
+    "grid_unbalanced_output": {
+      "address": 50006,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Unbalanced Output"
+    },
+    "shadow_scan": {
+      "address": 25020,
+      "type": "u16",
+      "access": "r",
+      "description": "Shadow Scan"
+    },
+    "export_limit_switch": {
+      "address": 25100,
+      "type": "u16",
+      "access": "r",
+      "description": "Export Limit Switch"
+    },
+    "export_limit_value": {
+      "address": 25103,
+      "type": "i16",
+      "access": "r",
+      "description": "Export Limit Value",
+      "scale": 0.1
+    },
+    "import_limit_switch": {
+      "address": 50007,
+      "type": "u16",
+      "access": "r",
+      "description": "Import Limit Switch"
+    },
+    "import_limit_value": {
+      "address": 50009,
+      "type": "u16",
+      "access": "r",
+      "description": "Import Limit Value",
+      "scale": 0.1
+    },
+    "ups_function": {
+      "address": 50001,
+      "type": "u16",
+      "access": "r",
+      "description": "Ups Function"
+    },
+    "battery_soc_min_ongrid": {
+      "address": 52503,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Soc Min Ongrid",
+      "scale": 0.1
+    },
+    "battery_soc_min_offgrid": {
+      "address": 52505,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Soc Min Offgrid",
+      "scale": 0.1
+    },
+    "battery_charge_current_limit": {
+      "address": 52601,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Current Limit",
+      "scale": 0.1
+    },
+    "battery_discharge_current_limit": {
+      "address": 52603,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Discharge Current Limit",
+      "scale": 0.1
+    },
+    "battery_soc_prot_ongrid": {
+      "address": 52502,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Soc Prot Ongrid"
+    },
+    "battery_soc_prot_offgrid": {
+      "address": 52504,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Soc Prot Offgrid"
+    },
+    "battery_soc_prot_relax": {
+      "address": 50012,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Soc Prot Relax"
+    },
+    "grid_voltage_l1": {
+      "address": 11009,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_voltage_l2": {
+      "address": 11011,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L2",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_voltage_l3": {
+      "address": 11013,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L3",
+      "unit": "V",
+      "scale": 0.1
+    }
+  },
+  "_source_verified": "Verified: plugin_solinteg.py confirmed; Solinteg Modbus RTU protocol PDF available"
+}

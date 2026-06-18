@@ -1,0 +1,835 @@
+{
+  "protocol": "goose",
+  "display_filter": "goose",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T16:10:23.971089+00:00",
+  "dissector_fields": {
+    "total": 92,
+    "by_type": {
+      "FT_BOOLEAN": 4,
+      "FT_BYTES": 8,
+      "FT_DOUBLE": 1,
+      "FT_FLOAT": 1,
+      "FT_INT32": 11,
+      "FT_NONE": 21,
+      "FT_OID": 1,
+      "FT_STRING": 10,
+      "FT_UINT16": 8,
+      "FT_UINT32": 19,
+      "FT_UINT8": 8
+    },
+    "fields": [
+      {
+        "name": "rgoose.session_hdr",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "rgoose.spdu_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.session_hdr_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.common_session_id",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.hdr_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.spdu_len",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "rgoose.spdu_num",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "rgoose.version",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "rgoose.sec_info",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "rgoose.curr_key_t",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "rgoose.next_key_t",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "rgoose.key_id",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "rgoose.init_v_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.init_v",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "rgoose.session_user_info",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "rgoose.payload",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "rgoose.payload_len",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "rgoose.pdu_tag",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.simulation",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.appid",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "rgoose.apdu_len",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "rgoose.padding_tag",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "rgoose.padding_len",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "rgoose.padding",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "rgoose.hmac",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "goose.appid",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "goose.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "goose.reserve1",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "goose.reserve1.s_bit",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "goose.reserve2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "goose.float_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "goose.gseMngtPdu_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "goose.goosePdu_element",
+        "type": "FT_NONE",
+        "description": "IECGoosePdu"
+      },
+      {
+        "name": "goose.stateID",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.requestResp",
+        "type": "FT_UINT32",
+        "description": "RequestResponse"
+      },
+      {
+        "name": "goose.requests",
+        "type": "FT_UINT32",
+        "description": "GSEMngtRequests"
+      },
+      {
+        "name": "goose.responses",
+        "type": "FT_UINT32",
+        "description": "GSEMngtResponses"
+      },
+      {
+        "name": "goose.getGoReference_element",
+        "type": "FT_NONE",
+        "description": "GetReferenceRequestPdu"
+      },
+      {
+        "name": "goose.getGOOSEElementNumber_element",
+        "type": "FT_NONE",
+        "description": "GetElementRequestPdu"
+      },
+      {
+        "name": "goose.getGsReference_element",
+        "type": "FT_NONE",
+        "description": "GetReferenceRequestPdu"
+      },
+      {
+        "name": "goose.getGSSEDataOffset_element",
+        "type": "FT_NONE",
+        "description": "GetElementRequestPdu"
+      },
+      {
+        "name": "goose.gseMngtNotSupported_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "goose.gseMngtResponses_GetGOReference_element",
+        "type": "FT_NONE",
+        "description": "GSEMngtResponsePdu"
+      },
+      {
+        "name": "goose.gseMngtResponses_GetGOOSEElementNumber_element",
+        "type": "FT_NONE",
+        "description": "GSEMngtResponsePdu"
+      },
+      {
+        "name": "goose.gseMngtResponses_GetGSReference_element",
+        "type": "FT_NONE",
+        "description": "GSEMngtResponsePdu"
+      },
+      {
+        "name": "goose.gseMngtResponses_GetGSSEDataOffset_element",
+        "type": "FT_NONE",
+        "description": "GSEMngtResponsePdu"
+      },
+      {
+        "name": "goose.ident",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "goose.getReferenceRequest.offset",
+        "type": "FT_UINT32",
+        "description": "T_getReferenceRequest_offset"
+      },
+      {
+        "name": "goose.getReferenceRequest_offset_item",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.references",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "goose.references_item",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "goose.confRev",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.posNeg",
+        "type": "FT_UINT32",
+        "description": "PositiveNegative"
+      },
+      {
+        "name": "goose.responsePositive_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "goose.datSet",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "goose.result",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_RequestResults"
+      },
+      {
+        "name": "goose.RequestResults",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "goose.responseNegative",
+        "type": "FT_INT32",
+        "description": "GlbErrors"
+      },
+      {
+        "name": "goose.offset",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.reference",
+        "type": "FT_STRING",
+        "description": "IA5String"
+      },
+      {
+        "name": "goose.error",
+        "type": "FT_INT32",
+        "description": "ErrorReason"
+      },
+      {
+        "name": "goose.gocbRef",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "goose.timeAllowedtoLive",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.goID",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "goose.t",
+        "type": "FT_STRING",
+        "description": "UtcTime"
+      },
+      {
+        "name": "goose.stNum",
+        "type": "FT_UINT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.sqNum",
+        "type": "FT_UINT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.simulation",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "goose.ndsCom",
+        "type": "FT_BOOLEAN",
+        "description": "BOOLEAN"
+      },
+      {
+        "name": "goose.numDatSetEntries",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.allData",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_Data"
+      },
+      {
+        "name": "goose.Data",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "goose.array",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_Data"
+      },
+      {
+        "name": "goose.structure",
+        "type": "FT_UINT32",
+        "description": "SEQUENCE_OF_Data"
+      },
+      {
+        "name": "goose.boolean",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "goose.bit_string",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "goose.integer",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "goose.unsigned",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.floating_point",
+        "type": "FT_BYTES",
+        "description": "FloatingPoint"
+      },
+      {
+        "name": "goose.real",
+        "type": "FT_DOUBLE",
+        "description": ""
+      },
+      {
+        "name": "goose.octet_string",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "goose.visible_string",
+        "type": "FT_STRING",
+        "description": "VisibleString"
+      },
+      {
+        "name": "goose.binary_time",
+        "type": "FT_BYTES",
+        "description": "TimeOfDay"
+      },
+      {
+        "name": "goose.bcd",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "goose.booleanArray",
+        "type": "FT_BYTES",
+        "description": "BIT_STRING"
+      },
+      {
+        "name": "goose.objId",
+        "type": "FT_OID",
+        "description": "OBJECT_IDENTIFIER"
+      },
+      {
+        "name": "goose.mMSString",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "goose.utc_time",
+        "type": "FT_STRING",
+        "description": "UtcTime"
+      },
+      {
+        "name": "goose.malformed.utctime",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "goose.zero_pdu",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "goose.invalid_sim",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "goose.bogus_length",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 25,
+    "by_pcap": {
+      "goosestalker_8d7c7db0-9804-012b-b2a6-0016cb8cea27.pcap": [],
+      "goosestalker_GOOSE.pcap": [
+        "ber_ber_bitstring_padding",
+        "goose_goose_Data",
+        "goose_goose_allData",
+        "goose_goose_appid",
+        "goose_goose_bit_string",
+        "goose_goose_boolean",
+        "goose_goose_confRev",
+        "goose_goose_datSet",
+        "goose_goose_goID",
+        "goose_goose_gocbRef",
+        "goose_goose_goosePdu_element",
+        "goose_goose_length",
+        "goose_goose_ndsCom",
+        "goose_goose_numDatSetEntries",
+        "goose_goose_reserve1",
+        "goose_goose_reserve1_s_bit",
+        "goose_goose_reserve2",
+        "goose_goose_simulation",
+        "goose_goose_sqNum",
+        "goose_goose_stNum",
+        "goose_goose_t",
+        "goose_goose_timeAllowedtoLive"
+      ],
+      "goosestalker_GOOSE_DEMO.pcap": [
+        "goose_goose_Data",
+        "goose_goose_allData",
+        "goose_goose_appid",
+        "goose_goose_boolean",
+        "goose_goose_confRev",
+        "goose_goose_datSet",
+        "goose_goose_goID",
+        "goose_goose_gocbRef",
+        "goose_goose_goosePdu_element",
+        "goose_goose_length",
+        "goose_goose_ndsCom",
+        "goose_goose_numDatSetEntries",
+        "goose_goose_reserve1",
+        "goose_goose_reserve1_s_bit",
+        "goose_goose_reserve2",
+        "goose_goose_simulation",
+        "goose_goose_sqNum",
+        "goose_goose_stNum",
+        "goose_goose_t",
+        "goose_goose_timeAllowedtoLive"
+      ],
+      "goosestalker_GOOSE_wireshark.pcap": [
+        "ber_ber_bitstring_padding",
+        "goose_goose_Data",
+        "goose_goose_allData",
+        "goose_goose_appid",
+        "goose_goose_bit_string",
+        "goose_goose_boolean",
+        "goose_goose_confRev",
+        "goose_goose_datSet",
+        "goose_goose_goID",
+        "goose_goose_gocbRef",
+        "goose_goose_goosePdu_element",
+        "goose_goose_length",
+        "goose_goose_ndsCom",
+        "goose_goose_numDatSetEntries",
+        "goose_goose_reserve1",
+        "goose_goose_reserve1_s_bit",
+        "goose_goose_reserve2",
+        "goose_goose_simulation",
+        "goose_goose_sqNum",
+        "goose_goose_stNum",
+        "goose_goose_t",
+        "goose_goose_timeAllowedtoLive"
+      ],
+      "goosestalker_Sample_File_GOOSE.pcap": [
+        "ber_ber_bitstring_padding",
+        "goose_goose_Data",
+        "goose_goose_allData",
+        "goose_goose_appid",
+        "goose_goose_bit_string",
+        "goose_goose_boolean",
+        "goose_goose_confRev",
+        "goose_goose_datSet",
+        "goose_goose_goID",
+        "goose_goose_gocbRef",
+        "goose_goose_goosePdu_element",
+        "goose_goose_length",
+        "goose_goose_ndsCom",
+        "goose_goose_numDatSetEntries",
+        "goose_goose_reserve1",
+        "goose_goose_reserve1_s_bit",
+        "goose_goose_reserve2",
+        "goose_goose_simulation",
+        "goose_goose_sqNum",
+        "goose_goose_stNum",
+        "goose_goose_t",
+        "goose_goose_timeAllowedtoLive"
+      ],
+      "goosestalker_Sample_File_MMS_and_GOOSE.pcap": [
+        "ber_ber_bitstring_padding",
+        "goose_goose_Data",
+        "goose_goose_allData",
+        "goose_goose_appid",
+        "goose_goose_bit_string",
+        "goose_goose_boolean",
+        "goose_goose_confRev",
+        "goose_goose_datSet",
+        "goose_goose_goID",
+        "goose_goose_gocbRef",
+        "goose_goose_goosePdu_element",
+        "goose_goose_length",
+        "goose_goose_ndsCom",
+        "goose_goose_numDatSetEntries",
+        "goose_goose_reserve1",
+        "goose_goose_reserve1_s_bit",
+        "goose_goose_reserve2",
+        "goose_goose_simulation",
+        "goose_goose_sqNum",
+        "goose_goose_stNum",
+        "goose_goose_t",
+        "goose_goose_timeAllowedtoLive"
+      ],
+      "iec61850_scapy_wireshark2.pcap": [
+        "ber_ber_bitstring_padding",
+        "goose_goose_Data",
+        "goose_goose_allData",
+        "goose_goose_appid",
+        "goose_goose_bit_string",
+        "goose_goose_boolean",
+        "goose_goose_confRev",
+        "goose_goose_datSet",
+        "goose_goose_goID",
+        "goose_goose_gocbRef",
+        "goose_goose_goosePdu_element",
+        "goose_goose_integer",
+        "goose_goose_length",
+        "goose_goose_ndsCom",
+        "goose_goose_numDatSetEntries",
+        "goose_goose_reserve1",
+        "goose_goose_reserve1_s_bit",
+        "goose_goose_reserve2",
+        "goose_goose_simulation",
+        "goose_goose_sqNum",
+        "goose_goose_stNum",
+        "goose_goose_structure",
+        "goose_goose_t",
+        "goose_goose_timeAllowedtoLive",
+        "goose_goose_utc_time"
+      ],
+      "iti_sample_goose.pcap": [
+        "ber_ber_bitstring_padding",
+        "goose_goose_Data",
+        "goose_goose_allData",
+        "goose_goose_appid",
+        "goose_goose_bit_string",
+        "goose_goose_boolean",
+        "goose_goose_confRev",
+        "goose_goose_datSet",
+        "goose_goose_goID",
+        "goose_goose_gocbRef",
+        "goose_goose_goosePdu_element",
+        "goose_goose_length",
+        "goose_goose_ndsCom",
+        "goose_goose_numDatSetEntries",
+        "goose_goose_reserve1",
+        "goose_goose_reserve1_s_bit",
+        "goose_goose_reserve2",
+        "goose_goose_simulation",
+        "goose_goose_sqNum",
+        "goose_goose_stNum",
+        "goose_goose_t",
+        "goose_goose_timeAllowedtoLive"
+      ]
+    },
+    "union": [
+      "ber_ber_bitstring_padding",
+      "goose_goose_Data",
+      "goose_goose_allData",
+      "goose_goose_appid",
+      "goose_goose_bit_string",
+      "goose_goose_boolean",
+      "goose_goose_confRev",
+      "goose_goose_datSet",
+      "goose_goose_goID",
+      "goose_goose_gocbRef",
+      "goose_goose_goosePdu_element",
+      "goose_goose_integer",
+      "goose_goose_length",
+      "goose_goose_ndsCom",
+      "goose_goose_numDatSetEntries",
+      "goose_goose_reserve1",
+      "goose_goose_reserve1_s_bit",
+      "goose_goose_reserve2",
+      "goose_goose_simulation",
+      "goose_goose_sqNum",
+      "goose_goose_stNum",
+      "goose_goose_structure",
+      "goose_goose_t",
+      "goose_goose_timeAllowedtoLive",
+      "goose_goose_utc_time"
+    ]
+  },
+  "extracted_fields": {
+    "total": 20,
+    "fields": [
+      "allData",
+      "appid",
+      "bit_string",
+      "boolean",
+      "confRev",
+      "datSet",
+      "float_value",
+      "goID",
+      "gocbRef",
+      "integer",
+      "ndsCom",
+      "numDatSetEntries",
+      "real",
+      "simulation",
+      "sqNum",
+      "stNum",
+      "structure",
+      "timeAllowedtoLive",
+      "unsigned",
+      "visible_string"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "24/92 (26%)",
+    "pcap_vs_extracted": "20/24 (83%)",
+    "t1_extracted": "13/11 (118%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "goose_goose_length",
+        "field": "goose.length",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "goosestalker_GOOSE.pcap",
+          "goosestalker_GOOSE_DEMO.pcap",
+          "goosestalker_GOOSE_wireshark.pcap",
+          "goosestalker_Sample_File_GOOSE.pcap",
+          "goosestalker_Sample_File_MMS_and_GOOSE.pcap",
+          "iec61850_scapy_wireshark2.pcap",
+          "iti_sample_goose.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "goose_goose_reserve1",
+        "field": "goose.reserve1",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "goosestalker_GOOSE.pcap",
+          "goosestalker_GOOSE_DEMO.pcap",
+          "goosestalker_GOOSE_wireshark.pcap",
+          "goosestalker_Sample_File_GOOSE.pcap",
+          "goosestalker_Sample_File_MMS_and_GOOSE.pcap",
+          "iec61850_scapy_wireshark2.pcap",
+          "iti_sample_goose.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "goose_goose_reserve1_s_bit",
+        "field": "goose.reserve1.s_bit",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "goosestalker_GOOSE.pcap",
+          "goosestalker_GOOSE_DEMO.pcap",
+          "goosestalker_GOOSE_wireshark.pcap",
+          "goosestalker_Sample_File_GOOSE.pcap",
+          "goosestalker_Sample_File_MMS_and_GOOSE.pcap",
+          "iec61850_scapy_wireshark2.pcap",
+          "iti_sample_goose.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "goose_goose_reserve2",
+        "field": "goose.reserve2",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "goosestalker_GOOSE.pcap",
+          "goosestalker_GOOSE_DEMO.pcap",
+          "goosestalker_GOOSE_wireshark.pcap",
+          "goosestalker_Sample_File_GOOSE.pcap",
+          "goosestalker_Sample_File_MMS_and_GOOSE.pcap",
+          "iec61850_scapy_wireshark2.pcap",
+          "iti_sample_goose.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "goose_goose_t",
+        "field": "goose.t",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "goosestalker_GOOSE.pcap",
+          "goosestalker_GOOSE_DEMO.pcap",
+          "goosestalker_GOOSE_wireshark.pcap",
+          "goosestalker_Sample_File_GOOSE.pcap",
+          "goosestalker_Sample_File_MMS_and_GOOSE.pcap",
+          "iec61850_scapy_wireshark2.pcap",
+          "iti_sample_goose.pcap"
+        ],
+        "description": "UtcTime"
+      },
+      {
+        "ek_name": "goose_goose_Data",
+        "field": "goose.Data",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "goosestalker_GOOSE.pcap",
+          "goosestalker_GOOSE_DEMO.pcap",
+          "goosestalker_GOOSE_wireshark.pcap",
+          "goosestalker_Sample_File_GOOSE.pcap",
+          "goosestalker_Sample_File_MMS_and_GOOSE.pcap",
+          "iec61850_scapy_wireshark2.pcap",
+          "iti_sample_goose.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "goose_goose_utc_time",
+        "field": "goose.utc_time",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "iec61850_scapy_wireshark2.pcap"
+        ],
+        "description": "UtcTime"
+      }
+    ],
+    "summary": {
+      "t1_total": 29,
+      "t1_in_pcap": 11,
+      "t1_covered": 13,
+      "t2_total": 42,
+      "t2_in_pcap": 12,
+      "t2_covered": 7,
+      "t3_skipped": 21,
+      "t4_ignored": 0
+    }
+  }
+}

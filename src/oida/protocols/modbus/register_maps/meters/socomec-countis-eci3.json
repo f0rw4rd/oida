@@ -1,0 +1,313 @@
+{
+  "vendor": "Socomec",
+  "model": "COUNTIS ECI 3",
+  "description": "Socomec COUNTIS ECI 3 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "input_1_absolute_value": {
+      "address": 38020,
+      "type": "u32",
+      "access": "r",
+      "description": "Input 1 absolute value"
+    },
+    "input_2_absolute_value": {
+      "address": 38023,
+      "type": "u32",
+      "access": "r",
+      "description": "Input 2 absolute value"
+    },
+    "input_1_value_for_0ma": {
+      "address": 38027,
+      "type": "u32",
+      "access": "r",
+      "description": "Input 1 value for 0mA"
+    },
+    "input_1_value_for_20ma": {
+      "address": 38029,
+      "type": "u32",
+      "access": "r",
+      "description": "Input 1 value for 20mA"
+    },
+    "input_2_value_for_0ma": {
+      "address": 38033,
+      "type": "u32",
+      "access": "r",
+      "description": "Input 2 value for 0mA"
+    },
+    "input_2_value_for_20ma": {
+      "address": 38035,
+      "type": "u32",
+      "access": "r",
+      "description": "Input 2 value for 20mA"
+    },
+    "integration_period": {
+      "address": 39170,
+      "type": "u16",
+      "access": "r",
+      "description": "Integration period"
+    },
+    "numerator_rate": {
+      "address": 39172,
+      "type": "u16",
+      "access": "r",
+      "description": "Numerator rate"
+    },
+    "denominator_rate": {
+      "address": 39173,
+      "type": "u16",
+      "access": "r",
+      "description": "Denominator rate"
+    },
+    "value_without_ct_vt_rate": {
+      "address": 39177,
+      "type": "u16",
+      "access": "r",
+      "description": "Value without CT*VT rate"
+    },
+    "integration_period_39314": {
+      "address": 39314,
+      "type": "u16",
+      "access": "r",
+      "description": "Integration period"
+    },
+    "numerator_rate_39316": {
+      "address": 39316,
+      "type": "u16",
+      "access": "r",
+      "description": "Numerator rate"
+    },
+    "denominator_rate_39317": {
+      "address": 39317,
+      "type": "u16",
+      "access": "r",
+      "description": "Denominator rate"
+    },
+    "value_without_ct_vt_rate_39321": {
+      "address": 39321,
+      "type": "u16",
+      "access": "r",
+      "description": "Value without CT*VT rate"
+    },
+    "name": {
+      "address": 39936,
+      "type": "str",
+      "access": "r",
+      "description": "Name"
+    },
+    "mode_0_disabled_1_0_20ma_2_4_20ma": {
+      "address": 39941,
+      "type": "u16",
+      "access": "r",
+      "description": "Mode: 0: disabled 1: 0 20mA 2: 4 20mA"
+    },
+    "unit_0_a_1_v_2_w_3_kw_4_var_5_kvar_6_va_7_kva_8_c_9_f_10_mbar_11_bar_12_custom_unit": {
+      "address": 39942,
+      "type": "u16",
+      "access": "r",
+      "description": "Unit: 0: A 1: V 2: W 3: kW 4: VAR 5: kVAR 6: VA 7: kVA 8: C 9: F 10: mbar 11: bar 12: custom unit"
+    },
+    "integration_time": {
+      "address": 39943,
+      "type": "u16",
+      "access": "r",
+      "description": "Integration time"
+    },
+    "synchro_type_0_rtc_1_external": {
+      "address": 39944,
+      "type": "u16",
+      "access": "r",
+      "description": "Synchro type: 0: RTC 1: external"
+    },
+    "x_pt1": {
+      "address": 39945,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt1"
+    },
+    "y_pt1": {
+      "address": 39946,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt1"
+    },
+    "x_pt2": {
+      "address": 39948,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt2"
+    },
+    "y_pt2": {
+      "address": 39949,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt2"
+    },
+    "x_pt3": {
+      "address": 39951,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt3"
+    },
+    "y_pt3": {
+      "address": 39952,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt3"
+    },
+    "x_pt4": {
+      "address": 39954,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt4"
+    },
+    "y_pt4": {
+      "address": 39955,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt4"
+    },
+    "x_pt5": {
+      "address": 39957,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt5"
+    },
+    "y_pt5": {
+      "address": 39958,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt5"
+    },
+    "name_39960": {
+      "address": 39960,
+      "type": "str",
+      "access": "r",
+      "description": "Name"
+    },
+    "mode_0_disabled_1_0_20ma_2_4_20ma_39965": {
+      "address": 39965,
+      "type": "u16",
+      "access": "r",
+      "description": "Mode: 0: disabled 1: 0 20mA 2: 4 20mA"
+    },
+    "unit_0_a_1_v_2_w_3_kw_4_var_5_kvar_6_va_7_kva_8_c_9_f_10_mbar_11_bar_12_custom_unit_39966": {
+      "address": 39966,
+      "type": "u16",
+      "access": "r",
+      "description": "Unit: 0: A 1: V 2: W 3: kW 4: VAR 5: kVAR 6: VA 7: kVA 8: C 9: F 10: mbar 11: bar 12: custom unit"
+    },
+    "integration_time_39967": {
+      "address": 39967,
+      "type": "u16",
+      "access": "r",
+      "description": "Integration time"
+    },
+    "synchro_type_0_rtc_1_external_39968": {
+      "address": 39968,
+      "type": "u16",
+      "access": "r",
+      "description": "Synchro type: 0: RTC 1: external"
+    },
+    "x_pt1_39969": {
+      "address": 39969,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt1"
+    },
+    "y_pt1_39970": {
+      "address": 39970,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt1"
+    },
+    "x_pt2_39972": {
+      "address": 39972,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt2"
+    },
+    "y_pt2_39973": {
+      "address": 39973,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt2"
+    },
+    "x_pt3_39975": {
+      "address": 39975,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt3"
+    },
+    "y_pt3_39976": {
+      "address": 39976,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt3"
+    },
+    "x_pt4_39978": {
+      "address": 39978,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt4"
+    },
+    "y_pt4_39979": {
+      "address": 39979,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt4"
+    },
+    "x_pt5_39981": {
+      "address": 39981,
+      "type": "u16",
+      "access": "r",
+      "description": "X_Pt5"
+    },
+    "y_pt5_39982": {
+      "address": 39982,
+      "type": "u32",
+      "access": "r",
+      "description": "Y_Pt5"
+    },
+    "load_curves_base_integration_time": {
+      "address": 39869,
+      "type": "u16",
+      "access": "r",
+      "description": "Load curves base integration time"
+    },
+    "external_synchro_type_0_disabled_1_input_7_2_com": {
+      "address": 39872,
+      "type": "u16",
+      "access": "r",
+      "description": "External synchro type: 0: disabled 1: input 7 2: COM"
+    },
+    "external_synchro_period": {
+      "address": 39873,
+      "type": "u16",
+      "access": "r",
+      "description": "External synchro period"
+    },
+    "currency_unit_0_euro_1_us_dollar_2_gb_pound_3_yuan_4_other": {
+      "address": 39874,
+      "type": "u16",
+      "access": "r",
+      "description": "Currency unit: 0: euro 1: US dollar 2: GB pound 3: yuan 4: other"
+    },
+    "label_of_custom_unit": {
+      "address": 37072,
+      "type": "str",
+      "access": "r",
+      "description": "Label of custom unit"
+    },
+    "save_context_count": {
+      "address": 45058,
+      "type": "u32",
+      "access": "r",
+      "description": "Save context count"
+    }
+  }
+}

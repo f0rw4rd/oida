@@ -1,0 +1,681 @@
+{
+  "vendor": "Danfoss",
+  "model": "VLT FC102/FC302",
+  "description": "Danfoss VLT HVAC Drive FC102 and AutomationDrive FC302 Variable Frequency Drive Modbus RTU/TCP register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Parameter address formula: (Parameter_Group * 100 + Parameter_Number) * 10. Example: Parameter 16-14 = 1614 * 10 = 16140. For Modbus address, subtract 1. Some special registers (CTW, REF, STW, MAV) use fixed addresses 49999, 50009, 50199, 50209. Frequency scaling: 16384 = 100% = 50Hz nominal. FC Profile control word and status word used. All 16-bit values unless noted. 32-bit parameters occupy 2 registers.",
+  "source": "https://files.danfoss.com/download/Drives/MG10S202.pdf, https://docs.webhmi.com.ua/danfoss_control",
+  "fault_codes": {
+    "2": "Live zero error - signal below 50% of minimum",
+    "3": "No motor connected",
+    "4": "Mains phase loss",
+    "5": "DC link voltage high",
+    "6": "DC link voltage low",
+    "7": "DC overvoltage",
+    "8": "DC undervoltage",
+    "9": "Inverter overload",
+    "10": "Motor ETR overtemperature",
+    "11": "Motor thermistor overtemperature",
+    "12": "Torque limit",
+    "13": "Overcurrent",
+    "14": "Ground fault",
+    "15": "Serial communication timeout",
+    "16": "Reserved",
+    "17": "Control word timeout",
+    "28": "Brake check fault",
+    "29": "Heatsink temperature",
+    "33": "Out of frequency range",
+    "34": "Internal communication fault",
+    "38": "Internal fault",
+    "39": "Heatsink sensor",
+    "40": "Safe stop activated",
+    "48": "External interlock",
+    "52": "Safe stop fault",
+    "65": "Control card temperature"
+  },
+  "warning_codes": {
+    "7": "DC overvoltage warning",
+    "8": "DC undervoltage warning",
+    "9": "Inverter overload warning",
+    "10": "Motor ETR overtemp warning",
+    "11": "Motor thermal warning",
+    "12": "Current limit",
+    "13": "Torque limit",
+    "14": "Speed limit",
+    "15": "Reference outside range",
+    "25": "Brake resistor thermal warning",
+    "29": "Heatsink temperature warning",
+    "51": "AMA not OK"
+  },
+  "control_commands": {
+    "start_forward": {
+      "register": 49999,
+      "value": "0x047F",
+      "description": "Start motor forward (coast=1, run=1, data_valid=1, forward)"
+    },
+    "start_reverse": {
+      "register": 49999,
+      "value": "0x847F",
+      "description": "Start motor reverse (coast=1, run=1, data_valid=1, reverse)"
+    },
+    "stop_ramp": {
+      "register": 49999,
+      "value": "0x0477",
+      "description": "Stop with ramp down"
+    },
+    "stop_coast": {
+      "register": 49999,
+      "value": "0x0475",
+      "description": "Coast stop (free wheel)"
+    },
+    "reset_fault": {
+      "register": 49999,
+      "value": "0x04FF",
+      "description": "Reset fault (toggle bit 7)"
+    },
+    "jog_forward": {
+      "register": 49999,
+      "value": "0x057F",
+      "description": "Jog forward"
+    },
+    "quick_stop": {
+      "register": 49999,
+      "value": "0x046F",
+      "description": "Quick stop"
+    }
+  },
+  "holding_registers": {
+    "control_word": {
+      "address": 49999,
+      "type": "u16",
+      "access": "rw",
+      "description": "Control Word (CTW) - FC Profile",
+      "notes": "Start/stop/direction control. Set parameter 8-10 to FC Profile.",
+      "bits": {
+        "0": "Reserved",
+        "1": "Coasting stop (0=coast, 1=normal)",
+        "2": "DC braking (0=DC brake, 1=normal)",
+        "3": "Stop/run (0=stop, 1=run)",
+        "4": "Quick stop (0=quick stop, 1=normal)",
+        "5": "Freeze frequency (0=freeze, 1=normal)",
+        "6": "Ramp stop/start (0=stop, 1=start)",
+        "7": "Reset (leading edge resets trip)",
+        "8": "Jog speed (0=normal, 1=jog)",
+        "9": "Ramp 1/2 select",
+        "10": "Data valid / Control word enable",
+        "11": "Relay 1",
+        "12": "Relay 2",
+        "13": "Setup select LSB",
+        "14": "Setup select MSB",
+        "15": "Reversing (0=forward, 1=reverse)"
+      }
+    },
+    "frequency_reference": {
+      "address": 50009,
+      "type": "s16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.0030517578125,
+      "description": "Bus Reference (REF) - Frequency setpoint",
+      "notes": "Range 0-16384 = 0-100% of max frequency. 16384 = 50Hz if nominal is 50Hz.",
+      "min": -32768,
+      "max": 32767
+    },
+    "status_word": {
+      "address": 50199,
+      "type": "u16",
+      "access": "r",
+      "description": "Status Word (STW) - FC Profile",
+      "bits": {
+        "0": "Control ready (1=ready)",
+        "1": "Drive ready (1=ready to operate)",
+        "2": "Coasting stop (1=coast command active)",
+        "3": "Trip (0=no trip, 1=tripped)",
+        "4": "Error (trip without lock)",
+        "5": "Not used",
+        "6": "Trip lock (1=locked)",
+        "7": "Warning (1=warning active)",
+        "8": "Speed == reference (1=at setpoint)",
+        "9": "Bus control (1=fieldbus control active)",
+        "10": "Frequency limit (1=at limit)",
+        "11": "Running (1=motor running)",
+        "12": "Voltage warn (1=DC bus warning)",
+        "13": "Current limit (1=at current limit)",
+        "14": "Thermal warning (1=thermal warn)",
+        "15": "Reverse (1=reverse direction)"
+      }
+    },
+    "actual_frequency": {
+      "address": 50209,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.0030517578125,
+      "description": "Main Actual Value (MAV) - Actual output frequency",
+      "notes": "Scaled same as reference: 16384 = 100%"
+    },
+    "par_1_00_config_mode": {
+      "address": 999,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 1-00: Configuration Mode",
+      "enum": {
+        "0": "Open Loop (Speed)",
+        "1": "Closed Loop (Speed)",
+        "2": "Process (PID)",
+        "3": "Torque"
+      }
+    },
+    "par_1_20_motor_power": {
+      "address": 1199,
+      "type": "u32",
+      "access": "rw",
+      "unit": "kW",
+      "scale": 0.001,
+      "description": "Parameter 1-20: Motor Power [kW]"
+    },
+    "par_1_22_motor_voltage": {
+      "address": 1219,
+      "type": "u16",
+      "access": "rw",
+      "unit": "V",
+      "description": "Parameter 1-22: Motor Voltage"
+    },
+    "par_1_23_motor_frequency": {
+      "address": 1229,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Parameter 1-23: Motor Frequency"
+    },
+    "par_1_24_motor_current": {
+      "address": 1239,
+      "type": "u16",
+      "access": "rw",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Parameter 1-24: Motor Current (nameplate)"
+    },
+    "par_1_25_motor_speed": {
+      "address": 1249,
+      "type": "u16",
+      "access": "rw",
+      "unit": "RPM",
+      "description": "Parameter 1-25: Motor Nominal Speed"
+    },
+    "par_3_02_min_reference": {
+      "address": 3019,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Parameter 3-02: Minimum Reference"
+    },
+    "par_3_03_max_reference": {
+      "address": 3029,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Parameter 3-03: Maximum Reference"
+    },
+    "par_3_10_preset_ref_0": {
+      "address": 3099,
+      "type": "s16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.01,
+      "description": "Parameter 3-10: Preset Reference 0"
+    },
+    "par_3_41_ramp_1_ramp_up": {
+      "address": 3409,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.01,
+      "description": "Parameter 3-41: Ramp 1 Ramp Up Time"
+    },
+    "par_3_42_ramp_1_ramp_down": {
+      "address": 3419,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.01,
+      "description": "Parameter 3-42: Ramp 1 Ramp Down Time"
+    },
+    "par_4_11_motor_speed_low_limit": {
+      "address": 4109,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Parameter 4-11: Motor Speed Low Limit [Hz]"
+    },
+    "par_4_13_motor_speed_high_limit": {
+      "address": 4129,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Parameter 4-13: Motor Speed High Limit [Hz]"
+    },
+    "par_4_16_torque_limit_motor": {
+      "address": 4159,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 4-16: Torque Limit Motor Mode"
+    },
+    "par_4_17_torque_limit_generator": {
+      "address": 4169,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 4-17: Torque Limit Generator Mode"
+    },
+    "par_4_18_current_limit": {
+      "address": 4179,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 4-18: Current Limit"
+    },
+    "par_8_01_control_site": {
+      "address": 8009,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 8-01: Control Site",
+      "enum": {
+        "0": "Digital and ctrl. word",
+        "1": "Digital only",
+        "2": "Control word only"
+      }
+    },
+    "par_8_02_control_word_source": {
+      "address": 8019,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 8-02: Control Word Source",
+      "enum": {
+        "0": "None",
+        "1": "FC RS485",
+        "2": "FC USB"
+      }
+    },
+    "par_8_10_control_word_profile": {
+      "address": 8099,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 8-10: Control Word Profile",
+      "enum": {
+        "0": "FC Profile",
+        "1": "PROFIdrive Profile"
+      }
+    },
+    "par_8_30_protocol": {
+      "address": 8299,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 8-30: Protocol",
+      "enum": {
+        "0": "FC Protocol",
+        "1": "FC/MC Protocol",
+        "2": "Modbus RTU"
+      }
+    },
+    "par_8_31_address": {
+      "address": 8309,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 8-31: FC/Modbus Address (1-247)",
+      "min": 1,
+      "max": 247
+    },
+    "par_8_32_baud_rate": {
+      "address": 8319,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 8-32: Baud Rate",
+      "enum": {
+        "0": "2400",
+        "1": "4800",
+        "2": "9600",
+        "3": "19200",
+        "4": "38400",
+        "5": "57600",
+        "6": "115200"
+      }
+    },
+    "par_8_33_parity": {
+      "address": 8329,
+      "type": "u16",
+      "access": "rw",
+      "description": "Parameter 8-33: Parity / Stop Bits",
+      "enum": {
+        "0": "Even parity, 1 stop bit",
+        "1": "Odd parity, 1 stop bit",
+        "2": "No parity, 1 stop bit",
+        "3": "No parity, 2 stop bits"
+      }
+    },
+    "par_16_00_control_word_readout": {
+      "address": 15999,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 16-00: Control Word (readback)"
+    },
+    "par_16_01_reference_unit": {
+      "address": 16009,
+      "type": "s16",
+      "access": "r",
+      "description": "Parameter 16-01: Reference [Unit]",
+      "notes": "Depends on operating mode (Hz, RPM, etc.)"
+    },
+    "par_16_02_reference_percent": {
+      "address": 16019,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 16-02: Reference [%]"
+    },
+    "par_16_03_status_word_readout": {
+      "address": 16029,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 16-03: Status Word (readback)"
+    },
+    "par_16_05_main_actual_value": {
+      "address": 16049,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 16-05: Main Actual Value [%]"
+    },
+    "par_16_10_power_kw": {
+      "address": 16099,
+      "type": "s32",
+      "access": "r",
+      "unit": "kW",
+      "scale": 0.001,
+      "description": "Parameter 16-10: Power [kW]"
+    },
+    "par_16_11_power_hp": {
+      "address": 16109,
+      "type": "s32",
+      "access": "r",
+      "unit": "hp",
+      "scale": 0.001,
+      "description": "Parameter 16-11: Power [hp]"
+    },
+    "par_16_12_motor_voltage": {
+      "address": 16119,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Parameter 16-12: Motor Voltage"
+    },
+    "par_16_13_frequency": {
+      "address": 16129,
+      "type": "s16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Parameter 16-13: Frequency (output)"
+    },
+    "par_16_14_motor_current": {
+      "address": 16139,
+      "type": "u32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Parameter 16-14: Motor Current (actual)"
+    },
+    "par_16_16_torque_nm": {
+      "address": 16159,
+      "type": "s32",
+      "access": "r",
+      "unit": "Nm",
+      "scale": 0.1,
+      "description": "Parameter 16-16: Torque [Nm]"
+    },
+    "par_16_17_speed_rpm": {
+      "address": 16169,
+      "type": "s16",
+      "access": "r",
+      "unit": "RPM",
+      "description": "Parameter 16-17: Speed [RPM]"
+    },
+    "par_16_18_motor_thermal": {
+      "address": 16179,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 16-18: Motor Thermal Load [%]"
+    },
+    "par_16_20_motor_angle": {
+      "address": 16199,
+      "type": "u16",
+      "access": "r",
+      "unit": "deg",
+      "description": "Parameter 16-20: Motor Angle"
+    },
+    "par_16_22_torque_percent": {
+      "address": 16219,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 16-22: Torque [%] (High res)"
+    },
+    "par_16_30_dc_link_voltage": {
+      "address": 16299,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Parameter 16-30: DC Link Voltage"
+    },
+    "par_16_32_brake_energy_per_s": {
+      "address": 16319,
+      "type": "u16",
+      "access": "r",
+      "unit": "kW",
+      "scale": 0.01,
+      "description": "Parameter 16-32: Brake Energy /s"
+    },
+    "par_16_33_brake_energy_2min": {
+      "address": 16329,
+      "type": "u16",
+      "access": "r",
+      "unit": "kW",
+      "scale": 0.1,
+      "description": "Parameter 16-33: Brake Energy /2 min"
+    },
+    "par_16_34_heatsink_temp": {
+      "address": 16339,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "description": "Parameter 16-34: Heatsink Temperature"
+    },
+    "par_16_35_inverter_thermal": {
+      "address": 16349,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 16-35: Inverter Thermal [%]"
+    },
+    "par_16_36_inverter_nom_current": {
+      "address": 16359,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Parameter 16-36: Inverter Nominal Current"
+    },
+    "par_16_37_inverter_max_current": {
+      "address": 16369,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Parameter 16-37: Inverter Maximum Current"
+    },
+    "par_16_39_control_card_temp": {
+      "address": 16389,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "description": "Parameter 16-39: Control Card Temperature"
+    },
+    "par_16_50_external_reference": {
+      "address": 16499,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Parameter 16-50: External Reference"
+    },
+    "par_16_52_feedback_unit": {
+      "address": 16519,
+      "type": "s16",
+      "access": "r",
+      "description": "Parameter 16-52: Feedback [Unit]"
+    },
+    "par_16_84_comm_option_stw": {
+      "address": 16839,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 16-84: Comm Option STW"
+    },
+    "par_16_90_alarm_word": {
+      "address": 16899,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 16-90: Alarm Word",
+      "bits": {
+        "0": "Control word timeout (A17)",
+        "1": "Serial comm timeout (A15)",
+        "2": "Reserved",
+        "3": "Reserved",
+        "4": "Reserved",
+        "5": "Reserved",
+        "6": "Reserved",
+        "7": "Reserved",
+        "8": "Reserved",
+        "9": "Reserved",
+        "10": "Reserved",
+        "11": "Reserved",
+        "12": "Reserved",
+        "13": "Reserved",
+        "14": "Reserved",
+        "15": "Reserved"
+      }
+    },
+    "par_16_92_warning_word": {
+      "address": 16919,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 16-92: Warning Word",
+      "bits": {
+        "0": "Current limit (W12)",
+        "1": "Torque limit (W13)",
+        "2": "Speed limit (W14)",
+        "3": "Ref. outside range (W15)",
+        "4": "DC overvoltage (W7)",
+        "5": "DC undervoltage (W8)",
+        "6": "Overload (W9)",
+        "7": "Motor ETR over (W10)",
+        "8": "Motor thermal (W11)",
+        "9": "Heatsink temp high",
+        "10": "Reserved",
+        "11": "Reserved",
+        "12": "Reserved",
+        "13": "Reserved",
+        "14": "Reserved",
+        "15": "Reserved"
+      }
+    },
+    "par_16_94_ext_status_word": {
+      "address": 16939,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 16-94: Extended Status Word"
+    },
+    "par_15_00_operating_hours": {
+      "address": 14999,
+      "type": "u32",
+      "access": "r",
+      "unit": "h",
+      "description": "Parameter 15-00: Operating Hours"
+    },
+    "par_15_01_running_hours": {
+      "address": 15009,
+      "type": "u32",
+      "access": "r",
+      "unit": "h",
+      "description": "Parameter 15-01: Running Hours"
+    },
+    "par_15_02_kwh_counter": {
+      "address": 15019,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Parameter 15-02: kWh Counter"
+    },
+    "par_15_03_power_ups": {
+      "address": 15029,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 15-03: Number of Power Ups"
+    },
+    "par_15_04_overtemps": {
+      "address": 15039,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 15-04: Number of Overtemperatures"
+    },
+    "par_15_05_overvoltages": {
+      "address": 15049,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 15-05: Number of Overvoltages"
+    },
+    "par_15_30_fault_log_error_code": {
+      "address": 15299,
+      "type": "u16",
+      "access": "r",
+      "description": "Parameter 15-30: Fault Log - Error Code"
+    }
+  },
+  "extended_info": {
+    "parameter_formula": {
+      "description": "Modbus address = (Parameter_Group * 100 + Parameter_Number) * 10 - 1",
+      "example": "Parameter 16-14 (Motor Current) -> (16*100+14)*10 - 1 = 16139"
+    },
+    "scaling": {
+      "frequency_reference": {
+        "description": "0-16384 corresponds to 0-100% of maximum frequency",
+        "multiplier": 0.0030517578125,
+        "example": "16384 = 100% = 50Hz (if max freq = 50Hz)"
+      },
+      "percentage": {
+        "description": "Values in 0.1% units",
+        "multiplier": 0.1
+      }
+    }
+  },
+  "_source_verified": "Verified: Parameter address formula confirmed; official FC102 register spreadsheet and Danfoss MG10S202 PDF verified"
+}

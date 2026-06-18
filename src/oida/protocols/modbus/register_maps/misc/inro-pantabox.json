@@ -1,0 +1,115 @@
+{
+  "vendor": "Pantabox",
+  "model": "Pantabox",
+  "description": "Imported from nymea-plugins-modbus (inro)",
+  "byte_order": "little",
+  "word_order": "little",
+  "source": "nymea-plugins-modbus/inro/pantabox-registers.json",
+  "registers": {
+    "serialNumber": {
+      "address": 256,
+      "type": "u32",
+      "access": "ro",
+      "description": "Serial number (hex)",
+      "function_code": 4
+    },
+    "modbusTcpVersion": {
+      "address": 258,
+      "type": "u32",
+      "access": "ro",
+      "description": "ModbusTCP version",
+      "function_code": 4
+    },
+    "vendorName": {
+      "address": 260,
+      "type": "str",
+      "access": "ro",
+      "description": "Name of vendor",
+      "function_code": 4
+    },
+    "productName": {
+      "address": 262,
+      "type": "str",
+      "access": "ro",
+      "description": "Name of product",
+      "function_code": 4
+    },
+    "firmwareVersion": {
+      "address": 266,
+      "type": "str",
+      "access": "ro",
+      "description": "Firmware version",
+      "function_code": 4
+    },
+    "chargingState": {
+      "address": 512,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charging state",
+      "function_code": 4
+    },
+    "currentPower": {
+      "address": 513,
+      "type": "u32",
+      "access": "ro",
+      "description": "Current charging power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "chargedEnergy": {
+      "address": 515,
+      "type": "u32",
+      "access": "ro",
+      "description": "Charged energy",
+      "unit": "Wh",
+      "function_code": 4
+    },
+    "maxPossibleChargingCurrent": {
+      "address": 517,
+      "type": "u16",
+      "access": "ro",
+      "description": "Maximal possible charging current (adapter)",
+      "unit": "A",
+      "function_code": 4
+    },
+    "chargingCurrent": {
+      "address": 518,
+      "type": "u16",
+      "access": "ro",
+      "description": "Actual charging current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "absoluteEnergy": {
+      "address": 519,
+      "type": "u32",
+      "access": "ro",
+      "description": "Absolute charged energy",
+      "unit": "Wh",
+      "function_code": 4
+    },
+    "chargingEnabled": {
+      "address": 768,
+      "type": "u16",
+      "access": "rw",
+      "description": "Charging enabled (1) / disabled (0)"
+    },
+    "maxChargingCurrent": {
+      "address": 769,
+      "type": "u16",
+      "access": "rw",
+      "description": "Max charging current"
+    }
+  },
+  "enums": {
+    "ChargingState": {
+      "65": "A",
+      "66": "B",
+      "67": "C",
+      "68": "D",
+      "69": "E",
+      "70": "F"
+    }
+  },
+  "_source_verified": "Verified: INRO Pantabox portable EV charger confirmed at pantabox.de; nymea documentation exists"
+}

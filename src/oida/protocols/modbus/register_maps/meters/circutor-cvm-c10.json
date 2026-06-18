@@ -1,0 +1,362 @@
+{
+  "vendor": "Circutor",
+  "model": "CVM C 10",
+  "description": "Circutor CVM C 10 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "0a": {
+      "address": 2100,
+      "type": "u32",
+      "access": "r",
+      "description": "0A"
+    },
+    "l1_current": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "mA"
+    },
+    "l1_active_power": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 active power",
+      "unit": "W"
+    },
+    "l1_inductive_power": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 inductive power",
+      "unit": "var"
+    },
+    "l1_capacitive_power": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 capacitive power",
+      "unit": "var"
+    },
+    "l1_apparent_power": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 apparent power",
+      "unit": "VA"
+    },
+    "l1_power_factor": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 power factor",
+      "unit": "x"
+    },
+    "cos_l1": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Cos L1",
+      "unit": "x"
+    },
+    "l2_phase_voltage": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "l2_current": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "mA"
+    },
+    "l2_active_power": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 active power",
+      "unit": "W"
+    },
+    "l2_inductive_power": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 inductive power",
+      "unit": "var"
+    },
+    "l2_capacitive_power": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 capacitive power",
+      "unit": "var"
+    },
+    "l2_apparent_power": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 apparent power",
+      "unit": "VA"
+    },
+    "l2_power_factor": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 power factor",
+      "unit": "x"
+    },
+    "cos_l2": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "Cos L2",
+      "unit": "x"
+    },
+    "l3_phase_voltage": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase voltage",
+      "unit": "V"
+    },
+    "l3_current": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "mA"
+    },
+    "l3_active_power": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 active power",
+      "unit": "W"
+    },
+    "l3_inductive_power": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 inductive power",
+      "unit": "var"
+    },
+    "l3_capacitive_power": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 capacitive power",
+      "unit": "var"
+    },
+    "l3_apparent_power": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 apparent power",
+      "unit": "VA"
+    },
+    "l3_power_factor": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 power factor",
+      "unit": "x"
+    },
+    "cos_l3": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "description": "Cos L3",
+      "unit": "x"
+    },
+    "active_three_phase_power": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "Active three phase power",
+      "unit": "W"
+    },
+    "inductive_three_phase_power": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "Inductive three phase power",
+      "unit": "var"
+    },
+    "capacitive_three_phase_power": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Capacitive three phase power",
+      "unit": "var"
+    },
+    "apparent_three_phase_power": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent three phase power",
+      "unit": "VA"
+    },
+    "three_phase_power_factor": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase power factor",
+      "unit": "x100"
+    },
+    "three_phase_cos": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase cos",
+      "unit": "x100"
+    },
+    "l1_frequency": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 frequency",
+      "unit": "Hz"
+    },
+    "l1_l2_voltage": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 L2 voltage",
+      "unit": "V"
+    },
+    "l2_l3_voltage": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 L3 voltage",
+      "unit": "V"
+    },
+    "l3_l1_voltage": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 L1 voltage",
+      "unit": "V"
+    },
+    "neutral_current_n": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current N",
+      "unit": "mA"
+    },
+    "l1_voltage_thd": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 voltage % THD",
+      "unit": "%"
+    },
+    "l2_voltage_thd": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 voltage % THD",
+      "unit": "%"
+    },
+    "l3_voltage_thd": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 voltage % THD",
+      "unit": "%"
+    },
+    "l1_current_thd": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 current % THD",
+      "unit": "%"
+    },
+    "l2_current_thd": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 current % THD",
+      "unit": "%"
+    },
+    "l3_current_thd": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 current % THD",
+      "unit": "%"
+    },
+    "maximum_demand_kw_iii": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand kW III",
+      "unit": "W"
+    },
+    "maximum_demand_kva_iii": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand kVA III",
+      "unit": "VA"
+    },
+    "maximum_demand_i_avg": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand I AVG",
+      "unit": "mA"
+    },
+    "maximum_demand_i_l1": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand I L1",
+      "unit": "mA"
+    },
+    "maximum_demand_i_l2": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand I L2",
+      "unit": "mA"
+    },
+    "maximum_demand_i_l3": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand I L3",
+      "unit": "mA"
+    },
+    "maximum_demand_kvarl_iii": {
+      "address": 512,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand kvarL III",
+      "unit": "kvarL"
+    },
+    "maximum_demand_kvarc_iii": {
+      "address": 514,
+      "type": "u32",
+      "access": "r",
+      "description": "Maximum demand kvarC III",
+      "unit": "kvarC"
+    },
+    "consumed_active_energy": {
+      "address": 220,
+      "type": "u32",
+      "access": "r",
+      "description": "Consumed active energy",
+      "unit": "kWh"
+    }
+  }
+}

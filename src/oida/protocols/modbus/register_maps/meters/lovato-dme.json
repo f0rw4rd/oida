@@ -1,0 +1,356 @@
+{
+  "vendor": "Lovato Electric",
+  "model": "DME",
+  "description": "Lovato Electric DME power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "l1_phase_voltage": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "l3_phase_voltage": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase voltage",
+      "unit": "V"
+    },
+    "l1_current": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "A"
+    },
+    "l2_current": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "A"
+    },
+    "l3_current": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "A"
+    },
+    "neutral_current": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "l1_l2_voltage": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 L2 voltage",
+      "unit": "V"
+    },
+    "l2_l3_voltage": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 L3 voltage",
+      "unit": "V"
+    },
+    "l3_l1_voltage": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 L1 voltage",
+      "unit": "V"
+    },
+    "l1_active_power": {
+      "address": 20,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 active power",
+      "unit": "W"
+    },
+    "l2_active_power": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 active power",
+      "unit": "W"
+    },
+    "l3_active_power": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 active power",
+      "unit": "W"
+    },
+    "l1_reactive_power": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 reactive power",
+      "unit": "Var"
+    },
+    "l2_reactive_power": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 reactive power",
+      "unit": "Var"
+    },
+    "l3_reactive_power": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 reactive power",
+      "unit": "Var"
+    },
+    "l1_apparent_power": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 apparent power",
+      "unit": "VA"
+    },
+    "l2_apparent_power": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 apparent power",
+      "unit": "VA"
+    },
+    "l3_apparent_power": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 apparent power",
+      "unit": "VA"
+    },
+    "l1_power_factor": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 power factor"
+    },
+    "l2_power_factor": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 power factor"
+    },
+    "l3_power_factor": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 power factor"
+    },
+    "l1_cosphi": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 cosphi"
+    },
+    "l2_cosphi": {
+      "address": 46,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 cosphi"
+    },
+    "l3_cosphi": {
+      "address": 48,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 cosphi"
+    },
+    "frequency": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "eqv_phase_voltage": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Phase voltage",
+      "unit": "V"
+    },
+    "eqv_phase_to_phase_voltage": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Phase to phase voltage",
+      "unit": "V"
+    },
+    "eqv_current": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Current",
+      "unit": "A"
+    },
+    "eqv_active_power": {
+      "address": 58,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv. Active power",
+      "unit": "W"
+    },
+    "eqv_reactive_power": {
+      "address": 60,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv. Reactive power",
+      "unit": "var"
+    },
+    "eqv_apparent_power": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Apparent power",
+      "unit": "VA"
+    },
+    "eqv_power_factor": {
+      "address": 64,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv power factor"
+    },
+    "phase_phase_voltage_asymmetry": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase phase voltage asymmetry",
+      "unit": "%"
+    },
+    "phase_neural_voltage_asymmetry": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase neural voltage asymmetry",
+      "unit": "%"
+    },
+    "current_asymmetry": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "Current asymmetry",
+      "unit": "%"
+    },
+    "l1_phase_voltage_1024": {
+      "address": 1024,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage_1026": {
+      "address": 1026,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "neutral_current_1094": {
+      "address": 1094,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "%"
+    },
+    "l1_phase_voltage_1536": {
+      "address": 1536,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage_1538": {
+      "address": 1538,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "neutral_current_1606": {
+      "address": 1606,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "%"
+    },
+    "neutral_current_2118": {
+      "address": 2118,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "%"
+    },
+    "l2_phase_voltage_2562": {
+      "address": 2562,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "neutral_current_2630": {
+      "address": 2630,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "%"
+    },
+    "total_imp_active_energy": {
+      "address": 6944,
+      "type": "u32",
+      "access": "r",
+      "description": "Total imp. Active energy",
+      "unit": "kWh"
+    },
+    "total_exported_active_energy": {
+      "address": 6948,
+      "type": "u32",
+      "access": "r",
+      "description": "Total exported active energy",
+      "unit": "kWh"
+    },
+    "total_imp_reactive_energy": {
+      "address": 6952,
+      "type": "u32",
+      "access": "r",
+      "description": "Total imp. Reactive energy",
+      "unit": "kvarh"
+    },
+    "total_exp_reactive_energy": {
+      "address": 6956,
+      "type": "u32",
+      "access": "r",
+      "description": "Total exp. Reactive energy",
+      "unit": "kvarh"
+    },
+    "total_apparent_energy": {
+      "address": 6960,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent energy",
+      "unit": "KVAh"
+    }
+  }
+}

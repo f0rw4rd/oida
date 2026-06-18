@@ -1,0 +1,363 @@
+{
+  "vendor": "Elspec",
+  "model": "G 4400",
+  "description": "Elspec G 4400 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "compliance_name_en_50160_or_any_other_compliance_standard": {
+      "address": 543,
+      "type": "str",
+      "access": "r",
+      "description": "Compliance name (EN 50160 or any other compliance standard)",
+      "unit": "String"
+    },
+    "compliance_description": {
+      "address": 563,
+      "type": "str",
+      "access": "r",
+      "description": "Compliance description",
+      "unit": "String"
+    },
+    "ok_fail_na_status_of_the_compliance_currently_running": {
+      "address": 603,
+      "type": "u16",
+      "access": "r",
+      "description": "OK / fail / NA status of the compliance currently running",
+      "unit": "UINT16"
+    },
+    "percentage_from_the_entire_time_including_off_time_in_which_this_compliance_parameters_was_ok": {
+      "address": 621,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage from the entire time (including off time) in which this compliance parameters was ok",
+      "unit": "float"
+    },
+    "percentage_from_the_entire_time_including_off_time_in_which_this_the_compliance_parameter_was_not_ok": {
+      "address": 623,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage from the entire time (including off time) in which this the compliance parameter was not ok",
+      "unit": "float"
+    },
+    "percentage_from_the_entire_time_including_off_time_in_which_this_compliance_parameter_was_not_evaluated_due_to_device_off_time": {
+      "address": 625,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage from the entire time (including off time) in which this compliance parameter was not evaluated (due to device off time)",
+      "unit": "float"
+    },
+    "number_of_compliance_parameters_under_check": {
+      "address": 627,
+      "type": "u32",
+      "access": "r",
+      "description": "Number of compliance parameters under check",
+      "unit": "UINT32"
+    },
+    "power_supply_temperature_read_every_second": {
+      "address": 537,
+      "type": "f32",
+      "access": "r",
+      "description": "Power supply temperature (read every second)",
+      "unit": "float"
+    },
+    "the_measured_frequency_calculated_every_200_msec_10_12_cycles": {
+      "address": 999,
+      "type": "f32",
+      "access": "r",
+      "description": "The measured frequency , calculated every 200 msec (10/12 cycles)",
+      "unit": "float"
+    },
+    "line_1_active_power_w_calculate_every_cycle": {
+      "address": 1025,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 1 active power (W), calculate every cycle",
+      "unit": "float"
+    },
+    "line_2_active_power_w_calculate_every_cycle": {
+      "address": 1027,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 2 active power (W), calculate every cycle",
+      "unit": "float"
+    },
+    "line_3_active_power_w_calculate_every_cycle": {
+      "address": 1029,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 3 active power (W), calculate every cycle",
+      "unit": "float"
+    },
+    "total_active_power_w_calculate_every_cycle": {
+      "address": 1037,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power (W), calculate every cycle",
+      "unit": "float"
+    },
+    "line_1_reactive_power_var_calculate_every_cycle": {
+      "address": 1041,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 1 reactive power (VAr) calculate every cycle",
+      "unit": "float"
+    },
+    "line_2_reactive_power_var_calculate_every_cycle": {
+      "address": 1043,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 2 reactive power (VAr) calculate every cycle",
+      "unit": "float"
+    },
+    "line_3_reactive_power_var_calculate_every_cycle": {
+      "address": 1045,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 3 reactive power (VAr) calculate every cycle",
+      "unit": "float"
+    },
+    "reactive_power_total_var_calculate_every_cycle": {
+      "address": 1053,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power total (VAr) calculate every cycle",
+      "unit": "float"
+    },
+    "line_1_apparent_power_va_calculate_every_cycle": {
+      "address": 1057,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 1 apparent power (VA) calculate every cycle",
+      "unit": "float"
+    },
+    "line_2_apparent_power_va_calculate_every_cycle": {
+      "address": 1059,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 2 apparent power (VA) calculate every cycle",
+      "unit": "float"
+    },
+    "line_3_apparent_power_va_calculate_every_cycle": {
+      "address": 1061,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 3 apparent power (VA) calculate every cycle",
+      "unit": "float"
+    },
+    "apparent_power_total_va_calculate_every_cycle": {
+      "address": 1069,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power total (VA) calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_v1_calculate_every_cycle": {
+      "address": 1103,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage V1, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_v2_calculate_every_cycle": {
+      "address": 1105,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage V2, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_v3_calculate_every_cycle": {
+      "address": 1107,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage V3, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_v12_calculate_every_cycle": {
+      "address": 1109,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage V12, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_v23_calculate_every_cycle": {
+      "address": 1111,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage V23, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_v31_calculate_every_cycle": {
+      "address": 1113,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage V31, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_i1_calculate_every_cycle": {
+      "address": 1117,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage I1, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_voltage_i2_calculate_every_cycle": {
+      "address": 1119,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS voltage I2, calculate every cycle",
+      "unit": "float"
+    },
+    "rms_current_i3_calculate_every_cycle": {
+      "address": 1121,
+      "type": "f32",
+      "access": "r",
+      "description": "RMS current I3, calculate every cycle",
+      "unit": "float"
+    },
+    "cycle_by_cycle_average_rms_voltage": {
+      "address": 1123,
+      "type": "f32",
+      "access": "r",
+      "description": "Cycle by cycle average RMS voltage",
+      "unit": "float"
+    },
+    "cycle_by_cycle_average_rms_phase_to_phase_voltage": {
+      "address": 1125,
+      "type": "f32",
+      "access": "r",
+      "description": "Cycle by cycle average RMS phase to phase voltage",
+      "unit": "float"
+    },
+    "cycle_by_cycle_average_rms_current": {
+      "address": 1127,
+      "type": "f32",
+      "access": "r",
+      "description": "Cycle by cycle average RMS current",
+      "unit": "float"
+    },
+    "internal_dsp_temperature_read_every_cycle": {
+      "address": 1159,
+      "type": "f32",
+      "access": "r",
+      "description": "Internal DSP temperature, read every cycle",
+      "unit": "float"
+    },
+    "external_dsp_temperature_pt100_reading_read_every_cycle": {
+      "address": 1161,
+      "type": "f32",
+      "access": "r",
+      "description": "External DSP temperature (PT100 READING) , read every cycle",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l1_calculated_over_2_seconds": {
+      "address": 1659,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L1 calculated over 2 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l1_calculated_over_2_seconds_1661": {
+      "address": 1661,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L1 calculated over 2 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l1_calculated_over_2_seconds_1663": {
+      "address": 1663,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L1 calculated over 2 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l12_calculated_over_2_seconds": {
+      "address": 1665,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L12 calculated over 2 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l23_calculated_over_2_seconds": {
+      "address": 1667,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L23 calculated over 2 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l31_calculated_over_2_seconds": {
+      "address": 1669,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L31 calculated over 2 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l1_calculated_over_10_seconds": {
+      "address": 1671,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L1 calculated over 10 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l2_calculated_over_10_seconds": {
+      "address": 1673,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L2 calculated over 10 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l3_calculated_over_10_seconds": {
+      "address": 1675,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L3 calculated over 10 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l12_calculated_over_10_seconds": {
+      "address": 1677,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L12 calculated over 10 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l23_calculated_over_10_seconds": {
+      "address": 1679,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L23 calculated over 10 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l31_calculated_over_10_seconds": {
+      "address": 1681,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L31 calculated over 10 seconds",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l1_calculated_over_10_minutes": {
+      "address": 1683,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L1 calculated over 10 minutes",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l2_calculated_over_10_minutes": {
+      "address": 1685,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L2 calculated over 10 minutes",
+      "unit": "float"
+    },
+    "pst_short_term_flicker_l3_calculated_over_10_minutes": {
+      "address": 1687,
+      "type": "f32",
+      "access": "r",
+      "description": "PST (short term flicker) L3 calculated over 10 minutes",
+      "unit": "float"
+    }
+  }
+}

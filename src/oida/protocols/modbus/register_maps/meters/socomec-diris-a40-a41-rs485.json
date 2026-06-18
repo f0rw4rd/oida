@@ -1,0 +1,340 @@
+{
+  "vendor": "Socomec",
+  "model": "DIRIS A 40 A 41 RS 485",
+  "description": "Socomec DIRIS A 40 A 41 RS 485 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "hour_meter": {
+      "address": 10511,
+      "type": "u32",
+      "access": "r",
+      "description": "Hour meter",
+      "unit": "1"
+    },
+    "phase_to_phase_voltage_u12": {
+      "address": 10513,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage u12",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_u23": {
+      "address": 10515,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage u23",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_u31": {
+      "address": 10517,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to phase voltage u31",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_1": {
+      "address": 10519,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 1",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_2": {
+      "address": 10521,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 2",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_phase_3": {
+      "address": 10523,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase to neutral voltage phase 3",
+      "unit": "V"
+    },
+    "frequency": {
+      "address": 10525,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "phase_current_1": {
+      "address": 10527,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase current 1"
+    },
+    "phase_current_2": {
+      "address": 10529,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase current 2"
+    },
+    "phase_current_3": {
+      "address": 10531,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase current 3"
+    },
+    "neutral_current": {
+      "address": 10533,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "active_power": {
+      "address": 10535,
+      "type": "u32",
+      "access": "r",
+      "description": "active power +/",
+      "unit": "kW"
+    },
+    "reactive_power": {
+      "address": 10537,
+      "type": "u32",
+      "access": "r",
+      "description": "reactive power +/",
+      "unit": "kvar"
+    },
+    "apparent_power": {
+      "address": 10539,
+      "type": "u32",
+      "access": "r",
+      "description": "apparent power",
+      "unit": "kVA"
+    },
+    "power_factor_leading_and_lagging": {
+      "address": 10541,
+      "type": "u32",
+      "access": "r",
+      "description": "power factor : leading and + : lagging"
+    },
+    "active_power_phase_1": {
+      "address": 10543,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power phase 1 +/",
+      "unit": "kW"
+    },
+    "active_power_phase_2": {
+      "address": 10545,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power phase 2 +/",
+      "unit": "kW"
+    },
+    "active_power_phase_3": {
+      "address": 10547,
+      "type": "u32",
+      "access": "r",
+      "description": "Active power phase 3 +/",
+      "unit": "kW"
+    },
+    "reactive_power_phase_1": {
+      "address": 10549,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power phase 1 +/",
+      "unit": "kvar"
+    },
+    "reactive_power_phase_2": {
+      "address": 10551,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power phase 2 +/",
+      "unit": "kvar"
+    },
+    "reactive_power_phase_3": {
+      "address": 10553,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive power phase 3 +/",
+      "unit": "kvar"
+    },
+    "apparent_power_phase_1": {
+      "address": 10555,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power phase 1",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_2": {
+      "address": 10557,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power phase 2",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_3": {
+      "address": 10559,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power phase 3",
+      "unit": "kVA"
+    },
+    "power_factor_phase_1_leading_and_lagging": {
+      "address": 10561,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor phase 1 : leading and + : lagging"
+    },
+    "power_factor_phase_2_leading_and_lagging": {
+      "address": 10563,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor phase 2 : leading and + : lagging"
+    },
+    "power_factor_phase_3_leading_and_lagging": {
+      "address": 10565,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor phase 3 : leading and + : lagging"
+    },
+    "hour_meter_10767": {
+      "address": 10767,
+      "type": "u32",
+      "access": "r",
+      "description": "Hour meter",
+      "unit": "1"
+    },
+    "active_energy": {
+      "address": 10769,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy +"
+    },
+    "apparent_apparente": {
+      "address": 10773,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent apparente"
+    },
+    "active_energy_10775": {
+      "address": 10775,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy"
+    },
+    "active_energy_10777": {
+      "address": 10777,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy +"
+    },
+    "no_compteurs_d_impulsions": {
+      "address": 10779,
+      "type": "u32",
+      "access": "r",
+      "description": "No. compteurs d'impulsions"
+    },
+    "pulse_meter_2": {
+      "address": 10783,
+      "type": "u32",
+      "access": "r",
+      "description": "Pulse meter 2"
+    },
+    "pulse_meter_3": {
+      "address": 10785,
+      "type": "u32",
+      "access": "r",
+      "description": "Pulse meter 3"
+    },
+    "pulse_meter_4": {
+      "address": 10787,
+      "type": "u32",
+      "access": "r",
+      "description": "Pulse meter 4"
+    },
+    "pulse_meter_5": {
+      "address": 10789,
+      "type": "u32",
+      "access": "r",
+      "description": "Pulse meter 5"
+    },
+    "s_predicted_reactive_power": {
+      "address": 10803,
+      "type": "u32",
+      "access": "r",
+      "description": "S predicted reactive power",
+      "unit": "kvar"
+    },
+    "s_predicted_apparent_power": {
+      "address": 10805,
+      "type": "u32",
+      "access": "r",
+      "description": "S predicted apparent power",
+      "unit": "kVA"
+    },
+    "ea_between_2_tops": {
+      "address": 10807,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea+ between 2 tops"
+    },
+    "ea_between_2_tops_10809": {
+      "address": 10809,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea between 2 tops"
+    },
+    "er_between_2_tops": {
+      "address": 10813,
+      "type": "u32",
+      "access": "r",
+      "description": "Er between 2 tops"
+    },
+    "avg_v1": {
+      "address": 11029,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg v1",
+      "unit": "V"
+    },
+    "avg_v3": {
+      "address": 11033,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg v3",
+      "unit": "V"
+    },
+    "avg_f": {
+      "address": 11035,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg f",
+      "unit": "Hz"
+    },
+    "avg_i1": {
+      "address": 11037,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg i1"
+    },
+    "avg_i2": {
+      "address": 11039,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg i2"
+    },
+    "avg_in": {
+      "address": 11043,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg in"
+    },
+    "avg_active_power": {
+      "address": 11045,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg active power +",
+      "unit": "kW"
+    }
+  }
+}

@@ -1,0 +1,558 @@
+{
+  "vendor": "AlphaESS",
+  "model": "SMILE Series",
+  "description": "AlphaESS SMILE Series inverter register map extracted from homeassistant-solax-modbus",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "AlphaESS SMILE battery inverters.",
+  "source": "https://github.com/wills106/homeassistant-solax-modbus",
+  "registers": {
+    "grid_voltage": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage",
+      "unit": "V"
+    },
+    "grid_voltage_l1": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage L1",
+      "unit": "V"
+    },
+    "grid_voltage_l2": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage L2",
+      "unit": "V"
+    },
+    "grid_voltage_l3": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage L3",
+      "unit": "V"
+    },
+    "grid_current": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_current_l1": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current L1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_current_l2": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current L2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_current_l3": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current L3",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_frequency": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "active_power_energy": {
+      "address": 33,
+      "type": "i32",
+      "access": "r",
+      "description": "Active Power Energy",
+      "unit": "W"
+    },
+    "reactive_power": {
+      "address": 41,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive Power",
+      "unit": "var"
+    },
+    "battery_voltage": {
+      "address": 256,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "battery_current": {
+      "address": 257,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_soc": {
+      "address": 258,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery SOC",
+      "unit": "%"
+    },
+    "battery_capacity": {
+      "address": 281,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Capacity",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_input_energy": {
+      "address": 288,
+      "type": "u32",
+      "access": "r",
+      "description": "Battery Input Energy",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_output_energy": {
+      "address": 290,
+      "type": "u32",
+      "access": "r",
+      "description": "Battery Output Energy",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "inverter_voltage": {
+      "address": 1024,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage",
+      "unit": "V"
+    },
+    "inverter_voltage_l1": {
+      "address": 1024,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L1",
+      "unit": "V"
+    },
+    "inverter_voltage_l2": {
+      "address": 1025,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L2",
+      "unit": "V"
+    },
+    "inverter_voltage_l3": {
+      "address": 1026,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L3",
+      "unit": "V"
+    },
+    "inverter_current": {
+      "address": 1027,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_current_l1": {
+      "address": 1027,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_current_l2": {
+      "address": 1028,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_current_l3": {
+      "address": 1029,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L3",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_power_l1": {
+      "address": 1030,
+      "type": "i32",
+      "access": "r",
+      "description": "Inverter Power L1",
+      "unit": "W"
+    },
+    "inverter_power_l2": {
+      "address": 1032,
+      "type": "i32",
+      "access": "r",
+      "description": "Inverter Power L2",
+      "unit": "W"
+    },
+    "inverter_power_l3": {
+      "address": 1034,
+      "type": "i32",
+      "access": "r",
+      "description": "Inverter Power L3",
+      "unit": "W"
+    },
+    "inverter_power": {
+      "address": 1036,
+      "type": "i32",
+      "access": "r",
+      "description": "Inverter Power",
+      "unit": "W"
+    },
+    "eps_voltage": {
+      "address": 1038,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Voltage",
+      "unit": "V"
+    },
+    "eps_voltage_l1": {
+      "address": 1038,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Voltage L1",
+      "unit": "V"
+    },
+    "eps_voltage_l2": {
+      "address": 1039,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Voltage L2",
+      "unit": "V"
+    },
+    "eps_voltage_l3": {
+      "address": 1040,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Voltage L3",
+      "unit": "V"
+    },
+    "eps_current": {
+      "address": 1041,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "eps_current_l1": {
+      "address": 1041,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Current L1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "eps_current_l2": {
+      "address": 1042,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Current L2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "eps_current_l3": {
+      "address": 1043,
+      "type": "u16",
+      "access": "r",
+      "description": "EPS Current L3",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "eps_power_l1": {
+      "address": 1044,
+      "type": "i32",
+      "access": "r",
+      "description": "EPS Power L1",
+      "unit": "W"
+    },
+    "eps_power_l2": {
+      "address": 1046,
+      "type": "i32",
+      "access": "r",
+      "description": "EPS Power L2",
+      "unit": "W"
+    },
+    "eps_power_l3": {
+      "address": 1048,
+      "type": "i32",
+      "access": "r",
+      "description": "EPS Power L3",
+      "unit": "W"
+    },
+    "eps_power": {
+      "address": 1050,
+      "type": "i32",
+      "access": "r",
+      "description": "EPS Power",
+      "unit": "W"
+    },
+    "inverter_frequency": {
+      "address": 1052,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "pv_voltage_1": {
+      "address": 1053,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_1": {
+      "address": 1054,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_1": {
+      "address": 1055,
+      "type": "i32",
+      "access": "r",
+      "description": "PV Power 1",
+      "unit": "W"
+    },
+    "pv_voltage_2": {
+      "address": 1057,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 2",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_2": {
+      "address": 1058,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_2": {
+      "address": 1059,
+      "type": "i32",
+      "access": "r",
+      "description": "PV Power 2",
+      "unit": "W"
+    },
+    "pv_voltage_3": {
+      "address": 1061,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 3",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_3": {
+      "address": 1062,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 3",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_3": {
+      "address": 1063,
+      "type": "i32",
+      "access": "r",
+      "description": "PV Power 3",
+      "unit": "W"
+    },
+    "inverter_temperature": {
+      "address": 1077,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "run_mode": {
+      "address": 1088,
+      "type": "u16",
+      "access": "r",
+      "description": "Run Mode"
+    },
+    "software_master_version": {
+      "address": 1600,
+      "type": "str",
+      "access": "r",
+      "description": "Software Master Version"
+    },
+    "software_slave_version": {
+      "address": 1605,
+      "type": "str",
+      "access": "r",
+      "description": "Software Slave Version"
+    },
+    "system_mode": {
+      "address": 2053,
+      "type": "u16",
+      "access": "r",
+      "description": "System Mode"
+    },
+    "3phase_unbalanced_mode": {
+      "address": 2065,
+      "type": "u16",
+      "access": "r",
+      "description": "3Phase Unbalanced Mode"
+    },
+    "time_preiod_control": {
+      "address": 2127,
+      "type": "u16",
+      "access": "r",
+      "description": "Time Preiod Control"
+    },
+    "discharge_minimum_soc": {
+      "address": 2128,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Minimum Soc"
+    },
+    "discharge_start_1_hours": {
+      "address": 2129,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Start 1 Hours"
+    },
+    "discharge_stop_1_hours": {
+      "address": 2130,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Stop 1 Hours"
+    },
+    "discharge_start_2_hours": {
+      "address": 2131,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Start 2 Hours"
+    },
+    "discharge_stop_2_hours": {
+      "address": 2132,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Stop 2 Hours"
+    },
+    "charge_target_soc": {
+      "address": 2133,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Target Soc"
+    },
+    "charge_start_1_hours": {
+      "address": 2134,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Start 1 Hours"
+    },
+    "charge_stop_1_hours": {
+      "address": 2135,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Stop 1 Hours"
+    },
+    "charge_start_2_hours": {
+      "address": 2136,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Start 2 Hours"
+    },
+    "charge_stop_2_hours": {
+      "address": 2137,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Stop 2 Hours"
+    },
+    "discharge_start_1_mins": {
+      "address": 2138,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Start 1 Mins"
+    },
+    "discharge_stop_1_mins": {
+      "address": 2139,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Stop 1 Mins"
+    },
+    "discharge_start_2_mins": {
+      "address": 2140,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Start 2 Mins"
+    },
+    "discharge_stop_2_mins": {
+      "address": 2141,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge Stop 2 Mins"
+    },
+    "charge_start_1_mins": {
+      "address": 2142,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Start 1 Mins"
+    },
+    "charge_stop_1_mins": {
+      "address": 2143,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Stop 1 Mins"
+    },
+    "charge_start_2_mins": {
+      "address": 2144,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Start 2 Mins"
+    },
+    "charge_stop_2_mins": {
+      "address": 2145,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Stop 2 Mins"
+    },
+    "3phase_unbalance_mode": {
+      "address": 2065,
+      "type": "u16",
+      "access": "rw",
+      "description": "3Phase Unbalance Mode",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      }
+    }
+  },
+  "_source_verified": "Verified: plugin_alphaess.py confirmed in wills106/homeassistant-solax-modbus; AlphaESS SMILE documented at alphamon.net"
+}

@@ -1,0 +1,307 @@
+{
+  "vendor": "Deye",
+  "model": "2Mppt",
+  "description": "Imported from Home Assistant Solarman (deye_2mppt.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/deye_2mppt.yaml",
+  "registers": {
+    "pv1_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 110,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv2_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "daily_production": {
+      "address": 60,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "daily_production_1": {
+      "address": 65,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production 1",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "daily_production_2": {
+      "address": 66,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production 2",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_production": {
+      "address": 63,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_production_1": {
+      "address": 69,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production 1",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_production_2": {
+      "address": 71,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production 2",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "active_power_regulations": {
+      "address": 40,
+      "type": "u16",
+      "access": "ro",
+      "description": "Active Power Regulations",
+      "unit": "%"
+    },
+    "ac_voltage": {
+      "address": 73,
+      "type": "u16",
+      "access": "ro",
+      "description": "AC Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_current": {
+      "address": 76,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "ac_output_frequency": {
+      "address": 79,
+      "type": "u16",
+      "access": "ro",
+      "description": "AC Output Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "grid_voltage_upp_limit": {
+      "address": 27,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage Upp Limit",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_voltage_lower_limit": {
+      "address": 28,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage Lower Limit",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_frequency_upper_limit": {
+      "address": 29,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Frequency Upper Limit",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "grid_frequency_lower_limit": {
+      "address": 30,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Frequency Lower Limit",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "overfrequency_and_load_reduction_starting_point": {
+      "address": 34,
+      "type": "u16",
+      "access": "ro",
+      "description": "Overfrequency And Load Reduction Starting Point",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "overfrequency_and_load_reduction_percentage": {
+      "address": 35,
+      "type": "u16",
+      "access": "ro",
+      "description": "Overfrequency And Load Reduction Percentage",
+      "unit": "%"
+    },
+    "onoff_enable": {
+      "address": 43,
+      "type": "u16",
+      "access": "ro",
+      "description": "ON-OFF Enable",
+      "enum": {
+        "0": "OFF",
+        "1": "ON"
+      }
+    },
+    "island_protection_enable": {
+      "address": 46,
+      "type": "u16",
+      "access": "ro",
+      "description": "Island Protection Enable",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      }
+    },
+    "overfrequencyloadshedding_enable": {
+      "address": 49,
+      "type": "u16",
+      "access": "ro",
+      "description": "Overfrequency&Load-shedding Enable",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      }
+    },
+    "running_status": {
+      "address": 59,
+      "type": "u16",
+      "access": "ro",
+      "description": "Running Status",
+      "enum": {
+        "0": "Stand-by",
+        "1": "Self-check",
+        "2": "Normal",
+        "3": "Warning",
+        "4": "Fault"
+      }
+    },
+    "total_ac_output_power_active": {
+      "address": 86,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total AC Output Power (Active)",
+      "unit": "W",
+      "scale": 0.1
+    },
+    "radiator_temperature": {
+      "address": 90,
+      "type": "u16",
+      "access": "ro",
+      "description": "Radiator Temperature",
+      "unit": "°C",
+      "scale": 0.01,
+      "offset": -1000
+    },
+    "inverter_id": {
+      "address": 3,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter ID"
+    },
+    "hardware_version": {
+      "address": 12,
+      "type": "u16",
+      "access": "ro",
+      "description": "Hardware Version"
+    },
+    "dc_master_firmware_version": {
+      "address": 13,
+      "type": "u16",
+      "access": "ro",
+      "description": "DC Master Firmware Version"
+    },
+    "ac_version_number": {
+      "address": 14,
+      "type": "u16",
+      "access": "ro",
+      "description": "AC Version. Number"
+    },
+    "rated_power": {
+      "address": 16,
+      "type": "u16",
+      "access": "ro",
+      "description": "Rated Power",
+      "unit": "W",
+      "scale": 0.1
+    },
+    "communication_protocol_version": {
+      "address": 18,
+      "type": "u16",
+      "access": "ro",
+      "description": "Communication Protocol Version"
+    },
+    "startup_selfchecking_time": {
+      "address": 21,
+      "type": "u16",
+      "access": "ro",
+      "description": "Start-up Self-checking Time ",
+      "unit": "s"
+    },
+    "update_time": {
+      "address": 22,
+      "type": "u16",
+      "access": "ro",
+      "description": "Update Time"
+    },
+    "soft_start_enable": {
+      "address": 47,
+      "type": "u16",
+      "access": "ro",
+      "description": "Soft Start Enable",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      }
+    },
+    "power_factor_regulation": {
+      "address": 50,
+      "type": "i16",
+      "access": "ro",
+      "description": "Power Factor Regulation",
+      "scale": 0.1
+    },
+    "restore_factory_settings": {
+      "address": 54,
+      "type": "u16",
+      "access": "ro",
+      "description": "Restore Factory Settings",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      }
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed at StephanJoubert/home_assistant_solarman; PV registers 109-112 match upstream"
+}

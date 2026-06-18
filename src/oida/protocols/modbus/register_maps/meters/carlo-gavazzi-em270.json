@@ -1,0 +1,318 @@
+{
+  "vendor": "Carlo Gavazzi",
+  "model": "EM 270 / EM 271",
+  "description": "Carlo Gavazzi EM 270 / EM 271 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: EM 270, EM 271",
+  "registers": {
+    "v_l2_n": {
+      "address": 2,
+      "type": "i32",
+      "access": "r",
+      "description": "V L2 N"
+    },
+    "v_l3_n": {
+      "address": 4,
+      "type": "i32",
+      "access": "r",
+      "description": "V L3 N"
+    },
+    "v_l1_l2": {
+      "address": 6,
+      "type": "i32",
+      "access": "r",
+      "description": "V L1 L2"
+    },
+    "v_l2_l3": {
+      "address": 8,
+      "type": "i32",
+      "access": "r",
+      "description": "V L2 L3"
+    },
+    "v_l3_l1": {
+      "address": 10,
+      "type": "i32",
+      "access": "r",
+      "description": "V L3 L1"
+    },
+    "a_l1": {
+      "address": 12,
+      "type": "i32",
+      "access": "r",
+      "description": "A L1"
+    },
+    "a_l2": {
+      "address": 14,
+      "type": "i32",
+      "access": "r",
+      "description": "A L2"
+    },
+    "a_l3": {
+      "address": 16,
+      "type": "i32",
+      "access": "r",
+      "description": "A L3"
+    },
+    "w": {
+      "address": 18,
+      "type": "i32",
+      "access": "r",
+      "description": "W"
+    },
+    "va": {
+      "address": 20,
+      "type": "i32",
+      "access": "r",
+      "description": "Va"
+    },
+    "var": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "Var"
+    },
+    "kwh_tot": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh(+)tot",
+      "unit": "kW"
+    },
+    "kvarh_tot": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh(+)tot",
+      "unit": "kvar"
+    },
+    "w_dmd": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "W dmd"
+    },
+    "va_dmd": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "Va dmd"
+    },
+    "w_maxdmd": {
+      "address": 32,
+      "type": "i32",
+      "access": "r",
+      "description": "W maxdmd"
+    },
+    "va_maxdmd": {
+      "address": 34,
+      "type": "i32",
+      "access": "r",
+      "description": "Va maxdmd"
+    },
+    "a_l1_tcda": {
+      "address": 268,
+      "type": "i32",
+      "access": "r",
+      "description": "A L1 tcda"
+    },
+    "a_l2_tcda": {
+      "address": 270,
+      "type": "i32",
+      "access": "r",
+      "description": "A L2 tcda"
+    },
+    "a_l3_tcda": {
+      "address": 272,
+      "type": "i32",
+      "access": "r",
+      "description": "A L3 tcda"
+    },
+    "w_l1_tcda": {
+      "address": 274,
+      "type": "i32",
+      "access": "r",
+      "description": "W L1 tcda"
+    },
+    "w_l2_tcda": {
+      "address": 276,
+      "type": "i32",
+      "access": "r",
+      "description": "W L2 tcda"
+    },
+    "w_l3_tcda": {
+      "address": 278,
+      "type": "i32",
+      "access": "r",
+      "description": "W L3 tcda"
+    },
+    "w_tot_tcda": {
+      "address": 280,
+      "type": "i32",
+      "access": "r",
+      "description": "W tot tcda"
+    },
+    "va_tot_tcda": {
+      "address": 282,
+      "type": "i32",
+      "access": "r",
+      "description": "Va tot tcda"
+    },
+    "var_tot_tcda": {
+      "address": 284,
+      "type": "i32",
+      "access": "r",
+      "description": "Var tot tcda"
+    },
+    "kwh_tcda_tot": {
+      "address": 286,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh(+)tcda tot",
+      "unit": "kW"
+    },
+    "kvarh_tcda_tot": {
+      "address": 288,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+)tcda tot",
+      "unit": "kvar"
+    },
+    "w_tot_tcda_dmd": {
+      "address": 290,
+      "type": "i32",
+      "access": "r",
+      "description": "W tot tcda dmd"
+    },
+    "va_tot_tcda_dmd": {
+      "address": 292,
+      "type": "i32",
+      "access": "r",
+      "description": "Va tot tcda dmd"
+    },
+    "w_tot_tcda_maxdmd": {
+      "address": 294,
+      "type": "i32",
+      "access": "r",
+      "description": "W tot tcda maxdmd"
+    },
+    "va_tot_tcda_maxdmd": {
+      "address": 296,
+      "type": "i32",
+      "access": "r",
+      "description": "Va tot tcda maxdmd"
+    },
+    "kwh_l1_tcda": {
+      "address": 298,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh(+) L1 tcda",
+      "unit": "kW"
+    },
+    "kwh_l2_tcda": {
+      "address": 300,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh(+) L2 tcda"
+    },
+    "kwh_l3_tcda": {
+      "address": 302,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh(+) L3 tcda"
+    },
+    "w_l1_tcda_dmd": {
+      "address": 304,
+      "type": "i32",
+      "access": "r",
+      "description": "W L1 tcda dmd"
+    },
+    "w_l2_tcda_dmd": {
+      "address": 306,
+      "type": "i32",
+      "access": "r",
+      "description": "W L2 tcda dmd"
+    },
+    "w_l3_tcda_dmd": {
+      "address": 308,
+      "type": "i32",
+      "access": "r",
+      "description": "W L3 tcda dmd"
+    },
+    "w_l1_tcda_maxdmd": {
+      "address": 310,
+      "type": "i32",
+      "access": "r",
+      "description": "W L1 tcda maxdmd"
+    },
+    "w_l2_tcda_maxdmd": {
+      "address": 312,
+      "type": "i32",
+      "access": "r",
+      "description": "W L2 tcda maxdmd"
+    },
+    "w_l3_tcda_maxdmd": {
+      "address": 314,
+      "type": "i32",
+      "access": "r",
+      "description": "W L3 tcda maxdmd"
+    },
+    "a_l1_tcdb": {
+      "address": 524,
+      "type": "i32",
+      "access": "r",
+      "description": "A L1 tcdb"
+    },
+    "a_l2_tcdb": {
+      "address": 526,
+      "type": "i32",
+      "access": "r",
+      "description": "A L2 tcdb"
+    },
+    "a_l3_tcdb": {
+      "address": 528,
+      "type": "i32",
+      "access": "r",
+      "description": "A L3 tcdb"
+    },
+    "w_l1_tcdb": {
+      "address": 530,
+      "type": "i32",
+      "access": "r",
+      "description": "W L1 tcdb"
+    },
+    "w_l2_tcdb": {
+      "address": 532,
+      "type": "i32",
+      "access": "r",
+      "description": "W L2 tcdb"
+    },
+    "w_l3_tcdb": {
+      "address": 534,
+      "type": "i32",
+      "access": "r",
+      "description": "W L3 tcdb"
+    },
+    "w_tot_tcdb": {
+      "address": 536,
+      "type": "i32",
+      "access": "r",
+      "description": "W tot tcdb"
+    },
+    "va_tot_tcdb": {
+      "address": 538,
+      "type": "i32",
+      "access": "r",
+      "description": "Va tot tcdb"
+    },
+    "var_tot_tcdb": {
+      "address": 540,
+      "type": "i32",
+      "access": "r",
+      "description": "Var tot tcdb"
+    }
+  }
+}

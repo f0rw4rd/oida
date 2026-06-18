@@ -1,0 +1,478 @@
+{
+  "vendor": "IGEN",
+  "model": "DTSD422-D3",
+  "description": "IGEN DTSD422-D3 six-channel three-phase energy meter with dual channels",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "Converted from deye-inverter-mqtt project. Features 6 CT inputs on two channels (CT1-3 on channel 1, CT4-6 on channel 2). SignedMagnitude values use sign bit in high word for double registers. low_word_first=False means high word comes first (big endian word order for double registers).",
+  "source": "https://github.com/kbialek/deye-inverter-mqtt",
+  "registers": {
+    "ct1_voltage": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Voltage CT1"
+    },
+    "ct1_current": {
+      "address": 7,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Current CT1"
+    },
+    "ct1_active_power": {
+      "address": 15,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active Power CT1"
+    },
+    "ct1_reactive_power": {
+      "address": 23,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Reactive Power CT1"
+    },
+    "ct1_apparent_power": {
+      "address": 31,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent Power CT1"
+    },
+    "ct1_power_factor": {
+      "address": 38,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor CT1"
+    },
+    "ct1_total_positive_energy": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy CT1"
+    },
+    "ct1_total_negative_energy": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy CT1"
+    },
+    "ct2_voltage": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Voltage CT2"
+    },
+    "ct2_current": {
+      "address": 9,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Current CT2"
+    },
+    "ct2_active_power": {
+      "address": 17,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active Power CT2"
+    },
+    "ct2_reactive_power": {
+      "address": 25,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Reactive Power CT2"
+    },
+    "ct2_apparent_power": {
+      "address": 33,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent Power CT2"
+    },
+    "ct2_power_factor": {
+      "address": 39,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor CT2"
+    },
+    "ct2_total_positive_energy": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy CT2"
+    },
+    "ct2_total_negative_energy": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy CT2"
+    },
+    "ct3_voltage": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Voltage CT3"
+    },
+    "ct3_current": {
+      "address": 11,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Current CT3"
+    },
+    "ct3_active_power": {
+      "address": 19,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active Power CT3"
+    },
+    "ct3_reactive_power": {
+      "address": 27,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Reactive Power CT3"
+    },
+    "ct3_apparent_power": {
+      "address": 35,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent Power CT3"
+    },
+    "ct3_power_factor": {
+      "address": 40,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor CT3"
+    },
+    "ct3_total_positive_energy": {
+      "address": 102,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy CT3"
+    },
+    "ct3_total_negative_energy": {
+      "address": 112,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy CT3"
+    },
+    "ct4_voltage": {
+      "address": 4097,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Voltage CT4"
+    },
+    "ct4_current": {
+      "address": 4103,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Current CT4"
+    },
+    "ct4_active_power": {
+      "address": 4111,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active Power CT4"
+    },
+    "ct4_reactive_power": {
+      "address": 4119,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Reactive Power CT4"
+    },
+    "ct4_apparent_power": {
+      "address": 4127,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent Power CT4"
+    },
+    "ct4_power_factor": {
+      "address": 4134,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor CT4"
+    },
+    "ct4_total_positive_energy": {
+      "address": 4158,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy CT4"
+    },
+    "ct4_total_negative_energy": {
+      "address": 4168,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy CT4"
+    },
+    "ct5_voltage": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Voltage CT5"
+    },
+    "ct5_current": {
+      "address": 4105,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Current CT5"
+    },
+    "ct5_active_power": {
+      "address": 4113,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active Power CT5"
+    },
+    "ct5_reactive_power": {
+      "address": 4121,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Reactive Power CT5"
+    },
+    "ct5_apparent_power": {
+      "address": 4129,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent Power CT5"
+    },
+    "ct5_power_factor": {
+      "address": 4135,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor CT5"
+    },
+    "ct5_total_positive_energy": {
+      "address": 4178,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy CT5"
+    },
+    "ct5_total_negative_energy": {
+      "address": 4188,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy CT5"
+    },
+    "ct6_voltage": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Voltage CT6"
+    },
+    "ct6_current": {
+      "address": 4107,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Current CT6"
+    },
+    "ct6_active_power": {
+      "address": 4115,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active Power CT6"
+    },
+    "ct6_reactive_power": {
+      "address": 4123,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Reactive Power CT6"
+    },
+    "ct6_apparent_power": {
+      "address": 4131,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent Power CT6"
+    },
+    "ct6_power_factor": {
+      "address": 4136,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor CT6"
+    },
+    "ct6_total_positive_energy": {
+      "address": 4198,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy CT6"
+    },
+    "ct6_total_negative_energy": {
+      "address": 4208,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy CT6"
+    },
+    "ch1_total_active_power": {
+      "address": 13,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total Active Power (1st channel)"
+    },
+    "ch2_total_active_power": {
+      "address": 4109,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total Active Power (2nd channel)"
+    },
+    "ch1_total_reactive_power": {
+      "address": 21,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Total Reactive Power (1st channel)"
+    },
+    "ch2_total_reactive_power": {
+      "address": 4117,
+      "type": "i32",
+      "access": "r",
+      "unit": "Var",
+      "description": "Total Reactive Power (2nd channel)"
+    },
+    "ch1_total_apparent_power": {
+      "address": 29,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Total Apparent Power (1st channel)"
+    },
+    "ch2_total_apparent_power": {
+      "address": 4125,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Total Apparent Power (2nd channel)"
+    },
+    "ch1_total_positive_energy": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy (1st channel)"
+    },
+    "ch2_total_positive_energy": {
+      "address": 4138,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Positive Energy (2nd channel)"
+    },
+    "ch1_total_negative_energy": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy (1st channel)"
+    },
+    "ch2_total_negative_energy": {
+      "address": 4148,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Total Negative Energy (2nd channel)"
+    },
+    "ch1_power_factor": {
+      "address": 37,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor (1st channel)"
+    },
+    "ch2_power_factor": {
+      "address": 4133,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power Factor (2nd channel)"
+    },
+    "ch1_frequency": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Frequency (1st channel)"
+    },
+    "ch2_frequency": {
+      "address": 4137,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Frequency (2nd channel)"
+    }
+  },
+  "_source_verified": "Verified: IGEN DTSD422-D3 explicitly listed in kbialek/deye-inverter-mqtt as supported meter"
+}

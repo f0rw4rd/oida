@@ -1,0 +1,355 @@
+{
+  "vendor": "SACI",
+  "model": "ANG 96",
+  "description": "SACI ANG 96 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage",
+      "unit": "V"
+    },
+    "current_l1": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L1",
+      "unit": "A"
+    },
+    "thd_current_l1": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "THD% current L1",
+      "unit": "%"
+    },
+    "thd_voltage": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "THD% voltage",
+      "unit": "%"
+    },
+    "active_power_l1": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L1",
+      "unit": "KW"
+    },
+    "power_factor": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "reactive_power_l1": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L1",
+      "unit": "Kvar"
+    },
+    "apparent_power_l1": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L1",
+      "unit": "KVA"
+    },
+    "voltage_24": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage",
+      "unit": "V"
+    },
+    "voltage_32": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage",
+      "unit": "V"
+    },
+    "current_l2": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L2",
+      "unit": "A"
+    },
+    "thd_current_l2": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "THD% current L2",
+      "unit": "%"
+    },
+    "thd_voltage_38": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "THD% voltage",
+      "unit": "%"
+    },
+    "active_power_l2": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L2",
+      "unit": "KW"
+    },
+    "power_factor_48": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "reactive_power_l2": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L2",
+      "unit": "Kvar"
+    },
+    "apparent_power_l2": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L2",
+      "unit": "KVA"
+    },
+    "voltage_54": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage",
+      "unit": "V"
+    },
+    "voltage_56": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage",
+      "unit": "V"
+    },
+    "current_l3": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L3",
+      "unit": "A"
+    },
+    "thd_current_l3": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "THD% current L3",
+      "unit": "%"
+    },
+    "thd_voltage_68": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "THD% voltage",
+      "unit": "%"
+    },
+    "active_power_l3": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3",
+      "unit": "KW"
+    },
+    "power_factor_72": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "reactive_power_l3": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3",
+      "unit": "Kvar"
+    },
+    "apparent_power_l3": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3",
+      "unit": "KVA"
+    },
+    "neutral_current": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "frequency": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "power_factor_88": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "apparent_power_total": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power total",
+      "unit": "KVA"
+    },
+    "active_power_total": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power total",
+      "unit": "KW"
+    },
+    "reactive_power_total": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power total",
+      "unit": "Kvar"
+    },
+    "import_active_energy": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy",
+      "unit": "kWh"
+    },
+    "export_active_energy": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy",
+      "unit": "kWh"
+    },
+    "reactive_energy_inductive": {
+      "address": 112,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy. inductive",
+      "unit": "kvarh"
+    },
+    "reactive_energy_capacitive": {
+      "address": 114,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy. capacitive",
+      "unit": "kvarh"
+    },
+    "generator_mode_import_active_energy": {
+      "address": 116,
+      "type": "f32",
+      "access": "r",
+      "description": "Generator mode. import active energy",
+      "unit": "kWh"
+    },
+    "generator_mode_export_active_energy": {
+      "address": 118,
+      "type": "f32",
+      "access": "r",
+      "description": "Generator mode. export active energy",
+      "unit": "kWh"
+    },
+    "generator_mode_reactive_energy_inductive": {
+      "address": 120,
+      "type": "f32",
+      "access": "r",
+      "description": "Generator mode. reactive energy. inductive",
+      "unit": "kvarh"
+    },
+    "generator_mode_reactive_energy_capacitive": {
+      "address": 128,
+      "type": "f32",
+      "access": "r",
+      "description": "Generator mode. reactive energy. capacitive",
+      "unit": "kvarh"
+    },
+    "import_active_energy_time_counter": {
+      "address": 130,
+      "type": "u32",
+      "access": "r",
+      "description": "Import active energy time counter"
+    },
+    "export_active_energy_time_counter": {
+      "address": 132,
+      "type": "u32",
+      "access": "r",
+      "description": "Export active energy time counter"
+    },
+    "generator_mode_import_active_energy_time_counter": {
+      "address": 134,
+      "type": "u32",
+      "access": "r",
+      "description": "Generator mode. import active energy time counter"
+    },
+    "generator_model_export_active_energy_time_counter": {
+      "address": 136,
+      "type": "u32",
+      "access": "r",
+      "description": "Generator model. export active energy time counter"
+    },
+    "current_l1_256": {
+      "address": 256,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L1",
+      "unit": "A"
+    },
+    "current_l1_258": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L1",
+      "unit": "A"
+    },
+    "current_l2_260": {
+      "address": 260,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L2",
+      "unit": "A"
+    },
+    "current_l2_262": {
+      "address": 262,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L2",
+      "unit": "A"
+    },
+    "current_l3_264": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L3",
+      "unit": "A"
+    },
+    "current_l3_272": {
+      "address": 272,
+      "type": "f32",
+      "access": "r",
+      "description": "Current L3",
+      "unit": "A"
+    }
+  }
+}

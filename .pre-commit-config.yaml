@@ -1,0 +1,39 @@
+repos:
+  - repo: local
+    hooks:
+      # --- pre-commit: fast static checks (seconds) ---
+      - id: ruff
+        name: ruff lint
+        entry: ruff check --fix
+        language: system
+        types: [python]
+        exclude: '^\.vulture_whitelist\.py$'
+        stages: [pre-commit]
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format
+        language: system
+        types: [python]
+        stages: [pre-commit]
+      # --- pre-push: heavier checks ---
+      - id: vulture
+        name: dead code detection (vulture)
+        entry: vulture src/oida/ .vulture_whitelist.py --min-confidence 80
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      - id: mypy
+        name: type check (mypy, informational)
+        entry: .githooks/mypy-check
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      # --- commit-msg ---
+      - id: no-ai-coauthor
+        name: block AI co-author lines
+        entry: .githooks/no-ai-coauthor
+        language: script
+        always_run: true
+        stages: [commit-msg]

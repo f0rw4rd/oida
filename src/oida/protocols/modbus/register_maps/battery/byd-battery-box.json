@@ -1,0 +1,273 @@
+{
+  "vendor": "BYD",
+  "model": "Battery-Box Premium",
+  "device_type": "Battery Storage",
+  "models": [
+    "LVS",
+    "LVL",
+    "LVFlex",
+    "HVS",
+    "HVM",
+    "HVL"
+  ],
+  "description": "BYD Battery-Box Premium series with Modbus RTU over TCP",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "default_port": 8080,
+  "default_ip": "192.168.16.254",
+  "protocol": "modbus_rtu_over_tcp",
+  "function_code": 3,
+  "notes": "Uses Modbus RTU over TCP on port 8080 (not standard Modbus TCP). Only one connection allowed. Default WLAN password: BYDB-Box",
+  "source": "https://github.com/sarnau/BYD-Battery-Box-Infos, ioBroker.bydhvs, Home Assistant integration",
+  "holding_registers": {
+    "serial_number": {
+      "address": 0,
+      "type": "str20",
+      "access": "r",
+      "description": "BMU Serial Number"
+    },
+    "bmu_a_version": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "BMU A Firmware Version (high:major, low:minor)"
+    },
+    "bmu_b_version": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "BMU B Firmware Version"
+    },
+    "bms_version": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Firmware Version"
+    },
+    "working_area": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "BMU/BMS Working Area (1=A, other=B)"
+    },
+    "config_byte": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Module/Inverter Configuration"
+    },
+    "app_battery_type": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Application/Battery Type"
+    },
+    "phase_config": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Configuration (high byte: 0=Single, 1=Three)"
+    },
+    "soc": {
+      "address": 1280,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of Charge"
+    },
+    "max_cell_voltage": {
+      "address": 1281,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "Maximum Cell Voltage"
+    },
+    "min_cell_voltage": {
+      "address": 1282,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "Minimum Cell Voltage"
+    },
+    "soh": {
+      "address": 1283,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of Health"
+    },
+    "current": {
+      "address": 1284,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "Battery Current (+charge/-discharge)"
+    },
+    "battery_voltage": {
+      "address": 1285,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "Total Battery Voltage"
+    },
+    "max_cell_temp": {
+      "address": 1286,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "description": "Maximum Cell Temperature"
+    },
+    "min_cell_temp": {
+      "address": 1287,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "description": "Minimum Cell Temperature"
+    },
+    "bmu_temp": {
+      "address": 1288,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "description": "BMU Temperature"
+    },
+    "bmu_online_version": {
+      "address": 1290,
+      "type": "u16",
+      "access": "r",
+      "description": "BMU Online Version"
+    },
+    "error_bitmask": {
+      "address": 1293,
+      "type": "u16",
+      "access": "r",
+      "description": "Error Flags Bitmask"
+    },
+    "output_voltage": {
+      "address": 1296,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "Output Voltage"
+    },
+    "charge_cycles_low": {
+      "address": 1297,
+      "type": "u16",
+      "access": "r",
+      "description": "Total Charge Cycles (low word)"
+    },
+    "charge_cycles_high": {
+      "address": 1298,
+      "type": "u16",
+      "access": "r",
+      "description": "Total Charge Cycles (high word)"
+    },
+    "discharge_cycles_low": {
+      "address": 1299,
+      "type": "u16",
+      "access": "r",
+      "description": "Total Discharge Cycles (low word)"
+    },
+    "discharge_cycles_high": {
+      "address": 1300,
+      "type": "u16",
+      "access": "r",
+      "description": "Total Discharge Cycles (high word)"
+    },
+    "charge_total_low": {
+      "address": 1301,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "Total Charge Energy (low word)"
+    },
+    "charge_total_high": {
+      "address": 1302,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "Total Charge Energy (high word)"
+    },
+    "discharge_total_low": {
+      "address": 1303,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "Total Discharge Energy (low word)"
+    },
+    "discharge_total_high": {
+      "address": 1304,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "Total Discharge Energy (high word)"
+    },
+    "bms_select": {
+      "address": 1360,
+      "type": "u16",
+      "access": "w",
+      "description": "BMS/Tower Selection (write 0x8100 + tower)"
+    },
+    "bms_response": {
+      "address": 1361,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Response Status"
+    }
+  },
+  "enums": {
+    "battery_type": {
+      "0": "HVL",
+      "1": "HVM",
+      "2": "HVS"
+    },
+    "application_type": {
+      "0": "OffGrid",
+      "1": "OnGrid",
+      "2": "Backup"
+    },
+    "bmu_state": {
+      "0": "Standby",
+      "1": "Inactive",
+      "2": "Restart",
+      "3": "Active",
+      "4": "Fault",
+      "5": "Updating",
+      "6": "Shutdown",
+      "7": "Precharge",
+      "8": "BatteryCheck",
+      "9": "AddressAssignment",
+      "10": "Init"
+    }
+  },
+  "error_flags": {
+    "0": "high_temp_charging",
+    "1": "low_temp_charging",
+    "2": "overcurrent_discharge",
+    "3": "overcurrent_charge",
+    "4": "short_circuit",
+    "5": "cell_imbalance",
+    "6": "voltage_sensor_fail",
+    "7": "temp_sensor_fail",
+    "8": "charge_mos_fail",
+    "9": "discharge_mos_fail",
+    "10": "precharge_mos_fail",
+    "11": "relay_fail",
+    "12": "cell_overvoltage",
+    "13": "cell_undervoltage",
+    "14": "pack_overvoltage",
+    "15": "pack_undervoltage"
+  },
+  "_source_verified": "Verified: BYD Battery-Box registers confirmed against sarnau/BYD-Battery-Box-Infos; port 8080, IP 192.168.16.254 match"
+}

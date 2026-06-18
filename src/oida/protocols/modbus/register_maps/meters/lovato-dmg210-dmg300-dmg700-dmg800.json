@@ -1,0 +1,359 @@
+{
+  "vendor": "Lovato Electric",
+  "model": "DMG 210 DMG 300 DMG 700 DMG 800",
+  "description": "Lovato Electric DMG 210 DMG 300 DMG 700 DMG 800 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "l1_phase_voltage": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "l3_phase_voltage": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 phase voltage",
+      "unit": "V"
+    },
+    "l1_current": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "A"
+    },
+    "l2_current": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "A"
+    },
+    "l3_current": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "A"
+    },
+    "l1_l2_voltage": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 L2 voltage",
+      "unit": "V"
+    },
+    "l2_l3_voltage": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 L3 voltage",
+      "unit": "V"
+    },
+    "l3_l1_voltage": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 L1 voltage",
+      "unit": "V"
+    },
+    "l1_active_power": {
+      "address": 20,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 active power",
+      "unit": "W"
+    },
+    "l2_active_power": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 active power",
+      "unit": "W"
+    },
+    "l3_active_power": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 active power",
+      "unit": "W"
+    },
+    "l1_reactive_power": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 reactive power",
+      "unit": "Var"
+    },
+    "l2_reactive_power": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 reactive power",
+      "unit": "Var"
+    },
+    "l3_reactive_power": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 reactive power",
+      "unit": "Var"
+    },
+    "l1_apparent_power": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 apparent power",
+      "unit": "VA"
+    },
+    "l2_apparent_power": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 apparent power",
+      "unit": "VA"
+    },
+    "l3_apparent_power": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 apparent power",
+      "unit": "VA"
+    },
+    "l1_power_factor": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "L1 power factor"
+    },
+    "l2_power_factor": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "L2 power factor"
+    },
+    "l3_power_factor": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "L3 power factor"
+    },
+    "frequency": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "eqv_phase_voltage": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Phase voltage",
+      "unit": "V"
+    },
+    "eqv_phase_to_phase_voltage": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Phase to phase voltage",
+      "unit": "V"
+    },
+    "eqv_current": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Current",
+      "unit": "A"
+    },
+    "eqv_active_power": {
+      "address": 58,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv. Active power",
+      "unit": "W"
+    },
+    "eqv_reactive_power": {
+      "address": 60,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv. Reactive power",
+      "unit": "Var"
+    },
+    "eqv_apparent_power": {
+      "address": 62,
+      "type": "u32",
+      "access": "r",
+      "description": "Eqv. Apparent power",
+      "unit": "VA"
+    },
+    "eqv_power_factor": {
+      "address": 64,
+      "type": "i32",
+      "access": "r",
+      "description": "Eqv power factor"
+    },
+    "asymmetriy_phase_phase_voltage": {
+      "address": 66,
+      "type": "u32",
+      "access": "r",
+      "description": "Asymmetriy phase phase voltage",
+      "unit": "%"
+    },
+    "asymmetriy_phase_neural_voltage": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "Asymmetriy phase neural voltage",
+      "unit": "%"
+    },
+    "asymmetriy_neutral_current": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "Asymmetriy neutral current",
+      "unit": "%"
+    },
+    "neutral_current": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "thd_l1_voltage": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L1 voltage",
+      "unit": "%"
+    },
+    "thd_l2_voltage": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L2 voltage",
+      "unit": "%"
+    },
+    "thd_l3_voltage": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L3 voltage",
+      "unit": "%"
+    },
+    "thd_l1_current": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L1 current",
+      "unit": "%"
+    },
+    "thd_l2_current": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L2 current",
+      "unit": "%"
+    },
+    "thd_l3_current": {
+      "address": 94,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L3 current",
+      "unit": "%"
+    },
+    "thd_l1_2_voltage": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L1 2 voltage",
+      "unit": "%"
+    },
+    "thd_l2_3_voltage": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L2 3 voltage",
+      "unit": "%"
+    },
+    "thd_l3_1_voltage": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L3 1 voltage",
+      "unit": "%"
+    },
+    "l1_phase_voltage_1024": {
+      "address": 1024,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage_1026": {
+      "address": 1026,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "thd_l3_1_voltage_1122": {
+      "address": 1122,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L3 1 voltage",
+      "unit": "%"
+    },
+    "l1_phase_voltage_1536": {
+      "address": 1536,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage_1538": {
+      "address": 1538,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    },
+    "thd_l3_1_voltage_1634": {
+      "address": 1634,
+      "type": "u32",
+      "access": "r",
+      "description": "Thd L3 1 voltage",
+      "unit": "%"
+    },
+    "l1_phase_voltage_2048": {
+      "address": 2048,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 phase voltage",
+      "unit": "V"
+    },
+    "l2_phase_voltage_2050": {
+      "address": 2050,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 phase voltage",
+      "unit": "V"
+    }
+  }
+}

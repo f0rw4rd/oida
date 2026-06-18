@@ -1,0 +1,632 @@
+{
+  "protocol": "knx",
+  "display_filter": "kip",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:51:31.902968+00:00",
+  "dissector_fields": {
+    "total": 71,
+    "by_type": {
+      "FT_BOOLEAN": 7,
+      "FT_BYTES": 1,
+      "FT_ETHER": 1,
+      "FT_IPv4": 5,
+      "FT_NONE": 3,
+      "FT_STRING": 1,
+      "FT_UINT16": 16,
+      "FT_UINT48": 1,
+      "FT_UINT8": 36
+    },
+    "fields": [
+      {
+        "name": "knxip.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "knxip.folder",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "knxip.headerlength",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.service",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.service.family",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.service.type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.totallength",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.struct.length",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.hostprotocol",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipaddr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "knxip.port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.dibtype",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium.ip",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium.rf",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium.pl132",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium.pl110",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium.tp1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium.tp0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.device.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.progmode",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.knxaddr",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.tunnel.usable",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.tunnel.authorized",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.tunnel.free",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.project",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.project.nr",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.project.installation",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.sernr",
+        "type": "FT_UINT48",
+        "description": ""
+      },
+      {
+        "name": "knxip.mcaddr",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "knxip.macaddr",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "knxip.device.name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "knxip.service.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.security.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.manufacturer",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.conn.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.tunnel.layer",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.channel",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.seqctr",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.subnet",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "knxip.gateway",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipassign",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipassign.auto",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipassign.dhcp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipassign.bootp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipassign.manual",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipcaps",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipcaps.auto",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipcaps.dhcp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "knxip.ipcaps.bootp",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "knxip.dhcp",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "knxip.tunnel.feature",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.loss",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.busy.time",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.busy.control",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.selector",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.maxapdulength",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.medium.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.mask.version",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.srp.mandatory",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.srp.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.reset.command",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.session",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.tag",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "knxip.user",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.session.status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "knxip.error",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "knxip.warning",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 19,
+    "by_pcap": {
+      "knxip_DataSec.pcap": [
+        "kip_knxip_channel",
+        "kip_knxip_folder",
+        "kip_knxip_headerlength",
+        "kip_knxip_reserved",
+        "kip_knxip_seqctr",
+        "kip_knxip_service",
+        "kip_knxip_service_family",
+        "kip_knxip_service_type",
+        "kip_knxip_struct_length",
+        "kip_knxip_totallength",
+        "kip_knxip_version"
+      ],
+      "knxip_SecureWrapper.pcap": [
+        "kip_knxip_data",
+        "kip_knxip_folder",
+        "kip_knxip_headerlength",
+        "kip_knxip_service",
+        "kip_knxip_service_family",
+        "kip_knxip_service_type",
+        "kip_knxip_session",
+        "kip_knxip_tag",
+        "kip_knxip_totallength",
+        "kip_knxip_version"
+      ],
+      "knxip_TimerNotify.pcap": [
+        "kip_knxip_data",
+        "kip_knxip_folder",
+        "kip_knxip_headerlength",
+        "kip_knxip_service",
+        "kip_knxip_service_family",
+        "kip_knxip_service_type",
+        "kip_knxip_tag",
+        "kip_knxip_totallength",
+        "kip_knxip_version"
+      ],
+      "ndpi_knxip.pcapng": [
+        "kip_knxip_data",
+        "kip_knxip_folder",
+        "kip_knxip_headerlength",
+        "kip_knxip_hostprotocol",
+        "kip_knxip_ipaddr",
+        "kip_knxip_port",
+        "kip_knxip_service",
+        "kip_knxip_service_family",
+        "kip_knxip_service_type",
+        "kip_knxip_srp_mandatory",
+        "kip_knxip_srp_type",
+        "kip_knxip_struct_length",
+        "kip_knxip_totallength",
+        "kip_knxip_version"
+      ]
+    },
+    "union": [
+      "kip_knxip_channel",
+      "kip_knxip_data",
+      "kip_knxip_folder",
+      "kip_knxip_headerlength",
+      "kip_knxip_hostprotocol",
+      "kip_knxip_ipaddr",
+      "kip_knxip_port",
+      "kip_knxip_reserved",
+      "kip_knxip_seqctr",
+      "kip_knxip_service",
+      "kip_knxip_service_family",
+      "kip_knxip_service_type",
+      "kip_knxip_session",
+      "kip_knxip_srp_mandatory",
+      "kip_knxip_srp_type",
+      "kip_knxip_struct_length",
+      "kip_knxip_tag",
+      "kip_knxip_totallength",
+      "kip_knxip_version"
+    ]
+  },
+  "extracted_fields": {
+    "total": 4,
+    "fields": [
+      "knxip_service",
+      "knxip_service_family",
+      "knxip_service_type",
+      "knxip_version"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "19/71 (26%)",
+    "pcap_vs_extracted": "4/19 (21%)",
+    "t1_extracted": "4/4 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "knxip_knxip_headerlength",
+        "field": "knxip.headerlength",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_DataSec.pcap",
+          "knxip_SecureWrapper.pcap",
+          "knxip_TimerNotify.pcap",
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_totallength",
+        "field": "knxip.totallength",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_DataSec.pcap",
+          "knxip_SecureWrapper.pcap",
+          "knxip_TimerNotify.pcap",
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_data",
+        "field": "knxip.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_SecureWrapper.pcap",
+          "knxip_TimerNotify.pcap",
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_struct_length",
+        "field": "knxip.struct.length",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_DataSec.pcap",
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_tag",
+        "field": "knxip.tag",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_SecureWrapper.pcap",
+          "knxip_TimerNotify.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_hostprotocol",
+        "field": "knxip.hostprotocol",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_ipaddr",
+        "field": "knxip.ipaddr",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_port",
+        "field": "knxip.port",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_channel",
+        "field": "knxip.channel",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_DataSec.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_reserved",
+        "field": "knxip.reserved",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_DataSec.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_seqctr",
+        "field": "knxip.seqctr",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_DataSec.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_srp_mandatory",
+        "field": "knxip.srp.mandatory",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_srp_type",
+        "field": "knxip.srp.type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "ndpi_knxip.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "knxip_knxip_session",
+        "field": "knxip.session",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "knxip_SecureWrapper.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 15,
+      "t1_in_pcap": 4,
+      "t1_covered": 4,
+      "t2_total": 53,
+      "t2_in_pcap": 14,
+      "t2_covered": 0,
+      "t3_skipped": 3,
+      "t4_ignored": 0
+    }
+  }
+}

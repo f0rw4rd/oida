@@ -1,0 +1,43 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "Modicon M580",
+  "description": "Schneider Electric Modicon M580 ePAC register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: Word order is LITTLE-ENDIAN for 32-bit values. MAST cycle time can increase by up to 0.5ms per incoming Modbus request. Hot Standby uses T_M_ECPU_HSBY DDT structure.",
+  "source": "EIO0000001578, FA351191, Unity Pro System Bits Reference",
+  "mei_expected": {
+    "vendor_name": "Schneider Electric"
+  },
+  "registers": {
+    "mw0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Memory word %MW0",
+      "notes": "iec_address=%MW0"
+    },
+    "md0": {
+      "address": 0,
+      "type": "u32",
+      "access": "rw",
+      "description": "Memory double %MD0 (LITTLE-ENDIAN word order)",
+      "notes": "iec_address=%MD0"
+    }
+  },
+  "extended_info": {
+    "memory_mapping": {
+      "supported_references": "0x, 1x, 3x, 4x (BMEP584040 and higher)",
+      "note": "Earlier CPUs (below 4040) may only support 0x and 4x"
+    },
+    "configuration_requirements": [
+      "Control Expert with Unity Pro runtime",
+      "ADDMX addressing format for remote I/O",
+      "I/O Scanning via DTM browser (FC 3, 16, 23 only)",
+      "BMENOC0301/0311 modules for additional Ethernet ports"
+    ]
+  },
+  "_source_verified": "Verified: M580 ePAC with BMENOC0301 confirmed; document EIO0000001578 verified"
+}

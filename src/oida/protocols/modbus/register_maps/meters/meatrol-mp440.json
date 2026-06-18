@@ -1,0 +1,354 @@
+{
+  "vendor": "Meatrol",
+  "model": "MP 440",
+  "description": "Meatrol MP 440 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "0_direct_connect_1_vt": {
+      "address": 99,
+      "type": "u16",
+      "access": "r",
+      "description": "0 = direct connect 1 = VT"
+    },
+    "realvalue_1000": {
+      "address": 102,
+      "type": "u32",
+      "access": "r",
+      "description": "=realvalue*1000",
+      "unit": "V"
+    },
+    "current_phase_a": {
+      "address": 1000,
+      "type": "f32",
+      "access": "r",
+      "description": "Current phase A",
+      "unit": "A"
+    },
+    "current_phase_b": {
+      "address": 1002,
+      "type": "f32",
+      "access": "r",
+      "description": "Current phase B",
+      "unit": "A"
+    },
+    "current_phase_c": {
+      "address": 1004,
+      "type": "f32",
+      "access": "r",
+      "description": "Current phase C",
+      "unit": "A"
+    },
+    "current_phase_n": {
+      "address": 1006,
+      "type": "f32",
+      "access": "r",
+      "description": "Current phase N",
+      "unit": "A"
+    },
+    "average_of_ia_ib_ic": {
+      "address": 1008,
+      "type": "f32",
+      "access": "r",
+      "description": "Average of IA, IB, IC",
+      "unit": "A"
+    },
+    "voltage_ua_un": {
+      "address": 1010,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage UA UN",
+      "unit": "V"
+    },
+    "voltage_ub_un": {
+      "address": 1012,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage UB UN",
+      "unit": "V"
+    },
+    "voltage_uc_un": {
+      "address": 1014,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage UC UN",
+      "unit": "V"
+    },
+    "voltage_un_ue": {
+      "address": 1016,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage UN UE",
+      "unit": "V"
+    },
+    "average_of_ua_ub_uc": {
+      "address": 1018,
+      "type": "f32",
+      "access": "r",
+      "description": "Average of UA, UB, UC",
+      "unit": "V"
+    },
+    "voltage_ua_ub": {
+      "address": 1020,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage UA UB",
+      "unit": "V"
+    },
+    "voltage_ub_uc": {
+      "address": 1022,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage UB UC",
+      "unit": "V"
+    },
+    "voltage_uc_ua": {
+      "address": 1024,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage UC UA",
+      "unit": "V"
+    },
+    "average_of_uab_ubc_uca": {
+      "address": 1026,
+      "type": "f32",
+      "access": "r",
+      "description": "Average of UAB, UBC, UCA",
+      "unit": "V"
+    },
+    "active_power_phase_a": {
+      "address": 1028,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase A",
+      "unit": "kW"
+    },
+    "active_power_phase_b": {
+      "address": 1030,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase B",
+      "unit": "kW"
+    },
+    "active_power_phase_c": {
+      "address": 1032,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase C",
+      "unit": "kW"
+    },
+    "total_active_power": {
+      "address": 1034,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "kW"
+    },
+    "reactive_power_phase_a": {
+      "address": 1036,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase A",
+      "unit": "kVAR"
+    },
+    "reactive_power_phase_b": {
+      "address": 1038,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase B",
+      "unit": "kVAR"
+    },
+    "reactive_power_phase_c": {
+      "address": 1040,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase C",
+      "unit": "kVAR"
+    },
+    "total_reactive_power": {
+      "address": 1042,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "kVAR"
+    },
+    "apparent_power_phase_a": {
+      "address": 1044,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase A",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_b": {
+      "address": 1046,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase B",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_c": {
+      "address": 1048,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase C",
+      "unit": "kVA"
+    },
+    "total_apparent_power": {
+      "address": 1050,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "kVA"
+    },
+    "power_factor_phase_a": {
+      "address": 1052,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase A"
+    },
+    "power_factor_phase_b": {
+      "address": 1054,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase B"
+    },
+    "power_factor_phase_c": {
+      "address": 1056,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase C"
+    },
+    "total_power_factor": {
+      "address": 1058,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "displacement_power_factor_phase_a": {
+      "address": 1060,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement power factor phase A"
+    },
+    "displacement_power_factor_phase_b": {
+      "address": 1062,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement power factor phase B"
+    },
+    "displacement_power_factor_phase_c": {
+      "address": 1064,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement power factor phase C"
+    },
+    "total_displacement_power_factor": {
+      "address": 1066,
+      "type": "f32",
+      "access": "r",
+      "description": "Total displacement power factor"
+    },
+    "frequency_phase_a": {
+      "address": 1068,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency phase A",
+      "unit": "Hz"
+    },
+    "frequency_phase_b": {
+      "address": 1070,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency phase B",
+      "unit": "Hz"
+    },
+    "frequency_phase_c": {
+      "address": 1072,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency phase C",
+      "unit": "Hz"
+    },
+    "average_of_freqa_freqb_freqc": {
+      "address": 1074,
+      "type": "f32",
+      "access": "r",
+      "description": "Average of FreqA, FreqB, FreqC",
+      "unit": "Hz"
+    },
+    "active_energy_import_phase_a": {
+      "address": 2000,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy import phase A",
+      "unit": "kWh"
+    },
+    "active_energy_import_phase_b": {
+      "address": 2002,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy import phase B",
+      "unit": "kWh"
+    },
+    "active_energy_import_phase_c": {
+      "address": 2004,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy import phase C",
+      "unit": "kWh"
+    },
+    "total_active_energy_import_phase_all": {
+      "address": 2006,
+      "type": "u32",
+      "access": "r",
+      "description": "Total active energy import phase all",
+      "unit": "kWh"
+    },
+    "active_energy_export_phase_a": {
+      "address": 2008,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy export phase A",
+      "unit": "kWh"
+    },
+    "active_energy_export_phase_b": {
+      "address": 2010,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy export phase B",
+      "unit": "kWh"
+    },
+    "active_energy_export_phase_c": {
+      "address": 2012,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy export phase C",
+      "unit": "kWh"
+    },
+    "total_active_energy_export_phase_all": {
+      "address": 2014,
+      "type": "u32",
+      "access": "r",
+      "description": "Total active energy export phase all",
+      "unit": "kWh"
+    },
+    "reactive_energy_import_phase_a": {
+      "address": 2016,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy import phase A",
+      "unit": "kVARh"
+    },
+    "reactive_energy_import_phase_b": {
+      "address": 2018,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy import phase B",
+      "unit": "kVARh"
+    }
+  }
+}

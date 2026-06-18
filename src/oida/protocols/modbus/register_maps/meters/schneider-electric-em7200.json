@@ -1,0 +1,313 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "EM 7200",
+  "description": "Schneider Electric EM 7200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_name": {
+      "address": 30,
+      "type": "str",
+      "access": "r",
+      "description": "Meter name"
+    },
+    "meter_model": {
+      "address": 50,
+      "type": "str",
+      "access": "r",
+      "description": "Meter model"
+    },
+    "manufacturer": {
+      "address": 70,
+      "type": "str",
+      "access": "r",
+      "description": "Manufacturer"
+    },
+    "product_id_number": {
+      "address": 90,
+      "type": "u16",
+      "access": "r",
+      "description": "Product id number"
+    },
+    "serial_number": {
+      "address": 130,
+      "type": "u32",
+      "access": "r",
+      "description": "Serial number"
+    },
+    "hardware_revision": {
+      "address": 136,
+      "type": "str",
+      "access": "r",
+      "description": "Hardware revision"
+    },
+    "production_history_01": {
+      "address": 141,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 01"
+    },
+    "production_history_02": {
+      "address": 142,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 02"
+    },
+    "production_history_03": {
+      "address": 143,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 03"
+    },
+    "production_history_04": {
+      "address": 144,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 04"
+    },
+    "production_history_05": {
+      "address": 145,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 05"
+    },
+    "production_history_06": {
+      "address": 146,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 06"
+    },
+    "production_history_07": {
+      "address": 147,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 07"
+    },
+    "production_history_08": {
+      "address": 148,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 08"
+    },
+    "production_history_09": {
+      "address": 149,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 09"
+    },
+    "production_history_10": {
+      "address": 150,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 10"
+    },
+    "production_history_11": {
+      "address": 151,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 11"
+    },
+    "production_history_12": {
+      "address": 152,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 12"
+    },
+    "production_history_13": {
+      "address": 153,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 13"
+    },
+    "production_history_14": {
+      "address": 154,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 14"
+    },
+    "production_history_15": {
+      "address": 155,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 15"
+    },
+    "production_history_16": {
+      "address": 156,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 16"
+    },
+    "production_history_17": {
+      "address": 157,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 17"
+    },
+    "production_history_18": {
+      "address": 158,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 18"
+    },
+    "production_history_19": {
+      "address": 159,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 19"
+    },
+    "production_history_20": {
+      "address": 160,
+      "type": "u16",
+      "access": "r",
+      "description": "Production history 20"
+    },
+    "checksum": {
+      "address": 161,
+      "type": "u16",
+      "access": "r",
+      "description": "Checksum"
+    },
+    "present_firmware_version_dlf_format_x_y_t": {
+      "address": 1637,
+      "type": "u16",
+      "access": "r",
+      "description": "Present firmware version (dlf format) x.y.t"
+    },
+    "x_major": {
+      "address": 1638,
+      "type": "u16",
+      "access": "r",
+      "description": "X major"
+    },
+    "y_minor": {
+      "address": 1639,
+      "type": "u16",
+      "access": "r",
+      "description": "Y minor"
+    },
+    "z_quality": {
+      "address": 1640,
+      "type": "u16",
+      "access": "r",
+      "description": "Z quality"
+    },
+    "t_internal_evolutions": {
+      "address": 1641,
+      "type": "u16",
+      "access": "r",
+      "description": "T internal evolutions"
+    },
+    "previous_firmware_version_dlf_format_x_y_t": {
+      "address": 1642,
+      "type": "u16",
+      "access": "r",
+      "description": "Previous firmware version (dlf format) x.y.t"
+    },
+    "x_major_1643": {
+      "address": 1643,
+      "type": "u16",
+      "access": "r",
+      "description": "X major"
+    },
+    "y_minor_1644": {
+      "address": 1644,
+      "type": "u16",
+      "access": "r",
+      "description": "Y minor"
+    },
+    "z_quality_1645": {
+      "address": 1645,
+      "type": "u16",
+      "access": "r",
+      "description": "Z quality"
+    },
+    "t_internal_evolutions_1646": {
+      "address": 1646,
+      "type": "u16",
+      "access": "r",
+      "description": "T internal evolutions"
+    },
+    "present_firmware_version_dlf_format_x_y_t_1701": {
+      "address": 1701,
+      "type": "u16",
+      "access": "r",
+      "description": "Present firmware version (dlf format) x.y.t"
+    },
+    "x_major_1702": {
+      "address": 1702,
+      "type": "u16",
+      "access": "r",
+      "description": "X major"
+    },
+    "y_minor_1703": {
+      "address": 1703,
+      "type": "u16",
+      "access": "r",
+      "description": "Y minor"
+    },
+    "z_quality_1704": {
+      "address": 1704,
+      "type": "u16",
+      "access": "r",
+      "description": "Z quality"
+    },
+    "t_internal_evolutions_1705": {
+      "address": 1705,
+      "type": "u16",
+      "access": "r",
+      "description": "T internal evolutions"
+    },
+    "previous_firmware_version_dlf_format_x_y_t_1706": {
+      "address": 1706,
+      "type": "u16",
+      "access": "r",
+      "description": "Previous firmware version (dlf format) x.y.t"
+    },
+    "x_major_1707": {
+      "address": 1707,
+      "type": "u16",
+      "access": "r",
+      "description": "X major"
+    },
+    "y_minor_1708": {
+      "address": 1708,
+      "type": "u16",
+      "access": "r",
+      "description": "Y minor"
+    },
+    "z_quality_1709": {
+      "address": 1709,
+      "type": "u16",
+      "access": "r",
+      "description": "Z quality"
+    },
+    "t_internal_evolutions_1710": {
+      "address": 1710,
+      "type": "u16",
+      "access": "r",
+      "description": "T internal evolutions"
+    },
+    "checksum_1715": {
+      "address": 1715,
+      "type": "u16",
+      "access": "r",
+      "description": "Checksum"
+    },
+    "bridge_code_version": {
+      "address": 1716,
+      "type": "u16",
+      "access": "r",
+      "description": "Bridge code version"
+    },
+    "number_of_metering_system_restarts": {
+      "address": 1828,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of metering system restarts"
+    }
+  }
+}

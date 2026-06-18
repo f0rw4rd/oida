@@ -1,0 +1,461 @@
+{
+  "vendor": "Sungrow",
+  "model": "Sungrow",
+  "description": "Imported from nymea-plugins-modbus (sungrow)",
+  "byte_order": "little",
+  "word_order": "little",
+  "source": "nymea-plugins-modbus/sungrow/sungrow-registers.json",
+  "registers": {
+    "protocolNumber": {
+      "address": 4949,
+      "type": "u32",
+      "access": "ro",
+      "description": "Protocol number",
+      "function_code": 4
+    },
+    "protocolVersion": {
+      "address": 4951,
+      "type": "u32",
+      "access": "ro",
+      "description": "Device type code",
+      "function_code": 4
+    },
+    "armSoftwareVersion": {
+      "address": 4953,
+      "type": "str",
+      "access": "ro",
+      "description": "ARM software version",
+      "function_code": 4
+    },
+    "dspSoftwareVersion": {
+      "address": 4968,
+      "type": "str",
+      "access": "ro",
+      "description": "ARM software version",
+      "function_code": 4
+    },
+    "serialNumber": {
+      "address": 4989,
+      "type": "str",
+      "access": "ro",
+      "description": "Serial number",
+      "function_code": 4
+    },
+    "deviceTypeCode": {
+      "address": 4999,
+      "type": "u16",
+      "access": "ro",
+      "description": "Device type code",
+      "function_code": 4
+    },
+    "nominalOutputPower": {
+      "address": 5000,
+      "type": "u16",
+      "access": "ro",
+      "description": "Nominal output power",
+      "unit": "kW",
+      "function_code": 4
+    },
+    "inverterTemperature": {
+      "address": 5007,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "dummy0": {
+      "address": 5008,
+      "type": "u16",
+      "access": "ro",
+      "description": "none",
+      "function_code": 4
+    },
+    "totalPVPower": {
+      "address": 5016,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total PV power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "phaseAVoltage": {
+      "address": 5018,
+      "type": "u16",
+      "access": "ro",
+      "description": "Phase A voltage",
+      "unit": "V",
+      "function_code": 4
+    },
+    "phaseBVoltage": {
+      "address": 5019,
+      "type": "i16",
+      "access": "ro",
+      "description": "Phase B voltage",
+      "unit": "V",
+      "function_code": 4
+    },
+    "phaseCVoltage": {
+      "address": 5020,
+      "type": "i16",
+      "access": "ro",
+      "description": "Phase C voltage",
+      "unit": "V",
+      "function_code": 4
+    },
+    "dummy1": {
+      "address": 5021,
+      "type": "u16",
+      "access": "ro",
+      "description": "none",
+      "function_code": 4
+    },
+    "reactivePower": {
+      "address": 5032,
+      "type": "i32",
+      "access": "ro",
+      "description": "Reactive power",
+      "unit": "var",
+      "function_code": 4
+    },
+    "powerFactor": {
+      "address": 5034,
+      "type": "i32",
+      "access": "ro",
+      "description": "Power factor",
+      "function_code": 4
+    },
+    "gridFrequency": {
+      "address": 5035,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid frequency",
+      "unit": "Hz",
+      "function_code": 4
+    },
+    "meterVoltagePhaseA": {
+      "address": 5740,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter voltage phase A",
+      "unit": "Volt",
+      "function_code": 4
+    },
+    "meterVoltagePhaseB": {
+      "address": 5741,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter voltage phase B",
+      "unit": "Volt",
+      "function_code": 4
+    },
+    "meterVoltagePhaseC": {
+      "address": 5742,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter voltage phase C",
+      "unit": "Volt",
+      "function_code": 4
+    },
+    "meterCurrentPhaseA": {
+      "address": 5743,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter current phase A",
+      "unit": "Amper",
+      "function_code": 4
+    },
+    "meterCurrentPhaseB": {
+      "address": 5744,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter current phase B",
+      "unit": "Amper",
+      "function_code": 4
+    },
+    "meterCurrentPhaseC": {
+      "address": 5745,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter current phase C",
+      "unit": "Amper",
+      "function_code": 4
+    },
+    "meterTotalEnergyImported": {
+      "address": 5746,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter totoal energy imported",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "meterTotalEnergyExported": {
+      "address": 5748,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter totoal energy exported",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "systemState": {
+      "address": 12999,
+      "type": "u16",
+      "access": "ro",
+      "description": "System state",
+      "function_code": 4
+    },
+    "runningState": {
+      "address": 13000,
+      "type": "u16",
+      "access": "ro",
+      "description": "Running state",
+      "function_code": 4
+    },
+    "dailyPVGeneration": {
+      "address": 13001,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily PV generation",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "totalPVGeneration": {
+      "address": 13002,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total PV generation",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "dailyPVExport": {
+      "address": 13004,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily PV export",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "totalPVExport": {
+      "address": 13005,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total PV export´",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "loadPower": {
+      "address": 13007,
+      "type": "i16",
+      "access": "ro",
+      "description": "Load power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "exportPower": {
+      "address": 13009,
+      "type": "i16",
+      "access": "ro",
+      "description": "Export power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "dailyBatteryChargePV": {
+      "address": 13011,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily battery charge from PV",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "totalBatteryChargePV": {
+      "address": 13012,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total battery charge from PV",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "dummy2": {
+      "address": 13014,
+      "type": "u16",
+      "access": "ro",
+      "description": "none",
+      "function_code": 4
+    },
+    "batteryVoltage": {
+      "address": 13019,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery voltage",
+      "unit": "V",
+      "function_code": 4
+    },
+    "batteryCurrent": {
+      "address": 13020,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "batteryPower": {
+      "address": 13021,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "batteryLevel": {
+      "address": 13022,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery level",
+      "unit": "%",
+      "function_code": 4
+    },
+    "batteryHealthState": {
+      "address": 13023,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery health state",
+      "unit": "%",
+      "function_code": 4
+    },
+    "batteryTemperature": {
+      "address": 13024,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "dummy3": {
+      "address": 13025,
+      "type": "u16",
+      "access": "ro",
+      "description": "none",
+      "function_code": 4
+    },
+    "gridState": {
+      "address": 13029,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid state",
+      "function_code": 4
+    },
+    "phaseACurrent": {
+      "address": 13030,
+      "type": "i16",
+      "access": "ro",
+      "description": "Phase A current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "phaseBCurrent": {
+      "address": 13031,
+      "type": "i16",
+      "access": "ro",
+      "description": "Phase B current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "phaseCCurrent": {
+      "address": 13032,
+      "type": "i16",
+      "access": "ro",
+      "description": "Phase C current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "totalActivePower": {
+      "address": 13033,
+      "type": "i32",
+      "access": "ro",
+      "description": "Total active power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "dailyImportEnergy": {
+      "address": 13035,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily import energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "totalImportEnergy": {
+      "address": 13036,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total import energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "dummy4": {
+      "address": 13038,
+      "type": "u16",
+      "access": "ro",
+      "description": "none",
+      "function_code": 4
+    },
+    "totalExportEnergy": {
+      "address": 13045,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total export energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "batteryType": {
+      "address": 13054,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery type"
+    },
+    "batteryNominalVoltage": {
+      "address": 13055,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery nominal voltage",
+      "unit": "V"
+    },
+    "batteryCapacity": {
+      "address": 13056,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery capacity",
+      "unit": "Ah"
+    }
+  },
+  "enums": {
+    "SystemState": {
+      "2": "Stop",
+      "8": "Standby",
+      "16": "InitialStandby",
+      "32": "Startup",
+      "64": "Running",
+      "256": "Fault",
+      "1024": "RunningMainMode",
+      "2048": "RunningForcedMode",
+      "4096": "RunningOffGridMode",
+      "9473": "Restarting",
+      "16384": "RunningExternalEMSMode"
+    },
+    "BatteryType": {
+      "0": "LeadAcidNarada",
+      "1": "LiIonSamsung",
+      "2": "NoBattery",
+      "3": "LeadAcidOther",
+      "4": "LiIonUS2000A",
+      "5": "LiIonLG",
+      "6": "LiIonUS2000B",
+      "7": "LiIonGCL",
+      "8": "LiIonBSG",
+      "9": "LiIonSungrow",
+      "10": "LiIonBYD",
+      "11": "LiIonTawaki"
+    }
+  },
+  "_source_verified": "Verified: Imported from nymea-plugins-modbus; -1 address offset vs other Sungrow files consistent with nymea 0-based addressing"
+}

@@ -1,0 +1,359 @@
+{
+  "vendor": "Socomec",
+  "model": "DIRIS D 30 D 50 D 70 / DIRIS I 31",
+  "description": "Socomec DIRIS D 30 D 50 D 70 / DIRIS I 31 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: DIRIS D 30 D 50 D 70, DIRIS I 31",
+  "registers": {
+    "inst_measurement_load_1_date_of_last_instance": {
+      "address": 18433,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Date of last instance",
+      "unit": "s"
+    },
+    "inst_measurement_load_1_integration_time": {
+      "address": 18435,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Integration time",
+      "unit": "s"
+    },
+    "inst_measurement_load_1_frequency": {
+      "address": 18442,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Frequency",
+      "unit": "Hz"
+    },
+    "inst_measurement_load_1_ph_n_voltage_v1": {
+      "address": 18444,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Ph N voltage : V1",
+      "unit": "V"
+    },
+    "inst_measurement_load_1_ph_n_voltage_v2": {
+      "address": 18446,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Ph N voltage : V2",
+      "unit": "V"
+    },
+    "inst_measurement_load_1_ph_n_voltage_v3": {
+      "address": 18448,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Ph N voltage : V3",
+      "unit": "V"
+    },
+    "inst_measurement_load_1_ph_ph_voltage_u12": {
+      "address": 18452,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Ph ph voltage : U12",
+      "unit": "V"
+    },
+    "inst_measurement_load_1_ph_ph_voltage_u23": {
+      "address": 18454,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Ph ph voltage : U23",
+      "unit": "V"
+    },
+    "inst_measurement_load_1_ph_ph_voltage_u31": {
+      "address": 18456,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Ph ph voltage : U31",
+      "unit": "V"
+    },
+    "inst_measurement_load_1_current_i1": {
+      "address": 18458,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Current : I1",
+      "unit": "A"
+    },
+    "inst_measurement_load_1_current_i2": {
+      "address": 18460,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Current : I2",
+      "unit": "A"
+    },
+    "inst_measurement_load_1_current_i3": {
+      "address": 18462,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Current : I3",
+      "unit": "A"
+    },
+    "inst_measurement_load_1_current_in": {
+      "address": 18464,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Current : in",
+      "unit": "A"
+    },
+    "inst_measurement_load_1_snom": {
+      "address": 18474,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Snom",
+      "unit": "VA"
+    },
+    "inst_measurement_load_1_total_active_power": {
+      "address": 18476,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Total active power",
+      "unit": "W"
+    },
+    "inst_measurement_load_1_total_reactive_power": {
+      "address": 18478,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Total reactive power",
+      "unit": "var"
+    },
+    "inst_measurement_load_1_total_lagging_reactive_power": {
+      "address": 18480,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Total lagging reactive power",
+      "unit": "var"
+    },
+    "inst_measurement_load_1_total_leading_reactive_power": {
+      "address": 18482,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Total leading reactive power",
+      "unit": "var"
+    },
+    "inst_measurement_load_1_total_apparent_power": {
+      "address": 18484,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Total apparent power",
+      "unit": "VA"
+    },
+    "inst_measurement_load_1_total_power_factor": {
+      "address": 18486,
+      "type": "i16",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Total power factor"
+    },
+    "inst_measurement_load_1_total_power_factor_type": {
+      "address": 18487,
+      "type": "i16",
+      "access": "r",
+      "description": "Inst. Measurement. Load #1. Total power factor type"
+    },
+    "inst_measurement_load_2_date_of_last_instance": {
+      "address": 20481,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Date of last instance",
+      "unit": "s"
+    },
+    "inst_measurement_load_2_integration_time": {
+      "address": 20483,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Integration time",
+      "unit": "s"
+    },
+    "inst_measurement_load_2_frequency": {
+      "address": 20490,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Frequency",
+      "unit": "Hz"
+    },
+    "inst_measurement_load_2_ph_n_voltage_v1": {
+      "address": 20492,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Ph N voltage : V1",
+      "unit": "V"
+    },
+    "inst_measurement_load_2_ph_n_voltage_v2": {
+      "address": 20494,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Ph N voltage : V2",
+      "unit": "V"
+    },
+    "inst_measurement_load_2_ph_n_voltage_v3": {
+      "address": 20496,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Ph N voltage : V3",
+      "unit": "V"
+    },
+    "inst_measurement_load_2_ph_ph_voltage_u12": {
+      "address": 20500,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Ph ph voltage : U12",
+      "unit": "V"
+    },
+    "inst_measurement_load_2_ph_ph_voltage_u23": {
+      "address": 20502,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Ph ph voltage : U23",
+      "unit": "V"
+    },
+    "inst_measurement_load_2_ph_ph_voltage_u31": {
+      "address": 20504,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Ph ph voltage : U31",
+      "unit": "V"
+    },
+    "inst_measurement_load_2_current_i1": {
+      "address": 20506,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Current : I1",
+      "unit": "A"
+    },
+    "inst_measurement_load_2_current_i2": {
+      "address": 20508,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Current : I2",
+      "unit": "A"
+    },
+    "inst_measurement_load_2_current_i3": {
+      "address": 20510,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Current : I3",
+      "unit": "A"
+    },
+    "inst_measurement_load_2_current_in": {
+      "address": 20512,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Current : in",
+      "unit": "A"
+    },
+    "inst_measurement_load_2_snom": {
+      "address": 20522,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Snom",
+      "unit": "VA"
+    },
+    "inst_measurement_load_2_total_active_power": {
+      "address": 20524,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Total active power",
+      "unit": "W"
+    },
+    "inst_measurement_load_2_total_reactive_power": {
+      "address": 20526,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Total reactive power",
+      "unit": "var"
+    },
+    "inst_measurement_load_2_total_lagging_reactive_power": {
+      "address": 20528,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Total lagging reactive power",
+      "unit": "var"
+    },
+    "inst_measurement_load_2_total_leading_reactive_power": {
+      "address": 20530,
+      "type": "i32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Total leading reactive power",
+      "unit": "var"
+    },
+    "inst_measurement_load_2_total_apparent_power": {
+      "address": 20532,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Total apparent power",
+      "unit": "VA"
+    },
+    "inst_measurement_load_2_total_power_factor": {
+      "address": 20534,
+      "type": "i16",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Total power factor"
+    },
+    "inst_measurement_load_2_total_power_factor_type": {
+      "address": 20535,
+      "type": "i16",
+      "access": "r",
+      "description": "Inst. Measurement. Load #2. Total power factor type"
+    },
+    "inst_measurement_load_3_date_of_last_instance": {
+      "address": 22529,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Date of last instance",
+      "unit": "s"
+    },
+    "inst_measurement_load_3_integration_time": {
+      "address": 22531,
+      "type": "u16",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Integration time",
+      "unit": "s"
+    },
+    "inst_measurement_load_3_frequency": {
+      "address": 22538,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Frequency",
+      "unit": "Hz"
+    },
+    "inst_measurement_load_3_ph_n_voltage_v1": {
+      "address": 22540,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Ph N voltage : V1",
+      "unit": "V"
+    },
+    "inst_measurement_load_3_ph_n_voltage_v2": {
+      "address": 22542,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Ph N voltage : V2",
+      "unit": "V"
+    },
+    "inst_measurement_load_3_ph_n_voltage_v3": {
+      "address": 22544,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Ph N voltage : V3",
+      "unit": "V"
+    },
+    "inst_measurement_load_3_ph_ph_voltage_u12": {
+      "address": 22548,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Ph ph voltage : U12",
+      "unit": "V"
+    },
+    "inst_measurement_load_3_ph_ph_voltage_u23": {
+      "address": 22550,
+      "type": "u32",
+      "access": "r",
+      "description": "Inst. Measurement. Load #3. Ph ph voltage : U23",
+      "unit": "V"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+"""PROFINET lazy imports and utility functions."""
+
+from ...utils.lazy_import import lazy_import
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+# Lazy import for optional profinet-py dependency
+_profinet = lazy_import("profinet", "PROFINET")
+
+
+def is_profinet_available() -> bool:
+    """Check if profinet-py is installed."""
+    return _profinet.is_available
+
+
+def _get_profinet():
+    """Get profinet module, raising DependencyError if not available."""
+    return _profinet()
+
+
+def get_dcp_module():
+    """Get profinet.dcp module."""
+    profinet_mod = _get_profinet()
+    return profinet_mod.dcp
+
+
+def get_rpc_con_class():
+    """Get RPCCon class from profinet module."""
+    profinet_mod = _get_profinet()
+    return profinet_mod.RPCCon
+
+
+def get_indices_module():
+    """Get profinet.indices module."""
+    _get_profinet()
+    from profinet import indices
+
+    return indices
+
+
+def get_blocks_module():
+    """Get profinet.blocks module."""
+    _get_profinet()
+    from profinet import blocks
+
+    return blocks
+
+
+def get_alarms_module():
+    """Get profinet.alarms module, or None if unavailable."""
+    if not _profinet.is_available:
+        return None
+    try:
+        from profinet import alarms
+
+        return alarms
+    except ImportError as e:
+        logger.debug(f"Optional import alarms not available: {e}")
+        return None

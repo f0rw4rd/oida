@@ -1,0 +1,271 @@
+{
+  "vendor": "Generic",
+  "model": "PLC",
+  "description": "Generic PLC register map for common Modbus registers. Useful as a starting point for unknown devices.",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Addresses are 0-based. Adjust addresses to match your specific PLC model. Most PLCs use holding registers (FC 3) for read/write and input registers (FC 4) for analog inputs.",
+  "registers": {
+    "device_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Device status word"
+    },
+    "firmware_version": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Firmware version (major.minor)"
+    },
+    "serial_number": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Device serial number"
+    },
+    "run_hours": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "unit": "h",
+      "description": "Total run hours"
+    },
+    "error_code": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Active error/fault code",
+      "enum": {
+        "0": "NO_ERROR",
+        "1": "COMMUNICATION_ERROR",
+        "2": "SENSOR_FAULT",
+        "3": "OVERLOAD",
+        "4": "OVERTEMPERATURE",
+        "5": "UNDERVOLTAGE",
+        "6": "OVERVOLTAGE"
+      }
+    },
+    "analog_input_1": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "function_code": 4,
+      "unit": "V",
+      "description": "Analog input channel 1 (0-10V)"
+    },
+    "analog_input_2": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "function_code": 4,
+      "unit": "mA",
+      "description": "Analog input channel 2 (4-20mA)"
+    },
+    "analog_input_3": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "function_code": 4,
+      "unit": "V",
+      "description": "Analog input channel 3 (0-10V)"
+    },
+    "analog_input_4": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "function_code": 4,
+      "unit": "mA",
+      "description": "Analog input channel 4 (4-20mA)"
+    },
+    "temperature_sensor_1": {
+      "address": 108,
+      "type": "i16",
+      "access": "r",
+      "function_code": 4,
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 1 (PT100/PT1000)"
+    },
+    "temperature_sensor_2": {
+      "address": 109,
+      "type": "i16",
+      "access": "r",
+      "function_code": 4,
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 2 (PT100/PT1000)"
+    },
+    "setpoint_1": {
+      "address": 200,
+      "type": "f32",
+      "access": "rw",
+      "description": "Setpoint 1 (general purpose)",
+      "min": 0,
+      "max": 100
+    },
+    "setpoint_2": {
+      "address": 202,
+      "type": "f32",
+      "access": "rw",
+      "description": "Setpoint 2 (general purpose)",
+      "min": 0,
+      "max": 100
+    },
+    "setpoint_temperature": {
+      "address": 204,
+      "type": "i16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature setpoint",
+      "min": -40,
+      "max": 150
+    },
+    "setpoint_pressure": {
+      "address": 205,
+      "type": "u16",
+      "access": "rw",
+      "unit": "bar",
+      "scale": 0.01,
+      "description": "Pressure setpoint",
+      "min": 0,
+      "max": 25
+    },
+    "analog_output_1": {
+      "address": 300,
+      "type": "f32",
+      "access": "rw",
+      "unit": "V",
+      "description": "Analog output channel 1 (0-10V)",
+      "min": 0,
+      "max": 10
+    },
+    "analog_output_2": {
+      "address": 302,
+      "type": "f32",
+      "access": "rw",
+      "unit": "mA",
+      "description": "Analog output channel 2 (4-20mA)",
+      "min": 4,
+      "max": 20
+    },
+    "pid_kp": {
+      "address": 400,
+      "type": "f32",
+      "access": "rw",
+      "description": "PID proportional gain (Kp)"
+    },
+    "pid_ki": {
+      "address": 402,
+      "type": "f32",
+      "access": "rw",
+      "description": "PID integral gain (Ki)"
+    },
+    "pid_kd": {
+      "address": 404,
+      "type": "f32",
+      "access": "rw",
+      "description": "PID derivative gain (Kd)"
+    },
+    "pid_output": {
+      "address": 406,
+      "type": "f32",
+      "access": "r",
+      "unit": "%",
+      "description": "PID controller output (0-100%)"
+    },
+    "device_name": {
+      "address": 500,
+      "type": "str",
+      "length": 20,
+      "access": "rw",
+      "description": "Device name string"
+    },
+    "ip_address": {
+      "address": 510,
+      "type": "u32",
+      "access": "rw",
+      "description": "IP address (as 32-bit integer)"
+    },
+    "modbus_baud_rate": {
+      "address": 512,
+      "type": "u16",
+      "access": "rw",
+      "description": "Serial baud rate setting",
+      "enum": {
+        "0": "9600",
+        "1": "19200",
+        "2": "38400",
+        "3": "57600",
+        "4": "115200"
+      }
+    }
+  },
+  "coils": {
+    "digital_output_1": {
+      "address": 0,
+      "access": "rw",
+      "description": "Digital output 1 (relay/transistor)"
+    },
+    "digital_output_2": {
+      "address": 1,
+      "access": "rw",
+      "description": "Digital output 2 (relay/transistor)"
+    },
+    "digital_output_3": {
+      "address": 2,
+      "access": "rw",
+      "description": "Digital output 3 (relay/transistor)"
+    },
+    "digital_output_4": {
+      "address": 3,
+      "access": "rw",
+      "description": "Digital output 4 (relay/transistor)"
+    },
+    "alarm_acknowledge": {
+      "address": 100,
+      "access": "rw",
+      "description": "Acknowledge active alarms"
+    },
+    "system_reset": {
+      "address": 101,
+      "access": "rw",
+      "description": "System reset (rising edge)"
+    }
+  },
+  "discrete_inputs": {
+    "digital_input_1": {
+      "address": 0,
+      "access": "r",
+      "description": "Digital input 1"
+    },
+    "digital_input_2": {
+      "address": 1,
+      "access": "r",
+      "description": "Digital input 2"
+    },
+    "digital_input_3": {
+      "address": 2,
+      "access": "r",
+      "description": "Digital input 3"
+    },
+    "digital_input_4": {
+      "address": 3,
+      "access": "r",
+      "description": "Digital input 4"
+    },
+    "emergency_stop": {
+      "address": 10,
+      "access": "r",
+      "description": "Emergency stop button state"
+    },
+    "door_switch": {
+      "address": 11,
+      "access": "r",
+      "description": "Cabinet door switch"
+    }
+  }
+}

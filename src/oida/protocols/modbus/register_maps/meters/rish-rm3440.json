@@ -1,0 +1,313 @@
+{
+  "vendor": "Rishabh",
+  "model": "EM 1300 EM 2300 EM 13 XX EM 23 XX / LM 1350 LM 1360 / RM 1300 RM 2300 / RM 3440 / RM 3440 I",
+  "description": "Rishabh EM 1300 EM 2300 EM 13 XX EM 23 XX / LM 1350 LM 1360 / RM 1300 RM 2300 / RM 3440 / RM 3440 I power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: EM 1300 EM 2300 EM 13 XX EM 23 XX, LM 1350 LM 1360, RM 1300 RM 2300, RM 3440, RM 3440 I",
+  "registers": {
+    "volts_2": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts 2"
+    },
+    "volts_3": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts 3"
+    },
+    "current_1": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 1"
+    },
+    "current_2": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 2"
+    },
+    "current_3": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 3"
+    },
+    "w1": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "W1"
+    },
+    "w2": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "W2"
+    },
+    "w3": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "W3"
+    },
+    "va_1": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "VA 1"
+    },
+    "va_2": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "VA 2"
+    },
+    "va_3": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "VA 3"
+    },
+    "var_1": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "VAR 1"
+    },
+    "var_2": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "VAR 2"
+    },
+    "var_3": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "VAR 3"
+    },
+    "pf_1": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "PF 1"
+    },
+    "pf_2": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "PF 2"
+    },
+    "pf_3": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "PF 3"
+    },
+    "phase_angle_1": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle 1"
+    },
+    "phase_angle_2": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle 2"
+    },
+    "phase_angle_3": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle 3"
+    },
+    "volts_av_g": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts av g"
+    },
+    "volts_sum": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts sum"
+    },
+    "current_avg": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Current avg"
+    },
+    "current_sum": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Current sum"
+    },
+    "watt_avg": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Watt avg"
+    },
+    "watt_sum": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Watt sum"
+    },
+    "va_av_g": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "VA av g"
+    },
+    "va_sum": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "VA sum"
+    },
+    "var_av_g": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "VAR av g"
+    },
+    "var_sum": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "VAR sum"
+    },
+    "pf_avg": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "PF avg"
+    },
+    "pf_sum": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "PF sum"
+    },
+    "phase_angle_avg": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle avg"
+    },
+    "phase_angle_sum": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle sum"
+    },
+    "freq": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Freq"
+    },
+    "wh_import_utility": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Wh import / utility"
+    },
+    "wh_export_gen": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Wh export / gen"
+    },
+    "capacitive_utility_varh": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Capacitive / utility VARh"
+    },
+    "inductive_gen_varh": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Inductive / gen VARh"
+    },
+    "vah_vah_utility": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "VAh / vah utility"
+    },
+    "vah_gen_only_2340": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "VAh gen (Only 2340)"
+    },
+    "w_demand_import_utility_gen": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "W demand (Import / utility / gen)"
+    },
+    "w_max_demand_import_utility": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "W max demand (Import / utility)"
+    },
+    "w_demand_export": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "W demand (Export)"
+    },
+    "w_max_demand_export_gen": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "W max demand (Export / gen)"
+    },
+    "old_w_max_demand_import_utility": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Old W max demand (Import / utility)"
+    },
+    "old_w_max_demand_export_gen": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "Old W max demand (Export / gen)"
+    },
+    "old_va_utility_max_demand": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "Old VA utility max demand"
+    },
+    "old_a_utility_max_demand": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Old A utility max demand"
+    },
+    "va_demand_utility_gen": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "VA demand (Utility / gen)"
+    }
+  }
+}

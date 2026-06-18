@@ -1,0 +1,11 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir bacpypes3>=0.0.80
+
+COPY bacnet_server.py /app/
+
+EXPOSE 47808/udp
+
+CMD ["python3", "bacnet_server.py"]

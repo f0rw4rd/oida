@@ -1,0 +1,348 @@
+{
+  "vendor": "Allen Bradley",
+  "model": "BRADLEY POWERMONITOR 3000",
+  "description": "Allen Bradley BRADLEY POWERMONITOR 3000 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "l1_current": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "A"
+    },
+    "l2_current": {
+      "address": 102,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "A"
+    },
+    "l3_current": {
+      "address": 104,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "A"
+    },
+    "avg_current": {
+      "address": 106,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. Current",
+      "unit": "A"
+    },
+    "l1_n_voltage": {
+      "address": 108,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 N voltage",
+      "unit": "V"
+    },
+    "l2_n_voltage": {
+      "address": 110,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 N voltage",
+      "unit": "V"
+    },
+    "l3_n_voltage": {
+      "address": 112,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 N voltage",
+      "unit": "V"
+    },
+    "avg_l_n_voltage": {
+      "address": 114,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg. L N voltage",
+      "unit": "V"
+    },
+    "l1_l2_voltage": {
+      "address": 116,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 L2 voltage",
+      "unit": "V"
+    },
+    "l2_l3_voltage": {
+      "address": 118,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 L3 voltage",
+      "unit": "V"
+    },
+    "l3_l1_voltage": {
+      "address": 120,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 L1 voltage",
+      "unit": "V"
+    },
+    "avg_l_l_voltage": {
+      "address": 122,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg L L voltage",
+      "unit": "V"
+    },
+    "frequency_last_cycle": {
+      "address": 124,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency, last cycle",
+      "unit": "Hz"
+    },
+    "metering_iteration": {
+      "address": 126,
+      "type": "u32",
+      "access": "r",
+      "description": "Metering iteration"
+    },
+    "l4_zero_sequence_current": {
+      "address": 200,
+      "type": "u32",
+      "access": "r",
+      "description": "L4 (zero sequence) current",
+      "unit": "A"
+    },
+    "positive_sequence_current": {
+      "address": 202,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive sequence current",
+      "unit": "A"
+    },
+    "negative_sequence_current": {
+      "address": 204,
+      "type": "u32",
+      "access": "r",
+      "description": "Negative sequence current",
+      "unit": "A"
+    },
+    "current_unbalance": {
+      "address": 206,
+      "type": "u32",
+      "access": "r",
+      "description": "% current unbalance",
+      "unit": "%"
+    },
+    "positive_sequence_voltage": {
+      "address": 208,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive sequence voltage",
+      "unit": "V"
+    },
+    "negaflvesequencevoltage": {
+      "address": 210,
+      "type": "u32",
+      "access": "r",
+      "description": "Negaflvesequencevoltage",
+      "unit": "V"
+    },
+    "voltage_unbalance": {
+      "address": 212,
+      "type": "u32",
+      "access": "r",
+      "description": "% voltage unbalance",
+      "unit": "%"
+    },
+    "phase_rotation": {
+      "address": 214,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase rotation"
+    },
+    "average_frequency": {
+      "address": 216,
+      "type": "u32",
+      "access": "r",
+      "description": "Average frequency",
+      "unit": "Hz"
+    },
+    "frequency_source": {
+      "address": 218,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency source"
+    },
+    "metering_iteration_220": {
+      "address": 220,
+      "type": "u32",
+      "access": "r",
+      "description": "Metering iteration"
+    },
+    "l1_real_power": {
+      "address": 300,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 real power",
+      "unit": "VA"
+    },
+    "l2_real_power": {
+      "address": 302,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 real power",
+      "unit": "VA"
+    },
+    "l3_real_power": {
+      "address": 304,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 real power",
+      "unit": "VA"
+    },
+    "total_real_power": {
+      "address": 306,
+      "type": "u32",
+      "access": "r",
+      "description": "Total real power",
+      "unit": "VA"
+    },
+    "l1_reactive_power": {
+      "address": 308,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 reactive power",
+      "unit": "VAR"
+    },
+    "l2_reactive_power": {
+      "address": 310,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 reactive power",
+      "unit": "VAR"
+    },
+    "l3_reactive_power": {
+      "address": 312,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 reactive power",
+      "unit": "VAR"
+    },
+    "total_reactive_power": {
+      "address": 314,
+      "type": "u32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "VAR"
+    },
+    "l1_apparent_power": {
+      "address": 316,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 apparent power",
+      "unit": "VA"
+    },
+    "l2_apparent_power": {
+      "address": 318,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 apparent power",
+      "unit": "VA"
+    },
+    "l3_apparent_power": {
+      "address": 320,
+      "type": "u32",
+      "access": "r",
+      "description": "L3 apparent power",
+      "unit": "VA"
+    },
+    "total_apparent_power": {
+      "address": 322,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "metering_iteration_324": {
+      "address": 324,
+      "type": "u32",
+      "access": "r",
+      "description": "Metering iteration"
+    },
+    "demand_current": {
+      "address": 400,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand current",
+      "unit": "A"
+    },
+    "demand_power": {
+      "address": 402,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand power",
+      "unit": "W"
+    },
+    "demand_reactive_power": {
+      "address": 404,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand reactive power"
+    },
+    "demand_apparent_power": {
+      "address": 406,
+      "type": "u32",
+      "access": "r",
+      "description": "Demand apparent power"
+    },
+    "projected_demand_i": {
+      "address": 408,
+      "type": "u32",
+      "access": "r",
+      "description": "Projected demand I"
+    },
+    "projected_demand_w": {
+      "address": 410,
+      "type": "u32",
+      "access": "r",
+      "description": "Projected demand W"
+    },
+    "projected_demand_var": {
+      "address": 412,
+      "type": "u32",
+      "access": "r",
+      "description": "Projected demand var"
+    },
+    "projected_demand_va": {
+      "address": 414,
+      "type": "u32",
+      "access": "r",
+      "description": "Projected demand va"
+    },
+    "elapsed_demand_period_time": {
+      "address": 416,
+      "type": "u32",
+      "access": "r",
+      "description": "Elapsed demand period time"
+    },
+    "metering_iteration_418": {
+      "address": 418,
+      "type": "u32",
+      "access": "r",
+      "description": "Metering iteration"
+    },
+    "l1_true_power_factor": {
+      "address": 500,
+      "type": "u32",
+      "access": "r",
+      "description": "L1 true power factor"
+    },
+    "l2_true_power_factor": {
+      "address": 502,
+      "type": "u32",
+      "access": "r",
+      "description": "L2 true power factor"
+    }
+  }
+}

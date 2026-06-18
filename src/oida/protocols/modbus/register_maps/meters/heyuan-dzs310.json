@@ -1,0 +1,313 @@
+{
+  "vendor": "Heyuan",
+  "model": "DZS 310 / MA 3 UI 5 C",
+  "description": "Heyuan DZS 310 / MA 3 UI 5 C power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: DZS 310, MA 3 UI 5 C",
+  "registers": {
+    "phase_a_voltage": {
+      "address": 4096,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage"
+    },
+    "phase_b_voltage": {
+      "address": 4097,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B voltage"
+    },
+    "phase_c_voltage": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C voltage"
+    },
+    "phase_voltage_mean_value": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage mean value"
+    },
+    "zero_sequence_voltage": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Zero sequence voltage"
+    },
+    "line_voltage_a_b": {
+      "address": 4101,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage (A b)"
+    },
+    "line_voltage_b_c": {
+      "address": 4102,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage (B c)"
+    },
+    "line_voltage_c_a": {
+      "address": 4103,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage (C a)"
+    },
+    "line_voltage_mean_value": {
+      "address": 4104,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage mean value"
+    },
+    "phase_line_current_of_phase_a": {
+      "address": 4105,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase/line current of phase A"
+    },
+    "phase_line_current_of_phase_b": {
+      "address": 4106,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase/line current of phase B"
+    },
+    "phase_line_current_of_phase_c": {
+      "address": 4107,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase/line current of phase C"
+    },
+    "phase_line_current_mean_value": {
+      "address": 4108,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase/line current mean value"
+    },
+    "zero_sequence_current": {
+      "address": 4109,
+      "type": "u16",
+      "access": "r",
+      "description": "Zero sequence current"
+    },
+    "active_power_of_phase_a": {
+      "address": 4110,
+      "type": "i16",
+      "access": "r",
+      "description": "Active power of phase A"
+    },
+    "active_power_of_phase_b": {
+      "address": 4111,
+      "type": "i16",
+      "access": "r",
+      "description": "Active power of phase B"
+    },
+    "active_power_of_phase_c": {
+      "address": 4112,
+      "type": "i16",
+      "access": "r",
+      "description": "Active power of phase C"
+    },
+    "total_three_phase_active_power": {
+      "address": 4113,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase active power"
+    },
+    "reactive_power_of_phase_a": {
+      "address": 4114,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power of phase A"
+    },
+    "reactive_power_of_phase_b": {
+      "address": 4115,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power of phase B"
+    },
+    "reactive_power_of_phase_c": {
+      "address": 4116,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power of phase C"
+    },
+    "total_three_phase_reactive_power": {
+      "address": 4117,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase reactive power"
+    },
+    "apparent_power_of_phase_a": {
+      "address": 4118,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power of phase A"
+    },
+    "apparent_power_of_phase_b": {
+      "address": 4119,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power of phase B"
+    },
+    "apparent_power_of_phase_c": {
+      "address": 4120,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power of phase C"
+    },
+    "total_three_phase_apparent_power": {
+      "address": 4121,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase apparent power"
+    },
+    "power_factor_of_phase_a": {
+      "address": 4122,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor of phase A"
+    },
+    "power_factor_of_phase_b": {
+      "address": 4123,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor of phase B"
+    },
+    "power_factor_of_phase_c": {
+      "address": 4124,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor of phase C"
+    },
+    "total_three_phase_power_factor": {
+      "address": 4125,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase power factor"
+    },
+    "frequency": {
+      "address": 4126,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "voltage_unbalance_factor": {
+      "address": 4127,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance factor"
+    },
+    "current_unbalance_factor": {
+      "address": 4128,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance factor"
+    },
+    "phase_b_to_line_voltage_total_harmonic_distortion": {
+      "address": 4353,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B to line voltage total harmonic distortion"
+    },
+    "phase_c_to_line_voltage_total_harmonic_distortion": {
+      "address": 4354,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C to line voltage total harmonic distortion"
+    },
+    "phase_voltage_average_total_harmonic_distortion": {
+      "address": 4355,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage average total harmonic distortion"
+    },
+    "phase_a_current_total_harmonic_distortion": {
+      "address": 4356,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A current total harmonic distortion"
+    },
+    "phase_b_current_total_harmonic_distortion": {
+      "address": 4357,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B current total harmonic distortion"
+    },
+    "phase_c_current_total_harmonic_distortion": {
+      "address": 4358,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C current total harmonic distortion"
+    },
+    "current_average_total_harmonic_distortion": {
+      "address": 4359,
+      "type": "u16",
+      "access": "r",
+      "description": "Current average total harmonic distortion"
+    },
+    "phase_a_voltage_harmonic_content_rate_5": {
+      "address": 4361,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (5)"
+    },
+    "phase_a_voltage_harmonic_content_rate_7": {
+      "address": 4362,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (7)"
+    },
+    "phase_a_voltage_harmonic_content_rate_9": {
+      "address": 4363,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (9)"
+    },
+    "phase_a_voltage_harmonic_content_rate_11": {
+      "address": 4364,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (11)"
+    },
+    "phase_a_voltage_harmonic_content_rate_13": {
+      "address": 4365,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (13)"
+    },
+    "phase_a_voltage_harmonic_content_rate_15": {
+      "address": 4366,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (15)"
+    },
+    "phase_a_voltage_harmonic_content_rate_17": {
+      "address": 4367,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (17)"
+    },
+    "phase_a_voltage_harmonic_content_rate_19": {
+      "address": 4368,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (19)"
+    },
+    "phase_a_voltage_harmonic_content_rate_21": {
+      "address": 4369,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (21)"
+    },
+    "phase_a_voltage_harmonic_content_rate_13_4370": {
+      "address": 4370,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage harmonic content rate (13)"
+    }
+  }
+}

@@ -1,0 +1,355 @@
+{
+  "vendor": "Hager",
+  "model": "ECN ECP ECT ECM ECR ECA",
+  "description": "Hager ECN ECP ECT ECM ECR ECA power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v_l1_n": {
+      "address": 45056,
+      "type": "u16",
+      "access": "r",
+      "description": "V, L1 N",
+      "unit": "V"
+    },
+    "v_l2_n": {
+      "address": 45057,
+      "type": "u16",
+      "access": "r",
+      "description": "V, L2 N",
+      "unit": "V"
+    },
+    "v_l3_n": {
+      "address": 45058,
+      "type": "u16",
+      "access": "r",
+      "description": "V, L3 N",
+      "unit": "V"
+    },
+    "v_l1_l2": {
+      "address": 45059,
+      "type": "u16",
+      "access": "r",
+      "description": "V, L1 L2",
+      "unit": "V"
+    },
+    "v_l2_l3": {
+      "address": 45060,
+      "type": "u16",
+      "access": "r",
+      "description": "V, L2 L3",
+      "unit": "V"
+    },
+    "v_l3_l1": {
+      "address": 45061,
+      "type": "u16",
+      "access": "r",
+      "description": "V, L3 L1",
+      "unit": "V"
+    },
+    "f": {
+      "address": 45062,
+      "type": "u16",
+      "access": "r",
+      "description": "F",
+      "unit": "Hz"
+    },
+    "not_used": {
+      "address": 45063,
+      "type": "u16",
+      "access": "r",
+      "description": "Not used",
+      "unit": "Hz"
+    },
+    "not_used_45064": {
+      "address": 45064,
+      "type": "u16",
+      "access": "r",
+      "description": "Not used",
+      "unit": "Hz"
+    },
+    "i_l1": {
+      "address": 45065,
+      "type": "u32",
+      "access": "r",
+      "description": "I, L1",
+      "unit": "mA"
+    },
+    "i_l2": {
+      "address": 45067,
+      "type": "u32",
+      "access": "r",
+      "description": "I, L2",
+      "unit": "mA"
+    },
+    "i_l3": {
+      "address": 45069,
+      "type": "u32",
+      "access": "r",
+      "description": "I, L3",
+      "unit": "mA"
+    },
+    "i_neutral": {
+      "address": 45071,
+      "type": "u32",
+      "access": "r",
+      "description": "I, neutral",
+      "unit": "mA"
+    },
+    "p_sum_l": {
+      "address": 45073,
+      "type": "i32",
+      "access": "r",
+      "description": "P, sum L",
+      "unit": "KW"
+    },
+    "q_sum_l": {
+      "address": 45075,
+      "type": "i32",
+      "access": "r",
+      "description": "Q, sum L",
+      "unit": "kvar"
+    },
+    "s_sum_l": {
+      "address": 45077,
+      "type": "u32",
+      "access": "r",
+      "description": "S, sum L",
+      "unit": "KvA"
+    },
+    "pf_sum_l_iec": {
+      "address": 45079,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, sum L iec"
+    },
+    "pf_sum_l_ieee": {
+      "address": 45080,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, sum L ieee"
+    },
+    "p_l1": {
+      "address": 45081,
+      "type": "i32",
+      "access": "r",
+      "description": "P, L1",
+      "unit": "KW"
+    },
+    "p_l2": {
+      "address": 45083,
+      "type": "i32",
+      "access": "r",
+      "description": "P, L2",
+      "unit": "KW"
+    },
+    "p_l3": {
+      "address": 45085,
+      "type": "i32",
+      "access": "r",
+      "description": "P, L3",
+      "unit": "KW"
+    },
+    "q_l1": {
+      "address": 45087,
+      "type": "i32",
+      "access": "r",
+      "description": "Q, L1",
+      "unit": "kvar"
+    },
+    "q_l2": {
+      "address": 45089,
+      "type": "i32",
+      "access": "r",
+      "description": "Q, L2",
+      "unit": "kvar"
+    },
+    "q_l3": {
+      "address": 45091,
+      "type": "i32",
+      "access": "r",
+      "description": "Q, L3",
+      "unit": "kvar"
+    },
+    "s_l1": {
+      "address": 45093,
+      "type": "u32",
+      "access": "r",
+      "description": "S, L1",
+      "unit": "KvA"
+    },
+    "s_l2": {
+      "address": 45095,
+      "type": "u32",
+      "access": "r",
+      "description": "S, L2",
+      "unit": "KvA"
+    },
+    "s_l3": {
+      "address": 45097,
+      "type": "u32",
+      "access": "r",
+      "description": "S, L3",
+      "unit": "KvA"
+    },
+    "pf_l1_iec": {
+      "address": 45099,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, L1 iec"
+    },
+    "pf_l2_iec": {
+      "address": 45100,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, L2 iec"
+    },
+    "pf_l3_iec": {
+      "address": 45101,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, L3 iec"
+    },
+    "pf_l1_ieee": {
+      "address": 45102,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, L1 ieee"
+    },
+    "pf_l2_ieee": {
+      "address": 45103,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, L2 ieee"
+    },
+    "pf_l3_ieee": {
+      "address": 45104,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf, L3 ieee"
+    },
+    "ea_sum_t": {
+      "address": 45152,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea+, sum T",
+      "unit": "kWh"
+    },
+    "er_sum_t": {
+      "address": 45154,
+      "type": "u32",
+      "access": "r",
+      "description": "Er+, sum T",
+      "unit": "kvarh"
+    },
+    "ea_sum_t_45156": {
+      "address": 45156,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea , sum T",
+      "unit": "kWh"
+    },
+    "er_sum_t_45158": {
+      "address": 45158,
+      "type": "u32",
+      "access": "r",
+      "description": "Er , sum T",
+      "unit": "kvarh"
+    },
+    "p_ea_sum_t": {
+      "address": 45160,
+      "type": "u32",
+      "access": "r",
+      "description": "P_ea+, sum T",
+      "unit": "kWh"
+    },
+    "p_ea_sum_t_45162": {
+      "address": 45162,
+      "type": "u32",
+      "access": "r",
+      "description": "P_ea , sum T",
+      "unit": "kWh"
+    },
+    "ea_m1_sum_t": {
+      "address": 45184,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea+, m1, sum T",
+      "unit": "kWh"
+    },
+    "ea_m2_sum_t": {
+      "address": 45186,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea+, m2, sum T",
+      "unit": "kWh"
+    },
+    "ea_m3_sum_t": {
+      "address": 45188,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea+, m3, sum T",
+      "unit": "kWh"
+    },
+    "ea_m1_sum_t_45190": {
+      "address": 45190,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea , m1, sum T",
+      "unit": "kWh"
+    },
+    "ea_m2_sum_t_45192": {
+      "address": 45192,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea , m2, sum T",
+      "unit": "kWh"
+    },
+    "ea_m3_sum_t_45194": {
+      "address": 45194,
+      "type": "u32",
+      "access": "r",
+      "description": "Ea , m3, sum T",
+      "unit": "kWh"
+    },
+    "p_ea_m1_sum_t": {
+      "address": 45196,
+      "type": "u32",
+      "access": "r",
+      "description": "P_ea+, m1, sum T",
+      "unit": "kWh"
+    },
+    "p_ea_m2_sum_t": {
+      "address": 45198,
+      "type": "u32",
+      "access": "r",
+      "description": "P_ea+, m2, sum T",
+      "unit": "kWh"
+    },
+    "p_ea_m3_sum_t": {
+      "address": 45200,
+      "type": "u32",
+      "access": "r",
+      "description": "P_ea+, m3, sum T",
+      "unit": "kWh"
+    },
+    "p_ea_m1_sum_t_45202": {
+      "address": 45202,
+      "type": "u32",
+      "access": "r",
+      "description": "P_ea , m1, sum T",
+      "unit": "kWh"
+    },
+    "p_ea_m2_sum_t_45204": {
+      "address": 45204,
+      "type": "u32",
+      "access": "r",
+      "description": "P_ea , m2, sum T",
+      "unit": "kWh"
+    }
+  }
+}

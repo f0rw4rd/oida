@@ -1,0 +1,230 @@
+{
+  "vendor": "Deep Sea Electronics",
+  "model": "DSE GenComm",
+  "description": "Deep Sea Electronics genset controllers using the GenComm Modbus protocol. Covers MK I (3110-7450), MK II (4510-8660), and MK III (6110-6120). All generations share the same measurement register map; they differ only in alarm register layout.",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 10,
+  "source": "https://github.com/victronenergy/dbus-modbus-client",
+  "notes": "GenComm protocol specification. Identification is via registers 768 (manufacturer code) + 769 (model number). Serial number at 770-771 as u32be. Default Modbus unit IDs are 1 or 10. Baud rates: 19200 or 115200 for RTU. Alarm systems differ by generation: MK I uses page 8 (base 2049), MK II/III use Named Alarm Conditions page 154 (base 39425) with family-specific alarm counts. Some registers marked with compatibility notes are only available on newer models (61xx MkII, 8xxx, 7xxx, 6xxx, P100, L40x, 4xxx).",
+  "models": {
+    "mk1": [
+      "3110", "3210", "4310", "4320", "4410", "4420",
+      "4510", "4520", "4610", "4620",
+      "6010", "6012", "6020", "6110", "6120",
+      "7110", "7120", "7210", "7220", "7310", "7320", "7410", "7420", "7450"
+    ],
+    "mk2": [
+      "4510 MKII", "4520 MKII",
+      "6010 MKII", "6020 MKII", "6110 MKII", "6120 MKII",
+      "7310 MKII", "7320 MKII", "7410 MKII", "7420 MKII",
+      "8610 MKII", "8620 MKII", "8660 MKII"
+    ],
+    "mk3": [
+      "6110 MKIII", "6120 MKIII"
+    ]
+  },
+  "registers": {
+    "manufacturer_code": {
+      "address": 768,
+      "type": "u16",
+      "access": "r",
+      "description": "GenComm manufacturer code (1 = Deep Sea Electronics)"
+    },
+    "model_number": {
+      "address": 769,
+      "type": "u16",
+      "access": "r",
+      "description": "GenComm model number. Used with manufacturer code for device identification."
+    },
+    "serial": {
+      "address": 770,
+      "type": "u32",
+      "access": "r",
+      "description": "Controller serial number as 32-bit unsigned integer"
+    },
+    "operating_mode": {
+      "address": 772,
+      "type": "u16",
+      "access": "r",
+      "description": "Current operating mode: 0=Stop, 1=Auto, 2=Manual, 3=Test on load, 4=Auto with manual restore, 5=User config, 6=Test off load, 7=Off"
+    },
+    "engine_oil_pressure": {
+      "address": 1024,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine oil pressure",
+      "unit": "kPa"
+    },
+    "engine_coolant_temperature": {
+      "address": 1025,
+      "type": "i16",
+      "access": "r",
+      "description": "Engine coolant temperature",
+      "unit": "C"
+    },
+    "engine_oil_temperature": {
+      "address": 1026,
+      "type": "i16",
+      "access": "r",
+      "description": "Engine oil temperature",
+      "unit": "C"
+    },
+    "fuel_level": {
+      "address": 1027,
+      "type": "u16",
+      "access": "r",
+      "description": "Fuel tank level",
+      "unit": "%"
+    },
+    "starter_voltage": {
+      "address": 1029,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Starter battery voltage",
+      "unit": "V"
+    },
+    "engine_speed": {
+      "address": 1030,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine speed",
+      "unit": "RPM"
+    },
+    "ac_frequency": {
+      "address": 1031,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator AC output frequency",
+      "unit": "Hz"
+    },
+    "ac_l1_voltage": {
+      "address": 1032,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator L1 phase voltage",
+      "unit": "V"
+    },
+    "ac_l2_voltage": {
+      "address": 1034,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator L2 phase voltage",
+      "unit": "V"
+    },
+    "ac_l3_voltage": {
+      "address": 1036,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator L3 phase voltage",
+      "unit": "V"
+    },
+    "ac_l1_current": {
+      "address": 1044,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator L1 phase current",
+      "unit": "A"
+    },
+    "ac_l2_current": {
+      "address": 1046,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator L2 phase current",
+      "unit": "A"
+    },
+    "ac_l3_current": {
+      "address": 1048,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Generator L3 phase current",
+      "unit": "A"
+    },
+    "ac_l1_power": {
+      "address": 1052,
+      "type": "i32",
+      "access": "r",
+      "description": "Generator L1 phase active power",
+      "unit": "W"
+    },
+    "ac_l2_power": {
+      "address": 1054,
+      "type": "i32",
+      "access": "r",
+      "description": "Generator L2 phase active power",
+      "unit": "W"
+    },
+    "ac_l3_power": {
+      "address": 1056,
+      "type": "i32",
+      "access": "r",
+      "description": "Generator L3 phase active power",
+      "unit": "W"
+    },
+    "status_code": {
+      "address": 1408,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine status code: 0=Stopped, 1=Pre-start, 2=Warming up, 3=Running, 4=Cooling down, 5=Stopped, 6=Post run, 15=Not available. May not be implemented on all models; fall back to engine speed > 100 RPM for run detection."
+    },
+    "ac_total_power": {
+      "address": 1536,
+      "type": "i32",
+      "access": "r",
+      "description": "Generator total active power. Available on 61xx MkII, 8xxx, 7xxx, 6xxx, P100, L40x, 4xxx.",
+      "unit": "W"
+    },
+    "engine_load": {
+      "address": 1558,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Engine load percentage. Available on 61xx MkII, 8xxx, 7xxx, 6xxx, P100, L40x, 4xxx.",
+      "unit": "%"
+    },
+    "engine_operating_hours": {
+      "address": 1798,
+      "type": "u32",
+      "access": "r",
+      "description": "Total engine operating hours. Available on 8xxx, 7xxx, 6xxx, L40x, 4xxx.",
+      "unit": "s"
+    },
+    "ac_energy_forward": {
+      "address": 1800,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "description": "Total generated energy. Available on 8xxx, 7xxx, 6xxx, L40x, 4xxx.",
+      "unit": "kWh"
+    },
+    "engine_starts": {
+      "address": 1808,
+      "type": "u32",
+      "access": "r",
+      "description": "Total engine start count. Available on 8xxx, 7xxx, 6xxx, L40x, 4xxx."
+    },
+    "scf_support_flags": {
+      "address": 4096,
+      "type": "u16",
+      "count": 8,
+      "access": "r",
+      "description": "GenComm System Control Function support flags. 8 registers of 16-bit flags indicating which control functions the controller supports."
+    },
+    "scf_command": {
+      "address": 4104,
+      "type": "u16",
+      "count": 2,
+      "access": "rw",
+      "description": "GenComm System Control Function command register. Write SCF key to 4104 and its two's complement (65535 - key) to 4105. Key 35701=Select Auto, 35732=Telemetry Start, 35733=Telemetry Stop."
+    }
+  }
+}

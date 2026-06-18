@@ -1,0 +1,341 @@
+{
+  "vendor": "GoodWe",
+  "model": "ET Series Hybrid",
+  "device_type": "Solar Inverter",
+  "models": [
+    "ET15",
+    "ET20",
+    "ET25",
+    "ET30"
+  ],
+  "description": "GoodWe ET Series hybrid solar inverter with battery support",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 247,
+  "default_port": 502,
+  "function_code": 3,
+  "notes": "Requires LAN Kit 2.0 or WiFi/LAN Kit 2.0 for Modbus TCP. Default address 247 (0xF7). Uses platform 745 (ARM.745.ESG2) register map.",
+  "source": "GoodWe Modbus Protocol Customer Version, ARM.745.ESG2.ET30 Protocol Map, marcelblijleven/goodwe GitHub",
+  "holding_registers": {
+    "pv1_voltage": {
+      "address": 35103,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "PV1 string voltage"
+    },
+    "pv1_current": {
+      "address": 35104,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "PV1 string current"
+    },
+    "pv1_power": {
+      "address": 35105,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "PV1 string power"
+    },
+    "pv2_voltage": {
+      "address": 35107,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "PV2 string voltage"
+    },
+    "pv2_current": {
+      "address": 35108,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "PV2 string current"
+    },
+    "pv2_power": {
+      "address": 35109,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "PV2 string power"
+    },
+    "grid_voltage_l1": {
+      "address": 35121,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Grid voltage phase 1"
+    },
+    "grid_current_l1": {
+      "address": 35122,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "Grid current phase 1"
+    },
+    "grid_frequency_l1": {
+      "address": 35123,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "Hz",
+      "description": "Grid frequency phase 1"
+    },
+    "grid_power_l1": {
+      "address": 35125,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Grid power phase 1 (+export/-import)"
+    },
+    "grid_voltage_l2": {
+      "address": 35126,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Grid voltage phase 2"
+    },
+    "grid_power_l2": {
+      "address": 35130,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Grid power phase 2 (+export/-import)"
+    },
+    "grid_voltage_l3": {
+      "address": 35131,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Grid voltage phase 3"
+    },
+    "grid_power_l3": {
+      "address": 35135,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Grid power phase 3 (+export/-import)"
+    },
+    "grid_mode": {
+      "address": 35136,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid mode status code"
+    },
+    "total_inverter_power": {
+      "address": 35138,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total inverter output power"
+    },
+    "active_power_total": {
+      "address": 35140,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total active power to/from grid"
+    },
+    "reactive_power": {
+      "address": 35142,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "Total reactive power"
+    },
+    "apparent_power": {
+      "address": 35144,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Total apparent power"
+    },
+    "backup_voltage_l1": {
+      "address": 35146,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Backup/EPS voltage phase 1"
+    },
+    "backup_current_l1": {
+      "address": 35147,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "Backup/EPS current phase 1"
+    },
+    "backup_power_l1": {
+      "address": 35150,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Backup/EPS power phase 1"
+    },
+    "load_power_l1": {
+      "address": 35164,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Load power phase 1"
+    },
+    "load_power_total": {
+      "address": 35172,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total load power"
+    },
+    "backup_power_total": {
+      "address": 35174,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Total backup/EPS power"
+    },
+    "battery_voltage": {
+      "address": 35180,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Battery 1 voltage"
+    },
+    "battery_current": {
+      "address": 35181,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "Battery 1 current (+charge/-discharge)"
+    },
+    "battery_power": {
+      "address": 35182,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Battery 1 power (+charge/-discharge)"
+    },
+    "battery_mode": {
+      "address": 35184,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery mode code"
+    },
+    "safety_country": {
+      "address": 35185,
+      "type": "u16",
+      "access": "r",
+      "description": "Safety country code"
+    },
+    "work_mode": {
+      "address": 35187,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter work mode"
+    },
+    "operation_mode": {
+      "address": 35188,
+      "type": "u16",
+      "access": "r",
+      "description": "Operation mode code"
+    },
+    "error_codes": {
+      "address": 35189,
+      "type": "u32",
+      "access": "r",
+      "description": "Error code bitmap"
+    },
+    "pv_energy_today": {
+      "address": 35191,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "PV energy generated today"
+    },
+    "pv_energy_total": {
+      "address": 35195,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "Total PV energy generated"
+    },
+    "battery_soc": {
+      "address": 37003,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Battery state of charge"
+    },
+    "battery_soh": {
+      "address": 37004,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Battery state of health"
+    },
+    "battery_temp": {
+      "address": 37005,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "C",
+      "description": "Battery temperature"
+    },
+    "battery_error_low": {
+      "address": 37006,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery error code (low word)"
+    },
+    "battery_error_high": {
+      "address": 37012,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery error code (high word)"
+    },
+    "meter_power": {
+      "address": 36005,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Smart meter power reading"
+    }
+  },
+  "enums": {
+    "battery_mode": {
+      "0": "No battery",
+      "1": "Standby",
+      "2": "Charging",
+      "3": "Discharging",
+      "4": "Fault"
+    },
+    "work_mode": {
+      "0": "Wait",
+      "1": "Normal (On-Grid)",
+      "2": "Off-Grid",
+      "3": "Fault",
+      "4": "Flash",
+      "5": "Check"
+    },
+    "operation_mode": {
+      "0": "General",
+      "1": "Economic",
+      "2": "Timing",
+      "3": "Off-Grid"
+    }
+  },
+  "_source_verified": "Verified: Registers 35103-35107 confirmed against marcelblijleven/goodwe ET series definitions"
+}

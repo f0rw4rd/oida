@@ -1,0 +1,83 @@
+# ProFTPD 1.3.0 - CVE-2006-5815 (sreplace Stack Buffer Overflow)
+# Stack-based buffer overflow in sreplace function in src/support.c
+# Reference: https://www.exploit-db.com/exploits/16852
+#
+# VULNERABLE: Upload .message file with specially crafted content, then CWD to directory
+# Affects: ProFTPD 1.2.x through 1.3.0
+#
+# For authorized security testing only
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and compile vulnerable ProFTPD 1.3.0
+WORKDIR /tmp
+RUN wget -q http://ftp.riken.jp/net/ProFTPD/historic/source/proftpd-1.3.0.tar.bz2 \
+    && tar xjf proftpd-1.3.0.tar.bz2 \
+    && cd proftpd-1.3.0 \
+    && ./configure --prefix=/usr/local \
+        CFLAGS="-fno-stack-protector -z execstack -no-pie -g" \
+    && make -j$(nproc) \
+    && make install \
+    && cd / && rm -rf /tmp/*
+
+# Create FTP user with writable directory
+RUN useradd -m -d /var/ftp -s /bin/false ftpuser \
+    && mkdir -p /var/ftp/upload \
+    && chown -R ftpuser:ftpuser /var/ftp \
+    && chmod 777 /var/ftp/upload
+
+# Create proftpd configuration
+RUN mkdir -p /usr/local/etc
+RUN cat > /usr/local/etc/proftpd.conf << 'EOF'
+# ProFTPD 1.3.0 - Vulnerable configuration for CVE-2006-5815 testing
+ServerName "ProFTPD 1.3.0 Vulnerable"
+ServerType standalone
+Port 2122
+DefaultServer on
+Umask 022
+
+# Run without chroot for testing
+DefaultRoot ~
+
+# Display .message files (triggers sreplace vulnerability)
+DisplayChdir .message true
+
+# Allow anonymous access with write to upload dir
+<Anonymous /var/ftp>
+  User ftpuser
+  Group ftpuser
+  UserAlias anonymous ftpuser
+  MaxClients 10
+  <Directory upload>
+    <Limit STOR MKD>
+      AllowAll
+    </Limit>
+  </Directory>
+</Anonymous>
+
+# Logging
+TransferLog /var/log/proftpd.log
+SystemLog /var/log/proftpd.log
+EOF
+
+# Create startup script
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+echo "Starting ProFTPD 1.3.0 (CVE-2006-5815 vulnerable)"
+echo "WARNING: This server is intentionally vulnerable for security testing"
+exec /usr/local/sbin/proftpd -n -c /usr/local/etc/proftpd.conf
+EOF
+RUN chmod +x /start.sh
+
+EXPOSE 2122
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD nc -zv localhost 2122 || exit 1
+
+CMD ["/start.sh"]

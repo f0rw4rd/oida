@@ -1,0 +1,271 @@
+{
+  "vendor": "ORNO1p525",
+  "model": "ORNO WE-525 & WE-526",
+  "description": "Imported from mbmd (orno1p525)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/orno1p525.go",
+  "registers": {
+    "frequency": {
+      "address": 266,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, 0.1Hz",
+      "function_code": 4
+    },
+    "voltage": {
+      "address": 256,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0.001V",
+      "function_code": 4
+    },
+    "current": {
+      "address": 258,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0.001A",
+      "function_code": 4
+    },
+    "power": {
+      "address": 260,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0W",
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 264,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0var",
+      "function_code": 4
+    },
+    "apparent_power": {
+      "address": 262,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0va",
+      "function_code": 4
+    },
+    "cosphi": {
+      "address": 267,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, 0.001",
+      "function_code": 4
+    },
+    "import": {
+      "address": 270,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "import_t1": {
+      "address": 272,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "import_t2": {
+      "address": 274,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "import_t3": {
+      "address": 276,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "import_t4": {
+      "address": 278,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "export": {
+      "address": 280,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "export_t1": {
+      "address": 282,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "export_t2": {
+      "address": 284,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "export_t3": {
+      "address": 286,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "export_t4": {
+      "address": 288,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "sum": {
+      "address": 290,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kWh",
+      "function_code": 4
+    },
+    "sum_t1": {
+      "address": 292,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kWh",
+      "function_code": 4
+    },
+    "sum_t2": {
+      "address": 294,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kWh",
+      "function_code": 4
+    },
+    "sum_t3": {
+      "address": 296,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kWh  // currently not supported",
+      "function_code": 4
+    },
+    "sum_t4": {
+      "address": 298,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kWh  // currently not supported",
+      "function_code": 4
+    },
+    "reactive_import": {
+      "address": 300,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "reactive_import_t1": {
+      "address": 302,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "reactive_import_t2": {
+      "address": 304,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "reactive_import_t3": {
+      "address": 306,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "reactive_import_t4": {
+      "address": 308,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "reactive_export": {
+      "address": 310,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "reactive_export_t1": {
+      "address": 312,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "reactive_export_t2": {
+      "address": 314,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh",
+      "function_code": 4
+    },
+    "reactive_export_t3": {
+      "address": 316,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "reactive_export_t4": {
+      "address": 318,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.00kWh  // currently not supported",
+      "function_code": 4
+    },
+    "reactive_sum": {
+      "address": 320,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh",
+      "function_code": 4
+    },
+    "reactive_sum_t1": {
+      "address": 322,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh",
+      "function_code": 4
+    },
+    "reactive_sum_t2": {
+      "address": 324,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh",
+      "function_code": 4
+    },
+    "reactive_sum_t3": {
+      "address": 326,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh  // currently not supported",
+      "function_code": 4
+    },
+    "reactive_sum_t4": {
+      "address": 328,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh  // currently not supported",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: ORNO OR-WE-525/526 confirmed; official manual at vikiwat.com; mbmd source orno1p525.go verified"
+}

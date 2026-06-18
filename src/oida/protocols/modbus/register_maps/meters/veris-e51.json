@@ -1,0 +1,361 @@
+{
+  "vendor": "Veris",
+  "model": "E 51",
+  "description": "Veris E 51 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "real_energy_diet_import_export": {
+      "address": 1,
+      "type": "u32",
+      "access": "r",
+      "description": "Real energy (diet import export)",
+      "unit": "kWh"
+    },
+    "real_energy_q1_4_import": {
+      "address": 3,
+      "type": "u32",
+      "access": "r",
+      "description": "Real energy (Q1 4 import)",
+      "unit": "kWh"
+    },
+    "real_energy_q2_3_import": {
+      "address": 5,
+      "type": "u32",
+      "access": "r",
+      "description": "Real energy (Q2 3 import)",
+      "unit": "kWh"
+    },
+    "reactive_energy_q1": {
+      "address": 7,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy Q1",
+      "unit": "kVARh"
+    },
+    "reactive_energy_q2": {
+      "address": 9,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy Q2",
+      "unit": "kVARh"
+    },
+    "reactive_energy_q3": {
+      "address": 11,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy Q3",
+      "unit": "kVARh"
+    },
+    "reactive_energy_q4": {
+      "address": 13,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy Q4",
+      "unit": "kVARh"
+    },
+    "apparent_energy_net_import_export": {
+      "address": 15,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent energy: net (import export)",
+      "unit": "kVAh"
+    },
+    "apparent_q1_4_import": {
+      "address": 17,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent: Q1 4 import",
+      "unit": "kVAh"
+    },
+    "apparent_q2_3_import": {
+      "address": 19,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent: Q2 3 import",
+      "unit": "kVAh"
+    },
+    "total_instantaneous_real_power": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Total instantaneous real power",
+      "unit": "kW"
+    },
+    "total_instantaneous_reactive_power": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Total instantaneous reactive power",
+      "unit": "kVAR"
+    },
+    "total_instantaneous_apparent_power": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Total instantaneous apparent power",
+      "unit": "KVA"
+    },
+    "total_power_factor_total_kw_total_kva": {
+      "address": 24,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor (total kw /total kva)",
+      "unit": "Ratio"
+    },
+    "voltage_l_l_average_of_active_phases": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage L L, average of active phases",
+      "unit": "yolt"
+    },
+    "current_average_of_active_phases": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, average of active phases",
+      "unit": "Amp"
+    },
+    "frequency": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "total_real_power_present_demand": {
+      "address": 29,
+      "type": "i16",
+      "access": "r",
+      "description": "Total real power present demand",
+      "unit": "kW"
+    },
+    "total_reactive_power_present_demand": {
+      "address": 30,
+      "type": "i16",
+      "access": "r",
+      "description": "Total reactive power present demand",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_present_demand": {
+      "address": 31,
+      "type": "i16",
+      "access": "r",
+      "description": "Total apparent power present demand",
+      "unit": "KVA"
+    },
+    "total_real_power_max_demand": {
+      "address": 32,
+      "type": "i16",
+      "access": "r",
+      "description": "Total real power max. demand",
+      "unit": "kW"
+    },
+    "total_reactive_power_max_demand": {
+      "address": 33,
+      "type": "i16",
+      "access": "r",
+      "description": "Total reactive power max. demand",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_max_demand": {
+      "address": 34,
+      "type": "i16",
+      "access": "r",
+      "description": "Total apparent power max. demand",
+      "unit": "KVA"
+    },
+    "total_real_power_max_demand_35": {
+      "address": 35,
+      "type": "i16",
+      "access": "r",
+      "description": "Total real power max. demand",
+      "unit": "kW"
+    },
+    "total_reactive_power_max_demand_36": {
+      "address": 36,
+      "type": "i16",
+      "access": "r",
+      "description": "Total reactive power max. demand",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_max_demand_37": {
+      "address": 37,
+      "type": "i16",
+      "access": "r",
+      "description": "Total apparent power max. demand",
+      "unit": "KVA"
+    },
+    "pulse_counter_1_import_real_energy": {
+      "address": 39,
+      "type": "u32",
+      "access": "r",
+      "description": "Pulse counter 1 (import real energy)"
+    },
+    "pulse_counter_2_export_real_energy": {
+      "address": 41,
+      "type": "u32",
+      "access": "r",
+      "description": "Pulse counter 2 (export real energy)"
+    },
+    "accumulated_real_energy_phase_a": {
+      "address": 43,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated real energy, phase A",
+      "unit": "kWh"
+    },
+    "accumulated_real_energy_phase_b": {
+      "address": 45,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated real energy, phase B",
+      "unit": "kWh"
+    },
+    "accumulated_real_energy_phase_c": {
+      "address": 47,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated real energy, phase C",
+      "unit": "kWh"
+    },
+    "accumulated_real_energy_phase_a_49": {
+      "address": 49,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated real energy, phase A",
+      "unit": "kWh"
+    },
+    "accumulated_real_energy_phase_b_51": {
+      "address": 51,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated real energy, phase B",
+      "unit": "kWh"
+    },
+    "accumulated_real_energy_phase_c_53": {
+      "address": 53,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated real energy, phase C",
+      "unit": "kWh"
+    },
+    "accumulated_q1_reactive_energy_phase_a": {
+      "address": 55,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q1 reactive energy phase A",
+      "unit": "kVARh"
+    },
+    "accumulated_q1_reactive_energy_phase_b": {
+      "address": 57,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q1 reactive energy phase B",
+      "unit": "kVARh"
+    },
+    "accumulated_q1_reactive_energy_phase_c": {
+      "address": 59,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q1 reactive energy phase C",
+      "unit": "kVARh"
+    },
+    "accumulated_q2_reactive_energy_phase_a": {
+      "address": 61,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q2 reactive energy phase A",
+      "unit": "kVARh"
+    },
+    "accumulated_q2_reactive_energy_phase_b": {
+      "address": 63,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q2 reactive energy phase B",
+      "unit": "kVARh"
+    },
+    "accumulated_q2_reactive_energy_phase_c": {
+      "address": 65,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q2 reactive energy phase C",
+      "unit": "kVARh"
+    },
+    "accumulated_q3_reactive_energy_phase_a": {
+      "address": 67,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q3 reactive energy phase A",
+      "unit": "kVARh"
+    },
+    "accumulated_q3_reactive_energy_phase_b": {
+      "address": 69,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q3 reactive energy phase B",
+      "unit": "kVARh"
+    },
+    "accumulated_q3_reactive_energy_phase_c": {
+      "address": 71,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q3 reactive energy phase C",
+      "unit": "kVARh"
+    },
+    "accumulated_q4_reactive_energy_phase_a": {
+      "address": 73,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q4 reactive energy phase A",
+      "unit": "kYARh"
+    },
+    "accumulated_q4_reactive_energy_phase_b": {
+      "address": 75,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q4 reactive energy phase B",
+      "unit": "kVARh"
+    },
+    "accumulated_q4_reactive_energy_phase_c": {
+      "address": 77,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated Q4 reactive energy phase C",
+      "unit": "kVARh"
+    },
+    "accumulated_apparent_energy_phase_a": {
+      "address": 79,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated apparent energy, phase A",
+      "unit": "kVAh"
+    },
+    "accumulated_apparent_energy_phase_b": {
+      "address": 81,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated apparent energy, phase B",
+      "unit": "kYAh"
+    },
+    "accumulated_apparent_energy_phase_c": {
+      "address": 83,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated apparent energy, phase C",
+      "unit": "kYAh"
+    },
+    "accumulated_apparent_energy_phase_a_85": {
+      "address": 85,
+      "type": "u32",
+      "access": "r",
+      "description": "Accumulated apparent energy, phase A",
+      "unit": "kYAh"
+    }
+  }
+}

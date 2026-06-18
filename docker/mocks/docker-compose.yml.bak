@@ -1,0 +1,2667 @@
+services:
+  msf-ics-mock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: msf-ics-mock-services
+    hostname: msf-ics-mock
+    ports:
+      # Network-based ICS protocols
+      - "502:502"       # Modbus TCP
+      - "4840:4840"     # OPC UA
+      # - "2404:2404"   # IEC 60870-5-104 (moved to iec104-lib60870 service)
+      - "48898:48898"   # Beckhoff ADS
+      # - "102:102"     # MMS/IEC 61850 (moved to mms-libiec61850 service)
+      - "44818:44818"   # EtherNet/IP
+      - "47808:47808/udp"  # BACnet/IP (UDP)
+    volumes:
+      - ./logs:/var/log/msf-ics
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; [socket.create_connection(('localhost', port), timeout=2).close() for port in [502, 4840, 48898, 44818]]"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mms-libiec61850:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.mms
+    container_name: mms-libiec61850-server
+    hostname: mms-server
+    ports:
+      - "102:102"       # MMS/IEC 61850 (libiec61850-based)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/102"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  iec104-lib60870:
+    build:
+      context: ./services/iec104
+      dockerfile: Dockerfile
+    container_name: iec104-lib60870-server
+    hostname: iec104-server
+    ports:
+      - "2404:2404"     # IEC 60870-5-104 (lib60870-based)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/2404"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Python-based IEC104 server with custom Type ID support (for testing --probe-custom-types)
+  iec104-custom-types:
+    build:
+      context: ./services
+      dockerfile: iec104/Dockerfile.python
+    container_name: iec104-custom-types-server
+    hostname: iec104-custom
+    ports:
+      - "2405:2404"     # IEC 60870-5-104 with custom types (port 2405)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/2404"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Conpot IEC 104 Honeypot (Honeynet Project)
+  # Low-interaction honeypot with ASDU address 7720 (non-standard)
+  # Article reference: foxgrid.net IEC 104 guide
+  iec104-conpot:
+    image: honeynet/conpot:latest
+    container_name: iec104-conpot-server
+    hostname: iec104-conpot
+    ports:
+      - "2409:2404"
+    environment:
+      - TZ=UTC
+    command: ["/home/conpot/.local/bin/conpot", "-f", "--template", "IEC104", "--logfile", "/var/log/conpot/conpot.log", "--temp_dir", "/tmp"]
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 2404), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "oida.protocol=iec104"
+      - "oida.description=Conpot IEC 104 honeypot (ASDU address 7720)"
+
+  snap7-server:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.snap7
+    container_name: snap7-mock-server
+    hostname: snap7-server
+    ports:
+      - "10102:102"     # Siemens S7 (mapped to 10102 to avoid MMS conflict)
+    environment:
+      - TZ=UTC
+      - SNAP7_CPU_TYPE=1200
+      - SNAP7_DB_COUNT=10
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "102"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  knx-calimero:
+    image: calimeroproject/knxserver:latest
+    container_name: knx-calimero-server
+    hostname: knx-server
+    stdin_open: true        # Keep stdin open for interactive server
+    tty: true               # Allocate pseudo-TTY
+    ports:
+      - "3671:3671/udp"   # KNXnet/IP UDP (standard)
+      - "3671:3671/tcp"   # KNXnet/IP TCP tunneling
+    volumes:
+      - ./services/knx/server-config.xml:/config/server-config.xml:ro
+    environment:
+      - TZ=UTC
+    command: ["/config/server-config.xml"]
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "knx-server", "3671"]   # TCP check on hostname (binds to eth0, not localhost)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  mqtt-mock:
+    build:
+      context: ./services/mqtt
+      dockerfile: Dockerfile
+    container_name: mqtt-mock-brokers
+    hostname: mqtt-server
+    ports:
+      - "1883:1883"     # MQTT Insecure (anonymous, no TLS)
+      - "1884:1884"     # MQTT Auth (weak credentials, brute-force target)
+      - "1885:1885"     # MQTT Sparkplug B (ICS simulation)
+      - "1886:1886"     # MQTT BUSY (auth required, NO wildcards, 50+ high-freq topics)
+      - "8883:8883"     # MQTT TLS (optional client cert)
+      - "8884:8884"     # MQTT Mutual TLS (client cert required)
+      - "8885:8885"     # MQTT BUSY TLS (auth + no wildcards + high activity + TLS)
+      - "8886:8886"     # MQTT BUSY Mutual TLS (client cert + auth + no wildcards)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./services/mqtt/certs:/app/certs:rw
+      - ./services/mqtt/wordlists:/app/wordlists:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; [socket.create_connection(('localhost', port), timeout=2).close() for port in [1883, 1884, 1885, 1886]]"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ============================================================================
+  # OPC UA Advanced Testing Services
+  # ============================================================================
+
+  opcua-advanced:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.opcua
+    container_name: opcua-advanced-server
+    hostname: opcua-advanced
+    ports:
+      - "4841:4840"     # OPC UA Enhanced (methods, subscriptions, events, multi-security)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_SECURITY=true
+      - OPCUA_AUTH=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  opcua-gds:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.opcua-gds
+    container_name: opcua-gds-server
+    hostname: opcua-gds
+    ports:
+      - "4850:4850"     # OPC UA Global Discovery Server
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - GDS_PORT=4850
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4850), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  opcua-insecure:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.opcua
+    container_name: opcua-insecure-server
+    hostname: opcua-insecure
+    ports:
+      - "4842:4840"     # OPC UA Insecure (no security, anonymous only)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_SECURITY=false
+      - OPCUA_AUTH=false
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ============================================================================
+  # Medical Protocol Mock Services
+  # ============================================================================
+
+  hl7-mock:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.hl7
+    container_name: hl7-mock-server
+    hostname: hl7-server
+    ports:
+      - "2575:2575"     # HL7 v2 MLLP
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 2575), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  dicom-mock:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dicom
+    container_name: dicom-mock-server
+    hostname: dicom-server
+    ports:
+      - "11112:11112"   # DICOM (pynetdicom)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DICOM_AET=MOCK_PACS
+      - DICOM_PORT=11112
+      # Set AET whitelist to test security (empty = accept all)
+      # - DICOM_AET_WHITELIST=PACS,WORKSTATION,CT_SCANNER
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 11112), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  dicom-strict:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dicom
+    container_name: dicom-strict-server
+    hostname: dicom-strict
+    ports:
+      - "11113:11112"   # DICOM with strict AET whitelist
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DICOM_AET=STRICT_PACS
+      - DICOM_PORT=11112
+      - DICOM_AET_WHITELIST=PACS,WORKSTATION,CT_SCANNER,MR_SCANNER
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 11112), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  fhir-mock:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.fhir
+    container_name: fhir-mock-server
+    hostname: fhir-server
+    ports:
+      - "8081:8080"     # FHIR R4 REST API
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/fhir/metadata', timeout=2)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ASTM/LIS Mock Server (iTechUW - OpenELIS team)
+  # Real ASTM LIS2-A2 implementation from University of Washington
+  astm-mock:
+    image: itechuw/astm-mock-server:latest
+    container_name: astm-mock-server
+    hostname: astm-server
+    ports:
+      - "1394:5000"     # ASTM E1394 (LIS2-A2) - server listens on 5000
+    environment:
+      - TZ=UTC
+      - ANALYZER_TYPE=CHEMISTRY
+      - RESPONSE_DELAY_MS=100
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5000), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ASTM Mock with hematology analyzer type
+  astm-hematology:
+    image: itechuw/astm-mock-server:latest
+    container_name: astm-hematology-server
+    hostname: astm-hematology
+    ports:
+      - "1395:5000"     # ASTM on alternate port
+    environment:
+      - TZ=UTC
+      - ANALYZER_TYPE=HEMATOLOGY
+      - RESPONSE_DELAY_MS=100
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5000), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Custom ASTM Mock Server (msf-ics)
+  # For data enumeration testing - has patient/order/result mock data
+  astm-data:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.astm
+    container_name: astm-data-server
+    hostname: astm-data
+    ports:
+      - "1396:1394"     # ASTM with mock patient/order data
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ASTM_PORT=1394
+      - ASTM_ANALYZER=COBAS_8000
+      - ASTM_ACCEPT_ALL=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 1394), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ============================================================================
+  # Production-Grade Medical Protocol Servers
+  # ============================================================================
+
+  # Orthanc - Full-featured DICOM/PACS server
+  # https://www.orthanc-server.com/
+  orthanc:
+    image: jodogne/orthanc-plugins:1.12.3
+    container_name: orthanc-pacs
+    hostname: orthanc
+    ports:
+      - "4242:4242"       # DICOM (standard port 104 equivalent)
+      - "8042:8042"       # Web UI / REST API
+    volumes:
+      - ./services/orthanc/orthanc.json:/etc/orthanc/orthanc.json:ro
+      - orthanc-data:/var/lib/orthanc/db
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8042/system"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # OpenELIS Global - Full-featured Laboratory Information System
+  # https://openelis-global.org/ (ASTM + HL7 analyzer integration)
+  # Note: This is a heavyweight LIS - use astm-mock for basic testing
+  openelis-db:
+    image: postgres:14-alpine
+    container_name: openelis-postgres
+    hostname: openelis-db
+    profiles: ["openelis"]  # Only start with: docker-compose --profile openelis up
+    environment:
+      - POSTGRES_USER=clinlims
+      - POSTGRES_PASSWORD=clinlims
+      - POSTGRES_DB=clinlims
+    volumes:
+      - openelis-db-data:/var/lib/postgresql/data
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinlims -d clinlims"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  openelis:
+    image: itechuw/openelis-global-2:develop
+    container_name: openelis-global
+    hostname: openelis
+    profiles: ["openelis"]
+    depends_on:
+      openelis-db:
+        condition: service_healthy
+    ports:
+      - "8180:8080"       # OpenELIS Web UI
+      - "8543:8443"       # OpenELIS HTTPS
+    environment:
+      - TZ=UTC
+      - DEFAULT_PW=adminADMIN!
+      - CATALINA_OPTS=-Xmx1g
+    volumes:
+      - openelis-plugins:/var/lib/openelis-global/plugins
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/OpenELIS-Global/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ASTM-HTTP Bridge for OpenELIS analyzer integration
+  astm-bridge:
+    image: itechuw/astm-http-bridge:latest
+    container_name: astm-http-bridge
+    hostname: astm-bridge
+    profiles: ["openelis"]
+    depends_on:
+      openelis:
+        condition: service_healthy
+    ports:
+      - "12001:12001"     # ASTM protocol (analyzer connects here)
+    environment:
+      - TZ=UTC
+      - LOGGING_LEVEL_ORG_ITECH=INFO
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "12001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Mirth Connect - Full-featured HL7 integration engine
+  # https://github.com/nextgenhealthcare/connect
+  mirth-db:
+    image: postgres:15-alpine
+    container_name: mirth-postgres
+    hostname: mirth-db
+    environment:
+      - POSTGRES_USER=mirth
+      - POSTGRES_PASSWORD=mirth
+      - POSTGRES_DB=mirthdb
+    volumes:
+      - mirth-db-data:/var/lib/postgresql/data
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mirth -d mirthdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mirth-connect:
+    image: nextgenhealthcare/connect:4.5.0
+    container_name: mirth-connect
+    hostname: mirth
+    depends_on:
+      mirth-db:
+        condition: service_healthy
+    ports:
+      - "8443:8443"       # Mirth Administrator (HTTPS)
+      - "8080:8080"       # HTTP API
+      - "6661:6661"       # HL7 MLLP Channel 1 (ADT)
+      - "6662:6662"       # HL7 MLLP Channel 2 (ORU)
+      - "6663:6663"       # HL7 MLLP Channel 3 (ORM)
+    environment:
+      - TZ=UTC
+      - DATABASE=postgres
+      - DATABASE_URL=jdbc:postgresql://mirth-db:5432/mirthdb
+      - DATABASE_USERNAME=mirth
+      - DATABASE_PASSWORD=mirth
+      - VMOPTIONS=-Xmx512m
+    volumes:
+      - ./services/mirth/channels:/opt/connect/channels:ro
+      - mirth-appdata:/opt/connect/appdata
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -s -o /dev/null https://localhost:8443/api/system/stats || test $? -eq 22"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ============================================================================
+  # DNP3 Mock Services (pydnp3-stepfunc - Rust DNP3 stack)
+  # All services use the same Dockerfile.dnp3 with different env var configs.
+  # ============================================================================
+
+  # Basic DNP3 outstation -- simple power grid simulation
+  dnp3-basic:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3
+    container_name: dnp3-basic-server
+    hostname: dnp3-basic
+    ports:
+      - "20000:20000"   # DNP3 TCP (basic)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=1024
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Basic Outstation
+      - DNP3_SERIAL=OIDA-DNP3-BASIC-001
+      - DNP3_SOFTWARE_VERSION=2.1.0
+      - DNP3_HARDWARE_VERSION=Rev-A
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Complex outstation -- large substation with many data points
+  dnp3-complex:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3
+    container_name: dnp3-complex-server
+    hostname: dnp3-complex
+    ports:
+      - "20001:20000"   # DNP3 TCP (complex)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=10
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=50
+      - DNP3_AI_COUNT=50
+      - DNP3_CT_COUNT=20
+      - DNP3_BO_COUNT=20
+      - DNP3_AO_COUNT=20
+      - DNP3_UPDATE_INTERVAL=3
+      - DNP3_DEVICE_NAME=OIDA Substation RTU
+      - DNP3_SERIAL=OIDA-DNP3-SUB-010
+      - DNP3_SOFTWARE_VERSION=3.4.1
+      - DNP3_HARDWARE_VERSION=Rev-C
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # TLS outstation -- uses pydnp3-stepfunc TlsServerConfig for real DNP3-SA TLS.
+  # Self-signed certs are generated at startup and written to /app/certs
+  # (mounted as ./services/dnp3-certs for scanner access).
+  # Uses non-standard address 1024 for testing address scanning.
+  dnp3-tls:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3
+    container_name: dnp3-tls-server
+    hostname: dnp3-tls
+    ports:
+      - "20002:20000"   # DNP3 TLS
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=1024
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Secure Outstation
+      - DNP3_SERIAL=OIDA-DNP3-TLS-1024
+      - DNP3_TLS=true
+      - DNP3_TLS_DNS_NAME=dnp3-tls
+      - DNP3_SOFTWARE_VERSION=2.1.0
+      - DNP3_HARDWARE_VERSION=Rev-A
+    volumes:
+      - ./services/dnp3-certs:/app/certs
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Multi-address outstations -- three separate containers with different
+  # DNP3 outstation addresses on consecutive ports.
+  # Note: pydnp3-stepfunc routes connections by source IP (address_filter),
+  # not by DNP3 link-layer address, so multiple outstations on one TCP
+  # endpoint is not supported. Use consecutive ports instead.
+  dnp3-addr1:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3
+    container_name: dnp3-addr1-server
+    hostname: dnp3-addr1
+    ports:
+      - "20003:20000"   # DNP3 TCP (outstation addr 2)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=2
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Multi-Drop RTU 2
+      - DNP3_SERIAL=OIDA-DNP3-MULTI-002
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  dnp3-addr10:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3
+    container_name: dnp3-addr10-server
+    hostname: dnp3-addr10
+    ports:
+      - "20004:20000"   # DNP3 TCP (outstation addr 10)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=10
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=15
+      - DNP3_AI_COUNT=15
+      - DNP3_CT_COUNT=8
+      - DNP3_BO_COUNT=8
+      - DNP3_AO_COUNT=8
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Multi-Drop RTU 10
+      - DNP3_SERIAL=OIDA-DNP3-MULTI-010
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  dnp3-addr100:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3
+    container_name: dnp3-addr100-server
+    hostname: dnp3-addr100
+    ports:
+      - "20005:20000"   # DNP3 TCP (outstation addr 100)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=100
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=5
+      - DNP3_AI_COUNT=5
+      - DNP3_CT_COUNT=3
+      - DNP3_BO_COUNT=3
+      - DNP3_AO_COUNT=3
+      - DNP3_UPDATE_INTERVAL=10
+      - DNP3_DEVICE_NAME=OIDA Multi-Drop RTU 100
+      - DNP3_SERIAL=OIDA-DNP3-MULTI-100
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Enhanced DNP3 outstation -- full feature support for testing advanced operations
+  # Supports: freeze operations, cold/warm restart, dead band writes
+  # Does NOT support (library limitation): file transfer (G70), app control, save config
+  dnp3-enhanced:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3-enhanced
+    container_name: dnp3-enhanced-server
+    hostname: dnp3-enhanced
+    ports:
+      - "20010:20000"   # DNP3 TCP (enhanced)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=10
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_FROZEN_COUNTER_COUNT=5
+      - DNP3_OCTET_COUNT=3
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Enhanced Outstation
+      - DNP3_SERIAL=OIDA-DNP3-ENH-001
+      - DNP3_COLD_RESTART_DELAY=60
+      - DNP3_WARM_RESTART_DELAY=5000
+      - DNP3_SOFTWARE_VERSION=4.0.0-beta
+      - DNP3_HARDWARE_VERSION=Rev-D
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "oida.protocol=dnp3"
+      - "oida.description=Enhanced DNP3 outstation with freeze/restart/deadband support"
+
+  # DNP3 outstation with file transfer support (FreyrSCADA dnp3protocol)
+  # Uses a different C library backend that supports outstation-side Group 70 file operations.
+  # The library handles file transfer internally against the local filesystem (/app/files).
+  dnp3-filetransfer:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.dnp3-filetransfer
+    container_name: dnp3-filetransfer-server
+    hostname: dnp3-filetransfer
+    ports:
+      - "20020:20000"   # DNP3 TCP (file transfer)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_SLAVE_ADDR=1
+      - DNP3_MASTER_ADDR=2
+      - DNP3_BI_COUNT=5
+      - DNP3_AI_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_FILE_DIR=/app/files
+      - DNP3_VIEW_TRAFFIC=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 20000), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "oida.protocol=dnp3"
+      - "oida.description=DNP3 outstation with file transfer (Group 70) support"
+
+  # ============================================================================
+  # OpENer - ODVA-compliant EtherNet/IP Stack
+  # Provides full CIP object support for realistic device simulation
+  # ============================================================================
+
+  opener-ethernetip:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.opener
+    container_name: opener-ethernetip-server
+    hostname: opener-device
+    ports:
+      - "44819:44818"       # EtherNet/IP TCP (mapped to 44819 to avoid conflict)
+      - "44819:44818/udp"   # EtherNet/IP UDP
+      - "2223:2222/udp"     # I/O messaging UDP
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "opener-device", "44818"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # HART-IP Mock Server (Basic - single device)
+  hart-mock:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.hart
+    container_name: hart-mock-server
+    hostname: hart-mock
+    ports:
+      - "5094:5094/udp"   # HART-IP UDP
+      - "5095:5095"       # HART-IP TCP
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - HART_MODE=basic
+      - HART_UDP_PORT=5094
+      - HART_TCP_PORT=5095
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5095), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # HART-IP Mock Server (Legacy HART 5 - for security testing)
+  hart-legacy:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.hart
+    container_name: hart-legacy-server
+    hostname: hart-legacy
+    ports:
+      - "5098:5094/udp"   # HART-IP UDP (mapped to 5098)
+      - "5099:5095"       # HART-IP TCP (mapped to 5099)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - HART_MODE=basic
+      - HART_PROTOCOL_VERSION=5
+      - HART_UDP_PORT=5094
+      - HART_TCP_PORT=5095
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5095), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # HART-IP Mock Server (Multi-drop - 4 devices)
+  hart-multidrop:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.hart
+    container_name: hart-multidrop-server
+    hostname: hart-multidrop
+    ports:
+      - "5096:5094/udp"   # HART-IP UDP (mapped to 5096)
+      - "5097:5095"       # HART-IP TCP (mapped to 5097)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - HART_MODE=multidrop
+      - HART_UDP_PORT=5094
+      - HART_TCP_PORT=5095
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5095), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # SNMP Mock — Linux ICS Server (net-snmp with v2c + v3 users)
+  # Full HOST-RESOURCES-MIB, ICS TCP listeners, ARP table, trap config
+  # ============================================================================
+
+  snmp:
+    build:
+      context: ./services/snmp
+      network: host
+    container_name: oida-snmp-mock
+    hostname: snmp-linux
+    ports:
+      - "10161:161/udp"
+    environment:
+      - SNMP_PROFILE=linux
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "snmpget", "-v2c", "-c", "public", "-t", "2", "-r", "0", "localhost", "sysDescr.0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # SNMP Mock — Windows ICS Workstation
+  # LanManager MIB (PEN 77): users, shares, services, domain
+  # ============================================================================
+
+  snmp-win:
+    build:
+      context: ./services/snmp
+      network: host
+    container_name: oida-snmp-win-mock
+    hostname: snmp-windows
+    ports:
+      - "10162:161/udp"
+    environment:
+      - SNMP_PROFILE=windows
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "snmpget", "-v2c", "-c", "public", "-t", "2", "-r", "0", "localhost", "sysDescr.0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # SNMP Mock — H3C Managed Switch
+  # H3C credential tables (PEN 2011 + 25506), Bridge MAC/FDB table
+  # ============================================================================
+
+  snmp-switch:
+    build:
+      context: ./services/snmp
+      network: host
+    container_name: oida-snmp-switch-mock
+    hostname: snmp-switch
+    ports:
+      - "10163:161/udp"
+    environment:
+      - SNMP_PROFILE=switch
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "snmpget", "-v2c", "-c", "public", "-t", "2", "-r", "0", "localhost", "sysDescr.0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # SunSpec Mock Server (pymodbus)
+  # Simulates a 10kW three-phase PV inverter with battery storage
+  # Model chain: 1 (Common) -> 103 (Inverter) -> 120 (Nameplate) ->
+  #              123 (Controls) -> 124 (Storage) -> 160 (MPPT) -> END
+  # Test with: oida modbus -t localhost -p 5502 --sunspec
+  # ============================================================================
+
+  modbus-sunspec:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.sunspec
+    container_name: modbus-sunspec-server
+    hostname: modbus-sunspec
+    ports:
+      - "5502:5502"       # Modbus TCP (SunSpec)
+    environment:
+      - TZ=UTC
+      - SUNSPEC_PORT=5502
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5502), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # Vulnerable Modbus Server for Fuzzing Demo
+  # Stack buffer overflow on MBAP length field - crashes when length > 57
+  # ============================================================================
+
+  modbus-vuln:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.modbus-vuln-fake
+    container_name: modbus-vuln-server
+    hostname: modbus-vuln
+    ports:
+      - "5020:5020"       # Modbus TCP (vulnerable)
+    environment:
+      - TZ=UTC
+      - MODBUS_PORT=5020
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5020"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # Vulnerable Modbus Server - CVE-2024-10918 (Stack Buffer Overflow)
+  # MBAP Length field not validated in FC 0x05/0x06 causes stack overflow
+  # Based on libmodbus v3.1.10 modbus_reply() vulnerability
+  # ============================================================================
+
+  modbus-cve-2024-10918:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.modbus-cve-2024-10918-fake
+    container_name: modbus-cve-2024-10918-server
+    hostname: modbus-cve-2024-10918
+    ports:
+      - "5022:5022"       # Modbus TCP (CVE-2024-10918 vulnerable)
+    environment:
+      - TZ=UTC
+      - MODBUS_PORT=5022
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5022"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # Vulnerable Modbus Server - CVE-2022-0367 (Heap Buffer Overflow)
+  # Missing write address validation in FC 0x17 (Read/Write Multiple Registers)
+  # Based on libmodbus copy-paste bug: https://github.com/stephane/libmodbus/issues/614
+  # ============================================================================
+
+  modbus-cve-2022-0367:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.modbus-cve-2022-0367-fake
+    container_name: modbus-cve-2022-0367-server
+    hostname: modbus-cve
+    ports:
+      - "5021:5021"       # Modbus TCP (CVE-2022-0367 vulnerable)
+    environment:
+      - TZ=UTC
+      - MODBUS_PORT=5021
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5021"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ============================================================================
+  # CVE Vulnerable Services for Security Testing
+  # Start with: docker-compose --profile vuln-services up -d
+  # ============================================================================
+
+  # === SMTP Mock Server for Fuzzer Testing ===
+
+  smtp-mock:
+    build:
+      context: ./services/vulnerable/smtp
+      dockerfile: Dockerfile.mock
+    container_name: smtp-mock-server
+    hostname: smtp-mock
+    profiles: ["vuln-services", "vuln-smtp", "fuzz-test"]
+    ports:
+      - "2520:25"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost', 25)); s.close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.protocol=smtp"
+      - "oida.description=SMTP mock server for fuzz testing"
+
+  # === SMTP Vulnerable Services ===
+
+  smtp-opensmtpd-cve-2020-7247:
+    build:
+      context: ./services/vulnerable/smtp
+      dockerfile: Dockerfile.opensmtpd
+    container_name: smtp-cve-2020-7247
+    hostname: smtp-opensmtpd
+    profiles: ["vuln-services", "vuln-smtp"]
+    ports:
+      - "2525:25"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-7247"
+      - "oida.protocol=smtp"
+      - "oida.severity=critical"
+      - "oida.description=OpenSMTPD shell injection RCE"
+
+  smtp-exim-cve-2019-15846:
+    build:
+      context: ./services/vulnerable/smtp
+      dockerfile: Dockerfile.exim-4.92
+    container_name: smtp-cve-2019-15846
+    hostname: smtp-exim-tls
+    profiles: ["vuln-services", "vuln-smtp"]
+    ports:
+      - "2526:25"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-15846"
+      - "oida.protocol=smtp"
+      - "oida.severity=critical"
+      - "oida.description=Exim TLS SNI heap overflow"
+
+  smtp-exim-cve-2019-16928:
+    build:
+      context: ./services/vulnerable/smtp
+      dockerfile: Dockerfile.exim-4.92.1
+    container_name: smtp-cve-2019-16928
+    hostname: smtp-exim-ehlo
+    profiles: ["vuln-services", "vuln-smtp"]
+    ports:
+      - "2527:25"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-16928"
+      - "oida.protocol=smtp"
+      - "oida.severity=critical"
+      - "oida.description=Exim EHLO heap overflow"
+
+  # === VNC Vulnerable Services ===
+
+  vnc-tightvnc-cve-2019-8287:
+    build:
+      context: ./services/vulnerable/vnc
+      dockerfile: Dockerfile.tightvnc
+    container_name: vnc-cve-2019-8287
+    hostname: vnc-tightvnc
+    profiles: ["vuln-services", "vuln-vnc"]
+    ports:
+      - "5901:5900"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5900"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-8287"
+      - "oida.protocol=vnc"
+      - "oida.severity=high"
+      - "oida.description=TightVNC heap buffer overflow"
+
+  vnc-libvncserver-cve-2018-20019:
+    build:
+      context: ./services/vulnerable/vnc
+      dockerfile: Dockerfile.libvncserver
+    container_name: vnc-cve-2018-20019
+    hostname: vnc-libvnc
+    profiles: ["vuln-services", "vuln-vnc"]
+    ports:
+      - "5902:5900"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5900"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-20019"
+      - "oida.protocol=vnc"
+      - "oida.severity=critical"
+      - "oida.description=LibVNCServer heap overflow"
+
+  # === DNS Vulnerable Services ===
+
+  dns-dnsmasq-cve-2017-14491:
+    build:
+      context: ./services/vulnerable/dns
+      dockerfile: Dockerfile.dnsmasq-2.78
+    container_name: dns-cve-2017-14491
+    hostname: dns-dnsmasq-old
+    profiles: ["vuln-services", "vuln-dns"]
+    ports:
+      - "10053:53/udp"
+      - "10053:53/tcp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "53"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2017-14491"
+      - "oida.protocol=dns"
+      - "oida.severity=critical"
+      - "oida.description=dnsmasq heap buffer overflow"
+
+  dns-dnsmasq-cve-2020-25681:
+    build:
+      context: ./services/vulnerable/dns
+      dockerfile: Dockerfile.dnsmasq-2.85
+    container_name: dns-cve-2020-25681
+    hostname: dns-dnspooq
+    profiles: ["vuln-services", "vuln-dns"]
+    ports:
+      - "10054:53/udp"
+      - "10054:53/tcp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "53"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-25681"
+      - "oida.protocol=dns"
+      - "oida.severity=critical"
+      - "oida.description=DNSpooq buffer overflow"
+
+  # === MQTT Vulnerable Services (Real CVE Memory Corruption) ===
+
+  # CVE-2017-7651: Heap buffer overflow on oversized client_id
+  mqtt-cve-2017-7651:
+    build:
+      context: ./services/vulnerable/mqtt
+      dockerfile: Dockerfile.mqtt-cve-2017-7651
+    container_name: mqtt-cve-2017-7651
+    hostname: mqtt-heap-overflow
+    profiles: ["vuln-services", "vuln-mqtt"]
+    ports:
+      - "11883:1883"
+    environment:
+      - MQTT_PORT=1883
+    networks:
+      - ics-network
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1883"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2017-7651"
+      - "oida.protocol=mqtt"
+      - "oida.severity=critical"
+      - "oida.description=MQTT heap overflow on client_id > 256 bytes"
+
+  # CVE-2021-34432: QoS 2 use-after-free / heap corruption
+  mqtt-cve-2021-34432:
+    build:
+      context: ./services/vulnerable/mqtt
+      dockerfile: Dockerfile.mqtt-cve-2021-34432
+    container_name: mqtt-cve-2021-34432
+    hostname: mqtt-qos2-uaf
+    profiles: ["vuln-services", "vuln-mqtt"]
+    ports:
+      - "11884:1883"
+    environment:
+      - MQTT_PORT=1883
+    networks:
+      - ics-network
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1883"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2021-34432"
+      - "oida.protocol=mqtt"
+      - "oida.severity=high"
+      - "oida.description=MQTT QoS 2 use-after-free on PUBREL replay"
+
+  # CVE-2017-7650: Stack overflow in topic pattern matching
+  mqtt-cve-2017-7650:
+    build:
+      context: ./services/vulnerable/mqtt
+      dockerfile: Dockerfile.mqtt-cve-2017-7650
+    container_name: mqtt-cve-2017-7650
+    hostname: mqtt-topic-overflow
+    profiles: ["vuln-services", "vuln-mqtt"]
+    ports:
+      - "11885:1883"
+    environment:
+      - MQTT_PORT=1883
+    networks:
+      - ics-network
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1883"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2017-7650"
+      - "oida.protocol=mqtt"
+      - "oida.severity=high"
+      - "oida.description=MQTT stack overflow on topic > 128 bytes"
+
+  # === CoAP Vulnerable Services ===
+
+  coap-libcoap-cve-2024-0962:
+    build:
+      context: ./services/vulnerable/coap
+      dockerfile: Dockerfile.libcoap-4.3.4
+    container_name: coap-cve-2024-0962
+    hostname: coap-libcoap
+    profiles: ["vuln-services", "vuln-coap"]
+    ports:
+      - "15683:5683/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo -n -e '\\x40\\x01\\x00\\x01' | nc -u -w1 localhost 5683 || true"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2024-0962"
+      - "oida.protocol=coap"
+      - "oida.severity=high"
+      - "oida.description=libcoap buffer overflow"
+
+  coap-californium:
+    build:
+      context: ./services/vulnerable/coap
+      dockerfile: Dockerfile.californium
+    container_name: coap-californium
+    hostname: coap-californium
+    profiles: ["vuln-services", "vuln-coap"]
+    ports:
+      - "15685:5683/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo -n -e '\\x40\\x01\\x00\\x01' | nc -u -w1 localhost 5683 || true"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.protocol=coap"
+      - "oida.description=Eclipse Californium CoAP reference"
+
+  # === DICOM Vulnerable Services ===
+
+  dicom-orthanc-cve-2023-33466:
+    image: jodogne/orthanc-plugins:1.5.6
+    container_name: dicom-cve-2023-33466
+    hostname: dicom-orthanc-vuln
+    profiles: ["vuln-services", "vuln-dicom"]
+    volumes:
+      - ./services/vulnerable/dicom/orthanc-insecure.json:/etc/orthanc/orthanc.json:ro
+    ports:
+      - "14242:4242"
+      - "18042:8042"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8042/system"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2023-33466"
+      - "oida.protocol=dicom"
+      - "oida.severity=high"
+      - "oida.description=Orthanc path traversal"
+
+  # ============================================================================
+  # OPC UA CVE Vulnerable Services
+  # ============================================================================
+
+  opcua-cve-2022-25761:
+    build:
+      context: ./services/vulnerable/opcua
+      dockerfile: Dockerfile.open62541-1.2.4
+    container_name: opcua-cve-2022-25761
+    hostname: opcua-heap-overflow
+    profiles: ["vuln-services", "vuln-opcua"]
+    ports:
+      - "4843:4840"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4840"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2022-25761"
+      - "oida.protocol=opcua"
+      - "oida.severity=high"
+      - "oida.description=open62541 heap buffer overflow in NodeId parsing"
+
+  opcua-cve-2021-34821:
+    build:
+      context: ./services/vulnerable/opcua
+      dockerfile: Dockerfile.open62541-1.1.5
+    container_name: opcua-cve-2021-34821
+    hostname: opcua-stack-overflow
+    profiles: ["vuln-services", "vuln-opcua"]
+    ports:
+      - "4844:4840"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4840"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2021-34821"
+      - "oida.protocol=opcua"
+      - "oida.severity=high"
+      - "oida.description=open62541 stack buffer overflow in UA_String"
+
+  opcua-cve-2019-19135:
+    build:
+      context: ./services/vulnerable/opcua
+      dockerfile: Dockerfile.freeopcua-0.90.4
+    container_name: opcua-cve-2019-19135
+    hostname: opcua-uaf
+    profiles: ["vuln-services", "vuln-opcua"]
+    ports:
+      - "4845:4840"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4840"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-19135"
+      - "oida.protocol=opcua"
+      - "oida.severity=high"
+      - "oida.description=FreeOpcUa use-after-free in subscription"
+
+  # ============================================================================
+  # IEC 104 CVE Vulnerable Services
+  # ============================================================================
+
+  iec104-cve-2022-0369:
+    build:
+      context: ./services/vulnerable/iec104
+      dockerfile: Dockerfile.lib60870-2.3.1
+    container_name: iec104-cve-2022-0369
+    hostname: iec104-int-overflow
+    profiles: ["vuln-services", "vuln-iec104"]
+    ports:
+      - "2406:2404"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2404"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2022-0369"
+      - "oida.protocol=iec104"
+      - "oida.severity=high"
+      - "oida.description=lib60870 integer overflow in ASDU parsing"
+
+  iec104-cve-2020-15025:
+    build:
+      context: ./services/vulnerable/iec104
+      dockerfile: Dockerfile.lib60870-2.2.1
+    container_name: iec104-cve-2020-15025
+    hostname: iec104-buf-overflow
+    profiles: ["vuln-services", "vuln-iec104"]
+    ports:
+      - "2407:2404"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2404"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-15025"
+      - "oida.protocol=iec104"
+      - "oida.severity=high"
+      - "oida.description=lib60870 buffer overflow in CP56Time2a"
+
+  iec104-cve-2019-18858:
+    build:
+      context: ./services/vulnerable/iec104
+      dockerfile: Dockerfile.iec104-python
+    container_name: iec104-cve-2019-18858
+    hostname: iec104-heap-overflow
+    profiles: ["vuln-services", "vuln-iec104"]
+    ports:
+      - "2408:2404"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2404"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-18858"
+      - "oida.protocol=iec104"
+      - "oida.severity=high"
+      - "oida.description=IEC 104 heap overflow in IOA handling"
+
+  # ============================================================================
+  # DNP3 CVE Vulnerable Services
+  # ============================================================================
+
+  dnp3-cve-2020-28875:
+    build:
+      context: ./services/vulnerable/dnp3
+      dockerfile: Dockerfile.opendnp3-3.1.0
+    container_name: dnp3-cve-2020-28875
+    hostname: dnp3-stack-overflow
+    profiles: ["vuln-services", "vuln-dnp3"]
+    ports:
+      - "20005:20000"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "20000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-28875"
+      - "oida.protocol=dnp3"
+      - "oida.severity=high"
+      - "oida.description=OpenDNP3 stack buffer overflow in link layer"
+
+  dnp3-cve-2019-18996:
+    build:
+      context: ./services/vulnerable/dnp3
+      dockerfile: Dockerfile.opendnp3-2.3.0
+    container_name: dnp3-cve-2019-18996
+    hostname: dnp3-heap-corruption
+    profiles: ["vuln-services", "vuln-dnp3"]
+    ports:
+      - "20006:20000"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "20000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-18996"
+      - "oida.protocol=dnp3"
+      - "oida.severity=high"
+      - "oida.description=OpenDNP3 heap corruption in transport"
+
+  dnp3-cve-2017-7938:
+    build:
+      context: ./services/vulnerable/dnp3
+      dockerfile: Dockerfile.dnp3-python
+    container_name: dnp3-cve-2017-7938
+    hostname: dnp3-obj-overflow
+    profiles: ["vuln-services", "vuln-dnp3"]
+    ports:
+      - "20007:20000"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "20000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2017-7938"
+      - "oida.protocol=dnp3"
+      - "oida.severity=high"
+      - "oida.description=DNP3 buffer overflow in object parsing"
+
+  # ============================================================================
+  # MMS/IEC 61850 CVE Vulnerable Services
+  # ============================================================================
+
+  mms-cve-2022-24760:
+    build:
+      context: ./services/vulnerable/mms
+      dockerfile: Dockerfile.libiec61850-1.5.0
+    container_name: mms-cve-2022-24760
+    hostname: mms-pdu-overflow
+    profiles: ["vuln-services", "vuln-mms"]
+    ports:
+      - "10103:102"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "102"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2022-24760"
+      - "oida.protocol=mms"
+      - "oida.severity=high"
+      - "oida.description=libiec61850 buffer overflow in MMS PDU"
+
+  mms-cve-2019-6138:
+    build:
+      context: ./services/vulnerable/mms
+      dockerfile: Dockerfile.libiec61850-1.3.2
+    container_name: mms-cve-2019-6138
+    hostname: mms-goose-overflow
+    profiles: ["vuln-services", "vuln-mms"]
+    ports:
+      - "10104:102"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "102"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-6138"
+      - "oida.protocol=mms"
+      - "oida.severity=high"
+      - "oida.description=libiec61850 heap overflow in GOOSE"
+
+  mms-cve-2018-12731:
+    build:
+      context: ./services/vulnerable/mms
+      dockerfile: Dockerfile.libiec61850-1.3.1
+    container_name: mms-cve-2018-12731
+    hostname: mms-asn1-overflow
+    profiles: ["vuln-services", "vuln-mms"]
+    ports:
+      - "10105:102"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "102"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-12731"
+      - "oida.protocol=mms"
+      - "oida.severity=high"
+      - "oida.description=libiec61850 stack overflow in ASN.1 decode"
+
+  # ============================================================================
+  # BACnet CVE Vulnerable Services
+  # ============================================================================
+
+  bacnet-cve-2021-42543:
+    build:
+      context: ./services/vulnerable/bacnet
+      dockerfile: Dockerfile.bacnet-stack-0.9.1
+    container_name: bacnet-cve-2021-42543
+    hostname: bacnet-apdu-overflow
+    profiles: ["vuln-services", "vuln-bacnet"]
+    ports:
+      - "47809:47808/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo -n -e '\\x81\\x0a\\x00\\x04' | nc -u -w1 localhost 47808 || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2021-42543"
+      - "oida.protocol=bacnet"
+      - "oida.severity=high"
+      - "oida.description=BACnet Stack APDU decode overflow"
+
+  bacnet-cve-2019-12480:
+    build:
+      context: ./services/vulnerable/bacnet
+      dockerfile: Dockerfile.bacpypes-0.17
+    container_name: bacnet-cve-2019-12480
+    hostname: bacnet-prop-overflow
+    profiles: ["vuln-services", "vuln-bacnet"]
+    ports:
+      - "47810:47808/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo -n -e '\\x81\\x0a\\x00\\x04' | nc -u -w1 localhost 47808 || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-12480"
+      - "oida.protocol=bacnet"
+      - "oida.severity=high"
+      - "oida.description=BACpypes heap overflow in property parsing"
+
+  bacnet-cve-2018-10630:
+    build:
+      context: ./services/vulnerable/bacnet
+      dockerfile: Dockerfile.bacnet-vuln
+    container_name: bacnet-cve-2018-10630
+    hostname: bacnet-buf-overflow
+    profiles: ["vuln-services", "vuln-bacnet"]
+    ports:
+      - "47811:47808/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo -n -e '\\x81\\x0a\\x00\\x04' | nc -u -w1 localhost 47808 || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-10630"
+      - "oida.protocol=bacnet"
+      - "oida.severity=high"
+      - "oida.description=BACnet buffer overflow in packet processing"
+
+  # ============================================================================
+  # EtherNet/IP CVE Vulnerable Services
+  # ============================================================================
+
+  ethernetip-cve-2021-27498:
+    build:
+      context: ./services/vulnerable/ethernetip
+      dockerfile: Dockerfile.opener-2.2.0
+    container_name: ethernetip-cve-2021-27498
+    hostname: ethernetip-cip-overflow
+    profiles: ["vuln-services", "vuln-ethernetip"]
+    ports:
+      - "44820:44818"
+      - "44820:44818/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "44818"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2021-27498"
+      - "oida.protocol=ethernetip"
+      - "oida.severity=high"
+      - "oida.description=OpENer heap overflow in CIP message"
+
+  ethernetip-cve-2020-25055:
+    build:
+      context: ./services/vulnerable/ethernetip
+      dockerfile: Dockerfile.opener-2.1.0
+    container_name: ethernetip-cve-2020-25055
+    hostname: ethernetip-stack-overflow
+    profiles: ["vuln-services", "vuln-ethernetip"]
+    ports:
+      - "44821:44818"
+      - "44821:44818/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "44818"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-25055"
+      - "oida.protocol=ethernetip"
+      - "oida.severity=high"
+      - "oida.description=OpENer stack buffer overflow in assembly"
+
+  ethernetip-cve-2019-10952:
+    build:
+      context: ./services/vulnerable/ethernetip
+      dockerfile: Dockerfile.cip-vuln
+    container_name: ethernetip-cve-2019-10952
+    hostname: ethernetip-oob-write
+    profiles: ["vuln-services", "vuln-ethernetip"]
+    ports:
+      - "44822:44818"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "44818"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-10952"
+      - "oida.protocol=ethernetip"
+      - "oida.severity=critical"
+      - "oida.description=EtherNet/IP CIP out-of-bounds write"
+
+  # ============================================================================
+  # Additional VNC/DNS/MQTT/CoAP/DICOM CVE Services
+  # ============================================================================
+
+  vnc-cve-2020-14397:
+    build:
+      context: ./services/vulnerable/vnc
+      dockerfile: Dockerfile.libvncserver-0.9.12
+    container_name: vnc-cve-2020-14397
+    hostname: vnc-nullptr
+    profiles: ["vuln-services", "vuln-vnc"]
+    ports:
+      - "5903:5900"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5900"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-14397"
+      - "oida.protocol=vnc"
+      - "oida.severity=high"
+      - "oida.description=LibVNCServer NULL pointer dereference"
+
+  dns-cve-2020-25682:
+    build:
+      context: ./services/vulnerable/dns
+      dockerfile: Dockerfile.dnsmasq-2.83
+    container_name: dns-cve-2020-25682
+    hostname: dns-dnspooq-2
+    profiles: ["vuln-services", "vuln-dns"]
+    ports:
+      - "10055:53/udp"
+      - "10055:53/tcp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "53"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-25682"
+      - "oida.protocol=dns"
+      - "oida.severity=critical"
+      - "oida.description=dnsmasq DNSSEC heap overflow"
+
+  coap-cve-2023-35862:
+    build:
+      context: ./services/vulnerable/coap
+      dockerfile: Dockerfile.libcoap-4.3.1
+    container_name: coap-cve-2023-35862
+    hostname: coap-memcorrupt
+    profiles: ["vuln-services", "vuln-coap"]
+    ports:
+      - "15686:5683/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo -n -e '\\x40\\x01\\x00\\x01' | nc -u -w1 localhost 5683 || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2023-35862"
+      - "oida.protocol=coap"
+      - "oida.severity=high"
+      - "oida.description=libcoap memory corruption"
+
+  dicom-cve-2022-29155:
+    build:
+      context: ./services/vulnerable/dicom
+      dockerfile: Dockerfile.orthanc-1.9.7
+    container_name: dicom-cve-2022-29155
+    hostname: dicom-path-traversal
+    profiles: ["vuln-services", "vuln-dicom"]
+    ports:
+      - "14243:4242"
+      - "18043:8042"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8042/system"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2022-29155"
+      - "oida.protocol=dicom"
+      - "oida.severity=high"
+      - "oida.description=Orthanc path traversal"
+
+  dicom-cve-2019-19016:
+    build:
+      context: ./services/vulnerable/dicom
+      dockerfile: Dockerfile.pynetdicom-vuln
+    container_name: dicom-cve-2019-19016
+    hostname: dicom-buf-overflow
+    profiles: ["vuln-services", "vuln-dicom"]
+    ports:
+      - "14244:11112"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "11112"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-19016"
+      - "oida.protocol=dicom"
+      - "oida.severity=high"
+      - "oida.description=DICOM buffer overflow in parsing"
+
+  # ============================================================================
+  # HTTP CVE Vulnerable Services
+  # ============================================================================
+
+  http-nginx-cve-2021-23017:
+    build:
+      context: ./services/vulnerable/http
+      dockerfile: Dockerfile.nginx-1.20.0
+    container_name: http-cve-2021-23017
+    hostname: nginx-dns-overflow
+    profiles: ["vuln-services", "vuln-http"]
+    ports:
+      - "8083:80"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2021-23017"
+      - "oida.protocol=http"
+      - "oida.severity=high"
+      - "oida.description=nginx DNS resolver heap overflow"
+
+  http-apache-cve-2019-0211:
+    build:
+      context: ./services/vulnerable/http
+      dockerfile: Dockerfile.apache-2.4.38
+    container_name: http-cve-2019-0211
+    hostname: apache-privesc
+    profiles: ["vuln-services", "vuln-http"]
+    ports:
+      - "8084:80"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-0211"
+      - "oida.protocol=http"
+      - "oida.severity=critical"
+      - "oida.description=Apache privilege escalation"
+
+  http-apache-cve-2018-1312:
+    build:
+      context: ./services/vulnerable/http
+      dockerfile: Dockerfile.apache-2.4.29
+    container_name: http-cve-2018-1312
+    hostname: apache-digest-uaf
+    profiles: ["vuln-services", "vuln-http"]
+    ports:
+      - "8085:80"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-1312"
+      - "oida.protocol=http"
+      - "oida.severity=high"
+      - "oida.description=Apache mod_auth_digest use-after-free"
+
+  # ============================================================================
+  # FTP CVE Vulnerable Services
+  # ============================================================================
+
+  ftp-vsftpd-cve-2021-3618:
+    build:
+      context: ./services/vulnerable/ftp
+      dockerfile: Dockerfile.vsftpd-3.0.3
+    container_name: ftp-cve-2021-3618
+    hostname: vsftpd-alpaca
+    profiles: ["vuln-services", "vuln-ftp"]
+    ports:
+      - "2121:21"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "21"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2021-3618"
+      - "oida.protocol=ftp"
+      - "oida.severity=high"
+      - "oida.description=vsftpd ALPACA TLS attack"
+
+  ftp-proftpd-cve-2015-3306:
+    build:
+      context: ./services/vulnerable/ftp
+      dockerfile: Dockerfile.proftpd-1.3.5
+    container_name: ftp-cve-2015-3306
+    hostname: proftpd-modcopy
+    profiles: ["vuln-services", "vuln-ftp"]
+    ports:
+      - "2122:21"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "perl -e 'use IO::Socket::INET; IO::Socket::INET->new(PeerAddr=>q(localhost),PeerPort=>21,Timeout=>2) or die'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2015-3306"
+      - "oida.protocol=ftp"
+      - "oida.severity=critical"
+      - "oida.description=ProFTPD mod_copy use-after-free"
+
+  ftp-proftpd-cve-2019-12815:
+    build:
+      context: ./services/vulnerable/ftp
+      dockerfile: Dockerfile.proftpd-1.3.5a
+    container_name: ftp-cve-2019-12815
+    hostname: proftpd-filecopy
+    profiles: ["vuln-services", "vuln-ftp"]
+    ports:
+      - "2123:21"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "21"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-12815"
+      - "oida.protocol=ftp"
+      - "oida.severity=critical"
+      - "oida.description=ProFTPD arbitrary file copy"
+
+  # ============================================================================
+  # SNMP CVE Vulnerable Services
+  # ============================================================================
+
+  snmp-cve-2022-24805:
+    build:
+      context: ./services/vulnerable/snmp
+      dockerfile: Dockerfile.net-snmp-5.9.1
+    container_name: snmp-cve-2022-24805
+    hostname: snmp-ttl-overflow
+    profiles: ["vuln-services", "vuln-snmp"]
+    ports:
+      - "16161:161/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "snmpget -v2c -c public localhost sysDescr.0 2>/dev/null || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2022-24805"
+      - "oida.protocol=snmp"
+      - "oida.severity=high"
+      - "oida.description=net-snmp ipDefaultTTL buffer overflow"
+
+  snmp-cve-2020-15861:
+    build:
+      context: ./services/vulnerable/snmp
+      dockerfile: Dockerfile.net-snmp-5.7.3
+    container_name: snmp-cve-2020-15861
+    hostname: snmp-agentx-overflow
+    profiles: ["vuln-services", "vuln-snmp"]
+    ports:
+      - "16162:161/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "snmpget -v2c -c public localhost sysDescr.0 2>/dev/null || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-15861"
+      - "oida.protocol=snmp"
+      - "oida.severity=high"
+      - "oida.description=net-snmp AgentX heap buffer overflow"
+
+  snmp-cve-2018-18066:
+    build:
+      context: ./services/vulnerable/snmp
+      dockerfile: Dockerfile.net-snmp-5.7.2
+    container_name: snmp-cve-2018-18066
+    hostname: snmp-nullptr
+    profiles: ["vuln-services", "vuln-snmp"]
+    ports:
+      - "16163:161/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "snmpget -v2c -c public localhost sysDescr.0 2>/dev/null || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-18066"
+      - "oida.protocol=snmp"
+      - "oida.severity=medium"
+      - "oida.description=net-snmp NULL pointer dereference"
+
+  # ============================================================================
+  # NTP CVE Vulnerable Services
+  # ============================================================================
+
+  ntp-cve-2020-11868:
+    build:
+      context: ./services/vulnerable/ntp
+      dockerfile: Dockerfile.ntpd-4.2.8p13
+    container_name: ntp-cve-2020-11868
+    hostname: ntp-dos
+    profiles: ["vuln-services", "vuln-ntp"]
+    ports:
+      - "12300:123/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ntpq -p localhost 2>/dev/null || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-11868"
+      - "oida.protocol=ntp"
+      - "oida.severity=medium"
+      - "oida.description=ntpd DoS via malformed packet"
+
+  ntp-cve-2018-12327:
+    build:
+      context: ./services/vulnerable/ntp
+      dockerfile: Dockerfile.ntpd-4.2.8p11
+    container_name: ntp-cve-2018-12327
+    hostname: ntp-stack-overflow
+    profiles: ["vuln-services", "vuln-ntp"]
+    ports:
+      - "12301:123/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ntpq -p localhost 2>/dev/null || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-12327"
+      - "oida.protocol=ntp"
+      - "oida.severity=high"
+      - "oida.description=ntpq stack buffer overflow"
+
+  ntp-cve-2016-9042:
+    build:
+      context: ./services/vulnerable/ntp
+      dockerfile: Dockerfile.ntpd-4.2.8p8
+    container_name: ntp-cve-2016-9042
+    hostname: ntp-timestamp-bypass
+    profiles: ["vuln-services", "vuln-ntp"]
+    ports:
+      - "12302:123/udp"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ntpq -p localhost 2>/dev/null || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2016-9042"
+      - "oida.protocol=ntp"
+      - "oida.severity=medium"
+      - "oida.description=ntpd origin timestamp bypass"
+
+  # ============================================================================
+  # HL7 CVE Vulnerable Services
+  # ============================================================================
+
+  hl7-cve-2020-14964:
+    build:
+      context: ./services/vulnerable/hl7
+      dockerfile: Dockerfile.mirth-3.8.0
+    container_name: hl7-cve-2020-14964
+    hostname: mirth-xxe
+    profiles: ["vuln-services", "vuln-hl7"]
+    ports:
+      - "2576:6661"
+      - "8086:8080"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      - "oida.cve=CVE-2020-14964"
+      - "oida.protocol=hl7"
+      - "oida.severity=high"
+      - "oida.description=Mirth Connect XXE in HL7 parsing"
+
+  hl7-cve-2019-17564:
+    build:
+      context: ./services/vulnerable/hl7
+      dockerfile: Dockerfile.hl7-vuln
+    container_name: hl7-cve-2019-17564
+    hostname: hl7-rce
+    profiles: ["vuln-services", "vuln-hl7"]
+    ports:
+      - "2577:2575"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2575"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2019-17564"
+      - "oida.protocol=hl7"
+      - "oida.severity=critical"
+      - "oida.description=HL7 component RCE"
+
+  hl7-cve-2018-11797:
+    build:
+      context: ./services/vulnerable/hl7
+      dockerfile: Dockerfile.hapi-2.3
+    container_name: hl7-cve-2018-11797
+    hostname: hl7-dos
+    profiles: ["vuln-services", "vuln-hl7"]
+    ports:
+      - "2578:2575"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2575"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-11797"
+      - "oida.protocol=hl7"
+      - "oida.severity=medium"
+      - "oida.description=HAPI HL7 DoS via malformed messages"
+
+  # ============================================================================
+  # Memcached CVE Vulnerable Services
+  # ============================================================================
+
+  memcached-cve-2021-45958:
+    build:
+      context: ./services/vulnerable/memcached
+      dockerfile: Dockerfile.memcached-1.6.12
+    container_name: memcached-cve-2021-45958
+    hostname: memcached-binary-overflow
+    profiles: ["vuln-services", "vuln-memcached"]
+    ports:
+      - "11214:11211"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo 'stats' | nc localhost 11211 | grep -q STAT || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2021-45958"
+      - "oida.protocol=memcached"
+      - "oida.severity=high"
+      - "oida.description=memcached binary protocol buffer overflow"
+
+  memcached-cve-2020-10931:
+    build:
+      context: ./services/vulnerable/memcached
+      dockerfile: Dockerfile.memcached-1.6.1
+    container_name: memcached-cve-2020-10931
+    hostname: memcached-extstore-uaf
+    profiles: ["vuln-services", "vuln-memcached"]
+    ports:
+      - "11215:11211"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo 'stats' | nc localhost 11211 | grep -q STAT || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2020-10931"
+      - "oida.protocol=memcached"
+      - "oida.severity=high"
+      - "oida.description=memcached extstore use-after-free"
+
+  memcached-cve-2018-1000127:
+    build:
+      context: ./services/vulnerable/memcached
+      dockerfile: Dockerfile.memcached-1.5.5
+    container_name: memcached-cve-2018-1000127
+    hostname: memcached-int-overflow
+    profiles: ["vuln-services", "vuln-memcached"]
+    ports:
+      - "11216:11211"
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo 'stats' | nc localhost 11211 | grep -q STAT || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.cve=CVE-2018-1000127"
+      - "oida.protocol=memcached"
+      - "oida.severity=high"
+      - "oida.description=memcached integer overflow in items.c"
+
+
+  # CVE-2023-26793: Heap overflow in read_io_status (FC 0x01)
+  modbus-cve-2023-26793:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.modbus-cve-2023-26793-fake
+    container_name: modbus-cve-2023-26793-server
+    ports:
+      - "5023:5023"
+    restart: "no"
+    networks:
+      - ics-network
+
+  # CVE-2019-14462: OOB read in FC 0x0F (Write Multiple Coils)
+  modbus-cve-2019-14462:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.modbus-cve-2019-14462-fake
+    container_name: modbus-cve-2019-14462-server
+    ports:
+      - "5024:5024"
+    restart: "no"
+    networks:
+      - ics-network
+
+  # CVE-2019-14463: OOB read in FC 0x10 (Write Multiple Registers)
+  modbus-cve-2019-14463:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.modbus-cve-2019-14463-fake
+    container_name: modbus-cve-2019-14463-server
+    ports:
+      - "5025:5025"
+    restart: "no"
+    networks:
+      - ics-network
+
+  # =============================================================================
+  # HTTP/2 Fuzzing Testbed
+  # =============================================================================
+  # Two complementary servers for protocol fuzzing:
+  # - http2-nghttp2: Industry-standard implementation with frame-level logging
+  # - http2-python: hyper-h2 based server with validation callbacks
+
+  http2-nghttp2:
+    build:
+      context: ./services/http2
+      dockerfile: Dockerfile.nghttp2
+    container_name: http2-nghttp2-server
+    hostname: http2-nghttp2
+    ports:
+      - "8280:8443"     # HTTP/2 TLS (nghttpd) - remapped to avoid Mirth 8443 conflict
+      - "8281:8080"     # HTTP/2 cleartext (h2c) - remapped to avoid Mirth 8080 conflict
+    volumes:
+      - ./services/http2/certs:/app/certs:ro
+      - ./logs/http2:/var/log/http2:rw
+    environment:
+      - TZ=UTC
+      - HTTP2_VERBOSE=true
+      - HTTP2_HEXDUMP=false
+      - HTTP2_LOG_FRAMES=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "--http2-prior-knowledge", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "oida.protocol=http2"
+      - "oida.description=nghttp2 HTTP/2 server with frame-level logging"
+
+  http2-python:
+    build:
+      context: ./services/http2
+      dockerfile: Dockerfile.python
+    container_name: http2-python-server
+    hostname: http2-python
+    ports:
+      - "9443:9443"     # HTTP/2 TLS (hyper-h2)
+      - "9080:9080"     # HTTP/2 cleartext
+    volumes:
+      - ./logs/http2:/var/log/http2:rw
+      - ./services/http2/certs:/app/certs:rw
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - HTTP2_LOG_LEVEL=INFO
+      - HTTP2_VALIDATE_HEADERS=true
+      - HTTP2_LOG_HPACK=true
+      - HTTP2_LOG_FRAMES=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 9080), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "oida.protocol=http2"
+      - "oida.description=Python HTTP/2 server with validation callbacks"
+
+  # h2spec conformance testing tool (on-demand profile)
+  http2-h2spec:
+    image: summerwind/h2spec:latest
+    container_name: http2-h2spec
+    hostname: h2spec
+    profiles: ["http2-test"]
+    networks:
+      - ics-network
+    entrypoint: ["sleep", "infinity"]
+    labels:
+      - "oida.protocol=http2"
+      - "oida.description=HTTP/2 conformance testing tool"
+
+  # ============================================================================
+  # EtherCAT Slave Emulation (software-based)
+  # Emulates an EtherCAT slave device using raw sockets (EtherType 0x88A4).
+  # Requires host networking or macvlan for Layer 2 (raw Ethernet) access.
+  # ============================================================================
+
+  ethercat-slave:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.ethercat
+    container_name: ethercat-slave-device
+    hostname: ethercat-slave
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - ETHERCAT_INTERFACE=eth0
+      - ETHERCAT_POSITION=1
+      - ETHERCAT_VERBOSITY=1
+    restart: unless-stopped
+    profiles: ["ethercat"]
+    labels:
+      - "oida.protocol=ethercat"
+      - "oida.description=EtherCAT slave emulation with CoE/FoE mailbox support"
+
+  # ============================================================================
+  # PROFINET IO Device Emulation (p-net stack)
+  # Emulates a PROFINET IO Device with DCP, LLDP, and IO communication.
+  # Requires host networking or macvlan for Layer 2 (raw Ethernet) access.
+  # ============================================================================
+
+  profinet-device:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.profinet
+    container_name: profinet-pnet-device
+    hostname: profinet-device
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - PNET_STATION_NAME=oida-pn-device
+      - PNET_INTERFACE=eth0
+      - PNET_VERBOSITY=2
+    restart: unless-stopped
+    profiles: ["profinet"]
+    labels:
+      - "oida.protocol=profinet"
+      - "oida.description=PROFINET IO Device emulation (p-net stack) with DCP/LLDP"
+
+networks:
+  ics-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+
+volumes:
+  logs:
+  orthanc-data:
+  mirth-db-data:
+  mirth-appdata:
+  openelis-db-data:
+  openelis-plugins:

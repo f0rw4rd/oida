@@ -1,0 +1,475 @@
+{
+  "vendor": "Danfoss",
+  "model": "Vacon 100",
+  "description": "Danfoss Vacon 100 Variable Frequency Drive Modbus TCP/RTU register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Vacon 100 supports both Modbus RTU and TCP. Control Word is 32-bit. Speed reference 0-10000 = 0-100% of frequency range. Process Data IN/OUT registers used for real-time control.",
+  "source": "https://files.danfoss.com/download/Drives/Vacon-100-Modbus-User-Manual-DPD00156C-UK.pdf",
+  "security_notes": {
+    "protocol_clarification": "Stuxnet (2010) targeted VFDs via PROFIBUS, NOT Modbus. No documented real-world Modbus-based VFD attacks exist. This register map is for authorized penetration testing and defensive monitoring.",
+    "theoretical_attack_vectors": [
+      "Control word manipulation for motor start/stop/direction",
+      "Speed reference modification (register 2002)",
+      "Frequency limit tampering",
+      "Ramp time manipulation for mechanical stress"
+    ],
+    "documented_modbus_attacks": "None. VFD attacks in Stuxnet used Profibus protocol.",
+    "defensive_use": "Monitor registers 2001 (control word), 2002 (speed ref), 2101 (status) for unauthorized changes",
+    "mitre_techniques": [
+      "T0855",
+      "T0831",
+      "T0836"
+    ]
+  },
+  "control_commands": {
+    "run_forward": {
+      "register": 2001,
+      "value": "0x0001",
+      "description": "Start motor forward - set Control Word bit 0"
+    },
+    "run_reverse": {
+      "register": 2001,
+      "value": "0x0003",
+      "description": "Start motor reverse - set Control Word bits 0 and 1"
+    },
+    "stop": {
+      "register": 2001,
+      "value": "0x0000",
+      "description": "Stop motor - clear Control Word"
+    },
+    "fault_reset": {
+      "register": 2001,
+      "value": "0x0004",
+      "description": "Reset fault - set Control Word bit 2"
+    }
+  },
+  "coils": {
+    "run_stop": {
+      "address": 1,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 0 - RUN/STOP"
+    },
+    "direction": {
+      "address": 2,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 1 - Direction (0=FWD, 1=REV)"
+    },
+    "fault_reset": {
+      "address": 3,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 2 - Fault reset"
+    },
+    "ext_fault": {
+      "address": 4,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 3 - External fault"
+    },
+    "pid_setpoint_1": {
+      "address": 7,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 6 - Preset PID setpoint 1"
+    },
+    "pid_setpoint_2": {
+      "address": 8,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 7 - Preset PID setpoint 2"
+    },
+    "motor_potentiometer_up": {
+      "address": 10,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 9 - Motor potentiometer UP"
+    },
+    "motor_potentiometer_down": {
+      "address": 11,
+      "type": "bool",
+      "access": "rw",
+      "description": "Control Word bit 10 - Motor potentiometer DOWN"
+    }
+  },
+  "discrete_inputs": {
+    "ready": {
+      "address": 1,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 0 - Ready"
+    },
+    "run": {
+      "address": 2,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 1 - Run"
+    },
+    "reverse": {
+      "address": 3,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 2 - Reverse"
+    },
+    "fault": {
+      "address": 4,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 3 - Fault"
+    },
+    "warning": {
+      "address": 5,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 4 - Warning"
+    },
+    "at_reference": {
+      "address": 6,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 5 - At reference"
+    },
+    "zero_speed": {
+      "address": 7,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 6 - Zero speed"
+    },
+    "control_from_fb": {
+      "address": 8,
+      "type": "bool",
+      "access": "r",
+      "description": "Status Word bit 7 - Control from fieldbus"
+    }
+  },
+  "holding_registers": {
+    "control_word": {
+      "address": 2001,
+      "type": "u16",
+      "access": "rw",
+      "description": "FB Control Word - Process Data IN 1",
+      "bits": {
+        "0": "RUN (1=Run, 0=Stop)",
+        "1": "Direction (1=Reverse, 0=Forward)",
+        "2": "Fault reset (rising edge)",
+        "3": "External fault input",
+        "4": "Reserved",
+        "5": "Motor potentiometer reference",
+        "6": "PID setpoint 1",
+        "7": "PID setpoint 2",
+        "8": "Accelerate/Decelerate prohibit",
+        "9": "Motor pot. UP",
+        "10": "Motor pot. DOWN",
+        "11-15": "Application specific"
+      }
+    },
+    "speed_reference": {
+      "address": 2002,
+      "type": "s16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.01,
+      "description": "FB Speed Reference - Process Data IN 2 (0-10000 = 0-100.00%)",
+      "min": -10000,
+      "max": 10000
+    },
+    "process_data_in_3": {
+      "address": 2003,
+      "type": "u16",
+      "access": "rw",
+      "description": "Process Data IN 3 - Application specific"
+    },
+    "process_data_in_4": {
+      "address": 2004,
+      "type": "u16",
+      "access": "rw",
+      "description": "Process Data IN 4"
+    },
+    "process_data_in_5": {
+      "address": 2005,
+      "type": "u16",
+      "access": "rw",
+      "description": "Process Data IN 5"
+    },
+    "process_data_in_6": {
+      "address": 2006,
+      "type": "u16",
+      "access": "rw",
+      "description": "Process Data IN 6"
+    },
+    "process_data_in_7": {
+      "address": 2007,
+      "type": "u16",
+      "access": "rw",
+      "description": "Process Data IN 7"
+    },
+    "process_data_in_8": {
+      "address": 2008,
+      "type": "u16",
+      "access": "rw",
+      "description": "Process Data IN 8"
+    },
+    "control_word_32bit_hi": {
+      "address": 2051,
+      "type": "u16",
+      "access": "rw",
+      "description": "32-bit Control Word High (bits 16-31)"
+    },
+    "control_word_32bit_lo": {
+      "address": 2052,
+      "type": "u16",
+      "access": "rw",
+      "description": "32-bit Control Word Low (bits 0-15)"
+    },
+    "par_motor_nom_voltage": {
+      "address": 607,
+      "type": "u16",
+      "access": "rw",
+      "unit": "V",
+      "description": "P1.6.7 Motor Nominal Voltage"
+    },
+    "par_motor_nom_frequency": {
+      "address": 608,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "P1.6.8 Motor Nominal Frequency"
+    },
+    "par_motor_nom_speed": {
+      "address": 609,
+      "type": "u16",
+      "access": "rw",
+      "unit": "rpm",
+      "description": "P1.6.9 Motor Nominal Speed"
+    },
+    "par_motor_nom_current": {
+      "address": 610,
+      "type": "u16",
+      "access": "rw",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "P1.6.10 Motor Nominal Current"
+    },
+    "par_frequency_min": {
+      "address": 101,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "P1.1.1 Minimum Frequency"
+    },
+    "par_frequency_max": {
+      "address": 102,
+      "type": "u16",
+      "access": "rw",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "P1.1.2 Maximum Frequency"
+    },
+    "par_accel_time_1": {
+      "address": 103,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.1,
+      "description": "P1.1.3 Acceleration Time 1"
+    },
+    "par_decel_time_1": {
+      "address": 104,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "scale": 0.1,
+      "description": "P1.1.4 Deceleration Time 1"
+    },
+    "par_current_limit": {
+      "address": 105,
+      "type": "u16",
+      "access": "rw",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "P1.1.5 Current Limit"
+    }
+  },
+  "input_registers": {
+    "status_word": {
+      "address": 2101,
+      "type": "u16",
+      "access": "r",
+      "description": "FB Status Word - Process Data OUT 1",
+      "bits": {
+        "0": "Ready",
+        "1": "Run",
+        "2": "Reverse",
+        "3": "Fault",
+        "4": "Warning",
+        "5": "At reference",
+        "6": "Zero speed",
+        "7": "Control from fieldbus"
+      }
+    },
+    "general_status_word": {
+      "address": 2102,
+      "type": "u16",
+      "access": "r",
+      "description": "General Status Word - Process Data OUT 2"
+    },
+    "actual_speed": {
+      "address": 2103,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.01,
+      "description": "Actual Speed - Process Data OUT 3 (0-10000 = 0-100.00%)"
+    },
+    "process_data_out_4": {
+      "address": 2104,
+      "type": "u16",
+      "access": "r",
+      "description": "Process Data OUT 4 - Configurable"
+    },
+    "process_data_out_5": {
+      "address": 2105,
+      "type": "u16",
+      "access": "r",
+      "description": "Process Data OUT 5"
+    },
+    "process_data_out_6": {
+      "address": 2106,
+      "type": "u16",
+      "access": "r",
+      "description": "Process Data OUT 6"
+    },
+    "process_data_out_7": {
+      "address": 2107,
+      "type": "u16",
+      "access": "r",
+      "description": "Process Data OUT 7"
+    },
+    "process_data_out_8": {
+      "address": 2108,
+      "type": "u16",
+      "access": "r",
+      "description": "Process Data OUT 8"
+    },
+    "status_word_32bit_hi": {
+      "address": 2151,
+      "type": "u16",
+      "access": "r",
+      "description": "32-bit Status Word High (bits 16-31)"
+    },
+    "status_word_32bit_lo": {
+      "address": 2152,
+      "type": "u16",
+      "access": "r",
+      "description": "32-bit Status Word Low (bits 0-15)"
+    },
+    "output_frequency": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "V2.1.1 Output Frequency"
+    },
+    "motor_speed": {
+      "address": 2,
+      "type": "s16",
+      "access": "r",
+      "unit": "rpm",
+      "description": "V2.1.2 Motor Speed"
+    },
+    "motor_current": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "V2.1.3 Motor Current"
+    },
+    "motor_torque": {
+      "address": 4,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "V2.1.4 Motor Torque"
+    },
+    "motor_power": {
+      "address": 5,
+      "type": "s16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "V2.1.5 Motor Power"
+    },
+    "motor_voltage": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "V2.1.6 Motor Voltage"
+    },
+    "dc_link_voltage": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "description": "V2.1.7 DC Link Voltage"
+    },
+    "drive_temperature": {
+      "address": 8,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "V2.1.8 Drive Temperature"
+    },
+    "active_fault_code": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Active Fault Code"
+    }
+  },
+  "fault_codes": {
+    "1": "Overcurrent",
+    "2": "Overvoltage",
+    "3": "Earth fault",
+    "8": "System fault",
+    "9": "Undervoltage",
+    "11": "Output phase supervision",
+    "13": "Drive undertemperature",
+    "14": "Drive overtemperature",
+    "15": "Motor stalled",
+    "16": "Motor overtemperature",
+    "22": "EEPROM checksum",
+    "25": "Watchdog",
+    "29": "Thermistor",
+    "34": "Internal bus",
+    "50": "4mA supervision",
+    "51": "External fault",
+    "53": "Fieldbus fault"
+  },
+  "extended_info": {
+    "scaling": {
+      "speed_reference": "0-10000 = 0-100.00% of frequency range",
+      "frequency": "0.01 Hz resolution",
+      "current": "0.1 A resolution",
+      "percentage": "0.1% resolution"
+    },
+    "models": {
+      "vacon_100_industrial": "Heavy duty industrial applications",
+      "vacon_100_hvac": "HVAC optimized",
+      "vacon_100_flow": "Pump and fan applications",
+      "vacon_100_x": "Demanding environments"
+    }
+  },
+  "_source_verified": "Verified: Official Danfoss Vacon 100 Modbus User Manual DPD00156C confirmed; registers 2001-2119 verified"
+}

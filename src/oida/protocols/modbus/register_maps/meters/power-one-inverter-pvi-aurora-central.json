@@ -1,0 +1,349 @@
+{
+  "vendor": "Power Measurement",
+  "model": "ONE INVERTER PVI AURORA CENTRAL",
+  "description": "Power Measurement ONE INVERTER PVI AURORA CENTRAL power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "modbus_interface_type": {
+      "address": 3650,
+      "type": "i16",
+      "access": "r",
+      "description": "Modbus interface type"
+    },
+    "firmware_major_release": {
+      "address": 3651,
+      "type": "i16",
+      "access": "r",
+      "description": "Firmware major release"
+    },
+    "firmware_minor_release": {
+      "address": 3652,
+      "type": "i16",
+      "access": "r",
+      "description": "Firmware minor release"
+    },
+    "firmware_build_release": {
+      "address": 3653,
+      "type": "i16",
+      "access": "r",
+      "description": "Firmware build release"
+    },
+    "collection_daily_energy_of_all_modules": {
+      "address": 3700,
+      "type": "f32",
+      "access": "r",
+      "description": "Collection daily energy of all modules",
+      "unit": "KWattHour"
+    },
+    "collection_total_energy_of_all_modules": {
+      "address": 3702,
+      "type": "f32",
+      "access": "r",
+      "description": "Collection total energy of all modules",
+      "unit": "KWattHour"
+    },
+    "collection_partial_energy_of_all_modules": {
+      "address": 3704,
+      "type": "f32",
+      "access": "r",
+      "description": "Collection partial energy of all modules",
+      "unit": "KWattHour"
+    },
+    "collection_week_energy_of_all_modules": {
+      "address": 3706,
+      "type": "f32",
+      "access": "r",
+      "description": "Collection week energy of all modules",
+      "unit": "KWattHour"
+    },
+    "collection_monthly_energy_of_all_modules": {
+      "address": 3708,
+      "type": "f32",
+      "access": "r",
+      "description": "Collection monthly energy of all modules",
+      "unit": "KWattHour"
+    },
+    "collection_yearly_energy_of_all_modules": {
+      "address": 3710,
+      "type": "f32",
+      "access": "r",
+      "description": "Collection yearly energy of all modules",
+      "unit": "KWattHour"
+    },
+    "pn5_module_01": {
+      "address": 129,
+      "type": "i16",
+      "access": "r",
+      "description": "PN5 module 01"
+    },
+    "type_of_module_master_or_slave": {
+      "address": 130,
+      "type": "i16",
+      "access": "r",
+      "description": "Type of module (Master or slave)"
+    },
+    "status0_module_01_global_state": {
+      "address": 131,
+      "type": "i16",
+      "access": "r",
+      "description": "Status0 module 01 (Global state)"
+    },
+    "status1_module_01_inverter_state": {
+      "address": 132,
+      "type": "i16",
+      "access": "r",
+      "description": "Status1 module 01 (Inverter state)"
+    },
+    "status2_module_01_alarm_state": {
+      "address": 133,
+      "type": "i16",
+      "access": "r",
+      "description": "Status2 module 01 (Alarm state)"
+    },
+    "daily_energy_module_01": {
+      "address": 136,
+      "type": "f32",
+      "access": "r",
+      "description": "Daily energy module 01",
+      "unit": "KWattHour"
+    },
+    "total_energy_module_01": {
+      "address": 138,
+      "type": "f32",
+      "access": "r",
+      "description": "Total energy module 01",
+      "unit": "KWattHour"
+    },
+    "partial_energy_module_01": {
+      "address": 140,
+      "type": "f32",
+      "access": "r",
+      "description": "Partial energy module 01",
+      "unit": "KWattHour"
+    },
+    "week_energy_module_01": {
+      "address": 142,
+      "type": "f32",
+      "access": "r",
+      "description": "Week energy module 01",
+      "unit": "KWattHour"
+    },
+    "monthly_energy_module_01": {
+      "address": 144,
+      "type": "f32",
+      "access": "r",
+      "description": "Monthly energy module 01",
+      "unit": "KWattHour"
+    },
+    "yearly_energy_module_01": {
+      "address": 146,
+      "type": "f32",
+      "access": "r",
+      "description": "Yearly energy module 01",
+      "unit": "KWattHour"
+    },
+    "3_phases_grid_voltage_module_01_slave": {
+      "address": 148,
+      "type": "f32",
+      "access": "r",
+      "description": "3 phases grid voltage module 01 (Slave)",
+      "unit": "Volt Rms"
+    },
+    "3_phases_grid_current_module_01_slave": {
+      "address": 150,
+      "type": "f32",
+      "access": "r",
+      "description": "3 phases grid current module 01 (Slave)",
+      "unit": "Ampere Rms"
+    },
+    "3_phases_grid_power_module_01_slave": {
+      "address": 152,
+      "type": "f32",
+      "access": "r",
+      "description": "3 phases grid power module 01 (Slave)",
+      "unit": "KWatt"
+    },
+    "3_phases_frequence_module_01_slave": {
+      "address": 154,
+      "type": "f32",
+      "access": "r",
+      "description": "3 phases frequence module 01 (Slave)",
+      "unit": "Hz"
+    },
+    "input_power_module_01_slave": {
+      "address": 156,
+      "type": "f32",
+      "access": "r",
+      "description": "Input power module 01 (Slave)",
+      "unit": "KWatt"
+    },
+    "input_voltage_module_01_slave": {
+      "address": 158,
+      "type": "f32",
+      "access": "r",
+      "description": "Input voltage module 01 (Slave)",
+      "unit": "Volt"
+    },
+    "input_current_module_01_slave": {
+      "address": 160,
+      "type": "f32",
+      "access": "r",
+      "description": "Input current module 01 (Slave)",
+      "unit": "Ampere"
+    },
+    "supervisor_temperature_module_01": {
+      "address": 162,
+      "type": "f32",
+      "access": "r",
+      "description": "Supervisor temperature module 01",
+      "unit": "Celsius Degree"
+    },
+    "power_supply_temperature_module_01": {
+      "address": 164,
+      "type": "f32",
+      "access": "r",
+      "description": "Power supply temperature module 01",
+      "unit": "Celsius Degree"
+    },
+    "headsink_module_01": {
+      "address": 166,
+      "type": "f32",
+      "access": "r",
+      "description": "Headsink module 01",
+      "unit": "Celsius Degree"
+    },
+    "t2_module_01": {
+      "address": 168,
+      "type": "f32",
+      "access": "r",
+      "description": "T2 module 01",
+      "unit": "Celsius Degree"
+    },
+    "t3_module_01": {
+      "address": 170,
+      "type": "f32",
+      "access": "r",
+      "description": "T3 module 01",
+      "unit": "Celsius Degree"
+    },
+    "daily_energy_module_01_rack_energy": {
+      "address": 172,
+      "type": "f32",
+      "access": "r",
+      "description": "Daily energy module 01 (Rack energy)",
+      "unit": "KWattHour"
+    },
+    "total_energy_module_01_rack_energy": {
+      "address": 174,
+      "type": "f32",
+      "access": "r",
+      "description": "Total energy module 01 (Rack energy)",
+      "unit": "KWattHour"
+    },
+    "partial_energy_module_01_rack_energy": {
+      "address": 176,
+      "type": "f32",
+      "access": "r",
+      "description": "Partial energy module 01 (Rack energy)",
+      "unit": "KWattHour"
+    },
+    "week_energy_module_01_rack_energy": {
+      "address": 178,
+      "type": "f32",
+      "access": "r",
+      "description": "Week energy module 01 (Rack energy)",
+      "unit": "KWattHour"
+    },
+    "monthly_energy_module_01_rack_energy": {
+      "address": 180,
+      "type": "f32",
+      "access": "r",
+      "description": "Monthly energy module 01 (Rack energy)",
+      "unit": "KWattHour"
+    },
+    "yearly_energy_module_01_rack_energy": {
+      "address": 182,
+      "type": "f32",
+      "access": "r",
+      "description": "Yearly energy module 01 (Rack energy)",
+      "unit": "KWattHour"
+    },
+    "grid_voltage_module_01_master_mean_of_3_phases_global_measurements": {
+      "address": 184,
+      "type": "f32",
+      "access": "r",
+      "description": "Grid voltage module 01 (Master mean of 3 phases global measurements)",
+      "unit": "Volt"
+    },
+    "grid_current_module_01_master_mean_of_3_phases_global_measurements": {
+      "address": 186,
+      "type": "f32",
+      "access": "r",
+      "description": "Grid current module 01 (Master mean of 3 phases global measurements)",
+      "unit": "Ampere"
+    },
+    "grid_power_module_01_master_mean_of_3_phases_global_measurements": {
+      "address": 188,
+      "type": "f32",
+      "access": "r",
+      "description": "Grid power module 01 (Master mean of 3 phases global measurements)",
+      "unit": "KWatt"
+    },
+    "input_power_module_01_master_global_measurements": {
+      "address": 190,
+      "type": "f32",
+      "access": "r",
+      "description": "Input power module 01 (Master global measurements)",
+      "unit": "KWatt"
+    },
+    "input_voltage_module_01_master_global_measurements": {
+      "address": 192,
+      "type": "f32",
+      "access": "r",
+      "description": "Input voltage module 01 (Master global measurements)",
+      "unit": "Volt"
+    },
+    "input_current_module_01_master_global_measurements": {
+      "address": 194,
+      "type": "f32",
+      "access": "r",
+      "description": "Input current module 01 (Master global measurements)",
+      "unit": "Ampere"
+    },
+    "numbers_junction_box_presents_in_the_system_total": {
+      "address": 4100,
+      "type": "i16",
+      "access": "r",
+      "description": "Numbers junction box presents in the system (Total)"
+    },
+    "racknumber_of_the_module_that_manages_the_junction_box": {
+      "address": 4101,
+      "type": "i16",
+      "access": "r",
+      "description": "RackNumber of the module that manages the junction box"
+    },
+    "address_of_the_module_that_manages_the_junction_box": {
+      "address": 4102,
+      "type": "i16",
+      "access": "r",
+      "description": "Address of the module that manages the junction box"
+    },
+    "junction_box_present_in_the_rack": {
+      "address": 4103,
+      "type": "i16",
+      "access": "r",
+      "description": "Junction box present in the rack"
+    },
+    "address_junction_box_01": {
+      "address": 4104,
+      "type": "i16",
+      "access": "r",
+      "description": "Address junction box 01"
+    }
+  }
+}

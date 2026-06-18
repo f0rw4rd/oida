@@ -1,0 +1,173 @@
+{
+  "vendor": "Amperfied",
+  "model": "Amperfied",
+  "description": "Imported from nymea-plugins-modbus (amperfied)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/amperfied/amperfied-registers.json",
+  "registers": {
+    "version": {
+      "address": 4,
+      "type": "u16",
+      "access": "ro",
+      "description": "Version",
+      "function_code": 4
+    },
+    "logisticString": {
+      "address": 102,
+      "type": "str",
+      "access": "ro",
+      "description": "Logistic string",
+      "function_code": 4
+    },
+    "chargingCurrent": {
+      "address": 261,
+      "type": "u16",
+      "access": "rw",
+      "description": "Charging current",
+      "unit": "1/10 A"
+    },
+    "standby": {
+      "address": 258,
+      "type": "u16",
+      "access": "ro",
+      "description": "Standby function control"
+    },
+    "phaseSwitchControl": {
+      "address": 501,
+      "type": "u16",
+      "access": "rw",
+      "description": "Phase switch control"
+    },
+    "chargingState": {
+      "address": 5,
+      "type": "u16",
+      "access": "ro",
+      "description": "ChargingState",
+      "function_code": 4
+    },
+    "currentL1": {
+      "address": 6,
+      "type": "u16",
+      "access": "ro",
+      "description": "Current L1",
+      "unit": "A",
+      "function_code": 4
+    },
+    "currentL2": {
+      "address": 7,
+      "type": "u16",
+      "access": "ro",
+      "description": "Current L2",
+      "unit": "A",
+      "function_code": 4
+    },
+    "currentL3": {
+      "address": 8,
+      "type": "u16",
+      "access": "ro",
+      "description": "Current L3",
+      "unit": "A",
+      "function_code": 4
+    },
+    "pcbTemperature": {
+      "address": 9,
+      "type": "u16",
+      "access": "ro",
+      "description": "PCB temperature",
+      "unit": "1/10°C",
+      "function_code": 4
+    },
+    "voltageL1": {
+      "address": 10,
+      "type": "u16",
+      "access": "ro",
+      "description": "Voltage L1",
+      "unit": "V",
+      "function_code": 4
+    },
+    "voltageL2": {
+      "address": 11,
+      "type": "u16",
+      "access": "ro",
+      "description": "Voltage L2",
+      "unit": "V",
+      "function_code": 4
+    },
+    "voltageL3": {
+      "address": 12,
+      "type": "u16",
+      "access": "ro",
+      "description": "Voltage L3",
+      "unit": "V",
+      "function_code": 4
+    },
+    "externalLock": {
+      "address": 13,
+      "type": "u16",
+      "access": "ro",
+      "description": "External lock",
+      "function_code": 4
+    },
+    "currentPower": {
+      "address": 14,
+      "type": "u16",
+      "access": "ro",
+      "description": "Power (L1+L2+L3)",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "sessionEnergy": {
+      "address": 15,
+      "type": "u32",
+      "access": "ro",
+      "description": "Energy since PowerOn",
+      "unit": "Wh",
+      "function_code": 4
+    },
+    "totalEnergy": {
+      "address": 17,
+      "type": "u32",
+      "access": "ro",
+      "description": "Energy since installation",
+      "unit": "Wh",
+      "function_code": 4
+    },
+    "maxChargingCurrent": {
+      "address": 100,
+      "type": "u16",
+      "access": "ro",
+      "description": "Absolute maximum charging current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "minChargingCurrent": {
+      "address": 101,
+      "type": "u16",
+      "access": "ro",
+      "description": "Absolute minimum charging current",
+      "unit": "A",
+      "function_code": 4
+    }
+  },
+  "enums": {
+    "ChargingState": {
+      "1": "Undefined",
+      "2": "A1",
+      "3": "A2",
+      "4": "B1",
+      "5": "B2",
+      "6": "C1",
+      "7": "C2",
+      "8": "Derating",
+      "9": "E",
+      "10": "F",
+      "11": "Error"
+    },
+    "Standby": {
+      "0": "StandbyEnabled",
+      "4": "StandbyDisabled"
+    }
+  },
+  "_source_verified": "Verified: Official Amperfied Modbus TCP Register Layout PDF confirmed; nymea-plugins-modbus source verified"
+}

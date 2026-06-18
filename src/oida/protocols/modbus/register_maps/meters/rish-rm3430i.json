@@ -1,0 +1,313 @@
+{
+  "vendor": "Rishabh",
+  "model": "RM 3430 I",
+  "description": "Rishabh RM 3430 I power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "volts_2": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts 2"
+    },
+    "volts_3": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts 3"
+    },
+    "current_1": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 1"
+    },
+    "current_2": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 2"
+    },
+    "current_3": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 3"
+    },
+    "w1": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "W1"
+    },
+    "w2": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "W2"
+    },
+    "w3": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "W3"
+    },
+    "va1": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "VA1"
+    },
+    "va2": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "VA2"
+    },
+    "va3": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "VA3"
+    },
+    "var1": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Var1"
+    },
+    "var2": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Var2"
+    },
+    "var3": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Var3"
+    },
+    "pf1": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "PF1"
+    },
+    "pf2": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "PF2"
+    },
+    "pf3": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "PF3"
+    },
+    "phase_angle_1": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle 1"
+    },
+    "phase_angle_2": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle 2"
+    },
+    "phase_angle_3": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle 3"
+    },
+    "volts_ave": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts ave"
+    },
+    "volts_sum": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts sum"
+    },
+    "current_ave": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Current ave"
+    },
+    "current_sum": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Current sum"
+    },
+    "watts_ave": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts ave"
+    },
+    "watts_sum": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts sum"
+    },
+    "va_ave": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Va ave"
+    },
+    "va_sum": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Va sum"
+    },
+    "var_ave": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Var ave"
+    },
+    "var_sum": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Var sum"
+    },
+    "pf_ave": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf ave"
+    },
+    "pf_sum": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf sum"
+    },
+    "phase_angle_ave": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle ave"
+    },
+    "phase_angle_sum": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle sum"
+    },
+    "freq": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Freq"
+    },
+    "wh_import": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Wh import"
+    },
+    "wh_export": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Wh export"
+    },
+    "varh_import": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Varh import"
+    },
+    "varh_export": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Varh export"
+    },
+    "vah": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Vah"
+    },
+    "volts_ave_max": {
+      "address": 132,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts ave max"
+    },
+    "volts_ave_min": {
+      "address": 134,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts ave min"
+    },
+    "current_ave_max": {
+      "address": 140,
+      "type": "f32",
+      "access": "r",
+      "description": "Current ave max"
+    },
+    "current_ave_min": {
+      "address": 142,
+      "type": "f32",
+      "access": "r",
+      "description": "Current ave min"
+    },
+    "active_import_energy_wh": {
+      "address": 144,
+      "type": "f32",
+      "access": "r",
+      "description": "Active import energy(wh)"
+    },
+    "active_export_energy_wh": {
+      "address": 146,
+      "type": "f32",
+      "access": "r",
+      "description": "Active export energy (wh)"
+    },
+    "reactive_import_energy_varh": {
+      "address": 148,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive import energy (varh)"
+    },
+    "reactive_export_energy_varh": {
+      "address": 150,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive export energy (varh)"
+    },
+    "apparent_energy_vah": {
+      "address": 152,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy (vah)"
+    },
+    "vl_1_2_calculated": {
+      "address": 200,
+      "type": "f32",
+      "access": "r",
+      "description": "Vl 1 2 ( calculated )"
+    }
+  }
+}

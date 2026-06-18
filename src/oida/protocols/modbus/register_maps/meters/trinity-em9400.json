@@ -1,0 +1,313 @@
+{
+  "vendor": "Trinity",
+  "model": "EM 9400",
+  "description": "Trinity EM 9400 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "vrn": {
+      "address": 199,
+      "type": "u32",
+      "access": "r",
+      "description": "Vrn"
+    },
+    "vyn": {
+      "address": 201,
+      "type": "u32",
+      "access": "r",
+      "description": "Vyn"
+    },
+    "vbn": {
+      "address": 203,
+      "type": "u32",
+      "access": "r",
+      "description": "Vbn"
+    },
+    "avg_vpn": {
+      "address": 205,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg vpn"
+    },
+    "vry": {
+      "address": 207,
+      "type": "u32",
+      "access": "r",
+      "description": "Vry"
+    },
+    "vyb": {
+      "address": 209,
+      "type": "u32",
+      "access": "r",
+      "description": "Vyb"
+    },
+    "vbr": {
+      "address": 211,
+      "type": "u32",
+      "access": "r",
+      "description": "Vbr"
+    },
+    "avg_vpp": {
+      "address": 213,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg vpp"
+    },
+    "ir": {
+      "address": 215,
+      "type": "u32",
+      "access": "r",
+      "description": "Ir"
+    },
+    "iy": {
+      "address": 217,
+      "type": "u32",
+      "access": "r",
+      "description": "Iy"
+    },
+    "ib": {
+      "address": 219,
+      "type": "u32",
+      "access": "r",
+      "description": "Ib"
+    },
+    "avg_amp": {
+      "address": 221,
+      "type": "u32",
+      "access": "r",
+      "description": "Avg amp"
+    },
+    "in": {
+      "address": 223,
+      "type": "u32",
+      "access": "r",
+      "description": "In"
+    },
+    "pf_r": {
+      "address": 225,
+      "type": "u32",
+      "access": "r",
+      "description": "Pf R"
+    },
+    "pf_y": {
+      "address": 227,
+      "type": "u32",
+      "access": "r",
+      "description": "Pf Y"
+    },
+    "pf_b": {
+      "address": 229,
+      "type": "u32",
+      "access": "r",
+      "description": "Pf B"
+    },
+    "sys_pf": {
+      "address": 231,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys pf"
+    },
+    "kw_r": {
+      "address": 233,
+      "type": "u32",
+      "access": "r",
+      "description": "Kw R"
+    },
+    "kw_y": {
+      "address": 235,
+      "type": "u32",
+      "access": "r",
+      "description": "Kw Y"
+    },
+    "kw_b": {
+      "address": 237,
+      "type": "u32",
+      "access": "r",
+      "description": "Kw B"
+    },
+    "sys_kw": {
+      "address": 239,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys kw"
+    },
+    "kva_r": {
+      "address": 241,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva R"
+    },
+    "kva_y": {
+      "address": 243,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva Y"
+    },
+    "kva_b": {
+      "address": 245,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva B"
+    },
+    "sys_kva": {
+      "address": 247,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys kva"
+    },
+    "kvar_r": {
+      "address": 249,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvar R"
+    },
+    "kvar_y": {
+      "address": 251,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvar Y"
+    },
+    "kvar_b": {
+      "address": 253,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvar B"
+    },
+    "sys_kvar": {
+      "address": 255,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys kvar"
+    },
+    "sys_freq": {
+      "address": 257,
+      "type": "u32",
+      "access": "r",
+      "description": "Sys freq"
+    },
+    "kwh": {
+      "address": 259,
+      "type": "u32",
+      "access": "r",
+      "description": "Kwh"
+    },
+    "kvah": {
+      "address": 261,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvah"
+    },
+    "kvarh_lg": {
+      "address": 263,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvarh lg"
+    },
+    "kvarh_ld": {
+      "address": 265,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvarh ld"
+    },
+    "total_kvarh": {
+      "address": 267,
+      "type": "u32",
+      "access": "r",
+      "description": "Total kvarh"
+    },
+    "voltage_r_y_angle": {
+      "address": 269,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage R Y angle"
+    },
+    "voltage_r_b_angle": {
+      "address": 271,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage R B angle"
+    },
+    "current_r_y_angle": {
+      "address": 273,
+      "type": "u32",
+      "access": "r",
+      "description": "Current R Y angle"
+    },
+    "current_r_b_angle": {
+      "address": 275,
+      "type": "u32",
+      "access": "r",
+      "description": "Current R B angle"
+    },
+    "voltage_unbalance_r_phase": {
+      "address": 277,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage unbalance(%) R phase"
+    },
+    "voltage_unbalance_y_phase": {
+      "address": 279,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage unbalance(%) Y phase"
+    },
+    "voltage_unbalance_b_phase": {
+      "address": 281,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage unbalance(%) B phase"
+    },
+    "current_unbalance_r_phase": {
+      "address": 283,
+      "type": "u32",
+      "access": "r",
+      "description": "Current unbalance(%) R phase"
+    },
+    "current_unbalance_y_phase": {
+      "address": 285,
+      "type": "u32",
+      "access": "r",
+      "description": "Current unbalance(%) Y phase"
+    },
+    "gurrent_unbalance_b_phase": {
+      "address": 287,
+      "type": "u32",
+      "access": "r",
+      "description": "Gurrent unbalance(%) B phase"
+    },
+    "on_minute": {
+      "address": 289,
+      "type": "u32",
+      "access": "r",
+      "description": "On minute"
+    },
+    "on_hour": {
+      "address": 291,
+      "type": "u32",
+      "access": "r",
+      "description": "On hour"
+    },
+    "run_minute": {
+      "address": 293,
+      "type": "u32",
+      "access": "r",
+      "description": "Run minute"
+    },
+    "run_hour": {
+      "address": 295,
+      "type": "u32",
+      "access": "r",
+      "description": "Run hour"
+    },
+    "vr_thd": {
+      "address": 297,
+      "type": "u32",
+      "access": "r",
+      "description": "Vr thd"
+    }
+  }
+}

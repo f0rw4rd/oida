@@ -1,0 +1,359 @@
+{
+  "vendor": "SACI",
+  "model": "AHM 1",
+  "description": "SACI AHM 1 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v1": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "V1",
+      "unit": "V"
+    },
+    "v2": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "V2",
+      "unit": "V"
+    },
+    "v3": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "V3",
+      "unit": "V"
+    },
+    "v12": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "V12",
+      "unit": "V"
+    },
+    "v23": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "V23",
+      "unit": "V"
+    },
+    "v31": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "V31",
+      "unit": "V"
+    },
+    "i1": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "I1",
+      "unit": "A"
+    },
+    "i2": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "I2",
+      "unit": "A"
+    },
+    "i3": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "I3",
+      "unit": "A"
+    },
+    "in_3p4w": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "In (3P4W)",
+      "unit": "A"
+    },
+    "p1": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "P1",
+      "unit": "kW"
+    },
+    "p2": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "P2",
+      "unit": "kW"
+    },
+    "p3": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "P3",
+      "unit": "kW"
+    },
+    "p": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "P",
+      "unit": "kW"
+    },
+    "q1": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Q1",
+      "unit": "kvar"
+    },
+    "q2": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Q2",
+      "unit": "kvar"
+    },
+    "q3": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Q3",
+      "unit": "kvar"
+    },
+    "q": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Q",
+      "unit": "kvar"
+    },
+    "s1": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "S1",
+      "unit": "kVA"
+    },
+    "s2": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "S2",
+      "unit": "kVA"
+    },
+    "s3": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "S3",
+      "unit": "kVA"
+    },
+    "s": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "S",
+      "unit": "kVA"
+    },
+    "pf1": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "PF1"
+    },
+    "pf2": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "PF2"
+    },
+    "pf3": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "PF3"
+    },
+    "pf": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "PF"
+    },
+    "f": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "F",
+      "unit": "Hz"
+    },
+    "average_value_of_vph_n": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Average value of vph N",
+      "unit": "V"
+    },
+    "average_value_of_vph_ph": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Average value of vph ph",
+      "unit": "V"
+    },
+    "average_current": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Average current",
+      "unit": "A"
+    },
+    "import_active_energy": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy",
+      "unit": "kWh"
+    },
+    "export_active_energy": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy",
+      "unit": "kWh"
+    },
+    "import_reactive_energy": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Import reactive energy",
+      "unit": "kvarh"
+    },
+    "export_reactive_energy": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Export reactive energy",
+      "unit": "kvarh"
+    },
+    "apparent_energy": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy",
+      "unit": "kVAh"
+    },
+    "1st_quadrant_reactive_energy_eql": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "1st quadrant reactive energy EQL+",
+      "unit": "kvarh"
+    },
+    "2nd_quadrant_reactive_energy_eqc": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "2nd quadrant reactive energy EQC+",
+      "unit": "kvarh"
+    },
+    "3rd_quadrant_reactive_energy_eql": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "3rd quadrant reactive energy EQL",
+      "unit": "kvarh"
+    },
+    "4th_quadrant_reactive_energy_eqc": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "4th quadrant reactive energy EQC",
+      "unit": "kvarh"
+    },
+    "hour_meter_ep": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Hour meter EP+",
+      "unit": "s"
+    },
+    "hour_meter_ep_86": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Hour meter EP",
+      "unit": "s"
+    },
+    "alternative_import_active_energy": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative import active energy",
+      "unit": "kWh"
+    },
+    "alternative_export_active_energy": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative export active energy",
+      "unit": "kWh"
+    },
+    "alternative_import_reactive_energy": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative import reactive energy",
+      "unit": "kvarh"
+    },
+    "alternative_export_reactive_energy": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative export reactive energy",
+      "unit": "kvarh"
+    },
+    "alternative_apparent_energy": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative apparent energy",
+      "unit": "kVAh"
+    },
+    "alternative_energy_eql": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative energy EQL+",
+      "unit": "kvarh"
+    },
+    "alternative_energy_eqc": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative energy EQC+",
+      "unit": "kvarh"
+    },
+    "alternative_energy_eql_102": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative energy EQL",
+      "unit": "kvarh"
+    },
+    "alternative_energy_eqc_104": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "Alternative energy EQC",
+      "unit": "kvarh"
+    }
+  }
+}

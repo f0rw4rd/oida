@@ -1,0 +1,353 @@
+{
+  "vendor": "Algodue",
+  "model": "UPM 215 UPM 310 UPM 315 UPM 3060 UPM 3080 / UPM 309",
+  "description": "Algodue UPM 215 UPM 310 UPM 315 UPM 3060 UPM 3080 / UPM 309 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: UPM 215 UPM 310 UPM 315 UPM 3060 UPM 3080, UPM 309",
+  "registers": {
+    "system_voltage": {
+      "address": 4096,
+      "type": "f32",
+      "access": "r",
+      "description": "System voltage",
+      "unit": "mV"
+    },
+    "l_n_voltage_phase_1": {
+      "address": 4098,
+      "type": "f32",
+      "access": "r",
+      "description": "L N voltage phase 1",
+      "unit": "mV"
+    },
+    "l_n_voltage_phase_2": {
+      "address": 4100,
+      "type": "f32",
+      "access": "r",
+      "description": "L N voltage phase 2",
+      "unit": "mV"
+    },
+    "l_n_voltage_phase_3": {
+      "address": 4102,
+      "type": "f32",
+      "access": "r",
+      "description": "L N voltage phase 3",
+      "unit": "mV"
+    },
+    "l_l_voltage_line_12": {
+      "address": 4104,
+      "type": "f32",
+      "access": "r",
+      "description": "L L voltage line 12",
+      "unit": "mV"
+    },
+    "l_l_voltage_line_23": {
+      "address": 4106,
+      "type": "f32",
+      "access": "r",
+      "description": "L L voltage line 23",
+      "unit": "mV"
+    },
+    "l_l_voltage_line_31": {
+      "address": 4108,
+      "type": "f32",
+      "access": "r",
+      "description": "L L voltage line 31",
+      "unit": "mV"
+    },
+    "system_current": {
+      "address": 4110,
+      "type": "f32",
+      "access": "r",
+      "description": "System current",
+      "unit": "mA"
+    },
+    "phase_1_current": {
+      "address": 4112,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current",
+      "unit": "mA"
+    },
+    "phase_2_current": {
+      "address": 4114,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 current",
+      "unit": "mA"
+    },
+    "phase_3_current": {
+      "address": 4116,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 current",
+      "unit": "mA"
+    },
+    "system_power_factor": {
+      "address": 4118,
+      "type": "f32",
+      "access": "r",
+      "description": "System power factor"
+    },
+    "phase_1_power_factor": {
+      "address": 4120,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 power factor"
+    },
+    "phase_2_power_factor": {
+      "address": 4122,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 power factor"
+    },
+    "phase_3_power_factor": {
+      "address": 4124,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 power factor"
+    },
+    "phase_order": {
+      "address": 4126,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase order"
+    },
+    "phase_1_cos": {
+      "address": 4128,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 cos"
+    },
+    "phase_2_cos": {
+      "address": 4130,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 cos"
+    },
+    "phase_3_cos": {
+      "address": 4132,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 cos"
+    },
+    "system_apparent_power": {
+      "address": 4134,
+      "type": "f32",
+      "access": "r",
+      "description": "System apparent power",
+      "unit": "mVA"
+    },
+    "phase_1_apparent_power": {
+      "address": 4136,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 apparent power",
+      "unit": "mVA"
+    },
+    "phase_2_apparent_power": {
+      "address": 4138,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 apparent power",
+      "unit": "mVA"
+    },
+    "phase_3_apparent_power": {
+      "address": 4140,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 apparent power",
+      "unit": "mVA"
+    },
+    "system_active_power": {
+      "address": 4142,
+      "type": "f32",
+      "access": "r",
+      "description": "System active power",
+      "unit": "mW"
+    },
+    "phase_1_active_power": {
+      "address": 4144,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 active power",
+      "unit": "mW"
+    },
+    "phase_2_active_power": {
+      "address": 4146,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 active power",
+      "unit": "mW"
+    },
+    "phase_3_active_power": {
+      "address": 4148,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 active power",
+      "unit": "mW"
+    },
+    "system_reactive_power": {
+      "address": 4150,
+      "type": "f32",
+      "access": "r",
+      "description": "System reactive power",
+      "unit": "mvar"
+    },
+    "phase_1_reactive_power": {
+      "address": 4152,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 reactive power",
+      "unit": "mvar"
+    },
+    "phase_2_reactive_power": {
+      "address": 4154,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 reactive power",
+      "unit": "mvar"
+    },
+    "phase_3_reactive_power": {
+      "address": 4156,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 reactive power",
+      "unit": "mvar"
+    },
+    "imported_active_energy": {
+      "address": 4158,
+      "type": "f32",
+      "access": "r",
+      "description": "Imported active energy",
+      "unit": "mWh"
+    },
+    "imported_reactive_inductive_energy": {
+      "address": 4160,
+      "type": "f32",
+      "access": "r",
+      "description": "Imported reactive inductive energy",
+      "unit": "mvarh"
+    },
+    "exported_active_energy": {
+      "address": 4162,
+      "type": "f32",
+      "access": "r",
+      "description": "Exported active energy",
+      "unit": "mWh"
+    },
+    "exported_reactive_inductive_energy": {
+      "address": 4164,
+      "type": "f32",
+      "access": "r",
+      "description": "Exported reactive inductive energy",
+      "unit": "mvarh"
+    },
+    "line_frequency": {
+      "address": 4166,
+      "type": "f32",
+      "access": "r",
+      "description": "Line frequency",
+      "unit": "mHz"
+    },
+    "phase_1_voltage_thd": {
+      "address": 4168,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage thd",
+      "unit": "m%"
+    },
+    "phase_2_voltage_thd": {
+      "address": 4170,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 voltage thd",
+      "unit": "m%"
+    },
+    "phase_3_voltage_thd": {
+      "address": 4172,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 voltage thd",
+      "unit": "m%"
+    },
+    "phase_1_current_thd": {
+      "address": 4174,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current thd",
+      "unit": "m%"
+    },
+    "phase_2_current_thd": {
+      "address": 4176,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 current thd",
+      "unit": "m%"
+    },
+    "phase_3_current_thd": {
+      "address": 4178,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 current thd",
+      "unit": "m%"
+    },
+    "void": {
+      "address": 4180,
+      "type": "f32",
+      "access": "r",
+      "description": "Void"
+    },
+    "void_4182": {
+      "address": 4182,
+      "type": "f32",
+      "access": "r",
+      "description": "Void"
+    },
+    "imported_reactive_capacitive_energy": {
+      "address": 4184,
+      "type": "f32",
+      "access": "r",
+      "description": "Imported reactive capacitive energy",
+      "unit": "mvarh"
+    },
+    "exported_reactive_capacitive_energy": {
+      "address": 4186,
+      "type": "f32",
+      "access": "r",
+      "description": "Exported reactive capacitive energy",
+      "unit": "mvarh"
+    },
+    "imported_apparent_energy": {
+      "address": 4188,
+      "type": "f32",
+      "access": "r",
+      "description": "Imported apparent energy",
+      "unit": "mVAh"
+    },
+    "exported_apparent_energy": {
+      "address": 4190,
+      "type": "f32",
+      "access": "r",
+      "description": "Exported apparent energy",
+      "unit": "mVAh"
+    },
+    "neutral_current": {
+      "address": 4192,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "mA"
+    },
+    "system_current_demand": {
+      "address": 4194,
+      "type": "f32",
+      "access": "r",
+      "description": "System current demand",
+      "unit": "mA"
+    }
+  }
+}

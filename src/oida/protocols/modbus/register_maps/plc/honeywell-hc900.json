@@ -1,0 +1,106 @@
+{
+  "vendor": "Honeywell",
+  "model": "ControlEdge HC900",
+  "description": "Honeywell ControlEdge HC900 Controller Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "HC900 has CONFIGURABLE byte order for 32-bit floats via HC Designer. Default FP B (4,3,2,1). Max 127 registers per FC03/04 request. FC17 returns firmware version.",
+  "source": "51-52-25-111 (ControlEdge HC900 Controller Communications User Guide, Rev 15, December 2018)",
+  "default_ip": "192.168.1.254",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "notes": "max_registers=127"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "notes": "max_registers=127"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register"
+    },
+    {
+      "code": "08",
+      "function": "Diagnostics"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers"
+    },
+    {
+      "code": "17",
+      "function": "Report Server ID",
+      "notes": "returns=firmware_version"
+    }
+  ],
+  "registers": {
+    "analog_input_base": {
+      "address": 2001,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "Analog inputs start address (FC04)"
+    },
+    "example_float": {
+      "address": 100,
+      "type": "f32",
+      "access": "rw",
+      "description": "Example 32-bit float (byte order per FP setting)"
+    }
+  },
+  "extended_info": {
+    "float_formats": {
+      "FP_B": {
+        "byte_order": "4,3,2,1",
+        "description": "Default - Honeywell PlantScape/Experion",
+        "is_default": true
+      },
+      "FP_BB": {
+        "byte_order": "3,4,1,2",
+        "description": "Byte-swapped big-endian"
+      },
+      "FP_L": {
+        "byte_order": "1,2,3,4",
+        "description": "Standard little-endian"
+      },
+      "FP_LB": {
+        "byte_order": "2,1,4,3",
+        "description": "Modicon/Wonderware standard"
+      }
+    },
+    "configuration_path": "HC Designer -> Utilities Worksheet -> Set Controller Network Parameters -> Modbus TCP Double Register Format",
+    "device_ids": {
+      "HC930": "0x93",
+      "HC950": "0x95",
+      "HC970": "0x70"
+    },
+    "memory_mapping": {
+      "coil_formula": "Coil = [(Rack-1)*512] + [(Slot-1)*32] + channel + 2000",
+      "digital_outputs_start": 2001,
+      "analog_inputs_start": 2001,
+      "analog_inputs_function": "FC04"
+    },
+    "serial_config": {
+      "baud_rates": "1200-115200",
+      "default_baud": 9600
+    }
+  },
+  "_source_verified": "Verified: HC900 Modbus TCP confirmed; document 51-52-25-111 communications guide verified"
+}

@@ -1,0 +1,362 @@
+{
+  "vendor": "SACI",
+  "model": "TCIL 2",
+  "description": "SACI TCIL 2 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "total_power_factor": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "grid_frequency": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Grid frequency",
+      "unit": "Hz"
+    },
+    "average_value_of_three_phase_voltages": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "Average value of three phase voltages",
+      "unit": "V"
+    },
+    "average_value_of_three_line_voltages": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Average value of three line voltages",
+      "unit": "V"
+    },
+    "average_value_of_three_phase_currents": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Average value of three phase currents",
+      "unit": "A"
+    },
+    "ep": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "EP+",
+      "unit": "kWh"
+    },
+    "ep_104": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "EP",
+      "unit": "kWh"
+    },
+    "eq": {
+      "address": 112,
+      "type": "f32",
+      "access": "r",
+      "description": "EQ+",
+      "unit": "kvarh"
+    },
+    "eq_114": {
+      "address": 114,
+      "type": "f32",
+      "access": "r",
+      "description": "EQ",
+      "unit": "kvarh"
+    },
+    "apparent_energy": {
+      "address": 116,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy",
+      "unit": "kVAh"
+    },
+    "trip_energy": {
+      "address": 118,
+      "type": "f32",
+      "access": "r",
+      "description": "Trip energy",
+      "unit": "KWh"
+    },
+    "first_quadrant_reactive_energy_eql": {
+      "address": 120,
+      "type": "f32",
+      "access": "r",
+      "description": "First quadrant reactive energy EQL+",
+      "unit": "kvarh"
+    },
+    "second_quadrant_reactive_energy_eqc": {
+      "address": 128,
+      "type": "f32",
+      "access": "r",
+      "description": "Second quadrant reactive energy EQC+",
+      "unit": "kvarh"
+    },
+    "third_quadrant_reactive_energy_eql": {
+      "address": 130,
+      "type": "f32",
+      "access": "r",
+      "description": "Third quadrant reactive energy EQL",
+      "unit": "kvarh"
+    },
+    "four_quadrant_reactive_energy_eqc": {
+      "address": 132,
+      "type": "f32",
+      "access": "r",
+      "description": "Four quadrant reactive energy EQC",
+      "unit": "kvarh"
+    },
+    "import_active_energy_total": {
+      "address": 134,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy[total",
+      "unit": "kWh"
+    },
+    "import_active_energy_tip": {
+      "address": 136,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy[tip",
+      "unit": "kWh"
+    },
+    "import_active_energy_peak": {
+      "address": 144,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy[peak",
+      "unit": "kWh"
+    },
+    "import_active_energy_flat": {
+      "address": 146,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy[flat",
+      "unit": "kWh"
+    },
+    "import_active_energy_valley": {
+      "address": 148,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy[valley",
+      "unit": "kWh"
+    },
+    "export_active_energy_total": {
+      "address": 150,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy[total",
+      "unit": "kWh"
+    },
+    "export_active_energy_tip": {
+      "address": 152,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy[tip",
+      "unit": "kWh"
+    },
+    "export_active_energy_peak": {
+      "address": 256,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy[peak",
+      "unit": "kWh"
+    },
+    "export_active_energy_flat": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy[flat",
+      "unit": "kWh"
+    },
+    "export_active_energy_valley": {
+      "address": 260,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy[valley",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_this_month_total": {
+      "address": 262,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of this month[total",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_this_month_tip": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of this month[tip",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_this_month_peak": {
+      "address": 272,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of this month[peak",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_this_month_flat": {
+      "address": 274,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of this month[flat",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_this_month_valley": {
+      "address": 276,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of this month[valley",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_this_month_total": {
+      "address": 278,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of this month[total",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_this_month_tip": {
+      "address": 280,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of this month[tip",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_this_month_peak": {
+      "address": 288,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of this month[peak",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_this_month_flat": {
+      "address": 290,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of this month[flat",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_this_month_valley": {
+      "address": 292,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of this month[valley",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_last_month_total": {
+      "address": 294,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of last month[total",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_last_month_tip": {
+      "address": 296,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of last month[tip",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_last_month_peak": {
+      "address": 304,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of last month[peak",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_last_month_flat": {
+      "address": 306,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of last month[flat",
+      "unit": "kWh"
+    },
+    "import_active_energy_of_last_month_valley": {
+      "address": 308,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy of last month[valley",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_last_month_total": {
+      "address": 310,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of last month[total",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_last_month_tip": {
+      "address": 312,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of last month[tip",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_last_month_peak": {
+      "address": 320,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of last month[peak",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_last_month_flat": {
+      "address": 322,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of last month[flat",
+      "unit": "kWh"
+    },
+    "export_active_energy_of_last_month_valley": {
+      "address": 324,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy of last month[valley",
+      "unit": "kWh"
+    },
+    "import_active_energy_two_month_before_total": {
+      "address": 326,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy two month before[total",
+      "unit": "kWh"
+    },
+    "import_active_energy_two_month_before_tip": {
+      "address": 328,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy two month before[tip",
+      "unit": "kWh"
+    },
+    "import_active_energy_two_month_before_peak": {
+      "address": 336,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy two month before[peak",
+      "unit": "kWh"
+    },
+    "import_active_energy_two_month_before_flat": {
+      "address": 338,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy two month before[flat",
+      "unit": "kWh"
+    },
+    "import_active_energy_two_month_before_valley": {
+      "address": 340,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy two month before[valley",
+      "unit": "kWh"
+    }
+  }
+}

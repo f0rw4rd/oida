@@ -1,0 +1,286 @@
+{
+  "vendor": "JK-BMS (Jikong)",
+  "model": "JK-B Series LiFePO4 BMS",
+  "description": "JK-BMS (Jikong) battery management system with Modbus RTU via RS485",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "JK-BMS RS485 Modbus V1.1 protocol. Default baud: 115200, 8N1. Supports up to 24 cells. Cell voltages at 0x1200+, temperatures at 0x1300+. Input registers (FC04).",
+  "source": "https://github.com/syssi/esphome-jk-bms (BMS RS485 Modbus V1.1.pdf)",
+  "registers": {
+    "pack_voltage": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Total pack voltage"
+    },
+    "pack_current": {
+      "address": 1,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Pack current (positive = discharge)"
+    },
+    "remaining_capacity": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "unit": "Ah",
+      "scale": 0.01,
+      "description": "Remaining capacity"
+    },
+    "nominal_capacity": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "unit": "Ah",
+      "scale": 0.01,
+      "description": "Nominal capacity"
+    },
+    "cycle_count": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Cycle count"
+    },
+    "production_date": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Production date (packed format)"
+    },
+    "balance_current": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "unit": "mA",
+      "description": "Balance current"
+    },
+    "errors": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Error bits (bitfield)"
+    },
+    "software_version": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Software version"
+    },
+    "soc": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "State of charge"
+    },
+    "mosfet_status": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "MOSFET status (bit0=charge, bit1=discharge)"
+    },
+    "cell_count": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of cells"
+    },
+    "temp_count": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of temperature sensors"
+    },
+    "temp_1": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 1"
+    },
+    "temp_2": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 2"
+    },
+    "temp_mos": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "MOSFET temperature"
+    },
+    "cell_voltage_1": {
+      "address": 4608,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 1 voltage"
+    },
+    "cell_voltage_2": {
+      "address": 4609,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 2 voltage"
+    },
+    "cell_voltage_3": {
+      "address": 4610,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 3 voltage"
+    },
+    "cell_voltage_4": {
+      "address": 4611,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 4 voltage"
+    },
+    "cell_voltage_5": {
+      "address": 4612,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 5 voltage"
+    },
+    "cell_voltage_6": {
+      "address": 4613,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 6 voltage"
+    },
+    "cell_voltage_7": {
+      "address": 4614,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 7 voltage"
+    },
+    "cell_voltage_8": {
+      "address": 4615,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 8 voltage"
+    },
+    "cell_voltage_9": {
+      "address": 4616,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 9 voltage"
+    },
+    "cell_voltage_10": {
+      "address": 4617,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 10 voltage"
+    },
+    "cell_voltage_11": {
+      "address": 4618,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 11 voltage"
+    },
+    "cell_voltage_12": {
+      "address": 4619,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 12 voltage"
+    },
+    "cell_voltage_13": {
+      "address": 4620,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 13 voltage"
+    },
+    "cell_voltage_14": {
+      "address": 4621,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 14 voltage"
+    },
+    "cell_voltage_15": {
+      "address": 4622,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 15 voltage"
+    },
+    "cell_voltage_16": {
+      "address": 4623,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 16 voltage"
+    },
+    "cell_voltage_max": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Maximum cell voltage"
+    },
+    "cell_voltage_min": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Minimum cell voltage"
+    },
+    "cell_voltage_diff": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell voltage difference"
+    },
+    "cell_voltage_avg": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Average cell voltage"
+    }
+  },
+  "_source_verified": "Verified: JK-BMS RS485 Modbus V1.1 protocol PDF confirmed at syssi/esphome-jk-bms GitHub"
+}

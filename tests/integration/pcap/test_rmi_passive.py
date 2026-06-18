@@ -1,0 +1,180 @@
+"""Integration tests for Java RMI passive listener.
+
+Tests cover:
+- RMI handshake parsing (magic, version, protocol type)
+- Protocol type identification (Stream, SingleOp, Multiplex)
+- Endpoint hostname/port extraction from server responses
+- Call/Return message detection
+- Device creation for both RMI client and server
+- Harvest output quality
+"""
+
+import pytest
+
+from .conftest import _run_listener_test
+
+pytestmark = [pytest.mark.integration]
+
+# RMI requires decode_as to be recognized by tshark
+RMI_DECODE_AS = {"tcp.port==1099": "rmi"}
+
+
+class TestRMIPassive:
+    """Java RMI protocol-specific tests."""
+
+    def test_handshake_extraction(self):
+        """RMI handshake packets extract version and protocol type."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            min_devices=2,
+            min_interactions=2,
+            expect_details=["message_type"],
+            expect_operations=["RMI Handshake"],
+            decode_as=RMI_DECODE_AS,
+        )
+
+        # Verify handshake interactions have version info
+        handshakes = [
+            ix for ix in listener.interactions if ix.details.get("message_type") == "Handshake"
+        ]
+        assert len(handshakes) >= 1, "No handshake interactions found"
+
+    def test_protocol_type_detection(self):
+        """RMI protocol types (Stream, SingleOp, Multiplex) are detected."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            decode_as=RMI_DECODE_AS,
+        )
+
+        protocol_names = {
+            ix.details.get("protocol_name")
+            for ix in listener.interactions
+            if ix.details.get("protocol_name")
+        }
+        # Our pcap has SingleOp and Stream protocols
+        assert len(protocol_names) >= 1, f"No protocol types detected; got: {protocol_names}"
+
+    def test_endpoint_extraction(self):
+        """Endpoint hostname and port are extracted from server responses."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            decode_as=RMI_DECODE_AS,
+        )
+
+        endpoints = {
+            ix.details.get("endpoint_host")
+            for ix in listener.interactions
+            if ix.details.get("endpoint_host")
+        }
+        assert "rmi-server.internal" in endpoints, (
+            f"Expected rmi-server.internal endpoint; got: {endpoints}"
+        )
+
+    def test_protocol_ack_detected(self):
+        """ProtocolAck messages from server are detected."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            decode_as=RMI_DECODE_AS,
+        )
+
+        ack_found = any(
+            ix.details.get("message_type") == "ProtocolAck" for ix in listener.interactions
+        )
+        assert ack_found, "No ProtocolAck message found"
+
+    def test_call_message_detected(self):
+        """RMI Call messages from client are detected."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            decode_as=RMI_DECODE_AS,
+        )
+
+        call_found = any(ix.details.get("message_type") == "Call" for ix in listener.interactions)
+        assert call_found, (
+            "No RMI Call message found; message types: "
+            f"{[ix.details.get('message_type') for ix in listener.interactions]}"
+        )
+
+    def test_both_endpoints_tracked(self):
+        """Both RMI client and server devices are discovered."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            min_devices=2,
+            decode_as=RMI_DECODE_AS,
+        )
+
+        device_types = [d.device_type for d in devices.values() if hasattr(d, "device_type")]
+        has_server = any("Server" in t for t in device_types)
+        has_client = any("Client" in t for t in device_types)
+        assert has_server, f"No RMI Server device; types: {device_types}"
+        assert has_client, f"No RMI Client device; types: {device_types}"
+
+    def test_server_endpoints_tracked(self):
+        """Server's discovered endpoints are stored on the device."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            min_devices=2,
+            decode_as=RMI_DECODE_AS,
+        )
+
+        # The server device should have endpoint data
+        server_devs = [
+            d
+            for d in devices.values()
+            if hasattr(d, "rmi_passive_data")
+            and d.rmi_passive_data
+            and d.rmi_passive_data.get("role") == "server"
+        ]
+        assert len(server_devs) >= 1, "No RMI server device with passive data"
+        eps = server_devs[0].rmi_passive_data.get("endpoints", [])
+        assert len(eps) >= 1, (
+            f"No endpoints stored on server device; data: {server_devs[0].rmi_passive_data}"
+        )
+
+    def test_harvest_returns_valid_dict(self):
+        """Harvest returns a valid dict."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            decode_as=RMI_DECODE_AS,
+        )
+        assert isinstance(result, dict)
+
+    def test_protocol_columns_format(self):
+        """Protocol columns are formatted correctly."""
+        listener, devices, result = _run_listener_test(
+            "rmi",
+            "RMIPassiveListener",
+            "rmi",
+            "rmi/generated_rmi.pcap",
+            decode_as=RMI_DECODE_AS,
+        )
+
+        for ix in listener.interactions:
+            cols = listener._format_protocol_columns(ix)
+            assert len(cols) == len(listener.PROTOCOL_COLUMNS), (
+                f"Column count mismatch: {len(cols)} vs {len(listener.PROTOCOL_COLUMNS)}"
+            )

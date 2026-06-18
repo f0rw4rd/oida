@@ -1,0 +1,125 @@
+{
+  "vendor": "Mitsubishi",
+  "model": "FX5U",
+  "description": "Mitsubishi MELSEC iQ-F FX5U Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: For 32-bit values, FX5 uses LOW-WORD FIRST (register N = low word, N+1 = high word). Bit devices require device number and allocating points in MULTIPLES OF 16. Long counters (LCN) occupy 2 points as DWORD. RTU mode only - no ASCII support.",
+  "source": "JY997D56101 (MELSEC iQ-F FX5 User's Manual - MODBUS Communication)",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register"
+    },
+    {
+      "code": "0F",
+      "function": "Write Multiple Coils"
+    },
+    {
+      "code": "10",
+      "function": "Write Multiple Registers"
+    }
+  ],
+  "registers": {
+    "d0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D0",
+      "notes": "fx5_device=D0"
+    },
+    "d0_dword": {
+      "address": 0,
+      "type": "u32",
+      "access": "rw",
+      "description": "32-bit DWORD (D0 = low word, D1 = high word)",
+      "notes": "fx5_device=D0-D1"
+    },
+    "d100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D100",
+      "notes": "fx5_device=D100"
+    }
+  },
+  "coils": {
+    "m0": {
+      "address": 0,
+      "access": "rw",
+      "description": "Internal relay M0",
+      "notes": "fx5_device=M0"
+    },
+    "m16": {
+      "address": 16,
+      "access": "rw",
+      "description": "Internal relay M16 (next multiple of 16)",
+      "notes": "fx5_device=M16"
+    }
+  },
+  "discrete_inputs": {
+    "x0": {
+      "address": 0,
+      "access": "r",
+      "description": "Input X0",
+      "notes": "fx5_device=X0"
+    }
+  },
+  "extended_info": {
+    "configuration_path": "GX Works3 -> [Parameter] -> Module model name -> [Module Parameter] -> [485 Serial Port] or [Extended Board]",
+    "32bit_word_order": "Low-word first (register N = low word, N+1 = high word)",
+    "bit_device_constraint": "Device number and allocating points must be MULTIPLES OF 16",
+    "max_device_allocations": 16,
+    "default_device_allocation": {
+      "coils_rw": {
+        "modbus_range_hex": "0000H-03FFH",
+        "modbus_range_dec": "0-1023",
+        "fx5_device": "M0-M1023"
+      },
+      "inputs_ro": {
+        "modbus_range_hex": "0000H-03FFH",
+        "modbus_range_dec": "0-1023",
+        "fx5_device": "X0-X1023"
+      },
+      "holding_registers": {
+        "modbus_range_hex": "0000H-0FFFH",
+        "modbus_range_dec": "0-4095",
+        "fx5_device": "D0-D4095"
+      }
+    },
+    "diagnostic_registers": {
+      "ch1_error_flag": "SM8500",
+      "ch1_error_code": "SD8500",
+      "ch2_error_flag": "SM8510",
+      "ch2_error_code": "SD8510",
+      "ch3_error_flag": "SM8520",
+      "ch3_error_code": "SD8520",
+      "ch4_error_flag": "SM8530",
+      "ch4_error_code": "SD8530",
+      "station_timeout_retry": "SD8861-SD8895"
+    }
+  },
+  "_source_verified": "Verified: FX5U Modbus manual JY997D56101 confirmed downloadable from dl.mitsubishielectric.com"
+}

@@ -1,0 +1,220 @@
+{
+  "vendor": "SunSpec",
+  "model": "Nameplate Ratings Model 120",
+  "description": "SunSpec Model 120 - Nameplate Ratings for DER device capability discovery",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 120,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 120 = Nameplate ratings. Model length is 26 registers. Describes DER device type and power/reactive/current/PF/storage ratings. Used by grid operators for device capability discovery. Addresses include 2-register header (ID+Length).",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00120.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (120 = Nameplate Ratings)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length (26 registers)"
+    },
+    "der_typ": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "DER device type (DERTyp)",
+      "enum": {
+        "4": "PV",
+        "82": "PV_STOR",
+        "83": "STOR"
+      }
+    },
+    "w_rtg": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 4,
+      "unit": "W",
+      "description": "Continuous power output rating (WRtg)"
+    },
+    "w_rtg_sf": {
+      "address": 4,
+      "type": "i16",
+      "access": "r",
+      "description": "Power rating scale factor (WRtg_SF)"
+    },
+    "va_rtg": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "VA",
+      "description": "Continuous apparent power rating (VARtg)"
+    },
+    "va_rtg_sf": {
+      "address": 6,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power rating scale factor (VARtg_SF)"
+    },
+    "var_rtg_q1": {
+      "address": 7,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 11,
+      "unit": "var",
+      "description": "Reactive power rating Q1 (VArRtgQ1)"
+    },
+    "var_rtg_q2": {
+      "address": 8,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 11,
+      "unit": "var",
+      "description": "Reactive power rating Q2 (VArRtgQ2)"
+    },
+    "var_rtg_q3": {
+      "address": 9,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 11,
+      "unit": "var",
+      "description": "Reactive power rating Q3 (VArRtgQ3)"
+    },
+    "var_rtg_q4": {
+      "address": 10,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 11,
+      "unit": "var",
+      "description": "Reactive power rating Q4 (VArRtgQ4)"
+    },
+    "var_rtg_sf": {
+      "address": 11,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power rating scale factor (VArRtg_SF)"
+    },
+    "a_rtg": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 13,
+      "unit": "A",
+      "description": "Maximum AC current rating (ARtg)"
+    },
+    "a_rtg_sf": {
+      "address": 13,
+      "type": "i16",
+      "access": "r",
+      "description": "Current rating scale factor (ARtg_SF)"
+    },
+    "pf_rtg_q1": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 18,
+      "unit": "cos()",
+      "description": "Minimum power factor rating Q1 (PFRtgQ1)"
+    },
+    "pf_rtg_q2": {
+      "address": 15,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 18,
+      "unit": "cos()",
+      "description": "Minimum power factor rating Q2 (PFRtgQ2)"
+    },
+    "pf_rtg_q3": {
+      "address": 16,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 18,
+      "unit": "cos()",
+      "description": "Minimum power factor rating Q3 (PFRtgQ3)"
+    },
+    "pf_rtg_q4": {
+      "address": 17,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 18,
+      "unit": "cos()",
+      "description": "Minimum power factor rating Q4 (PFRtgQ4)"
+    },
+    "pf_rtg_sf": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor rating scale factor (PFRtg_SF)"
+    },
+    "wh_rtg": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 20,
+      "unit": "Wh",
+      "description": "Energy storage rating (WHRtg)"
+    },
+    "wh_rtg_sf": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "Energy storage rating scale factor (WHRtg_SF)"
+    },
+    "ahr_rtg": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 22,
+      "unit": "Ah",
+      "description": "Amp-hour storage rating (AhrRtg)"
+    },
+    "ahr_rtg_sf": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Amp-hour rating scale factor (AhrRtg_SF)"
+    },
+    "max_cha_rte": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 24,
+      "unit": "W",
+      "description": "Maximum charge rate (MaxChaRte)"
+    },
+    "max_cha_rte_sf": {
+      "address": 24,
+      "type": "i16",
+      "access": "r",
+      "description": "Max charge rate scale factor (MaxChaRte_SF)"
+    },
+    "max_dis_cha_rte": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 26,
+      "unit": "W",
+      "description": "Maximum discharge rate (MaxDisChaRte)"
+    },
+    "max_dis_cha_rte_sf": {
+      "address": 26,
+      "type": "i16",
+      "access": "r",
+      "description": "Max discharge rate scale factor (MaxDisChaRte_SF)"
+    },
+    "pad": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Padding register"
+    }
+  },
+  "_source_verified": "Verified: Model 120 register offsets confirmed against official sunspec/models/smdx/smdx_00120.xml"
+}

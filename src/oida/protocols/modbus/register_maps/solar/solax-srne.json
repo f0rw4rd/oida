@@ -1,0 +1,198 @@
+{
+  "vendor": "SRNE",
+  "model": "Hybrid",
+  "description": "SRNE Hybrid inverter register map extracted from homeassistant-solax-modbus",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "SRNE hybrid inverters.",
+  "source": "https://github.com/wills106/homeassistant-solax-modbus",
+  "registers": {
+    "battery_capacity_charge": {
+      "address": 256,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Capacity",
+      "unit": "%"
+    },
+    "battery_voltage": {
+      "address": 257,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "battery_current": {
+      "address": 258,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_voltage_1": {
+      "address": 263,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_1": {
+      "address": 264,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_1": {
+      "address": 265,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Power 1",
+      "unit": "W"
+    },
+    "charger_state": {
+      "address": 267,
+      "type": "u16",
+      "access": "r",
+      "description": "Charger State"
+    },
+    "battery_power": {
+      "address": 270,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Power",
+      "unit": "W"
+    },
+    "pv_voltage_2": {
+      "address": 271,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 2",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv_current_2": {
+      "address": 272,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv_power_2": {
+      "address": 273,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Power 2",
+      "unit": "W"
+    },
+    "run_mode": {
+      "address": 528,
+      "type": "u16",
+      "access": "r",
+      "description": "Run Mode"
+    },
+    "grid_voltage_meter_l1": {
+      "address": 531,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage L1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_current_l1": {
+      "address": 532,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current L1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_frequency_l1": {
+      "address": 533,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Frequency L1",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "inverter_voltage_meter_l1": {
+      "address": 534,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "inverter_current_l1": {
+      "address": 535,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_frequency_l1": {
+      "address": 536,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Frequency L1",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "load_current_l1": {
+      "address": 537,
+      "type": "u16",
+      "access": "r",
+      "description": "Load Current L1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_charge_mains": {
+      "address": 542,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Mains",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "dc_dc_temperature": {
+      "address": 544,
+      "type": "u16",
+      "access": "r",
+      "description": "DC-DC Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "dc_ac_temperature": {
+      "address": 545,
+      "type": "u16",
+      "access": "r",
+      "description": "DC-AC Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "translator_temperature": {
+      "address": 546,
+      "type": "u16",
+      "access": "r",
+      "description": "Translator Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "battery_charge_pv": {
+      "address": 548,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge PV",
+      "unit": "A",
+      "scale": 0.1
+    }
+  },
+  "_source_verified": "Verified: plugin_srne.py confirmed (WIP); SRNE Modbus protocol V1.7 publicly available"
+}

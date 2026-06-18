@@ -1,0 +1,213 @@
+{
+  "protocol": "socks",
+  "display_filter": "socks",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:58:40.643359+00:00",
+  "dissector_fields": {
+    "total": 27,
+    "by_type": {
+      "FT_BYTES": 1,
+      "FT_IPv4": 1,
+      "FT_IPv6": 1,
+      "FT_NONE": 4,
+      "FT_STRING": 3,
+      "FT_STRINGZ": 1,
+      "FT_UINT16": 4,
+      "FT_UINT8": 12
+    },
+    "fields": [
+      {
+        "name": "socks.version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.dst",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "socks.dstV6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "socks.gssapi.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "socks.gssapi.command",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.gssapi.length",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "socks.v4a_dns_name",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "socks.dstport",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "socks.command",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.results",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.auth_method_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.auth_method",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "socks.auth_accepted_method",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.auth_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.remote_host_port",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "socks.subnegotiation_version",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.username",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "socks.password",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "socks.remote_name",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "socks.address_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.fragment_number",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "socks.ping_end_command",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "socks.ping_results",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "socks.traceroute_end_command",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "socks.traceroute_results",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 9,
+    "by_pcap": {
+      "generated_socks.pcap": [
+        "socks_socks_auth_accepted_method",
+        "socks_socks_auth_method",
+        "socks_socks_auth_method_count",
+        "socks_socks_auth_status",
+        "socks_socks_password",
+        "socks_socks_subnegotiation_version",
+        "socks_socks_username",
+        "socks_socks_version",
+        "text"
+      ]
+    },
+    "union": [
+      "socks_socks_auth_accepted_method",
+      "socks_socks_auth_method",
+      "socks_socks_auth_method_count",
+      "socks_socks_auth_status",
+      "socks_socks_password",
+      "socks_socks_subnegotiation_version",
+      "socks_socks_username",
+      "socks_socks_version",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 8,
+    "fields": [
+      "auth_accepted_method",
+      "auth_method",
+      "auth_method_count",
+      "auth_status",
+      "password",
+      "subnegotiation_version",
+      "username",
+      "version"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "8/27 (29%)",
+    "pcap_vs_extracted": "8/8 (100%)",
+    "t1_extracted": "8/8 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [],
+    "summary": {
+      "t1_total": 14,
+      "t1_in_pcap": 8,
+      "t1_covered": 8,
+      "t2_total": 9,
+      "t2_in_pcap": 0,
+      "t2_covered": 0,
+      "t3_skipped": 4,
+      "t4_ignored": 0
+    }
+  }
+}

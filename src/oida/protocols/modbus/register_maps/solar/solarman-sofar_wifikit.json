@@ -1,0 +1,363 @@
+{
+  "vendor": "Sofar",
+  "model": "Wifikit",
+  "description": "Imported from Home Assistant Solarman (sofar_wifikit.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/sofar_wifikit.yaml",
+  "registers": {
+    "generation_power": {
+      "address": 533,
+      "type": "u16",
+      "access": "ro",
+      "description": "Generation Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "daily_generation": {
+      "address": 536,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Generation",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "total_generation": {
+      "address": 541,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Generation",
+      "unit": "kWh"
+    },
+    "daily_generation_time": {
+      "address": 579,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Generation Time",
+      "unit": "min"
+    },
+    "total_generation_time": {
+      "address": 581,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Generation Time",
+      "unit": "h"
+    },
+    "consumption_power": {
+      "address": 531,
+      "type": "u16",
+      "access": "ro",
+      "description": "Consumption Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "daily_consumption": {
+      "address": 539,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Consumption",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "total_consumption": {
+      "address": 547,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Consumption",
+      "unit": "kWh"
+    },
+    "grid_a_voltage": {
+      "address": 518,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid A Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_a_current": {
+      "address": 519,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid A Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "grid_b_voltage": {
+      "address": 520,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid B Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_b_current": {
+      "address": 521,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid B Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "grid_c_voltage": {
+      "address": 522,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid C Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_c_current": {
+      "address": 523,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid C Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "grid_frequency": {
+      "address": 524,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "daily_power_sold": {
+      "address": 537,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Power Sold",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "daily_power_bought": {
+      "address": 538,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Power Bought",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "battery_voltage": {
+      "address": 526,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.01
+    },
+    "battery_current": {
+      "address": 527,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "battery_charge_discharge_power": {
+      "address": 525,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Charge / Discharge Power",
+      "unit": "kW",
+      "scale": 0.01
+    },
+    "battery_soc": {
+      "address": 528,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery SOC",
+      "unit": "%"
+    },
+    "battery_temperature": {
+      "address": 529,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Temperature",
+      "unit": "°C"
+    },
+    "battery_capacity": {
+      "address": 4273,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Capacity"
+    },
+    "battery_max_charge_voltage": {
+      "address": 4275,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Max Charge Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "battery_max_charge_current": {
+      "address": 4276,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Max Charge Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "battery_min_discharge_voltage": {
+      "address": 4278,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Min Discharge Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "battery_max_discharge_current": {
+      "address": 4279,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Max Discharge Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "battery_discharge_depth": {
+      "address": 4281,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Discharge Depth",
+      "unit": "%"
+    },
+    "battery_empty_voltage": {
+      "address": 4283,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Empty Voltage",
+      "unit": "V",
+      "scale": 0.01
+    },
+    "battery_full_voltage": {
+      "address": 4284,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Full Voltage",
+      "unit": "V",
+      "scale": 0.01
+    },
+    "battery_type": {
+      "address": 4272,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Type"
+    },
+    "inverter_status": {
+      "address": 512,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Status"
+    },
+    "inverter_temperature": {
+      "address": 568,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Temperature",
+      "unit": "°C"
+    },
+    "inverter_heatsink_temperature": {
+      "address": 569,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Heat-Sink Temperature",
+      "unit": "°C"
+    },
+    "inverter_bus_voltage": {
+      "address": 557,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Bus Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "llc_bus_voltage": {
+      "address": 558,
+      "type": "u16",
+      "access": "ro",
+      "description": "LLC Bus Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "countdown_time": {
+      "address": 554,
+      "type": "u16",
+      "access": "ro",
+      "description": "Countdown Time",
+      "unit": "s"
+    },
+    "inverter_alert_message": {
+      "address": 555,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Alert Message"
+    },
+    "communication_board_inner_message": {
+      "address": 578,
+      "type": "u16",
+      "access": "ro",
+      "description": "Communication Board Inner Message"
+    },
+    "country": {
+      "address": 570,
+      "type": "u16",
+      "access": "ro",
+      "description": "Country"
+    },
+    "fault_1": {
+      "address": 513,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 1"
+    },
+    "fault_2": {
+      "address": 514,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 2"
+    },
+    "fault_3": {
+      "address": 515,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 3"
+    },
+    "fault_4": {
+      "address": 516,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 4"
+    },
+    "fault_5": {
+      "address": 517,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 5"
+    },
+    "production_code": {
+      "address": 8192,
+      "type": "u16",
+      "access": "ro",
+      "description": "Production Code"
+    },
+    "serial_number": {
+      "address": 8193,
+      "type": "str",
+      "access": "ro",
+      "description": "Serial Number"
+    },
+    "software_version": {
+      "address": 8200,
+      "type": "str",
+      "access": "ro",
+      "description": "Software Version"
+    },
+    "hardware_version": {
+      "address": 8202,
+      "type": "str",
+      "access": "ro",
+      "description": "Hardware Version"
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed at StephanJoubert/home_assistant_solarman"
+}

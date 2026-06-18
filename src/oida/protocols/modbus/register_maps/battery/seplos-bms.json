@@ -1,0 +1,338 @@
+{
+  "vendor": "Seplos",
+  "model": "BMS V3 (48V LiFePO4)",
+  "description": "Seplos battery management system V3 protocol with Modbus RTU",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 0,
+  "notes": "Seplos V3 protocol. Default baud: 19200, 8N1. Unit ID 0 = broadcast to all packs. Supports daisy-chaining multiple packs. Input registers (FC04).",
+  "source": "https://github.com/marcelrv/seplosBMSv3, https://github.com/syssi/esphome-seplos-bms",
+  "registers": {
+    "pack_voltage": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Total pack voltage"
+    },
+    "pack_current": {
+      "address": 1,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Pack current (positive = charge)"
+    },
+    "remaining_capacity": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "unit": "Ah",
+      "scale": 0.01,
+      "description": "Remaining capacity"
+    },
+    "full_capacity": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "unit": "Ah",
+      "scale": 0.01,
+      "description": "Full charge capacity"
+    },
+    "cycle_count": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Cycle count"
+    },
+    "soc": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "State of charge"
+    },
+    "soh": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "State of health"
+    },
+    "port_voltage": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Output port voltage"
+    },
+    "cell_count": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of cells"
+    },
+    "temp_count": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of temperature sensors"
+    },
+    "cell_voltage_1": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 1 voltage"
+    },
+    "cell_voltage_2": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 2 voltage"
+    },
+    "cell_voltage_3": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 3 voltage"
+    },
+    "cell_voltage_4": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 4 voltage"
+    },
+    "cell_voltage_5": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 5 voltage"
+    },
+    "cell_voltage_6": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 6 voltage"
+    },
+    "cell_voltage_7": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 7 voltage"
+    },
+    "cell_voltage_8": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 8 voltage"
+    },
+    "cell_voltage_9": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 9 voltage"
+    },
+    "cell_voltage_10": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 10 voltage"
+    },
+    "cell_voltage_11": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 11 voltage"
+    },
+    "cell_voltage_12": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 12 voltage"
+    },
+    "cell_voltage_13": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 13 voltage"
+    },
+    "cell_voltage_14": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 14 voltage"
+    },
+    "cell_voltage_15": {
+      "address": 30,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 15 voltage"
+    },
+    "cell_voltage_16": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Cell 16 voltage"
+    },
+    "temp_sensor_1": {
+      "address": 48,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 1 (cell)"
+    },
+    "temp_sensor_2": {
+      "address": 49,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 2 (cell)"
+    },
+    "temp_sensor_3": {
+      "address": 50,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 3 (cell)"
+    },
+    "temp_sensor_4": {
+      "address": 51,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Temperature sensor 4 (cell)"
+    },
+    "temp_environment": {
+      "address": 52,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Environment temperature"
+    },
+    "temp_mosfet": {
+      "address": 53,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "MOSFET temperature"
+    },
+    "cell_voltage_max": {
+      "address": 64,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Maximum cell voltage"
+    },
+    "cell_voltage_min": {
+      "address": 65,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Minimum cell voltage"
+    },
+    "cell_voltage_max_cell": {
+      "address": 66,
+      "type": "u16",
+      "access": "r",
+      "description": "Cell number with max voltage"
+    },
+    "cell_voltage_min_cell": {
+      "address": 67,
+      "type": "u16",
+      "access": "r",
+      "description": "Cell number with min voltage"
+    },
+    "cell_voltage_avg": {
+      "address": 68,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Average cell voltage"
+    },
+    "cell_voltage_diff": {
+      "address": 69,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.001,
+      "description": "Max-min cell voltage difference"
+    },
+    "discharge_mosfet": {
+      "address": 80,
+      "type": "u16",
+      "access": "r",
+      "description": "Discharge MOSFET state (1 = on)"
+    },
+    "charge_mosfet": {
+      "address": 81,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge MOSFET state (1 = on)"
+    },
+    "balance_state": {
+      "address": 82,
+      "type": "u16",
+      "access": "r",
+      "description": "Balance state (bitfield per cell)"
+    },
+    "alarm_status": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "Alarm status (bitfield)"
+    },
+    "protection_status": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "description": "Protection status (bitfield)"
+    }
+  },
+  "_source_verified": "PARTIAL: Seplos BMS V3 is real and source repos exist, but V3 protocol docs show register ranges at 0x1000+ which differ from the 0-based addresses in this file. May represent V2 protocol or different abstraction layer."
+}

@@ -1,0 +1,118 @@
+{
+  "vendor": "Beckhoff",
+  "model": "BC9000/BC9020/BC9050/BC9120 Bus Terminal Controller",
+  "description": "Beckhoff Ethernet TCP/IP Bus Terminal Controller with integrated PLC",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_port": 502,
+  "source": "Beckhoff InfoSys BC9000 documentation",
+  "notes": {
+    "plc_variables": "16 bytes I/O assigned to fieldbus by default, starting at address 128",
+    "fieldbus_mode": "Terminals must be set to 'Field bus terminal' mode in KS2000 for direct access",
+    "process_image": "Digital signals first, then byte-oriented (analog) signals"
+  },
+  "registers": {
+    "digital_input_0": {
+      "address": 0,
+      "type": "coil",
+      "access": "ro",
+      "function_code": 2,
+      "description": "Digital input coil 0 (when terminal mapped to fieldbus)"
+    },
+    "digital_output_0": {
+      "address": 0,
+      "type": "coil",
+      "access": "rw",
+      "function_code": 5,
+      "description": "Digital output coil 0 (when terminal mapped to fieldbus)"
+    },
+    "plc_input_word_0": {
+      "address": 128,
+      "type": "u16",
+      "access": "ro",
+      "function_code": 4,
+      "description": "PLC input variable word 0 (default fieldbus assignment)"
+    },
+    "plc_output_word_0": {
+      "address": 128,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "PLC output variable word 0 (default fieldbus assignment)"
+    },
+    "analog_input_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "function_code": 4,
+      "description": "Analog input register 0 (fieldbus mode)"
+    },
+    "analog_output_0": {
+      "address": 2048,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 6,
+      "description": "Analog output register 0 with 0x800 offset (fieldbus mode)"
+    },
+    "mb_flag_0": {
+      "address": 16384,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "PLC marker/flag MB0..MB1 with 0x4000 offset"
+    },
+    "mb_flag_1": {
+      "address": 16385,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "PLC marker/flag MB2..MB3 with 0x4000 offset"
+    }
+  },
+  "address_ranges": {
+    "digital_inputs": {
+      "start": 0,
+      "end": 511,
+      "function_code": 2,
+      "description": "Digital input coils"
+    },
+    "digital_outputs": {
+      "start": 0,
+      "end": 511,
+      "function_code": 5,
+      "description": "Digital output coils"
+    },
+    "plc_inputs": {
+      "start": 128,
+      "end": 143,
+      "function_code": 4,
+      "description": "Default PLC input variables (16 bytes)"
+    },
+    "plc_outputs": {
+      "start": 128,
+      "end": 143,
+      "function_code": 3,
+      "description": "Default PLC output variables (16 bytes)"
+    },
+    "analog_inputs": {
+      "start": 0,
+      "end": 127,
+      "function_code": 4,
+      "description": "Analog input registers"
+    },
+    "analog_outputs": {
+      "start": 2048,
+      "end": 2175,
+      "function_code": 6,
+      "description": "Analog outputs with 0x800 offset"
+    },
+    "mb_flags": {
+      "start": 16384,
+      "end": 32767,
+      "function_code": 3,
+      "description": "PLC marker/flag area with 0x4000 offset"
+    }
+  },
+  "_source_verified": "Verified: Modbus TCP interface at infosys.beckhoff.com; process image 0x0000, config 0x1000+ confirmed"
+}

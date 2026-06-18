@@ -1,0 +1,359 @@
+{
+  "vendor": "Mikro",
+  "model": "PFRLCD",
+  "description": "Mikro PFRLCD power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "frequency": {
+      "address": 17,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "phase_voltage_a": {
+      "address": 19,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage A",
+      "unit": "Vrms"
+    },
+    "phase_voltage_b": {
+      "address": 21,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage B",
+      "unit": "Vrms"
+    },
+    "phase_voltage_c": {
+      "address": 23,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage C",
+      "unit": "Vrms"
+    },
+    "phase_current_a": {
+      "address": 25,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current A",
+      "unit": "Irms"
+    },
+    "phase_current_b": {
+      "address": 27,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current B",
+      "unit": "Irms"
+    },
+    "phase_current_c": {
+      "address": 29,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current C",
+      "unit": "Irms"
+    },
+    "active_power_phase_a": {
+      "address": 31,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase A",
+      "unit": "W"
+    },
+    "reactive_power_phase_a": {
+      "address": 33,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase A",
+      "unit": "VAR"
+    },
+    "apparent_power_phase_a": {
+      "address": 35,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase A",
+      "unit": "VA"
+    },
+    "power_factor_phase_a": {
+      "address": 37,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase A"
+    },
+    "active_power_phase_b": {
+      "address": 39,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase B",
+      "unit": "W"
+    },
+    "reactive_power_phase_b": {
+      "address": 41,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase B",
+      "unit": "VAR"
+    },
+    "apparent_power_phase_b": {
+      "address": 43,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase B",
+      "unit": "VA"
+    },
+    "power_factor_phase_b": {
+      "address": 45,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase B"
+    },
+    "active_power_phase_c": {
+      "address": 47,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power phase C",
+      "unit": "W"
+    },
+    "reactive_power_phase_c": {
+      "address": 49,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power phase C",
+      "unit": "VAR"
+    },
+    "apparent_power_phase_c": {
+      "address": 51,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase C",
+      "unit": "VA"
+    },
+    "power_factor_phase_c": {
+      "address": 53,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase C"
+    },
+    "total_active_power": {
+      "address": 55,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "total_reactive_power": {
+      "address": 57,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "VAR"
+    },
+    "total_apparent_power": {
+      "address": 59,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "total_power_factor": {
+      "address": 61,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "fundamental_active_power_phase_a": {
+      "address": 63,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental active power phase A",
+      "unit": "W"
+    },
+    "fundamental_active_power_phase_b": {
+      "address": 65,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental active power phase B",
+      "unit": "W"
+    },
+    "fundamental_active_power_phase_c": {
+      "address": 67,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental active power phase C",
+      "unit": "W"
+    },
+    "fundamental_reactive_power_phase_a": {
+      "address": 69,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental reactive power phase A",
+      "unit": "VAR"
+    },
+    "fundamental_reactive_power_phase_b": {
+      "address": 71,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental reactive power phase B",
+      "unit": "VAR"
+    },
+    "fundamental_reactive_power_phase_c": {
+      "address": 73,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental reactive power phase C",
+      "unit": "VAR"
+    },
+    "harmonic_active_power_phase_a": {
+      "address": 75,
+      "type": "f32",
+      "access": "r",
+      "description": "Harmonic active power phase A",
+      "unit": "W"
+    },
+    "harmonic_active_power_phase_b": {
+      "address": 77,
+      "type": "f32",
+      "access": "r",
+      "description": "Harmonic active power phase B",
+      "unit": "W"
+    },
+    "harmonic_active_power_phase_c": {
+      "address": 79,
+      "type": "f32",
+      "access": "r",
+      "description": "Harmonic active power phase C",
+      "unit": "W"
+    },
+    "harmonic_reactive_power_phase_a": {
+      "address": 81,
+      "type": "f32",
+      "access": "r",
+      "description": "Harmonic reactive power phase A",
+      "unit": "VAR"
+    },
+    "harmonic_reactive_power_phase_b": {
+      "address": 83,
+      "type": "f32",
+      "access": "r",
+      "description": "Harmonic reactive power phase B",
+      "unit": "VAR"
+    },
+    "harmonic_reactive_power_phase_c": {
+      "address": 85,
+      "type": "f32",
+      "access": "r",
+      "description": "Harmonic reactive power phase C",
+      "unit": "VAR"
+    },
+    "total_voltage_harmonic_phase_a": {
+      "address": 87,
+      "type": "f32",
+      "access": "r",
+      "description": "Total voltage harmonic phase A",
+      "unit": "Vrms"
+    },
+    "total_voltage_harmonic_phase_b": {
+      "address": 89,
+      "type": "f32",
+      "access": "r",
+      "description": "Total voltage harmonic phase B",
+      "unit": "Vrms"
+    },
+    "total_voltage_harmonic_phase_c": {
+      "address": 91,
+      "type": "f32",
+      "access": "r",
+      "description": "Total voltage harmonic phase C",
+      "unit": "Vrms"
+    },
+    "total_current_harmonic_phase_a": {
+      "address": 93,
+      "type": "f32",
+      "access": "r",
+      "description": "Total current harmonic phase A",
+      "unit": "Irms"
+    },
+    "total_current_harmonic_phase_b": {
+      "address": 95,
+      "type": "f32",
+      "access": "r",
+      "description": "Total current harmonic phase B",
+      "unit": "Irms"
+    },
+    "total_current_harmonic_phase_c": {
+      "address": 97,
+      "type": "f32",
+      "access": "r",
+      "description": "Total current harmonic phase C",
+      "unit": "Irms"
+    },
+    "voltage_a_harmonics_0": {
+      "address": 99,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 0",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_1": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 1",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_2": {
+      "address": 101,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 2",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_3": {
+      "address": 102,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 3",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_4": {
+      "address": 103,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 4",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_5": {
+      "address": 104,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 5",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_6": {
+      "address": 105,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 6",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_7": {
+      "address": 106,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 7",
+      "unit": "%"
+    },
+    "voltage_a_harmonics_8": {
+      "address": 107,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A harmonics 8",
+      "unit": "%"
+    }
+  }
+}

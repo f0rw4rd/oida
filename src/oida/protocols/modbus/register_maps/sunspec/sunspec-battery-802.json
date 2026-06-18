@@ -1,0 +1,493 @@
+{
+  "vendor": "SunSpec",
+  "model": "Battery Base Model 802",
+  "description": "SunSpec Model 802 - Battery Base Model for energy storage systems",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 802,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 802 is the required base model for all SunSpec battery devices. Model length is 62 registers. Maps to IEC 61850 DBAT logical node. Addresses include 2-register header.",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00802.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (802 = Battery Base Model)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length (62 registers)"
+    },
+    "ah_rtg": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 52,
+      "unit": "Ah",
+      "description": "Nameplate charge capacity (AHRtg)"
+    },
+    "wh_rtg": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 53,
+      "unit": "Wh",
+      "description": "Nameplate energy capacity (WHRtg)"
+    },
+    "wcha_rte_max": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "W",
+      "description": "Maximum rate of energy transfer into storage (WChaRteMax)"
+    },
+    "wdischa_rte_max": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 54,
+      "unit": "W",
+      "description": "Maximum rate of energy transfer out of storage (WDisChaRteMax)"
+    },
+    "discha_rte": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 55,
+      "unit": "% WHRtg/day",
+      "description": "Self discharge rate (DisChaRte)"
+    },
+    "soc_max": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 56,
+      "unit": "%",
+      "description": "Manufacturer maximum state of charge (SoCMax)"
+    },
+    "soc_min": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 56,
+      "unit": "%",
+      "description": "Manufacturer minimum state of charge (SoCMin)"
+    },
+    "soc_rsv_max": {
+      "address": 9,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 56,
+      "unit": "%",
+      "description": "Maximum operational reserve setpoint (SocRsvMax)"
+    },
+    "soc_rsv_min": {
+      "address": 10,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 56,
+      "unit": "%",
+      "description": "Minimum operational reserve setpoint (SoCRsvMin)"
+    },
+    "soc": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 56,
+      "unit": "%",
+      "description": "State of charge (SoC)"
+    },
+    "dod": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 57,
+      "unit": "%",
+      "description": "Depth of discharge (DoD)"
+    },
+    "soh": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 58,
+      "unit": "%",
+      "description": "State of health (SoH)"
+    },
+    "n_cyc": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Number of charge/discharge cycles (NCyc)"
+    },
+    "cha_st": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge status (ChaSt)",
+      "enum": {
+        "1": "OFF",
+        "2": "EMPTY",
+        "3": "DISCHARGING",
+        "4": "CHARGING",
+        "5": "FULL",
+        "6": "HOLDING",
+        "7": "TESTING"
+      }
+    },
+    "loc_rem_ctl": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery control mode (LocRemCtl)",
+      "enum": {
+        "0": "REMOTE",
+        "1": "LOCAL"
+      }
+    },
+    "hb": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery heartbeat - increments every second (Hb)"
+    },
+    "ctrl_hb": {
+      "address": 19,
+      "type": "u16",
+      "access": "rw",
+      "description": "Controller heartbeat (CtrlHb)"
+    },
+    "alm_rst": {
+      "address": 20,
+      "type": "u16",
+      "access": "rw",
+      "description": "Alarm reset - write 1 to reset latched alarms (AlmRst)"
+    },
+    "typ": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery type (Typ)",
+      "enum": {
+        "0": "NOT_APPLICABLE_UNKNOWN",
+        "1": "LEAD_ACID",
+        "2": "NICKEL_METAL_HYDRATE",
+        "3": "NICKEL_CADMIUM",
+        "4": "LITHIUM_ION",
+        "5": "CARBON_ZINC",
+        "6": "ZINC_CHLORIDE",
+        "7": "ALKALINE",
+        "8": "RECHARGEABLE_ALKALINE",
+        "9": "SODIUM_SULFUR",
+        "10": "FLOW",
+        "99": "OTHER"
+      }
+    },
+    "state": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery bank state (State)",
+      "enum": {
+        "1": "DISCONNECTED",
+        "2": "INITIALIZING",
+        "3": "CONNECTED",
+        "4": "STANDBY",
+        "5": "SOC_PROTECTION",
+        "6": "SUSPENDING",
+        "99": "FAULT"
+      }
+    },
+    "state_vnd": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Vendor specific battery bank state (StateVnd)"
+    },
+    "warr_dt": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "Warranty expiration date - days since 1/1/2000 (WarrDt)"
+    },
+    "evt1": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "description": "Event bitfield 1 (Evt1)",
+      "bitfield": {
+        "0": "COMMUNICATION_ERROR",
+        "1": "OVER_TEMP_ALARM",
+        "2": "OVER_TEMP_WARNING",
+        "3": "UNDER_TEMP_ALARM",
+        "4": "UNDER_TEMP_WARNING",
+        "5": "OVER_CHARGE_CURRENT_ALARM",
+        "6": "OVER_CHARGE_CURRENT_WARNING",
+        "7": "OVER_DISCHARGE_CURRENT_ALARM",
+        "8": "OVER_DISCHARGE_CURRENT_WARNING",
+        "9": "OVER_VOLT_ALARM",
+        "10": "OVER_VOLT_WARNING",
+        "11": "UNDER_VOLT_ALARM",
+        "12": "UNDER_VOLT_WARNING",
+        "13": "UNDER_SOC_MIN_ALARM",
+        "14": "UNDER_SOC_MIN_WARNING",
+        "15": "OVER_SOC_MAX_ALARM",
+        "16": "OVER_SOC_MAX_WARNING",
+        "17": "VOLTAGE_IMBALANCE_WARNING",
+        "18": "TEMPERATURE_IMBALANCE_ALARM",
+        "19": "TEMPERATURE_IMBALANCE_WARNING",
+        "20": "CONTACTOR_ERROR",
+        "21": "FAN_ERROR",
+        "22": "GROUND_FAULT",
+        "23": "OPEN_DOOR_ERROR",
+        "24": "CURRENT_IMBALANCE_WARNING",
+        "25": "OTHER_ALARM",
+        "26": "OTHER_WARNING",
+        "27": "RESERVED_1",
+        "28": "CONFIGURATION_ALARM",
+        "29": "CONFIGURATION_WARNING"
+      }
+    },
+    "evt2": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "Event bitfield 2 - reserved (Evt2)"
+    },
+    "evt_vnd1": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 1 (EvtVnd1)"
+    },
+    "evt_vnd2": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 2 (EvtVnd2)"
+    },
+    "v": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 59,
+      "unit": "V",
+      "description": "DC Bus Voltage (V)"
+    },
+    "v_max": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 59,
+      "unit": "V",
+      "description": "Instantaneous maximum battery voltage (VMax)"
+    },
+    "v_min": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 59,
+      "unit": "V",
+      "description": "Instantaneous minimum battery voltage (VMin)"
+    },
+    "cell_v_max": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 60,
+      "unit": "V",
+      "description": "Maximum cell voltage (CellVMax)"
+    },
+    "cell_v_max_str": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "String containing cell with max voltage (CellVMaxStr)"
+    },
+    "cell_v_max_mod": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Module containing cell with max voltage (CellVMaxMod)"
+    },
+    "cell_v_min": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 60,
+      "unit": "V",
+      "description": "Minimum cell voltage (CellVMin)"
+    },
+    "cell_v_min_str": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "String containing cell with min voltage (CellVMinStr)"
+    },
+    "cell_v_min_mod": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "Module containing cell with min voltage (CellVMinMod)"
+    },
+    "cell_v_avg": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 60,
+      "unit": "V",
+      "description": "Average cell voltage (CellVAvg)"
+    },
+    "a": {
+      "address": 44,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 61,
+      "unit": "A",
+      "description": "Total DC current (A)"
+    },
+    "a_cha_max": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 62,
+      "unit": "A",
+      "description": "Instantaneous max DC charge current (AChaMax)"
+    },
+    "a_discha_max": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 62,
+      "unit": "A",
+      "description": "Instantaneous max DC discharge current (ADisChaMax)"
+    },
+    "w": {
+      "address": 47,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 63,
+      "unit": "W",
+      "description": "Total power (W)"
+    },
+    "req_inv_state": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter start/stop request from battery (ReqInvState)",
+      "enum": {
+        "0": "NO_REQUEST",
+        "1": "START",
+        "2": "STOP"
+      }
+    },
+    "req_w": {
+      "address": 49,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 63,
+      "unit": "W",
+      "description": "AC Power requested by battery (ReqW)"
+    },
+    "set_op": {
+      "address": 50,
+      "type": "u16",
+      "access": "rw",
+      "description": "Battery operation command (SetOp)",
+      "enum": {
+        "1": "CONNECT",
+        "2": "DISCONNECT"
+      }
+    },
+    "set_inv_state": {
+      "address": 51,
+      "type": "u16",
+      "access": "rw",
+      "description": "Set inverter state (SetInvState)",
+      "enum": {
+        "1": "INVERTER_STOPPED",
+        "2": "INVERTER_STANDBY",
+        "3": "INVERTER_STARTED"
+      }
+    },
+    "ah_rtg_sf": {
+      "address": 52,
+      "type": "i16",
+      "access": "r",
+      "description": "Charge capacity scale factor (AHRtg_SF)"
+    },
+    "wh_rtg_sf": {
+      "address": 53,
+      "type": "i16",
+      "access": "r",
+      "description": "Energy capacity scale factor (WHRtg_SF)"
+    },
+    "wcha_discha_max_sf": {
+      "address": 54,
+      "type": "i16",
+      "access": "r",
+      "description": "Max charge/discharge rate scale factor (WChaDisChaMax_SF)"
+    },
+    "discha_rte_sf": {
+      "address": 55,
+      "type": "i16",
+      "access": "r",
+      "description": "Self discharge rate scale factor (DisChaRte_SF)"
+    },
+    "soc_sf": {
+      "address": 56,
+      "type": "i16",
+      "access": "r",
+      "description": "State of charge scale factor (SoC_SF)"
+    },
+    "dod_sf": {
+      "address": 57,
+      "type": "i16",
+      "access": "r",
+      "description": "Depth of discharge scale factor (DoD_SF)"
+    },
+    "soh_sf": {
+      "address": 58,
+      "type": "i16",
+      "access": "r",
+      "description": "State of health scale factor (SoH_SF)"
+    },
+    "v_sf": {
+      "address": 59,
+      "type": "i16",
+      "access": "r",
+      "description": "DC bus voltage scale factor (V_SF)"
+    },
+    "cell_v_sf": {
+      "address": 60,
+      "type": "i16",
+      "access": "r",
+      "description": "Cell voltage scale factor (CellV_SF)"
+    },
+    "a_sf": {
+      "address": 61,
+      "type": "i16",
+      "access": "r",
+      "description": "DC current scale factor (A_SF)"
+    },
+    "a_max_sf": {
+      "address": 62,
+      "type": "i16",
+      "access": "r",
+      "description": "Instantaneous DC current scale factor (AMax_SF)"
+    },
+    "w_sf": {
+      "address": 63,
+      "type": "i16",
+      "access": "r",
+      "description": "AC power scale factor (W_SF)"
+    }
+  },
+  "_source_verified": "Verified: Model 802 register offsets confirmed against official sunspec/models/smdx/smdx_00802.xml"
+}

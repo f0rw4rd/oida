@@ -1,0 +1,35 @@
+# wu-ftpd 2.6.1 - CVE-2001-0550 (File Globbing Heap Corruption) - SIMULATED
+# Heap corruption in glob function (ftpglob)
+# Reference: https://www.exploit-db.com/exploits/21161
+#
+# VULNERABLE: "~{" pattern in commands like ls/CWD causes heap corruption
+# Affects: wu-ftpd 2.6.1 and earlier
+#
+# For authorized security testing only
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create simulated vulnerable wu-ftpd server
+COPY wuftpd_glob.c /tmp/wuftpd_glob.c
+RUN gcc -fno-stack-protector -z execstack -no-pie -g -o /usr/local/sbin/wuftpd_glob /tmp/wuftpd_glob.c \
+    && rm /tmp/wuftpd_glob.c
+
+# Create FTP directories
+RUN mkdir -p /var/ftp/pub \
+    && chmod 755 /var/ftp
+
+# Create startup script
+RUN printf '#!/bin/sh\necho "Starting wu-ftpd 2.6.1 simulator (CVE-2001-0550 vulnerable)"\necho "WARNING: This server is intentionally vulnerable for security testing"\nexec /usr/local/sbin/wuftpd_glob\n' > /start.sh \
+    && chmod +x /start.sh
+
+EXPOSE 2124
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
+    CMD nc -zv localhost 2124 || exit 1
+
+CMD ["/start.sh"]

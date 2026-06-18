@@ -1,0 +1,352 @@
+{
+  "vendor": "Pilot",
+  "model": "SPM 33",
+  "description": "Pilot SPM 33 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_b_voltage": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B voltage",
+      "unit": "V"
+    },
+    "phase_c_voltage": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C voltage",
+      "unit": "V"
+    },
+    "line_ab_voltage": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Line ab voltage",
+      "unit": "V"
+    },
+    "line_bc_voltage": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Line bc voltage",
+      "unit": "V"
+    },
+    "line_ca_voltage": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Line ca voltage",
+      "unit": "V"
+    },
+    "phase_a_current": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A current",
+      "unit": "A"
+    },
+    "phase_b_current": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B current",
+      "unit": "A"
+    },
+    "phase_c_current": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C current",
+      "unit": "A"
+    },
+    "neutral_current": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "total_active_power": {
+      "address": 10,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "total_reactive_power": {
+      "address": 12,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "Var"
+    },
+    "total_power_factor": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "phase_a_active_power": {
+      "address": 15,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A active power",
+      "unit": "W"
+    },
+    "phase_b_active_power": {
+      "address": 16,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B active power",
+      "unit": "W"
+    },
+    "phase_c_active_power": {
+      "address": 17,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C active power",
+      "unit": "W"
+    },
+    "phase_a_reactive_power": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A reactive power",
+      "unit": "W"
+    },
+    "phase_b_reactive_power": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B reactive power",
+      "unit": "W"
+    },
+    "phase_c_reactive_power": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C reactive power",
+      "unit": "W"
+    },
+    "phase_a_power_factor": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor": {
+      "address": 23,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "frequency": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "total_active_energy": {
+      "address": 25,
+      "type": "u32",
+      "access": "r",
+      "description": "Total active energy",
+      "unit": "kWh"
+    },
+    "total_reactive_energy": {
+      "address": 27,
+      "type": "u32",
+      "access": "r",
+      "description": "Total reactive energy",
+      "unit": "kvarh"
+    },
+    "input_active_energy": {
+      "address": 29,
+      "type": "u32",
+      "access": "r",
+      "description": "Input active energy",
+      "unit": "kWh"
+    },
+    "output_active_energy": {
+      "address": 31,
+      "type": "u32",
+      "access": "r",
+      "description": "Output active energy",
+      "unit": "kWh"
+    },
+    "input_reactive_energy": {
+      "address": 33,
+      "type": "u32",
+      "access": "r",
+      "description": "Input reactive energy",
+      "unit": "kvarh"
+    },
+    "output_reactive_energy": {
+      "address": 35,
+      "type": "u32",
+      "access": "r",
+      "description": "Output reactive energy",
+      "unit": "kvarh"
+    },
+    "on_off_status": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "On off status"
+    },
+    "relay_status": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Relay status"
+    },
+    "alarm_status": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Alarm status"
+    },
+    "ct_ratio": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Ct ratio"
+    },
+    "average_phase_voltage": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase voltage",
+      "unit": "V"
+    },
+    "average_line_voltage": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "description": "Average line voltage",
+      "unit": "V"
+    },
+    "average_phase_current": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current",
+      "unit": "A"
+    },
+    "current_unbalance_rate": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance rate",
+      "unit": "A"
+    },
+    "phase_a_apparent_power": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A apparent power",
+      "unit": "VA"
+    },
+    "phase_b_apparent_power": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B apparent power",
+      "unit": "VA"
+    },
+    "phase_c_apparent_power": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C apparent power",
+      "unit": "VA"
+    },
+    "total_apparent_power": {
+      "address": 49,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "grid_input_active_energy": {
+      "address": 51,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid input active energy",
+      "unit": "kWh"
+    },
+    "grid_output_active_energy": {
+      "address": 53,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid output active energy"
+    },
+    "grid_total_active_energy": {
+      "address": 55,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid total active energy"
+    },
+    "grid_input_reactive_energy": {
+      "address": 57,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid input reactive energy",
+      "unit": "kvarh"
+    },
+    "grid_output_reactive_energy": {
+      "address": 59,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid output reactive energy",
+      "unit": "kvarh"
+    },
+    "grid_totalreactive_energy": {
+      "address": 61,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid totalreactive energy",
+      "unit": "kvarh"
+    },
+    "generator_input_active_energy": {
+      "address": 63,
+      "type": "u32",
+      "access": "r",
+      "description": "Generator input active energy",
+      "unit": "kWh"
+    },
+    "generator_output_active_energy": {
+      "address": 65,
+      "type": "u32",
+      "access": "r",
+      "description": "Generator output active energy",
+      "unit": "kWh"
+    },
+    "generator_total_active_energy": {
+      "address": 67,
+      "type": "u32",
+      "access": "r",
+      "description": "Generator total active energy",
+      "unit": "kWh"
+    },
+    "generator_input_reactive_energy": {
+      "address": 69,
+      "type": "u32",
+      "access": "r",
+      "description": "Generator input reactive energy",
+      "unit": "kvarh"
+    }
+  }
+}

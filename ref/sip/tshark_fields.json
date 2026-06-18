@@ -1,0 +1,2409 @@
+{
+  "protocol": "sip",
+  "display_filter": "sip",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:58:00.136281+00:00",
+  "dissector_fields": {
+    "total": 295,
+    "by_type": {
+      "FT_ABSOLUTE_TIME": 1,
+      "FT_BOOLEAN": 2,
+      "FT_BYTES": 3,
+      "FT_FRAMENUM": 2,
+      "FT_GUID": 2,
+      "FT_NONE": 11,
+      "FT_STRING": 251,
+      "FT_UINT16": 5,
+      "FT_UINT32": 18
+    },
+    "fields": [
+      {
+        "name": "sip.msg_hdr",
+        "type": "FT_STRING",
+        "description": "Message Header in SIP message"
+      },
+      {
+        "name": "sip.Method",
+        "type": "FT_STRING",
+        "description": "SIP Method"
+      },
+      {
+        "name": "sip.Request-Line",
+        "type": "FT_STRING",
+        "description": "SIP Request-Line"
+      },
+      {
+        "name": "sip.r-uri.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP R-URI Display Info"
+      },
+      {
+        "name": "sip.r-uri",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP R-URI"
+      },
+      {
+        "name": "sip.r-uri.user",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP R-URI User"
+      },
+      {
+        "name": "sip.r-uri.host",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP R-URI Host"
+      },
+      {
+        "name": "sip.r-uri.port",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP R-URI Port"
+      },
+      {
+        "name": "sip.r-uri.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Status-Code",
+        "type": "FT_UINT32",
+        "description": "SIP Status Code"
+      },
+      {
+        "name": "sip.Status-Line",
+        "type": "FT_STRING",
+        "description": "SIP Status-Line"
+      },
+      {
+        "name": "sip.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Display info"
+      },
+      {
+        "name": "sip.to.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: To Display info"
+      },
+      {
+        "name": "sip.to.addr",
+        "type": "FT_STRING",
+        "description": "RFC 3261: To Address"
+      },
+      {
+        "name": "sip.to.user",
+        "type": "FT_STRING",
+        "description": "RFC 3261: To Address User"
+      },
+      {
+        "name": "sip.to.host",
+        "type": "FT_STRING",
+        "description": "RFC 3261: To Address Host"
+      },
+      {
+        "name": "sip.to.port",
+        "type": "FT_STRING",
+        "description": "RFC 3261: To Address Port"
+      },
+      {
+        "name": "sip.to.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.to.tag",
+        "type": "FT_STRING",
+        "description": "RFC 3261: to tag"
+      },
+      {
+        "name": "sip.from.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: From Display info"
+      },
+      {
+        "name": "sip.from.addr",
+        "type": "FT_STRING",
+        "description": "RFC 3261: From Address"
+      },
+      {
+        "name": "sip.from.user",
+        "type": "FT_STRING",
+        "description": "RFC 3261: From Address User"
+      },
+      {
+        "name": "sip.from.host",
+        "type": "FT_STRING",
+        "description": "RFC 3261: From Address Host"
+      },
+      {
+        "name": "sip.from.port",
+        "type": "FT_STRING",
+        "description": "RFC 3261: From Address Port"
+      },
+      {
+        "name": "sip.from.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.from.tag",
+        "type": "FT_STRING",
+        "description": "RFC 3261: from tag"
+      },
+      {
+        "name": "sip.contact.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP C-URI Display info"
+      },
+      {
+        "name": "sip.contact.uri",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP C-URI"
+      },
+      {
+        "name": "sip.contact.user",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP C-URI User"
+      },
+      {
+        "name": "sip.contact.host",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP C-URI Host"
+      },
+      {
+        "name": "sip.contact.port",
+        "type": "FT_STRING",
+        "description": "RFC 3261: SIP C-URI Port"
+      },
+      {
+        "name": "sip.contact.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Route.display.info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Route.uri",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Route.user",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Route.host",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Route.port",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Route.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Record-Route.display.info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Record-Route.uri",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Record-Route.user",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Record-Route.host",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Record-Route.port",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Record-Route.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Service-Route.display.info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Service-Route.uri",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Service-Route.user",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Service-Route.host",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Service-Route.port",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Service-Route.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Path.display.info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Path.uri",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Path.user",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Path.host",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Path.port",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Path.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.contact.parameter",
+        "type": "FT_STRING",
+        "description": "RFC 3261: one contact parameter"
+      },
+      {
+        "name": "sip.tag",
+        "type": "FT_STRING",
+        "description": "RFC 3261: tag"
+      },
+      {
+        "name": "sip.pai.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Asserted-Identity Display info"
+      },
+      {
+        "name": "sip.pai.addr",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Asserted-Identity Address"
+      },
+      {
+        "name": "sip.pai.user",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Asserted-Identity User"
+      },
+      {
+        "name": "sip.pai.host",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Asserted-Identity Host"
+      },
+      {
+        "name": "sip.pai.port",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Asserted-Identity Port"
+      },
+      {
+        "name": "sip.pai.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.pmiss.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Permission Missing Display info"
+      },
+      {
+        "name": "sip.pmiss.addr",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Permission Missing Address"
+      },
+      {
+        "name": "sip.pmiss.user",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Permission Missing User"
+      },
+      {
+        "name": "sip.pmiss.host",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Permission Missing Host"
+      },
+      {
+        "name": "sip.pmiss.port",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Permission Missing Port"
+      },
+      {
+        "name": "sip.pmiss.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.ppi.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Preferred-Identity Display info"
+      },
+      {
+        "name": "sip.ppi.addr",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Preferred-Identity Address"
+      },
+      {
+        "name": "sip.ppi.user",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Preferred-Identity User"
+      },
+      {
+        "name": "sip.ppi.host",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Preferred-Identity Host"
+      },
+      {
+        "name": "sip.ppi.port",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Preferred-Identity Port"
+      },
+      {
+        "name": "sip.ppi.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.tc.display.info",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Trigger Consent Display info"
+      },
+      {
+        "name": "sip.tc.addr",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Trigger Consent Address"
+      },
+      {
+        "name": "sip.tc.user",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Trigger Consent User"
+      },
+      {
+        "name": "sip.tc.host",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Trigger Consent Host"
+      },
+      {
+        "name": "sip.tc.port",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Trigger Consent Port"
+      },
+      {
+        "name": "sip.tc.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.tc.target-uri",
+        "type": "FT_STRING",
+        "description": "RFC 3325: Trigger Consent Target URI"
+      },
+      {
+        "name": "sip.Accept",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Accept Header"
+      },
+      {
+        "name": "sip.Accept-Contact",
+        "type": "FT_STRING",
+        "description": "RFC 3841: Accept-Contact Header"
+      },
+      {
+        "name": "sip.Accept-Encoding",
+        "type": "FT_STRING",
+        "description": "RFC 3841: Accept-Encoding Header"
+      },
+      {
+        "name": "sip.Accept-Language",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Accept-Language Header"
+      },
+      {
+        "name": "sip.Accept-Resource-Priority",
+        "type": "FT_STRING",
+        "description": "Draft: Accept-Resource-Priority Header"
+      },
+      {
+        "name": "sip.Additional-Identity",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Alert-Info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Alert-Info Header"
+      },
+      {
+        "name": "sip.Allow",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Allow Header"
+      },
+      {
+        "name": "sip.Allow-Events",
+        "type": "FT_STRING",
+        "description": "RFC 3265: Allow-Events Header"
+      },
+      {
+        "name": "sip.Answer-Mode",
+        "type": "FT_STRING",
+        "description": "RFC 5373: Answer-Mode Header"
+      },
+      {
+        "name": "sip.Attestation-Info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Authentication-Info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Authentication-Info Header"
+      },
+      {
+        "name": "sip.Authorization",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Authorization Header"
+      },
+      {
+        "name": "sip.Call-ID",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Call-ID Header"
+      },
+      {
+        "name": "sip.Call-Info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Call-Info Header"
+      },
+      {
+        "name": "sip.Cellular-Network-Info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Contact",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Contact Header"
+      },
+      {
+        "name": "sip.Content-Disposition",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Content-Disposition Header"
+      },
+      {
+        "name": "sip.Content-Encoding",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Content-Encoding Header"
+      },
+      {
+        "name": "sip.Content-Language",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Content-Language Header"
+      },
+      {
+        "name": "sip.Content-Length",
+        "type": "FT_UINT32",
+        "description": "RFC 3261: Content-Length Header"
+      },
+      {
+        "name": "sip.Content-Type",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Content-Type Header"
+      },
+      {
+        "name": "sip.CSeq",
+        "type": "FT_STRING",
+        "description": "RFC 3261: CSeq Header"
+      },
+      {
+        "name": "sip.Date",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Date Header"
+      },
+      {
+        "name": "sip.Error-Info",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Error-Info Header"
+      },
+      {
+        "name": "sip.Event",
+        "type": "FT_STRING",
+        "description": "RFC 3265: Event Header"
+      },
+      {
+        "name": "sip.Expires",
+        "type": "FT_UINT32",
+        "description": "RFC 3261: Expires Header"
+      },
+      {
+        "name": "sip.Feature-Caps",
+        "type": "FT_STRING",
+        "description": "RFC 6809: Feature-Caps"
+      },
+      {
+        "name": "sip.Flow-Timer",
+        "type": "FT_STRING",
+        "description": "RFC 5626: Flow-Timer"
+      },
+      {
+        "name": "sip.From",
+        "type": "FT_STRING",
+        "description": "RFC 3261: From Header"
+      },
+      {
+        "name": "sip.Geolocation",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Geolocation-Error",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Geolocation-Routing",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.History-Info",
+        "type": "FT_STRING",
+        "description": "RFC 4244: Request History Information"
+      },
+      {
+        "name": "sip.Identity",
+        "type": "FT_STRING",
+        "description": "RFC 4474: Request Identity"
+      },
+      {
+        "name": "sip.Identity-info",
+        "type": "FT_STRING",
+        "description": "RFC 4474: Request Identity-info"
+      },
+      {
+        "name": "sip.Info-Package",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.In-Reply-To",
+        "type": "FT_STRING",
+        "description": "RFC 3261: In-Reply-To Header"
+      },
+      {
+        "name": "sip.Join",
+        "type": "FT_STRING",
+        "description": "Draft: Join Header"
+      },
+      {
+        "name": "sip.Max-Breadth",
+        "type": "FT_UINT32",
+        "description": "RFC 5393: Max-Breadth Header"
+      },
+      {
+        "name": "sip.Max-Forwards",
+        "type": "FT_UINT32",
+        "description": "RFC 3261: Max-Forwards Header"
+      },
+      {
+        "name": "sip.MIME-Version",
+        "type": "FT_STRING",
+        "description": "RFC 3261: MIME-Version Header"
+      },
+      {
+        "name": "sip.Min-Expires",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Min-Expires Header"
+      },
+      {
+        "name": "sip.Min-SE",
+        "type": "FT_STRING",
+        "description": "Draft: Min-SE Header"
+      },
+      {
+        "name": "sip.Organization",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Organization Header"
+      },
+      {
+        "name": "sip.Origination-Id",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.P-Access-Network-Info",
+        "type": "FT_STRING",
+        "description": "P-Access-Network-Info Header"
+      },
+      {
+        "name": "sip.P-Answer-State",
+        "type": "FT_STRING",
+        "description": "RFC 4964: P-Answer-State Header"
+      },
+      {
+        "name": "sip.P-Asserted-Identity",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Asserted-Identity Header"
+      },
+      {
+        "name": "sip.P-Asserted-Service",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.P-Charge-Info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.P-Associated-URI",
+        "type": "FT_STRING",
+        "description": "RFC 3455: P-Associated-URI Header"
+      },
+      {
+        "name": "sip.P-Called-Party-ID",
+        "type": "FT_STRING",
+        "description": "RFC 3455: P-Called-Party-ID Header"
+      },
+      {
+        "name": "sip.P-Charging-Function-Addresses",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.P-Charging-Vector",
+        "type": "FT_STRING",
+        "description": "P-Charging-Vector Header"
+      },
+      {
+        "name": "sip.P-DCS-Trace-Party-ID",
+        "type": "FT_STRING",
+        "description": "P-DCS-Trace-Party-ID Header"
+      },
+      {
+        "name": "sip.P-DCS-OSPS",
+        "type": "FT_STRING",
+        "description": "P-DCS-OSPS Header"
+      },
+      {
+        "name": "sip.P-DCS-Billing-Info",
+        "type": "FT_STRING",
+        "description": "P-DCS-Billing-Info Header"
+      },
+      {
+        "name": "sip.P-DCS-LAES",
+        "type": "FT_STRING",
+        "description": "P-DCS-LAES Header"
+      },
+      {
+        "name": "sip.P-DCS-Redirect",
+        "type": "FT_STRING",
+        "description": "P-DCS-Redirect Header"
+      },
+      {
+        "name": "sip.P-Early-Media",
+        "type": "FT_STRING",
+        "description": "P-Early-Media Header"
+      },
+      {
+        "name": "sip.P-Media-Authorization",
+        "type": "FT_STRING",
+        "description": "RFC 3313: P-Media-Authorization Header"
+      },
+      {
+        "name": "sip.P-Preferred-Identity",
+        "type": "FT_STRING",
+        "description": "RFC 3325: P-Preferred-Identity Header"
+      },
+      {
+        "name": "sip.P-Preferred-Service",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.P-Profile-Key",
+        "type": "FT_STRING",
+        "description": "P-Profile-Key Header"
+      },
+      {
+        "name": "sip.P-Refused-URI-List",
+        "type": "FT_STRING",
+        "description": "P-Refused-URI-List Header"
+      },
+      {
+        "name": "sip.P-Served-User",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.P-User-Database",
+        "type": "FT_STRING",
+        "description": "P-User-Database Header"
+      },
+      {
+        "name": "sip.P-Visited-Network-ID",
+        "type": "FT_STRING",
+        "description": "RFC 3455: P-Visited-Network-ID Header"
+      },
+      {
+        "name": "sip.Path",
+        "type": "FT_STRING",
+        "description": "RFC 3327: Path Header"
+      },
+      {
+        "name": "sip.Permission-Missing",
+        "type": "FT_STRING",
+        "description": "RFC 5360: Permission Missing Header"
+      },
+      {
+        "name": "sip.Policy_Contact",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Policy_ID",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Priority",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Priority Header"
+      },
+      {
+        "name": "sip.Priority-Share",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Priv-Answer-mode",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Privacy",
+        "type": "FT_STRING",
+        "description": "Privacy Header"
+      },
+      {
+        "name": "sip.Proxy-Authenticate",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Proxy-Authenticate Header"
+      },
+      {
+        "name": "sip.Proxy-Authorization",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Proxy-Authorization Header"
+      },
+      {
+        "name": "sip.Proxy-Require",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Proxy-Require Header"
+      },
+      {
+        "name": "sip.RAck",
+        "type": "FT_STRING",
+        "description": "RFC 3262: RAck Header"
+      },
+      {
+        "name": "sip.Reason",
+        "type": "FT_STRING",
+        "description": "RFC 3326 Reason Header"
+      },
+      {
+        "name": "sip.Reason-Phrase",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Record-Route",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Record-Route Header"
+      },
+      {
+        "name": "sip.Recv-Info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Refer-Sub",
+        "type": "FT_STRING",
+        "description": "RFC 4488: Refer-Sub Header"
+      },
+      {
+        "name": "sip.Refer-To",
+        "type": "FT_STRING",
+        "description": "RFC 3515: Refer-To Header"
+      },
+      {
+        "name": "sip.Referred-by",
+        "type": "FT_STRING",
+        "description": "RFC 3892: Referred-by Header"
+      },
+      {
+        "name": "sip.Reject-Contact",
+        "type": "FT_STRING",
+        "description": "RFC 3841: Reject-Contact Header"
+      },
+      {
+        "name": "sip.Relayed-Charge",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Replaces",
+        "type": "FT_STRING",
+        "description": "RFC 3891: Replaces Header"
+      },
+      {
+        "name": "sip.Reply-To",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Reply-To Header"
+      },
+      {
+        "name": "sip.Request-Disposition",
+        "type": "FT_STRING",
+        "description": "RFC 3841: Request-Disposition Header"
+      },
+      {
+        "name": "sip.Require",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Require Header"
+      },
+      {
+        "name": "sip.Resource-Priority",
+        "type": "FT_STRING",
+        "description": "Draft: Resource-Priority Header"
+      },
+      {
+        "name": "sip.Resource-Share",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Response-Source",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Restoration-Info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Retry-After",
+        "type": "FT_UINT32",
+        "description": "RFC 3261: Retry-After Header"
+      },
+      {
+        "name": "sip.Route",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Route Header"
+      },
+      {
+        "name": "sip.RSeq",
+        "type": "FT_UINT32",
+        "description": "RFC 3262: RSeq Header"
+      },
+      {
+        "name": "sip.Security-Client",
+        "type": "FT_STRING",
+        "description": "RFC 3329 Security-Client Header"
+      },
+      {
+        "name": "sip.Security-Server",
+        "type": "FT_STRING",
+        "description": "RFC 3329 Security-Server Header"
+      },
+      {
+        "name": "sip.Security-Verify",
+        "type": "FT_STRING",
+        "description": "RFC 3329 Security-Verify Header"
+      },
+      {
+        "name": "sip.Server",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Server Header"
+      },
+      {
+        "name": "sip.Service-Interact-Info",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Service-Route",
+        "type": "FT_STRING",
+        "description": "RFC 3608: Service-Route Header"
+      },
+      {
+        "name": "sip.Session-Expires",
+        "type": "FT_STRING",
+        "description": "RFC 4028: Session-Expires Header"
+      },
+      {
+        "name": "sip.Session-ID",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.ETag",
+        "type": "FT_STRING",
+        "description": "RFC 3903: SIP-ETag Header"
+      },
+      {
+        "name": "sip.If_Match",
+        "type": "FT_STRING",
+        "description": "RFC 3903: SIP-If-Match Header"
+      },
+      {
+        "name": "sip.Subject",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Subject Header"
+      },
+      {
+        "name": "sip.Subscription-State",
+        "type": "FT_STRING",
+        "description": "RFC 3265: Subscription-State Header"
+      },
+      {
+        "name": "sip.Supported",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Supported Header"
+      },
+      {
+        "name": "sip.Suppress_If_Match",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Target-Dialog",
+        "type": "FT_STRING",
+        "description": "RFC 4538: Target-Dialog Header"
+      },
+      {
+        "name": "sip.Timestamp",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Timestamp Header"
+      },
+      {
+        "name": "sip.To",
+        "type": "FT_STRING",
+        "description": "RFC 3261: To Header"
+      },
+      {
+        "name": "sip.Trigger-Consent",
+        "type": "FT_STRING",
+        "description": "RFC 5380: Trigger Consent"
+      },
+      {
+        "name": "sip.Unsupported",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Unsupported Header"
+      },
+      {
+        "name": "sip.User-Agent",
+        "type": "FT_STRING",
+        "description": "RFC 3261: User-Agent Header"
+      },
+      {
+        "name": "sip.Via",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Via Header"
+      },
+      {
+        "name": "sip.Warning",
+        "type": "FT_STRING",
+        "description": "RFC 3261: Warning Header"
+      },
+      {
+        "name": "sip.WWW-Authenticate",
+        "type": "FT_STRING",
+        "description": "RFC 3261: WWW-Authenticate Header"
+      },
+      {
+        "name": "sip.Diversion",
+        "type": "FT_STRING",
+        "description": "RFC 5806: Diversion Header"
+      },
+      {
+        "name": "sip.uui",
+        "type": "FT_STRING",
+        "description": "draft-johnston-sipping-cc-uui-09: User-to-User header"
+      },
+      {
+        "name": "sip.resend",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sip.resend-original",
+        "type": "FT_FRAMENUM",
+        "description": "Original transmission of frame"
+      },
+      {
+        "name": "sip.response-request",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "sip.response-time",
+        "type": "FT_UINT32",
+        "description": "Response time since original request (in milliseconds)"
+      },
+      {
+        "name": "sip.release-time",
+        "type": "FT_UINT32",
+        "description": "release time since original BYE (in milliseconds)"
+      },
+      {
+        "name": "sip.auth",
+        "type": "FT_STRING",
+        "description": "SIP Authentication"
+      },
+      {
+        "name": "sip.auth.scheme",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Scheme"
+      },
+      {
+        "name": "sip.auth.digest.response",
+        "type": "FT_STRING",
+        "description": "SIP Digest Authentication Response Value"
+      },
+      {
+        "name": "sip.auth.nc",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Nonce count"
+      },
+      {
+        "name": "sip.auth.username",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Username"
+      },
+      {
+        "name": "sip.auth.realm",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Realm"
+      },
+      {
+        "name": "sip.auth.nonce",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Nonce"
+      },
+      {
+        "name": "sip.auth.algorithm",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Algorithm"
+      },
+      {
+        "name": "sip.auth.opaque",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Opaque value"
+      },
+      {
+        "name": "sip.auth.qop",
+        "type": "FT_STRING",
+        "description": "SIP Authentication QOP"
+      },
+      {
+        "name": "sip.auth.cnonce",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Client Nonce"
+      },
+      {
+        "name": "sip.auth.uri",
+        "type": "FT_STRING",
+        "description": "SIP Authentication URI"
+      },
+      {
+        "name": "sip.auth.domain",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Domain"
+      },
+      {
+        "name": "sip.auth.stale",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Stale Flag"
+      },
+      {
+        "name": "sip.auth.auts",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Token"
+      },
+      {
+        "name": "sip.auth.rspauth",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Response auth"
+      },
+      {
+        "name": "sip.auth.nextnonce",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Next Nonce"
+      },
+      {
+        "name": "sip.auth.ik",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Integrity Key"
+      },
+      {
+        "name": "sip.auth.ck",
+        "type": "FT_STRING",
+        "description": "SIP Authentication Cyphering Key"
+      },
+      {
+        "name": "sip.CSeq.seq",
+        "type": "FT_UINT32",
+        "description": "CSeq header sequence number"
+      },
+      {
+        "name": "sip.CSeq.method",
+        "type": "FT_STRING",
+        "description": "CSeq header method"
+      },
+      {
+        "name": "sip.Via.transport",
+        "type": "FT_STRING",
+        "description": "Via header Transport"
+      },
+      {
+        "name": "sip.Via.sent-by.address",
+        "type": "FT_STRING",
+        "description": "Via header Sent-by Address"
+      },
+      {
+        "name": "sip.Via.sent-by.port",
+        "type": "FT_UINT16",
+        "description": "Via header Sent-by Port"
+      },
+      {
+        "name": "sip.Via.branch",
+        "type": "FT_STRING",
+        "description": "SIP Via Branch"
+      },
+      {
+        "name": "sip.Via.maddr",
+        "type": "FT_STRING",
+        "description": "SIP Via Maddr"
+      },
+      {
+        "name": "sip.Via.rport",
+        "type": "FT_STRING",
+        "description": "SIP Via RPort"
+      },
+      {
+        "name": "sip.Via.received",
+        "type": "FT_STRING",
+        "description": "SIP Via Received"
+      },
+      {
+        "name": "sip.Via.ttl",
+        "type": "FT_STRING",
+        "description": "SIP Via TTL"
+      },
+      {
+        "name": "sip.Via.comp",
+        "type": "FT_STRING",
+        "description": "SIP Via comp"
+      },
+      {
+        "name": "sip.Via.sigcomp-id",
+        "type": "FT_STRING",
+        "description": "SIP Via sigcomp identifier"
+      },
+      {
+        "name": "sip.Via.oc",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Via.oc_val",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sip.Via.oc_validity",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Via.oc_seq",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Via.oc_seq.ts",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": ""
+      },
+      {
+        "name": "sip.Via.oc_algo",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Via.be_route",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.P-Access-Network-Info.access-type",
+        "type": "FT_STRING",
+        "description": "SIP P-Access-Network-Info access-type"
+      },
+      {
+        "name": "sip.P-Access-Network-Info.utran-cell-id-3gpp",
+        "type": "FT_STRING",
+        "description": "SIP P-Access-Network-Info utran-cell-id-3gpp"
+      },
+      {
+        "name": "sip.RAck.RSeq.seq",
+        "type": "FT_UINT32",
+        "description": "RAck RSeq header sequence number (from prov response)"
+      },
+      {
+        "name": "sip.RAck.CSeq.seq",
+        "type": "FT_UINT32",
+        "description": "RAck CSeq header sequence number (from prov response)"
+      },
+      {
+        "name": "sip.RAck.CSeq.method",
+        "type": "FT_STRING",
+        "description": "RAck CSeq header method (from prov response)"
+      },
+      {
+        "name": "sip.reason_protocols",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.reason_cause_q850",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sip.reason_cause_sip",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sip.reason_cause_other",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sip.reason_text",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.msg_body",
+        "type": "FT_BYTES",
+        "description": "Message Body in SIP message"
+      },
+      {
+        "name": "sip.sec_mechanism",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.alg",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.ealg",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.prot",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.spi_c",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.spi_s",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.port1",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.port_c",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.port2",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.port_s",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "sip.Session-ID.sess_id",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "sip.Session-ID.param",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.Session-ID.local_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "sip.Session-ID.remote_uuid",
+        "type": "FT_GUID",
+        "description": ""
+      },
+      {
+        "name": "sip.Session-ID.logme",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "sip.continuation",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "sip.feature_cap",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.service_priority",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.icid_value",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.icid_gen_addr",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "sip.call_id_generated",
+        "type": "FT_STRING",
+        "description": "Use to catch call id across protocols"
+      },
+      {
+        "name": "sip.unrecognized_header",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.header_no_colon",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.header_not_terminated",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.Call-ID.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.sec_mechanism.malformed",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.Via.sent-by.port.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.content_length.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.retry_after.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.Status-Code.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.authorization.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "sip.Session-ID.sess_id.invalid",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 81,
+    "by_pcap": {
+      "bruteshark_sip_rtp.pcap": [
+        "sdp",
+        "sip_sip_Allow",
+        "sip_sip_CSeq",
+        "sip_sip_CSeq_method",
+        "sip_sip_CSeq_seq",
+        "sip_sip_Call-ID",
+        "sip_sip_Contact",
+        "sip_sip_Content-Length",
+        "sip_sip_Content-Type",
+        "sip_sip_Expires",
+        "sip_sip_From",
+        "sip_sip_Max-Forwards",
+        "sip_sip_Method",
+        "sip_sip_Request-Line",
+        "sip_sip_Server",
+        "sip_sip_Status-Code",
+        "sip_sip_Status-Line",
+        "sip_sip_To",
+        "sip_sip_User-Agent",
+        "sip_sip_Via",
+        "sip_sip_Via_branch",
+        "sip_sip_Via_received",
+        "sip_sip_Via_rport",
+        "sip_sip_Via_sent-by_address",
+        "sip_sip_Via_sent-by_port",
+        "sip_sip_Via_transport",
+        "sip_sip_call_id_generated",
+        "sip_sip_contact_display_info",
+        "sip_sip_contact_host",
+        "sip_sip_contact_port",
+        "sip_sip_contact_uri",
+        "sip_sip_contact_user",
+        "sip_sip_display_info",
+        "sip_sip_from_addr",
+        "sip_sip_from_display_info",
+        "sip_sip_from_host",
+        "sip_sip_from_param",
+        "sip_sip_from_port",
+        "sip_sip_from_tag",
+        "sip_sip_from_user",
+        "sip_sip_msg_body",
+        "sip_sip_msg_hdr",
+        "sip_sip_r-uri",
+        "sip_sip_r-uri_host",
+        "sip_sip_r-uri_port",
+        "sip_sip_r-uri_user",
+        "sip_sip_resend",
+        "sip_sip_response-request",
+        "sip_sip_response-time",
+        "sip_sip_tag",
+        "sip_sip_to_addr",
+        "sip_sip_to_display_info",
+        "sip_sip_to_host",
+        "sip_sip_to_port",
+        "sip_sip_to_tag",
+        "sip_sip_to_user"
+      ],
+      "wireshark_sip_rtp.pcap": [
+        "sdp",
+        "sip_sip_Accept",
+        "sip_sip_Allow",
+        "sip_sip_Authorization",
+        "sip_sip_CSeq",
+        "sip_sip_CSeq_method",
+        "sip_sip_CSeq_seq",
+        "sip_sip_Call-ID",
+        "sip_sip_Contact",
+        "sip_sip_Content-Length",
+        "sip_sip_Content-Type",
+        "sip_sip_Date",
+        "sip_sip_Expires",
+        "sip_sip_From",
+        "sip_sip_Max-Forwards",
+        "sip_sip_Method",
+        "sip_sip_P-Associated-URI",
+        "sip_sip_Proxy-Authenticate",
+        "sip_sip_Proxy-Authorization",
+        "sip_sip_Reason",
+        "sip_sip_Request-Line",
+        "sip_sip_Server",
+        "sip_sip_Status-Code",
+        "sip_sip_Status-Line",
+        "sip_sip_To",
+        "sip_sip_User-Agent",
+        "sip_sip_Via",
+        "sip_sip_Via_branch",
+        "sip_sip_Via_received",
+        "sip_sip_Via_rport",
+        "sip_sip_Via_sent-by_address",
+        "sip_sip_Via_sent-by_port",
+        "sip_sip_Via_transport",
+        "sip_sip_WWW-Authenticate",
+        "sip_sip_Warning",
+        "sip_sip_auth",
+        "sip_sip_auth_algorithm",
+        "sip_sip_auth_digest_response",
+        "sip_sip_auth_nc",
+        "sip_sip_auth_nonce",
+        "sip_sip_auth_opaque",
+        "sip_sip_auth_realm",
+        "sip_sip_auth_scheme",
+        "sip_sip_auth_stale",
+        "sip_sip_auth_uri",
+        "sip_sip_auth_username",
+        "sip_sip_call_id_generated",
+        "sip_sip_contact_display_info",
+        "sip_sip_contact_host",
+        "sip_sip_contact_param",
+        "sip_sip_contact_parameter",
+        "sip_sip_contact_port",
+        "sip_sip_contact_uri",
+        "sip_sip_contact_user",
+        "sip_sip_display_info",
+        "sip_sip_from_addr",
+        "sip_sip_from_display_info",
+        "sip_sip_from_host",
+        "sip_sip_from_tag",
+        "sip_sip_from_user",
+        "sip_sip_msg_body",
+        "sip_sip_msg_hdr",
+        "sip_sip_r-uri",
+        "sip_sip_r-uri_host",
+        "sip_sip_r-uri_user",
+        "sip_sip_reason_cause_q850",
+        "sip_sip_reason_protocols",
+        "sip_sip_resend",
+        "sip_sip_resend-original",
+        "sip_sip_response-request",
+        "sip_sip_response-time",
+        "sip_sip_tag",
+        "sip_sip_to_addr",
+        "sip_sip_to_host",
+        "sip_sip_to_tag",
+        "sip_sip_to_user"
+      ],
+      "wireshark_sip_rtp.pcapng": [
+        "sdp",
+        "sip_sip_Allow",
+        "sip_sip_CSeq",
+        "sip_sip_CSeq_method",
+        "sip_sip_CSeq_seq",
+        "sip_sip_Call-ID",
+        "sip_sip_Contact",
+        "sip_sip_Content-Length",
+        "sip_sip_Content-Type",
+        "sip_sip_Expires",
+        "sip_sip_From",
+        "sip_sip_Max-Forwards",
+        "sip_sip_Method",
+        "sip_sip_Request-Line",
+        "sip_sip_Server",
+        "sip_sip_Status-Code",
+        "sip_sip_Status-Line",
+        "sip_sip_To",
+        "sip_sip_User-Agent",
+        "sip_sip_Via",
+        "sip_sip_Via_branch",
+        "sip_sip_Via_received",
+        "sip_sip_Via_rport",
+        "sip_sip_Via_sent-by_address",
+        "sip_sip_Via_sent-by_port",
+        "sip_sip_Via_transport",
+        "sip_sip_call_id_generated",
+        "sip_sip_contact_display_info",
+        "sip_sip_contact_host",
+        "sip_sip_contact_port",
+        "sip_sip_contact_uri",
+        "sip_sip_contact_user",
+        "sip_sip_display_info",
+        "sip_sip_from_addr",
+        "sip_sip_from_display_info",
+        "sip_sip_from_host",
+        "sip_sip_from_param",
+        "sip_sip_from_port",
+        "sip_sip_from_tag",
+        "sip_sip_from_user",
+        "sip_sip_msg_body",
+        "sip_sip_msg_hdr",
+        "sip_sip_r-uri",
+        "sip_sip_r-uri_host",
+        "sip_sip_r-uri_port",
+        "sip_sip_r-uri_user",
+        "sip_sip_resend",
+        "sip_sip_response-request",
+        "sip_sip_response-time",
+        "sip_sip_tag",
+        "sip_sip_to_addr",
+        "sip_sip_to_display_info",
+        "sip_sip_to_host",
+        "sip_sip_to_port",
+        "sip_sip_to_tag",
+        "sip_sip_to_user"
+      ],
+      "wireshark_sip_spoof.pcap": [
+        "sip_sip_CSeq",
+        "sip_sip_CSeq_method",
+        "sip_sip_CSeq_seq",
+        "sip_sip_Call-ID",
+        "sip_sip_Contact",
+        "sip_sip_Content-Length",
+        "sip_sip_From",
+        "sip_sip_Max-Forwards",
+        "sip_sip_Method",
+        "sip_sip_Request-Line",
+        "sip_sip_Status-Code",
+        "sip_sip_Status-Line",
+        "sip_sip_To",
+        "sip_sip_User-Agent",
+        "sip_sip_Via",
+        "sip_sip_Via_received",
+        "sip_sip_Via_sent-by_address",
+        "sip_sip_Via_transport",
+        "sip_sip_call_id_generated",
+        "sip_sip_contact_host",
+        "sip_sip_contact_uri",
+        "sip_sip_display_info",
+        "sip_sip_from_addr",
+        "sip_sip_from_display_info",
+        "sip_sip_from_host",
+        "sip_sip_msg_hdr",
+        "sip_sip_r-uri",
+        "sip_sip_r-uri_host",
+        "sip_sip_resend",
+        "sip_sip_tag",
+        "sip_sip_to_addr",
+        "sip_sip_to_host",
+        "sip_sip_to_tag"
+      ]
+    },
+    "union": [
+      "sdp",
+      "sip_sip_Accept",
+      "sip_sip_Allow",
+      "sip_sip_Authorization",
+      "sip_sip_CSeq",
+      "sip_sip_CSeq_method",
+      "sip_sip_CSeq_seq",
+      "sip_sip_Call-ID",
+      "sip_sip_Contact",
+      "sip_sip_Content-Length",
+      "sip_sip_Content-Type",
+      "sip_sip_Date",
+      "sip_sip_Expires",
+      "sip_sip_From",
+      "sip_sip_Max-Forwards",
+      "sip_sip_Method",
+      "sip_sip_P-Associated-URI",
+      "sip_sip_Proxy-Authenticate",
+      "sip_sip_Proxy-Authorization",
+      "sip_sip_Reason",
+      "sip_sip_Request-Line",
+      "sip_sip_Server",
+      "sip_sip_Status-Code",
+      "sip_sip_Status-Line",
+      "sip_sip_To",
+      "sip_sip_User-Agent",
+      "sip_sip_Via",
+      "sip_sip_Via_branch",
+      "sip_sip_Via_received",
+      "sip_sip_Via_rport",
+      "sip_sip_Via_sent-by_address",
+      "sip_sip_Via_sent-by_port",
+      "sip_sip_Via_transport",
+      "sip_sip_WWW-Authenticate",
+      "sip_sip_Warning",
+      "sip_sip_auth",
+      "sip_sip_auth_algorithm",
+      "sip_sip_auth_digest_response",
+      "sip_sip_auth_nc",
+      "sip_sip_auth_nonce",
+      "sip_sip_auth_opaque",
+      "sip_sip_auth_realm",
+      "sip_sip_auth_scheme",
+      "sip_sip_auth_stale",
+      "sip_sip_auth_uri",
+      "sip_sip_auth_username",
+      "sip_sip_call_id_generated",
+      "sip_sip_contact_display_info",
+      "sip_sip_contact_host",
+      "sip_sip_contact_param",
+      "sip_sip_contact_parameter",
+      "sip_sip_contact_port",
+      "sip_sip_contact_uri",
+      "sip_sip_contact_user",
+      "sip_sip_display_info",
+      "sip_sip_from_addr",
+      "sip_sip_from_display_info",
+      "sip_sip_from_host",
+      "sip_sip_from_param",
+      "sip_sip_from_port",
+      "sip_sip_from_tag",
+      "sip_sip_from_user",
+      "sip_sip_msg_body",
+      "sip_sip_msg_hdr",
+      "sip_sip_r-uri",
+      "sip_sip_r-uri_host",
+      "sip_sip_r-uri_port",
+      "sip_sip_r-uri_user",
+      "sip_sip_reason_cause_q850",
+      "sip_sip_reason_protocols",
+      "sip_sip_resend",
+      "sip_sip_resend-original",
+      "sip_sip_response-request",
+      "sip_sip_response-time",
+      "sip_sip_tag",
+      "sip_sip_to_addr",
+      "sip_sip_to_display_info",
+      "sip_sip_to_host",
+      "sip_sip_to_port",
+      "sip_sip_to_tag",
+      "sip_sip_to_user"
+    ]
+  },
+  "extracted_fields": {
+    "total": 44,
+    "fields": [
+      "Authorization",
+      "CSeq_method",
+      "CSeq_seq",
+      "Call-ID",
+      "Method",
+      "Proxy-Authenticate",
+      "Proxy-Authorization",
+      "Status-Code",
+      "Status-Line",
+      "User-Agent",
+      "Via_sent-by_address",
+      "WWW-Authenticate",
+      "auth",
+      "auth_algorithm",
+      "auth_cnonce",
+      "auth_digest_response",
+      "auth_nc",
+      "auth_nonce",
+      "auth_opaque",
+      "auth_qop",
+      "auth_realm",
+      "auth_scheme",
+      "auth_stale",
+      "auth_uri",
+      "auth_username",
+      "call_id",
+      "contact_user",
+      "from",
+      "from_addr",
+      "from_host",
+      "from_port",
+      "from_user",
+      "media_format",
+      "media_port",
+      "method",
+      "r-uri_user",
+      "response-time",
+      "rtpmap_encoding_name",
+      "status_code",
+      "to",
+      "to_addr",
+      "to_host",
+      "to_port",
+      "to_user"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "80/295 (27%)",
+    "pcap_vs_extracted": "36/80 (45%)",
+    "t1_extracted": "36/34 (105%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "sip_sip_msg_hdr",
+        "field": "sip.msg_hdr",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "Message Header in SIP message"
+      },
+      {
+        "ek_name": "sip_sip_Request-Line",
+        "field": "sip.Request-Line",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "SIP Request-Line"
+      },
+      {
+        "ek_name": "sip_sip_r-uri",
+        "field": "sip.r-uri",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: SIP R-URI"
+      },
+      {
+        "ek_name": "sip_sip_r-uri_host",
+        "field": "sip.r-uri.host",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: SIP R-URI Host"
+      },
+      {
+        "ek_name": "sip_sip_display_info",
+        "field": "sip.display.info",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: Display info"
+      },
+      {
+        "ek_name": "sip_sip_to_tag",
+        "field": "sip.to.tag",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: to tag"
+      },
+      {
+        "ek_name": "sip_sip_from_display_info",
+        "field": "sip.from.display.info",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: From Display info"
+      },
+      {
+        "ek_name": "sip_sip_contact_uri",
+        "field": "sip.contact.uri",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: SIP C-URI"
+      },
+      {
+        "ek_name": "sip_sip_contact_host",
+        "field": "sip.contact.host",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: SIP C-URI Host"
+      },
+      {
+        "ek_name": "sip_sip_tag",
+        "field": "sip.tag",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: tag"
+      },
+      {
+        "ek_name": "sip_sip_Contact",
+        "field": "sip.Contact",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: Contact Header"
+      },
+      {
+        "ek_name": "sip_sip_Content-Length",
+        "field": "sip.Content-Length",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: Content-Length Header"
+      },
+      {
+        "ek_name": "sip_sip_CSeq",
+        "field": "sip.CSeq",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: CSeq Header"
+      },
+      {
+        "ek_name": "sip_sip_From",
+        "field": "sip.From",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: From Header"
+      },
+      {
+        "ek_name": "sip_sip_Max-Forwards",
+        "field": "sip.Max-Forwards",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: Max-Forwards Header"
+      },
+      {
+        "ek_name": "sip_sip_To",
+        "field": "sip.To",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: To Header"
+      },
+      {
+        "ek_name": "sip_sip_Via",
+        "field": "sip.Via",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "RFC 3261: Via Header"
+      },
+      {
+        "ek_name": "sip_sip_resend",
+        "field": "sip.resend",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "sip_sip_Via_transport",
+        "field": "sip.Via.transport",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "Via header Transport"
+      },
+      {
+        "ek_name": "sip_sip_Via_received",
+        "field": "sip.Via.received",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "SIP Via Received"
+      },
+      {
+        "ek_name": "sip_sip_call_id_generated",
+        "field": "sip.call_id_generated",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng",
+          "wireshark_sip_spoof.pcap"
+        ],
+        "description": "Use to catch call id across protocols"
+      },
+      {
+        "ek_name": "sip_sip_from_tag",
+        "field": "sip.from.tag",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: from tag"
+      },
+      {
+        "ek_name": "sip_sip_contact_display_info",
+        "field": "sip.contact.display.info",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: SIP C-URI Display info"
+      },
+      {
+        "ek_name": "sip_sip_contact_port",
+        "field": "sip.contact.port",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: SIP C-URI Port"
+      },
+      {
+        "ek_name": "sip_sip_Allow",
+        "field": "sip.Allow",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: Allow Header"
+      },
+      {
+        "ek_name": "sip_sip_Content-Type",
+        "field": "sip.Content-Type",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: Content-Type Header"
+      },
+      {
+        "ek_name": "sip_sip_Expires",
+        "field": "sip.Expires",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: Expires Header"
+      },
+      {
+        "ek_name": "sip_sip_Server",
+        "field": "sip.Server",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: Server Header"
+      },
+      {
+        "ek_name": "sip_sip_Via_sent-by_port",
+        "field": "sip.Via.sent-by.port",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "Via header Sent-by Port"
+      },
+      {
+        "ek_name": "sip_sip_Via_branch",
+        "field": "sip.Via.branch",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "SIP Via Branch"
+      },
+      {
+        "ek_name": "sip_sip_Via_rport",
+        "field": "sip.Via.rport",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "SIP Via RPort"
+      },
+      {
+        "ek_name": "sip_sip_msg_body",
+        "field": "sip.msg_body",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "Message Body in SIP message"
+      },
+      {
+        "ek_name": "sip_sip_r-uri_port",
+        "field": "sip.r-uri.port",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: SIP R-URI Port"
+      },
+      {
+        "ek_name": "sip_sip_to_display_info",
+        "field": "sip.to.display.info",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": "RFC 3261: To Display info"
+      },
+      {
+        "ek_name": "sip_sip_from_param",
+        "field": "sip.from.param",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_sip_rtp.pcap",
+          "wireshark_sip_rtp.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "sip_sip_contact_param",
+        "field": "sip.contact.param",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "sip_sip_contact_parameter",
+        "field": "sip.contact.parameter",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": "RFC 3261: one contact parameter"
+      },
+      {
+        "ek_name": "sip_sip_Accept",
+        "field": "sip.Accept",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": "RFC 3261: Accept Header"
+      },
+      {
+        "ek_name": "sip_sip_Date",
+        "field": "sip.Date",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": "RFC 3261: Date Header"
+      },
+      {
+        "ek_name": "sip_sip_P-Associated-URI",
+        "field": "sip.P-Associated-URI",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": "RFC 3455: P-Associated-URI Header"
+      },
+      {
+        "ek_name": "sip_sip_Reason",
+        "field": "sip.Reason",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": "RFC 3326 Reason Header"
+      },
+      {
+        "ek_name": "sip_sip_Warning",
+        "field": "sip.Warning",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": "RFC 3261: Warning Header"
+      },
+      {
+        "ek_name": "sip_sip_reason_protocols",
+        "field": "sip.reason_protocols",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "sip_sip_reason_cause_q850",
+        "field": "sip.reason_cause_q850",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_sip_rtp.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 87,
+      "t1_in_pcap": 34,
+      "t1_covered": 36,
+      "t2_total": 195,
+      "t2_in_pcap": 44,
+      "t2_covered": 0,
+      "t3_skipped": 11,
+      "t4_ignored": 2
+    }
+  }
+}

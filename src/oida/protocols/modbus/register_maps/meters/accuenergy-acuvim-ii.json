@@ -1,0 +1,313 @@
+{
+  "vendor": "Accuenergy",
+  "model": "ACUVIM II",
+  "description": "Accuenergy ACUVIM II power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "frequency": {
+      "address": 12288,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "phase_voltage_v1": {
+      "address": 12290,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage V1"
+    },
+    "phase_voltage_v2": {
+      "address": 12292,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage V2"
+    },
+    "phase_voltage_v3": {
+      "address": 12294,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage V3"
+    },
+    "average_voltage_vavg": {
+      "address": 12296,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage vavg"
+    },
+    "line_voltage_v12": {
+      "address": 12298,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage V12"
+    },
+    "line_voltage_v23": {
+      "address": 12300,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage V23"
+    },
+    "line_voltage_v31": {
+      "address": 12302,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage V31"
+    },
+    "average_line_voltage_vlavg": {
+      "address": 12304,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line voltage vlavg"
+    },
+    "current_i1": {
+      "address": 12306,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I1"
+    },
+    "current_i2": {
+      "address": 12308,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I2"
+    },
+    "current_i3": {
+      "address": 12310,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I3"
+    },
+    "average_current_iavg": {
+      "address": 12312,
+      "type": "f32",
+      "access": "r",
+      "description": "Average current iavg"
+    },
+    "neutral_current_in": {
+      "address": 12314,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current in"
+    },
+    "phase_a_power_pa": {
+      "address": 12316,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A power pa"
+    },
+    "phase_b_power_pb": {
+      "address": 12318,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase B power pb"
+    },
+    "phase_c_power_pc": {
+      "address": 12320,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase C power pc"
+    },
+    "system_power_psum": {
+      "address": 12322,
+      "type": "f32",
+      "access": "r",
+      "description": "System power psum"
+    },
+    "phase_a_reactive_power_qa": {
+      "address": 12324,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A reactive power qa"
+    },
+    "phase_b_reactive_power_qb": {
+      "address": 12326,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase B reactive power qb"
+    },
+    "phase_c_reactive_power_qc": {
+      "address": 12328,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase C reactive power qc"
+    },
+    "system_reactive_power_qsum": {
+      "address": 12330,
+      "type": "f32",
+      "access": "r",
+      "description": "System reactive power qsum"
+    },
+    "phase_a_apparent_power_sa": {
+      "address": 12332,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A apparent power sa"
+    },
+    "phase_b_apparent_power_sb": {
+      "address": 208942,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase B apparent power sb"
+    },
+    "phase_c_apparent_power_sc": {
+      "address": 12336,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase C apparent power sc"
+    },
+    "system_apparent_power_ssum": {
+      "address": 12338,
+      "type": "f32",
+      "access": "r",
+      "description": "System apparent power ssum"
+    },
+    "phase_a_power_factor_pfa": {
+      "address": 12340,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A power factor pfa"
+    },
+    "phase_b_power_factor_pfb": {
+      "address": 12342,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase B power factor pfb"
+    },
+    "phase_c_power_factor_pfc": {
+      "address": 12344,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase C power factor pfc"
+    },
+    "system_power_factor_pfsum": {
+      "address": 12346,
+      "type": "f32",
+      "access": "r",
+      "description": "System power factor pfsum"
+    },
+    "frequency_16384": {
+      "address": 16384,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "phase_voltage_v1_16386": {
+      "address": 16386,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage V1"
+    },
+    "phase_voltage_v2_16388": {
+      "address": 16388,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage V2"
+    },
+    "phase_voltage_v3_16390": {
+      "address": 16390,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage V3"
+    },
+    "average_voltage_vavg_16392": {
+      "address": 16392,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage vavg"
+    },
+    "line_voltage_v12_16394": {
+      "address": 16394,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage V12"
+    },
+    "line_voltage_v23_16396": {
+      "address": 16396,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage V23"
+    },
+    "line_voltage_v31_16398": {
+      "address": 16398,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage V31"
+    },
+    "average_line_voltage_vlavg_16400": {
+      "address": 16400,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line voltage vlavg"
+    },
+    "current_i1_16402": {
+      "address": 16402,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I1"
+    },
+    "current_i2_16404": {
+      "address": 16404,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I2"
+    },
+    "current_i3_16406": {
+      "address": 16406,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I3"
+    },
+    "average_current_iavg_16408": {
+      "address": 16408,
+      "type": "f32",
+      "access": "r",
+      "description": "Average current iavg"
+    },
+    "neutral_current_in_16410": {
+      "address": 16410,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current in"
+    },
+    "phase_a_power_pa_16412": {
+      "address": 16412,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A power pa"
+    },
+    "phase_b_power_pb_16414": {
+      "address": 16414,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase B power pb"
+    },
+    "phase_c_power_pc_16416": {
+      "address": 16416,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase C power pc"
+    },
+    "system_power_psum_16418": {
+      "address": 16418,
+      "type": "f32",
+      "access": "r",
+      "description": "System power psum"
+    },
+    "phase_a_reactive_power_qa_16420": {
+      "address": 16420,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A reactive power qa"
+    },
+    "phase_b_reactive_power_qb_16422": {
+      "address": 16422,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase B reactive power qb"
+    }
+  }
+}

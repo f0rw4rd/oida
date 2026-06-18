@@ -1,0 +1,16 @@
+FROM debian:bookworm-slim
+
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends \
+       libcoap3-bin \
+       python3-minimal \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY coap/libcoap_entrypoint.sh /app/
+
+RUN chmod +x /app/libcoap_entrypoint.sh
+
+EXPOSE 5683/udp 5684/udp
+
+ENTRYPOINT ["/app/libcoap_entrypoint.sh"]

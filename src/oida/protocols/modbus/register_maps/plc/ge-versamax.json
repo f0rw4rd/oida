@@ -1,0 +1,67 @@
+{
+  "vendor": "GE/Emerson",
+  "model": "VersaMax Micro",
+  "description": "GE/Emerson VersaMax Micro PLC Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: %M (Internal Coils) and %AQ (Analog Outputs) are NOT directly accessible via Modbus. Data must be copied to %Q or %R via ladder logic for Modbus exposure.",
+  "source": "GFK-1645M (VersaMax Micro PLCs and Nano PLCs User's Manual, Dec 2019)",
+  "registers": {
+    "ai0": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "Analog input %AI0001 (input register 30001)",
+      "notes": "ge_address=%AI0001"
+    },
+    "r0": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "System register %R0001 (holding register 40001)",
+      "notes": "ge_address=%R0001"
+    }
+  },
+  "extended_info": {
+    "memory_mapping": {
+      "coils_0xxxx": {
+        "ge_memory": "%Q (Discrete Outputs)",
+        "access": "rw"
+      },
+      "discrete_inputs_1xxxx": {
+        "ge_memory": "%I (Discrete Inputs)",
+        "access": "r"
+      },
+      "input_registers_3xxxx": {
+        "ge_memory": "%AI (Analog Inputs)",
+        "access": "r"
+      },
+      "holding_registers_4xxxx": {
+        "ge_memory": "%R (System Registers)",
+        "access": "rw"
+      }
+    },
+    "not_accessible_via_modbus": [
+      "%M (Internal Coils) - copy to %Q via ladder",
+      "%AQ (Analog Outputs) - copy to %R via ladder"
+    ],
+    "memory_ranges_by_model": {
+      "10-14_point": {
+        "r_words": 256
+      },
+      "20-40-64_point_micro_plus": {
+        "r_words": 32640
+      }
+    },
+    "serial_config": {
+      "port": "Port 2 RS-485",
+      "configuration_tool": "VersaPro/PME",
+      "baud_rates": "300-38400",
+      "station_addresses": "1-247"
+    }
+  },
+  "_source_verified": "Verified: VersaMax Micro Modbus TCP confirmed; GFK-1645M manual verified at instrumart.com"
+}

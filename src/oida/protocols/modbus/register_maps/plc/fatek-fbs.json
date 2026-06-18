@@ -1,0 +1,299 @@
+{
+  "vendor": "Fatek",
+  "model": "FBS Series",
+  "description": "Fatek FBS PLC Modbus register map (FBS-10/14/20/24/32/40/60 MA/MC/MN models)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: Fatek uses unique address mapping. D registers start at 6001 (not 1). R registers at 1. Word order is LOW-WORD FIRST for 32-bit values. Supports both ASCII and RTU mode. Special registers WX/WY use word-level access to X/Y bit areas.",
+  "source": "Fatek FBS Series Programming Manual (Chapter 6: Modbus Communication)",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "area": "Y, M, S outputs"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "area": "X, M, S inputs"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "area": "R, D, WY, WM, WS registers"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "area": "R, D, WX, WM, WS registers"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "area": "Y, M, S"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "R, D, WY, WM, WS"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils",
+      "area": "Y, M, S"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "R, D, WY, WM, WS"
+    }
+  ],
+  "registers": {
+    "r0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register R0 (Modbus 40001)",
+      "notes": "fatek_device=R0, modbus_address=40001"
+    },
+    "r100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register R100",
+      "notes": "fatek_device=R100, modbus_address=40101"
+    },
+    "r0_dword": {
+      "address": 0,
+      "type": "u32",
+      "access": "rw",
+      "description": "32-bit DWORD at R0 (R0 = low word, R1 = high word)",
+      "notes": "fatek_device=R0-R1"
+    },
+    "d0": {
+      "address": 6000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D0 (Modbus 46001)",
+      "notes": "fatek_device=D0, modbus_address=46001"
+    },
+    "d100": {
+      "address": 6100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data register D100",
+      "notes": "fatek_device=D100, modbus_address=46101"
+    },
+    "wx0": {
+      "address": 5000,
+      "type": "u16",
+      "access": "r",
+      "description": "Word access to X0-X15 inputs",
+      "notes": "fatek_device=WX0, modbus_address=35001"
+    },
+    "wy0": {
+      "address": 5000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Word access to Y0-Y15 outputs",
+      "notes": "fatek_device=WY0, modbus_address=45001"
+    },
+    "wm0": {
+      "address": 5100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Word access to M0-M15 auxiliary relays",
+      "notes": "fatek_device=WM0, modbus_address=45101"
+    }
+  },
+  "coils": {
+    "y0": {
+      "address": 0,
+      "access": "rw",
+      "description": "Output Y0 (coil 00001)",
+      "notes": "fatek_device=Y0, modbus_address=1"
+    },
+    "y255": {
+      "address": 255,
+      "access": "rw",
+      "description": "Output Y255 (coil 00256)",
+      "notes": "fatek_device=Y255, modbus_address=256"
+    },
+    "m0": {
+      "address": 2000,
+      "access": "rw",
+      "description": "Auxiliary relay M0 (coil 02001)",
+      "notes": "fatek_device=M0, modbus_address=2001"
+    },
+    "m2001": {
+      "address": 4001,
+      "access": "rw",
+      "description": "Auxiliary relay M2001",
+      "notes": "fatek_device=M2001, modbus_address=4002"
+    },
+    "s0": {
+      "address": 6000,
+      "access": "rw",
+      "description": "Step relay S0 (coil 06001)",
+      "notes": "fatek_device=S0, modbus_address=6001"
+    }
+  },
+  "discrete_inputs": {
+    "x0": {
+      "address": 1000,
+      "access": "r",
+      "description": "Input X0 (discrete 01001)",
+      "notes": "fatek_device=X0, modbus_address=1001"
+    },
+    "x255": {
+      "address": 1255,
+      "access": "r",
+      "description": "Input X255 (discrete 01256)",
+      "notes": "fatek_device=X255, modbus_address=1256"
+    }
+  },
+  "extended_info": {
+    "address_mapping": {
+      "coils_0x": {
+        "Y_outputs": {
+          "range": "Y0-Y255",
+          "modbus": "00001-00256"
+        },
+        "M_aux_relay": {
+          "range": "M0-M2001",
+          "modbus": "02001-04002"
+        },
+        "S_step_relay": {
+          "range": "S0-S999",
+          "modbus": "06001-07000"
+        },
+        "T_timer_coil": {
+          "range": "T0-T255",
+          "modbus": "09001-09256"
+        },
+        "C_counter_coil": {
+          "range": "C0-C255",
+          "modbus": "09501-09756"
+        }
+      },
+      "discrete_inputs_1x": {
+        "X_inputs": {
+          "range": "X0-X255",
+          "modbus": "01001-01256"
+        },
+        "M_aux_relay_ro": {
+          "range": "M0-M2001",
+          "modbus": "02001-04002"
+        },
+        "S_step_relay_ro": {
+          "range": "S0-S999",
+          "modbus": "06001-07000"
+        }
+      },
+      "input_registers_3x": {
+        "R_data": {
+          "range": "R0-R4167",
+          "modbus": "30001-34168"
+        },
+        "D_data": {
+          "range": "D0-D2998",
+          "modbus": "36001-38999"
+        },
+        "WX_word_input": {
+          "range": "WX0-WX15",
+          "modbus": "35001-35016"
+        }
+      },
+      "holding_registers_4x": {
+        "R_data": {
+          "range": "R0-R4167",
+          "modbus": "40001-44168"
+        },
+        "D_data": {
+          "range": "D0-D2998",
+          "modbus": "46001-48999"
+        },
+        "WY_word_output": {
+          "range": "WY0-WY15",
+          "modbus": "45001-45016"
+        },
+        "WM_word_aux": {
+          "range": "WM0-WM124",
+          "modbus": "45101-45225"
+        },
+        "WS_word_step": {
+          "range": "WS0-WS61",
+          "modbus": "45301-45362"
+        },
+        "T_timer_value": {
+          "range": "T0-T255",
+          "modbus": "49001-49256"
+        },
+        "C_counter_value": {
+          "range": "C0-C199",
+          "modbus": "49501-49700"
+        },
+        "C32_32bit_counter": {
+          "range": "C200-C255",
+          "modbus": "49701-49812",
+          "note": "32-bit, 2 registers each"
+        }
+      }
+    },
+    "32bit_word_order": "Low-word first (address n = bits 15-0, n+1 = bits 31-16)",
+    "communication_config": {
+      "default_baud": 9600,
+      "data_bits": 8,
+      "stop_bits": 1,
+      "parity": "EVEN",
+      "default_station": 1,
+      "modes": [
+        "ASCII",
+        "RTU"
+      ]
+    },
+    "fbs_models": {
+      "FBS-10MA": {
+        "io": "6DI/4DO",
+        "program": "8K steps"
+      },
+      "FBS-14MA": {
+        "io": "8DI/6DO",
+        "program": "16K steps"
+      },
+      "FBS-20MA": {
+        "io": "12DI/8DO",
+        "program": "16K steps"
+      },
+      "FBS-24MA": {
+        "io": "14DI/10DO",
+        "program": "16K steps"
+      },
+      "FBS-32MA": {
+        "io": "20DI/12DO",
+        "program": "32K steps"
+      },
+      "FBS-40MA": {
+        "io": "24DI/16DO",
+        "program": "32K steps"
+      },
+      "FBS-60MA": {
+        "io": "36DI/24DO",
+        "program": "32K steps"
+      }
+    },
+    "ethernet_options": {
+      "FBS-CBEH": {
+        "description": "Ethernet communication board",
+        "protocols": [
+          "Modbus TCP",
+          "Fatek protocol over Ethernet"
+        ]
+      }
+    },
+    "configuration_software": "WinProLadder"
+  },
+  "_source_verified": "Verified: D registers at 6001, R registers at 1 confirmed against Fatek manual Chapter 12-13"
+}

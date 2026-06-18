@@ -1,0 +1,302 @@
+{
+  "vendor": "DEIF",
+  "model": "AGC 150",
+  "description": "DEIF AGC 150 series genset controllers including AGC 150 GEN, AGC 150 DGH (Hybrid), and AGC 150 LDG (PMS Lite).",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/victronenergy/dbus-modbus-client",
+  "notes": "Data registers use input register access (function code 4), not holding registers. Info and configuration registers use holding register access. Model identification via text register at address 770 (6 registers). Oil pressure and coolant temperature may come from Multi Input analog channels (registers 583-586) based on configuration in registers 776-779, or from EIC measurement registers (593-595). The controller may report values in US units (Fahrenheit, PSI) if register 4797 == 1; conversion to metric is required. Baud rate: 115200 for RTU.",
+  "models": [
+    "AGC 150 GEN",
+    "AGC 150 DGH",
+    "AGC 150 LDG"
+  ],
+  "registers": {
+    "firmware_version": {
+      "address": 500,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Controller firmware version number"
+    },
+    "ac_l1_voltage": {
+      "address": 504,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Generator L1 phase voltage",
+      "unit": "V"
+    },
+    "ac_l2_voltage": {
+      "address": 505,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Generator L2 phase voltage",
+      "unit": "V"
+    },
+    "ac_l3_voltage": {
+      "address": 506,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Generator L3 phase voltage",
+      "unit": "V"
+    },
+    "ac_frequency": {
+      "address": 507,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 0.01,
+      "description": "Generator AC output frequency",
+      "unit": "Hz"
+    },
+    "ac_l1_current": {
+      "address": 513,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Generator L1 phase current",
+      "unit": "A"
+    },
+    "ac_l2_current": {
+      "address": 514,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Generator L2 phase current",
+      "unit": "A"
+    },
+    "ac_l3_current": {
+      "address": 515,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Generator L3 phase current",
+      "unit": "A"
+    },
+    "ac_l1_power": {
+      "address": 516,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 1000,
+      "description": "Generator L1 phase active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_l2_power": {
+      "address": 517,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 1000,
+      "description": "Generator L2 phase active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_l3_power": {
+      "address": 518,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 1000,
+      "description": "Generator L3 phase active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_total_power": {
+      "address": 519,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 1000,
+      "description": "Generator total active power. Raw value in kW, multiply by 1000 for watts.",
+      "unit": "W"
+    },
+    "ac_energy_forward": {
+      "address": 536,
+      "type": "i32",
+      "access": "r",
+      "function": "input",
+      "description": "Total generated energy",
+      "unit": "kWh"
+    },
+    "engine_operating_hours": {
+      "address": 554,
+      "type": "i32",
+      "access": "r",
+      "function": "input",
+      "scale": 3600,
+      "description": "Total engine operating hours. Raw value in hours, multiply by 3600 for seconds.",
+      "unit": "s"
+    },
+    "engine_starts": {
+      "address": 566,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Total engine start count"
+    },
+    "starter_voltage": {
+      "address": 567,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 0.1,
+      "description": "Starter battery voltage",
+      "unit": "V"
+    },
+    "multi_input_20": {
+      "address": 583,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Multi Input 20 analog value. Function depends on configuration register 776 (4=oil pressure, 5=water temp, 6=fuel level)."
+    },
+    "multi_input_21": {
+      "address": 584,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Multi Input 21 analog value. Function depends on configuration register 777."
+    },
+    "multi_input_22": {
+      "address": 585,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Multi Input 22 analog value. Function depends on configuration register 778."
+    },
+    "multi_input_23": {
+      "address": 586,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Multi Input 23 analog value. Function depends on configuration register 779."
+    },
+    "engine_speed": {
+      "address": 593,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "description": "Engine speed from EIC (Engine Interface Card). Invalid value: 0.",
+      "unit": "RPM",
+      "invalid": 0
+    },
+    "engine_coolant_temperature_eic": {
+      "address": 594,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 0.1,
+      "description": "Engine coolant temperature from EIC. Used as fallback when no Multi Input is configured for water temperature. Value may be in Fahrenheit if US units are enabled (register 4797).",
+      "unit": "C"
+    },
+    "engine_oil_pressure_eic": {
+      "address": 595,
+      "type": "i16",
+      "access": "r",
+      "function": "input",
+      "scale": 0.01,
+      "description": "Engine oil pressure from EIC. Used as fallback when no Multi Input is configured for oil pressure. Value in bar (metric) or PSI (US). Convert PSI to kPa by multiplying by 6.89476.",
+      "unit": "kPa"
+    },
+    "multi_input_config_20": {
+      "address": 776,
+      "type": "i16",
+      "access": "r",
+      "function": "holding",
+      "description": "Configuration for Multi Input 20: 4=RMI oil pressure, 5=RMI water temperature, 6=RMI fuel level"
+    },
+    "multi_input_config_21": {
+      "address": 777,
+      "type": "i16",
+      "access": "r",
+      "function": "holding",
+      "description": "Configuration for Multi Input 21"
+    },
+    "multi_input_config_22": {
+      "address": 778,
+      "type": "i16",
+      "access": "r",
+      "function": "holding",
+      "description": "Configuration for Multi Input 22"
+    },
+    "multi_input_config_23": {
+      "address": 779,
+      "type": "i16",
+      "access": "r",
+      "function": "holding",
+      "description": "Configuration for Multi Input 23"
+    },
+    "model_identifier": {
+      "address": 770,
+      "type": "string",
+      "length": 6,
+      "access": "r",
+      "function": "holding",
+      "description": "Model identification string (e.g. AGC150GEN, AGC150DGH, AGC150LDG)"
+    },
+    "alarm_shutdown": {
+      "address": 1000,
+      "type": "u16",
+      "count": 10,
+      "access": "r",
+      "function": "input",
+      "description": "Shutdown alarm bit flags. 10 registers of 16-bit flags."
+    },
+    "status_running_bit": {
+      "address": 1018,
+      "type": "u16",
+      "access": "r",
+      "function": "input",
+      "description": "Engine status register. Bit 6 indicates engine running (1=running, 0=stopped)."
+    },
+    "remote_start_mode_enabled": {
+      "address": 1019,
+      "type": "u16",
+      "access": "r",
+      "function": "input",
+      "description": "Remote start mode status. Bit 3 indicates auto/remote start mode is enabled."
+    },
+    "alarm_warning": {
+      "address": 1057,
+      "type": "u16",
+      "access": "r",
+      "function": "input",
+      "description": "Warning alarm bit flags register."
+    },
+    "unit_system": {
+      "address": 4797,
+      "type": "i16",
+      "access": "r",
+      "function": "holding",
+      "description": "Unit system selection: 0=Metric (C, bar), 1=US (F, PSI)"
+    },
+    "nr_of_phases": {
+      "address": 5107,
+      "type": "u16",
+      "access": "r",
+      "function": "holding",
+      "description": "Number of phases configuration: 0=3ph 3W4, 1=3ph 3W3, 2=2ph L1|L3, 3=2ph L1|L2, 4=1ph L1"
+    },
+    "engine_fuel_delivery_pressure": {
+      "address": 26022,
+      "type": "u16",
+      "access": "r",
+      "function": "input",
+      "scale": 0.01,
+      "description": "Engine fuel delivery pressure from EIC. Value in bar (metric) or PSI (US). Invalid value: 0.",
+      "unit": "kPa",
+      "invalid": 0
+    },
+    "control_command": {
+      "address": 6,
+      "type": "u16",
+      "access": "rw",
+      "function": "holding",
+      "description": "Remote control command register. Bit 0=execute, bit 11=start, bit 13=set AUTO mode. Write (1 | 1<<11) to start, write (1) to stop, write (1 | 1<<13) for AUTO mode."
+    }
+  }
+}

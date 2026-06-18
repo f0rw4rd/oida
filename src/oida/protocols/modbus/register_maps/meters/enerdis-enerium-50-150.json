@@ -1,0 +1,333 @@
+{
+  "vendor": "Enerdis",
+  "model": "ENERIUM 50 150",
+  "description": "Enerdis ENERIUM 50 150 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "in": {
+      "address": 1300,
+      "type": "u32",
+      "access": "r",
+      "description": "In",
+      "unit": "A"
+    },
+    "p1": {
+      "address": 1302,
+      "type": "i32",
+      "access": "r",
+      "description": "P1",
+      "unit": "W"
+    },
+    "p2": {
+      "address": 1304,
+      "type": "i32",
+      "access": "r",
+      "description": "P2",
+      "unit": "W"
+    },
+    "p3": {
+      "address": 1306,
+      "type": "i32",
+      "access": "r",
+      "description": "P3",
+      "unit": "W"
+    },
+    "pt": {
+      "address": 1308,
+      "type": "i32",
+      "access": "r",
+      "description": "Pt",
+      "unit": "W"
+    },
+    "q1": {
+      "address": 1310,
+      "type": "i32",
+      "access": "r",
+      "description": "Q1",
+      "unit": "var"
+    },
+    "q2": {
+      "address": 1312,
+      "type": "i32",
+      "access": "r",
+      "description": "Q2",
+      "unit": "var"
+    },
+    "q3": {
+      "address": 1314,
+      "type": "i32",
+      "access": "r",
+      "description": "Q3",
+      "unit": "var"
+    },
+    "qt": {
+      "address": 1316,
+      "type": "i32",
+      "access": "r",
+      "description": "Qt",
+      "unit": "var"
+    },
+    "s1": {
+      "address": 1318,
+      "type": "u32",
+      "access": "r",
+      "description": "S1",
+      "unit": "VA"
+    },
+    "s2": {
+      "address": 1320,
+      "type": "u32",
+      "access": "r",
+      "description": "S2",
+      "unit": "VA"
+    },
+    "s3": {
+      "address": 1322,
+      "type": "u32",
+      "access": "r",
+      "description": "S3",
+      "unit": "VA"
+    },
+    "st": {
+      "address": 1324,
+      "type": "u32",
+      "access": "r",
+      "description": "St",
+      "unit": "VA"
+    },
+    "fp1": {
+      "address": 1326,
+      "type": "i16",
+      "access": "r",
+      "description": "FP1"
+    },
+    "quadrant_fp1": {
+      "address": 1327,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant FP1"
+    },
+    "fp2": {
+      "address": 1328,
+      "type": "i16",
+      "access": "r",
+      "description": "FP2"
+    },
+    "quadrant_fp2": {
+      "address": 1329,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant FP2"
+    },
+    "fp3": {
+      "address": 1330,
+      "type": "i16",
+      "access": "r",
+      "description": "FP3"
+    },
+    "quadrant_fp3": {
+      "address": 1331,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant FP3"
+    },
+    "fpt": {
+      "address": 1332,
+      "type": "i16",
+      "access": "r",
+      "description": "Fpt"
+    },
+    "quadrant_fpt": {
+      "address": 1333,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant fpt"
+    },
+    "cos_phi_phase_1": {
+      "address": 1334,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi phase 1"
+    },
+    "quadrant": {
+      "address": 1335,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant"
+    },
+    "cos_phi_phase_2": {
+      "address": 1336,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi phase 2"
+    },
+    "quadrant_1337": {
+      "address": 1337,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant"
+    },
+    "cos_phi_phase_3": {
+      "address": 1338,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi phase 3"
+    },
+    "quadrant_1339": {
+      "address": 1339,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant"
+    },
+    "cos_phi_three_phase": {
+      "address": 1340,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi three phase"
+    },
+    "quadrant_1341": {
+      "address": 1341,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant"
+    },
+    "v1_crest_factor": {
+      "address": 1342,
+      "type": "u16",
+      "access": "r",
+      "description": "V1 crest factor"
+    },
+    "v2_crest_factor": {
+      "address": 1343,
+      "type": "u16",
+      "access": "r",
+      "description": "V2 crest factor"
+    },
+    "v3_crest_factor": {
+      "address": 1344,
+      "type": "u16",
+      "access": "r",
+      "description": "V3 crest factor"
+    },
+    "i1_crest_factor": {
+      "address": 1345,
+      "type": "u16",
+      "access": "r",
+      "description": "I1 crest factor"
+    },
+    "i2_crest_factor": {
+      "address": 1346,
+      "type": "u16",
+      "access": "r",
+      "description": "I2 crest factor"
+    },
+    "i3_crest_factor": {
+      "address": 1347,
+      "type": "u16",
+      "access": "r",
+      "description": "I3 crest factor"
+    },
+    "unbalance_of_the_voltages": {
+      "address": 1348,
+      "type": "i16",
+      "access": "r",
+      "description": "Unbalance of the voltages"
+    },
+    "frequency": {
+      "address": 1349,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "total_tan_phi": {
+      "address": 1350,
+      "type": "i32",
+      "access": "r",
+      "description": "Total tan phi"
+    },
+    "minima_of_v1": {
+      "address": 2788,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of V1",
+      "unit": "V"
+    },
+    "date_of_the_minimum_of_v1": {
+      "address": 2790,
+      "type": "u32",
+      "access": "r",
+      "description": "Date of the minimum of V1"
+    },
+    "minima_of_v2": {
+      "address": 2792,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of V2",
+      "unit": "V"
+    },
+    "date_of_the_minimum_of_v2": {
+      "address": 2794,
+      "type": "u32",
+      "access": "r",
+      "description": "Date of the minimum of V2"
+    },
+    "minima_of_v3": {
+      "address": 2796,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of V3",
+      "unit": "V"
+    },
+    "date_of_the_minimum_of_v3": {
+      "address": 2798,
+      "type": "u32",
+      "access": "r",
+      "description": "Date of the minimum of V3"
+    },
+    "minima_of_vt": {
+      "address": 2800,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of vt",
+      "unit": "V"
+    },
+    "date_of_the_minimum_of_vt": {
+      "address": 2802,
+      "type": "u32",
+      "access": "r",
+      "description": "Date of the minimum of vt"
+    },
+    "minima_of_u12": {
+      "address": 2804,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of U12",
+      "unit": "V"
+    },
+    "date_of_the_minimum_of_u12": {
+      "address": 2806,
+      "type": "u32",
+      "access": "r",
+      "description": "Date of the minimum of U12"
+    },
+    "minima_of_u23": {
+      "address": 2808,
+      "type": "u32",
+      "access": "r",
+      "description": "Minima of U23",
+      "unit": "V"
+    },
+    "date_of_the_minimum_of_u23": {
+      "address": 2810,
+      "type": "u32",
+      "access": "r",
+      "description": "Date of the minimum of U23"
+    }
+  }
+}

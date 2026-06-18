@@ -1,0 +1,1504 @@
+{
+  "protocol": "snmp",
+  "display_filter": "snmp",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:58:39.236789+00:00",
+  "dissector_fields": {
+    "total": 134,
+    "by_type": {
+      "FT_ABSOLUTE_TIME": 1,
+      "FT_BOOLEAN": 5,
+      "FT_BYTES": 18,
+      "FT_ETHER": 1,
+      "FT_FRAMENUM": 2,
+      "FT_INT32": 13,
+      "FT_INT64": 3,
+      "FT_IPv4": 3,
+      "FT_IPv6": 2,
+      "FT_NONE": 51,
+      "FT_OID": 5,
+      "FT_RELATIVE_TIME": 1,
+      "FT_STRING": 5,
+      "FT_UINT32": 18,
+      "FT_UINT64": 4,
+      "FT_UINT8": 2
+    },
+    "fields": [
+      {
+        "name": "snmp.response_in",
+        "type": "FT_FRAMENUM",
+        "description": "The response to this SNMP request is in this frame"
+      },
+      {
+        "name": "snmp.response_to",
+        "type": "FT_FRAMENUM",
+        "description": "This is a response to the SNMP request in this frame"
+      },
+      {
+        "name": "snmp.time",
+        "type": "FT_RELATIVE_TIME",
+        "description": "The time between the Request and the Response"
+      },
+      {
+        "name": "snmp.v3.flags.auth",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "snmp.v3.flags.crypt",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "snmp.v3.flags.report",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.conform",
+        "type": "FT_BOOLEAN",
+        "description": "Engine ID RFC3411 Conformance"
+      },
+      {
+        "name": "snmp.engineid.enterprise",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.format",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.ipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.cisco.type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.mac",
+        "type": "FT_ETHER",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.text",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.time",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": ""
+      },
+      {
+        "name": "snmp.engineid.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.v3.auth",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "snmp.decrypted_pdu",
+        "type": "FT_BYTES",
+        "description": "Decrypted PDU"
+      },
+      {
+        "name": "snmp.noSuchObject",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.noSuchInstance",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.endOfMibView",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.unSpecified",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.int",
+        "type": "FT_INT64",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.octets",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.oid",
+        "type": "FT_OID",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.null",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.ipv4",
+        "type": "FT_IPv4",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.ipv6",
+        "type": "FT_IPv6",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.addr",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.u32",
+        "type": "FT_INT64",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.g32",
+        "type": "FT_INT64",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.unk",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.counter",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.nsap",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.timeticks",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "snmp.value.opaque",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.name",
+        "type": "FT_OID",
+        "description": ""
+      },
+      {
+        "name": "snmp.name.index",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "snmp.var-bind_str",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "snmp.agentid_trailer",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.SMUX_PDUs",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.version",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.community",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "snmp.data",
+        "type": "FT_UINT32",
+        "description": "PDUs"
+      },
+      {
+        "name": "snmp.parameters",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "snmp.datav2u",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.v2u_plaintext",
+        "type": "FT_UINT32",
+        "description": "PDUs"
+      },
+      {
+        "name": "snmp.encrypted",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "snmp.msgAuthoritativeEngineID",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgAuthoritativeEngineBoots",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgAuthoritativeEngineTime",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgUserName",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgAuthenticationParameters",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgPrivacyParameters",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgVersion",
+        "type": "FT_INT32",
+        "description": "Version"
+      },
+      {
+        "name": "snmp.msgGlobalData_element",
+        "type": "FT_NONE",
+        "description": "HeaderData"
+      },
+      {
+        "name": "snmp.msgSecurityParameters",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgData",
+        "type": "FT_UINT32",
+        "description": "ScopedPduData"
+      },
+      {
+        "name": "snmp.msgID",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_2147483647"
+      },
+      {
+        "name": "snmp.msgMaxSize",
+        "type": "FT_UINT32",
+        "description": "INTEGER_484_2147483647"
+      },
+      {
+        "name": "snmp.msgFlags",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.msgSecurityModel",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.plaintext_element",
+        "type": "FT_NONE",
+        "description": "ScopedPDU"
+      },
+      {
+        "name": "snmp.encryptedPDU",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "snmp.contextEngineID",
+        "type": "FT_BYTES",
+        "description": "SnmpEngineID"
+      },
+      {
+        "name": "snmp.contextName",
+        "type": "FT_STRING",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "snmp.get_request_element",
+        "type": "FT_NONE",
+        "description": "GetRequest_PDU"
+      },
+      {
+        "name": "snmp.get_next_request_element",
+        "type": "FT_NONE",
+        "description": "GetNextRequest_PDU"
+      },
+      {
+        "name": "snmp.get_response_element",
+        "type": "FT_NONE",
+        "description": "GetResponse_PDU"
+      },
+      {
+        "name": "snmp.set_request_element",
+        "type": "FT_NONE",
+        "description": "SetRequest_PDU"
+      },
+      {
+        "name": "snmp.trap_element",
+        "type": "FT_NONE",
+        "description": "Trap_PDU"
+      },
+      {
+        "name": "snmp.getBulkRequest_element",
+        "type": "FT_NONE",
+        "description": "GetBulkRequest_PDU"
+      },
+      {
+        "name": "snmp.informRequest_element",
+        "type": "FT_NONE",
+        "description": "InformRequest_PDU"
+      },
+      {
+        "name": "snmp.snmpV2_trap_element",
+        "type": "FT_NONE",
+        "description": "SNMPv2_Trap_PDU"
+      },
+      {
+        "name": "snmp.report_element",
+        "type": "FT_NONE",
+        "description": "Report_PDU"
+      },
+      {
+        "name": "snmp.request_id",
+        "type": "FT_INT32",
+        "description": "T_request_id"
+      },
+      {
+        "name": "snmp.error_status",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.error_index",
+        "type": "FT_INT32",
+        "description": "INTEGER"
+      },
+      {
+        "name": "snmp.variable_bindings",
+        "type": "FT_UINT32",
+        "description": "VarBindList"
+      },
+      {
+        "name": "snmp.non_repeaters",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_2147483647"
+      },
+      {
+        "name": "snmp.max_repetitions",
+        "type": "FT_UINT32",
+        "description": "INTEGER_0_2147483647"
+      },
+      {
+        "name": "snmp.enterprise",
+        "type": "FT_OID",
+        "description": "EnterpriseOID"
+      },
+      {
+        "name": "snmp.agent_addr",
+        "type": "FT_IPv4",
+        "description": "NetworkAddress"
+      },
+      {
+        "name": "snmp.generic_trap",
+        "type": "FT_INT32",
+        "description": "GenericTrap"
+      },
+      {
+        "name": "snmp.specific_trap",
+        "type": "FT_INT32",
+        "description": "SpecificTrap"
+      },
+      {
+        "name": "snmp.time_stamp",
+        "type": "FT_UINT32",
+        "description": "TimeTicks"
+      },
+      {
+        "name": "snmp.valueType_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.VarBind_element",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.open",
+        "type": "FT_UINT32",
+        "description": "OpenPDU"
+      },
+      {
+        "name": "snmp.close",
+        "type": "FT_INT32",
+        "description": "ClosePDU"
+      },
+      {
+        "name": "snmp.registerRequest_element",
+        "type": "FT_NONE",
+        "description": "RReqPDU"
+      },
+      {
+        "name": "snmp.registerResponse",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.commitOrRollback",
+        "type": "FT_INT32",
+        "description": "SOutPDU"
+      },
+      {
+        "name": "snmp.rRspPDU",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.pDUs",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.smux_simple_element",
+        "type": "FT_NONE",
+        "description": "SimpleOpen"
+      },
+      {
+        "name": "snmp.smux_version",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.identity",
+        "type": "FT_OID",
+        "description": "OBJECT_IDENTIFIER"
+      },
+      {
+        "name": "snmp.description",
+        "type": "FT_BYTES",
+        "description": "DisplayString"
+      },
+      {
+        "name": "snmp.password",
+        "type": "FT_BYTES",
+        "description": "OCTET_STRING"
+      },
+      {
+        "name": "snmp.subtree",
+        "type": "FT_OID",
+        "description": "ObjectName"
+      },
+      {
+        "name": "snmp.priority",
+        "type": "FT_INT32",
+        "description": "INTEGER_M1_2147483647"
+      },
+      {
+        "name": "snmp.operation",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "snmp.failed_decrypted_data_pdu",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.decrypted_data_bad_formatted",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.verify_authentication_error",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.authentication_ok",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.authentication_error",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.varbind.not_uni_class_seq",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.varbind.has_indicator",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.objectname_not_oid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.objectname_has_indicator",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.value_not_primitive_encoding",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.invalid_oid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.varbind.wrong_tag",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.varbind.response",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.no_instance_subid",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.wrong_num_of_subids",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.index_suboid_too_short",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.unimplemented_instance_index",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.ndex_suboid_len0",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.index_suboid_too_long",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.index_string_too_long",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.column_parent_not_row",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.uint_too_large",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.int_too_large",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.integral_value0",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.missing_mib",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.varbind.wrong_length_value",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.varbind.wrong_class_tag",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.rfc1910_non_conformant",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.rfc3411_non_conformant",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.version.unknown",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "snmp.trap_pdu_obsolete",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 61,
+    "by_pcap": {
+      "credslayer_snmp_v1.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_name",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_set_request_element",
+        "snmp_snmp_time",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_value_oid",
+        "snmp_snmp_value_timeticks",
+        "snmp_snmp_var-bind_str",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "credslayer_snmp_v3.pcap": [
+        "snmp_snmp_contextEngineID",
+        "snmp_snmp_contextName",
+        "snmp_snmp_data",
+        "snmp_snmp_encryptedPDU",
+        "snmp_snmp_engineid_conform",
+        "snmp_snmp_engineid_data",
+        "snmp_snmp_engineid_enterprise",
+        "snmp_snmp_engineid_format",
+        "snmp_snmp_engineid_time",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_next_request_element",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_msgAuthenticationParameters",
+        "snmp_snmp_msgAuthoritativeEngineBoots",
+        "snmp_snmp_msgAuthoritativeEngineID",
+        "snmp_snmp_msgAuthoritativeEngineTime",
+        "snmp_snmp_msgData",
+        "snmp_snmp_msgFlags",
+        "snmp_snmp_msgGlobalData_element",
+        "snmp_snmp_msgID",
+        "snmp_snmp_msgMaxSize",
+        "snmp_snmp_msgPrivacyParameters",
+        "snmp_snmp_msgSecurityModel",
+        "snmp_snmp_msgUserName",
+        "snmp_snmp_msgVersion",
+        "snmp_snmp_name",
+        "snmp_snmp_plaintext_element",
+        "snmp_snmp_report_element",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_v3_flags_auth",
+        "snmp_snmp_v3_flags_crypt",
+        "snmp_snmp_v3_flags_report",
+        "snmp_snmp_value_counter",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_value_timeticks",
+        "snmp_snmp_var-bind_str",
+        "snmp_snmp_variable_bindings",
+        "text"
+      ],
+      "filtered_snmp.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_contextEngineID",
+        "snmp_snmp_contextName",
+        "snmp_snmp_data",
+        "snmp_snmp_encryptedPDU",
+        "snmp_snmp_engineid_conform",
+        "snmp_snmp_engineid_enterprise",
+        "snmp_snmp_engineid_format",
+        "snmp_snmp_engineid_text",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_next_request_element",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_msgAuthenticationParameters",
+        "snmp_snmp_msgAuthoritativeEngineBoots",
+        "snmp_snmp_msgAuthoritativeEngineID",
+        "snmp_snmp_msgAuthoritativeEngineTime",
+        "snmp_snmp_msgData",
+        "snmp_snmp_msgFlags",
+        "snmp_snmp_msgGlobalData_element",
+        "snmp_snmp_msgID",
+        "snmp_snmp_msgMaxSize",
+        "snmp_snmp_msgPrivacyParameters",
+        "snmp_snmp_msgSecurityModel",
+        "snmp_snmp_msgUserName",
+        "snmp_snmp_msgVersion",
+        "snmp_snmp_name",
+        "snmp_snmp_plaintext_element",
+        "snmp_snmp_report_element",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_v3_flags_auth",
+        "snmp_snmp_v3_flags_crypt",
+        "snmp_snmp_v3_flags_report",
+        "snmp_snmp_value_counter",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_ipv4",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_leak_test.pcap": [
+        "snmp_snmp_agent_addr",
+        "snmp_snmp_community",
+        "snmp_snmp_contextEngineID",
+        "snmp_snmp_contextName",
+        "snmp_snmp_data",
+        "snmp_snmp_engineid_conform",
+        "snmp_snmp_engineid_data",
+        "snmp_snmp_engineid_enterprise",
+        "snmp_snmp_engineid_format",
+        "snmp_snmp_engineid_time",
+        "snmp_snmp_enterprise",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_generic_trap",
+        "snmp_snmp_getBulkRequest_element",
+        "snmp_snmp_get_next_request_element",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_max_repetitions",
+        "snmp_snmp_msgAuthenticationParameters",
+        "snmp_snmp_msgAuthoritativeEngineBoots",
+        "snmp_snmp_msgAuthoritativeEngineID",
+        "snmp_snmp_msgAuthoritativeEngineTime",
+        "snmp_snmp_msgData",
+        "snmp_snmp_msgFlags",
+        "snmp_snmp_msgGlobalData_element",
+        "snmp_snmp_msgID",
+        "snmp_snmp_msgMaxSize",
+        "snmp_snmp_msgPrivacyParameters",
+        "snmp_snmp_msgSecurityModel",
+        "snmp_snmp_msgUserName",
+        "snmp_snmp_msgVersion",
+        "snmp_snmp_name",
+        "snmp_snmp_non_repeaters",
+        "snmp_snmp_plaintext_element",
+        "snmp_snmp_report_element",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_set_request_element",
+        "snmp_snmp_specific_trap",
+        "snmp_snmp_time",
+        "snmp_snmp_time_stamp",
+        "snmp_snmp_trap_element",
+        "snmp_snmp_v3_flags_auth",
+        "snmp_snmp_v3_flags_crypt",
+        "snmp_snmp_v3_flags_report",
+        "snmp_snmp_value_counter",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_value_oid",
+        "snmp_snmp_value_timeticks",
+        "snmp_snmp_var-bind_str",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmp-crash-62790.pcap": [
+        "_ws_expert",
+        "snmp_snmp_encryptedPDU",
+        "snmp_snmp_engineid_conform",
+        "snmp_snmp_engineid_enterprise",
+        "snmp_snmp_msgAuthenticationParameters",
+        "snmp_snmp_msgAuthoritativeEngineBoots",
+        "snmp_snmp_msgAuthoritativeEngineID",
+        "snmp_snmp_msgAuthoritativeEngineTime",
+        "snmp_snmp_msgData",
+        "snmp_snmp_msgFlags",
+        "snmp_snmp_msgGlobalData_element",
+        "snmp_snmp_msgID",
+        "snmp_snmp_msgMaxSize",
+        "snmp_snmp_msgPrivacyParameters",
+        "snmp_snmp_msgSecurityModel",
+        "snmp_snmp_msgUserName",
+        "snmp_snmp_msgVersion",
+        "snmp_snmp_v3_flags_auth",
+        "snmp_snmp_v3_flags_crypt",
+        "snmp_snmp_v3_flags_report",
+        "text"
+      ],
+      "zeek_snmpv1_get.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_name",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_set_request_element",
+        "snmp_snmp_time",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_value_oid",
+        "snmp_snmp_value_timeticks",
+        "snmp_snmp_var-bind_str",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmpv1_get_short.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_name",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmpv1_set.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_name",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_set_request_element",
+        "snmp_snmp_time",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_var-bind_str",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmpv1_trap.pcap": [
+        "snmp_snmp_agent_addr",
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_enterprise",
+        "snmp_snmp_generic_trap",
+        "snmp_snmp_name",
+        "snmp_snmp_specific_trap",
+        "snmp_snmp_time_stamp",
+        "snmp_snmp_trap_element",
+        "snmp_snmp_value_int",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmpv2_get.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_name",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_value_counter",
+        "snmp_snmp_value_null",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmpv2_get_bulk.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_getBulkRequest_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_max_repetitions",
+        "snmp_snmp_name",
+        "snmp_snmp_non_repeaters",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_value_null",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmpv2_get_next.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_next_request_element",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_name",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_value_counter",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_timeticks",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ],
+      "zeek_snmpv3_get_next.pcap": [
+        "snmp_snmp_contextEngineID",
+        "snmp_snmp_contextName",
+        "snmp_snmp_data",
+        "snmp_snmp_engineid_conform",
+        "snmp_snmp_engineid_data",
+        "snmp_snmp_engineid_enterprise",
+        "snmp_snmp_engineid_format",
+        "snmp_snmp_engineid_time",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_next_request_element",
+        "snmp_snmp_get_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_msgAuthenticationParameters",
+        "snmp_snmp_msgAuthoritativeEngineBoots",
+        "snmp_snmp_msgAuthoritativeEngineID",
+        "snmp_snmp_msgAuthoritativeEngineTime",
+        "snmp_snmp_msgData",
+        "snmp_snmp_msgFlags",
+        "snmp_snmp_msgGlobalData_element",
+        "snmp_snmp_msgID",
+        "snmp_snmp_msgMaxSize",
+        "snmp_snmp_msgPrivacyParameters",
+        "snmp_snmp_msgSecurityModel",
+        "snmp_snmp_msgUserName",
+        "snmp_snmp_msgVersion",
+        "snmp_snmp_name",
+        "snmp_snmp_plaintext_element",
+        "snmp_snmp_report_element",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_v3_flags_auth",
+        "snmp_snmp_v3_flags_crypt",
+        "snmp_snmp_v3_flags_report",
+        "snmp_snmp_value_counter",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_variable_bindings",
+        "text"
+      ],
+      "zeek_snmpwalk-short.pcap": [
+        "snmp_snmp_community",
+        "snmp_snmp_data",
+        "snmp_snmp_error_index",
+        "snmp_snmp_error_status",
+        "snmp_snmp_get_next_request_element",
+        "snmp_snmp_get_response_element",
+        "snmp_snmp_name",
+        "snmp_snmp_request_id",
+        "snmp_snmp_response_to",
+        "snmp_snmp_time",
+        "snmp_snmp_value_counter",
+        "snmp_snmp_value_g32",
+        "snmp_snmp_value_int",
+        "snmp_snmp_value_ipv4",
+        "snmp_snmp_value_null",
+        "snmp_snmp_value_octets",
+        "snmp_snmp_value_oid",
+        "snmp_snmp_value_timeticks",
+        "snmp_snmp_var-bind_str",
+        "snmp_snmp_variable_bindings",
+        "snmp_snmp_version",
+        "text"
+      ]
+    },
+    "union": [
+      "_ws_expert",
+      "snmp_snmp_agent_addr",
+      "snmp_snmp_community",
+      "snmp_snmp_contextEngineID",
+      "snmp_snmp_contextName",
+      "snmp_snmp_data",
+      "snmp_snmp_encryptedPDU",
+      "snmp_snmp_engineid_conform",
+      "snmp_snmp_engineid_data",
+      "snmp_snmp_engineid_enterprise",
+      "snmp_snmp_engineid_format",
+      "snmp_snmp_engineid_text",
+      "snmp_snmp_engineid_time",
+      "snmp_snmp_enterprise",
+      "snmp_snmp_error_index",
+      "snmp_snmp_error_status",
+      "snmp_snmp_generic_trap",
+      "snmp_snmp_getBulkRequest_element",
+      "snmp_snmp_get_next_request_element",
+      "snmp_snmp_get_request_element",
+      "snmp_snmp_get_response_element",
+      "snmp_snmp_max_repetitions",
+      "snmp_snmp_msgAuthenticationParameters",
+      "snmp_snmp_msgAuthoritativeEngineBoots",
+      "snmp_snmp_msgAuthoritativeEngineID",
+      "snmp_snmp_msgAuthoritativeEngineTime",
+      "snmp_snmp_msgData",
+      "snmp_snmp_msgFlags",
+      "snmp_snmp_msgGlobalData_element",
+      "snmp_snmp_msgID",
+      "snmp_snmp_msgMaxSize",
+      "snmp_snmp_msgPrivacyParameters",
+      "snmp_snmp_msgSecurityModel",
+      "snmp_snmp_msgUserName",
+      "snmp_snmp_msgVersion",
+      "snmp_snmp_name",
+      "snmp_snmp_non_repeaters",
+      "snmp_snmp_plaintext_element",
+      "snmp_snmp_report_element",
+      "snmp_snmp_request_id",
+      "snmp_snmp_response_to",
+      "snmp_snmp_set_request_element",
+      "snmp_snmp_specific_trap",
+      "snmp_snmp_time",
+      "snmp_snmp_time_stamp",
+      "snmp_snmp_trap_element",
+      "snmp_snmp_v3_flags_auth",
+      "snmp_snmp_v3_flags_crypt",
+      "snmp_snmp_v3_flags_report",
+      "snmp_snmp_value_counter",
+      "snmp_snmp_value_g32",
+      "snmp_snmp_value_int",
+      "snmp_snmp_value_ipv4",
+      "snmp_snmp_value_null",
+      "snmp_snmp_value_octets",
+      "snmp_snmp_value_oid",
+      "snmp_snmp_value_timeticks",
+      "snmp_snmp_var-bind_str",
+      "snmp_snmp_variable_bindings",
+      "snmp_snmp_version",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 33,
+    "fields": [
+      "agent_addr",
+      "community",
+      "contextEngineID",
+      "contextName",
+      "counter",
+      "data",
+      "engineid_enterprise",
+      "enterprise",
+      "error_index",
+      "error_status",
+      "gauge32",
+      "generic_trap",
+      "int",
+      "ipaddress",
+      "msgAuthenticationParameters",
+      "msgAuthoritativeEngineBoots",
+      "msgAuthoritativeEngineID",
+      "msgAuthoritativeEngineTime",
+      "msgID",
+      "msgSecurityModel",
+      "msgUserName",
+      "msgVersion",
+      "name",
+      "octets",
+      "oid",
+      "request_id",
+      "specific_trap",
+      "timeticks",
+      "v3_flags_auth",
+      "v3_flags_crypt",
+      "var_bind_str",
+      "variable_bindings",
+      "version"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "59/134 (44%)",
+    "pcap_vs_extracted": "25/59 (42%)",
+    "t1_extracted": "16/16 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "snmp_snmp_value_int",
+        "field": "snmp.value.int",
+        "type": "FT_INT64",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v1.pcap",
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv1_get.pcap",
+          "zeek_snmpv1_get_short.pcap",
+          "zeek_snmpv1_trap.pcap",
+          "zeek_snmpv2_get_next.pcap",
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_value_octets",
+        "field": "snmp.value.octets",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v1.pcap",
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv1_get.pcap",
+          "zeek_snmpv1_get_short.pcap",
+          "zeek_snmpv1_set.pcap",
+          "zeek_snmpv3_get_next.pcap",
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_value_counter",
+        "field": "snmp.value.counter",
+        "type": "FT_UINT64",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv2_get.pcap",
+          "zeek_snmpv2_get_next.pcap",
+          "zeek_snmpv3_get_next.pcap",
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_value_timeticks",
+        "field": "snmp.value.timeticks",
+        "type": "FT_UINT64",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v1.pcap",
+          "credslayer_snmp_v3.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv1_get.pcap",
+          "zeek_snmpv2_get_next.pcap",
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_var-bind_str",
+        "field": "snmp.var-bind_str",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v1.pcap",
+          "credslayer_snmp_v3.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv1_get.pcap",
+          "zeek_snmpv1_set.pcap",
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_v3_flags_report",
+        "field": "snmp.v3.flags.report",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmp-crash-62790.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_engineid_conform",
+        "field": "snmp.engineid.conform",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmp-crash-62790.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": "Engine ID RFC3411 Conformance"
+      },
+      {
+        "ek_name": "snmp_snmp_msgPrivacyParameters",
+        "field": "snmp.msgPrivacyParameters",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmp-crash-62790.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_msgData",
+        "field": "snmp.msgData",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmp-crash-62790.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": "ScopedPduData"
+      },
+      {
+        "ek_name": "snmp_snmp_msgMaxSize",
+        "field": "snmp.msgMaxSize",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmp-crash-62790.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": "INTEGER_484_2147483647"
+      },
+      {
+        "ek_name": "snmp_snmp_msgFlags",
+        "field": "snmp.msgFlags",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmp-crash-62790.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_engineid_format",
+        "field": "snmp.engineid.format",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_value_oid",
+        "field": "snmp.value.oid",
+        "type": "FT_OID",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v1.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv1_get.pcap",
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_engineid_time",
+        "field": "snmp.engineid.time",
+        "type": "FT_ABSOLUTE_TIME",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_engineid_data",
+        "field": "snmp.engineid.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "zeek_leak_test.pcap",
+          "zeek_snmpv3_get_next.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_encryptedPDU",
+        "field": "snmp.encryptedPDU",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_snmp_v3.pcap",
+          "filtered_snmp.pcap",
+          "zeek_snmp-crash-62790.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_value_ipv4",
+        "field": "snmp.value.ipv4",
+        "type": "FT_IPv4",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_snmp.pcap",
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_non_repeaters",
+        "field": "snmp.non_repeaters",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "zeek_leak_test.pcap",
+          "zeek_snmpv2_get_bulk.pcap"
+        ],
+        "description": "INTEGER_0_2147483647"
+      },
+      {
+        "ek_name": "snmp_snmp_max_repetitions",
+        "field": "snmp.max_repetitions",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "zeek_leak_test.pcap",
+          "zeek_snmpv2_get_bulk.pcap"
+        ],
+        "description": "INTEGER_0_2147483647"
+      },
+      {
+        "ek_name": "snmp_snmp_time_stamp",
+        "field": "snmp.time_stamp",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "zeek_leak_test.pcap",
+          "zeek_snmpv1_trap.pcap"
+        ],
+        "description": "TimeTicks"
+      },
+      {
+        "ek_name": "snmp_snmp_engineid_text",
+        "field": "snmp.engineid.text",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "filtered_snmp.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "snmp_snmp_value_g32",
+        "field": "snmp.value.g32",
+        "type": "FT_INT64",
+        "tier": "T2",
+        "seen_in": [
+          "zeek_snmpwalk-short.pcap"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 19,
+      "t1_in_pcap": 16,
+      "t1_covered": 16,
+      "t2_total": 61,
+      "t2_in_pcap": 31,
+      "t2_covered": 9,
+      "t3_skipped": 51,
+      "t4_ignored": 3
+    }
+  }
+}

@@ -1,0 +1,335 @@
+{
+  "vendor": "Electro Industries",
+  "model": "INDUSTRIES SHARK 50",
+  "description": "Electro Industries INDUSTRIES SHARK 50 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_serial_number": {
+      "address": 8,
+      "type": "str",
+      "access": "r",
+      "description": "Meter serial number"
+    },
+    "meter_type": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter type"
+    },
+    "firmware_version": {
+      "address": 17,
+      "type": "u32",
+      "access": "r",
+      "description": "Firmware version"
+    },
+    "map_version": {
+      "address": 19,
+      "type": "u32",
+      "access": "r",
+      "description": "Map version"
+    },
+    "meter_configuration": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter configuration"
+    },
+    "asic_version": {
+      "address": 21,
+      "type": "u32",
+      "access": "r",
+      "description": "ASIC version"
+    },
+    "vars_3_ph_total": {
+      "address": 901,
+      "type": "u32",
+      "access": "r",
+      "description": "VARs, 3 Ph total"
+    },
+    "vas_3_ph_total": {
+      "address": 903,
+      "type": "u32",
+      "access": "r",
+      "description": "VAs, 3 Ph total"
+    },
+    "volts_b_n": {
+      "address": 1001,
+      "type": "u32",
+      "access": "r",
+      "description": "Volts B N"
+    },
+    "volts_c_n": {
+      "address": 1003,
+      "type": "u32",
+      "access": "r",
+      "description": "Volts C N"
+    },
+    "volts_a_b": {
+      "address": 1005,
+      "type": "u32",
+      "access": "r",
+      "description": "Volts A B"
+    },
+    "volts_b_c": {
+      "address": 1007,
+      "type": "u32",
+      "access": "r",
+      "description": "Volts B C"
+    },
+    "volts_c_a": {
+      "address": 1009,
+      "type": "u32",
+      "access": "r",
+      "description": "Volts C A"
+    },
+    "amps_a": {
+      "address": 1011,
+      "type": "u32",
+      "access": "r",
+      "description": "Amps A"
+    },
+    "amps_b": {
+      "address": 1013,
+      "type": "u32",
+      "access": "r",
+      "description": "Amps B"
+    },
+    "amps_c": {
+      "address": 1015,
+      "type": "u32",
+      "access": "r",
+      "description": "Amps C"
+    },
+    "watts_3_ph_total": {
+      "address": 1017,
+      "type": "u32",
+      "access": "r",
+      "description": "Watts, 3 Ph total"
+    },
+    "vars_3_ph_total_1019": {
+      "address": 1019,
+      "type": "u32",
+      "access": "r",
+      "description": "VARs, 3 Ph total"
+    },
+    "vas_3_ph_total_1021": {
+      "address": 1021,
+      "type": "u32",
+      "access": "r",
+      "description": "VAs, 3 Ph total"
+    },
+    "power_factor_3_ph_total": {
+      "address": 1023,
+      "type": "u32",
+      "access": "r",
+      "description": "Power factor, 3 Ph total"
+    },
+    "frequency": {
+      "address": 1025,
+      "type": "u32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "neutral_current": {
+      "address": 1027,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "amps"
+    },
+    "w_hours_received": {
+      "address": 1099,
+      "type": "i32",
+      "access": "r",
+      "description": "W hours, received",
+      "unit": "Wh"
+    },
+    "w_hours_delivered": {
+      "address": 1101,
+      "type": "i32",
+      "access": "r",
+      "description": "W hours, delivered",
+      "unit": "Wh"
+    },
+    "w_hours_net": {
+      "address": 1103,
+      "type": "i32",
+      "access": "r",
+      "description": "W hours, net",
+      "unit": "Wh"
+    },
+    "w_hours_total": {
+      "address": 1105,
+      "type": "i32",
+      "access": "r",
+      "description": "W hours, total",
+      "unit": "Wh"
+    },
+    "var_hours_positive": {
+      "address": 1107,
+      "type": "i32",
+      "access": "r",
+      "description": "VAR hours, positive"
+    },
+    "var_hours_negative": {
+      "address": 1109,
+      "type": "i32",
+      "access": "r",
+      "description": "VAR hours, negative"
+    },
+    "var_hours_net": {
+      "address": 1111,
+      "type": "i32",
+      "access": "r",
+      "description": "VAR hours, net"
+    },
+    "var_hours_total": {
+      "address": 1113,
+      "type": "i32",
+      "access": "r",
+      "description": "VAR hours, total"
+    },
+    "va_hours_total": {
+      "address": 1115,
+      "type": "i32",
+      "access": "r",
+      "description": "VA hours, total"
+    },
+    "amps_a_average": {
+      "address": 1999,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps a, average",
+      "unit": "amps"
+    },
+    "amps_b_average": {
+      "address": 2001,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps b, average",
+      "unit": "amps"
+    },
+    "amps_c_average": {
+      "address": 2003,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps c, average",
+      "unit": "amps"
+    },
+    "positive_watts_3_ph_average": {
+      "address": 2005,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive watts, 3 Ph, average",
+      "unit": "watts"
+    },
+    "positive_vars_3_ph_average": {
+      "address": 2007,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive VARs, 3 Ph, average",
+      "unit": "VARs"
+    },
+    "negative_watts_3_ph_average": {
+      "address": 2009,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative watts, 3 Ph, average",
+      "unit": "watts"
+    },
+    "negative_vars_3_ph_average": {
+      "address": 2011,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative VARs, 3 Ph, average",
+      "unit": "VARs"
+    },
+    "vas_3_ph_average": {
+      "address": 2013,
+      "type": "f32",
+      "access": "r",
+      "description": "VAs, 3 Ph, average",
+      "unit": "VAs"
+    },
+    "positive_pf_3_ph_average": {
+      "address": 2015,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive PF, 3 Ph, average"
+    },
+    "negative_pf_3_pf_average": {
+      "address": 2017,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative PF, 3 PF, average"
+    },
+    "volts_a_n_minimum": {
+      "address": 2999,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts A N, minimum",
+      "unit": "volts"
+    },
+    "volts_b_n_minimum": {
+      "address": 3001,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts B N, minimum",
+      "unit": "volts"
+    },
+    "volts_c_n_minimum": {
+      "address": 3003,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts C N, minimum",
+      "unit": "volts"
+    },
+    "volts_a_b_minimum": {
+      "address": 3005,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts A B, minimum",
+      "unit": "volts"
+    },
+    "volts_b_c_minimum": {
+      "address": 3007,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts B C, minimum",
+      "unit": "volts"
+    },
+    "volts_c_a_minimum": {
+      "address": 3009,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts C A, minimum",
+      "unit": "volts"
+    },
+    "amps_a_minimum_avg_demand": {
+      "address": 3011,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps a, minimum avg demand",
+      "unit": "amps"
+    },
+    "amps_b_minimum_avg_demand": {
+      "address": 3013,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps b, minimum avg demand",
+      "unit": "amps"
+    },
+    "amps_c_minimum_avg_demand": {
+      "address": 3015,
+      "type": "f32",
+      "access": "r",
+      "description": "Amps c, minimum avg demand",
+      "unit": "amps"
+    }
+  }
+}

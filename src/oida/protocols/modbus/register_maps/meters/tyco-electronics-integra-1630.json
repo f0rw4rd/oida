@@ -1,0 +1,313 @@
+{
+  "vendor": "Tyco",
+  "model": "ELECTRONICS INTEGRA 1630",
+  "description": "Tyco ELECTRONICS INTEGRA 1630 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "volts_2_l2_n_4w_or_l2_l3_3w": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts 2 (L2 N 4w or L2 L3 3w)"
+    },
+    "volts_3_l3_n_4w_or_l3_l1_3w": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts 3 (L3 N 4w or L3 L1 3w)"
+    },
+    "current_1": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 1"
+    },
+    "current_2": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 2"
+    },
+    "current_3": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 3"
+    },
+    "w_phase_1": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "W phase 1"
+    },
+    "w_phase_2": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "W phase 2"
+    },
+    "w_phase_3": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "W phase 3"
+    },
+    "va_phase_1": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Va phase 1"
+    },
+    "va_phase_2": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Va phase 2"
+    },
+    "va_phase_3": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Va phase 3"
+    },
+    "var_phase_1": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Var phase 1"
+    },
+    "var_phase_2": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Var phase 2"
+    },
+    "var_phase_3": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Var phase 3"
+    },
+    "power_factor_phase_1": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase 1"
+    },
+    "power_factor_phase_2": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase 2"
+    },
+    "power_factor_phase_3": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase 3"
+    },
+    "phase_angle_phase_1": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle phase 1"
+    },
+    "phase_angle_phase_2": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle phase 2"
+    },
+    "phase_angle_phase_3": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle phase 3"
+    },
+    "volts_ave": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Volts ave"
+    },
+    "current_ave": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Current ave"
+    },
+    "current_sum": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Current sum"
+    },
+    "watts_sum": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Watts sum"
+    },
+    "va_sum": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Va sum"
+    },
+    "var_sum": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Var sum"
+    },
+    "power_factor_ave": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor ave"
+    },
+    "average_phase_angle": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Average phase angle"
+    },
+    "frequency": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "wh_import": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Wh import"
+    },
+    "wh_export": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Wh export"
+    },
+    "varh_import": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Varh import"
+    },
+    "varh_export": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Varh export"
+    },
+    "vah": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Vah"
+    },
+    "w_demand_import": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "W demand import"
+    },
+    "w_max_demand_import": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "W max. Demand import"
+    },
+    "va_demand": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Va demand"
+    },
+    "va_max_demand": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Va max. Demand"
+    },
+    "a_demand": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "A demand"
+    },
+    "a_max_demand": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "A max. Demand"
+    },
+    "v_l1_l2": {
+      "address": 200,
+      "type": "f32",
+      "access": "r",
+      "description": "V L1 L2"
+    },
+    "v_l2_l3": {
+      "address": 202,
+      "type": "f32",
+      "access": "r",
+      "description": "V L2 L3"
+    },
+    "v_l3_l1": {
+      "address": 204,
+      "type": "f32",
+      "access": "r",
+      "description": "V L3 L1"
+    },
+    "average_line_to_line_volts": {
+      "address": 206,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line to line volts"
+    },
+    "neutral_current": {
+      "address": 224,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "thd_volts_1": {
+      "address": 234,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd volts 1"
+    },
+    "thd_volts_2": {
+      "address": 236,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd volts 2"
+    },
+    "thd_volts_3": {
+      "address": 238,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd volts 3"
+    },
+    "thd_current_1": {
+      "address": 240,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd current 1"
+    },
+    "thd_current_2": {
+      "address": 242,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd current 2"
+    }
+  }
+}

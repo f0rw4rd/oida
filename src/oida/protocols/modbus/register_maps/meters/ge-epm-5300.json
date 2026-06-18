@@ -1,0 +1,313 @@
+{
+  "vendor": "GE",
+  "model": "EPM 5300",
+  "description": "GE EPM 5300 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "volt_an_instant": {
+      "address": 278,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt an, Instant"
+    },
+    "volt_an_average": {
+      "address": 317,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt an, Average"
+    },
+    "volt_an_max": {
+      "address": 356,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt an, Max"
+    },
+    "volt_an_min": {
+      "address": 395,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt an, Min"
+    },
+    "volt_bn_instant": {
+      "address": 279,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bn, Instant"
+    },
+    "volt_bn_average": {
+      "address": 318,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bn, Average"
+    },
+    "volt_bn_max": {
+      "address": 357,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bn, Max"
+    },
+    "volt_bn_min": {
+      "address": 396,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bn, Min"
+    },
+    "volt_cn_instant": {
+      "address": 280,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt cn, Instant"
+    },
+    "volt_cn_average": {
+      "address": 319,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt cn, Average"
+    },
+    "volt_cn_max": {
+      "address": 358,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt cn, Max"
+    },
+    "volt_cn_min": {
+      "address": 397,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt cn, Min"
+    },
+    "volt_ab_instant": {
+      "address": 281,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ab, Instant"
+    },
+    "volt_ab_average": {
+      "address": 320,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ab, Average"
+    },
+    "volt_ab_max": {
+      "address": 359,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ab, Max"
+    },
+    "volt_ab_min": {
+      "address": 398,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ab, Min"
+    },
+    "volt_bc_instant": {
+      "address": 282,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bc, Instant"
+    },
+    "volt_bc_average": {
+      "address": 321,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bc, Average"
+    },
+    "volt_bc_max": {
+      "address": 360,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bc, Max"
+    },
+    "volt_bc_min": {
+      "address": 399,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt bc, Min"
+    },
+    "volt_ca_instant": {
+      "address": 283,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ca, Instant"
+    },
+    "volt_ca_average": {
+      "address": 322,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ca, Average"
+    },
+    "volt_ca_max": {
+      "address": 361,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ca, Max"
+    },
+    "volt_ca_min": {
+      "address": 400,
+      "type": "u16",
+      "access": "r",
+      "description": "Volt ca, Min"
+    },
+    "amp_a_instant": {
+      "address": 284,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp A, Instant"
+    },
+    "amp_a_average": {
+      "address": 323,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp A, Average"
+    },
+    "amp_a_max": {
+      "address": 362,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp A, Max"
+    },
+    "amp_a_min": {
+      "address": 401,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp A, Min"
+    },
+    "amp_b_instant": {
+      "address": 285,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp B, Instant"
+    },
+    "amp_b_average": {
+      "address": 324,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp B, Average"
+    },
+    "amp_b_max": {
+      "address": 363,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp B, Max"
+    },
+    "amp_b_min": {
+      "address": 402,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp B, Min"
+    },
+    "amp_c_instant": {
+      "address": 286,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp C, Instant"
+    },
+    "amp_c_average": {
+      "address": 325,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp C, Average"
+    },
+    "amp_c_max": {
+      "address": 364,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp C, Max"
+    },
+    "amp_c_min": {
+      "address": 403,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp C, Min"
+    },
+    "amp_n_instant": {
+      "address": 287,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp N, Instant"
+    },
+    "amp_n_average": {
+      "address": 326,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp N, Average"
+    },
+    "amp_n_max": {
+      "address": 365,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp N, Max"
+    },
+    "amp_n_min": {
+      "address": 404,
+      "type": "u16",
+      "access": "r",
+      "description": "Amp N, Min"
+    },
+    "watt_instant": {
+      "address": 288,
+      "type": "u16",
+      "access": "r",
+      "description": "Watt, Instant"
+    },
+    "watt_average": {
+      "address": 327,
+      "type": "u16",
+      "access": "r",
+      "description": "Watt, Average"
+    },
+    "watt_max": {
+      "address": 366,
+      "type": "u16",
+      "access": "r",
+      "description": "Watt, Max"
+    },
+    "watt_min": {
+      "address": 405,
+      "type": "u16",
+      "access": "r",
+      "description": "Watt, Min"
+    },
+    "var_instant": {
+      "address": 289,
+      "type": "u16",
+      "access": "r",
+      "description": "Var, Instant"
+    },
+    "var_average": {
+      "address": 328,
+      "type": "u16",
+      "access": "r",
+      "description": "Var, Average"
+    },
+    "var_max": {
+      "address": 367,
+      "type": "u16",
+      "access": "r",
+      "description": "Var, Max"
+    },
+    "var_min": {
+      "address": 406,
+      "type": "u16",
+      "access": "r",
+      "description": "Var, Min"
+    },
+    "va_instant": {
+      "address": 290,
+      "type": "u16",
+      "access": "r",
+      "description": "Va, Instant"
+    },
+    "va_average": {
+      "address": 329,
+      "type": "u16",
+      "access": "r",
+      "description": "Va, Average"
+    }
+  }
+}

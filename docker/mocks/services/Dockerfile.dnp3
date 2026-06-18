@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+# Install pydnp3-stepfunc (Rust-based DNP3 stack) and cryptography (for TLS cert generation)
+RUN pip install --no-cache-dir pydnp3-stepfunc>=1.6.0.4 cryptography>=42.0.0
+
+COPY dnp3_stepfunc_server.py /app/
+
+WORKDIR /app
+
+EXPOSE 20000
+
+# All configuration via environment variables (see dnp3_stepfunc_server.py)
+CMD ["python3", "dnp3_stepfunc_server.py"]

@@ -1,0 +1,34 @@
+# OpENer - ODVA-compliant EtherNet/IP stack
+# Provides full CIP object support: Identity, TCP/IP Interface, Ethernet Link, Assembly
+# https://github.com/EIPStackGroup/OpENer
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    libcap-dev \
+    netcat-openbsd \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone OpENer repository
+RUN git clone --depth 1 https://github.com/EIPStackGroup/OpENer.git /opener
+
+# Build OpENer for POSIX (Linux)
+WORKDIR /opener/bin/posix
+RUN ./setup_posix.sh && make -j$(nproc)
+
+# Expose EtherNet/IP ports
+# 44818 - TCP/UDP for explicit messaging
+# 2222 - UDP for implicit (I/O) messaging
+EXPOSE 44818/tcp 44818/udp 2222/udp
+
+# Run OpENer on eth0 interface
+# Note: For Docker, use --network host or macvlan for proper multicast
+ENTRYPOINT ["./src/ports/POSIX/OpENer"]
+CMD ["eth0"]

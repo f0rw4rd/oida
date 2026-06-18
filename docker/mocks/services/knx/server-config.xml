@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Calimero KNXnet/IP server settings for MSF-ICS testing
+     Uses "emulate" subnet to simulate process communication:
+     - Group address reads return last-written values
+     - Datapoints file defines known DPTs and initial state
+     - Additional addresses 1.1.1-1.1.5 represent bus devices
+-->
+<knxServer name="msf-ics-knx" friendlyName="MSF-ICS KNX Mock Server">
+	<discovery listenNetIf="all" outgoingNetIf="all" />
+	<serviceContainer activate="true" routing="true" networkMonitoring="true"
+		netif="any" udpPort="3671" securedServices="optional">
+		<knxAddress type="individual">1.1.0</knxAddress>
+		<!-- Emulate mode: simulates KNX subnet for process communication.
+		     Written datapoint values are stored and returned on read.
+		     Medium tp1 = twisted pair (standard building automation). -->
+		<knxSubnet type="emulate" medium="tp1">
+			<datapoints ref="/config/datapoints.xml" />
+		</knxSubnet>
+		<groupAddressFilter>
+			<!-- Lighting (DPT 1.001 switching) -->
+			<knxAddress type="group">1/0/1</knxAddress>
+			<knxAddress type="group">1/0/2</knxAddress>
+			<knxAddress type="group">1/0/3</knxAddress>
+			<!-- Dimming (DPT 5.001 scaling 0-100%) -->
+			<knxAddress type="group">1/1/1</knxAddress>
+			<knxAddress type="group">1/1/2</knxAddress>
+			<!-- Temperature (DPT 9.001 2-byte float) -->
+			<knxAddress type="group">2/0/1</knxAddress>
+			<knxAddress type="group">2/0/2</knxAddress>
+			<knxAddress type="group">2/0/3</knxAddress>
+			<!-- Temperature setpoint -->
+			<knxAddress type="group">2/1/1</knxAddress>
+			<!-- Blinds (DPT 5.001 position) -->
+			<knxAddress type="group">3/0/1</knxAddress>
+			<knxAddress type="group">3/0/2</knxAddress>
+			<!-- HVAC mode (DPT 20.102) -->
+			<knxAddress type="group">4/0/1</knxAddress>
+			<!-- Scene control (DPT 17.001) -->
+			<knxAddress type="group">5/0/1</knxAddress>
+			<!-- Energy counter (DPT 13.001) -->
+			<knxAddress type="group">6/0/1</knxAddress>
+			<!-- Display text (DPT 16.001) -->
+			<knxAddress type="group">7/0/1</knxAddress>
+		</groupAddressFilter>
+		<!-- Additional addresses: tunneling client addresses and simulated bus devices.
+		     Addresses 1.1.1-1.1.5 represent devices on the emulated bus.
+		     Addresses 1.1.10-1.1.20 are for tunneling client connections. -->
+		<additionalAddresses>
+			<!-- Simulated bus devices -->
+			<knxAddress type="individual">1.1.1</knxAddress>
+			<knxAddress type="individual">1.1.2</knxAddress>
+			<knxAddress type="individual">1.1.3</knxAddress>
+			<knxAddress type="individual">1.1.4</knxAddress>
+			<knxAddress type="individual">1.1.5</knxAddress>
+			<!-- Tunneling client addresses -->
+			<knxAddress type="individual">1.1.10</knxAddress>
+			<knxAddress type="individual">1.1.11</knxAddress>
+			<knxAddress type="individual">1.1.12</knxAddress>
+			<knxAddress type="individual">1.1.13</knxAddress>
+			<knxAddress type="individual">1.1.14</knxAddress>
+			<knxAddress type="individual">1.1.15</knxAddress>
+		</additionalAddresses>
+	</serviceContainer>
+</knxServer>

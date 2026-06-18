@@ -1,0 +1,358 @@
+{
+  "vendor": "Finder",
+  "model": "SERIES 7 E 7 E 64 7 E 68 7 E 78 7 E 86",
+  "description": "Finder SERIES 7 E 7 E 64 7 E 68 7 E 78 7 E 86 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ph_1_n_voltage": {
+      "address": 4096,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph 1 N voltage",
+      "unit": "V"
+    },
+    "ph_2_n_voltage": {
+      "address": 4098,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph 2 N voltage",
+      "unit": "V"
+    },
+    "ph_3_n_voltage": {
+      "address": 4100,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph 3 N voltage",
+      "unit": "V"
+    },
+    "l_1_2_voltage": {
+      "address": 4102,
+      "type": "f32",
+      "access": "r",
+      "description": "L 1 2 voltage",
+      "unit": "V"
+    },
+    "l_2_3_voltage": {
+      "address": 4104,
+      "type": "f32",
+      "access": "r",
+      "description": "L 2 3 voltage",
+      "unit": "V"
+    },
+    "l_3_1_voltage": {
+      "address": 4106,
+      "type": "f32",
+      "access": "r",
+      "description": "L 3 1 voltage",
+      "unit": "V"
+    },
+    "system_voltage": {
+      "address": 4108,
+      "type": "f32",
+      "access": "r",
+      "description": "System voltage",
+      "unit": "V"
+    },
+    "ph1_current": {
+      "address": 4110,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 current",
+      "unit": "A"
+    },
+    "ph2_current": {
+      "address": 4112,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 current",
+      "unit": "A"
+    },
+    "ph3_current": {
+      "address": 4114,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 current",
+      "unit": "A"
+    },
+    "neutral_current": {
+      "address": 4116,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "system_current": {
+      "address": 4118,
+      "type": "f32",
+      "access": "r",
+      "description": "System current",
+      "unit": "A"
+    },
+    "ph1_power_factor": {
+      "address": 4120,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 power factor"
+    },
+    "ph2_power_factor": {
+      "address": 4122,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 power factor"
+    },
+    "ph3_power_factor": {
+      "address": 4124,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 power factor"
+    },
+    "sys_power_factor": {
+      "address": 4126,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys power factor"
+    },
+    "ph1_active_power": {
+      "address": 4128,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 active power",
+      "unit": "W"
+    },
+    "ph2_active_power": {
+      "address": 4130,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 active power",
+      "unit": "W"
+    },
+    "ph3_active_power": {
+      "address": 4132,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 active power",
+      "unit": "W"
+    },
+    "sys_active_power": {
+      "address": 4134,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys active power",
+      "unit": "W"
+    },
+    "ph1_appare_nt_power": {
+      "address": 4136,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 appare nt power",
+      "unit": "VA"
+    },
+    "ph2_apparent_power": {
+      "address": 4138,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 apparent power",
+      "unit": "VA"
+    },
+    "ph3_apparent_power": {
+      "address": 4140,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 apparent power",
+      "unit": "VA"
+    },
+    "sys_apparent_power": {
+      "address": 4142,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys apparent power",
+      "unit": "VA"
+    },
+    "ph1_reactive_power": {
+      "address": 4144,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 reactive power",
+      "unit": "var"
+    },
+    "ph2_reactive_power": {
+      "address": 4146,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 reactive power",
+      "unit": "var"
+    },
+    "ph3_reactive_power": {
+      "address": 4148,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 reactive power",
+      "unit": "var"
+    },
+    "sys_reactive_power": {
+      "address": 4150,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys reactive power",
+      "unit": "var"
+    },
+    "frequency": {
+      "address": 4152,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "phase_seque_nce": {
+      "address": 4154,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase seque nce"
+    },
+    "ph1_imp_active_en": {
+      "address": 4352,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 imp. Active en",
+      "unit": "Wh"
+    },
+    "ph2_imp_active_en": {
+      "address": 4354,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 imp. Active en",
+      "unit": "Wh"
+    },
+    "ph3_imp_active_en": {
+      "address": 4356,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 imp. Active en",
+      "unit": "Wh"
+    },
+    "sys_imp_active_en": {
+      "address": 4358,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys imp. Active en",
+      "unit": "Wh"
+    },
+    "ph1_exp_active_en": {
+      "address": 4360,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 exp. Active en",
+      "unit": "Wh"
+    },
+    "ph2_exp_active_en": {
+      "address": 4362,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 exp. Active en",
+      "unit": "Wh"
+    },
+    "ph3_exp_active_en": {
+      "address": 4364,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 exp. Active en",
+      "unit": "Wh"
+    },
+    "sys_exp_active_en": {
+      "address": 4366,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys exp. Active en",
+      "unit": "Wh"
+    },
+    "ph1_imp_lag_apparent_en": {
+      "address": 4368,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 imp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "ph2_imp_lag_apparent_en": {
+      "address": 4370,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 imp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "ph3_imp_lag_apparent_en": {
+      "address": 4372,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 imp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "sys_imp_lag_apparent_en": {
+      "address": 4374,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys imp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "ph1_exp_lag_apparent_en": {
+      "address": 4376,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 exp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "ph2_exp_lag_apparent_en": {
+      "address": 4378,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 exp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "ph3_exp_lag_apparent_en": {
+      "address": 4380,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 exp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "sys_exp_lag_apparent_en": {
+      "address": 4382,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys exp. Lag. Apparent en",
+      "unit": "VAh"
+    },
+    "ph1_imp_lead_apparent_en": {
+      "address": 4384,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph1 imp. Lead. Apparent en",
+      "unit": "VAh"
+    },
+    "ph2_imp_lead_apparent_en": {
+      "address": 4386,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph2 imp. Lead. Apparent en",
+      "unit": "VAh"
+    },
+    "ph3_imp_lead_apparent_en": {
+      "address": 4388,
+      "type": "f32",
+      "access": "r",
+      "description": "Ph3 imp. Lead. Apparent en",
+      "unit": "VAh"
+    },
+    "sys_imp_lead_apparent_en": {
+      "address": 4390,
+      "type": "f32",
+      "access": "r",
+      "description": "Sys imp. Lead. Apparent en",
+      "unit": "VAh"
+    }
+  }
+}

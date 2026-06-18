@@ -1,0 +1,103 @@
+{
+  "vendor": "ORNO1p",
+  "model": "ORNO WE-514 & WE-515",
+  "description": "Imported from mbmd (orno1p)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/orno1p.go",
+  "registers": {
+    "frequency": {
+      "address": 304,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, 0.01Hz",
+      "function_code": 3
+    },
+    "voltage": {
+      "address": 305,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, 0.01V",
+      "function_code": 3
+    },
+    "current": {
+      "address": 313,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0.001A",
+      "function_code": 3
+    },
+    "power": {
+      "address": 320,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0.001kW",
+      "function_code": 3
+    },
+    "reactive_power": {
+      "address": 328,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0.001kvar",
+      "function_code": 3
+    },
+    "apparent_power": {
+      "address": 336,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 bit, 0.001kva",
+      "function_code": 3
+    },
+    "cosphi": {
+      "address": 344,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, 0.001",
+      "function_code": 3
+    },
+    "sum": {
+      "address": 40960,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kwh",
+      "function_code": 3
+    },
+    "sum_t1": {
+      "address": 40962,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kwh",
+      "function_code": 3
+    },
+    "sum_t2": {
+      "address": 40964,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kwh",
+      "function_code": 3
+    },
+    "reactive_sum": {
+      "address": 40990,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh",
+      "function_code": 3
+    },
+    "reactive_sum_t1": {
+      "address": 40992,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh",
+      "function_code": 3
+    },
+    "reactive_sum_t2": {
+      "address": 40994,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, 0.01kvarh",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: ORNO OR-WE-514/515 confirmed; protocol PDF on GitHub; mbmd source orno1p.go verified"
+}

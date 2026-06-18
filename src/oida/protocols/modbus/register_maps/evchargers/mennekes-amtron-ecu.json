@@ -1,0 +1,177 @@
+{
+  "vendor": "AmtronECU",
+  "model": "AmtronECU",
+  "description": "Imported from nymea-plugins-modbus (mennekes)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/mennekes/amtron-ecu-registers.json",
+  "registers": {
+    "firmwareVersion": {
+      "address": 100,
+      "type": "u32",
+      "access": "ro",
+      "description": "Firmware version"
+    },
+    "cpSignalState": {
+      "address": 122,
+      "type": "u16",
+      "access": "ro",
+      "description": "CP signal state"
+    },
+    "cpAvailability": {
+      "address": 124,
+      "type": "u16",
+      "access": "rw",
+      "description": "Charge Point availability ( Version < 5.22: 0 available, 1 unavailable | Version >= 5.22 1 available, 0 unavailable )"
+    },
+    "model": {
+      "address": 142,
+      "type": "str",
+      "access": "ro",
+      "description": "Device model (>= 5.22)"
+    },
+    "signalledCurrent": {
+      "address": 706,
+      "type": "u16",
+      "access": "ro",
+      "description": "Signalled current to EV",
+      "unit": "A"
+    },
+    "minCurrentLimit": {
+      "address": 712,
+      "type": "u16",
+      "access": "ro",
+      "description": "Minimum current limit",
+      "unit": "A"
+    },
+    "maxCurrentLimit": {
+      "address": 715,
+      "type": "u16",
+      "access": "ro",
+      "description": "Maximum current limit (>= 5.22)",
+      "unit": "A"
+    },
+    "chargedEnergy": {
+      "address": 716,
+      "type": "u32",
+      "access": "ro",
+      "description": "Charged energy for current session (>= 5.22)",
+      "unit": "Wh"
+    },
+    "hemsCurrentLimit": {
+      "address": 1000,
+      "type": "u16",
+      "access": "rw",
+      "description": "HEMS current limit",
+      "unit": "A"
+    },
+    "meterEnergyL1": {
+      "address": 200,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter energy L1",
+      "unit": "Wh"
+    },
+    "meterEnergyL2": {
+      "address": 202,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter energy L2",
+      "unit": "Wh"
+    },
+    "meterEnergyL3": {
+      "address": 204,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter energy L3",
+      "unit": "Wh"
+    },
+    "meterPowerL1": {
+      "address": 206,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter power L1",
+      "unit": "W"
+    },
+    "meterPowerL2": {
+      "address": 208,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter power L2",
+      "unit": "W"
+    },
+    "meterPowerL3": {
+      "address": 210,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter power L3",
+      "unit": "W"
+    },
+    "meterCurrentL1": {
+      "address": 212,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter current L1",
+      "unit": "mA"
+    },
+    "meterCurrentL2": {
+      "address": 214,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter current L2",
+      "unit": "mA"
+    },
+    "meterCurrentL3": {
+      "address": 216,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter current L3",
+      "unit": "mA"
+    },
+    "meterTotoalEnergy": {
+      "address": 218,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter total energy (>= 5.22)",
+      "unit": "Wh"
+    },
+    "meterTotalPower": {
+      "address": 220,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter total power (>= 5.22)",
+      "unit": "W"
+    },
+    "meterVoltageL1": {
+      "address": 222,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter voltage L1 (>= 5.22)",
+      "unit": "V"
+    },
+    "meterVoltageL2": {
+      "address": 224,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter voltage L2 (>= 5.22)",
+      "unit": "V"
+    },
+    "meterVoltageL3": {
+      "address": 226,
+      "type": "u32",
+      "access": "ro",
+      "description": "Meter voltage L3 (>= 5.22)",
+      "unit": "V"
+    }
+  },
+  "enums": {
+    "CPSignalState": {
+      "1": "A",
+      "2": "B",
+      "3": "C",
+      "4": "D",
+      "5": "E"
+    }
+  },
+  "_source_verified": "Verified: ECU firmware v5.12.3+ Modbus TCP confirmed; nymea-plugins-modbus source verified"
+}

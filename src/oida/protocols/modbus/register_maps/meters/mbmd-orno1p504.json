@@ -1,0 +1,75 @@
+{
+  "vendor": "ORNO1P504",
+  "model": "ORNO WE-504",
+  "description": "Imported from mbmd (orno1p504)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/orno1p504.go",
+  "registers": {
+    "frequency": {
+      "address": 2,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, Hz",
+      "function_code": 3
+    },
+    "voltage": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, V",
+      "function_code": 3
+    },
+    "current": {
+      "address": 1,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, A",
+      "function_code": 3
+    },
+    "power": {
+      "address": 3,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, W",
+      "function_code": 3
+    },
+    "reactive_power": {
+      "address": 4,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, var",
+      "function_code": 3
+    },
+    "apparent_power": {
+      "address": 5,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit, va",
+      "function_code": 3
+    },
+    "cosphi": {
+      "address": 6,
+      "type": "f32",
+      "access": "ro",
+      "description": "16 bit,",
+      "function_code": 3
+    },
+    "sum": {
+      "address": 7,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, wh",
+      "function_code": 3
+    },
+    "reactive_sum": {
+      "address": 9,
+      "type": "f32",
+      "access": "ro",
+      "description": "32 Bit, varh",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: ORNO OR-WE-504 confirmed; ESPHome device page exists; mbmd source orno1p504.go verified"
+}

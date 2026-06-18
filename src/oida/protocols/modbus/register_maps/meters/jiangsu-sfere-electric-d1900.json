@@ -1,0 +1,352 @@
+{
+  "vendor": "Jiangsu",
+  "model": "SFERE ELECTRIC D 1900",
+  "description": "Jiangsu SFERE ELECTRIC D 1900 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "import_active_energy": {
+      "address": 262,
+      "type": "i32",
+      "access": "r",
+      "description": "Import active energy",
+      "unit": "Wh"
+    },
+    "export_active_enregy": {
+      "address": 264,
+      "type": "i32",
+      "access": "r",
+      "description": "Export active enregy",
+      "unit": "Wh"
+    },
+    "import_reactive_energy": {
+      "address": 266,
+      "type": "i32",
+      "access": "r",
+      "description": "Import reactive energy",
+      "unit": "varh"
+    },
+    "export_reactive_energy": {
+      "address": 268,
+      "type": "i32",
+      "access": "r",
+      "description": "Export reactive energy",
+      "unit": "varh"
+    },
+    "apparent_energy": {
+      "address": 270,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent energy",
+      "unit": "V"
+    },
+    "first_quadrant_reactive_energy": {
+      "address": 272,
+      "type": "i32",
+      "access": "r",
+      "description": "First quadrant reactive energy",
+      "unit": "varh"
+    },
+    "second_quadrant_reactive_energy": {
+      "address": 274,
+      "type": "i32",
+      "access": "r",
+      "description": "Second quadrant reactive energy",
+      "unit": "varh"
+    },
+    "third_quadrant_reactive_energy": {
+      "address": 276,
+      "type": "i32",
+      "access": "r",
+      "description": "Third quadrant reactive energy",
+      "unit": "varh"
+    },
+    "fourth_quadrant_reactive_energy": {
+      "address": 278,
+      "type": "i32",
+      "access": "r",
+      "description": "Fourth quadrant reactive energy",
+      "unit": "varh"
+    },
+    "active_energy_total": {
+      "address": 280,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy [total",
+      "unit": "Wh"
+    },
+    "active_energy_tip": {
+      "address": 282,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy [tip",
+      "unit": "Wh"
+    },
+    "active_energy_peak": {
+      "address": 284,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy [peak",
+      "unit": "Wh"
+    },
+    "active_energy_level": {
+      "address": 286,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy [level",
+      "unit": "Wh"
+    },
+    "active_energy_valley": {
+      "address": 288,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy [valley",
+      "unit": "Wh"
+    },
+    "active_energy_of_this_month_total_tip_peak_level_valley": {
+      "address": 290,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy of this month [total/tip/peak/level/valley",
+      "unit": "Wh"
+    },
+    "active_energy_of_last_month_total_tip_peak_level_valley": {
+      "address": 300,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy of last month [total/tip/peak/level/valley",
+      "unit": "Wh"
+    },
+    "active_energy_of_the_month_before": {
+      "address": 310,
+      "type": "i32",
+      "access": "r",
+      "description": "Active energy of the month before",
+      "unit": "Wh"
+    },
+    "current": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Current",
+      "unit": "A"
+    },
+    "active_power": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power",
+      "unit": "kW"
+    },
+    "reactive_power": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power",
+      "unit": "kvar"
+    },
+    "apparent_power": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power",
+      "unit": "kVA"
+    },
+    "power_factor": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "frequency": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "import_active_energy_14": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy",
+      "unit": "kW"
+    },
+    "export_active_energy": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy",
+      "unit": "kW"
+    },
+    "import_reactive_energy_18": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Import reactive energy",
+      "unit": "kvar"
+    },
+    "max_reactive_power_demand_value_of_this_month": {
+      "address": 1550,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. reactive power demand value of this month",
+      "unit": "var"
+    },
+    "max_apparent_power_demand_value_of_this_month": {
+      "address": 1551,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. apparent power demand value of this month",
+      "unit": "V"
+    },
+    "active_power_demand_value_at_present": {
+      "address": 1552,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power demand value at present",
+      "unit": "W"
+    },
+    "reactive_power_demand_value_at_present": {
+      "address": 1553,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power demand value at present",
+      "unit": "var"
+    },
+    "apparent_power_demand_value_at_present": {
+      "address": 1554,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power demand value at present",
+      "unit": "V"
+    },
+    "power_on_record_times_and_year": {
+      "address": 1556,
+      "type": "str",
+      "access": "r",
+      "description": "Power on record times and year"
+    },
+    "power_on_record_month_and_data": {
+      "address": 1557,
+      "type": "str",
+      "access": "r",
+      "description": "Power on record month and data"
+    },
+    "power_on_record_hour_and_minute": {
+      "address": 1558,
+      "type": "str",
+      "access": "r",
+      "description": "Power on record hour and minute"
+    },
+    "programming_record_times_and_year": {
+      "address": 1559,
+      "type": "str",
+      "access": "r",
+      "description": "Programming record times and year"
+    },
+    "programming_record_month_and_day": {
+      "address": 1560,
+      "type": "str",
+      "access": "r",
+      "description": "Programming record month and day"
+    },
+    "programming_record_hour_and_minute": {
+      "address": 1561,
+      "type": "str",
+      "access": "r",
+      "description": "Programming record hour and minute"
+    },
+    "energy_clearing_times_and_year": {
+      "address": 1562,
+      "type": "str",
+      "access": "r",
+      "description": "Energy clearing times and year"
+    },
+    "energy_clearing_month_and_day": {
+      "address": 1563,
+      "type": "str",
+      "access": "r",
+      "description": "Energy clearing month and day"
+    },
+    "energy_clearing_hour_and_minute": {
+      "address": 1564,
+      "type": "str",
+      "access": "r",
+      "description": "Energy clearing hour and minute"
+    },
+    "voltage": {
+      "address": 512,
+      "type": "i32",
+      "access": "r",
+      "description": "Voltage",
+      "unit": "V"
+    },
+    "current_513": {
+      "address": 513,
+      "type": "i32",
+      "access": "r",
+      "description": "Current",
+      "unit": "A"
+    },
+    "active_power_514": {
+      "address": 514,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power",
+      "unit": "W"
+    },
+    "reactive_power_515": {
+      "address": 515,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power",
+      "unit": "var"
+    },
+    "apparent_power_516": {
+      "address": 516,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent power",
+      "unit": "V"
+    },
+    "power_factor_517": {
+      "address": 517,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "frequency_518": {
+      "address": 518,
+      "type": "i32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "max_voltage_value": {
+      "address": 1536,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. voltage value",
+      "unit": "V"
+    },
+    "max_current_value": {
+      "address": 1537,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. current value",
+      "unit": "A"
+    },
+    "max_active_power_value": {
+      "address": 1538,
+      "type": "i32",
+      "access": "r",
+      "description": "Max. active power value",
+      "unit": "W"
+    }
+  }
+}

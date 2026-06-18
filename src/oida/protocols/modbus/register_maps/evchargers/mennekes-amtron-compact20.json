@@ -1,0 +1,147 @@
+{
+  "vendor": "AmtronCompact20",
+  "model": "AmtronCompact20",
+  "description": "Imported from nymea-plugins-modbus (mennekes)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/mennekes/amtron-compact20-registers.json",
+  "registers": {
+    "firmwareVersion": {
+      "address": 1,
+      "type": "str",
+      "access": "ro",
+      "description": "Firmware version"
+    },
+    "serial": {
+      "address": 19,
+      "type": "str",
+      "access": "ro",
+      "description": "Serial number"
+    },
+    "evseState": {
+      "address": 256,
+      "type": "u16",
+      "access": "ro",
+      "description": "EVSE state"
+    },
+    "cpSignalState": {
+      "address": 264,
+      "type": "u16",
+      "access": "ro",
+      "description": "CP signal state"
+    },
+    "chargingCurrentEnergyManager": {
+      "address": 770,
+      "type": "f32",
+      "access": "rw",
+      "description": "Charging current energy manager"
+    },
+    "maxCurrentEVSE": {
+      "address": 774,
+      "type": "f32",
+      "access": "ro",
+      "description": "Max current EVSE"
+    },
+    "powerOverall": {
+      "address": 1298,
+      "type": "f32",
+      "access": "ro",
+      "description": "Overall power on all phases"
+    },
+    "heartbeat": {
+      "address": 3328,
+      "type": "u16",
+      "access": "ro",
+      "description": "Heartbeat"
+    },
+    "switchedPhases": {
+      "address": 3586,
+      "type": "u16",
+      "access": "ro",
+      "description": "Switched phases"
+    },
+    "chargedEnergyTotal": {
+      "address": 4096,
+      "type": "f32",
+      "access": "ro",
+      "description": "Charged energy total"
+    },
+    "maxCurrentSession": {
+      "address": 2816,
+      "type": "f32",
+      "access": "ro",
+      "description": "Max current for session"
+    },
+    "chargedEnergySession": {
+      "address": 2818,
+      "type": "f32",
+      "access": "ro",
+      "description": "Charged energy session"
+    },
+    "sessionDuration": {
+      "address": 2820,
+      "type": "u32",
+      "access": "ro",
+      "description": "Session duration"
+    },
+    "detectedEVPhases": {
+      "address": 2822,
+      "type": "u16",
+      "access": "ro",
+      "description": "Detected EV phases"
+    },
+    "solarChargingMode": {
+      "address": 3331,
+      "type": "u16",
+      "access": "rw",
+      "description": "Solar charging mode (LED)"
+    },
+    "requestedPhases": {
+      "address": 3332,
+      "type": "u16",
+      "access": "rw",
+      "description": "Requested phases"
+    },
+    "chargingReleaseEnergyManager": {
+      "address": 3333,
+      "type": "u16",
+      "access": "rw",
+      "description": "Charging release energy manager"
+    }
+  },
+  "enums": {
+    "CPSignalState": {
+      "10": "A1",
+      "11": "B1",
+      "12": "C1",
+      "13": "D1",
+      "14": "E",
+      "15": "F",
+      "26": "A2",
+      "27": "B2",
+      "28": "C2",
+      "29": "D2"
+    },
+    "EvseState": {
+      "0": "NotInitialized",
+      "1": "Idle",
+      "2": "EvConnected",
+      "3": "PreconditionsValidButNotCharging",
+      "4": "ReadyToCharge",
+      "5": "Charging",
+      "6": "Error",
+      "7": "ServiceMode"
+    },
+    "PhaseMode": {
+      "0": "All",
+      "1": "Single"
+    },
+    "SolarChargingMode": {
+      "0": "Off",
+      "1": "Standard",
+      "2": "Sunshine",
+      "3": "SunshinePlus"
+    }
+  },
+  "_source_verified": "Verified: Official Mennekes Modbus RTU Specification confirmed; nymea-plugins-modbus source verified"
+}

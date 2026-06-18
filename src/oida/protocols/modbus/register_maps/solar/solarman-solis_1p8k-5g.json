@@ -1,0 +1,150 @@
+{
+  "vendor": "Solis",
+  "model": "1P8K-5G",
+  "description": "Imported from Home Assistant Solarman (solis_1p8k-5g.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/solis_1p8k-5g.yaml",
+  "registers": {
+    "inverter_status": {
+      "address": 3043,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter Status"
+    },
+    "operating_status": {
+      "address": 3071,
+      "type": "str",
+      "access": "ro",
+      "description": "Operating Status"
+    },
+    "inverter_temperature": {
+      "address": 3041,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter Temperature",
+      "unit": "°C",
+      "scale": 0.1
+    },
+    "product_model": {
+      "address": 2999,
+      "type": "str",
+      "access": "ro",
+      "description": "Product Model"
+    },
+    "dsp_software_version": {
+      "address": 3000,
+      "type": "str",
+      "access": "ro",
+      "description": "DSP Software Version"
+    },
+    "lcd_software_version": {
+      "address": 3001,
+      "type": "str",
+      "access": "ro",
+      "description": "LCD Software Version"
+    },
+    "pv1_voltage": {
+      "address": 3021,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 3023,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 3022,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv2_current": {
+      "address": 3024,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "total_dc_power": {
+      "address": 3007,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total DC Power",
+      "unit": "kW",
+      "scale": 0.001
+    },
+    "inverter_ac_power": {
+      "address": 3005,
+      "type": "u32",
+      "access": "ro",
+      "description": "Inverter AC Power",
+      "unit": "kW",
+      "scale": 0.001
+    },
+    "inverter_voltage": {
+      "address": 3035,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "inverter_current": {
+      "address": 3038,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_frequency": {
+      "address": 3042,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "daily_generation": {
+      "address": 3014,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Generation",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "monthly_generation": {
+      "address": 3011,
+      "type": "u32",
+      "access": "ro",
+      "description": "Monthly Generation",
+      "unit": "kWh"
+    },
+    "yearly_generation": {
+      "address": 3017,
+      "type": "u32",
+      "access": "ro",
+      "description": "Yearly Generation",
+      "unit": "kWh"
+    },
+    "total_generation": {
+      "address": 3009,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Generation",
+      "unit": "kWh"
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed; registers 3041/2999/3043 match upstream. Solis Modbus protocol documented"
+}

@@ -1,0 +1,86 @@
+{
+  "vendor": "Rockwell Automation",
+  "model": "MicroLogix 1100/1400",
+  "description": "Allen-Bradley MicroLogix 1100/1400 Modbus register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "MicroLogix 1100/1400 have NATIVE Modbus TCP support on Channel 1 (built-in Ethernet). Unlike CompactLogix, no AOI required. Configure via RSLogix 500 Channel Configuration.",
+  "source": "Rockwell Publication 1763-RM001, 1766-RM001",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "area": "B3 file"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "area": "I file"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "area": "N7/F8 files"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "area": "Configured area"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "area": "B3 file"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "N7/F8 files"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils",
+      "area": "B3 file"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "N7/F8 files"
+    }
+  ],
+  "registers": {},
+  "coils": {},
+  "extended_info": {
+    "native_support": {
+      "micrologix_1100": {
+        "modbus_tcp": true,
+        "channel": "Channel 1 (Ethernet)",
+        "max_connections": 8
+      },
+      "micrologix_1400": {
+        "modbus_tcp": true,
+        "channel": "Channel 1 (Ethernet)",
+        "max_connections": 8
+      },
+      "micrologix_1000": {
+        "modbus_tcp": false,
+        "note": "No Ethernet port"
+      }
+    },
+    "configuration_requirements": [
+      "Configure Channel 1 in RSLogix 500",
+      "Enable Modbus TCP Server in Channel Configuration",
+      "Set Unit ID (default 1)",
+      "Map data files to Modbus addresses via Modbus Message Handler"
+    ],
+    "memory_mapping": {
+      "coils_0x": "B3 (Binary) file, bit-addressable",
+      "discrete_inputs_1x": "I (Input) file",
+      "input_registers_3x": "Mapped via configuration",
+      "holding_registers_4x": "N7 (Integer) or F8 (Float) files"
+    }
+  },
+  "_source_verified": "Verified: MicroLogix 1100/1400 native Modbus TCP confirmed; publication 1766-RM001 verified"
+}

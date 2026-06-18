@@ -1,0 +1,173 @@
+{
+  "vendor": "Deye",
+  "model": "String",
+  "description": "Imported from Home Assistant Solarman (deye_string.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/deye_string.yaml",
+  "registers": {
+    "pv1_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 110,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv2_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "daily_production": {
+      "address": 60,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_production": {
+      "address": 63,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "grid_voltage_lla": {
+      "address": 73,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage L-L(A)",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_voltage_llb": {
+      "address": 74,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage L-L(B))",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_voltage_llc": {
+      "address": 75,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Voltage L-L(C)",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_current_a": {
+      "address": 76,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid Current A",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_current_b": {
+      "address": 77,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid Current B",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_current_c": {
+      "address": 78,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid Current C",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_frequency": {
+      "address": 79,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "running_status": {
+      "address": 59,
+      "type": "u16",
+      "access": "ro",
+      "description": "Running Status",
+      "enum": {
+        "0": "Stand-by",
+        "1": "Self-checking",
+        "2": "Normal",
+        "3": "FAULT"
+      }
+    },
+    "total_output_ac_power": {
+      "address": 80,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Output AC Power",
+      "unit": "W",
+      "scale": 0.1
+    },
+    "input_active_power": {
+      "address": 82,
+      "type": "u32",
+      "access": "ro",
+      "description": "Input Active Power",
+      "unit": "W",
+      "scale": 0.1
+    },
+    "output_apparent_power": {
+      "address": 84,
+      "type": "u32",
+      "access": "ro",
+      "description": "Output Apparent Power",
+      "unit": "VA",
+      "scale": 0.1
+    },
+    "output_active_power": {
+      "address": 86,
+      "type": "u32",
+      "access": "ro",
+      "description": "Output Active Power",
+      "unit": "W",
+      "scale": 0.1
+    },
+    "output_reactive_power": {
+      "address": 88,
+      "type": "u32",
+      "access": "ro",
+      "description": "Output Reactive Power",
+      "unit": "VAR",
+      "scale": 0.1
+    },
+    "inverter_id": {
+      "address": 3,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter ID"
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed at StephanJoubert/home_assistant_solarman"
+}

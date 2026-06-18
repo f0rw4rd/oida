@@ -1,0 +1,348 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "PM 8000 / ION 7400",
+  "description": "Schneider Electric PM 8000 / ION 7400 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: PM 8000, ION 7400",
+  "registers": {
+    "meter_name": {
+      "address": 30,
+      "type": "str",
+      "access": "r",
+      "description": "Meter name"
+    },
+    "meter_model": {
+      "address": 50,
+      "type": "str",
+      "access": "r",
+      "description": "Meter model"
+    },
+    "current_version": {
+      "address": 1717,
+      "type": "str",
+      "access": "r",
+      "description": "Current version"
+    },
+    "year": {
+      "address": 1837,
+      "type": "u16",
+      "access": "r",
+      "description": "Year",
+      "unit": "year"
+    },
+    "month": {
+      "address": 1838,
+      "type": "u16",
+      "access": "r",
+      "description": "Month",
+      "unit": "month"
+    },
+    "day": {
+      "address": 1839,
+      "type": "u16",
+      "access": "r",
+      "description": "Day",
+      "unit": "days"
+    },
+    "hour": {
+      "address": 1840,
+      "type": "u16",
+      "access": "r",
+      "description": "Hour",
+      "unit": "hours"
+    },
+    "minute": {
+      "address": 1841,
+      "type": "u16",
+      "access": "r",
+      "description": "Minute",
+      "unit": "minutes"
+    },
+    "second": {
+      "address": 1842,
+      "type": "u16",
+      "access": "r",
+      "description": "Second",
+      "unit": "seconds"
+    },
+    "day_of_week": {
+      "address": 1844,
+      "type": "u16",
+      "access": "r",
+      "description": "Day of week"
+    },
+    "digital_input_status_validity_base_unit": {
+      "address": 2400,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input status validity base unit"
+    },
+    "digital_output_status_validity_base_unit": {
+      "address": 2402,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital output status validity base unit"
+    },
+    "setpoint_status_validity": {
+      "address": 2420,
+      "type": "u16",
+      "access": "r",
+      "description": "Setpoint status validity"
+    },
+    "digital_input_status_validity_option_slot_a": {
+      "address": 2550,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input status validity option slot A"
+    },
+    "digital_input_status_validity_option_slot_b": {
+      "address": 2552,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input status validity option slot B"
+    },
+    "digital_input_status_validity_option_slot_c": {
+      "address": 2554,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input status validity option slot C"
+    },
+    "digital_input_status_validity_option_slot_d": {
+      "address": 2556,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input status validity option slot D"
+    },
+    "digital_output_status_validity_option_slot_a": {
+      "address": 2566,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital output status validity option slot A"
+    },
+    "digital_output_status_validity_option_slot_b": {
+      "address": 2568,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital output status validity option slot B"
+    },
+    "digital_output_status_validity_option_slot_c": {
+      "address": 2570,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital output status validity option slot C"
+    },
+    "digital_output_status_validity_option_slot_d": {
+      "address": 2572,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital output status validity option slot D"
+    },
+    "active_energy_delivered_into_load": {
+      "address": 2700,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy delivered (into load)",
+      "unit": "kWh"
+    },
+    "active_energy_received_out_of_load": {
+      "address": 2702,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy received (out of load)",
+      "unit": "kWh"
+    },
+    "active_energy_delivered_received": {
+      "address": 2704,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy delivered + received",
+      "unit": "kWh"
+    },
+    "active_energy_delivered_received_2706": {
+      "address": 2706,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy delivered received",
+      "unit": "kWh"
+    },
+    "reactive_energy_delivered": {
+      "address": 2708,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy delivered",
+      "unit": "kVARh"
+    },
+    "reactive_energy_received": {
+      "address": 2710,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy received",
+      "unit": "kVARh"
+    },
+    "reactive_energy_delivered_received": {
+      "address": 2712,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy delivered + received",
+      "unit": "kVARh"
+    },
+    "reactive_energy_delivered_received_2714": {
+      "address": 2714,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy delivered received",
+      "unit": "kVARh"
+    },
+    "apparent_energy_delivered": {
+      "address": 2716,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy delivered",
+      "unit": "kVAh"
+    },
+    "apparent_energy_received": {
+      "address": 2718,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy received",
+      "unit": "kVAh"
+    },
+    "apparent_energy_delivered_received": {
+      "address": 2720,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy delivered + received",
+      "unit": "kVAh"
+    },
+    "apparent_energy_delivered_received_2722": {
+      "address": 2722,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy delivered received",
+      "unit": "kVAh"
+    },
+    "active_energy_in_quadrant_i": {
+      "address": 2724,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy in quadrant I",
+      "unit": "kWh"
+    },
+    "active_energy_in_quadrant_ii": {
+      "address": 2726,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy in quadrant ii",
+      "unit": "kWh"
+    },
+    "active_energy_in_quadrant_iii": {
+      "address": 2728,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy in quadrant iii",
+      "unit": "kWh"
+    },
+    "active_energy_in_quadrant_iv": {
+      "address": 2730,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy in quadrant iv",
+      "unit": "kWh"
+    },
+    "reactive_energy_in_quadrant_i": {
+      "address": 2732,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy in quadrant I",
+      "unit": "kVARh"
+    },
+    "reactive_energy_in_quadrant_ii": {
+      "address": 2734,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy in quadrant ii",
+      "unit": "kVARh"
+    },
+    "reactive_energy_in_quadrant_iii": {
+      "address": 2736,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy in quadrant iii",
+      "unit": "kVARh"
+    },
+    "reactive_energy_in_quadrant_iv": {
+      "address": 2738,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy in quadrant iv",
+      "unit": "kVARh"
+    },
+    "apparent_energy_in_quadrant_i": {
+      "address": 2740,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy in quadrant I",
+      "unit": "kVAh"
+    },
+    "apparent_energy_in_quadrant_ii": {
+      "address": 2742,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy in quadrant ii",
+      "unit": "kVAh"
+    },
+    "apparent_energy_in_quadrant_iii": {
+      "address": 2744,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy in quadrant iii",
+      "unit": "kVAh"
+    },
+    "apparent_energy_in_quadrant_iv": {
+      "address": 2746,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy in quadrant iv",
+      "unit": "kVAh"
+    },
+    "conditional_active_energy_delivered_into_load": {
+      "address": 2748,
+      "type": "f32",
+      "access": "r",
+      "description": "Conditional active energy delivered (into load)",
+      "unit": "kWh"
+    },
+    "conditional_active_energy_received_out_of_load": {
+      "address": 2750,
+      "type": "f32",
+      "access": "r",
+      "description": "Conditional active energy received (out of load)",
+      "unit": "kWh"
+    },
+    "active_energy_delivered_received_conditional": {
+      "address": 2754,
+      "type": "f32",
+      "access": "r",
+      "description": "Active energy delivered received, conditional",
+      "unit": "kWh"
+    },
+    "conditional_reactive_energy_in_delivered": {
+      "address": 2756,
+      "type": "f32",
+      "access": "r",
+      "description": "Conditional reactive energy in (delivered)",
+      "unit": "kVARh"
+    },
+    "conditional_reactive_energy_out_received": {
+      "address": 2758,
+      "type": "f32",
+      "access": "r",
+      "description": "Conditional reactive energy out (received)",
+      "unit": "kVARh"
+    }
+  }
+}

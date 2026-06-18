@@ -1,0 +1,483 @@
+{
+  "vendor": "Kstar",
+  "model": "Hybrid",
+  "description": "Imported from Home Assistant Solarman (kstar_hybrid.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/kstar_hybrid.yaml",
+  "registers": {
+    "pv1_voltage": {
+      "address": 3000,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 3001,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 3012,
+      "type": "i16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "pv2_current": {
+      "address": 3013,
+      "type": "i16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "pv1_power": {
+      "address": 3024,
+      "type": "i16",
+      "access": "ro",
+      "description": "PV1 Power",
+      "unit": "W"
+    },
+    "pv2_power": {
+      "address": 3025,
+      "type": "i16",
+      "access": "ro",
+      "description": "PV2 Power",
+      "unit": "W"
+    },
+    "daily_production": {
+      "address": 3036,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "monthly_production": {
+      "address": 3038,
+      "type": "u32",
+      "access": "ro",
+      "description": "Monthly Production",
+      "unit": "kWh"
+    },
+    "yearly_production": {
+      "address": 3040,
+      "type": "u32",
+      "access": "ro",
+      "description": "Yearly Production",
+      "unit": "kWh"
+    },
+    "cumulative_production": {
+      "address": 3042,
+      "type": "u32",
+      "access": "ro",
+      "description": "Cumulative Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_grid_power": {
+      "address": 3100,
+      "type": "i16",
+      "access": "ro",
+      "description": "Total Grid Power",
+      "unit": "W"
+    },
+    "daily_energy_purchased": {
+      "address": 3109,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Energy Purchased",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "monthly_energy_purchased": {
+      "address": 3111,
+      "type": "u32",
+      "access": "ro",
+      "description": "Monthly Energy Purchased",
+      "unit": "kWh"
+    },
+    "yearly_energy_purchased": {
+      "address": 3113,
+      "type": "u32",
+      "access": "ro",
+      "description": "Yearly Energy Purchased",
+      "unit": "kWh"
+    },
+    "cumulative_energy_purchased": {
+      "address": 3115,
+      "type": "u32",
+      "access": "ro",
+      "description": "Cumulative Energy Purchased",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "daily_energy_feedin": {
+      "address": 3116,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Energy Feed-In",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "monthly_energy_feedin": {
+      "address": 3118,
+      "type": "u32",
+      "access": "ro",
+      "description": "Monthly Energy Feed-In",
+      "unit": "kWh"
+    },
+    "yearly_energy_feedin": {
+      "address": 3120,
+      "type": "u32",
+      "access": "ro",
+      "description": "Yearly Energy Feed-In",
+      "unit": "kWh"
+    },
+    "cumulative_grid_feedin": {
+      "address": 3122,
+      "type": "u32",
+      "access": "ro",
+      "description": "Cumulative Grid Feed-In",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_consumption_power": {
+      "address": 3144,
+      "type": "u16",
+      "access": "ro",
+      "description": "Total Consumption Power",
+      "unit": "W"
+    },
+    "daily_consumption": {
+      "address": 3147,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Consumption",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "monthly_consumption": {
+      "address": 3149,
+      "type": "u32",
+      "access": "ro",
+      "description": "Monthly Consumption",
+      "unit": "kWh"
+    },
+    "yearly_consumption": {
+      "address": 3151,
+      "type": "u32",
+      "access": "ro",
+      "description": "Yearly Consumption",
+      "unit": "kWh"
+    },
+    "cumulative_consumption": {
+      "address": 3153,
+      "type": "u32",
+      "access": "ro",
+      "description": "Cumulative Consumption",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_type": {
+      "address": 3062,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Type"
+    },
+    "battery_voltage": {
+      "address": 3063,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.01
+    },
+    "battery_current": {
+      "address": 3064,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_power": {
+      "address": 3065,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Power",
+      "unit": "W"
+    },
+    "battery_soc": {
+      "address": 3066,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery SoC",
+      "unit": "%",
+      "scale": 0.1
+    },
+    "battery_temperature": {
+      "address": 3067,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Temperature",
+      "unit": "°C",
+      "scale": 0.1
+    },
+    "battery_discharge_capacity_depth": {
+      "address": 3068,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Discharge Capacity Depth",
+      "unit": "%"
+    },
+    "battery_radiator_temperature": {
+      "address": 3056,
+      "type": "i16",
+      "access": "ro",
+      "description": "Battery Radiator Temperature",
+      "unit": "°C",
+      "scale": 0.1
+    },
+    "battery_total_discharge": {
+      "address": 3293,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery Total Discharge",
+      "unit": "kWh"
+    },
+    "battery_daily_discharge": {
+      "address": 3294,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Daily Discharge",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "battery_total_charge": {
+      "address": 3300,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery Total Charge",
+      "unit": "kWh"
+    },
+    "battery_daily_charge": {
+      "address": 3301,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery Daily Charge",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "inverter_working_mode": {
+      "address": 3044,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Working Mode"
+    },
+    "inverter_model": {
+      "address": 3045,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Model"
+    },
+    "system_status": {
+      "address": 3046,
+      "type": "u16",
+      "access": "ro",
+      "description": "System status"
+    },
+    "inverter_status": {
+      "address": 3047,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter status"
+    },
+    "dcdc_status": {
+      "address": 3048,
+      "type": "u16",
+      "access": "ro",
+      "description": "DCDC status"
+    },
+    "dsp_alarm_code": {
+      "address": 3050,
+      "type": "str",
+      "access": "ro",
+      "description": "DSP Alarm Code"
+    },
+    "dsp_error_code": {
+      "address": 3052,
+      "type": "str",
+      "access": "ro",
+      "description": "DSP Error Code"
+    },
+    "grid_standard": {
+      "address": 3193,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Standard"
+    },
+    "inverter_model_name": {
+      "address": 3200,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter Model Name"
+    },
+    "inverter_battery_name": {
+      "address": 3208,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter Battery Name"
+    },
+    "arm_version_number": {
+      "address": 3216,
+      "type": "u16",
+      "access": "ro",
+      "description": "ARM Version Number"
+    },
+    "dsp_version_number": {
+      "address": 3217,
+      "type": "u16",
+      "access": "ro",
+      "description": "DSP Version Number"
+    },
+    "inverter_sn_number": {
+      "address": 3228,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter SN Number"
+    },
+    "inverter_bus_voltage": {
+      "address": 3053,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Bus Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "inverter_dc_bus_voltage": {
+      "address": 3054,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter DC Bus Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "inverter_radiator_temperature": {
+      "address": 3055,
+      "type": "i16",
+      "access": "ro",
+      "description": "Inverter Radiator Temperature",
+      "unit": "°C",
+      "scale": 0.1
+    },
+    "chassis_internal_temperature": {
+      "address": 3057,
+      "type": "i16",
+      "access": "ro",
+      "description": "Chassis Internal Temperature",
+      "unit": "°C",
+      "scale": 0.1
+    },
+    "rphase_grid_voltage": {
+      "address": 3097,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Grid Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "rphase_grid_frequency": {
+      "address": 3098,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "rphase_meter_current": {
+      "address": 3099,
+      "type": "i16",
+      "access": "ro",
+      "description": "R-phase Meter Current",
+      "unit": "A",
+      "scale": 0.001
+    },
+    "rphase_grid_power": {
+      "address": 3100,
+      "type": "i16",
+      "access": "ro",
+      "description": "R-phase Grid Power",
+      "unit": "W"
+    },
+    "rphase_inverter_voltage": {
+      "address": 3123,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Inverter Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "rphase_inverter_current": {
+      "address": 3124,
+      "type": "i16",
+      "access": "ro",
+      "description": "R-phase Inverter Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "rphase_inverter_frequency": {
+      "address": 3125,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Inverter Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "rphase_inverter_power": {
+      "address": 3126,
+      "type": "i16",
+      "access": "ro",
+      "description": "R-phase Inverter Power",
+      "unit": "W"
+    },
+    "rphase_backup_voltage": {
+      "address": 3135,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Backup Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "rphase_backup_current": {
+      "address": 3136,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Backup Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "rphase_backup_power": {
+      "address": 3137,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Backup Power",
+      "unit": "W"
+    },
+    "rphase_load_power": {
+      "address": 3144,
+      "type": "u16",
+      "access": "ro",
+      "description": "R-phase Load Power",
+      "unit": "W"
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed; registers 3000/3001/3012/3013 match upstream exactly. KSTAR Modbus protocol V2.5-V3.5 documented"
+}

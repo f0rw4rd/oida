@@ -1,0 +1,198 @@
+{
+  "vendor": "Solis",
+  "model": "3P-4G",
+  "description": "Imported from Home Assistant Solarman (solis_3p-4g.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/solis_3p-4g.yaml",
+  "registers": {
+    "working_mode": {
+      "address": 3040,
+      "type": "u16",
+      "access": "ro",
+      "description": "Working Mode"
+    },
+    "inverter_temperature": {
+      "address": 3041,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Temperature",
+      "unit": "°C",
+      "scale": 0.1
+    },
+    "product_model": {
+      "address": 2999,
+      "type": "u16",
+      "access": "ro",
+      "description": "Product Model"
+    },
+    "dsp_software_version": {
+      "address": 3000,
+      "type": "u16",
+      "access": "ro",
+      "description": "DSP Software Version"
+    },
+    "lcd_software_version": {
+      "address": 3001,
+      "type": "u16",
+      "access": "ro",
+      "description": "LCD Software Version"
+    },
+    "inverter_status": {
+      "address": 3043,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Status",
+      "enum": {
+        "0": "Waiting",
+        "1": "OpenRun",
+        "2": "SoftRun",
+        "3": "Generating",
+        "1004": "Grid off",
+        "2011": "Fail Safe"
+      }
+    },
+    "dc_voltage_1": {
+      "address": 3021,
+      "type": "u16",
+      "access": "ro",
+      "description": "DC Voltage 1",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "dc_voltage_2": {
+      "address": 3023,
+      "type": "u16",
+      "access": "ro",
+      "description": "DC Voltage 2",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "dc_current_1": {
+      "address": 3022,
+      "type": "u16",
+      "access": "ro",
+      "description": "DC Current 1",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "dc_current_2": {
+      "address": 3024,
+      "type": "u16",
+      "access": "ro",
+      "description": "DC Current 2",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "total_dc_power": {
+      "address": 3007,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total DC Power",
+      "unit": "kW",
+      "scale": 0.001
+    },
+    "active_power": {
+      "address": 3005,
+      "type": "u32",
+      "access": "ro",
+      "description": "Active power",
+      "unit": "kW",
+      "scale": 0.001
+    },
+    "inverter_ac_power": {
+      "address": 3005,
+      "type": "u32",
+      "access": "ro",
+      "description": "Inverter AC Power",
+      "unit": "kW",
+      "scale": 0.001
+    },
+    "a_phase_voltage": {
+      "address": 3033,
+      "type": "u16",
+      "access": "ro",
+      "description": "A phase voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "b_phase_voltage": {
+      "address": 3034,
+      "type": "u16",
+      "access": "ro",
+      "description": "B phase voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "c_phase_voltage": {
+      "address": 3035,
+      "type": "u16",
+      "access": "ro",
+      "description": "C phase voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "a_phase_current": {
+      "address": 3036,
+      "type": "u16",
+      "access": "ro",
+      "description": "A phase current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "b_phase_current": {
+      "address": 3037,
+      "type": "u16",
+      "access": "ro",
+      "description": "B phase current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "c_phase_current": {
+      "address": 3038,
+      "type": "u16",
+      "access": "ro",
+      "description": "C phase current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "inverter_frequency": {
+      "address": 3042,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "daily_generation": {
+      "address": 3014,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Generation",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "monthly_generation": {
+      "address": 3011,
+      "type": "u32",
+      "access": "ro",
+      "description": "Monthly Generation",
+      "unit": "kWh"
+    },
+    "yearly_generation": {
+      "address": 3017,
+      "type": "u32",
+      "access": "ro",
+      "description": "Yearly Generation",
+      "unit": "kWh"
+    },
+    "total_generation": {
+      "address": 3009,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Generation",
+      "unit": "kWh"
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed at StephanJoubert/home_assistant_solarman; Solis 3P-4G documented"
+}

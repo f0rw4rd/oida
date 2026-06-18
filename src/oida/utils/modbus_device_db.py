@@ -1,0 +1,25 @@
+"""Backward-compatibility shim -- module moved to oida.protocols.modbus.device_db."""
+
+from oida.protocols.modbus.device_db import (  # noqa: F401
+    VENDOR_PATTERNS,
+    analyze_exception_response,
+    detect_custom_function_codes,
+    fingerprint_by_exceptions,
+    format_device_info,
+    fuzzy_vendor_match,
+    get_database_path,
+    get_exception_info,
+    get_exception_name,
+    get_exception_test_sequence,
+    get_function_code_info,
+    get_mei_object_name,
+    get_product_count,
+    get_vendor_list,
+    identify_device,
+    identify_product,
+    identify_vendor,
+    is_security_sensitive_fc,
+    load_database,
+    search_products,
+    search_vendors,
+)

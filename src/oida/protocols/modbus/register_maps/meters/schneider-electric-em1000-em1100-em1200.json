@@ -1,0 +1,313 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "EM 1000 EM 1100 EM 1200",
+  "description": "Schneider Electric EM 1000 EM 1100 EM 1200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "current_average": {
+      "address": 3056,
+      "type": "f32",
+      "access": "r",
+      "description": "Current average"
+    },
+    "current_phase_1": {
+      "address": 3008,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 1"
+    },
+    "current_phase_2": {
+      "address": 3024,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 2"
+    },
+    "current_phase_3": {
+      "address": 3040,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 3"
+    },
+    "voltage_ll_average": {
+      "address": 3058,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage (ll) average"
+    },
+    "voltage_ll_phase_1_2": {
+      "address": 3010,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ll), phase 1 2"
+    },
+    "voltage_ll_phase_2_3": {
+      "address": 3026,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ll), phase 2 3"
+    },
+    "voltage_ll_phase_3_1": {
+      "address": 3042,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ll), phase 3 1"
+    },
+    "voltage_ln_average": {
+      "address": 3060,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln) average"
+    },
+    "voltage_ln_phase_1": {
+      "address": 3012,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln), phase 1"
+    },
+    "voltage_ln_phase_2": {
+      "address": 3028,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln), phase 2"
+    },
+    "voltage_ln_phase_3": {
+      "address": 3044,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln), phase 3"
+    },
+    "frequency": {
+      "address": 3062,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "active_power_total": {
+      "address": 3050,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, total"
+    },
+    "active_power_phase_1": {
+      "address": 3002,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, phase 1"
+    },
+    "active_power_phase_2": {
+      "address": 3018,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, phase 2"
+    },
+    "active_power_phase_3": {
+      "address": 3034,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, phase 3"
+    },
+    "reactive_power_total": {
+      "address": 3052,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, total"
+    },
+    "reactive_power_phase_1": {
+      "address": 3004,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase 1"
+    },
+    "reactive_power_phase_2": {
+      "address": 3020,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase 2"
+    },
+    "reactive_power_phase_3": {
+      "address": 3036,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase 3"
+    },
+    "apparent_power_total": {
+      "address": 3048,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, total"
+    },
+    "apparent_power_phase_1": {
+      "address": 3000,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase 1"
+    },
+    "apparent_power_phase_2": {
+      "address": 3016,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase 2"
+    },
+    "apparent_power_phase_3": {
+      "address": 3032,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase 3"
+    },
+    "power_factor_total": {
+      "address": 3054,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor total"
+    },
+    "power_factor_phase_1": {
+      "address": 3006,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase 1"
+    },
+    "power_factor_phase_2": {
+      "address": 3022,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase 2"
+    },
+    "power_factor_phase_3": {
+      "address": 3038,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase 3"
+    },
+    "forward_apparent_energy": {
+      "address": 3200,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward apparent energy"
+    },
+    "forward_active_energy": {
+      "address": 3202,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward active energy"
+    },
+    "forward_reactive_energy": {
+      "address": 3204,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward reactive energy"
+    },
+    "forward_run_seconds": {
+      "address": 3264,
+      "type": "u32",
+      "access": "r",
+      "description": "Forward run seconds"
+    },
+    "on_seconds": {
+      "address": 3266,
+      "type": "u32",
+      "access": "r",
+      "description": "On seconds"
+    },
+    "number_of_input_voltage_interruptions": {
+      "address": 3268,
+      "type": "u32",
+      "access": "r",
+      "description": "Number of input voltage interruptions"
+    },
+    "current_average_2506": {
+      "address": 2506,
+      "type": "f32",
+      "access": "r",
+      "description": "Current average"
+    },
+    "current_phase_1_2500": {
+      "address": 2500,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 1"
+    },
+    "current_phase_2_2502": {
+      "address": 2502,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 2"
+    },
+    "current_phase_3_2504": {
+      "address": 2504,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase 3"
+    },
+    "voltage_ll_average_2514": {
+      "address": 2514,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage (ll) average"
+    },
+    "voltage_ll_phase_1_2_2508": {
+      "address": 2508,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ll), phase 1 2"
+    },
+    "voltage_ll_phase_2_3_2510": {
+      "address": 2510,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ll), phase 2 3"
+    },
+    "voltage_ll_phase_3_1_2512": {
+      "address": 2512,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ll), phase 3 1"
+    },
+    "voltage_ln_average_2522": {
+      "address": 2522,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln) average"
+    },
+    "voltage_ln_phase_1_2516": {
+      "address": 2516,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln), phase 1"
+    },
+    "voltage_ln_phase_2_2518": {
+      "address": 2518,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln), phase 2"
+    },
+    "voltage_ln_phase_3_2520": {
+      "address": 2520,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage(ln), phase 3"
+    },
+    "frequency_2530": {
+      "address": 2530,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "active_power_total_2546": {
+      "address": 2546,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, total"
+    },
+    "active_power_phase_1_2540": {
+      "address": 2540,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power, phase 1"
+    }
+  }
+}

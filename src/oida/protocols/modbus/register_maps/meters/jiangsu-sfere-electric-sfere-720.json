@@ -1,0 +1,359 @@
+{
+  "vendor": "Jiangsu",
+  "model": "SFERE ELECTRIC SFERE 720",
+  "description": "Jiangsu SFERE ELECTRIC SFERE 720 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v1": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "V1",
+      "unit": "v"
+    },
+    "v2": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "V2",
+      "unit": "v"
+    },
+    "v3": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "V3",
+      "unit": "v"
+    },
+    "v12": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "V12",
+      "unit": "v"
+    },
+    "v23": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "V23",
+      "unit": "v"
+    },
+    "v31": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "V31",
+      "unit": "v"
+    },
+    "11": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "11",
+      "unit": "A"
+    },
+    "12": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "12",
+      "unit": "A"
+    },
+    "13": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "13",
+      "unit": "A"
+    },
+    "in": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "In",
+      "unit": "A"
+    },
+    "p1": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "P1",
+      "unit": "kW"
+    },
+    "p2": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "P2",
+      "unit": "kW"
+    },
+    "p3": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "P3",
+      "unit": "kW"
+    },
+    "p": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "P",
+      "unit": "kW"
+    },
+    "q_1": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Q 1",
+      "unit": "kvar"
+    },
+    "q2": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Q2",
+      "unit": "kvar"
+    },
+    "q3": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Q3",
+      "unit": "kvar"
+    },
+    "s1": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "S1",
+      "unit": "kVA"
+    },
+    "s2": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "S2",
+      "unit": "kVA"
+    },
+    "s3": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "S3",
+      "unit": "kVA"
+    },
+    "s": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "S",
+      "unit": "kVA"
+    },
+    "pfi": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Pfi"
+    },
+    "pf2": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "PF2"
+    },
+    "pf3": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "PF3"
+    },
+    "pf": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf"
+    },
+    "f": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "F",
+      "unit": "Hz"
+    },
+    "import_active_energy": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active energy",
+      "unit": "kW"
+    },
+    "export_active_energy": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active energy",
+      "unit": "kW"
+    },
+    "import_reactive_energy": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Import reactive energy",
+      "unit": "kvar"
+    },
+    "export_reactive_energy": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Export reactive energy",
+      "unit": "kvar"
+    },
+    "apparent_energy": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy",
+      "unit": "kVA"
+    },
+    "1_quadrant_reactive_energy_eql": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "1 quadrant reactive energy eql+",
+      "unit": "kvar"
+    },
+    "2_quadrant_reactive_energy_eqc": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "2 quadrant reactive energy eqc",
+      "unit": "kvar"
+    },
+    "3_quadrant_reactive_energy_eql": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "3 quadrant reactive energy eql",
+      "unit": "kvar"
+    },
+    "4_quadrant_reactive_energy_eqc": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "4 quadrant reactive energy eqc",
+      "unit": "kvar"
+    },
+    "fundamenta_import_active_energy": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamenta import active energy",
+      "unit": "kW"
+    },
+    "fundamenta_export_active_energy": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamenta export active energy",
+      "unit": "kW"
+    },
+    "fundamenta_import_reactive_energy": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamenta import reactive energy",
+      "unit": "kvar"
+    },
+    "fundamenta_export_reactive_energy": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamenta export reactive energy",
+      "unit": "kvar"
+    },
+    "l1_import_active_energy": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 import active energy",
+      "unit": "kW"
+    },
+    "l2_import_active_energy": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 import active energy",
+      "unit": "kW"
+    },
+    "l3_import_active_energy": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 import active energy",
+      "unit": "kW"
+    },
+    "li_export_active_energy": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Li export active energy",
+      "unit": "kW"
+    },
+    "l2_export_active_energy": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 export active energy",
+      "unit": "kW"
+    },
+    "l3_export_active_energy": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 export active energy",
+      "unit": "kW"
+    },
+    "li_import_reactive_energy": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Li import reactive energy",
+      "unit": "kvar"
+    },
+    "l2_import_reactive_energy": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 import reactive energy",
+      "unit": "kvar"
+    },
+    "l3_import_reactive_energy": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 import reactive energy",
+      "unit": "kvar"
+    },
+    "l1_export_reactive_energy": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 export reactive energy",
+      "unit": "kvar"
+    },
+    "l2_export_reactive_energy": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 export reactive energy",
+      "unit": "kvar"
+    }
+  }
+}

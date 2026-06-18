@@ -1,0 +1,810 @@
+{
+  "protocol": "pgsql",
+  "display_filter": "pgsql",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:55:16.103057+00:00",
+  "dissector_fields": {
+    "total": 116,
+    "by_type": {
+      "FT_ABSOLUTE_TIME": 6,
+      "FT_BOOLEAN": 2,
+      "FT_BYTES": 7,
+      "FT_CHAR": 2,
+      "FT_INT32": 7,
+      "FT_INT8": 4,
+      "FT_STRING": 14,
+      "FT_STRINGZ": 30,
+      "FT_UINT16": 5,
+      "FT_UINT32": 20,
+      "FT_UINT64": 14,
+      "FT_UINT8": 5
+    },
+    "fields": [
+      {
+        "name": "pgsql.frontend",
+        "type": "FT_BOOLEAN",
+        "description": "True for messages from the frontend, false otherwise."
+      },
+      {
+        "name": "pgsql.type",
+        "type": "FT_STRING",
+        "description": "A one-byte message type identifier."
+      },
+      {
+        "name": "pgsql.length",
+        "type": "FT_UINT32",
+        "description": "The length of the message (not including the type)."
+      },
+      {
+        "name": "pgsql.version_major",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pgsql.version_minor",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "pgsql.request_code",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pgsql.version_supported_minor",
+        "type": "FT_UINT32",
+        "description": "Newest minor protocol version supported by the server for the major protocol version requested by the client."
+      },
+      {
+        "name": "pgsql.number_nonsupported_options",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "pgsql.nonsupported_option",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "pgsql.parameter_name",
+        "type": "FT_STRINGZ",
+        "description": "The name of a database parameter."
+      },
+      {
+        "name": "pgsql.parameter_value",
+        "type": "FT_STRINGZ",
+        "description": "The value of a database parameter."
+      },
+      {
+        "name": "pgsql.query",
+        "type": "FT_STRINGZ",
+        "description": "A query string."
+      },
+      {
+        "name": "pgsql.password",
+        "type": "FT_STRINGZ",
+        "description": "A password."
+      },
+      {
+        "name": "pgsql.authtype",
+        "type": "FT_UINT32",
+        "description": "The type of authentication requested by the backend."
+      },
+      {
+        "name": "pgsql.salt",
+        "type": "FT_BYTES",
+        "description": "The salt to use while encrypting a password."
+      },
+      {
+        "name": "pgsql.auth.gssapi_sspi.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "pgsql.auth.sasl.mech",
+        "type": "FT_STRINGZ",
+        "description": ""
+      },
+      {
+        "name": "pgsql.auth.sasl.data.length",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "pgsql.auth.sasl.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "pgsql.statement",
+        "type": "FT_STRINGZ",
+        "description": "The name of a prepared statement."
+      },
+      {
+        "name": "pgsql.portal",
+        "type": "FT_STRINGZ",
+        "description": "The name of a portal."
+      },
+      {
+        "name": "pgsql.returns",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "pgsql.tag",
+        "type": "FT_STRINGZ",
+        "description": "A completion tag."
+      },
+      {
+        "name": "pgsql.status",
+        "type": "FT_UINT8",
+        "description": "The transaction status of the backend."
+      },
+      {
+        "name": "pgsql.copydata",
+        "type": "FT_BYTES",
+        "description": "Data sent following a Copy-in or Copy-out response."
+      },
+      {
+        "name": "pgsql.copydata_type",
+        "type": "FT_STRING",
+        "description": "A one-byte message type identifier for Copy data."
+      },
+      {
+        "name": "pgsql.xlogdata",
+        "type": "FT_BYTES",
+        "description": "XLog data."
+      },
+      {
+        "name": "pgsql.error",
+        "type": "FT_STRINGZ",
+        "description": "An error message."
+      },
+      {
+        "name": "pgsql.pid",
+        "type": "FT_UINT32",
+        "description": "The process ID of a backend."
+      },
+      {
+        "name": "pgsql.key",
+        "type": "FT_UINT32",
+        "description": "The secret key used by a particular backend."
+      },
+      {
+        "name": "pgsql.condition",
+        "type": "FT_STRINGZ",
+        "description": "The name of a NOTIFY condition."
+      },
+      {
+        "name": "pgsql.text",
+        "type": "FT_STRINGZ",
+        "description": "Text from the backend."
+      },
+      {
+        "name": "pgsql.oid.table",
+        "type": "FT_UINT32",
+        "description": "The object identifier of a table."
+      },
+      {
+        "name": "pgsql.oid.type",
+        "type": "FT_UINT32",
+        "description": "The object identifier of a type."
+      },
+      {
+        "name": "pgsql.oid",
+        "type": "FT_UINT32",
+        "description": "An object identifier."
+      },
+      {
+        "name": "pgsql.format",
+        "type": "FT_UINT16",
+        "description": "A format specifier."
+      },
+      {
+        "name": "pgsql.field.count",
+        "type": "FT_UINT16",
+        "description": "The number of fields within a row."
+      },
+      {
+        "name": "pgsql.col.name",
+        "type": "FT_STRINGZ",
+        "description": "The name of a column."
+      },
+      {
+        "name": "pgsql.col.index",
+        "type": "FT_UINT32",
+        "description": "The position of a column within a row."
+      },
+      {
+        "name": "pgsql.val.length",
+        "type": "FT_INT32",
+        "description": "The length of a parameter value, in bytes. -1 means NULL."
+      },
+      {
+        "name": "pgsql.val.data",
+        "type": "FT_BYTES",
+        "description": "Parameter data."
+      },
+      {
+        "name": "pgsql.val.text_data",
+        "type": "FT_STRING",
+        "description": "Text data."
+      },
+      {
+        "name": "pgsql.col.typemod",
+        "type": "FT_INT32",
+        "description": "The type modifier for a column."
+      },
+      {
+        "name": "pgsql.severity",
+        "type": "FT_STRINGZ",
+        "description": "Message severity."
+      },
+      {
+        "name": "pgsql.code",
+        "type": "FT_STRINGZ",
+        "description": "SQLState code."
+      },
+      {
+        "name": "pgsql.message",
+        "type": "FT_STRINGZ",
+        "description": "Error message."
+      },
+      {
+        "name": "pgsql.detail",
+        "type": "FT_STRINGZ",
+        "description": "Detailed error message."
+      },
+      {
+        "name": "pgsql.hint",
+        "type": "FT_STRINGZ",
+        "description": "A suggestion to resolve an error."
+      },
+      {
+        "name": "pgsql.position",
+        "type": "FT_STRINGZ",
+        "description": "The index of the error within the query string."
+      },
+      {
+        "name": "pgsql.internal_position",
+        "type": "FT_STRINGZ",
+        "description": "The index of the error within the internally-generated query string."
+      },
+      {
+        "name": "pgsql.internal_query",
+        "type": "FT_STRINGZ",
+        "description": "The internally-generated query string"
+      },
+      {
+        "name": "pgsql.where",
+        "type": "FT_STRINGZ",
+        "description": "The context in which an error occurred."
+      },
+      {
+        "name": "pgsql.schema_name",
+        "type": "FT_STRINGZ",
+        "description": "The schema with which an error is associated."
+      },
+      {
+        "name": "pgsql.table_name",
+        "type": "FT_STRINGZ",
+        "description": "The table with which an error is associated."
+      },
+      {
+        "name": "pgsql.column_name",
+        "type": "FT_STRINGZ",
+        "description": "The column with which an error is associated."
+      },
+      {
+        "name": "pgsql.type_name",
+        "type": "FT_STRINGZ",
+        "description": "The date type with which an error is associated."
+      },
+      {
+        "name": "pgsql.constraint_name",
+        "type": "FT_STRINGZ",
+        "description": "The constraint with which an error is associated."
+      },
+      {
+        "name": "pgsql.file",
+        "type": "FT_STRINGZ",
+        "description": "The source-code file where an error was reported."
+      },
+      {
+        "name": "pgsql.line",
+        "type": "FT_STRINGZ",
+        "description": "The line number on which an error was reported."
+      },
+      {
+        "name": "pgsql.routine",
+        "type": "FT_STRINGZ",
+        "description": "The routine that reported an error."
+      },
+      {
+        "name": "pgsql.ssl_response",
+        "type": "FT_CHAR",
+        "description": ""
+      },
+      {
+        "name": "pgsql.gssenc_response",
+        "type": "FT_CHAR",
+        "description": ""
+      },
+      {
+        "name": "pgsql.gssapi.encrypted_payload",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "pgsql.xlog_ts",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "The server's system clock at the time of transmission."
+      },
+      {
+        "name": "pgsql.xid",
+        "type": "FT_UINT32",
+        "description": "Xid of the transaction."
+      },
+      {
+        "name": "pgsql.xid_subtransaction",
+        "type": "FT_UINT32",
+        "description": "Xid of the subtransaction."
+      },
+      {
+        "name": "pgsql.custom_type_name",
+        "type": "FT_STRING",
+        "description": "Name of the data type."
+      },
+      {
+        "name": "pgsql.namespace",
+        "type": "FT_STRING",
+        "description": "Namespace (empty string for pg_catalog)."
+      },
+      {
+        "name": "pgsql.relation",
+        "type": "FT_STRING",
+        "description": "Relation name."
+      },
+      {
+        "name": "pgsql.tuple_type",
+        "type": "FT_STRING",
+        "description": "Tuple type."
+      },
+      {
+        "name": "pgsql.tuple_data_type",
+        "type": "FT_STRING",
+        "description": "Tuple data type."
+      },
+      {
+        "name": "pgsql.xlog_wal_start",
+        "type": "FT_UINT64",
+        "description": "The starting point of the WAL data in this message."
+      },
+      {
+        "name": "pgsql.xlog_wal_end",
+        "type": "FT_UINT64",
+        "description": "The current end of WAL on the server."
+      },
+      {
+        "name": "pgsql.standby.last_wal_written",
+        "type": "FT_UINT64",
+        "description": "The location of the last WAL byte + 1 received and written to disk in the standby."
+      },
+      {
+        "name": "pgsql.standby.last_wal_flushed",
+        "type": "FT_UINT64",
+        "description": "The location of the last WAL byte + 1 flushed to disk in the standby."
+      },
+      {
+        "name": "pgsql.standby.last_wal_applied",
+        "type": "FT_UINT64",
+        "description": "The location of the last WAL byte + 1 applied in the standby."
+      },
+      {
+        "name": "pgsql.standby.immediate_ack",
+        "type": "FT_BOOLEAN",
+        "description": "If true, except a reply as soon as possible. 0 otherwise."
+      },
+      {
+        "name": "pgsql.standby.xmin",
+        "type": "FT_UINT32",
+        "description": "The standby's current global xmin, excluding the catalog_xmin from any replication slots. If both this value and the following catalog_xmin are 0, this is treated as a notification that hot standby feedback will no longer be sent on this connection. Later non-zero messages may reinitiate the feedback mechanism."
+      },
+      {
+        "name": "pgsql.standby.xmin_epoch",
+        "type": "FT_UINT32",
+        "description": "The epoch of the global xmin xid on the standby."
+      },
+      {
+        "name": "pgsql.standby.catalog_xmin",
+        "type": "FT_UINT32",
+        "description": "The lowest catalog_xmin of any replication slots on the standby. Set to 0 if no catalog_xmin exists on the standby or if hot standby feedback is being disabled."
+      },
+      {
+        "name": "pgsql.standby.catalog_xmin_epoch",
+        "type": "FT_UINT32",
+        "description": "The epoch of the catalog_xmin xid on the standby."
+      },
+      {
+        "name": "pgsql.logical.msg_type",
+        "type": "FT_STRING",
+        "description": "A one-byte message type identifier for logical message."
+      },
+      {
+        "name": "pgsql.logical.replica_identity",
+        "type": "FT_UINT8",
+        "description": "Replica identity setting for the relation (same as relreplident in pg_class)."
+      },
+      {
+        "name": "pgsql.logical.number_columns",
+        "type": "FT_UINT16",
+        "description": "Number of columns."
+      },
+      {
+        "name": "pgsql.logical.column_length",
+        "type": "FT_INT32",
+        "description": "Length of the column value."
+      },
+      {
+        "name": "pgsql.logical.column_flags",
+        "type": "FT_UINT8",
+        "description": "Flags for the column. Currently can be either 0 for no flags or 1 which marks the column as part of the key."
+      },
+      {
+        "name": "pgsql.logical.column_name",
+        "type": "FT_STRING",
+        "description": "Name of the column."
+      },
+      {
+        "name": "pgsql.logical.column_oid",
+        "type": "FT_UINT32",
+        "description": "OID of the column's data type."
+      },
+      {
+        "name": "pgsql.logical.type_modifier",
+        "type": "FT_INT32",
+        "description": "Type modifier of the column (atttypmod)."
+      },
+      {
+        "name": "pgsql.relation_oid",
+        "type": "FT_UINT32",
+        "description": "OID of the relation."
+      },
+      {
+        "name": "pgsql.logical.lsn",
+        "type": "FT_UINT64",
+        "description": "The final LSN of the transaction."
+      },
+      {
+        "name": "pgsql.logical.prepare.flags",
+        "type": "FT_UINT8",
+        "description": "Prepare Flags. Currently unused."
+      },
+      {
+        "name": "pgsql.logical.prepare.gid",
+        "type": "FT_STRING",
+        "description": "The user defined GID of the prepared transaction."
+      },
+      {
+        "name": "pgsql.logical.prepare.lsn",
+        "type": "FT_UINT64",
+        "description": "The LSN of the prepare."
+      },
+      {
+        "name": "pgsql.logical.prepare.lsn_end",
+        "type": "FT_UINT64",
+        "description": "The end LSN of the prepared transaction."
+      },
+      {
+        "name": "pgsql.logical.prepare.rollback_lsn_end",
+        "type": "FT_UINT64",
+        "description": "The end LSN of the rollback of the prepared transaction."
+      },
+      {
+        "name": "pgsql.logical.commit_ts",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "Commit timestamp of the transaction."
+      },
+      {
+        "name": "pgsql.logical.prepare.ts",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "Prepare timestamp of the transaction."
+      },
+      {
+        "name": "pgsql.logical.prepare.commit_ts",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "Commit timestamp of the transaction."
+      },
+      {
+        "name": "pgsql.logical.prepare.rollback_ts",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "Rollback timestamp of the transaction."
+      },
+      {
+        "name": "pgsql.logical.relation_number",
+        "type": "FT_UINT32",
+        "description": "Number of relations."
+      },
+      {
+        "name": "pgsql.logical.truncate_flags",
+        "type": "FT_INT8",
+        "description": "Truncate Flags. 1 for CASCADE, 2 for RESTART IDENTITY."
+      },
+      {
+        "name": "pgsql.logical.commit_flags",
+        "type": "FT_INT8",
+        "description": "Commit Flags. Currently unused."
+      },
+      {
+        "name": "pgsql.logical.lsn_commit",
+        "type": "FT_UINT64",
+        "description": "The LSN of the commit."
+      },
+      {
+        "name": "pgsql.logical.lsn_transaction",
+        "type": "FT_UINT64",
+        "description": "The end LSN of the transaction."
+      },
+      {
+        "name": "pgsql.logical.lsn_origin",
+        "type": "FT_UINT64",
+        "description": "The LSN of the commit on the origin server."
+      },
+      {
+        "name": "pgsql.logical.lsn_abort",
+        "type": "FT_UINT64",
+        "description": "The LSN of the abort."
+      },
+      {
+        "name": "pgsql.logical.message.flags",
+        "type": "FT_UINT8",
+        "description": "Message Flags. Either 0 for no flags or 1 if the logical decoding message is transactional."
+      },
+      {
+        "name": "pgsql.logical.message.lsn",
+        "type": "FT_UINT64",
+        "description": "The LSN of the logical decoding message."
+      },
+      {
+        "name": "pgsql.logical.message.prefix",
+        "type": "FT_STRING",
+        "description": "The prefix of the logical decoding message."
+      },
+      {
+        "name": "pgsql.logical.message.content",
+        "type": "FT_STRING",
+        "description": "The content of the logical decoding message."
+      },
+      {
+        "name": "pgsql.logical.message.length",
+        "type": "FT_INT32",
+        "description": ""
+      },
+      {
+        "name": "pgsql.logical.stream.first_segment",
+        "type": "FT_INT8",
+        "description": "First segment."
+      },
+      {
+        "name": "pgsql.logical.stream.flags",
+        "type": "FT_INT8",
+        "description": "Stream flags. Currently Unused."
+      },
+      {
+        "name": "pgsql.logical.stream.abort_ts",
+        "type": "FT_ABSOLUTE_TIME",
+        "description": "Abort timestamp of the transaction."
+      },
+      {
+        "name": "pgsql.logical.origin_name",
+        "type": "FT_STRING",
+        "description": "Name of the origin."
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 22,
+    "by_pcap": {
+      "credslayer_pgsql.pcap": [
+        "pgsql_pgsql_authtype",
+        "pgsql_pgsql_frontend",
+        "pgsql_pgsql_length",
+        "pgsql_pgsql_parameter_name",
+        "pgsql_pgsql_parameter_value",
+        "pgsql_pgsql_password",
+        "pgsql_pgsql_salt",
+        "pgsql_pgsql_type",
+        "pgsql_pgsql_version_major",
+        "pgsql_pgsql_version_minor"
+      ],
+      "credslayer_pgsql_nopassword.pcap": [
+        "pgsql_pgsql_frontend",
+        "pgsql_pgsql_length",
+        "pgsql_pgsql_parameter_name",
+        "pgsql_pgsql_parameter_value",
+        "pgsql_pgsql_type",
+        "pgsql_pgsql_version_major",
+        "pgsql_pgsql_version_minor"
+      ],
+      "wireshark_pgsql.cap": [
+        "pgsql_pgsql_authtype",
+        "pgsql_pgsql_frontend",
+        "pgsql_pgsql_length",
+        "pgsql_pgsql_parameter_name",
+        "pgsql_pgsql_parameter_value",
+        "pgsql_pgsql_password",
+        "pgsql_pgsql_salt",
+        "pgsql_pgsql_type",
+        "pgsql_pgsql_version_major",
+        "pgsql_pgsql_version_minor"
+      ],
+      "wireshark_pgsql_jdbc.pcap": [
+        "pgsql_pgsql_code",
+        "pgsql_pgsql_file",
+        "pgsql_pgsql_format",
+        "pgsql_pgsql_frontend",
+        "pgsql_pgsql_length",
+        "pgsql_pgsql_line",
+        "pgsql_pgsql_message",
+        "pgsql_pgsql_oid",
+        "pgsql_pgsql_parameter_name",
+        "pgsql_pgsql_parameter_value",
+        "pgsql_pgsql_routine",
+        "pgsql_pgsql_severity",
+        "pgsql_pgsql_status",
+        "pgsql_pgsql_type",
+        "pgsql_pgsql_val_data",
+        "pgsql_pgsql_val_length",
+        "pgsql_pgsql_version_major",
+        "pgsql_pgsql_version_minor",
+        "text"
+      ]
+    },
+    "union": [
+      "pgsql_pgsql_authtype",
+      "pgsql_pgsql_code",
+      "pgsql_pgsql_file",
+      "pgsql_pgsql_format",
+      "pgsql_pgsql_frontend",
+      "pgsql_pgsql_length",
+      "pgsql_pgsql_line",
+      "pgsql_pgsql_message",
+      "pgsql_pgsql_oid",
+      "pgsql_pgsql_parameter_name",
+      "pgsql_pgsql_parameter_value",
+      "pgsql_pgsql_password",
+      "pgsql_pgsql_routine",
+      "pgsql_pgsql_salt",
+      "pgsql_pgsql_severity",
+      "pgsql_pgsql_status",
+      "pgsql_pgsql_type",
+      "pgsql_pgsql_val_data",
+      "pgsql_pgsql_val_length",
+      "pgsql_pgsql_version_major",
+      "pgsql_pgsql_version_minor",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 22,
+    "fields": [
+      "all_field_names",
+      "application_name",
+      "auth.sasl.mech",
+      "authtype",
+      "client_encoding",
+      "code",
+      "database",
+      "file",
+      "frontend",
+      "line",
+      "message",
+      "parameter_name",
+      "parameter_value",
+      "password",
+      "query",
+      "routine",
+      "salt",
+      "severity",
+      "status",
+      "user",
+      "version_major",
+      "version_minor"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "22/116 (18%)",
+    "pcap_vs_extracted": "17/22 (77%)",
+    "t1_extracted": "11/12 (91%)",
+    "t1_gaps": [
+      {
+        "ek_name": "pgsql_pgsql_type",
+        "field": "pgsql.type",
+        "type": "FT_STRING",
+        "tier": "T1",
+        "seen_in": [
+          "credslayer_pgsql.pcap",
+          "credslayer_pgsql_nopassword.pcap",
+          "wireshark_pgsql.cap",
+          "wireshark_pgsql_jdbc.pcap"
+        ],
+        "description": "A one-byte message type identifier."
+      },
+      {
+        "ek_name": "pgsql_pgsql_oid",
+        "field": "pgsql.oid",
+        "type": "FT_UINT32",
+        "tier": "T1",
+        "seen_in": [
+          "wireshark_pgsql_jdbc.pcap"
+        ],
+        "description": "An object identifier."
+      }
+    ],
+    "t2_consider": [
+      {
+        "ek_name": "pgsql_pgsql_length",
+        "field": "pgsql.length",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "credslayer_pgsql.pcap",
+          "credslayer_pgsql_nopassword.pcap",
+          "wireshark_pgsql.cap",
+          "wireshark_pgsql_jdbc.pcap"
+        ],
+        "description": "The length of the message (not including the type)."
+      },
+      {
+        "ek_name": "pgsql_pgsql_text",
+        "field": "pgsql.text",
+        "type": "FT_STRINGZ",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pgsql_jdbc.pcap"
+        ],
+        "description": "Text from the backend."
+      },
+      {
+        "ek_name": "pgsql_pgsql_format",
+        "field": "pgsql.format",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pgsql_jdbc.pcap"
+        ],
+        "description": "A format specifier."
+      },
+      {
+        "ek_name": "pgsql_pgsql_val_length",
+        "field": "pgsql.val.length",
+        "type": "FT_INT32",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pgsql_jdbc.pcap"
+        ],
+        "description": "The length of a parameter value, in bytes. -1 means NULL."
+      },
+      {
+        "ek_name": "pgsql_pgsql_val_data",
+        "field": "pgsql.val.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "wireshark_pgsql_jdbc.pcap"
+        ],
+        "description": "Parameter data."
+      }
+    ],
+    "summary": {
+      "t1_total": 50,
+      "t1_in_pcap": 12,
+      "t1_covered": 11,
+      "t2_total": 66,
+      "t2_in_pcap": 10,
+      "t2_covered": 6,
+      "t3_skipped": 0,
+      "t4_ignored": 0
+    }
+  }
+}

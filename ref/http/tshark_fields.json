@@ -1,0 +1,1493 @@
+{
+  "protocol": "http",
+  "display_filter": "http",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:50:42.333288+00:00",
+  "dissector_fields": {
+    "total": 90,
+    "by_type": {
+      "FT_BOOLEAN": 8,
+      "FT_BYTES": 6,
+      "FT_FRAMENUM": 5,
+      "FT_NONE": 10,
+      "FT_RELATIVE_TIME": 1,
+      "FT_STRING": 54,
+      "FT_UINT16": 1,
+      "FT_UINT24": 1,
+      "FT_UINT32": 3,
+      "FT_UINT64": 1
+    },
+    "fields": [
+      {
+        "name": "http.notification",
+        "type": "FT_BOOLEAN",
+        "description": "true if HTTP notification"
+      },
+      {
+        "name": "http.response",
+        "type": "FT_BOOLEAN",
+        "description": "true if HTTP response"
+      },
+      {
+        "name": "http.request",
+        "type": "FT_BOOLEAN",
+        "description": "true if HTTP request"
+      },
+      {
+        "name": "http.authbasic",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.authcitrix",
+        "type": "FT_BOOLEAN",
+        "description": "true if CitrixAGBasic Auth"
+      },
+      {
+        "name": "http.authcitrix.user",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.authcitrix.domain",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.authcitrix.password",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.authcitrix.session",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.response.line",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.request.line",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.request.method",
+        "type": "FT_STRING",
+        "description": "HTTP Request Method"
+      },
+      {
+        "name": "http.request.uri",
+        "type": "FT_STRING",
+        "description": "HTTP Request-URI"
+      },
+      {
+        "name": "http.request.uri.path",
+        "type": "FT_STRING",
+        "description": "HTTP Request-URI Path"
+      },
+      {
+        "name": "http.request.uri.path.segment",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.request.uri.query",
+        "type": "FT_STRING",
+        "description": "HTTP Request-URI Query"
+      },
+      {
+        "name": "http.request.uri.query.parameter",
+        "type": "FT_STRING",
+        "description": "HTTP Request-URI Query Parameter"
+      },
+      {
+        "name": "http.request.version",
+        "type": "FT_STRING",
+        "description": "HTTP Request HTTP-Version"
+      },
+      {
+        "name": "http.response.version",
+        "type": "FT_STRING",
+        "description": "HTTP Response HTTP-Version"
+      },
+      {
+        "name": "http.request.full_uri",
+        "type": "FT_STRING",
+        "description": "The full requested URI (including host name)"
+      },
+      {
+        "name": "http.response.code",
+        "type": "FT_UINT24",
+        "description": "HTTP Response Status Code"
+      },
+      {
+        "name": "http.response.code.desc",
+        "type": "FT_STRING",
+        "description": "HTTP Response Status Code Description"
+      },
+      {
+        "name": "http.response.phrase",
+        "type": "FT_STRING",
+        "description": "HTTP Response Reason Phrase"
+      },
+      {
+        "name": "http.authorization",
+        "type": "FT_STRING",
+        "description": "HTTP Authorization header"
+      },
+      {
+        "name": "http.proxy_authenticate",
+        "type": "FT_STRING",
+        "description": "HTTP Proxy-Authenticate header"
+      },
+      {
+        "name": "http.proxy_authorization",
+        "type": "FT_STRING",
+        "description": "HTTP Proxy-Authorization header"
+      },
+      {
+        "name": "http.proxy_connect_host",
+        "type": "FT_STRING",
+        "description": "HTTP Proxy Connect Hostname"
+      },
+      {
+        "name": "http.proxy_connect_port",
+        "type": "FT_UINT16",
+        "description": "HTTP Proxy Connect Port"
+      },
+      {
+        "name": "http.www_authenticate",
+        "type": "FT_STRING",
+        "description": "HTTP WWW-Authenticate header"
+      },
+      {
+        "name": "http.content_type",
+        "type": "FT_STRING",
+        "description": "HTTP Content-Type header"
+      },
+      {
+        "name": "http.content_length_header",
+        "type": "FT_STRING",
+        "description": "HTTP Content-Length header"
+      },
+      {
+        "name": "http.content_length",
+        "type": "FT_UINT64",
+        "description": ""
+      },
+      {
+        "name": "http.content_encoding",
+        "type": "FT_STRING",
+        "description": "HTTP Content-Encoding header"
+      },
+      {
+        "name": "http.transfer_encoding",
+        "type": "FT_STRING",
+        "description": "HTTP Transfer-Encoding header"
+      },
+      {
+        "name": "http.upgrade",
+        "type": "FT_STRING",
+        "description": "HTTP Upgrade header"
+      },
+      {
+        "name": "http.user_agent",
+        "type": "FT_STRING",
+        "description": "HTTP User-Agent header"
+      },
+      {
+        "name": "http.host",
+        "type": "FT_STRING",
+        "description": "HTTP Host"
+      },
+      {
+        "name": "http.range",
+        "type": "FT_STRING",
+        "description": "HTTP Range"
+      },
+      {
+        "name": "http.content_range",
+        "type": "FT_STRING",
+        "description": "HTTP Content-Range"
+      },
+      {
+        "name": "http.connection",
+        "type": "FT_STRING",
+        "description": "HTTP Connection"
+      },
+      {
+        "name": "http.cookie",
+        "type": "FT_STRING",
+        "description": "HTTP Cookie"
+      },
+      {
+        "name": "http.cookie_pair",
+        "type": "FT_STRING",
+        "description": "A name/value HTTP cookie pair"
+      },
+      {
+        "name": "http.accept",
+        "type": "FT_STRING",
+        "description": "HTTP Accept"
+      },
+      {
+        "name": "http.referer",
+        "type": "FT_STRING",
+        "description": "HTTP Referer"
+      },
+      {
+        "name": "http.accept_language",
+        "type": "FT_STRING",
+        "description": "HTTP Accept Language"
+      },
+      {
+        "name": "http.accept_encoding",
+        "type": "FT_STRING",
+        "description": "HTTP Accept Encoding"
+      },
+      {
+        "name": "http.date",
+        "type": "FT_STRING",
+        "description": "HTTP Date"
+      },
+      {
+        "name": "http.cache_control",
+        "type": "FT_STRING",
+        "description": "HTTP Cache Control"
+      },
+      {
+        "name": "http.server",
+        "type": "FT_STRING",
+        "description": "HTTP Server"
+      },
+      {
+        "name": "http.location",
+        "type": "FT_STRING",
+        "description": "HTTP Location"
+      },
+      {
+        "name": "http.sec_websocket_accept",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.sec_websocket_extensions",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.sec_websocket_key",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.sec_websocket_protocol",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.sec_websocket_version",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.set_cookie",
+        "type": "FT_STRING",
+        "description": "HTTP Set Cookie"
+      },
+      {
+        "name": "http.last_modified",
+        "type": "FT_STRING",
+        "description": "HTTP Last Modified"
+      },
+      {
+        "name": "http.x_forwarded_for",
+        "type": "FT_STRING",
+        "description": "HTTP X-Forwarded-For"
+      },
+      {
+        "name": "http.http2_settings",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.request_in",
+        "type": "FT_FRAMENUM",
+        "description": "This packet is a response to the packet with this number"
+      },
+      {
+        "name": "http.response_in",
+        "type": "FT_FRAMENUM",
+        "description": "This packet will be responded in the packet with this number"
+      },
+      {
+        "name": "http.time",
+        "type": "FT_RELATIVE_TIME",
+        "description": "Time since the request was sent"
+      },
+      {
+        "name": "http.chunked_trailer_part",
+        "type": "FT_STRING",
+        "description": "Optional trailer in a chunked body"
+      },
+      {
+        "name": "http.chunk_boundary",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "http.chunk_size",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "http.chunk_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "http.file_data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "http.unknown_header",
+        "type": "FT_STRING",
+        "description": ""
+      },
+      {
+        "name": "http.http2_settings_uri",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragments",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragment",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragment.overlap",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragment.overlap.conflicts",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragment.multiple_tails",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragment.too_long_fragment",
+        "type": "FT_BOOLEAN",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragment.error",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "http.body.fragment.count",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "http.body.reassembled.in",
+        "type": "FT_FRAMENUM",
+        "description": ""
+      },
+      {
+        "name": "http.body.reassembled.length",
+        "type": "FT_UINT32",
+        "description": ""
+      },
+      {
+        "name": "http.body.reassembled.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "http.body.segment",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "http.te_and_length",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.te_unknown",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.subdissector_failed",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.tls_port",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.excess_data",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.leading_crlf",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.bad_header_name",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.decompression_failed",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "http.decompression_disabled",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 48,
+    "by_pcap": {
+      "bruteshark_http_basic.pcap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_authbasic",
+        "http_http_authorization",
+        "http_http_cache_control",
+        "http_http_chunk_boundary",
+        "http_http_chunk_data",
+        "http_http_chunk_size",
+        "http_http_connection",
+        "http_http_content_type",
+        "http_http_cookie",
+        "http_http_cookie_pair",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_last_modified",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_uri_path",
+        "http_http_request_uri_query",
+        "http_http_request_uri_query_parameter",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_transfer_encoding",
+        "http_http_user_agent",
+        "http_http_www_authenticate",
+        "text"
+      ],
+      "bruteshark_http_digest.pcap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_authorization",
+        "http_http_cache_control",
+        "http_http_connection",
+        "http_http_date",
+        "http_http_host",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_user_agent",
+        "text"
+      ],
+      "bruteshark_http_digest_md5.pcap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_authorization",
+        "http_http_cache_control",
+        "http_http_connection",
+        "http_http_date",
+        "http_http_host",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_user_agent",
+        "text"
+      ],
+      "bruteshark_http_ntlm.pcap": [
+        "data",
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_authorization",
+        "http_http_cache_control",
+        "http_http_connection",
+        "http_http_content_length",
+        "http_http_content_length_header",
+        "http_http_content_type",
+        "http_http_cookie",
+        "http_http_cookie_pair",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_last_modified",
+        "http_http_location",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_uri_path",
+        "http_http_request_uri_query",
+        "http_http_request_uri_query_parameter",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_unknown_header",
+        "http_http_user_agent",
+        "ntlmssp",
+        "text"
+      ],
+      "bruteshark_ntlm_http.pcap": [
+        "data",
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_authorization",
+        "http_http_cache_control",
+        "http_http_connection",
+        "http_http_content_length",
+        "http_http_content_length_header",
+        "http_http_content_type",
+        "http_http_cookie",
+        "http_http_cookie_pair",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_last_modified",
+        "http_http_location",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_uri_path",
+        "http_http_request_uri_query",
+        "http_http_request_uri_query_parameter",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_unknown_header",
+        "http_http_user_agent",
+        "ntlmssp",
+        "text"
+      ],
+      "credslayer_http_basic_auth.pcap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_authbasic",
+        "http_http_authorization",
+        "http_http_cache_control",
+        "http_http_chunk_boundary",
+        "http_http_chunk_data",
+        "http_http_chunk_size",
+        "http_http_connection",
+        "http_http_content_type",
+        "http_http_cookie",
+        "http_http_cookie_pair",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_last_modified",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_uri_path",
+        "http_http_request_uri_query",
+        "http_http_request_uri_query_parameter",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_transfer_encoding",
+        "http_http_user_agent",
+        "http_http_www_authenticate",
+        "text"
+      ],
+      "credslayer_http_get_auth.pcap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_connection",
+        "http_http_content_length",
+        "http_http_content_length_header",
+        "http_http_content_type",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_uri_path",
+        "http_http_request_uri_query",
+        "http_http_request_uri_query_parameter",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_user_agent",
+        "text"
+      ],
+      "credslayer_http_ntlm.pcap": [
+        "data",
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_authorization",
+        "http_http_cache_control",
+        "http_http_connection",
+        "http_http_content_length",
+        "http_http_content_length_header",
+        "http_http_content_type",
+        "http_http_cookie",
+        "http_http_cookie_pair",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_last_modified",
+        "http_http_location",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_uri_path",
+        "http_http_request_uri_query",
+        "http_http_request_uri_query_parameter",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_unknown_header",
+        "http_http_user_agent",
+        "ntlmssp",
+        "text"
+      ],
+      "credslayer_http_post_auth.pcap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_connection",
+        "http_http_content_length",
+        "http_http_content_length_header",
+        "http_http_content_type",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_user_agent",
+        "text"
+      ],
+      "internet_http_chunked.pcap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_cache_control",
+        "http_http_chunk_boundary",
+        "http_http_chunk_data",
+        "http_http_chunk_size",
+        "http_http_connection",
+        "http_http_content_encoding",
+        "http_http_content_type",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_set_cookie",
+        "http_http_time",
+        "http_http_transfer_encoding",
+        "http_http_user_agent",
+        "text"
+      ],
+      "internet_http_gzip.cap": [
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_connection",
+        "http_http_content_encoding",
+        "http_http_content_length",
+        "http_http_content_length_header",
+        "http_http_content_type",
+        "http_http_cookie",
+        "http_http_cookie_pair",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_last_modified",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_user_agent",
+        "text"
+      ],
+      "internet_http_with_jpegs.cap": [
+        "data",
+        "http_http_accept",
+        "http_http_accept_encoding",
+        "http_http_accept_language",
+        "http_http_connection",
+        "http_http_content_length",
+        "http_http_content_length_header",
+        "http_http_content_type",
+        "http_http_cookie",
+        "http_http_cookie_pair",
+        "http_http_date",
+        "http_http_file_data",
+        "http_http_host",
+        "http_http_last_modified",
+        "http_http_referer",
+        "http_http_request",
+        "http_http_request_full_uri",
+        "http_http_request_in",
+        "http_http_request_line",
+        "http_http_request_method",
+        "http_http_request_uri",
+        "http_http_request_version",
+        "http_http_response",
+        "http_http_response_code",
+        "http_http_response_code_desc",
+        "http_http_response_line",
+        "http_http_response_phrase",
+        "http_http_response_version",
+        "http_http_server",
+        "http_http_time",
+        "http_http_user_agent",
+        "text"
+      ]
+    },
+    "union": [
+      "data",
+      "http_http_accept",
+      "http_http_accept_encoding",
+      "http_http_accept_language",
+      "http_http_authbasic",
+      "http_http_authorization",
+      "http_http_cache_control",
+      "http_http_chunk_boundary",
+      "http_http_chunk_data",
+      "http_http_chunk_size",
+      "http_http_connection",
+      "http_http_content_encoding",
+      "http_http_content_length",
+      "http_http_content_length_header",
+      "http_http_content_type",
+      "http_http_cookie",
+      "http_http_cookie_pair",
+      "http_http_date",
+      "http_http_file_data",
+      "http_http_host",
+      "http_http_last_modified",
+      "http_http_location",
+      "http_http_referer",
+      "http_http_request",
+      "http_http_request_full_uri",
+      "http_http_request_in",
+      "http_http_request_line",
+      "http_http_request_method",
+      "http_http_request_uri",
+      "http_http_request_uri_path",
+      "http_http_request_uri_query",
+      "http_http_request_uri_query_parameter",
+      "http_http_request_version",
+      "http_http_response",
+      "http_http_response_code",
+      "http_http_response_code_desc",
+      "http_http_response_line",
+      "http_http_response_phrase",
+      "http_http_response_version",
+      "http_http_server",
+      "http_http_set_cookie",
+      "http_http_time",
+      "http_http_transfer_encoding",
+      "http_http_unknown_header",
+      "http_http_user_agent",
+      "http_http_www_authenticate",
+      "ntlmssp",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 14,
+    "fields": [
+      "authbasic",
+      "authorization",
+      "content_type",
+      "host",
+      "request_method",
+      "request_uri",
+      "request_version",
+      "response_code",
+      "response_code_desc",
+      "response_version",
+      "server",
+      "user_agent",
+      "www_authenticate",
+      "x_powered_by"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "45/90 (50%)",
+    "pcap_vs_extracted": "13/45 (28%)",
+    "t1_extracted": "8/8 (100%)",
+    "t1_gaps": [],
+    "t2_consider": [
+      {
+        "ek_name": "http_http_response",
+        "field": "http.response",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "true if HTTP response"
+      },
+      {
+        "ek_name": "http_http_request",
+        "field": "http.request",
+        "type": "FT_BOOLEAN",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "true if HTTP request"
+      },
+      {
+        "ek_name": "http_http_response_line",
+        "field": "http.response.line",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_request_line",
+        "field": "http.request.line",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_request_full_uri",
+        "field": "http.request.full_uri",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "The full requested URI (including host name)"
+      },
+      {
+        "ek_name": "http_http_response_phrase",
+        "field": "http.response.phrase",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Response Reason Phrase"
+      },
+      {
+        "ek_name": "http_http_connection",
+        "field": "http.connection",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Connection"
+      },
+      {
+        "ek_name": "http_http_accept",
+        "field": "http.accept",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Accept"
+      },
+      {
+        "ek_name": "http_http_accept_encoding",
+        "field": "http.accept_encoding",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Accept Encoding"
+      },
+      {
+        "ek_name": "http_http_date",
+        "field": "http.date",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Date"
+      },
+      {
+        "ek_name": "http_http_accept_language",
+        "field": "http.accept_language",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Accept Language"
+      },
+      {
+        "ek_name": "http_http_file_data",
+        "field": "http.file_data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_referer",
+        "field": "http.referer",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Referer"
+      },
+      {
+        "ek_name": "http_http_cache_control",
+        "field": "http.cache_control",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_digest.pcap",
+          "bruteshark_http_digest_md5.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "internet_http_chunked.pcap"
+        ],
+        "description": "HTTP Cache Control"
+      },
+      {
+        "ek_name": "http_http_content_length_header",
+        "field": "http.content_length_header",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Content-Length header"
+      },
+      {
+        "ek_name": "http_http_content_length",
+        "field": "http.content_length",
+        "type": "FT_UINT64",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "credslayer_http_post_auth.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_cookie",
+        "field": "http.cookie",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Cookie"
+      },
+      {
+        "ek_name": "http_http_cookie_pair",
+        "field": "http.cookie_pair",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "A name/value HTTP cookie pair"
+      },
+      {
+        "ek_name": "http_http_last_modified",
+        "field": "http.last_modified",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_ntlm.pcap",
+          "internet_http_gzip.cap",
+          "internet_http_with_jpegs.cap"
+        ],
+        "description": "HTTP Last Modified"
+      },
+      {
+        "ek_name": "http_http_request_uri_path",
+        "field": "http.request.uri.path",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap"
+        ],
+        "description": "HTTP Request-URI Path"
+      },
+      {
+        "ek_name": "http_http_request_uri_query",
+        "field": "http.request.uri.query",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap"
+        ],
+        "description": "HTTP Request-URI Query"
+      },
+      {
+        "ek_name": "http_http_request_uri_query_parameter",
+        "field": "http.request.uri.query.parameter",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "credslayer_http_get_auth.pcap",
+          "credslayer_http_ntlm.pcap"
+        ],
+        "description": "HTTP Request-URI Query Parameter"
+      },
+      {
+        "ek_name": "http_http_transfer_encoding",
+        "field": "http.transfer_encoding",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "internet_http_chunked.pcap"
+        ],
+        "description": "HTTP Transfer-Encoding header"
+      },
+      {
+        "ek_name": "http_http_location",
+        "field": "http.location",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_ntlm.pcap"
+        ],
+        "description": "HTTP Location"
+      },
+      {
+        "ek_name": "http_http_chunk_boundary",
+        "field": "http.chunk_boundary",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "internet_http_chunked.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_chunk_size",
+        "field": "http.chunk_size",
+        "type": "FT_UINT32",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "internet_http_chunked.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_chunk_data",
+        "field": "http.chunk_data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_basic.pcap",
+          "credslayer_http_basic_auth.pcap",
+          "internet_http_chunked.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_unknown_header",
+        "field": "http.unknown_header",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "bruteshark_http_ntlm.pcap",
+          "bruteshark_ntlm_http.pcap",
+          "credslayer_http_ntlm.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "http_http_content_encoding",
+        "field": "http.content_encoding",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "internet_http_chunked.pcap",
+          "internet_http_gzip.cap"
+        ],
+        "description": "HTTP Content-Encoding header"
+      },
+      {
+        "ek_name": "http_http_set_cookie",
+        "field": "http.set_cookie",
+        "type": "FT_STRING",
+        "tier": "T2",
+        "seen_in": [
+          "internet_http_chunked.pcap"
+        ],
+        "description": "HTTP Set Cookie"
+      }
+    ],
+    "summary": {
+      "t1_total": 16,
+      "t1_in_pcap": 8,
+      "t1_covered": 8,
+      "t2_total": 58,
+      "t2_in_pcap": 35,
+      "t2_covered": 5,
+      "t3_skipped": 10,
+      "t4_ignored": 6
+    }
+  }
+}

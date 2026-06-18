@@ -1,0 +1,88 @@
+{
+  "vendor": "AutomationDirect",
+  "model": "DirectLogic DL06",
+  "description": "AutomationDirect DirectLogic DL06 Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: DirectLogic uses OCTAL internal addressing. Must convert octal to decimal for Modbus. DL06/D2-260/262 support MRX/MWX (native Modbus addressing). DL05/D2-250-1 require RX/WX with manual conversion. DL05 with D0-DCM as master does NOT support FC04.",
+  "source": "D0-06USER-M (DL06 User Manual Ch.4), D0-DCM-M (Data Communications Module Manual Ch.5)",
+  "registers": {
+    "v400": {
+      "address": 256,
+      "type": "u16",
+      "access": "rw",
+      "description": "V-memory start (user area)",
+      "notes": "dl_address_octal=V400"
+    },
+    "v2100_example": {
+      "address": 1089,
+      "type": "u16",
+      "access": "rw",
+      "description": "Example: V2100 octal = 1088 decimal + 1 = 41089",
+      "notes": "dl_address_octal=V2100"
+    }
+  },
+  "extended_info": {
+    "address_conversion": {
+      "formula": "Convert octal address to decimal, then add offset",
+      "example": "V2100 octal -> 1088 decimal -> Modbus 41089 (40001 + 1088)",
+      "spreadsheet": "Modbus_conversion.xls (AN-MISC-010)"
+    },
+    "model_differences": {
+      "native_modbus_addressing": [
+        "DL06",
+        "D2-260",
+        "D2-262"
+      ],
+      "manual_conversion_required": [
+        "DL05",
+        "D2-250-1"
+      ],
+      "fc04_not_supported": "DL05 with D0-DCM as master"
+    },
+    "memory_mapping": {
+      "v_memory_user": {
+        "dl06_range_octal": "V400-V17777",
+        "modbus_start": 256,
+        "modbus_end": 8191,
+        "type": "Holding Register"
+      },
+      "inputs_x": {
+        "range_octal": "X0-X777",
+        "modbus_start": 2048,
+        "type": "Discrete Input"
+      },
+      "outputs_y": {
+        "range_octal": "Y0-Y777",
+        "modbus_start": 2048,
+        "type": "Coil"
+      },
+      "control_relays_c": {
+        "range_octal": "C0-C1777",
+        "modbus_start": 3072,
+        "type": "Coil"
+      },
+      "timer_contacts_t": {
+        "range_octal": "T0-T377",
+        "modbus_start": 6144,
+        "type": "Coil"
+      }
+    },
+    "serial_config": {
+      "port1": {
+        "baud": 9600,
+        "parity": "odd",
+        "mode": "slave-only",
+        "fixed": true
+      },
+      "port2": {
+        "baud_range": "300-38400",
+        "mode": "master/slave",
+        "configurable": true
+      }
+    }
+  },
+  "_source_verified": "Verified: Octal addressing and MRX/MWX Modbus addressing confirmed via AutomationDirect manuals"
+}

@@ -1,0 +1,346 @@
+{
+  "vendor": "CET",
+  "model": "PMC 350 C / PMC 53 A",
+  "description": "CET PMC 350 C / PMC 53 A power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: PMC 350 C, PMC 53 A",
+  "registers": {
+    "ubn": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Ubn",
+      "unit": "V"
+    },
+    "ucn": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Ucn",
+      "unit": "V"
+    },
+    "uln_average": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Uln average",
+      "unit": "V"
+    },
+    "uab": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Uab",
+      "unit": "V"
+    },
+    "ubc": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Ubc",
+      "unit": "V"
+    },
+    "uca": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Uca",
+      "unit": "V"
+    },
+    "ull_average": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Ull average",
+      "unit": "V"
+    },
+    "ia": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Ia",
+      "unit": "A"
+    },
+    "ib": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib",
+      "unit": "A"
+    },
+    "ic": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic",
+      "unit": "A"
+    },
+    "i_average": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "I average",
+      "unit": "A"
+    },
+    "kwa": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "kWa",
+      "unit": "W"
+    },
+    "kwb": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "kWb",
+      "unit": "W"
+    },
+    "kwc": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "kWc",
+      "unit": "W"
+    },
+    "kw_total": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "kW total",
+      "unit": "W"
+    },
+    "kvara": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvara",
+      "unit": "var"
+    },
+    "kvarb": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarb",
+      "unit": "var"
+    },
+    "kvarc": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarc",
+      "unit": "var"
+    },
+    "kvar_total": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar total",
+      "unit": "var"
+    },
+    "kvaa": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "kVAa",
+      "unit": "VA"
+    },
+    "kvab": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "kVAb",
+      "unit": "VA"
+    },
+    "kvac": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "kVAc",
+      "unit": "VA"
+    },
+    "kva_total": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "kVA total",
+      "unit": "VA"
+    },
+    "pfa": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "PFa"
+    },
+    "pfb": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "PFb"
+    },
+    "pfc": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "PFc"
+    },
+    "pf_total": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "PF total"
+    },
+    "frequency": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "uan_uab_3p3w_angle": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Uan/Uab (3P3W) angle",
+      "unit": "D"
+    },
+    "ubn_ubc_3p3w_angle": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Ubn/Ubc (3P3W) angle",
+      "unit": "D"
+    },
+    "ucn_uca_3p3w_angle": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Ucn/Uca (3P3W) angle",
+      "unit": "D"
+    },
+    "ia_angle": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Ia angle",
+      "unit": "D"
+    },
+    "ib_angle": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib angle",
+      "unit": "D"
+    },
+    "ic_angle": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic angle",
+      "unit": "D"
+    },
+    "in_calculated": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "In (Calculated)",
+      "unit": "A"
+    },
+    "ir1": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "IR1",
+      "unit": "mA"
+    },
+    "displacement_pfa": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement PFa"
+    },
+    "displacement_pfb": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement PFb"
+    },
+    "displacement_pfc": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement PFc"
+    },
+    "displacement_pf_total": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement PF total"
+    },
+    "tc11": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "TC11"
+    },
+    "tc21": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "TC21"
+    },
+    "tc31": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "TC31"
+    },
+    "tc41": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "TC41"
+    },
+    "di_status1_2": {
+      "address": 96,
+      "type": "u16",
+      "access": "r",
+      "description": "DI status1, 2"
+    },
+    "do_status_1_3": {
+      "address": 98,
+      "type": "u16",
+      "access": "r",
+      "description": "DO status 1, 3"
+    },
+    "setpoint_alarm_status4": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "description": "Setpoint alarm status4"
+    },
+    "wiring_diagnostic_status5": {
+      "address": 101,
+      "type": "u16",
+      "access": "r",
+      "description": "Wiring diagnostic status5"
+    },
+    "soe_pointer6": {
+      "address": 102,
+      "type": "u32",
+      "access": "r",
+      "description": "SOE pointer6"
+    },
+    "device_operating_time7": {
+      "address": 104,
+      "type": "u32",
+      "access": "r",
+      "description": "Device operating time7",
+      "unit": "Hour"
+    }
+  }
+}

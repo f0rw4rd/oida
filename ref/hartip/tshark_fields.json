@@ -1,0 +1,1826 @@
+{
+  "protocol": "hartip",
+  "display_filter": "hart_ip",
+  "tshark_version": "4.6.2",
+  "generated": "2026-02-22T15:50:24.111027+00:00",
+  "dissector_fields": {
+    "total": 154,
+    "by_type": {
+      "FT_BYTES": 13,
+      "FT_FLOAT": 20,
+      "FT_NONE": 2,
+      "FT_STRINGZPAD": 3,
+      "FT_UINT16": 14,
+      "FT_UINT32": 1,
+      "FT_UINT8": 101
+    },
+    "fields": [
+      {
+        "name": "hart_ip.version",
+        "type": "FT_UINT8",
+        "description": "HART_IP version number"
+      },
+      {
+        "name": "hart_ip.message_type",
+        "type": "FT_UINT8",
+        "description": "HART_IP message type"
+      },
+      {
+        "name": "hart_ip.message_id",
+        "type": "FT_UINT8",
+        "description": "HART_IP message id"
+      },
+      {
+        "name": "hart_ip.status",
+        "type": "FT_UINT8",
+        "description": "HART_IP status field"
+      },
+      {
+        "name": "hart_ip.transaction_id",
+        "type": "FT_UINT16",
+        "description": "HART_IP Sequence Number"
+      },
+      {
+        "name": "hart_ip.msg_length",
+        "type": "FT_UINT16",
+        "description": "HART_IP Message Length"
+      },
+      {
+        "name": "hart_ip.data",
+        "type": "FT_BYTES",
+        "description": "HART_IP Message Data"
+      },
+      {
+        "name": "hart_ip.session_init.master_type",
+        "type": "FT_UINT8",
+        "description": "Session Host Type"
+      },
+      {
+        "name": "hart_ip.session_init.inactivity_close_timer",
+        "type": "FT_UINT32",
+        "description": "Session Inactivity Close Timer"
+      },
+      {
+        "name": "hart_ip.error.error_code",
+        "type": "FT_UINT8",
+        "description": "Error Code"
+      },
+      {
+        "name": "hart_ip.pt.preambles",
+        "type": "FT_BYTES",
+        "description": "Pass Through Preambles"
+      },
+      {
+        "name": "hart_ip.pt.delimiter",
+        "type": "FT_UINT8",
+        "description": "Pass Through Delimiter"
+      },
+      {
+        "name": "hart_ip.pt.delimiter.frame_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.delimiter.physical_layer_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.delimiter.number_of_expansion_bytes",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.delimiter.address_type",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.short_addr",
+        "type": "FT_UINT8",
+        "description": "Pass Through Short Address"
+      },
+      {
+        "name": "hart_ip.pt.long_address",
+        "type": "FT_BYTES",
+        "description": "Pass Through Long Address"
+      },
+      {
+        "name": "hart_ip.pt.expansion_bytes",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.command",
+        "type": "FT_UINT8",
+        "description": "Pass Through Command"
+      },
+      {
+        "name": "hart_ip.pt.length",
+        "type": "FT_UINT8",
+        "description": "Pass Through Length"
+      },
+      {
+        "name": "hart_ip.pt.response_code",
+        "type": "FT_UINT8",
+        "description": "Pass Through Response Code"
+      },
+      {
+        "name": "hart_ip.pt.device_status",
+        "type": "FT_UINT8",
+        "description": "Pass Through Device Status"
+      },
+      {
+        "name": "hart_ip.pt.payload",
+        "type": "FT_BYTES",
+        "description": "Pass Through Payload"
+      },
+      {
+        "name": "hart_ip.pt.checksum",
+        "type": "FT_UINT8",
+        "description": "Pass Through Checksum"
+      },
+      {
+        "name": "hart_ip.pt.rsp.expansion_code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.expanded_device_type",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.req_min_preambles",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.hart_univ_rev",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.device_rev",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.software_rev",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.hardrev_and_physical_signal",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.device_id",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.rsp_min_preambles",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.device_variables",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.configure_change",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.ext_device_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.manufacturer_Id",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.private_label",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.device_profile",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_percent_range",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_loop_current",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.sv_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.sv",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.tv_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.tv",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.qv_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.qv",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.loop_current_mode",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.primary_variable_classification",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.secondary_variable_classification",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.tertiary_variable_classification",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.quaternary_variable_classification",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_device_var_classification",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot1_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot1_device_var_classify",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot1_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot1_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot1_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot2_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot2_device_var_classify",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot2_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot2_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot2_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot3_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot3_device_var_classify",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot3_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot3_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot3_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot4_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot4_device_var_classify",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot4_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot4_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot4_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot5_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot5_device_var_classify",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot5_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot5_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot5_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot6_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot6_device_var_classify",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot6_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot6_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot6_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot7_device_var",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot7_device_var_classify",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot7_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot7_device_var_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot7_device_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_data_timestamp",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.descriptor",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.day",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.month",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.year",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.transducer_serial_number",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.transducer_limit_min_span_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.upper_transducer_limit",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.lower_transducer_limit",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.minimum_span",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_alarm_selection_code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_transfer_function_code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_upper_and_lower_range_values_units",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_upper_range_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_lower_range_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_damping_value",
+        "type": "FT_FLOAT",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.write_protect_code",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.reserved",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.pv_analog_channel_flags",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.final_assembly_number",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.tag",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.message",
+        "type": "FT_STRINGZPAD",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.device_sp_status",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.device_op_mode",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.standardized_status_0",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.standardized_status_1",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.analog_channel_saturated",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.standardized_status_2",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.standardized_status_3",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.analog_channel_fixed",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.io_card",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.channel",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.tx_preamble_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.embedded_command_delimiter",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.poll_address",
+        "type": "FT_UINT8",
+        "description": "Embedded Command Short Address"
+      },
+      {
+        "name": "hart_ip.pt.rsp.unique_id",
+        "type": "FT_BYTES",
+        "description": "Embedded Command Long Address"
+      },
+      {
+        "name": "hart_ip.pt.rsp.embedded_command",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.number_of_commands",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.command_number",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.data",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.command_byte_count",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.index_of_first_discrete_var",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.number_of_discrete_vars",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.timestamp_for_most_recent_discrete_change",
+        "type": "FT_BYTES",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_discrete_var_state",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot0_discrete_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot1_discrete_var_state",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot1_discrete_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot2_discrete_var_state",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot2_discrete_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot3_discrete_var_state",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot3_discrete_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot4_discrete_var_state",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot4_discrete_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot5_discrete_var_state",
+        "type": "FT_UINT16",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.pt.rsp.slot5_discrete_var_status",
+        "type": "FT_UINT8",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.data.none",
+        "type": "FT_NONE",
+        "description": ""
+      },
+      {
+        "name": "hart_ip.data.unexpected",
+        "type": "FT_NONE",
+        "description": ""
+      }
+    ]
+  },
+  "pcap_fields": {
+    "total": 90,
+    "by_pcap": {
+      "cisagov_hart_ip_all_messageIDs.pcapng": [
+        "_ws_expert",
+        "hart_ip_hart_ip_data",
+        "hart_ip_hart_ip_message_id",
+        "hart_ip_hart_ip_message_type",
+        "hart_ip_hart_ip_msg_length",
+        "hart_ip_hart_ip_pt_checksum",
+        "hart_ip_hart_ip_pt_command",
+        "hart_ip_hart_ip_pt_delimiter",
+        "hart_ip_hart_ip_pt_delimiter_address_type",
+        "hart_ip_hart_ip_pt_delimiter_frame_type",
+        "hart_ip_hart_ip_pt_delimiter_number_of_expansion_bytes",
+        "hart_ip_hart_ip_pt_delimiter_physical_layer_type",
+        "hart_ip_hart_ip_pt_device_status",
+        "hart_ip_hart_ip_pt_length",
+        "hart_ip_hart_ip_pt_long_address",
+        "hart_ip_hart_ip_pt_payload",
+        "hart_ip_hart_ip_pt_response_code",
+        "hart_ip_hart_ip_session_init_inactivity_close_timer",
+        "hart_ip_hart_ip_session_init_master_type",
+        "hart_ip_hart_ip_status",
+        "hart_ip_hart_ip_transaction_id",
+        "hart_ip_hart_ip_version",
+        "text"
+      ],
+      "cisagov_hart_ip_all_types_commands.pcapng": [
+        "_ws_expert",
+        "hart_ip_hart_ip_data",
+        "hart_ip_hart_ip_message_id",
+        "hart_ip_hart_ip_message_type",
+        "hart_ip_hart_ip_msg_length",
+        "hart_ip_hart_ip_pt_checksum",
+        "hart_ip_hart_ip_pt_command",
+        "hart_ip_hart_ip_pt_delimiter",
+        "hart_ip_hart_ip_pt_delimiter_address_type",
+        "hart_ip_hart_ip_pt_delimiter_frame_type",
+        "hart_ip_hart_ip_pt_delimiter_number_of_expansion_bytes",
+        "hart_ip_hart_ip_pt_delimiter_physical_layer_type",
+        "hart_ip_hart_ip_pt_device_status",
+        "hart_ip_hart_ip_pt_length",
+        "hart_ip_hart_ip_pt_long_address",
+        "hart_ip_hart_ip_pt_payload",
+        "hart_ip_hart_ip_pt_response_code",
+        "hart_ip_hart_ip_pt_rsp_analog_channel_fixed",
+        "hart_ip_hart_ip_pt_rsp_analog_channel_saturated",
+        "hart_ip_hart_ip_pt_rsp_configure_change",
+        "hart_ip_hart_ip_pt_rsp_day",
+        "hart_ip_hart_ip_pt_rsp_descriptor",
+        "hart_ip_hart_ip_pt_rsp_device_id",
+        "hart_ip_hart_ip_pt_rsp_device_op_mode",
+        "hart_ip_hart_ip_pt_rsp_device_profile",
+        "hart_ip_hart_ip_pt_rsp_device_rev",
+        "hart_ip_hart_ip_pt_rsp_device_sp_status",
+        "hart_ip_hart_ip_pt_rsp_device_variables",
+        "hart_ip_hart_ip_pt_rsp_expanded_device_type",
+        "hart_ip_hart_ip_pt_rsp_expansion_code",
+        "hart_ip_hart_ip_pt_rsp_ext_device_status",
+        "hart_ip_hart_ip_pt_rsp_final_assembly_number",
+        "hart_ip_hart_ip_pt_rsp_flags",
+        "hart_ip_hart_ip_pt_rsp_hardrev_and_physical_signal",
+        "hart_ip_hart_ip_pt_rsp_hart_univ_rev",
+        "hart_ip_hart_ip_pt_rsp_loop_current_mode",
+        "hart_ip_hart_ip_pt_rsp_manufacturer_Id",
+        "hart_ip_hart_ip_pt_rsp_message",
+        "hart_ip_hart_ip_pt_rsp_month",
+        "hart_ip_hart_ip_pt_rsp_poll_address",
+        "hart_ip_hart_ip_pt_rsp_private_label",
+        "hart_ip_hart_ip_pt_rsp_req_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_rsp_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_software_rev",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_0",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_1",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_2",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_3",
+        "hart_ip_hart_ip_pt_rsp_tag",
+        "hart_ip_hart_ip_pt_rsp_year",
+        "hart_ip_hart_ip_session_init_inactivity_close_timer",
+        "hart_ip_hart_ip_session_init_master_type",
+        "hart_ip_hart_ip_status",
+        "hart_ip_hart_ip_transaction_id",
+        "hart_ip_hart_ip_version",
+        "text"
+      ],
+      "cisagov_hart_ip_publish_keepalive.pcapng": [
+        "_ws_expert",
+        "hart_ip_hart_ip_data",
+        "hart_ip_hart_ip_message_id",
+        "hart_ip_hart_ip_message_type",
+        "hart_ip_hart_ip_msg_length",
+        "hart_ip_hart_ip_pt_checksum",
+        "hart_ip_hart_ip_pt_command",
+        "hart_ip_hart_ip_pt_delimiter",
+        "hart_ip_hart_ip_pt_delimiter_address_type",
+        "hart_ip_hart_ip_pt_delimiter_frame_type",
+        "hart_ip_hart_ip_pt_delimiter_number_of_expansion_bytes",
+        "hart_ip_hart_ip_pt_delimiter_physical_layer_type",
+        "hart_ip_hart_ip_pt_device_status",
+        "hart_ip_hart_ip_pt_length",
+        "hart_ip_hart_ip_pt_long_address",
+        "hart_ip_hart_ip_pt_response_code",
+        "hart_ip_hart_ip_pt_rsp_command_number",
+        "hart_ip_hart_ip_pt_rsp_configure_change",
+        "hart_ip_hart_ip_pt_rsp_data",
+        "hart_ip_hart_ip_pt_rsp_device_id",
+        "hart_ip_hart_ip_pt_rsp_device_profile",
+        "hart_ip_hart_ip_pt_rsp_device_rev",
+        "hart_ip_hart_ip_pt_rsp_device_variables",
+        "hart_ip_hart_ip_pt_rsp_expanded_device_type",
+        "hart_ip_hart_ip_pt_rsp_expansion_code",
+        "hart_ip_hart_ip_pt_rsp_ext_device_status",
+        "hart_ip_hart_ip_pt_rsp_flags",
+        "hart_ip_hart_ip_pt_rsp_hardrev_and_physical_signal",
+        "hart_ip_hart_ip_pt_rsp_hart_univ_rev",
+        "hart_ip_hart_ip_pt_rsp_manufacturer_Id",
+        "hart_ip_hart_ip_pt_rsp_private_label",
+        "hart_ip_hart_ip_pt_rsp_req_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_rsp_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_slot0_data_timestamp",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_classification",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot0_units",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot1_units",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot2_units",
+        "hart_ip_hart_ip_pt_rsp_software_rev",
+        "hart_ip_hart_ip_pt_rsp_tag",
+        "hart_ip_hart_ip_pt_short_addr",
+        "hart_ip_hart_ip_session_init_inactivity_close_timer",
+        "hart_ip_hart_ip_session_init_master_type",
+        "hart_ip_hart_ip_status",
+        "hart_ip_hart_ip_transaction_id",
+        "hart_ip_hart_ip_version",
+        "text"
+      ],
+      "iti_hart_ip.pcap": [
+        "_ws_expert",
+        "hart_ip_hart_ip_data",
+        "hart_ip_hart_ip_message_id",
+        "hart_ip_hart_ip_message_type",
+        "hart_ip_hart_ip_msg_length",
+        "hart_ip_hart_ip_pt_checksum",
+        "hart_ip_hart_ip_pt_command",
+        "hart_ip_hart_ip_pt_delimiter",
+        "hart_ip_hart_ip_pt_delimiter_address_type",
+        "hart_ip_hart_ip_pt_delimiter_frame_type",
+        "hart_ip_hart_ip_pt_delimiter_number_of_expansion_bytes",
+        "hart_ip_hart_ip_pt_delimiter_physical_layer_type",
+        "hart_ip_hart_ip_pt_device_status",
+        "hart_ip_hart_ip_pt_length",
+        "hart_ip_hart_ip_pt_long_address",
+        "hart_ip_hart_ip_pt_payload",
+        "hart_ip_hart_ip_pt_response_code",
+        "hart_ip_hart_ip_pt_rsp_analog_channel_saturated",
+        "hart_ip_hart_ip_pt_rsp_configure_change",
+        "hart_ip_hart_ip_pt_rsp_day",
+        "hart_ip_hart_ip_pt_rsp_descriptor",
+        "hart_ip_hart_ip_pt_rsp_device_id",
+        "hart_ip_hart_ip_pt_rsp_device_op_mode",
+        "hart_ip_hart_ip_pt_rsp_device_profile",
+        "hart_ip_hart_ip_pt_rsp_device_rev",
+        "hart_ip_hart_ip_pt_rsp_device_sp_status",
+        "hart_ip_hart_ip_pt_rsp_device_variables",
+        "hart_ip_hart_ip_pt_rsp_expanded_device_type",
+        "hart_ip_hart_ip_pt_rsp_expansion_code",
+        "hart_ip_hart_ip_pt_rsp_ext_device_status",
+        "hart_ip_hart_ip_pt_rsp_flags",
+        "hart_ip_hart_ip_pt_rsp_hardrev_and_physical_signal",
+        "hart_ip_hart_ip_pt_rsp_hart_univ_rev",
+        "hart_ip_hart_ip_pt_rsp_manufacturer_Id",
+        "hart_ip_hart_ip_pt_rsp_message",
+        "hart_ip_hart_ip_pt_rsp_month",
+        "hart_ip_hart_ip_pt_rsp_private_label",
+        "hart_ip_hart_ip_pt_rsp_pv",
+        "hart_ip_hart_ip_pt_rsp_pv_loop_current",
+        "hart_ip_hart_ip_pt_rsp_pv_percent_range",
+        "hart_ip_hart_ip_pt_rsp_pv_units",
+        "hart_ip_hart_ip_pt_rsp_qv",
+        "hart_ip_hart_ip_pt_rsp_qv_units",
+        "hart_ip_hart_ip_pt_rsp_req_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_rsp_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_slot0_data_timestamp",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_classification",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot0_units",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot1_units",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot2_units",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot3_units",
+        "hart_ip_hart_ip_pt_rsp_software_rev",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_0",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_1",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_2",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_3",
+        "hart_ip_hart_ip_pt_rsp_sv",
+        "hart_ip_hart_ip_pt_rsp_sv_units",
+        "hart_ip_hart_ip_pt_rsp_tag",
+        "hart_ip_hart_ip_pt_rsp_tv",
+        "hart_ip_hart_ip_pt_rsp_tv_units",
+        "hart_ip_hart_ip_pt_rsp_year",
+        "hart_ip_hart_ip_pt_short_addr",
+        "hart_ip_hart_ip_session_init_inactivity_close_timer",
+        "hart_ip_hart_ip_session_init_master_type",
+        "hart_ip_hart_ip_status",
+        "hart_ip_hart_ip_transaction_id",
+        "hart_ip_hart_ip_version",
+        "text"
+      ],
+      "ndpi_hart_ip.pcap": [
+        "_ws_expert",
+        "hart_ip_hart_ip_data",
+        "hart_ip_hart_ip_message_id",
+        "hart_ip_hart_ip_message_type",
+        "hart_ip_hart_ip_msg_length",
+        "hart_ip_hart_ip_pt_checksum",
+        "hart_ip_hart_ip_pt_command",
+        "hart_ip_hart_ip_pt_delimiter",
+        "hart_ip_hart_ip_pt_delimiter_address_type",
+        "hart_ip_hart_ip_pt_delimiter_frame_type",
+        "hart_ip_hart_ip_pt_delimiter_number_of_expansion_bytes",
+        "hart_ip_hart_ip_pt_delimiter_physical_layer_type",
+        "hart_ip_hart_ip_pt_device_status",
+        "hart_ip_hart_ip_pt_length",
+        "hart_ip_hart_ip_pt_long_address",
+        "hart_ip_hart_ip_pt_payload",
+        "hart_ip_hart_ip_pt_response_code",
+        "hart_ip_hart_ip_pt_rsp_analog_channel_saturated",
+        "hart_ip_hart_ip_pt_rsp_configure_change",
+        "hart_ip_hart_ip_pt_rsp_day",
+        "hart_ip_hart_ip_pt_rsp_descriptor",
+        "hart_ip_hart_ip_pt_rsp_device_id",
+        "hart_ip_hart_ip_pt_rsp_device_op_mode",
+        "hart_ip_hart_ip_pt_rsp_device_profile",
+        "hart_ip_hart_ip_pt_rsp_device_rev",
+        "hart_ip_hart_ip_pt_rsp_device_sp_status",
+        "hart_ip_hart_ip_pt_rsp_device_variables",
+        "hart_ip_hart_ip_pt_rsp_expanded_device_type",
+        "hart_ip_hart_ip_pt_rsp_expansion_code",
+        "hart_ip_hart_ip_pt_rsp_ext_device_status",
+        "hart_ip_hart_ip_pt_rsp_flags",
+        "hart_ip_hart_ip_pt_rsp_hardrev_and_physical_signal",
+        "hart_ip_hart_ip_pt_rsp_hart_univ_rev",
+        "hart_ip_hart_ip_pt_rsp_manufacturer_Id",
+        "hart_ip_hart_ip_pt_rsp_message",
+        "hart_ip_hart_ip_pt_rsp_month",
+        "hart_ip_hart_ip_pt_rsp_private_label",
+        "hart_ip_hart_ip_pt_rsp_pv",
+        "hart_ip_hart_ip_pt_rsp_pv_loop_current",
+        "hart_ip_hart_ip_pt_rsp_pv_percent_range",
+        "hart_ip_hart_ip_pt_rsp_pv_units",
+        "hart_ip_hart_ip_pt_rsp_qv",
+        "hart_ip_hart_ip_pt_rsp_qv_units",
+        "hart_ip_hart_ip_pt_rsp_req_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_rsp_min_preambles",
+        "hart_ip_hart_ip_pt_rsp_slot0_data_timestamp",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_classification",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot0_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot0_units",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot1_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot1_units",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot2_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot2_units",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var_classify",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var_status",
+        "hart_ip_hart_ip_pt_rsp_slot3_device_var_value",
+        "hart_ip_hart_ip_pt_rsp_slot3_units",
+        "hart_ip_hart_ip_pt_rsp_software_rev",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_0",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_1",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_2",
+        "hart_ip_hart_ip_pt_rsp_standardized_status_3",
+        "hart_ip_hart_ip_pt_rsp_sv",
+        "hart_ip_hart_ip_pt_rsp_sv_units",
+        "hart_ip_hart_ip_pt_rsp_tag",
+        "hart_ip_hart_ip_pt_rsp_tv",
+        "hart_ip_hart_ip_pt_rsp_tv_units",
+        "hart_ip_hart_ip_pt_rsp_year",
+        "hart_ip_hart_ip_pt_short_addr",
+        "hart_ip_hart_ip_session_init_inactivity_close_timer",
+        "hart_ip_hart_ip_session_init_master_type",
+        "hart_ip_hart_ip_status",
+        "hart_ip_hart_ip_transaction_id",
+        "hart_ip_hart_ip_version",
+        "text"
+      ]
+    },
+    "union": [
+      "_ws_expert",
+      "hart_ip_hart_ip_data",
+      "hart_ip_hart_ip_message_id",
+      "hart_ip_hart_ip_message_type",
+      "hart_ip_hart_ip_msg_length",
+      "hart_ip_hart_ip_pt_checksum",
+      "hart_ip_hart_ip_pt_command",
+      "hart_ip_hart_ip_pt_delimiter",
+      "hart_ip_hart_ip_pt_delimiter_address_type",
+      "hart_ip_hart_ip_pt_delimiter_frame_type",
+      "hart_ip_hart_ip_pt_delimiter_number_of_expansion_bytes",
+      "hart_ip_hart_ip_pt_delimiter_physical_layer_type",
+      "hart_ip_hart_ip_pt_device_status",
+      "hart_ip_hart_ip_pt_length",
+      "hart_ip_hart_ip_pt_long_address",
+      "hart_ip_hart_ip_pt_payload",
+      "hart_ip_hart_ip_pt_response_code",
+      "hart_ip_hart_ip_pt_rsp_analog_channel_fixed",
+      "hart_ip_hart_ip_pt_rsp_analog_channel_saturated",
+      "hart_ip_hart_ip_pt_rsp_command_number",
+      "hart_ip_hart_ip_pt_rsp_configure_change",
+      "hart_ip_hart_ip_pt_rsp_data",
+      "hart_ip_hart_ip_pt_rsp_day",
+      "hart_ip_hart_ip_pt_rsp_descriptor",
+      "hart_ip_hart_ip_pt_rsp_device_id",
+      "hart_ip_hart_ip_pt_rsp_device_op_mode",
+      "hart_ip_hart_ip_pt_rsp_device_profile",
+      "hart_ip_hart_ip_pt_rsp_device_rev",
+      "hart_ip_hart_ip_pt_rsp_device_sp_status",
+      "hart_ip_hart_ip_pt_rsp_device_variables",
+      "hart_ip_hart_ip_pt_rsp_expanded_device_type",
+      "hart_ip_hart_ip_pt_rsp_expansion_code",
+      "hart_ip_hart_ip_pt_rsp_ext_device_status",
+      "hart_ip_hart_ip_pt_rsp_final_assembly_number",
+      "hart_ip_hart_ip_pt_rsp_flags",
+      "hart_ip_hart_ip_pt_rsp_hardrev_and_physical_signal",
+      "hart_ip_hart_ip_pt_rsp_hart_univ_rev",
+      "hart_ip_hart_ip_pt_rsp_loop_current_mode",
+      "hart_ip_hart_ip_pt_rsp_manufacturer_Id",
+      "hart_ip_hart_ip_pt_rsp_message",
+      "hart_ip_hart_ip_pt_rsp_month",
+      "hart_ip_hart_ip_pt_rsp_poll_address",
+      "hart_ip_hart_ip_pt_rsp_private_label",
+      "hart_ip_hart_ip_pt_rsp_pv",
+      "hart_ip_hart_ip_pt_rsp_pv_loop_current",
+      "hart_ip_hart_ip_pt_rsp_pv_percent_range",
+      "hart_ip_hart_ip_pt_rsp_pv_units",
+      "hart_ip_hart_ip_pt_rsp_qv",
+      "hart_ip_hart_ip_pt_rsp_qv_units",
+      "hart_ip_hart_ip_pt_rsp_req_min_preambles",
+      "hart_ip_hart_ip_pt_rsp_rsp_min_preambles",
+      "hart_ip_hart_ip_pt_rsp_slot0_data_timestamp",
+      "hart_ip_hart_ip_pt_rsp_slot0_device_var",
+      "hart_ip_hart_ip_pt_rsp_slot0_device_var_classification",
+      "hart_ip_hart_ip_pt_rsp_slot0_device_var_status",
+      "hart_ip_hart_ip_pt_rsp_slot0_device_var_value",
+      "hart_ip_hart_ip_pt_rsp_slot0_units",
+      "hart_ip_hart_ip_pt_rsp_slot1_device_var",
+      "hart_ip_hart_ip_pt_rsp_slot1_device_var_classify",
+      "hart_ip_hart_ip_pt_rsp_slot1_device_var_status",
+      "hart_ip_hart_ip_pt_rsp_slot1_device_var_value",
+      "hart_ip_hart_ip_pt_rsp_slot1_units",
+      "hart_ip_hart_ip_pt_rsp_slot2_device_var",
+      "hart_ip_hart_ip_pt_rsp_slot2_device_var_classify",
+      "hart_ip_hart_ip_pt_rsp_slot2_device_var_status",
+      "hart_ip_hart_ip_pt_rsp_slot2_device_var_value",
+      "hart_ip_hart_ip_pt_rsp_slot2_units",
+      "hart_ip_hart_ip_pt_rsp_slot3_device_var",
+      "hart_ip_hart_ip_pt_rsp_slot3_device_var_classify",
+      "hart_ip_hart_ip_pt_rsp_slot3_device_var_status",
+      "hart_ip_hart_ip_pt_rsp_slot3_device_var_value",
+      "hart_ip_hart_ip_pt_rsp_slot3_units",
+      "hart_ip_hart_ip_pt_rsp_software_rev",
+      "hart_ip_hart_ip_pt_rsp_standardized_status_0",
+      "hart_ip_hart_ip_pt_rsp_standardized_status_1",
+      "hart_ip_hart_ip_pt_rsp_standardized_status_2",
+      "hart_ip_hart_ip_pt_rsp_standardized_status_3",
+      "hart_ip_hart_ip_pt_rsp_sv",
+      "hart_ip_hart_ip_pt_rsp_sv_units",
+      "hart_ip_hart_ip_pt_rsp_tag",
+      "hart_ip_hart_ip_pt_rsp_tv",
+      "hart_ip_hart_ip_pt_rsp_tv_units",
+      "hart_ip_hart_ip_pt_rsp_year",
+      "hart_ip_hart_ip_pt_short_addr",
+      "hart_ip_hart_ip_session_init_inactivity_close_timer",
+      "hart_ip_hart_ip_session_init_master_type",
+      "hart_ip_hart_ip_status",
+      "hart_ip_hart_ip_transaction_id",
+      "hart_ip_hart_ip_version",
+      "text"
+    ]
+  },
+  "extracted_fields": {
+    "total": 48,
+    "fields": [
+      "message_id",
+      "message_type",
+      "pt_command",
+      "pt_delimiter_address_type",
+      "pt_device_status",
+      "pt_long_address",
+      "pt_payload",
+      "pt_response_code",
+      "pt_rsp_command_number",
+      "pt_rsp_descriptor",
+      "pt_rsp_device_id",
+      "pt_rsp_device_op_mode",
+      "pt_rsp_device_rev",
+      "pt_rsp_device_sp_status",
+      "pt_rsp_device_variables",
+      "pt_rsp_expanded_device_type",
+      "pt_rsp_ext_device_status",
+      "pt_rsp_final_assembly_number",
+      "pt_rsp_manufacturer_Id",
+      "pt_rsp_poll_address",
+      "pt_rsp_primary_variable_classification",
+      "pt_rsp_pv",
+      "pt_rsp_pv_loop_current",
+      "pt_rsp_pv_percent_range",
+      "pt_rsp_pv_units",
+      "pt_rsp_qv",
+      "pt_rsp_slot0_device_var_status",
+      "pt_rsp_slot1_device_var_status",
+      "pt_rsp_slot2_device_var_status",
+      "pt_rsp_slot3_device_var_status",
+      "pt_rsp_slot4_device_var_status",
+      "pt_rsp_slot5_device_var_status",
+      "pt_rsp_slot6_device_var_status",
+      "pt_rsp_slot7_device_var_status",
+      "pt_rsp_software_rev",
+      "pt_rsp_standardized_status_0",
+      "pt_rsp_standardized_status_1",
+      "pt_rsp_standardized_status_2",
+      "pt_rsp_standardized_status_3",
+      "pt_rsp_sv",
+      "pt_rsp_tag",
+      "pt_rsp_tv",
+      "pt_short_addr",
+      "session_init_inactivity_close_timer",
+      "session_init_master_type",
+      "status",
+      "transaction_id",
+      "version"
+    ]
+  },
+  "coverage": {
+    "dissector_vs_pcap": "88/154 (57%)",
+    "pcap_vs_extracted": "48/88 (54%)",
+    "t1_extracted": "29/25 (116%)",
+    "t1_gaps": [
+      {
+        "ek_name": "hart_ip_hart_ip_pt_checksum",
+        "field": "hart_ip.pt.checksum",
+        "type": "FT_UINT8",
+        "tier": "T1",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": "Pass Through Checksum"
+      }
+    ],
+    "t2_consider": [
+      {
+        "ek_name": "hart_ip_hart_ip_msg_length",
+        "field": "hart_ip.msg_length",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": "HART_IP Message Length"
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_data",
+        "field": "hart_ip.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": "HART_IP Message Data"
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_delimiter",
+        "field": "hart_ip.pt.delimiter",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": "Pass Through Delimiter"
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_delimiter_frame_type",
+        "field": "hart_ip.pt.delimiter.frame_type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_delimiter_physical_layer_type",
+        "field": "hart_ip.pt.delimiter.physical_layer_type",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_delimiter_number_of_expansion_bytes",
+        "field": "hart_ip.pt.delimiter.number_of_expansion_bytes",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_length",
+        "field": "hart_ip.pt.length",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_messageIDs.pcapng",
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": "Pass Through Length"
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_expansion_code",
+        "field": "hart_ip.pt.rsp.expansion_code",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_req_min_preambles",
+        "field": "hart_ip.pt.rsp.req_min_preambles",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_hart_univ_rev",
+        "field": "hart_ip.pt.rsp.hart_univ_rev",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_hardrev_and_physical_signal",
+        "field": "hart_ip.pt.rsp.hardrev_and_physical_signal",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_flags",
+        "field": "hart_ip.pt.rsp.flags",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_rsp_min_preambles",
+        "field": "hart_ip.pt.rsp.rsp_min_preambles",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_configure_change",
+        "field": "hart_ip.pt.rsp.configure_change",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_private_label",
+        "field": "hart_ip.pt.rsp.private_label",
+        "type": "FT_UINT16",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_device_profile",
+        "field": "hart_ip.pt.rsp.device_profile",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot0_device_var",
+        "field": "hart_ip.pt.rsp.slot0_device_var",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot0_device_var_classification",
+        "field": "hart_ip.pt.rsp.slot0_device_var_classification",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot0_units",
+        "field": "hart_ip.pt.rsp.slot0_units",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot0_device_var_value",
+        "field": "hart_ip.pt.rsp.slot0_device_var_value",
+        "type": "FT_FLOAT",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot1_device_var",
+        "field": "hart_ip.pt.rsp.slot1_device_var",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot1_device_var_classify",
+        "field": "hart_ip.pt.rsp.slot1_device_var_classify",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot1_units",
+        "field": "hart_ip.pt.rsp.slot1_units",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot1_device_var_value",
+        "field": "hart_ip.pt.rsp.slot1_device_var_value",
+        "type": "FT_FLOAT",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot2_device_var",
+        "field": "hart_ip.pt.rsp.slot2_device_var",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot2_device_var_classify",
+        "field": "hart_ip.pt.rsp.slot2_device_var_classify",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot2_units",
+        "field": "hart_ip.pt.rsp.slot2_units",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot2_device_var_value",
+        "field": "hart_ip.pt.rsp.slot2_device_var_value",
+        "type": "FT_FLOAT",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot0_data_timestamp",
+        "field": "hart_ip.pt.rsp.slot0_data_timestamp",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_day",
+        "field": "hart_ip.pt.rsp.day",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_month",
+        "field": "hart_ip.pt.rsp.month",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_year",
+        "field": "hart_ip.pt.rsp.year",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_message",
+        "field": "hart_ip.pt.rsp.message",
+        "type": "FT_STRINGZPAD",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_analog_channel_saturated",
+        "field": "hart_ip.pt.rsp.analog_channel_saturated",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng",
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_sv_units",
+        "field": "hart_ip.pt.rsp.sv_units",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_tv_units",
+        "field": "hart_ip.pt.rsp.tv_units",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_qv_units",
+        "field": "hart_ip.pt.rsp.qv_units",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot3_device_var",
+        "field": "hart_ip.pt.rsp.slot3_device_var",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot3_device_var_classify",
+        "field": "hart_ip.pt.rsp.slot3_device_var_classify",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot3_units",
+        "field": "hart_ip.pt.rsp.slot3_units",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_slot3_device_var_value",
+        "field": "hart_ip.pt.rsp.slot3_device_var_value",
+        "type": "FT_FLOAT",
+        "tier": "T2",
+        "seen_in": [
+          "iti_hart_ip.pcap",
+          "ndpi_hart_ip.pcap"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_loop_current_mode",
+        "field": "hart_ip.pt.rsp.loop_current_mode",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_analog_channel_fixed",
+        "field": "hart_ip.pt.rsp.analog_channel_fixed",
+        "type": "FT_UINT8",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_all_types_commands.pcapng"
+        ],
+        "description": ""
+      },
+      {
+        "ek_name": "hart_ip_hart_ip_pt_rsp_data",
+        "field": "hart_ip.pt.rsp.data",
+        "type": "FT_BYTES",
+        "tier": "T2",
+        "seen_in": [
+          "cisagov_hart_ip_publish_keepalive.pcapng"
+        ],
+        "description": ""
+      }
+    ],
+    "summary": {
+      "t1_total": 46,
+      "t1_in_pcap": 25,
+      "t1_covered": 29,
+      "t2_total": 106,
+      "t2_in_pcap": 63,
+      "t2_covered": 19,
+      "t3_skipped": 2,
+      "t4_ignored": 0
+    }
+  }
+}

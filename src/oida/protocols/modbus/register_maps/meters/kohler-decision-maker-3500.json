@@ -1,0 +1,362 @@
+{
+  "vendor": "Kohler",
+  "model": "DECISION MAKER 3500",
+  "description": "Kohler DECISION MAKER 3500 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "rms_generator_voltage_l2_l3": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator voltage L2 L3",
+      "unit": "% "
+    },
+    "rms_generator_voltage_l3_l1": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator voltage L3 L1",
+      "unit": "% "
+    },
+    "rms_generator_voltage_line_to_line_average": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator voltage line to line average",
+      "unit": "% "
+    },
+    "rms_generator_voltage_l1_n": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator voltage L1 N",
+      "unit": "% "
+    },
+    "rms_generator_voltage_l2_n": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator voltage L2 N",
+      "unit": "% "
+    },
+    "rms_generator_voltage_l3_n": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator voltage L3 N",
+      "unit": "% "
+    },
+    "rms_generator_voltage_line_to_neutral_average": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator voltage line to neutral average",
+      "unit": "% "
+    },
+    "rms_generator_current_l1": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator current L1",
+      "unit": "% "
+    },
+    "rms_generator_current_l2": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator current L2",
+      "unit": "% "
+    },
+    "rms_generator_current_l3": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator current L3",
+      "unit": "% "
+    },
+    "rms_generator_current_average": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms generator current average",
+      "unit": "% "
+    },
+    "generator_frequency": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator frequency",
+      "unit": " 100"
+    },
+    "generator_real_power_l1": {
+      "address": 13,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator real power L1",
+      "unit": "% "
+    },
+    "generator_real_power_l2": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator real power L2",
+      "unit": "% "
+    },
+    "generator_real_power_l3": {
+      "address": 15,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator real power L3",
+      "unit": "% "
+    },
+    "generator_total_real_power": {
+      "address": 16,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator total real power",
+      "unit": "% "
+    },
+    "generator_reactive_power_l1": {
+      "address": 17,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator reactive power L1",
+      "unit": "% "
+    },
+    "generator_reactive_power_l2": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator reactive power L2",
+      "unit": "% "
+    },
+    "generator_reactive_power_l3": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator reactive power L3",
+      "unit": "% "
+    },
+    "generator_reactive_power": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator reactive power",
+      "unit": "% "
+    },
+    "generator_apparent_power_l1": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator apparent power L1",
+      "unit": "% "
+    },
+    "generator_apparent_power_l2": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator apparent power L2",
+      "unit": "% "
+    },
+    "generator_apparent_power_l3": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator apparent power L3",
+      "unit": "% "
+    },
+    "generator_apparent_power": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Generator apparent power",
+      "unit": "% "
+    },
+    "generator_power_factor_l1": {
+      "address": 25,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator power factor L1",
+      "unit": "pF "
+    },
+    "generator_power_factor_l2": {
+      "address": 26,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator power factor L2",
+      "unit": "pF"
+    },
+    "generator_power_factor_l3": {
+      "address": 27,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator power factor L3",
+      "unit": "pF "
+    },
+    "generator_power_factor": {
+      "address": 28,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator power factor",
+      "unit": "pF "
+    },
+    "generator_phase_angle_voltage_l1_voltage_l2": {
+      "address": 29,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator phase angle voltage L1 voltage L2",
+      "unit": "D "
+    },
+    "generator_phase_angle_voltage_l1_voltage_l3": {
+      "address": 30,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator phase angle voltage L1 voltage L3",
+      "unit": "D "
+    },
+    "generator_phase_angle_voltage_l1_current_l1": {
+      "address": 31,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator phase angle voltage L1 current L1",
+      "unit": "D "
+    },
+    "generator_phase_angle_voltage_l2_current_l2": {
+      "address": 32,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator phase angle voltage L2 current L2",
+      "unit": "D "
+    },
+    "generator_phase_angle_voltage_l3_current_l3": {
+      "address": 33,
+      "type": "i16",
+      "access": "r",
+      "description": "Generator phase angle voltage L3 current L3",
+      "unit": "D "
+    },
+    "rms_bus_voltage_l1_l2": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms bus voltage L1 L2",
+      "unit": "% "
+    },
+    "rms_bus_voltage_l2_l3": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms bus voltage L2 L3",
+      "unit": "% "
+    },
+    "rms_bus_voltage_l3_l1": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms bus voltage L3 L1",
+      "unit": "% "
+    },
+    "rms_bus_voltage_average_line_to_line": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Rms bus voltage average line to line",
+      "unit": "% "
+    },
+    "total_bus_real_power": {
+      "address": 47,
+      "type": "i16",
+      "access": "r",
+      "description": "Total bus real power",
+      "unit": "% "
+    },
+    "total_bus_reactive_power": {
+      "address": 48,
+      "type": "i16",
+      "access": "r",
+      "description": "Total bus reactive power",
+      "unit": "% "
+    },
+    "bus_frequency": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "Bus frequency",
+      "unit": " 100"
+    },
+    "phase_angle_generator_voltage_l1_bus_voltage_l1": {
+      "address": 51,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase angle generator voltage L1 bus voltage L1",
+      "unit": "D "
+    },
+    "speed_bias": {
+      "address": 52,
+      "type": "i16",
+      "access": "r",
+      "description": "Speed bias",
+      "unit": "% "
+    },
+    "voltage_bias": {
+      "address": 53,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage bias",
+      "unit": "% "
+    },
+    "engine_run_speed": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine run speed",
+      "unit": "RPM"
+    },
+    "total_number_of_starts": {
+      "address": 512,
+      "type": "u16",
+      "access": "r",
+      "description": "Total number of starts"
+    },
+    "total_runtime_hours_since_maintenance_lw": {
+      "address": 513,
+      "type": "u16",
+      "access": "r",
+      "description": "Total runtime hours since maintenance lw",
+      "unit": "hr "
+    },
+    "total_loaded_hours_since_maintenance_lw": {
+      "address": 515,
+      "type": "u16",
+      "access": "r",
+      "description": "Total loaded hours since maintenance lw",
+      "unit": "hr "
+    },
+    "total_kw_hours_since_maintenance_lw": {
+      "address": 517,
+      "type": "u16",
+      "access": "r",
+      "description": "Total kw hours since maintenance lw",
+      "unit": "kWh"
+    },
+    "last_maintenance_day_month": {
+      "address": 519,
+      "type": "u16",
+      "access": "r",
+      "description": "Last maintenance day, month",
+      "unit": "Day of Month, Month of Year"
+    },
+    "last_maintenance_year": {
+      "address": 520,
+      "type": "u16",
+      "access": "r",
+      "description": "Last maintenance year",
+      "unit": "16 bit year "
+    }
+  }
+}

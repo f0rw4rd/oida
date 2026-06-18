@@ -1,0 +1,361 @@
+{
+  "vendor": "Kohler",
+  "model": "DECISION MAKER 550 / DECISION MAKER 6000",
+  "description": "Kohler DECISION MAKER 550 / DECISION MAKER 6000 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: DECISION MAKER 550, DECISION MAKER 6000",
+  "registers": {
+    "l2_l3_voltage": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "L2 L3 voltage",
+      "unit": "Volts AC"
+    },
+    "l3_l1_voltage": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "L3 L1 voltage",
+      "unit": "Volts AC"
+    },
+    "l1_l0_voltage": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "L1 l0 voltage",
+      "unit": "Volts AC"
+    },
+    "l2_l0_voltage": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "L2 l0 voltage",
+      "unit": "Volts AC"
+    },
+    "l3_l0_voltage": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "L3 l0 voltage",
+      "unit": "Volts AC"
+    },
+    "l1_current": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "Amps AC"
+    },
+    "l2_current": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "Amps AC"
+    },
+    "l3_current": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "Amps AC"
+    },
+    "frequency": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz X 100"
+    },
+    "total_kw": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Total kw",
+      "unit": "kW"
+    },
+    "percent_of_rated_kw": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Percent of rated kw",
+      "unit": "% Rated kW"
+    },
+    "total_power_factor": {
+      "address": 12,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor",
+      "unit": "PF X 100 "
+    },
+    "l1_kw": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "L1 kw",
+      "unit": "kW"
+    },
+    "l1_power_factor": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "description": "L1 power factor",
+      "unit": "PF X 100 "
+    },
+    "l2_kw": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "L2 kw",
+      "unit": "kW"
+    },
+    "l2_power_factor": {
+      "address": 16,
+      "type": "i16",
+      "access": "r",
+      "description": "L2 power factor",
+      "unit": "PF X 100 "
+    },
+    "l3_kw": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "L3 kw",
+      "unit": "kW"
+    },
+    "l3_power_factor": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "L3 power factor",
+      "unit": "PF X 100 "
+    },
+    "total_kvar": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "description": "Total kvar",
+      "unit": "kVAR "
+    },
+    "l1_kvar": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "L1 kvar",
+      "unit": "kVAR "
+    },
+    "l2_kvar": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "L2 kvar",
+      "unit": "kVAR "
+    },
+    "l3_kvar": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "L3 kvar",
+      "unit": "kVAR "
+    },
+    "total_kva": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Total kva",
+      "unit": "kVA"
+    },
+    "l1_kva": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "L1 kva",
+      "unit": "kVA"
+    },
+    "l2_kva": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "L2 kva",
+      "unit": "kVA"
+    },
+    "l3_kva": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "L3 kva",
+      "unit": "kVA"
+    },
+    "current_lead_lag": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Current lead/lag",
+      "unit": "Bits 0-1 Total Current - Leading = 10 Lagging = 01 Bits 2-3 L1 Current Leading = 10 Lagging = 01 Bits 4-5 L2 Current - Leading = 10 Lagging = 01 Bits 6-7 L3 Current - Leading = 10 Lagging = 01"
+    },
+    "oil_pressure": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Oil pressure",
+      "unit": "kPa/psi"
+    },
+    "coolant_temperature": {
+      "address": 33,
+      "type": "i16",
+      "access": "r",
+      "description": "Coolant temperature",
+      "unit": "Degrees C/Degrees F"
+    },
+    "engine_speed": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine speed",
+      "unit": "RPM"
+    },
+    "local_battery_voltage": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Local battery voltage",
+      "unit": "Volts DC X 10"
+    },
+    "fuel_pressure": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Fuel pressure",
+      "unit": "kPa/psi DDEC/MDEC/ADEC only"
+    },
+    "fuel_temperature": {
+      "address": 37,
+      "type": "i16",
+      "access": "r",
+      "description": "Fuel temperature",
+      "unit": "Degrees C/Degrees F DDEC/MDEC/ADEC only"
+    },
+    "fuel_rate": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Fuel rate",
+      "unit": "Liters/Hour X 100 or Gallons/Hour X 100 DDEC only"
+    },
+    "used_last_run": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Used last run",
+      "unit": "Liters/Gallons DDEC only"
+    },
+    "coolant_pressure": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Coolant pressure",
+      "unit": "kPa/psi DDEC only"
+    },
+    "coolant_level": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "Coolant level",
+      "unit": "% X 10 DDEC only"
+    },
+    "lube_oil_temperature": {
+      "address": 42,
+      "type": "i16",
+      "access": "r",
+      "description": "Lube oil temperature",
+      "unit": "Degrees C/Degrees F DDEC/MDEC/ADEC/Waukesha only"
+    },
+    "oil_level": {
+      "address": 43,
+      "type": "u16",
+      "access": "r",
+      "description": "Oil level",
+      "unit": "% X 10 DDEC only"
+    },
+    "crankcase_pressure": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Crankcase pressure",
+      "unit": "kPa/psi DDEC only"
+    },
+    "ambient_temperature": {
+      "address": 45,
+      "type": "i16",
+      "access": "r",
+      "description": "Ambient temperature",
+      "unit": "Degrees C/Degrees F DDEC only"
+    },
+    "ecm_battery_voltage": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Ecm battery voltage",
+      "unit": "Volts DC X 10 DDEC/MDEC/ADEC only"
+    },
+    "ecm_status": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Ecm status",
+      "unit": "0 = DDEC-Equipped, 1 = Non-ECM, 2 = MDEC/ADEC-Equipped"
+    },
+    "intake_air_temperature": {
+      "address": 48,
+      "type": "i16",
+      "access": "r",
+      "description": "Intake air temperature",
+      "unit": "Degrees C/Degrees F MDEC/ADEC/Waukesha only"
+    },
+    "intake_air_pressure": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "Intake air pressure",
+      "unit": "Degrees C/Degrees F MDEC/ADEC only"
+    },
+    "mdec_adec_fault_codes": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Mdec/adec fault codes",
+      "unit": "Numeric Fault Code MDEC/ADEC only"
+    },
+    "analog_input_00_battery_voltage": {
+      "address": 60,
+      "type": "u16",
+      "access": "r",
+      "description": "Analog input 00 (battery voltage)",
+      "unit": "Volts DC"
+    },
+    "analog_input01": {
+      "address": 61,
+      "type": "u16",
+      "access": "r",
+      "description": "Analog input01",
+      "unit": "User-defined and calibrated through the 550 controller. See the controller operation manual."
+    },
+    "analog_input02": {
+      "address": 62,
+      "type": "u16",
+      "access": "r",
+      "description": "Analog input02"
+    },
+    "analog_input03": {
+      "address": 63,
+      "type": "u16",
+      "access": "r",
+      "description": "Analog input03"
+    }
+  }
+}

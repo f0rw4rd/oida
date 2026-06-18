@@ -1,0 +1,460 @@
+{
+  "vendor": "SolaX",
+  "model": "EV Charger",
+  "description": "SolaX EV Charger inverter register map extracted from homeassistant-solax-modbus",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "SolaX EV Charger modbus registers.",
+  "source": "https://github.com/wills106/homeassistant-solax-modbus",
+  "registers": {
+    "meter_setting": {
+      "address": 1548,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter Setting"
+    },
+    "charger_use_mode": {
+      "address": 1549,
+      "type": "u16",
+      "access": "r",
+      "description": "Charger Use Mode"
+    },
+    "eco_gear": {
+      "address": 1550,
+      "type": "u16",
+      "access": "r",
+      "description": "ECO Gear"
+    },
+    "green_gear": {
+      "address": 1551,
+      "type": "u16",
+      "access": "r",
+      "description": "Green Gear"
+    },
+    "boost_mode": {
+      "address": 1555,
+      "type": "u16",
+      "access": "r",
+      "description": "Boost Mode"
+    },
+    "device_lock": {
+      "address": 1557,
+      "type": "u16",
+      "access": "r",
+      "description": "Device Lock"
+    },
+    "rfid_program": {
+      "address": 1558,
+      "type": "u16",
+      "access": "r",
+      "description": "RFID Program"
+    },
+    "evse_scene": {
+      "address": 1564,
+      "type": "u16",
+      "access": "r",
+      "description": "EVSE Scene"
+    },
+    "rtc": {
+      "address": 1566,
+      "type": "u16",
+      "access": "r",
+      "description": "RTC"
+    },
+    "datahub_charge_current": {
+      "address": 1572,
+      "type": "u16",
+      "access": "r",
+      "description": "Datahub Charge Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "charge_phase": {
+      "address": 1573,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Phase"
+    },
+    "charge_current": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Current",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "control_command": {
+      "address": 1575,
+      "type": "u16",
+      "access": "r",
+      "description": "Control Command"
+    },
+    "evse_mode": {
+      "address": 1641,
+      "type": "u16",
+      "access": "r",
+      "description": "EVSE Mode"
+    },
+    "charge_voltage": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Voltage",
+      "unit": "V",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_voltage_l1": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Voltage L1",
+      "unit": "V",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_voltage_l2": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Voltage L2",
+      "unit": "V",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_voltage_l3": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Voltage L3",
+      "unit": "V",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_pe_voltage": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge PE Voltage",
+      "unit": "V",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_current_l1": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Current L1",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_current_l2": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Current L2",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_current_l3": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Current L3",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_pe_current": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge PE Current",
+      "function_code": 4
+    },
+    "charge_power": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "charge_power_l1": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Power L1",
+      "unit": "W",
+      "function_code": 4
+    },
+    "charge_power_l2": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Power L2",
+      "unit": "W",
+      "function_code": 4
+    },
+    "charge_power_l3": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Power L3",
+      "unit": "W",
+      "function_code": 4
+    },
+    "charge_power_total": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Power Total",
+      "unit": "W",
+      "function_code": 4
+    },
+    "charge_frequency": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Frequency",
+      "unit": "Hz",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_frequency_l1": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Frequency L1",
+      "unit": "Hz",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_frequency_l2": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Frequency L2",
+      "unit": "Hz",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_frequency_l3": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Frequency L3",
+      "unit": "Hz",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "charge_added": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Added",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "charge_added_cum": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge Added - Cumulative",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "charge_added_total": {
+      "address": 1561,
+      "type": "u32",
+      "access": "r",
+      "description": "Charge Added Total",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 3
+    },
+    "grid_current": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Current",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "grid_current_l1": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Current L1",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "grid_current_l2": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Current L2",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "grid_current_l3": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Current L3",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "grid_power": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "grid_power_l1": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Power L1",
+      "unit": "W",
+      "function_code": 4
+    },
+    "grid_power_l2": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Power L2",
+      "unit": "W",
+      "function_code": 4
+    },
+    "grid_power_l3": {
+      "address": 23,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Power L3",
+      "unit": "W",
+      "function_code": 4
+    },
+    "grid_power_total": {
+      "address": 24,
+      "type": "i16",
+      "access": "r",
+      "description": "Grid Power Total",
+      "unit": "W",
+      "function_code": 4
+    },
+    "charger_temperature": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Charger Temperature",
+      "unit": "C",
+      "function_code": 4
+    },
+    "run_mode": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "description": "Run Mode",
+      "function_code": 4
+    },
+    "fault_code": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "Fault code",
+      "function_code": 4
+    },
+    "firmware_version": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Firmware version",
+      "function_code": 4
+    },
+    "net_connected": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Network connected",
+      "function_code": 4
+    },
+    "rssi": {
+      "address": 39,
+      "type": "i16",
+      "access": "r",
+      "description": "RSSI",
+      "unit": "%",
+      "function_code": 4
+    },
+    "charge_duration": {
+      "address": 43,
+      "type": "i32",
+      "access": "r",
+      "description": "Charging duration",
+      "unit": "s",
+      "function_code": 4
+    },
+    "lock_state": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Lock state",
+      "function_code": 4
+    },
+    "mainbrk_limit": {
+      "address": 46,
+      "type": "u16",
+      "access": "r",
+      "description": "Main breaker limit",
+      "function_code": 4
+    },
+    "delay_state": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Random delay state",
+      "function_code": 4
+    },
+    "ban_state": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Ban state",
+      "function_code": 4
+    },
+    "max_charge_current": {
+      "address": 1640,
+      "type": "u16",
+      "access": "rw",
+      "description": "Max Charge Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "start_charge_mode": {
+      "address": 1552,
+      "type": "u16",
+      "access": "rw",
+      "description": "Start Charge Mode",
+      "enum": {
+        "0": "Plug & Charge",
+        "1": "RFID to Charge",
+        "2": "App start"
+      }
+    }
+  },
+  "_source_verified": "Verified: plugin_solax_ev_charger.py confirmed; SolaX X3-EVC 11K/22K is a real product"
+}

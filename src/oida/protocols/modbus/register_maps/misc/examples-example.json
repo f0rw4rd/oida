@@ -1,0 +1,72 @@
+{
+  "vendor": "Example",
+  "model": "Example",
+  "description": "Imported from nymea-plugins-modbus (examples)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/examples/example-registers.json",
+  "registers": {
+    "foo": {
+      "address": 10,
+      "type": "f32",
+      "access": "ro",
+      "description": "Foo register",
+      "unit": "ValueUnit",
+      "function_code": 4
+    },
+    "bar": {
+      "address": 20,
+      "type": "f32",
+      "access": "ro",
+      "description": "Bar register",
+      "unit": "ValueUnit",
+      "function_code": 4
+    },
+    "A": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "A register",
+      "unit": "X",
+      "function_code": 4
+    },
+    "B": {
+      "address": 2,
+      "type": "f32",
+      "access": "ro",
+      "description": "B register",
+      "unit": "X",
+      "function_code": 4
+    },
+    "C": {
+      "address": 4,
+      "type": "f32",
+      "access": "ro",
+      "description": "C register",
+      "unit": "X",
+      "function_code": 4
+    },
+    "D": {
+      "address": 6,
+      "type": "f32",
+      "access": "ro",
+      "description": "D register",
+      "unit": "X",
+      "function_code": 4
+    },
+    "E": {
+      "address": 8,
+      "type": "f32",
+      "access": "ro",
+      "description": "E register",
+      "unit": "X",
+      "function_code": 4
+    }
+  },
+  "enums": {
+    "NameOfEnum": {
+      "0": "EnumValue1",
+      "1": "EnumValue2"
+    }
+  }
+}
