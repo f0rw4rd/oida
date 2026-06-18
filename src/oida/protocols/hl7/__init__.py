@@ -1001,9 +1001,7 @@ class hl7(
                 keys = ["StaffID", "StaffName", "StaffType", "Department", "ActiveStatus"]
                 headers = ["Host", "Port"] + keys
                 rows = [[self.ip, port] + [s.get(k, "") for k in keys] for s in staff]
-                export_data(
-                    rows, headers, file_fmt, output_dir, "hl7_staff", logger=self.logger
-                )
+                export_data(rows, headers, file_fmt, output_dir, "hl7_staff", logger=self.logger)
             charges = mf_data.get("charge_entries", [])
             if charges:
                 keys = [
@@ -1015,9 +1013,7 @@ class hl7(
                 ]
                 headers = ["Host", "Port"] + keys
                 rows = [[self.ip, port] + [c.get(k, "") for k in keys] for c in charges]
-                export_data(
-                    rows, headers, file_fmt, output_dir, "hl7_charges", logger=self.logger
-                )
+                export_data(rows, headers, file_fmt, output_dir, "hl7_charges", logger=self.logger)
 
         # Export WhoAmI server identity (--whoami)
         whoami = data.get("whoami_results", {})

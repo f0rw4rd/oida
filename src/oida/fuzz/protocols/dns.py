@@ -1408,9 +1408,7 @@ class DNSFuzzer(BaseFuzzer):
                                 b"\x02\x00",  # 512 bytes
                             ],
                         ),
-                        Bytes(
-                            "padding_data", b"\x00" * 64, size=64, max_len=512, fuzzable=True
-                        ),
+                        Bytes("padding_data", b"\x00" * 64, size=64, max_len=512, fuzzable=True),
                     ),
                 ),
             ),
@@ -2264,7 +2262,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C02, endian=">"),
                         Word("flags", 0x8002, endian=">"),  # Response, RCODE=2 (Server Failure)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2281,7 +2281,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C03, endian=">"),
                         Word("flags", 0x8003, endian=">"),  # Response, RCODE=3 (Name Error)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2298,7 +2300,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C04, endian=">"),
                         Word("flags", 0x8004, endian=">"),  # Response, RCODE=4 (Not Implemented)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2315,7 +2319,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C05, endian=">"),
                         Word("flags", 0x8005, endian=">"),  # Response, RCODE=5 (Refused)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2333,7 +2339,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C06, endian=">"),
                         Word("flags", 0x8006, endian=">"),  # Response, RCODE=6 (Name Exists)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2350,7 +2358,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C07, endian=">"),
                         Word("flags", 0x8007, endian=">"),  # Response, RCODE=7 (RRSet Exists)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2369,7 +2379,9 @@ class DNSFuzzer(BaseFuzzer):
                         Word(
                             "flags", 0x8008, endian=">"
                         ),  # Response, RCODE=8 (RRSet Does Not Exist)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2386,7 +2398,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C09, endian=">"),
                         Word("flags", 0x8009, endian=">"),  # Response, RCODE=9 (Not Authoritative)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2403,7 +2417,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C10, endian=">"),
                         Word("flags", 0x800A, endian=">"),  # Response, RCODE=10 (Name Not In Zone)
-                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
+                        Word(
+                            "questions", 0x0000, endian=">"
+                        ),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),

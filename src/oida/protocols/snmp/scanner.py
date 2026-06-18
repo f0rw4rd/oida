@@ -608,9 +608,7 @@ class SNMPScanner(
 
         if self.version == "3":
             if not self.username:
-                self.logger.warning(
-                    "SNMPv3 requires credentials -- use -C user:authpass:privpass"
-                )
+                self.logger.warning("SNMPv3 requires credentials -- use -C user:authpass:privpass")
                 return None
             from pysnmp.hlapi.asyncio import UsmUserData
 

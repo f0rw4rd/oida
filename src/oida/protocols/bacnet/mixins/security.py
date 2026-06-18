@@ -759,9 +759,7 @@ class SecurityMixin:
                             if current_value is not None:
                                 break
                         except BaseException as e:
-                            self.logger.debug(
-                                f"bacpypes3 test priority writes failed: {e}"
-                            )
+                            self.logger.debug(f"bacpypes3 test priority writes failed: {e}")
                             continue
         except BaseException as e:
             self.logger.debug(f"bacpypes3 test priority writes failed: {e}")

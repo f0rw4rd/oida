@@ -74,9 +74,7 @@ class FilesMixin:
                                 try:
                                     decoded = pv.cast_out(cast_type)
                                 except BaseException as e:
-                                    self.logger.debug(
-                                        f"bacpypes3 enumerate files failed: {e}"
-                                    )
+                                    self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
                                     continue
                                 if decoded is not None and decoded != "":
                                     value = (
@@ -87,14 +85,14 @@ class FilesMixin:
                                     break
 
                         if value:
-                                if prop_name == "fileSize":
-                                    self.logger.display(f"    {display_name}: {value} bytes")
-                                elif prop_name == "readOnly":
-                                    self.logger.display(
-                                        f"    {display_name}: {'Yes' if value else 'No'}"
-                                    )
-                                else:
-                                    self.logger.display(f"    {display_name}: {value}")
+                            if prop_name == "fileSize":
+                                self.logger.display(f"    {display_name}: {value} bytes")
+                            elif prop_name == "readOnly":
+                                self.logger.display(
+                                    f"    {display_name}: {'Yes' if value else 'No'}"
+                                )
+                            else:
+                                self.logger.display(f"    {display_name}: {value}")
 
                 except BaseException as e:
                     self.logger.debug(f"bacpypes3 enumerate files failed: {e}")

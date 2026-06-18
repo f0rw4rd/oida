@@ -286,6 +286,7 @@ class IPv6Scanner:
             logger.debug(f"IPv6: multicast MAC conversion error: {e}")
             return "33:33:00:00:00:01"
 
+
 class IPv6PassiveListener(PassiveListenerBase):
     """Comprehensive passive IPv6 traffic listener.
 

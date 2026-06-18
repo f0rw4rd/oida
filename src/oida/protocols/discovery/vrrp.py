@@ -30,6 +30,7 @@ _scapy_all = lazy_import("scapy.all", "discovery")
 
 logger = get_module_logger(__name__)
 
+
 class VRRPPassiveListener:
     """Passive VRRP traffic listener.
 

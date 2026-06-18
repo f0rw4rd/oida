@@ -150,9 +150,7 @@ class EepromOpsMixin(_ScannerBase):
         """Return SyncManager configuration parsed from the SII SM category."""
         return sii.get("sync_managers", [])
 
-    def _read_eeprom_pdo(
-        self, master: Any, slave_pos: int, sii: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _read_eeprom_pdo(self, master: Any, slave_pos: int, sii: Dict[str, Any]) -> Dict[str, Any]:
         """Read PDO configuration (counts from SII, byte sizes from pysoem)."""
         try:
             slave = master.slaves[slave_pos]
