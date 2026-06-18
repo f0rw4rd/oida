@@ -97,6 +97,47 @@ class TestIPMIPassive:
             f"payload_types: {[ix.details.get('payload_type_name') for ix in listener.interactions]}"
         )
 
+    def test_ipmi_rakp_hash_credential_recorded(self):
+        """RAKP-2 yields a crackable rakp_hash credential with the RAKP-1 username.
+
+        Uses a real RMCP+ capture (github_ipmi_cipher3_auth.pcap) that carries a
+        full RAKP 1-4 handshake with a parseable body. tshark's IPMI dissector
+        does not decode the RAKP message body, so the username (RAKP-1) and the
+        key-exchange auth code / HMAC (RAKP-2) are parsed from the raw payload.
+        """
+        listener, devices, result = _run_listener_test(
+            "ipmi",
+            "IPMIPassiveListener",
+            "ipmi_session || rmcp",
+            "ipmi/github_ipmi_cipher3_auth.pcap",
+            min_devices=2,
+            min_interactions=1,
+        )
+        rakp_creds = [c for c in listener.credentials if c.credential_type == "rakp_hash"]
+        assert rakp_creds, (
+            "No rakp_hash credential recorded; "
+            f"credential types: {[c.credential_type for c in listener.credentials]}"
+        )
+        cred = rakp_creds[0]
+        # Username comes from RAKP-1 (this capture authenticates as 'admin').
+        assert cred.username == "admin", f"Expected RAKP username 'admin', got {cred.username!r}"
+        # The hash is the RAKP-2 key-exchange auth code (HMAC-SHA1 here = 20 bytes).
+        assert cred.rakp_hash, "rakp_hash field is empty"
+        assert len(cred.rakp_hash) == 40, (
+            f"Expected 20-byte (40 hex char) HMAC, got {len(cred.rakp_hash)} chars"
+        )
+        int(cred.rakp_hash, 16)  # must be valid hex
+        # The BMC (RAKP-2 source) is the credential server.
+        assert cred.server_ip == "192.168.2.20", (
+            f"Expected BMC server 192.168.2.20, got {cred.server_ip}"
+        )
+        # And it surfaces in the credential summary the scanner consumes.
+        summary = listener.get_credentials_summary()
+        rakp_rows = [r for r in summary if r["credential_type"] == "rakp_hash"]
+        assert rakp_rows, "rakp_hash not present in get_credentials_summary()"
+        assert rakp_rows[0]["rakp_hash"] == cred.rakp_hash
+        assert rakp_rows[0]["username"] == "admin"
+
     def test_ipmi_open_session_detected(self):
         """RMCP+ Open Session Request is detected."""
         listener, devices, result = _run_listener_test(

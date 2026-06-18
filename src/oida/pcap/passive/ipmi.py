@@ -84,6 +84,7 @@ class IPMICredential:
     dest_port: int = 623
     auth_type: str = ""
     timestamp: str = ""
+    rakp_hash: str = ""  # RAKP-2 key-exchange auth code (crackable HMAC), hex
 
     @property
     def server_ip(self) -> str:
@@ -144,6 +145,10 @@ class IPMIPassiveListener(PySharkListenerBase):
         self._seen_creds: set = set()
         # Track BMC details
         self.bmc_info: Dict[str, Dict[str, Any]] = {}
+        # RAKP-1 (client -> BMC) carries the username; RAKP-2 (BMC -> client)
+        # carries the crackable HMAC. They are separate packets, so stash the
+        # RAKP-1 username keyed by the BMC IP and pair it when RAKP-2 arrives.
+        self._rakp_users: Dict[str, str] = {}
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format IPMI interaction as protocol-specific table columns."""
@@ -213,10 +218,37 @@ class IPMIPassiveListener(PySharkListenerBase):
             detail = payload_type_name
             if "Message 1" in payload_type_name:
                 detail = "RAKP-1 (username + random)"
+                # RAKP-1 (client -> BMC) carries the username being authenticated.
+                # The BMC is the destination; stash the username under it so the
+                # RAKP-2 response from that BMC can be paired with it.
+                username = self._parse_rakp1_username(packet)
+                if username:
+                    self._rakp_users[dst_ip] = username
             elif "Message 2" in payload_type_name:
                 detail = "RAKP-2 (HMAC hash)"
-                # RAKP Message 2 contains the crackable hash
-                self.logger.info(f"IPMI RAKP-2 hash from BMC {src_ip} -> {dst_ip}")
+                # RAKP-2 (BMC -> client) carries the crackable key-exchange auth
+                # code (HMAC). The BMC is the source; recover the username seen in
+                # the matching RAKP-1 (may be absent if RAKP-1 was not captured).
+                rakp_hash = self._parse_rakp2_hash(packet)
+                if rakp_hash:
+                    username = self._rakp_users.get(src_ip, "")
+                    self.logger.info(
+                        f"IPMI RAKP-2 hash from BMC {src_ip} -> {dst_ip} "
+                        f"user={username or '(unknown)'}"
+                    )
+                    self._record_credential(
+                        username=username,
+                        credential_type="rakp_hash",
+                        src_ip=dst_ip,
+                        dst_ip=src_ip,
+                        dest_port=src_port if src_port else 623,
+                        auth_type="RMCP+ RAKP",
+                        rakp_hash=rakp_hash,
+                    )
+                else:
+                    self.logger.info(
+                        f"IPMI RAKP-2 from BMC {src_ip} -> {dst_ip} (no parseable HMAC in payload)"
+                    )
             elif "Message 3" in payload_type_name:
                 detail = "RAKP-3 (client proof)"
             elif "Message 4" in payload_type_name:
@@ -301,6 +333,64 @@ class IPMIPassiveListener(PySharkListenerBase):
                 },
             )
 
+    @staticmethod
+    def _rakp_payload_bytes(packet) -> bytes:
+        """Return the raw RMCP+ payload (RAKP body) bytes for a packet.
+
+        tshark's IPMI dissector does not decode the RAKP message body, so the
+        username (RAKP-1) and HMAC (RAKP-2) are only available as the raw
+        ``data`` layer that follows the session wrapper.
+        """
+        raw = None
+        if hasattr(packet, "data"):
+            raw = getattr(packet.data, "data", None)
+        if not raw:
+            return b""
+        try:
+            return bytes.fromhex(str(raw).replace(":", "").replace(" ", ""))
+        except ValueError:
+            return b""
+
+    def _parse_rakp1_username(self, packet) -> str:
+        """Extract the username from a RAKP Message 1 body.
+
+        RAKP-1 layout (IPMI 2.0, after the session wrapper):
+            [0]    message tag
+            [1:4]  reserved
+            [4:8]  managed system session ID
+            [8:24] remote console random number (16 bytes)
+            [24]   requested maximum privilege level
+            [25:27] reserved
+            [27]   username length (N)
+            [28:28+N] username
+        """
+        body = self._rakp_payload_bytes(packet)
+        if len(body) < 28:
+            return ""
+        ulen = body[27]
+        if ulen == 0 or len(body) < 28 + ulen:
+            return ""
+        try:
+            return body[28 : 28 + ulen].decode("latin1").strip("\x00")
+        except Exception:
+            return ""
+
+    def _parse_rakp2_hash(self, packet) -> str:
+        """Extract the key-exchange auth code (crackable HMAC) from RAKP-2.
+
+        RAKP-2 layout (IPMI 2.0, after the session wrapper):
+            [0]     message tag
+            [1:4]   reserved
+            [4:8]   remote console session ID
+            [8:24]  managed system (BMC) random number (16 bytes)
+            [24:40] managed system (BMC) GUID (16 bytes)
+            [40:]   key exchange authentication code (HMAC, 0/12/16/20/32 bytes)
+        """
+        body = self._rakp_payload_bytes(packet)
+        if len(body) <= 40:
+            return ""
+        return body[40:].hex()
+
     def _record_credential(
         self,
         username: str,
@@ -309,6 +399,7 @@ class IPMIPassiveListener(PySharkListenerBase):
         dst_ip: str,
         dest_port: int = 623,
         auth_type: str = "",
+        rakp_hash: str = "",
     ) -> None:
         """Record an extracted IPMI credential."""
         cred_key = (username, credential_type, src_ip, dst_ip)
@@ -324,6 +415,7 @@ class IPMIPassiveListener(PySharkListenerBase):
             dest_port=dest_port,
             auth_type=auth_type,
             timestamp=datetime.now().isoformat(),
+            rakp_hash=rakp_hash,
         )
         self.credentials.append(cred)
 
@@ -343,6 +435,7 @@ class IPMIPassiveListener(PySharkListenerBase):
                 "server_ip": cred.dest_ip,
                 "client_ip": cred.source_ip,
                 "server_port": cred.dest_port,
+                "rakp_hash": cred.rakp_hash,
                 "timestamp": cred.timestamp,
             }
             for cred in self.credentials
