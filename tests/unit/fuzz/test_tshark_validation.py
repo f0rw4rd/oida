@@ -118,6 +118,13 @@ TSHARK_PROTOCOLS: Dict[str, dict] = {
         "expected_layers": ["icmpv6"],
         "decode_as": [],
     },
+    "mdns": {
+        "port": 5353,
+        "transport": "udp",
+        "tshark_filter": "mdns",
+        "expected_layers": ["mdns"],
+        "decode_as": [],
+    },
     "mqtt": {
         "port": 1883,
         "transport": "tcp",
@@ -253,10 +260,6 @@ NO_TSHARK_DISSECTOR = {
     "daytime",
     "hl7",
     "tcp",
-    # mdns: simple queries now decode cleanly (the DNS big-endian fix landed),
-    # but response/multi-record baselines still trip [Malformed Packet] due to a
-    # separate RR/RDATA encoding issue. Re-include once responses are clean.
-    "mdns",
     "http2",
 }
 
