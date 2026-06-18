@@ -75,12 +75,34 @@ class TestCheckProtectionLevel(unittest.TestCase):
         self.assertTrue(result.get("indeterminate"))
         self.assertIn("Indeterminate", result["description"])
 
-    def test_write_protection(self):
-        """Test protection level 2 - write protected, sch_schal is 0."""
+    def test_no_protection_open_plc(self):
+        """sch_schal=1 means level 1 = NO protection (open PLC).
+
+        Regression: the old logic mapped sch_schal=1 (most dangerous, wide
+        open) to "Full protection - Password required" - the exact opposite
+        of reality. The field value IS the protection level, mirroring
+        SZLParser._parse_0x0132 (sch_schal=1 -> level 1).
+        """
         protection = Mock()
-        protection.sch_schal = 0
+        protection.sch_schal = 1
         protection.sch_par = 1
-        protection.sch_rel = 0
+        protection.sch_rel = 1
+        protection.bart_sch = 0
+        protection.anl_sch = 0
+        self.conn.get_protection.return_value = protection
+
+        result = self.host._check_protection_level(self.conn)
+
+        self.assertEqual(result["level"], 1, "sch_schal=1 must be level 1 (no protection)")
+        self.assertTrue(result["has_protection"])
+        self.assertIn("No protection", result["description"])
+
+    def test_write_protection(self):
+        """Test protection level 2 - write protected (max field == 2)."""
+        protection = Mock()
+        protection.sch_schal = 1
+        protection.sch_par = 2
+        protection.sch_rel = 1
         protection.bart_sch = 0
         protection.anl_sch = 0
         self.conn.get_protection.return_value = protection
