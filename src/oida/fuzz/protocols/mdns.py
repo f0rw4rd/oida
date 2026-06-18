@@ -126,7 +126,7 @@ class MDNSFuzzer(BaseFuzzer):
         return Block(
             name,
             children=(
-                Word("ID", 0x1234, output_format="binary"),  # Transaction ID
+                Word("ID", 0x1234, output_format="binary", endian=">"),  # Transaction ID
                 BitField("QR", default_value=qr, width=1),  # Query/Response flag
                 BitField("Opcode", default_value=opcode, width=4),  # Operation code
                 BitField("AA", default_value=aa, width=1),  # Authoritative Answer
@@ -135,10 +135,10 @@ class MDNSFuzzer(BaseFuzzer):
                 BitField("RA", default_value=ra, width=1),  # Recursion Available
                 BitField("Z", default_value=z, width=3),  # Reserved (inc. AD bit)
                 BitField("Rcode", default_value=rcode, width=4),  # Response code
-                Word("QDCount", 0, output_format="binary"),  # Question count
-                Word("ANCount", 0, output_format="binary"),  # Answer count
-                Word("NSCount", 0, output_format="binary"),  # Authority count
-                Word("ARCount", 0, output_format="binary"),  # Additional count
+                Word("QDCount", 0, output_format="binary", endian=">"),  # Question count
+                Word("ANCount", 0, output_format="binary", endian=">"),  # Answer count
+                Word("NSCount", 0, output_format="binary", endian=">"),  # Authority count
+                Word("ARCount", 0, output_format="binary", endian=">"),  # Additional count
             ),
         )
 
@@ -177,8 +177,8 @@ class MDNSFuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Word("QTYPE", DNSType.PTR, output_format="binary"),  # Query type
-                Word("QCLASS", DNSClass.IN, output_format="binary"),  # Query class
+                Word("QTYPE", DNSType.PTR, output_format="binary", endian=">"),  # Query type
+                Word("QCLASS", DNSClass.IN, output_format="binary", endian=">"),  # Query class
             ),
         )
 
@@ -215,11 +215,15 @@ class MDNSFuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Word("TYPE", DNSType.PTR, output_format="binary"),  # RR type
-                Word("CLASS", DNSClass.IN, output_format="binary"),  # RR class
-                DWord("TTL", 120, output_format="binary"),  # Time to live
+                Word("TYPE", DNSType.PTR, output_format="binary", endian=">"),  # RR type
+                Word("CLASS", DNSClass.IN, output_format="binary", endian=">"),  # RR class
+                DWord("TTL", 120, output_format="binary", endian=">"),  # Time to live
                 Size(
-                    f"{name}_RDLENGTH", block_name=f"{name}_RDATA", length=2, inclusive=False
+                    f"{name}_RDLENGTH",
+                    block_name=f"{name}_RDATA",
+                    length=2,
+                    endian=">",
+                    inclusive=False,
                 ),  # RData length
                 Block(
                     f"{name}_RDATA",
@@ -248,9 +252,9 @@ class MDNSFuzzer(BaseFuzzer):
                         Block(
                             f"{name}_SRV_Data",
                             children=(
-                                Word(f"{name}_Priority", 0, output_format="binary"),
-                                Word(f"{name}_Weight", 0, output_format="binary"),
-                                Word(f"{name}_Port", 80, output_format="binary"),
+                                Word(f"{name}_Priority", 0, output_format="binary", endian=">"),
+                                Word(f"{name}_Weight", 0, output_format="binary", endian=">"),
+                                Word(f"{name}_Port", 80, output_format="binary", endian=">"),
                                 Size(
                                     f"{name}_Target_Length",
                                     block_name=f"{name}_Target",
@@ -323,7 +327,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "QC_Header",
                     children=(
-                        Word("ID", 0xABCD, output_format="binary"),
+                        Word("ID", 0xABCD, output_format="binary", endian=">"),
                         BitField("QR", default_value=1, width=1),  # Response
                         BitField("Opcode", default_value=0, width=4),
                         BitField("AA", default_value=1, width=1),
@@ -336,10 +340,10 @@ class MDNSFuzzer(BaseFuzzer):
                         # mutates them — section-count lies about actual record
                         # count are a classic DNS parser bug class
                         # (RDLENGTH confusion); see ref/mdns/cves/README.md.
-                        Word("QDCount", 1, output_format="binary"),  # 1 question
-                        Word("ANCount", 8, output_format="binary"),  # 8 answers
-                        Word("NSCount", 1, output_format="binary"),  # 1 authority
-                        Word("ARCount", 1, output_format="binary"),  # 1 additional
+                        Word("QDCount", 1, output_format="binary", endian=">"),  # 1 question
+                        Word("ANCount", 8, output_format="binary", endian=">"),  # 8 answers
+                        Word("NSCount", 1, output_format="binary", endian=">"),  # 1 authority
+                        Word("ARCount", 1, output_format="binary", endian=">"),  # 1 additional
                     ),
                 ),
                 # Question: ANY record for service discovery
@@ -501,7 +505,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Bad_Header",
                     children=(
-                        Word("ID", 0xFFFF, output_format="binary"),
+                        Word("ID", 0xFFFF, output_format="binary", endian=">"),
                         BitField(
                             "QR", default_value=2, width=1
                         ),  # Invalid value (should be 0 or 1)
@@ -512,10 +516,12 @@ class MDNSFuzzer(BaseFuzzer):
                         BitField("RA", default_value=1, width=1),
                         BitField("Z", default_value=7, width=3),  # Reserved bits set
                         BitField("Rcode", default_value=15, width=4),  # Invalid response code
-                        Word("QDCount", 65535, output_format="binary"),  # Excessive count
-                        Word("ANCount", 65535, output_format="binary"),
-                        Word("NSCount", 65535, output_format="binary"),
-                        Word("ARCount", 65535, output_format="binary"),
+                        Word(
+                            "QDCount", 65535, output_format="binary", endian=">"
+                        ),  # Excessive count
+                        Word("ANCount", 65535, output_format="binary", endian=">"),
+                        Word("NSCount", 65535, output_format="binary", endian=">"),
+                        Word("ARCount", 65535, output_format="binary", endian=">"),
                     ),
                 )
             ),
@@ -630,7 +636,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Nested_Header",
                     children=(
-                        Word("ID", 0x1234, output_format="binary"),
+                        Word("ID", 0x1234, output_format="binary", endian=">"),
                         BitField("QR", default_value=0, width=1),
                         BitField("Opcode", default_value=0, width=4),
                         BitField("AA", default_value=0, width=1),
@@ -695,7 +701,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Variable_Header",
                     children=(
-                        Word("ID", 0x1234, output_format="binary"),
+                        Word("ID", 0x1234, output_format="binary", endian=">"),
                         BitField("QR", default_value=1, width=1),  # Response
                         BitField("Opcode", default_value=0, width=4),
                         BitField("AA", default_value=1, width=1),
@@ -810,7 +816,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "TC_Header",
                     children=(
-                        Word("ID", 0x1234, output_format="binary"),
+                        Word("ID", 0x1234, output_format="binary", endian=">"),
                         BitField("QR", default_value=1, width=1),  # Response
                         BitField("Opcode", default_value=0, width=4),
                         BitField("AA", default_value=1, width=1),
@@ -897,7 +903,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Multi_Header",
                     children=(
-                        Word("ID", 0x1234, output_format="binary"),
+                        Word("ID", 0x1234, output_format="binary", endian=">"),
                         BitField("QR", default_value=0, width=1),
                         BitField("Opcode", default_value=0, width=4),
                         BitField("AA", default_value=0, width=1),
@@ -964,7 +970,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Multi_Answer_Header",
                     children=(
-                        Word("ID", 0x1234, output_format="binary"),
+                        Word("ID", 0x1234, output_format="binary", endian=">"),
                         BitField("QR", default_value=1, width=1),  # Response
                         BitField("Opcode", default_value=0, width=4),  # Standard query
                         BitField("AA", default_value=1, width=1),  # Authoritative
@@ -1038,7 +1044,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Mixed_Header",
                     children=(
-                        Word("ID", 0x1234, output_format="binary"),
+                        Word("ID", 0x1234, output_format="binary", endian=">"),
                         BitField("QR", default_value=1, width=1),  # Response
                         BitField("Opcode", default_value=0, width=4),  # Standard query
                         BitField("AA", default_value=1, width=1),  # Authoritative

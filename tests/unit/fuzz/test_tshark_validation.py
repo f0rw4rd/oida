@@ -76,6 +76,48 @@ TSHARK_PROTOCOLS: Dict[str, dict] = {
         "expected_layers": ["dnp3"],
         "decode_as": ["tcp.port==20000,dnp3"],
     },
+    "snmpv2c": {
+        "port": 161,
+        "transport": "udp",
+        "tshark_filter": "snmp",
+        "expected_layers": ["snmp"],
+        "decode_as": [],
+    },
+    "dhcpv6": {
+        "port": 547,
+        "transport": "udp",
+        "tshark_filter": "dhcpv6",
+        "expected_layers": ["dhcpv6"],
+        "decode_as": [],
+    },
+    "ethernet": {
+        "port": 0,
+        "transport": "raw_eth",
+        "tshark_filter": "eth",
+        "expected_layers": ["eth"],
+        "decode_as": [],
+    },
+    "ipv4": {
+        "port": 0,
+        "transport": "raw_ipv4",
+        "tshark_filter": "ip",
+        "expected_layers": ["ip"],
+        "decode_as": [],
+    },
+    "icmp": {
+        "port": 0,
+        "transport": "icmp",
+        "tshark_filter": "icmp",
+        "expected_layers": ["icmp"],
+        "decode_as": [],
+    },
+    "icmpv6": {
+        "port": 0,
+        "transport": "icmpv6",
+        "tshark_filter": "icmpv6",
+        "expected_layers": ["icmpv6"],
+        "decode_as": [],
+    },
     "mqtt": {
         "port": 1883,
         "transport": "tcp",
@@ -195,15 +237,14 @@ TSHARK_PROTOCOLS: Dict[str, dict] = {
 
 # Protocols that can't instantiate in test environment (raw socket, serial, etc.)
 SKIP_INSTANTIATE = {
-    "icmp",
-    "icmpv6",
-    "ipv4",
+    # ipv6: baseline sets payload_length for a TCP next-header but ships <20
+    # bytes, so tshark flags the inner TCP malformed (tracked separately).
     "ipv6",
-    "ethernet",
-    "industrial_ethernet",
-    "profinet_dcp",
-    "modbus_rtu",
+    # mutation: generic mutation engine, not a wire protocol.
     "mutation",
+    # modbus_rtu: serial framing has no standard pcap encapsulation for tshark;
+    # CRC correctness is guarded by the dedicated render check instead.
+    "modbus_rtu",
 }
 
 # Protocols without a stock tshark dissector — skip them
@@ -212,10 +253,11 @@ NO_TSHARK_DISSECTOR = {
     "daytime",
     "hl7",
     "tcp",
+    # mdns: simple queries now decode cleanly (the DNS big-endian fix landed),
+    # but response/multi-record baselines still trip [Malformed Packet] due to a
+    # separate RR/RDATA encoding issue. Re-include once responses are clean.
     "mdns",
     "http2",
-    "dhcpv6",
-    "snmpv2c",
 }
 
 # Text-based protocols where baseline packets are command strings, not binary
@@ -311,13 +353,31 @@ def _instantiate_fuzzer(protocol_name: str):
 
 
 def _write_pcap(payload: bytes, port: int, transport: str, pcap_path: str) -> None:
-    """Wrap payload in transport headers and write pcap."""
-    from scapy.all import IP, TCP, UDP, Raw, wrpcap, Ether, conf
+    """Wrap payload in transport headers and write pcap.
+
+    Transports:
+      tcp/udp        - app-layer payload over Ether/IP/{TCP,UDP}
+      raw_eth        - payload IS a complete Ethernet frame (L2 fuzzers)
+      raw_ipv4/ipv6  - payload IS an IP packet; wrap only in Ethernet
+      icmp           - payload is a bare ICMP message; wrap in Ether/IP(proto=1)
+      icmpv6         - payload is a bare ICMPv6 message; wrap in Ether/IPv6(nh=58)
+    """
+    from scapy.all import IP, IPv6, TCP, UDP, Raw, wrpcap, Ether, conf
 
     conf.verb = 0
 
     if transport == "udp":
         pkt = Ether() / IP(dst="10.0.0.1") / UDP(dport=port, sport=12345) / Raw(load=payload)
+    elif transport == "raw_eth":
+        pkt = Ether(payload)
+    elif transport == "raw_ipv4":
+        pkt = Ether(type=0x0800) / Raw(load=payload)
+    elif transport == "raw_ipv6":
+        pkt = Ether(type=0x86DD) / Raw(load=payload)
+    elif transport == "icmp":
+        pkt = Ether() / IP(dst="10.0.0.1", proto=1) / Raw(load=payload)
+    elif transport == "icmpv6":
+        pkt = Ether() / IPv6(dst="fe80::1", nh=58) / Raw(load=payload)
     else:
         pkt = (
             Ether()
