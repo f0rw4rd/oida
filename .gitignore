@@ -2,6 +2,11 @@
 .claude/
 CLAUDE.md
 
+# Internal review artifacts — enumerate findings/vulns; keep LOCAL, never ship
+CODE_REVIEW.md
+TEST_GAP_AUDIT.md
+.review-tmp/
+
 # Per-protocol research material — kept local
 ref/
 
