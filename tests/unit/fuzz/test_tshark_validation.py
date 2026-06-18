@@ -670,7 +670,6 @@ _ALL_REQUESTS_RAW_EXCLUDE = {"ethernet", "ipv4", "ipv6", "icmp", "icmpv6"}
 # green and these are tracked; remove a protocol once its requests are fixed.
 # DNS shares mDNS's big-endian/flags bug; the rest are length/encoding bugs.
 _KNOWN_STRUCTURAL_BUGS = {
-    "bacnet",
     "dhcp",
     "dhcpv6",
     "coap",
