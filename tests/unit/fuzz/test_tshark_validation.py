@@ -653,7 +653,10 @@ _INTENTIONAL_MALFORMED_KEYWORDS = (
 
 # Explicit (protocol, request) pairs that are intentionally malformed but whose
 # names lack an obvious keyword. Each entry verified by hand.
-_INTENTIONAL_MALFORMED: set = set()
+_INTENTIONAL_MALFORMED: set = {
+    "dns/DNS_No_Null_Term",  # deliberately omits the QNAME root label
+    "dns/DNS_EDNS0_OPTIONS",  # CVE-2020-8616 oversized-option overflow
+}
 
 # Raw L2/L3 protocols are excluded from the all-requests validator: their frames
 # carry pseudo-header checksums and embedded packets that cannot be validated
@@ -667,7 +670,6 @@ _ALL_REQUESTS_RAW_EXCLUDE = {"ethernet", "ipv4", "ipv6", "icmp", "icmpv6"}
 # green and these are tracked; remove a protocol once its requests are fixed.
 # DNS shares mDNS's big-endian/flags bug; the rest are length/encoding bugs.
 _KNOWN_STRUCTURAL_BUGS = {
-    "dns",
     "bacnet",
     "dhcp",
     "dhcpv6",
