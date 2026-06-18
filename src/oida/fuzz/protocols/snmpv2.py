@@ -1378,27 +1378,33 @@ class SNMPv2cFuzzer(BaseFuzzer):
         )
 
         # ==================== PHASE 1: BASELINE ====================
-        if self.is_request_enabled("SNMPv2c_Baseline"):
+        if self.is_request_enabled("SNMPv2c_GetBulkRequest"):
             self.session.connect(get_bulk_request)
 
         # ==================== PHASE 2: STANDARD OPERATIONS ====================
-        if self.is_request_enabled("SNMPv2c_Standard"):
+        if self.is_request_enabled("SNMPv2c_GetRequest"):
             self.session.connect(get_request)
+        if self.is_request_enabled("SNMPv2c_GetNextRequest"):
             self.session.connect(get_next_request)
-            if enable_set:
-                self.session.connect(set_request)
+        if enable_set and self.is_request_enabled("SNMPv2c_SetRequest"):
+            self.session.connect(set_request)
+        if self.is_request_enabled("SNMPv2c_InformRequest"):
             self.session.connect(inform_request)
 
         # ==================== PHASE 3: BOUNDARY TESTS ====================
-        if self.is_request_enabled("SNMPv2c_Boundary"):
+        if self.is_request_enabled("SNMPv2c_GetBulk_MaxRepExtreme"):
             self.session.connect(get_bulk_maxrep_extreme)
+        if self.is_request_enabled("SNMPv2c_GetBulk_ZeroVarBinds"):
             self.session.connect(get_bulk_zero_varbinds)
+        if self.is_request_enabled("SNMPv2c_BoundaryValues"):
             self.session.connect(boundary_values)
+        if self.is_request_enabled("SNMPv2c_BoundaryZeroReqID"):
             self.session.connect(boundary_zero_reqid)
+        if self.is_request_enabled("SNMPv2c_BoundaryEmptyCommunity"):
             self.session.connect(boundary_empty_community)
 
         # ==================== PHASE 4: OVERFLOW / MALFORMED ====================
-        if self.is_request_enabled("SNMPv2c_Overflow"):
+        if self.is_request_enabled("SNMPv2c_Malformed"):
             self.session.connect(malformed_snmpv2c)
 
         # ==================== PHASE 5: TRAP ====================

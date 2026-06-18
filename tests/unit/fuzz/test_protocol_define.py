@@ -129,3 +129,47 @@ def test_mdns_request_definitions_match_connected(mock_config, mock_factory):
         f"connected-but-not-listed={sorted(connected - defined)}, "
         f"listed-but-not-connected={sorted(defined - connected)}"
     )
+
+
+def _mdns_connected_names(config, factory):
+    """Build an mDNS fuzzer and return the set of actually-connected request names."""
+    fuzzer_class = PROTOCOL_FUZZERS["mdns"]
+    if fuzzer_class is None:
+        pytest.skip("mdns fuzzer not available (optional dependency)")
+    try:
+        fuzzer = fuzzer_class(config=config, connection_factory=factory)
+        session = fuzzer.session
+    except ImportError as e:
+        pytest.skip(f"Missing dependency for mdns: {e}")
+    return {node.name for node in session.nodes.values()} - {session.root.name}
+
+
+def test_mdns_enable_connects_only_selected(mock_config, mock_factory):
+    """--enable (whitelist) must connect only the named mDNS request, nothing else.
+
+    Guards is_request_enabled() wiring in mdns.py: before the fix every request
+    was connected unconditionally, so --enable was silently ineffective and a
+    subset run (e.g. only Circular_Compression to repro the infinite-loop crash)
+    was impossible.
+    """
+    mock_config.enabled_requests = ["Circular_Compression"]
+    connected = _mdns_connected_names(mock_config, mock_factory)
+    assert connected == {"Circular_Compression"}, (
+        f"--enable should connect only Circular_Compression, got {sorted(connected)}"
+    )
+
+
+def test_mdns_disable_excludes_selected(mock_config, mock_factory):
+    """--disable (blacklist) must drop the named mDNS requests and keep the rest."""
+    fuzzer_class = PROTOCOL_FUZZERS["mdns"]
+    if fuzzer_class is None:
+        pytest.skip("mdns fuzzer not available (optional dependency)")
+
+    all_names = {d.name for d in fuzzer_class.get_request_definitions()}
+
+    mock_config.disabled_requests = ["Oversized_Packet", "Long_Name"]
+    connected = _mdns_connected_names(mock_config, mock_factory)
+
+    assert "Oversized_Packet" not in connected
+    assert "Long_Name" not in connected
+    assert connected == all_names - {"Oversized_Packet", "Long_Name"}

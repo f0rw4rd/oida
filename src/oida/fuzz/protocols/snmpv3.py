@@ -2951,30 +2951,35 @@ class SNMPv3Fuzzer(BaseFuzzer):
 
         # ==================== PHASE 1: BASELINE ====================
         # Engine discovery and authenticated operations for baseline coverage
-        if self.is_request_enabled("SNMPv3_Baseline"):
+        if self.is_request_enabled("SNMPv3_Discovery"):
             self.session.connect(discovery_request)
+        if self.is_request_enabled("SNMPv3_Authenticated"):
             self.session.connect(auth_request)
 
         # ==================== PHASE 2: STANDARD OPERATIONS ====================
         # Additional PDU types (GetNext, GetBulk, Inform, Set)
-        if self.is_request_enabled("SNMPv3_Standard"):
+        if self.is_request_enabled("SNMPv3_GetNextRequest"):
             self.session.connect(get_next_request)
+        if self.is_request_enabled("SNMPv3_GetBulkRequest"):
             self.session.connect(get_bulk_request)
+        if self.is_request_enabled("SNMPv3_InformRequest"):
             self.session.connect(inform_request)
-            if enable_set:
-                self.session.connect(set_request)
+        if enable_set and self.is_request_enabled("SNMPv3_SetRequest"):
+            self.session.connect(set_request)
 
         # ==================== PHASE 3: ATTACKS ====================
         # Malformed packets and report PDU injection (high crash likelihood)
-        if self.is_request_enabled("SNMPv3_Overflow"):
+        if self.is_request_enabled("SNMPv3_Malformed"):
             self.session.connect(malformed_snmpv3)
+        if self.is_request_enabled("SNMPv3_Report"):
             self.session.connect(report_request)
 
         # ==================== PHASE 4: USM TIMING/REPLAY ====================
         # Engine boots/time manipulation to test replay protection;
         # explicit USM AuthParams/PrivParams Group mutation (CVE-2018-18066).
-        if self.is_request_enabled("SNMPv3_CVE"):
+        if self.is_request_enabled("SNMPv3_TimingAttack"):
             self.session.connect(timing_attack)
+        if self.is_request_enabled("SNMPv3_USMAuthFuzz"):
             self.session.connect(usm_auth_fuzz)
 
         # ==================== PHASE 5: BOUNDARY ====================

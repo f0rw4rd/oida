@@ -960,41 +960,49 @@ class DHCPFuzzer(BaseFuzzer):
 
         # ==================== PHASE 1: QUICK COVERAGE (~30 sec) ====================
         # Touch all 8 message types once for maximum breadth coverage
-        if self.is_request_enabled("DHCP_Baseline"):
+        if self.is_request_enabled("DHCP_Quick_Coverage"):
             self.session.connect(dhcp_quick_coverage)
+        if self.is_request_enabled("DHCP_DISCOVER"):
             self.session.connect(dhcp_discover)
 
         # ==================== PHASE 2: HIGH-CRASH TESTS (~3 min) ====================
         # Moved up from late session - these trigger buffer overflows and crashes
-        if self.is_request_enabled("DHCP_Overflow"):
+        if self.is_request_enabled("DHCP_MALFORMED_OPTIONS"):
             self.session.connect(dhcp_malformed)  # CVE-2004-0460 pattern
+        if self.is_request_enabled("DHCP_OPTION_CHAIN"):
             self.session.connect(dhcp_option_chain)  # Parser overflow
+        if self.is_request_enabled("DHCP_MALFORMED_EXTENDED"):
             self.session.connect(dhcp_malformed_extended)  # CVE-2022-2928 pattern
+        if self.is_request_enabled("DHCP_Hostname_Overflow"):
             self.session.connect(dhcp_hostname_overflow)  # Hostname buffer overflow
 
         # ==================== PHASE 3: CVE-TARGETED OPERATIONS (~3 min) ====================
-        if self.is_request_enabled("DHCP_CVE"):
+        if self.is_request_enabled("DHCP_OPTION_INJECTION"):
             self.session.connect(dhcp_injection)  # Option injection
+        if self.is_request_enabled("DHCP_INVALID_MESSAGE_TYPE"):
             self.session.connect(dhcp_invalid)  # Invalid message types
+        if self.is_request_enabled("DHCP_Option_Refcount"):
             self.session.connect(dhcp_option_refcount)  # CVE-2022-2928 refcount
 
         # ==================== PHASE 4: BOUNDARY ATTACKS (~3 min) ====================
-        if self.is_request_enabled("DHCP_Boundary"):
+        if self.is_request_enabled("DHCP_Length_Boundary"):
             self.session.connect(dhcp_length_boundary)  # Option length boundaries
+        if self.is_request_enabled("DHCP_Field_Boundary"):
             self.session.connect(dhcp_field_boundary)  # Header field boundaries
 
         # ==================== PHASE 5: REMAINING TESTS ====================
-        if self.is_request_enabled("DHCP_Standard"):
+        if self.is_request_enabled("DHCP_REQUEST"):
             self.session.connect(dhcp_request)
+        if self.is_request_enabled("DHCP_RELEASE"):
             self.session.connect(dhcp_release)
 
-        if self.is_request_enabled("DHCP_Vendor"):
+        if self.is_request_enabled("DHCP_VENDOR_SPECIFIC"):
             self.session.connect(dhcp_vendor)
 
-        if self.is_request_enabled("DHCP_Extended"):
+        if self.is_request_enabled("DHCP_EXTENDED_OPTIONS"):
             self.session.connect(dhcp_extended_options)
 
-        if self.is_request_enabled("DHCP_DoS"):
+        if self.is_request_enabled("DHCP_RESOURCE_EXHAUSTION"):
             self.session.connect(dhcp_exhaustion)
 
 
@@ -1886,25 +1894,35 @@ class DHCPv6Fuzzer(BaseFuzzer):
         # Use --enable or --disable CLI flags to select specific request groups
 
         # ==================== PHASE 1: BASELINE (~30 sec) ====================
-        if self.is_request_enabled("DHCPv6_Baseline"):
+        if self.is_request_enabled("DHCPv6_SOLICIT"):
             self.session.connect(dhcpv6_solicit)
 
         # ==================== PHASE 2: STANDARD MESSAGE TYPES (~3 min) ====================
-        if self.is_request_enabled("DHCPv6_Standard"):
+        if self.is_request_enabled("DHCPv6_REQUEST"):
             self.session.connect(dhcpv6_request)
+        if self.is_request_enabled("DHCPv6_RELEASE"):
             self.session.connect(dhcpv6_release)
+        if self.is_request_enabled("DHCPv6_RENEW"):
             self.session.connect(dhcpv6_renew)
+        if self.is_request_enabled("DHCPv6_REBIND"):
             self.session.connect(dhcpv6_rebind)
+        if self.is_request_enabled("DHCPv6_CONFIRM"):
             self.session.connect(dhcpv6_confirm)
+        if self.is_request_enabled("DHCPv6_DECLINE"):
             self.session.connect(dhcpv6_decline)
+        if self.is_request_enabled("DHCPv6_INFORMATION_REQUEST"):
             self.session.connect(dhcpv6_information_request)
+        if self.is_request_enabled("DHCPv6_Rapid_Commit"):
             self.session.connect(dhcpv6_rapid_commit)
+        if self.is_request_enabled("DHCPv6_ADVANCED_OPTIONS"):
             self.session.connect(dhcpv6_advanced)
+        if self.is_request_enabled("DHCPv6_PREFIX_DELEGATION"):
             self.session.connect(dhcpv6_prefix_delegation)
 
         # ==================== PHASE 3: OVERFLOW AND BUFFER ATTACKS (~3 min) ====================
-        if self.is_request_enabled("DHCPv6_Overflow"):
+        if self.is_request_enabled("DHCPv6_MALFORMED_OPTIONS"):
             self.session.connect(dhcpv6_malformed)
+        if self.is_request_enabled("DHCPv6_DNS_Overflow"):
             self.session.connect(dhcpv6_dns_overflow)  # CVE-2020-25681 pattern
 
         # ==================== PHASE 4: BOUNDARY VALUE ATTACKS ====================
@@ -1912,8 +1930,9 @@ class DHCPv6Fuzzer(BaseFuzzer):
             self.session.connect(dhcpv6_boundary)
 
         # ==================== PHASE 5: RELAY MESSAGE FUZZING ====================
-        if self.is_request_enabled("DHCPv6_Relay"):
+        if self.is_request_enabled("DHCPv6_RELAY_FORWARD"):
             self.session.connect(dhcpv6_relay_forward)
+        if self.is_request_enabled("DHCPv6_RELAY_REPLY"):
             self.session.connect(dhcpv6_relay_reply)
 
 

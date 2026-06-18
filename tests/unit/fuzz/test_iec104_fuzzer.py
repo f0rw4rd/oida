@@ -510,6 +510,85 @@ class TestIEC104RequestDefinitions:
 
 
 # =============================================================================
+# Test Request-Group Gating (--enable / --disable)
+# =============================================================================
+
+
+class TestIEC104RequestGroupGating:
+    """The 13 advertised request groups must actually control which Requests
+    get connected via --enable / --disable (no network involved)."""
+
+    @staticmethod
+    def _connected_names(**config_kwargs):
+        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+
+        config = FuzzerConfig(
+            target_ip="192.168.1.100",
+            target_port=2404,
+            protocol_type=ProtocolType.TCP,
+            **config_kwargs,
+        )
+        fuzzer = IEC104Fuzzer(config, connection_factory=MockConnectionFactory())
+        return {node.name for node in fuzzer.session.nodes.values()}
+
+    def test_default_run_connects_core_and_attack_requests(self):
+        """With no --enable/--disable everything (subject to config flags) connects."""
+        names = self._connected_names()
+        # Core monitoring + control + a genuine attack pattern all present.
+        assert "M_SP_NA_1" in names
+        assert "C_SC_NA_1" in names
+        assert "ATTACK_MalformedAPCI" in names
+
+    def test_disable_attack_patterns_suppresses_attack_requests(self):
+        """--disable IEC104_Attack_Patterns must drop the attack Requests."""
+        names = self._connected_names(disabled_requests=["IEC104_Attack_Patterns"])
+
+        # Every Attack_Patterns Request is gone...
+        assert "ATTACK_MalformedAPCI" not in names
+        assert "ATTACK_DeviceDiscovery" not in names
+        assert "ATTACK_MaxPayload" not in names
+        assert "IEC104_ASDU_TypeId" not in names
+
+        # ...while unrelated groups keep running.
+        assert "M_SP_NA_1" in names
+        assert "C_SC_NA_1" in names
+        # The sequence-attack Request belongs to a *different* advertised group,
+        # so it must survive disabling Attack_Patterns.
+        assert "ATTACK_InvalidSeqNum" in names
+
+    def test_disable_sequence_attacks_only_drops_sequence_request(self):
+        """IEC104_Sequence_Attacks gates the seq-number Request independently."""
+        names = self._connected_names(disabled_requests=["IEC104_Sequence_Attacks"])
+        assert "ATTACK_InvalidSeqNum" not in names
+        # Regular attack patterns still present.
+        assert "ATTACK_MalformedAPCI" in names
+
+    def test_enable_baseline_only_excludes_attack_and_core(self):
+        """--enable IEC104_Baseline runs only that group, not attacks/core/vendor."""
+        names = self._connected_names(enabled_requests=["IEC104_Baseline"])
+
+        # Baseline (TESTFR connectivity) is present.
+        assert "TESTFR_Baseline" in names
+
+        # Nothing from other groups leaks through.
+        assert not any(n.startswith("ATTACK_") for n in names)
+        assert not any("VENDOR" in n for n in names)
+        assert "M_SP_NA_1" not in names
+        assert "C_SC_NA_1" not in names
+        assert "S_Frame_Fuzz" not in names
+
+    def test_enable_attack_patterns_only_connects_attack_requests(self):
+        """Whitelisting just the attack group yields attack Requests and nothing else."""
+        names = self._connected_names(enabled_requests=["IEC104_Attack_Patterns"])
+        assert "ATTACK_MalformedAPCI" in names
+        assert "IEC104_ASDU_TypeId" in names
+        # Core monitoring is excluded under whitelist mode.
+        assert "M_SP_NA_1" not in names
+
+
+# =============================================================================
 # Test Monitor Setup
 # =============================================================================
 

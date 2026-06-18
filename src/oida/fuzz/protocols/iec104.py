@@ -1330,43 +1330,89 @@ class IEC104Fuzzer(StatefulFuzzer):
 
         Note: The actual STARTDT handshake is performed in the pre_send callback.
         These requests are for testing U-format frame fuzzing after connection is established.
+
+        Requests are gated by the advertised request groups (see
+        get_request_definitions): the TESTFR baseline maps to IEC104_Baseline,
+        U-format frames to IEC104_Connection, and S-format frames to
+        IEC104_S_Frame so --enable/--disable on those names takes effect.
         """
+        baseline_enabled = self.is_request_enabled("IEC104_Baseline")
+        connection_enabled = self.is_request_enabled("IEC104_Connection")
+        s_frame_enabled = self.is_request_enabled("IEC104_S_Frame")
+
         # STARTDT activation - non-fuzzable baseline test
-        startdt_baseline = create_apci_u_format(
-            "STARTDT_ACT", UFormat_Functions.STARTDT_ACT, fuzzable=False
-        )
-        self.session.connect(Request("STARTDT_Baseline", children=(startdt_baseline,)))
+        if connection_enabled:
+            startdt_baseline = create_apci_u_format(
+                "STARTDT_ACT", UFormat_Functions.STARTDT_ACT, fuzzable=False
+            )
+            self.session.connect(Request("STARTDT_Baseline", children=(startdt_baseline,)))
 
-        # TESTFR activation - non-fuzzable baseline test
-        testfr_baseline = create_apci_u_format(
-            "TESTFR_ACT", UFormat_Functions.TESTFR_ACT, fuzzable=False
-        )
-        self.session.connect(Request("TESTFR_Baseline", children=(testfr_baseline,)))
+        # TESTFR activation - non-fuzzable baseline test (IEC104_Baseline)
+        if baseline_enabled:
+            testfr_baseline = create_apci_u_format(
+                "TESTFR_ACT", UFormat_Functions.TESTFR_ACT, fuzzable=False
+            )
+            self.session.connect(Request("TESTFR_Baseline", children=(testfr_baseline,)))
 
-        # Fuzzable U-format frames for attack testing
-        startdt_fuzz = create_apci_u_format(
-            "STARTDT_ACT_Fuzz", UFormat_Functions.STARTDT_ACT, fuzzable=True
-        )
-        self.session.connect(Request("STARTDT_Fuzz", children=(startdt_fuzz,)))
+        if connection_enabled:
+            # Fuzzable U-format frames for attack testing
+            startdt_fuzz = create_apci_u_format(
+                "STARTDT_ACT_Fuzz", UFormat_Functions.STARTDT_ACT, fuzzable=True
+            )
+            self.session.connect(Request("STARTDT_Fuzz", children=(startdt_fuzz,)))
 
-        testfr_fuzz = create_apci_u_format(
-            "TESTFR_ACT_Fuzz", UFormat_Functions.TESTFR_ACT, fuzzable=True
-        )
-        self.session.connect(Request("TESTFR_Fuzz", children=(testfr_fuzz,)))
+            testfr_fuzz = create_apci_u_format(
+                "TESTFR_ACT_Fuzz", UFormat_Functions.TESTFR_ACT, fuzzable=True
+            )
+            self.session.connect(Request("TESTFR_Fuzz", children=(testfr_fuzz,)))
 
-        # STOPDT activation
-        stopdt = create_apci_u_format("STOPDT_ACT", UFormat_Functions.STOPDT_ACT, fuzzable=True)
-        self.session.connect(Request("STOPDT", children=(stopdt,)))
+            # STOPDT activation
+            stopdt = create_apci_u_format(
+                "STOPDT_ACT", UFormat_Functions.STOPDT_ACT, fuzzable=True
+            )
+            self.session.connect(Request("STOPDT", children=(stopdt,)))
 
         # S-format (supervisory) frames for acknowledgment fuzzing
-        s_frame_baseline = create_apci_s_format("S_Frame_Baseline", recv_seq=0, fuzzable=False)
-        self.session.connect(Request("S_Frame_Baseline", children=(s_frame_baseline,)))
+        if s_frame_enabled:
+            s_frame_baseline = create_apci_s_format("S_Frame_Baseline", recv_seq=0, fuzzable=False)
+            self.session.connect(Request("S_Frame_Baseline", children=(s_frame_baseline,)))
 
-        s_frame_fuzz = create_apci_s_format("S_Frame_Fuzz", recv_seq=0, fuzzable=True)
-        self.session.connect(Request("S_Frame_Fuzz", children=(s_frame_fuzz,)))
+            s_frame_fuzz = create_apci_s_format("S_Frame_Fuzz", recv_seq=0, fuzzable=True)
+            self.session.connect(Request("S_Frame_Fuzz", children=(s_frame_fuzz,)))
 
     def _add_core_asdus(self):
-        """Add core essential ASDU types - monitoring messages"""
+        """Add core essential ASDU types - monitoring messages.
+
+        Each ASDU is gated by the advertised request group it belongs to
+        (see get_request_definitions) so --enable/--disable on those group
+        names actually controls which families are connected:
+          - IEC104_Monitoring     : M_SP/M_DP/M_ST/M_BO point info (+ time-tagged)
+          - IEC104_Measured_Values: M_ME measured values (+ time-tagged)
+          - IEC104_Counters       : M_IT integrated totals (+ time-tagged)
+          - IEC104_Control        : C_SC/C_DC/C_RC/C_SE/C_BO commands (+ time-tagged)
+          - IEC104_System         : interrogation/clock/test/reset/parameter cmds
+        """
+        monitoring = self.is_request_enabled("IEC104_Monitoring")
+        measured = self.is_request_enabled("IEC104_Measured_Values")
+        counters = self.is_request_enabled("IEC104_Counters")
+        control = self.is_request_enabled("IEC104_Control")
+        system = self.is_request_enabled("IEC104_System")
+
+        if monitoring:
+            self._add_monitoring_asdus()
+        if measured:
+            self._add_measured_value_asdus()
+        if counters:
+            self._add_counter_asdus()
+        if monitoring or measured or counters:
+            self._add_time_tagged_monitoring_asdus(monitoring, measured, counters)
+        if control:
+            self._add_control_asdus()
+        if system:
+            self._add_system_asdus()
+
+    def _add_monitoring_asdus(self):
+        """Single/double/step/bitstring point monitoring ASDUs (IEC104_Monitoring)."""
         # Single-point information
         self.session.connect(
             create_complete_asdu_message(
@@ -1403,6 +1449,8 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_measured_value_asdus(self):
+        """Measured value ASDUs - normalized/scaled/float (IEC104_Measured_Values)."""
         # Measured value normalized
         self.session.connect(
             create_complete_asdu_message(
@@ -1430,6 +1478,8 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_counter_asdus(self):
+        """Integrated totals / counter ASDUs (IEC104_Counters)."""
         # Integrated totals
         self.session.connect(
             create_complete_asdu_message(
@@ -1439,6 +1489,17 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_time_tagged_monitoring_asdus(self, monitoring, measured, counters):
+        """Time-tagged monitoring/measured/counter ASDUs, each gated by its group."""
+        if monitoring:
+            self._add_time_tagged_point_asdus()
+        if measured:
+            self._add_time_tagged_measured_asdus()
+        if counters:
+            self._add_time_tagged_counter_asdus()
+
+    def _add_time_tagged_point_asdus(self):
+        """Time-tagged point monitoring ASDUs (IEC104_Monitoring)."""
         # Time-tagged single-point
         self.session.connect(
             create_complete_asdu_message(
@@ -1499,6 +1560,8 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_time_tagged_measured_asdus(self):
+        """Time-tagged measured value ASDUs (IEC104_Measured_Values)."""
         # Time-tagged measured value normalized
         self.session.connect(
             create_complete_asdu_message(
@@ -1544,6 +1607,8 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_time_tagged_counter_asdus(self):
+        """Time-tagged integrated totals (IEC104_Counters)."""
         # Time-tagged integrated totals
         self.session.connect(
             create_complete_asdu_message(
@@ -1559,6 +1624,8 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_control_asdus(self):
+        """Control command ASDUs - single/double/step/setpoint/bitstring (IEC104_Control)."""
         # Control commands
         # Single command
         self.session.connect(
@@ -1728,6 +1795,8 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_system_asdus(self):
+        """System / interrogation / clock / parameter command ASDUs (IEC104_System)."""
         # System commands
         # General interrogation
         self.session.connect(
@@ -1891,9 +1960,29 @@ class IEC104Fuzzer(StatefulFuzzer):
         )
 
     def _add_attack_patterns(self):
-        """Add consolidated attack patterns based on research"""
+        """Add consolidated attack patterns based on research.
+
+        Gated by the advertised IEC104_Attack_Patterns group, except the
+        sequence-number manipulation request which belongs to the separate
+        IEC104_Sequence_Attacks group so each advertised name controls
+        something (see get_request_definitions).
+        """
+        attack_enabled = self.is_request_enabled("IEC104_Attack_Patterns")
+        sequence_enabled = self.is_request_enabled("IEC104_Sequence_Attacks")
+
+        if not (attack_enabled or sequence_enabled):
+            return
+
         intensity = self.config.get_option("attack_intensity", "medium")
 
+        if attack_enabled:
+            self._add_attack_pattern_requests(intensity)
+
+        if sequence_enabled:
+            self._add_sequence_attack_requests()
+
+    def _add_attack_pattern_requests(self, intensity):
+        """Malformed/DoS/reconnaissance attack requests (IEC104_Attack_Patterns)."""
         # Reconnaissance - Device discovery
         self.session.connect(
             create_complete_asdu_message(
@@ -1981,25 +2070,6 @@ class IEC104Fuzzer(StatefulFuzzer):
                     Byte("bad_control_1", 0x00, fuzzable=True),
                     Byte("bad_control_2", 0x00, fuzzable=True),
                     SmartBytes("junk_data", b"\x00" * 100, max_len=250, fuzzable=True),
-                ),
-            )
-        )
-
-        # Protocol violation - Invalid sequence numbers
-        self.session.connect(
-            Request(
-                "ATTACK_InvalidSeqNum",
-                children=(
-                    Static("start", b"\x68"),
-                    Byte("length", 10),
-                    Word("send_seq", 0xFFFF, endian="<", fuzzable=True),
-                    Word("recv_seq", 0xFFFF, endian="<", fuzzable=True),
-                    SmartBytes(
-                        "payload",
-                        b"\x01\x01\x06\x00\x01\x00\x01\x00\x00\x01",
-                        max_len=250,
-                        fuzzable=True,
-                    ),
                 ),
             )
         )
@@ -2101,8 +2171,32 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
         )
 
+    def _add_sequence_attack_requests(self):
+        """Sequence-number manipulation attacks (IEC104_Sequence_Attacks)."""
+        # Protocol violation - Invalid sequence numbers
+        self.session.connect(
+            Request(
+                "ATTACK_InvalidSeqNum",
+                children=(
+                    Static("start", b"\x68"),
+                    Byte("length", 10),
+                    Word("send_seq", 0xFFFF, endian="<", fuzzable=True),
+                    Word("recv_seq", 0xFFFF, endian="<", fuzzable=True),
+                    SmartBytes(
+                        "payload",
+                        b"\x01\x01\x06\x00\x01\x00\x01\x00\x00\x01",
+                        max_len=250,
+                        fuzzable=True,
+                    ),
+                ),
+            )
+        )
+
     def _add_file_transfer_patterns(self):
-        """Add comprehensive file transfer ASDU patterns"""
+        """Add comprehensive file transfer ASDU patterns (IEC104_File_Transfer)."""
+        if not self.is_request_enabled("IEC104_File_Transfer"):
+            return
+
         # File ready
         self.session.connect(
             create_complete_asdu_message(
@@ -2299,7 +2393,10 @@ class IEC104Fuzzer(StatefulFuzzer):
             )
 
     def _add_vendor_patterns(self):
-        """Add vendor-specific attack patterns"""
+        """Add vendor-specific attack patterns (IEC104_Vendor_Attacks)."""
+        if not self.is_request_enabled("IEC104_Vendor_Attacks"):
+            return
+
         # Siemens SICAM pattern 1
         self.session.connect(
             Request(
