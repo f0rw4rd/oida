@@ -410,13 +410,13 @@ class MQTTFuzzer(StatefulFuzzer):
                     "Packet_Type",
                     values=[
                         # CONNECT (0x10) - Client connection request
-                        b"\x10\x10\x00\x04MQTT\x04\x02\x00\x3c\x00\x06fuzz01",
+                        b"\x10\x12\x00\x04MQTT\x04\x02\x00\x3c\x00\x06fuzz01",
                         # PUBLISH QoS 0 (0x30) - Basic publish
-                        b"\x30\x0e\x00\x04test\x00\x01testmsg",
+                        b"\x30\x0f\x00\x04test\x00\x01testmsg",
                         # PUBLISH QoS 1 (0x32) - Publish with ACK
-                        b"\x32\x10\x00\x04test\x00\x01testmsg",
+                        b"\x32\x0f\x00\x04test\x00\x01testmsg",
                         # PUBLISH QoS 2 (0x34) - Publish exactly-once
-                        b"\x34\x10\x00\x04test\x00\x01testmsg",
+                        b"\x34\x0f\x00\x04test\x00\x01testmsg",
                         # PUBACK (0x40) - Publish acknowledgment
                         b"\x40\x02\x00\x01",
                         # PUBREC (0x50) - Publish received (QoS 2 step 1)
@@ -1023,12 +1023,15 @@ class MQTTFuzzer(StatefulFuzzer):
             children=(
                 # PUBLISH QoS 0 (Sparkplug NDATA / DDATA are typically QoS 0)
                 Static(name="publish_header", default_value=b"\x30"),
-                Size(name="remaining_length", block_name="sparkplug_publish", length=2, endian=">"),
+                # MQTT remaining length is a varint; the default payload is < 128
+                # bytes so it must be a single octet. A fixed 2-byte Size emits a
+                # leading 0x00 that MQTT reads as remaining-length 0.
+                Size(name="remaining_length", block_name="sparkplug_publish", length=1),
                 Block(
                     "sparkplug_publish",
                     children=(
-                        # Sparkplug B topic — spBv1.0/<group>/NDATA/<edge>
-                        Word("topic_length", 26, endian=">"),
+                        # Sparkplug B topic — spBv1.0/<group>/NDATA/<edge> (25 bytes)
+                        Word("topic_length", 25, endian=">"),
                         Static(
                             name="sparkplug_topic",
                             default_value=b"spBv1.0/grp1/NDATA/node01",
