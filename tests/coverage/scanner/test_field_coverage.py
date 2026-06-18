@@ -583,16 +583,19 @@ def test_mms_coverage(coverage_results_dir):
 
 @pytest.mark.coverage
 def test_hart_coverage(coverage_results_dir):
-    """HART-IP scanner coverage against the Python HART mock (UDP 5090).
+    """HART-IP scanner coverage against the REAL FieldComm hipserver (UDP 5094).
 
-    The C hipserver on 5094 only answers session/encryption probes; the
-    pure-Python mock (hart-pymock, host UDP 5090) returns full Read-Unique-Id
-    device data, which is what device-field coverage measures.
+    The hipserver returns full Read-Unique-Id (Command 0) device data over an
+    unencrypted UDP session; the scanner reads it and closes the session
+    cleanly. (The hipserver holds sessions for 600s, so a session-pool
+    exhaustion under heavy parallel load shows up as an empty result — handled
+    by the skip-on-no-data guard in _run_and_record. hart-pymock on 5090 is the
+    fallback Python implementation.)
     """
     ensure_protocol_dep("hartip")
     host, port, target_name = container_target(
+        ("hart-hipserver", 5094),
         ("hart-pymock", 5090),
-        ("hart-mock", 5094),
         udp=True,
     )
 
