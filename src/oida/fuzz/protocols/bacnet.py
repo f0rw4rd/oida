@@ -642,7 +642,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x000C, endian=">"),
+                        Word("BVLL_Length", 0x000D, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -656,8 +656,9 @@ class BACnetFuzzer(BaseFuzzer):
                     "APDU_Header_DCC",
                     children=(
                         Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.DEVICE_COMMUNICATION_CONTROL),
+                        Byte("Max_Segs_Resp", 0x05),  # confirmed-req requires this octet
                         Byte("Invoke_ID", 0x03),
+                        Byte("Service_Choice", BACnetServiceCodes.DEVICE_COMMUNICATION_CONTROL),
                     ),
                 ),
                 Byte("Enable_Disable_Tag", 0x19),
@@ -948,7 +949,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0014, endian=">"),
+                        Word("BVLL_Length", 0x0013, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -962,8 +963,9 @@ class BACnetFuzzer(BaseFuzzer):
                     "APDU_Header_RPM",
                     children=(
                         Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY_MULTIPLE),
+                        Byte("Max_Segs_Resp", 0x05),  # confirmed-req requires this octet
                         Byte("Invoke_ID", 0x05),
+                        Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY_MULTIPLE),
                     ),
                 ),
                 Byte("Object_ID_Tag", 0x0C),
@@ -1018,7 +1020,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x000C, endian=">"),
+                        Word("BVLL_Length", 0x000A, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -1049,7 +1051,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x000C, endian=">"),
+                        Word("BVLL_Length", 0x000A, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -1080,7 +1082,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0013, endian=">"),
+                        Word("BVLL_Length", 0x0013, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -1094,8 +1096,9 @@ class BACnetFuzzer(BaseFuzzer):
                     "APDU_Header_SCOV",
                     children=(
                         Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.SUBSCRIBE_COV),
+                        Byte("Max_Segs_Resp", 0x05),  # confirmed-req requires this octet
                         Byte("Invoke_ID", 0x09),
+                        Byte("Service_Choice", BACnetServiceCodes.SUBSCRIBE_COV),
                     ),
                 ),
                 Byte("Process_ID_Tag", 0x09),
@@ -1158,7 +1161,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0B),
-                        Word("BVLL_Length", 0x0014, endian=">"),
+                        Word("BVLL_Length", 0x0016, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -1200,7 +1203,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x000D, endian=">"),
+                        Word("BVLL_Length", 0x000E, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -1214,8 +1217,9 @@ class BACnetFuzzer(BaseFuzzer):
                     "APDU_Header_VTO",
                     children=(
                         Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.VT_OPEN),
+                        Byte("Max_Segs_Resp", 0x05),  # confirmed-req requires this octet
                         Byte("Invoke_ID", 0x0B),
+                        Byte("Service_Choice", BACnetServiceCodes.VT_OPEN),
                     ),
                 ),
                 Byte("VT_Class_Tag", 0x09),
@@ -1234,7 +1238,7 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0010, endian=">"),
+                        Word("BVLL_Length", 0x000E, endian=">"),  # = total frame length
                     ),
                 ),
                 Block(
@@ -1248,8 +1252,9 @@ class BACnetFuzzer(BaseFuzzer):
                     "APDU_Header_CO",
                     children=(
                         Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.CREATE_OBJECT),
+                        Byte("Max_Segs_Resp", 0x05),  # confirmed-req requires this octet
                         Byte("Invoke_ID", 0x0D),
+                        Byte("Service_Choice", BACnetServiceCodes.CREATE_OBJECT),
                     ),
                 ),
                 Byte("Object_Specifier_Open", 0x0E),
