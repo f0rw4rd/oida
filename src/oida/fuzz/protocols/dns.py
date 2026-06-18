@@ -190,9 +190,9 @@ class DNSFuzzer(BaseFuzzer):
                     "DNS_Question",
                     children=(
                         # Domain name (encoded as length-prefixed labels)
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),  # End of name
                         Word("qtype", 0x0001, endian=">"),  # A record
@@ -222,7 +222,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
                         Byte("label3_length", 3),
                         SmartString("label3", "org", max_len=63),
@@ -256,7 +256,7 @@ class DNSFuzzer(BaseFuzzer):
                         SmartString("label1", "mailsrv", max_len=63),
                         Byte("label2_length", 7),
                         SmartString("label2", "company", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x000F, endian=">"),  # MX record
@@ -324,7 +324,7 @@ class DNSFuzzer(BaseFuzzer):
                     "DNS_Question_Long",
                     children=(
                         # Oversized label length (should be max 63)
-                        Byte("oversized_label_length", 255),
+                        Byte("oversized_label_length", 19),  # auto: len("dns-oversized-label")
                         SmartString("oversized_label", "dns-oversized-label", max_len=1000),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -395,9 +395,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 3),
                         SmartString("label1", "www", max_len=63),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -421,9 +421,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Authority_Poison",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("type", 0x0002, endian=">"),  # NS record
@@ -433,7 +433,7 @@ class DNSFuzzer(BaseFuzzer):
                         # Malicious nameserver
                         Byte("ns_label_length", 4),
                         SmartString("ns_label", "evil", max_len=63),
-                        Byte("ns_domain_length", 3),
+                        Byte("ns_domain_length", 5),  # auto: len("local")
                         SmartString("ns_domain", "local", max_len=63),
                         Byte("ns_terminator", 0),
                     ),
@@ -502,7 +502,7 @@ class DNSFuzzer(BaseFuzzer):
                         SmartString("label1", "_malware", max_len=63),
                         Byte("label2_length", 4),
                         SmartString("label2", "test", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0010, endian=">"),  # TXT record
@@ -532,7 +532,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -689,9 +689,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_DNSKEY",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0030, endian=">"),  # DNSKEY record
@@ -732,9 +732,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_DS",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x002B, endian=">"),  # DS record
@@ -774,9 +774,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_RRSIG",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x002E, endian=">"),  # RRSIG record
@@ -816,9 +816,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_NSEC",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x002F, endian=">"),  # NSEC record
@@ -858,9 +858,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_NSEC3",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0032, endian=">"),  # NSEC3 record
@@ -900,9 +900,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_NSEC3PARAM",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0033, endian=">"),  # NSEC3PARAM record (type 51)
@@ -942,9 +942,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_CDS",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x003B, endian=">"),  # CDS record (type 59)
@@ -984,9 +984,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_CDNSKEY",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x003C, endian=">"),  # CDNSKEY record (type 60)
@@ -1026,9 +1026,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_EDNS_OPT",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1075,9 +1075,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_Cookies",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1142,7 +1142,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1192,9 +1192,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_Cookies_Mal",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 8),  # auto: len("attacker")
                         SmartString("label1", "attacker", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1257,7 +1257,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 7),
                         SmartString("label1", "blocked", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1273,10 +1273,12 @@ class DNSFuzzer(BaseFuzzer):
                         Byte("extended_rcode", 0),
                         Byte("edns_version", 0),
                         Word("edns_flags", 0x0000, endian=">"),
-                        Word("edns_data_length", 0x0020, endian=">"),  # 32 bytes
+                        # RDLEN = option-code(2) + option-length(2) + option-data(25) = 29
+                        Word("edns_data_length", 0x001D, endian=">"),  # 29 bytes
                         # Extended DNS Error option (code 15)
                         Word("ede_option_code", 0x000F, endian=">"),
-                        Word("ede_option_length", 0x001C, endian=">"),  # 28 bytes
+                        # option-data = info-code(2) + "Access denied by policy"(23) = 25
+                        Word("ede_option_length", 0x0019, endian=">"),  # 25 bytes
                         # INFO-CODE (2 bytes) - using code 15 (Blocked)
                         Group(
                             "info_code",
@@ -1324,7 +1326,7 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_NSID",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
                         Byte("label2_length", 3),
                         SmartString("label2", "net", max_len=63),
@@ -1432,11 +1434,11 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_DNSSEC_Alg",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 6),  # auto: len("dnssec")
                         SmartString("label1", "dnssec", max_len=63),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1492,9 +1494,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_KeyTag",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1540,9 +1542,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_Expire",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0006, endian=">"),  # SOA query
@@ -1587,9 +1589,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 3),
                         SmartString("label1", "www", max_len=63),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1610,9 +1612,9 @@ class DNSFuzzer(BaseFuzzer):
                         Word("chain_option_code", 0x000D, endian=">"),
                         Word("chain_option_length", 0x000A, endian=">"),
                         # Closest Trust Point: "oida.local."
-                        Byte("ctp_label1_length", 7),
+                        Byte("ctp_label1_length", 4),  # auto: len("oida")
                         SmartString("ctp_label1", "oida", max_len=63, fuzzable=True),
-                        Byte("ctp_label2_length", 3),
+                        Byte("ctp_label2_length", 5),  # auto: len("local")
                         SmartString("ctp_label2", "local", max_len=63, fuzzable=True),
                         Byte("ctp_terminator", 0),
                     ),
@@ -1644,9 +1646,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Zone",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("ztype", 0x0006, endian=">"),  # SOA
@@ -1659,9 +1661,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63, fuzzable=True),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("type", 0x0001, endian=">"),  # A record
@@ -1692,9 +1694,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Zone_DEL",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("ztype", 0x0006, endian=">"),  # SOA
@@ -1707,9 +1709,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63, fuzzable=True),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("type", 0x0001, endian=">"),  # A record
@@ -1739,9 +1741,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Zone_PR",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("ztype", 0x0006, endian=">"),
@@ -1754,9 +1756,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63, fuzzable=True),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("type", 0x00FF, endian=">"),  # ANY - name must exist
@@ -1771,9 +1773,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63, fuzzable=True),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("type", 0x0001, endian=">"),  # A record
@@ -1816,9 +1818,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Zone_MAL",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("ztype", 0x0006, endian=">"),
@@ -1854,11 +1856,11 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_AD",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 6),  # auto: len("dnssec")
                         SmartString("label1", "dnssec", max_len=63),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1901,9 +1903,9 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 7),
                         SmartString("label1", "untrust", max_len=63),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -1988,9 +1990,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_CAA",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0101, endian=">"),  # CAA = 257 = 0x0101
@@ -2035,9 +2037,9 @@ class DNSFuzzer(BaseFuzzer):
                         SmartString("label1", "_443", max_len=63),
                         Byte("label2_length", 4),
                         SmartString("label2", "_tcp", max_len=63),
-                        Byte("label3_length", 7),
+                        Byte("label3_length", 4),  # auto: len("oida")
                         SmartString("label3", "oida", max_len=63),
-                        Byte("label4_length", 3),
+                        Byte("label4_length", 5),  # auto: len("local")
                         SmartString("label4", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0034, endian=">"),  # TLSA = 52 = 0x0034
@@ -2080,9 +2082,9 @@ class DNSFuzzer(BaseFuzzer):
                         # _service.oida.local
                         Byte("label1_length", 8),
                         SmartString("label1", "_service", max_len=63),
-                        Byte("label2_length", 7),
+                        Byte("label2_length", 4),  # auto: len("oida")
                         SmartString("label2", "oida", max_len=63),
-                        Byte("label3_length", 3),
+                        Byte("label3_length", 5),  # auto: len("local")
                         SmartString("label3", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0040, endian=">"),  # SVCB = 64 = 0x0040
@@ -2122,9 +2124,9 @@ class DNSFuzzer(BaseFuzzer):
                 Block(
                     "DNS_Question_HTTPS",
                     children=(
-                        Byte("label1_length", 7),
+                        Byte("label1_length", 4),  # auto: len("oida")
                         SmartString("label1", "oida", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0041, endian=">"),  # HTTPS = 65 = 0x0041
@@ -2169,9 +2171,9 @@ class DNSFuzzer(BaseFuzzer):
                         SmartString("label1", "_http", max_len=63),
                         Byte("label2_length", 4),
                         SmartString("label2", "_tcp", max_len=63),
-                        Byte("label3_length", 7),
+                        Byte("label3_length", 4),  # auto: len("oida")
                         SmartString("label3", "oida", max_len=63),
-                        Byte("label4_length", 3),
+                        Byte("label4_length", 5),  # auto: len("local")
                         SmartString("label4", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0021, endian=">"),  # SRV = 33 = 0x0021
@@ -2217,7 +2219,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
@@ -2262,7 +2264,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C02, endian=">"),
                         Word("flags", 0x8002, endian=">"),  # Response, RCODE=2 (Server Failure)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2279,7 +2281,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C03, endian=">"),
                         Word("flags", 0x8003, endian=">"),  # Response, RCODE=3 (Name Error)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2296,7 +2298,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C04, endian=">"),
                         Word("flags", 0x8004, endian=">"),  # Response, RCODE=4 (Not Implemented)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2313,7 +2315,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C05, endian=">"),
                         Word("flags", 0x8005, endian=">"),  # Response, RCODE=5 (Refused)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2331,7 +2333,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C06, endian=">"),
                         Word("flags", 0x8006, endian=">"),  # Response, RCODE=6 (Name Exists)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2348,7 +2350,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C07, endian=">"),
                         Word("flags", 0x8007, endian=">"),  # Response, RCODE=7 (RRSet Exists)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2367,7 +2369,7 @@ class DNSFuzzer(BaseFuzzer):
                         Word(
                             "flags", 0x8008, endian=">"
                         ),  # Response, RCODE=8 (RRSet Does Not Exist)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2384,7 +2386,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C09, endian=">"),
                         Word("flags", 0x8009, endian=">"),  # Response, RCODE=9 (Not Authoritative)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2401,7 +2403,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Word("transaction_id", 0x2C10, endian=">"),
                         Word("flags", 0x800A, endian=">"),  # Response, RCODE=10 (Name Not In Zone)
-                        Word("questions", 0x0001, endian=">"),
+                        Word("questions", 0x0000, endian=">"),  # header-only response: no question section
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0000, endian=">"),
@@ -2598,7 +2600,7 @@ class DNSFuzzer(BaseFuzzer):
                     children=(
                         Byte("label1_length", 4),
                         SmartString("label1", "test", max_len=63),
-                        Byte("label2_length", 3),
+                        Byte("label2_length", 5),  # auto: len("local")
                         SmartString("label2", "local", max_len=63),
                         Byte("name_terminator", 0),
                         Word("qtype", 0x0001, endian=">"),
