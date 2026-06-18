@@ -43,8 +43,11 @@ SKIP_PROTOCOLS = {
     "mutation",
 }
 
-# Protocols with known structural issues (e.g. recursive walk)
-WALK_XFAIL = {"snmpv2c"}
+# Protocols with known structural issues (e.g. recursive walk). Empty: the old
+# {"snmpv2c"} entry was dead — snmpv2c is not a benchmarked protocol (the SNMP
+# fuzzers are snmpv1/snmpv3, both of which walk cleanly), so the xfail never
+# fired. Keep the guard hook in case a real recursive-walk protocol appears.
+WALK_XFAIL: set[str] = set()
 
 # ---------------------------------------------------------------------------
 # Baselines — regression anchors.  Update when new requests are added.
