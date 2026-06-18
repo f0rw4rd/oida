@@ -511,7 +511,7 @@ class TestOPCUASecurityPolicySelection(unittest.TestCase):
         self.assertEqual(scanner.security_mode, "none")
 
 
-class TestOPCUANodeBrowsing(unittest.TestCase):
+class TestOPCUANodeBrowsing(unittest.IsolatedAsyncioTestCase):
     """Test node browsing and result parsing"""
 
     @patch("oida.protocols.opcua.scanner.asyncio")
@@ -583,7 +583,7 @@ class TestOPCUANodeBrowsing(unittest.TestCase):
         self.assertTrue(scanner.read_values)
 
 
-class TestOPCUAAuthenticationHandling(unittest.TestCase):
+class TestOPCUAAuthenticationHandling(unittest.IsolatedAsyncioTestCase):
     """Test authentication methods and credential handling"""
 
     async def test_set_user_anonymous(self):
@@ -709,7 +709,7 @@ class TestOPCUACertificateValidation(unittest.TestCase):
         self.assertEqual(actual, expected)
 
 
-class TestOPCUAWriteAccessTesting(unittest.TestCase):
+class TestOPCUAWriteAccessTesting(unittest.IsolatedAsyncioTestCase):
     """Test write access detection and testing"""
 
     async def test_write_access_attribute_check(self):
@@ -888,7 +888,7 @@ class TestOPCUAEndpointAnalysis(unittest.TestCase):
         self.assertTrue(has_signing)
 
 
-class TestOPCUAValueReading(unittest.TestCase):
+class TestOPCUAValueReading(unittest.IsolatedAsyncioTestCase):
     """Test reading values from OPC UA variable nodes"""
 
     def test_read_values_parameter(self):
