@@ -21,7 +21,7 @@ import argparse
 import logging
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Tuple
 import time
 import json
 import csv
@@ -578,42 +578,59 @@ def print_banner():
      ╚═════╝ ╚═╝╚═════╝ ╚═╝  ╚═╝  v{__version__}
 
     Scan. Fuzz. Assess. Responsible in OT.
-    https://github.com/f0rw4rd/oida
+    https://getoida.dev
 """)
 
 
-def _show_usage_and_exit() -> int:
+# Subcommands that are utilities, not scannable protocols.
+_NON_PROTOCOL_SUBCOMMANDS = {"serial", "fuzz"}
+
+
+def _protocol_listing(parser) -> List[Tuple[str, str]]:
+    """Build the (display_name, help) protocol list from the live parser.
+
+    Reads the help strings argparse already stores on each registered
+    subparser, so the no-arg usage screen can never drift from the actual
+    set of dynamically loaded protocols.
+    """
+    action = getattr(parser, "_subparsers_action", None)
+    if action is None:
+        return []
+
+    # canonical name -> aliases (reverse of PROTOCOL_ALIASES)
+    aliases: Dict[str, List[str]] = {}
+    for alias, canonical in PROTOCOL_ALIASES.items():
+        aliases.setdefault(canonical, []).append(alias)
+
+    listing: List[Tuple[str, str]] = []
+    for pseudo in action._choices_actions:
+        name = pseudo.dest
+        if name in _NON_PROTOCOL_SUBCOMMANDS:
+            continue
+        display = name
+        if name in aliases:
+            display = f"{name} ({', '.join(sorted(aliases[name]))})"
+        listing.append((display, pseudo.help or ""))
+
+    listing.sort(key=lambda row: row[0])
+    return listing
+
+
+def _show_usage_and_exit(parser=None) -> int:
     """Show usage information when no arguments provided"""
     print_banner()
     print("Usage: oida <protocol> <target> [options]")
     print("")
     print("Available protocols:")
-    print("  ads        Beckhoff ADS/TwinCAT")
-    print("  astm       ASTM/LIS laboratory")
-    print("  bacnet     BACnet building automation")
-    print("  can        Controller Area Network (CANopen/UDS/XCP)")
-    print("  coap       CoAP (RFC 7252) constrained devices")
-    print("  dicom      DICOM medical imaging")
-    print("  discovery  Network discovery (passive/active)")
-    print("  dnp3       DNP3 SCADA")
-    print("  ethercat   EtherCAT fieldbus")
-    print("  ethernetip EtherNet/IP CIP")
-    print("  fhir       FHIR R4 REST healthcare")
-    print("  goose      IEC 61850 GOOSE sniffer / R-GOOSE listener")
-    print("  hart       HART-IP field devices")
-    print("  hl7        HL7 healthcare messaging")
-    print("  iec104     IEC 60870-5-104 telecontrol")
-    print("  knx        KNX/EIB building automation")
-    print("  mms        MMS/IEC 61850")
-    print("  modbus     Modbus TCP/RTU/TLS")
-    print("  mqtt       MQTT with Sparkplug B")
-    print("  ocpp       OCPP EV charging stations")
-    print("  opcua      OPC UA")
-    print("  pcap       Passive capture analysis")
-    print("  profinet   PROFINET DCP/RPC")
-    print("  s7         Siemens S7 (Snap7)")
-    print("  snmp       SNMP v1/v2c/v3")
-    print("  tase2      TASE.2/ICCP (IEC 60870-6)")
+
+    listing = _protocol_listing(parser) if parser is not None else []
+    if listing:
+        width = max(len(name) for name, _ in listing)
+        for name, help_text in listing:
+            print(f"  {name.ljust(width)}  {help_text}")
+    else:
+        print("  (unable to enumerate protocols; run 'oida <protocol> -h')")
+
     print("")
     print("Run 'oida <protocol> -h' for protocol-specific options")
     return 0
@@ -1039,7 +1056,11 @@ def main(argv: Optional[List[str]] = None):
 
     # Show banner when no arguments provided
     if not args_to_parse:
-        return _show_usage_and_exit()
+        try:
+            parser = gen_cli_args()
+        except Exception:
+            parser = None
+        return _show_usage_and_exit(parser)
 
     # Generate parser
     try:
