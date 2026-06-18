@@ -447,7 +447,7 @@ class DHCPFuzzer(BaseFuzzer):
                         SmartString("vendor_class", "MSFT 5.0", max_len=12),
                         # Vendor Specific Information (43)
                         Byte("option_43_code", 43),
-                        Byte("option_43_length", 50),
+                        Byte("option_43_length", 20),
                         SmartString(
                             "vendor_specific_data", "dhcp-vendor-specific", max_len=50
                         ),  # Potential overflow
@@ -594,7 +594,7 @@ class DHCPFuzzer(BaseFuzzer):
                         DWord("rebinding_time", 6300, endian=">"),
                         # Relay Agent Information (82) - RFC 3046
                         Byte("option_82_code", 82),
-                        Byte("option_82_length", 20),
+                        Byte("option_82_length", 19),
                         # Agent Circuit ID Sub-option
                         Byte("circuit_id_subopt", 1),
                         Byte("circuit_id_length", 8),
@@ -605,7 +605,7 @@ class DHCPFuzzer(BaseFuzzer):
                         SmartString("remote_id", "port001", max_len=8, fuzzable=True),
                         # Client FQDN (81) - RFC 4702
                         Byte("option_81_code", 81),
-                        Byte("option_81_length", 20),
+                        Byte("option_81_length", 21),
                         Byte("fqdn_flags", 0x03),  # S and O flags
                         Byte("rcode1", 0),
                         Byte("rcode2", 0),
