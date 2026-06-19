@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 
 from oida.protocols.pcap.scanner import PcapScanner
@@ -94,6 +95,80 @@ class TestHashcatExport:
             hashcat_file = Path(tmpdir) / "hashcat.txt"
             # FTP has no get_hashcat_hashes(), so no file should be written
             assert not hashcat_file.exists(), "hashcat.txt should not exist for plaintext-only pcap"
+
+
+class TestKerberosRepServerPort:
+    """*-REP server_port must record the KDC port (src_port=88), not the client port.
+
+    Regression for the AS-REP/TGS-REP direction bug: process_packet passed
+    dst_port (the client's ephemeral port for a reply) as server_port to the
+    REP handlers, so the KDC's hash recorded a random high client port instead
+    of 88. The fix passes src_port for the REP path (the KDC is the sender).
+
+    These drive the handlers directly (no pyshark) with a SimpleNamespace
+    standing in for the kerberos layer, matching how process_packet calls them.
+    """
+
+    @staticmethod
+    def _make_listener():
+        from oida.pcap.passive.kerberos import KerberosPassiveListener
+
+        return KerberosPassiveListener(interface="lo", timeout=1)
+
+    @staticmethod
+    def _rep_layer(sname=None):
+        # etype 23 = RC4_HMAC (crackable); cipher is the ticket blob.
+        fields = {
+            "etype": "23",
+            "CNameString": "alice",
+            "realm": "CORP.EXAMPLE.COM",
+            "encryptedTicketData_cipher": "de:ad:be:ef",
+        }
+        if sname is not None:
+            fields["SNameString"] = sname
+        return SimpleNamespace(**fields)
+
+    def test_as_rep_records_kdc_src_port(self):
+        listener = self._make_listener()
+        kdc_ip, client_ip = "10.0.0.1", "10.0.0.50"
+        kdc_port, client_port = 88, 54321
+
+        # Mirror process_packet's REP call: server_port must be the KDC's
+        # src_port (88), NOT the client's ephemeral dst_port.
+        listener._process_as_rep(
+            kdc_ip, client_ip, "Kerberos", self._rep_layer(), kdc_port
+        )
+
+        assert len(listener.hashes) == 1
+        h = listener.hashes[0]
+        assert h.hash_type == "AS-REP"
+        assert h.server_ip == kdc_ip
+        assert h.server_port == kdc_port, (
+            f"AS-REP server_port should be the KDC port {kdc_port}, got {h.server_port}"
+        )
+        assert h.client_ip == client_ip
+        assert h.server_port != client_port
+
+    def test_tgs_rep_records_kdc_src_port(self):
+        listener = self._make_listener()
+        kdc_ip, client_ip = "10.0.0.1", "10.0.0.50"
+        kdc_port = 88
+
+        listener._process_tgs_rep(
+            kdc_ip,
+            client_ip,
+            "Kerberos",
+            self._rep_layer(sname="HTTP,web.corp.example.com"),
+            kdc_port,
+        )
+
+        assert len(listener.hashes) == 1
+        h = listener.hashes[0]
+        assert h.hash_type == "TGS-REP"
+        assert h.server_ip == kdc_ip
+        assert h.server_port == kdc_port, (
+            f"TGS-REP server_port should be the KDC port {kdc_port}, got {h.server_port}"
+        )
 
 
 class TestNTLMHashcatFormatProperty:

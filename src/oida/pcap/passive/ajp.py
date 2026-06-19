@@ -228,6 +228,13 @@ class AJPPassiveListener(PySharkListenerBase):
             )
             if code_raw == AJP_SHUTDOWN:
                 self.logger.warning(f"AJP SHUTDOWN command: {src_ip} -> {dst_ip}")
+        else:
+            # Body-chunk (3/6) and any unrecognized AJP code have no dedicated
+            # branch; log so the drop is observable instead of silent.
+            self.logger.debug(
+                f"AJP packet not recorded: code={code_raw} ({code_name}) "
+                f"{src_ip} -> {dst_ip}"
+            )
 
     def _process_forward_request(
         self,

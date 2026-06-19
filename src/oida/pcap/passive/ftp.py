@@ -205,6 +205,15 @@ class FTPPassiveListener(PySharkListenerBase):
             self._process_server_response(
                 client_ip, server_ip, response_code, response_arg, server_port
             )
+            return
+
+        # FTP layer present but neither a request command nor a response code was
+        # found (e.g. a tshark continuation/reassembly segment of a multi-line
+        # response). Log and skip rather than silently dropping the frame.
+        self.logger.debug(
+            f"FTP: frame {src_ip}->{dst_ip} has ftp layer but no recognized "
+            "request_command or response_code; no interaction recorded"
+        )
 
     def _get_session(self, client_ip: str, server_ip: str) -> FTPSession:
         """Get or create FTP session tracker."""
