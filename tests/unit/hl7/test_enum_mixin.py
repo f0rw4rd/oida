@@ -95,6 +95,39 @@ class TestEnumProviders(unittest.TestCase):
 
 
 @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
+class TestStoredResponseKey(unittest.TestCase):
+    """The stored-response path must read the key the writer actually populates.
+
+    Regression: the enum loops read all_responses[i]["raw"], but the only writer
+    (_extract_detailed_response) never set "raw", so the stored-response path was
+    dead code. This drives the real writer and then the real reader end-to-end.
+    """
+
+    def test_extract_detailed_response_populates_raw_key(self):
+        s = _scanner(_args(extract_response=True, extract_fields=""))
+        raw = (
+            "MSH|^~\\&|EPIC|HOSP|OIDA|SEC|20240101||ADT^A01|1|P|2.5\r"
+            "PID|1||MRN9^^^HOSP^MR||DOE^JOHN"
+        ).encode()
+        s._extract_detailed_response(raw, "ADT^A01")
+        self.assertEqual(len(s.all_responses), 1)
+        # The real key holding the stored response is "raw".
+        self.assertEqual(s.all_responses[0]["raw"], raw)
+
+    def test_enum_apps_consumes_writer_populated_entry(self):
+        # No fresh QRY in _enum_apps: it depends entirely on the stored loop.
+        s = _scanner(_args(extract_response=True, extract_fields=""))
+        stored = "MSH|^~\\&|MIRTH|GENERAL_HOSP|OIDA|SEC|20240101||ADT^A01|1|P|2.5"
+        # Populate via the genuine writer rather than hand-building the dict.
+        s._extract_detailed_response(stored.encode(), "ADT^A01")
+        s._enum_apps()
+        topo = s.results["data"].get("interface_topology")
+        self.assertIsNotNone(topo)
+        self.assertIn("MIRTH", topo["applications"])
+        self.assertIn("GENERAL_HOSP", topo["facilities"])
+
+
+@patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
 class TestEnumApps(unittest.TestCase):
     def test_extracts_apps_and_facilities_from_responses(self):
         s = _scanner(_args())

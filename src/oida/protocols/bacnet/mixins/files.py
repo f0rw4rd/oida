@@ -9,6 +9,19 @@ import asyncio
 from ..constants import _load_bacpypes3
 
 
+# Hard ceiling on bytes accumulated by a single AtomicReadFile run. The
+# reported fileSize is fully attacker-controlled (a BACnet Unsigned can claim
+# multiple GB), so we never trust it to size the in-memory bytearray. 16 MB is
+# generous for the config/log files this tool actually retrieves while keeping
+# a hostile or buggy device from streaming the scanner into OOM.
+MAX_FILE_BYTES = 16 * 1024 * 1024
+
+# Independent upper bound on read iterations, so a device that dribbles 1-byte
+# chunks (or never sets endOfFile) can't spin the loop indefinitely even below
+# the byte cap.
+MAX_FILE_READS = 100_000
+
+
 class FilesMixin:
     """Mixin providing BACnet file operations."""
 
@@ -146,9 +159,22 @@ class FilesMixin:
             chunk_size = getattr(self.args, "file_chunk_size", 1024)
             output_path = getattr(self.args, "output", None)
 
+            # Hard cap on total bytes accumulated. fileSize is attacker-
+            # controlled, so derive the budget from min(reported, ceiling)
+            # and never let the bytearray grow past the ceiling regardless of
+            # what the device reports or how many chunks it streams.
+            max_total_bytes = MAX_FILE_BYTES
+
             all_data = bytearray()
             offset = 0
-            max_reads = (file_size // chunk_size) + 2 if file_size > 0 else 10
+            # Bound iterations by both the reported size and an absolute cap so
+            # a huge fileSize cannot inflate max_reads into the millions and a
+            # dribbling device cannot loop forever.
+            if file_size > 0:
+                derived_reads = (min(file_size, max_total_bytes) // max(chunk_size, 1)) + 2
+            else:
+                derived_reads = 10
+            max_reads = min(derived_reads, MAX_FILE_READS)
 
             for read_num in range(max_reads):
                 try:
@@ -219,6 +245,19 @@ class FilesMixin:
                             )
                         else:
                             self.logger.debug("  Empty chunk received")
+                            break
+
+                        # Stop before the in-memory buffer can exceed the cap.
+                        # Truncate to exactly max_total_bytes so a single
+                        # oversized final chunk can't overshoot the ceiling.
+                        if len(all_data) >= max_total_bytes:
+                            if len(all_data) > max_total_bytes:
+                                del all_data[max_total_bytes:]
+                            self.logger.warning(
+                                f"  File read capped at {max_total_bytes} bytes "
+                                f"(device-reported fileSize={file_size}); "
+                                "aborting to avoid unbounded memory growth"
+                            )
                             break
 
                         if end_of_file or (file_size > 0 and offset >= file_size):
