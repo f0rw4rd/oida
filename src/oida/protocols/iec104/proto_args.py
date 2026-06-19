@@ -287,7 +287,15 @@ Examples:
     fuzz_group.add_argument(
         "--test-commands",
         action="store_true",
-        help="Test command execution (write operations) — requires --confirm",
+        help="Test control-command acceptance at --test-command-ioa "
+        "(C_SC/C_DC) — requires --confirm",
+    )
+    fuzz_group.add_argument(
+        "--test-command-ioa",
+        type=int,
+        default=None,
+        metavar="IOA",
+        help="Target IOA for --test-commands (default: --write-single's IOA)",
     )
     fuzz_group.add_argument(
         "--fuzz-ioa",

@@ -489,6 +489,96 @@ class CommandMixin:
 
         return result
 
+    def _test_commands(self, client: Any, conn: Any) -> Dict[str, Any]:
+        """Test whether the outstation accepts control commands (--test-commands).
+
+        Sends standard control commands (C_SC_NA_1 single, C_DC_NA_1 double) to a
+        target IOA and reports whether the outstation activates them (ACT_CON).
+        An accepted command means an unauthenticated client can drive controls —
+        a real security finding. Confirm-gated: it transmits live commands.
+        """
+        from ._deps import _get_c104
+
+        c104 = _get_c104()
+
+        result: Dict[str, Any] = {
+            "tested": 0,
+            "accepted": [],
+            "rejected": [],
+            "ioa": self.test_command_ioa,
+            "error": None,
+        }
+
+        if not self.confirm_dangerous:
+            self.logger.fail("--test-commands requires --confirm flag (transmits live commands)")
+            result["error"] = "Missing --confirm"
+            return result
+
+        ioa = self.test_command_ioa
+        if ioa is None:
+            self.logger.fail(
+                "--test-commands needs a target IOA: pass --test-command-ioa <IOA> "
+                "(or --write-single <IOA>)"
+            )
+            result["error"] = "No target IOA"
+            return result
+
+        # Least-disruptive probe values (OFF/open). Each tuple: (type, value, name).
+        probes = [
+            (c104.Type.C_SC_NA_1, False, "C_SC_NA_1 (Single command)"),
+            (c104.Type.C_DC_NA_1, c104.Double.OFF, "C_DC_NA_1 (Double command)"),
+        ]
+
+        try:
+            ca = self._best_common_address()
+            station = conn.get_station(ca) or conn.add_station(common_address=ca)
+            if station is None:
+                self.logger.fail(f"Cannot create station CA={ca} for command test")
+                result["error"] = "Station not available"
+                return result
+
+            cmd_mode = (
+                c104.CommandMode.SELECT_AND_EXECUTE
+                if self.select_execute
+                else c104.CommandMode.DIRECT
+            )
+
+            self.logger.display(f"Testing command execution at IOA={ioa} (CA={ca})")
+            for write_type, value, type_name in probes:
+                # A fresh command point per type (replace any existing point at IOA).
+                if station.get_point(ioa) is not None:
+                    station.remove_point(ioa)
+                point = station.add_point(io_address=ioa, type=write_type, command_mode=cmd_mode)
+                if point is None:
+                    result["rejected"].append(
+                        {"type": type_name, "reason": "point creation failed"}
+                    )
+                    continue
+
+                point.value = value
+                result["tested"] += 1
+                try:
+                    success = point.transmit(cause=c104.Cot.ACTIVATION)
+                except Exception as e:  # transmit can raise on transport errors
+                    result["rejected"].append({"type": type_name, "reason": str(e)})
+                    continue
+
+                if success:
+                    self.logger.security_finding(
+                        "Control command accepted",
+                        detail=f"{type_name} at IOA={ioa} activated (unauthenticated command execution)",
+                    )
+                    result["accepted"].append(type_name)
+                else:
+                    self.logger.display(f"  {type_name}: not activated (rejected/no ACT_CON)")
+                    result["rejected"].append({"type": type_name, "reason": "no activation"})
+
+        except Exception as e:
+            self.logger.fail(f"Command test failed: {e}")
+            result["error"] = str(e)
+
+        return result
+
     def _fuzz_commands(self, client: Any, conn: Any) -> Dict[str, Any]:
         """Fuzz IEC 104 commands.
 
