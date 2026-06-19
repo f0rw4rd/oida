@@ -235,7 +235,9 @@ class SlotScanMixin(_ScannerBase):
                     series = info.get("series", "")
                     if series in ("S7-1200", "S7-1500"):
                         found_modern_plc = True
-                    time.sleep(0.1)
+                # Pace every probe, not just responding ones, to rate-limit the
+                # slot sweep against sensitive ISO-TSAP stacks.
+                time.sleep(0.1)
 
             # Phase 2: Only scan S7-300/400 slots if no S7-1200/1500 found
             # This saves ~20 seconds of timeout delays on modern PLCs
@@ -250,7 +252,8 @@ class SlotScanMixin(_ScannerBase):
                     info = self._scan_single_slot(host, port, rack, slot, detailed=False)
                     if info:
                         found.append(info)
-                        time.sleep(0.1)
+                    # Pace every probe, not just responding ones.
+                    time.sleep(0.1)
 
         # Identify main CPU slot and mark it
         if found:

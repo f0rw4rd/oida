@@ -408,3 +408,50 @@ class TestWriteAssetFiles:
         }
         # Should not raise — silently skips without output dir
         scanner._write_asset_files(scanner.discovered_devices)
+
+
+# ---------------------------------------------------------------------------
+# Pipeline early-failure error path (regression)
+# ---------------------------------------------------------------------------
+
+
+class _RaisingArgs(dict):
+    """dict whose .get('decode_as') raises a crash-classified exception.
+
+    Simulates a failure that occurs early inside _run_pyshark_pipeline's try
+    block (between the try-open and the FileCapture loop) and is classified as
+    a crash by the except handler ("crashed"/"retcode" in the message).
+    """
+
+    def get(self, key, default=None):
+        if key == "decode_as":
+            raise RuntimeError("tshark crashed (retcode 2)")
+        return super().get(key, default)
+
+
+class TestPipelineEarlyFailure:
+    """The crash branch must not mask an early error with UnboundLocalError."""
+
+    def test_early_crash_does_not_raise_unboundlocalerror(self, monkeypatch):
+        from unittest.mock import PropertyMock, patch
+        from oida.protocols.pcap import scanner as scanner_mod
+
+        scanner = PcapScanner("f.pcap")
+        scanner.args = _RaisingArgs()
+
+        # Reach the try block: need a listener, pyshark "available", and a
+        # packet count call that does not itself raise.
+        monkeypatch.setattr(scanner, "_create_pyshark_listeners", lambda: {"x": object()})
+        monkeypatch.setattr(scanner, "_get_packet_count", lambda _f: 0)
+
+        lazy_cls = type(scanner_mod._pyshark)
+        # packet_count == 0 and is_crash -> handler takes the `elif is_crash`
+        # branch and re-raises. Before the fix it raised UnboundLocalError
+        # (capture/packet_count unbound); after the fix the original error
+        # propagates intact.
+        with patch.object(lazy_cls, "is_available", new_callable=PropertyMock, return_value=True):
+            with pytest.raises(RuntimeError) as excinfo:
+                scanner._run_pyshark_pipeline()
+
+        assert "crashed" in str(excinfo.value)
+        assert not isinstance(excinfo.value, UnboundLocalError)

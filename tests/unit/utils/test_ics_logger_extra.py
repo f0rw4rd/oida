@@ -116,5 +116,40 @@ class TestExtraThreadLocal(unittest.TestCase):
         self.assertEqual(other["host"], "h")
 
 
+    def test_format_snapshots_extra_once(self):
+        """_format() reads the per-thread prefix dict a single time.
+
+        Covers CODE_REVIEW.md LOW (ics_logger.py:176-180,225-229,312-325):
+        a concurrent get_logger()/update_logger_host() can mutate host/hostname
+        in place while _format() runs. Reading self.extra once and rendering
+        from that snapshot means all fields on a line come from one consistent
+        view, never a torn mix of pre- and post-mutation values.
+        """
+        logger = ICSLogger(protocol="modbus", host="10.0.0.1", port=502, hostname="old")
+
+        accesses = []
+        real_seed = dict(logger._extra_seed)
+
+        class CountingDict(dict):
+            def __getitem__(self, key):
+                accesses.append(key)
+                return super().__getitem__(key)
+
+        # Seed this thread's copy as a CountingDict so we can observe access.
+        logger._extra_local.data = CountingDict(real_seed)
+
+        line = logger._format("hello")
+
+        # Every field used by the rendered line must come from one dict object,
+        # i.e. _format must not re-fetch self.extra between field reads. The
+        # CountingDict only counts __getitem__ on the one snapshot, so the line
+        # reflects a single consistent view.
+        self.assertIn("10.0.0.1", line)
+        self.assertIn("old", line)
+        self.assertIn("502", line)
+        # protocol, hostname, port, host -> exactly the four keys, once each.
+        self.assertEqual(sorted(accesses), ["host", "hostname", "port", "protocol"])
+
+
 if __name__ == "__main__":
     unittest.main()

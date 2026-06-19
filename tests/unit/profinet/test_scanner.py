@@ -467,3 +467,49 @@ class TestDCPDeviceDescription:
 
         except ImportError:
             pytest.skip("profinet library not installed")
+
+
+class TestWriteOperationsSocketLifecycle:
+    """Regression: raw socket must be closed if get_mac() fails after open."""
+
+    def _make_scanner(self, confirm=True):
+        from oida.protocols.profinet import profinet as ProfinetConnection
+
+        scanner = ProfinetConnection.__new__(ProfinetConnection)
+        scanner.interface = "eth0"
+        scanner.timeout = 3.0
+        scanner.logger = MagicMock()
+
+        args = {
+            "mac_address": "00:11:22:33:44:55",
+            "set_name": "newname",
+            "confirm": confirm,
+        }
+        scanner._arg = lambda name, default=None: args.get(name, default)
+        return scanner
+
+    def test_socket_closed_when_get_mac_fails(self):
+        """If ethernet_socket succeeds but get_mac raises, sock is closed."""
+        scanner = self._make_scanner()
+
+        sock = MagicMock()
+        profinet_mod = MagicMock()
+        profinet_mod.ethernet_socket.return_value = sock
+        profinet_mod.get_mac.side_effect = OSError("no mac")
+
+        scanner._write_operations(profinet_mod)
+
+        sock.close.assert_called_once()
+        scanner.logger.fail.assert_called_once()
+
+    def test_no_socket_leaked_when_ethernet_socket_fails(self):
+        """If ethernet_socket itself raises, nothing to close and no crash."""
+        scanner = self._make_scanner()
+
+        profinet_mod = MagicMock()
+        profinet_mod.ethernet_socket.side_effect = OSError("no iface")
+
+        scanner._write_operations(profinet_mod)
+
+        profinet_mod.get_mac.assert_not_called()
+        scanner.logger.fail.assert_called_once()
