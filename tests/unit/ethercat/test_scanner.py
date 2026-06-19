@@ -1502,6 +1502,30 @@ class TestDiscoverWorkflow(unittest.TestCase):
         self.assertIn("expected_wkc", info)
         self.assertIn("timestamp", info)
 
+    def test_network_info_sends_before_receiving(self):
+        """send_processdata() must precede receive_processdata() in a PD cycle."""
+        scanner = _make_scanner(**{"scan-range": "1-1"})
+        master = _make_mock_master()
+
+        # Route both PD calls through one parent so ordering is observable.
+        parent = Mock()
+        master.send_processdata = parent.send
+        master.receive_processdata = parent.receive
+        parent.receive.return_value = 3
+
+        scanner._get_network_info(master)
+
+        # Process data must be sent before the first receive.
+        method_order = [name for name, _, _ in parent.mock_calls]
+        self.assertTrue(method_order, "no process-data calls were made")
+        self.assertEqual(method_order[0], "send")
+        first_recv = method_order.index("receive")
+        self.assertLess(
+            method_order.index("send"),
+            first_recv,
+            "send_processdata() must be called before receive_processdata()",
+        )
+
 
 # ===========================================================================
 # Error Handling Tests [Category C]

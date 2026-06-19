@@ -299,8 +299,11 @@ class TestFuzzDataObject:
             inst._fuzz_data_object("LD0/A", 1)
 
         # Restore must go through _create_mms_value with the ORIGINAL float,
-        # so the correct MmsValue type is reconstructed.
-        inst.scanner._create_mms_value.assert_called_once_with(23.4)
+        # so the correct MmsValue type is reconstructed. (_create_mms_value is
+        # also used by the writable-FC probe, so assert it was called with the
+        # typed float rather than asserting an exact call count.)
+        create_args = [c.args[0] for c in inst.scanner._create_mms_value.call_args_list]
+        assert 23.4 in create_args
         # And the typed restore MmsValue must be the one written back last.
         last_write = lib.IedConnection_writeObject.call_args_list[-1]
         assert last_write.args[-1] is sentinel_restore
@@ -308,6 +311,72 @@ class TestFuzzDataObject:
         # written back as an integer during restore.
         restored_ints = [c.args[0] for c in lib.MmsValue_newInteger.call_args_list]
         assert 1102957363 not in restored_ints
+
+    def test_fuzz_write_uses_discovered_fc_not_hardcoded_co(self):
+        # Regression: the object is writable ONLY under FC_SP (a setpoint), not
+        # FC_CO. The fuzz writer must target the discovered FC_SP, otherwise
+        # every write fails (successful=0) and no real fuzzing happens. Asserts
+        # the fuzz-iteration write does NOT use the hardcoded FC_CO.
+        inst = self._prep(fuzz=True, confirm=True, fuzz_iterations=1)
+        inst.scanner._extract_mms_value.return_value = 7
+        inst.scanner._create_mms_value.return_value = MagicMock(name="restore_value")
+
+        lib = MagicMock()
+        lib.IEC61850_FC_MX = 0
+        lib.IEC61850_FC_CO = 1
+        lib.IEC61850_FC_SP = 2
+        lib.IEC61850_FC_ST = 3
+        # Unique sentinel so we can pinpoint the fuzz-payload write (which goes
+        # through MmsValue_newInteger) vs. the discovery-probe/restore writes
+        # (which go through scanner._create_mms_value).
+        fuzz_payload_value = MagicMock(name="fuzz_payload_mms_value")
+        lib.MmsValue_newInteger.return_value = fuzz_payload_value
+
+        # Native calls return an FC-tagged tuple so the unpack_result stub can
+        # decide success per-FC: only FC_SP accepts a write; reads always work.
+        def read_object(conn, ref, fc):
+            return ("R", fc)
+
+        def write_object(conn, ref, fc, val):
+            return ("W", fc)
+
+        lib.IedConnection_readObject.side_effect = read_object
+        lib.IedConnection_writeObject.side_effect = write_object
+
+        mms_value_obj = MagicMock(name="read_mms_value")
+
+        def unpack(result):
+            kind, fc = result
+            if kind == "R":
+                return (mms_value_obj, 0, True)
+            # write succeeds only under FC_SP (the discovered writable FC)
+            return (None, 0, fc == lib.IEC61850_FC_SP)
+
+        with (
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "iec61850", lib),
+            patch.object(_Lib, "unpack_result", side_effect=unpack),
+            patch.object(_Lib, "safe_mms_value_delete"),
+            patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
+            patch("time.sleep"),
+        ):
+            inst._fuzz_data_object("LD0/Setpoint", 1)
+
+        # Isolate the FC used for the actual fuzz-payload write (val is the
+        # MmsValue_newInteger sentinel) from probe/restore writes.
+        fuzz_write_fcs = [
+            c.args[2]
+            for c in lib.IedConnection_writeObject.call_args_list
+            if c.args[3] is fuzz_payload_value
+        ]
+        assert fuzz_write_fcs, "expected the fuzz payload to be written at least once"
+        # The fuzz write must target the DISCOVERED FC_SP, never the old
+        # hardcoded FC_CO.
+        assert all(fc == lib.IEC61850_FC_SP for fc in fuzz_write_fcs)
+        assert lib.IEC61850_FC_CO not in fuzz_write_fcs
+        # Reads must use the same discovered FC_SP, never the old FC_MX default.
+        read_fcs = [c.args[2] for c in lib.IedConnection_readObject.call_args_list]
+        assert lib.IEC61850_FC_MX not in read_fcs
 
     def test_read_value_none_returns_zero_bytes(self):
         inst = self._prep(fuzz=True, confirm=True)

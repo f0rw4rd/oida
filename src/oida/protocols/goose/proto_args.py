@@ -19,6 +19,7 @@ Examples:
   oida goose eth0                          # Passive GOOSE sniffing on eth0
   oida goose eth0 --timeout 30             # Listen for 30 seconds
   oida goose eth0 --appid 1000            # Filter by AppID (decimal)
+  oida goose eth0 --gocb-ref 'LD/LLN0$GO$gcb01'  # Live capture of a known GoCB
   oida goose --mms-enum 192.168.1.100      # Enumerate GoCBs via MMS
 
 Security Testing:
@@ -58,6 +59,15 @@ Security Testing:
         default=None,
         metavar="ID",
         help="Filter by GOOSE Application ID (decimal, e.g. 1000; shown as hex 0x03E8 in capture output)",
+    )
+    capture_group.add_argument(
+        "--gocb-ref",
+        type=str,
+        default="",
+        metavar="REF",
+        help="GOOSE Control Block reference for live capture "
+        "(e.g. 'LD/LLN0$GO$gcb01'); required for passive GOOSE capture. "
+        "Use --mms-enum <ip> to discover GoCB references first.",
     )
 
     # R-GOOSE options (not yet implemented in the high-level API).

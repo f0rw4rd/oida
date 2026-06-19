@@ -731,5 +731,89 @@ class TestAnalyzeSecurity101(unittest.TestCase):
         self.assertEqual(len(analysis["issues"]), 3)
 
 
+class TestListenComposesDiscoveryCallback(unittest.TestCase):
+    """Regression: --listen + --interrogate must not lose raw discovery.
+
+    _run_listen_mode registers a raw-receive callback, which REPLACES the
+    discovery callback installed at connect() time (c104 has a single raw slot).
+    When listen is combined with interrogation, discover() falls through to
+    _perform_interrogation, which relies on the discovery callback to populate
+    _discovered_points / _raw_type_ids / _discovered_stations. The composed
+    callback must therefore drive BOTH the discovery parser and the monitor.
+    """
+
+    def _capture_listen_callback(self, scanner):
+        """Run _run_listen_mode and return the callback it registers on conn.
+
+        Uses a fixed 1s duration with time.sleep patched out, so the wait
+        loop runs once and returns immediately.
+        """
+        scanner.listen_time = 1
+
+        captured = {}
+
+        class FakeConn:
+            def on_receive_raw(self, cb):
+                captured["cb"] = cb
+
+        mock_c104 = MagicMock()
+        # Discovery callback uses explain_bytes_dict to extract points.
+        mock_c104.explain_bytes_dict.return_value = {
+            "type": "Type.M_ME_NC_1",
+            "cot": "Cot.SPONTANEOUS",
+            "commonAddress": 7,
+            "firstInformationObjectAddress": 100,
+            "numberOfObjects": 1,
+            "sequence": False,
+            "negative": False,
+        }
+        # Both scanner._create_callbacks() and listen._create_monitor_callback()
+        # resolve c104 via the shared _deps module (scanner imports it directly;
+        # listen does `from . import _deps`), so a single patch covers both.
+        with patch(
+            "oida.protocols.iec104._deps._get_c104", return_value=mock_c104
+        ), patch("oida.protocols.iec104.listen.time.sleep", return_value=None):
+            scanner._run_listen_mode(MagicMock(), FakeConn())
+        return captured["cb"]
+
+    def test_discovery_still_fires_under_listen(self):
+        scanner = make_scanner()
+        cb = self._capture_listen_callback(scanner)
+        self.assertIsNotNone(cb, "listen mode never registered a raw-receive callback")
+
+        # Type 13 (short float) I-frame: 6B APCI + TI=13 + 5B header + IOA(3)+f(4)+QDS(1)
+        ioa = 100
+        ioa_bytes = struct.pack("<HB", ioa & 0xFFFF, (ioa >> 16) & 0xFF)
+        body = ioa_bytes + struct.pack("<f", 230.5) + bytes([0x00])
+        data = bytes([0] * 6) + bytes([13]) + bytes([0] * 5) + body
+
+        cb(MagicMock(), data)
+
+        # Discovery side: points/types/stations populated (would be empty if the
+        # monitor callback had overwritten the discovery callback).
+        self.assertIn(ioa, scanner._discovered_points)
+        self.assertEqual(scanner._discovered_points[ioa]["type_id"], 13)
+        self.assertIn(13, scanner._raw_type_ids)
+        # Monitor side: the ASDU was also captured for listen output.
+        self.assertEqual(len(scanner._captured_asdus), 1)
+        self.assertEqual(scanner._captured_asdus[0].type_id, 13)
+
+    def test_monitor_failure_does_not_block_discovery(self):
+        """Even if the monitor parser raises, discovery must still be recorded."""
+        scanner = make_scanner()
+        cb = self._capture_listen_callback(scanner)
+
+        ioa = 100
+        ioa_bytes = struct.pack("<HB", ioa & 0xFFFF, (ioa >> 16) & 0xFF)
+        body = ioa_bytes + struct.pack("<f", 230.5) + bytes([0x00])
+        data = bytes([0] * 6) + bytes([13]) + bytes([0] * 5) + body
+
+        # Force the monitor parser to raise; discovery (run first) must survive.
+        with patch.object(scanner, "_parse_asdu_value", side_effect=RuntimeError("boom")):
+            cb(MagicMock(), data)
+
+        self.assertIn(ioa, scanner._discovered_points)
+
+
 if __name__ == "__main__":
     unittest.main()

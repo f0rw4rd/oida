@@ -118,6 +118,52 @@ class mms(NetworkConnection):
                 if ref:
                     self._fuzz_data_object(ref, iterations)
 
+    def _discover_writable_fc(self, reference: str):
+        """Find the functional constraint the object is writable under.
+
+        successful_writes (from MMSScanner._test_write_access) records only the
+        reference, not the FC it was accepted under. _write_data_object probes
+        [FC_CO, FC_SP, FC_MX] and returns on the first success, so an object may
+        be writable only under FC_SP/FC_MX (the common case for setpoints and
+        measurements). Hardcoding FC_CO here would silently target the wrong FC
+        and make every fuzz write fail. Re-probe the same order using a
+        same-value write (read current value, write it straight back) so the
+        probe is non-destructive, and return the first FC that the server
+        accepts. Returns None if none accept a write.
+        """
+        mms_value = None
+        try:
+            for fc in (
+                _Lib.iec61850.IEC61850_FC_CO,
+                _Lib.iec61850.IEC61850_FC_SP,
+                _Lib.iec61850.IEC61850_FC_MX,
+            ):
+                read_result = _Lib.iec61850.IedConnection_readObject(self.conn, reference, fc)
+                current, _, _ = _Lib.unpack_result(read_result)
+                if current is None:
+                    continue
+                value = self.scanner._extract_mms_value(current)
+                _Lib.safe_mms_value_delete(current)
+                mms_value = self.scanner._create_mms_value(value)
+                if mms_value is None:
+                    continue
+                write_result = _Lib.iec61850.IedConnection_writeObject(
+                    self.conn, reference, fc, mms_value
+                )
+                _, _, ok = _Lib.unpack_result(write_result)
+                _Lib.safe_mms_value_delete(mms_value)
+                mms_value = None
+                if ok:
+                    self.logger.debug(f"  {reference} writable under FC {fc}")
+                    return fc
+            self.logger.debug(f"  No writable FC discovered for {reference}; defaulting to FC_MX")
+            return None
+        except Exception as e:
+            self.logger.debug(f"Failed to discover writable FC for {reference}: {e}")
+            return None
+        finally:
+            _Lib.safe_mms_value_delete(mms_value)
+
     def _fuzz_data_object(self, reference: str, iterations: int) -> None:
         """Fuzz a single MMS data object."""
         import struct
@@ -126,6 +172,18 @@ class mms(NetworkConnection):
         _Lib.require()
 
         target_id = f"mms:{reference}"
+
+        # The object may have been discovered writable under any of CO/SP/MX
+        # (_write_data_object probes all three and accepts the first that
+        # succeeds), but successful_writes does not record which one. Probe the
+        # same order here and reuse the discovered FC for every read and write
+        # below, so writes target the FC the object is actually writable under
+        # (not a hardcoded FC_CO) and the read-back anomaly check compares like
+        # for like. Falls back to FC_MX (measurement read) if none accepts a
+        # write, which keeps the read path working for a dry/permission-denied
+        # target.
+        write_fc = self._discover_writable_fc(reference)
+        read_fc = write_fc if write_fc is not None else _Lib.iec61850.IEC61850_FC_MX
 
         # Original typed Python value captured by read_value(); used for an
         # end-of-run restore that reconstructs the correct MmsValue type rather
@@ -139,7 +197,7 @@ class mms(NetworkConnection):
             mms_value = None
             try:
                 result = _Lib.iec61850.IedConnection_readObject(
-                    self.conn, reference, _Lib.iec61850.IEC61850_FC_MX
+                    self.conn, reference, read_fc
                 )
                 mms_value, _, _ = _Lib.unpack_result(result)
 
@@ -175,7 +233,7 @@ class mms(NetworkConnection):
                 value = int.from_bytes(data[:4].ljust(4, b"\x00"), "little", signed=True)
                 mms_value = _Lib.iec61850.MmsValue_newInteger(value)
                 result = _Lib.iec61850.IedConnection_writeObject(
-                    self.conn, reference, _Lib.iec61850.IEC61850_FC_CO, mms_value
+                    self.conn, reference, read_fc, mms_value
                 )
                 _, _, ok = _Lib.unpack_result(result)
                 return ok
@@ -199,7 +257,7 @@ class mms(NetworkConnection):
                     self.logger.debug(f"Could not build MmsValue to restore {value!r}")
                     return False
                 result = _Lib.iec61850.IedConnection_writeObject(
-                    self.conn, reference, _Lib.iec61850.IEC61850_FC_CO, mms_value
+                    self.conn, reference, read_fc, mms_value
                 )
                 _, _, ok = _Lib.unpack_result(result)
                 return ok

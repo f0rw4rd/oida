@@ -625,7 +625,10 @@ class EtherCATScanner(
         }
 
         try:
-            # Get working counter
+            # Get working counter. A process-data cycle is send THEN receive;
+            # without a preceding send_processdata() there is no frame in flight
+            # and receive_processdata() returns a stale/empty buffer.
+            master.send_processdata()
             info["actual_wkc"] = master.receive_processdata(2000)
 
             # Estimate cycle time
