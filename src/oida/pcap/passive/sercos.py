@@ -217,7 +217,7 @@ class SERCOSPassiveListener(PySharkListenerBase):
         # Parse phase from MST
         phase_raw = self.get_field(siii, "mst_phase")
         if phase_raw is not None:
-            phase_code = self._parse_int(phase_raw, None, base=16)
+            phase_code = self._parse_int(phase_raw, None)
             if phase_code is not None:
                 new_phase = SERCOS_PHASES.get(phase_code, f"Phase(0x{phase_code:02x})")
                 if new_phase != self.current_phase and self.current_phase:
@@ -275,7 +275,7 @@ class SERCOSPassiveListener(PySharkListenerBase):
         # Process hot-plug
         hp_addr_raw = self.get_field(siii, "mdt_hp_sercosaddress")
         if hp_addr_raw is not None:
-            hp_addr = self._parse_int(hp_addr_raw, None, base=16)
+            hp_addr = self._parse_int(hp_addr_raw, None)
             if hp_addr is not None and hp_addr > 0:
                 self._ensure_slave(hp_addr, now)
                 detail = f"HotPlug slave={hp_addr}"
@@ -326,7 +326,7 @@ class SERCOSPassiveListener(PySharkListenerBase):
 
         # IDN
         idn_raw = self.get_field(siii, "mdt_svch_idn")
-        idn_val = self._parse_int(idn_raw, None, base=16)
+        idn_val = self._parse_int(idn_raw, None)
         idn_str = _format_idn(idn_val) if idn_val is not None else ""
 
         # Data block element

@@ -236,7 +236,7 @@ class EPLPassiveListener(PySharkListenerBase):
             nmt_raw = self.get_field(epl, "soa_stat")
 
         if nmt_raw is not None:
-            nmt_code = self._parse_int(nmt_raw, None, base=16)
+            nmt_code = self._parse_int(nmt_raw, None)
             if nmt_code is not None:
                 nmt_state_name = EPL_NMT_STATES.get(nmt_code, f"0x{nmt_code:02x}")
                 src_epl_node.nmt_state = nmt_state_name
@@ -249,7 +249,7 @@ class EPLPassiveListener(PySharkListenerBase):
         # Process ASnd subtypes
         if mtyp == 6:  # ASnd
             asnd_svid_raw = self.get_field(epl, "asnd_svid")
-            asnd_svid = self._parse_int(asnd_svid_raw, None, base=16)
+            asnd_svid = self._parse_int(asnd_svid_raw, None)
             asnd_name = (
                 ASND_SERVICE_IDS.get(asnd_svid, f"ASnd(0x{asnd_svid:02x})")
                 if asnd_svid is not None
@@ -260,7 +260,7 @@ class EPLPassiveListener(PySharkListenerBase):
                 self._process_ident_response(epl, src_epl_node)
                 nmt_ires_raw = self.get_field(epl, "asnd_ires_state")
                 if nmt_ires_raw is not None:
-                    nmt_code = self._parse_int(nmt_ires_raw, None, base=16)
+                    nmt_code = self._parse_int(nmt_ires_raw, None)
                     if nmt_code is not None:
                         nmt_state_name = EPL_NMT_STATES.get(nmt_code, f"0x{nmt_code:02x}")
                         src_epl_node.nmt_state = nmt_state_name
@@ -271,7 +271,7 @@ class EPLPassiveListener(PySharkListenerBase):
 
             elif asnd_svid == 0x04:  # NMTCommand
                 cmd_id_raw = self.get_field(epl, "asnd_nmtcommand_cid")
-                cmd_id = self._parse_int(cmd_id_raw, None, base=16)
+                cmd_id = self._parse_int(cmd_id_raw, None)
                 cmd_name = (
                     NMT_COMMANDS.get(cmd_id, f"NMTCmd(0x{cmd_id:02x})")
                     if cmd_id is not None
@@ -285,7 +285,7 @@ class EPLPassiveListener(PySharkListenerBase):
 
             elif asnd_svid == 0x03:  # NMTRequest
                 rcid_raw = self.get_field(epl, "asnd_nmtrequest_rcid")
-                rcid = self._parse_int(rcid_raw, None, base=16)
+                rcid = self._parse_int(rcid_raw, None)
                 req_name = (
                     NMT_COMMANDS.get(rcid, f"NMTReq(0x{rcid:02x})")
                     if rcid is not None
@@ -400,10 +400,10 @@ class EPLPassiveListener(PySharkListenerBase):
         cmd_name = SDO_COMMANDS.get(cmd_id, f"Cmd(0x{cmd_id:02x})") if cmd_id is not None else ""
 
         index_raw = self.get_field(epl, "asnd_sdo_cmd_data_index")
-        index_val = self._parse_int(index_raw, None, base=16)
+        index_val = self._parse_int(index_raw, None)
 
         subindex_raw = self.get_field(epl, "asnd_sdo_cmd_data_subindex")
-        subindex_val = self._parse_int(subindex_raw, None, base=16)
+        subindex_val = self._parse_int(subindex_raw, None)
 
         rw = ""
         if cmd_id is not None:
@@ -424,7 +424,7 @@ class EPLPassiveListener(PySharkListenerBase):
         # Check for abort
         abort_raw = self.get_field(epl, "asnd_sdo_cmd_abort_code")
         if abort_raw is not None:
-            abort_code = self._parse_int(abort_raw, None, base=16)
+            abort_code = self._parse_int(abort_raw, None)
             if abort_code is not None and abort_code != 0:
                 parts.append(f"ABORT=0x{abort_code:08x}")
 

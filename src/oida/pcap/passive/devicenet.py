@@ -172,7 +172,7 @@ class DeviceNetPassiveListener(PySharkListenerBase):
             dst_ip = f"MAC:{dst_mac}" if dst_mac else ""
 
         # Extract core fields
-        can_id = self._parse_int(self.get_field(dn, "can_id", None), None, base=16)
+        can_id = self._parse_int(self.get_field(dn, "can_id", None), None)
         src_mac_id = self._parse_int(self.get_field(dn, "src_mac_id", None), None)
         dst_mac_id = self._parse_int(self.get_field(dn, "dest_mac_id", None), None)
         connection_id = self._parse_int(self.get_field(dn, "connection_id", None), None)
@@ -187,37 +187,37 @@ class DeviceNetPassiveListener(PySharkListenerBase):
             is_request = self._parse_int(rr_raw, 0) == 0
 
         service_code = self._parse_int(self.get_field(dn, "service", None), None)
-        cip_class = self._parse_int(self.get_field(dn, "class", None), None, base=16)
-        instance = self._parse_int(self.get_field(dn, "instance", None), None, base=16)
-        attribute = self._parse_int(self.get_field(dn, "attribute", None), None, base=16)
+        cip_class = self._parse_int(self.get_field(dn, "class", None), None)
+        instance = self._parse_int(self.get_field(dn, "instance", None), None)
+        attribute = self._parse_int(self.get_field(dn, "attribute", None), None)
 
         # Vendor and serial from Dup MAC ID or general fields
-        vendor_id = self._parse_int(self.get_field(dn, "vendor", None), None, base=16)
-        serial_num = self._parse_int(self.get_field(dn, "serial_number", None), None, base=16)
-        dup_vendor = self._parse_int(self.get_field(dn, "dup_mac_id_vendor", None), None, base=16)
+        vendor_id = self._parse_int(self.get_field(dn, "vendor", None), None)
+        serial_num = self._parse_int(self.get_field(dn, "serial_number", None), None)
+        dup_vendor = self._parse_int(self.get_field(dn, "dup_mac_id_vendor", None), None)
         if dup_vendor is None:
             dup_vendor = self._parse_int(
-                self.get_field(dn, "dup_mac_id.vendor", None), None, base=16
+                self.get_field(dn, "dup_mac_id.vendor", None), None
             )
         dup_serial = self._parse_int(
-            self.get_field(dn, "dup_mac_id_serial_number", None), None, base=16
+            self.get_field(dn, "dup_mac_id_serial_number", None), None
         )
         if dup_serial is None:
             dup_serial = self._parse_int(
-                self.get_field(dn, "dup_mac_id.serial_number", None), None, base=16
+                self.get_field(dn, "dup_mac_id.serial_number", None), None
             )
 
         # Fragment info
-        frag_type = self._parse_int(self.get_field(dn, "fragment_type", None), None, base=16)
+        frag_type = self._parse_int(self.get_field(dn, "fragment_type", None), None)
         frag_count = self._parse_int(self.get_field(dn, "fragment_count", None), None)
 
         # Comm fault
         comm_fault_val = self._parse_int(
-            self.get_field(dn, "comm_fault_value", None), None, base=16
+            self.get_field(dn, "comm_fault_value", None), None
         )
         if comm_fault_val is None:
             comm_fault_val = self._parse_int(
-                self.get_field(dn, "comm_fault.value", None), None, base=16
+                self.get_field(dn, "comm_fault.value", None), None
             )
 
         # Build operation name and details

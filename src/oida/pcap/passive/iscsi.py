@@ -35,7 +35,12 @@ from typing import Any, Dict, List, Optional
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ...protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-# iSCSI opcode mapping
+# iSCSI opcode mapping.
+# Values are the 6-bit opcode (BHS byte 0 masked with 0x3f), which is exactly
+# what tshark exposes as iscsi.opcode (FT_UINT8, mask 0x3f, BASE_HEX).
+# Verified against RFC 7143 and Linux iscsi_proto.h:
+#   R2T = 0x31 (49), Asynchronous Message = 0x32 (50), Reject = 0x3f (63).
+# Both decimal- and hex-keyed forms are kept so either tshark string form resolves.
 OPCODES = {
     "0": "NOP-Out",
     "1": "SCSI Command",
@@ -63,6 +68,7 @@ OPCODES = {
     "0x04": "Text Request",
     "0x05": "Data-Out",
     "0x06": "Logout Request",
+    "0x10": "SNACK Request",
     "0x20": "NOP-In",
     "0x21": "SCSI Response",
     "0x22": "Task Management Response",
