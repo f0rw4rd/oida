@@ -125,12 +125,17 @@ class _ScanHandler:
                         target = getattr(self, key)
                         target.append(indexed_val)
 
-            def OnDeviceAttribute(self, info, variation, attr_value):
+            def OnDeviceAttribute(self, info, attr_set, variation, value):
+                # opendnp3's ISOEHandler calls this positionally as
+                # OnDeviceAttribute(info, set, variation, value). The override
+                # must accept all four args or it raises "takes 4 positional
+                # arguments but 5 were given" and every Group-0 device attribute
+                # is silently dropped.
                 with self._lock:
                     entry = {
                         "variation": variation,
-                        "set": 0,
-                        "value": self._extract_value(attr_value),
+                        "set": attr_set,
+                        "value": self._extract_value(value),
                     }
                     self.string_attrs.append(entry)
 

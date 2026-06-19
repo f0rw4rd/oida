@@ -1131,5 +1131,49 @@ class TestSnap7WithErrorInjection:
         assert scanner.timeout == expected
 
 
+class TestSnap7MonitorAction(unittest.TestCase):
+    """Regression: --monitor is a store_true bool (shared factory), so the
+    handler must source areas from --monitor-areas, not from args.monitor.
+    Previously it did `args.monitor.split(...)` → 'bool' has no attribute 'split'
+    and monitor mode could never run.
+    """
+
+    def test_action_monitor_passes_area_string_not_bool(self):
+        from types import SimpleNamespace
+        from oida.protocols.snap7.nxc_connection import s7
+
+        inst = object.__new__(s7)
+        inst.args = SimpleNamespace(
+            monitor=True,  # store_true bool
+            monitor_areas="I,Q,M",
+            monitor_interval=0.5,
+            monitor_size=16,
+            monitor_duration=0,
+            monitor_bits=False,
+        )
+        inst.scanner = Mock()
+        inst.conn = Mock()
+
+        inst._action_monitor()
+
+        inst.scanner.monitor.assert_called_once()
+        kwargs = inst.scanner.monitor.call_args.kwargs
+        self.assertEqual(kwargs["areas"], "I,Q,M")
+        self.assertIsInstance(kwargs["areas"], str)
+
+    def test_action_monitor_defaults_areas_when_unset(self):
+        from types import SimpleNamespace
+        from oida.protocols.snap7.nxc_connection import s7
+
+        inst = object.__new__(s7)
+        inst.args = SimpleNamespace(monitor=True)  # only the bool, nothing else
+        inst.scanner = Mock()
+        inst.conn = Mock()
+
+        inst._action_monitor()
+
+        self.assertEqual(inst.scanner.monitor.call_args.kwargs["areas"], "I,Q,M")
+
+
 if __name__ == "__main__":
     unittest.main()

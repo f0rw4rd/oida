@@ -17,8 +17,29 @@ opendnp3 = pytest.importorskip("opendnp3", reason="yadnp3 (opendnp3) not install
 
 from oida.protocols.dnp3.scanner import (
     DNP3Scanner,
+    _ScanHandler,
 )
 from oida.protocols.dnp3.constants import KNOWN_ATTRIBUTES
+
+
+class TestDNP3DeviceAttributeCallback:
+    """Regression: the ISOEHandler.OnDeviceAttribute override must accept the
+    binding's 4 positional args (info, set, variation, value). A 3-arg override
+    raised 'takes 4 positional arguments but 5 were given' and silently dropped
+    every Group-0 device attribute.
+    """
+
+    def test_on_device_attribute_accepts_binding_arity(self):
+        handler = _ScanHandler.create()
+
+        class _FakeVal:
+            type = opendnp3.DeviceAttrType.VISIBLE_STRING
+            stringValue = "Acme PLC"
+
+        # Call exactly as opendnp3 invokes it: (info, set, variation, value).
+        handler.OnDeviceAttribute(None, 0, 245, _FakeVal())
+
+        assert handler.string_attrs == [{"variation": 245, "set": 0, "value": "Acme PLC"}]
 
 
 class TestDNP3ScannerInit:
@@ -1739,8 +1760,7 @@ class TestBuildSAConfig:
         if auth is None:
             return False
         return any(
-            getattr(auth, m, None) is not None
-            for m in ("SetUpdateKey", "AddUser", "AddUpdateKey")
+            getattr(auth, m, None) is not None for m in ("SetUpdateKey", "AddUser", "AddUpdateKey")
         )
 
     def test_sa_disabled_builds_plain_master_stack_config(self):
