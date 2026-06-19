@@ -49,9 +49,21 @@ class TestParseObjectId(unittest.TestCase):
         self.assertEqual(result, (0, 0))
 
     def test_parse_object_with_attributes(self):
-        obj = Mock()
-        obj.objectType = 2
-        obj.objectIdentifier = ("analogValue", 10)
+        # bacpypes3-style object: type and instance both come from the single
+        # objectIdentifier 2-tuple, not a separate objectType scalar.
+        obj = Mock(spec=["objectIdentifier"])
+        obj.objectIdentifier = (2, 10)
+        scanner = _create_instance()
+        result = scanner._parse_object_id(obj)
+        self.assertEqual(result, (2, 10))
+
+    def test_parse_object_objectidentifier_is_consistent(self):
+        # Regression: the type must be read from objectIdentifier[0], not from a
+        # mismatched objectType attribute. An object exposing a misleading
+        # objectType must be ignored in favour of the identifier tuple.
+        obj = Mock(spec=["objectIdentifier", "objectType"])
+        obj.objectType = 99  # bogus / inconsistent value, must be ignored
+        obj.objectIdentifier = (2, 10)
         scanner = _create_instance()
         result = scanner._parse_object_id(obj)
         self.assertEqual(result, (2, 10))

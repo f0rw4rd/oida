@@ -87,6 +87,11 @@ class SecurityMixin:
                                 self.logger.debug(
                                     f"fuzz peek read: {e}"
                                 )  # Expected - no response to fuzz payload
+                            except ValueError as e:
+                                # ssl.SSLSocket.recv() rejects non-zero flags
+                                # (MSG_PEEK) with ValueError. Not a fuzz error -
+                                # treat as the expected no-response path.
+                                self.logger.debug(f"fuzz peek skipped (TLS): {e}")
                     else:
                         # String payload - send as frame
                         if self._send_enq():

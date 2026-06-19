@@ -535,6 +535,27 @@ TestSearchOrders = _make_simple_search_test(
 TestSearchOrders.__qualname__ = "TestSearchOrders"
 
 
+class TestDisplayDeviceResults(unittest.TestCase):
+    """Test _display_device_results() column mapping."""
+
+    @patch("oida.utils.export_utils.print_table")
+    def test_model_number_renders_in_model_column(self, mock_print_table):
+        """Regression: parser stores the device model under 'model_number',
+        so the 'Model' column must key off 'model_number' (not 'model') or it
+        is silently dropped by the active-columns filter."""
+        host = MockSearchHost()
+        # Mirrors FHIRResourceParser.parse_device() output keys.
+        devices = [{"id": "d1", "device_name": "Pump", "model_number": "X-9000"}]
+
+        host._display_device_results(devices)
+
+        self.assertTrue(mock_print_table.called)
+        rows, headers = mock_print_table.call_args.args[0], mock_print_table.call_args.args[1]
+        self.assertIn("Model", headers)
+        model_col = headers.index("Model")
+        self.assertEqual(rows[0][model_col], "X-9000")
+
+
 class TestReadResource(unittest.TestCase):
     """Test _read_resource() method"""
 
