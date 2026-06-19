@@ -229,6 +229,43 @@ class TestAnalyzeSecurity(unittest.TestCase):
         concern_texts = " ".join(analysis["concerns"])
         self.assertIn("No protection", concern_texts)
 
+    def test_level_1_reports_no_protection_finding_level_3_does_not(self):
+        """Regression for the MEDIUM 'unreachable level-1 concern' finding.
+
+        _check_protection_level emits level 1 for an unprotected (open) PLC.
+        _analyze_security must surface that as the 'No protection' concern AND
+        an "Insecure configuration" security_finding. Before the corrected
+        max()-based level mapping, _check_protection_level never produced
+        level 1, so this branch was dead and the most severe finding (an open
+        PLC) never fired. Level 3 (password-protected) must NOT raise it.
+        """
+        # Level 1 (open PLC) -> concern + security_finding fire.
+        results_open = {"protection_level": {"level": 1}, "data_blocks": [], "memory_areas": {}}
+        analysis_open = self.host._analyze_security(results_open)
+        self.assertIn("No protection", " ".join(analysis_open["concerns"]))
+        finding_calls = [c for c in self.host.logger.security_finding.call_args_list]
+        self.assertTrue(
+            any(
+                call.args and call.args[0] == "Insecure configuration"
+                and call.kwargs.get("detail") == "protection_level=1"
+                for call in finding_calls
+            ),
+            "Level-1 open PLC must raise the 'No protection' Insecure configuration finding",
+        )
+
+        # Level 3 (password protected) -> no 'No protection' concern/finding.
+        self.host.logger.security_finding.reset_mock()
+        results_full = {"protection_level": {"level": 3}, "data_blocks": [], "memory_areas": {}}
+        analysis_full = self.host._analyze_security(results_full)
+        self.assertNotIn("No protection", " ".join(analysis_full["concerns"]))
+        self.assertFalse(
+            any(
+                call.kwargs.get("detail") == "protection_level=1"
+                for call in self.host.logger.security_finding.call_args_list
+            ),
+            "Level-3 protected PLC must NOT raise the 'No protection' finding",
+        )
+
     def test_protection_level_2_write_protected(self):
         """Test security analysis with write protection (level 2)."""
         results = {"protection_level": {"level": 2}, "data_blocks": [], "memory_areas": {}}

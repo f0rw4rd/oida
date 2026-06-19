@@ -276,20 +276,46 @@ class ICSLogger:
             verbose: Enable debug output (defaults to global setting)
         """
         self.verbose = verbose if verbose is not None else _global_verbose
-        self.extra = {
+        # The display prefix (protocol/host/port/hostname) is stored per-thread.
+        # A single ICSLogger is cached and shared across concurrent scans that
+        # map to the same protocol:host:port key (a duplicate target in the
+        # list, or two distinct hostnames that resolve to the same IP). Each
+        # scan runs on its own ThreadPoolExecutor worker and mutates
+        # ``logger.extra["host"/"hostname"/"port"]`` in place (connection.py
+        # proto_logger()/__init__). Backing ``extra`` with thread-local storage
+        # gives each worker its own copy, so concurrent scans on the same cache
+        # key cannot torn-read or cross-label each other's output. The seed
+        # below is the shared default each thread's copy is initialised from.
+        self._extra_seed = {
             "protocol": protocol.upper(),
             "host": host,
             "port": port,
             "hostname": hostname[:16] if hostname else "",
         }
-        # Findings are stored per-thread. A single ICSLogger is cached and shared
-        # across concurrent scans that map to the same protocol:host:port key
-        # (duplicate targets, or a hostname that resolves to an already-scanned
-        # IP). Each scan runs on its own ThreadPoolExecutor worker, so backing
-        # the findings buffer with thread-local storage keeps each scan's
-        # findings isolated — no cross-attaching between targets and no torn
-        # read in to_list() while another thread appends.
+        self._extra_local = threading.local()
+        # Findings are likewise stored per-thread (same shared-instance
+        # rationale): no cross-attaching between targets and no torn read in
+        # to_list() while another thread appends.
         self._findings_local = threading.local()
+
+    @property
+    def extra(self) -> Dict[str, Any]:
+        """Per-thread display-prefix dict (protocol/host/port/hostname).
+
+        Lazily seeded from ``self._extra_seed`` the first time each thread
+        touches it, so in-place mutation by one scan worker never leaks into a
+        concurrent worker that shares this cached logger instance.
+        """
+        d = getattr(self._extra_local, "data", None)
+        if d is None:
+            d = dict(self._extra_seed)
+            self._extra_local.data = d
+        return d
+
+    @extra.setter
+    def extra(self, value: Dict[str, Any]) -> None:
+        """Replace this thread's prefix dict (kept for any direct assignment)."""
+        self._extra_local.data = dict(value) if value else {}
 
     @property
     def prefix_width(self) -> int:

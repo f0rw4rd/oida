@@ -277,6 +277,33 @@ class connection(ABC):
         Must be implemented by child class.
         """
 
+    def require_confirm(self, action_name: str) -> bool:
+        """Canonical gate for destructive / live-write operations.
+
+        This is the *single idiom* every protocol should use before actuating a
+        dangerous action (write/control/start/stop/fuzz, etc.). The framework
+        adds ``--confirm`` and the dangerous flags centrally via
+        ``proto_args_factory`` and every help string promises
+        "(requires --confirm)"; this helper enforces that promise with one
+        standard check plus a standard failure log, so a new gated action only
+        needs::
+
+            if not self.require_confirm("--write-value"):
+                return
+
+        Args:
+            action_name: Human-readable name of the gated action (e.g.
+                ``"--write-value"``) used in the failure message.
+
+        Returns:
+            True if ``--confirm`` was supplied and the action may proceed;
+            False (after logging a standard failure line) otherwise.
+        """
+        if getattr(self.args, "confirm", False):
+            return True
+        self.logger.fail(f"{action_name} requires --confirm (dangerous operation)")
+        return False
+
     def login(self):
         """
         Authenticate to target (if applicable)

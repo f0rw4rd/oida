@@ -65,7 +65,10 @@ class SecurityMixin(_ScannerBase):
             if all_zero:
                 level = 0
                 desc = "Indeterminate (CPU did not expose protection SZL)"
-            elif level <= 1:
+            elif level == 1:
+                # level 1 = no protection (open PLC). _analyze_security keys
+                # the "No protection" concern off this exact value, so keep
+                # the two in lock-step (== 1, not <= 1).
                 desc = "No protection - Full read/write access"
             elif level == 2:
                 desc = "Read access - Write protected"

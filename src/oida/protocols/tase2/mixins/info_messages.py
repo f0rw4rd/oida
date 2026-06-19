@@ -162,7 +162,8 @@ class InfoMessagesMixin(_ScannerBase):
             connection: Active TASE.2 connection
             domain: Domain name
             store: IM store name
-            message_id: Message ID to read
+            message_id: Message ID to read (the msg_id emitted by
+                get_information_messages / --list-messages)
 
         Returns:
             Dict with message content, info_ref, local_ref, time_created, and any error
@@ -179,7 +180,21 @@ class InfoMessagesMixin(_ScannerBase):
         }
 
         try:
-            info_ref = int(message_id) if message_id.isdigit() else 0
+            # list-messages emits msg_id as the identifier, but the library
+            # only looks messages up by info_ref. Resolve the user-supplied
+            # msg_id to its info_ref via the message listing so the id shown
+            # to the operator is the id this method accepts.
+            info_ref = None
+            for listed in connection.get_info_messages(domain):
+                if str(listed.msg_id) == str(message_id):
+                    info_ref = listed.info_ref
+                    break
+
+            if info_ref is None:
+                result["error"] = f"Message {message_id} not found in {domain}/{store}"
+                self.logger.debug(result["error"])
+                return result
+
             msg = connection.get_info_message_by_ref(domain, info_ref)
             if msg is not None:
                 result["content"] = msg.text

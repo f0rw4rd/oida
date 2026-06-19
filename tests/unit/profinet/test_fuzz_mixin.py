@@ -241,3 +241,22 @@ class TestFuzzWritableIndices:
 
         # Should report failures and restore failure
         assert any(level == "error" for level, _ in stub.logger.messages)
+
+    def test_boundary_mode_yields_payloads_for_im_string_index(self):
+        """Regression: boundary mode must produce >0 payloads for I&M string
+        indices (0xAFF1/0xAFF2/0xAFF3/0xAFF5). Previously these were remapped
+        to the unrecognised 'bytes' type, whose boundary set is empty, so
+        boundary mode silently sent nothing."""
+        stub = FuzzMixinStub(args={"fuzz_delay": 0.001})
+        original = b"original_data_xx"
+        con = MockCon(read_data=original)
+        indices = [(0, 1, 0xAFF1)]  # I&M1 -> data_type "string" in the stub
+
+        stub._fuzz_writable_indices(con, indices, iterations=10, mode="boundary")
+
+        # Writes = boundary payloads + the final restore write. If boundary
+        # mode produced zero payloads, the only write would be the restore.
+        fuzz_writes = [w for w in con.writes if w[3] != original]
+        assert len(fuzz_writes) > 0, "boundary mode produced no payloads"
+        # And the original value is still restored at the end.
+        assert con.writes[-1] == (0, 1, 0xAFF1, original)
