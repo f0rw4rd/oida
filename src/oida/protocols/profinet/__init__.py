@@ -358,8 +358,14 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
 
         try:
             sock = profinet_mod.ethernet_socket(self.interface, 0x8892)
+        except Exception as e:
+            self.logger.fail(f"Failed to open interface for write operations: {e}")
+            return
+
+        try:
             src_mac = profinet_mod.get_mac(self.interface)
         except Exception as e:
+            sock.close()
             self.logger.fail(f"Failed to open interface for write operations: {e}")
             return
 

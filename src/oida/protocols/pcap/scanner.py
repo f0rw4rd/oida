@@ -273,6 +273,12 @@ class PcapScanner:
             self.logger.debug("_run_pyshark_pipeline: capinfos reports %d packets", total_packets)
 
         try:
+            # Bind names referenced by the except handler before any code that
+            # could raise, so an early failure (decode_as parsing, pref merge,
+            # event-loop setup) classified as a crash cannot mask the real error
+            # with an UnboundLocalError.
+            packet_count = 0
+            capture = None
             self.logger.debug("_run_pyshark_pipeline: opening capture %s", self.pcap_file)
             t0 = time.time()
 
@@ -294,7 +300,6 @@ class PcapScanner:
             if decode_as_final:
                 self.logger.debug("_run_pyshark_pipeline: decode_as=%s", decode_as_final)
 
-            packet_count = 0
             progress_interval = 200  # update every N packets
             collect_stats = bool(self.args.get("stats") or self.args.get("assets"))
 
@@ -384,7 +389,6 @@ class PcapScanner:
             # EK mode: ~18x faster NDJSON parsing vs XML/PDML.
             # Needs tshark 4.6+ EK fixes (upstream PRs #744/#743), shipped via the
             # oida-pyshark PyPI package. EK multifields are resolved in stats.py.
-            capture = None
             try:
                 capture = _pyshark.FileCapture(self.pcap_file, use_ek=True, **capture_kw)
             except Exception as e:

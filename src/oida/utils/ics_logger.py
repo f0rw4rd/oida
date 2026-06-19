@@ -337,10 +337,15 @@ class ICSLogger:
 
     def _format(self, msg: str) -> str:
         """Format message with protocol context prefix."""
-        proto = colored(self.extra["protocol"], "blue", attrs=["bold"])
-        hostname = self.extra["hostname"]
-        port = self.extra["port"]
-        host = self.extra["host"]
+        # Snapshot the per-thread prefix dict once so a concurrent in-place
+        # mutation (get_logger()/update_logger_host() updating host/hostname on
+        # a shared cached instance) cannot produce a torn read across the
+        # several field accesses below.
+        extra = self.extra
+        proto = colored(extra["protocol"], "blue", attrs=["bold"])
+        hostname = extra["hostname"]
+        port = extra["port"]
+        host = extra["host"]
         if port:
             host_part = f"{host}:{str(port):<5}"
         else:

@@ -369,6 +369,52 @@ class TestScanSlots(unittest.TestCase):
 
         self.assertEqual(len(result), 2)
 
+    @patch("time.sleep")
+    @patch("oida.protocols.snap7.scanner._identify_main_slot")
+    @patch("oida.protocols.snap7.scanner._suppress_snap7_logging")
+    def test_scan_slots_paces_every_probe_when_nothing_found(
+        self, mock_suppress, mock_main_slot, mock_sleep
+    ):
+        """Regression: pacing sleep fires between every probe, not only after
+        responding slots. Previously time.sleep(0.1) was inside the `if info:`
+        guard, so unresponsive slots (the common case while sweeping 2-7)
+        skipped pacing entirely."""
+        mock_suppress.return_value.__enter__ = Mock(return_value=None)
+        mock_suppress.return_value.__exit__ = Mock(return_value=False)
+        mock_main_slot.return_value = None
+
+        with patch.object(self.host, "_scan_single_slot", return_value=None):
+            result = self.host.scan_slots("192.168.1.100", 102)
+
+        self.assertEqual(result, [])
+        # 2 phase-1 probes + 8 phase-2 probes, all unresponsive, must each pace.
+        self.assertEqual(mock_sleep.call_count, 10)
+
+    @patch("time.sleep")
+    @patch("oida.protocols.snap7.scanner._identify_main_slot")
+    @patch("oida.protocols.snap7.scanner._suppress_snap7_logging")
+    def test_scan_slots_paces_phase1_modern_plc(
+        self, mock_suppress, mock_main_slot, mock_sleep
+    ):
+        """Regression: when a modern PLC is found in phase 1 (phase 2 skipped),
+        both phase-1 probes are still paced, including the non-responding one."""
+        mock_suppress.return_value.__enter__ = Mock(return_value=None)
+        mock_suppress.return_value.__exit__ = Mock(return_value=False)
+        mock_main_slot.return_value = None
+
+        s7_1500_info = {"rack": 0, "slot": 1, "series": "S7-1500", "order_code": "6ES7 511"}
+
+        with patch.object(
+            self.host,
+            "_scan_single_slot",
+            side_effect=[s7_1500_info, None],  # slot 1 found, slot 0 nothing
+        ):
+            result = self.host.scan_slots("192.168.1.100", 102)
+
+        self.assertEqual(len(result), 1)
+        # Both phase-1 probes paced (the responding one and the empty one).
+        self.assertEqual(mock_sleep.call_count, 2)
+
 
 class TestScanSingleSlotSetParam(unittest.TestCase):
     """Test _scan_single_slot parameter setup."""
