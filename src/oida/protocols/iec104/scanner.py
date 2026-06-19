@@ -188,6 +188,10 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         self.write_value = args.get("value") or inline_value
         self.select_execute = args.get("select-execute", False)
         self.write_type_id = args.get("write-type")
+        # Target IOA for --test-commands (falls back to --write-single's IOA).
+        self.test_command_ioa = args.get("test-command-ioa")
+        if self.test_command_ioa is None:
+            self.test_command_ioa = self.write_single_ioa
         self.write_ioa = args.get("write-ioa")
 
         # Listen/monitor mode options
@@ -839,6 +843,11 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         # Command fuzzing
         if self.fuzz_enabled:
             results["commands"] = self._fuzz_commands(client, conn)
+
+        # Command-execution test (--test-commands): probe whether the outstation
+        # accepts unauthenticated control commands.
+        if self.test_commands:
+            results["command_test"] = self._test_commands(client, conn)
 
         # Write operations (explicit value writes)
         if self._has_write_operation():
