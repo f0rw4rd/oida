@@ -1072,6 +1072,34 @@ class TestDICOMRejectInfo(unittest.TestCase):
 
         self.assertEqual(result, "Unknown")
 
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    def test_get_reject_info_rejected_info_none(self):
+        """Rejected association whose acceptor.info is None must not raise"""
+
+        scanner = _make_dicom_instance(self.mock_args)
+        scanner.assoc = MockAssociation(established=False)
+        scanner.assoc.is_rejected = True
+        scanner.assoc.acceptor.info = None
+
+        result = scanner._get_reject_info()
+
+        self.assertIn("Rejected", result)
+        self.assertIn("unknown", result)
+
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    def test_get_reject_info_rejected_info_not_dict(self):
+        """Rejected association whose acceptor.info lacks .get must not raise"""
+
+        scanner = _make_dicom_instance(self.mock_args)
+        scanner.assoc = MockAssociation(established=False)
+        scanner.assoc.is_rejected = True
+        scanner.assoc.acceptor.info = "unexpected-string"
+
+        result = scanner._get_reject_info()
+
+        self.assertIn("Rejected", result)
+        self.assertIn("unknown", result)
+
 
 class TestDICOMModuleExports(unittest.TestCase):
     """Test DICOM module exports and compatibility"""

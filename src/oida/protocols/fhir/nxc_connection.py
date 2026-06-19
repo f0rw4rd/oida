@@ -256,13 +256,12 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
 
                     self.smart_client.server.session.auth = HTTPBasicAuth(username, password)
 
-            self.logger.success(f"Connected to FHIR endpoint: {base_url}")
+            self.logger.info(f"Configured FHIR client for {base_url}")
 
             if base_url.startswith("https://"):
                 self._check_tls_certificate(base_url)
 
             self.conn = self.smart_client
-            self.results["data"]["connected"] = True
             self.results["data"]["base_url"] = base_url
             self.results["data"]["tls_enabled"] = base_url.startswith("https://")
             return True
@@ -306,6 +305,11 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             cap_stmt = capabilitystatement.CapabilityStatement.read_from(
                 "metadata", self.smart_client.server
             )
+
+            # Reachability is only proven once the /metadata round-trip succeeds;
+            # mark the connection live here rather than at client-construction time.
+            self.results["data"]["connected"] = True
+            self.logger.success(f"Connected to FHIR endpoint: {self._get_base_url()}")
 
             try:
                 self.results["data"]["capability_statement"] = cap_stmt.as_json()
@@ -367,6 +371,9 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             return True
 
         except FHIRValidationError as e:
+            # The /metadata body was received; only schema validation failed, so the
+            # endpoint is reachable. Mark connected (it is not set when read_from raises).
+            self.results["data"]["connected"] = True
             self.logger.debug(f"CapabilityStatement validation warning: {e}")
             self.results["data"]["server_info"] = {"error": "Partial CapabilityStatement"}
             return True

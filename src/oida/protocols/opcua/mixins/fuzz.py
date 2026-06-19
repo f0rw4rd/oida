@@ -171,8 +171,10 @@ class FuzzMixin:
                     crashes += 1
                 await asyncio.sleep(0.1)
 
-            # Restore original
-            if original:
+            # Restore original. read_value() always returns bytes (b"" for an
+            # empty/None-valued node), so guard on `is not None`, not truthiness,
+            # to avoid leaving an empty-but-valid node holding the last payload.
+            if original is not None:
                 await write_value(original)
 
             status = "+" if crashes == 0 and anomalies == 0 else "!"

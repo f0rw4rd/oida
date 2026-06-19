@@ -684,7 +684,27 @@ class TestCreateConnObj(unittest.TestCase):
             result = scanner.create_conn_obj()
 
         self.assertTrue(result)
-        self.assertTrue(scanner.results["data"]["connected"])
+
+    def test_does_not_mark_connected_before_metadata_fetch(self):
+        """create_conn_obj only builds the client; reachability is unproven until
+        the /metadata round-trip in enum_host_info, so connected must NOT be set
+        and no 'Connected' success line must be emitted yet."""
+        scanner = _create_scanner()
+
+        mock_client = MagicMock()
+        mock_client.server = MagicMock()
+        mock_client.server.session = MagicMock()
+
+        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+            mock_fhir.FHIRClient.return_value = mock_client
+            scanner.smart_client = None
+            scanner.conn = None
+            result = scanner.create_conn_obj()
+
+        self.assertTrue(result)
+        # connected must not be asserted prematurely (no key set, or explicitly falsey)
+        self.assertFalse(scanner.results["data"].get("connected", False))
+        scanner.logger.success.assert_not_called()
 
     def test_bearer_token_strips_prefix(self):
         """Test Bearer prefix is stripped from token"""
@@ -825,6 +845,10 @@ class TestEnumHostInfo(unittest.TestCase):
         self.assertIn("server_info", scanner.results["data"])
         self.assertEqual(scanner.results["data"]["server_info"]["fhir_version"], "4.0.1")
         self.assertEqual(scanner.results["data"]["server_info"]["vendor"], "HAPI FHIR")
+        # connected and the 'Connected' success line are only asserted once the
+        # /metadata round-trip actually returns.
+        self.assertTrue(scanner.results["data"]["connected"])
+        scanner.logger.success.assert_called()
 
     def test_404_returns_false(self):
         """Test 404 response returns False"""
@@ -836,6 +860,9 @@ class TestEnumHostInfo(unittest.TestCase):
             result = scanner.enum_host_info()
 
         self.assertFalse(result)
+        # An unreachable host must never be reported as connected.
+        self.assertFalse(scanner.results["data"].get("connected", False))
+        scanner.logger.success.assert_not_called()
 
     def test_connection_refused_returns_false(self):
         """Test connection refused returns False"""
