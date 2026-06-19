@@ -51,7 +51,18 @@ class hart(NetworkConnection):
         self.enum_host_info()
         self.print_host_info()
 
-        scan_mode = getattr(self.args, "scan_mode", "enumeration")
+        # Derive scan_mode from the --discover/--quick/--full shortcut flags
+        # (mirrors bacnet). --discover stops after device ID; --full auto-runs
+        # command enumeration + security analysis. --quick / no flag fall
+        # through to the plain enumeration path.
+        if getattr(self.args, "scan_mode", None):
+            scan_mode = self.args.scan_mode
+        elif getattr(self.args, "discover", False):
+            scan_mode = "discovery"
+        elif getattr(self.args, "full", False):
+            scan_mode = "full"
+        else:
+            scan_mode = "enumeration"
 
         # Discovery mode stops after device identification — no further probing
         if scan_mode == "discovery" and not self._has_specific_action():

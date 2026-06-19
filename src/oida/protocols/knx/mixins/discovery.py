@@ -531,6 +531,15 @@ class DiscoveryMixin:
         self.logger.debug("Testing routing capabilities")
         routing_test = {"routing_supported": False, "errors": []}
 
+        # Sending the probe telegram is a live write onto the bus, so it is
+        # gated behind --confirm like other dangerous KNX operations.
+        if not self.args.get("confirm"):
+            self.logger.fail(
+                "--test-routing requires --confirm flag (DANGEROUS operation)"
+            )
+            routing_test["error"] = "Missing --confirm flag"
+            return routing_test
+
         try:
             # Test routing by sending a GroupValueWrite telegram. xknx requires
             # an APCI instance as the payload (raw bytes raise ConversionError

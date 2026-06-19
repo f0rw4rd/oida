@@ -463,7 +463,13 @@ class dicom(
 
         # Recursive bulk export (--dump-all)
         if getattr(self.args, "dump_all", False):
-            self._recursive_bulk_export()
+            if not getattr(self.args, "confirm", False):
+                self.logger.fail(
+                    "--dump-all performs recursive bulk C-GET of every patient/study "
+                    "(mass PHI exfiltration) — requires --confirm"
+                )
+            else:
+                self._recursive_bulk_export()
 
         # C-GET operations (retrieve images)
         if getattr(self.args, "get", False):

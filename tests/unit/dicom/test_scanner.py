@@ -2022,5 +2022,66 @@ class TestDICOMHandleStoreEdgeCases(unittest.TestCase):
         self.assertEqual(result, 0x0000)
 
 
+class TestDICOMDumpAllConfirmGate(unittest.TestCase):
+    """--dump-all (mass PHI bulk C-GET) must be gated behind --confirm."""
+
+    def _make_args(self, confirm):
+        args = Mock()
+        args.port = 11112
+        args.timeout = 5
+        args.aet = "OIDA"
+        args.called_aet = "ANY"
+        args.tls = False
+        args.verbose = 0
+        args.find = False
+        args.get = False
+        args.store = False
+        args.move = False
+        args.aet_brute = None
+        args.common_ae = False
+        args.confirm = confirm
+        args.probe_ops = False
+        args.worklist = False
+        args.dump_all = True
+        args.fuzz = False
+        args.enum_operators = False
+        args.enum_devices = False
+        args.time_analysis = False
+        return args
+
+    def _run_proto_flow(self, scanner):
+        # Neutralise every other workflow step so only the --dump-all branch
+        # exercises real logic; create_conn_obj returns True so the body runs.
+        with (
+            patch.object(scanner, "create_conn_obj", return_value=True),
+            patch.object(scanner, "enum_host_info"),
+            patch.object(scanner, "print_host_info"),
+            patch.object(scanner, "_analyze_security"),
+            patch.object(scanner, "_export_results"),
+            patch.object(scanner, "_disconnect"),
+            patch.object(scanner, "_recursive_bulk_export") as mock_export,
+        ):
+            scanner.proto_flow()
+        return mock_export
+
+    def test_dump_all_skipped_without_confirm(self):
+        scanner = _make_dicom_instance(self._make_args(confirm=False))
+        scanner.logger = Mock()
+
+        mock_export = self._run_proto_flow(scanner)
+
+        mock_export.assert_not_called()
+        scanner.logger.fail.assert_called_once()
+        self.assertIn("--confirm", scanner.logger.fail.call_args[0][0])
+
+    def test_dump_all_runs_with_confirm(self):
+        scanner = _make_dicom_instance(self._make_args(confirm=True))
+        scanner.logger = Mock()
+
+        mock_export = self._run_proto_flow(scanner)
+
+        mock_export.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -568,3 +568,87 @@ class TestProtoFlow:
         scanner.enumerate_commands.assert_not_called()
         scanner.security_analysis.assert_not_called()
         scanner.read_all_variables.assert_not_called()
+
+    # --- scan_mode derived from the --discover/--full shortcut flags ---
+    # The real HART argparse Namespace has no scan_mode attribute; proto_flow
+    # must derive it from the boolean discovery flags (finding #1).
+    def test_proto_flow_discover_flag_stops_early(self):
+        # No scan_mode attr at all; only --discover set.
+        args = _full_args(discover=True, full=False, quick=False)
+        del args.scan_mode
+        h = _flow_nxc(args)
+        h._convert_args_to_dict = MagicMock(return_value={"rhost": "10.0.0.5"})
+        scanner = MagicMock()
+        scanner.connect.return_value = MagicMock()
+        scanner.psk_identity = None
+        scanner.psk_key = None
+        scanner.cipher_suite = None
+        scanner.read_device_info.return_value = None
+        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+            h.proto_flow()
+        scanner.enumerate_commands.assert_not_called()
+        scanner.security_analysis.assert_not_called()
+        scanner.read_all_variables.assert_not_called()
+
+    def test_proto_flow_full_flag_runs_enum_and_security(self):
+        # No scan_mode attr; only --full set -> auto enum + security.
+        args = _full_args(discover=False, full=True, quick=False)
+        del args.scan_mode
+        h = _flow_nxc(args)
+        h._convert_args_to_dict = MagicMock(return_value={"rhost": "10.0.0.5"})
+        scanner = MagicMock()
+        scanner.connect.return_value = MagicMock()
+        scanner.psk_identity = None
+        scanner.psk_key = None
+        scanner.cipher_suite = None
+        scanner.read_device_info.return_value = None
+        scanner.read_all_variables.return_value = []
+        scanner.read_output_info.return_value = {}
+        scanner.enumerate_commands.return_value = {"supported": [0], "unsupported": []}
+        scanner.security_analysis.return_value = [{"severity": "high", "issue": "x"}]
+        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+            h.proto_flow()
+        scanner.enumerate_commands.assert_called_once()
+        scanner.security_analysis.assert_called_once()
+
+    def test_proto_flow_enumerate_device_specific_flag_reaches_handler(self):
+        # --enumerate-device-specific now reaches its handler (finding #2).
+        args = _full_args(enumerate_device_specific=True, command_range="128-130")
+        del args.scan_mode
+        h = _flow_nxc(args)
+        h._convert_args_to_dict = MagicMock(return_value={"rhost": "10.0.0.5"})
+        scanner = MagicMock()
+        scanner.connect.return_value = MagicMock()
+        scanner.psk_identity = None
+        scanner.psk_key = None
+        scanner.cipher_suite = None
+        scanner.read_device_info.return_value = None
+        scanner.read_all_variables.return_value = []
+        scanner.read_output_info.return_value = {}
+        scanner.enumerate_device_specific_commands.return_value = [129]
+        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+            h.proto_flow()
+        scanner.enumerate_device_specific_commands.assert_called_once()
+        assert h.results["data"]["device_specific_commands"] == [129]
+
+    def test_proto_flow_probe_write_flag_reaches_handler(self):
+        # --probe-write reaches _handle_command_probes (finding #2). With
+        # --confirm it runs security_analysis; the handler is now reachable.
+        args = _full_args(probe_write=True, confirm=True)
+        del args.scan_mode
+        h = _flow_nxc(args)
+        h._convert_args_to_dict = MagicMock(return_value={"rhost": "10.0.0.5"})
+        scanner = MagicMock()
+        scanner.connect.return_value = MagicMock()
+        scanner.psk_identity = None
+        scanner.psk_key = None
+        scanner.cipher_suite = None
+        scanner.read_device_info.return_value = None
+        scanner.read_all_variables.return_value = []
+        scanner.read_output_info.return_value = {}
+        scanner.security_analysis.return_value = [
+            {"severity": "high", "issue": "Write command accessible"}
+        ]
+        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+            h.proto_flow()
+        assert "command_probes" in h.results["data"]

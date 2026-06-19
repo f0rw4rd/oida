@@ -55,3 +55,31 @@ class TestHARTProtoArgs:
 
     def test_read_all_vars_flag(self):
         assert _parse("--read-all-vars").read_all_vars is True
+
+    # Discovery shortcut flags drive scan_mode in proto_flow (finding #1).
+    def test_discover_flag(self):
+        assert _parse("--discover").discover is True
+
+    def test_full_flag(self):
+        assert _parse("--full").full is True
+
+    def test_quick_flag(self):
+        assert _parse("--quick").quick is True
+
+    # Previously-unregistered flags whose handlers were unreachable (finding #2).
+    def test_enumerate_device_specific_flag(self):
+        assert _parse("--enumerate-device-specific").enumerate_device_specific is True
+
+    def test_probe_calibration_flag(self):
+        assert _parse("--probe-calibration").probe_calibration is True
+
+    def test_probe_write_flag(self):
+        assert _parse("--probe-write").probe_write is True
+
+    def test_enumerate_device_specific_default_false(self):
+        assert _parse().enumerate_device_specific is False
+
+    def test_probe_flags_default_false(self):
+        args = _parse()
+        assert args.probe_calibration is False
+        assert args.probe_write is False

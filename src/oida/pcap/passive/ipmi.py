@@ -186,8 +186,13 @@ class IPMIPassiveListener(PySharkListenerBase):
             payload_type = str(self.get_field(ipmi, "payloadtype", "") or "")
             payload_type_name = PAYLOAD_TYPES.get(payload_type, payload_type)
 
-        # Determine direction: port 623 is the BMC
-        is_to_bmc = dst_port == 623
+        # Determine direction. IPMI/RMCP runs on UDP/623 by convention, but the
+        # BMC can sit behind NAT/port-forwarding or appear on a non-standard
+        # port. Use the canonical port if either side has it; otherwise fall
+        # back to "lower port wins" (the BMC listens on the smaller fixed port,
+        # the client uses an ephemeral high port) — same heuristic as the
+        # modbus/iec104/mms cluster.
+        is_to_bmc = dst_port == 623 or (dst_port != 623 and src_port != 623 and dst_port < src_port)
         direction = "request" if is_to_bmc else "response"
 
         # Build operation
@@ -198,8 +203,12 @@ class IPMIPassiveListener(PySharkListenerBase):
         else:
             operation = "IPMI/RMCP"
 
-        # Detect cipher-zero (auth type None with active session)
-        if auth_type in ("0x00", "0") and session_id and session_id != "0x00000000":
+        # Detect cipher-zero (auth type None with active session). The session
+        # id must be compared numerically: in EK mode get_field() returns it as
+        # a decimal string ("0"), while XML mode yields "0x00000000". Both
+        # render a not-yet-established session (Open Session / RAKP setup) that
+        # must NOT be flagged. _parse_int normalizes both forms.
+        if auth_type in ("0x00", "0") and self._parse_int(session_id, 0) != 0:
             detail = "[!] Cipher-zero (no auth)"
             self.logger.warning(
                 f"IPMI cipher-zero detected: {src_ip} -> {dst_ip} session={session_id}"

@@ -156,6 +156,11 @@ Examples:
         metavar="RANGE",
         help="Command range to enumerate (default: 0-48)",
     )
+    scan_group.add_argument(
+        "--enumerate-device-specific",
+        action="store_true",
+        help="Enumerate device-specific commands (128-253, honors --command-range)",
+    )
 
     # Security Options
     security_group = hart_parser.add_argument_group("Security Options")
@@ -256,6 +261,16 @@ Examples:
         "--master-reset",
         action="store_true",
         help="Perform master reset - DANGEROUS (Command 42)",
+    )
+    write_group.add_argument(
+        "--probe-calibration",
+        action="store_true",
+        help="Probe calibration command accessibility (requires --confirm)",
+    )
+    write_group.add_argument(
+        "--probe-write",
+        action="store_true",
+        help="Probe write command accessibility (requires --confirm)",
     )
 
     # Standard dangerous operations (--confirm, --fuzz, --fuzz-iterations)

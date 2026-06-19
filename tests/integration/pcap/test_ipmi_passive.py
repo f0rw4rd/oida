@@ -236,3 +236,181 @@ class TestIPMIPassive:
                 assert ix.direction == "response", (
                     f"Packet from port 623 should be response, got {ix.direction}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Unit-level regression tests (no pyshark/tshark required).
+#
+# These feed lightweight fake packets directly into process_packet() to
+# exercise the two fixed code paths in isolation:
+#   1. direction on non-standard BMC ports (lower-port-wins fallback)
+#   2. cipher-zero detection across EK (decimal) and XML (hex) session-id forms
+# ---------------------------------------------------------------------------
+
+
+class _FakeLayer:
+    """Minimal stand-in for a pyshark layer (plain attribute access)."""
+
+    def __init__(self, **fields):
+        self.__dict__.update(fields)
+
+
+class _FakeIPLayer(_FakeLayer):
+    pass
+
+
+class _FakePacket:
+    """Minimal fake packet exposing only the layers process_packet reads.
+
+    Deliberately omits ``data``/``eth`` so RAKP body parsing and MAC lookup
+    short-circuit cleanly; the listener only needs ip + udp + ipmi_session
+    for the direction and cipher-zero logic under test.
+    """
+
+    def __init__(self, src_ip, dst_ip, src_port, dst_port, ipmi_fields):
+        self.ip = _FakeIPLayer(src=src_ip, dst=dst_ip)
+        self.udp = _FakeLayer(srcport=src_port, dstport=dst_port, stream="0")
+        self.ipmi_session = _FakeLayer(**ipmi_fields)
+
+
+def _make_listener():
+    from oida.pcap.passive.ipmi import IPMIPassiveListener
+
+    return IPMIPassiveListener(interface="lo", timeout=10)
+
+
+class TestIPMIDirectionFallback:
+    """Direction must be correct even when the BMC is not on UDP/623."""
+
+    def test_non_standard_port_to_bmc_is_request(self):
+        """BMC on a non-standard low port (6230): client->BMC is a request.
+
+        Lower-port-wins: dst 6230 < src 49152, so dst is the BMC side.
+        """
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.10",
+            dst_ip="192.168.50.20",
+            src_port=49152,
+            dst_port=6230,
+            # RMCP+ Open Session Request (EK decimal payloadtype 16)
+            ipmi_fields={"authtype": "6", "id": "0", "payloadtype": "16"},
+        )
+        listener.process_packet(pkt)
+        assert listener.interactions, "no interaction recorded"
+        ix = listener.interactions[0]
+        assert ix.direction == "request", (
+            f"client->BMC on non-standard port should be 'request', got {ix.direction}"
+        )
+        # The BMC (lower port, dst) must be registered as the BMC, not the client.
+        device_types = {d.device_type for d in listener.discovered_devices.values()}
+        assert "IPMI BMC" in device_types, f"BMC not tracked correctly: {device_types}"
+
+    def test_non_standard_port_from_bmc_is_response(self):
+        """BMC reply (src 6230 < dst 49152) is a response."""
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.20",
+            dst_ip="192.168.50.10",
+            src_port=6230,
+            dst_port=49152,
+            ipmi_fields={"authtype": "6", "id": "0", "payloadtype": "17"},
+        )
+        listener.process_packet(pkt)
+        assert listener.interactions, "no interaction recorded"
+        ix = listener.interactions[0]
+        assert ix.direction == "response", (
+            f"BMC->client on non-standard port should be 'response', got {ix.direction}"
+        )
+
+    def test_standard_port_623_still_request(self):
+        """The canonical-port path is unchanged: dst==623 stays a request."""
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.10",
+            dst_ip="192.168.50.20",
+            src_port=49152,
+            dst_port=623,
+            ipmi_fields={"authtype": "6", "id": "0", "payloadtype": "16"},
+        )
+        listener.process_packet(pkt)
+        assert listener.interactions[0].direction == "request"
+
+
+class TestIPMICipherZeroEKMode:
+    """Cipher-zero detection must work in EK mode and not false-positive."""
+
+    def test_ek_zero_session_no_false_positive(self):
+        """EK mode renders an unestablished session id as decimal '0'.
+
+        Open Session / RAKP setup carries authtype=None(0) + session id 0
+        *before* a session exists — this must NOT be flagged cipher-zero.
+        """
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.10",
+            dst_ip="192.168.50.20",
+            src_port=49152,
+            dst_port=623,
+            ipmi_fields={"authtype": "0", "id": "0", "payloadtype": "16"},
+        )
+        listener.process_packet(pkt)
+        cipher_zero = [c for c in listener.credentials if c.credential_type == "cipher_zero"]
+        assert not cipher_zero, "EK-mode session id '0' (no session) falsely flagged as cipher-zero"
+
+    def test_ek_active_session_detected(self):
+        """EK mode: authtype None + a real (non-zero, decimal) session id detects."""
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.10",
+            dst_ip="192.168.50.20",
+            src_port=49152,
+            dst_port=623,
+            # 268435457 == 0x10000001, a real established session id (decimal in EK).
+            ipmi_fields={"authtype": "0", "id": "268435457", "payloadtype": "0"},
+        )
+        listener.process_packet(pkt)
+        cipher_zero = [c for c in listener.credentials if c.credential_type == "cipher_zero"]
+        assert cipher_zero, "EK-mode active no-auth session not flagged as cipher-zero"
+
+    def test_xml_hex_zero_session_no_false_positive(self):
+        """XML mode: '0x00000000' session id must still be excluded."""
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.10",
+            dst_ip="192.168.50.20",
+            src_port=49152,
+            dst_port=623,
+            ipmi_fields={"authtype": "0x00", "id": "0x00000000", "payloadtype": "0x10"},
+        )
+        listener.process_packet(pkt)
+        cipher_zero = [c for c in listener.credentials if c.credential_type == "cipher_zero"]
+        assert not cipher_zero, "XML-mode zero session id falsely flagged as cipher-zero"
+
+    def test_xml_hex_active_session_detected(self):
+        """XML mode: hex non-zero session id with authtype None detects."""
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.10",
+            dst_ip="192.168.50.20",
+            src_port=49152,
+            dst_port=623,
+            ipmi_fields={"authtype": "0x00", "id": "0x10000001", "payloadtype": "0x00"},
+        )
+        listener.process_packet(pkt)
+        cipher_zero = [c for c in listener.credentials if c.credential_type == "cipher_zero"]
+        assert cipher_zero, "XML-mode active no-auth session not flagged as cipher-zero"
+
+    def test_cipher_zero_detected_on_non_standard_port(self):
+        """Cipher-zero is no longer gated on port 623 (BMC on 6230)."""
+        listener = _make_listener()
+        pkt = _FakePacket(
+            src_ip="192.168.50.10",
+            dst_ip="192.168.50.20",
+            src_port=49152,
+            dst_port=6230,
+            ipmi_fields={"authtype": "0", "id": "268435457", "payloadtype": "0"},
+        )
+        listener.process_packet(pkt)
+        cipher_zero = [c for c in listener.credentials if c.credential_type == "cipher_zero"]
+        assert cipher_zero, "cipher-zero on non-standard BMC port not detected"
