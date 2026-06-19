@@ -377,3 +377,73 @@ def caplog_at(level):
         yield
     finally:
         root.removeHandler(handler)
+
+
+class TestExportResultsDoesNotMutate:
+    """export_results must not destructively edit caller-owned result dicts.
+
+    Regression for CODE_REVIEW.md cli.py:303-308: the 'collect tables' loop
+    used data.pop('tables', ...) which silently stripped 'tables' from the
+    live result dicts, so a second consumer (or a re-export) would see
+    truncated data. The read loop must leave the source dict intact.
+    """
+
+    def _results_with_tables(self):
+        return [
+            {
+                "host": "10.0.0.1",
+                "ip": "10.0.0.1",
+                "protocol": "pcap",
+                "port": 0,
+                "success": True,
+                "data": {
+                    "identified": True,
+                    "tables": [
+                        {"name": "creds", "rows": [{"user": "admin"}]},
+                    ],
+                },
+            },
+        ]
+
+    def test_tables_still_present_after_export(self, tmp_path):
+        from oida.cli import export_results
+
+        results = self._results_with_tables()
+        export_results(
+            results,
+            str(tmp_path),
+            "json",
+            protocol_name="pcap",
+        )
+
+        # The live result dict must still carry its 'tables' payload.
+        assert "tables" in results[0]["data"]
+        assert results[0]["data"]["tables"] == [
+            {"name": "creds", "rows": [{"user": "admin"}]},
+        ]
+
+    def test_tables_excluded_from_json_dump(self, tmp_path):
+        import json as _json
+
+        from oida.cli import export_results
+
+        results = self._results_with_tables()
+        export_results(results, str(tmp_path), "json", protocol_name="pcap")
+
+        with open(tmp_path / "pcap.json") as f:
+            dumped = _json.load(f)
+
+        # tables are written to dedicated CSV files, not the JSON dump
+        assert "tables" not in dumped[0]["data"]
+        # ...but the source dict is untouched
+        assert "tables" in results[0]["data"]
+
+    def test_repeated_export_sees_same_data(self, tmp_path):
+        from oida.cli import export_results
+
+        results = self._results_with_tables()
+        export_results(results, str(tmp_path / "a"), "json", protocol_name="pcap")
+        # second consumer must still see the tables
+        export_results(results, str(tmp_path / "b"), "json", protocol_name="pcap")
+
+        assert "tables" in results[0]["data"]

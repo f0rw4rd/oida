@@ -298,20 +298,32 @@ def export_results(
     output_dir = output_path
     os.makedirs(output_dir, exist_ok=True)
 
-    # Collect per-table data from pcap results for dedicated file export
+    # Collect per-table data from pcap results for dedicated file export.
+    # Read without mutating the caller-owned result dicts; ``tables`` are
+    # written to dedicated CSV files below, so they are excluded from the
+    # JSON/CSV dumps at export time rather than by deleting them in place.
     all_tables: List[Dict[str, Any]] = []
     for r in results:
         data = r.get("data", {})
         if isinstance(data, dict):
-            tables = data.pop("tables", [])
+            tables = data.get("tables", [])
             if tables:
                 all_tables.extend(tables)
 
     for fmt in formats:
         if fmt == "json":
             json_path = os.path.join(output_dir, f"{protocol_name}.json")
+            export_results_json = [
+                {
+                    **r,
+                    "data": {k: v for k, v in r["data"].items() if k != "tables"},
+                }
+                if isinstance(r.get("data"), dict) and "tables" in r["data"]
+                else r
+                for r in results
+            ]
             with open(json_path, "w") as f:
-                json.dump(results, f, indent=2, default=str)
+                json.dump(export_results_json, f, indent=2, default=str)
             _log.debug("Results exported to %s", json_path)
 
         elif fmt == "csv":
@@ -331,6 +343,9 @@ def export_results(
                 data = r.get("data", {})
                 if isinstance(data, dict):
                     for key, value in data.items():
+                        # ``tables`` get their own dedicated CSV files
+                        if key == "tables":
+                            continue
                         # Convert complex values to strings
                         if isinstance(value, (dict, list)):
                             flat[f"data_{key}"] = json.dumps(value, default=str)

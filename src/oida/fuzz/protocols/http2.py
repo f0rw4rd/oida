@@ -205,6 +205,10 @@ class HTTP2Fuzzer(BaseFuzzer):
             RequestInfo("HTTP2_Goaway", "GOAWAY frame with debug data", "standard"),
             RequestInfo("HTTP2_Priority", "PRIORITY frame dependency chains", "standard"),
             RequestInfo("HTTP2_Push_Promise", "PUSH_PROMISE server push testing", "standard"),
+            RequestInfo("HTTP2_Ping", "PING frame keepalive testing", "standard"),
+            RequestInfo(
+                "HTTP2_Rst_Stream", "RST_STREAM frame with error code variations", "standard"
+            ),
             # Phase 6: Content Payload Fuzzing
             RequestInfo("HTTP2_Content_POST_JSON", "JSON body fuzzing over HTTP/2", "content"),
             RequestInfo(
@@ -1183,96 +1187,119 @@ class HTTP2Fuzzer(BaseFuzzer):
             )
 
         # Additional standard frames
-        ping = Request(
-            "http2_ping",
-            children=(
-                Static(default_value=b"\x00\x00\x08"),  # Length: 8 bytes
-                Byte(name="type", default_value=self.PING),
-                Byte(name="flags", default_value=0),  # No ACK
-                DWord(name="stream_id", default_value=0, endian=">"),  # Connection-level
-                QWord(name="ping_data", default_value=0x1234567890ABCDEF, endian=">"),
-            ),
-        )
-        self.session.connect(ping)
-
-        window_update = Request(
-            "http2_window_update",
-            children=(
-                Static(default_value=b"\x00\x00\x04"),  # Length: 4 bytes
-                Byte(name="type", default_value=self.WINDOW_UPDATE),
-                Byte(name="flags", default_value=0),
-                DWord(name="stream_id", default_value=0, endian=">"),  # Connection-level
-                DWord(name="window_increment", default_value=65536, endian=">"),
-            ),
-        )
-        self.session.connect(window_update)
-
-        rst_stream = Request(
-            "http2_rst_stream",
-            children=(
-                Static(default_value=b"\x00\x00\x04"),  # Length: 4 bytes
-                Byte(name="type", default_value=self.RST_STREAM),
-                Byte(name="flags", default_value=0),
-                DWord(name="stream_id", default_value=1, endian=">"),
-                Group(
-                    "error_code",
-                    values=[
-                        struct.pack(">I", self.NO_ERROR),
-                        struct.pack(">I", self.PROTOCOL_ERROR),
-                        struct.pack(">I", self.FLOW_CONTROL_ERROR),
-                        struct.pack(">I", self.STREAM_CLOSED),
-                        struct.pack(">I", self.FRAME_SIZE_ERROR),
-                        struct.pack(">I", self.REFUSED_STREAM),
-                        struct.pack(">I", self.CANCEL),
-                        struct.pack(">I", self.COMPRESSION_ERROR),
-                    ],
+        if self.is_request_enabled("HTTP2_Ping"):
+            ping = Request(
+                "http2_ping",
+                children=(
+                    Static(default_value=b"\x00\x00\x08"),  # Length: 8 bytes
+                    Byte(name="type", default_value=self.PING),
+                    Byte(name="flags", default_value=0),  # No ACK
+                    DWord(name="stream_id", default_value=0, endian=">"),  # Connection-level
+                    QWord(name="ping_data", default_value=0x1234567890ABCDEF, endian=">"),
                 ),
-            ),
-        )
-        self.session.connect(rst_stream)
+            )
+            self.session.connect(ping)
+            self.register_request("HTTP2_Ping", "PING frame keepalive testing", "standard")
+
+        if self.is_request_enabled("HTTP2_Window_Attack"):
+            window_update = Request(
+                "http2_window_update",
+                children=(
+                    Static(default_value=b"\x00\x00\x04"),  # Length: 4 bytes
+                    Byte(name="type", default_value=self.WINDOW_UPDATE),
+                    Byte(name="flags", default_value=0),
+                    DWord(name="stream_id", default_value=0, endian=">"),  # Connection-level
+                    DWord(name="window_increment", default_value=65536, endian=">"),
+                ),
+            )
+            self.session.connect(window_update)
+
+        if self.is_request_enabled("HTTP2_Rst_Stream"):
+            rst_stream = Request(
+                "http2_rst_stream",
+                children=(
+                    Static(default_value=b"\x00\x00\x04"),  # Length: 4 bytes
+                    Byte(name="type", default_value=self.RST_STREAM),
+                    Byte(name="flags", default_value=0),
+                    DWord(name="stream_id", default_value=1, endian=">"),
+                    Group(
+                        "error_code",
+                        values=[
+                            struct.pack(">I", self.NO_ERROR),
+                            struct.pack(">I", self.PROTOCOL_ERROR),
+                            struct.pack(">I", self.FLOW_CONTROL_ERROR),
+                            struct.pack(">I", self.STREAM_CLOSED),
+                            struct.pack(">I", self.FRAME_SIZE_ERROR),
+                            struct.pack(">I", self.REFUSED_STREAM),
+                            struct.pack(">I", self.CANCEL),
+                            struct.pack(">I", self.COMPRESSION_ERROR),
+                        ],
+                    ),
+                ),
+            )
+            self.session.connect(rst_stream)
+            self.register_request(
+                "HTTP2_Rst_Stream", "RST_STREAM frame with error code variations", "standard"
+            )
 
         # SETTINGS variations
-        settings_variations = Request(
-            "http2_settings_variations",
-            children=(
-                Static(default_value=b"\x00\x00\x24"),  # Length: 36 bytes (6 settings x 6 bytes)
-                Byte(name="type", default_value=self.SETTINGS),
-                Byte(name="flags", default_value=0),
-                DWord(name="stream_id", default_value=0, endian=">"),
-                Word(name="setting1_id", default_value=self.SETTINGS_HEADER_TABLE_SIZE, endian=">"),
-                DWord(name="setting1_val", default_value=4096, endian=">"),
-                Word(name="setting2_id", default_value=self.SETTINGS_ENABLE_PUSH, endian=">"),
-                DWord(name="setting2_val", default_value=1, endian=">"),
-                Word(
-                    name="setting3_id",
-                    default_value=self.SETTINGS_MAX_CONCURRENT_STREAMS,
-                    endian=">",
+        if self.is_request_enabled("HTTP2_Settings_Attack"):
+            settings_variations = Request(
+                "http2_settings_variations",
+                children=(
+                    Static(
+                        default_value=b"\x00\x00\x24"
+                    ),  # Length: 36 bytes (6 settings x 6 bytes)
+                    Byte(name="type", default_value=self.SETTINGS),
+                    Byte(name="flags", default_value=0),
+                    DWord(name="stream_id", default_value=0, endian=">"),
+                    Word(
+                        name="setting1_id",
+                        default_value=self.SETTINGS_HEADER_TABLE_SIZE,
+                        endian=">",
+                    ),
+                    DWord(name="setting1_val", default_value=4096, endian=">"),
+                    Word(name="setting2_id", default_value=self.SETTINGS_ENABLE_PUSH, endian=">"),
+                    DWord(name="setting2_val", default_value=1, endian=">"),
+                    Word(
+                        name="setting3_id",
+                        default_value=self.SETTINGS_MAX_CONCURRENT_STREAMS,
+                        endian=">",
+                    ),
+                    DWord(name="setting3_val", default_value=100, endian=">"),
+                    Word(
+                        name="setting4_id",
+                        default_value=self.SETTINGS_INITIAL_WINDOW_SIZE,
+                        endian=">",
+                    ),
+                    DWord(name="setting4_val", default_value=65535, endian=">"),
+                    Word(
+                        name="setting5_id", default_value=self.SETTINGS_MAX_FRAME_SIZE, endian=">"
+                    ),
+                    DWord(name="setting5_val", default_value=16384, endian=">"),
+                    Word(
+                        name="setting6_id",
+                        default_value=self.SETTINGS_MAX_HEADER_LIST_SIZE,
+                        endian=">",
+                    ),
+                    DWord(name="setting6_val", default_value=8192, endian=">"),
                 ),
-                DWord(name="setting3_val", default_value=100, endian=">"),
-                Word(
-                    name="setting4_id", default_value=self.SETTINGS_INITIAL_WINDOW_SIZE, endian=">"
-                ),
-                DWord(name="setting4_val", default_value=65535, endian=">"),
-                Word(name="setting5_id", default_value=self.SETTINGS_MAX_FRAME_SIZE, endian=">"),
-                DWord(name="setting5_val", default_value=16384, endian=">"),
-                Word(
-                    name="setting6_id", default_value=self.SETTINGS_MAX_HEADER_LIST_SIZE, endian=">"
-                ),
-                DWord(name="setting6_val", default_value=8192, endian=">"),
-            ),
-        )
-        self.session.connect(settings_variations)
+            )
+            self.session.connect(settings_variations)
 
-        settings_ack = Request(
-            "http2_settings_ack",
-            children=(
-                Static(default_value=b"\x00\x00\x00"),  # Length: 0 bytes for ACK
-                Byte(name="type", default_value=self.SETTINGS),
-                Byte(name="flags", default_value=self.FLAG_ACK),
-                DWord(name="stream_id", default_value=0, endian=">"),
-            ),
-        )
-        self.session.connect(settings_ack)
+            settings_ack = Request(
+                "http2_settings_ack",
+                children=(
+                    Static(default_value=b"\x00\x00\x00"),  # Length: 0 bytes for ACK
+                    Byte(name="type", default_value=self.SETTINGS),
+                    Byte(name="flags", default_value=self.FLAG_ACK),
+                    DWord(name="stream_id", default_value=0, endian=">"),
+                ),
+            )
+            self.session.connect(settings_ack)
+            self.register_request(
+                "HTTP2_Settings_Attack", "Invalid SETTINGS values and boundaries", "protocol"
+            )
 
         # ================================================================
         # PHASE 6: CONTENT PAYLOAD FUZZING

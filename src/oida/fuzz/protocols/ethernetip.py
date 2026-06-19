@@ -2077,6 +2077,8 @@ class EtherNetIPFuzzer(BaseFuzzer):
         if self.is_request_enabled("EIP_Baseline"):
             self.session.connect(quick_eip_coverage)  # All 10 EIP commands
             self.session.connect(quick_cip_coverage)  # All 21 CIP services
+
+        if self.is_request_enabled("CIP_Class_Enumeration"):
             self.session.connect(cip_class_enumeration)  # Well-known CIP object classes
 
         # ==================== PHASE 2: HIGH-CRASH TESTS (~3 min) ====================

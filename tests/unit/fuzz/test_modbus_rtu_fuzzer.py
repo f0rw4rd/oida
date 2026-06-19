@@ -345,6 +345,28 @@ class TestModbusRTURequestDefinitions:
         names = [d.name for d in definitions]
         assert "RTU_Invalid_FC" in names
 
+    def test_no_phantom_request_definitions(self):
+        """Every advertised request must be gated by is_request_enabled().
+
+        Regression for the phantom RTU_Combined_Attacks definition: it was
+        advertised by --list-requests but had no Request built and no
+        is_request_enabled() gate, so --enable RTU_Combined_Attacks fuzzed
+        nothing. Guard that no advertised name lacks a runtime gate.
+        """
+        import inspect
+
+        source = inspect.getsource(ModbusRTUFuzzer._define_protocol)
+        names = [d.name for d in ModbusRTUFuzzer.get_request_definitions()]
+        missing = [
+            name for name in names if f'is_request_enabled("{name}")' not in source
+        ]
+        assert not missing, f"Advertised requests with no is_request_enabled() gate: {missing}"
+
+    def test_combined_attacks_not_advertised(self):
+        """RTU_Combined_Attacks was a phantom and must stay removed unless implemented."""
+        names = [d.name for d in ModbusRTUFuzzer.get_request_definitions()]
+        assert "RTU_Combined_Attacks" not in names
+
 
 class TestModbusRTUProtocolOptions:
     """Test Modbus RTU protocol-specific options."""

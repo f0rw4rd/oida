@@ -99,9 +99,36 @@ def test_enable_whitelists_single_request():
     config = _make_config(enabled_requests=["EIP_Baseline"])
     connected = _connected_names(_build(config))
 
-    # EIP_Baseline wires the quick-coverage + class-enumeration requests.
+    # EIP_Baseline wires the quick-coverage requests. CIP_Class_Enumeration is
+    # its own advertised group and must NOT ride along under EIP_Baseline.
     assert connected == {
         "Quick_EIP_Coverage",
         "Quick_CIP_Coverage",
-        "CIP_Class_Enumeration",
     }
+
+
+def test_cip_class_enumeration_independently_selectable():
+    """CIP_Class_Enumeration has its own gate, decoupled from EIP_Baseline.
+
+    Regression guard for CODE_REVIEW.md ethernetip.py:210-215: the
+    cip_class_enumeration request was connected inside the EIP_Baseline gate,
+    so --enable CIP_Class_Enumeration ran nothing and --disable
+    CIP_Class_Enumeration could not suppress it.
+    """
+    # --enable CIP_Class_Enumeration alone connects exactly that request.
+    enabled = _connected_names(
+        _build(_make_config(enabled_requests=["CIP_Class_Enumeration"]))
+    )
+    assert enabled == {"CIP_Class_Enumeration"}
+
+    # --enable EIP_Baseline alone must NOT pull in CIP_Class_Enumeration.
+    baseline = _connected_names(_build(_make_config(enabled_requests=["EIP_Baseline"])))
+    assert "CIP_Class_Enumeration" not in baseline
+
+    # --disable CIP_Class_Enumeration suppresses it from the full default run.
+    not_disabled = _connected_names(_build(_make_config()))
+    assert "CIP_Class_Enumeration" in not_disabled
+    disabled = _connected_names(
+        _build(_make_config(disabled_requests=["CIP_Class_Enumeration"]))
+    )
+    assert "CIP_Class_Enumeration" not in disabled
