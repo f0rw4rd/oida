@@ -598,6 +598,61 @@ class TestWsBruteForce(unittest.TestCase):
         finally:
             os.unlink(tmp_path)
 
+    def test_ws_brute_bare_host_port_443_uses_wss(self):
+        """Bare host on port 443 should build a wss:// base URL (TLS inferred
+        from port, since OCPP has no --tls flag)."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("/ocpp\n")
+            tmp_path = f.name
+
+        try:
+            instance = self._make_ocpp_instance(ws_brute=tmp_path)
+            instance.args.port = 443
+            instance.args.target = "csms.example.com"
+            instance.scanner._probe_path.return_value = {
+                "reachable": False,
+                "subprotocol": None,
+                "version": None,
+                "status_code": 404,
+                "url": "wss://csms.example.com:443/ocpp/CP_TEST_001",
+                "reason": "not found",
+            }
+
+            instance.ws_brute_force()
+
+            ws_data = instance.results["data"]["ws_brute"]
+            assert ws_data["base_url"] == "wss://csms.example.com:443"
+        finally:
+            os.unlink(tmp_path)
+
+    def test_ws_brute_bare_host_port_8443_in_target_uses_ws(self):
+        """A non-443 TLS-ish port (e.g. 8443) embedded in the target still
+        builds ws:// — TLS is keyed strictly on DEFAULT_WSS_PORT (443),
+        matching the scanner __init__ behaviour."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("/ocpp\n")
+            tmp_path = f.name
+
+        try:
+            instance = self._make_ocpp_instance(ws_brute=tmp_path)
+            instance.args.target = "csms.example.com:443"
+            instance.scanner._probe_path.return_value = {
+                "reachable": False,
+                "subprotocol": None,
+                "version": None,
+                "status_code": 404,
+                "url": "wss://csms.example.com:443/ocpp/CP_TEST_001",
+                "reason": "not found",
+            }
+
+            instance.ws_brute_force()
+
+            ws_data = instance.results["data"]["ws_brute"]
+            # port parsed from the host:port form -> 443 -> wss
+            assert ws_data["base_url"] == "wss://csms.example.com:443"
+        finally:
+            os.unlink(tmp_path)
+
 
 # ---------------------------------------------------------------------------
 # Proto args tests

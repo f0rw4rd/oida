@@ -705,7 +705,9 @@ class dicom(
             return "Unknown"
 
         if self.assoc.is_rejected:
-            return f"Rejected (source: {self.assoc.acceptor.info.get('result_source', 'unknown')})"
+            info = getattr(self.assoc.acceptor, "info", None)
+            source = info.get("result_source", "unknown") if isinstance(info, dict) else "unknown"
+            return f"Rejected (source: {source})"
         elif self.assoc.is_aborted:
             return "Aborted by peer"
         else:

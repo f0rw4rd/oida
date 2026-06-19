@@ -16,6 +16,7 @@ from ..constants import (
     SUBPROTOCOL_TO_VERSION,
     ALL_ACTIONS_V16,
     ALL_ACTIONS_V201,
+    DEFAULT_WSS_PORT,
 )
 
 _security_findings = lazy_import(
@@ -1067,13 +1068,15 @@ class DiscoveryMixin:
             port = parsed.port or port
             base_url = f"{scheme}://{host}:{port}"
         else:
-            scheme = "wss" if getattr(self.args, "tls", False) else "ws"
             host = target or self.ip
             if ":" in host and not host.startswith("["):
                 parts = host.rsplit(":", 1)
                 if parts[1].isdigit():
                     host = parts[0]
                     port = int(parts[1])
+            # TLS is inferred from the port (wss:// default 443), mirroring how
+            # the scanner __init__ derives it; there is no --tls flag for OCPP.
+            scheme = "wss" if port == DEFAULT_WSS_PORT else "ws"
             base_url = f"{scheme}://{host}:{port}"
 
         paths = self._load_ws_paths()

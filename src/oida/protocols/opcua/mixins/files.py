@@ -6,6 +6,11 @@ Provides file transfer operations (read/write/dump) for OPC UA FileType nodes.
 
 from ..helpers import ua
 
+# Default ceiling on the total bytes pulled from a server-advertised FileType
+# node, to bound memory growth when the server reports/streams an arbitrarily
+# large file. Override per-invocation via args.max_read_bytes.
+DEFAULT_MAX_READ_BYTES = 64 * 1024 * 1024  # 64 MiB
+
 
 class FilesMixin:
     """Mixin providing OPC UA file transfer operations."""
@@ -201,13 +206,36 @@ class FilesMixin:
                 chunk_size = 4096
                 bytes_read = chunk_size
 
+                # Cap the total read to bound memory growth: the server-advertised
+                # Size is untrusted, so we never let an unbounded/oversized stream
+                # accumulate in RAM.
+                max_read_bytes = getattr(self.args, "max_read_bytes", None)
+                if not max_read_bytes or max_read_bytes <= 0:
+                    max_read_bytes = DEFAULT_MAX_READ_BYTES
+                truncated = False
+
                 while bytes_read == chunk_size:
                     chunk = await file_node.call_method(read_method, file_handle, chunk_size)
                     if chunk:
                         file_content += bytes(chunk)
                         bytes_read = len(chunk)
+                        if len(file_content) >= max_read_bytes:
+                            truncated = True
+                            self.logger.fail(
+                                f"File exceeds max read size ({max_read_bytes} bytes) - "
+                                "aborting read to bound memory use"
+                            )
+                            break
                     else:
                         break
+
+                if truncated:
+                    # Close handle and abort without storing the partial blob.
+                    try:
+                        await file_node.call_method(close_method, file_handle)
+                    except Exception as e:
+                        self.logger.debug("read file failed: %s", e)
+                    return
 
                 self.logger.success(f"Read {len(file_content)} bytes")
 
