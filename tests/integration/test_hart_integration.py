@@ -1920,8 +1920,15 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             ]
         ), f"Expected quick mode output: {text[:500]}"
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     def test_full_mode(self, cli_runner, target, port):
-        """Test --full full scan mode [Category B]"""
+        """Test --full full scan mode [Category B]
+
+        Flaky under heavy parallel load only: --full runs command enumeration +
+        security analysis, which opens many sessions against the hipserver mock
+        and can hit its session-pool cap under `-n 8` contention (see
+        docs/TESTING.md). Completes in ~7s in isolation. Retried, not a bug.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
