@@ -31,8 +31,13 @@ class ExportMixin:
             obj_type = OBJECT_TYPE_NAMES.get(parts[0], 0)
             instance = int(parts[1])
             return (obj_type, instance)
-        if hasattr(obj_id, "objectType") and hasattr(obj_id, "objectIdentifier"):
-            return (obj_id.objectType, obj_id.objectIdentifier[1])
+        # bacpypes3 exposes the identifier as a 2-tuple-like (type, instance)
+        # via .objectIdentifier; read both elements from that single value so
+        # the type/instance stay consistent (the type is an ObjectType enum,
+        # which is an int subclass).
+        if hasattr(obj_id, "objectIdentifier"):
+            obj_type, instance = obj_id.objectIdentifier
+            return (int(obj_type), int(instance))
         return (0, 0)
 
     def _export_results(self):

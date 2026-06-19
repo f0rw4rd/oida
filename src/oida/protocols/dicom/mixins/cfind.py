@@ -195,13 +195,25 @@ class CFindMixin(_ScannerBase):
 
         return result
 
-    def _extract_all_tags(self, dataset, phi_only: bool = False) -> dict:
+    # Hardening guards against a hostile DICOM responder returning deeply or
+    # pathologically nested C-FIND identifiers (see threat model). Bounds the
+    # recursion depth and total element count so --dump-tags extraction cannot
+    # be driven into RecursionError / stack exhaustion.
+    _MAX_TAG_DEPTH = 32
+    _MAX_TAG_ELEMENTS = 100000
+
+    def _extract_all_tags(
+        self, dataset, phi_only: bool = False, _depth: int = 0, _counter: list | None = None
+    ) -> dict:
         """
         Extract all DICOM tags from a dataset.
 
         Args:
             dataset: pydicom Dataset object
             phi_only: If True, only extract PHI-containing tags
+            _depth: Current sequence-nesting depth (internal recursion guard)
+            _counter: Single-element list tracking total elements extracted
+                across the whole tree (internal recursion guard)
 
         Returns:
             Dictionary of tag_name -> value mappings
@@ -211,15 +223,38 @@ class CFindMixin(_ScannerBase):
         if dataset is None:
             return result
 
+        if _counter is None:
+            _counter = [0]
+
+        # Guard against attacker-controlled deeply nested sequences driving
+        # Python recursion into stack exhaustion.
+        if _depth > self._MAX_TAG_DEPTH:
+            result["_extraction_error"] = (
+                f"max nesting depth ({self._MAX_TAG_DEPTH}) exceeded"
+            )
+            return result
+
         try:
             for elem in dataset:
+                # Guard against an oversized identifier exhausting memory/time.
+                if _counter[0] >= self._MAX_TAG_ELEMENTS:
+                    result["_extraction_error"] = (
+                        f"max element count ({self._MAX_TAG_ELEMENTS}) exceeded"
+                    )
+                    break
+                _counter[0] += 1
+
                 # Recursively extract sequence (nested dataset) items
                 if elem.VR == "SQ":
                     # Recursively extract from sequence items
                     if elem.value:
                         seq_items = []
                         for item in elem.value:
-                            seq_items.append(self._extract_all_tags(item, phi_only))
+                            seq_items.append(
+                                self._extract_all_tags(
+                                    item, phi_only, _depth + 1, _counter
+                                )
+                            )
                         if seq_items:
                             result[elem.keyword or f"Tag_{elem.tag}"] = seq_items
                     continue

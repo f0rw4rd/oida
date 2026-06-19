@@ -224,9 +224,8 @@ class EnumerationMixin(_ScannerBase):
                     protocol=self.transport,
                     timeout=timeout,
                 )
-                probe_client.connect()
-
                 try:
+                    probe_client.connect()
                     response = probe_client.read_unique_id(addr)
                     if response.response_code == 0:
                         lib_info = response.parsed

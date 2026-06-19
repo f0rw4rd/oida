@@ -967,7 +967,7 @@ class SearchMixin:
             ("device_name", "Name"),
             ("type_display", "Type"),
             ("manufacturer", "Manufacturer"),
-            ("model", "Model"),
+            ("model_number", "Model"),
             ("serial_number", "Serial"),
             ("status", "Status"),
         ]

@@ -2083,5 +2083,76 @@ class TestDICOMDumpAllConfirmGate(unittest.TestCase):
         mock_export.assert_called_once()
 
 
+class TestDICOMExtractAllTagsRecursionGuard(unittest.TestCase):
+    """Regression tests for the --dump-tags nested-sequence recursion guard.
+
+    A hostile DICOM responder can return a C-FIND identifier with deeply
+    nested SQ elements; _extract_all_tags must not recurse without bound and
+    blow the Python stack (RecursionError / stack exhaustion).
+    """
+
+    def setUp(self):
+        self.mock_args = Mock()
+        self.mock_args.port = 11112
+        self.mock_args.timeout = 30
+        self.mock_args.aet = "OIDA"
+        self.mock_args.called_aet = "ANY"
+        self.mock_args.verbose = 0
+
+    @staticmethod
+    def _build_nested_dataset(depth):
+        """Build a Dataset nested `depth` SQ levels deep (real pydicom)."""
+        from pydicom.dataset import Dataset
+        from pydicom.sequence import Sequence
+
+        leaf = Dataset()
+        leaf.PatientID = "DEEP"
+        current = leaf
+        for _ in range(depth):
+            parent = Dataset()
+            # ReferencedStudySequence is a standard SQ VR element.
+            parent.ReferencedStudySequence = Sequence([current])
+            current = parent
+        return current
+
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    def test_deeply_nested_sequences_do_not_crash(self):
+        """Extraction of a pathologically deep dataset returns without raising."""
+        scanner = _make_dicom_instance(self.mock_args)
+
+        # Far deeper than the guard cap and deep enough to risk the native stack.
+        dataset = self._build_nested_dataset(scanner._MAX_TAG_DEPTH + 2000)
+
+        # Must not raise RecursionError; must terminate.
+        result = scanner._extract_all_tags(dataset)
+        self.assertIsInstance(result, dict)
+
+        # The depth guard must have fired somewhere in the tree.
+        def find_error(node):
+            if isinstance(node, dict):
+                if "_extraction_error" in node and "depth" in node["_extraction_error"]:
+                    return True
+                return any(find_error(v) for v in node.values())
+            if isinstance(node, list):
+                return any(find_error(v) for v in node)
+            return False
+
+        self.assertTrue(
+            find_error(result), "expected a max-depth _extraction_error marker"
+        )
+
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    def test_shallow_nested_sequences_still_extracted(self):
+        """A normal, shallow nested sequence is still fully extracted."""
+        scanner = _make_dicom_instance(self.mock_args)
+
+        dataset = self._build_nested_dataset(2)
+        result = scanner._extract_all_tags(dataset)
+
+        self.assertIn("ReferencedStudySequence", result)
+        # No depth-guard error for a 2-deep tree.
+        self.assertNotIn("_extraction_error", result)
+
+
 if __name__ == "__main__":
     unittest.main()

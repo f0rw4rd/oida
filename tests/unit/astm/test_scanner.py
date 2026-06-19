@@ -667,6 +667,63 @@ class TestModuleExports:
         assert astm is not None
 
 
+class TestFuzzTLSPeek:
+    """Regression: TLS fuzz peek must not be miscounted as an error.
+
+    ssl.SSLSocket.recv() raises ValueError for any non-zero flags
+    (including socket.MSG_PEEK). _fuzz_records must treat that as the
+    expected no-response path, not a fuzz error.
+    """
+
+    def _make_scanner(self, conn):
+        from oida.protocols.astm.mixins.security import SecurityMixin
+
+        scanner = SecurityMixin.__new__(SecurityMixin)
+        scanner.conn = conn
+        scanner.logger = MagicMock()
+        scanner.args = Namespace(
+            fuzz_iterations=1,
+            fuzz_record=None,
+            fuzz_frame=True,
+        )
+        scanner.results = {"data": {}}
+        scanner.create_conn_obj = MagicMock(return_value=True)
+        # Stub the string-payload (record-level) send path so this test
+        # isolates the raw-byte peek branch under test.
+        scanner._send_enq = MagicMock(return_value=False)
+        scanner._send_frame = MagicMock()
+        scanner._send_eot = MagicMock()
+        scanner.record_builder = MagicMock()
+        return scanner
+
+    def test_sslsocket_peek_valueerror_not_counted_as_error(self):
+        """A ValueError from recv(MSG_PEEK) on an SSLSocket is not a fuzz error."""
+        import socket
+
+        conn = MagicMock()
+        conn.recv.side_effect = ValueError(
+            "non-zero flags not allowed in calls to recv() on SSLSocket"
+        )
+
+        scanner = self._make_scanner(conn)
+        scanner._fuzz_records()
+
+        # The frame-level (raw byte) cases were sent; the peek raised
+        # ValueError but must be swallowed, so errors stays at 0.
+        conn.recv.assert_called_with(1, socket.MSG_PEEK)
+        assert scanner.results["data"]["fuzz_results"]["errors"] == 0
+
+    def test_other_exception_still_counted_as_error(self):
+        """A non-Timeout/ValueError from recv still increments error_count."""
+        conn = MagicMock()
+        conn.recv.side_effect = RuntimeError("boom")
+
+        scanner = self._make_scanner(conn)
+        scanner._fuzz_records()
+
+        assert scanner.results["data"]["fuzz_results"]["errors"] > 0
+
+
 # Run tests if executed directly
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

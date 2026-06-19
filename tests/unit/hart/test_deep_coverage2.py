@@ -451,6 +451,29 @@ class TestScanPollAddresses:
             results = scanner.scan_poll_addresses(0, 2, threads=2, timeout=0.1)
         assert results == []
 
+    def test_scan_closes_client_when_connect_fails(self):
+        # Regression: a client that constructs but fails to connect must still
+        # be closed, otherwise the probe leaks its socket/resources.
+        scanner = make_scanner(client=None)
+        created = []
+
+        def make_probe_client(*a, **kw):
+            c = MagicMock()
+            c.connect.side_effect = OSError("refused")
+            created.append(c)
+            return c
+
+        with patch(
+            "oida.protocols.hart.hartip.HARTIPClient",
+            side_effect=make_probe_client,
+        ):
+            results = scanner.scan_poll_addresses(0, 2, threads=2, timeout=0.1)
+
+        assert results == []
+        assert created, "expected probe clients to be constructed"
+        for c in created:
+            c.close.assert_called_once()
+
 
 # ===========================================================================
 # nxc proto_flow end-to-end dispatch
