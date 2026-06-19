@@ -173,3 +173,69 @@ def test_mdns_disable_excludes_selected(mock_config, mock_factory):
     assert "Oversized_Packet" not in connected
     assert "Long_Name" not in connected
     assert connected == all_names - {"Oversized_Packet", "Long_Name"}
+
+
+def test_enable_unknown_request_warns(mock_config, mock_factory, monkeypatch):
+    """An --enable name not in the registry must emit a WARNING, not silently fuzz nothing.
+
+    Guards _validate_request_filters() in base_fuzzer.py: a typo such as
+    --enable Circular_Compressio (missing trailing 'n') otherwise puts the
+    fuzzer in whitelist mode that matches no registered request, so it connects
+    zero requests and exits 'successfully' without sending anything. The warning
+    makes the mistake visible.
+    """
+    fuzzer_class = PROTOCOL_FUZZERS["mdns"]
+    if fuzzer_class is None:
+        pytest.skip("mdns fuzzer not available (optional dependency)")
+
+    from oida.utils.ics_logger import ICSLogger
+
+    warnings: list[str] = []
+    orig_warning = ICSLogger.warning
+
+    def capture(self, msg, *args):
+        warnings.append(msg % args if args else msg)
+        return orig_warning(self, msg, *args)
+
+    monkeypatch.setattr(ICSLogger, "warning", capture)
+
+    # Real registered request is "Circular_Compression"; this is a typo.
+    mock_config.enabled_requests = ["Circular_Compressio"]
+    try:
+        fuzzer_class(config=mock_config, connection_factory=mock_factory)
+    except ImportError as e:
+        pytest.skip(f"Missing dependency for mdns: {e}")
+
+    typo_warnings = [w for w in warnings if "Circular_Compressio" in w and "not found" in w]
+    assert typo_warnings, (
+        f"expected a 'not found in registry' warning for the typo'd --enable name, "
+        f"got warnings: {warnings}"
+    )
+
+
+def test_known_enable_request_does_not_warn(mock_config, mock_factory, monkeypatch):
+    """A valid --enable name must NOT trigger the unknown-request warning."""
+    fuzzer_class = PROTOCOL_FUZZERS["mdns"]
+    if fuzzer_class is None:
+        pytest.skip("mdns fuzzer not available (optional dependency)")
+
+    from oida.utils.ics_logger import ICSLogger
+
+    warnings: list[str] = []
+    orig_warning = ICSLogger.warning
+
+    def capture(self, msg, *args):
+        warnings.append(msg % args if args else msg)
+        return orig_warning(self, msg, *args)
+
+    monkeypatch.setattr(ICSLogger, "warning", capture)
+
+    mock_config.enabled_requests = ["Circular_Compression"]
+    try:
+        fuzzer_class(config=mock_config, connection_factory=mock_factory)
+    except ImportError as e:
+        pytest.skip(f"Missing dependency for mdns: {e}")
+
+    assert not [w for w in warnings if "not found in registry" in w], (
+        f"valid --enable name should not warn, got: {warnings}"
+    )

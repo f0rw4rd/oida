@@ -75,6 +75,8 @@ class NTPFuzzer(BaseFuzzer):
     def get_request_definitions(cls) -> List[RequestInfo]:
         """Get static request definitions for --list-requests"""
         return [
+            # Quick coverage
+            RequestInfo("NTP_Quick_Coverage", "All-modes sweep", "quick"),
             # Standard NTP
             RequestInfo("NTP_Client_Request", "Standard client request", "standard"),
             RequestInfo("NTP_Control_Message", "Mode 6 control message", "control"),
@@ -89,7 +91,13 @@ class NTPFuzzer(BaseFuzzer):
             RequestInfo("NTP_Autokey_Request", "Autokey protocol", "crypto"),
             # Attack patterns
             RequestInfo("NTP_Malformed", "Malformed packets", "high_crash"),
+            RequestInfo("NTP_Extension_Overflow", "Extension length overflow", "high_crash"),
+            RequestInfo("NTP_Crypto_NAK_Attack", "Crypto-NAK buffer attack (CVE-2014-9295)", "cve"),
+            RequestInfo("NTP_Monlist_Attack", "Mode 7 monlist (CVE-2013-5211)", "cve"),
+            RequestInfo("NTP_Trap_Attack", "Control trap (CVE-2016-9311)", "cve"),
             # Boundary tests
+            RequestInfo("NTP_Reference_ID_Boundary", "Reference ID boundary", "boundary"),
+            RequestInfo("NTP_Timestamp_Fraction_Boundary", "Timestamp fraction boundary", "boundary"),
             RequestInfo("NTP_Leap_Indicator_Boundary", "Leap indicator boundary", "boundary"),
             RequestInfo("NTP_Version_Boundary", "Version field boundary", "boundary"),
             RequestInfo("NTP_Mode_Boundary", "Mode field boundary", "boundary"),
@@ -1260,45 +1268,71 @@ class NTPFuzzer(BaseFuzzer):
 
         # PHASE 1: Quick Coverage (first ~30 seconds)
         # Single request that sweeps all modes and key operations
-        self.session.connect(quick_coverage)
+        if self.is_request_enabled("NTP_Quick_Coverage"):
+            self.session.connect(quick_coverage)
 
         # PHASE 2: High-Crash Tests (30s - 2 minutes)
         # These are most likely to find crashes quickly
-        self.session.connect(malformed_ntp)  # Invalid field combinations
-        self.session.connect(extension_overflow)  # Buffer overflow via extension
-        self.session.connect(crypto_nak_attack)  # CVE-2014-9295
-        self.session.connect(extension_length_attack)  # Extension length boundary
+        if self.is_request_enabled("NTP_Malformed"):
+            self.session.connect(malformed_ntp)  # Invalid field combinations
+        if self.is_request_enabled("NTP_Extension_Overflow"):
+            self.session.connect(extension_overflow)  # Buffer overflow via extension
+        if self.is_request_enabled("NTP_Crypto_NAK_Attack"):
+            self.session.connect(crypto_nak_attack)  # CVE-2014-9295
+        if self.is_request_enabled("NTP_Extension_Length_Attack"):
+            self.session.connect(extension_length_attack)  # Extension length boundary
 
         # PHASE 3: CVE-Targeted Operations (2 - 5 minutes)
         # Known vulnerability patterns
-        self.session.connect(monlist_attack)  # CVE-2013-5211
-        self.session.connect(trap_attack)  # CVE-2016-9311
-        self.session.connect(private_req)  # Mode 7 deep fuzzing
-        self.session.connect(control_msg)  # Mode 6 deep fuzzing
+        if self.is_request_enabled("NTP_Monlist_Attack"):
+            self.session.connect(monlist_attack)  # CVE-2013-5211
+        if self.is_request_enabled("NTP_Trap_Attack"):
+            self.session.connect(trap_attack)  # CVE-2016-9311
+        if self.is_request_enabled("NTP_Private_Request"):
+            self.session.connect(private_req)  # Mode 7 deep fuzzing
+        if self.is_request_enabled("NTP_Control_Message"):
+            self.session.connect(control_msg)  # Mode 6 deep fuzzing
 
         # PHASE 4: Boundary Attacks (5 - 10 minutes)
         # Systematic boundary value testing
-        self.session.connect(timestamp_epoch_test)  # Critical epoch boundaries (2036, 2038)
-        self.session.connect(version_boundary_test)  # Version 0-7
-        self.session.connect(mode_boundary_test)  # Mode 0-7
-        self.session.connect(stratum_boundary_test)  # Stratum 0-255
-        self.session.connect(leap_indicator_test)  # LI 0-3
-        self.session.connect(poll_boundary_test)  # Poll interval
-        self.session.connect(precision_boundary_test)  # Precision values
-        self.session.connect(root_delay_test)  # Root delay boundaries
-        self.session.connect(root_dispersion_test)  # Root dispersion boundaries
-        self.session.connect(reference_id_test)  # Reference ID patterns
-        self.session.connect(timestamp_fraction_test)  # Fractional timestamp
+        if self.is_request_enabled("NTP_Timestamp_Epoch_Boundary"):
+            self.session.connect(timestamp_epoch_test)  # Critical epoch boundaries (2036, 2038)
+        if self.is_request_enabled("NTP_Version_Boundary"):
+            self.session.connect(version_boundary_test)  # Version 0-7
+        if self.is_request_enabled("NTP_Mode_Boundary"):
+            self.session.connect(mode_boundary_test)  # Mode 0-7
+        if self.is_request_enabled("NTP_Stratum_Boundary"):
+            self.session.connect(stratum_boundary_test)  # Stratum 0-255
+        if self.is_request_enabled("NTP_Leap_Indicator_Boundary"):
+            self.session.connect(leap_indicator_test)  # LI 0-3
+        if self.is_request_enabled("NTP_Poll_Boundary"):
+            self.session.connect(poll_boundary_test)  # Poll interval
+        if self.is_request_enabled("NTP_Precision_Boundary"):
+            self.session.connect(precision_boundary_test)  # Precision values
+        if self.is_request_enabled("NTP_Root_Delay_Boundary"):
+            self.session.connect(root_delay_test)  # Root delay boundaries
+        if self.is_request_enabled("NTP_Root_Dispersion_Boundary"):
+            self.session.connect(root_dispersion_test)  # Root dispersion boundaries
+        if self.is_request_enabled("NTP_Reference_ID_Boundary"):
+            self.session.connect(reference_id_test)  # Reference ID patterns
+        if self.is_request_enabled("NTP_Timestamp_Fraction_Boundary"):
+            self.session.connect(timestamp_fraction_test)  # Fractional timestamp
 
         # PHASE 5: Deep Fuzzing (10+ minutes)
         # Standard protocol operations with full mutation
-        self.session.connect(client_req)  # Standard client request
-        self.session.connect(broadcast_msg)  # Broadcast mode
-        self.session.connect(kiss_of_death)  # KoD messages
-        self.session.connect(extension_req)  # Single extension
-        self.session.connect(multi_ext_req)  # Multiple extensions
-        self.session.connect(autokey_req)  # Autokey protocol
-        if enable_auth:
+        if self.is_request_enabled("NTP_Client_Request"):
+            self.session.connect(client_req)  # Standard client request
+        if self.is_request_enabled("NTP_Broadcast_Message"):
+            self.session.connect(broadcast_msg)  # Broadcast mode
+        if self.is_request_enabled("NTP_Kiss_Of_Death"):
+            self.session.connect(kiss_of_death)  # KoD messages
+        if self.is_request_enabled("NTP_Extension_Request"):
+            self.session.connect(extension_req)  # Single extension
+        if self.is_request_enabled("NTP_Multi_Extension_Request"):
+            self.session.connect(multi_ext_req)  # Multiple extensions
+        if self.is_request_enabled("NTP_Autokey_Request"):
+            self.session.connect(autokey_req)  # Autokey protocol
+        if enable_auth and self.is_request_enabled("NTP_Auth_Request"):
             self.session.connect(auth_req)  # Authenticated requests
 
     def _get_ntp_timestamp(self):

@@ -673,6 +673,39 @@ class ICMPv6Fuzzer(BaseFuzzer):
             ),
         )
 
+        # Hop limit boundary testing (Router Advertisement Cur_Hop_Limit field)
+        hop_limit_boundary = Request(
+            "ICMPv6_Hop_Limit_Boundary",
+            children=(
+                Block(
+                    "RA_HopLimit_Header",
+                    children=(
+                        Byte("Type", 134, fuzzable=False),  # Router Advertisement
+                        Byte("Code", 0, fuzzable=False),
+                        Word("Checksum", 0, endian=">", fuzzable=False),
+                        Group(
+                            "Cur_Hop_Limit_Values",
+                            values=[
+                                bytes([0]),  # Unspecified (RFC 4861: no preference)
+                                bytes([1]),  # Minimum routable
+                                bytes([63]),  # Just below common default
+                                bytes([64]),  # Common default
+                                bytes([65]),  # Just above common default
+                                bytes([127]),  # Mid range
+                                bytes([128]),  # Mid range boundary
+                                bytes([254]),  # Just below max
+                                bytes([255]),  # Maximum / NDP expected
+                            ],
+                        ),
+                        Byte("Flags", 0, fuzzable=False),
+                        Word("Router_Lifetime", 1800, endian=">", fuzzable=False),
+                        DWord("Reachable_Time", 0, endian=">", fuzzable=False),
+                        DWord("Retrans_Timer", 0, endian=">", fuzzable=False),
+                    ),
+                ),
+            ),
+        )
+
         # Prefix length boundary testing (Router Advertisement)
         prefix_boundary = Request(
             "ICMPv6_Prefix_Boundary",
@@ -1657,6 +1690,8 @@ class ICMPv6Fuzzer(BaseFuzzer):
             self.session.connect(type_boundary)
         if self.is_request_enabled("ICMPv6_Code_Boundary"):
             self.session.connect(code_boundary)
+        if self.is_request_enabled("ICMPv6_Hop_Limit_Boundary"):
+            self.session.connect(hop_limit_boundary)
         if self.is_request_enabled("ICMPv6_MTU_Boundary"):
             self.session.connect(mtu_boundary)
         if self.is_request_enabled("ICMPv6_Prefix_Boundary"):

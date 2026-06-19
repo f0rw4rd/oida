@@ -101,6 +101,9 @@ class IPv6Fuzzer(BaseFuzzer):
     def get_request_definitions(cls) -> List[RequestInfo]:
         """Get static request definitions for --list-requests"""
         return [
+            # Quick coverage (broad, shallow sweep)
+            RequestInfo("IPv6_Quick_Coverage", "Quick sweep of all packet types", "baseline"),
+            RequestInfo("IPv6_Quick_ICMPv6_Types", "Quick sweep of all ICMPv6 types", "baseline"),
             # Basic headers
             RequestInfo("IPv6_Basic", "Basic IPv6 packet", "standard"),
             RequestInfo("IPv6_Hop_by_Hop", "Hop-by-hop options header", "extension"),
@@ -116,6 +119,9 @@ class IPv6Fuzzer(BaseFuzzer):
             RequestInfo("IPv6_ND_Neighbor_Solicitation", "Neighbor solicitation", "nd"),
             RequestInfo("IPv6_Router_Advertisement_Flood", "RA flood test", "nd"),
             # Attack patterns
+            RequestInfo(
+                "IPv6_Incorrect_Length", "Payload length field validation attacks", "boundary"
+            ),
             RequestInfo("IPv6_Malformed", "Malformed packets", "high_crash"),
             RequestInfo("IPv6_Jumbogram", "Jumbogram handling", "high_crash"),
             RequestInfo("IPv6_DHCPv6_Solicit", "DHCPv6 solicit", "dhcp"),
@@ -1318,8 +1324,10 @@ class IPv6Fuzzer(BaseFuzzer):
         # =============================================================
 
         # Quick coverage first (broad, shallow)
-        self.session.connect(ipv6_quick_coverage)
-        self.session.connect(ipv6_quick_icmpv6_types)
+        if self.is_request_enabled("IPv6_Quick_Coverage"):
+            self.session.connect(ipv6_quick_coverage)
+        if self.is_request_enabled("IPv6_Quick_ICMPv6_Types"):
+            self.session.connect(ipv6_quick_icmpv6_types)
 
         # High-crash tests next - CVE and overflow patterns
         # These have highest probability of finding crashes
@@ -1337,7 +1345,8 @@ class IPv6Fuzzer(BaseFuzzer):
             self.session.connect(ipv6_malformed)  # Malformed packets
 
         # CVE-targeted operations: length validation, jumbograms, RA flooding
-        self.session.connect(ipv6_incorrect_length)  # Length validation bypass
+        if self.is_request_enabled("IPv6_Incorrect_Length"):
+            self.session.connect(ipv6_incorrect_length)  # Length validation bypass
         if self.is_request_enabled("IPv6_Jumbogram"):
             self.session.connect(ipv6_jumbogram)  # Jumbogram handling
         if self.is_request_enabled("IPv6_Router_Advertisement_Flood"):

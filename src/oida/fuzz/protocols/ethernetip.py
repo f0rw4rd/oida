@@ -176,12 +176,6 @@ class EtherNetIPFuzzer(BaseFuzzer):
                 "boundary",
                 requires_state=CommonState.ANY,
             ),
-            RequestInfo(
-                "EIP_CIP_Boundary",
-                "CIP-specific boundary attacks",
-                "boundary",
-                requires_state=CommonState.ANY,
-            ),
             # Phase 5: Remaining tests
             RequestInfo(
                 "EIP_Read_Operations",

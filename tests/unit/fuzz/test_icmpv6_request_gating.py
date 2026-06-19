@@ -68,14 +68,25 @@ def test_default_run_connects_everything():
     """No --enable/--disable: all advertised requests connect under default flags.
 
     enable_cve_tests defaults True and attack_mode defaults "normal", so every
-    request in get_request_definitions() that has a backing Request is wired up.
-    ICMPv6_Hop_Limit_Boundary is advertised but has no connect in any mode, so
-    it is excluded from the expectation.
+    request in get_request_definitions() must have a backing Request that is
+    wired up. This asserts advertised == connected with no phantom: every name
+    in --list-requests resolves to a real connected Request and vice versa.
     """
     config = _make_config()
     connected = _connected_names(_build(config))
 
     advertised = {d.name for d in PROTOCOL_FUZZERS["icmpv6"].get_request_definitions()}
-    expected = advertised - {"ICMPv6_Hop_Limit_Boundary"}
 
-    assert connected == expected
+    # No advertised-but-never-built phantom (regression: ICMPv6_Hop_Limit_Boundary).
+    assert advertised - connected == set(), f"advertised but not connected: {advertised - connected}"
+    # No connected request that was never advertised.
+    assert connected - advertised == set(), f"connected but not advertised: {connected - advertised}"
+    assert connected == advertised
+
+
+def test_hop_limit_boundary_is_connected():
+    """ICMPv6_Hop_Limit_Boundary is advertised AND builds/connects a real Request."""
+    config = _make_config(enabled_requests=["ICMPv6_Hop_Limit_Boundary"])
+    connected = _connected_names(_build(config))
+
+    assert connected == {"ICMPv6_Hop_Limit_Boundary"}
