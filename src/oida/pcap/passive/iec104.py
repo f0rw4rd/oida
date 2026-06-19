@@ -421,7 +421,7 @@ class IEC104PassiveListener(PySharkListenerBase):
                         packet, controlling_ip, controlled_ip, src_ip, dst_ip, flow_id
                     )
                     recorded = True
-                if frame_type_vals <= {0x01}:
+                if frame_type_vals and frame_type_vals <= {0x01}:
                     self._process_s_frame(
                         packet, controlling_ip, controlled_ip, src_ip, dst_ip, flow_id
                     )

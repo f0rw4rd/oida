@@ -8,7 +8,11 @@ Tests cover:
 - Harvest output quality
 """
 
+import logging
+
 import pytest
+
+from oida.pcap.passive.ajp import AJPPassiveListener
 
 from .conftest import _run_listener_test
 
@@ -16,6 +20,68 @@ pytestmark = [pytest.mark.integration]
 
 # AJP13 requires decode_as to be recognized by tshark
 AJP_DECODE_AS = {"tcp.port==8009": "ajp13"}
+
+
+class _FakeLayer:
+    """Minimal stand-in for a pyshark layer (attribute access only)."""
+
+    def __init__(self, **fields):
+        self.__dict__.update(fields)
+
+
+class _FakePacket:
+    """Minimal stand-in for a pyshark packet with ajp13/ip/tcp/eth layers.
+
+    Lets us drive AJPPassiveListener.process_packet directly without tshark,
+    so the unrecognized-code branch can be exercised offline.
+    """
+
+    def __init__(self, code):
+        self.ajp13 = _FakeLayer(code=code)
+        self.ip = _FakeLayer(src="10.0.0.1", dst="10.0.0.2")
+        self.tcp = _FakeLayer(srcport="40000", dstport="8009", stream="0")
+        self.eth = _FakeLayer(src="00:11:22:33:44:55", dst="66:77:88:99:aa:bb")
+
+
+class TestAJPUnrecognizedCode:
+    """Regression: body-chunk / unknown AJP codes must not be silently dropped."""
+
+    @pytest.mark.parametrize("code", ["3", "6", "99"])
+    def test_unrecognized_code_logs_and_drops(self, code):
+        """Send/Get Body Chunk (3/6) and unknown codes record nothing but log a debug line."""
+        listener = AJPPassiveListener(interface="lo", timeout=10)
+
+        # The listener uses a custom (non-propagating, WARNING-level) logger, so
+        # capture its records by attaching our own handler at DEBUG level.
+        records: list[logging.LogRecord] = []
+
+        class _Capture(logging.Handler):
+            def emit(self, record):
+                records.append(record)
+
+        handler = _Capture()
+        listener.logger.addHandler(handler)
+        old_level = listener.logger.level
+        listener.logger.setLevel(logging.DEBUG)
+        try:
+            listener.process_packet(_FakePacket(code))
+        finally:
+            listener.logger.removeHandler(handler)
+            listener.logger.setLevel(old_level)
+
+        assert listener.interactions == [], (
+            f"code {code} should not record an interaction; got {listener.interactions}"
+        )
+        assert any("not recorded" in r.getMessage() for r in records), (
+            f"expected a debug log for unrecognized AJP code {code}; "
+            f"logs: {[r.getMessage() for r in records]}"
+        )
+
+    def test_known_code_still_records(self):
+        """A recognized code (End Response = 5) still records, proving the else is a tail branch."""
+        listener = AJPPassiveListener(interface="lo", timeout=10)
+        listener.process_packet(_FakePacket("5"))
+        assert len(listener.interactions) == 1
 
 
 class TestAJPPassive:

@@ -158,8 +158,16 @@ class MongoDBPassiveListener(PySharkListenerBase):
         opcode_raw = self.get_field(mongo, "opcode", "")
         opcode_name = OPCODE_NAMES.get(opcode_raw, OPCODE_NAMES.get(str(opcode_raw), "UNKNOWN"))
 
-        # Determine direction based on opcode
-        is_reply = opcode_name == "OP_REPLY"
+        # response_to is set on any reply (the request_id it answers). OP_REPLY
+        # is legacy; in MongoDB 3.6+ OP_MSG carries both commands and responses,
+        # and a server->client OP_MSG response has a non-zero response_to.
+        response_to = self.get_field(mongo, "response_to", "")
+        responds_to_request = bool(response_to) and str(response_to) != "0"
+
+        # Determine direction based on opcode / response_to
+        is_reply = opcode_name == "OP_REPLY" or (
+            opcode_name == "OP_MSG" and responds_to_request
+        )
         if is_reply:
             # Server -> Client
             server_ip, server_port = src_ip, src_port
@@ -198,7 +206,6 @@ class MongoDBPassiveListener(PySharkListenerBase):
         number_returned = self.get_field(mongo, "number_returned", "")
         cursor_id = self.get_field(mongo, "cursor_id", "")
         request_id = self.get_field(mongo, "request_id", "")
-        response_to = self.get_field(mongo, "response_to", "")
 
         # Extract BSON element names and values
         element_names = self.get_field(mongo, "element_name", "")

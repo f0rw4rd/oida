@@ -445,9 +445,11 @@ class KerberosPassiveListener(PySharkListenerBase):
         if msg_type == KRB_AS_REQ:
             self._process_as_req(src_ip, dst_ip, protocol, krb_layer, dst_port)
         elif msg_type == KRB_AS_REP:
-            self._process_as_rep(src_ip, dst_ip, protocol, krb_layer, dst_port)
+            # For *-REP the KDC is the sender, so its port (88) is src_port.
+            self._process_as_rep(src_ip, dst_ip, protocol, krb_layer, src_port)
         elif msg_type == KRB_TGS_REP:
-            self._process_tgs_rep(src_ip, dst_ip, protocol, krb_layer, dst_port)
+            # For *-REP the KDC is the sender, so its port (88) is src_port.
+            self._process_tgs_rep(src_ip, dst_ip, protocol, krb_layer, src_port)
         elif msg_type == KRB_ERROR:
             self._process_krb_error(
                 src_ip, dst_ip, protocol, error_code, username, realm, service_name
