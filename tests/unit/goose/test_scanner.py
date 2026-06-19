@@ -1632,6 +1632,50 @@ class TestGooseProtoArgs(unittest.TestCase):
         args = main_parser.parse_args(["goose", "eth0"])
         self.assertEqual(args.mms_port, 102)
 
+    def test_proto_args_gocb_ref_registered(self):
+        """--gocb-ref is registered and parses to dest 'gocb_ref'.
+
+        Regression: the live GOOSE capture mode requires a GoCB reference
+        but no --gocb-ref flag was registered in proto_args, leaving the
+        documented passive-capture flow unreachable from `oida goose`.
+        """
+        import argparse
+        from oida.protocols.goose.proto_args import proto_args
+
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        parent = argparse.ArgumentParser(add_help=False)
+        proto_args(subparsers, [parent])
+
+        # Default is empty string (matches protocol_options contract).
+        args = main_parser.parse_args(["goose", "eth0"])
+        self.assertEqual(args.gocb_ref, "")
+
+        # Supplied value parses to the dest the scanner reads.
+        args = main_parser.parse_args(
+            ["goose", "eth0", "--gocb-ref", "LD/LLN0$GO$gcb01"]
+        )
+        self.assertEqual(args.gocb_ref, "LD/LLN0$GO$gcb01")
+
+    def test_gocb_ref_reaches_live_capture_path(self):
+        """A registered --gocb-ref reaches the live-capture connection.
+
+        With a gocb-ref present, GOOSEScanner.connect() must route to
+        _create_goose_connection() and return a capture config instead of
+        hard-failing with the 'gocb-ref required for GOOSE capture' message.
+        """
+        scanner = _make_scanner({"gocb-ref": "LD/LLN0$GO$gcb01"})
+
+        with patch("oida.protocols.goose._pyiec61850_goose"):
+            connection = scanner.connect()
+
+        self.assertIsNotNone(
+            connection,
+            "live-capture path returned None: gocb-ref did not reach the scanner",
+        )
+        self.assertEqual(connection.get("gocb_ref"), "LD/LLN0$GO$gcb01")
+        scanner.logger.fail.assert_not_called()
+
 
 # ===========================================================================
 # Metadata / module factory

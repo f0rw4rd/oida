@@ -101,3 +101,27 @@ class TestADSConfirmErrorMessage:
         msg = str(ei.value)
         assert "--set-state" in msg
         assert "--write-symbol" in msg
+
+
+class TestADSFuzzModeChoices:
+    """--fuzz only advertises modes that are actually implemented.
+
+    The 'memory' mode used to be an accepted choice with no handler in
+    _handle_fuzz, so ``--fuzz memory`` parsed cleanly and then silently did
+    nothing.  It must now be rejected as an invalid choice rather than being
+    accepted as a no-op.
+    """
+
+    @pytest.mark.parametrize("mode", ["symbols", "all"])
+    def test_implemented_modes_parse(self, mode):
+        args = _parse("--fuzz", mode)
+        assert args.fuzz == mode
+
+    def test_bare_fuzz_defaults_to_symbols(self):
+        args = _parse("--fuzz")
+        assert args.fuzz == "symbols"
+
+    def test_unimplemented_memory_mode_rejected(self):
+        # argparse rejects an out-of-choices value with SystemExit(2).
+        with pytest.raises(SystemExit):
+            _parse("--fuzz", "memory")

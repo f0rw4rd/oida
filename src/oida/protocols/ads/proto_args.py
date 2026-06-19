@@ -418,9 +418,9 @@ def proto_args(parser, parents):
         "--fuzz",
         nargs="?",
         const="symbols",
-        choices=["symbols", "memory", "all"],
+        choices=["symbols", "all"],
         metavar="MODE",
-        help="Fuzz testing mode: symbols=writable symbols, memory=memory areas, all=both",
+        help="Fuzz testing mode: symbols=writable symbols, all=all writable symbols",
     )
 
     security_group.add_argument(

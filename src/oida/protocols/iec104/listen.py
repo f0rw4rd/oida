@@ -256,9 +256,28 @@ class ListenMixin:
         self._stop_listen.clear()
         self._listen_output_fh = None
 
-        # Setup enhanced monitor callback
+        # Setup enhanced monitor callback.
+        #
+        # Registering a raw-receive callback REPLACES any previously installed
+        # one (c104 exposes a single raw-receive slot). The discovery callback
+        # installed during connect() populates _discovered_points/_raw_type_ids/
+        # _discovered_stations; overwriting it here would silently lose that data
+        # when listen mode is combined with --interrogate (discover() falls
+        # through to interrogation after listen). To keep both working, compose
+        # the monitor callback with the original discovery callback so both run.
         monitor_callback = self._create_monitor_callback()
-        conn.on_receive_raw(monitor_callback)
+        discovery_callback = self._create_callbacks()[2]
+
+        def on_receive_raw_composed(connection: Any, data: bytes) -> None:
+            # Run discovery first so _discovered_* is populated even if the
+            # monitor parser raises; monitor handles its own exceptions.
+            try:
+                discovery_callback(connection, data)
+            except Exception as e:
+                self.logger.debug(f"Discovery callback error during listen: {e}")
+            monitor_callback(connection, data)
+
+        conn.on_receive_raw(on_receive_raw_composed)
 
         # Display mode info
         duration_str = f"{self.listen_time}s" if self.listen_time > 0 else "indefinite"
