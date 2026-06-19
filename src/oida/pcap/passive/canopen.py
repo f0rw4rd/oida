@@ -235,9 +235,9 @@ class CANopenPassiveListener(PySharkListenerBase):
         src_mac, dst_mac = self.get_mac_info(packet)
 
         # Extract COB-ID, function code, and node ID
-        cob_id = self._parse_int(self.get_field(canopen_layer, "cob_id"), 0, base=16)
-        func_code = self._parse_int(self.get_field(canopen_layer, "function_code"), 0, base=16)
-        node_id = self._parse_int(self.get_field(canopen_layer, "node_id"), 0, base=16)
+        cob_id = self._parse_int(self.get_field(canopen_layer, "cob_id"), 0)
+        func_code = self._parse_int(self.get_field(canopen_layer, "function_code"), 0)
+        node_id = self._parse_int(self.get_field(canopen_layer, "node_id"), 0)
 
         now = datetime.now().isoformat()
         flow_id = self.get_flow_id(packet)
@@ -299,8 +299,8 @@ class CANopenPassiveListener(PySharkListenerBase):
         flow_id: str,
     ) -> None:
         """Process NMT master command (COB-ID 0x000)."""
-        cmd = self._parse_int(self.get_field(layer, "nmt_ctrl_cd"), 0, base=16)
-        target_node = self._parse_int(self.get_field(layer, "nmt_ctrl_node_id"), 0, base=16)
+        cmd = self._parse_int(self.get_field(layer, "nmt_ctrl_cd"), 0)
+        target_node = self._parse_int(self.get_field(layer, "nmt_ctrl_node_id"), 0)
 
         cmd_name = NMT_COMMANDS.get(cmd, f"NMT cmd 0x{cmd:02X}")
         target_str = f"node {target_node}" if target_node > 0 else "ALL nodes"
@@ -369,8 +369,8 @@ class CANopenPassiveListener(PySharkListenerBase):
         flow_id: str,
     ) -> None:
         """Process EMCY (Emergency) message."""
-        err_code = self._parse_int(self.get_field(layer, "em_err_code"), 0, base=16)
-        err_reg = self._parse_int(self.get_field(layer, "em_err_reg"), 0, base=16)
+        err_code = self._parse_int(self.get_field(layer, "em_err_code"), 0)
+        err_reg = self._parse_int(self.get_field(layer, "em_err_reg"), 0)
         err_field = self.get_field(layer, "em_err_field") or ""
 
         # Update node tracking
@@ -460,12 +460,12 @@ class CANopenPassiveListener(PySharkListenerBase):
             cs_name = SDO_CCS.get(ccs, f"CCS={ccs}") if ccs is not None else "?"
 
         # Extract OD index/subindex
-        main_idx = self._parse_int(self.get_field(layer, "sdo_main_idx"), None, base=16)
-        sub_idx = self._parse_int(self.get_field(layer, "sdo_sub_idx"), None, base=16)
+        main_idx = self._parse_int(self.get_field(layer, "sdo_main_idx"), None)
+        sub_idx = self._parse_int(self.get_field(layer, "sdo_sub_idx"), None)
 
         # Extract SDO data
         sdo_data = self.get_field(layer, "sdo_data_bytes") or ""
-        abort_code = self._parse_int(self.get_field(layer, "sdo_abort_code"), None, base=16)
+        abort_code = self._parse_int(self.get_field(layer, "sdo_abort_code"), None)
 
         # Determine if this is a read or write
         is_write = False
@@ -546,7 +546,7 @@ class CANopenPassiveListener(PySharkListenerBase):
         flow_id: str,
     ) -> None:
         """Process Heartbeat / NMT Error Control message."""
-        state_raw = self._parse_int(self.get_field(layer, "nmt_guard_state"), 0, base=16)
+        state_raw = self._parse_int(self.get_field(layer, "nmt_guard_state"), 0)
         state_name = NMT_STATES.get(state_raw, f"state=0x{state_raw:02X}")
 
         # Update node tracking
@@ -584,7 +584,7 @@ class CANopenPassiveListener(PySharkListenerBase):
         flow_id: str,
     ) -> None:
         """Process LSS (Layer Setting Services) message."""
-        cs = self._parse_int(self.get_field(layer, "lss_cs"), 0, base=16)
+        cs = self._parse_int(self.get_field(layer, "lss_cs"), 0)
         is_request = cob_id == 0x7E4
         direction = "request" if is_request else "response"
 

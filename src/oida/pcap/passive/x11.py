@@ -479,8 +479,17 @@ class X11PassiveListener(PySharkListenerBase):
 
         Keys are prefixed ``x11_x11_``.  Returns *default* when the key
         is absent or the value is ``None``.
+
+        tshark's ``-T ek`` JSON normalizes both dots and hyphens in field
+        names to underscores, so a hyphenated short name like
+        ``reply-sequencenumber`` is exposed as the key
+        ``x11_x11_reply_sequencenumber``.  We therefore try the literal
+        short name first and then fall back to the hyphen->underscore
+        normalized form so both spellings resolve.
         """
         val = fields_dict.get(f"x11_x11_{short_name}")
+        if val is None and "-" in short_name:
+            val = fields_dict.get(f"x11_x11_{short_name.replace('-', '_')}")
         if val is None:
             return default
         if isinstance(val, list):

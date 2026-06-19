@@ -254,6 +254,8 @@ class PTPPassiveListener(PySharkListenerBase):
         self._alerts: List[Dict[str, str]] = []
         # Track grandmaster history per domain for change detection
         self._gm_history: Dict[int, List[str]] = {}
+        # Track GM transitions already alerted so each change fires exactly once
+        self._gm_change_alerted: Set[tuple] = set()
 
     def process_packet(self, packet) -> None:
         """Process a PTP packet using PyShark dissection."""
@@ -496,8 +498,12 @@ class PTPPassiveListener(PySharkListenerBase):
             if len(gm_list) > 1:
                 prev_gm = gm_list[-2]
                 new_gm = gm_list[-1]
-                # Only alert once per change (check if we just added it)
-                if gm_list.count(new_gm) == 1 or (len(gm_list) >= 2 and gm_list[-2] != new_gm):
+                # Alert exactly once per (domain, prev->new) transition.
+                # _check_security runs per packet, so without this guard a
+                # single GM change would re-append on every later packet.
+                transition = (domain, prev_gm, new_gm)
+                if transition not in self._gm_change_alerted:
+                    self._gm_change_alerted.add(transition)
                     self._alerts.append(
                         {
                             "level": "fail",

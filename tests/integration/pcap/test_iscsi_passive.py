@@ -20,6 +20,56 @@ from .conftest import _run_listener_test
 pytestmark = [pytest.mark.integration]
 
 
+@pytest.mark.unit
+class TestISCSIOpcodeMap:
+    """Pure-unit checks of the iSCSI opcode table (no capture needed).
+
+    Opcode values verified against RFC 7143 and Linux iscsi_proto.h, and against
+    tshark's `iscsi.opcode` value map (the 6-bit opcode, BHS byte 0 & 0x3f).
+    Guards the historically-confused R2T / Asynchronous Message pair.
+    """
+
+    # (decimal-key, hex-key, expected name)
+    EXPECTED = [
+        ("49", "0x31", "R2T"),  # Ready To Transfer
+        ("50", "0x32", "Async Message"),  # Asynchronous Message
+        ("63", "0x3f", "Reject"),
+        ("33", "0x21", "SCSI Response"),
+        ("32", "0x20", "NOP-In"),
+        ("16", "0x10", "SNACK Request"),
+    ]
+
+    def test_known_opcodes_resolve_correctly(self):
+        from oida.pcap.passive.iscsi import OPCODES
+
+        for dec, hexk, name in self.EXPECTED:
+            assert OPCODES.get(dec) == name, f"decimal {dec} should map to {name}"
+            assert OPCODES.get(hexk) == name, f"hex {hexk} should map to {name}"
+
+    def test_r2t_and_async_not_swapped(self):
+        """Regression: R2T is 0x31 (49), Async Message is 0x32 (50) - never swapped."""
+        from oida.pcap.passive.iscsi import OPCODES
+
+        assert OPCODES["0x31"] == "R2T"
+        assert OPCODES["49"] == "R2T"
+        assert OPCODES["0x32"] == "Async Message"
+        assert OPCODES["50"] == "Async Message"
+        # No bogus 0x30/48 R2T entry (the CODE_REVIEW premise was incorrect).
+        assert "0x30" not in OPCODES
+        assert "48" not in OPCODES
+
+    def test_decimal_and_hex_halves_are_consistent(self):
+        """Every decimal opcode has a matching hex entry with the same label."""
+        from oida.pcap.passive.iscsi import OPCODES
+
+        dec = {int(k): v for k, v in OPCODES.items() if not k.startswith("0x")}
+        hx = {int(k, 16): v for k, v in OPCODES.items() if k.startswith("0x")}
+        for val, name in dec.items():
+            assert hx.get(val) == name, (
+                f"opcode {val:#04x} ({val}): decimal={name!r} hex={hx.get(val)!r}"
+            )
+
+
 class TestISCSIPassiveEK:
     """iSCSI-specific tests beyond the parametrized quality suite."""
 

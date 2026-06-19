@@ -52,14 +52,18 @@ FILE_SIGNATURES = {
     "GIF87a": {
         "extension": ".gif",
         "headers": [bytes.fromhex("474946383761")],
-        "footers": [bytes.fromhex("3B")],
+        # GIF trailer is 0x3B; anchor on the block-terminator 0x00 that always
+        # precedes it (00 3B) so a bare 0x3B inside pixel/color-table/extension
+        # data does not prematurely truncate the carved image.
+        "footers": [bytes.fromhex("003B")],
         "max_size": 20 * 1024 * 1024,
         "min_size": 800,
     },
     "GIF89a": {
         "extension": ".gif",
         "headers": [bytes.fromhex("474946383961")],
-        "footers": [bytes.fromhex("3B")],
+        # See GIF87a: anchor the trailer on the preceding block terminator.
+        "footers": [bytes.fromhex("003B")],
         "max_size": 20 * 1024 * 1024,
         "min_size": 800,
     },

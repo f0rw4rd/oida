@@ -12,9 +12,59 @@ Tests cover:
 
 import pytest
 
+from oida.pcap.passive.x11 import X11PassiveListener
+
 from .conftest import _run_listener_test
 
 pytestmark = [pytest.mark.integration]
+
+
+class TestX11EKHyphenatedFields:
+    """Regression: hyphenated EK field names must resolve.
+
+    tshark's ``-T ek`` JSON normalizes hyphens (and dots) in field names
+    to underscores, so ``x11.reply-sequencenumber`` is exposed as the key
+    ``x11_x11_reply_sequencenumber``.  ``_get_ek_field`` must resolve the
+    hyphenated short names used by the fallback classifier
+    (reply-sequencenumber / major-opcode / minor-opcode).
+    """
+
+    @staticmethod
+    def _listener():
+        # __init__ only validates the (dummy) interface name; no pyshark
+        # or docker is touched, so this is a fast pure-Python construction.
+        return X11PassiveListener(interface="lo", timeout=1)
+
+    def test_get_ek_field_resolves_hyphenated_names(self):
+        listener = self._listener()
+        # EK-style sub-dict: keys carry underscores, not hyphens.
+        sd = {
+            "x11_x11_reply_sequencenumber": "42",
+            "x11_x11_major_opcode": "152",
+            "x11_x11_minor_opcode": "3",
+        }
+        assert listener._get_ek_field(sd, "reply-sequencenumber") == "42"
+        assert listener._get_ek_field(sd, "major-opcode") == "152"
+        assert listener._get_ek_field(sd, "minor-opcode") == "3"
+
+    def test_reply_subdict_classified_as_reply(self):
+        listener = self._listener()
+        # A reply PDU exposed only via the underscore (EK) key.
+        sd = {"x11_x11_reply_sequencenumber": "42"}
+        msg_type, operation, details = listener._classify_ek_subdict(sd)
+        assert msg_type == "reply"
+        assert operation == "Reply(seq=42)"
+        assert details["reply_sequence"] == "42"
+
+    def test_extension_request_subdict_classified(self):
+        listener = self._listener()
+        # major-opcode without 'opcode'/'reply' -> extension request.
+        sd = {"x11_x11_major_opcode": "152", "x11_x11_minor_opcode": "3"}
+        msg_type, operation, details = listener._classify_ek_subdict(sd)
+        assert msg_type == "request"
+        assert operation == "ExtRequest(152.3)"
+        assert details["major_opcode"] == "152"
+        assert details["minor_opcode"] == "3"
 
 
 class TestX11PassiveEK:
