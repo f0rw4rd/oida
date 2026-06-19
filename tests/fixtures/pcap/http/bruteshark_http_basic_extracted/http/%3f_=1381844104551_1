@@ -1,0 +1,173 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>BrowserSpy.dk</title>
+<meta name="description" content="BrowserSpy.dk is the place where you can see just how much information your browser reveales about you and your system. Privacy to the ultimate test" />
+<meta name="keywords" content="browserspy,browser,privacy,version,information,bandwidth,speed,test,javascript,cookies,gemal,spy,secret,mozilla,netscape,ip,anonymous" />
+<link rel="icon" href="http://browserspy.dk/favicon.ico" type="image/x-icon" />
+<link rel="shortcut icon" href="http://browserspy.dk/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" type="text/css" media="all" href="http://browserspy.dk/theme/reset.css" />
+<link rel="stylesheet" type="text/css" media="all" href="http://browserspy.dk/theme/default.css" />
+<link rel="stylesheet" type="text/css" media="all" href="http://browserspy.dk/theme/blog.css" />
+<script type="text/javascript" src="http://browserspy.dk/js/jquery.js"></script>
+<script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=cse-search-box&amp;lang=en"></script>
+<script type="text/javascript">
+//<![CDATA[
+
+			$(document).ready(function(){
+				$("a[rel=external]").click(function(){
+					pageTracker._trackPageview("/outgoing/"+ $(this).attr("href"));
+				});
+			});
+		
+//]]>
+</script>
+<link rel="alternate" type="application/rss+xml" title="BrowserSpy.dk RSS" href="http://browserspy.dk/rss/" />
+</head>
+<body id="browserspydk">
+
+			<div id="header">
+				<div class="inner">
+					<div id="logo">
+		<a href="http://browserspy.dk/" title="Back to BrowserSpy.dk frontpage"><img alt="BrowserSpy.dk logo" width="300" height="53" src="http://browserspy.dk/pics/logo.png" /></a>
+					</div>
+			<div id="banner-header">
+<script type="text/javascript">
+//<![CDATA[
+var google_ad_client = "pub-3782597996216257";
+var google_ad_slot = "7564469343";
+var google_ad_width = 468;
+var google_ad_height = 60;
+//]]>
+</script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script>
+</div>
+	</div>
+				<div class="clr"></div>
+			</div>
+			<div id="menu">
+				<ul id="menutop">
+<li class="active"><a href="http://browserspy.dk/" title="Back to the frontpage of BrowserSpy.dk">Home</a></li><li><a href="http://browserspy.dk/about/" title="What is BrowserSpy.dk all about?">About</a></li><li><a href="http://browserspy.dk/blog/" title="The BrowserSpy.dk blog with news and relevant information">Blog</a></li><li><a href="http://browserspy.dk/contact/" title="How do I contact BrowserSpy.dk">Contact</a></li><li><a href="http://browserspy.dk/donate/" title="How do I donate money to the development of BrowserSpy.dk">Donate</a></li><li><a href="http://browserspy.dk/faq/" title="List of Frequently Asked Questions on BrowserSpy.dk">FAQ</a></li></ul>
+
+				<div id="search"><form action="http://browserspy.dk/search/" id="cse-search-mini"><div><input type="hidden" name="cx" value="003484130720911686425:b-rcd__nbbw" /><input type="hidden" name="cof" value="FORID:11" /><input type="hidden" name="ie" value="UTF-8" /><input type="text" name="q" size="30" title="Search the BrowserSpy.dk site" /><input type="submit" name="sa" class="sub" value="Search Site" title="Do the search!" /></div></form></div>
+			</div>
+			<div id="content">
+				<div id="left">
+					<div class="inner">
+						<div id="info"><p>BrowserSpy.dk shows you just how much information can be retrieved from your browser just by visiting a page.</p><p>Available tests are listed below.</p></div>
+						<ul id="nav">
+<li><a href="http://browserspy.dk/accept.php" title="What filetypes does your browser accept?">Accepted Filetypes</a></li><li><a href="http://browserspy.dk/activex.php" title="Does your browser support ActiveX?">ActiveX</a></li><li><a href="http://browserspy.dk/adobereader.php" title="Is Adobe Reader installed?">Adobe Reader</a></li><li><a href="http://browserspy.dk/ajax.php" title="Does your browser support XML requests and documents. XMLHttpRequest is used in Ajax based websites">Ajax Support</a></li><li><a href="http://browserspy.dk/bandwidth.php" title="What is your internet connection speed?">Bandwidth</a></li><li><a href="http://browserspy.dk/browser.php" title="What is the name and version of your browser?">Browser</a></li><li><a href="http://browserspy.dk/capabilities.php" title="What capabilities does your browser have?">Capabilities</a></li><li><a href="http://browserspy.dk/colors.php" title="What kind of system colors does your browser support?">Colors</a></li><li><a href="http://browserspy.dk/component.php" title="What Internet Explorer components can be and has been installed?">Components</a></li><li><a href="http://browserspy.dk/connections.php" title="How many connections does your browser supports?">Connections</a></li><li><a href="http://browserspy.dk/cookie.php" title="Does your browser support cookies and are they enabled?">Cookies</a></li><li><a href="http://browserspy.dk/cpu.php" title="What CUP does your system have?">CPU</a></li><li><a href="http://browserspy.dk/css.php" title="Is CSS supported and what CSS media types does your browser support?">CSS</a></li><li><a href="http://browserspy.dk/css-exploit.php" title="Can it be detected which websites you have visisted?">CSS Exploit</a></li><li><a href="http://browserspy.dk/cursors.php" title="What kind of cursors does your browser support?">Cursors</a></li><li><a href="http://browserspy.dk/date.php" title="What's the date and time on your system?">Date and Time</a></li><li><a href="http://browserspy.dk/directx.php" title="What DirectX components are available?">DirectX</a></li><li><a href="http://browserspy.dk/document.php" title="Get various information about the current document">Document</a></li><li><a href="http://browserspy.dk/donottrack.php" title="Does your browser send the Do Not Track header?" class="new">Do No Track</a></li><li><a href="http://browserspy.dk/dotnet.php" title="What .NET frameworks does your system have installed?">.NET Framework</a></li><li><a href="http://browserspy.dk/mailcheck.php" title="Can your email address be verified by spammers?">Email Verification</a></li><li><a href="http://browserspy.dk/flash.php" title="Is Adobe Flash installed?">Flash</a></li><li><a href="http://browserspy.dk/fonts-flash.php" title="What fonts does your system have installed? Detetced using Flash.">Fonts via Flash</a></li><li><a href="http://browserspy.dk/fonts-java.php" title="What fonts does your system have installed? Detetced using Java.">Fonts via Java</a></li><li><a href="http://browserspy.dk/gears.php" title="Is Gears aka Google Gears installed?">Gears</a></li><li><a href="http://browserspy.dk/gecko.php" title="Is your browser powered by the layout engine Gecko?">Gecko</a></li><li><a href="http://browserspy.dk/geolocation.php" title="Does your browser supports Geolocation?">Geolocation</a></li><li><a href="http://browserspy.dk/googlechrome.php" title="Are you running the Google Chrome browser? And if so what version?">Google Chrome</a></li><li><a href="http://browserspy.dk/googleapps.php" title="Check to see if you Google Apps domain is setup correctly. Checks if the MX record and the TXT record with the SPF is setup correctly.">Google Apps</a></li><li><a href="http://browserspy.dk/gzip.php" title="Does your browser support GZip compression?">GZip Support</a></li><li><a href="http://browserspy.dk/headers.php" title="What HTTP headers does your browser send?">HTTP Headers</a></li><li><a href="http://browserspy.dk/http.php" title="What HTTP headers does your browser send?">HTTP</a></li><li><a href="http://browserspy.dk/images.php" title="What types of images does your browser support?">Images</a></li><li><a href="http://browserspy.dk/ip.php" title="What IP address and host name have you got? Also shows you your location on a map.">IP Address</a></li><li><a href="http://browserspy.dk/java.php" title="Is Java installed?">Java</a></li><li><a href="http://browserspy.dk/javascript.php" title="Is JavaScript enabled and what versions are supported?">JavaScript</a></li><li><a href="http://browserspy.dk/language.php" title="What languages does your browser accept?">Languages</a></li><li><a href="http://browserspy.dk/math.php" title="What miscellaneous mathematical information are available?">Mathematical</a></li><li><a href="http://browserspy.dk/mathml.php" title="Does your browser support MathML language?">MathML Support</a></li><li><a href="http://browserspy.dk/mimetypes.php" title="What MIME types your browser supports?">MIME Types</a></li><li><a href="http://browserspy.dk/mobile.php" title="Are you using a mobile device and what's it's capabilities?">Mobile</a></li><li><a href="http://browserspy.dk/network.php" title="What headers your browser send when retriving this page?">Network</a></li><li><a href="http://browserspy.dk/object.php" title="What objects does your browser supports? Object like layers, images, forms, links, frames, anchors.">Objects</a></li><li><a href="http://browserspy.dk/showprop.php" title="Show an DOM object with all it's properties and values">Object Browser</a></li><li><a href="http://browserspy.dk/offline.php" title="Can your browser go offline? And can it store data?">Online / Offline</a></li><li><a href="http://browserspy.dk/opendns.php" title="Are you using the OpenDNS service?">OpenDNS</a></li><li><a href="http://browserspy.dk/openoffice.php" title="Is OpenOffice.org installed?">OpenOffice.org</a></li><li><a href="http://browserspy.dk/opera.php" title="Are you running the Opera browser? And if so what version?">Opera Browser</a></li><li><a href="http://browserspy.dk/os.php" title="What operating system does your system run?">Operating System</a></li><li><a href="http://browserspy.dk/pagerank.php" title="Find out the Google PageRank for any web page">Google PageRank</a></li><li><a href="http://browserspy.dk/password.php" title="Does your browser support HTTP password/authentication?">HTTP Password</a></li><li><a href="http://browserspy.dk/ping.php" title="Does your browser ping?">Ping</a></li><li><a href="http://browserspy.dk/plugins.php" title="What plugins does your browser have installed?">Plugins</a></li><li><a href="http://browserspy.dk/plugs.php" title="Find out what other plug-ins or helper components are installed?">Plugs</a></li><li><a href="http://browserspy.dk/prefetch.php" title="Does your browser support link prefetching?">Prefetch</a></li><li><a href="http://browserspy.dk/proxy.php" title="Do you use a proxy to connect to the internet?">Proxy</a></li><li><a href="http://browserspy.dk/psm.php" title="Does your browser use Personal Security Manager (PSM)?">Personal Security Manager</a></li><li><a href="http://browserspy.dk/quicktime.php" title="Is Apple QuickTime installed?">QuickTime Player</a></li><li><a href="http://browserspy.dk/realplayer.php" title="Is RealPlayer installed?">RealPlayer</a></li><li><a href="http://browserspy.dk/resolution.php" title="What is the resolution of your screen?">Resolution</a></li><li><a href="http://browserspy.dk/screen.php" title="What properties does your screen have? Including width, height, DPI, color depth and font smoothing">Screen</a></li><li><a href="http://browserspy.dk/security.php" title="What kind of security does your browser have?">Security</a></li><li><a href="http://browserspy.dk/shockwave.php" title="Is Adobe Shockwave installed?">Shockwave</a></li><li><a href="http://browserspy.dk/silverlight.php" title="Is Microsoft Silverlight installed?">Silverlight</a></li><li><a href="http://browserspy.dk/soundcard.php" title="Is there a sounce card installed in your computer?">Sound Card</a></li><li><a href="http://browserspy.dk/svg.php" title="Does your browser support Scalable Vector Graphics (SVG)">SVG</a></li><li><a href="http://browserspy.dk/textformat.php" title="What text formatting does your browser support?">Text Formatting</a></li><li><a href="http://browserspy.dk/upload.php" title="Does your browser support file upload?">File Upload</a></li><li><a href="http://browserspy.dk/useragent.php" title="What useragent does your browser send? Is the JavaScript version of it the same?">UserAgent</a></li><li><a href="http://browserspy.dk/vbscript.php" title="Does your browser support VBScript (Visual Basic Script)?">VBScript</a></li><li><a href="http://browserspy.dk/wap.php" title="What WAP and/or Mobile device are you using?">WAP Device</a></li><li><a href="http://browserspy.dk/webkit.php" title="Is your browser using the WebKit layout engine?">WebKit</a></li><li><a href="http://browserspy.dk/webserver.php" title="What webserver software is a website runinng? Check websites and see what software and version it's running">Web Server</a></li><li><a href="http://browserspy.dk/window.php" title="Find out various information about the current window">Window</a></li><li><a href="http://browserspy.dk/windowsmediaplayer.php" title="Is Microsoft Windows Media Player installed?">Windows Media Player</a></li></ul>
+
+					</div>
+				</div>
+				<div id="right">
+					<div class="inner">
+		
+
+<h1>BrowserSpy.dk</h1>
+<p>
+Welcome to BrowserSpy.dk. BrowserSpy.dk is the place where you can see just how much information your browser reveals about you and your system.
+</p>
+<p>
+Did you know that all websites that you visit can find out <a href="fonts-flash.php">which fonts you have installed</a>? It's also possible to find out if you have a range of programs installed. These include <a href="adobereader.php">Adobe Reader</a>, <a href="openoffice.php">OpenOffice.org</a>, <a href="googlechrome.php">Google Chrome</a> and <a href="silverlight.php">Microsoft Silverlight</a>. Perhaps even which <a href="css-exploit.php">sites you have visited lately can be detected</a>!
+</p>
+<p>
+When you surf around the internet your browser leaves behind a trail of digital footprints. Websites can use these footprints to check your system. BrowserSpy.dk is a service where you can check just what information it's possible to gather from your system, just by visiting a website.
+</p>
+<p>
+<strong>Privacy to the ultimate test!</strong>
+</p>
+
+<div class="blogpost ">
+<h2><a rel="bookmark" href="http://browserspy.dk/blog/7/browserspydk-mentioned-in-computerorg-article">BrowserSpy.dk mentioned in computer.org&#160;article</a></h2>
+<a rel="bookmark" href="http://browserspy.dk/blog/7/browserspydk-mentioned-in-computerorg-article"><img src="http://browserspy.dk/images/8t.png" class="blogthumb" width="75" height="15" alt="Computing Now" /></a>
+Once again BrowserSpy.dk is in the media.
+This time it's an article for computer.org about how browser fingerprints threaten your online privacy. Go ahead and read the entire article.
+The section about BrowserSpy.dk:
+Henrik Gemal, Danish Web applications developer, introduced  JavaScript-based...
+<p class="clr"><a rel="bookmark" href="http://browserspy.dk/blog/7/browserspydk-mentioned-in-computerorg-article">Read entire posting...</a></p>
+<p class="blogposted">Entry posted on  3. May 2010</p>
+</div>
+<div class="blogpost ">
+<h2><a rel="bookmark" href="http://browserspy.dk/blog/6/google-apps-check-added">Google Apps check&#160;added</a></h2>
+<a rel="bookmark" href="http://browserspy.dk/blog/6/google-apps-check-added"><img src="http://browserspy.dk/images/7t.jpg" class="blogthumb" width="75" height="56" alt="Google Apps" /></a>
+I've just added a Google Apps Check to BrowserSpy.
+Now you can check to see if your Google Apps domain is setup correctly. It checks if the MX record and the TXT record with the SPF is setup correctly.
+Google Apps is a service from Google for using custom domain names with several Google...
+<p class="clr"><a rel="bookmark" href="http://browserspy.dk/blog/6/google-apps-check-added">Read entire posting...</a></p>
+<p class="blogposted">Entry posted on 11. March 2010</p>
+</div>
+<div class="blogpost ">
+<h2><a rel="bookmark" href="http://browserspy.dk/blog/5/article-about-browserspydk">Article about BrowserSpy.dk</a></h2>
+<a rel="bookmark" href="http://browserspy.dk/blog/5/article-about-browserspydk"><img src="http://browserspy.dk/images/6t.png" class="blogthumb" width="75" height="37" alt="TechRepublic" /></a>
+I recently got interviewed by Michael Kassner, who liked to know a little more about BrowserSpy.dk, that you can read on the pages.The interview resulted in a nice article, entitled &quot;BrowserSpy.dk: Reveals more than enough information", appearing at techrepublic.com.<p class="clr"><a rel="bookmark" href="http://browserspy.dk/blog/5/article-about-browserspydk">Read entire posting...</a></p>
+<p class="blogposted">Entry posted on 11. February 2010</p>
+</div>
+<div class="blogpost ">
+<h2><a rel="bookmark" href="http://browserspy.dk/blog/4/nyhedsdaekning">Nyhedsdækning</a></h2>
+
+Min lancering af BrowserSpy fik lidt pressed&aelig;kning, hvilket altid er rart. BrowserSpy var bla i den trykte udgave af MetroXpress:Hvilke aftryk efterlader vi?Hver gang man g&aring;r p&aring; internettet efterlader man et stor m&aelig;ngde aftryk. Alt lige fra seri&oslash;se firmaer til...
+<p class="clr"><a rel="bookmark" href="http://browserspy.dk/blog/4/nyhedsdaekning">Read entire posting...</a></p>
+<p class="blogposted">Entry posted on  9. November 2008</p>
+</div>
+<div class="blogpost ">
+<h2><a rel="bookmark" href="http://browserspy.dk/blog/3/opendns-detection-added">OpenDNS detection&#160;added</a></h2>
+<a rel="bookmark" href="http://browserspy.dk/blog/3/opendns-detection-added"><img src="http://browserspy.dk/images/3t.gif" class="blogthumb" width="75" height="30" alt="OpenDNS logo" /></a>
+Detection for OpenDNS has just been added to BrowserSpy.dk. It can now be detected if you are using the OpenDNS service.OpenDNS offers DNS resolution for consumers and businesses as an alternative to using their Internet service provider&#39;s DNS servers. By placing company servers in strategic...
+<p class="clr"><a rel="bookmark" href="http://browserspy.dk/blog/3/opendns-detection-added">Read entire posting...</a></p>
+<p class="blogposted">Entry posted on  9. October 2008</p>
+</div>
+
+
+<div class="clr"></div>
+
+<p class="advertising">Casinoportalen er din guide til <a href="http://www.casinoportalen.dk/">online casino</a>. Her finder du regler og strategier til de bedste casino spil.</a></p>
+
+<h2>News Archive</h2>
+<p>You can see all previous postings in the <a href="http://browserspy.dk/blog/" title="Blog - BrowserSpy.dk">archive</a>.</p>
+
+
+
+
+						<div id="navtop">[ <a href="#header" title="Go to the top of the page">Top of page</a> ]</div><div id="share"><script type="text/javascript" src="http://w.sharethis.com/button/sharethis.js#publisher=5d9dfc37-7972-470c-beee-b2235e3e55d9&amp;type=website&amp;style=horizontal"></script>
+</div><div id="banner-content">
+<script type="text/javascript">
+//<![CDATA[
+var google_ad_client = "pub-3782597996216257";
+var google_ad_slot = "9894692284";
+var google_ad_width = 728;
+var google_ad_height = 90;
+//]]>
+</script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script>
+</div>
+		</div>
+				</div>
+				<div id="footer">
+					<p><a href="http://browserspy.dk/copyright/" title="Copyright - BrowserSpy.dk">Copyright</a> &copy; 1999-2013 <a href="http://browserspy.dk/contact/" title="Contact - BrowserSpy.dk">Henrik Gemal</a>. All Rights Reserved. <a href="http://browserspy.dk/sitemap/" title="Sitemap - BrowserSpy.dk">Sitemap</a></p>
+				</div>
+			</div>
+		<script type="text/javascript">
+//<![CDATA[
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+try {
+var pageTracker = _gat._getTracker("UA-73153-14");
+pageTracker._initData();
+pageTracker._trackPageview();
+} catch(err) {}
+//]]>
+</script>
+
+</body>
+</html>
+<!-- GSite site: browserspy.dk -->
+<!-- GSite time: 0.00173 -->
+

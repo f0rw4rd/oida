@@ -59,7 +59,11 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
 
         scheme = "https" if use_tls else "http"
 
-        if (use_tls and port != 443) or (not use_tls and port != 80):
+        # Only append a genuinely non-standard port. args.port carries the
+        # default_port (443) even with --no-tls, so a naive "port != 80" check
+        # appended a spurious ":443" to an http:// URL; and a target that already
+        # embeds host:port keeps it without a doubled port.
+        if port and port not in (80, 443):
             return f"{scheme}://{target}:{port}"
 
         return f"{scheme}://{target}"
