@@ -301,7 +301,18 @@ class bacnet(
 
             self.logger.display(f"Reading device {device_id} properties...")
 
-            properties = await self._bacpypes3_read_properties(app, target_addr, device_id, timeout)
+            # Isolate the application-layer property read: a transient
+            # rejection/abort (or a BBMD/router that simply doesn't answer
+            # ReadProperty(device, ...)) must not take down the whole scan,
+            # because the network-layer recon below operates at the BVLL /
+            # network layer and does not depend on these properties.
+            try:
+                properties = await self._bacpypes3_read_properties(
+                    app, target_addr, device_id, timeout
+                )
+            except BaseException as e:
+                self.logger.warning(f"Device property read failed: {e}")
+                properties = None
 
             if properties:
                 self.devices[device_id] = {
@@ -383,25 +394,6 @@ class bacnet(
                 if getattr(self.args, "test_oos", False):
                     await self._bacpypes3_test_oos(app, target_addr, device_id, timeout)
 
-                # Network reconnaissance
-                if getattr(self.args, "who_has", None):
-                    await self._bacpypes3_who_has(app, target_addr, self.args.who_has, timeout)
-
-                if getattr(self.args, "enum_bbmd", False):
-                    await self._bacpypes3_enum_bbmd(app, target_addr, timeout)
-
-                if getattr(self.args, "enum_fdt", False):
-                    await self._bacpypes3_enum_fdt(app, target_addr, timeout)
-
-                if getattr(self.args, "enum_routers", False):
-                    await self._bacpypes3_enum_routers(app, target_addr, timeout)
-
-                if getattr(self.args, "test_bbmd_injection", False):
-                    if not getattr(self.args, "confirm", False):
-                        self.logger.fail("--test-bbmd-injection requires --confirm flag")
-                    else:
-                        await self._bacpypes3_test_bbmd_injection(app, target_addr, timeout)
-
                 # Configuration security checks
                 if getattr(self.args, "check_schedules", False):
                     await self._bacpypes3_check_schedules(app, target_addr, device_id, timeout)
@@ -453,18 +445,6 @@ class bacnet(
                 if getattr(self.args, "discover_mstp", False):
                     await self._bacpypes3_discover_mstp(app, target_addr, device_id, timeout)
 
-                # Remote network discovery
-                if getattr(self.args, "networks", False):
-                    await self._bacpypes3_discover_networks(app, target_addr, timeout)
-
-                if getattr(self.args, "scan_network", None) is not None:
-                    await self._bacpypes3_scan_remote_network(
-                        app, target_addr, self.args.scan_network, timeout
-                    )
-
-                if getattr(self.args, "scan_all_networks", False):
-                    await self._bacpypes3_scan_all_networks(app, target_addr, timeout)
-
                 # Write property (bacpypes3 path)
                 if getattr(self.args, "write", None):
                     await self._bacpypes3_write_single_property(app, target_addr, timeout)
@@ -473,7 +453,48 @@ class bacnet(
                 if getattr(self.args, "dump", False):
                     self._handle_dump()
             else:
-                self.logger.fail(f"Could not read device {device_id} properties")
+                # The device may exist but reject/abort application-layer
+                # ReadProperty (common for pure BBMDs/routers). Don't let that
+                # silently swallow the BVLL / network-layer recon below, which
+                # does not depend on these properties — just warn and continue.
+                self.logger.warning(
+                    f"Could not read device {device_id} properties; "
+                    "continuing with network-layer reconnaissance"
+                )
+
+            # Network-layer reconnaissance (BBMD/FDT/routers/Who-Has/remote
+            # networks). Hoisted out of the `if properties:` block above: these
+            # operate at the BVLL / network layer and must run regardless of
+            # whether the device answered application-layer property reads.
+            if getattr(self.args, "who_has", None):
+                await self._bacpypes3_who_has(app, target_addr, self.args.who_has, timeout)
+
+            if getattr(self.args, "enum_bbmd", False):
+                await self._bacpypes3_enum_bbmd(app, target_addr, timeout)
+
+            if getattr(self.args, "enum_fdt", False):
+                await self._bacpypes3_enum_fdt(app, target_addr, timeout)
+
+            if getattr(self.args, "enum_routers", False):
+                await self._bacpypes3_enum_routers(app, target_addr, timeout)
+
+            if getattr(self.args, "test_bbmd_injection", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--test-bbmd-injection requires --confirm flag")
+                else:
+                    await self._bacpypes3_test_bbmd_injection(app, target_addr, timeout)
+
+            # Remote network discovery
+            if getattr(self.args, "networks", False):
+                await self._bacpypes3_discover_networks(app, target_addr, timeout)
+
+            if getattr(self.args, "scan_network", None) is not None:
+                await self._bacpypes3_scan_remote_network(
+                    app, target_addr, self.args.scan_network, timeout
+                )
+
+            if getattr(self.args, "scan_all_networks", False):
+                await self._bacpypes3_scan_all_networks(app, target_addr, timeout)
 
         finally:
             app.close()

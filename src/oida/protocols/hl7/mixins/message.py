@@ -91,16 +91,21 @@ class MessageMixin:
             )
             return
 
-        self.logger.display("Sending ORU^R01 (Observation Result) message...")
+        # Build from CLI-provided segment args (PID/PV1/ORC/OBR/OBX) so that
+        # -I/--obx-value etc. are honored, instead of a hardcoded dummy result.
+        msg = self._create_message_with_segments("ORU", "R01")
+        if not msg:
+            self.logger.fail("ORU requires patient data. Use --patient-id or --patient-name")
+            return
 
-        msg = self._create_test_message("ORU", "R01")
-        if msg:
-            response = self._send_mllp_message(msg)
-            if response:
-                self.logger.success("Received ORU response")
-                self._parse_response(response)
-            else:
-                self.logger.warning("No response to ORU message")
+        self.logger.display("Sending ORU^R01 (Observation Result) message...")
+        response = self._send_mllp_message(msg)
+        if response:
+            self.logger.success("Received ORU response")
+            self._parse_response(response)
+            self._extract_detailed_response(response, "ORU^R01")
+        else:
+            self.logger.warning("No response to ORU message")
 
     def _send_custom_message(self, msg_type: str):
         """Send custom message type (e.g., 'ORM^O01')"""

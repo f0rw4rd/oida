@@ -42,6 +42,13 @@ from ..constants import (
 )
 
 
+# De-facto XCP-on-CAN convention: the slave's response (DTO) arbitration ID is
+# one greater than the request (CRO) arbitration ID. Used by scan_xcp to only
+# accept a CONNECT response on the ID that the probed request ID would elicit,
+# so delayed/foreign replies are not mis-attributed to the wrong request ID.
+XCP_RESP_ID_OFFSET = 1
+
+
 def _get_python_can():
     """Resolve _python_can from scanner module (avoids circular import)."""
     from ..scanner import _python_can
@@ -108,9 +115,17 @@ class XCPMixin:
                 self.logger.debug(f"XCP: CONNECT frame send failed: {e}")
                 continue
 
-            # Listen for XCP response on any ID (XCP response ID is
-            # implementation-specific, often req_id + 1 or configurable)
-            resp = self._recv_xcp_response(bus, timeout=0.05)
+            # Listen for the XCP response on the expected response (DTO) ID
+            # only. The XCP response ID is implementation-specific, but the
+            # de-facto convention on CAN is rx = tx + 1. Filtering by the
+            # expected ID prevents a delayed reply from an EARLIER probe being
+            # mis-attributed to the request ID currently under test (which on a
+            # busy bus produces XCPScanResult rows pairing a request_id that
+            # never elicited the response with the slave's real response_id).
+            expected_resp_id = req_id + XCP_RESP_ID_OFFSET
+            resp = self._recv_xcp_response(
+                bus, timeout=0.05, expected_id=expected_resp_id
+            )
             if resp is None:
                 continue
 

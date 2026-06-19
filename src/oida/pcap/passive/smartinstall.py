@@ -193,6 +193,16 @@ class SmartInstallPassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
+        # Only assert CVE-2018-0171 exposure when there is evidence that a
+        # Smart Install service actually exists, not merely a client
+        # connection attempt to port 4786. Real evidence is either:
+        #   - a parsed SMI protocol header (smi_info present), or
+        #   - a packet originating FROM port 4786 (the switch responded).
+        # A bare client SYN / ACK / RST to a closed-or-filtered 4786 (an
+        # nmap scan probe) carries neither and must not mint a switch device
+        # or a CVE alert for the destination IP.
+        service_confirmed = smi_info is not None or is_from_server
+
         # Update device tracking
         self._update_devices(
             src_ip,
@@ -202,6 +212,7 @@ class SmartInstallPassiveListener(PySharkListenerBase):
             operation_name,
             src_mac=src_mac,
             dst_mac=dst_mac,
+            service_confirmed=service_confirmed,
         )
 
     def _parse_smart_install_payload(self, packet) -> Optional[Dict[str, Any]]:
@@ -263,8 +274,16 @@ class SmartInstallPassiveListener(PySharkListenerBase):
         operation: str,
         src_mac: str = "",
         dst_mac: str = "",
+        service_confirmed: bool = False,
     ) -> None:
-        """Update device entries for Smart Install participants."""
+        """Update device entries for Smart Install participants.
+
+        ``service_confirmed`` must be True before the port-4786 endpoint is
+        recorded as a Smart Install switch / CVE-2018-0171 exposure. Without
+        it (a bare client SYN or scan probe to 4786 with no server response
+        and no parseable SMI header) we have no evidence the service exists,
+        so no switch device or CVE alert is created for the destination.
+        """
         # The device sending TO port 4786 is the director/client
         # The device listening ON port 4786 is the switch/server
         if dst_port == SMART_INSTALL_PORT:
@@ -278,7 +297,7 @@ class SmartInstallPassiveListener(PySharkListenerBase):
             director_mac = dst_mac
             switch_mac = src_mac
 
-        if is_valid_discovered_ip(switch_ip):
+        if service_confirmed and is_valid_discovered_ip(switch_ip):
             vendor = lookup_mac_vendor(switch_mac) if switch_mac else ""
             device, is_new = self._ensure_device(
                 f"smi-switch:{switch_ip}",

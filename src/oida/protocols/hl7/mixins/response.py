@@ -31,6 +31,11 @@ class ResponseMixin:
             extracted = {
                 "message_type": msg_type,
                 "timestamp": datetime.now().isoformat(),
+                # Store the raw response bytes so the enumeration mixins
+                # (_enum_providers/_enum_apps/_enum_locations) can re-parse
+                # previously collected responses. Without this key their
+                # "also extract from stored responses" loop is dead code.
+                "raw": response,
                 "segments": {},
             }
 

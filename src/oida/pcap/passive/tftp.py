@@ -61,6 +61,11 @@ class TFTPPassiveListener(PySharkListenerBase):
     ):
         super().__init__(interface, timeout, nxc_logger)
         self.file_operations: List[Dict[str, str]] = []
+        # Per-flow TFTP server IP, learned from the initial RRQ/WRQ (the
+        # request destination is always the server). Used to attribute DATA
+        # direction: RRQ download => server sends DATA; WRQ upload => client
+        # sends DATA. Keyed by the direction-independent flow_id.
+        self._flow_server_ip: Dict[str, str] = {}
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format TFTP interaction as protocol-specific table columns."""
@@ -164,6 +169,10 @@ class TFTPPassiveListener(PySharkListenerBase):
         dst_port: int = 0,
     ) -> None:
         """Handle RRQ (opcode 1) -- client requests file download."""
+        # The request destination is the TFTP server for this flow.
+        if flow_id:
+            self._flow_server_ip[flow_id] = dst_ip
+
         filename = self.get_field(tftp, "source_file", "")
         filename = str(filename).strip() if filename else ""
         if not filename:
@@ -213,6 +222,10 @@ class TFTPPassiveListener(PySharkListenerBase):
         dst_port: int = 0,
     ) -> None:
         """Handle WRQ (opcode 2) -- client requests file upload."""
+        # The request destination is the TFTP server for this flow.
+        if flow_id:
+            self._flow_server_ip[flow_id] = dst_ip
+
         filename = self.get_field(tftp, "destination_file", "")
         filename = str(filename).strip() if filename else ""
         if not filename:
@@ -261,7 +274,22 @@ class TFTPPassiveListener(PySharkListenerBase):
         src_port: int = 0,
         dst_port: int = 0,
     ) -> None:
-        """Handle DATA (opcode 3) -- server sends data block."""
+        """Handle DATA (opcode 3) -- data block (server->client on RRQ download,
+        client->server on WRQ upload)."""
+        # Determine DATA direction from the transfer learned at RRQ/WRQ time.
+        # The TFTP server replies from an ephemeral TID port, so the DATA flow_id
+        # need not match the request's; correlate by the server IP (the request
+        # destination) instead. If either endpoint of this DATA packet is a known
+        # server, the server is whichever endpoint matches; otherwise fall back to
+        # the common RRQ-download case of server-as-source.
+        known_servers = set(self._flow_server_ip.values())
+        if src_ip in known_servers:
+            server_is_src = True
+        elif dst_ip in known_servers:
+            server_is_src = False
+        else:
+            server_is_src = True
+
         block_raw = self.get_field(tftp, "blocknum", "")
         block = str(block_raw).strip() if block_raw else "?"
         if not block or block == "":
@@ -296,7 +324,7 @@ class TFTPPassiveListener(PySharkListenerBase):
             dst_port=dst_port,
         )
 
-        self._track_devices(src_ip, dst_ip, src_mac, dst_mac, server_is_src=True)
+        self._track_devices(src_ip, dst_ip, src_mac, dst_mac, server_is_src=server_is_src)
         self.logger.debug(f"TFTP: DATA block {block} ({src_ip} -> {dst_ip})")
 
     def _process_ack(

@@ -1031,5 +1031,55 @@ class TestProtoFlowMessageRouting(unittest.TestCase):
         self.assertTrue(len(mock_sock.sent_data) > 0)
 
 
+@patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
+class TestSendORUHonorsCLIArgs(unittest.TestCase):
+    """--send-oru must honor -I/--patient-id and --obx-value, not send a dummy.
+
+    Regression: _send_oru_message built a hardcoded ORU via _create_test_message
+    that ignored every CLI segment arg, transmitting a dummy patient and no
+    observation value. It must route through _create_message_with_segments.
+    """
+
+    def _scanner(self, args):
+        mock_sock = MockSocket()
+        s = _make_hl7_instance(args, None, "10.0.0.1")
+        s.logger = Mock()
+        s.conn = mock_sock
+        return s, mock_sock
+
+    def test_oru_uses_cli_patient_and_obx_value(self):
+        args = create_mock_args()
+        args.send_oru = True
+        args.confirm = True
+        args.patient_id = "PT001"
+        args.obx_value = "95"
+        args.ssn = ""
+
+        s, sock = self._scanner(args)
+        s._send_oru_message()
+
+        self.assertTrue(sock.sent_data, "no ORU message was transmitted")
+        sent = b"".join(sock.sent_data).decode("utf-8", errors="ignore")
+        # CLI patient id and OBX value present; hardcoded dummy patient absent.
+        self.assertIn("PT001", sent)
+        self.assertIn("95", sent)
+        self.assertNotIn("12345^^^MRN", sent)
+
+    def test_oru_requires_patient_data(self):
+        args = create_mock_args()
+        args.send_oru = True
+        args.confirm = True
+        args.patient_id = None
+        args.patient_name = None
+        args.mrn = None
+        args.ssn = ""
+
+        s, sock = self._scanner(args)
+        s._send_oru_message()
+
+        self.assertFalse(sock.sent_data, "ORU sent without patient data")
+        s.logger.fail.assert_called()
+
+
 if __name__ == "__main__":
     unittest.main()

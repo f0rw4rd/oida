@@ -1581,6 +1581,53 @@ class TestXCPScannerMock(unittest.TestCase):
         self.assertEqual(len(results), 0)
 
     @patch("oida.protocols.can.scanner._python_can")
+    def test_scan_xcp_ignores_response_on_unexpected_arbid(self, mock_can_lazy):
+        """A CONNECT response on an unexpected arb ID must NOT be attributed
+        to the probed request ID (regression: delayed/foreign reply
+        mis-attribution during a full-range scan)."""
+        mock_can = MagicMock()
+        mock_can_lazy.return_value = mock_can
+        mock_bus = MagicMock()
+
+        # While probing req_id=0x100 (expected response on 0x101), a positive
+        # XCP response arrives on a foreign arb ID (0x2A0) -- e.g. a delayed
+        # reply to an earlier probe. It must be ignored, not paired with 0x100.
+        def recv_side_effect(timeout=0.05):
+            msg = MagicMock()
+            msg.arbitration_id = 0x2A0
+            msg.data = bytearray([0xFF, 0x00, 0x00, 0x08, 0x08, 0x00, 0x01, 0x04])
+            return msg
+
+        mock_bus.recv.side_effect = recv_side_effect
+
+        results = self.scanner.scan_xcp(mock_bus, scan_range=(0x100, 0x100))
+
+        self.assertEqual(len(results), 0)
+
+    @patch("oida.protocols.can.scanner._python_can")
+    def test_scan_xcp_attributes_response_on_expected_arbid(self, mock_can_lazy):
+        """A CONNECT response on the expected response ID (req_id + 1) IS
+        attributed to the probed request ID."""
+        mock_can = MagicMock()
+        mock_can_lazy.return_value = mock_can
+        mock_bus = MagicMock()
+
+        def recv_side_effect(timeout=0.05):
+            msg = MagicMock()
+            # Probing req_id=0x100 -> expected response on 0x101.
+            msg.arbitration_id = 0x101
+            msg.data = bytearray([0xFF, 0x00, 0x00, 0x08, 0x08, 0x00, 0x01, 0x04])
+            return msg
+
+        mock_bus.recv.side_effect = recv_side_effect
+
+        results = self.scanner.scan_xcp(mock_bus, scan_range=(0x100, 0x100))
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].request_id, 0x100)
+        self.assertEqual(results[0].response_id, 0x101)
+
+    @patch("oida.protocols.can.scanner._python_can")
     def test_recv_xcp_response(self, mock_can_lazy):
         """Test XCP response reception."""
         mock_bus = MagicMock()
