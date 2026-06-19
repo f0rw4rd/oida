@@ -157,7 +157,12 @@ def get_protocol_defaults(protocol: str) -> Union[List[str], List[Tuple]]:
         "ics": GENERIC_ICS_DEFAULTS,
     }
 
-    return defaults.get(protocol_lower, [])
+    # Return a defensive shallow copy so callers that mutate the result
+    # (append/extend/sort) cannot corrupt the shared module-level lists or
+    # leak entries across protocols that alias the same constant (e.g.
+    # s7/snap7/siemens -> SIEMENS_S7_DEFAULTS). Elements are immutable
+    # (str / tuples of int|bytes|str), so a shallow copy is sufficient.
+    return list(defaults.get(protocol_lower, []))
 
 
 # =============================================================================

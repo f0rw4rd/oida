@@ -475,13 +475,23 @@ class dicom(
         if getattr(self.args, "get", False):
             self._cget_retrieve()
 
-        # C-STORE operations (upload images)
+        # C-STORE operations (upload images) — writes an object to the PACS
         if getattr(self.args, "store", False):
-            self._cstore_send()
+            if not getattr(self.args, "confirm", False):
+                self.logger.fail(
+                    "--store uploads a DICOM object to the PACS (state-changing) — requires --confirm"
+                )
+            else:
+                self._cstore_send()
 
-        # C-MOVE operations (transfer images)
+        # C-MOVE operations (transfer images) — instructs the PACS to move studies
         if getattr(self.args, "move", False):
-            self._cmove_request()
+            if not getattr(self.args, "confirm", False):
+                self.logger.fail(
+                    "--move instructs the PACS to transfer studies to a destination AET — requires --confirm"
+                )
+            else:
+                self._cmove_request()
 
         # Fuzzing
         if getattr(self.args, "fuzz", False):

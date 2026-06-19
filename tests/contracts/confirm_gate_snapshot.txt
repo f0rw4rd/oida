@@ -25,9 +25,7 @@ can:xcp_memory_read
 coap:content_format
 coap:psk
 coap:psk_identity
-dicom:move
 dicom:probe_ops
-dicom:store
 dnp3:activate_config
 dnp3:ao_direct
 dnp3:ao_sbo

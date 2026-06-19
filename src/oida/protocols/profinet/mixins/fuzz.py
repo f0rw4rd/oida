@@ -127,10 +127,14 @@ class FuzzMixin(_ScannerBase):
             data_type = self._get_index_data_type(idx)
             # PROFINET I&M string fields are fixed-width ASCII padded with
             # spaces, not length-prefixed. The "string" type generates LE
-            # length-prefix boundaries which are inappropriate. Use "bytes"
-            # (raw byte mutations) for these fields instead.
+            # length-prefix boundaries which are inappropriate. Use "struct"
+            # (generic size-based byte mutations) for these fields instead.
+            # NB: "bytes" is NOT a recognised fuzzer type and yields an empty
+            # boundary set, so boundary mode would silently send nothing;
+            # "struct" hits the generic boundary branch and always produces
+            # payloads from the original value.
             if data_type == "string":
-                data_type = "bytes"
+                data_type = "struct"
             max_len = len(original) + 8 if mode == "full" else len(original)
 
             # "boundary" mode: only boundary/edge-case values, no random

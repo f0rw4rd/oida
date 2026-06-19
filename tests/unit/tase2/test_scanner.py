@@ -903,6 +903,69 @@ class TestTASE2InformationMessages(unittest.TestCase):
         self.assertIn("local_ref", result)
 
     @patch("oida.protocols.tase2.scanner._tase2", create=True)
+    def test_read_information_message_by_listed_msg_id(self, mock_tase2):
+        """Regression: an id from list-messages reads that message via read-message.
+
+        list-messages emits msg_id, but the library looks messages up by
+        info_ref (a distinct field). With msg_id != info_ref, reading by the
+        listed id must still resolve to the correct message rather than the
+        wrong/empty one.
+        """
+        from types import SimpleNamespace
+
+        listed_msg = SimpleNamespace(
+            msg_id=42,
+            info_ref=7,  # deliberately != msg_id
+            local_ref=3,
+            size=11,
+            timestamp=None,
+        )
+        full_msg = SimpleNamespace(
+            msg_id=42,
+            info_ref=7,
+            local_ref=3,
+            text="hello world",
+            timestamp=None,
+        )
+
+        mock_conn = MagicMock()
+        mock_conn.get_info_messages.return_value = [listed_msg]
+        mock_conn.get_info_message_by_ref.return_value = full_msg
+
+        # The id the operator copies from --list-messages is the msg_id.
+        listed = self.scanner.get_information_messages(mock_conn, "VCC", "IM_Operator")
+        self.assertEqual(len(listed), 1)
+        listed_id = listed[0]["message_id"]
+        self.assertEqual(listed_id, "42")
+
+        # Reading by that exact id must return the real content, and must have
+        # looked the message up by its info_ref (7), not the raw id (42).
+        result = self.scanner.read_information_message(mock_conn, "VCC", "IM_Operator", listed_id)
+        self.assertIsNone(result["error"])
+        self.assertEqual(result["content"], "hello world")
+        self.assertEqual(result["message_id"], "42")
+        self.assertEqual(result["info_ref"], 7)
+        mock_conn.get_info_message_by_ref.assert_called_once_with("VCC", 7)
+
+    @patch("oida.protocols.tase2.scanner._tase2", create=True)
+    def test_read_information_message_not_found(self, mock_tase2):
+        """Reading an id that is not in the listing reports not-found, not wrong data."""
+        from types import SimpleNamespace
+
+        listed_msg = SimpleNamespace(
+            msg_id=42, info_ref=7, local_ref=3, size=11, timestamp=None
+        )
+        mock_conn = MagicMock()
+        mock_conn.get_info_messages.return_value = [listed_msg]
+
+        result = self.scanner.read_information_message(mock_conn, "VCC", "IM_Operator", "999")
+
+        self.assertIsNone(result["content"])
+        self.assertIsNotNone(result["error"])
+        self.assertIn("not found", result["error"])
+        mock_conn.get_info_message_by_ref.assert_not_called()
+
+    @patch("oida.protocols.tase2.scanner._tase2", create=True)
     def test_get_im_transfer_attributes_structure(self, mock_tase2):
         """Test get_im_transfer_attributes returns proper dict structure"""
         mock_conn = MagicMock()

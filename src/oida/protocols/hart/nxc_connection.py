@@ -91,11 +91,17 @@ class hart(NetworkConnection):
         if getattr(self.args, "enumerate_device_specific", False):
             self._handle_enumerate_device_specific()
 
-        # Calibration / write command probes
+        # Calibration / write command probes (dangerous — require --confirm)
         if getattr(self.args, "probe_calibration", False) or getattr(
             self.args, "probe_write", False
         ):
-            self._handle_command_probes()
+            if not getattr(self.args, "confirm", False):
+                self.logger.fail(
+                    "--probe-calibration/--probe-write transmit live calibration/write "
+                    "commands to the device — requires --confirm"
+                )
+            else:
+                self._handle_command_probes()
 
         # Security analysis
         if security_analysis:
