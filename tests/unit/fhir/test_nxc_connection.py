@@ -159,6 +159,17 @@ class TestGetBaseURL(unittest.TestCase):
         scanner = _create_scanner("fhir.local", tls=False, port=80)
         self.assertEqual(scanner._get_base_url(), "http://fhir.local")
 
+    def test_hostname_no_tls_default_port_no_spurious_443(self):
+        """--no-tls leaves args.port at the 443 default; the http URL must NOT
+        get a spurious ':443' appended (regression: built http://host:443)."""
+        scanner = _create_scanner("fhir.local", tls=False, port=443)
+        self.assertEqual(scanner._get_base_url(), "http://fhir.local")
+
+    def test_target_with_embedded_port_no_tls_not_doubled(self):
+        """A host:port target with --no-tls must not double the port to :443."""
+        scanner = _create_scanner("127.0.0.1:8081", tls=False, port=443)
+        self.assertEqual(scanner._get_base_url(), "http://127.0.0.1:8081")
+
     def test_hostname_non_default_port_tls(self):
         """Test hostname with non-default port includes port number"""
         scanner = _create_scanner("fhir.example.com", tls=True, port=8443)
