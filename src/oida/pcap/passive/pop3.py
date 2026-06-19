@@ -199,12 +199,30 @@ class POP3PassiveListener(PySharkListenerBase):
         # Try to get response data (capabilities)
         response_data = self.get_field(pop_layer, "response_data", "")
 
-        # Determine direction based on port
-        # POP3 standard port 110, POP3S port 995
+        # Determine direction based on port.
+        # POP3 standard port 110, POP3S port 995, but the protocol may run on any
+        # port (stunnel wrappers, lab setups, containers mapping 1100/8110, etc.).
+        # Prefer the canonical port if it appears on either side; otherwise fall
+        # back to "lower port wins" (the listening server has the smaller
+        # fixed-vs-ephemeral port), matching the iec104/modbus/mms/smtp listeners.
+        # This avoids silently dropping POP3 sessions on non-standard ports.
         now = datetime.now().isoformat()
         cmd = str(request_command).upper() if request_command else ""
 
-        if dst_port in (110, 995):
+        _STD_PORTS = (110, 995)
+        if dst_port in _STD_PORTS:
+            is_request = True
+        elif src_port in _STD_PORTS:
+            is_request = False
+        else:
+            # Non-standard port: server is the lower (listening) port.
+            is_request = dst_port < src_port
+            self.logger.debug(
+                f"POP3 on non-standard port: {src_ip}:{src_port} -> {dst_ip}:{dst_port} "
+                f"(treating as {'request' if is_request else 'response'})"
+            )
+
+        if is_request:
             # Client -> Server (commands)
             client_ip = src_ip
             client_port = src_port
@@ -269,7 +287,7 @@ class POP3PassiveListener(PySharkListenerBase):
                 request_command,
                 request_parameter,
             )
-        elif src_port in (110, 995):
+        else:
             # Server -> Client (responses)
             client_ip = dst_ip
             client_port = dst_port

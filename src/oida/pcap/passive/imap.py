@@ -235,26 +235,37 @@ class IMAPPassiveListener(PySharkListenerBase):
         pyshark_username = self.get_field(imap_layer, "request_username", "")
         pyshark_password = self.get_field(imap_layer, "request_password", "")
 
-        # Determine direction based on port (143 = IMAP, 993 = IMAPS)
+        # Determine direction based on port (143 = IMAP, 993 = IMAPS). IMAP may
+        # run on any TCP port (e.g. a proxy/remapped port); use a canonical port
+        # if it appears on either side, otherwise fall back to "lower port wins"
+        # (the listening server side has the smaller fixed port vs. the ephemeral
+        # client port). This mirrors the iec104/mms heuristic and avoids dropping
+        # non-standard-port sessions that still match the imap display filter.
         if dst_port in self.IMAP_PORTS:
             # Client -> Server
+            is_request = True
+        elif src_port in self.IMAP_PORTS:
+            # Server -> Client
+            is_request = False
+        else:
+            # Non-standard port: lower port is the server (listening) side.
+            is_request = dst_port <= src_port
+
+        if is_request:
             client_ip = src_ip
             server_ip = dst_ip
             server_port = dst_port
-        elif src_port in self.IMAP_PORTS:
-            # Server -> Client
+        else:
             client_ip = dst_ip
             server_ip = src_ip
             server_port = src_port
-        else:
-            return
 
         now = datetime.now().isoformat()
         banner = self.server_banners.get(server_ip, "")
         cmd_upper = str(request_command).upper() if request_command else ""
 
         # --- Process server responses (line_data, response_status) ---
-        if src_port in self.IMAP_PORTS:
+        if not is_request:
             # Server -> Client: check for banner, capabilities
             if line_data:
                 line_str = str(line_data)
@@ -292,7 +303,7 @@ class IMAPPassiveListener(PySharkListenerBase):
             )
 
         # --- Process client commands ---
-        if dst_port in self.IMAP_PORTS:
+        if is_request:
             # Try to determine the command -- either from PyShark's parsed
             # request_command/command fields, or by inspecting the raw request
             # data for unrecognised commands (DONE, SASL continuation, etc.).

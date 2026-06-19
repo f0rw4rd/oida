@@ -184,6 +184,26 @@ class RMIPassiveListener(PySharkListenerBase):
                 dst_mac,
                 packet,
             )
+        else:
+            # No fresh stream token (magic / input / output). Typically a
+            # serialization-data continuation segment -- the highest-value
+            # signal here (ysoserial / JNDI deserialization surface). Don't
+            # silently drop it: record a generic interaction so it leaves a
+            # trace and a debug log explaining the skip.
+            ser_data = str(self.get_field(rmi, "serialization_data", "") or "")
+            self._process_data(
+                src_ip,
+                dst_ip,
+                ser_magic,
+                ser_version,
+                ser_data,
+                flow_id,
+                src_port,
+                dst_port,
+                src_mac,
+                dst_mac,
+                packet,
+            )
 
     def _process_handshake(
         self,
@@ -363,6 +383,80 @@ class RMIPassiveListener(PySharkListenerBase):
             src_mac,
             dst_mac,
         )
+
+    def _process_data(
+        self,
+        src_ip,
+        dst_ip,
+        ser_magic,
+        ser_version,
+        ser_data,
+        flow_id,
+        src_port,
+        dst_port,
+        src_mac,
+        dst_mac,
+        packet,
+    ) -> None:
+        """Record an RMI packet that carries no fresh stream token.
+
+        These are typically serialization-data continuation segments (the Java
+        deserialization attack surface) or fragments/keepalives. We still record
+        them so no packet matching the ``rmi`` display filter is silently
+        dropped. ser_magic/ser_version are read here too -- serialized data can
+        arrive without a leading output token, and that should still be flagged
+        into ``serialization_flows``.
+        """
+        has_serialization = ser_magic.lower() in ("0xaced", "44269", "aced")
+        # Direction: client -> server unless the source is the registry port.
+        is_request_dir = dst_port == 1099 or (src_port != 1099 and dst_port < src_port)
+        direction = "request" if is_request_dir else "response"
+
+        detail_parts = ["Data"]
+        if has_serialization:
+            detail_parts.append(f"java-ser-v{ser_version}")
+            # Output flows client -> server; record that direction as the flow.
+            if is_request_dir:
+                self.serialization_flows.add((src_ip, dst_ip))
+            else:
+                self.serialization_flows.add((dst_ip, src_ip))
+        detail = " ".join(detail_parts)
+
+        self.logger.debug(
+            f"RMI data segment (no magic/input/output token) "
+            f"from {src_ip}:{src_port} -> {dst_ip}:{dst_port} "
+            f"serialization={has_serialization}"
+        )
+
+        details: Dict[str, Any] = {
+            "message_type": "Data",
+            "has_serialization": has_serialization,
+            "ser_version": ser_version if has_serialization else "",
+            "endpoint": "",
+            "protocol_name": "",
+            "detail": detail,
+        }
+
+        now = datetime.now().isoformat()
+        self._record_interaction(
+            now,
+            src_ip,
+            dst_ip,
+            direction,
+            "RMI Data",
+            details,
+            f"RMI Data {src_ip} -> {dst_ip}"
+            + (" (java-serialization)" if has_serialization else ""),
+            flow_id=flow_id,
+            src_port=src_port,
+            dst_port=dst_port,
+            stream_id=self.get_stream_id(packet),
+        )
+
+        if is_request_dir:
+            self._update_devices(src_ip, dst_ip, src_mac, dst_mac)
+        else:
+            self._update_devices(dst_ip, src_ip, dst_mac, src_mac)
 
     def _update_devices(
         self,

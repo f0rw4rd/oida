@@ -19,6 +19,94 @@ pytestmark = [pytest.mark.integration]
 RMI_DECODE_AS = {"tcp.port==1099": "rmi"}
 
 
+# ---------------------------------------------------------------------------
+# Fake-packet helpers for driving process_packet directly (no tshark needed)
+# ---------------------------------------------------------------------------
+
+
+class _FakeLayer:
+    """Minimal stand-in for a pyshark layer: attribute access -> field value."""
+
+    def __init__(self, **fields):
+        self.__dict__.update(fields)
+
+
+class _FakePacket:
+    """Minimal packet exposing the layers the RMI listener accesses."""
+
+    def __init__(self, rmi, src_ip, dst_ip, src_port, dst_port):
+        self.rmi = rmi
+        self.ip = _FakeLayer(src=src_ip, dst=dst_ip)
+        self.tcp = _FakeLayer(srcport=str(src_port), dstport=str(dst_port))
+
+
+class TestRMISilentDropRegression:
+    """Regression: an rmi packet with no magic/input/output token must not be
+    silently dropped (CODE_REVIEW.md rmi.py:142-186).
+
+    A serialization-data continuation segment carries none of the fresh stream
+    tokens. Previously it fell through every branch with no interaction and no
+    debug log. It must now leave a trace.
+    """
+
+    def _listener(self):
+        from oida.pcap.passive.rmi import RMIPassiveListener
+
+        return RMIPassiveListener(interface="lo", timeout=10)
+
+    def test_data_segment_records_interaction(self):
+        """A token-less RMI packet now records a generic 'RMI Data' interaction."""
+        listener = self._listener()
+        # rmi layer with NO magic / inputstream / outputstream tokens, but a
+        # Java serialization marker (0xaced) -- the deserialization surface.
+        rmi = _FakeLayer(ser_magic="0xaced", ser_version="5", serialization_data="aceddead")
+        pkt = _FakePacket(rmi, "10.0.0.5", "10.0.0.9", src_port=55000, dst_port=1099)
+
+        listener.process_packet(pkt)
+
+        assert listener.interactions, "Token-less RMI packet was silently dropped"
+        ops = {ix.operation for ix in listener.interactions}
+        assert "RMI Data" in ops, f"Expected 'RMI Data' interaction; got {ops}"
+        data_ix = next(ix for ix in listener.interactions if ix.operation == "RMI Data")
+        assert data_ix.details.get("message_type") == "Data"
+        assert data_ix.details.get("has_serialization") is True
+
+    def test_data_segment_emits_debug_log(self):
+        """The previously-silent path now emits an explanatory debug log.
+
+        The listener uses the project's custom module logger (not the stdlib
+        root logger caplog hooks into), so capture debug() calls directly.
+        """
+        listener = self._listener()
+        debug_msgs = []
+        listener.logger.debug = lambda msg, *a, **k: debug_msgs.append(str(msg))
+
+        rmi = _FakeLayer(serialization_data="deadbeef")  # no tokens, no ser magic
+        pkt = _FakePacket(rmi, "10.0.0.5", "10.0.0.9", src_port=55000, dst_port=1099)
+
+        listener.process_packet(pkt)
+
+        assert any("no magic/input/output token" in m for m in debug_msgs), (
+            f"Expected a debug log explaining the token-less RMI skip; got {debug_msgs}"
+        )
+        # Even with no serialization marker, a trace is still recorded.
+        assert listener.interactions, "Token-less RMI packet must still leave a trace"
+
+    def test_serialization_without_output_token_flagged(self):
+        """Serialized data arriving without a leading output token is still
+        flagged into serialization_flows (the related blind spot)."""
+        listener = self._listener()
+        rmi = _FakeLayer(ser_magic="0xaced", ser_version="5")
+        pkt = _FakePacket(rmi, "10.0.0.5", "10.0.0.9", src_port=55000, dst_port=1099)
+
+        listener.process_packet(pkt)
+
+        # Client (lower-port side -> registry 1099) -> server flow recorded.
+        assert ("10.0.0.5", "10.0.0.9") in listener.serialization_flows, (
+            f"Serialization flow not flagged; got {listener.serialization_flows}"
+        )
+
+
 class TestRMIPassive:
     """Java RMI protocol-specific tests."""
 

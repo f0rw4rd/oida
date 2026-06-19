@@ -392,3 +392,51 @@ class TestBACnetHarvestIntegration:
             )
             assert len(listener.interactions) > 0, f"No interactions from {pcap_name}"
             assert isinstance(result, dict), f"harvest() did not return dict from {pcap_name}"
+
+
+class _FakeLayer:
+    """Minimal pyshark-layer stand-in: only the attrs set are 'present'.
+
+    get_field() uses getattr(layer, name, default), so any attribute we do
+    NOT set is treated as an absent tshark field.
+    """
+
+    def __init__(self, **fields):
+        self.__dict__.update(fields)
+
+
+class _FakeBACnetPacket:
+    """Synthetic BACnet/IP packet with an IP+UDP+bacapp layer."""
+
+    def __init__(self, **bacapp_fields):
+        self.ip = _FakeLayer(src="10.0.0.1", dst="10.0.0.2")
+        self.udp = _FakeLayer(srcport="47808", dstport="47808", stream="0")
+        self.bacapp = _FakeLayer(**bacapp_fields)
+
+
+class TestBACnetMissingServiceChoice:
+    """Regression: APDUs with no service-choice field must not be dropped.
+
+    For ComplexAck/segmented PDUs the confirmed_service choice can be absent
+    (it lives on the matching request). Previously process_packet hit
+    `if not svc_name: return` and silently dropped the packet with no
+    interaction and no debug log. The catch-all now records a generic
+    `APDU-<type>` interaction so every bacapp packet yields >= 1 row.
+    """
+
+    def test_complexack_without_service_choice_records_interaction(self):
+        from oida.pcap.passive.bacnet import BACnetPassiveListener
+
+        listener = BACnetPassiveListener(interface="lo", timeout=10)
+        # apdu_type=3 (ComplexAck) but NO confirmed_service field present.
+        packet = _FakeBACnetPacket(type="3", invoke_id="7")
+        listener.process_packet(packet)
+
+        assert len(listener.interactions) == 1, (
+            "ComplexAck with absent service choice was dropped instead of "
+            "recording a generic interaction"
+        )
+        ix = listener.interactions[0]
+        assert ix.operation == "APDU-3", f"Expected generic 'APDU-3', got {ix.operation!r}"
+        assert ix.details.get("service") == "APDU-3"
+        assert ix.direction == "response"
