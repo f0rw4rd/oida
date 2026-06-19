@@ -353,6 +353,10 @@ class OPCUAScanner(NetworkScanner):
         results = {
             "anonymous_access": False,
             "username_password": {},
+            # Maps username -> the password that actually validated, so the
+            # credential report emits the real per-user password rather than a
+            # shared self.password.
+            "valid_passwords": {},
             "tested_credentials": [],
         }
 
@@ -434,6 +438,7 @@ class OPCUAScanner(NetworkScanner):
                     # Read service requires an authenticated session.
                     await probe_client.get_root_node().read_browse_name()
                     results["username_password"][username] = "valid"
+                    results["valid_passwords"][username] = password
                     results["tested_credentials"].append(f"{username}:{password}")
                     self.logger.display(f"VALID: {username}:{password}")
                     valid_count += 1
@@ -543,7 +548,15 @@ class OPCUAScanner(NetworkScanner):
         except Exception as e:
             error_str = str(e).lower()
             if "badattributeidinvalid" in error_str:
-                # Node doesn't support AccessLevel, fall back to write test
+                # Node doesn't support AccessLevel, fall back to write test.
+                # The fallback issues a real Write service call against a live
+                # variable — gate it on --confirm like every other write path.
+                if not parse_bool(self.args.get("confirm", False)):
+                    result["error"] = (
+                        "AccessLevel unavailable; write-back probe skipped "
+                        "(writes to live variable) — requires --confirm"
+                    )
+                    return result
                 try:
                     original = await node.read_value()
                     await node.write_value(original)
@@ -705,10 +718,13 @@ class OPCUAScanner(NetworkScanner):
         if not has_encryption:
             self.logger.security_finding("No encryption", detail="No secure endpoints available")
 
-        # Report valid credentials
+        # Report valid credentials with the password that actually validated
+        # for each user (falling back to self.password only if unrecorded).
+        valid_passwords = auth_test.get("valid_passwords", {})
         for username, status in auth_test.get("username_password", {}).items():
             if status == "valid":
-                self.report_credential(username, self.password, host=host, port=port)
+                password = valid_passwords.get(username, self.password)
+                self.report_credential(username, password, host=host, port=port)
 
         # Report writable nodes as security finding
         address_space = results.get("address_space", {})

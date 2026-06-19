@@ -214,21 +214,30 @@ class CredentialsMixin:
 
                 self.logger.display(f"  Readable nodes: {len(access['readable_nodes'])}")
 
-                # Test write access - find variable nodes and try safe write
-                for node in test_nodes:
-                    try:
-                        node_class = await node.read_node_class()
-                        if node_class == ua.NodeClass.Variable:
-                            # Try to read current value
-                            current = await node.read_value()
-                            # Try to write same value back (safe)
-                            await node.write_value(current)
-                            access["writable_nodes"].append(str(node.nodeid))
-                    except Exception as e:
-                        self.logger.debug("test rbac failed: %s", e)
-                        pass
+                # Test write access - find variable nodes and try safe write.
+                # The write-back issues a real Write service call against a
+                # live variable — gate it on --confirm like every other write
+                # path. Without --confirm, skip the write column gracefully.
+                if not getattr(self.args, "confirm", False):
+                    self.logger.display(
+                        "  Writable nodes: skipped (write-back probe writes to "
+                        "live variables) — requires --confirm"
+                    )
+                else:
+                    for node in test_nodes:
+                        try:
+                            node_class = await node.read_node_class()
+                            if node_class == ua.NodeClass.Variable:
+                                # Try to read current value
+                                current = await node.read_value()
+                                # Try to write same value back (safe)
+                                await node.write_value(current)
+                                access["writable_nodes"].append(str(node.nodeid))
+                        except Exception as e:
+                            self.logger.debug("test rbac failed: %s", e)
+                            pass
 
-                self.logger.display(f"  Writable nodes: {len(access['writable_nodes'])}")
+                    self.logger.display(f"  Writable nodes: {len(access['writable_nodes'])}")
 
                 # Test method access - find and try to call methods
                 try:

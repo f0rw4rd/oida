@@ -199,7 +199,7 @@ def mock_scanner(mock_logger, knx_data):
                 return group_addr, value
             except Exception as e:
                 self.logger.fail(f"Invalid group write format '{write_arg}': {e}")
-                return "0/0/0", b""
+                return None, b""
 
         def _parse_bcu_type(self, descriptor: bytes) -> str:
             """Parse BCU type from mask version descriptor"""
@@ -476,16 +476,16 @@ class TestParseGroupWrite:
         assert value == b"\xaa\xbb"
 
     def test_invalid_format_no_colon(self, mock_scanner):
-        """Test invalid format without colon."""
+        """Test invalid format without colon does not fall back to 0/0/0."""
         group_addr, value = mock_scanner._parse_group_write("1/0/1")
-        assert group_addr == "0/0/0"
+        assert group_addr is None
         assert value == b""
         mock_scanner.logger.fail.assert_called()
 
     def test_invalid_hex_value(self, mock_scanner):
-        """Test invalid hex value."""
+        """Test invalid hex value does not fall back to 0/0/0."""
         group_addr, value = mock_scanner._parse_group_write("1/0/1:GG")
-        assert group_addr == "0/0/0"
+        assert group_addr is None
         assert value == b""
         mock_scanner.logger.fail.assert_called()
 

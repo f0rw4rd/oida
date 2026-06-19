@@ -57,17 +57,28 @@ class TestScanBusDevices:
 
 class TestTestRouting:
     def test_routing_supported_when_put_succeeds(self, host, patch_xknx_cls):
+        host.args = {"confirm": True}
         knx = make_knx(FakeP2P([]))
         res = asyncio.run(host._test_routing(knx))
         assert res["routing_supported"] is True
         knx.telegrams.put.assert_awaited()
 
     def test_routing_failure_recorded(self, host, patch_xknx_cls):
+        host.args = {"confirm": True}
         knx = make_knx(FakeP2P([]))
         knx.telegrams.put.side_effect = RuntimeError("no route")
         res = asyncio.run(host._test_routing(knx))
         assert res["routing_supported"] is False
         assert any("no route" in e for e in res["errors"])
+
+    def test_routing_probe_skipped_without_confirm(self, host, patch_xknx_cls):
+        # No --confirm: the live GroupValueWrite probe must NOT be sent.
+        host.args = {}
+        knx = make_knx(FakeP2P([]))
+        res = asyncio.run(host._test_routing(knx))
+        assert res["routing_supported"] is False
+        assert res["error"] == "Missing --confirm flag"
+        knx.telegrams.put.assert_not_awaited()
 
 
 class TestFindDeviceBySerial:

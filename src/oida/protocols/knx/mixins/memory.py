@@ -219,6 +219,13 @@ class MemoryMixin:
             "error": None,
         }
 
+        # Reject the sentinel produced by _parse_group_write on malformed input
+        # so a bad --group-write argument never actuates a default device.
+        if not group_addr:
+            result["error"] = "Invalid group address"
+            self.logger.fail("Refusing group write: invalid/empty group address")
+            return result
+
         try:
             self.logger.display(f"Writing {value.hex()} to group address {group_addr}")
             ga = _xknx_cls.GroupAddress(group_addr)
@@ -301,7 +308,13 @@ class MemoryMixin:
             return 0, b""
 
     def _parse_group_write(self, write_arg: str) -> tuple:
-        """Parse group write argument (ADDR:VALUE)"""
+        """Parse group write argument (ADDR:VALUE)
+
+        Returns (group_addr, value) on success, or (None, b"") on malformed
+        input so the caller never falls back to a default address. A None
+        group address is rejected by _write_group_value before any telegram
+        is sent.
+        """
         try:
             parts = write_arg.split(":")
             if len(parts) != 2:
@@ -311,8 +324,10 @@ class MemoryMixin:
             value = bytes.fromhex(parts[1])
             return group_addr, value
         except Exception as e:
+            # Do NOT fall back to a default group address: returning 0/0/0 here
+            # would silently actuate a real device the operator never typed.
             self.logger.fail(f"Invalid group write format '{write_arg}': {e}")
-            return "0/0/0", b""
+            return None, b""
 
     # =========================================================================
     # Phase 2: Advanced Object Discovery & Firmware Reconnaissance

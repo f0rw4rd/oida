@@ -630,6 +630,50 @@ class TestOPCUAAuthenticationHandling(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(auth_result["username_password"]["admin"], "valid")
         self.assertFalse(auth_result["certificate_auth"])
 
+    def test_report_credential_uses_validating_password(self):
+        """Credential report must emit the password that validated per user,
+        not the shared self.password."""
+        scanner = OPCUAScanner(
+            {
+                "rhost": "192.168.1.100",
+                "rport": 4840,
+                "username": "admin",
+                "password": "shared-default",
+            }
+        )
+
+        results = {
+            "authentication_test": {
+                "anonymous_access": False,
+                "username_password": {
+                    "admin": "valid",
+                    "operator": "valid",
+                    "guest": "invalid",
+                },
+                "valid_passwords": {
+                    "admin": "adminpass",
+                    "operator": "operatorpass",
+                },
+            },
+            "endpoints": [],
+            "address_space": {},
+        }
+
+        scanner.report_host_info = Mock()
+        scanner.report_service_info = Mock()
+        scanner.report_vulnerability = Mock()
+        scanner.report_credential = Mock()
+
+        scanner._report_findings(results)
+
+        reported = {
+            call.args[0]: call.args[1]
+            for call in scanner.report_credential.call_args_list
+        }
+        self.assertEqual(reported, {"admin": "adminpass", "operator": "operatorpass"})
+        # The shared self.password must not leak into the report.
+        self.assertNotIn("shared-default", reported.values())
+
 
 class TestOPCUACertificateValidation(unittest.TestCase):
     """Test certificate validation and security configuration"""
@@ -749,6 +793,52 @@ class TestOPCUAWriteAccessTesting(unittest.IsolatedAsyncioTestCase):
             result = await scanner._test_write_access(mock_node)
 
             self.assertFalse(result["writable"])
+
+    async def test_write_back_fallback_skipped_without_confirm(self):
+        """AccessLevel-unavailable write-back probe must be skipped without --confirm"""
+        from oida.protocols.opcua.helpers import _asyncua
+
+        if not _asyncua.is_available:
+            self.skipTest("asyncua not available")
+
+        mock_node = Mock()
+        mock_node.read_attribute = AsyncMock(
+            side_effect=Exception("BadAttributeIdInvalid: attribute not supported")
+        )
+        mock_node.read_value = AsyncMock(return_value=42)
+        mock_node.write_value = AsyncMock()
+
+        scanner = OPCUAScanner({"rhost": "127.0.0.1", "rport": 4840, "test-write": True})
+
+        result = await scanner._test_write_access(mock_node)
+
+        # No write performed, not reported writable, and a confirm hint recorded
+        mock_node.write_value.assert_not_called()
+        self.assertFalse(result["writable"])
+        self.assertIn("--confirm", result["error"])
+
+    async def test_write_back_fallback_writes_with_confirm(self):
+        """With --confirm the write-back probe is allowed to run"""
+        from oida.protocols.opcua.helpers import _asyncua
+
+        if not _asyncua.is_available:
+            self.skipTest("asyncua not available")
+
+        mock_node = Mock()
+        mock_node.read_attribute = AsyncMock(
+            side_effect=Exception("BadAttributeIdInvalid: attribute not supported")
+        )
+        mock_node.read_value = AsyncMock(return_value=42)
+        mock_node.write_value = AsyncMock()
+
+        scanner = OPCUAScanner(
+            {"rhost": "127.0.0.1", "rport": 4840, "test-write": True, "confirm": True}
+        )
+
+        result = await scanner._test_write_access(mock_node)
+
+        mock_node.write_value.assert_awaited_once_with(42)
+        self.assertTrue(result["writable"])
 
     def test_test_write_parameter(self):
         """Test test-write parameter initialization"""

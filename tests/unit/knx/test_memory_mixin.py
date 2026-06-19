@@ -97,6 +97,16 @@ class TestWriteGroupValue:
         assert res["success"] is False
         assert "queue full" in res["error"]
 
+    def test_malformed_parse_does_not_write_default_address(self, host, patch_xknx_cls):
+        # The (None, b"") sentinel from a malformed --group-write must be
+        # rejected before any telegram is sent (never actuate 0/0/0).
+        addr, value = host._parse_group_write("bad")
+        knx = make_knx(FakeP2P([]))
+        res = asyncio.run(host._write_group_value(knx, addr, value))
+        assert res["success"] is False
+        assert res["error"] == "Invalid group address"
+        knx.telegrams.put.assert_not_awaited()
+
 
 class TestRestartDevice:
     def test_requires_confirm(self, host, patch_xknx_cls):
@@ -143,4 +153,8 @@ class TestParsers:
         assert host._parse_group_write("1/2/3:01") == ("1/2/3", b"\x01")
 
     def test_parse_group_write_invalid(self, host):
-        assert host._parse_group_write("bad") == ("0/0/0", b"")
+        # Malformed input must NOT silently fall back to 0/0/0 (a real device).
+        addr, value = host._parse_group_write("bad")
+        assert addr is None
+        assert value == b""
+        assert host.logger.records["fail"]
