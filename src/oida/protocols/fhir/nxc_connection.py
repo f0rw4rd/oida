@@ -45,10 +45,16 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         """Get FHIR base URL from target"""
         target = self.host
 
+        # An explicit scheme in the target always wins, so an https:// target is
+        # never downgraded to cleartext (and an http:// target is honored as-is).
         if target.startswith("http://") or target.startswith("https://"):
             return target.rstrip("/")
 
         port = getattr(self.args, "port", self.default_port)
+        # FHIR is HTTPS-by-default: proto_args sets --tls default True (with an
+        # explicit --no-tls opt-out), matching default_port 443. The getattr
+        # fallback mirrors that default so a bare-hostname target is not silently
+        # scanned over cleartext HTTP.
         use_tls = getattr(self.args, "tls", True)
 
         scheme = "https" if use_tls else "http"

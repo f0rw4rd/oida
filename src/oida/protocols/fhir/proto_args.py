@@ -81,7 +81,21 @@ Examples:
     )
 
     # TLS Options (--tls, --tls-cert, --tls-key, --tls-ca, --tls-insecure)
-    add_tls_options(fhir_parser, include_cert=True, include_insecure=True)
+    tls_group = add_tls_options(fhir_parser, include_cert=True, include_insecure=True)
+
+    # FHIR is HTTPS-by-default (default port 443). The shared --tls flag is
+    # store_true/default-False, which would silently downgrade a bare-hostname
+    # target to cleartext HTTP and contradict the code's HTTPS assumption. Make
+    # the default coherent: TLS on by default, with an explicit --no-tls opt-out.
+    # An explicit http:///https:// scheme in the target still wins (see
+    # nxc_connection._get_base_url).
+    tls_group.add_argument(
+        "--no-tls",
+        dest="tls",
+        action="store_false",
+        help="Disable TLS (use cleartext HTTP) for bare-hostname targets",
+    )
+    fhir_parser.set_defaults(tls=True)
 
     # ============================================================================
     # Discovery Options

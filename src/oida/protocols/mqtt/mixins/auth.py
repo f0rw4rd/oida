@@ -85,7 +85,7 @@ class AuthMixin:
                                 user, passwd = line.split(":", 1)
                                 credentials.append((user, passwd))
                     if credentials:
-                        self.report_service_info(
+                        self.logger.display(
                             f"Loaded {len(credentials)} credentials from {wordlist_path}"
                         )
                         break
@@ -93,7 +93,7 @@ class AuthMixin:
         # Fallback to hardcoded defaults (Mirai + MQTT-PWN + ICS defaults)
         if not credentials:
             credentials = list(DEFAULT_CREDENTIALS)
-            self.report_service_info(f"Using {len(credentials)} built-in default credentials")
+            self.logger.display(f"Using {len(credentials)} built-in default credentials")
 
         # Use brute_rate as delay between attempts
         delay = self.brute_rate
