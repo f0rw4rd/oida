@@ -769,7 +769,7 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         elif auth_type_int == AUTH_SASL:
             session.auth_type = "sasl"
             # Extract SASL mechanism if available
-            sasl_mech = self.get_field(pgsql_layer, "auth.sasl.mech", "")
+            sasl_mech = self.get_field(pgsql_layer, "auth_sasl_mech", "")
             if sasl_mech:
                 details["sasl_mechanism"] = str(sasl_mech)
             details["result"] = "requesting SASL auth"

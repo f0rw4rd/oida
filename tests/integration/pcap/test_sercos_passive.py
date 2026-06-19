@@ -77,3 +77,49 @@ class TestSERCOSEKDecimalParsing:
         import oida.pcap.passive.sercos as mod
 
         assert "base=16" not in inspect.getsource(mod), "base=16 must not be reintroduced"
+
+
+class TestSERCOSSvcAttribution:
+    """Regression: SVC read/write counts must land on the addressed slave.
+
+    The old code iterated self.slaves.values() and credited the FIRST slave
+    in dict order, mis-assigning SVC activity in any multi-slave ring. The
+    fix attributes SVC stats to the slave addressed by the telegram.
+    """
+
+    def _listener_with_two_slaves(self):
+        from oida.pcap.passive.sercos import SERCOSPassiveListener
+
+        listener = SERCOSPassiveListener(interface="lo", timeout=1)
+        # Insertion order matters: slave 1 is first in dict order.
+        listener._ensure_slave(1, "t0")
+        listener._ensure_slave(2, "t0")
+        return listener
+
+    def test_svc_write_credited_to_addressed_slave(self):
+        listener = self._listener_with_two_slaves()
+        # SVC write addressed to slave 2 (NOT the first-in-dict slave 1).
+        layer = _FakeLayer(mdt_svch_rw="1", mdt_svch_idn="32")
+        listener._process_svc(layer, "t1", target_addr=2)
+
+        assert listener.slaves[2].svc_write_count == 1
+        assert listener.slaves[1].svc_write_count == 0, "first-in-dict slave must not be credited"
+        assert "S-0-0032" in listener.slaves[2].idns_accessed
+        assert listener.slaves[1].idns_accessed == set()
+
+    def test_svc_read_credited_to_addressed_slave(self):
+        listener = self._listener_with_two_slaves()
+        layer = _FakeLayer(mdt_svch_rw="0", mdt_svch_idn="32")
+        listener._process_svc(layer, "t1", target_addr=2)
+
+        assert listener.slaves[2].svc_read_count == 1
+        assert listener.slaves[1].svc_read_count == 0, "first-in-dict slave must not be credited"
+
+    def test_svc_no_target_addr_credits_nobody(self):
+        listener = self._listener_with_two_slaves()
+        # Without an addressed slave, SVC stats must not be mis-attributed.
+        layer = _FakeLayer(mdt_svch_rw="1", mdt_svch_idn="32")
+        listener._process_svc(layer, "t1", target_addr=None)
+
+        assert listener.slaves[1].svc_write_count == 0
+        assert listener.slaves[2].svc_write_count == 0

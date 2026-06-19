@@ -247,10 +247,12 @@ class SERCOSPassiveListener(PySharkListenerBase):
                 detail = f"CP0 slave addr={addr}"
 
         # Process slave SERCOS address from AT
+        svc_target_addr: int | None = None
         at_addr_raw = self.get_field(siii, "at_sercosaddress")
         if at_addr_raw is not None:
             addr = self._parse_int(at_addr_raw, None)
             if addr is not None and addr > 0:
+                svc_target_addr = addr
                 slave = self._ensure_slave(addr, now)
                 if src_mac:
                     slave.mac = src_mac
@@ -267,7 +269,7 @@ class SERCOSPassiveListener(PySharkListenerBase):
         # Process service channel in MDT
         svc_ctrl_raw = self.get_field(siii, "mdt_svch_ctrl")
         if svc_ctrl_raw is not None:
-            svc_detail, svc_rw = self._process_svc(siii, now)
+            svc_detail, svc_rw = self._process_svc(siii, now, svc_target_addr)
             if svc_detail:
                 detail = svc_detail
                 rw = svc_rw
@@ -317,8 +319,13 @@ class SERCOSPassiveListener(PySharkListenerBase):
         for slave in self.slaves.values():
             self._update_device(slave)
 
-    def _process_svc(self, siii, now: str) -> Tuple[str, str]:
-        """Process service channel fields. Returns (detail_str, rw)."""
+    def _process_svc(self, siii, now: str, target_addr: int | None = None) -> Tuple[str, str]:
+        """Process service channel fields. Returns (detail_str, rw).
+
+        SVC stats are attributed to the slave addressed by this telegram
+        (``target_addr``, derived from the AT sercosaddress) rather than the
+        arbitrary first slave in dict order.
+        """
         # Read/Write flag
         rw_raw = self.get_field(siii, "mdt_svch_rw")
         is_write = self._parse_bool(rw_raw)
@@ -338,15 +345,17 @@ class SERCOSPassiveListener(PySharkListenerBase):
         eot_raw = self.get_field(siii, "mdt_svch_eot")
         eot = self._parse_bool(eot_raw)
 
-        # Update slave tracking (find first slave with active SVC)
-        for slave in self.slaves.values():
+        # Attribute SVC stats to the addressed slave, not an arbitrary one.
+        target_slave: SERCOSSlave | None = None
+        if target_addr is not None and target_addr in self.slaves:
+            target_slave = self.slaves[target_addr]
+        if target_slave is not None:
             if is_write:
-                slave.svc_write_count += 1
+                target_slave.svc_write_count += 1
             else:
-                slave.svc_read_count += 1
+                target_slave.svc_read_count += 1
             if idn_str:
-                slave.idns_accessed.add(idn_str)
-            break  # Only count once
+                target_slave.idns_accessed.add(idn_str)
 
         parts = [f"SVC {'Write' if is_write else 'Read'}"]
         if idn_str:

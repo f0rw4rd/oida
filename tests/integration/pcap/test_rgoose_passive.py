@@ -36,3 +36,25 @@ class TestRGOOSEPassiveSmoke:
         listener._x509 = True
         result = listener.harvest()
         assert isinstance(result, dict), "harvest() must return a dict"
+
+    def test_l2_goose_without_ip_dropped_with_debug_log(self):
+        """A 'goose' packet with no IP (L2 GOOSE) must be dropped, not recorded,
+        and the drop must emit a debug trace rather than vanishing silently.
+        """
+        from unittest.mock import MagicMock
+
+        from oida.pcap.passive.rgoose import RGOOSEPassiveListener
+
+        listener = RGOOSEPassiveListener(interface="lo", timeout=1)
+        listener.logger = MagicMock()
+
+        # Fake an L2 GOOSE packet: has a 'goose' layer but get_ip_info yields no IP.
+        packet = MagicMock()
+        packet.goose = MagicMock()
+        listener.get_ip_info = MagicMock(return_value=(None, None))
+
+        listener.process_packet(packet)
+
+        # No publisher/device created from a no-IP packet, and a debug log was emitted.
+        assert listener.publishers == {}, "L2 GOOSE (no IP) must not create a publisher"
+        assert listener.logger.debug.called, "no-IP drop must emit a debug trace"

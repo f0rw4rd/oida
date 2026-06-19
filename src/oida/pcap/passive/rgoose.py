@@ -170,9 +170,16 @@ class RGOOSEPassiveListener(PySharkListenerBase):
 
         goose_layer = packet.goose
 
-        # R-GOOSE is IP/UDP -- extract IP addresses
+        # R-GOOSE is IP/UDP -- extract IP addresses. The 'goose' layer is
+        # shared with the L2 GOOSE listener, so a combined-pcap run feeds
+        # plain L2 GOOSE (no IP) here too; reject those (and any malformed
+        # R-GOOSE with an unparsable IP) with a trace instead of vanishing.
         src_ip, dst_ip = self.get_ip_info(packet)
         if not src_ip:
+            self.logger.debug(
+                "rgoose: dropping GOOSE packet with no IP "
+                "(L2 GOOSE or malformed R-GOOSE, no rgoose session)"
+            )
             return
 
         src_port, dst_port = self.get_port_info(packet)

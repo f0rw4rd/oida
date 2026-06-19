@@ -109,6 +109,37 @@ class TestFuzzCLIArgumentParsing:
 
         assert getattr(args, "protocol_options", None) == ["unit_id=5", "timeout=2.0"]
 
+    def test_monitors_help_matches_registry(self):
+        """The --monitors help 'Available:' list must be derived from the live
+        registry: every registered monitor advertised, no phantom entries."""
+        import argparse
+
+        from oida.cli import gen_cli_args
+        from oida.fuzz.monitors.registry import MONITOR_REGISTRY
+
+        parser = gen_cli_args()
+
+        monitors_help = None
+        for action in parser._subparsers._group_actions:
+            for name, subparser in getattr(action, "choices", {}).items():
+                if name != "fuzz":
+                    continue
+                for sub_action in subparser._actions:
+                    if isinstance(sub_action, argparse.Action) and "--monitors" in (
+                        sub_action.option_strings or []
+                    ):
+                        monitors_help = sub_action.help
+        assert monitors_help is not None, "--monitors argument not found"
+
+        _, _, advertised_str = monitors_help.partition("Available:")
+        advertised = {m.strip() for m in advertised_str.split(",") if m.strip()}
+
+        registered = set(MONITOR_REGISTRY.keys())
+        # No phantom advertised monitors (e.g. the old 'dicom').
+        assert advertised - registered == set()
+        # Every registered monitor is advertised (no silent omissions).
+        assert registered - advertised == set()
+
 
 class TestFuzzCommandHandler:
     """Test fuzz command handler functions."""

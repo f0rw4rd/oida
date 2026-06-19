@@ -281,6 +281,9 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         default=100,
         help="Monitor check interval (default: 100)",
     )
+    from .fuzz.monitors.registry import MONITOR_REGISTRY
+
+    available_monitors = ", ".join(sorted(MONITOR_REGISTRY.keys()))
     fuzz_parser.add_argument(
         "--monitors",
         "-M",
@@ -289,7 +292,7 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         help="Monitor specification (default: protocol-specific). "
         "Format: name[:interval],name[:interval],... "
         "Examples: ping,socket | ping:50,modbus:10 | none. "
-        "Available: ping, socket, http, modbus, iec104, mms, hl7, dicom, ftp, smtp, dns, dhcp, tftp",
+        f"Available: {available_monitors}",
     )
     fuzz_parser.add_argument(
         "--monitor-logic",
