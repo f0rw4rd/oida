@@ -32,7 +32,7 @@ Examples:
   oida s7 192.168.1.100 -e                   # List data blocks
   oida s7 192.168.1.100 -r 1:0:100           # Read DB1 bytes 0-100
   oida s7 192.168.1.100 -I 0:10 -Q 0:8      # Read inputs + outputs
-  oida s7 192.168.1.100 --monitor I,Q,M      # Monitor I/O
+  oida s7 192.168.1.100 --monitor --monitor-areas I,Q,M  # Monitor I/O
   oida s7 192.168.1.100 -P passwords.txt     # Brute-force from file
   oida s7 192.168.1.100 -L -E                # List and enumerate SZL
   oida s7 192.168.1.100 --audit              # Full security audit
@@ -347,6 +347,13 @@ Examples:
 
     # Monitor Mode (--monitor, --interval, --duration)
     monitor_group = add_monitor_options(s7_parser, default_interval=0.5)
+    monitor_group.add_argument(
+        "--monitor-areas",
+        type=str,
+        default="I,Q,M",
+        metavar="AREAS",
+        help="Comma-separated areas to monitor (I,Q,M,DB1,...) (default: I,Q,M)",
+    )
     monitor_group.add_argument(
         "--monitor-size",
         type=int,
