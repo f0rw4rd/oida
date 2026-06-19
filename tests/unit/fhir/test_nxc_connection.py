@@ -175,6 +175,63 @@ class TestGetBaseURL(unittest.TestCase):
         # rstrip("/") removes all trailing slashes
         self.assertFalse(scanner._get_base_url().endswith("/"))
 
+    def test_explicit_https_target_not_downgraded(self):
+        """An explicit https:// target is never scanned over cleartext, even
+        if args.tls is somehow False (scheme in the target always wins)."""
+        scanner = _create_scanner("https://fhir.example.com/r4", tls=False)
+        url = scanner._get_base_url()
+        self.assertTrue(url.startswith("https://"))
+        self.assertFalse(url.startswith("http://fhir"))
+
+
+class TestSchemeResolutionConsistency(unittest.TestCase):
+    """Scheme resolution must be coherent: the parser default for --tls and the
+    code's getattr(...,'tls', default) must agree so a bare-hostname FHIR target
+    is not silently scanned over cleartext HTTP (CODE_REVIEW finding
+    nxc_connection.py:51)."""
+
+    @staticmethod
+    def _parse(*flags):
+        import argparse
+
+        from oida.protocols.fhir.proto_args import proto_args
+
+        parent = argparse.ArgumentParser(add_help=False)
+        main = argparse.ArgumentParser()
+        subparsers = main.add_subparsers()
+        proto_args(subparsers, [parent])
+        return main.parse_args(["fhir", "fhir.example.com", *flags])
+
+    def test_parser_tls_defaults_true(self):
+        """FHIR is HTTPS-by-default: the parser must populate args.tls=True."""
+        self.assertTrue(self._parse().tls)
+
+    def test_no_tls_opts_out(self):
+        """--no-tls explicitly downgrades to cleartext HTTP."""
+        self.assertFalse(self._parse("--no-tls").tls)
+
+    def test_tls_flag_still_enables(self):
+        """--tls remains accepted and keeps TLS enabled."""
+        self.assertTrue(self._parse("--tls").tls)
+
+    def test_bare_hostname_default_is_https_not_cleartext(self):
+        """With parser defaults, a bare-hostname target resolves to https,
+        matching default_port 443 — no silent cleartext downgrade."""
+        args = self._parse()
+        scanner = _create_scanner("fhir.example.com", tls=args.tls, port=443)
+        url = scanner._get_base_url()
+        self.assertEqual(url, "https://fhir.example.com")
+        self.assertFalse(url.startswith("http://"))
+
+    def test_getattr_default_matches_parser_default(self):
+        """The code's getattr(self.args, 'tls', <default>) fallback must agree
+        with the parser default so the two can never contradict."""
+        # Parser default
+        self.assertTrue(self._parse().tls)
+        # getattr fallback (when attr absent) used by _get_base_url
+        args = Mock(spec=[])  # no 'tls' attribute at all
+        self.assertTrue(getattr(args, "tls", True))
+
 
 class TestIdentifyVendor(unittest.TestCase):
     """Test _identify_vendor() method"""

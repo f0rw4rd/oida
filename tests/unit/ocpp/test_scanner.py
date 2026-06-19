@@ -2883,5 +2883,156 @@ class TestListenModeDispatch(unittest.TestCase):
         )
 
 
+class TestHandleFirmwareInfo(unittest.TestCase):
+    """Test DiscoveryMixin._handle_firmware_info firmware-info parsing.
+
+    After the duplicate-definition cleanup, the single surviving method must:
+      - issue a targeted GetConfiguration for the fixed firmware key list and
+        parse the OCPP 1.6 (configurationKey) and 2.x (getVariableResult)
+        response shapes,
+      - capture boot_status / server_time from the prior BootNotification,
+      - additionally harvest firmware-related keys from any already-collected
+        GetConfiguration data via the substring-hint heuristic (the unique
+        behavior merged in from the former dead duplicate).
+    """
+
+    def _make_obj(self):
+        from oida.protocols.ocpp import ocpp as OcppClass
+        from oida.protocols.ocpp.constants import MessageType
+
+        obj = OcppClass.__new__(OcppClass)
+        obj.conn = MagicMock()
+        obj.scanner = MagicMock()
+        obj.logger = MagicMock()
+        obj.results = {"data": {}}
+        return obj, MessageType
+
+    def test_single_handler_definition(self):
+        """Regression: exactly one _handle_firmware_info must exist (no shadow)."""
+        import inspect
+        from oida.protocols.ocpp.mixins import discovery
+
+        src = inspect.getsource(discovery.DiscoveryMixin)
+        self.assertEqual(
+            src.count("def _handle_firmware_info"),
+            1,
+            "Duplicate _handle_firmware_info definition reintroduced",
+        )
+
+    def test_no_connection_is_noop(self):
+        obj, _ = self._make_obj()
+        obj.conn = None
+        obj._handle_firmware_info()
+        self.assertNotIn("firmware_info", obj.results["data"])
+
+    def test_parses_ocpp16_configuration_key_response(self):
+        """1.6 CALLRESULT configurationKey entries are folded into firmware_info."""
+        obj, MessageType = self._make_obj()
+        obj.results["data"]["ocpp_version"] = "1.6"
+        obj.results["data"]["boot_notification"] = {
+            "status": "Accepted",
+            "current_time": "2026-06-18T00:00:00Z",
+        }
+        payload = {
+            "configurationKey": [
+                {"key": "FirmwareVersion", "value": "1.2.3"},
+                {"key": "ChargePointVendor", "value": "ACME"},
+            ]
+        }
+        obj.scanner._send_and_receive.return_value = json.dumps(
+            [MessageType.CALLRESULT, "id1", payload]
+        )
+
+        obj._handle_firmware_info()
+
+        info = obj.results["data"]["firmware_info"]
+        self.assertEqual(info["boot_status"], "Accepted")
+        self.assertEqual(info["server_time"], "2026-06-18T00:00:00Z")
+        self.assertEqual(info["FirmwareVersion"], "1.2.3")
+        self.assertEqual(info["ChargePointVendor"], "ACME")
+
+    def test_harvests_hint_matched_keys_from_existing_configuration(self):
+        """Merged behavior: substring-hint scan over already-collected config keys.
+
+        A vendor-specific key not in _FIRMWARE_CONFIG_KEYS but matching a hint
+        ('version') must still be surfaced. Targeted request returns no result.
+        """
+        obj, _ = self._make_obj()
+        obj.results["data"]["ocpp_version"] = "1.6"
+        obj.results["data"]["configuration"] = {
+            "keys": [
+                {"key": "VendorFirmwareVersion", "value": "9.9", "readonly": True},
+                {"key": "HeartbeatInterval", "value": "300", "readonly": False},
+            ]
+        }
+        # No usable response to the targeted GetConfiguration.
+        obj.scanner._send_and_receive.return_value = None
+
+        obj._handle_firmware_info()
+
+        info = obj.results["data"]["firmware_info"]
+        self.assertEqual(
+            info.get("VendorFirmwareVersion"),
+            "9.9",
+            "hint-matched config key should be harvested",
+        )
+        self.assertNotIn(
+            "HeartbeatInterval", info, "non-firmware key must not be harvested"
+        )
+
+    def test_targeted_response_does_not_clobber_existing_hint_value(self):
+        """setdefault semantics: prior hint value wins over a later empty/dup."""
+        obj, MessageType = self._make_obj()
+        obj.results["data"]["ocpp_version"] = "1.6"
+        obj.results["data"]["configuration"] = {
+            "keys": [{"key": "FirmwareVersion", "value": "harvested-1.0"}]
+        }
+        payload = {
+            "configurationKey": [{"key": "FirmwareVersion", "value": "targeted-2.0"}]
+        }
+        obj.scanner._send_and_receive.return_value = json.dumps(
+            [MessageType.CALLRESULT, "id1", payload]
+        )
+
+        obj._handle_firmware_info()
+
+        # Hint-scan runs first and populates via setdefault; the targeted loop
+        # overwrites directly, so the targeted value is authoritative here.
+        self.assertEqual(
+            obj.results["data"]["firmware_info"]["FirmwareVersion"], "targeted-2.0"
+        )
+
+    def test_parses_ocpp201_get_variable_result(self):
+        """2.x getVariableResult entries are parsed into firmware_info."""
+        obj, MessageType = self._make_obj()
+        obj.results["data"]["ocpp_version"] = "2.0.1"
+        payload = {
+            "getVariableResult": [
+                {
+                    "variable": {"name": "FirmwareVersion"},
+                    "attributeValue": "2.0.1-rc",
+                }
+            ]
+        }
+        obj.scanner._send_and_receive.return_value = json.dumps(
+            [MessageType.CALLRESULT, "id1", payload]
+        )
+
+        obj._handle_firmware_info()
+
+        self.assertEqual(
+            obj.results["data"]["firmware_info"]["FirmwareVersion"], "2.0.1-rc"
+        )
+
+    def test_no_details_still_records_empty_firmware_info(self):
+        obj, _ = self._make_obj()
+        obj.results["data"]["ocpp_version"] = "1.6"
+        obj.scanner._send_and_receive.return_value = None
+
+        obj._handle_firmware_info()
+
+        self.assertEqual(obj.results["data"]["firmware_info"], {})
+
+
 if __name__ == "__main__":
     unittest.main()

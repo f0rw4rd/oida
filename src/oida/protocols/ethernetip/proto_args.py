@@ -162,14 +162,16 @@ def proto_args(parser, parents):
     security_group.add_argument(
         "--dump-security",
         action="store_true",
-        default=True,
-        help="Dump detailed CIP Security settings (enabled by default)",
+        default=False,
+        help="Dump detailed CIP Security settings: heavy cert download + "
+        "Password Authenticator (0x61) read per host (opt-in; also enabled by "
+        "--enumerate-all)",
     )
     security_group.add_argument(
         "--no-dump-security",
         dest="dump_security",
         action="store_false",
-        help="Disable CIP Security settings dump",
+        help="Disable CIP Security settings dump (default; kept for explicitness)",
     )
 
     # File Operations

@@ -737,47 +737,57 @@ class MQTTScanner(
                         results["auth"]["brute_results"] = self._brute_force_credentials()
                 return results
 
-            # Reconnect for enumeration
+            # Reconnect for enumeration. This client is created locally and is
+            # not tracked by the connection wrapper's cleanup(), so we own its
+            # lifecycle and must disconnect it ourselves (see finally below).
             conn = self.connect()
             if not conn:
                 return results
+            owns_conn = True
         else:
             # Connected - only mark anonymous if no credentials were provided
             results["auth"]["anonymous_allowed"] = not bool(self.username)
+            owns_conn = False
 
-        # Run brute-force if enabled (even when anonymous works, to find additional creds)
-        if self.brute_enabled:
-            if not self.args.get("confirm", False):
-                self.logger.fail(
-                    "--brute / --default-creds runs credential brute-force "
-                    "(trips broker lockout / IDS) — requires --confirm"
-                )
-            else:
-                results["auth"]["brute_results"] = self._brute_force_credentials()
+        try:
+            # Run brute-force if enabled (even when anonymous works, to find additional creds)
+            if self.brute_enabled:
+                if not self.args.get("confirm", False):
+                    self.logger.fail(
+                        "--brute / --default-creds runs credential brute-force "
+                        "(trips broker lockout / IDS) — requires --confirm"
+                    )
+                else:
+                    results["auth"]["brute_results"] = self._brute_force_credentials()
 
-        # Enumerate broker info via $SYS (requires -e)
-        if self.enumerate_sys:
-            results["broker_info"] = self._enumerate_sys_topics(conn)
+            # Enumerate broker info via $SYS (requires -e)
+            if self.enumerate_sys:
+                results["broker_info"] = self._enumerate_sys_topics(conn)
 
-        # Enumerate topics (requires -e)
-        if self.enumerate:
-            results["topics"] = self._enumerate_topics(conn)
+            # Enumerate topics (requires -e)
+            if self.enumerate:
+                results["topics"] = self._enumerate_topics(conn)
 
-        # Enumerate Sparkplug B (included in -e)
-        if self.enumerate:
-            results["sparkplug"] = self._enumerate_sparkplug(conn)
+            # Enumerate Sparkplug B (included in -e)
+            if self.enumerate:
+                results["sparkplug"] = self._enumerate_sparkplug(conn)
 
-        # Enumerate common topics (bruteforce when wildcards are blocked)
-        # Auto-enable if custom topic list file is provided
-        if self.enumerate_common or self.topic_list_file:
-            results["common_topics"] = self._enumerate_common_topics(conn)
+            # Enumerate common topics (bruteforce when wildcards are blocked)
+            # Auto-enable if custom topic list file is provided
+            if self.enumerate_common or self.topic_list_file:
+                results["common_topics"] = self._enumerate_common_topics(conn)
 
-        # Listen mode
-        if self.listen_mode:
-            results["listen_stats"] = self._run_listen_mode(conn)
+            # Listen mode
+            if self.listen_mode:
+                results["listen_stats"] = self._run_listen_mode(conn)
 
-        # Security analysis
-        results["security_issues"] = self._analyze_security(results)
+            # Security analysis
+            results["security_issues"] = self._analyze_security(results)
+        finally:
+            # Close the client we opened here for enumeration. The client passed
+            # in by the caller is disconnected by the caller's cleanup().
+            if owns_conn:
+                self.disconnect(conn)
 
         return results
 

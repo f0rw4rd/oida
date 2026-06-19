@@ -123,6 +123,32 @@ class TestProtoArgs(unittest.TestCase):
         args = enip_parser.parse_args(["192.168.1.100", "--no-check-security"])
         self.assertFalse(args.check_security)
 
+    def test_proto_args_dump_security_defaults_off(self):
+        """--dump-security is the heavy opt-in path and must default to False.
+
+        Regression for CODE_REVIEW.md: the flag was registered with
+        default=True, so the cert download + Password Authenticator (0x61)
+        read ran on every host even when the user never asked for it.
+        """
+        from oida.protocols.ethernetip.proto_args import proto_args
+
+        parent = argparse.ArgumentParser(add_help=False)
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        enip_parser = proto_args(subparsers, [parent])
+
+        # Default: dump_security must be OFF (no heavy dump on a plain scan).
+        args = enip_parser.parse_args(["192.168.1.100"])
+        self.assertFalse(args.dump_security)
+
+        # Explicitly requesting it turns it on.
+        args = enip_parser.parse_args(["192.168.1.100", "--dump-security"])
+        self.assertTrue(args.dump_security)
+
+        # --no-dump-security keeps it off (explicit, harmless default).
+        args = enip_parser.parse_args(["192.168.1.100", "--no-dump-security"])
+        self.assertFalse(args.dump_security)
+
     def test_proto_args_write_and_fuzz(self):
         from oida.protocols.ethernetip.proto_args import proto_args
 

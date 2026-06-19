@@ -311,19 +311,33 @@ class IPPPassiveListener(PySharkListenerBase):
             "copies": "copies",
         }
 
-        # Extract from charstring_value fields (most IPP attributes are strings)
-        # In EK mode, all IPP attributes may appear as ipp.name / ipp.charstring_value
+        # Extract from charstring_value fields (most IPP attributes are strings).
+        # In EK mode, all IPP attributes may appear as ipp.name / ipp.charstring_value.
+        # ipp.name lists EVERY attribute name (integer/boolean/enum/keyword/string),
+        # while ipp.charstring_value lists ONLY the string-typed values, so the two
+        # flattened comma-joined lists are NOT positionally aligned in general
+        # (e.g. names=6 / values=8). Zipping them would pair a name with the value
+        # of an unrelated attribute and surface wrong printer/user/job data. tshark
+        # does not expose the per-attribute (name,type,value) grouping through these
+        # flattened arrays, so we only trust a positional pairing when the two lists
+        # have equal length; otherwise we skip it and rely on the typed-field
+        # fallback loop below, which keys off real field names.
         name_vals = self.get_field(ipp_layer, "name", "")
         string_vals = self.get_field(ipp_layer, "charstring_value", "")
 
         if name_vals and string_vals:
-            names = str(name_vals).split(",") if "," in str(name_vals) else [str(name_vals)]
-            values = str(string_vals).split(",") if "," in str(string_vals) else [str(string_vals)]
-            for name, value in zip(names, values):
-                name = name.strip()
-                value = value.strip()
-                if name in attr_map and value:
-                    details[attr_map[name]] = value
+            names = [n.strip() for n in str(name_vals).split(",")]
+            values = [v.strip() for v in str(string_vals).split(",")]
+            if len(names) == len(values):
+                for name, value in zip(names, values):
+                    if name in attr_map and value:
+                        details[attr_map[name]] = value
+            else:
+                self.logger.debug(
+                    "IPP: name/charstring_value count mismatch "
+                    f"({len(names)} names vs {len(values)} values); "
+                    "skipping positional pairing to avoid mis-associating attributes"
+                )
 
         # Also check for fields directly in the all_fields dict
         for key, value in fields.items():

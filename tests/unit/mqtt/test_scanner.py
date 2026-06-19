@@ -1813,5 +1813,83 @@ class TestMQTTWithErrorInjection:
         assert scanner.port == port
 
 
+class TestMQTTBruteForceServiceInfo(unittest.TestCase):
+    """Regression tests: brute-force status lines must not pollute services."""
+
+    def test_default_creds_status_is_not_reported_as_service(self):
+        """The 'Using N built-in default credentials' line is a log message,
+        not a discovered service, and must not append to results['services']."""
+        from oida.protocols.mqtt.scanner import MQTTScanner
+
+        args = {"rhost": "127.0.0.1", "rport": 1883, "brute-rate": 0}
+        scanner = MQTTScanner(args)
+
+        # Force the hardcoded-defaults branch (no creds/wordlist files), and
+        # avoid any real network by stubbing the per-credential test.
+        scanner.credentials_path = None
+        scanner.wordlist_path = None
+        scanner._test_credentials = Mock(return_value=False)
+
+        with patch.object(
+            type(scanner), "report_service_info", autospec=True
+        ) as mock_report:
+            results = scanner._brute_force_credentials()
+
+        # report_service_info must NOT be called with a status string.
+        mock_report.assert_not_called()
+        # And no bogus service entry should have leaked into the result list.
+        self.assertEqual(scanner.results["services"], [])
+        self.assertGreater(results["tested"], 0)
+
+
+class TestMQTTDiscoverAnonReconnectCleanup(unittest.TestCase):
+    """Regression test: the reconnected enumeration client must be disconnected."""
+
+    def test_anonymous_enum_client_is_disconnected(self):
+        """On the anonymous-allowed path discover() reconnects to obtain a fresh
+        client; that locally-owned client must be disconnected before return."""
+        from oida.protocols.mqtt.scanner import MQTTScanner
+
+        args = {"rhost": "127.0.0.1", "rport": 1883, "enumerate": True}
+        scanner = MQTTScanner(args)
+
+        # Anonymous access is allowed, so discover() will call connect() again.
+        scanner._test_anonymous_auth = Mock(
+            return_value={"anonymous_allowed": True, "requires_auth": False}
+        )
+        reconnected_client = MagicMock(name="reconnected_client")
+        scanner.connect = Mock(return_value=reconnected_client)
+
+        # Stub the enumeration helpers so no real I/O happens.
+        scanner._enumerate_sys_topics = Mock(return_value={})
+        scanner._enumerate_topics = Mock(return_value=[])
+        scanner._enumerate_sparkplug = Mock(return_value={})
+        scanner._analyze_security = Mock(return_value=[])
+
+        # Track disconnect of the locally-created client.
+        scanner.disconnect = Mock(wraps=scanner.disconnect)
+
+        # conn=None forces the anonymous-test + reconnect branch.
+        scanner.discover(None)
+
+        scanner.disconnect.assert_called_once_with(reconnected_client)
+
+    def test_provided_client_is_not_disconnected_by_discover(self):
+        """When discover() receives a live client from the caller, it must NOT
+        disconnect it (the caller's cleanup() owns that client)."""
+        from oida.protocols.mqtt.scanner import MQTTScanner
+
+        args = {"rhost": "127.0.0.1", "rport": 1883}
+        scanner = MQTTScanner(args)
+
+        scanner._analyze_security = Mock(return_value=[])
+        scanner.disconnect = Mock()
+
+        provided_client = MagicMock(name="provided_client")
+        scanner.discover(provided_client)
+
+        scanner.disconnect.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

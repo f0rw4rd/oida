@@ -375,49 +375,6 @@ class DiscoveryMixin:
         "chargeboxserialnumber",
     )
 
-    def _handle_firmware_info(self):
-        """
-        Gather firmware / identification details from the target.
-
-        Combines the BootNotification response (already collected during the
-        post-connection phase) with firmware/version-related GetConfiguration
-        keys. Read-only; surfaces what the CSMS/CP discloses about itself.
-        """
-        if not self.conn:
-            return
-
-        self.logger.display("[Firmware Info]")
-
-        # Ensure configuration keys are available; run GetConfiguration if the
-        # discovery dispatch hasn't already populated them.
-        config = self.results["data"].get("configuration")
-        if config is None:
-            self._handle_get_configuration()
-            config = self.results["data"].get("configuration")
-
-        firmware = {}
-
-        boot = self.results["data"].get("boot_notification", {})
-        current_time = boot.get("current_time")
-        if current_time:
-            firmware["server_time"] = current_time
-
-        matched_keys = []
-        keys = (config or {}).get("keys", []) if isinstance(config, dict) else []
-        for key_info in keys:
-            key = str(key_info.get("key", ""))
-            value = key_info.get("value", "")
-            if any(hint in key.lower() for hint in self._FIRMWARE_KEY_HINTS):
-                matched_keys.append({"key": key, "value": value})
-                self.logger.display(f"    {key}: {value}")
-
-        if matched_keys:
-            firmware["config_keys"] = matched_keys
-        else:
-            self.logger.display("    No firmware/version configuration keys disclosed")
-
-        self.results["data"]["firmware_info"] = firmware
-
     def _handle_data_transfer_probe(self):
         """
         Send a DataTransfer message to probe for vendor extensions.
@@ -486,6 +443,23 @@ class DiscoveryMixin:
         boot = self.results["data"].get("boot_notification", {})
         if boot:
             info["boot_status"] = boot.get("status")
+            current_time = boot.get("current_time")
+            if current_time:
+                info["server_time"] = current_time
+
+        # Harvest firmware/version-related keys from any GetConfiguration data
+        # the discovery dispatch may have already collected, using a
+        # case-insensitive substring match (broader than the targeted key list
+        # below, so it catches vendor-specific naming).
+        config = self.results["data"].get("configuration")
+        if isinstance(config, dict):
+            for key_info in config.get("keys", []):
+                key = str(key_info.get("key", ""))
+                value = key_info.get("value", "")
+                if key and value and any(
+                    hint in key.lower() for hint in self._FIRMWARE_KEY_HINTS
+                ):
+                    info.setdefault(key, value)
 
         get_config_msg = self._build_get_configuration(
             keys=self._FIRMWARE_CONFIG_KEYS, version=version
