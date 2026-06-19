@@ -99,6 +99,7 @@ class CoAPFuzzer(BaseFuzzer):
             RequestInfo("CoAP_Content_Format", "Content format options", "standard"),
             RequestInfo("CoAP_Conditional", "Conditional requests", "standard"),
             RequestInfo("CoAP_ETag", "ETag handling", "standard"),
+            RequestInfo("CoAP_Cache_Control", "Max-Age and cache control", "standard"),
         ]
 
     def __init__(self, config: FuzzerConfig = None, connection_factory=None):
@@ -221,7 +222,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(quick_coverage)
+        if self.is_request_enabled("CoAP_Quick_Coverage"):
+            self.session.connect(quick_coverage)
 
         # ============================================================
         # PHASE 2: HIGH-CRASH TESTS (30s - 2m)
@@ -272,7 +274,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(high_crash_malformed)
+        if self.is_request_enabled("CoAP_High_Crash_Malformed"):
+            self.session.connect(high_crash_malformed)
 
         # Buffer overflow via large payloads
         overflow_payload = Request(
@@ -287,7 +290,8 @@ class CoAPFuzzer(BaseFuzzer):
                 SmartString("large_payload", "A" * 1024, max_len=65535),  # Max UDP payload
             ),
         )
-        self.session.connect(overflow_payload)
+        if self.is_request_enabled("CoAP_Overflow_Payload"):
+            self.session.connect(overflow_payload)
 
         # Option parsing overflow (CVE-2024-0962 style)
         option_overflow = Request(
@@ -313,7 +317,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(option_overflow)
+        if self.is_request_enabled("CoAP_Option_Overflow"):
+            self.session.connect(option_overflow)
 
         # ============================================================
         # PHASE 3: CVE-TARGETED OPERATIONS (2m - 5m)
@@ -347,7 +352,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(integer_overflow)
+        if self.is_request_enabled("CoAP_Integer_Overflow"):
+            self.session.connect(integer_overflow)
 
         # PDU handling attacks (CVE-2025-50518 use-after-free patterns)
         pdu_attacks = Request(
@@ -376,7 +382,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(pdu_attacks)
+        if self.is_request_enabled("CoAP_PDU_Attacks"):
+            self.session.connect(pdu_attacks)
 
         # Path traversal attacks
         path_traversal = Request(
@@ -400,7 +407,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(path_traversal)
+        if self.is_request_enabled("CoAP_Path_Traversal"):
+            self.session.connect(path_traversal)
 
         # ============================================================
         # PHASE 4: BOUNDARY ATTACKS (5m - 10m)
@@ -425,7 +433,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(token_boundary)
+        if self.is_request_enabled("CoAP_Token_Boundary"):
+            self.session.connect(token_boundary)
 
         # Header byte boundary (all combinations of Ver/Type/TKL)
         header_boundary = Request(
@@ -458,7 +467,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(header_boundary)
+        if self.is_request_enabled("CoAP_Header_Boundary"):
+            self.session.connect(header_boundary)
 
         # Code boundary testing (all valid and invalid codes)
         code_boundary = Request(
@@ -492,7 +502,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(code_boundary)
+        if self.is_request_enabled("CoAP_Code_Boundary"):
+            self.session.connect(code_boundary)
 
         # Option delta/length boundary testing
         option_boundary = Request(
@@ -521,7 +532,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(option_boundary)
+        if self.is_request_enabled("CoAP_Option_Boundary"):
+            self.session.connect(option_boundary)
 
         # ============================================================
         # PHASE 5: DEEP FUZZING (10m+)
@@ -538,7 +550,8 @@ class CoAPFuzzer(BaseFuzzer):
                 Static(name="uri_path", default_value=self._build_uri_path_option("temperature")),
             ),
         )
-        self.session.connect(coap_get)
+        if self.is_request_enabled("CoAP_GET"):
+            self.session.connect(coap_get)
 
         # Standard POST with payload mutations
         coap_post = Request(
@@ -553,7 +566,8 @@ class CoAPFuzzer(BaseFuzzer):
                 SmartString("payload", "test_payload", max_len=1024),
             ),
         )
-        self.session.connect(coap_post)
+        if self.is_request_enabled("CoAP_POST"):
+            self.session.connect(coap_post)
 
         # Standard PUT
         coap_put = Request(
@@ -568,7 +582,8 @@ class CoAPFuzzer(BaseFuzzer):
                 SmartString("temperature", "25.5", max_len=256),
             ),
         )
-        self.session.connect(coap_put)
+        if self.is_request_enabled("CoAP_PUT"):
+            self.session.connect(coap_put)
 
         # Standard DELETE
         coap_delete = Request(
@@ -580,7 +595,8 @@ class CoAPFuzzer(BaseFuzzer):
                 Static(name="uri_path", default_value=self._build_uri_path_option("temperature")),
             ),
         )
-        self.session.connect(coap_delete)
+        if self.is_request_enabled("CoAP_DELETE"):
+            self.session.connect(coap_delete)
 
         # Observe subscription
         coap_observe = Request(
@@ -598,7 +614,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(coap_observe)
+        if self.is_request_enabled("CoAP_Observe"):
+            self.session.connect(coap_observe)
 
         # Block-wise transfer
         coap_block = Request(
@@ -615,7 +632,8 @@ class CoAPFuzzer(BaseFuzzer):
                 SmartString("block_payload", "A" * 64, max_len=1024),
             ),
         )
-        self.session.connect(coap_block)
+        if self.is_request_enabled("CoAP_Block_Transfer"):
+            self.session.connect(coap_block)
 
         # Content-Format option testing
         coap_content_format = Request(
@@ -640,7 +658,8 @@ class CoAPFuzzer(BaseFuzzer):
                 SmartString("content_payload", '{"value": 42}', max_len=256),
             ),
         )
-        self.session.connect(coap_content_format)
+        if self.is_request_enabled("CoAP_Content_Format"):
+            self.session.connect(coap_content_format)
 
         # Conditional requests (If-Match, If-None-Match)
         coap_conditional = Request(
@@ -668,7 +687,8 @@ class CoAPFuzzer(BaseFuzzer):
                 SmartString("cond_payload", "updated_value", max_len=128),
             ),
         )
-        self.session.connect(coap_conditional)
+        if self.is_request_enabled("CoAP_Conditional"):
+            self.session.connect(coap_conditional)
 
         # ETag option testing
         coap_etag = Request(
@@ -689,7 +709,8 @@ class CoAPFuzzer(BaseFuzzer):
                 Static(name="uri_path", default_value=self._build_uri_path_option("resource")),
             ),
         )
-        self.session.connect(coap_etag)
+        if self.is_request_enabled("CoAP_ETag"):
+            self.session.connect(coap_etag)
 
         # Max-Age and cache control
         coap_cache = Request(
@@ -711,7 +732,8 @@ class CoAPFuzzer(BaseFuzzer):
                 ),
             ),
         )
-        self.session.connect(coap_cache)
+        if self.is_request_enabled("CoAP_Cache_Control"):
+            self.session.connect(coap_cache)
 
     def _get_monitors(self) -> List[BaseMonitor]:
         """Return list of monitors for CoAP service"""

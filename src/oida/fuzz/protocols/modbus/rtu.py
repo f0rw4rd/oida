@@ -123,7 +123,6 @@ class ModbusRTUFuzzer(BaseFuzzer):
             RequestInfo("RTU_Baseline", "Quick FC sweep (17 FCs) + baseline read", "baseline"),
             # Phase 2: High-crash tests (prioritized early)
             RequestInfo("RTU_Overflow_Testing", "Frame overflow and buffer attacks", "protocol"),
-            RequestInfo("RTU_Combined_Attacks", "Combined overflow/mismatch attacks", "boundary"),
             # Phase 3: CVE-targeted operations
             RequestInfo(
                 "RTU_Write_Operations",

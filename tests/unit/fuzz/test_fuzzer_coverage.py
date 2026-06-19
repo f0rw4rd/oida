@@ -152,7 +152,9 @@ ICS_SCADA_TIERS = {
 # annotation passes) so the *count* of registered Requests is unchanged.
 ICS_AUDIT_REQUEST_COUNTS = {
     "modbus": 15,
-    "modbus_rtu": 12,
+    # 12 -> 11: removed phantom RTU_Combined_Attacks (advertised but never
+    # built or connected; CODE_REVIEW.md modbus/rtu.py:126).
+    "modbus_rtu": 11,
     "dnp3": 13,
     "iec104": 13,
     # OPCUA: 22 + 3 (§4 sweep 2026-06-03: NodeIdEncodingOverflow,
