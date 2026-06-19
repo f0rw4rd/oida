@@ -268,7 +268,14 @@ class ListenMixin:
         monitor_callback = self._create_monitor_callback()
         discovery_callback = self._create_callbacks()[2]
 
-        def on_receive_raw_composed(connection: Any, data: bytes) -> None:
+        # c104 introspects the callback's annotations and rejects anything but
+        # exactly (connection: c104.Connection, data: bytes) -> None, so the
+        # composed wrapper must carry the real c104.Connection annotation.
+        from . import _deps
+
+        c104 = _deps._get_c104()
+
+        def on_receive_raw_composed(connection: c104.Connection, data: bytes) -> None:
             # Run discovery first so _discovered_* is populated even if the
             # monitor parser raises; monitor handles its own exceptions.
             try:

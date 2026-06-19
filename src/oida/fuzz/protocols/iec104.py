@@ -1313,16 +1313,30 @@ class IEC104Fuzzer(StatefulFuzzer):
         # Attack patterns
         self._add_attack_patterns()
 
+        # File transfer / vendor / auth groups are opt-in via config flags, but an
+        # explicit `--enable <group>` whitelist must also pull them in (otherwise the
+        # advertised group can never be fuzzed in isolation). is_request_enabled() is
+        # not enough: it returns True for everything on a default run, which would turn
+        # these opt-in groups on by default — so check explicit whitelist membership.
+        def _explicitly_enabled(group: str) -> bool:
+            return self._enabled_requests is not None and group in self._enabled_requests
+
         # File transfer patterns
-        if self.config.get_option("enable_file_transfer", False):
+        if self.config.get_option("enable_file_transfer", False) or _explicitly_enabled(
+            "IEC104_File_Transfer"
+        ):
             self._add_file_transfer_patterns()
 
         # Optional advanced features
-        if self.config.get_option("enable_vendor_attacks", False):
+        if self.config.get_option("enable_vendor_attacks", False) or _explicitly_enabled(
+            "IEC104_Vendor_Attacks"
+        ):
             self._add_vendor_patterns()
 
         # IEC 62351 Authentication fuzzing
-        if self.config.get_option("enable_auth", False):
+        if self.config.get_option("enable_auth", False) or _explicitly_enabled(
+            "IEC104_IEC62351_Auth"
+        ):
             self._add_iec62351_auth_patterns()
 
     def _create_connection_sequence(self):
@@ -1367,9 +1381,7 @@ class IEC104Fuzzer(StatefulFuzzer):
             self.session.connect(Request("TESTFR_Fuzz", children=(testfr_fuzz,)))
 
             # STOPDT activation
-            stopdt = create_apci_u_format(
-                "STOPDT_ACT", UFormat_Functions.STOPDT_ACT, fuzzable=True
-            )
+            stopdt = create_apci_u_format("STOPDT_ACT", UFormat_Functions.STOPDT_ACT, fuzzable=True)
             self.session.connect(Request("STOPDT", children=(stopdt,)))
 
         # S-format (supervisory) frames for acknowledgment fuzzing
