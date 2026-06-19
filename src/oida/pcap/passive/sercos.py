@@ -322,9 +322,9 @@ class SERCOSPassiveListener(PySharkListenerBase):
     def _process_svc(self, siii, now: str, target_addr: int | None = None) -> Tuple[str, str]:
         """Process service channel fields. Returns (detail_str, rw).
 
-        SVC stats are attributed to the slave addressed by this telegram
-        (``target_addr``, derived from the AT sercosaddress) rather than the
-        arbitrary first slave in dict order.
+        SVC stats are attributed to ``target_addr`` (the AT sercosaddress) when
+        known, else to the single known slave on a one-slave bus, rather than the
+        arbitrary first slave in dict order on multi-slave rings.
         """
         # Read/Write flag
         rw_raw = self.get_field(siii, "mdt_svch_rw")
@@ -346,9 +346,16 @@ class SERCOSPassiveListener(PySharkListenerBase):
         eot = self._parse_bool(eot_raw)
 
         # Attribute SVC stats to the addressed slave, not an arbitrary one.
+        # The SVC channel lives in the MDT, which is slot-addressed and usually
+        # does not carry the AT sercosaddress, so target_addr is often None here.
+        # When it is unknown, fall back to the single known slave (unambiguous —
+        # the common single-slave bus, which the old first-slave code got right);
+        # only skip attribution when multiple slaves make it genuinely ambiguous.
         target_slave: SERCOSSlave | None = None
         if target_addr is not None and target_addr in self.slaves:
             target_slave = self.slaves[target_addr]
+        elif target_addr is None and len(self.slaves) == 1:
+            target_slave = next(iter(self.slaves.values()))
         if target_slave is not None:
             if is_write:
                 target_slave.svc_write_count += 1

@@ -117,9 +117,25 @@ class TestSERCOSSvcAttribution:
 
     def test_svc_no_target_addr_credits_nobody(self):
         listener = self._listener_with_two_slaves()
-        # Without an addressed slave, SVC stats must not be mis-attributed.
+        # With MULTIPLE slaves and no addressed slave, attribution is ambiguous
+        # so SVC stats must not be mis-attributed to any of them.
         layer = _FakeLayer(mdt_svch_rw="1", mdt_svch_idn="32")
         listener._process_svc(layer, "t1", target_addr=None)
 
         assert listener.slaves[1].svc_write_count == 0
         assert listener.slaves[2].svc_write_count == 0
+
+    def test_svc_no_target_addr_single_slave_credited(self):
+        # Regression: the SVC channel lives in the MDT (slot-addressed), so
+        # target_addr is usually None here. On a single-slave bus the attribution
+        # is unambiguous and must still be recorded — crediting nobody (an earlier
+        # over-correction) silently lost all SVC read/write counts.
+        from oida.pcap.passive.sercos import SERCOSPassiveListener
+
+        listener = SERCOSPassiveListener(interface="lo", timeout=1)
+        listener._ensure_slave(7, "t0")
+        layer = _FakeLayer(mdt_svch_rw="1", mdt_svch_idn="32")
+        listener._process_svc(layer, "t1", target_addr=None)
+
+        assert listener.slaves[7].svc_write_count == 1
+        assert "S-0-0032" in listener.slaves[7].idns_accessed

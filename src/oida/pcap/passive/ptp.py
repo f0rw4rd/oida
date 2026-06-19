@@ -254,8 +254,9 @@ class PTPPassiveListener(PySharkListenerBase):
         self._alerts: List[Dict[str, str]] = []
         # Track grandmaster history per domain for change detection
         self._gm_history: Dict[int, List[str]] = {}
-        # Track GM transitions already alerted so each change fires exactly once
-        self._gm_change_alerted: Set[tuple] = set()
+        # Per-domain count of GM history entries already alerted (1 = initial GM,
+        # no transition yet) so each transition fires exactly once.
+        self._gm_change_alerted: Dict[int, int] = {}
 
     def process_packet(self, packet) -> None:
         """Process a PTP packet using PyShark dissection."""
@@ -498,12 +499,16 @@ class PTPPassiveListener(PySharkListenerBase):
             if len(gm_list) > 1:
                 prev_gm = gm_list[-2]
                 new_gm = gm_list[-1]
-                # Alert exactly once per (domain, prev->new) transition.
-                # _check_security runs per packet, so without this guard a
-                # single GM change would re-append on every later packet.
-                transition = (domain, prev_gm, new_gm)
-                if transition not in self._gm_change_alerted:
-                    self._gm_change_alerted.add(transition)
+                # Alert exactly once per transition. _gm_history only grows when
+                # the GM actually changes (see the append guard), so its length is
+                # 1 + (number of transitions). Tracking how many transitions we've
+                # already alerted per domain fires once for every real change —
+                # including a flap back to a previous GM (A->B->A->B) — without the
+                # per-packet re-alert, and without suppressing a repeated A->B that
+                # a (domain,prev,new) set would wrongly collapse.
+                alerted = self._gm_change_alerted.get(domain, 1)
+                if len(gm_list) > alerted:
+                    self._gm_change_alerted[domain] = len(gm_list)
                     self._alerts.append(
                         {
                             "level": "fail",
