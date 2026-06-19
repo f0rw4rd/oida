@@ -286,3 +286,77 @@ class TestSOCKSPassiveEK:
         assert len(row) == len(SOCKSPassiveListener.PROTOCOL_COLUMNS)
         assert row[0] == "5"  # Version
         assert row[1] == "SOCKS Greeting"  # Operation
+
+
+class _FakeLayer:
+    """Minimal stand-in for a pyshark layer (attribute access only)."""
+
+    def __init__(self, **fields):
+        for k, v in fields.items():
+            setattr(self, k, v)
+
+
+class _FakePacket:
+    """Minimal stand-in for a pyshark packet with ip/tcp/socks layers."""
+
+    def __init__(self, socks, src="10.0.0.1", dst="10.0.0.2", sport=40000, dport=1080):
+        self.socks = socks
+        self.ip = _FakeLayer(src=src, dst=dst)
+        self.tcp = _FakeLayer(srcport=sport, dstport=dport, stream="0")
+
+
+class TestSOCKSCommandNotDropped:
+    """Regression: SOCKS command/connect packets must not be silently dropped.
+
+    See CODE_REVIEW.md socks.py:138-271 -- command/connect packets carry none
+    of the auth fields and previously fell through every branch with neither a
+    recorded interaction nor a debug log.
+    """
+
+    def test_socks_connect_command_recorded(self):
+        """A SOCKS CONNECT command packet yields a 'SOCKS Connect' interaction."""
+        from oida.pcap.passive.socks import SOCKSPassiveListener
+
+        listener = SOCKSPassiveListener(interface="lo", timeout=10)
+        # CONNECT (command=1) to 93.184.216.34:443 -- no auth fields present.
+        packet = _FakePacket(
+            _FakeLayer(version="5", command="1", dst="93.184.216.34", dstport="443")
+        )
+        listener.process_packet(packet)
+
+        assert len(listener.interactions) == 1, "CONNECT packet was silently dropped"
+        ix = listener.interactions[0]
+        assert ix.operation == "SOCKS Connect"
+        assert ix.direction == "request"
+        assert ix.details.get("command_name") == "CONNECT"
+        assert ix.details.get("dst") == "93.184.216.34"
+        assert ix.details.get("dstport") == "443"
+        # Table row renders without error and includes the target.
+        row = listener._format_protocol_columns(ix)
+        assert len(row) == len(SOCKSPassiveListener.PROTOCOL_COLUMNS)
+        assert "93.184.216.34:443" in row[2]
+
+    def test_socks_reply_result_recorded(self):
+        """A SOCKS server reply packet yields a 'SOCKS Reply' interaction."""
+        from oida.pcap.passive.socks import SOCKSPassiveListener
+
+        listener = SOCKSPassiveListener(interface="lo", timeout=10)
+        packet = _FakePacket(_FakeLayer(version="5", results="0"))
+        listener.process_packet(packet)
+
+        assert len(listener.interactions) == 1, "Reply packet was silently dropped"
+        ix = listener.interactions[0]
+        assert ix.operation == "SOCKS Reply"
+        assert ix.direction == "response"
+        assert ix.details.get("results_name") == "Succeeded"
+
+    def test_socks_unclassified_packet_recorded(self):
+        """A SOCKS packet with no recognized fields is recorded as generic data."""
+        from oida.pcap.passive.socks import SOCKSPassiveListener
+
+        listener = SOCKSPassiveListener(interface="lo", timeout=10)
+        packet = _FakePacket(_FakeLayer(version="5"))
+        listener.process_packet(packet)
+
+        assert len(listener.interactions) == 1, "Unclassified packet was silently dropped"
+        assert listener.interactions[0].operation == "SOCKS Data"

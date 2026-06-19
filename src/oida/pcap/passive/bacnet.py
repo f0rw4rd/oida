@@ -369,7 +369,15 @@ class BACnetPassiveListener(PySharkListenerBase):
             svc_name = f"APDU-{apdu_type}"
 
         if not svc_name:
-            return
+            # Service choice absent (e.g. ComplexAck/segmented PDUs where the
+            # choice lives on the matching request). Don't silently drop the
+            # packet: record a generic interaction so every bacapp packet
+            # yields at least one row, matching the modbus/iec104/mms/s7comm
+            # catch-all pattern.
+            svc_name = f"APDU-{apdu_type}"
+            self.logger.debug(
+                f"BACnet: no service choice for apdu_type={apdu_type}, recording generic {svc_name}"
+            )
 
         # Extract object type and instance
         obj_type_raw = self.get_field(bacapp, "objectType", None)

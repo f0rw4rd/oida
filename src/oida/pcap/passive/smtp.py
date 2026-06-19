@@ -218,15 +218,25 @@ class SMTPPassiveListener(PySharkListenerBase):
         if src_port == 0 and dst_port == 0:
             return
 
-        # Determine direction based on SMTP ports
+        # Determine direction based on SMTP ports. SMTP defaults to 25/587/465
+        # but may run on any TCP port; the captured peer could be on a remapped
+        # submission/proxy port. Use a canonical port if it appears on either
+        # side; otherwise fall back to "lower port wins" (the listening server
+        # side has the smaller fixed port vs. the ephemeral client port). This
+        # mirrors the iec104/mms heuristic and avoids dropping non-standard-port
+        # sessions that still match the smtp display filter.
         if dst_port in self.SMTP_PORTS:
             client_ip, server_ip = src_ip, dst_ip
             server_port = dst_port
         elif src_port in self.SMTP_PORTS:
             client_ip, server_ip = dst_ip, src_ip
             server_port = src_port
+        elif dst_port <= src_port:
+            client_ip, server_ip = src_ip, dst_ip
+            server_port = dst_port
         else:
-            return
+            client_ip, server_ip = dst_ip, src_ip
+            server_port = src_port
 
         smtp_layer = packet.smtp
         session = self._get_session(client_ip, server_ip)
@@ -503,9 +513,11 @@ class SMTPPassiveListener(PySharkListenerBase):
         # Category 2 edge cases (bare auth continuation lines like CRAM-MD5
         # responses that have an smtp layer but zero parseable fields).
         if not interaction_recorded:
-            # Determine direction from port: traffic FROM the server port is a
-            # response, traffic TO the server port is a request.
-            direction = "request" if dst_port in self.SMTP_PORTS else "response"
+            # Determine direction from the resolved server endpoint: traffic
+            # FROM the server is a response, traffic TO the server is a request.
+            # (Uses the same canonical-or-lower-port direction decision above so
+            # non-standard-port sessions are labelled consistently.)
+            direction = "request" if dst_ip == server_ip else "response"
             self._record_interaction(
                 now,
                 src_ip,

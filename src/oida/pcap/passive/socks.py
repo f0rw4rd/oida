@@ -52,6 +52,36 @@ AUTH_STATUS_NAMES: Dict[str, str] = {
     "0": "Success",
 }
 
+# SOCKS command codes (RFC 1928 Section 4)
+COMMAND_NAMES: Dict[str, str] = {
+    "1": "CONNECT",
+    "2": "BIND",
+    "3": "UDP ASSOCIATE",
+}
+
+# SOCKS reply/result codes (RFC 1928 Section 6)
+RESULT_NAMES: Dict[str, str] = {
+    "0": "Succeeded",
+    "1": "General SOCKS server failure",
+    "2": "Connection not allowed by ruleset",
+    "3": "Network unreachable",
+    "4": "Host unreachable",
+    "5": "Connection refused",
+    "6": "TTL expired",
+    "7": "Command not supported",
+    "8": "Address type not supported",
+}
+
+
+def _command_name(code: str) -> str:
+    """Return human-readable SOCKS command name."""
+    return COMMAND_NAMES.get(code, f"Command({code})")
+
+
+def _result_name(code: str) -> str:
+    """Return human-readable SOCKS reply/result name."""
+    return RESULT_NAMES.get(code, f"Result({code})")
+
 
 def _auth_method_name(code: str) -> str:
     """Return human-readable auth method name for a SOCKS method code."""
@@ -134,6 +164,10 @@ class SOCKSPassiveListener(PySharkListenerBase):
         subneg_version = self.get_field(socks, "subnegotiation_version", "")
         username = str(self.get_field(socks, "username", "") or "").strip()
         password = str(self.get_field(socks, "password", "") or "").strip()
+        command = self.get_field(socks, "command", "")
+        dst = self.get_field(socks, "dst", "") or self.get_field(socks, "remote_ip", "")
+        dstport = self.get_field(socks, "dstport", "")
+        results = self.get_field(socks, "results", "")
 
         # --- Determine packet type and record interaction ---
 
@@ -270,6 +304,86 @@ class SOCKSPassiveListener(PySharkListenerBase):
                 self.logger.info(f"SOCKS auth failure: {src_ip} -> {dst_ip} status={status_str}")
             return
 
+        # Type 5: Client command request (CONNECT/BIND/UDP ASSOCIATE) -- the
+        # most security-relevant part of a SOCKS session: which host/port the
+        # proxy was asked to reach.
+        if command != "" and command is not None:
+            command_str = str(command)
+            command_name = _command_name(command_str)
+            dst_str = str(dst) if dst else ""
+            dstport_str = str(dstport) if dstport else ""
+            target = f"{dst_str}:{dstport_str}" if dst_str else dstport_str
+            detail = f"{command_name} {target}".strip()
+            self._record_interaction(
+                now,
+                src_ip,
+                dst_ip,
+                "request",
+                "SOCKS Connect",
+                {
+                    "version": version_str,
+                    "command": command_str,
+                    "command_name": command_name,
+                    "dst": dst_str,
+                    "dstport": dstport_str,
+                },
+                f"SOCKSv{version_str} {detail}",
+                flow_id=flow_id,
+                src_port=src_port,
+                dst_port=dst_port,
+                stream_id=self.get_stream_id(packet),
+            )
+            self._update_devices(
+                client_ip=src_ip,
+                server_ip=dst_ip,
+                dst_port=dst_port,
+                version=version_str,
+            )
+            return
+
+        # Type 6: Server command reply (carries the connection result code).
+        if results != "" and results is not None:
+            results_str = str(results)
+            result_name = _result_name(results_str)
+            self._record_interaction(
+                now,
+                src_ip,
+                dst_ip,
+                "response",
+                "SOCKS Reply",
+                {
+                    "version": version_str,
+                    "results": results_str,
+                    "results_name": result_name,
+                },
+                f"SOCKSv{version_str} reply: {result_name}",
+                flow_id=flow_id,
+                src_port=src_port,
+                dst_port=dst_port,
+                stream_id=self.get_stream_id(packet),
+            )
+            return
+
+        # Catch-all: a SOCKS packet that matched the display filter but carries
+        # none of the recognized fields. Record a generic interaction so no
+        # filtered packet is silently dropped without trace.
+        self._record_interaction(
+            now,
+            src_ip,
+            dst_ip,
+            "request",
+            "SOCKS Data",
+            {"version": version_str},
+            f"SOCKSv{version_str} data",
+            flow_id=flow_id,
+            src_port=src_port,
+            dst_port=dst_port,
+            stream_id=self.get_stream_id(packet),
+        )
+        self.logger.debug(
+            f"SOCKS: unclassified packet {src_ip} -> {dst_ip} recorded as generic data"
+        )
+
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format a SOCKS interaction as a table row."""
         d = ix.details
@@ -285,6 +399,13 @@ class SOCKSPassiveListener(PySharkListenerBase):
             detail = f"user={d.get('username', '?')}"
         elif op == "SOCKS Auth Response":
             detail = d.get("auth_status_name", "?")
+        elif op == "SOCKS Connect":
+            dst = d.get("dst", "")
+            dstport = d.get("dstport", "")
+            target = f"{dst}:{dstport}" if dst else dstport
+            detail = f"{d.get('command_name', '?')} {target}".strip()
+        elif op == "SOCKS Reply":
+            detail = d.get("results_name", "?")
         else:
             detail = ix.summary
 
