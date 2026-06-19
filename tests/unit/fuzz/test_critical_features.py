@@ -138,7 +138,11 @@ CRITICAL_FEATURE_REQUIREMENTS = {
         ),
         (
             "CIP path overflow (CVE-2021-27478)",
-            ["CIP_Boundary", "Path"],
+            # Delivered by the EIP_Overflow group, which connects the
+            # EIP_CIP_Path_Overflow request. Previously this matched the
+            # phantom EIP_CIP_Boundary (advertised but never connected;
+            # CODE_REVIEW.md ethernetip.py:179) - which delivered nothing.
+            ["Overflow", "Path"],
         ),
     ],
     # fins / tase2 / hartip / profinet_dcp / industrial_ethernet entries

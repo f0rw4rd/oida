@@ -211,6 +211,11 @@ class BaseFuzzer(ABC):
         if config.disabled_requests:
             self._disabled_requests = set(config.disabled_requests)
 
+        # Warn about --enable/--disable names that don't match any registered
+        # request, so a typo (e.g. "HTTP_Baselin") is visible instead of silently
+        # putting the fuzzer in whitelist mode that matches nothing and fuzzes nothing.
+        self._validate_request_filters()
+
         # Progress monitoring
         self._progress_stop_flag = False
         self._progress_interval = 5  # seconds
@@ -712,6 +717,35 @@ class BaseFuzzer(ABC):
 
         # Otherwise, check blacklist (--disable)
         return name not in self._disabled_requests
+
+    def _validate_request_filters(self) -> None:
+        """Warn about --enable/--disable names not present in the request registry.
+
+        ``_available_requests`` is populated from ``get_request_definitions()`` (the
+        same source that powers ``--list-requests``). Any enable/disable name that is
+        not a known request is almost certainly a typo: in whitelist (--enable) mode an
+        unknown name silently matches nothing, so the fuzzer connects zero requests and
+        exits 'successfully' without sending anything. Surfacing a WARNING makes the
+        mistake visible instead of masquerading as a clean run.
+        """
+        known = set(self._available_requests.keys())
+        if not known:
+            # No static registry (e.g. protocols that register lazily in
+            # _define_protocol); nothing to validate against here.
+            return
+
+        for label, names in (
+            ("--enable", self._enabled_requests),
+            ("--disable", self._disabled_requests),
+        ):
+            if not names:
+                continue
+            unknown = sorted(set(names) - known)
+            if unknown:
+                self.log.warning(
+                    f"{label} request(s) not found in registry (typo? will match nothing): "
+                    f"{', '.join(unknown)}"
+                )
 
     @classmethod
     def get_request_definitions(cls) -> List[RequestInfo]:

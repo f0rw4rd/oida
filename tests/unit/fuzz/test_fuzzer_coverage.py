@@ -159,7 +159,9 @@ ICS_AUDIT_REQUEST_COUNTS = {
     # MalformedCert, State_Confusion).
     "opcua": 25,
     "bacnet": 13,
-    "ethernetip": 12,
+    # 12 -> 11: removed phantom EIP_CIP_Boundary (advertised but never built
+    # or connected; CODE_REVIEW.md ethernetip.py:179).
+    "ethernetip": 11,
     "mms": 14,
     "ads": 12,
     "snmpv2c": 12,
