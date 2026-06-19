@@ -2685,88 +2685,152 @@ class DNSFuzzer(BaseFuzzer):
         # actually fuzzed. Ordering: baseline -> core -> security-critical -> exotic.
 
         # TIER 0: BASELINE - Non-fuzzable connectivity test (FASTEST - <100ms)
-        self.session.connect(dns_baseline)  # Simple A query, all fields static
+        if self.is_request_enabled("DNS_Baseline"):
+            self.session.connect(dns_baseline)  # Simple A query, all fields static
 
         # TIER 1: CORE A RECORD - Fuzzed baseline query
-        self.session.connect(dns_a_query)  # A record with fuzzing
+        if self.is_request_enabled("DNS_A_QUERY"):
+            self.session.connect(dns_a_query)  # A record with fuzzing
 
         # TIER 2: CORE QUERY TYPES - Most common DNS operations
-        self.session.connect(dns_aaaa_query)  # IPv6 addresses
-        self.session.connect(dns_mx_query)  # Mail exchange
-        self.session.connect(dns_ptr_query)  # Reverse DNS
-        self.session.connect(dns_txt_query)  # Text records
-        self.session.connect(dns_srv_query)  # Service discovery
-        self.session.connect(dns_caa_query)  # Certificate authority authorization
-        self.session.connect(dns_tlsa_query)  # TLSA / DANE record
-        self.session.connect(dns_svcb_query)  # SVCB service binding
-        self.session.connect(dns_https_query)  # HTTPS service binding
+        if self.is_request_enabled("DNS_AAAA_QUERY"):
+            self.session.connect(dns_aaaa_query)  # IPv6 addresses
+        if self.is_request_enabled("DNS_MX_QUERY"):
+            self.session.connect(dns_mx_query)  # Mail exchange
+        if self.is_request_enabled("DNS_PTR_QUERY"):
+            self.session.connect(dns_ptr_query)  # Reverse DNS
+        if self.is_request_enabled("DNS_TXT_QUERY"):
+            self.session.connect(dns_txt_query)  # Text records
+        if self.is_request_enabled("DNS_SRV_QUERY"):
+            self.session.connect(dns_srv_query)  # Service discovery
+        if self.is_request_enabled("DNS_CAA_QUERY"):
+            self.session.connect(dns_caa_query)  # Certificate authority authorization
+        if self.is_request_enabled("DNS_TLSA_QUERY"):
+            self.session.connect(dns_tlsa_query)  # TLSA / DANE record
+        if self.is_request_enabled("DNS_SVCB_QUERY"):
+            self.session.connect(dns_svcb_query)  # SVCB service binding
+        if self.is_request_enabled("DNS_HTTPS_QUERY"):
+            self.session.connect(dns_https_query)  # HTTPS service binding
 
         # TIER 3: CRITICAL ATTACK PATTERNS - High-severity vulnerabilities
-        self.session.connect(dns_cache_poisoning)  # CVE-2008-1447, Kaminsky attack
-        self.session.connect(dns_amplification)  # DDoS amplification
-        self.session.connect(dns_domain_overflow)  # AMNESIA:33 buffer overflow
-        self.session.connect(dns_length_overflow)  # AMNESIA:33 length validation
-        self.session.connect(dns_response_mismatch)  # CVE-2020-25928 count mismatch
-        self.session.connect(dns_no_null_term)  # CVE-2020-24341 missing null term
+        if self.is_request_enabled("DNS_CACHE_POISONING"):
+            self.session.connect(dns_cache_poisoning)  # CVE-2008-1447, Kaminsky attack
+        if self.is_request_enabled("DNS_AMPLIFICATION"):
+            self.session.connect(dns_amplification)  # DDoS amplification
+        if self.is_request_enabled("DNS_Domain_Overflow"):
+            self.session.connect(dns_domain_overflow)  # AMNESIA:33 buffer overflow
+        if self.is_request_enabled("DNS_Length_Overflow"):
+            self.session.connect(dns_length_overflow)  # AMNESIA:33 length validation
+        if self.is_request_enabled("DNS_Response_Mismatch"):
+            self.session.connect(dns_response_mismatch)  # CVE-2020-25928 count mismatch
+        if self.is_request_enabled("DNS_No_Null_Term"):
+            self.session.connect(dns_no_null_term)  # CVE-2020-24341 missing null term
 
         # TIER 4: BUFFER OVERFLOW & PARSING ATTACKS
-        self.session.connect(dns_long_domain)  # Oversized domain names
-        self.session.connect(dns_malformed_labels)  # Invalid label structures
-        self.session.connect(dns_compression_loop)  # Compression pointer loops
-        self.session.connect(dns_invalid_flags)  # Invalid header flags
-        self.session.connect(dns_malformed_edns0)  # Malformed EDNS0 extensions
+        if self.is_request_enabled("DNS_LONG_DOMAIN"):
+            self.session.connect(dns_long_domain)  # Oversized domain names
+        if self.is_request_enabled("DNS_MALFORMED_LABELS"):
+            self.session.connect(dns_malformed_labels)  # Invalid label structures
+        if self.is_request_enabled("DNS_COMPRESSION_LOOP"):
+            self.session.connect(dns_compression_loop)  # Compression pointer loops
+        if self.is_request_enabled("DNS_INVALID_FLAGS"):
+            self.session.connect(dns_invalid_flags)  # Invalid header flags
+        if self.is_request_enabled("DNS_MALFORMED_EDNS0"):
+            self.session.connect(dns_malformed_edns0)  # Malformed EDNS0 extensions
 
         # TIER 5: DNSSEC QUERIES - Cryptographic extensions
-        self.session.connect(dns_dnskey_query)  # Public key records
-        self.session.connect(dns_rrsig_query)  # Resource record signatures
-        self.session.connect(dns_ds_query)  # Delegation signer
-        self.session.connect(dns_nsec_query)  # Next secure record
-        self.session.connect(dns_nsec3_query)  # Hashed next secure record
-        self.session.connect(dns_nsec3param_query)  # NSEC3 parameters
-        self.session.connect(dns_cds_query)  # Child DS
-        self.session.connect(dns_cdnskey_query)  # Child DNSKEY
-        self.session.connect(dns_dnssec_algorithms)  # Algorithm negotiation
+        if self.is_request_enabled("DNS_DNSKEY_QUERY"):
+            self.session.connect(dns_dnskey_query)  # Public key records
+        if self.is_request_enabled("DNS_RRSIG_QUERY"):
+            self.session.connect(dns_rrsig_query)  # Resource record signatures
+        if self.is_request_enabled("DNS_DS_QUERY"):
+            self.session.connect(dns_ds_query)  # Delegation signer
+        if self.is_request_enabled("DNS_NSEC_QUERY"):
+            self.session.connect(dns_nsec_query)  # Next secure record
+        if self.is_request_enabled("DNS_NSEC3_QUERY"):
+            self.session.connect(dns_nsec3_query)  # Hashed next secure record
+        if self.is_request_enabled("DNS_NSEC3PARAM_QUERY"):
+            self.session.connect(dns_nsec3param_query)  # NSEC3 parameters
+        if self.is_request_enabled("DNS_CDS_QUERY"):
+            self.session.connect(dns_cds_query)  # Child DS
+        if self.is_request_enabled("DNS_CDNSKEY_QUERY"):
+            self.session.connect(dns_cdnskey_query)  # Child DNSKEY
+        if self.is_request_enabled("DNS_DNSSEC_ALGORITHMS"):
+            self.session.connect(dns_dnssec_algorithms)  # Algorithm negotiation
 
         # TIER 6: EDNS0 EXTENSIONS - Modern DNS features
-        self.session.connect(dns_edns0_options)  # Extended DNS options
-        self.session.connect(dns_cookies)  # DNS cookies (RFC 7873)
-        self.session.connect(dns_cookies_client_only)  # Client-only cookie
-        self.session.connect(dns_cookies_malformed)  # Malformed cookie data
-        self.session.connect(dns_extended_errors)  # Extended error codes (RFC 8914)
-        self.session.connect(dns_nsid)  # Name server identifier
-        self.session.connect(dns_padding)  # EDNS padding option
-        self.session.connect(dns_edns_key_tag)  # EDNS key tag signaling
-        self.session.connect(dns_edns_expire)  # EDNS expire option
-        self.session.connect(dns_chain_query)  # EDNS chain query
+        if self.is_request_enabled("DNS_EDNS0_OPTIONS"):
+            self.session.connect(dns_edns0_options)  # Extended DNS options
+        if self.is_request_enabled("DNS_COOKIES"):
+            self.session.connect(dns_cookies)  # DNS cookies (RFC 7873)
+        if self.is_request_enabled("DNS_COOKIES_CLIENT_ONLY"):
+            self.session.connect(dns_cookies_client_only)  # Client-only cookie
+        if self.is_request_enabled("DNS_COOKIES_MALFORMED"):
+            self.session.connect(dns_cookies_malformed)  # Malformed cookie data
+        if self.is_request_enabled("DNS_EXTENDED_ERRORS"):
+            self.session.connect(dns_extended_errors)  # Extended error codes (RFC 8914)
+        if self.is_request_enabled("DNS_NSID"):
+            self.session.connect(dns_nsid)  # Name server identifier
+        if self.is_request_enabled("DNS_PADDING"):
+            self.session.connect(dns_padding)  # EDNS padding option
+        if self.is_request_enabled("DNS_EDNS_KEY_TAG"):
+            self.session.connect(dns_edns_key_tag)  # EDNS key tag signaling
+        if self.is_request_enabled("DNS_EDNS_EXPIRE"):
+            self.session.connect(dns_edns_expire)  # EDNS expire option
+        if self.is_request_enabled("DNS_CHAIN_QUERY"):
+            self.session.connect(dns_chain_query)  # EDNS chain query
 
         # TIER 7: DYNAMIC UPDATE - DNS UPDATE operations (RFC 2136)
-        self.session.connect(dns_update_add)  # Add resource records
-        self.session.connect(dns_update_delete_record)  # Delete resource records
-        self.session.connect(dns_update_with_prereq)  # Update with prerequisites
-        self.session.connect(dns_update_malformed)  # Malformed UPDATE messages
+        if self.is_request_enabled("DNS_UPDATE_ADD_RECORD"):
+            self.session.connect(dns_update_add)  # Add resource records
+        if self.is_request_enabled("DNS_UPDATE_DELETE_RECORD"):
+            self.session.connect(dns_update_delete_record)  # Delete resource records
+        if self.is_request_enabled("DNS_UPDATE_WITH_PREREQ"):
+            self.session.connect(dns_update_with_prereq)  # Update with prerequisites
+        if self.is_request_enabled("DNS_UPDATE_MALFORMED"):
+            self.session.connect(dns_update_malformed)  # Malformed UPDATE messages
 
         # TIER 8: HEADER FLAG COMBINATIONS - DNSSEC AD/CD signaling
-        self.session.connect(dns_flags_ad)  # Authentic Data flag
-        self.session.connect(dns_flags_cd)  # Checking Disabled flag
-        self.session.connect(dns_flags_ad_cd_both)  # AD+CD combination
+        if self.is_request_enabled("DNS_FLAGS_AD"):
+            self.session.connect(dns_flags_ad)  # Authentic Data flag
+        if self.is_request_enabled("DNS_FLAGS_CD"):
+            self.session.connect(dns_flags_cd)  # Checking Disabled flag
+        if self.is_request_enabled("DNS_FLAGS_AD_CD_BOTH"):
+            self.session.connect(dns_flags_ad_cd_both)  # AD+CD combination
 
         # TIER 9: RCODE RESPONSES - Response-code parsing (RFC 6895 / TSIG)
-        self.session.connect(dns_rcode_noerror)
-        self.session.connect(dns_rcode_formerr)
-        self.session.connect(dns_rcode_servfail)
-        self.session.connect(dns_rcode_nxdomain)
-        self.session.connect(dns_rcode_notimp)
-        self.session.connect(dns_rcode_refused)
-        self.session.connect(dns_rcode_yxdomain)
-        self.session.connect(dns_rcode_yxrrset)
-        self.session.connect(dns_rcode_nxrrset)
-        self.session.connect(dns_rcode_notauth)
-        self.session.connect(dns_rcode_notzone)
-        self.session.connect(dns_rcode_badvers)
-        self.session.connect(dns_rcode_badcookie)
-        self.session.connect(dns_rcode_badsig)
-        self.session.connect(dns_rcode_badkey)
-        self.session.connect(dns_rcode_badtime)
+        if self.is_request_enabled("DNS_RCODE_NOERROR"):
+            self.session.connect(dns_rcode_noerror)
+        if self.is_request_enabled("DNS_RCODE_FORMERR"):
+            self.session.connect(dns_rcode_formerr)
+        if self.is_request_enabled("DNS_RCODE_SERVFAIL"):
+            self.session.connect(dns_rcode_servfail)
+        if self.is_request_enabled("DNS_RCODE_NXDOMAIN"):
+            self.session.connect(dns_rcode_nxdomain)
+        if self.is_request_enabled("DNS_RCODE_NOTIMP"):
+            self.session.connect(dns_rcode_notimp)
+        if self.is_request_enabled("DNS_RCODE_REFUSED"):
+            self.session.connect(dns_rcode_refused)
+        if self.is_request_enabled("DNS_RCODE_YXDOMAIN"):
+            self.session.connect(dns_rcode_yxdomain)
+        if self.is_request_enabled("DNS_RCODE_YXRRSET"):
+            self.session.connect(dns_rcode_yxrrset)
+        if self.is_request_enabled("DNS_RCODE_NXRRSET"):
+            self.session.connect(dns_rcode_nxrrset)
+        if self.is_request_enabled("DNS_RCODE_NOTAUTH"):
+            self.session.connect(dns_rcode_notauth)
+        if self.is_request_enabled("DNS_RCODE_NOTZONE"):
+            self.session.connect(dns_rcode_notzone)
+        if self.is_request_enabled("DNS_RCODE_BADVERS"):
+            self.session.connect(dns_rcode_badvers)
+        if self.is_request_enabled("DNS_RCODE_BADCOOKIE"):
+            self.session.connect(dns_rcode_badcookie)
+        if self.is_request_enabled("DNS_RCODE_BADSIG"):
+            self.session.connect(dns_rcode_badsig)
+        if self.is_request_enabled("DNS_RCODE_BADKEY"):
+            self.session.connect(dns_rcode_badkey)
+        if self.is_request_enabled("DNS_RCODE_BADTIME"):
+            self.session.connect(dns_rcode_badtime)
 
     def get_fuzzing_targets(self) -> list:
         """Return list of DNS fuzzing targets and their purposes"""

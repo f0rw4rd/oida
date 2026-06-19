@@ -695,13 +695,37 @@ class VNCFuzzer(BaseFuzzer):
             ),
         )
 
-        # Connect requests in fuzzing flow
-        self.session.connect(version_dyn_all)
-        self.session.connect(version_dyn_version)
-        self.session.connect(version_static, security)
-        self.session.connect(security, sec_response)
-        self.session.connect(sec_response, vnc_auth)
-        self.session.connect(security, malformed)
+        # Connect requests in fuzzing flow, honoring --enable/--disable filters.
+        # version_dyn_all / version_dyn_version are independent roots; the rest
+        # form a chain rooted at version_static:
+        #   version_static -> security -> {sec_response -> vnc_auth, malformed}
+        # When a downstream request is enabled its prerequisite path nodes are
+        # also connected so boofuzz can reach it.
+        if self.is_request_enabled("ProtocolVersionDynAll"):
+            self.session.connect(version_dyn_all)
+        if self.is_request_enabled("ProtocolVersionDynVersion"):
+            self.session.connect(version_dyn_version)
+
+        static_enabled = self.is_request_enabled("StaticProtocolVersion")
+        security_enabled = self.is_request_enabled("SecurityTypeSelection")
+        sec_response_enabled = self.is_request_enabled("SecurityTypeResponse")
+        vnc_auth_enabled = self.is_request_enabled("VNCAuth")
+        malformed_enabled = self.is_request_enabled("MalformedMessages")
+
+        need_security = (
+            security_enabled or sec_response_enabled or vnc_auth_enabled or malformed_enabled
+        )
+        if need_security:
+            # version_static is the chain root and is reached as a side effect.
+            self.session.connect(version_static, security)
+        elif static_enabled:
+            self.session.connect(version_static)
+        if sec_response_enabled or vnc_auth_enabled:
+            self.session.connect(security, sec_response)
+        if vnc_auth_enabled:
+            self.session.connect(sec_response, vnc_auth)
+        if malformed_enabled:
+            self.session.connect(security, malformed)
 
     def _define_postauth_protocol(self) -> None:
         """Define post-authentication VNC protocol messages."""
@@ -875,15 +899,49 @@ class VNCFuzzer(BaseFuzzer):
             ),
         )
 
-        # Connect requests in fuzzing flow
-        self.session.connect(client_init)
-        self.session.connect(client_init, pixel_format)
-        self.session.connect(pixel_format, encodings)
-        self.session.connect(encodings, fb_update)
-        self.session.connect(encodings, key_event)
-        self.session.connect(encodings, pointer_event)
-        self.session.connect(encodings, overflow_test)
-        self.session.connect(encodings, boundary_test)
+        # Connect requests in fuzzing flow, honoring --enable/--disable filters.
+        # The post-auth messages form a chain rooted at ClientInit:
+        #   client_init -> pixel_format -> encodings -> {leaf messages}
+        # boofuzz can only reach a node through a connected parent, so when a
+        # downstream request is enabled its prerequisite path nodes are also
+        # connected (the same pattern smtp.py uses for its HELO prerequisite).
+        client_init_enabled = self.is_request_enabled("ClientInit")
+        pixel_format_enabled = self.is_request_enabled("SetPixelFormat")
+        encodings_enabled = self.is_request_enabled("SetEncodings")
+        fb_update_enabled = self.is_request_enabled("FramebufferUpdateRequest")
+        key_event_enabled = self.is_request_enabled("KeyEvent")
+        pointer_event_enabled = self.is_request_enabled("PointerEvent")
+        overflow_enabled = self.is_request_enabled("VNC_Overflow")
+        boundary_enabled = self.is_request_enabled("VNC_Boundary")
+        any_leaf_enabled = (
+            fb_update_enabled
+            or key_event_enabled
+            or pointer_event_enabled
+            or overflow_enabled
+            or boundary_enabled
+        )
+        # encodings is a prerequisite for every leaf; pixel_format for encodings;
+        # client_init for everything.
+        need_encodings = encodings_enabled or any_leaf_enabled
+        need_pixel_format = pixel_format_enabled or need_encodings
+        need_client_init = client_init_enabled or need_pixel_format
+
+        if need_client_init:
+            self.session.connect(client_init)
+        if need_pixel_format:
+            self.session.connect(client_init, pixel_format)
+        if need_encodings:
+            self.session.connect(pixel_format, encodings)
+        if fb_update_enabled:
+            self.session.connect(encodings, fb_update)
+        if key_event_enabled:
+            self.session.connect(encodings, key_event)
+        if pointer_event_enabled:
+            self.session.connect(encodings, pointer_event)
+        if overflow_enabled:
+            self.session.connect(encodings, overflow_test)
+        if boundary_enabled:
+            self.session.connect(encodings, boundary_test)
 
     def _preflight_auth_check(self):
         """
