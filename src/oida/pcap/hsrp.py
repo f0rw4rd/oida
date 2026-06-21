@@ -294,7 +294,7 @@ class HSRPPassiveListener(PySharkListenerBase):
 
             # Virtual IP -- tshark field is hsrp.virt_ip (not virtual_ip)
             virtual_ip = str(
-                self.get_field(hsrp, "virt_ip", None) or self.get_field(hsrp, "virtual_ip", "")
+                self.get_field_any(hsrp, "virt_ip", "virtual_ip", default="")
             )
 
             # Authentication data (plaintext for v1)
@@ -338,47 +338,41 @@ class HSRPPassiveListener(PySharkListenerBase):
         """
         try:
             opcode = self._parse_int(
-                self.get_field(hsrp, "hsrp2_opcode", None) or self.get_field(hsrp, "opcode", "0"),
+                self.get_field_any(hsrp, "hsrp2_opcode", "opcode", default="0"),
                 0,
             )
             state = self._parse_int(
-                self.get_field(hsrp, "hsrp2_state", None) or self.get_field(hsrp, "state", "0"),
+                self.get_field_any(hsrp, "hsrp2_state", "state", default="0"),
                 0,
             )
             group = self._parse_int(
-                self.get_field(hsrp, "hsrp2_group", None) or self.get_field(hsrp, "group", "0"),
+                self.get_field_any(hsrp, "hsrp2_group", "group", default="0"),
                 0,
             )
             priority = self._parse_int(
-                self.get_field(hsrp, "hsrp2_priority", None)
-                or self.get_field(hsrp, "priority", "100"),
+                self.get_field_any(hsrp, "hsrp2_priority", "priority", default="100"),
                 100,
             )
             hello_time = self._parse_int(
-                self.get_field(hsrp, "hsrp2_hellotime", None)
-                or self.get_field(hsrp, "hellotime", "3000"),
+                self.get_field_any(hsrp, "hsrp2_hellotime", "hellotime", default="3000"),
                 3000,
             )
             hold_time = self._parse_int(
-                self.get_field(hsrp, "hsrp2_holdtime", None)
-                or self.get_field(hsrp, "holdtime", "10000"),
+                self.get_field_any(hsrp, "hsrp2_holdtime", "holdtime", default="10000"),
                 10000,
             )
             virtual_ip = str(
-                self.get_field(hsrp, "hsrp2_virt_ip", None)
-                or self.get_field(hsrp, "virtual_ip", "")
+                self.get_field_any(hsrp, "hsrp2_virt_ip", "virtual_ip", default="")
             )
 
             # Identifier (MAC address) from v2
             identifier = str(
-                self.get_field(hsrp, "hsrp2_identifier", None)
-                or self.get_field(hsrp, "identifier", "")
+                self.get_field_any(hsrp, "hsrp2_identifier", "identifier", default="")
             )
 
             # IP version (hsrp2.ipversion in EK mode)
             ip_version = self._parse_int(
-                self.get_field(hsrp, "hsrp2_ipversion", None)
-                or self.get_field(hsrp, "addr_type", "4"),
+                self.get_field_any(hsrp, "hsrp2_ipversion", "addr_type", default="4"),
                 4,
             )
 
@@ -406,8 +400,7 @@ class HSRPPassiveListener(PySharkListenerBase):
             # Authentication -- check for text auth or MD5 auth.
             # Text auth (TLV type 3)
             auth_data = str(
-                self.get_field(hsrp, "hsrp2_auth_data", None)
-                or self.get_field(hsrp, "auth_data", "")
+                self.get_field_any(hsrp, "hsrp2_auth_data", "auth_data", default="")
             )
             if auth_data:
                 auth_data = auth_data.replace("\x00", "").strip()
@@ -420,22 +413,17 @@ class HSRPPassiveListener(PySharkListenerBase):
             if md5_auth_tlv is not None:
                 result["md5_auth_tlv"] = self._parse_int(md5_auth_tlv, 0)
 
-            md5_key_id = self.get_field(hsrp, "hsrp2_md5_key_id", None) or self.get_field(
-                hsrp, "md5_key_id", None
-            )
+            md5_key_id = self.get_field_any(hsrp, "hsrp2_md5_key_id", "md5_key_id")
             if md5_key_id is not None:
                 result["auth_type"] = "md5"
                 result["md5_key_id"] = self._parse_int(md5_key_id, 0)
                 result["md5_algorithm"] = self._parse_int(
-                    self.get_field(hsrp, "hsrp2_md5_algorithm", None)
-                    or self.get_field(hsrp, "md5_algorithm", "0"),
+                    self.get_field_any(hsrp, "hsrp2_md5_algorithm", "md5_algorithm", default="0"),
                     0,
                 )
 
                 # MD5 authentication digest (hsrp2.md5_auth_data)
-                md5_digest = self.get_field(hsrp, "hsrp2_md5_auth_data", None) or self.get_field(
-                    hsrp, "md5_auth_data", None
-                )
+                md5_digest = self.get_field_any(hsrp, "hsrp2_md5_auth_data", "md5_auth_data")
                 if md5_digest:
                     result["md5_auth_data"] = str(md5_digest)
                 else:
@@ -445,14 +433,11 @@ class HSRPPassiveListener(PySharkListenerBase):
                 result["auth_data"] = f"MD5 Key-ID:{result['md5_key_id']}"
 
             # Interface state TLV fields
-            active_groups = self.get_field(hsrp, "hsrp2_active_groups", None) or self.get_field(
-                hsrp, "active_groups", None
-            )
+            active_groups = self.get_field_any(hsrp, "hsrp2_active_groups", "active_groups")
             if active_groups is not None:
                 result["active_groups"] = self._parse_int(active_groups, 0)
                 result["passive_groups"] = self._parse_int(
-                    self.get_field(hsrp, "hsrp2_passive_groups", None)
-                    or self.get_field(hsrp, "passive_groups", "0"),
+                    self.get_field_any(hsrp, "hsrp2_passive_groups", "passive_groups", default="0"),
                     0,
                 )
 

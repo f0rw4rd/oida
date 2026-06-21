@@ -172,12 +172,8 @@ class SIPPassiveListener(PySharkListenerBase):
 
         # Get SIP method (for requests) or status code (for responses)
         # Try EK-mode field name first (Method), then XML-mode (method)
-        method = self.get_field(sip_layer, "Method", None) or self.get_field(
-            sip_layer, "method", None
-        )
-        status_code = self.get_field(sip_layer, "Status-Code", None) or self.get_field(
-            sip_layer, "status_code", None
-        )
+        method = self.get_field_any(sip_layer, "Method", "method")
+        status_code = self.get_field_any(sip_layer, "Status-Code", "status_code")
 
         # Extract common per-packet fields for interaction details
         call_id = self.get_field(sip_layer, "Call-ID", None) or self.get_field(
@@ -436,14 +432,10 @@ class SIPPassiveListener(PySharkListenerBase):
 
         # Fall back to manual address parsing if tshark fields are absent
         if not from_user and not from_host:
-            from_addr = self.get_field(sip_layer, "from", "") or self.get_field(
-                sip_layer, "from_addr", ""
-            )
+            from_addr = self.get_field_any(sip_layer, "from", "from_addr", default="")
             from_user, from_host = self._parse_sip_address(str(from_addr))
         if not to_user and not to_host:
-            to_addr = self.get_field(sip_layer, "to", "") or self.get_field(
-                sip_layer, "to_addr", ""
-            )
+            to_addr = self.get_field_any(sip_layer, "to", "to_addr", default="")
             to_user, to_host = self._parse_sip_address(str(to_addr))
 
         call = VoIPCall(

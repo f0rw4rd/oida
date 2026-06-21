@@ -165,7 +165,7 @@ class SOCKSPassiveListener(PySharkListenerBase):
         username = str(self.get_field(socks, "username", "") or "").strip()
         password = str(self.get_field(socks, "password", "") or "").strip()
         command = self.get_field(socks, "command", "")
-        dst = self.get_field(socks, "dst", "") or self.get_field(socks, "remote_ip", "")
+        dst = self.get_field_any(socks, "dst", "remote_ip", default="")
         dstport = self.get_field(socks, "dstport", "")
         results = self.get_field(socks, "results", "")
 

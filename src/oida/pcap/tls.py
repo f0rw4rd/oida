@@ -345,14 +345,10 @@ class TLSPassiveListener(PySharkListenerBase):
             details["rsa_key_exchange"] = True
             details["epms_len"] = str(epms_len)
         # JA3/JA3S fingerprint
-        ja3 = self.get_field(tls_layer, "handshake_ja3_hash", None) or self.get_field(
-            tls_layer, "handshake_ja3", None
-        )
+        ja3 = self.get_field_any(tls_layer, "handshake_ja3_hash", "handshake_ja3")
         if ja3:
             details["ja3"] = str(ja3)
-        ja3s = self.get_field(tls_layer, "handshake_ja3s_hash", None) or self.get_field(
-            tls_layer, "handshake_ja3s", None
-        )
+        ja3s = self.get_field_any(tls_layer, "handshake_ja3s_hash", "handshake_ja3s")
         if ja3s:
             details["ja3s"] = str(ja3s)
         # Certificate CN — extract from raw cert hex (works in EK mode)

@@ -772,31 +772,25 @@ class SMBPassiveListener(PySharkListenerBase):
         """Parse NTLMSSP layer from PyShark."""
         # Domain name
         domain = (
-            self.get_field(ntlmssp, "auth_domain")
-            or self.get_field(ntlmssp, "ntlmserverchallenge_domainname")
-            or self.get_field(ntlmssp, "challenge_domain")
+            self.get_field_any(ntlmssp, "auth_domain", "ntlmserverchallenge_domainname", "challenge_domain")
         )
         if domain and not session.get("domain"):
             session["domain"] = domain
 
         # Username
-        username = self.get_field(ntlmssp, "auth_username") or self.get_field(ntlmssp, "auth_user")
+        username = self.get_field_any(ntlmssp, "auth_username", "auth_user")
         if username and not session.get("username"):
             session["username"] = username
 
         # Workstation/hostname
         workstation = (
-            self.get_field(ntlmssp, "auth_hostname")
-            or self.get_field(ntlmssp, "auth_host")
-            or self.get_field(ntlmssp, "ntlmserverchallenge_workstation")
+            self.get_field_any(ntlmssp, "auth_hostname", "auth_host", "ntlmserverchallenge_workstation")
         )
         if workstation and not session.get("workstation"):
             session["workstation"] = workstation
 
         # Target info - may contain OS version
-        target_info = self.get_field(ntlmssp, "av_pairs_target_info") or self.get_field(
-            ntlmssp, "target_info"
-        )
+        target_info = self.get_field_any(ntlmssp, "av_pairs_target_info", "target_info")
         if target_info:
             self.logger.debug(f"NTLMSSP target_info: {target_info}")
 
