@@ -1,6 +1,5 @@
-# Claude Code tooling and instructions — kept local, not tracked
-.claude/
-CLAUDE.md
+# Claude Code local machine-specific settings — keep local
+.claude/settings.local.json
 
 # Internal review artifacts — enumerate findings/vulns; keep LOCAL, never ship
 CODE_REVIEW.md
