@@ -240,17 +240,11 @@ class C1222PassiveListener(PySharkListenerBase):
         # write_table after the layer prefix is stripped and dots become
         # underscores), likewise for offset. READ uses c1222.read.count;
         # WRITE uses c1222.write.size for the byte count.
-        table_raw = self.get_field(c1222_layer, "read_table") or self.get_field(
-            c1222_layer, "write_table"
-        )
+        table_raw = self.get_field_any(c1222_layer, "read_table", "write_table")
         table_num = self._parse_int(table_raw, None)
-        offset_raw = self.get_field(c1222_layer, "read_offset") or self.get_field(
-            c1222_layer, "write_offset"
-        )
+        offset_raw = self.get_field_any(c1222_layer, "read_offset", "write_offset")
         offset = self._parse_int(offset_raw, None)
-        count_raw = self.get_field(c1222_layer, "read_count") or self.get_field(
-            c1222_layer, "write_size"
-        )
+        count_raw = self.get_field_any(c1222_layer, "read_count", "write_size")
         count = self._parse_int(count_raw, None)
 
         # Extract authentication fields. LOGON exposes c1222.logon.id (numeric

@@ -248,7 +248,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
 
         # T1: eigrp.seq -- EK mode uses "seq", XML mode uses "sequence"
         seq_num = self._parse_int(
-            self.get_field(eigrp, "seq", None) or self.get_field(eigrp, "sequence", "0"),
+            self.get_field_any(eigrp, "seq", "sequence", default="0"),
             0,
         )
         if seq_num == 0 and opcode != 5:  # non-Hello with seq=0 is unusual
@@ -256,7 +256,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
 
         # T2: eigrp.ack -- EK mode uses "ack", XML mode uses "acknowledge"
         ack_num = self._parse_int(
-            self.get_field(eigrp, "ack", None) or self.get_field(eigrp, "acknowledge", "0"),
+            self.get_field_any(eigrp, "ack", "acknowledge", default="0"),
             0,
         )
 
@@ -476,9 +476,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
     def _extract_credentials(self, eigrp, src_ip: str, as_number: int) -> None:
         """Extract EIGRP authentication data (MD5/SHA-256 digest)."""
         # Try both EK-mode and XML-mode field names
-        auth_type_raw = self.get_field(eigrp, "auth_type", None) or self.get_field(
-            eigrp, "auth.type", None
-        )
+        auth_type_raw = self.get_field_any(eigrp, "auth_type", "auth.type")
         if auth_type_raw is None:
             return
 
@@ -487,28 +485,26 @@ class EIGRPPassiveListener(PySharkListenerBase):
             return
 
         digest = str(
-            self.get_field(eigrp, "auth_digest", None)
-            or self.get_field(eigrp, "auth.digest", "")
-            or ""
+            self.get_field_any(eigrp, "auth_digest", "auth.digest", default="")
         ).strip()
         if not digest:
             return
 
         key_id = self._parse_int(
-            self.get_field(eigrp, "auth_keyid", None) or self.get_field(eigrp, "auth.keyid", "0"),
+            self.get_field_any(eigrp, "auth_keyid", "auth.keyid", default="0"),
             0,
         )
         auth_type_name = EIGRP_AUTH_TYPES.get(auth_type, f"Unknown({auth_type})")
 
         # T1: eigrp.auth.keyseq -- key sequence for rotation tracking
         key_seq = self._parse_int(
-            self.get_field(eigrp, "auth_keyseq", None) or self.get_field(eigrp, "auth.keyseq", "0"),
+            self.get_field_any(eigrp, "auth_keyseq", "auth.keyseq", default="0"),
             0,
         )
 
         # T1: eigrp.auth.length -- auth data length
         auth_length = self._parse_int(
-            self.get_field(eigrp, "auth_length", None) or self.get_field(eigrp, "auth.length", "0"),
+            self.get_field_any(eigrp, "auth_length", "auth.length", default="0"),
             0,
         )
 

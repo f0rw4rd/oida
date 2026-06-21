@@ -222,9 +222,7 @@ class IMAPPassiveListener(PySharkListenerBase):
         imap_layer = packet.imap
 
         # Extract structured fields from PyShark
-        request_command = self.get_field(imap_layer, "request_command", "") or self.get_field(
-            imap_layer, "command", ""
-        )
+        request_command = self.get_field_any(imap_layer, "request_command", "command", default="")
         request_tag = self.get_field(imap_layer, "request_tag", "")
         response_status = self.get_field(imap_layer, "response_status", "")
         response_command = self.get_field(imap_layer, "response_command", "")

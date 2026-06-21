@@ -293,6 +293,21 @@ class PySharkListenerBase(ABC):
             self.logger.debug(f"PyShark: layer value resolution failed: {e}")
             return default
 
+    def get_field_any(self, layer, *field_names: str, default: Any = None) -> Any:
+        """Return the first present field among several candidate names.
+
+        Bridges XML-mode dotted names and EK-mode short/underscore names
+        (e.g. ``"tds.7login_username"`` vs ``"7login_username"``) without
+        forcing every caller to chain ``get_field(...) or get_field(...)``.
+        A field counts as present when its value is neither ``None`` nor the
+        empty string, matching the short-circuit behaviour of ``or``.
+        """
+        for name in field_names:
+            val = self.get_field(layer, name, None)
+            if val is not None and val != "":
+                return val
+        return default
+
     def get_all_fields(self, layer) -> Dict[str, str]:
         """Get all fields from PyShark layer as dict."""
         try:
