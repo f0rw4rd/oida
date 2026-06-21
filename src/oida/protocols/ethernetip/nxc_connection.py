@@ -14,7 +14,7 @@ class ethernetip(NetworkConnection):
     """NXC-style EtherNet/IP scanner (callable)"""
 
     def __init__(self, args, db, host):
-        self.protocol_name = "ETHERNET/IP"
+        self.protocol_name = "EtherNet/IP"
         self.default_port = 44818
         self.conn = None
         self.scanner = None

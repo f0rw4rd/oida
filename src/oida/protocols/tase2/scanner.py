@@ -175,7 +175,7 @@ class TASE2Scanner(
         self.tase2_version = None
 
     def get_protocol_name(self) -> str:
-        return "TASE.2/ICCP"
+        return "TASE.2"
 
     def get_default_port(self) -> int:
         return 102

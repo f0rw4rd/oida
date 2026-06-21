@@ -104,7 +104,7 @@ def _clear_progress_line() -> None:
         print("\r\033[K", end="", flush=True)
 
 
-_SPONSORS: list = ["@Limes Security"]
+_SPONSORS: list = []
 
 
 def print_startup_banner() -> None:
@@ -112,7 +112,7 @@ def print_startup_banner() -> None:
     Print a single startup banner line. Only prints once per process.
 
     Output:
-        [+] OIDA v1.0.0 | powered by @f0rw4rd | supported by @Limes Security
+        [+] OIDA v1.0.0 | powered by @f0rw4rd
     """
     global _banner_printed
     with _print_lock:

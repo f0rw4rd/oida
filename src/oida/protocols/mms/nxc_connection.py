@@ -14,7 +14,7 @@ class mms(NetworkConnection):
     """NXC-style MMS scanner (callable)"""
 
     def __init__(self, args, db, host):
-        self.protocol_name = "MMS"
+        self.protocol_name = "IEC 61850 MMS"
         self.default_port = 102
         super().__init__(args, db, host)
 

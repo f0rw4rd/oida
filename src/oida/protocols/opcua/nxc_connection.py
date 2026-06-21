@@ -81,7 +81,7 @@ class opcua(
     """
 
     def __init__(self, args, db, host):
-        self.protocol_name = "opcua"
+        self.protocol_name = "OPC UA"
         self.default_port = 4840
         self._client = None
         self._original_url = None

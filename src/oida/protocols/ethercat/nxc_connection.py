@@ -17,7 +17,7 @@ class ethercat(SerialConnection):
     """NXC-style Ethercat scanner (callable)"""
 
     def __init__(self, args, db, host):
-        self.protocol_name = "Ethercat"
+        self.protocol_name = "EtherCAT"
         self.default_port = None
         super().__init__(args, db, host)
 
