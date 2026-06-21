@@ -80,7 +80,7 @@ class modbus(
             db: Database instance (optional, not used yet)
             host: Target IP address
         """
-        self.protocol_name = "modbus"
+        self.protocol_name = "Modbus"
         self.default_port = 502
 
         # Extract decode/encode settings from args for typed operations

@@ -29,7 +29,7 @@ class snmp(NetworkConnection):
     """
 
     def __init__(self, args, db, host):
-        self.protocol_name = "snmp"
+        self.protocol_name = "SNMP"
         self.default_port = 161
         super().__init__(args, db, host)
 

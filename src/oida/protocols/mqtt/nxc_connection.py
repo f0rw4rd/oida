@@ -19,7 +19,7 @@ class mqtt(NetworkConnection):
     """
 
     def __init__(self, args: Any, db: Optional[Any], host: str):
-        self.protocol_name = "mqtt"
+        self.protocol_name = "MQTT"
         self.default_port = 1883
         self.conn = None
         self.scanner = None

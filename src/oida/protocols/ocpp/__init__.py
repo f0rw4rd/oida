@@ -136,7 +136,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
     )
 
     def __init__(self, args, db, host):
-        self.protocol_name = "ocpp"
+        self.protocol_name = "OCPP"
         self.default_port = DEFAULT_WS_PORT
         self.conn = None
         self.scanner = None

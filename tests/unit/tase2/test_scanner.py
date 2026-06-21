@@ -21,7 +21,7 @@ class TestTASE2ScannerInit(unittest.TestCase):
 
         self.assertEqual(scanner.host, "192.168.1.100")
         self.assertEqual(scanner.port, 102)
-        self.assertEqual(scanner.get_protocol_name(), "TASE.2/ICCP")
+        self.assertEqual(scanner.get_protocol_name(), "TASE.2")
         self.assertEqual(scanner.get_default_port(), 102)
 
     def test_scanner_init_custom_values(self):
@@ -219,7 +219,7 @@ class TestTASE2Integration(unittest.TestCase):
         default_port = scanner.get_default_port()
         dependencies_ok = scanner.check_dependencies()
 
-        self.assertEqual(protocol_name, "TASE.2/ICCP")
+        self.assertEqual(protocol_name, "TASE.2")
         self.assertEqual(default_port, 102)
         self.assertIsInstance(dependencies_ok, bool)
 

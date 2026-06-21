@@ -12,7 +12,7 @@ class goose(SerialConnection):
     """NXC-style GOOSE scanner (callable)"""
 
     def __init__(self, args, db, host):
-        self.protocol_name = "GOOSE"
+        self.protocol_name = "IEC 61850 GOOSE"
         self.default_port = 0
         super().__init__(args, db, host)
 
