@@ -241,13 +241,13 @@ class EIGRPPassiveListener(PySharkListenerBase):
         src_mac, _ = self.get_mac_info(packet)
 
         # Extract EIGRP header fields
-        version = _safe_int(self.get_field(eigrp, "version", "2"), 2)
-        opcode = _safe_int(self.get_field(eigrp, "opcode", "0"), 0)
-        flags = _safe_int(self.get_field(eigrp, "flags", "0"), 0)
-        as_number = _safe_int(self.get_field(eigrp, "as", "0"), 0)
+        version = self._parse_int(self.get_field(eigrp, "version", "2"), 2)
+        opcode = self._parse_int(self.get_field(eigrp, "opcode", "0"), 0)
+        flags = self._parse_int(self.get_field(eigrp, "flags", "0"), 0)
+        as_number = self._parse_int(self.get_field(eigrp, "as", "0"), 0)
 
         # T1: eigrp.seq -- EK mode uses "seq", XML mode uses "sequence"
-        seq_num = _safe_int(
+        seq_num = self._parse_int(
             self.get_field(eigrp, "seq", None) or self.get_field(eigrp, "sequence", "0"),
             0,
         )
@@ -255,24 +255,24 @@ class EIGRPPassiveListener(PySharkListenerBase):
             self.logger.debug(f"EIGRP seq=0 for non-Hello opcode={opcode} from {src_ip}")
 
         # T2: eigrp.ack -- EK mode uses "ack", XML mode uses "acknowledge"
-        ack_num = _safe_int(
+        ack_num = self._parse_int(
             self.get_field(eigrp, "ack", None) or self.get_field(eigrp, "acknowledge", "0"),
             0,
         )
 
         # T1: eigrp.vrid -- Virtual Router ID
-        vrid = _safe_int(self.get_field(eigrp, "vrid", "0"), 0)
+        vrid = self._parse_int(self.get_field(eigrp, "vrid", "0"), 0)
 
         # T1: eigrp.checksum + eigrp.checksum.status
         checksum_raw = self.get_field(eigrp, "checksum", "")
-        checksum_status = _safe_int(self.get_field(eigrp, "checksum_status", "0"), 0)
+        checksum_status = self._parse_int(self.get_field(eigrp, "checksum_status", "0"), 0)
         checksum_status_name = EIGRP_CHECKSUM_STATUS.get(
             checksum_status, f"Unknown({checksum_status})"
         )
 
         # T1: eigrp.release_version + eigrp.tlv_version
-        release_version_raw = _safe_int(self.get_field(eigrp, "release_version", "0"), 0)
-        tlv_version_raw = _safe_int(self.get_field(eigrp, "tlv_version", "0"), 0)
+        release_version_raw = self._parse_int(self.get_field(eigrp, "release_version", "0"), 0)
+        tlv_version_raw = self._parse_int(self.get_field(eigrp, "tlv_version", "0"), 0)
         # Decode packed versions: high byte = major, low byte = minor
         release_major = (release_version_raw >> 8) & 0xFF
         release_minor = release_version_raw & 0xFF
@@ -318,14 +318,14 @@ class EIGRPPassiveListener(PySharkListenerBase):
         k1 = self.get_field(eigrp, "par_k1", None)
         if k1 is not None:
             k_values = {
-                "k1": _safe_int(self.get_field(eigrp, "par_k1", "1"), 1),
-                "k2": _safe_int(self.get_field(eigrp, "par_k2", "0"), 0),
-                "k3": _safe_int(self.get_field(eigrp, "par_k3", "1"), 1),
-                "k4": _safe_int(self.get_field(eigrp, "par_k4", "0"), 0),
-                "k5": _safe_int(self.get_field(eigrp, "par_k5", "0"), 0),
-                "k6": _safe_int(self.get_field(eigrp, "par_k6", "0"), 0),
+                "k1": self._parse_int(self.get_field(eigrp, "par_k1", "1"), 1),
+                "k2": self._parse_int(self.get_field(eigrp, "par_k2", "0"), 0),
+                "k3": self._parse_int(self.get_field(eigrp, "par_k3", "1"), 1),
+                "k4": self._parse_int(self.get_field(eigrp, "par_k4", "0"), 0),
+                "k5": self._parse_int(self.get_field(eigrp, "par_k5", "0"), 0),
+                "k6": self._parse_int(self.get_field(eigrp, "par_k6", "0"), 0),
             }
-            hold_time = _safe_int(self.get_field(eigrp, "par_holdtime", "15"), 15)
+            hold_time = self._parse_int(self.get_field(eigrp, "par_holdtime", "15"), 15)
 
         # Software version fields
         ios_major = self.get_field(eigrp, "sw_version_ios_major", None)
@@ -342,7 +342,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
             routes.append(
                 {
                     "network": str(ip_prefix),
-                    "prefix_len": _safe_int(prefix_len_str, 0),
+                    "prefix_len": self._parse_int(prefix_len_str, 0),
                     "type": "internal",
                     "af": "ipv4",
                 }
@@ -351,11 +351,11 @@ class EIGRPPassiveListener(PySharkListenerBase):
         # --- Route extraction (IPv6 internal/external) ---
         ipv6_dest = self.get_field(eigrp, "ipv6_destination", None)
         if ipv6_dest is not None:
-            ipv6_prefix_len = _safe_int(self.get_field(eigrp, "ipv6_prefixlen", "0"), 0)
+            ipv6_prefix_len = self._parse_int(self.get_field(eigrp, "ipv6_prefixlen", "0"), 0)
             ipv6_nexthop = self.get_field(eigrp, "ipv6_nexthop", "")
             # Determine route type from TLV type
             tlv_type_raw = self.get_field(eigrp, "tlv_type", "")
-            tlv_type_int = _safe_int(tlv_type_raw, 0) if "," not in str(tlv_type_raw) else 0
+            tlv_type_int = self._parse_int(tlv_type_raw, 0) if "," not in str(tlv_type_raw) else 0
             route_type = "external" if tlv_type_int == 0x0403 else "internal"
             route_entry: Dict[str, Any] = {
                 "network": str(ipv6_dest),
@@ -371,12 +371,12 @@ class EIGRPPassiveListener(PySharkListenerBase):
         old_metric: Dict[str, Any] = {}
         old_metric_rel = self.get_field(eigrp, "old_metric_rel", None)
         if old_metric_rel is not None:
-            old_metric["reliability"] = _safe_int(old_metric_rel, 0)
-            old_metric["bandwidth"] = _safe_int(self.get_field(eigrp, "old_metric_bw", "0"), 0)
-            old_metric["delay"] = _safe_int(self.get_field(eigrp, "old_metric_delay", "0"), 0)
-            old_metric["load"] = _safe_int(self.get_field(eigrp, "old_metric_load", "0"), 0)
-            old_metric["hopcount"] = _safe_int(self.get_field(eigrp, "old_metric_hopcount", "0"), 0)
-            old_metric["mtu"] = _safe_int(self.get_field(eigrp, "old_metric_mtu", "0"), 0)
+            old_metric["reliability"] = self._parse_int(old_metric_rel, 0)
+            old_metric["bandwidth"] = self._parse_int(self.get_field(eigrp, "old_metric_bw", "0"), 0)
+            old_metric["delay"] = self._parse_int(self.get_field(eigrp, "old_metric_delay", "0"), 0)
+            old_metric["load"] = self._parse_int(self.get_field(eigrp, "old_metric_load", "0"), 0)
+            old_metric["hopcount"] = self._parse_int(self.get_field(eigrp, "old_metric_hopcount", "0"), 0)
+            old_metric["mtu"] = self._parse_int(self.get_field(eigrp, "old_metric_mtu", "0"), 0)
             # Attach metrics to routes extracted in this packet
             for route in routes:
                 route["metric"] = old_metric
@@ -386,12 +386,12 @@ class EIGRPPassiveListener(PySharkListenerBase):
         extdata_origrid = self.get_field(eigrp, "extdata_origrid", None)
         if extdata_origrid is not None:
             extdata["originating_router_id"] = str(extdata_origrid)
-            extdata["originating_as"] = _safe_int(self.get_field(eigrp, "extdata_as", "0"), 0)
-            extdata["originating_protocol"] = _safe_int(
+            extdata["originating_as"] = self._parse_int(self.get_field(eigrp, "extdata_as", "0"), 0)
+            extdata["originating_protocol"] = self._parse_int(
                 self.get_field(eigrp, "extdata_proto", "0"), 0
             )
-            extdata["external_metric"] = _safe_int(self.get_field(eigrp, "extdata_metric", "0"), 0)
-            extdata["external_tag"] = _safe_int(self.get_field(eigrp, "extdata_tag", "0"), 0)
+            extdata["external_metric"] = self._parse_int(self.get_field(eigrp, "extdata_metric", "0"), 0)
+            extdata["external_tag"] = self._parse_int(self.get_field(eigrp, "extdata_tag", "0"), 0)
             for route in routes:
                 route["external_data"] = extdata
 
@@ -482,7 +482,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
         if auth_type_raw is None:
             return
 
-        auth_type = _safe_int(auth_type_raw, 0)
+        auth_type = self._parse_int(auth_type_raw, 0)
         if auth_type not in EIGRP_AUTH_TYPES:
             return
 
@@ -494,20 +494,20 @@ class EIGRPPassiveListener(PySharkListenerBase):
         if not digest:
             return
 
-        key_id = _safe_int(
+        key_id = self._parse_int(
             self.get_field(eigrp, "auth_keyid", None) or self.get_field(eigrp, "auth.keyid", "0"),
             0,
         )
         auth_type_name = EIGRP_AUTH_TYPES.get(auth_type, f"Unknown({auth_type})")
 
         # T1: eigrp.auth.keyseq -- key sequence for rotation tracking
-        key_seq = _safe_int(
+        key_seq = self._parse_int(
             self.get_field(eigrp, "auth_keyseq", None) or self.get_field(eigrp, "auth.keyseq", "0"),
             0,
         )
 
         # T1: eigrp.auth.length -- auth data length
-        auth_length = _safe_int(
+        auth_length = self._parse_int(
             self.get_field(eigrp, "auth_length", None) or self.get_field(eigrp, "auth.length", "0"),
             0,
         )
@@ -648,15 +648,6 @@ class EIGRPPassiveListener(PySharkListenerBase):
             }
             for cred in self.credentials
         ]
-
-
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default
 
 
 def _is_true(value) -> bool:

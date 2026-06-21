@@ -171,7 +171,7 @@ class VTPPassiveListener(PySharkListenerBase):
         # Extract VTP header fields (using correct tshark field names)
         version = str(self.get_field(vtp, "version", "") or "")
         code_raw = self.get_field(vtp, "code", None)
-        code_val = _safe_int(code_raw, -1)
+        code_val = self._parse_int(code_raw, -1)
         code_name = VTP_CODES.get(code_val, str(code_raw) if code_raw else "?")
 
         # Domain name: tshark field is "md" (management domain)
@@ -259,8 +259,8 @@ class VTPPassiveListener(PySharkListenerBase):
             domain_info = self.domains[domain_name]
             domain_info["switches"].add(src_mac)
             # Update revision if higher
-            rev_current = _safe_int(domain_info.get("revision", "0"), 0)
-            rev_new = _safe_int(revision, 0)
+            rev_current = self._parse_int(domain_info.get("revision", "0"), 0)
+            rev_new = self._parse_int(revision, 0)
             if rev_new > rev_current:
                 domain_info["revision"] = revision
                 if updater:
@@ -346,20 +346,20 @@ class VTPPassiveListener(PySharkListenerBase):
         vlan_mtus = _split_multi(str(vlan_mtu_raw)) if vlan_mtu_raw else []
 
         for i, vid_str in enumerate(vlan_ids):
-            vid = _safe_int(vid_str, -1)
+            vid = self._parse_int(vid_str, -1)
             if vid < 0:
                 continue
             vlan: Dict[str, Any] = {"id": vid}
             if i < len(vlan_names) and vlan_names[i]:
                 vlan["name"] = vlan_names[i]
             if i < len(vlan_types):
-                vtype = _safe_int(vlan_types[i], -1)
+                vtype = self._parse_int(vlan_types[i], -1)
                 vlan["type"] = VTP_VLAN_TYPES.get(vtype, str(vlan_types[i]))
             if i < len(vlan_statuses):
-                status_val = _safe_int(vlan_statuses[i], -1)
+                status_val = self._parse_int(vlan_statuses[i], -1)
                 vlan["active"] = status_val == VTP_VLAN_STATUS_ACTIVE
             if i < len(vlan_mtus):
-                vlan["mtu"] = _safe_int(vlan_mtus[i], 0)
+                vlan["mtu"] = self._parse_int(vlan_mtus[i], 0)
             vlans.append(vlan)
 
         return vlans
@@ -433,18 +433,6 @@ class VTPPassiveListener(PySharkListenerBase):
             return {}
 
         return {"tables": tables, "alerts": alerts}
-
-
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        s = str(value).strip()
-        if s.startswith(("0x", "0X")):
-            return int(s, 16)
-        return int(s)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"VTP: hex/decimal int parse failed for field value: {e}")
-        return default
 
 
 def _split_multi(value: str) -> List[str]:

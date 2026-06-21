@@ -172,13 +172,13 @@ class PIMPassiveListener(PySharkListenerBase):
         src_mac, _ = self.get_mac_info(packet)
 
         # --- Common header fields (all message types) ---
-        version = _safe_int(self.get_field(pim, "version", "2"), 2)
-        msg_type = _safe_int(self.get_field(pim, "type", "0"), 0)
+        version = self._parse_int(self.get_field(pim, "version", "2"), 2)
+        msg_type = self._parse_int(self.get_field(pim, "type", "0"), 0)
 
         # T1 field: pim.cksum.status (EK: cksum_status)
         cksum_status_raw = self.get_field(pim, "cksum_status", None)
         if cksum_status_raw is not None:
-            cksum_status = _safe_int(cksum_status_raw, -1)
+            cksum_status = self._parse_int(cksum_status_raw, -1)
         else:
             cksum_status = -1
             self.logger.debug(f"Missing cksum_status field in PIM packet from {src_ip} -> {dst_ip}")
@@ -199,15 +199,15 @@ class PIMPassiveListener(PySharkListenerBase):
         if msg_type == 0:
             ht = self.get_field(pim, "holdtime", None)
             if ht is not None:
-                hold_time = _safe_int(ht, 105)
+                hold_time = self._parse_int(ht, 105)
 
             dp = self.get_field(pim, "dr_priority", None)
             if dp is not None:
-                dr_priority = _safe_int(dp, 1)
+                dr_priority = self._parse_int(dp, 1)
 
             gid = self.get_field(pim, "generation_id", None)
             if gid is not None:
-                generation_id = _safe_int(gid, 0)
+                generation_id = self._parse_int(gid, 0)
 
             # Address list from Hello options
             addr_field = self.get_field(pim, "address_list_ip4", None)
@@ -222,7 +222,7 @@ class PIMPassiveListener(PySharkListenerBase):
             # T1 field: pim.ip_version (EK: ip_version)
             ip_ver_raw = self.get_field(pim, "ip_version", None)
             if ip_ver_raw is not None:
-                ip_version = _safe_int(ip_ver_raw, 0)
+                ip_version = self._parse_int(ip_ver_raw, 0)
             else:
                 ip_version = 0
                 self.logger.debug(
@@ -231,7 +231,7 @@ class PIMPassiveListener(PySharkListenerBase):
             extra_details["ip_version"] = ip_version if ip_version else "?"
 
             reg_flag = self.get_field(pim, "register_flag", None)
-            extra_details["register_flag"] = _safe_int(reg_flag, 0) if reg_flag is not None else "?"
+            extra_details["register_flag"] = self._parse_int(reg_flag, 0) if reg_flag is not None else "?"
 
             border_raw = self.get_field(pim, "register_flag_border", None)
             extra_details["register_border"] = _to_bool(border_raw)
@@ -250,9 +250,9 @@ class PIMPassiveListener(PySharkListenerBase):
                 # Take first value from comma-separated or bracketed list
                 if "," in af_str:
                     first = af_str.strip("[]").split(",")[0].strip()
-                    af_val = _safe_int(first, 0)
+                    af_val = self._parse_int(first, 0)
                 else:
-                    af_val = _safe_int(af_str, 0)
+                    af_val = self._parse_int(af_str, 0)
             else:
                 af_val = 0
                 self.logger.debug(
@@ -262,13 +262,13 @@ class PIMPassiveListener(PySharkListenerBase):
             extra_details["addr_family_name"] = _ADDR_FAMILY.get(af_val, f"Unknown({af_val})")
 
             ngroups = self.get_field(pim, "numgroups", None)
-            extra_details["num_groups"] = _safe_int(ngroups, 0) if ngroups is not None else "?"
+            extra_details["num_groups"] = self._parse_int(ngroups, 0) if ngroups is not None else "?"
 
             njoins = self.get_field(pim, "numjoins", None)
-            extra_details["num_joins"] = _safe_int(njoins, 0) if njoins is not None else "?"
+            extra_details["num_joins"] = self._parse_int(njoins, 0) if njoins is not None else "?"
 
             nprunes = self.get_field(pim, "numprunes", None)
-            extra_details["num_prunes"] = _safe_int(nprunes, 0) if nprunes is not None else "?"
+            extra_details["num_prunes"] = self._parse_int(nprunes, 0) if nprunes is not None else "?"
 
             # Upstream neighbor (IPv6 or IPv4)
             upstream = self.get_field(pim, "upstream_neighbor_ip6", None)
@@ -279,7 +279,7 @@ class PIMPassiveListener(PySharkListenerBase):
             # Hold time for Join/Prune
             jp_ht = self.get_field(pim, "holdtime", None)
             if jp_ht is not None:
-                hold_time = _safe_int(jp_ht, 0)
+                hold_time = self._parse_int(jp_ht, 0)
 
             # Multicast groups from join/prune
             group_v6 = self.get_field(pim, "group_ip6", None)
@@ -429,15 +429,6 @@ class PIMPassiveListener(PySharkListenerBase):
                 for k, v in extra_details.items():
                     if k not in device.pim_data:
                         device.pim_data[k] = v
-
-
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default
 
 
 def _to_bool(value) -> bool:

@@ -160,9 +160,9 @@ class STPPassiveListener(PySharkListenerBase):
         src_mac = normalize_mac(src_mac)
 
         # Extract STP header fields
-        version = _safe_int(self.get_field(stp, "version", "0"), 0)
-        bpdu_type = _safe_int(self.get_field(stp, "type", "0"), 0)
-        flags = _safe_int(self.get_field(stp, "flags", "0"), 0)
+        version = self._parse_int(self.get_field(stp, "version", "0"), 0)
+        bpdu_type = self._parse_int(self.get_field(stp, "type", "0"), 0)
+        flags = self._parse_int(self.get_field(stp, "flags", "0"), 0)
 
         protocol_name = STP_VERSIONS.get(version, f"Unknown ({version})")
         bpdu_type_name = BPDU_TYPES.get(bpdu_type, f"Unknown ({bpdu_type})")
@@ -174,11 +174,11 @@ class STPPassiveListener(PySharkListenerBase):
 
         # Configuration or RST/MST BPDU
         root_mac = str(self.get_field(stp, "root_hw", "") or "")
-        root_priority = _safe_int(self.get_field(stp, "root_prio", "0"), 0)
-        root_cost = _safe_int(self.get_field(stp, "root_cost", "0"), 0)
+        root_priority = self._parse_int(self.get_field(stp, "root_prio", "0"), 0)
+        root_cost = self._parse_int(self.get_field(stp, "root_cost", "0"), 0)
         bridge_mac = str(self.get_field(stp, "bridge_hw", "") or "")
-        bridge_priority = _safe_int(self.get_field(stp, "bridge_prio", "0"), 0)
-        port_id = _safe_int(self.get_field(stp, "port", "0"), 0)
+        bridge_priority = self._parse_int(self.get_field(stp, "bridge_prio", "0"), 0)
+        port_id = self._parse_int(self.get_field(stp, "port", "0"), 0)
 
         # Timers (PyShark returns raw timer values)
         msg_age = self.get_field(stp, "msg_age", "0")
@@ -320,10 +320,3 @@ class STPPassiveListener(PySharkListenerBase):
         return flag_names
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

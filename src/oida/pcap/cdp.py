@@ -330,7 +330,7 @@ class CDPPassiveListener(PySharkListenerBase):
         if cap_raw is None:
             return ""
 
-        cap_val = _safe_int(cap_raw, 0)
+        cap_val = self._parse_int(cap_raw, 0)
         if cap_val == 0:
             return str(cap_raw) if cap_raw else ""
 
@@ -417,10 +417,3 @@ def _shorten_version(version: str) -> str:
     return version
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

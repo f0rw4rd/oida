@@ -154,18 +154,18 @@ class GLBPPassiveListener(PySharkListenerBase):
             src_mac = ""
 
         # Parse GLBP fields from PyShark
-        version = _safe_int(self.get_field(glbp, "version", "0"), 0)
-        group_id = _safe_int(self.get_field(glbp, "group", "0"), 0)
+        version = self._parse_int(self.get_field(glbp, "version", "0"), 0)
+        group_id = self._parse_int(self.get_field(glbp, "group", "0"), 0)
 
         # Owner ID (MAC address)
         owner_mac = str(self.get_field(glbp, "owner_id", ""))
         device_mac = owner_mac if owner_mac else src_mac
 
         # Hello TLV fields (Virtual Gateway)
-        vg_state = _safe_int(self.get_field(glbp, "hello_vg_state", "0"), 0)
-        priority = _safe_int(self.get_field(glbp, "hello_priority", "0"), 0)
-        hello_interval = _safe_int(self.get_field(glbp, "hello_hellotime", "0"), 0)
-        hold_interval = _safe_int(self.get_field(glbp, "hello_holdtime", "0"), 0)
+        vg_state = self._parse_int(self.get_field(glbp, "hello_vg_state", "0"), 0)
+        priority = self._parse_int(self.get_field(glbp, "hello_priority", "0"), 0)
+        hello_interval = self._parse_int(self.get_field(glbp, "hello_hellotime", "0"), 0)
+        hold_interval = self._parse_int(self.get_field(glbp, "hello_holdtime", "0"), 0)
         virtual_ip = str(self.get_field(glbp, "hello_virtual_ipv4", ""))
 
         # Try alternate field names
@@ -173,13 +173,13 @@ class GLBPPassiveListener(PySharkListenerBase):
             virtual_ip = str(self.get_field(glbp, "hello_virtual_ipv6", ""))
 
         # Forwarder TLV fields (Virtual Forwarder)
-        forwarder_id = _safe_int(self.get_field(glbp, "forwarder_fwd_number", "0"), 0)
-        vf_state = _safe_int(self.get_field(glbp, "forwarder_fwd_state", "0"), 0)
-        weight = _safe_int(self.get_field(glbp, "forwarder_fwd_weight", "0"), 0)
+        forwarder_id = self._parse_int(self.get_field(glbp, "forwarder_fwd_number", "0"), 0)
+        vf_state = self._parse_int(self.get_field(glbp, "forwarder_fwd_state", "0"), 0)
+        weight = self._parse_int(self.get_field(glbp, "forwarder_fwd_weight", "0"), 0)
         virtual_mac = str(self.get_field(glbp, "forwarder_fwd_virtual_mac", ""))
 
         # Authentication TLV
-        auth_type = _safe_int(self.get_field(glbp, "auth_type", "0"), 0)
+        auth_type = self._parse_int(self.get_field(glbp, "auth_type", "0"), 0)
         auth_password = str(self.get_field(glbp, "auth_authstring", ""))
 
         # Compute role flags from state values
@@ -317,10 +317,3 @@ class GLBPPassiveListener(PySharkListenerBase):
         return creds
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

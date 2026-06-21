@@ -284,7 +284,7 @@ class IGMPPassiveListener(PySharkListenerBase):
                 msg_type = int(msg_type_str)
 
             # Get max response time
-            max_resp = _safe_int(self.get_field(igmp, "max_resp", "0"), 0)
+            max_resp = self._parse_int(self.get_field(igmp, "max_resp", "0"), 0)
 
             # Get multicast group address
             group_address = str(self.get_field(igmp, "maddr", "0.0.0.0"))
@@ -303,7 +303,7 @@ class IGMPPassiveListener(PySharkListenerBase):
             checksum_status_raw = self.get_field(igmp, "checksum_status", None)
             checksum_status = "?"
             if checksum_status_raw is not None:
-                cs_int = _safe_int(checksum_status_raw, -1)
+                cs_int = self._parse_int(checksum_status_raw, -1)
                 if cs_int == 1:
                     checksum_status = "Good"
                 elif cs_int == 2:
@@ -348,7 +348,7 @@ class IGMPPassiveListener(PySharkListenerBase):
 
             # Prefer tshark-dissected version when available
             if tshark_version is not None:
-                ts_ver = _safe_int(tshark_version, 0)
+                ts_ver = self._parse_int(tshark_version, 0)
                 if ts_ver in (1, 2, 3):
                     version = ts_ver
 
@@ -362,15 +362,15 @@ class IGMPPassiveListener(PySharkListenerBase):
             if msg_type == IGMP_MEMBERSHIP_QUERY:
                 qrv_raw = self.get_field(igmp, "qrv", None)
                 if qrv_raw is not None:
-                    qrv = _safe_int(qrv_raw, 0)
+                    qrv = self._parse_int(qrv_raw, 0)
 
                 qqic_raw = self.get_field(igmp, "qqic", None)
                 if qqic_raw is not None:
-                    qqic = _safe_int(qqic_raw, 0)
+                    qqic = self._parse_int(qqic_raw, 0)
 
                 num_src_raw = self.get_field(igmp, "num_src", None)
                 if num_src_raw is not None:
-                    num_src = _safe_int(num_src_raw, 0)
+                    num_src = self._parse_int(num_src_raw, 0)
 
                 s_raw = self.get_field(igmp, "s", None)
                 if s_raw is not None:
@@ -379,7 +379,7 @@ class IGMPPassiveListener(PySharkListenerBase):
             if msg_type == IGMP_V3_MEMBERSHIP_REPORT:
                 rt_raw = self.get_field(igmp, "record_type", None)
                 if rt_raw is not None:
-                    record_type = _safe_int(rt_raw, 0)
+                    record_type = self._parse_int(rt_raw, 0)
 
             group_name = MULTICAST_GROUPS.get(group_address, "")
             is_ics = group_address in ICS_MULTICAST_GROUPS
@@ -414,10 +414,3 @@ class IGMPPassiveListener(PySharkListenerBase):
             return None
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default
