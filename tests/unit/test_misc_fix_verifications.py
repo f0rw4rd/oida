@@ -131,7 +131,7 @@ class TestHl7MasterFileParserKeys(unittest.TestCase):
 
 class TestVrrpRfcCompliance(unittest.TestCase):
     def test_passive_listener_uses_advertisement_means_master(self):
-        src = _read("src/oida/pcap/passive/vrrp.py")
+        src = _read("src/oida/pcap/vrrp.py")
         # The fix sets is_master = True for any observed advertisement
         # (Per RFC 5798 §6.4.3, only Master sends Advertisements).
         self.assertIn("is_master = True", src)
@@ -143,12 +143,12 @@ class TestPcapMssqlFinsCredentialsPrintFully(unittest.TestCase):
     """Per project policy: passive sniff is RECOVERED creds; print fully."""
 
     def test_mssql_logs_full_password(self):
-        src = _read("src/oida/pcap/passive/mssql.py")
+        src = _read("src/oida/pcap/mssql.py")
         # The line was reverted to show the password value.
         self.assertIn('f"MSSQL credential: {username}:{password}', src)
 
     def test_fins_logs_full_password(self):
-        src = _read("src/oida/pcap/passive/fins.py")
+        src = _read("src/oida/pcap/fins.py")
         self.assertIn('f"FINS: password={password}', src)
 
 

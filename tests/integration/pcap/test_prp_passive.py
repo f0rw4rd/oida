@@ -17,20 +17,20 @@ class TestPRPPassiveSmoke:
     """prp listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.prp as mod
+        import oida.pcap.prp as mod
 
         cls = getattr(mod, "PRPPassiveListener", None)
-        assert cls is not None, "PRPPassiveListener not exported from oida.pcap.passive.prp"
+        assert cls is not None, "PRPPassiveListener not exported from oida.pcap.prp"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.prp import PRPPassiveListener
+        from oida.pcap.prp import PRPPassiveListener
 
         required = getattr(PRPPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "prp" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.prp import PRPPassiveListener
+        from oida.pcap.prp import PRPPassiveListener
 
         listener = PRPPassiveListener(interface="lo", timeout=1)
         listener._x509 = True

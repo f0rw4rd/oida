@@ -1,7 +1,7 @@
 """Regression test: an FTP-layer packet carrying neither a request_command nor a
 response_code must not be silently dropped.
 
-CODE_REVIEW finding ``src/oida/pcap/passive/ftp.py:150-207``: process_packet()
+CODE_REVIEW finding ``src/oida/pcap/ftp.py:150-207``: process_packet()
 recorded an interaction only inside the ``if request_command:`` and
 ``if response_code:`` branches. An ftp-layer packet with neither field set (e.g. a
 tshark continuation segment of a multi-line response, or a reassembled frame where
@@ -14,7 +14,7 @@ tshark needed): a well-formed command/response still records an interaction, whi
 a field-less ftp frame records nothing but logs at debug level.
 """
 
-from oida.pcap.passive.ftp import FTPPassiveListener
+from oida.pcap.ftp import FTPPassiveListener
 
 
 class _Layer:

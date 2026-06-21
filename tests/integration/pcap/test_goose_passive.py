@@ -308,7 +308,7 @@ class TestGOOSEInteractionTable:
 
     def test_format_protocol_columns_count(self):
         """_format_protocol_columns output must match PROTOCOL_COLUMNS length."""
-        from oida.pcap.passive.goose import GOOSEPassiveListener
+        from oida.pcap.goose import GOOSEPassiveListener
 
         listener, _devices, _result = _run_listener_test(
             "goose",

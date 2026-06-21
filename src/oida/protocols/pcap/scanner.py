@@ -514,7 +514,7 @@ class PcapScanner:
                 return 0
 
         # Harvest protocol-specific data from all listeners via generic interface
-        from ...pcap.passive.pyshark_base import PySharkListenerBase
+        from ...pcap.pyshark_base import PySharkListenerBase
 
         all_tables: List[Dict[str, Any]] = []
         all_interactions = []

@@ -50,7 +50,7 @@ class TestRMISilentDropRegression:
     """
 
     def _listener(self):
-        from oida.pcap.passive.rmi import RMIPassiveListener
+        from oida.pcap.rmi import RMIPassiveListener
 
         return RMIPassiveListener(interface="lo", timeout=10)
 

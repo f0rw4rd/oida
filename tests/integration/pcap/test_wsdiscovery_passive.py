@@ -114,7 +114,7 @@ class TestWSDiscoveryPassiveEK:
 
     def test_wsd_device_type_classification(self):
         """Device types are classified from WS-Discovery types string."""
-        from oida.pcap.passive.wsdiscovery import WSDiscoveryPassiveListener
+        from oida.pcap.wsdiscovery import WSDiscoveryPassiveListener
 
         listener = WSDiscoveryPassiveListener(interface="lo", timeout=10)
         assert listener._classify_device_type("dn:NetworkVideoTransmitter") == "ONVIF Camera"

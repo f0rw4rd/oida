@@ -14,8 +14,8 @@ heuristic. These tests feed hand-built packet objects directly to
 
 import pytest
 
-from oida.pcap.passive.imap import IMAPPassiveListener
-from oida.pcap.passive.smtp import SMTPPassiveListener
+from oida.pcap.imap import IMAPPassiveListener
+from oida.pcap.smtp import SMTPPassiveListener
 
 pytestmark = [pytest.mark.unit]
 

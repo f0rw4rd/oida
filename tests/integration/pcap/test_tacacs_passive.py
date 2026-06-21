@@ -276,7 +276,7 @@ class TestTACACSInteractionTable:
     """Interaction table via PROTOCOL_COLUMNS / _format_protocol_columns."""
 
     def test_protocol_columns_set(self):
-        from oida.pcap.passive.tacacs import TACACSPassiveListener
+        from oida.pcap.tacacs import TACACSPassiveListener
 
         assert TACACSPassiveListener.PROTOCOL_COLUMNS
         assert len(TACACSPassiveListener.PROTOCOL_COLUMNS) == 8

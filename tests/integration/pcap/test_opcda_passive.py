@@ -7,7 +7,7 @@ without crashing and yields the expected dict shapes from harvest().
 import pytest
 
 from .conftest import _run_listener_test
-from oida.pcap.passive.opcda import OPCDAPassiveListener
+from oida.pcap.opcda import OPCDAPassiveListener
 
 pytestmark = [pytest.mark.integration]
 

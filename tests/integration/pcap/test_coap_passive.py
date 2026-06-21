@@ -17,20 +17,20 @@ class TestCoAPPassiveSmoke:
     """coap listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.coap as mod
+        import oida.pcap.coap as mod
 
         cls = getattr(mod, "CoAPPassiveListener", None)
-        assert cls is not None, "CoAPPassiveListener not exported from oida.pcap.passive.coap"
+        assert cls is not None, "CoAPPassiveListener not exported from oida.pcap.coap"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.coap import CoAPPassiveListener
+        from oida.pcap.coap import CoAPPassiveListener
 
         required = getattr(CoAPPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "coap" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.coap import CoAPPassiveListener
+        from oida.pcap.coap import CoAPPassiveListener
 
         listener = CoAPPassiveListener(interface="lo", timeout=1)
         listener._x509 = True

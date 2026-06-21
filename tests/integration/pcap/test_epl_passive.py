@@ -17,20 +17,20 @@ class TestEPLPassiveSmoke:
     """epl listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.epl as mod
+        import oida.pcap.epl as mod
 
         cls = getattr(mod, "EPLPassiveListener", None)
-        assert cls is not None, "EPLPassiveListener not exported from oida.pcap.passive.epl"
+        assert cls is not None, "EPLPassiveListener not exported from oida.pcap.epl"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.epl import EPLPassiveListener
+        from oida.pcap.epl import EPLPassiveListener
 
         required = getattr(EPLPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "epl" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.epl import EPLPassiveListener
+        from oida.pcap.epl import EPLPassiveListener
 
         listener = EPLPassiveListener(interface="lo", timeout=1)
         listener._x509 = True
@@ -54,7 +54,7 @@ class TestEPLEKDecimalParsing:
     """
 
     def test_sdo_index_ek_decimal_not_reparsed_as_hex(self):
-        from oida.pcap.passive.epl import EPLPassiveListener
+        from oida.pcap.epl import EPLPassiveListener
 
         listener = EPLPassiveListener(interface="lo", timeout=1)
         # asnd_sdo_cmd_data_index 0x1018 renders as decimal "4120" in EK mode.
@@ -66,7 +66,7 @@ class TestEPLEKDecimalParsing:
         assert index_val == 0x1018
 
     def test_nmt_command_ek_decimal_not_reparsed_as_hex(self):
-        from oida.pcap.passive.epl import EPLPassiveListener
+        from oida.pcap.epl import EPLPassiveListener
 
         listener = EPLPassiveListener(interface="lo", timeout=1)
         # NMT command id 0x2C (Stop Node) renders as decimal "44" in EK mode.
@@ -77,6 +77,6 @@ class TestEPLEKDecimalParsing:
     def test_source_no_longer_forces_base16(self):
         import inspect
 
-        import oida.pcap.passive.epl as mod
+        import oida.pcap.epl as mod
 
         assert "base=16" not in inspect.getsource(mod), "base=16 must not be reintroduced"

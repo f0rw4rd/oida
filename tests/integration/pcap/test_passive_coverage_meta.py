@@ -95,7 +95,7 @@ class TestListenerImportability:
         failures = []
         for module_name, class_name in self.LISTENER_MODULES.items():
             try:
-                mod = importlib.import_module(f"oida.pcap.passive.{module_name}")
+                mod = importlib.import_module(f"oida.pcap.{module_name}")
                 cls = getattr(mod, class_name, None)
                 if cls is None:
                     failures.append(f"{module_name}: {class_name} not found")
@@ -108,7 +108,7 @@ class TestListenerImportability:
         failures = []
         for module_name, class_name in self.LISTENER_MODULES.items():
             try:
-                mod = importlib.import_module(f"oida.pcap.passive.{module_name}")
+                mod = importlib.import_module(f"oida.pcap.{module_name}")
                 cls = getattr(mod, class_name)
                 for attr in ("PROTOCOL_NAME", "DISPLAY_FILTER"):
                     val = getattr(cls, attr, None)
@@ -128,7 +128,7 @@ class TestListenerImportability:
         failures = []
         for module_name, class_name in self.LISTENER_MODULES.items():
             try:
-                mod = importlib.import_module(f"oida.pcap.passive.{module_name}")
+                mod = importlib.import_module(f"oida.pcap.{module_name}")
                 cls = getattr(mod, class_name)
                 layers = getattr(cls, "REQUIRED_LAYERS", None)
                 if layers is not None and len(layers) == 0:

@@ -10,7 +10,7 @@ them paired an attribute name with the value of an unrelated attribute and
 surfaced wrong printer / user / job data.
 """
 
-from oida.pcap.passive.ipp import IPPPassiveListener
+from oida.pcap.ipp import IPPPassiveListener
 
 
 class _FakeLayer:

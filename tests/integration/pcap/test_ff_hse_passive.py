@@ -17,20 +17,20 @@ class TestFFHSEPassiveSmoke:
     """ff_hse listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.ff_hse as mod
+        import oida.pcap.ff_hse as mod
 
         cls = getattr(mod, "FFHSEPassiveListener", None)
-        assert cls is not None, "FFHSEPassiveListener not exported from oida.pcap.passive.ff_hse"
+        assert cls is not None, "FFHSEPassiveListener not exported from oida.pcap.ff_hse"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.ff_hse import FFHSEPassiveListener
+        from oida.pcap.ff_hse import FFHSEPassiveListener
 
         required = getattr(FFHSEPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "ff" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.ff_hse import FFHSEPassiveListener
+        from oida.pcap.ff_hse import FFHSEPassiveListener
 
         listener = FFHSEPassiveListener(interface="lo", timeout=1)
         listener._x509 = True

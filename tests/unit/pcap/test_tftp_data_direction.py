@@ -1,6 +1,6 @@
 """Regression test: TFTP DATA device attribution must follow the transfer type.
 
-CODE_REVIEW finding `src/oida/pcap/passive/tftp.py:299,383-423`: ``_process_data``
+CODE_REVIEW finding `src/oida/pcap/tftp.py:299,383-423`: ``_process_data``
 called ``self._track_devices(..., server_is_src=True)`` unconditionally. That is
 correct for an RRQ (download), where DATA flows server -> client, but TFTP DATA
 also flows client -> server during a WRQ (upload): after the WRQ the uploading
@@ -17,7 +17,7 @@ These tests drive process_packet() with lightweight fake packets (no pyshark /
 tshark needed) and assert the device roles are correct for both transfer types.
 """
 
-from oida.pcap.passive.tftp import TFTPPassiveListener
+from oida.pcap.tftp import TFTPPassiveListener
 
 
 class _Layer:

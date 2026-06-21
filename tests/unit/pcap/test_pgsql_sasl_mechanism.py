@@ -1,6 +1,6 @@
 """Regression test: PGSQL SASL mechanism field name must use underscores.
 
-CODE_REVIEW finding `src/oida/pcap/passive/pgsql.py:772`: the AUTH_SASL
+CODE_REVIEW finding `src/oida/pcap/pgsql.py:772`: the AUTH_SASL
 branch read the mechanism via
 `self.get_field(pgsql_layer, "auth.sasl.mech", "")`. get_field() resolves
 field names with `getattr(layer, field_name)`, and a Python attribute name
@@ -15,7 +15,7 @@ captured under the underscore field name and would have been missed under
 the dotted name.
 """
 
-from oida.pcap.passive.pgsql import AUTH_SASL, PostgreSQLPassiveListener
+from oida.pcap.pgsql import AUTH_SASL, PostgreSQLPassiveListener
 
 
 class _Layer:

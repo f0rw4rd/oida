@@ -18,7 +18,7 @@ pytestmark = [pytest.mark.integration]
 
 
 def _make_listener():
-    from oida.pcap.passive.smb import SMBPassiveListener
+    from oida.pcap.smb import SMBPassiveListener
 
     return SMBPassiveListener(interface="lo", timeout=10)
 

@@ -79,7 +79,7 @@ class TestRADIUSPassiveEK:
         import importlib
 
         pcap = _pcap_path("radius/generated_radius.pcap")
-        mod = importlib.import_module("oida.pcap.passive.radius")
+        mod = importlib.import_module("oida.pcap.radius")
         listener = mod.RADIUSPassiveListener(interface="lo", timeout=10)
         packets = _load_packets(pcap, display_filter="radius")
         listener.feed_packets(iter(packets))
@@ -98,7 +98,7 @@ class TestRADIUSPassiveEK:
         import importlib
 
         pcap = _pcap_path("radius/generated_radius.pcap")
-        mod = importlib.import_module("oida.pcap.passive.radius")
+        mod = importlib.import_module("oida.pcap.radius")
         listener = mod.RADIUSPassiveListener(interface="lo", timeout=10)
         packets = _load_packets(pcap, display_filter="radius")
         listener.feed_packets(iter(packets))
@@ -121,7 +121,7 @@ class TestRADIUSWiresharkFixture:
         import importlib
 
         pcap = _pcap_path("radius/wireshark_radius.pcapng")
-        mod = importlib.import_module("oida.pcap.passive.radius")
+        mod = importlib.import_module("oida.pcap.radius")
         listener = mod.RADIUSPassiveListener(interface="lo", timeout=10)
         packets = _load_packets(pcap, display_filter="radius")
         listener.feed_packets(iter(packets))
@@ -272,7 +272,7 @@ class TestRADIUSWiresharkFixture:
         import importlib
 
         pcap = _pcap_path("radius/generated_radius.pcap")
-        mod = importlib.import_module("oida.pcap.passive.radius")
+        mod = importlib.import_module("oida.pcap.radius")
         listener = mod.RADIUSPassiveListener(interface="lo", timeout=10)
         packets = _load_packets(pcap, display_filter="radius")
         listener.feed_packets(iter(packets))
@@ -293,7 +293,7 @@ class TestRADIUSCredentialDataclass:
 
     def test_pap_credential_properties(self):
         """PAP credential should have correct scanner-compatible properties."""
-        from oida.pcap.passive.radius import RADIUSCredential
+        from oida.pcap.radius import RADIUSCredential
 
         cred = RADIUSCredential(
             username="testuser",
@@ -316,7 +316,7 @@ class TestRADIUSCredentialDataclass:
 
     def test_chap_credential_properties(self):
         """CHAP credential should use CHAP-Password for hash_value."""
-        from oida.pcap.passive.radius import RADIUSCredential
+        from oida.pcap.radius import RADIUSCredential
 
         cred = RADIUSCredential(
             username="chapuser",
@@ -338,7 +338,7 @@ class TestRADIUSCredentialDataclass:
 
     def test_new_dataclass_fields_have_defaults(self):
         """New fields should have defaults so existing code is not broken."""
-        from oida.pcap.passive.radius import RADIUSCredential
+        from oida.pcap.radius import RADIUSCredential
 
         cred = RADIUSCredential(
             username="u",

@@ -17,20 +17,20 @@ class TestJ1939PassiveSmoke:
     """j1939 listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.j1939 as mod
+        import oida.pcap.j1939 as mod
 
         cls = getattr(mod, "J1939PassiveListener", None)
-        assert cls is not None, "J1939PassiveListener not exported from oida.pcap.passive.j1939"
+        assert cls is not None, "J1939PassiveListener not exported from oida.pcap.j1939"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.j1939 import J1939PassiveListener
+        from oida.pcap.j1939 import J1939PassiveListener
 
         required = getattr(J1939PassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "j1939" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.j1939 import J1939PassiveListener
+        from oida.pcap.j1939 import J1939PassiveListener
 
         listener = J1939PassiveListener(interface="lo", timeout=1)
         listener._x509 = True

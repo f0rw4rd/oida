@@ -193,7 +193,7 @@ class TestSOCKSPassiveEK:
 
     def test_socks_protocol_columns_set(self):
         """PROTOCOL_COLUMNS is set for operations table auto-generation."""
-        from oida.pcap.passive.socks import SOCKSPassiveListener
+        from oida.pcap.socks import SOCKSPassiveListener
 
         assert SOCKSPassiveListener.PROTOCOL_COLUMNS
         assert len(SOCKSPassiveListener.PROTOCOL_COLUMNS) == 4
@@ -203,7 +203,7 @@ class TestSOCKSPassiveEK:
         """_format_protocol_columns output must match PROTOCOL_COLUMNS length."""
         listener, devices, result = _run_listener_test(**_SOCKS_PARAMS, min_interactions=1)
 
-        from oida.pcap.passive.socks import SOCKSPassiveListener
+        from oida.pcap.socks import SOCKSPassiveListener
 
         expected = len(SOCKSPassiveListener.PROTOCOL_COLUMNS)
         for ix in listener.interactions:
@@ -264,7 +264,7 @@ class TestSOCKSPassiveEK:
 
     def test_socks_format_protocol_columns_override(self):
         """_format_protocol_columns is properly overridden and returns correct columns."""
-        from oida.pcap.passive.socks import SOCKSPassiveListener, ProtocolInteraction
+        from oida.pcap.socks import SOCKSPassiveListener, ProtocolInteraction
 
         listener = SOCKSPassiveListener(interface="lo", timeout=10)
         ix = ProtocolInteraction(
@@ -315,7 +315,7 @@ class TestSOCKSCommandNotDropped:
 
     def test_socks_connect_command_recorded(self):
         """A SOCKS CONNECT command packet yields a 'SOCKS Connect' interaction."""
-        from oida.pcap.passive.socks import SOCKSPassiveListener
+        from oida.pcap.socks import SOCKSPassiveListener
 
         listener = SOCKSPassiveListener(interface="lo", timeout=10)
         # CONNECT (command=1) to 93.184.216.34:443 -- no auth fields present.
@@ -338,7 +338,7 @@ class TestSOCKSCommandNotDropped:
 
     def test_socks_reply_result_recorded(self):
         """A SOCKS server reply packet yields a 'SOCKS Reply' interaction."""
-        from oida.pcap.passive.socks import SOCKSPassiveListener
+        from oida.pcap.socks import SOCKSPassiveListener
 
         listener = SOCKSPassiveListener(interface="lo", timeout=10)
         packet = _FakePacket(_FakeLayer(version="5", results="0"))
@@ -352,7 +352,7 @@ class TestSOCKSCommandNotDropped:
 
     def test_socks_unclassified_packet_recorded(self):
         """A SOCKS packet with no recognized fields is recorded as generic data."""
-        from oida.pcap.passive.socks import SOCKSPassiveListener
+        from oida.pcap.socks import SOCKSPassiveListener
 
         listener = SOCKSPassiveListener(interface="lo", timeout=10)
         packet = _FakePacket(_FakeLayer(version="5"))

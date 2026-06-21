@@ -18,7 +18,7 @@ pytestmark = [pytest.mark.integration]
 
 def _make_listener():
     """Create an EIGRPPassiveListener for testing."""
-    from oida.pcap.passive.eigrp import EIGRPPassiveListener
+    from oida.pcap.eigrp import EIGRPPassiveListener
 
     listener = EIGRPPassiveListener(interface="lo", timeout=10)
     listener._x509 = True

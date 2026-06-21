@@ -460,7 +460,7 @@ class TestIEC104RW:
             expect_details=["type_id"],
         )
 
-        from oida.pcap.passive.iec104 import CONTROL_TYPE_IDS
+        from oida.pcap.iec104 import CONTROL_TYPE_IDS
 
         allowed = {"write", "read", "error", "control", "file"}
         for ix in listener.interactions:
@@ -480,7 +480,7 @@ class TestIEC104RW:
             expect_details=["type_id"],
         )
 
-        from oida.pcap.passive.iec104 import CONTROL_TYPE_IDS
+        from oida.pcap.iec104 import CONTROL_TYPE_IDS
 
         for ix in listener.interactions:
             type_id = ix.details.get("type_id")
@@ -765,7 +765,7 @@ class TestIEC104ProtocolColumns:
             expect_details=["type_id"],
         )
 
-        from oida.pcap.passive.iec104 import IEC104PassiveListener
+        from oida.pcap.iec104 import IEC104PassiveListener
 
         expected_cols = len(IEC104PassiveListener.PROTOCOL_COLUMNS)
 
@@ -802,7 +802,7 @@ class TestIEC104ProtocolColumns:
 
     def test_protocol_columns_tuple_contents(self):
         """PROTOCOL_COLUMNS must contain expected column names."""
-        from oida.pcap.passive.iec104 import IEC104PassiveListener
+        from oida.pcap.iec104 import IEC104PassiveListener
 
         expected = {"rw", "operation", "type_id", "common_addr", "ioa", "value", "quality", "cot"}
         actual = set(IEC104PassiveListener.PROTOCOL_COLUMNS)
@@ -866,7 +866,7 @@ class TestIEC104ControlDetection:
             expect_details=["type_id"],
         )
 
-        from oida.pcap.passive.iec104 import CONTROL_TYPE_IDS
+        from oida.pcap.iec104 import CONTROL_TYPE_IDS
 
         control_interactions = [
             ix for ix in listener.interactions if ix.details.get("type_id") in CONTROL_TYPE_IDS

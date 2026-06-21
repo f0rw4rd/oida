@@ -325,7 +325,7 @@ class TestPIMRegisterIPVersion:
         _skip_unless_pyshark()
         import importlib
 
-        mod = importlib.import_module("oida.pcap.passive.pim")
+        mod = importlib.import_module("oida.pcap.pim")
         import inspect
 
         source = inspect.getsource(mod.PIMPassiveListener.process_packet)
@@ -353,7 +353,7 @@ class TestPIMRegisterIPVersion:
 
         import importlib
 
-        mod = importlib.import_module("oida.pcap.passive.pim")
+        mod = importlib.import_module("oida.pcap.pim")
         listener = mod.PIMPassiveListener(interface="lo", timeout=10)
         listener._x509 = True
         listener.feed_packets(iter(packets))
@@ -393,7 +393,7 @@ class TestPIMEdgeCases:
 
     def test_pim_protocol_columns_match_rows(self):
         """PROTOCOL_COLUMNS length matches _format_protocol_columns output."""
-        from oida.pcap.passive.pim import PIMPassiveListener
+        from oida.pcap.pim import PIMPassiveListener
 
         listener = PIMPassiveListener(interface="lo", timeout=10)
         assert len(listener.PROTOCOL_COLUMNS) == 6

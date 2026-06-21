@@ -17,22 +17,22 @@ class TestDeviceNetPassiveSmoke:
     """devicenet listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.devicenet as mod
+        import oida.pcap.devicenet as mod
 
         cls = getattr(mod, "DeviceNetPassiveListener", None)
         assert cls is not None, (
-            "DeviceNetPassiveListener not exported from oida.pcap.passive.devicenet"
+            "DeviceNetPassiveListener not exported from oida.pcap.devicenet"
         )
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.devicenet import DeviceNetPassiveListener
+        from oida.pcap.devicenet import DeviceNetPassiveListener
 
         required = getattr(DeviceNetPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "devicenet" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.devicenet import DeviceNetPassiveListener
+        from oida.pcap.devicenet import DeviceNetPassiveListener
 
         listener = DeviceNetPassiveListener(interface="lo", timeout=1)
         listener._x509 = True
@@ -56,7 +56,7 @@ class TestDeviceNetEKDecimalParsing:
     """
 
     def test_cip_class_ek_decimal_not_reparsed_as_hex(self):
-        from oida.pcap.passive.devicenet import DeviceNetPassiveListener
+        from oida.pcap.devicenet import DeviceNetPassiveListener
 
         listener = DeviceNetPassiveListener(interface="lo", timeout=1)
         # CIP Identity Object class 0x01, instance 1, attribute 16 (decimal in EK).
@@ -69,7 +69,7 @@ class TestDeviceNetEKDecimalParsing:
         assert attribute == 16
 
     def test_can_id_ek_decimal_not_reparsed_as_hex(self):
-        from oida.pcap.passive.devicenet import DeviceNetPassiveListener
+        from oida.pcap.devicenet import DeviceNetPassiveListener
 
         listener = DeviceNetPassiveListener(interface="lo", timeout=1)
         # CAN id 0x3FF renders as decimal "1023" in EK mode.
@@ -81,6 +81,6 @@ class TestDeviceNetEKDecimalParsing:
     def test_source_no_longer_forces_base16(self):
         import inspect
 
-        import oida.pcap.passive.devicenet as mod
+        import oida.pcap.devicenet as mod
 
         assert "base=16" not in inspect.getsource(mod), "base=16 must not be reintroduced"

@@ -219,7 +219,7 @@ class TestAMQPPassiveEK:
 
     def test_amqp_class_method_resolution(self):
         """Class IDs and method IDs are resolved to human-readable names."""
-        from oida.pcap.passive.amqp import AMQP_CLASSES, AMQP_METHOD_MAPS
+        from oida.pcap.amqp import AMQP_CLASSES, AMQP_METHOD_MAPS
 
         assert AMQP_CLASSES.get("10") == "Connection"
         assert AMQP_CLASSES.get("50") == "Queue"

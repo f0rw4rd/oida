@@ -200,7 +200,7 @@ def _run_listener_test(
     """Run smoke + content-quality assertions for a passive listener.
 
     Args:
-        module_name: Module under ``oida.pcap.passive`` (e.g. ``"modbus"``).
+        module_name: Module under ``oida.pcap`` (e.g. ``"modbus"``).
         class_name: Listener class name.
         display_filter: tshark display filter.
         pcap_subpath: Path relative to fixture dir.
@@ -221,7 +221,7 @@ def _run_listener_test(
     """
     _skip_unless_pyshark()
     pcap = _pcap_path(pcap_subpath)
-    mod = importlib.import_module(f"oida.pcap.passive.{module_name}")
+    mod = importlib.import_module(f"oida.pcap.{module_name}")
     cls = getattr(mod, class_name)
     listener = cls(interface="lo", timeout=10)
     listener._x509 = True

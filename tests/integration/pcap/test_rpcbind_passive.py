@@ -24,7 +24,7 @@ def _feed_unfiltered(pcap_subpath: str):
     Mirrors pcap-replay in production, where DISPLAY_FILTER is NOT applied and
     every dissector sees every packet. Returns ``(listener, devices)``.
     """
-    from oida.pcap.passive.rpcbind import RPCBindPassiveListener
+    from oida.pcap.rpcbind import RPCBindPassiveListener
 
     _skip_unless_pyshark()
     pcap = _pcap_path(pcap_subpath)

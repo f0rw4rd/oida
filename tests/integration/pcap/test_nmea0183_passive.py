@@ -17,22 +17,22 @@ class TestNMEA0183PassiveSmoke:
     """nmea0183 listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.nmea0183 as mod
+        import oida.pcap.nmea0183 as mod
 
         cls = getattr(mod, "NMEA0183PassiveListener", None)
         assert cls is not None, (
-            "NMEA0183PassiveListener not exported from oida.pcap.passive.nmea0183"
+            "NMEA0183PassiveListener not exported from oida.pcap.nmea0183"
         )
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.nmea0183 import NMEA0183PassiveListener
+        from oida.pcap.nmea0183 import NMEA0183PassiveListener
 
         required = getattr(NMEA0183PassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "nmea0183" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.nmea0183 import NMEA0183PassiveListener
+        from oida.pcap.nmea0183 import NMEA0183PassiveListener
 
         listener = NMEA0183PassiveListener(interface="lo", timeout=1)
         listener._x509 = True
