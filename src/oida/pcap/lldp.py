@@ -244,7 +244,7 @@ class LLDPPassiveListener(PySharkListenerBase):
 
         # TTL
         ttl = self.get_field(lldp, "time_to_live", "")
-        ttl_val = _safe_int(ttl, 0)
+        ttl_val = self._parse_int(ttl, 0)
 
         # IEEE 802.1 VLAN info
         port_vlan_id = str(self.get_field(lldp, "ieee_802_1_port_vlan_id", "") or "")
@@ -427,10 +427,3 @@ def _extract_version(desc: str) -> str:
     return desc
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

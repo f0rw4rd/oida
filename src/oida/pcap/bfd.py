@@ -158,13 +158,13 @@ class BFDPassiveListener(PySharkListenerBase):
 
         # --- T1 field: bfd.version (EK: "version") ---
         version_raw = self.get_field(bfd, "version", None)
-        version = _safe_int(version_raw, -1) if version_raw is not None else -1
+        version = self._parse_int(version_raw, -1) if version_raw is not None else -1
         if version < 0:
             self.logger.debug(f"Missing bfd.version in packet from {src_ip} -> {dst_ip}")
 
         # --- Session state fields ---
         # EK-mode field name is "sta" (not "flags_sta")
-        state_raw = _safe_int(self.get_field(bfd, "sta", None), -1)
+        state_raw = self._parse_int(self.get_field(bfd, "sta", None), -1)
         if state_raw < 0:
             state_name = "?"
             self.logger.debug(f"Missing bfd.sta in packet from {src_ip} -> {dst_ip}")
@@ -172,7 +172,7 @@ class BFDPassiveListener(PySharkListenerBase):
             state_name = self.BFD_STATES.get(state_raw, f"Unknown({state_raw})")
 
         # EK-mode field name is "diag" (not "flags_diag")
-        diag_raw = _safe_int(self.get_field(bfd, "diag", None), -1)
+        diag_raw = self._parse_int(self.get_field(bfd, "diag", None), -1)
         if diag_raw < 0:
             diag_name = "?"
             self.logger.debug(f"Missing bfd.diag in packet from {src_ip} -> {dst_ip}")
@@ -189,7 +189,7 @@ class BFDPassiveListener(PySharkListenerBase):
 
         # --- Authentication section ---
         auth_type_raw = self.get_field(bfd, "auth_type", None)
-        auth_type = _safe_int(auth_type_raw, 0) if auth_type_raw is not None else 0
+        auth_type = self._parse_int(auth_type_raw, 0) if auth_type_raw is not None else 0
         auth_type_name = (
             BFD_AUTH_TYPES.get(auth_type, f"Unknown({auth_type})") if auth_type else "None"
         )
@@ -212,8 +212,8 @@ class BFDPassiveListener(PySharkListenerBase):
         credential_type = ""
 
         if auth_type:
-            key_id = _safe_int(self.get_field(bfd, "auth_key", "0"), 0)
-            seq_num = _safe_int(self.get_field(bfd, "auth_seq_num", "0"), 0)
+            key_id = self._parse_int(self.get_field(bfd, "auth_key", "0"), 0)
+            seq_num = self._parse_int(self.get_field(bfd, "auth_seq_num", "0"), 0)
             credential_type = "hash"
 
             if auth_type == 1:
@@ -360,10 +360,3 @@ class BFDPassiveListener(PySharkListenerBase):
         ]
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

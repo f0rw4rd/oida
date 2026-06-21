@@ -194,25 +194,25 @@ class VRRPPassiveListener(PySharkListenerBase):
 
         # Extract VRRP fields using correct EK-mode field names
         # "version" is the EK name for vrrp.version (vrrp_ver is XML-only)
-        version = _safe_int(self.get_field(vrrp, "version", "2"), 2)
+        version = self._parse_int(self.get_field(vrrp, "version", "2"), 2)
         # "virt_rtr_id" is the EK name for vrrp.virt_rtr_id (vrid is XML-only)
-        vrid = _safe_int(self.get_field(vrrp, "virt_rtr_id", "0"), 0)
+        vrid = self._parse_int(self.get_field(vrrp, "virt_rtr_id", "0"), 0)
         if vrid == 0:
-            vrid = _safe_int(self.get_field(vrrp, "vrid", "0"), 0)
+            vrid = self._parse_int(self.get_field(vrrp, "vrid", "0"), 0)
         if vrid == 0:
             self.logger.debug(f"Missing VRID in VRRP packet from {src_ip} -> {dst_ip}")
-        priority = _safe_int(self.get_field(vrrp, "prio", "100"), 100)
-        adver_int = _safe_int(self.get_field(vrrp, "adver_int", "1"), 1)
+        priority = self._parse_int(self.get_field(vrrp, "prio", "100"), 100)
+        adver_int = self._parse_int(self.get_field(vrrp, "adver_int", "1"), 1)
 
         # T1 field: addr_count -- number of virtual IPs advertised
-        addr_count = _safe_int(self.get_field(vrrp, "addr_count", "0"), 0)
+        addr_count = self._parse_int(self.get_field(vrrp, "addr_count", "0"), 0)
 
         # T1 field: checksum and checksum validation status
         checksum_raw = self.get_field(vrrp, "checksum", None)
         checksum = str(checksum_raw) if checksum_raw is not None else "?"
         checksum_status_raw = self.get_field(vrrp, "checksum_status", None)
         checksum_status = (
-            _safe_int(checksum_status_raw, 0) if checksum_status_raw is not None else 0
+            self._parse_int(checksum_status_raw, 0) if checksum_status_raw is not None else 0
         )
 
         # Extract virtual IPs -- use "ip_addr" (EK name for vrrp.ip_addr)
@@ -255,7 +255,7 @@ class VRRPPassiveListener(PySharkListenerBase):
 
         # Determine authentication type and name
         auth_type_raw = self.get_field(vrrp, "auth_type", None)
-        auth_type_val = _safe_int(auth_type_raw, 0) if auth_type_raw is not None else 0
+        auth_type_val = self._parse_int(auth_type_raw, 0) if auth_type_raw is not None else 0
         auth_type_name = VRRP_AUTH_TYPES.get(auth_type_val, f"Unknown({auth_type_val})")
 
         # Extract authentication credentials (VRRPv2 only)
@@ -401,10 +401,3 @@ class VRRPPassiveListener(PySharkListenerBase):
         return results
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

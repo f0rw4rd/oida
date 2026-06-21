@@ -153,22 +153,22 @@ class DTPPassiveListener(PySharkListenerBase):
 
         # Trunk Administrative Status (admin-configured mode)
         tas_raw = self.get_field(dtp, "tas", None)
-        tas_val = _safe_int(tas_raw, -1)
+        tas_val = self._parse_int(tas_raw, -1)
         admin_status_name = DTP_STATUS.get(tas_val, str(tas_raw) if tas_raw else "?")
 
         # Trunk Administrative Type (admin-configured encapsulation)
         tat_raw = self.get_field(dtp, "tat", None)
-        tat_val = _safe_int(tat_raw, -1)
+        tat_val = self._parse_int(tat_raw, -1)
         admin_type_name = DTP_TYPES.get(tat_val, str(tat_raw) if tat_raw else "?")
 
         # Trunk Operating Status (current operating mode)
         tos_raw = self.get_field(dtp, "tos", None)
-        tos_val = _safe_int(tos_raw, -1)
+        tos_val = self._parse_int(tos_raw, -1)
         oper_status_name = DTP_STATUS.get(tos_val, str(tos_raw) if tos_raw else "?")
 
         # Trunk Operating Type (current encapsulation)
         tot_raw = self.get_field(dtp, "tot", None)
-        tot_val = _safe_int(tot_raw, -1)
+        tot_val = self._parse_int(tot_raw, -1)
         oper_type_name = DTP_TYPES.get(tot_val, str(tot_raw) if tot_raw else "?")
 
         # TLV fields (optional, multi-value)
@@ -336,13 +336,3 @@ class DTPPassiveListener(PySharkListenerBase):
         return {"tables": tables, "alerts": alerts}
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        s = str(value).strip()
-        if s.startswith(("0x", "0X")):
-            return int(s, 16)
-        return int(s)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"DTP: hex/decimal int parse failed for field value: {e}")
-        return default

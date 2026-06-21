@@ -165,7 +165,7 @@ class OSPFPassiveListener(PySharkListenerBase):
 
         # Extract OSPF header fields
         # EK field: "version"
-        version = _safe_int(self.get_field(ospf, "version", "2"), 2)
+        version = self._parse_int(self.get_field(ospf, "version", "2"), 2)
 
         # EK field: "msg" (NOT "msg_type" -- that is the XML-mode name)
         msg_type_str = self.get_field(ospf, "msg", "0")
@@ -251,10 +251,10 @@ class OSPFPassiveListener(PySharkListenerBase):
 
             hello_info = {
                 "network_mask": network_mask,
-                "hello_interval": _safe_int(hello_interval, 10),
-                "options": _safe_int(options, 0),
-                "priority": _safe_int(priority, 1),
-                "dead_interval": _safe_int(dead_interval, 40),
+                "hello_interval": self._parse_int(hello_interval, 10),
+                "options": self._parse_int(options, 0),
+                "priority": self._parse_int(priority, 1),
+                "dead_interval": self._parse_int(dead_interval, 40),
                 "designated_router": dr,
                 "backup_dr": bdr,
             }
@@ -535,10 +535,3 @@ class OSPFPassiveListener(PySharkListenerBase):
         return result
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

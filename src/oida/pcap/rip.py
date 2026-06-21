@@ -163,8 +163,8 @@ class RIPPassiveListener(PySharkListenerBase):
         src_mac, _ = self.get_mac_info(packet)
 
         # Extract RIP header fields
-        command = _safe_int(self.get_field(rip, "command", "0"), 0)
-        version = _safe_int(self.get_field(rip, "version", "0"), 0)
+        command = self._parse_int(self.get_field(rip, "command", "0"), 0)
+        version = self._parse_int(self.get_field(rip, "version", "0"), 0)
 
         command_name = RIP_COMMANDS.get(command, f"Unknown({command})")
         version_name = RIP_VERSIONS.get(version, f"v{version}")
@@ -174,7 +174,7 @@ class RIPPassiveListener(PySharkListenerBase):
         auth_type_name = "None"
         auth_type_field = self.get_field(rip, "auth_type", None)
         if auth_type_field is not None:
-            auth_type = _safe_int(auth_type_field, 0)
+            auth_type = self._parse_int(auth_type_field, 0)
             auth_type_name = RIP_AUTH_TYPES.get(auth_type, f"Unknown({auth_type})")
 
         # Extract authentication password/data
@@ -242,7 +242,7 @@ class RIPPassiveListener(PySharkListenerBase):
                 if nh == "0.0.0.0":
                     nh = src_ip
 
-                metric = _safe_int(metrics[i].strip() if i < len(metrics) else "0", 0)
+                metric = self._parse_int(metrics[i].strip() if i < len(metrics) else "0", 0)
 
                 route = {
                     "network": ip,
@@ -251,7 +251,7 @@ class RIPPassiveListener(PySharkListenerBase):
                     "metric": metric,
                 }
                 if version == 2:
-                    tag = _safe_int(tags[i].strip() if i < len(tags) else "0", 0)
+                    tag = self._parse_int(tags[i].strip() if i < len(tags) else "0", 0)
                     route["route_tag"] = tag
 
                 routes.append(route)
@@ -381,10 +381,3 @@ class RIPPassiveListener(PySharkListenerBase):
         return result
 
 
-def _safe_int(value, default: int = 0) -> int:
-    """Safely convert a PyShark field value to int."""
-    try:
-        return int(value)
-    except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
-        return default

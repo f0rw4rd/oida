@@ -31,7 +31,7 @@ from typing import Any
 # Project layout
 # ---------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent.parent
-SRC_DIR = ROOT / "src" / "oida" / "pcap" / "passive"
+SRC_DIR = ROOT / "src" / "oida" / "pcap"
 FIXTURE_DIR = ROOT / "tests" / "fixtures" / "pcap"
 REF_DIR = ROOT / "ref"
 
@@ -821,7 +821,7 @@ def write_inventory(inventory: dict[str, Any]) -> Path:
 
 
 def discover_all_listeners() -> list[dict[str, Any]]:
-    """Discover all listener modules under src/oida/pcap/passive/."""
+    """Discover all listener modules under src/oida/pcap/."""
     listeners: list[dict[str, Any]] = []
     for path in sorted(SRC_DIR.glob("*.py")):
         if path.stem in _SKIP_MODULES:
