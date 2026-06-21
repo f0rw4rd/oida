@@ -1,6 +1,6 @@
 """GLBP (Gateway Load Balancing Protocol) shared constants.
 
-Used by both pcap/passive/glbp.py (PyShark) and protocols/discovery/glbp.py (Scapy).
+Used by both pcap/glbp.py (PyShark) and protocols/discovery/glbp.py (Scapy).
 """
 
 # GLBP constants

@@ -17,20 +17,20 @@ class TestPCOMPassiveSmoke:
     """pcom listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.pcom as mod
+        import oida.pcap.pcom as mod
 
         cls = getattr(mod, "PCOMPassiveListener", None)
-        assert cls is not None, "PCOMPassiveListener not exported from oida.pcap.passive.pcom"
+        assert cls is not None, "PCOMPassiveListener not exported from oida.pcap.pcom"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.pcom import PCOMPassiveListener
+        from oida.pcap.pcom import PCOMPassiveListener
 
         required = getattr(PCOMPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "pcomtcp" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.pcom import PCOMPassiveListener
+        from oida.pcap.pcom import PCOMPassiveListener
 
         listener = PCOMPassiveListener(interface="lo", timeout=1)
         listener._x509 = True

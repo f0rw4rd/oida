@@ -31,7 +31,7 @@ class TestPTPGrandmasterChangeAlert:
     """Regression: a single GM change must yield exactly one alert, not N."""
 
     def test_single_gm_change_alerts_once(self):
-        from oida.pcap.passive.ptp import PTPPassiveListener
+        from oida.pcap.ptp import PTPPassiveListener
 
         listener = PTPPassiveListener(interface="lo", timeout=1)
 
@@ -55,7 +55,7 @@ class TestPTPGrandmasterChangeAlert:
         )
 
     def test_two_distinct_changes_alert_twice(self):
-        from oida.pcap.passive.ptp import PTPPassiveListener
+        from oida.pcap.ptp import PTPPassiveListener
 
         listener = PTPPassiveListener(interface="lo", timeout=1)
 

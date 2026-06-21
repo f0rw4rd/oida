@@ -20,7 +20,7 @@ the structured data produced.
 
 import pytest
 
-from oida.pcap.passive.modbus import (
+from oida.pcap.modbus import (
     MODBUS_FC,
     ModbusPassiveListener,
     ModbusSession,

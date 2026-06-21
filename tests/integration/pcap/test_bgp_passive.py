@@ -484,7 +484,7 @@ class TestBGPCredentialCompatibility:
 
     def test_credential_canonical_fields(self):
         """All canonical credential fields are directly accessible."""
-        from oida.pcap.passive.bgp import BGPCredential
+        from oida.pcap.bgp import BGPCredential
 
         cred = BGPCredential(
             auth_data="test_auth",
@@ -518,14 +518,14 @@ class TestBGPInteractionTable:
 
     def test_protocol_columns_set(self):
         """PROTOCOL_COLUMNS is set on the listener class."""
-        from oida.pcap.passive.bgp import BGPPassiveListener
+        from oida.pcap.bgp import BGPPassiveListener
 
         assert BGPPassiveListener.PROTOCOL_COLUMNS
         assert "type" in BGPPassiveListener.PROTOCOL_COLUMNS
 
     def test_format_protocol_columns_count(self):
         """_format_protocol_columns output must match PROTOCOL_COLUMNS length."""
-        from oida.pcap.passive.bgp import BGPPassiveListener
+        from oida.pcap.bgp import BGPPassiveListener
 
         listener, devices, result = _run_listener_test(
             "bgp",

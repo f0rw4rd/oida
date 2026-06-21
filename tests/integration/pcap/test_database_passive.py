@@ -339,7 +339,7 @@ class TestPgsqlPassiveEK:
 
     def test_pgsql_interaction_headers_format(self):
         """Verify PROTOCOL_COLUMNS are set and _format_protocol_columns produces correct cols."""
-        from oida.pcap.passive.pgsql import PostgreSQLPassiveListener
+        from oida.pcap.pgsql import PostgreSQLPassiveListener
 
         assert PostgreSQLPassiveListener.PROTOCOL_COLUMNS == (
             "type",
@@ -717,7 +717,7 @@ class TestMySQLPassiveEK:
 
     def test_mysql_interaction_headers_format(self):
         """Verify PROTOCOL_COLUMNS are set and match expected format."""
-        from oida.pcap.passive.mysql import MySQLPassiveListener
+        from oida.pcap.mysql import MySQLPassiveListener
 
         assert MySQLPassiveListener.PROTOCOL_COLUMNS == ("operation", "details", "result"), (
             f"Unexpected PROTOCOL_COLUMNS: {MySQLPassiveListener.PROTOCOL_COLUMNS}"

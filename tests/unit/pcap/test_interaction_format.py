@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from oida.pcap.passive.pyshark_base import PySharkListenerBase
+from oida.pcap.pyshark_base import PySharkListenerBase
 
 from .conftest import requires_pyshark
 
@@ -405,7 +405,7 @@ def _load_listener(case, _retries: int = 2):
     except RuntimeError:
         asyncio.set_event_loop(asyncio.new_event_loop())
 
-    mod = importlib.import_module(f"oida.pcap.passive.{case['module']}")
+    mod = importlib.import_module(f"oida.pcap.{case['module']}")
     cls = getattr(mod, case["cls"])
     listener = cls(interface="lo", timeout=10)
 

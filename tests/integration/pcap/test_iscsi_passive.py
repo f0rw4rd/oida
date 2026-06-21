@@ -40,7 +40,7 @@ class TestISCSIOpcodeMap:
     ]
 
     def test_known_opcodes_resolve_correctly(self):
-        from oida.pcap.passive.iscsi import OPCODES
+        from oida.pcap.iscsi import OPCODES
 
         for dec, hexk, name in self.EXPECTED:
             assert OPCODES.get(dec) == name, f"decimal {dec} should map to {name}"
@@ -48,7 +48,7 @@ class TestISCSIOpcodeMap:
 
     def test_r2t_and_async_not_swapped(self):
         """Regression: R2T is 0x31 (49), Async Message is 0x32 (50) - never swapped."""
-        from oida.pcap.passive.iscsi import OPCODES
+        from oida.pcap.iscsi import OPCODES
 
         assert OPCODES["0x31"] == "R2T"
         assert OPCODES["49"] == "R2T"
@@ -60,7 +60,7 @@ class TestISCSIOpcodeMap:
 
     def test_decimal_and_hex_halves_are_consistent(self):
         """Every decimal opcode has a matching hex entry with the same label."""
-        from oida.pcap.passive.iscsi import OPCODES
+        from oida.pcap.iscsi import OPCODES
 
         dec = {int(k): v for k, v in OPCODES.items() if not k.startswith("0x")}
         hx = {int(k, 16): v for k, v in OPCODES.items() if k.startswith("0x")}

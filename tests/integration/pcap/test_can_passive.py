@@ -17,20 +17,20 @@ class TestCANPassiveSmoke:
     """can listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.can as mod
+        import oida.pcap.can as mod
 
         cls = getattr(mod, "CANPassiveListener", None)
-        assert cls is not None, "CANPassiveListener not exported from oida.pcap.passive.can"
+        assert cls is not None, "CANPassiveListener not exported from oida.pcap.can"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.can import CANPassiveListener
+        from oida.pcap.can import CANPassiveListener
 
         required = getattr(CANPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "can" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.can import CANPassiveListener
+        from oida.pcap.can import CANPassiveListener
 
         listener = CANPassiveListener(interface="lo", timeout=1)
         listener._x509 = True

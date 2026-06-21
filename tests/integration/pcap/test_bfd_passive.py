@@ -434,7 +434,7 @@ class TestBFDPassiveEK:
 
     def test_bfd_protocol_columns_set(self):
         """PROTOCOL_COLUMNS is set on the listener class."""
-        from oida.pcap.passive.bfd import BFDPassiveListener
+        from oida.pcap.bfd import BFDPassiveListener
 
         assert BFDPassiveListener.PROTOCOL_COLUMNS
         expected_cols = (
@@ -452,7 +452,7 @@ class TestBFDPassiveEK:
 
     def test_bfd_format_protocol_columns_count(self):
         """_format_protocol_columns output must match PROTOCOL_COLUMNS length."""
-        from oida.pcap.passive.bfd import BFDPassiveListener
+        from oida.pcap.bfd import BFDPassiveListener
 
         listener, _, _ = _run_listener_test(
             "bfd",

@@ -73,7 +73,7 @@ class TestADSInvokeID:
         )
 
         # Verify PROTOCOL_COLUMNS includes "Invoke ID"
-        from oida.pcap.passive.ads import ADSPassiveListener
+        from oida.pcap.ads import ADSPassiveListener
 
         assert "invoke_id" in ADSPassiveListener.PROTOCOL_COLUMNS
 
@@ -266,7 +266,7 @@ class TestADSRichPcap:
             expect_details=["command_name"],
         )
 
-        from oida.pcap.passive.ads import ADSPassiveListener
+        from oida.pcap.ads import ADSPassiveListener
 
         expected_cols = len(ADSPassiveListener.PROTOCOL_COLUMNS)
 

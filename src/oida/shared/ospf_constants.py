@@ -1,6 +1,6 @@
 """OSPF (Open Shortest Path First) shared constants.
 
-Used by both pcap/passive/ospf.py (PyShark) and protocols/discovery/ospf_passive.py (Scapy).
+Used by both pcap/ospf.py (PyShark) and protocols/discovery/ospf_passive.py (Scapy).
 """
 
 # OSPF constants

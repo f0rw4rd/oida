@@ -17,22 +17,22 @@ class TestCIPSafetyPassiveSmoke:
     """cipsafety listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.cipsafety as mod
+        import oida.pcap.cipsafety as mod
 
         cls = getattr(mod, "CIPSafetyPassiveListener", None)
         assert cls is not None, (
-            "CIPSafetyPassiveListener not exported from oida.pcap.passive.cipsafety"
+            "CIPSafetyPassiveListener not exported from oida.pcap.cipsafety"
         )
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.cipsafety import CIPSafetyPassiveListener
+        from oida.pcap.cipsafety import CIPSafetyPassiveListener
 
         required = getattr(CIPSafetyPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "cipsafety" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.cipsafety import CIPSafetyPassiveListener
+        from oida.pcap.cipsafety import CIPSafetyPassiveListener
 
         listener = CIPSafetyPassiveListener(interface="lo", timeout=1)
         listener._x509 = True

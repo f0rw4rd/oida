@@ -425,7 +425,7 @@ class TestBACnetMissingServiceChoice:
     """
 
     def test_complexack_without_service_choice_records_interaction(self):
-        from oida.pcap.passive.bacnet import BACnetPassiveListener
+        from oida.pcap.bacnet import BACnetPassiveListener
 
         listener = BACnetPassiveListener(interface="lo", timeout=10)
         # apdu_type=3 (ComplexAck) but NO confirmed_service field present.

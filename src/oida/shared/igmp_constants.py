@@ -1,6 +1,6 @@
 """IGMP (Internet Group Management Protocol) shared constants.
 
-Used by both pcap/passive/igmp.py (PyShark) and protocols/discovery/igmp.py (Scapy).
+Used by both pcap/igmp.py (PyShark) and protocols/discovery/igmp.py (Scapy).
 """
 
 # IGMP constants

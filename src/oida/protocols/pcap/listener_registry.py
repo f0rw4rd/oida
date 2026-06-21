@@ -23,7 +23,7 @@ logger = get_module_logger(__name__)
 # ---------------------------------------------------------------------------
 # Registry: name -> (module_path, class_name, category, tags)
 #
-# module_path is relative to oida.pcap.passive
+# module_path is relative to oida.pcap
 # tags are used for filtering: protocol name, category, and any aliases
 # ---------------------------------------------------------------------------
 
@@ -823,7 +823,7 @@ def create_listeners(names: Set[str], logger=logger) -> Dict[str, Any]:
             logger.debug("create_listeners: unknown listener '%s'", name)
             continue
         try:
-            module = importlib.import_module(info["module"], "oida.pcap.passive")
+            module = importlib.import_module(info["module"], "oida.pcap")
             cls = getattr(module, info["class"])
             listeners[name] = cls(interface="pcap", nxc_logger=logger)
             logger.debug("create_listeners: registered %s (%s)", name, info["class"])

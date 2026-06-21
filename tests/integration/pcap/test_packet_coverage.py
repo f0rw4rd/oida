@@ -56,7 +56,7 @@ class TestPacketCoverage:
             pytest.skip(f"tshark found 0 packets for filter '{display_filter}'")
 
         # 2. Run listener (note: _load_packets caps at _MAX_TEST_PACKETS)
-        mod = importlib.import_module(f"oida.pcap.passive.{case['module']}")
+        mod = importlib.import_module(f"oida.pcap.{case['module']}")
         cls = getattr(mod, case["cls"])
         listener = cls(interface="lo", timeout=10)
         listener._x509 = True

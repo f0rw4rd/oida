@@ -17,20 +17,20 @@ class TestCANopenPassiveSmoke:
     """canopen listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.canopen as mod
+        import oida.pcap.canopen as mod
 
         cls = getattr(mod, "CANopenPassiveListener", None)
-        assert cls is not None, "CANopenPassiveListener not exported from oida.pcap.passive.canopen"
+        assert cls is not None, "CANopenPassiveListener not exported from oida.pcap.canopen"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.canopen import CANopenPassiveListener
+        from oida.pcap.canopen import CANopenPassiveListener
 
         required = getattr(CANopenPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "canopen" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.canopen import CANopenPassiveListener
+        from oida.pcap.canopen import CANopenPassiveListener
 
         listener = CANopenPassiveListener(interface="lo", timeout=1)
         listener._x509 = True
@@ -56,7 +56,7 @@ class TestCANopenEKDecimalParsing:
     """
 
     def test_sdo_index_ek_decimal_not_reparsed_as_hex(self):
-        from oida.pcap.passive.canopen import CANopenPassiveListener
+        from oida.pcap.canopen import CANopenPassiveListener
 
         listener = CANopenPassiveListener(interface="lo", timeout=1)
         # EK mode delivers "4120" (decimal) for OD index 0x1018, "2" for subidx.
@@ -68,7 +68,7 @@ class TestCANopenEKDecimalParsing:
         assert sub_idx == 2
 
     def test_nmt_state_ek_decimal_not_reparsed_as_hex(self):
-        from oida.pcap.passive.canopen import CANopenPassiveListener
+        from oida.pcap.canopen import CANopenPassiveListener
 
         listener = CANopenPassiveListener(interface="lo", timeout=1)
         # NMT state 0xFD (Pre-operational) renders as decimal "253" in EK mode.
@@ -79,6 +79,6 @@ class TestCANopenEKDecimalParsing:
     def test_source_no_longer_forces_base16(self):
         import inspect
 
-        import oida.pcap.passive.canopen as mod
+        import oida.pcap.canopen as mod
 
         assert "base=16" not in inspect.getsource(mod), "base=16 must not be reintroduced"

@@ -1,6 +1,6 @@
 """Regression test: MongoDB OP_MSG replies must be classified as responses.
 
-CODE_REVIEW finding `src/oida/pcap/passive/mongodb.py:162-184`: direction
+CODE_REVIEW finding `src/oida/pcap/mongodb.py:162-184`: direction
 detection did ``is_reply = opcode_name == "OP_REPLY"`` and treated everything
 else as a request. In MongoDB 3.6+ OP_MSG (2013) carries BOTH client commands
 and server responses -- OP_REPLY is largely legacy. A server -> client OP_MSG
@@ -16,7 +16,7 @@ These tests drive process_packet() with lightweight fake packets (no pyshark /
 tshark needed).
 """
 
-from oida.pcap.passive.mongodb import MongoDBPassiveListener
+from oida.pcap.mongodb import MongoDBPassiveListener
 
 
 class _Layer:

@@ -1,6 +1,6 @@
 """HSRP (Hot Standby Router Protocol) shared constants.
 
-Used by both pcap/passive/hsrp.py (PyShark) and protocols/discovery/hsrp.py (Scapy).
+Used by both pcap/hsrp.py (PyShark) and protocols/discovery/hsrp.py (Scapy).
 """
 
 # HSRP constants

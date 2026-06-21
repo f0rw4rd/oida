@@ -464,7 +464,7 @@ class TestMQTTInteractionTable:
 
     def test_protocol_columns_set(self):
         """PROTOCOL_COLUMNS is set on the listener class."""
-        from oida.pcap.passive.mqtt import MQTTPassiveListener
+        from oida.pcap.mqtt import MQTTPassiveListener
 
         assert MQTTPassiveListener.PROTOCOL_COLUMNS
         assert "type" in MQTTPassiveListener.PROTOCOL_COLUMNS
@@ -478,7 +478,7 @@ class TestMQTTInteractionTable:
             "mqtt/emreekin_mqtt_user_credentials.pcap",
         )
 
-        from oida.pcap.passive.mqtt import MQTTPassiveListener
+        from oida.pcap.mqtt import MQTTPassiveListener
 
         expected = len(MQTTPassiveListener.PROTOCOL_COLUMNS)
         for ix in listener.interactions:

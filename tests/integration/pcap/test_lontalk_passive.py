@@ -17,20 +17,20 @@ class TestLonTalkPassiveSmoke:
     """lontalk listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.lontalk as mod
+        import oida.pcap.lontalk as mod
 
         cls = getattr(mod, "LonTalkPassiveListener", None)
-        assert cls is not None, "LonTalkPassiveListener not exported from oida.pcap.passive.lontalk"
+        assert cls is not None, "LonTalkPassiveListener not exported from oida.pcap.lontalk"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.lontalk import LonTalkPassiveListener
+        from oida.pcap.lontalk import LonTalkPassiveListener
 
         required = getattr(LonTalkPassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "lon" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.lontalk import LonTalkPassiveListener
+        from oida.pcap.lontalk import LonTalkPassiveListener
 
         listener = LonTalkPassiveListener(interface="lo", timeout=1)
         listener._x509 = True

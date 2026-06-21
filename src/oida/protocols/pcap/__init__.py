@@ -8,7 +8,7 @@ Offline analysis of pcap/pcapng capture files:
 - File carving from HTTP, SMB, FTP, TFTP, DICOM
 - Traffic statistics
 
-Uses listeners from oida.pcap.passive (PyShark-based) for streaming
+Uses listeners from oida.pcap (PyShark-based) for streaming
 packet analysis across all supported protocol categories.
 
 Usage:

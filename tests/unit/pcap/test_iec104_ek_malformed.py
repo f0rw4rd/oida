@@ -13,7 +13,7 @@ that behaviour: an EK frame with no parseable type must NOT be recorded as
 an S-frame, and must be recorded as a Malformed APDU.
 """
 
-from oida.pcap.passive.iec104 import IEC104PassiveListener
+from oida.pcap.iec104 import IEC104PassiveListener
 
 
 class _FakeLayer:

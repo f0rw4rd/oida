@@ -111,7 +111,7 @@ class TestKerberosRepServerPort:
 
     @staticmethod
     def _make_listener():
-        from oida.pcap.passive.kerberos import KerberosPassiveListener
+        from oida.pcap.kerberos import KerberosPassiveListener
 
         return KerberosPassiveListener(interface="lo", timeout=1)
 
@@ -180,7 +180,7 @@ class TestNTLMHashcatFormatProperty:
     """
 
     def test_complete_ntlmv1_yields_mode5500_line(self):
-        from oida.pcap.passive.ntlm import NTLMHash
+        from oida.pcap.ntlm import NTLMHash
 
         h = NTLMHash(
             hash_type="NTLMv1",
@@ -194,7 +194,7 @@ class TestNTLMHashcatFormatProperty:
         assert h.hashcat_format == f"administrator::VNET3:{'ab' * 24}:{'cd' * 24}:1122334455667788"
 
     def test_missing_challenge_yields_empty_not_bare_response(self):
-        from oida.pcap.passive.ntlm import NTLMHash
+        from oida.pcap.ntlm import NTLMHash
 
         bare = "aa58dd5b9b655c207fac3d27e685c99d7a163a54b4b6f8cc"
         h = NTLMHash(
@@ -213,7 +213,7 @@ class TestNTLMHashcatFormatProperty:
         assert h.hash_value == bare
 
     def test_complete_ntlmv2_yields_mode5600_line(self):
-        from oida.pcap.passive.ntlm import NTLMHash
+        from oida.pcap.ntlm import NTLMHash
 
         nt = "0" * 32 + "deadbeef"
         h = NTLMHash(
@@ -246,7 +246,7 @@ class TestNTLMConcurrentHandshakeChallengePairing:
 
     @staticmethod
     def _make_listener():
-        from oida.pcap.passive.ntlm import NTLMPassiveListener
+        from oida.pcap.ntlm import NTLMPassiveListener
 
         # __init__ only needs the interface/timeout it forwards to the base; no
         # capture is started, we call the parsing helpers directly.

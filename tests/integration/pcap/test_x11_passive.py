@@ -12,7 +12,7 @@ Tests cover:
 
 import pytest
 
-from oida.pcap.passive.x11 import X11PassiveListener
+from oida.pcap.x11 import X11PassiveListener
 
 from .conftest import _run_listener_test
 

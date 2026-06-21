@@ -1,4 +1,4 @@
-"""Regression tests for GIF trailer carving in pcap.passive.file_carving.
+"""Regression tests for GIF trailer carving in pcap.file_carving.
 
 The GIF trailer is a bare 0x3B byte. A naive footer of b"\\x3B" truncates a
 carved GIF at the first 0x3B-valued byte inside pixel/color-table/extension
@@ -9,7 +9,7 @@ precedes it (00 3B), matching the scapy discovery variant.
 import logging
 import threading
 
-from oida.pcap.passive.file_carving import FILE_SIGNATURES
+from oida.pcap.file_carving import FILE_SIGNATURES
 from oida.shared.file_carving_common import FileCarvingMixin, StreamBuffer
 
 

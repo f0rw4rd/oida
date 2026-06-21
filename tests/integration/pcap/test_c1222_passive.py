@@ -19,7 +19,7 @@ which exist in packet-c1222.c) silently failed to read.
 import pytest
 
 from .conftest import _run_listener_test
-from oida.pcap.passive.c1222 import C1222PassiveListener
+from oida.pcap.c1222 import C1222PassiveListener
 
 pytestmark = [pytest.mark.integration]
 

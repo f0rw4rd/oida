@@ -224,7 +224,7 @@ class TestSIPPassiveEK:
         )
         assert len(listener.calls) >= 1
         # At least one call should reach IN_CALL state (after ACK)
-        from oida.pcap.passive.sip import CallState
+        from oida.pcap.sip import CallState
 
         states_seen = {c.state for c in listener.calls.values()}
         assert CallState.IN_CALL in states_seen or CallState.INVITED in states_seen, (

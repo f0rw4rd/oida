@@ -53,7 +53,7 @@ class _FakePacket:
 
 
 def _make_listener():
-    from oida.pcap.passive.smartinstall import SmartInstallPassiveListener
+    from oida.pcap.smartinstall import SmartInstallPassiveListener
 
     listener = SmartInstallPassiveListener(interface="lo", timeout=10)
     return listener

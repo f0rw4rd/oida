@@ -12,7 +12,7 @@ import logging
 
 import pytest
 
-from oida.pcap.passive.ajp import AJPPassiveListener
+from oida.pcap.ajp import AJPPassiveListener
 
 from .conftest import _run_listener_test
 

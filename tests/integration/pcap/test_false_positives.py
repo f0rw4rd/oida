@@ -81,7 +81,7 @@ class TestCrossProtocolFalsePositives:
         if not packets:
             pytest.skip(f"No packets in {alien_pcap} with filter {alien_filter}")
 
-        mod = importlib.import_module(f"oida.pcap.passive.{module_name}")
+        mod = importlib.import_module(f"oida.pcap.{module_name}")
         cls = getattr(mod, class_name)
         listener = cls(interface="lo", timeout=10)
         listener.feed_packets(iter(packets))

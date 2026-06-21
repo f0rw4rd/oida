@@ -1,6 +1,6 @@
 """PIM (Protocol Independent Multicast) shared constants.
 
-Used by both pcap/passive/pim.py (PyShark) and protocols/discovery/pim_passive.py (Scapy).
+Used by both pcap/pim.py (PyShark) and protocols/discovery/pim_passive.py (Scapy).
 """
 
 # PIM constants

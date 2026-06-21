@@ -17,20 +17,20 @@ class TestHL7PassiveSmoke:
     """hl7 listener smoke tests (no fixture pcap)."""
 
     def test_class_importable(self):
-        import oida.pcap.passive.hl7 as mod
+        import oida.pcap.hl7 as mod
 
         cls = getattr(mod, "HL7PassiveListener", None)
-        assert cls is not None, "HL7PassiveListener not exported from oida.pcap.passive.hl7"
+        assert cls is not None, "HL7PassiveListener not exported from oida.pcap.hl7"
 
     def test_required_layers_set(self):
-        from oida.pcap.passive.hl7 import HL7PassiveListener
+        from oida.pcap.hl7 import HL7PassiveListener
 
         required = getattr(HL7PassiveListener, "REQUIRED_LAYERS", None)
         assert required, "REQUIRED_LAYERS must be set so the listener registers a filter"
         assert "hl7" in required or len(required) > 0
 
     def test_harvest_shape_on_empty(self):
-        from oida.pcap.passive.hl7 import HL7PassiveListener
+        from oida.pcap.hl7 import HL7PassiveListener
 
         listener = HL7PassiveListener(interface="lo", timeout=1)
         listener._x509 = True

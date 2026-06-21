@@ -1,6 +1,6 @@
 """Regression test: POP3 listener must not silently drop non-standard-port sessions.
 
-CODE_REVIEW finding `src/oida/pcap/passive/pop3.py:207-311`: process_packet()
+CODE_REVIEW finding `src/oida/pcap/pop3.py:207-311`: process_packet()
 gated the entire interaction record on `dst_port in (110, 995)` /
 `src_port in (110, 995)` with no else branch, so a POP3 session on any
 non-standard port (stunnel wrappers, lab setups, containers mapping
@@ -12,7 +12,7 @@ These tests drive process_packet() with lightweight fake packets (no pyshark
 processed and directionally correct.
 """
 
-from oida.pcap.passive.pop3 import POP3PassiveListener
+from oida.pcap.pop3 import POP3PassiveListener
 
 
 class _Layer:

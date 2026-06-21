@@ -274,7 +274,7 @@ class _FakePacket:
 
 
 def _make_listener():
-    from oida.pcap.passive.ipmi import IPMIPassiveListener
+    from oida.pcap.ipmi import IPMIPassiveListener
 
     return IPMIPassiveListener(interface="lo", timeout=10)
 
