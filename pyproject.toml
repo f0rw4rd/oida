@@ -142,8 +142,6 @@ oida = [
     "data/*.csv",
     "data/**/*.txt",
     "data/**/*.json",
-    "configs/*.yml",
-    "configs/*.yaml",
     "protocols/modbus/register_maps/*.json",
     "protocols/modbus/register_maps/**/*.json",
     "protocols/hart/data/*.json",

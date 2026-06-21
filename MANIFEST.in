@@ -3,7 +3,6 @@ include LICENSE
 include CONTRIBUTING.md
 include pyproject.toml
 recursive-include src/oida/data *.json *.csv *.txt *.md *.yaml *.yml
-recursive-include src/oida/configs *.yaml *.yml *.json
 recursive-include src/oida/protocols *.json *.csv *.yaml *.yml
 recursive-exclude src/oida *.pyc
 recursive-exclude src/oida __pycache__
