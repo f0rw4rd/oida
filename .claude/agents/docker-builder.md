@@ -55,7 +55,7 @@ Read these files to understand the current state:
    - Profile naming convention (`vuln-services`, `vuln-<protocol>`)
    - Restart policy (`"no"` for CVE services)
 
-3. **Existing Dockerfiles** — scan `docker/mocks/services/Dockerfile.*` and `docker/mocks/services/vulnerable/*/Dockerfile.*` to understand:
+3. **Existing Dockerfiles** — scan `docker/mocks/services/<protocol>/mock/Dockerfile.*` and `docker/mocks/services/<protocol>/cve/Dockerfile.*` to understand:
    - Base image choices per service type
    - Build argument patterns
    - COPY and dependency installation patterns
@@ -105,13 +105,15 @@ Read these files to understand the current state:
 ### File Placement
 
 **Mock services**:
-- Dockerfile: `docker/mocks/services/Dockerfile.<protocol>` (or `docker/mocks/services/<protocol>/Dockerfile` for complex services)
-- Server: `docker/mocks/services/<protocol>_server.py` (or `docker/mocks/services/<protocol>/<script>.py`)
+- Dockerfile: `docker/mocks/services/<protocol>/mock/Dockerfile.<detail>`
+- Server: `docker/mocks/services/<protocol>/mock/<script>.py`
+- Build context: `./services/<protocol>/mock`
 - Compose entry: append to `docker/mocks/compose.yml` under the appropriate section header
 
 **CVE services**:
-- Dockerfile: `docker/mocks/services/vulnerable/<protocol>/Dockerfile.<detail>`
-- C source: `docker/mocks/services/vulnerable/<protocol>/<protocol>_cve_<year>_<number>.c`
+- Dockerfile: `docker/mocks/services/<protocol>/cve/Dockerfile.<detail>`
+- C source: `docker/mocks/services/<protocol>/cve/<protocol>_cve_<year>_<number>.c`
+- Build context: `./services/<protocol>/cve`
 - Compose entry: append to `docker/mocks/compose.cve.yml` under the appropriate section header
 
 ## Step 3 — Generate Dockerfile
@@ -228,7 +230,7 @@ Key rules:
 ```yaml
   <protocol>-cve-<year>-<number>:
     build:
-      context: ./services/vulnerable/<protocol>
+      context: ./services/<protocol>/cve
       dockerfile: Dockerfile.<detail>
     container_name: <protocol>-cve-<year>-<number>
     hostname: <protocol>-<short-vuln-name>
@@ -654,7 +656,7 @@ Before declaring the service complete, verify:
 
 1. **Missing scanner**: if `src/oida/protocols/<protocol>/` doesn't exist, warn the user that the mock won't be testable via `oida <protocol>`. Offer to create a minimal mock that just accepts connections and returns a banner.
 
-2. **Missing vulnerable directory**: if `docker/mocks/services/vulnerable/<protocol>/` doesn't exist, create it. This is expected for new protocols.
+2. **Missing cve directory**: if `docker/mocks/services/<protocol>/cve/` doesn't exist, create it. This is expected for new protocols.
 
 3. **Port range exhaustion**: if all ports in the protocol's standard range are taken, use `<default_port> + 100 * N` where N increments until a free port is found. Always confirm the choice with the user.
 

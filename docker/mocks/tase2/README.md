@@ -147,7 +147,7 @@ docker run -p 102:102 msf-ics-tase2 --vendor "MyUtility" --model "SCADA-GW"
 | `tase2_server_spec.py` | Main server (Block 1,2,5) |
 | `tase2_types.py` | IEC 60870-6-802 data types |
 | `Dockerfile` | Builds libiec61850 + server |
-| `docker-compose.yml` | Service definition |
+| `compose.yml` | Service definition |
 
 ## Building libiec61850
 

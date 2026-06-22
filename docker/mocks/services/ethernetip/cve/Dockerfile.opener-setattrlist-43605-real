@@ -1,0 +1,61 @@
+# REAL OpENer CVE-2022-43605 (TALOS-2022-1662) - SetAttributeList stack OOB write
+# + AddressSanitizer. Genuine EIPStackGroup/OpENer source at commit 58ee13c.
+#
+# OOB write (CWE-787) in SetAttributeList(), source/src/cip/cipcommon.c:1179.
+# Sibling of CVE-2022-43604: CIP service 0x04 (Set_Attribute_List) on the
+# Identity object reads an attacker-controlled 16-bit attribute_count_request
+# off the wire and uses it as an unchecked loop bound:
+#
+#   CipUint attribute_count_request = GetUintFromMessage(&...->data);  // wire
+#   for(size_t j = 0; j < attribute_count_request; j++) {
+#     attribute_number = GetUintFromMessage(&...->data);
+#     AddIntToMessage(attribute_number, &message_router_response->message);
+#     ...                                                                // more writes
+#   }
+#
+# AddIntToMessage()/AddSintToMessage() (endianconv.c) do raw pointer stores into
+# message_router_response->message.message_buffer[512] with NO bounds check; the
+# enclosing CipMessageRouterResponse is a STACK local in cpf.c. A count of
+# ~0xFFFF walks the write cursor far past the 512-byte buffer -> stack smash.
+# Talos: "stack smashing detected"/SIGABRT. Under ASan: deterministic
+# stack-buffer-overflow abort in/through SetAttributeList -- crash class (a),
+# native, NO poison fence needed.
+#
+# Reachable pre-auth over TCP 44818: RegisterSession then SendRRData carrying an
+# unconnected MessageRouter request: service 0x04, EPATH class 0x01 instance 1,
+# attribute_count = 0xFFFF.
+#
+# Same build as Dockerfile.opener-getattrlist-43604-real (one commit, one stack);
+# the two services differ only in CIP service code 0x03 vs 0x04 and label.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake netcat-openbsd iproute2 libcap-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone https://github.com/EIPStackGroup/OpENer.git && \
+    cd OpENer && git checkout 58ee13c
+
+WORKDIR /build/OpENer/bin/posix
+RUN cmake \
+      -DCMAKE_C_COMPILER=gcc \
+      -DOpENer_PLATFORM:STRING="POSIX" \
+      -DCMAKE_BUILD_TYPE:STRING="Debug" \
+      -DBUILD_SHARED_LIBS:BOOL=OFF \
+      -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      ../../source && \
+    make -j"$(nproc)" OpENer
+
+COPY poc_setattrlist_43605.py /app/poc.py
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && \
+    cp "$(find /build/OpENer/bin/posix -name OpENer -type f | head -1)" /app/OpENer
+
+WORKDIR /app
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 44818 2222/udp
+CMD ["/app/entrypoint.sh"]

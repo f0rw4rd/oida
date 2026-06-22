@@ -98,9 +98,9 @@ pytestmark = [
 
 
 def _load_mock_server():
-    """Import docker/mocks/services/can_server.py as a module."""
+    """Import docker/mocks/services/can/mock/can_server.py as a module."""
     repo_root = Path(__file__).resolve().parents[2]
-    mock_path = repo_root / "docker" / "mocks" / "services" / "can_server.py"
+    mock_path = repo_root / "docker" / "mocks" / "services" / "can" / "mock" / "can_server.py"
     spec = importlib.util.spec_from_file_location("oida_can_mock_server", mock_path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

@@ -1,0 +1,66 @@
+# REAL OpENer CVE-2022-43604 (TALOS-2022-1661) - GetAttributeList stack OOB write
+# + AddressSanitizer. Genuine EIPStackGroup/OpENer source at commit 58ee13c.
+#
+# OOB write (CWE-787) in GetAttributeList(), source/src/cip/cipcommon.c:1117.
+# The CIP service 0x03 (Get_Attribute_List) on the Identity object reads an
+# attacker-controlled 16-bit attribute_count_request straight off the wire and
+# uses it as an unchecked loop bound:
+#
+#   CipUint attribute_count_request = GetUintFromMessage(&...->data);  // wire
+#   for(size_t j = 0; j < attribute_count_request; j++) {
+#     AddIntToMessage(attribute_number, &message_router_response->message);
+#     ... AddSintToMessage(...); attribute->encode(...);               // more writes
+#   }
+#
+# AddIntToMessage()/AddSintToMessage() (endianconv.c) do raw pointer stores into
+# message_router_response->message.message_buffer[512] with NO bounds check.
+# The whole CipMessageRouterResponse (which embeds the 512-byte ENIPMessage) is
+# a STACK local in cpf.c:NotifyCommonPacketFormat. attribute_count_request ~0xFFFF
+# walks current_message_position far past the 512-byte buffer -> classic stack
+# smash. Talos observed "stack smashing detected"/SIGABRT; under ASan this is a
+# deterministic stack-buffer-overflow WRITE abort -- crash class (a), native,
+# NO poison fence needed (the write crosses the live stack allocation).
+#
+# Reachable pre-auth over TCP 44818: RegisterSession, then SendRRData carrying an
+# unconnected MessageRouter request: service 0x03, EPATH class 0x01 instance 1,
+# attribute_count = 0xFFFF.
+#
+# Fixed by adding the "attribute_count*2 <= remaining buffer" guard upstream.
+# Build: OpENer's own CMake POSIX target (bin/posix) with sanitizer C flags; run
+# the real ./OpENer sample server foregrounded so the ASan trace reaches stdout.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake netcat-openbsd iproute2 libcap-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+# Pin the confirmed-vulnerable Talos commit (development 58ee13c, < 2022-10-18).
+RUN git clone https://github.com/EIPStackGroup/OpENer.git && \
+    cd OpENer && git checkout 58ee13c
+
+# Build the real POSIX sample server with ASan+UBSan. OPENER_TRACE off keeps the
+# ASSERT macros as the abort()-ing variant only where intended; we just need the
+# default build with sanitizer flags injected via CMAKE_C_FLAGS.
+WORKDIR /build/OpENer/bin/posix
+RUN cmake \
+      -DCMAKE_C_COMPILER=gcc \
+      -DOpENer_PLATFORM:STRING="POSIX" \
+      -DCMAKE_BUILD_TYPE:STRING="Debug" \
+      -DBUILD_SHARED_LIBS:BOOL=OFF \
+      -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      ../../source && \
+    make -j"$(nproc)" OpENer
+
+COPY poc_getattrlist_43604.py /app/poc.py
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && \
+    cp "$(find /build/OpENer/bin/posix -name OpENer -type f | head -1)" /app/OpENer
+
+WORKDIR /app
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 44818 2222/udp
+CMD ["/app/entrypoint.sh"]

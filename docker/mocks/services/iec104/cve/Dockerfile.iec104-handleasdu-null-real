@@ -1,0 +1,84 @@
+# REAL lib60870-C CS104 slave NULL-pointer dereference (CWE-476) + ASan
+#
+# NULL pointer dereference in the CS104 slave message dispatcher.
+# src/iec60870/cs104/cs104_slave.c :: handleMessage(), I-frame branch:
+#   CS101_ASDU asdu = CS101_ASDU_createFromBuffer(.., buffer + 6, msgSize - 6);
+#   handleASDU(self, asdu);   // <-- NO NULL check
+# A short I-frame (total size 7..11) makes msgSize-6 < the 6-byte ASDU header,
+# so CS101_ASDU_createFromBuffer returns NULL. handleASDU then calls
+# CS101_ASDU_getCOT(NULL) -> self->asdu[2] on a NULL self -> SIGSEGV.
+# Reachable pre-auth over CS104/TCP 2404 after a STARTDT_ACT.
+#
+# Vulnerable: v0.9.4 / v2.0.0 / v2.0.1 / v2.1.0 / v2.1.1.
+# Fixed in v2.2.0 (commit 1b0c06d8) which wraps the call in `if (asdu) {...}`.
+# Confirmed by reading src at tag v2.0.0: handleASDU is called with an
+# unchecked, possibly-NULL asdu.
+#
+# Distinct from sibling tasks: NOT the C_TS_TA_1 (107) getElementEx per-element
+# NULL deref (newer-tag switch case; here the whole asdu is NULL and the crash
+# precedes the switch), and NOT the createFromBuffer index/elementSize math
+# (createFromBuffer returns NULL correctly here; the caller fails to check it).
+#
+# A NULL deref SIGSEGVs natively; ASan is built in only for a clean, symbolized
+# SEGV report at the exact function:file:line.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+# Clone and pin the confirmed-vulnerable tag.
+RUN git clone https://github.com/mz-automation/lib60870.git && \
+    cd lib60870 && \
+    git checkout v2.0.0
+
+WORKDIR /app
+COPY iec104_handleasdu_null_real.c server.c
+
+# Compile the lib60870-C sources we need straight into the harness with the
+# sanitizer flags. TLS is left out entirely: the CONFIG_CS104_SUPPORT_TLS macro
+# is only defined by the lib's own Makefile/CMake (WITH_MBEDTLS), so when we
+# compile the .c files directly the #if evaluates to 0 and no mbedtls is pulled
+# in. Include dirs: config, src/inc/api, src/inc/internal, src/hal/inc,
+# src/common/inc.
+#
+# NOTE vs the v2.3.5 recipe: at v2.0.0 lib_memory.c lives in src/common/ (not
+# src/hal/memory/), so the path differs here.
+RUN set -eux; \
+    L=/build/lib60870/lib60870-C; \
+    gcc -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer \
+      -I$L/config -I$L/src/inc/api -I$L/src/inc/internal \
+      -I$L/src/hal/inc -I$L/src/common/inc -I$L/src/tls \
+      server.c \
+      $L/src/iec60870/frame.c \
+      $L/src/iec60870/lib60870_common.c \
+      $L/src/iec60870/link_layer/serial_transceiver_ft_1_2.c \
+      $L/src/iec60870/link_layer/link_layer.c \
+      $L/src/iec60870/link_layer/buffer_frame.c \
+      $L/src/iec60870/cs104/cs104_slave.c \
+      $L/src/iec60870/cs104/cs104_frame.c \
+      $L/src/iec60870/cs104/cs104_connection.c \
+      $L/src/iec60870/cs101/cs101_slave.c \
+      $L/src/iec60870/cs101/cs101_queue.c \
+      $L/src/iec60870/cs101/cs101_master_connection.c \
+      $L/src/iec60870/cs101/cs101_master.c \
+      $L/src/iec60870/cs101/cs101_information_objects.c \
+      $L/src/iec60870/cs101/cs101_asdu.c \
+      $L/src/iec60870/cs101/cs101_bcr.c \
+      $L/src/iec60870/apl/cpXXtime2a.c \
+      $L/src/common/linked_list.c \
+      $L/src/common/lib_memory.c \
+      $L/src/hal/socket/linux/socket_linux.c \
+      $L/src/hal/time/unix/time.c \
+      $L/src/hal/thread/linux/thread_linux.c \
+      $L/src/hal/serial/linux/serial_port_linux.c \
+      -fsanitize=address,undefined \
+      -o server -lpthread
+
+ENV IEC104_PORT=2404
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 2404
+CMD ["./server"]

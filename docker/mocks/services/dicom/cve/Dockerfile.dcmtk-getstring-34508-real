@@ -1,0 +1,68 @@
+# REAL DCMTK CVE-2024-34508 (DCMTK issue #1114) - dcmnet NULL deref on an
+# invalid incoming DIMSE message. Genuine OFFIS DCMTK 3.6.8 source + ASan/UBSan.
+#
+# Crash class (a) — NULL/invalid-pointer deref, caught NATIVELY (no poison fence).
+#
+# Two sibling bugs were fixed in commit c78e434c (DCMTK-3.6.9):
+#   * dcmnet/libsrc/dimcmd.cc  getString()      — DU_stripLeadingAndTrailingSpaces(s)
+#       was called on the OFString buffer even when elem->getString(aString) had
+#       FAILED, so `s` points at uninitialised / NULL-backed storage.  Fix wraps
+#       the strip + assignment in `if (ec.good())`.
+#   * dcmdata/libsrc/dcelem.cc DcmElement::loadValue() — an incomplete dataset
+#       read from the stream left the value pointer NULL while errorFlag stayed
+#       "good"; later use dereferences NULL.  Fix sets EC_InvalidStream.
+#
+# Reachable PRE-AUTH over the DICOM upper layer (TCP): open an association to
+# the dcmrecv Store SCP, then send a P-DATA-TF carrying a DIMSE C-STORE-RQ
+# command set whose string element (e.g. AffectedSOPClassUID, VR=UI) has a
+# malformed / truncated value.  dimse command parsing (DIMSE_parseCmdObject ->
+# getString) then operates on the failed element -> SIGSEGV inside getString().
+#
+# Server: dcmrecv (ships with DCMTK, dcmnet module) — a real DIMSE C-STORE SCP.
+# We build only ofstd oflog dcmdata dcmnet + the dcmrecv tool to keep the
+# (otherwise very large) DCMTK CMake build tractable.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake netcat-openbsd python3 python3-pip \
+    libssl-dev zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --no-cache-dir pynetdicom==2.0.2 pydicom==2.4.4
+
+WORKDIR /build
+RUN git clone --depth 1 --branch DCMTK-3.6.8 https://github.com/DCMTK/dcmtk.git
+
+WORKDIR /build/dcmtk/build
+# ASan+UBSan on the whole tree; only the modules we need are built (the tools we
+# don't reference simply aren't invoked, but limiting the build keeps it sane).
+RUN cmake \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DDCMTK_ENABLE_CXX11=ON \
+      -DDCMTK_WITH_OPENSSL=OFF -DDCMTK_WITH_ZLIB=OFF \
+      -DDCMTK_WITH_PNG=OFF -DDCMTK_WITH_TIFF=OFF -DDCMTK_WITH_XML=OFF \
+      -DDCMTK_WITH_ICONV=OFF -DDCMTK_WITH_ICU=OFF -DDCMTK_WITH_WRAP=OFF \
+      -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_CXX_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      .. && \
+    make -j"$(nproc)" dcmrecv
+
+RUN mkdir -p /app && \
+    cp "$(find /build/dcmtk/build -name dcmrecv -type f | head -1)" /app/dcmrecv && \
+    cp /build/dcmtk/dcmdata/data/dicom.dic /app/dicom.dic
+
+WORKDIR /app
+COPY poc_getstring_34508.py /app/poc.py
+COPY entrypoint-34508.sh /app/entrypoint.sh
+RUN mkdir -p /app/storage && chmod +x /app/entrypoint.sh
+
+# Load the DICOM data dictionary so the DIMSE command set is fully parsed
+# (the getString() bug is on the command-element decode path).
+ENV DCMDICTPATH=/app/dicom.dic
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+ENV DICOM_PORT=11112
+EXPOSE 11112
+CMD ["/app/entrypoint.sh"]

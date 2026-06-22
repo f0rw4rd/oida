@@ -1,0 +1,47 @@
+# REAL CVE-2024-53429 - actual vulnerable open62541 v1.4.6 + ASan/UBSan
+#
+# Reachable assertion (CWE-617): DECODE_BINARY(Variant) accepts a Variant whose
+# arrayDimensions product != arrayLength (no validation), but ENCODE_BINARY
+# rejects it -> the OPC UA fuzz harness fuzz_binary_decode.cc:79
+#   UA_assert(UA_encodeBinary(...) == UA_STATUSCODE_GOOD)
+# aborts. open62541 issue #6825; fixed in 1.4 branch by commit b9473527 which
+# adds the missing product==arrayLength check to the decoder.
+#
+# Built CMAKE_BUILD_TYPE=Debug so UA_assert maps to live assert(); the harness
+# also explicitly abort()s on the encoder's BADENCODINGERROR. ASan/UBSan ride
+# along to catch any incidental memory error in the decode path.
+
+FROM debian:bookworm
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake python3 netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone https://github.com/open62541/open62541.git && \
+    cd open62541 && \
+    git checkout v1.4.6 && \
+    git submodule update --init --recursive && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DUA_ENABLE_AMALGAMATION=OFF \
+        -DUA_BUILD_EXAMPLES=OFF \
+        -DUA_LOGLEVEL=300 \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+        -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined" && \
+    make -j$(nproc) && make install
+
+WORKDIR /app
+COPY opcua_cve_2024_53429_real.c server.c
+RUN gcc -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer \
+    -o server server.c -I/usr/include -lopen62541 -lpthread
+
+ENV LD_LIBRARY_PATH=/usr/lib
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 4840
+CMD ["./server"]

@@ -1,0 +1,58 @@
+# REAL OpENer CVE-2022-43606 (TALOS-2022-1663) - LargeForwardOpen NULL call
+# + AddressSanitizer. Genuine EIPStackGroup/OpENer source at commit 58ee13c.
+#
+# Use-of-uninitialized / NULL function-pointer call (CWE-824) reached through
+# HandleNonNullNonMatchingForwardOpenRequest(), source/src/cip/cipconnectionmanager.c:483.
+#
+# A LargeForwardOpen (CIP service 0x5B on the Connection Manager, class 0x06)
+# with connection_path_size == 0 parses as a Non-Null / Non-Matching request.
+# The handler then resolves the target by class id:
+#
+#   connection_management_entry = GetConnectionManagementEntry(class_id /*==0*/);
+#   if(NULL != connection_management_entry) {                  // entry is non-NULL...
+#     temp = connection_management_entry->open_connection_function(...);  // ...but fn ptr is NULL
+#
+# GetConnectionManagementEntry() (line 1731) returns the first slot whose
+# class_id matches 0 -- an uninitialised trailing slot of g_connection_management_list
+# whose open_connection_function is NULL. The NULL check is on the *entry*, not the
+# *function pointer*, so the call dereferences NULL -> jump to pc 0x0 -> SIGSEGV.
+# Crash class (a): genuine wild call, caught NATIVELY (ASan reports
+# "SEGV on unknown address 0x000000000000 (pc 0x0)"), NO poison fence needed.
+#
+# Reachable pre-auth over TCP 44818: RegisterSession then SendRRData carrying a
+# LargeForwardOpen with connection_path_size = 0 (the very first request crashes).
+#
+# Same OpENer build as Dockerfile.opener-{get,set}attrlist-4360{4,5}-real (commit
+# 58ee13c); this service differs only in the PoC packet and labels.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake netcat-openbsd iproute2 libcap-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone https://github.com/EIPStackGroup/OpENer.git && \
+    cd OpENer && git checkout 58ee13c
+
+WORKDIR /build/OpENer/bin/posix
+RUN cmake \
+      -DCMAKE_C_COMPILER=gcc \
+      -DOpENer_PLATFORM:STRING="POSIX" \
+      -DCMAKE_BUILD_TYPE:STRING="Debug" \
+      -DBUILD_SHARED_LIBS:BOOL=OFF \
+      -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      ../../source && \
+    make -j"$(nproc)" OpENer
+
+COPY poc_largeforwardopen_43606.py /app/poc.py
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && \
+    cp "$(find /build/OpENer/bin/posix -name OpENer -type f | head -1)" /app/OpENer
+
+WORKDIR /app
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 44818 2222/udp
+CMD ["/app/entrypoint.sh"]

@@ -189,7 +189,7 @@ Every flag shown in `oida <proto> -h` output should be testable against the mock
 
 ### Mock Service Capability Map
 
-Cross-reference each module's flags against what the mock services actually support. The mocks are defined in `docker/mocks/compose.yml` and `docker/mocks/docker-compose.yml`:
+Cross-reference each module's flags against what the mock services actually support. The mocks are defined in `docker/mocks/compose.yml` and `docker/mocks/compose.cve.yml`:
 
 | Capability | Mock Services That Support It |
 |------------|-------------------------------|
