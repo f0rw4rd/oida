@@ -20,6 +20,8 @@ oida_fuzz_session.db
 fuzzer_session.db
 http_cli_test.db
 modbus_crash_test.db
+modbus_rtu_broadcast_test.db
+modbus_unit_id_test.db
 test_fuzz_session.db
 # SQLite WAL/SHM sidecars — never source
 *.db-wal
