@@ -522,6 +522,61 @@ class TestDTLSPortResolution(unittest.TestCase):
         assert inst._resolve_dtls_port() == 15684
 
 
+class TestDTLSUnavailable(unittest.TestCase):
+    """DTLS requested but the DTLSSocket backend is not installed.
+
+    Regression for the 'DTLS gated on DTLSSocket that was removed from the
+    coap extra' finding: requesting DTLS must fail loudly with a clear
+    'unavailable' message and abort, NOT silently downgrade to a cleartext
+    CoAP scan.
+    """
+
+    def _make_instance(self):
+        from oida.protocols.coap import coap as CoAPClass
+
+        args = Mock()
+        args.dtls = True
+        args.psk = None
+        args.psk_identity = None
+        args.dtls_cert = None
+        args.dtls_key = None
+        args.dtls_ca = None
+        args.dtls_rpk = None
+
+        with patch.object(CoAPClass, "__init__", lambda self, *a, **kw: None):
+            instance = CoAPClass.__new__(CoAPClass)
+
+        instance.args = args
+        instance.host = "127.0.0.1"
+        instance.port = 5684
+        instance.conn = None
+        instance.results = {"data": {}}
+        instance.logger = Mock()
+        return instance
+
+    def test_dtls_requested_without_backend_fails_loudly(self):
+        instance = self._make_instance()
+
+        with (
+            patch("oida.protocols.coap.nxc_connection._dtls_available", return_value=False),
+            patch("oida.protocols.coap.nxc_connection.CoAPScanner") as mock_scanner_cls,
+            patch.object(type(instance), "create_conn_obj") as mock_create,
+            patch.object(type(instance), "_convert_args_to_dict", return_value={}, create=True),
+        ):
+            instance.proto_flow()
+
+        # Aborted with a clear unavailable error...
+        assert instance.results["success"] is False
+        assert "DTLS" in instance.results["error"]
+        instance.logger.fail.assert_called()
+        msg = instance.logger.fail.call_args[0][0]
+        assert "unavailable" in msg.lower()
+
+        # ...and did NOT silently fall back to a cleartext CoAP scan.
+        mock_create.assert_not_called()
+        mock_scanner_cls.return_value.discover.assert_not_called()
+
+
 # ---------------------------------------------------------------------------
 # Credential Parsing Integration Tests
 # ---------------------------------------------------------------------------

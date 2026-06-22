@@ -1552,9 +1552,7 @@ class TestNewInitArgs(unittest.TestCase):
         mock_c104 = MagicMock()
         mock_tls = MagicMock()
         mock_c104.TransportSecurity.return_value = mock_tls
-        with patch(
-            "oida.protocols.iec104.scanner._deps._get_c104", return_value=mock_c104
-        ):
+        with patch("oida.protocols.iec104.scanner._deps._get_c104", return_value=mock_c104):
             result = scanner._build_tls_config()
         mock_tls.set_ca_certificate.assert_called_once_with(cert="/path/ca.pem")
         self.assertIs(result, mock_tls)

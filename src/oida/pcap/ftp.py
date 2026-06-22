@@ -72,7 +72,6 @@ class FTPPassiveListener(PySharkListenerBase):
         # Live capture
         listener = FTPPassiveListener(interface="eth0", timeout=60)
         devices = listener.scan()
-        devices = listener.scan()
 
         # Access extracted credentials
         for cred in listener.credentials:

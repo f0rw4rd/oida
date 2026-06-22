@@ -134,7 +134,9 @@ class MockPDRealData:
         port2.subslot = 0x8002
         port2.link_state_link = 2  # Down
         port2.mau_type_name = "Unknown"
-        port2.peers = [MagicMock(chassis_id="switch-01", port_id="port1", mac_str="aa:bb:cc:dd:ee:ff")]
+        port2.peers = [
+            MagicMock(chassis_id="switch-01", port_id="port1", mac_str="aa:bb:cc:dd:ee:ff")
+        ]
         port2.mau_type = 0
 
         self.ports = [port1, port2]

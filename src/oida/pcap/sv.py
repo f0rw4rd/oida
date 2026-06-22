@@ -130,15 +130,11 @@ class SVStream:
     conf_revs: Set[int] = field(default_factory=set)
     smp_synch_modes: Set[int] = field(default_factory=set)
     smp_rates: Set[int] = field(default_factory=set)
-    smp_mods: Set[int] = field(default_factory=set)
     datasets: Set[str] = field(default_factory=set)
     last_smp_cnt: int = -1
     sample_gaps: int = 0
     total_frames: int = 0
     simulated_frames: int = 0
-    no_asdu_values: Set[int] = field(default_factory=set)
-    min_meas_value: Optional[int] = None
-    max_meas_value: Optional[int] = None
     quality_issues: int = 0
     first_seen: str = ""
     last_seen: str = ""
@@ -256,10 +252,7 @@ class SVPassiveListener(PySharkListenerBase):
             conf_rev,
             smp_synch,
             smp_rate,
-            smp_mod,
-            no_asdu,
             simulated,
-            meas_values,
             quality_issues,
         )
 
@@ -329,10 +322,7 @@ class SVPassiveListener(PySharkListenerBase):
         conf_rev: int,
         smp_synch: int,
         smp_rate: int,
-        smp_mod: int,
-        no_asdu: int,
         simulated: bool,
-        meas_values: List[int],
         quality_issues: List[str],
     ) -> SVStream:
         """Update or create an SV stream entry."""
@@ -359,11 +349,6 @@ class SVPassiveListener(PySharkListenerBase):
             stream.smp_synch_modes.add(smp_synch)
         if smp_rate > 0:
             stream.smp_rates.add(smp_rate)
-        if smp_mod >= 0:
-            stream.smp_mods.add(smp_mod)
-        if no_asdu > 0:
-            stream.no_asdu_values.add(no_asdu)
-
         # Track confRev for mismatch detection
         if sv_id and conf_rev:
             self._conf_rev_by_svid.setdefault(sv_id, set()).add(conf_rev)
@@ -381,13 +366,6 @@ class SVPassiveListener(PySharkListenerBase):
 
         if simulated:
             stream.simulated_frames += 1
-
-        # Track measurement value range
-        for val in meas_values:
-            if stream.min_meas_value is None or val < stream.min_meas_value:
-                stream.min_meas_value = val
-            if stream.max_meas_value is None or val > stream.max_meas_value:
-                stream.max_meas_value = val
 
         if quality_issues:
             stream.quality_issues += 1

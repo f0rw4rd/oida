@@ -212,13 +212,6 @@ MSG_TYPE_RESPONSE = 1
 MSG_TYPE_PUBLISH = 2
 MSG_TYPE_NAK = 15
 
-MSG_TYPE_NAMES = {
-    MSG_TYPE_REQUEST: "Request",
-    MSG_TYPE_RESPONSE: "Response",
-    MSG_TYPE_PUBLISH: "Publish",
-    MSG_TYPE_NAK: "NAK",
-}
-
 # HART-IP message IDs
 MSG_ID_SESSION_INIT = 0
 MSG_ID_SESSION_CLOSE = 1
@@ -313,6 +306,7 @@ class HARTIPPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "hartip"
     DISPLAY_FILTER = "hart_ip"
     REQUIRED_LAYERS = ("hart_ip",)
+    SERVER_PORTS = (5094,)
     PROTOCOL_COLUMNS = (
         "rw",
         "command",
@@ -375,23 +369,34 @@ class HARTIPPassiveListener(PySharkListenerBase):
         version = self._parse_int(self.get_field(hart_layer, "version"))
         transaction_id = self._parse_int(self.get_field(hart_layer, "transaction_id"))
 
-        # Determine direction: request goes to port 5094, response comes from it
-        if dst_port == 5094:
-            host_ip, device_ip = src_ip, dst_ip
-            host_mac, device_mac = src_mac, dst_mac
-            is_request = True
-        elif msg_type == MSG_TYPE_REQUEST:
-            host_ip, device_ip = src_ip, dst_ip
-            host_mac, device_mac = src_mac, dst_mac
-            is_request = True
-        elif msg_type in (MSG_TYPE_RESPONSE, MSG_TYPE_PUBLISH):
-            host_ip, device_ip = dst_ip, src_ip
-            host_mac, device_mac = dst_mac, src_mac
-            is_request = False
+        # Determine direction via the shared cascade.  The HART-IP header carries
+        # an authoritative message_type field (0=Request, 1=Response, 2=Publish,
+        # 15=NAK) that is single-packet and port-independent, so it is the native
+        # signal: REQUEST -> native=True, RESPONSE/PUBLISH/NAK -> native=False
+        # (publish/NAK both originate device-side, i.e. response direction).
+        # When message_type is absent/unrecognised we pass native=None and let
+        # resolve_direction() fall back to the known server port (5094, unioned
+        # with any --decode-as / OVERRIDE_PREFS overrides) then the lower-port /
+        # first-seen heuristic.  This preserves the prior port-5094 behaviour and
+        # adds non-standard-port robustness.
+        if msg_type == MSG_TYPE_REQUEST:
+            native: Optional[bool] = True
+        elif msg_type in (MSG_TYPE_RESPONSE, MSG_TYPE_PUBLISH, MSG_TYPE_NAK):
+            native = False
         else:
-            host_ip, device_ip = src_ip, dst_ip
-            host_mac, device_mac = src_mac, dst_mac
-            is_request = True
+            native = None
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request = d.is_request
+        host_ip, device_ip = d.client_ip, d.server_ip
+        host_mac, device_mac = (src_mac, dst_mac) if is_request else (dst_mac, src_mac)
 
         # Handle non-pass-through messages (session init/close, keep alive)
         if msg_id != MSG_ID_PASS_THROUGH:
@@ -413,14 +418,16 @@ class HARTIPPassiveListener(PySharkListenerBase):
             return
 
         # Pass-through: extract HART command frame fields
-        command = self._parse_int(self.get_field(hart_layer, "pt_command"))
+        command = self._parse_int(self.get_field(hart_layer, "pt_command"), default=None)
         if command is None:
             return
 
         # Device address
-        short_addr = self._parse_int(self.get_field(hart_layer, "pt_short_addr"))
+        short_addr = self._parse_int(self.get_field(hart_layer, "pt_short_addr"), default=None)
         long_addr = self.get_field(hart_layer, "pt_long_address")
-        addr_type = self._parse_int(self.get_field(hart_layer, "pt_delimiter_address_type"))
+        addr_type = self._parse_int(
+            self.get_field(hart_layer, "pt_delimiter_address_type"), default=None
+        )
 
         # Build address display string
         if addr_type == 1 and long_addr:

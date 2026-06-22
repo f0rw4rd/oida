@@ -61,10 +61,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # EIGRP constants
 EIGRP_PROTOCOL = 88
@@ -139,11 +135,6 @@ class EIGRPCredential:
 
     @property
     def server_ip(self) -> str:
-        """Canonical credential field."""
-        return self.router_ip
-
-    @property
-    def client_ip(self) -> str:
         """Canonical credential field."""
         return self.router_ip
 
@@ -372,10 +363,14 @@ class EIGRPPassiveListener(PySharkListenerBase):
         old_metric_rel = self.get_field(eigrp, "old_metric_rel", None)
         if old_metric_rel is not None:
             old_metric["reliability"] = self._parse_int(old_metric_rel, 0)
-            old_metric["bandwidth"] = self._parse_int(self.get_field(eigrp, "old_metric_bw", "0"), 0)
+            old_metric["bandwidth"] = self._parse_int(
+                self.get_field(eigrp, "old_metric_bw", "0"), 0
+            )
             old_metric["delay"] = self._parse_int(self.get_field(eigrp, "old_metric_delay", "0"), 0)
             old_metric["load"] = self._parse_int(self.get_field(eigrp, "old_metric_load", "0"), 0)
-            old_metric["hopcount"] = self._parse_int(self.get_field(eigrp, "old_metric_hopcount", "0"), 0)
+            old_metric["hopcount"] = self._parse_int(
+                self.get_field(eigrp, "old_metric_hopcount", "0"), 0
+            )
             old_metric["mtu"] = self._parse_int(self.get_field(eigrp, "old_metric_mtu", "0"), 0)
             # Attach metrics to routes extracted in this packet
             for route in routes:
@@ -390,7 +385,9 @@ class EIGRPPassiveListener(PySharkListenerBase):
             extdata["originating_protocol"] = self._parse_int(
                 self.get_field(eigrp, "extdata_proto", "0"), 0
             )
-            extdata["external_metric"] = self._parse_int(self.get_field(eigrp, "extdata_metric", "0"), 0)
+            extdata["external_metric"] = self._parse_int(
+                self.get_field(eigrp, "extdata_metric", "0"), 0
+            )
             extdata["external_tag"] = self._parse_int(self.get_field(eigrp, "extdata_tag", "0"), 0)
             for route in routes:
                 route["external_data"] = extdata
@@ -484,9 +481,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
         if auth_type not in EIGRP_AUTH_TYPES:
             return
 
-        digest = str(
-            self.get_field_any(eigrp, "auth_digest", "auth.digest", default="")
-        ).strip()
+        digest = str(self.get_field_any(eigrp, "auth_digest", "auth.digest", default="")).strip()
         if not digest:
             return
 

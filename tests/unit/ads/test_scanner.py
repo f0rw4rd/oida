@@ -262,6 +262,52 @@ class TestADSProtocolLogic(unittest.TestCase):
         mock_pyads.open_port.assert_called_once()
         mock_pyads.set_local_address.assert_called_once()
 
+    @patch("oida.protocols.ads.scanner._get_pyads")
+    def test_connect_returns_within_timeout_when_open_hangs(self, mock_get_pyads):
+        """connect() must honor its timeout even if connection.open() hangs.
+
+        Regression for CODE_REVIEW finding #9: the executor was used as a
+        `with` context manager, so leaving it on TimeoutError called
+        shutdown(wait=True) and blocked until the stuck open() returned,
+        defeating the timeout. connect() must return ~at the timeout, not
+        after open() finishes.
+        """
+        import threading
+        import time
+
+        scanner = self.ADSScanner(self.args)
+        scanner.timeout = 0.2
+
+        open_started = threading.Event()
+        open_release = threading.Event()
+
+        class HangingConnection:
+            def open(self):
+                open_started.set()
+                # Block far longer than the timeout; released in finally below.
+                open_release.wait(timeout=10)
+
+        mock_pyads = Mock()
+        mock_pyads.Connection.return_value = HangingConnection()
+        mock_get_pyads.return_value = mock_pyads
+
+        try:
+            start = time.monotonic()
+            result = scanner.connect()
+            elapsed = time.monotonic() - start
+
+            self.assertTrue(open_started.wait(timeout=1), "open() never ran")
+            self.assertIsNone(result)
+            # Must return shortly after the 0.2s timeout, NOT after open() ends.
+            self.assertLess(
+                elapsed,
+                2.0,
+                f"connect() blocked {elapsed:.2f}s; timeout not enforced",
+            )
+            mock_pyads.close_port.assert_called_once()
+        finally:
+            open_release.set()
+
     def test_device_info_extraction(self):
         """Test device information extraction"""
         scanner = self.ADSScanner(self.args)

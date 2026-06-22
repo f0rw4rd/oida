@@ -1619,6 +1619,84 @@ class TestGooseProtoArgs(unittest.TestCase):
         args = main_parser.parse_args(["goose", "eth0", "--mms-enum", "192.168.1.100"])
         self.assertEqual(args.mms_enum, "192.168.1.100")
 
+    def test_proto_args_mms_enum_without_positional_target(self):
+        """Documented `oida goose --mms-enum <ip>` invocation parses without a
+        positional target (regression: target was a required positional)."""
+        import argparse
+        from oida.protocols.goose.proto_args import proto_args
+
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        parent = argparse.ArgumentParser(add_help=False)
+        proto_args(subparsers, [parent])
+
+        # Previously raised SystemExit: "the following arguments are required: target"
+        args = main_parser.parse_args(["goose", "--mms-enum", "192.168.1.100"])
+        self.assertEqual(args.mms_enum, "192.168.1.100")
+        self.assertEqual(args.target, "")
+
+    def test_proto_args_mms_enum_with_port_without_positional_target(self):
+        """Documented `oida goose --mms-enum <ip> --mms-port 102` invocation
+        parses without a positional target."""
+        import argparse
+        from oida.protocols.goose.proto_args import proto_args
+
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        parent = argparse.ArgumentParser(add_help=False)
+        proto_args(subparsers, [parent])
+
+        args = main_parser.parse_args(["goose", "--mms-enum", "192.168.1.100", "--mms-port", "102"])
+        self.assertEqual(args.mms_enum, "192.168.1.100")
+        self.assertEqual(args.mms_port, 102)
+        self.assertEqual(args.target, "")
+
+    def test_cli_main_derives_target_from_mms_enum(self):
+        """cli.py main() derives the run target from --mms-enum when the
+        positional interface is absent, so the empty-target guard is not hit
+        and _resolve_targets receives the IP. We stub the scan execution and
+        capture the targets the pipeline resolved."""
+        import argparse
+        from unittest import mock
+
+        from oida import cli
+
+        captured = {}
+
+        def fake_resolve(args, protocol_name, is_serial):
+            captured["target_input"] = getattr(args, "target", None)
+            return None  # short-circuit after resolution so no real scan runs
+
+        parsed = argparse.Namespace(
+            protocol="goose",
+            target="",
+            mms_enum="192.168.1.100",
+            rgoose=False,
+            config=None,
+            json_log=None,
+            list_maps=False,
+        )
+
+        with (
+            mock.patch.object(cli, "_resolve_targets", side_effect=fake_resolve),
+            mock.patch.object(cli, "setup_logging"),
+            mock.patch.object(cli, "configure_from_args"),
+            mock.patch.object(cli, "gen_cli_args") as gen,
+        ):
+            mock_parser = mock.MagicMock()
+            mock_parser.parse_args.return_value = parsed
+            mock_loader = mock.MagicMock()
+            mock_loader.get_protocol_class.return_value = type("Goose", (), {})
+            mock_parser._protocol_loader = mock_loader
+            mock_parser._subparsers_action = None
+            gen.return_value = mock_parser
+
+            rc = cli.main(["goose", "--mms-enum", "192.168.1.100"])
+
+        self.assertEqual(captured.get("target_input"), "192.168.1.100")
+        self.assertEqual(parsed.target, "192.168.1.100")
+        self.assertEqual(rc, 1)  # _resolve_targets returned None -> early exit
+
     def test_proto_args_mms_port_default(self):
         """Test --mms-port defaults to 102."""
         import argparse
@@ -1652,9 +1730,7 @@ class TestGooseProtoArgs(unittest.TestCase):
         self.assertEqual(args.gocb_ref, "")
 
         # Supplied value parses to the dest the scanner reads.
-        args = main_parser.parse_args(
-            ["goose", "eth0", "--gocb-ref", "LD/LLN0$GO$gcb01"]
-        )
+        args = main_parser.parse_args(["goose", "eth0", "--gocb-ref", "LD/LLN0$GO$gcb01"])
         self.assertEqual(args.gocb_ref, "LD/LLN0$GO$gcb01")
 
     def test_gocb_ref_reaches_live_capture_path(self):

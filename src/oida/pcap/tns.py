@@ -90,6 +90,7 @@ class TNSPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "tns"
     DISPLAY_FILTER = "tns"
     REQUIRED_LAYERS = ("tns",)
+    SERVER_PORTS = (TNS_DEFAULT_PORT,)
     PROTOCOL_COLUMNS = ("type", "version", "detail")
 
     def __init__(
@@ -268,8 +269,24 @@ class TNSPassiveListener(PySharkListenerBase):
         sdu_size = self.get_field(tns_layer, "sdu_size", "")
         max_tdu_size = self.get_field(tns_layer, "max_tdu_size", "")
 
-        # Determine direction based on packet type and port
-        is_server = src_port == TNS_DEFAULT_PORT or pkt_type_str in ("2", "4")
+        # Determine direction via the shared cascade.  TNS Accept (type 2) and
+        # Refuse (type 4) are server-originated -- a clean, port-independent
+        # response signal we feed as the native tier.  Other packet types
+        # (Connect/Data/ACK/...) carry no QR bit, so native=None falls through
+        # to the known-server-port tier (canonical 1521 plus user --decode-as /
+        # OVERRIDE_PREFS) and then the lower-port heuristic.  is_server == the
+        # src_ip is the Oracle server (server -> client response).
+        native = False if pkt_type_str in ("2", "4") else None
+        d = self.resolve_direction(
+            None,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_server = not d.is_request
         direction = "response" if is_server else "request"
 
         # Build base details

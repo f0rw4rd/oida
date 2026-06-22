@@ -4,7 +4,6 @@ Tests for ReducedString primitive - optimized string fuzzing for protocols.
 Tests cover:
 - Fuzz library contents and reduction
 - Long string seed expansion with boundary testing
-- Protocol-specific payload registry
 - Reduction levels (balanced/aggressive)
 - Statistics reporting
 - Mutations output
@@ -156,64 +155,6 @@ class TestReducedStringInstance:
         assert count < 1000, f"Should be reduced, got {count}"
 
 
-class TestProtocolPayloadRegistry:
-    """Test protocol-specific payload registration."""
-
-    def setup_method(self):
-        """Clear registry before each test."""
-        ReducedString.clear_protocol_payloads()
-
-    def teardown_method(self):
-        """Clean up registry after each test."""
-        ReducedString.clear_protocol_payloads()
-
-    def test_register_payloads(self):
-        ReducedString.register_protocol_payloads("http", ["GET /", "POST /"])
-        payloads = ReducedString.get_protocol_payloads("http")
-        assert "GET /" in payloads
-        assert "POST /" in payloads
-
-    def test_register_no_duplicates(self):
-        ReducedString.register_protocol_payloads("http", ["GET /", "POST /"])
-        ReducedString.register_protocol_payloads("http", ["GET /", "PUT /"])
-        payloads = ReducedString.get_protocol_payloads("http")
-        assert payloads.count("GET /") == 1
-        assert "PUT /" in payloads
-
-    def test_get_empty_protocol(self):
-        payloads = ReducedString.get_protocol_payloads("nonexistent")
-        assert payloads == []
-
-    def test_list_protocols(self):
-        ReducedString.register_protocol_payloads("http", ["test1"])
-        ReducedString.register_protocol_payloads("ftp", ["test2"])
-        protocols = ReducedString.list_protocols()
-        assert "http" in protocols
-        assert "ftp" in protocols
-
-    def test_clear_specific_protocol(self):
-        ReducedString.register_protocol_payloads("http", ["test1"])
-        ReducedString.register_protocol_payloads("ftp", ["test2"])
-        ReducedString.clear_protocol_payloads("http")
-        assert ReducedString.get_protocol_payloads("http") == []
-        assert "ftp" in ReducedString.list_protocols()
-
-    def test_clear_all_protocols(self):
-        ReducedString.register_protocol_payloads("http", ["test1"])
-        ReducedString.register_protocol_payloads("ftp", ["test2"])
-        ReducedString.clear_protocol_payloads()
-        assert ReducedString.list_protocols() == []
-
-    def test_instance_with_protocol(self):
-        ReducedString.register_protocol_payloads("http", ["GET / HTTP/0.9"])
-        s = ReducedString(name="method", default_value="GET", protocol_name="http")
-        assert s.protocol_name == "http"
-
-    def test_instance_without_protocol(self):
-        s = ReducedString(name="method", default_value="GET")
-        assert s.protocol_name is None
-
-
 class TestReductionLevels:
     """Test reduction level switching."""
 
@@ -280,13 +221,6 @@ class TestReducedStringStats:
         assert "long_string_count" in stats
         assert "total_per_field" in stats
         assert stats["total_per_field"] == stats["fuzz_library_count"] + stats["long_string_count"]
-
-    def test_get_stats_with_protocol(self):
-        ReducedString.register_protocol_payloads("test_proto", ["p1", "p2", "p3"])
-        stats = ReducedString.get_stats(protocol_name="test_proto")
-        assert stats["protocol_payload_count"] == 3
-        assert stats["total_with_protocol"] == stats["total_per_field"] + 3
-        ReducedString.clear_protocol_payloads()
 
     def test_stats_mutation_count_reduced(self):
         stats = ReducedString.get_stats()

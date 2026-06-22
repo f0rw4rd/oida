@@ -5,6 +5,7 @@ Handles continuation/fragmentation:
 - DSC segment handling
 - MSH-14 continuation pointer
 - Fragment reassembly
+- Driving the continuation loop on the query path
 """
 
 from typing import List, Optional
@@ -15,16 +16,68 @@ from hl7apy.parser import parse_message
 from ..segments import HL7SegmentParser
 from ._helpers import populate_msh
 
+# Hard cap on continuation rounds so a misbehaving/hostile server that keeps
+# returning a DSC pointer can't drive an unbounded request loop.
+MAX_CONTINUATION_ROUNDS = 64
+
 
 class ContinuationMixin:
     """Mixin providing HL7 continuation/fragmentation building blocks.
 
     Exposes the DSC/MSH-14 detection (_check_continuation), QCN request
     builder (_create_continuation_request), and fragment reassembly
-    (_reassemble_fragments) helpers. These are unit-tested but not yet
-    chained into the query/scan path, so DSC/MSH-14 continuation is not
-    driven end-to-end.
+    (_reassemble_fragments) helpers, plus _send_query_message which chains
+    them into the live query path so paginated (DSC/MSH-14) results are
+    followed and reassembled instead of being silently truncated.
     """
+
+    def _send_query_message(self, message: str) -> Optional[bytes]:
+        """Send a query and follow DSC/MSH-14 continuation pointers.
+
+        Sends the initial query frame via _send_mllp_message (byte-identical
+        to a plain single-shot send). If the response carries a continuation
+        pointer, repeatedly issues QCN^J01 continuation requests over the same
+        connection, collecting every returned frame, then reassembles them
+        into a single payload.
+
+        When there is NO continuation pointer (the common case) this returns
+        the single frame unchanged with no extra requests issued.
+        """
+        first = self._send_mllp_message(message)
+        if not first:
+            return first
+
+        pointer, _style = self._check_continuation(first)
+        if not pointer:
+            # No continuation: behave exactly like a single-shot send.
+            return first
+
+        fragments: List[bytes] = [first]
+        rounds = 0
+        while pointer and rounds < MAX_CONTINUATION_ROUNDS:
+            rounds += 1
+            cont_request = self._create_continuation_request(pointer)
+            if not cont_request:
+                break
+
+            self.logger.debug(f"Following HL7 continuation pointer (round {rounds})")
+            next_frame = self._send_mllp_message(cont_request)
+            if not next_frame:
+                break
+
+            fragments.append(next_frame)
+            pointer, _style = self._check_continuation(next_frame)
+
+        if pointer and rounds >= MAX_CONTINUATION_ROUNDS:
+            self.logger.warning(
+                "HL7 continuation exceeded %d rounds; truncating result",
+                MAX_CONTINUATION_ROUNDS,
+            )
+
+        if len(fragments) > 1:
+            self.logger.display(f"Reassembled {len(fragments)} HL7 continuation fragments")
+
+        return self._reassemble_fragments(fragments)
 
     def _check_continuation(self, response: bytes) -> tuple:
         """Check if response has continuation (DSC segment or MSH-14)"""

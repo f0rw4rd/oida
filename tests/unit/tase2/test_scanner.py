@@ -929,7 +929,8 @@ class TestTASE2InformationMessages(unittest.TestCase):
         )
 
         mock_conn = MagicMock()
-        mock_conn.get_info_messages.return_value = [listed_msg]
+        store_buf = SimpleNamespace(name="IM_Operator", messages=[listed_msg])
+        mock_conn.get_info_buffers.return_value = [store_buf]
         mock_conn.get_info_message_by_ref.return_value = full_msg
 
         # The id the operator copies from --list-messages is the msg_id.
@@ -952,11 +953,10 @@ class TestTASE2InformationMessages(unittest.TestCase):
         """Reading an id that is not in the listing reports not-found, not wrong data."""
         from types import SimpleNamespace
 
-        listed_msg = SimpleNamespace(
-            msg_id=42, info_ref=7, local_ref=3, size=11, timestamp=None
-        )
+        listed_msg = SimpleNamespace(msg_id=42, info_ref=7, local_ref=3, size=11, timestamp=None)
         mock_conn = MagicMock()
-        mock_conn.get_info_messages.return_value = [listed_msg]
+        store_buf = SimpleNamespace(name="IM_Operator", messages=[listed_msg])
+        mock_conn.get_info_buffers.return_value = [store_buf]
 
         result = self.scanner.read_information_message(mock_conn, "VCC", "IM_Operator", "999")
 
@@ -966,16 +966,59 @@ class TestTASE2InformationMessages(unittest.TestCase):
         mock_conn.get_info_message_by_ref.assert_not_called()
 
     @patch("oida.protocols.tase2.scanner._tase2", create=True)
-    def test_get_im_transfer_attributes_structure(self, mock_tase2):
-        """Test get_im_transfer_attributes returns proper dict structure"""
+    def test_get_information_messages_scoped_to_store(self, mock_tase2):
+        """Listing scopes to the requested store, not the whole domain.
+
+        Two stores live in the same domain. Listing store A must return only
+        A's messages, never B's. The pre-fix code called
+        get_info_messages(domain) and returned the same domain-wide list for
+        every store.
+        """
+        from types import SimpleNamespace
+
+        msg_a = SimpleNamespace(msg_id=1, info_ref=10, local_ref=1, size=3, timestamp=None)
+        msg_b = SimpleNamespace(msg_id=2, info_ref=20, local_ref=2, size=4, timestamp=None)
+        buf_a = SimpleNamespace(name="IM_StoreA", messages=[msg_a])
+        buf_b = SimpleNamespace(name="IM_StoreB", messages=[msg_b])
+
         mock_conn = MagicMock()
+        mock_conn.get_info_buffers.return_value = [buf_a, buf_b]
 
-        result = self.scanner.get_im_transfer_attributes(mock_conn, "VCC", "IM_Operator")
+        listed_a = self.scanner.get_information_messages(mock_conn, "VCC", "IM_StoreA")
+        self.assertEqual([m["message_id"] for m in listed_a], ["1"])
 
-        self.assertIsInstance(result, dict)
-        self.assertIn("domain", result)
-        self.assertIn("store", result)
-        self.assertIn("scope", result)
+        listed_b = self.scanner.get_information_messages(mock_conn, "VCC", "IM_StoreB")
+        self.assertEqual([m["message_id"] for m in listed_b], ["2"])
+
+        # A store name not present in the domain yields nothing, not the
+        # domain-wide list.
+        listed_missing = self.scanner.get_information_messages(mock_conn, "VCC", "IM_Nope")
+        self.assertEqual(listed_missing, [])
+
+    @patch("oida.protocols.tase2.scanner._tase2", create=True)
+    def test_read_information_message_not_resolved_from_other_store(self, mock_tase2):
+        """A msg_id that belongs to a different store in the domain is not read.
+
+        msg_id 2 lives in IM_StoreB. Reading it via IM_StoreA must report
+        not-found and must never call get_info_message_by_ref. Pre-fix, the
+        domain-wide listing resolved it and read it as if it were in StoreA.
+        """
+        from types import SimpleNamespace
+
+        msg_a = SimpleNamespace(msg_id=1, info_ref=10, local_ref=1, size=3, timestamp=None)
+        msg_b = SimpleNamespace(msg_id=2, info_ref=20, local_ref=2, size=4, timestamp=None)
+        buf_a = SimpleNamespace(name="IM_StoreA", messages=[msg_a])
+        buf_b = SimpleNamespace(name="IM_StoreB", messages=[msg_b])
+
+        mock_conn = MagicMock()
+        mock_conn.get_info_buffers.return_value = [buf_a, buf_b]
+
+        result = self.scanner.read_information_message(mock_conn, "VCC", "IM_StoreA", "2")
+
+        self.assertIsNone(result["content"])
+        self.assertIsNotNone(result["error"])
+        self.assertIn("not found", result["error"])
+        mock_conn.get_info_message_by_ref.assert_not_called()
 
     @patch("oida.protocols.tase2.scanner._tase2", create=True)
     def test_write_information_message_read_only(self, mock_tase2):
@@ -1005,55 +1048,6 @@ class TestTASE2InformationMessages(unittest.TestCase):
         self.assertIsInstance(result, dict)
         self.assertFalse(result["success"])
         self.assertIn("Read-only", result["error"])
-
-
-class TestTASE2IMSecurityAnalysis(unittest.TestCase):
-    """Test TASE.2 Information Messages security analysis"""
-
-    def setUp(self):
-        """Set up test environment"""
-        self.scanner = TASE2Scanner({"rhost": "127.0.0.1", "rport": 102})
-
-    def test_analyze_im_security_with_block4_enabled(self):
-        """Test IM security analysis when Block 4 is enabled"""
-        features = {"block4": True}
-        results = {
-            "im_stores": [
-                {"name": "IM_Operator", "domain": "VCC", "max_messages": 100, "current_count": 5}
-            ]
-        }
-
-        concerns = self.scanner._analyze_im_security(results, features)
-
-        self.assertIsInstance(concerns, list)
-        self.assertTrue(len(concerns) > 0)
-        # Should flag Block 4 as enabled
-        self.assertTrue(any("Block 4" in c for c in concerns))
-
-    def test_analyze_im_security_with_block4_disabled(self):
-        """Test IM security analysis when Block 4 is disabled"""
-        features = {"block4": False}
-        results = {}
-
-        concerns = self.scanner._analyze_im_security(results, features)
-
-        self.assertIsInstance(concerns, list)
-        self.assertEqual(len(concerns), 0)
-
-    def test_analyze_im_security_large_capacity(self):
-        """Test IM security flags large capacity"""
-        features = {"block4": True}
-        results = {
-            "im_stores": [
-                {"name": "IM_Store1", "domain": "VCC", "max_messages": 300, "current_count": 10},
-                {"name": "IM_Store2", "domain": "ICC1", "max_messages": 300, "current_count": 20},
-            ]
-        }
-
-        concerns = self.scanner._analyze_im_security(results, features)
-
-        # Should flag large capacity (>500 total)
-        self.assertTrue(any("exfiltration" in c.lower() for c in concerns))
 
 
 class TestTASE2IMConstants(unittest.TestCase):

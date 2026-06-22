@@ -1830,9 +1830,7 @@ class TestMQTTBruteForceServiceInfo(unittest.TestCase):
         scanner.wordlist_path = None
         scanner._test_credentials = Mock(return_value=False)
 
-        with patch.object(
-            type(scanner), "report_service_info", autospec=True
-        ) as mock_report:
+        with patch.object(type(scanner), "report_service_info", autospec=True) as mock_report:
             results = scanner._brute_force_credentials()
 
         # report_service_info must NOT be called with a status string.

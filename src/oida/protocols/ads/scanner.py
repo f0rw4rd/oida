@@ -188,15 +188,22 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             def do_connect():
                 connection.open()
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(do_connect)
-                try:
-                    future.result(timeout=timeout)
-                except concurrent.futures.TimeoutError as e:
-                    self.logger.debug("do connect failed: %s", e)
-                    self.logger.fail(f"Connection timed out after {timeout}s")
-                    pyads.close_port()
-                    return None
+            # Manage the executor explicitly rather than via `with`: its __exit__
+            # calls shutdown(wait=True), which would block until the (possibly
+            # stuck) open() returns, defeating the timeout this guard exists for.
+            # shutdown(wait=False) returns promptly; on timeout the worker thread
+            # and its stuck open()/connection are left to leak intentionally.
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+            future = executor.submit(do_connect)
+            try:
+                future.result(timeout=timeout)
+            except concurrent.futures.TimeoutError as e:
+                self.logger.debug("do connect failed: %s", e)
+                self.logger.fail(f"Connection timed out after {timeout}s")
+                pyads.close_port()
+                executor.shutdown(wait=False)
+                return None
+            executor.shutdown(wait=False)
 
             self.logger.display(f"Connected to {self.ams_netid} (AMS port {ads_port})")
             return connection

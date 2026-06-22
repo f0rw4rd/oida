@@ -54,6 +54,23 @@ class bacnet(
 ):
     """BACnet/IP Protocol Scanner (NXC-style)"""
 
+    # Mutating/injecting operations that --safe must force off. `write` is a
+    # str/None flag handled separately; everything here is a store_true flag.
+    _DANGEROUS_FLAGS = frozenset(
+        {
+            "test_write",
+            "check_reinit",
+            "check_oos",
+            "brute_force",
+            "test_dcc",
+            "test_priority_writes",
+            "test_time_sync",
+            "test_oos",
+            "test_reinit_pass",
+            "test_bbmd_injection",
+        }
+    )
+
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.protocol_name = "bacnet"
         self.default_port = 47808
@@ -122,6 +139,19 @@ class bacnet(
             self.logger.debug("BACnet: using BAC0 (operator opted in via --use-bac0)")
             asyncio.run(self._async_proto_flow())
         else:
+            # --monitor and --diff are implemented only against the BAC0
+            # connection (_async_handle_monitor / _handle_diff both go through
+            # self._read_property -> self.bacnet.read, which is None in the
+            # bacpypes3 raw path). Rather than silently ignore these visible
+            # action flags in the default path, fail loudly with guidance.
+            if getattr(self.args, "monitor", False):
+                self.logger.fail(
+                    "--monitor requires --use-bac0 (not available in the default scan path)"
+                )
+            if getattr(self.args, "diff", None):
+                self.logger.fail(
+                    "--diff requires --use-bac0 (not available in the default scan path)"
+                )
             self._raw_scan()
 
     async def _async_proto_flow(self):
@@ -178,6 +208,10 @@ class bacnet(
             if getattr(self.args, "check_oos", False):
                 self._handle_check_oos()
 
+            # Mirror the raw path: populate results["data"]["device_info"] (the
+            # structured result surface returned by get_results()) before export
+            # so --use-bac0 scans don't come back with an empty results["data"].
+            self.enum_host_info()
             self._export_results()
 
         finally:
@@ -213,12 +247,14 @@ class bacnet(
             self.args.check_bacnet_sc = True
 
         if getattr(self.args, "safe", False):
+            # --safe must suppress every mutating/injecting operation, not just
+            # the obvious writes. Anything that issues a write, time-sync,
+            # reinit, DCC or BBMD injection (even behind --confirm) belongs here
+            # so the safety contract holds end-to-end. Keep this as a single
+            # set so new dangerous test_* flags are covered by default.
             self.args.write = None
-            self.args.test_write = False
-            self.args.check_reinit = False
-            self.args.check_oos = False
-            self.args.brute_force = False
-            self.args.test_dcc = False
+            for dangerous_flag in self._DANGEROUS_FLAGS:
+                setattr(self.args, dangerous_flag, False)
 
         # Assessment shortcuts
         if getattr(self.args, "assess_network", False):
@@ -295,24 +331,31 @@ class bacnet(
                     self.logger.debug(f"async raw scan failed: {e}")
                     device_id = None
                 if device_id is None:
+                    # Do NOT return here: a pure BBMD/router need not answer
+                    # Who-Is/ReadProperty(device), but the network-layer recon
+                    # block below (enum_bbmd/fdt/routers/who_has/networks/
+                    # bbmd_injection) operates at the BVLL / network layer and
+                    # must still run. Skip only the device-property-dependent
+                    # work by leaving device_id None and falling through.
                     self.logger.warning("Could not discover device ID")
                     self.logger.display("Use --device-id to specify the BACnet device instance")
-                    return
 
-            self.logger.display(f"Reading device {device_id} properties...")
+            properties = None
+            if device_id is not None:
+                self.logger.display(f"Reading device {device_id} properties...")
 
-            # Isolate the application-layer property read: a transient
-            # rejection/abort (or a BBMD/router that simply doesn't answer
-            # ReadProperty(device, ...)) must not take down the whole scan,
-            # because the network-layer recon below operates at the BVLL /
-            # network layer and does not depend on these properties.
-            try:
-                properties = await self._bacpypes3_read_properties(
-                    app, target_addr, device_id, timeout
-                )
-            except BaseException as e:
-                self.logger.warning(f"Device property read failed: {e}")
-                properties = None
+                # Isolate the application-layer property read: a transient
+                # rejection/abort (or a BBMD/router that simply doesn't answer
+                # ReadProperty(device, ...)) must not take down the whole scan,
+                # because the network-layer recon below operates at the BVLL /
+                # network layer and does not depend on these properties.
+                try:
+                    properties = await self._bacpypes3_read_properties(
+                        app, target_addr, device_id, timeout
+                    )
+                except BaseException as e:
+                    self.logger.warning(f"Device property read failed: {e}")
+                    properties = None
 
             if properties:
                 self.devices[device_id] = {
@@ -452,11 +495,12 @@ class bacnet(
                 # Dump device state
                 if getattr(self.args, "dump", False):
                     self._handle_dump()
-            else:
+            elif device_id is not None:
                 # The device may exist but reject/abort application-layer
                 # ReadProperty (common for pure BBMDs/routers). Don't let that
                 # silently swallow the BVLL / network-layer recon below, which
                 # does not depend on these properties — just warn and continue.
+                # (When device_id is None we already warned about discovery.)
                 self.logger.warning(
                     f"Could not read device {device_id} properties; "
                     "continuing with network-layer reconnaissance"

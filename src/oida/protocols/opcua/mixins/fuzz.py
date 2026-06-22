@@ -110,8 +110,8 @@ class FuzzMixin:
                 self.logger.warning(f"Node {node_id} is not a Variable, skipping")
                 return None
 
-            async def read_value():
-                value = await node.read_value()
+            def encode_value(value) -> bytes:
+                """Encode a typed OPC UA value to its canonical byte form."""
                 if isinstance(value, bytes):
                     return value
                 elif isinstance(value, str):
@@ -127,30 +127,43 @@ class FuzzMixin:
                 else:
                     return bytes(str(value), "utf-8")
 
+            def decode_value(data: bytes, template):
+                """Decode raw fuzz bytes into a typed value matching `template`."""
+                if isinstance(template, bool):
+                    return bool(data[0]) if data else False
+                elif isinstance(template, int):
+                    return int.from_bytes(
+                        data[:4].ljust(4, b"\x00"), byteorder="little", signed=True
+                    )
+                elif isinstance(template, float):
+                    return (
+                        struct.unpack("<f", data[:4].ljust(4, b"\x00"))[0]
+                        if len(data) >= 4
+                        else 0.0
+                    )
+                elif isinstance(template, str):
+                    return data.decode("utf-8", errors="replace")
+                else:
+                    return data
+
+            async def read_value():
+                return encode_value(await node.read_value())
+
             async def write_value(data: bytes):
+                """Write fuzz bytes; return the typed value written, or None on failure.
+
+                Returning the typed value lets the caller re-encode it the same way
+                read_value() does and compare like-with-like, instead of comparing a
+                re-encoded readback against the raw pre-encoding payload bytes.
+                """
                 try:
-                    original = await node.read_value()
-                    if isinstance(original, bool):
-                        value = bool(data[0]) if data else False
-                    elif isinstance(original, int):
-                        value = int.from_bytes(
-                            data[:4].ljust(4, b"\x00"), byteorder="little", signed=True
-                        )
-                    elif isinstance(original, float):
-                        value = (
-                            struct.unpack("<f", data[:4].ljust(4, b"\x00"))[0]
-                            if len(data) >= 4
-                            else 0.0
-                        )
-                    elif isinstance(original, str):
-                        value = data.decode("utf-8", errors="replace")
-                    else:
-                        value = data
+                    template = await node.read_value()
+                    value = decode_value(data, template)
                     await node.write_value(value)
-                    return True
+                    return value
                 except Exception as e:
                     self.logger.debug("write value failed: %s", e)
-                    return False
+                    return None
 
             original = await read_value()
             successful, failed, anomalies, crashes = 0, 0, 0, 0
@@ -159,10 +172,18 @@ class FuzzMixin:
                 original, count=iterations
             ):  # fuzz() yields (bytes, desc) tuples
                 try:
-                    if await write_value(payload):
+                    written = await write_value(payload)
+                    if written is not None:
                         successful += 1
+                        # Compare like-with-like: re-encode the value we actually
+                        # wrote (after write_value decoded the raw payload) and
+                        # compare it against the re-encoded readback. Comparing the
+                        # raw payload bytes here would flag almost every faithful
+                        # int/float/str write as a false anomaly, since the typed
+                        # round-trip rarely reproduces the original byte string.
+                        expected = encode_value(written)
                         readback = await read_value()
-                        if readback != payload and readback != original:
+                        if readback != expected and readback != original:
                             anomalies += 1
                     else:
                         failed += 1

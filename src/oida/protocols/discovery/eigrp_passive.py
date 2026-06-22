@@ -97,8 +97,6 @@ class EIGRPPassiveListener(PassiveListenerBase):
                 version = eigrp.ver if hasattr(eigrp, "ver") else 2
                 opcode = eigrp.opcode
                 flags = eigrp.flags if hasattr(eigrp, "flags") else 0
-                seq_num = eigrp.seq if hasattr(eigrp, "seq") else 0
-                ack_num = eigrp.ack if hasattr(eigrp, "ack") else 0
                 as_number = eigrp.asn if hasattr(eigrp, "asn") else 0
 
                 # Parse flags
@@ -136,8 +134,6 @@ class EIGRPPassiveListener(PassiveListenerBase):
                     as_number=as_number,
                     flags=flags,
                     flag_names=flag_names,
-                    seq_num=seq_num,
-                    ack_num=ack_num,
                     k_values=k_values,
                     hold_time=hold_time,
                     software_version=software_version,
@@ -168,8 +164,7 @@ class EIGRPPassiveListener(PassiveListenerBase):
             opcode = data[1]
             _checksum = struct.unpack("!H", data[2:4])[0]  # noqa: F841
             flags = struct.unpack("!I", data[4:8])[0]
-            seq_num = struct.unpack("!I", data[8:12])[0]
-            ack_num = struct.unpack("!I", data[12:16])[0]
+            # bytes 8:16 carry seq/ack (unused — EIGRP reliability is not tracked)
             as_number = struct.unpack("!I", data[16:20])[0]
 
             # Parse flags
@@ -245,8 +240,6 @@ class EIGRPPassiveListener(PassiveListenerBase):
                 as_number=as_number,
                 flags=flags,
                 flag_names=flag_names,
-                seq_num=seq_num,
-                ack_num=ack_num,
                 k_values=k_values,
                 hold_time=hold_time,
                 software_version=software_version,
@@ -266,8 +259,6 @@ class EIGRPPassiveListener(PassiveListenerBase):
         as_number: int,
         flags: int,
         flag_names: List[str],
-        seq_num: int,
-        ack_num: int,
         k_values: Dict,
         hold_time: int,
         software_version: str,

@@ -48,57 +48,29 @@ class ICSProtocolError(Exception):
 class ICSConnectionError(ICSProtocolError):
     """Raised when connection to target fails"""
 
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize connection error"""
-        super().__init__(message, protocol, error_code)
-
 
 class AuthenticationError(ICSProtocolError):
     """Raised when authentication fails"""
-
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize authentication error"""
-        super().__init__(message, protocol, error_code)
 
 
 class ProtocolError(ICSProtocolError):
     """Raised when protocol-specific errors occur"""
 
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize protocol error"""
-        super().__init__(message, protocol, error_code)
-
 
 class DependencyError(ICSProtocolError):
     """Raised when required dependencies are missing"""
-
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize dependency error"""
-        super().__init__(message, protocol, error_code)
 
 
 class ConfigurationError(ICSProtocolError):
     """Raised when configuration is invalid"""
 
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize configuration error"""
-        super().__init__(message, protocol, error_code)
-
 
 class ICSTimeoutError(ICSProtocolError):
     """Raised when operations timeout"""
 
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize timeout error"""
-        super().__init__(message, protocol, error_code)
-
 
 class SecurityError(ICSProtocolError):
     """Raised when security violations are detected"""
-
-    def __init__(self, message: str, protocol: str = "", error_code: str = ""):
-        """Initialize security error"""
-        super().__init__(message, protocol, error_code)
 
 
 # Protocol-specific exceptions

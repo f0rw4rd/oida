@@ -38,12 +38,6 @@ def proto_args(parser, parents):
         help="Enable all enumeration (identity, services, interfaces, objects, security)",
     )
     enip_group.add_argument(
-        "-i",
-        "--list-identity",
-        action="store_true",
-        help="Send ListIdentity command to get device info",
-    )
-    enip_group.add_argument(
         "--list-services",
         action="store_true",
         help="Send ListServices command to enumerate CIP services",

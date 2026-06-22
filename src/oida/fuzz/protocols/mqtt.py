@@ -229,40 +229,6 @@ class MQTTFuzzer(StatefulFuzzer):
         self._state_context.set("mqtt_connected", return_code == 0)
         self._state_context.set("session_present", session_present)
 
-    def store_publish_response(self, packet_id: int, response: bytes, qos: int) -> None:
-        """Store MQTT publish acknowledgment.
-
-        State Machine V2 Pattern:
-        Store PUBACK/PUBREC/PUBCOMP for QoS tracking.
-
-        Args:
-            packet_id: Packet identifier
-            response: Raw response bytes
-            qos: QoS level (1 or 2)
-        """
-        operation = f"PUBLISH_{packet_id}"
-        self._state_context.set_response(
-            operation, ResponseData(raw=response, parsed={"packet_id": packet_id, "qos": qos})
-        )
-
-    def get_mqtt_state_info(self) -> dict:
-        """Get current MQTT state information.
-
-        State Machine V2 Pattern:
-        Use this for debugging and logging state.
-
-        Returns:
-            Dictionary with context keys and responses
-        """
-        return {
-            "connected": self._state_context.get("mqtt_connected", False),
-            "session_present": self._state_context.get("session_present", False),
-            "client_id": self.client_id,
-            "protocol_version": self.protocol_version,
-            "context_keys": self._state_context.keys(),
-            "responses_stored": self._state_context.response_keys(),
-        }
-
     def _create_authenticator(self, config: FuzzerConfig) -> Optional[ProtocolAuthenticator]:
         """Create MQTT authenticator from config options."""
         if not self.use_auth:
@@ -1161,17 +1127,6 @@ class MQTTFuzzer(StatefulFuzzer):
         # MQTT 5.0 reason code sweep — all 256 byte values
         if self.is_request_enabled("MQTT_Reason_Code_Sweep"):
             self.session.connect(mqtt_reason_code_sweep)
-
-    def _encode_remaining_length(self, value):
-        """Encode MQTT variable length encoding"""
-        result = b""
-        while value > 0:
-            byte = value & 0x7F
-            value >>= 7
-            if value > 0:
-                byte |= 0x80
-            result += bytes([byte])
-        return result if result else b"\x00"
 
     def _define_state_machine(self) -> None:
         """

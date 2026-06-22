@@ -28,8 +28,16 @@ class ExportMixin:
             else:
                 return (0, 0)
 
+            # A malformed entry (single part, or a non-numeric instance from a
+            # hostile/garbled objectList) must not abort enumeration of the
+            # whole device; return (0, 0) so the caller skips just this entry.
+            if len(parts) < 2:
+                return (0, 0)
             obj_type = OBJECT_TYPE_NAMES.get(parts[0], 0)
-            instance = int(parts[1])
+            try:
+                instance = int(parts[1])
+            except ValueError:
+                return (0, 0)
             return (obj_type, instance)
         # bacpypes3 exposes the identifier as a 2-tuple-like (type, instance)
         # via .objectIdentifier; read both elements from that single value so

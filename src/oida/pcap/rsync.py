@@ -52,6 +52,7 @@ class RsyncPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "rsync"
     REQUIRED_LAYERS = ("rsync",)
     PROTOCOL_COLUMNS = ("operation", "module_version", "detail")
+    SERVER_PORTS = (873,)
 
     # Decode-as hint needed because tshark doesn't auto-detect rsync
     DECODE_AS = {"tcp.port==873": "rsync"}
@@ -182,8 +183,22 @@ class RsyncPassiveListener(PySharkListenerBase):
         packet,
     ) -> None:
         """Process @RSYNCD version handshake."""
-        # Determine direction: server sends first greeting, client responds
-        is_server = src_port == 873 or dst_port != 873
+        # Determine direction via the shared cascade.  The @RSYNCD greeting has
+        # no request/response bit, so resolve_direction() falls through to the
+        # known-server-port tier (canonical 873 plus any user --decode-as /
+        # OVERRIDE_PREFS override) and then the lower-port heuristic.  A version
+        # frame whose source is the server is a response (server greets first).
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        # is_server == the src_ip is the server side (server -> client greeting).
+        is_server = not d.is_request
         direction = "response" if is_server else "request"
 
         if is_server and version:

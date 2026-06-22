@@ -21,20 +21,6 @@ from ..protocols.discovery.core import (
     lookup_mac_vendor,
 )
 
-# SMB dialect strings (SMB1 negotiate)
-SMB1_DIALECTS = {
-    "PC NETWORK PROGRAM 1.0": "SMB1",
-    "MICROSOFT NETWORKS 1.03": "SMB1",
-    "MICROSOFT NETWORKS 3.0": "SMB1",
-    "LANMAN1.0": "SMB1",
-    "LM1.2X002": "SMB1",
-    "DOS LANMAN2.1": "SMB1",
-    "LANMAN2.1": "SMB1",
-    "Samba": "SMB1",
-    "NT LANMAN 1.0": "SMB1",
-    "NT LM 0.12": "SMB1",
-}
-
 # SMB2/3 dialect codes
 SMB2_DIALECTS = {
     0x0202: "SMB 2.002",
@@ -606,7 +592,7 @@ class SMBPassiveListener(PySharkListenerBase):
                 elif "2." in dialect_name:
                     session["smb_version"] = "SMB2"
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if isinstance(dialect_rev, str) and d...: {e}")
+                self.logger.debug(f"SMB: failed to parse dialect revision: {e}")
 
         # NT Status code (SMB2)
         nt_status_raw = self.get_field(smb2, "nt_status")
@@ -771,8 +757,8 @@ class SMBPassiveListener(PySharkListenerBase):
     def _parse_ntlmssp_layer(self, ntlmssp, session: Dict[str, Any]) -> None:
         """Parse NTLMSSP layer from PyShark."""
         # Domain name
-        domain = (
-            self.get_field_any(ntlmssp, "auth_domain", "ntlmserverchallenge_domainname", "challenge_domain")
+        domain = self.get_field_any(
+            ntlmssp, "auth_domain", "ntlmserverchallenge_domainname", "challenge_domain"
         )
         if domain and not session.get("domain"):
             session["domain"] = domain
@@ -783,8 +769,8 @@ class SMBPassiveListener(PySharkListenerBase):
             session["username"] = username
 
         # Workstation/hostname
-        workstation = (
-            self.get_field_any(ntlmssp, "auth_hostname", "auth_host", "ntlmserverchallenge_workstation")
+        workstation = self.get_field_any(
+            ntlmssp, "auth_hostname", "auth_host", "ntlmserverchallenge_workstation"
         )
         if workstation and not session.get("workstation"):
             session["workstation"] = workstation
@@ -793,22 +779,6 @@ class SMBPassiveListener(PySharkListenerBase):
         target_info = self.get_field_any(ntlmssp, "av_pairs_target_info", "target_info")
         if target_info:
             self.logger.debug(f"NTLMSSP target_info: {target_info}")
-
-    def _parse_ntlmssp_field(self, field: str, value: str, session: Dict[str, Any]) -> None:
-        """Parse individual NTLMSSP field from dissector output."""
-        field_lower = field.lower()
-
-        if "domain" in field_lower and value:
-            if not session.get("domain"):
-                session["domain"] = value
-
-        elif "username" in field_lower or "user" in field_lower:
-            if value and not session.get("username"):
-                session["username"] = value
-
-        elif "hostname" in field_lower or "workstation" in field_lower or "host" in field_lower:
-            if value and not session.get("workstation"):
-                session["workstation"] = value
 
     def get_file_operations(self) -> List[Dict[str, str]]:
         """Get file operations extracted from SMB traffic."""

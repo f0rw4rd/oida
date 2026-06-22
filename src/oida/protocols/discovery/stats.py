@@ -45,7 +45,7 @@ def _int(val, default=0):
 
 
 # Service signatures for open port detection
-# (port, transport): (service_name, detection_function_name)
+# (port, transport): service_name
 SERVICE_PORTS = {
     # ICS / OT
     (102, "tcp"): "S7/ISO-COTP",
@@ -171,6 +171,8 @@ def _is_server_port(port: int, transport: Optional[str] = None) -> bool:
     """Return True if *port* looks like a server/service port (not ephemeral)."""
     if port <= WELL_KNOWN_PORT_MAX:
         return True
+    if EPHEMERAL_PORT_MIN <= port <= EPHEMERAL_PORT_MAX:
+        return False
     if transport and (port, transport) in SERVICE_PORTS:
         return True
     if port in COMMON_SERVER_PORTS:
@@ -216,24 +218,6 @@ class OpenPort:
     first_seen: Optional[datetime] = None
 
 
-@dataclass
-class Certificate:
-    """Extracted TLS/SSL certificate"""
-
-    thumbprint: str
-    common_name: str
-    subject: str
-    issuer: str
-    server_ip: str
-    server_port: int
-    key_type: str = ""
-    key_size: int = 0
-    not_before: str = ""
-    not_after: str = ""
-    self_signed: bool = False
-    first_seen: Optional[datetime] = None
-
-
 class PassiveStatistics:
     """
     Wireshark-style passive traffic statistics collector.
@@ -243,7 +227,6 @@ class PassiveStatistics:
     - MAC conversations (Ethernet-level)
     - IP conversations (with ports)
     - Open ports (from response traffic)
-    - TLS/SSL certificates
     """
 
     def __init__(self, nxc_logger=None):
@@ -258,9 +241,6 @@ class PassiveStatistics:
 
         # Open ports keyed by (ip, port, transport)
         self.open_ports: Dict[Tuple, OpenPort] = {}
-
-        # TLS certificates keyed by thumbprint
-        self.certificates: Dict[str, Certificate] = {}
 
         # TCP stream tracking for flow direction detection
         # Maps normalized flow key to (server_ip, server_port, client_ip, client_port)
@@ -910,38 +890,10 @@ class PassiveStatistics:
     def _is_server_port(self, port: int, transport: str) -> bool:
         """Determine if a port is likely a server port (not client ephemeral).
 
-        Uses heuristics based on port ranges and known services:
-        - Well-known ports (0-1023) are always server ports
-        - Registered service ports from SERVICE_PORTS
-        - Common server ports (8080, 3000, etc.)
-        - Ephemeral range (49152-65535) is never server ports
-
-        Args:
-            port: Port number to check
-            transport: "tcp" or "udp"
-
-        Returns:
-            True if port is likely a server port
+        Thin wrapper over the module-level :func:`_is_server_port` heuristic so
+        callers and the cross-protocol path share one implementation.
         """
-        # Well-known ports are always server ports
-        if port <= WELL_KNOWN_PORT_MAX:
-            return True
-
-        # Ephemeral range is never server ports
-        if EPHEMERAL_PORT_MIN <= port <= EPHEMERAL_PORT_MAX:
-            return False
-
-        # Check if it's a known service port
-        if (port, transport) in SERVICE_PORTS:
-            return True
-
-        # Check common server ports
-        if port in COMMON_SERVER_PORTS:
-            return True
-
-        # Registered ports (1024-49151) - ambiguous, but lean towards server
-        # if destination and not in ephemeral range
-        return False
+        return _is_server_port(port, transport)
 
     def _is_ephemeral_port(self, port: int) -> bool:
         """Check if port is in the ephemeral (client) port range.
@@ -962,23 +914,6 @@ class PassiveStatistics:
         ep1 = (src_ip, sport)
         ep2 = (dst_ip, dport)
         return tuple(sorted([ep1, ep2]))
-
-    @staticmethod
-    def parse_certificate(cert_data: bytes) -> Optional[Dict[str, Any]]:
-        """Parse certificate data using central security_findings utility.
-
-        Returns the parsed cert info dict, or None on failure.
-        Usable by passive listeners and the stats module alike.
-        """
-        try:
-            from ...utils.security_findings import get_cert_info
-
-            info = get_cert_info(cert_data)
-            if "error" not in info:
-                return info
-        except Exception as e:
-            logger.debug(f"Certificate parse error: {e}")
-        return None
 
     def to_dict(self) -> Dict[str, Any]:
         """Export statistics as dictionary for JSON output"""
@@ -1037,25 +972,6 @@ class PassiveStatistics:
                 }
                 for op in sorted(self.open_ports.values(), key=lambda x: (x.ip, x.port))
             ],
-            "certificates": [
-                {
-                    "thumbprint": cert.thumbprint,
-                    "common_name": cert.common_name,
-                    "subject": cert.subject,
-                    "issuer": cert.issuer,
-                    "server_ip": cert.server_ip,
-                    "server_port": cert.server_port,
-                    "key_type": cert.key_type,
-                    "key_size": cert.key_size,
-                    "not_before": cert.not_before,
-                    "not_after": cert.not_after,
-                    "self_signed": cert.self_signed,
-                }
-                for cert in sorted(
-                    self.certificates.values(),
-                    key=lambda x: (x.server_ip, x.server_port),
-                )
-            ],
         }
 
     def print_summary(self, logger=None) -> None:
@@ -1092,9 +1008,6 @@ class PassiveStatistics:
 
         # Open Ports
         self._print_open_ports()
-
-        # Certificates
-        self._print_certificates()
 
     def _log(self, msg: str, level: str = "display") -> None:
         """Log message via NXC logger, or module logger if unavailable."""
@@ -1297,34 +1210,6 @@ class PassiveStatistics:
             title="Open Ports Detected",
             logger=self._logger,
         )
-
-    def _print_certificates(self) -> None:
-        """Print extracted TLS certificates using NXC-style logger."""
-        if not self.certificates:
-            return
-
-        self._log("TLS Certificates Extracted:")
-
-        for cert in sorted(self.certificates.values(), key=lambda x: (x.server_ip, x.server_port)):
-            self._log(f"  [{cert.server_ip}:{cert.server_port}]")
-
-            # Build display string
-            subject = cert.subject or "Unknown"
-            key_info = f"{cert.key_size or '?'}-bit {cert.key_type or '?'}"
-            valid_from = (cert.not_before or "?")[:10]
-            valid_to = (cert.not_after or "?")[:10]
-
-            self._log(f"    Subject: {subject}")
-            self._log(f"    Key: {key_info}")
-            self._log(f"    Valid: {valid_from} - {valid_to}")
-
-            if cert.thumbprint:
-                self._log(f"    Thumbprint: {cert.thumbprint[:32]}...")
-
-            if cert.self_signed:
-                self._log("    Self-signed certificate!", level="warning")
-            elif cert.issuer:
-                self._log(f"    Issuer: {cert.issuer}")
 
     @staticmethod
     def _format_bytes(num_bytes: int) -> str:

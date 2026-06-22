@@ -179,14 +179,14 @@ class MapReadWriteMixin(_ScannerBase):
         regs_needed = resolver.get_registers_needed(entry)
         address = entry["address"]
         fc = entry["function_code"]
-        unit_id = getattr(self.args, "unit_id", None)
-        if unit_id is None:
-            unit_id = 1
-
-        # Use map's default unit ID if user didn't specify
+        # Use map's default unit ID only if the user did not explicitly pass -u
+        # (argparse default is None). An explicit -u 1 must be honored verbatim.
+        user_unit_id = getattr(self.args, "unit_id", None)
         default_uid = resolver.map_data.get("default_unit_id")
-        if unit_id == 1 and default_uid is not None and default_uid != 1:
-            unit_id = default_uid
+        if user_unit_id is None:
+            unit_id = default_uid if default_uid is not None else 1
+        else:
+            unit_id = user_unit_id
 
         self.logger.display(
             f"[Read by Name] {entry['name']} @ address {address} "
@@ -324,14 +324,14 @@ class MapReadWriteMixin(_ScannerBase):
         address = entry["address"]
         fc = entry["function_code"]
         dtype = entry["type"]
-        unit_id = getattr(self.args, "unit_id", None)
-        if unit_id is None:
-            unit_id = 1
-
-        # Use map's default unit ID if user didn't specify
+        # Use map's default unit ID only if the user did not explicitly pass -u
+        # (argparse default is None). An explicit -u 1 must be honored verbatim.
+        user_unit_id = getattr(self.args, "unit_id", None)
         default_uid = resolver.map_data.get("default_unit_id")
-        if unit_id == 1 and default_uid is not None and default_uid != 1:
-            unit_id = default_uid
+        if user_unit_id is None:
+            unit_id = default_uid if default_uid is not None else 1
+        else:
+            unit_id = user_unit_id
 
         # Handle coil writes
         is_coil = fc in (1, 5) or entry["section"] == "coils"

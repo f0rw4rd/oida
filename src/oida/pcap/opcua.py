@@ -197,14 +197,6 @@ USER_TOKEN_TYPES = {
     3: "IssuedToken",
 }
 
-# Application Types
-APPLICATION_TYPES = {
-    0: "Server",
-    1: "Client",
-    2: "ClientAndServer",
-    3: "DiscoveryServer",
-}
-
 
 @dataclass
 class OPCUACertificate:
@@ -549,7 +541,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
                     mode_int = int(security_mode_val)
                 security_mode = SECURITY_MODES.get(mode_int, f"Mode_{mode_int}")
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if , in security_mode_val:: {e}")
+                self.logger.debug(f"OPC UA: failed to parse message security mode: {e}")
 
         # User token type -- EK mode may give comma-separated list; take first
         # (opcua.UserTokenType -- audit alias)

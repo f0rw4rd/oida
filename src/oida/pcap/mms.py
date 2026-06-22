@@ -213,6 +213,7 @@ class MMSPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "mms"
     DISPLAY_FILTER = "acse or mms"
     REQUIRED_LAYERS = ("mms", "acse")
+    SERVER_PORTS = (102,)
     PROTOCOL_COLUMNS = ("operation", "variable", "domain", "data")
 
     def __init__(
@@ -241,16 +242,21 @@ class MMSPassiveListener(PySharkListenerBase):
 
         # Determine direction. MMS/IEC 61850 defaults to TCP 102 but the spec
         # allows any port; substations sometimes run on 10102/10106/10108 etc.
-        # Use the canonical port if either side has it; otherwise fall back
-        # to "lower port wins" (server-side listening port < ephemeral).
-        if dst_port == 102 or (dst_port != 102 and src_port != 102 and dst_port < src_port):
-            client_ip, server_ip = src_ip, dst_ip
-            client_mac, server_mac = src_mac, dst_mac
-            is_request = True
-        else:
-            client_ip, server_ip = dst_ip, src_ip
-            client_mac, server_mac = dst_mac, src_mac
-            is_request = False
+        # MMS has no clean single request/response field, so pass native=None
+        # and let the known-server-port tier (SERVER_PORTS 102 ∪ --decode-as ∪
+        # OVERRIDE_PREFS) plus the lower-port / first-seen heuristic decide.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request = d.is_request
+        client_ip, server_ip = d.client_ip, d.server_ip
+        client_mac, server_mac = (src_mac, dst_mac) if is_request else (dst_mac, src_mac)
 
         stream_id = self.get_stream_id(packet)
 

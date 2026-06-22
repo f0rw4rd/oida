@@ -40,8 +40,6 @@ REDIS_PORT = 6379
 REDIS_PORTS = {REDIS_PORT, 6380, 16379, 26379}
 
 # Security-relevant commands
-AUTH_COMMANDS = {"AUTH"}
-CONFIG_COMMANDS = {"CONFIG"}
 ADMIN_COMMANDS = {
     "SHUTDOWN",
     "SLAVEOF",
@@ -75,20 +73,6 @@ WRITE_COMMANDS = {
     "EXPIRE",
     "PERSIST",
     "RENAME",
-}
-READ_COMMANDS = {
-    "GET",
-    "MGET",
-    "HGET",
-    "HGETALL",
-    "LRANGE",
-    "SMEMBERS",
-    "ZRANGE",
-    "KEYS",
-    "SCAN",
-    "TYPE",
-    "TTL",
-    "EXISTS",
 }
 
 
@@ -126,6 +110,7 @@ class RedisPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "redis"
     DISPLAY_FILTER = "resp"
     REQUIRED_LAYERS = ("resp",)
+    SERVER_PORTS = tuple(sorted(REDIS_PORTS))
     PROTOCOL_COLUMNS = ("command", "key_args", "response")
 
     def __init__(
@@ -143,6 +128,43 @@ class RedisPassiveListener(PySharkListenerBase):
         self.keys_seen: Set[str] = set()
         self._write_ops: List[Dict[str, Any]] = []
         self._alerts: List[Dict[str, str]] = []
+
+    def _resolve_roles(
+        self,
+        packet,
+        native: Optional[bool],
+        src_ip: str,
+        dst_ip: str,
+        src_port: int,
+        dst_port: int,
+        flow_id: str,
+    ) -> Tuple[str, int, str, int]:
+        """Resolve (server_ip, server_port, client_ip, client_port) via the cascade.
+
+        The RESP message shape is an authoritative native direction signal
+        (command array = request, any response value = response).  When that is
+        ambiguous (native=None) the known-server-port tier (canonical Redis
+        ports plus learned servers and user --decode-as / OVERRIDE_PREFS
+        overrides) and the lower-port / first-seen heuristic decide -- the
+        packet is never dropped.  Learns the resolved server into
+        ``_known_servers``.
+        """
+        if native is None:
+            if src_ip in self._known_servers:
+                native = False
+            elif dst_ip in self._known_servers:
+                native = True
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        self._known_servers.add(d.server_ip)
+        return d.server_ip, d.server_port, d.client_ip, d.client_port
 
     def process_packet(self, packet) -> None:
         """Process Redis RESP packet."""
@@ -181,19 +203,15 @@ class RedisPassiveListener(PySharkListenerBase):
                 # Determine direction based on command-like first element
                 is_request = command.isalpha() and len(command) <= 20
                 if is_request:
-                    # Client -> Server
-                    if dst_port in REDIS_PORTS or dst_ip in self._known_servers:
-                        client_ip, client_port = src_ip, src_port
-                        server_ip, server_port = dst_ip, dst_port
+                    # Client -> Server (native=True: a command array is an
+                    # authoritative request signal, port-independent).
+                    server_ip, server_port, client_ip, client_port = self._resolve_roles(
+                        packet, True, src_ip, dst_ip, src_port, dst_port, flow_id
+                    )
+                    if client_ip == src_ip:
                         client_mac, server_mac = src_mac, dst_mac
-                    elif src_port in REDIS_PORTS or src_ip in self._known_servers:
-                        server_ip, server_port = src_ip, src_port
-                        client_ip, client_port = dst_ip, dst_port
-                        server_mac, client_mac = src_mac, dst_mac
                     else:
-                        client_ip, client_port = src_ip, src_port
-                        server_ip, server_port = dst_ip, dst_port
-                        client_mac, server_mac = src_mac, dst_mac
+                        client_mac, server_mac = dst_mac, src_mac
 
                     self._process_command(
                         now,
@@ -210,14 +228,11 @@ class RedisPassiveListener(PySharkListenerBase):
                     )
                     return
                 else:
-                    # Array response (e.g., CONFIG GET result)
-                    if src_port in REDIS_PORTS or src_ip in self._known_servers:
-                        server_ip, server_port = src_ip, src_port
-                        client_ip, client_port = dst_ip, dst_port
-                    else:
-                        server_ip, server_port = src_ip, src_port
-                        client_ip, client_port = dst_ip, dst_port
-                    self._known_servers.add(server_ip)
+                    # Array response (e.g., CONFIG GET result) -- native=False:
+                    # a non-command array value is an authoritative response.
+                    server_ip, server_port, client_ip, client_port = self._resolve_roles(
+                        packet, False, src_ip, dst_ip, src_port, dst_port, flow_id
+                    )
 
                     details: Dict[str, Any] = {
                         "response_type": "array",
@@ -259,15 +274,12 @@ class RedisPassiveListener(PySharkListenerBase):
                 )
                 return
 
-        # Simple string / error / integer response
+        # Simple string / error / integer response -- native=False (a typed
+        # RESP response value is an authoritative response signal).
         if simple_string is not None or error_msg is not None or integer_val is not None:
-            if src_port in REDIS_PORTS or src_ip in self._known_servers:
-                server_ip, server_port = src_ip, src_port
-                client_ip, client_port = dst_ip, dst_port
-            else:
-                server_ip, server_port = src_ip, src_port
-                client_ip, client_port = dst_ip, dst_port
-            self._known_servers.add(server_ip)
+            server_ip, server_port, client_ip, client_port = self._resolve_roles(
+                packet, False, src_ip, dst_ip, src_port, dst_port, flow_id
+            )
 
             if simple_string is not None:
                 resp_str = str(simple_string)
@@ -330,13 +342,10 @@ class RedisPassiveListener(PySharkListenerBase):
         # e.g., GET response returning a value, INFO response returning a string
         bulk_string_value = self._get_raw_field(resp, "bulk_string_value")
         if bulk_string_value is not None:
-            if src_port in REDIS_PORTS or src_ip in self._known_servers:
-                server_ip, server_port = src_ip, src_port
-                client_ip, client_port = dst_ip, dst_port
-            else:
-                server_ip, server_port = src_ip, src_port
-                client_ip, client_port = dst_ip, dst_port
-            self._known_servers.add(server_ip)
+            # A bare bulk string is a server response value -- native=False.
+            server_ip, server_port, client_ip, client_port = self._resolve_roles(
+                packet, False, src_ip, dst_ip, src_port, dst_port, flow_id
+            )
 
             values = self._parse_bulk_values(bulk_string_value)
             preview = values[0][:60] if values else "?"
@@ -366,21 +375,26 @@ class RedisPassiveListener(PySharkListenerBase):
             return
 
         # Fallback: RESP packet with no recognized fields (e.g., empty EK layer
-        # from multi-PDU TCP segments)
+        # from multi-PDU TCP segments).  No native signal -- the cascade's
+        # known-server-port tier (canonical Redis ports + learned servers + user
+        # overrides) and heuristic decide; never dropped.
         self.logger.debug(
             f"Unrecognized RESP packet from {src_ip}:{src_port} -> {dst_ip}:{dst_port}"
         )
-        if src_port in REDIS_PORTS or src_ip in self._known_servers:
-            server_ip, server_port = src_ip, src_port
-            client_ip, client_port = dst_ip, dst_port
-        else:
-            server_ip, server_port = dst_ip, dst_port
-            client_ip, client_port = src_ip, src_port
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
         self._record_interaction(
             now,
             src_ip,
             dst_ip,
-            "response" if src_port in REDIS_PORTS or src_ip in self._known_servers else "request",
+            d.direction,
             "RESP",
             {"response_type": "unknown"},
             f"Redis RESP ({src_ip}:{src_port} -> {dst_ip}:{dst_port})",

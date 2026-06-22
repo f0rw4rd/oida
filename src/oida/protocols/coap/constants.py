@@ -112,9 +112,6 @@ COMMON_PATHS = [
     "/info",
 ]
 
-# Write methods (security-relevant)
-WRITE_METHODS = {"PUT", "POST", "DELETE", "PATCH", "IPATCH"}
-
 # Protocol options dictionary for scanner registration
 protocol_options: Dict[str, Dict[str, Any]] = {
     "probe-paths": {

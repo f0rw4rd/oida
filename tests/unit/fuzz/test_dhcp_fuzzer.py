@@ -36,11 +36,7 @@ def _make_config(enabled=None, disabled=None):
 
 def _connected_request_names(fuzzer):
     """Return the set of connected request node names (excluding the root)."""
-    return {
-        node.name
-        for node in fuzzer.session.nodes.values()
-        if node.name != "__ROOT_NODE__"
-    }
+    return {node.name for node in fuzzer.session.nodes.values() if node.name != "__ROOT_NODE__"}
 
 
 class TestDHCPRequestGating:
@@ -76,9 +72,7 @@ class TestDHCPRequestGating:
         assert "DHCP_DISCOVER" not in connected
         assert connected == advertised - {"DHCP_DISCOVER"}
 
-    @pytest.mark.parametrize(
-        "name", [r.name for r in DHCPFuzzer.get_request_definitions()]
-    )
+    @pytest.mark.parametrize("name", [r.name for r in DHCPFuzzer.get_request_definitions()])
     def test_each_advertised_name_is_individually_enableable(self, name):
         """Every advertised name must be reachable via --enable."""
         fuzzer = DHCPFuzzer(
@@ -117,9 +111,7 @@ class TestDHCPv6RequestGating:
         assert "DHCPv6_SOLICIT" not in connected
         assert connected == advertised - {"DHCPv6_SOLICIT"}
 
-    @pytest.mark.parametrize(
-        "name", [r.name for r in DHCPv6Fuzzer.get_request_definitions()]
-    )
+    @pytest.mark.parametrize("name", [r.name for r in DHCPv6Fuzzer.get_request_definitions()])
     def test_each_advertised_name_is_individually_enableable(self, name):
         fuzzer = DHCPv6Fuzzer(
             config=_make_config(enabled=[name]),

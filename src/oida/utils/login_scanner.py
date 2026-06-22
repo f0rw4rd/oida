@@ -3,9 +3,7 @@
 Login scanner utility for ICS protocol modules.
 
 Provides scanner factories for different authentication patterns:
-- make_scanner: Standard username:password authentication
 - make_password_scanner: Password-only protocols (S7, etc.)
-- make_sa_scanner: DNP3 Secure Authentication (user_id:key)
 
 All scanners support:
 - Loading credentials from files
@@ -160,74 +158,5 @@ def make_password_scanner(
             log(f"Password not found after {results['tested']} attempts", level="warning")
 
         return results
-
-    return scanner
-
-
-def make_scanner(login_function):
-    """
-    Create a scanner function that uses the provided login check function
-    to test username/password combinations
-
-    Args:
-        login_function: A function that takes (host, port, username, password)
-                       and returns True if the login is successful
-
-    Returns:
-        A scanner function that processes scan arguments
-    """
-
-    def scanner(args):
-        host = args["rhost"]
-        port = args["rport"]
-        userpass_value = args["userpass"]
-        sleep_interval = args.get("sleep_interval", 0)
-
-        # Process credentials
-        credentials = []
-        if userpass_value.startswith("file:"):
-            file_path = userpass_value[5:]
-            try:
-                with open(file_path, "r") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith("#"):
-                            if ":" in line:
-                                username, password = line.split(":", 1)
-                                credentials.append((username, password))
-            except Exception as e:
-                log(f"Failed to read credentials file: {e}", level="error")
-                return
-        else:
-            for cred in userpass_value.split(","):
-                if ":" in cred:
-                    username, password = cred.split(":", 1)
-                    credentials.append((username, password))
-
-        if not credentials:
-            log("No valid credentials provided", level="error")
-            return
-
-        # Try each credential
-        for username, password in credentials:
-            try:
-                if login_function(host, port, username, password):
-                    # RECOVERED credential — surface to operator (the feature).
-                    log(f"Success: {username}:{password}", level="good")
-                    _logger.info("Valid credential: %s@%s:%s", username, host, port)
-                else:
-                    # INPUT credential — log the username for progress, but
-                    # never the candidate password value (operator already
-                    # has the wordlist; failed attempts in the log are a
-                    # leak vector). Demote info → debug.
-                    log(f"Failed: {username}:***", level="debug")
-                    _logger.debug("Credential failed: %s@%s:%s", username, host, port)
-
-                # Sleep if interval specified
-                if sleep_interval > 0:
-                    time.sleep(sleep_interval)
-
-            except Exception as e:
-                log(f"Error testing {username}:*** - {str(e)}", level="error")
 
     return scanner

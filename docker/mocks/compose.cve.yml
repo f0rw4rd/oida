@@ -12,6 +12,7 @@ services:
     build:
       context: ./services/vulnerable/smtp
       dockerfile: Dockerfile.mock
+    image: ghcr.io/f0rw4rd/oida-mock-smtp-mock:latest
     container_name: smtp-mock-server
     hostname: smtp-mock
     profiles: ["vuln-services", "vuln-smtp", "fuzz-test"]
@@ -34,6 +35,7 @@ services:
     build:
       context: ./services/vulnerable/smtp
       dockerfile: Dockerfile.opensmtpd
+    image: ghcr.io/f0rw4rd/oida-mock-smtp-opensmtpd:latest
     container_name: smtp-cve-2020-7247
     hostname: smtp-opensmtpd
     profiles: ["vuln-services", "vuln-smtp"]
@@ -58,6 +60,7 @@ services:
     build:
       context: ./services/vulnerable/smtp
       dockerfile: Dockerfile.exim-4.92
+    image: ghcr.io/f0rw4rd/oida-mock-smtp-exim-4-92:latest
     container_name: smtp-cve-2019-15846
     hostname: smtp-exim-tls
     profiles: ["vuln-services", "vuln-smtp"]
@@ -82,6 +85,7 @@ services:
     build:
       context: ./services/vulnerable/smtp
       dockerfile: Dockerfile.exim-4.92.1
+    image: ghcr.io/f0rw4rd/oida-mock-smtp-exim-4-92-1:latest
     container_name: smtp-cve-2019-16928
     hostname: smtp-exim-ehlo
     profiles: ["vuln-services", "vuln-smtp"]
@@ -110,6 +114,7 @@ services:
     build:
       context: ./services/vulnerable/vnc
       dockerfile: Dockerfile.tightvnc
+    image: ghcr.io/f0rw4rd/oida-mock-vnc-tightvnc:latest
     container_name: vnc-cve-2019-8287
     hostname: vnc-tightvnc
     profiles: ["vuln-services", "vuln-vnc"]
@@ -134,6 +139,7 @@ services:
     build:
       context: ./services/vulnerable/vnc
       dockerfile: Dockerfile.libvncserver
+    image: ghcr.io/f0rw4rd/oida-mock-vnc-libvncserver:latest
     container_name: vnc-cve-2018-20019
     hostname: vnc-libvnc
     profiles: ["vuln-services", "vuln-vnc"]
@@ -158,6 +164,7 @@ services:
     build:
       context: ./services/vulnerable/vnc
       dockerfile: Dockerfile.libvncserver-0.9.12
+    image: ghcr.io/f0rw4rd/oida-mock-vnc-libvncserver-0-9-12:latest
     container_name: vnc-cve-2020-14397
     hostname: vnc-nullptr
     profiles: ["vuln-services", "vuln-vnc"]
@@ -186,6 +193,7 @@ services:
     build:
       context: ./services/vulnerable/dns
       dockerfile: Dockerfile.dnsmasq-2.78
+    image: ghcr.io/f0rw4rd/oida-mock-dns-dnsmasq-2-78:latest
     container_name: dns-cve-2017-14491
     hostname: dns-dnsmasq-old
     profiles: ["vuln-services", "vuln-dns"]
@@ -211,6 +219,7 @@ services:
     build:
       context: ./services/vulnerable/dns
       dockerfile: Dockerfile.dnsmasq-2.85
+    image: ghcr.io/f0rw4rd/oida-mock-dns-dnsmasq-2-85:latest
     container_name: dns-cve-2020-25681
     hostname: dns-dnspooq
     profiles: ["vuln-services", "vuln-dns"]
@@ -236,6 +245,7 @@ services:
     build:
       context: ./services/vulnerable/dns
       dockerfile: Dockerfile.dnsmasq-2.83
+    image: ghcr.io/f0rw4rd/oida-mock-dns-dnsmasq-2-83:latest
     container_name: dns-cve-2020-25682
     hostname: dns-dnspooq-2
     profiles: ["vuln-services", "vuln-dns"]
@@ -265,6 +275,7 @@ services:
     build:
       context: ./services/vulnerable/mqtt
       dockerfile: Dockerfile.mqtt-cve-2017-7651
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt-mqtt-cve-2017-7651:latest
     container_name: mqtt-cve-2017-7651
     hostname: mqtt-heap-overflow
     profiles: ["vuln-services", "vuln-mqtt"]
@@ -292,6 +303,7 @@ services:
     build:
       context: ./services/vulnerable/mqtt
       dockerfile: Dockerfile.mqtt-cve-2021-34432
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt-mqtt-cve-2021-34432:latest
     container_name: mqtt-cve-2021-34432
     hostname: mqtt-qos2-uaf
     profiles: ["vuln-services", "vuln-mqtt"]
@@ -319,6 +331,7 @@ services:
     build:
       context: ./services/vulnerable/mqtt
       dockerfile: Dockerfile.mqtt-cve-2017-7650
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt-mqtt-cve-2017-7650:latest
     container_name: mqtt-cve-2017-7650
     hostname: mqtt-topic-overflow
     profiles: ["vuln-services", "vuln-mqtt"]
@@ -350,6 +363,7 @@ services:
     build:
       context: ./services/vulnerable/coap
       dockerfile: Dockerfile.libcoap-4.3.4
+    image: ghcr.io/f0rw4rd/oida-mock-coap-libcoap-4-3-4:latest
     container_name: coap-cve-2024-0962
     hostname: coap-libcoap
     profiles: ["vuln-services", "vuln-coap"]
@@ -374,6 +388,7 @@ services:
     build:
       context: ./services/vulnerable/coap
       dockerfile: Dockerfile.californium
+    image: ghcr.io/f0rw4rd/oida-mock-coap-californium:latest
     container_name: coap-californium
     hostname: coap-californium
     profiles: ["vuln-services", "vuln-coap"]
@@ -396,6 +411,7 @@ services:
     build:
       context: ./services/vulnerable/coap
       dockerfile: Dockerfile.libcoap-4.3.1
+    image: ghcr.io/f0rw4rd/oida-mock-coap-libcoap-4-3-1:latest
     container_name: coap-cve-2023-35862
     hostname: coap-memcorrupt
     profiles: ["vuln-services", "vuln-coap"]
@@ -424,6 +440,7 @@ services:
     build:
       context: ./services/vulnerable/dicom
       dockerfile: Dockerfile.pynetdicom-vuln
+    image: ghcr.io/f0rw4rd/oida-mock-dicom-pynetdicom-vuln:latest
     container_name: dicom-cve-2019-19016
     hostname: dicom-buf-overflow
     profiles: ["vuln-services", "vuln-dicom"]
@@ -452,6 +469,7 @@ services:
     build:
       context: ./services/vulnerable/opcua
       dockerfile: Dockerfile.open62541-1.2.4
+    image: ghcr.io/f0rw4rd/oida-mock-opcua-open62541-1-2-4:latest
     container_name: opcua-cve-2022-25761
     hostname: opcua-heap-overflow
     profiles: ["vuln-services", "vuln-opcua"]
@@ -476,6 +494,7 @@ services:
     build:
       context: ./services/vulnerable/opcua
       dockerfile: Dockerfile.open62541-1.1.5
+    image: ghcr.io/f0rw4rd/oida-mock-opcua-open62541-1-1-5:latest
     container_name: opcua-cve-2021-34821
     hostname: opcua-stack-overflow
     profiles: ["vuln-services", "vuln-opcua"]
@@ -500,6 +519,7 @@ services:
     build:
       context: ./services/vulnerable/opcua
       dockerfile: Dockerfile.freeopcua-0.90.4
+    image: ghcr.io/f0rw4rd/oida-mock-opcua-freeopcua-0-90-4:latest
     container_name: opcua-cve-2019-19135
     hostname: opcua-uaf
     profiles: ["vuln-services", "vuln-opcua"]
@@ -528,6 +548,7 @@ services:
     build:
       context: ./services/vulnerable/iec104
       dockerfile: Dockerfile.lib60870-2.3.1
+    image: ghcr.io/f0rw4rd/oida-mock-iec104-lib60870-2-3-1:latest
     container_name: iec104-cve-2022-0369
     hostname: iec104-int-overflow
     profiles: ["vuln-services", "vuln-iec104"]
@@ -552,6 +573,7 @@ services:
     build:
       context: ./services/vulnerable/iec104
       dockerfile: Dockerfile.lib60870-2.2.1
+    image: ghcr.io/f0rw4rd/oida-mock-iec104-lib60870-2-2-1:latest
     container_name: iec104-cve-2020-15025
     hostname: iec104-buf-overflow
     profiles: ["vuln-services", "vuln-iec104"]
@@ -576,6 +598,7 @@ services:
     build:
       context: ./services/vulnerable/iec104
       dockerfile: Dockerfile.iec104-python
+    image: ghcr.io/f0rw4rd/oida-mock-iec104-iec104-python:latest
     container_name: iec104-cve-2019-18858
     hostname: iec104-heap-overflow
     profiles: ["vuln-services", "vuln-iec104"]
@@ -604,6 +627,7 @@ services:
     build:
       context: ./services/vulnerable/dnp3
       dockerfile: Dockerfile.opendnp3-3.1.0
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3-opendnp3-3-1-0:latest
     container_name: dnp3-cve-2020-28875
     hostname: dnp3-stack-overflow
     profiles: ["vuln-services", "vuln-dnp3"]
@@ -628,6 +652,7 @@ services:
     build:
       context: ./services/vulnerable/dnp3
       dockerfile: Dockerfile.opendnp3-2.3.0
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3-opendnp3-2-3-0:latest
     container_name: dnp3-cve-2019-18996
     hostname: dnp3-heap-corruption
     profiles: ["vuln-services", "vuln-dnp3"]
@@ -652,6 +677,7 @@ services:
     build:
       context: ./services/vulnerable/dnp3
       dockerfile: Dockerfile.dnp3-python
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3-dnp3-python:latest
     container_name: dnp3-cve-2017-7938
     hostname: dnp3-obj-overflow
     profiles: ["vuln-services", "vuln-dnp3"]
@@ -680,6 +706,7 @@ services:
     build:
       context: ./services/vulnerable/mms
       dockerfile: Dockerfile.libiec61850-1.5.0
+    image: ghcr.io/f0rw4rd/oida-mock-mms-libiec61850-1-5-0:latest
     container_name: mms-cve-2022-24760
     hostname: mms-pdu-overflow
     profiles: ["vuln-services", "vuln-mms"]
@@ -704,6 +731,7 @@ services:
     build:
       context: ./services/vulnerable/mms
       dockerfile: Dockerfile.libiec61850-1.3.2
+    image: ghcr.io/f0rw4rd/oida-mock-mms-libiec61850-1-3-2:latest
     container_name: mms-cve-2019-6138
     hostname: mms-goose-overflow
     profiles: ["vuln-services", "vuln-mms"]
@@ -728,6 +756,7 @@ services:
     build:
       context: ./services/vulnerable/mms
       dockerfile: Dockerfile.libiec61850-1.3.1
+    image: ghcr.io/f0rw4rd/oida-mock-mms-libiec61850-1-3-1:latest
     container_name: mms-cve-2018-12731
     hostname: mms-asn1-overflow
     profiles: ["vuln-services", "vuln-mms"]
@@ -756,6 +785,7 @@ services:
     build:
       context: ./services/vulnerable/bacnet
       dockerfile: Dockerfile.bacnet-stack-0.9.1
+    image: ghcr.io/f0rw4rd/oida-mock-bacnet-bacnet-stack-0-9-1:latest
     container_name: bacnet-cve-2021-42543
     hostname: bacnet-apdu-overflow
     profiles: ["vuln-services", "vuln-bacnet"]
@@ -780,6 +810,7 @@ services:
     build:
       context: ./services/vulnerable/bacnet
       dockerfile: Dockerfile.bacpypes-0.17
+    image: ghcr.io/f0rw4rd/oida-mock-bacnet-bacpypes-0-17:latest
     container_name: bacnet-cve-2019-12480
     hostname: bacnet-prop-overflow
     profiles: ["vuln-services", "vuln-bacnet"]
@@ -804,6 +835,7 @@ services:
     build:
       context: ./services/vulnerable/bacnet
       dockerfile: Dockerfile.bacnet-vuln
+    image: ghcr.io/f0rw4rd/oida-mock-bacnet-bacnet-vuln:latest
     container_name: bacnet-cve-2018-10630
     hostname: bacnet-buf-overflow
     profiles: ["vuln-services", "vuln-bacnet"]
@@ -832,6 +864,7 @@ services:
     build:
       context: ./services/vulnerable/ethernetip
       dockerfile: Dockerfile.opener-2.2.0
+    image: ghcr.io/f0rw4rd/oida-mock-ethernetip-opener-2-2-0:latest
     container_name: ethernetip-cve-2021-27498
     hostname: ethernetip-cip-overflow
     profiles: ["vuln-services", "vuln-ethernetip"]
@@ -857,6 +890,7 @@ services:
     build:
       context: ./services/vulnerable/ethernetip
       dockerfile: Dockerfile.opener-2.1.0
+    image: ghcr.io/f0rw4rd/oida-mock-ethernetip-opener-2-1-0:latest
     container_name: ethernetip-cve-2020-25055
     hostname: ethernetip-stack-overflow
     profiles: ["vuln-services", "vuln-ethernetip"]
@@ -882,6 +916,7 @@ services:
     build:
       context: ./services/vulnerable/ethernetip
       dockerfile: Dockerfile.cip-vuln
+    image: ghcr.io/f0rw4rd/oida-mock-ethernetip-cip-vuln:latest
     container_name: ethernetip-cve-2019-10952
     hostname: ethernetip-oob-write
     profiles: ["vuln-services", "vuln-ethernetip"]
@@ -910,6 +945,7 @@ services:
     build:
       context: ./services/vulnerable/http
       dockerfile: Dockerfile.nginx-1.20.0
+    image: ghcr.io/f0rw4rd/oida-mock-http-nginx-1-20-0:latest
     container_name: http-cve-2021-23017
     hostname: nginx-dns-overflow
     profiles: ["vuln-services", "vuln-http"]
@@ -934,6 +970,7 @@ services:
     build:
       context: ./services/vulnerable/http
       dockerfile: Dockerfile.apache-2.4.38
+    image: ghcr.io/f0rw4rd/oida-mock-http-apache-2-4-38:latest
     container_name: http-cve-2019-0211
     hostname: apache-privesc
     profiles: ["vuln-services", "vuln-http"]
@@ -958,6 +995,7 @@ services:
     build:
       context: ./services/vulnerable/http
       dockerfile: Dockerfile.apache-2.4.29
+    image: ghcr.io/f0rw4rd/oida-mock-http-apache-2-4-29:latest
     container_name: http-cve-2018-1312
     hostname: apache-digest-uaf
     profiles: ["vuln-services", "vuln-http"]
@@ -986,6 +1024,7 @@ services:
     build:
       context: ./services/vulnerable/ftp
       dockerfile: Dockerfile.vsftpd-3.0.3
+    image: ghcr.io/f0rw4rd/oida-mock-ftp-vsftpd-3-0-3:latest
     container_name: ftp-cve-2021-3618
     hostname: vsftpd-alpaca
     profiles: ["vuln-services", "vuln-ftp"]
@@ -1010,6 +1049,7 @@ services:
     build:
       context: ./services/vulnerable/ftp
       dockerfile: Dockerfile.proftpd-1.3.5
+    image: ghcr.io/f0rw4rd/oida-mock-ftp-proftpd-1-3-5:latest
     container_name: ftp-cve-2015-3306
     hostname: proftpd-modcopy
     profiles: ["vuln-services", "vuln-ftp"]
@@ -1034,6 +1074,7 @@ services:
     build:
       context: ./services/vulnerable/ftp
       dockerfile: Dockerfile.proftpd-1.3.5a
+    image: ghcr.io/f0rw4rd/oida-mock-ftp-proftpd-1-3-5a:latest
     container_name: ftp-cve-2019-12815
     hostname: proftpd-filecopy
     profiles: ["vuln-services", "vuln-ftp"]
@@ -1054,6 +1095,85 @@ services:
       - "oida.severity=critical"
       - "oida.description=ProFTPD arbitrary file copy"
 
+  ftp-proftpd-cve-2010-4221:
+    build:
+      context: ./services/vulnerable/ftp
+      dockerfile: Dockerfile.ftp-proftpd-cve-2010-4221-real
+    image: ghcr.io/f0rw4rd/oida-mock-ftp-proftpd-cve-2010-4221:latest
+    container_name: ftp-cve-2010-4221
+    hostname: proftpd-telnet-iac
+    profiles: ["vuln-services", "vuln-ftp"]
+    ports:
+      - "2124:21"
+    networks:
+      - ics-network
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "21"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.group=ftp"
+      - "oida.ports=2124"
+      - "oida.cve=CVE-2010-4221"
+      - "oida.protocol=ftp"
+      - "oida.severity=critical"
+      - "oida.description=ProFTPD 1.3.3a pr_netio_telnet_gets Telnet IAC stack overflow (real, ASan)"
+
+  ftp-proftpd-cve-2006-5815:
+    build:
+      context: ./services/vulnerable/ftp
+      dockerfile: Dockerfile.ftp-proftpd-cve-2006-5815-real
+    image: ghcr.io/f0rw4rd/oida-mock-ftp-proftpd-cve-2006-5815:latest
+    container_name: ftp-cve-2006-5815
+    hostname: proftpd-sreplace
+    profiles: ["vuln-services", "vuln-ftp"]
+    ports:
+      - "2125:21"
+      - "30000-30009:30000-30009"
+    networks:
+      - ics-network
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "21"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.group=ftp"
+      - "oida.ports=2125"
+      - "oida.cve=CVE-2006-5815"
+      - "oida.protocol=ftp"
+      - "oida.severity=critical"
+      - "oida.description=ProFTPD 1.3.0 sreplace .message stack overflow (real, ASan)"
+
+  ftp-wuftpd-cve-2001-0550:
+    build:
+      context: ./services/vulnerable/ftp
+      dockerfile: Dockerfile.ftp-wuftpd-cve-2001-0550-real
+    image: ghcr.io/f0rw4rd/oida-mock-ftp-wuftpd-cve-2001-0550:latest
+    container_name: ftp-cve-2001-0550
+    hostname: wuftpd-ftpglob
+    profiles: ["vuln-services", "vuln-ftp"]
+    ports:
+      - "2126:21"
+    networks:
+      - ics-network
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "21"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "oida.group=ftp"
+      - "oida.ports=2126"
+      - "oida.cve=CVE-2001-0550"
+      - "oida.protocol=ftp"
+      - "oida.severity=high"
+      - "oida.description=wu-ftpd 2.6.0 ftpglob ~{ glob heap corruption (real, ASan)"
+
   # ============================================================================
   # SNMP CVE
   # ============================================================================
@@ -1062,6 +1182,7 @@ services:
     build:
       context: ./services/vulnerable/snmp
       dockerfile: Dockerfile.net-snmp-5.9.1
+    image: ghcr.io/f0rw4rd/oida-mock-snmp-net-snmp-5-9-1:latest
     container_name: snmp-cve-2022-24805
     hostname: snmp-ttl-overflow
     profiles: ["vuln-services", "vuln-snmp"]
@@ -1086,6 +1207,7 @@ services:
     build:
       context: ./services/vulnerable/snmp
       dockerfile: Dockerfile.net-snmp-5.7.3
+    image: ghcr.io/f0rw4rd/oida-mock-snmp-net-snmp-5-7-3:latest
     container_name: snmp-cve-2020-15861
     hostname: snmp-agentx-overflow
     profiles: ["vuln-services", "vuln-snmp"]
@@ -1110,6 +1232,7 @@ services:
     build:
       context: ./services/vulnerable/snmp
       dockerfile: Dockerfile.net-snmp-5.7.2
+    image: ghcr.io/f0rw4rd/oida-mock-snmp-net-snmp-5-7-2:latest
     container_name: snmp-cve-2018-18066
     hostname: snmp-nullptr
     profiles: ["vuln-services", "vuln-snmp"]
@@ -1138,6 +1261,7 @@ services:
     build:
       context: ./services/vulnerable/ntp
       dockerfile: Dockerfile.ntpd-4.2.8p13
+    image: ghcr.io/f0rw4rd/oida-mock-ntp-ntpd-4-2-8p13:latest
     container_name: ntp-cve-2020-11868
     hostname: ntp-dos
     profiles: ["vuln-services", "vuln-ntp"]
@@ -1162,6 +1286,7 @@ services:
     build:
       context: ./services/vulnerable/ntp
       dockerfile: Dockerfile.ntpd-4.2.8p11
+    image: ghcr.io/f0rw4rd/oida-mock-ntp-ntpd-4-2-8p11:latest
     container_name: ntp-cve-2018-12327
     hostname: ntp-stack-overflow
     profiles: ["vuln-services", "vuln-ntp"]
@@ -1186,6 +1311,7 @@ services:
     build:
       context: ./services/vulnerable/ntp
       dockerfile: Dockerfile.ntpd-4.2.8p8
+    image: ghcr.io/f0rw4rd/oida-mock-ntp-ntpd-4-2-8p8:latest
     container_name: ntp-cve-2016-9042
     hostname: ntp-timestamp-bypass
     profiles: ["vuln-services", "vuln-ntp"]
@@ -1214,6 +1340,7 @@ services:
     build:
       context: ./services/vulnerable/hl7
       dockerfile: Dockerfile.mirth-3.8.0
+    image: ghcr.io/f0rw4rd/oida-mock-hl7-mirth-3-8-0:latest
     container_name: hl7-cve-2020-14964
     hostname: mirth-xxe
     profiles: ["vuln-services", "vuln-hl7"]
@@ -1240,6 +1367,7 @@ services:
     build:
       context: ./services/vulnerable/hl7
       dockerfile: Dockerfile.hl7-vuln
+    image: ghcr.io/f0rw4rd/oida-mock-hl7-hl7-vuln:latest
     container_name: hl7-cve-2019-17564
     hostname: hl7-rce
     profiles: ["vuln-services", "vuln-hl7"]
@@ -1264,6 +1392,7 @@ services:
     build:
       context: ./services/vulnerable/hl7
       dockerfile: Dockerfile.hapi-2.3
+    image: ghcr.io/f0rw4rd/oida-mock-hl7-hapi-2-3:latest
     container_name: hl7-cve-2018-11797
     hostname: hl7-dos
     profiles: ["vuln-services", "vuln-hl7"]
@@ -1292,6 +1421,7 @@ services:
     build:
       context: ./services/vulnerable/memcached
       dockerfile: Dockerfile.memcached-1.6.12
+    image: ghcr.io/f0rw4rd/oida-mock-memcached-memcached-1-6-12:latest
     container_name: memcached-cve-2021-45958
     hostname: memcached-binary-overflow
     profiles: ["vuln-services", "vuln-memcached"]
@@ -1316,6 +1446,7 @@ services:
     build:
       context: ./services/vulnerable/memcached
       dockerfile: Dockerfile.memcached-1.6.1
+    image: ghcr.io/f0rw4rd/oida-mock-memcached-memcached-1-6-1:latest
     container_name: memcached-cve-2020-10931
     hostname: memcached-extstore-uaf
     profiles: ["vuln-services", "vuln-memcached"]
@@ -1340,6 +1471,7 @@ services:
     build:
       context: ./services/vulnerable/memcached
       dockerfile: Dockerfile.memcached-1.5.5
+    image: ghcr.io/f0rw4rd/oida-mock-memcached-memcached-1-5-5:latest
     container_name: memcached-cve-2018-1000127
     hostname: memcached-int-overflow
     profiles: ["vuln-services", "vuln-memcached"]
@@ -1368,6 +1500,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.modbus-vuln-fake
+    image: ghcr.io/f0rw4rd/oida-mock-modbus-vuln-fake:latest
     container_name: modbus-vuln-server
     hostname: modbus-vuln
     profiles: ["vuln-services", "vuln-modbus"]
@@ -1395,7 +1528,8 @@ services:
   modbus-cve-2024-10918:
     build:
       context: ./services
-      dockerfile: Dockerfile.modbus-cve-2024-10918-fake
+      dockerfile: Dockerfile.modbus-cve-2024-10918-real
+    image: ghcr.io/f0rw4rd/oida-mock-modbus-cve-2024-10918:latest
     container_name: modbus-cve-2024-10918-server
     hostname: modbus-cve-2024-10918
     profiles: ["vuln-services", "vuln-modbus"]
@@ -1424,7 +1558,8 @@ services:
   modbus-cve-2022-0367:
     build:
       context: ./services
-      dockerfile: Dockerfile.modbus-cve-2022-0367-fake
+      dockerfile: Dockerfile.modbus-cve-2022-0367-real
+    image: ghcr.io/f0rw4rd/oida-mock-modbus-cve-2022-0367:latest
     container_name: modbus-cve-2022-0367-server
     hostname: modbus-cve-2022-0367
     profiles: ["vuln-services", "vuln-modbus"]
@@ -1450,30 +1585,11 @@ services:
       - "oida.severity=high"
       - "oida.description=libmodbus integer overflow"
 
-  modbus-cve-2023-26793:
-    build:
-      context: ./services
-      dockerfile: Dockerfile.modbus-cve-2023-26793-fake
-    container_name: modbus-cve-2023-26793-server
-    hostname: modbus-cve-2023-26793
-    profiles: ["vuln-services", "vuln-modbus"]
-    ports:
-      - "5023:5023"
-    restart: "no"
-    networks:
-      - ics-network
-    labels:
-      - "oida.group=modbus"
-      - "oida.ports=5023"
-      - "oida.cve=CVE-2023-26793"
-      - "oida.protocol=modbus"
-      - "oida.severity=critical"
-      - "oida.description=libmodbus stack buffer overflow"
-
   modbus-cve-2019-14462:
     build:
       context: ./services
-      dockerfile: Dockerfile.modbus-cve-2019-14462-fake
+      dockerfile: Dockerfile.modbus-cve-2019-14462-real
+    image: ghcr.io/f0rw4rd/oida-mock-modbus-cve-2019-14462:latest
     container_name: modbus-cve-2019-14462-server
     hostname: modbus-cve-2019-14462
     profiles: ["vuln-services", "vuln-modbus"]
@@ -1493,7 +1609,8 @@ services:
   modbus-cve-2019-14463:
     build:
       context: ./services
-      dockerfile: Dockerfile.modbus-cve-2019-14463-fake
+      dockerfile: Dockerfile.modbus-cve-2019-14463-real
+    image: ghcr.io/f0rw4rd/oida-mock-modbus-cve-2019-14463:latest
     container_name: modbus-cve-2019-14463-server
     hostname: modbus-cve-2019-14463
     profiles: ["vuln-services", "vuln-modbus"]

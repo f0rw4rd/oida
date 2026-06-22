@@ -1975,50 +1975,6 @@ class TestASTMFraming:
         result = instance._send_frame("H|\\^&|||TEST")
         assert result is False
 
-    def test_receive_frame_valid(self):
-        """Verify _receive_frame parses valid frame [Category A]"""
-        recv_seq = _ack_sequence(6) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
-        args = _make_args()
-        instance = _instantiate_astm_nxc(args, mock_sock)
-
-        assert instance.results["success"] is True
-        # Build a valid frame to receive
-        record = "H|\\^&|||OIDA"
-        frame_num = b"1"
-        data_bytes = record.encode("utf-8")
-        checksum_data = frame_num + data_bytes + ETX
-        checksum = _astm_checksum(checksum_data)
-        frame = STX + checksum_data + checksum + CR + LF
-
-        recv_sock = _make_mock_socket([frame])
-        recv_sock.sendall = MagicMock()
-        instance.conn = recv_sock
-
-        result = instance._receive_frame()
-        assert result is not None
-        assert "H|" in result
-
-    def test_receive_frame_bad_checksum(self):
-        """Verify _receive_frame rejects bad checksum [Category C]"""
-        recv_seq = _ack_sequence(6) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
-        args = _make_args()
-        instance = _instantiate_astm_nxc(args, mock_sock)
-
-        assert instance.results["success"] is True
-        # Build a frame with bad checksum
-        frame = STX + b"1H|\\^&|||OIDA" + ETX + b"XX" + CR + LF
-
-        recv_sock = _make_mock_socket([frame])
-        recv_sock.sendall = MagicMock()
-        instance.conn = recv_sock
-
-        result = instance._receive_frame()
-        assert result is None
-        # NAK should have been sent
-        recv_sock.sendall.assert_called_with(NAK)
-
 
 # ============================================================================
 # Record Builder Integration Tests

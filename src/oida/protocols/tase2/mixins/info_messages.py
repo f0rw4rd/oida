@@ -47,7 +47,7 @@ class InfoMessagesMixin(_ScannerBase):
 
         if im_stores:
             results["im_stores"] = im_stores
-            results["conformance_blocks"].append("Block 4 (Information Messages)")
+            results.setdefault("conformance_blocks", []).append("Block 4 (Information Messages)")
 
     def get_information_message_stores(self, connection: Any, domain: str) -> List[Dict[str, Any]]:
         """
@@ -105,6 +105,29 @@ class InfoMessagesMixin(_ScannerBase):
 
         return stores
 
+    def _get_store_messages(self, connection: Any, domain: str, store: str) -> List[Any]:
+        """
+        Return the raw message objects owned by a single IM store.
+
+        connection.get_info_messages(domain) is domain-wide and does not scope
+        by store, so resolve the owning InformationBuffer (by name) and read its
+        per-store .messages list. Falls back to an empty list when the store is
+        not present in the domain.
+
+        Args:
+            connection: Active TASE.2 connection
+            domain: Domain name
+            store: IM store name
+
+        Returns:
+            List of raw message objects belonging to ``store``
+        """
+        buffers = connection.get_info_buffers(domain)
+        for buf in buffers:
+            if buf.name == store:
+                return list(getattr(buf, "messages", []) or [])
+        return []
+
     def get_information_messages(
         self, connection: Any, domain: str, store: str
     ) -> List[Dict[str, Any]]:
@@ -115,8 +138,10 @@ class InfoMessagesMixin(_ScannerBase):
         - info_reference: Information Reference (inherited from store)
         - local_reference: Local Reference for this message
 
-        Uses get_info_messages() (pyiec61850-ng >= 1.6.0.9) for structured
-        message info.
+        Scopes to the named IM store by reading the owning InformationBuffer's
+        per-store message list (get_info_buffers), since
+        connection.get_info_messages(domain) is domain-wide and returns the same
+        unfiltered list for every store in the domain.
 
         Args:
             connection: Active TASE.2 connection
@@ -130,8 +155,7 @@ class InfoMessagesMixin(_ScannerBase):
         messages = []
 
         try:
-            raw_messages = connection.get_info_messages(domain)
-            for msg in raw_messages:
+            for msg in self._get_store_messages(connection, domain, store):
                 messages.append(
                     {
                         "message_id": str(msg.msg_id),
@@ -182,10 +206,12 @@ class InfoMessagesMixin(_ScannerBase):
         try:
             # list-messages emits msg_id as the identifier, but the library
             # only looks messages up by info_ref. Resolve the user-supplied
-            # msg_id to its info_ref via the message listing so the id shown
-            # to the operator is the id this method accepts.
+            # msg_id to its info_ref via the store's own message listing so the
+            # id shown to the operator is the id this method accepts, and so a
+            # msg_id belonging to a different store in the same domain is not
+            # resolved as if it lived in the requested store.
             info_ref = None
-            for listed in connection.get_info_messages(domain):
+            for listed in self._get_store_messages(connection, domain, store):
                 if str(listed.msg_id) == str(message_id):
                     info_ref = listed.info_ref
                     break

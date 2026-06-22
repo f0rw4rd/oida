@@ -396,31 +396,41 @@ class SecurityMixin:
                 )
 
             except asyncio.TimeoutError:
-                # Timeout usually means server rejected/didn't respond to our cert
-                result["tested"] = True
-                result["rejection_reason"] = "Connection timeout (likely rejected)"
-                self.logger.success("Server rejects untrusted client certificates")
+                # A timeout (firewall drop, packet loss, slow/overloaded server)
+                # says nothing about whether the server validated the client cert.
+                # Do NOT assert the server is clean — report inconclusive.
+                result["tested"] = False
+                result["status"] = "inconclusive"
+                result["error"] = "Connection timeout (could not determine)"
+                self.logger.warning(
+                    "Could not determine if server accepts untrusted certs (timeout)"
+                )
             except Exception as e:
                 err_str = str(e).lower()
                 err_type = type(e).__name__.lower()
-                # Check for certificate rejection errors
+                # Only explicit cert-rejection status codes prove the server
+                # validated our untrusted cert against its trust list. Generic
+                # "timeout"/"certificate" substrings are too broad — an error that
+                # merely mentions a certificate does not imply a trust decision.
                 if any(
                     x in err_str or x in err_type
                     for x in [
                         "badcertificate",
+                        "badsecuritychecksfailed",
+                        "securitychecksfailed",
                         "untrusted",
                         "rejected",
-                        "securitychecksfailed",
-                        "timeout",
-                        "certificate",
                     ]
                 ):
                     result["tested"] = True
                     result["rejection_reason"] = str(e)[:100]
                     self.logger.success("Server rejects untrusted client certificates")
                 else:
-                    result["tested"] = True
+                    # Unrelated/ambiguous error — cannot conclude either way.
+                    result["tested"] = False
+                    result["status"] = "inconclusive"
                     result["error"] = str(e)[:100]
+                    self.logger.warning("Could not determine if server accepts untrusted certs")
                     self.logger.debug(f"Cert test error: {e}")
 
         except Exception as e:

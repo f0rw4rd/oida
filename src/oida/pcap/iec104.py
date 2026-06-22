@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from ._iec_common import classify_rw, parse_asdu_field
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import (
     is_valid_discovered_ip,
@@ -329,6 +330,7 @@ class IEC104PassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "iec104"
     DISPLAY_FILTER = "iec60870_104"
     REQUIRED_LAYERS = ("iec60870_104",)
+    SERVER_PORTS = (2404,)
     PROTOCOL_COLUMNS = (
         "rw",
         "operation",
@@ -364,12 +366,24 @@ class IEC104PassiveListener(PySharkListenerBase):
         # Get MAC addresses
         src_mac, dst_mac = self.get_mac_info(packet)
 
-        # Determine direction. Default IEC 104 port is 2404 but the standard
-        # permits any TCP port — the captured peer may be running on 2405, 2406,
-        # etc. (mocks in this repo use 2405/2409). Use the canonical port if it
-        # appears on either side; otherwise fall back to "lower port wins"
-        # (the listening side has the smaller ephemeral-vs-fixed port).
-        if dst_port == 2404 or (dst_port != 2404 and src_port != 2404 and dst_port < src_port):
+        # Determine controlling/controlled roles via the shared cascade. The
+        # standard permits any TCP port, so we cannot key off 2404 alone; the
+        # cascade unions canonical 2404 with any user --decode-as / OVERRIDE_PREFS
+        # override and falls back to the lower-port heuristic. There is no clean
+        # frame-level request/response signal available this early (the COT lives
+        # per-ASDU and drives the per-interaction direction separately), so pass
+        # native=None and let the port + heuristic tiers decide who is the
+        # controlling (SCADA, client) vs controlled (RTU, server) station.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        if d.is_request:
             # To controlled station (RTU): src is controlling (SCADA)
             controlling_ip = src_ip
             controlled_ip = dst_ip
@@ -625,13 +639,7 @@ class IEC104PassiveListener(PySharkListenerBase):
             session.ioa_seen.add(ioa)
 
         # Parse cause of transmission
-        cause_tx = 0
-        cause_tx_raw = self.get_field(asdu_layer, "causetx", None)
-        if cause_tx_raw:
-            try:
-                cause_tx = int(cause_tx_raw)
-            except (ValueError, TypeError) as e:
-                self.logger.debug(f"Failed to get cause_tx: {e}")
+        cause_tx = parse_asdu_field(self.get_field(asdu_layer, "causetx", None), 0)
 
         # Parse negative (P/N) bit
         is_negative = False
@@ -658,20 +666,14 @@ class IEC104PassiveListener(PySharkListenerBase):
         quality_list = self._extract_quality(asdu_layer, type_id)
 
         # Classify rw
-        if is_error_cot:
-            rw = "error"
-        elif type_id in _WRITE_TYPE_IDS:
-            rw = "write"
-        elif type_id in _READ_COMMAND_TYPE_IDS:
-            rw = "read"
-        elif type_id in _SYSTEM_TYPE_IDS:
-            rw = "control"
-        elif type_id in _FILE_TYPE_IDS:
-            rw = "file"
-        elif type_id <= 44:
-            rw = "read"
-        else:
-            rw = "write"
+        rw = classify_rw(
+            type_id,
+            is_error_cot,
+            write_ids=_WRITE_TYPE_IDS,
+            read_ids=_READ_COMMAND_TYPE_IDS,
+            system_ids=_SYSTEM_TYPE_IDS,
+            file_ids=_FILE_TYPE_IDS,
+        )
 
         details: Dict[str, Any] = {
             "type_id": type_id,
@@ -743,13 +745,7 @@ class IEC104PassiveListener(PySharkListenerBase):
         for ioa in ioa_list:
             session.ioa_seen.add(ioa)
 
-        cause_tx = 0
-        cause_tx_raw = self.get_field(asdu_layer, "causetx", None)
-        if cause_tx_raw:
-            try:
-                cause_tx = int(cause_tx_raw)
-            except (ValueError, TypeError) as e:
-                self.logger.debug(f"Failed to get cause_tx: {e}")
+        cause_tx = parse_asdu_field(self.get_field(asdu_layer, "causetx", None), 0)
 
         is_negative = False
         nega_raw = self.get_field(asdu_layer, "nega", None)
@@ -772,20 +768,14 @@ class IEC104PassiveListener(PySharkListenerBase):
         values = self._extract_values(asdu_layer, type_id)
         quality_list = self._extract_quality(asdu_layer, type_id)
 
-        if is_error_cot:
-            rw = "error"
-        elif type_id in _WRITE_TYPE_IDS:
-            rw = "write"
-        elif type_id in _READ_COMMAND_TYPE_IDS:
-            rw = "read"
-        elif type_id in _SYSTEM_TYPE_IDS:
-            rw = "control"
-        elif type_id in _FILE_TYPE_IDS:
-            rw = "file"
-        elif type_id <= 44:
-            rw = "read"
-        else:
-            rw = "write"
+        rw = classify_rw(
+            type_id,
+            is_error_cot,
+            write_ids=_WRITE_TYPE_IDS,
+            read_ids=_READ_COMMAND_TYPE_IDS,
+            system_ids=_SYSTEM_TYPE_IDS,
+            file_ids=_FILE_TYPE_IDS,
+        )
 
         return {
             "type_id": type_id,

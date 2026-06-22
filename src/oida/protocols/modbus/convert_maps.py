@@ -5,6 +5,7 @@ Convert external Modbus register map formats to OIDA format.
 Supported input formats:
 - Solarman YAML (Home Assistant integration)
 - Nymea JSON (nymea-plugins-modbus)
+- mbmd Go meter definitions
 
 OIDA Format Specification:
 {
@@ -30,6 +31,7 @@ OIDA Format Specification:
 Usage:
     python -m oida.protocols.modbus.convert_maps solarman /path/to/yaml_dir -o output_dir
     python -m oida.protocols.modbus.convert_maps nymea /path/to/json_dir -o output_dir
+    python -m oida.protocols.modbus.convert_maps mbmd /path/to/mbmd -o output_dir
 """
 
 import json
@@ -300,6 +302,73 @@ def convert_nymea_json(filepath: Path) -> Optional[Dict[str, Any]]:
 
 
 # =============================================================================
+# mbmd Go Meter Converter
+# =============================================================================
+
+
+def convert_mbmd_go(filepath: Path) -> Optional[Dict[str, Any]]:
+    """
+    Convert an mbmd Go meter definition to OIDA format.
+
+    mbmd format (Go source):
+        Register("ABB", ...)
+        opcodes: { Power: 0x5B14, // Total power }
+    """
+    try:
+        content = filepath.read_text()
+    except Exception as e:
+        logger.error("Error reading %s: %s", filepath.name, e)
+        return None
+
+    # Extract meter name from Register() call
+    name_match = re.search(r'Register\s*\(\s*"([^"]+)"', content)
+    if not name_match:
+        return None
+    meter_name = name_match.group(1)
+
+    # Extract description
+    desc_match = re.search(r'func \([^)]+\) Description\(\) string \{\s*return "([^"]+)"', content)
+    description = desc_match.group(1) if desc_match else meter_name
+
+    # Extract opcodes (name: address, // comment)
+    opcodes = {}
+    opcode_pattern = re.compile(r"(\w+):\s*(0x[0-9A-Fa-f]+|\d+),?\s*//\s*(.+)?")
+    for match in opcode_pattern.finditer(content):
+        name = match.group(1)
+        address = int(match.group(2), 0)  # Handles hex and decimal
+        comment = match.group(3).strip() if match.group(3) else name
+        opcodes[name] = {"address": address, "description": comment}
+
+    if not opcodes:
+        return None
+
+    # Most meters read input registers (FC 4); holding registers if ReadHoldingReg present
+    fc = 3 if "ReadHoldingReg" in content else 4
+
+    oida_map = {
+        "vendor": meter_name,
+        "model": description,
+        "description": f"Imported from mbmd ({filepath.stem})",
+        "byte_order": "big",
+        "word_order": "big",
+        "source": f"mbmd/meters/rs485/{filepath.name}",
+        "registers": {},
+    }
+
+    for name, info in opcodes.items():
+        snake_name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+        oida_map["registers"][snake_name] = {
+            "address": info["address"],
+            "type": "f32",  # Most meters use float32
+            "access": "ro",
+            "description": info["description"],
+            "function_code": fc,
+        }
+
+    return oida_map if oida_map["registers"] else None
+
+
+# =============================================================================
 # Batch Conversion
 # =============================================================================
 
@@ -393,6 +462,38 @@ def convert_directory(source_dir: Path, output_dir: Path, fmt: str) -> Tuple[int
             )
             success += 1
 
+    elif fmt == "mbmd":
+        meters_dir = source_dir / "meters" / "rs485"
+        if not meters_dir.exists():
+            meters_dir = source_dir  # Direct path to .go files
+
+        skip = {"registry.go", "rs485.go", "producer.go", "transform.go"}
+        for go_file in sorted(meters_dir.glob("*.go")):
+            if go_file.name in skip:
+                continue
+
+            total += 1
+            logger.info("Converting: %s", go_file.name)
+
+            oida_map = convert_mbmd_go(go_file)
+            if not oida_map:
+                logger.info("  Skipped (no registers)")
+                continue
+
+            out_path = output_dir / "meters" / f"mbmd-{go_file.stem}.json"
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(out_path, "w") as f:
+                json.dump(oida_map, f, indent=2)
+                f.write("\n")
+
+            logger.info(
+                "  -> %s (%d registers)",
+                out_path.relative_to(output_dir),
+                len(oida_map["registers"]),
+            )
+            success += 1
+
     return success, total
 
 
@@ -415,12 +516,15 @@ Examples:
   # Convert Nymea JSON files
   python -m oida.protocols.modbus.convert_maps nymea /tmp/nymea-plugins-modbus
 
+  # Convert mbmd Go meter definitions
+  python -m oida.protocols.modbus.convert_maps mbmd /tmp/mbmd
+
   # Custom output directory
   python -m oida.protocols.modbus.convert_maps solarman /tmp/solarman -o ./my-maps
         """,
     )
     parser.add_argument(
-        "format", choices=["solarman", "nymea"], help="Input format to convert from"
+        "format", choices=["solarman", "nymea", "mbmd"], help="Input format to convert from"
     )
     parser.add_argument(
         "source", type=Path, help="Source directory containing register definitions"

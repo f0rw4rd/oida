@@ -484,8 +484,6 @@ def gen_cli_args():
         required=True,
         help="Protocol to use for scanning",
     )
-    # Store subparsers reference for error handling
-    parser._subparsers_map = {}
 
     # Register serial utilities subcommand
     serial_args(subparsers, [])
@@ -495,6 +493,61 @@ def gen_cli_args():
 
     # Standard parser (inherited by all protocols)
     std_parser = argparse.ArgumentParser(add_help=False)
+
+    # Mirror the most-used global flags onto every protocol subparser so they
+    # are also accepted *after* the subcommand and target -- e.g.
+    # `oida modbus HOST -v` -- not only before it. argparse only lets a
+    # parser's own optionals appear ahead of its subcommand, so without this
+    # `oida modbus HOST -v` is rejected with a confusing usage error.
+    #
+    # default=SUPPRESS is essential: when a flag is absent after the
+    # subcommand, the subparser must NOT write its dest, otherwise it would
+    # clobber the value already parsed before the subcommand back to a default.
+    # The pre-subcommand definitions on the main parser supply the real
+    # defaults, so each attribute is always present on the namespace either way.
+    #
+    # Short aliases that individual protocols reuse for their own options
+    # (-o, -q, -t, -W) are deliberately mirrored by long form only; after the
+    # subcommand those short flags keep their protocol-specific meaning.
+    post_cmd = std_parser.add_argument_group("Global Options (also valid after the target)")
+    post_cmd.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=argparse.SUPPRESS,
+        help="Increase verbosity (-v, -vv, -vvv)",
+    )
+    post_cmd.add_argument(
+        "--debug", action="store_true", default=argparse.SUPPRESS, help="Enable debug output"
+    )
+    post_cmd.add_argument(
+        "--quiet", action="store_true", default=argparse.SUPPRESS, help="Suppress console output"
+    )
+    post_cmd.add_argument(
+        "--output", type=str, default=argparse.SUPPRESS, help="Output file path (without extension)"
+    )
+    post_cmd.add_argument(
+        "--format",
+        choices=["json", "csv", "xml", "console", "all"],
+        default=argparse.SUPPRESS,
+        help="Output format",
+    )
+    post_cmd.add_argument(
+        "--threads", type=int, default=argparse.SUPPRESS, help="Number of concurrent threads"
+    )
+    post_cmd.add_argument(
+        "--full-width",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        help="Show full-width tables without truncating to terminal width",
+    )
+    post_cmd.add_argument(
+        "--json-log",
+        type=str,
+        metavar="FILE",
+        default=argparse.SUPPRESS,
+        help="Write structured JSON log events to FILE (NDJSON format)",
+    )
 
     # Load protocols dynamically
     protocols_dir = Path(__file__).parent / "protocols"
@@ -1149,6 +1202,23 @@ def main(argv: Optional[List[str]] = None):
     # Validate target is provided (unless in special modes)
     target_input = getattr(args, "target", None)
     list_maps = getattr(args, "list_maps", False)
+
+    # GOOSE has two modes that carry their own target instead of the
+    # positional: MMS GoCB enumeration (--mms-enum <ip>) and the R-GOOSE
+    # listener (--rgoose). When the positional interface is absent, derive
+    # the run target from --mms-enum so the documented
+    # `oida goose --mms-enum <ip>` invocation works; the GOOSEScanner reads
+    # --mms-enum directly and ignores the interface in that branch.
+    if protocol_name == "goose" and not target_input:
+        mms_enum = getattr(args, "mms_enum", None)
+        if mms_enum:
+            target_input = mms_enum
+            args.target = mms_enum
+        elif getattr(args, "rgoose", False):
+            # R-GOOSE is unimplemented; pass through so the scanner can emit
+            # its own "not yet supported" message instead of an argparse error.
+            target_input = "rgoose"
+            args.target = "rgoose"
 
     if not target_input and not list_maps:
         if is_serial_protocol:

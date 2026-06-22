@@ -361,10 +361,11 @@ class can(ISOTPMixin, SerialConnection):
         try:
             self.conn.send(msg)
             # VIN response uses ISO-TP multi-frame: isotp_recv sends Flow Control
-            # after the First Frame and reassembles the de-framed payload.
-            payload = self.isotp_recv(
-                self.conn, OBD2_REQUEST_ID, OBD2_RESPONSE_RANGE[0], timeout=1.0
-            )
+            # after the First Frame and reassembles the de-framed payload. It now
+            # returns (source_arbitration_id, payload); the VIN read only needs
+            # the payload.
+            recv = self.isotp_recv(self.conn, OBD2_REQUEST_ID, OBD2_RESPONSE_RANGE[0], timeout=1.0)
+            payload = recv[1] if recv is not None else None
             # De-framed Mode 09 PID 02 response: [0x49, 0x02, NODI, <17 VIN bytes>]
             if payload and len(payload) > 3 and payload[0] == 0x49 and payload[1] == 0x02:
                 try:

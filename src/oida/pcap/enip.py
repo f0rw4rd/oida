@@ -261,7 +261,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
             else:
                 cmd_code = int(cmd_raw)
         except (ValueError, TypeError) as e:
-            self.logger.debug(f"if isinstance(cmd_raw, str) and cmd_r...: {e}")
+            self.logger.debug(f"ENIP: failed to parse encap command {cmd_raw!r}: {e}")
             return
 
         cmd_name = ENIP_COMMANDS.get(cmd_code, f"Cmd 0x{cmd_code:04x}")
@@ -276,7 +276,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
                 else:
                     status = int(status_raw)
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if isinstance(status_raw, str) and st...: {e}")
+                self.logger.debug(f"ENIP: failed to parse encap status {status_raw!r}: {e}")
 
         # RegisterSession/UnregisterSession are requests
         # ListIdentity responses contain device info
@@ -495,7 +495,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
             else:
                 svc_code = int(svc_raw)
         except (ValueError, TypeError) as e:
-            self.logger.debug(f"if isinstance(svc_raw, str) and svc_r...: {e}")
+            self.logger.debug(f"ENIP/CIP: failed to parse service code {svc_raw!r}: {e}")
             return
 
         svc_name = CIP_SERVICES.get(svc_code, f"CIP Svc 0x{svc_code:02x}")

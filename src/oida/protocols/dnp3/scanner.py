@@ -551,6 +551,16 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         """Build channel retry configuration from CLI args.
 
         Returns an opendnp3.ChannelRetry or None if defaults are fine.
+
+        ``--no-reconnect`` asks opendnp3 to stop auto-reconnecting after a
+        channel failure. The opendnp3 / pydnp3 binding only exposes that
+        behaviour through an ``OpenRetryStrategy`` passed as a third
+        ``ChannelRetry`` argument (a strategy that ignores reopen requests),
+        which not every build ships. We feature-detect it: when the binding
+        can honour the request we build a no-reconnect ChannelRetry; when it
+        cannot we warn loudly and fall back rather than silently handing back
+        a retry object that keeps reconnecting -- the previous behaviour, where
+        ``--no-reconnect`` was completely inert.
         """
         if self.retry_min is None and self.retry_max is None and not self.no_reconnect:
             return None
@@ -565,8 +575,54 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
             if self.retry_max
             else dnp3.TimeDuration.Seconds(30)
         )
-        retry = dnp3.ChannelRetry(min_delay, max_delay)
-        return retry
+
+        if self.no_reconnect:
+            no_retry = self._build_no_reconnect_retry(min_delay, max_delay)
+            if no_retry is not None:
+                self.logger.debug("--no-reconnect: channel will not auto-reconnect")
+                return no_retry
+            self.logger.warning(
+                "--no-reconnect requested but the installed opendnp3 binding "
+                "exposes no way to disable automatic reconnection "
+                "(no OpenRetryStrategy / NeverRetry on ChannelRetry); the "
+                "master WILL keep reconnecting on channel failure."
+            )
+            if self.retry_min is None and self.retry_max is None:
+                return None
+
+        return dnp3.ChannelRetry(min_delay, max_delay)
+
+    def _build_no_reconnect_retry(self, min_delay, max_delay):
+        """Build a ChannelRetry that does not auto-reconnect, if the binding supports it.
+
+        Returns the ChannelRetry instance, or None when the installed opendnp3
+        binding has no API to suppress reconnection.
+        """
+        dnp3 = self._dnp3
+
+        # Some builds expose a dedicated factory.
+        for factory_name in ("NeverRetry", "Never"):
+            factory = getattr(dnp3.ChannelRetry, factory_name, None)
+            if callable(factory):
+                try:
+                    return factory()
+                except Exception:  # pragma: no cover - binding-specific
+                    pass
+
+        # Otherwise look for an OpenRetryStrategy whose "ignore / never" member
+        # tells opendnp3 not to reopen the channel, passed as the 3rd arg.
+        strategy_enum = getattr(dnp3, "OpenRetryStrategy", None)
+        if strategy_enum is not None:
+            for member_name in ("IGNORE", "Ignore", "NEVER", "Never"):
+                strategy = getattr(strategy_enum, member_name, None)
+                if strategy is None:
+                    continue
+                try:
+                    return dnp3.ChannelRetry(min_delay, max_delay, strategy)
+                except Exception:  # pragma: no cover - binding-specific
+                    continue
+
+        return None
 
     def _apply_sa_credentials(self, stack_config):
         """Install the SA v5 user id + update key onto a MasterAuthStackConfig.

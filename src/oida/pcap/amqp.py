@@ -44,8 +44,9 @@ PyShark AMQP field reference (packet.amqp.*):
 - amqp.type: Frame type
 """
 
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import (
@@ -153,6 +154,26 @@ AMQP_FRAME_TYPES: Dict[str, str] = {
 }
 
 
+@dataclass
+class AMQPCredential:
+    """Extracted AMQP SASL credential.
+
+    Exposes canonical attribute names (username, password, server_ip,
+    client_ip, auth_method, credential_type) so both the scanner getattr
+    credential loop and the central ``get_credentials_summary()`` table
+    builder resolve every field without fallback chains.
+    """
+
+    username: str
+    password: str = ""
+    auth_method: str = "SASL-PLAIN"
+    credential_type: str = "plaintext"
+    server_ip: str = ""
+    server_port: int = 0
+    client_ip: str = ""
+    timestamp: str = ""
+
+
 class AMQPPassiveListener(PySharkListenerBase):
     """Passive AMQP traffic listener for messaging infrastructure discovery.
 
@@ -174,6 +195,7 @@ class AMQPPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "amqp"
     DISPLAY_FILTER = "amqp"
     REQUIRED_LAYERS = ("amqp",)
+    SERVER_PORTS = (AMQP_PORT, AMQP_TLS_PORT)
     PROTOCOL_COLUMNS = (
         "class_method",
         "exchange",
@@ -189,7 +211,7 @@ class AMQPPassiveListener(PySharkListenerBase):
         nxc_logger: Optional[Any] = None,
     ):
         super().__init__(interface, timeout, nxc_logger)
-        self.credentials: list = []
+        self.credentials: List[AMQPCredential] = []
         self._seen_creds: set = set()
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
@@ -249,7 +271,12 @@ class AMQPPassiveListener(PySharkListenerBase):
             else:
                 class_method = "AMQP"
 
-        # Determine direction
+        # Determine direction.  AMQP method names carry a clean request/response
+        # signal (broker-originated methods + "-Ok" replies), which we feed to
+        # the cascade as the authoritative native tier.  When a frame has no
+        # decodable method (Header/Body/Heartbeat), native=None falls through to
+        # the known-server-port tier (canonical 5672/5671 plus user --decode-as /
+        # OVERRIDE_PREFS) and then the lower-port heuristic.
         is_response = method_name.endswith("-Ok") or method_name in (
             "Start",
             "Tune",
@@ -258,7 +285,17 @@ class AMQPPassiveListener(PySharkListenerBase):
             "Get-Ok",
             "Get-Empty",
         )
-        direction = "response" if is_response else "request"
+        native = (not is_response) if method_name else None
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        direction = d.direction
 
         # Extract protocol-specific fields
         exchange = str(self.get_field(amqp, "method_arguments_exchange", "") or "")
@@ -271,8 +308,6 @@ class AMQPPassiveListener(PySharkListenerBase):
         # Connection metadata
         mechanism = str(self.get_field(amqp, "method_arguments_mechanism", "") or "")
         mechanisms = str(self.get_field(amqp, "method_arguments_mechanisms", "") or "")
-        # Locale field extracted but not currently used
-        # locale = str(self.get_field(amqp, "method_arguments_locale", "") or "")
         reply_code = str(self.get_field(amqp, "method_arguments_reply_code", "") or "")
         reply_text = str(self.get_field(amqp, "method_arguments_reply_text", "") or "")
 
@@ -347,15 +382,16 @@ class AMQPPassiveListener(PySharkListenerBase):
                     now,
                 )
 
-        # Update device tracking
+        # Update device tracking.  Roles come from the resolved direction: the
+        # broker is d.server_ip, the producer/consumer is d.client_ip.
+        broker_mac = src_mac if not d.is_request else dst_mac
+        client_mac = dst_mac if not d.is_request else src_mac
         self._update_devices(
-            src_ip,
-            dst_ip,
-            src_port,
-            dst_port,
+            d.server_ip,
+            d.client_ip,
+            broker_mac,
+            client_mac,
             class_method,
-            src_mac=src_mac,
-            dst_mac=dst_mac,
             vhost=vhost,
             mechanisms=mechanisms or mechanism,
         )
@@ -371,53 +407,85 @@ class AMQPPassiveListener(PySharkListenerBase):
     ) -> None:
         """Extract credentials from SASL authentication response."""
         if mechanism.upper() == "PLAIN":
-            username, password = self._decode_auth_plain(response)
+            username, password = self._decode_sasl_plain_response(response)
             if username:
                 cred_key = (username, client_ip, server_ip)
                 if cred_key not in self._seen_creds:
                     self._seen_creds.add(cred_key)
                     self.credentials.append(
-                        {
-                            "protocol": "AMQP",
-                            "credential_type": "plaintext",
-                            "auth_method": "SASL-PLAIN",
-                            "username": username,
-                            "password": password,
-                            "server_ip": server_ip,
-                            "server_port": server_port,
-                            "client_ip": client_ip,
-                            "timestamp": timestamp,
-                        }
+                        AMQPCredential(
+                            username=username,
+                            password=password,
+                            auth_method="SASL-PLAIN",
+                            credential_type="plaintext",
+                            server_ip=server_ip,
+                            server_port=server_port,
+                            client_ip=client_ip,
+                            timestamp=timestamp,
+                        )
                     )
                     self.logger.info(f"AMQP SASL PLAIN: {username} @ {server_ip}:{server_port}")
 
+    @staticmethod
+    def _decode_sasl_plain_response(response: str) -> Tuple[str, str]:
+        """Decode an AMQP SASL PLAIN response into (username, password).
+
+        The AMQP ``connection.start-ok`` response argument is FT_BYTES in
+        tshark (packet-amqp.c), not a base64 string. pyshark renders FT_BYTES
+        either as colon-hex ("00:75:73:65:72...") in PDML/XML mode or as a
+        ``b'...'`` repr in EK mode. The raw SASL PLAIN payload is the binary
+        form ``\\x00authcid\\x00passwd`` (authzid is usually empty), so we
+        convert the rendering to raw bytes and split on the NUL separators
+        directly — never base64-decode it.
+        """
+        if not response:
+            return "", ""
+        raw = response.strip()
+        try:
+            if raw.startswith("b'") or raw.startswith('b"'):
+                # EK mode: repr'd bytes literal "b'\\x00user\\x00pass'"
+                import ast
+
+                payload = ast.literal_eval(raw)
+            else:
+                # PDML/XML mode: colon- or space-separated hex
+                hex_str = raw.replace(":", "").replace(" ", "")
+                payload = bytes.fromhex(hex_str)
+        except (ValueError, SyntaxError):
+            return "", ""
+
+        if not isinstance(payload, (bytes, bytearray)):
+            return "", ""
+
+        # SASL PLAIN wire format: authzid \x00 authcid \x00 passwd
+        parts = bytes(payload).split(b"\x00")
+        if len(parts) != 3:
+            return "", ""
+        _authzid, authcid, passwd = parts
+        try:
+            return authcid.decode("utf-8"), passwd.decode("utf-8")
+        except UnicodeDecodeError:
+            return (
+                authcid.decode("latin-1", "replace"),
+                passwd.decode("latin-1", "replace"),
+            )
+
     def _update_devices(
         self,
-        src_ip: str,
-        dst_ip: str,
-        src_port: int,
-        dst_port: int,
+        broker_ip: str,
+        client_ip: str,
+        broker_mac: str,
+        client_mac: str,
         class_method: str,
-        src_mac: str = "",
-        dst_mac: str = "",
         vhost: str = "",
         mechanisms: str = "",
     ) -> None:
-        """Update device entries for AMQP participants."""
-        # Broker is the side with port 5672
-        if dst_port in (AMQP_PORT, AMQP_TLS_PORT):
-            broker_ip = dst_ip
-            client_ip = src_ip
-            broker_mac = dst_mac
-            client_mac = src_mac
-        elif src_port in (AMQP_PORT, AMQP_TLS_PORT):
-            broker_ip = src_ip
-            client_ip = dst_ip
-            broker_mac = src_mac
-            client_mac = dst_mac
-        else:
-            return
+        """Update device entries for AMQP participants.
 
+        Roles are pre-resolved by the caller via ``resolve_direction()``: the
+        broker is *broker_ip* (server side), the producer/consumer is
+        *client_ip*.
+        """
         if is_valid_discovered_ip(broker_ip):
             vendor = lookup_mac_vendor(broker_mac) if broker_mac else ""
             device, is_new = self._ensure_device(
@@ -460,5 +528,18 @@ class AMQPPassiveListener(PySharkListenerBase):
                 }
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all extracted credentials."""
-        return list(self.credentials)
+        """Get summary of all extracted credentials using canonical key names."""
+        return [
+            {
+                "protocol": "AMQP",
+                "credential_type": cred.credential_type,
+                "auth_method": cred.auth_method,
+                "username": cred.username,
+                "password": cred.password,
+                "server_ip": cred.server_ip,
+                "server_port": cred.server_port,
+                "client_ip": cred.client_ip,
+                "timestamp": cred.timestamp,
+            }
+            for cred in self.credentials
+        ]

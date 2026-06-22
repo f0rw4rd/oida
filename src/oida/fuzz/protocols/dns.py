@@ -2832,51 +2832,6 @@ class DNSFuzzer(BaseFuzzer):
         if self.is_request_enabled("DNS_RCODE_BADTIME"):
             self.session.connect(dns_rcode_badtime)
 
-    def get_fuzzing_targets(self) -> list:
-        """Return list of DNS fuzzing targets and their purposes"""
-        return [
-            {
-                "name": "DNS_A_QUERY",
-                "description": "A record queries - tests IPv4 address resolution",
-            },
-            {
-                "name": "DNS_AAAA_QUERY",
-                "description": "AAAA record queries - tests IPv6 address resolution",
-            },
-            {
-                "name": "DNS_MX_QUERY",
-                "description": "MX record queries - tests mail exchange resolution",
-            },
-            {
-                "name": "DNS_PTR_QUERY",
-                "description": "PTR record queries - tests reverse DNS resolution",
-            },
-            {
-                "name": "DNS_LONG_DOMAIN",
-                "description": "Oversized domain names - tests buffer overflow protection",
-            },
-            {
-                "name": "DNS_MALFORMED_LABELS",
-                "description": "Malformed label structures - tests parsing robustness",
-            },
-            {
-                "name": "DNS_CACHE_POISONING",
-                "description": "Cache poisoning attempts - tests response validation",
-            },
-            {
-                "name": "DNS_AMPLIFICATION",
-                "description": "Query amplification attacks - tests response size limits",
-            },
-            {
-                "name": "DNS_TXT_QUERY",
-                "description": "TXT record queries - tests text data handling",
-            },
-            {
-                "name": "DNS_INVALID_FLAGS",
-                "description": "Invalid flag combinations - tests protocol state validation",
-            },
-        ]
-
 
 # For backward compatibility and explicit exports
 __all__ = ["DNSFuzzer"]

@@ -78,9 +78,13 @@ def test_default_run_connects_everything():
     advertised = {d.name for d in PROTOCOL_FUZZERS["icmpv6"].get_request_definitions()}
 
     # No advertised-but-never-built phantom (regression: ICMPv6_Hop_Limit_Boundary).
-    assert advertised - connected == set(), f"advertised but not connected: {advertised - connected}"
+    assert advertised - connected == set(), (
+        f"advertised but not connected: {advertised - connected}"
+    )
     # No connected request that was never advertised.
-    assert connected - advertised == set(), f"connected but not advertised: {connected - advertised}"
+    assert connected - advertised == set(), (
+        f"connected but not advertised: {connected - advertised}"
+    )
     assert connected == advertised
 
 

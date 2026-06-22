@@ -46,11 +46,21 @@ class TestBruteBcuAuth:
         assert [v["key"] for v in res["valid_keys"]] == ["AAAAAAAA", "BBBBBBBB"]
 
     def test_level_15_treated_as_no_access(self, host, patch_xknx_cls):
-        p2p = FakeP2P([_auth_resp(3), _auth_resp(15)])
+        p2p = FakeP2P([_auth_resp(15), _auth_resp(15)])
         knx = make_knx(p2p)
-        res = asyncio.run(host._brute_bcu_auth(knx, "1.1.2", ["1", "2"]))
+        res = asyncio.run(host._brute_bcu_auth(knx, "1.1.2", ["1", "2"], continue_on_success=True))
         assert res["valid_keys"] == []
         assert res["keys_tested"] == 2
+
+    def test_level_3_is_a_valid_granted_level(self, host, patch_xknx_cls):
+        # Finding [2]: level 3 is the lowest *granted* access level, not a
+        # no-access sentinel.  A key that authenticates to level 3 must be
+        # reported as found, not silently dropped.
+        p2p = FakeP2P([_auth_resp(3)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._brute_bcu_auth(knx, "1.1.2", ["CAFEBABE"]))
+        assert res["keys_tested"] == 1
+        assert res["valid_keys"] == [{"key": "CAFEBABE", "level": 3}]
 
     def test_per_key_exception_recorded_not_fatal(self, host, patch_xknx_cls):
         p2p = FakeP2P([RuntimeError("timeout"), _auth_resp(0)])
@@ -145,6 +155,7 @@ class TestWriteAccess:
 
     def test_writeback_marks_writable(self, host, patch_xknx_cls):
         host.read_only = False
+        host.args = {"confirm": True}
         # first response = original read, second = write echo
         p2p = FakeP2P([make_response(data=b"\x42"), make_response(data=b"\x42")])
         knx = make_knx(p2p)
@@ -156,10 +167,25 @@ class TestWriteAccess:
 
     def test_no_original_data_skips_write(self, host, patch_xknx_cls):
         host.read_only = False
+        host.args = {"confirm": True}
         p2p = FakeP2P([make_response(data=None)])
         knx = make_knx(p2p)
         res = asyncio.run(host._test_write_access(knx, [{"address": "1.1.5", "accessible": True}]))
         assert res["1.1.5"]["writable_addresses"] == []
+
+    def test_requires_confirm_no_bus_write(self, host, patch_xknx_cls):
+        # Finding [1]: a non-read-only scan must NOT actuate the bus
+        # unless --confirm is set.
+        host.read_only = False
+        host.args = {}  # no confirm
+        p2p = FakeP2P([make_response(data=b"\x42"), make_response(data=b"\x42")])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._test_write_access(knx, [{"address": "1.1.5", "accessible": True}]))
+        # nothing written; no per-device results produced
+        assert res == {}
+        # no request (read or write) was ever issued on the bus
+        assert p2p.call_count == 0
+        assert any("--test-write requires --confirm" in m for m in host.logger.records["fail"])
 
 
 # ---------------------------------------------------------------------------

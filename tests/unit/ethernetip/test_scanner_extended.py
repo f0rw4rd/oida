@@ -734,6 +734,70 @@ class TestTagAnalysis(unittest.TestCase):
 
 
 # =============================================================================
+# Single-connection reuse (no double Forward Open / session per scan)
+# =============================================================================
+
+
+class TestConnectReusesDriver(unittest.TestCase):
+    """Regression: connect() must not open a second CIP session when one is
+    already established (double Forward Open per scan)."""
+
+    @patch("oida.protocols.ethernetip.scanner._get_logix_driver")
+    def test_connect_opens_driver_once(self, mock_get_logix):
+        scanner = make_scanner()
+        driver = MagicMock()
+        driver_factory = MagicMock(return_value=driver)
+        mock_get_logix.return_value = driver_factory
+
+        first = scanner.connect()
+
+        self.assertIs(first, driver)
+        self.assertEqual(driver_factory.call_count, 1)
+        self.assertEqual(driver.open.call_count, 1)
+
+    @patch("oida.protocols.ethernetip.scanner._get_logix_driver")
+    def test_second_connect_reuses_existing_driver(self, mock_get_logix):
+        scanner = make_scanner()
+        driver = MagicMock()
+        driver_factory = MagicMock(return_value=driver)
+        mock_get_logix.return_value = driver_factory
+
+        first = scanner.connect()
+        second = scanner.connect()
+
+        # Same driver returned, and NO second driver constructed / opened.
+        self.assertIs(second, first)
+        self.assertEqual(driver_factory.call_count, 1)
+        self.assertEqual(driver.open.call_count, 1)
+
+    @patch("oida.protocols.ethernetip.scanner._get_logix_driver")
+    def test_run_scan_does_not_open_second_session(self, mock_get_logix):
+        """When the NXC layer already opened a driver (stored on the scanner),
+        run_scan() must reuse it instead of opening a second session."""
+        scanner = make_scanner()
+        driver = MagicMock()
+        driver_factory = MagicMock(return_value=driver)
+        mock_get_logix.return_value = driver_factory
+
+        # Simulate create_conn_obj() having already opened the driver.
+        established = scanner.connect()
+        self.assertIs(established, driver)
+        self.assertEqual(driver_factory.call_count, 1)
+
+        # discover() is exercised elsewhere; stub it so run_scan stays focused
+        # on connection management.
+        scanner.discover = MagicMock(return_value={"identity": {}})
+
+        scanner.run_scan()
+
+        # run_scan() called connect() internally but must NOT have built or
+        # opened a second driver.
+        self.assertEqual(driver_factory.call_count, 1)
+        self.assertEqual(driver.open.call_count, 1)
+        scanner.discover.assert_called_once_with(driver)
+
+
+# =============================================================================
 # NXC connection class
 # =============================================================================
 

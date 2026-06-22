@@ -131,7 +131,10 @@ class TestFuzzAttributes(unittest.TestCase):
         self.host._fuzz_single_attribute.assert_not_called()
         self.assertEqual(result, {})
 
-    def test_missing_raw_defaults_to_null_byte(self):
+    def test_missing_raw_passes_none_not_placeholder(self):
+        # When no genuine original was captured the original value passed in must
+        # be None (not a fabricated b"\x00"), so the downstream restore step is
+        # skipped instead of writing a synthetic value to a live device.
         write_results = {
             "100": {
                 "class_attributes": {"1": {"writable": True}},
@@ -142,7 +145,20 @@ class TestFuzzAttributes(unittest.TestCase):
         self.host._fuzz_single_attribute = MagicMock(return_value={})
         self.host._fuzz_attributes(self.conn, attributes, write_results)
         call = self.host._fuzz_single_attribute.call_args
-        self.assertEqual(call.args[4], b"\x00")
+        self.assertIsNone(call.args[4])
+
+    def test_missing_raw_instance_passes_none_not_placeholder(self):
+        write_results = {
+            "100": {
+                "class_attributes": {},
+                "instances": {"3": {"2": {"writable": True}}},
+            }
+        }
+        attributes = {"100": {"class_attributes": {}, "instances": {}}}
+        self.host._fuzz_single_attribute = MagicMock(return_value={"test_count": 1})
+        self.host._fuzz_attributes(self.conn, attributes, write_results)
+        call = self.host._fuzz_single_attribute.call_args
+        self.assertIsNone(call.args[4])
 
 
 # =============================================================================
@@ -193,6 +209,38 @@ class TestFuzzSingleAttribute(unittest.TestCase):
         self.assertEqual(result["interesting"][0]["response"], "accepted")
         # restore attempted because something was accepted and orig value present
         self.assertTrue(result["restored"])
+
+    def test_no_original_does_not_write_placeholder_on_accept(self):
+        # Regression: with no genuine original (None), an ACCEPTED fuzz payload
+        # must NOT trigger a restore write. Previously a fabricated b"\x00" was
+        # passed and written back to the live device with a false "Restored
+        # original value" success message.
+        conn = self._conn_with(write_error=None)
+        result = self.host._fuzz_single_attribute(
+            conn, 0x64, 0, 1, None, "Attr1", "USINT", iterations=1
+        )
+        # the payload was accepted...
+        self.assertEqual(len(result["interesting"]), 1)
+        # ...but no restore was attempted and no false success was logged
+        self.assertFalse(result["restored"])
+        # Set_Attribute_Single (0x10) calls = fuzz writes only, never a restore.
+        # With 1 iteration: 1 write (0x10) + 1 read (0x0E) = exactly 2 calls.
+        self.assertEqual(conn.generic_message.call_count, 2)
+        write_services = [c.kwargs.get("service") for c in conn.generic_message.call_args_list]
+        # exactly one Set_Attribute_Single (the fuzz write), zero restore writes
+        self.assertEqual(write_services.count(0x10), 1)
+        # never claim restoration when no real original existed
+        for call in self.host.logger.success.call_args_list:
+            self.assertNotIn("Restored original value", str(call))
+
+    def test_empty_original_does_not_write_placeholder_on_accept(self):
+        # Empty bytes is also not a genuine value -> no restore.
+        conn = self._conn_with(write_error=None)
+        result = self.host._fuzz_single_attribute(
+            conn, 0x64, 0, 1, b"", "Attr1", "USINT", iterations=1
+        )
+        self.assertEqual(len(result["interesting"]), 1)
+        self.assertFalse(result["restored"])
 
     def test_crash_on_timeout_read(self):
         conn = self._conn_with(write_error="rejected", read_error="timeout occurred")

@@ -488,6 +488,33 @@ class TestOPCUAURLNormalization(unittest.TestCase):
         self.assertEqual(port, 4840)
 
 
+class TestOPCUAValidateTargetIPv6(unittest.TestCase):
+    """Regression tests for validate_target on bracketed-IPv6 opc.tcp:// URLs.
+
+    The old naive splitter did host.replace("opc.tcp://","").split(":")[0],
+    which returns the literal '[' for opc.tcp://[::1]:4840 and rejected every
+    valid bracketed-IPv6 endpoint.
+    """
+
+    def test_validate_target_accepts_bracketed_ipv6_url(self):
+        scanner = OPCUAScanner({"rhost": "opc.tcp://[::1]:4840"})
+        scanner.logger = Mock()
+        self.assertTrue(scanner.validate_target("opc.tcp://[::1]:4840", 4840))
+        scanner.logger.fail.assert_not_called()
+
+    def test_validate_target_accepts_bracketed_ipv6_url_with_path(self):
+        scanner = OPCUAScanner({"rhost": "opc.tcp://[2001:db8::1]:4840/UA/Server"})
+        scanner.logger = Mock()
+        self.assertTrue(scanner.validate_target("opc.tcp://[2001:db8::1]:4840/UA/Server", 4840))
+        scanner.logger.fail.assert_not_called()
+
+    def test_validate_target_still_accepts_ipv4_url(self):
+        scanner = OPCUAScanner({"rhost": "opc.tcp://192.168.1.100:4840"})
+        scanner.logger = Mock()
+        self.assertTrue(scanner.validate_target("opc.tcp://192.168.1.100:4840", 4840))
+        scanner.logger.fail.assert_not_called()
+
+
 class TestOPCUASecurityPolicySelection(unittest.TestCase):
     """Test security policy selection and configuration"""
 
@@ -666,10 +693,7 @@ class TestOPCUAAuthenticationHandling(unittest.IsolatedAsyncioTestCase):
 
         scanner._report_findings(results)
 
-        reported = {
-            call.args[0]: call.args[1]
-            for call in scanner.report_credential.call_args_list
-        }
+        reported = {call.args[0]: call.args[1] for call in scanner.report_credential.call_args_list}
         self.assertEqual(reported, {"admin": "adminpass", "operator": "operatorpass"})
         # The shared self.password must not leak into the report.
         self.assertNotIn("shared-default", reported.values())

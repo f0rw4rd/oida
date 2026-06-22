@@ -34,21 +34,42 @@ class EnumerationMixin:
             nature_of_request="O",  # Orders/tests
         )
 
-        if self._send_frame(query):
-            self.logger.success("Test query accepted")
-            # In a real implementation, we would receive and parse response frames here
-            self.results["data"].setdefault("security_findings", []).append(
-                {
-                    "severity": "MEDIUM",
-                    "operation": "Test Enumeration",
-                    "issue": "Test Catalog Accessible",
-                    "description": "Lab test catalog can be enumerated",
-                }
-            )
+        link_ack = self._send_frame(query)
 
         terminator = self.record_builder.build_terminator()
         self._send_frame(terminator)
         self._send_eot()
+
+        if link_ack:
+            # A link-level ACK does not mean the catalog was returned. Only
+            # claim the catalog is enumerable if the LIS replies at the
+            # application layer (server-initiated transmission of records).
+            app_accepted = self._read_application_ack()
+            self.results["data"]["test_enum_app_accepted"] = app_accepted
+            if app_accepted:
+                self.logger.success("Test query accepted (application reply received)")
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "MEDIUM",
+                        "operation": "Test Enumeration",
+                        "issue": "Test Catalog Accessible",
+                        "description": "Lab test catalog can be enumerated "
+                        "(application-level reply observed)",
+                    }
+                )
+            else:
+                self.logger.display(
+                    "Test query accepted at link level (application acceptance unverified)"
+                )
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "LOW",
+                        "operation": "Test Enumeration",
+                        "issue": "Test Query Frame Accepted (Link-Level)",
+                        "description": "Endpoint accepted the test query frame at link level "
+                        "(application acceptance unverified - no application-level reply)",
+                    }
+                )
 
         # Display known test types (from our constants)
         self.logger.display(f"Common lab test codes ({len(LAB_TEST_TYPES)} known):")
@@ -108,21 +129,42 @@ class EnumerationMixin:
             nature_of_request="S",  # Sample/patient demographics
         )
 
-        if self._send_frame(query):
-            self.logger.success("Patient query accepted - PHI EXPOSURE RISK")
-            self.results["data"]["patient_enum_accepted"] = True
-            self.results["data"].setdefault("security_findings", []).append(
-                {
-                    "severity": "HIGH",
-                    "operation": "Patient Enumeration",
-                    "issue": "Patient Data Exposure",
-                    "description": "Endpoint allows wildcard patient queries - PHI exposure risk",
-                }
-            )
+        link_ack = self._send_frame(query)
 
         terminator = self.record_builder.build_terminator()
         self._send_frame(terminator)
         self._send_eot()
+
+        if link_ack:
+            # PHI is only exposed if the LIS actually returns patient records
+            # at the application layer; a link-level ACK alone does not.
+            app_accepted = self._read_application_ack()
+            self.results["data"]["patient_enum_accepted"] = True
+            self.results["data"]["patient_enum_app_accepted"] = app_accepted
+            if app_accepted:
+                self.logger.success("Patient query accepted - PHI EXPOSURE RISK")
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "HIGH",
+                        "operation": "Patient Enumeration",
+                        "issue": "Patient Data Exposure",
+                        "description": "Endpoint returned patient data to a wildcard query "
+                        "(application-level reply observed) - PHI exposure risk",
+                    }
+                )
+            else:
+                self.logger.display(
+                    "Patient query accepted at link level (application acceptance unverified)"
+                )
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "LOW",
+                        "operation": "Patient Enumeration",
+                        "issue": "Patient Query Frame Accepted (Link-Level)",
+                        "description": "Endpoint accepted the wildcard patient query frame at link "
+                        "level (application acceptance unverified - no application-level reply)",
+                    }
+                )
 
     def _probe_operations(self):
         """Probe supported record types"""

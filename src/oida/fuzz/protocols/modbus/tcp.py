@@ -154,6 +154,11 @@ class ModbusFuzzer(BaseFuzzer):
         else:
             config.protocol_type = ProtocolType.TCP
 
+        # Configured Modbus Unit ID / Slave Address (1-247). Used for every
+        # request that targets a specific unit (i.e. not the broadcast or
+        # Unit_ID-boundary requests, which deliberately override it).
+        self.unit_id = config.get_option("unit_id", 1)
+
         super().__init__(config, connection_factory)
 
     @classmethod
@@ -357,7 +362,7 @@ class ModbusFuzzer(BaseFuzzer):
                     math=lambda x: x + 1,
                     fuzzable=False,
                 ),
-                Byte("Unit_ID", 0x01, fuzzable=False),
+                Byte("Unit_ID", self.unit_id, fuzzable=False),
             ),
         )
 
@@ -398,7 +403,7 @@ class ModbusFuzzer(BaseFuzzer):
                         Word("Transaction_ID", 0x0001, endian=">", fuzzable=True),
                         Word("Protocol_ID", 0x0000, endian=">", fuzzable=False),
                         Word("Length", 0x0006, endian=">", fuzzable=False),
-                        Byte("Unit_ID", 0x01, fuzzable=False),
+                        Byte("Unit_ID", self.unit_id, fuzzable=False),
                     ),
                 ),
                 create_baseline_read_pdu(),
@@ -758,7 +763,7 @@ class ModbusFuzzer(BaseFuzzer):
                             inclusive=False,
                             math=lambda x: x + 1,
                         ),
-                        Byte("Unit_ID", 0x01),
+                        Byte("Unit_ID", self.unit_id),
                     ),
                 ),
                 Block(
@@ -798,7 +803,7 @@ class ModbusFuzzer(BaseFuzzer):
                             inclusive=False,
                             math=lambda x: x + 1,
                         ),
-                        Byte("Unit_ID", 0x01),
+                        Byte("Unit_ID", self.unit_id),
                     ),
                 ),
                 Block(
@@ -821,7 +826,7 @@ class ModbusFuzzer(BaseFuzzer):
                         Word("Transaction_ID", 0x0001, endian=">"),
                         Word("Protocol_ID", 0x0000, endian=">"),
                         Word("Length_Too_Short", 0x0003, endian=">"),  # Says 3 bytes
-                        Byte("Unit_ID", 0x01),
+                        Byte("Unit_ID", self.unit_id),
                     ),
                 ),
                 Block(
@@ -844,7 +849,7 @@ class ModbusFuzzer(BaseFuzzer):
                         Word("Transaction_ID", 0x0001, endian=">"),
                         Word("Protocol_ID", 0x0000, endian=">"),
                         Word("Length_Too_Long", 0x0014, endian=">"),  # Says 20 bytes
-                        Byte("Unit_ID", 0x01),
+                        Byte("Unit_ID", self.unit_id),
                     ),
                 ),
                 Block(
@@ -877,7 +882,7 @@ class ModbusFuzzer(BaseFuzzer):
                                 b"\xff\xff",  # Maximum (65535)
                             ],
                         ),
-                        Byte("Unit_ID", 0x01),
+                        Byte("Unit_ID", self.unit_id),
                     ),
                 ),
                 Block(
@@ -908,7 +913,7 @@ class ModbusFuzzer(BaseFuzzer):
                             inclusive=False,
                             math=lambda x: x + 1,
                         ),
-                        Byte("Unit_ID", 0x01),
+                        Byte("Unit_ID", self.unit_id),
                     ),
                 ),
                 Block(

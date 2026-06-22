@@ -47,6 +47,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from ._iec_common import parse_asdu_field
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import (
     is_valid_discovered_ip,
@@ -371,7 +372,7 @@ class IEC103PassiveListener(PySharkListenerBase):
         type_id_raw: Any,
     ) -> None:
         """Process control direction ASDU."""
-        type_id = self._parse_int(type_id_raw, 0, base=16)
+        type_id = parse_asdu_field(type_id_raw, 0)
         session.type_ids_ctrl.add(type_id)
         session.control_count += 1
 
@@ -379,7 +380,7 @@ class IEC103PassiveListener(PySharkListenerBase):
 
         # COT for control direction
         cot_raw = self.get_field(iec103_layer, "cot_ctrl", None)
-        cot = self._parse_int(cot_raw, 0, base=16)
+        cot = parse_asdu_field(cot_raw, 0)
         cot_name = COT_CTRL.get(cot, str(cot))
 
         # Extract additional details based on type
@@ -491,7 +492,7 @@ class IEC103PassiveListener(PySharkListenerBase):
         type_id_raw: Any,
     ) -> None:
         """Process monitor direction ASDU."""
-        type_id = self._parse_int(type_id_raw, 0, base=16)
+        type_id = parse_asdu_field(type_id_raw, 0)
         session.type_ids_mon.add(type_id)
         session.monitor_count += 1
 
@@ -499,7 +500,7 @@ class IEC103PassiveListener(PySharkListenerBase):
 
         # COT for monitor direction
         cot_raw = self.get_field(iec103_layer, "cot_mon", None)
-        cot = self._parse_int(cot_raw, 0, base=16)
+        cot = parse_asdu_field(cot_raw, 0)
         cot_name = COT_MON.get(cot, str(cot))
 
         detail_str = ""

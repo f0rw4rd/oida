@@ -9,7 +9,6 @@ Requires pyiec61850-ng >= 1.6.0.9 (with pyiec61850.mms submodule).
 Requires: pip install pyiec61850-ng
 """
 
-import sys
 import time
 from typing import Dict, List, Any, Optional
 
@@ -826,12 +825,6 @@ class MMSScanner(NetworkScanner):
 metadata, run = create_protocol_module(
     MMSScanner, dependencies_check_func=lambda: not _pyiec61850.is_available
 )
-
-
-if __name__ == "__main__":
-    from utils.cli import main  # type: ignore[import-not-found]
-
-    main(sys.argv, run, metadata)
 
 
 # Re-export NXC-style callable class

@@ -38,13 +38,6 @@ from typing import Any, List
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import normalize_mac
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-# CDP constants
-CDP_MULTICAST_MAC = "01:00:0c:cc:cc:cc"
 
 # CDP capability bits
 CDP_CAPABILITIES = {
@@ -415,5 +408,3 @@ def _shorten_version(version: str) -> str:
             return f"IOS {ver}"
         return ver
     return version
-
-

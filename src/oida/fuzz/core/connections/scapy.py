@@ -143,17 +143,6 @@ class ScapyRawConnection:
         """
         return b""
 
-    def set_timeout(self, timeout: float):
-        """Set timeout (no-op for Scapy)"""
-
-    def get_max_send(self) -> int:
-        """Get maximum send size"""
-        return 65535  # Max IP packet size
-
-    def get_max_recv(self) -> int:
-        """Get maximum receive size"""
-        return 65535
-
     # Compatibility methods for boofuzz interface
     def __enter__(self):
         self.open()

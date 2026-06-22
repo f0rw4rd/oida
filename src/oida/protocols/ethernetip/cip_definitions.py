@@ -375,18 +375,13 @@ def get_permission_from_descriptor(descriptor: int) -> str:
 
 # CIP General Status Codes for Access Errors
 CIP_STATUS_SUCCESS = 0x00
-CIP_STATUS_PATH_SEGMENT_ERROR = 0x04
-CIP_STATUS_PATH_DESTINATION_UNKNOWN = 0x05
 CIP_STATUS_SERVICE_NOT_SUPPORTED = 0x08
 CIP_STATUS_INVALID_ATTRIBUTE = 0x09
-CIP_STATUS_ATTRIBUTE_LIST_ERROR = 0x0A
-CIP_STATUS_STATE_CONFLICT = 0x0C
 CIP_STATUS_OBJECT_STATE_CONFLICT = 0x0C
 CIP_STATUS_ATTRIBUTE_NOT_SETTABLE = 0x0E  # Definitive read-only
 CIP_STATUS_PRIVILEGE_VIOLATION = 0x0F  # Permission denied (user/role)
 CIP_STATUS_DEVICE_STATE_CONFLICT = 0x10  # Mode prohibits writes
 CIP_STATUS_WRITE_ONCE_WRITTEN = 0x21  # One-time programmable limit
-CIP_STATUS_ATTRIBUTE_NOT_GETTABLE = 0x2C  # Write-only attribute
 
 
 def interpret_write_error(status_code: int) -> tuple:

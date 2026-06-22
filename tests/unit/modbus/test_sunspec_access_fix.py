@@ -49,7 +49,7 @@ class TestSunSpecAccessOverride(unittest.TestCase):
 
         src = pathlib.Path("src/oida/protocols/modbus/mixins/sunspec.py").read_text()
         self.assertNotIn(
-            'access = expected_access  # trust the spec',
+            "access = expected_access  # trust the spec",
             src,
             "SunSpec access-override regression — see CODE_REVIEW.md HIGH",
         )

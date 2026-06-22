@@ -172,10 +172,13 @@ class SecurityMixin(_ScannerBase):
                     "Block 2 (RBE) enabled - automatic data streaming available"
                 )
 
-            if features.get("block4"):
-                analysis["concerns"].append(
-                    "Block 4 (Information Messages) enabled - text/file transfer possible"
-                )
+            # Block 4 (Information Messages): delegate to _analyze_im_security so
+            # the IM-store risk findings (F18 large-capacity exfiltration, F19
+            # write-injection) are emitted alongside the base "enabled" concern.
+            # _analyze_im_security already emits the "enabled" line itself and
+            # no-ops cleanly when block4 is absent, so this is the single source
+            # for every Block 4 concern (no duplicate "enabled" line).
+            analysis["concerns"].extend(self._analyze_im_security(results, features))
 
             if features.get("block11") or features.get("block12"):
                 analysis["concerns"].append("Historical data blocks enabled - past data accessible")

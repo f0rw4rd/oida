@@ -43,6 +43,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from ..protocols.discovery.core import lookup_mac_vendor
 
 # BGP NOTIFICATION major error code names (RFC 4271 Section 4.5)
 _NOTIFY_MAJOR = {
@@ -175,6 +176,8 @@ class BGPPassiveListener(PySharkListenerBase):
 
         flow_id = self.get_flow_id(packet)
         src_port, dst_port = self.get_port_info(packet)
+        stream_id = self.get_stream_id(packet)
+        src_mac, dst_mac = self.get_mac_info(packet)
 
         # Determine message type
         msg_type_raw = str(self.get_field(bgp, "type", "") or "").strip()
@@ -208,23 +211,30 @@ class BGPPassiveListener(PySharkListenerBase):
         # Build a short detail summary for the table
         details["detail"] = self._build_detail_summary(msg_type_raw, details)
 
+        # Direction: NOTIFICATION (3) is sent by the peer tearing the session
+        # down (treated as a response); OPEN/UPDATE/KEEPALIVE are the
+        # session-initiating/maintaining direction (request). This is heuristic
+        # since BGP is peer-to-peer, but it keeps the unified table directional.
+        direction = "response" if msg_type_raw == "3" else "request"
+
         # Record interaction
         now = datetime.now().isoformat()
         self._record_interaction(
             now,
             src_ip,
             dst_ip,
-            "request",
+            direction,
             f"BGP {msg_type_name}",
             details,
             f"BGP {msg_type_name} from {src_ip}",
             flow_id=flow_id,
             src_port=src_port,
             dst_port=dst_port,
+            stream_id=stream_id,
         )
 
         # Update devices
-        self._update_devices(src_ip, dst_ip, flow_id, details)
+        self._update_devices(src_ip, dst_ip, src_mac, dst_mac, flow_id, details)
 
         # Store credential if auth data present
         if not auth_data:
@@ -440,6 +450,8 @@ class BGPPassiveListener(PySharkListenerBase):
         self,
         src_ip: str,
         dst_ip: str,
+        src_mac: str = "",
+        dst_mac: str = "",
         flow_id: str = "",
         details: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -447,13 +459,16 @@ class BGPPassiveListener(PySharkListenerBase):
         if details is None:
             details = {}
 
-        for ip in [src_ip, dst_ip]:
+        for ip, mac in ((src_ip, src_mac), (dst_ip, dst_mac)):
             device_key = f"bgp:{ip}"
+            vendor = lookup_mac_vendor(mac) if mac else ""
             device, is_new = self._ensure_device(
                 device_key,
                 ip,
+                mac=mac or "",
                 name=f"BGP Router ({ip})",
                 device_type="Router",
+                manufacturer=vendor if vendor and vendor != "Unknown" else "",
             )
             if is_new:
                 device.bgp_passive_data = {

@@ -1607,7 +1607,7 @@ class HL7SegmentParser:
             "DrugName": comp(rxd_2, 1),
             "DispenseDate": get(seg, "rxd_3"),
             "Quantity": get(seg, "rxd_4"),
-            "Units": get(seg, "rxd_6"),
+            "Units": get(seg, "rxd_5"),
             "LotNumber": get(seg, "rxd_18"),
             "Status": "Dispensed",
         }

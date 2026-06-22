@@ -36,27 +36,46 @@ class RecordsMixin:
             nature_of_request="A",  # All info
         )
 
-        if self._send_frame(query):
-            self.logger.success("Query record accepted")
-            self.results["data"]["query_accepted"] = True
-
-            # Security finding
-            self.results["data"].setdefault("security_findings", []).append(
-                {
-                    "severity": "MEDIUM",
-                    "operation": "Query",
-                    "issue": "Query Access Available",
-                    "description": "Endpoint accepts query records from unknown sender",
-                }
-            )
-        else:
-            self.logger.warning("Query record rejected")
-            self.results["data"]["query_accepted"] = False
+        link_ack = self._send_frame(query)
 
         # Terminator and EOT
         terminator = self.record_builder.build_terminator()
         self._send_frame(terminator)
         self._send_eot()
+
+        if link_ack:
+            # A frame-level ACK only confirms data-link receipt. Probe for an
+            # application-level reply before claiming the query was honored.
+            app_accepted = self._read_application_ack()
+            self.results["data"]["query_accepted"] = True
+            self.results["data"]["query_app_accepted"] = app_accepted
+            if app_accepted:
+                self.logger.success("Query record accepted (application reply received)")
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "MEDIUM",
+                        "operation": "Query",
+                        "issue": "Query Access Available",
+                        "description": "Endpoint returns query results to an unknown sender "
+                        "(application-level reply observed)",
+                    }
+                )
+            else:
+                self.logger.display(
+                    "Query frame accepted at link level (application acceptance unverified)"
+                )
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "LOW",
+                        "operation": "Query",
+                        "issue": "Query Frame Accepted (Link-Level)",
+                        "description": "Endpoint accepted the query frame at link level "
+                        "(application acceptance unverified - no application-level reply)",
+                    }
+                )
+        else:
+            self.logger.warning("Query record rejected")
+            self.results["data"]["query_accepted"] = False
 
     def _send_patient_record(self):
         """Send P (Patient) record"""
@@ -79,24 +98,44 @@ class RecordsMixin:
             patient_name=getattr(self.args, "patient_name", "") or "TEST^PATIENT",
         )
 
-        if self._send_frame(patient):
-            self.logger.success("Patient record accepted - PATIENT INJECTION POSSIBLE")
-            self.results["data"]["patient_accepted"] = True
-            self.results["data"].setdefault("security_findings", []).append(
-                {
-                    "severity": "HIGH",
-                    "operation": "Patient",
-                    "issue": "Patient Injection Possible",
-                    "description": "Endpoint accepts patient records - forged patient "
-                    "demographics can be injected into the LIS",
-                }
-            )
-        else:
-            self.logger.warning("Patient record rejected")
+        link_ack = self._send_frame(patient)
 
         terminator = self.record_builder.build_terminator()
         self._send_frame(terminator)
         self._send_eot()
+
+        if link_ack:
+            # Link-level ACK != application acceptance. Only claim injection is
+            # possible if the LIS returns an application-level acknowledgement.
+            app_accepted = self._read_application_ack()
+            self.results["data"]["patient_accepted"] = True
+            self.results["data"]["patient_app_accepted"] = app_accepted
+            if app_accepted:
+                self.logger.success("Patient record accepted - PATIENT INJECTION POSSIBLE")
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "HIGH",
+                        "operation": "Patient",
+                        "issue": "Patient Injection Possible",
+                        "description": "LIS application accepted patient record (application-level "
+                        "acknowledgement observed) - forged patient demographics can be injected",
+                    }
+                )
+            else:
+                self.logger.display(
+                    "Patient frame accepted at link level (application acceptance unverified)"
+                )
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "LOW",
+                        "operation": "Patient",
+                        "issue": "Patient Frame Accepted (Link-Level)",
+                        "description": "Endpoint accepted the patient frame at link level "
+                        "(application acceptance unverified - no application-level reply)",
+                    }
+                )
+        else:
+            self.logger.warning("Patient record rejected")
 
     def _send_order_record(self):
         """Send O (Order) record - DANGEROUS"""
@@ -142,36 +181,55 @@ class RecordsMixin:
             action_code=action_code,
         )
 
-        if self._send_frame(order):
-            if action_code == "C":
-                self.logger.success("Order CANCEL accepted - ORDER CANCELLATION POSSIBLE")
-                issue = "Order Cancellation Possible"
-                desc = "Endpoint accepts order cancellation - can disrupt pending tests"
-            elif action_code == "X":
-                self.logger.success("Order DELETE accepted - ORDER DELETION POSSIBLE")
-                issue = "Order Deletion Possible"
-                desc = "Endpoint accepts order deletion - can remove test orders"
-            else:
-                self.logger.success("Order record accepted - ORDER INJECTION POSSIBLE")
-                issue = "Order Injection Possible"
-                desc = "Endpoint accepts order records - test orders can be injected"
-
-            self.results["data"]["order_accepted"] = True
-            self.results["data"]["order_action"] = action_code
-            self.results["data"].setdefault("security_findings", []).append(
-                {
-                    "severity": "CRITICAL",
-                    "operation": f"Order ({action_desc})",
-                    "issue": issue,
-                    "description": desc,
-                }
-            )
-        else:
-            self.logger.display("Order record rejected")
+        link_ack = self._send_frame(order)
 
         terminator = self.record_builder.build_terminator()
         self._send_frame(terminator)
         self._send_eot()
+
+        if link_ack:
+            # Link-level ACK is not application acceptance. Probe for an
+            # application-level reply before raising a CRITICAL finding.
+            app_accepted = self._read_application_ack()
+            self.results["data"]["order_accepted"] = True
+            self.results["data"]["order_action"] = action_code
+            self.results["data"]["order_app_accepted"] = app_accepted
+            if app_accepted:
+                if action_code == "C":
+                    self.logger.success("Order CANCEL accepted - ORDER CANCELLATION POSSIBLE")
+                    issue = "Order Cancellation Possible"
+                    desc = "LIS application accepted order cancellation - can disrupt pending tests"
+                elif action_code == "X":
+                    self.logger.success("Order DELETE accepted - ORDER DELETION POSSIBLE")
+                    issue = "Order Deletion Possible"
+                    desc = "LIS application accepted order deletion - can remove test orders"
+                else:
+                    self.logger.success("Order record accepted - ORDER INJECTION POSSIBLE")
+                    issue = "Order Injection Possible"
+                    desc = "LIS application accepted order record - test orders can be injected"
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "CRITICAL",
+                        "operation": f"Order ({action_desc})",
+                        "issue": issue,
+                        "description": desc + " (application-level acknowledgement observed)",
+                    }
+                )
+            else:
+                self.logger.display(
+                    "Order frame accepted at link level (application acceptance unverified)"
+                )
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "LOW",
+                        "operation": f"Order ({action_desc})",
+                        "issue": "Order Frame Accepted (Link-Level)",
+                        "description": "Endpoint accepted the order frame at link level "
+                        "(application acceptance unverified - no application-level reply)",
+                    }
+                )
+        else:
+            self.logger.display("Order record rejected")
 
     def _send_result_record(self):
         """Send R (Result) record - DANGEROUS"""
@@ -235,34 +293,53 @@ class RecordsMixin:
             result_status=result_status,
         )
 
-        if self._send_frame(result):
-            if result_status == "C":
-                self.logger.success("Result CORRECTION accepted - RESULT MODIFICATION POSSIBLE")
-                issue = "Result Correction Possible"
-                desc = "Endpoint accepts corrected results - existing results can be modified"
-            elif result_status == "X":
-                self.logger.success("Result DELETION accepted - RESULT DELETION POSSIBLE")
-                issue = "Result Deletion Possible"
-                desc = "Endpoint accepts result deletion - lab results can be removed"
-            else:
-                self.logger.success("Result record accepted - RESULT INJECTION POSSIBLE")
-                issue = "Result Injection Possible"
-                desc = "Endpoint accepts result records - lab results can be falsified"
-
-            self.results["data"]["result_accepted"] = True
-            self.results["data"]["result_status"] = result_status
-            self.results["data"]["result_value"] = getattr(self.args, "result_value", "") or "100"
-            self.results["data"].setdefault("security_findings", []).append(
-                {
-                    "severity": "CRITICAL",
-                    "operation": f"Result ({status_desc})",
-                    "issue": issue,
-                    "description": desc,
-                }
-            )
-        else:
-            self.logger.display("Result record rejected")
+        link_ack = self._send_frame(result)
 
         terminator = self.record_builder.build_terminator()
         self._send_frame(terminator)
         self._send_eot()
+
+        if link_ack:
+            # Link-level ACK is not application acceptance. Probe for an
+            # application-level reply before raising a CRITICAL finding.
+            app_accepted = self._read_application_ack()
+            self.results["data"]["result_accepted"] = True
+            self.results["data"]["result_status"] = result_status
+            self.results["data"]["result_value"] = getattr(self.args, "result_value", "") or "100"
+            self.results["data"]["result_app_accepted"] = app_accepted
+            if app_accepted:
+                if result_status == "C":
+                    self.logger.success("Result CORRECTION accepted - RESULT MODIFICATION POSSIBLE")
+                    issue = "Result Correction Possible"
+                    desc = "LIS application accepted corrected result - existing results can be modified"
+                elif result_status == "X":
+                    self.logger.success("Result DELETION accepted - RESULT DELETION POSSIBLE")
+                    issue = "Result Deletion Possible"
+                    desc = "LIS application accepted result deletion - lab results can be removed"
+                else:
+                    self.logger.success("Result record accepted - RESULT INJECTION POSSIBLE")
+                    issue = "Result Injection Possible"
+                    desc = "LIS application accepted result record - lab results can be falsified"
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "CRITICAL",
+                        "operation": f"Result ({status_desc})",
+                        "issue": issue,
+                        "description": desc + " (application-level acknowledgement observed)",
+                    }
+                )
+            else:
+                self.logger.display(
+                    "Result frame accepted at link level (application acceptance unverified)"
+                )
+                self.results["data"].setdefault("security_findings", []).append(
+                    {
+                        "severity": "LOW",
+                        "operation": f"Result ({status_desc})",
+                        "issue": "Result Frame Accepted (Link-Level)",
+                        "description": "Endpoint accepted the result frame at link level "
+                        "(application acceptance unverified - no application-level reply)",
+                    }
+                )
+        else:
+            self.logger.display("Result record rejected")

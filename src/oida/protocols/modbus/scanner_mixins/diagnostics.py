@@ -141,11 +141,20 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             rtt = (time.time() - start_time) * 1000  # ms
 
             if not result.isError():
-                received = getattr(result, "message", None) or getattr(result, "data", None)
+                # pymodbus exposes the echoed payload on `.message`. Use it directly
+                # (no `or` fallback): a valid 0x0000 echo is falsy and would otherwise
+                # be discarded as None, reporting a spurious match=False. pymodbus
+                # decodes a single 16-bit word as an int but multi-word echoes as a
+                # tuple, so normalize a 1-element tuple/list down to its scalar before
+                # comparing against the int we sent.
+                received = getattr(result, "message", None)
+                normalized = received
+                if isinstance(received, (tuple, list)) and len(received) == 1:
+                    normalized = received[0]
                 return {
                     "sent": test_data,
                     "received": received,
-                    "match": test_data == received,
+                    "match": test_data == normalized,
                     "rtt_ms": round(rtt, 2),
                 }
         except Exception as e:

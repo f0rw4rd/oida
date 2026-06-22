@@ -129,16 +129,21 @@ class UDSMixin:
             timeout: Maximum wait time in seconds
 
         Returns:
-            Tuple of (response_id, de-framed payload) or None. The payload has
-            the ISO-TP PCI stripped (service byte first), reassembled across
-            multiple frames if the ECU answered with a First Frame (in which
-            case ``isotp_recv`` sends the required Flow Control).
+            Tuple of (response_id, de-framed payload) or None. The ``response_id``
+            is the *actual* source arbitration ID of the frame that answered, not
+            the expected ID -- this matters for OBD-II broadcast probes (0x7DF),
+            where any ECU in 0x7E8-0x7EF may reply and distinct ECUs must not
+            collapse into a single mislabeled result. The payload has the ISO-TP
+            PCI stripped (service byte first), reassembled across multiple frames
+            if the ECU answered with a First Frame (in which case ``isotp_recv``
+            sends the required Flow Control).
         """
         expected_resp = COMMON_UDS_PAIRS.get(request_id, request_id + 0x08)
-        payload = self.isotp_recv(bus, request_id, expected_resp, timeout=timeout)
-        if payload is None:
+        result = self.isotp_recv(bus, request_id, expected_resp, timeout=timeout)
+        if result is None:
             return None
-        return (expected_resp, payload)
+        source_id, payload = result
+        return (source_id, payload)
 
     def _selected_uds_services(self) -> Dict[int, str]:
         """Return the UDS services to probe, honouring ``--uds-services``.
@@ -662,28 +667,3 @@ class UDSMixin:
                 return False
 
         return False
-
-    def uds_tester_present_keepalive(
-        self, bus: Any, req_id: int, suppress_response: bool = True
-    ) -> bool:
-        """
-        Send a single TesterPresent (0x3E) keep-alive message.
-
-        Args:
-            bus: python-can Bus instance
-            req_id: ECU request arbitration ID
-            suppress_response: If True, use sub-function 0x80 (no response needed)
-
-        Returns:
-            True if message was sent
-        """
-        can = _get_python_can()()
-        sub_func = 0x80 if suppress_response else 0x00
-        data = bytes([0x02, 0x3E, sub_func, 0x00, 0x00, 0x00, 0x00, 0x00])
-        try:
-            msg = can.Message(arbitration_id=req_id, data=data, is_extended_id=False)
-            bus.send(msg)
-            return True
-        except Exception as e:
-            self.logger.debug(f"UDS: TesterPresent CAN frame send failed: {e}")
-            return False

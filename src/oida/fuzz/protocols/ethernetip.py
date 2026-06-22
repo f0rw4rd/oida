@@ -402,7 +402,39 @@ class EtherNetIPFuzzer(BaseFuzzer):
             ),
         )
 
-        # Quick CIP Service Sweep - All CIP services once
+        # Quick CIP Service Sweep - CIP services once.
+        # Read-only services always run; state-changing/destructive services
+        # (RESET/START/STOP/CREATE/DELETE/SET_*/WRITE_*/FORWARD_OPEN/
+        # APPLY_ATTRIBUTES) are gated behind --enable-write, mirroring the
+        # Phase-3 write requests so the baseline sweep cannot silently bypass
+        # the safety gate.
+        quick_cip_enable_write = self.config.get_option("enable_write", False)
+        quick_cip_services = [
+            bytes([CIPServices.GET_ATTRIBUTES_ALL]),
+            bytes([CIPServices.GET_ATTRIBUTE_LIST]),
+            bytes([CIPServices.MULTIPLE_SERVICE]),
+            bytes([CIPServices.GET_ATTRIBUTE_SINGLE]),
+            bytes([CIPServices.FIND_NEXT]),
+            bytes([CIPServices.READ_TAG]),
+            bytes([CIPServices.READ_TAG_FRAGMENTED]),
+            bytes([CIPServices.FORWARD_CLOSE]),
+            bytes([CIPServices.READ_TEMPLATE]),
+        ]
+        if quick_cip_enable_write:
+            quick_cip_services += [
+                bytes([CIPServices.SET_ATTRIBUTES_ALL]),
+                bytes([CIPServices.SET_ATTRIBUTE_LIST]),
+                bytes([CIPServices.RESET]),
+                bytes([CIPServices.START]),
+                bytes([CIPServices.STOP]),
+                bytes([CIPServices.CREATE]),
+                bytes([CIPServices.DELETE]),
+                bytes([CIPServices.APPLY_ATTRIBUTES]),
+                bytes([CIPServices.SET_ATTRIBUTE_SINGLE]),
+                bytes([CIPServices.WRITE_TAG]),
+                bytes([CIPServices.WRITE_TAG_FRAGMENTED]),
+                bytes([CIPServices.FORWARD_OPEN]),
+            ]
         quick_cip_coverage = Request(
             "Quick_CIP_Coverage",
             children=(
@@ -446,29 +478,7 @@ class EtherNetIPFuzzer(BaseFuzzer):
                             children=(
                                 Group(
                                     "Service",
-                                    values=[
-                                        bytes([CIPServices.GET_ATTRIBUTES_ALL]),
-                                        bytes([CIPServices.SET_ATTRIBUTES_ALL]),
-                                        bytes([CIPServices.GET_ATTRIBUTE_LIST]),
-                                        bytes([CIPServices.SET_ATTRIBUTE_LIST]),
-                                        bytes([CIPServices.RESET]),
-                                        bytes([CIPServices.START]),
-                                        bytes([CIPServices.STOP]),
-                                        bytes([CIPServices.CREATE]),
-                                        bytes([CIPServices.DELETE]),
-                                        bytes([CIPServices.MULTIPLE_SERVICE]),
-                                        bytes([CIPServices.APPLY_ATTRIBUTES]),
-                                        bytes([CIPServices.GET_ATTRIBUTE_SINGLE]),
-                                        bytes([CIPServices.SET_ATTRIBUTE_SINGLE]),
-                                        bytes([CIPServices.FIND_NEXT]),
-                                        bytes([CIPServices.READ_TAG]),
-                                        bytes([CIPServices.WRITE_TAG]),
-                                        bytes([CIPServices.READ_TAG_FRAGMENTED]),
-                                        bytes([CIPServices.WRITE_TAG_FRAGMENTED]),
-                                        bytes([CIPServices.FORWARD_OPEN]),
-                                        bytes([CIPServices.FORWARD_CLOSE]),
-                                        bytes([CIPServices.READ_TEMPLATE]),
-                                    ],
+                                    values=quick_cip_services,
                                 ),
                                 Byte("Request_Path_Size", 0x02, fuzzable=False),
                                 Byte("Class_Segment", 0x20, fuzzable=False),
@@ -2076,7 +2086,12 @@ class EtherNetIPFuzzer(BaseFuzzer):
         # ==================== PHASE 1: QUICK COVERAGE (~30 sec) ====================
         if self.is_request_enabled("EIP_Baseline"):
             self.session.connect(quick_eip_coverage)  # All 10 EIP commands
-            self.session.connect(quick_cip_coverage)  # All 21 CIP services
+            self.session.connect(quick_cip_coverage)  # CIP service sweep
+            if not quick_cip_enable_write:
+                self.log.warning(
+                    "[EIP] Quick CIP sweep limited to read-only services "
+                    "(enable destructive services with --enable-write)"
+                )
 
         if self.is_request_enabled("CIP_Class_Enumeration"):
             self.session.connect(cip_class_enumeration)  # Well-known CIP object classes

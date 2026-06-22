@@ -98,6 +98,8 @@ def create_mock_args():
     mock_args.output = None
     mock_args.extract_response = False
     mock_args.extract_fields = ""
+    mock_args.save_response = None
+    mock_args.parse_segments = False
     # MFN-specific
     mock_args.mfn_type = "M01"
     mock_args.staff_id = None
@@ -829,6 +831,40 @@ class TestDSCSegmentParser(unittest.TestCase):
         self.assertEqual(result["ContinuationPointer"], "CONT456")
 
 
+class MultiFrameMockSocket:
+    """Mock MLLP socket that serves a queue of framed responses.
+
+    Each entry in ``frames`` is delivered as one complete MLLP frame in
+    response to the corresponding ``sendall``. This lets a test simulate a
+    server that paginates results via a DSC continuation pointer: frame 1
+    carries the pointer, frame 2 carries the rest.
+    """
+
+    def __init__(self, frames):
+        # frames: list[bytes] of raw (unframed) HL7 payloads
+        self._frames = [MLLP_START + f + MLLP_END for f in frames]
+        self._idx = 0
+        self.sent_data = []
+        self.connected = True
+        self.timeout = 10
+
+    def settimeout(self, timeout):
+        self.timeout = timeout
+
+    def sendall(self, data):
+        self.sent_data.append(data)
+
+    def recv(self, bufsize):
+        if self._idx < len(self._frames):
+            frame = self._frames[self._idx]
+            self._idx += 1
+            return frame
+        return b""
+
+    def close(self):
+        self.connected = False
+
+
 class TestContinuationHandling(unittest.TestCase):
     """Test continuation/fragmentation handling"""
 
@@ -898,6 +934,72 @@ class TestContinuationHandling(unittest.TestCase):
 
         # Should NOT have DSC segment
         self.assertNotIn("DSC|", result_str)
+
+    @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
+    def test_send_query_follows_continuation_end_to_end(self):
+        """E2E: a DSC pointer drives a continuation request and pages merge.
+
+        Frame 1 carries page-one data plus a DSC continuation pointer.
+        Frame 2 carries page-two data and no pointer. The query path must:
+        issue exactly one continuation request, and return a reassembled
+        payload containing BOTH pages.
+        """
+        page1 = (
+            "MSH|^~\\&|SERVER|FAC|OIDA|SEC|20240101||RSP^K22|MSG1|P|2.5\r"
+            "MSA|AA|MSG1\r"
+            "PID|1||PT001||DOE^JOHN\r"
+            "DSC|CONT123|I\r"
+        ).encode("utf-8")
+        page2 = (
+            "MSH|^~\\&|SERVER|FAC|OIDA|SEC|20240101||RSP^K22|MSG2|P|2.5\r"
+            "MSA|AA|MSG2\r"
+            "PID|2||PT002||SMITH^JANE\r"
+        ).encode("utf-8")
+
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
+        scanner.logger = Mock()
+        scanner.conn = MultiFrameMockSocket([page1, page2])
+
+        result = scanner._send_query_message("MSH|^~\\&|QRY\r")
+
+        # Two frames were requested: the original query + one continuation.
+        self.assertEqual(len(scanner.conn.sent_data), 2)
+        # The second send must be a QCN continuation carrying the pointer.
+        second_send = scanner.conn.sent_data[1].decode("utf-8", errors="ignore")
+        self.assertIn("QCN^J01", second_send)
+        self.assertIn("CONT123", second_send)
+
+        # Reassembled payload contains BOTH pages, deduped header, no DSC.
+        merged = result.decode("utf-8")
+        self.assertIn("PT001", merged)
+        self.assertIn("PT002", merged)
+        self.assertEqual(merged.count("PID|"), 2)
+        self.assertEqual(merged.count("MSH|"), 1)
+        self.assertNotIn("DSC|", merged)
+
+    @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
+    def test_send_query_no_continuation_is_single_shot(self):
+        """A normal single-frame response triggers NO extra request.
+
+        Behavior must be byte-identical to a plain single-shot send: exactly
+        one frame sent, and the returned payload is the stripped first frame.
+        """
+        single = (
+            "MSH|^~\\&|SERVER|FAC|OIDA|SEC|20240101||RSP^K22|MSG1|P|2.5\r"
+            "MSA|AA|MSG1\r"
+            "PID|1||PT001||DOE^JOHN\r"
+        ).encode("utf-8")
+
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
+        scanner.logger = Mock()
+        scanner.conn = MultiFrameMockSocket([single])
+
+        result = scanner._send_query_message("MSH|^~\\&|QRY\r")
+
+        # Exactly one send: no continuation request issued.
+        self.assertEqual(len(scanner.conn.sent_data), 1)
+        # Returned payload is the stripped single frame, unchanged.
+        self.assertEqual(result, single)
 
 
 # =============================================================================

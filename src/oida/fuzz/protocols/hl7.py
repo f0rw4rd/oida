@@ -57,21 +57,6 @@ class HL7Fuzzer(BaseFuzzer):
     # Protocol-specific monitor: HL7 ACK check every 20 tests
     DEFAULT_MONITORS = "hl7:20"
 
-    # Message types that can be probed for capability detection
-    ALL_MESSAGE_TYPES = {
-        "ADT": ["A01", "A02", "A03", "A04", "A08", "A11", "A13"],  # Admit/Discharge/Transfer
-        "ORU": ["R01"],  # Observation Results
-        "ORM": ["O01"],  # Orders
-        "QRY": ["A19"],  # Query
-        "MDM": ["T01", "T02"],  # Medical Documents
-        "ACK": [""],  # Acknowledgment (base)
-        "RDE": ["O11"],  # Pharmacy Orders
-        "VXU": ["V04"],  # Immunization
-        "DFT": ["P03"],  # Financial Transaction
-        "BAR": ["P01"],  # Billing Account
-        "SIU": ["S12"],  # Scheduling
-    }
-
     PROTOCOL_OPTIONS = {
         "use_capability_detection": {
             "type": bool,

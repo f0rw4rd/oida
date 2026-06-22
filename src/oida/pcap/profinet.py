@@ -111,6 +111,15 @@ DCP_SERVICE_NAMES = {
 DCP_TYPE_REQUEST = 0  # bit pattern: neither response nor selection
 DCP_TYPE_RESPONSE_BIT = 0x01  # response flag (bit 0)
 
+# DCE/RPC PDU packet types (dcerpc.pkt_type). PNIO-CM acyclic services ride on
+# DCE/RPC, whose PDU type is the authoritative request/response signal.
+DCERPC_PKT_TYPE_REQUEST = 0
+DCERPC_PKT_TYPE_RESPONSE = 2
+DCERPC_PKT_TYPE_FAULT = 3
+# Server-originated PDUs (response/fault/reject/orphaned ack family).
+_DCERPC_RESPONSE_PKT_TYPES = {DCERPC_PKT_TYPE_RESPONSE, DCERPC_PKT_TYPE_FAULT}
+_DCERPC_REQUEST_PKT_TYPES = {DCERPC_PKT_TYPE_REQUEST}
+
 # RT FrameID ranges
 _RT_CYCLIC_LOW = 0x8000
 _RT_CYCLIC_HIGH = 0xBFFF
@@ -248,9 +257,6 @@ class IMRecord:
     sw_revision_patch: int = 0
     revision_counter: int = 0
     profile_id: int = 0
-    profile_specific_type: int = 0
-    im_version_major: int = 0
-    im_version_minor: int = 0
     im_supported: int = 0
 
     # I&M1 fields
@@ -576,6 +582,29 @@ class PROFINETPassiveListener(PySharkListenerBase):
     # IO (acyclic RPC) processing
     # ------------------------------------------------------------------
 
+    def _io_is_response(self, packet, raw_error_code: Any) -> bool:
+        """Classify an acyclic PNIO packet as a response (vs a request).
+
+        Prefers the DCE/RPC PDU type (``dcerpc.pkt_type``), the canonical
+        request/response signal for the RPC PNIO-CM carries. Only when no
+        DCE/RPC layer/PDU type is exposed does it fall back to *presence* of
+        the ``error_code`` field -- and presence is tested against the raw
+        ``get_field`` value (``is not None``), never a defaulted int, because a
+        successful response carries ``error_code=0``.
+        """
+        dcerpc = getattr(packet, "dcerpc", None)
+        if dcerpc is not None:
+            _raw_pkt_type = self.get_field(dcerpc, "pkt_type")
+            if _raw_pkt_type is not None:
+                pkt_type = self._parse_int(_raw_pkt_type, -1)
+                if pkt_type in _DCERPC_RESPONSE_PKT_TYPES:
+                    return True
+                if pkt_type in _DCERPC_REQUEST_PKT_TYPES:
+                    return False
+
+        # Fallback: the error_code field is present only on the response side.
+        return raw_error_code is not None
+
     def _process_io(self, packet, src_mac: str, dst_mac: str, layer_name: str = "pn_io") -> None:
         """Process a PROFINET IO packet (DCE/RPC-based acyclic services)."""
         io_layer = getattr(packet, layer_name)
@@ -612,8 +641,10 @@ class PROFINETPassiveListener(PySharkListenerBase):
             or ""
         ).strip()
 
-        # Error status
-        error_code = self._parse_int(self.get_field(io_layer, f"{pfx}error_code"))
+        # Error status. Use the raw value to distinguish a genuinely-absent
+        # field from a present 0 (a successful response carries error_code=0).
+        _raw_error_code = self.get_field(io_layer, f"{pfx}error_code")
+        error_code = self._parse_int(_raw_error_code) if _raw_error_code is not None else None
 
         # Get IP info for session tracking
         src_ip, dst_ip = self.get_ip_info(packet)
@@ -627,9 +658,13 @@ class PROFINETPassiveListener(PySharkListenerBase):
         else:
             rw = ""
 
-        # Determine request/response from error status presence or RPC direction
-        # If we have an error_code field, this is likely a response
-        is_response = error_code is not None
+        # Determine request/response direction. The DCE/RPC PDU type is the
+        # authoritative signal (PNIO-CM acyclic services ride on DCE/RPC); a
+        # status field cannot be used because a successful response carries
+        # error_code=0, which is indistinguishable from an absent field's
+        # default. Fall back to explicit error_code-field *presence* only when
+        # no DCE/RPC PDU type is exposed by the dissector.
+        is_response = self._io_is_response(packet, _raw_error_code)
         direction = "response" if is_response else "request"
 
         # Update session
@@ -1480,16 +1515,6 @@ class PROFINETPassiveListener(PySharkListenerBase):
         profile_id = self._parse_int(self.get_field(io_layer, f"{pfx}im_profile_id"))
         if profile_id:
             record.profile_id = profile_id
-
-        profile_type = self._parse_int(self.get_field(io_layer, f"{pfx}im_profile_specific_type"))
-        if profile_type:
-            record.profile_specific_type = profile_type
-
-        im_ver_major = self._parse_int(self.get_field(io_layer, f"{pfx}im_version_major"))
-        im_ver_minor = self._parse_int(self.get_field(io_layer, f"{pfx}im_version_minor"))
-        if im_ver_major or im_ver_minor:
-            record.im_version_major = im_ver_major
-            record.im_version_minor = im_ver_minor
 
         im_supported = self._parse_int(self.get_field(io_layer, f"{pfx}im_supported"))
         if im_supported:

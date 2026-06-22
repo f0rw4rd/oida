@@ -8,7 +8,7 @@ methods that had 5% coverage.
 
 Categories:
 - Connection: create_conn_obj, _disconnect
-- Framing: _send_enq, _send_eot, _send_frame, _receive_frame, _calculate_checksum
+- Framing: _send_enq, _send_eot, _send_frame, _calculate_checksum
 - Extraction: _extract_analyzer_info, _identify_server, _receive_server_response
 - Operations: _send_query_record, _send_patient_record, _send_order_record, _send_result_record
 - Enumeration: _enum_tests, _enum_instruments, _enum_patients
@@ -372,69 +372,6 @@ class TestSendFrame:
         sent_data = mock_sock.sendall.call_args[0][0]
         # Frame number 8 % 8 = 0
         assert sent_data[1:2] == b"0"
-
-
-class TestReceiveFrame:
-    """Test _receive_frame()"""
-
-    def test_receive_valid_frame(self):
-        scanner = _instantiate_scanner(_make_args())
-
-        # Build a valid frame: STX + frame_num + data + ETX + checksum + CR + LF
-        record_data = "H|\\^&|||OIDA"
-        frame_num = b"1"
-        data_bytes = record_data.encode()
-        checksum_data = frame_num + data_bytes + ETX
-        checksum = scanner._calculate_checksum(checksum_data)
-        frame = STX + checksum_data + checksum + CR + LF
-
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = frame
-        scanner.conn = mock_sock
-
-        result = scanner._receive_frame()
-
-        assert result == record_data
-        mock_sock.sendall.assert_called_with(ACK)
-
-    def test_receive_bad_checksum(self):
-        mock_sock = MagicMock()
-        # Frame with wrong checksum
-        frame = STX + b"1H|test" + ETX + b"FF" + CR + LF
-        mock_sock.recv.return_value = frame
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
-
-        result = scanner._receive_frame()
-
-        assert result is None
-        mock_sock.sendall.assert_called_with(NAK)
-
-    def test_receive_no_etx(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = b"garbage data" + CR + LF
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
-
-        assert scanner._receive_frame() is None
-
-    def test_receive_timeout(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.side_effect = socket.timeout()
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
-
-        assert scanner._receive_frame() is None
-
-    def test_receive_empty(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = b""
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
-
-        assert scanner._receive_frame() is None
-
-    def test_receive_no_connection(self):
-        scanner = _instantiate_scanner(_make_args())
-        scanner.conn = None
-
-        assert scanner._receive_frame() is None
 
 
 # ---------------------------------------------------------------------------

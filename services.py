@@ -231,6 +231,30 @@ def _resolve_services_by_group(
     return sorted(services)
 
 
+def _pull(
+    compose_args: list[str],
+    *,
+    profiles: tuple[str, ...] = (),
+    services: tuple[str, ...] = (),
+) -> None:
+    """Best-effort pull of pre-built images from ghcr.io.
+
+    Buildable services carry an ``image:`` pointing at ghcr.io/f0rw4rd/oida-mock-*,
+    so ``pull`` grabs the published image when available. Failures (offline, image
+    not yet published, third-party images) are swallowed — the subsequent ``up``
+    builds whatever is still missing locally.
+    """
+    profile_args: list[str] = []
+    for p in profiles:
+        profile_args.extend(["--profile", p])
+    print(f"{YELLOW}[*]{RST} Pulling pre-built images (will build locally on miss)...")
+    _run(
+        _compose_cmd(*compose_args, *profile_args, "pull", "--ignore-pull-failures", *services),
+        check=False,
+        suppress_stderr=True,
+    )
+
+
 def _check_docker() -> bool:
     """Pre-flight check that Docker is available. Returns True if Docker is OK."""
     try:
@@ -266,16 +290,22 @@ def cmd_up(args: argparse.Namespace) -> int:
     """Start mock services."""
     stack = args.stack
 
+    build_flag = ["--build"] if args.build else []
+
     if stack == "core":
         print(f"{BLUE}=== Starting Core Services ==={RST}")
-        _run(_compose_cmd(*_core_args(), "up", "-d", "--build"))
+        if not args.build and not args.no_pull:
+            _pull(_core_args())
+        _run(_compose_cmd(*_core_args(), "up", "-d", *build_flag))
         ok = wait_healthy(_all_args())
         return 0 if ok else 1
 
     elif stack in ("cve", "all"):
         label = "Core + CVE" if stack == "cve" else "All"
         print(f"{BLUE}=== Starting {label} Services ==={RST}")
-        _run(_compose_cmd(*_all_args(), "--profile", "vuln-services", "up", "-d", "--build"))
+        if not args.build and not args.no_pull:
+            _pull(_all_args(), profiles=("vuln-services",))
+        _run(_compose_cmd(*_all_args(), "--profile", "vuln-services", "up", "-d", *build_flag))
         ok = wait_healthy(_all_args())
         return 0 if ok else 1
 
@@ -548,7 +578,8 @@ def cmd_up_cve(args: argparse.Namespace) -> int:
     """Start specific CVE protocol group."""
     proto = args.proto
     print(f"{BLUE}=== Starting CVE services: vuln-{proto} ==={RST}")
-    _run(_compose_cmd(*_all_args(), "--profile", f"vuln-{proto}", "up", "-d", "--build"))
+    _pull(_all_args(), profiles=(f"vuln-{proto}",))
+    _run(_compose_cmd(*_all_args(), "--profile", f"vuln-{proto}", "up", "-d"))
     return 0
 
 
@@ -583,7 +614,8 @@ def _up_proto_impl(group: str) -> int:
                 seen_profiles.add(p)
                 profile_args.extend(["--profile", p])
 
-    # Start services
+    # Pull pre-built images first, then start (building anything still missing)
+    _pull(compose_args, profiles=tuple(seen_profiles), services=tuple(services))
     cmd = _compose_cmd(*compose_args, *profile_args, "up", "-d", *services)
     _run(cmd)
 
@@ -799,6 +831,8 @@ def _cmd_up_proto_generic(args: argparse.Namespace, spec: dict) -> int:
     """Generic handler for data-driven per-protocol commands."""
     _ = args
     print(f"{BLUE}=== Starting {spec['header']} ==={RST}")
+    spec_profiles = tuple(spec["compose_args"][1::2])  # ["--profile", p, ...] -> (p, ...)
+    _pull(_core_args(), profiles=spec_profiles, services=tuple(spec["services"]))
     compose = _compose_cmd(*_core_args(), *spec["compose_args"], "up", "-d", *spec["services"])
     _run(compose)
 
@@ -832,6 +866,16 @@ def build_parser() -> argparse.ArgumentParser:
     # Infrastructure commands
     p_up = sub.add_parser("up", help="Start mock services [core|cve|all|<group>]")
     p_up.add_argument("stack", nargs="?", default="core", help="Stack to start (default: core)")
+    p_up.add_argument(
+        "--build",
+        action="store_true",
+        help="Force a local image rebuild instead of pulling pre-built images from ghcr.io",
+    )
+    p_up.add_argument(
+        "--no-pull",
+        action="store_true",
+        help="Skip the registry pull; build any missing images locally",
+    )
 
     sub.add_parser("down", help="Stop all mock services")
     sub.add_parser("restart", help="Restart mock services")

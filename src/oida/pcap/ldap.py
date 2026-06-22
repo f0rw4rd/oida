@@ -97,9 +97,6 @@ LDAP_WRITE_OPS = {
 # Password Modify Extended Operation OID (RFC 3062)
 PASSWD_MODIFY_OID = "1.3.6.1.4.1.4203.1.11.1"
 
-# StartTLS Extended Operation OID (RFC 4511)
-STARTTLS_OID = "1.3.6.1.4.6.1.1"
-
 # LDAP authentication choice values (ldap.authentication)
 LDAP_AUTH_CHOICES = {
     "0": "simple",
@@ -108,22 +105,6 @@ LDAP_AUTH_CHOICES = {
     "11": "sicily_initial",
     "12": "sicily_subsequent",
 }
-
-# T1 tshark fields that this listener extracts.
-# Used by the audit tool to measure field coverage.
-_T1_FIELDS = (
-    "ldap.messageID",
-    "ldap.errorMessage",
-    "ldap.version",
-    "ldap.name",
-    "ldap.authentication",
-    "ldap.bindResponse_resultCode",
-    "ldap.resultCode",
-    "ldap.credentials",
-    "ldap.requestName",
-    "ldap.extendedResponse_resultCode",
-    "ldap.maxBytes",
-)
 
 
 @dataclass
@@ -198,6 +179,7 @@ class LDAPPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "ldap"
     DISPLAY_FILTER = "ldap"
     REQUIRED_LAYERS = ("ldap",)
+    SERVER_PORTS = tuple(sorted(LDAP_PORTS))
 
     PROTOCOL_COLUMNS = ("op", "details", "result")
 
@@ -223,7 +205,6 @@ class LDAPPassiveListener(PySharkListenerBase):
 
         # Counters for server/client device enrichment
         self._server_stats: Dict[str, Dict[str, Any]] = {}  # server_ip -> stats
-        self._client_stats: Dict[str, Dict[str, Any]] = {}  # client_ip -> stats
 
         # Write operations for alerting
         self._write_ops: List[Dict[str, Any]] = []
@@ -433,9 +414,20 @@ class LDAPPassiveListener(PySharkListenerBase):
         elif self._is_sasl_encrypted(fields):
             # SASL/GSSAPI-encrypted LDAP message — content is opaque but the
             # presence and framing are valuable intelligence (active Kerberos
-            # bind session). Determine direction by destination port.
-            is_request = dst_port in (389, 3268, 636, 3269)
-            direction = "request" if is_request else "response"
+            # bind session).  No readable protocolOp, so native=None: the
+            # known-server-port tier (canonical 389/3268/636/3269 plus any user
+            # --decode-as / OVERRIDE_PREFS override) classifies, then the
+            # lower-port / first-seen heuristic.  Never drops on a
+            # non-standard port.
+            direction = self.resolve_direction(
+                None,
+                native=None,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=src_port,
+                dst_port=dst_port,
+                flow_id=flow_id,
+            ).direction
             buf_len = fields.get("ldap.sasl_buffer_length", "?")
             self._record_interaction(
                 now,

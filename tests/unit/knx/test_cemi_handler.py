@@ -314,9 +314,7 @@ def cemi_handler_module():
     cemi_module, helpers_module = load_cemi_handler_module()
 
     # Set up helpers module with mocked xknx
-    helpers_module._get_cemi_classes = MagicMock(
-        return_value=(MockCEMIHandler, MockCEMIFrame, MockCEMIMessageCode)
-    )
+    helpers_module._get_cemi_message_code = MagicMock(return_value=MockCEMIMessageCode)
     helpers_module._get_xknx_classes = MagicMock(
         return_value=(
             MockXKNX,
@@ -464,9 +462,7 @@ class TestDeviceDiscoveryTracking:
     def test_found_device_appears_in_result(self, mock_xknx, mock_logger):
         """A device responding via L_DATA_IND is reported in result['devices']."""
         mock_helpers = MagicMock()
-        mock_helpers.parse_bus_ranges = MagicMock(
-            return_value=[MockIndividualAddress("1.1.5")]
-        )
+        mock_helpers.parse_bus_ranges = MagicMock(return_value=[MockIndividualAddress("1.1.5")])
         handler = TestableCustomCEMIHandler(mock_xknx, mock_logger, mock_helpers)
 
         # Drive a synthetic L_DATA_IND through the installed handler mid-scan.
@@ -781,9 +777,7 @@ class TestIntegration:
         """Test complete discovery workflow."""
         handler = TestableCustomCEMIHandler(mock_xknx, mock_logger, mock_helpers)
 
-        result = asyncio.run(
-            handler.fast_bus_discovery("1.1.1-1.1.5", timeout=0, listen_time=0)
-        )
+        result = asyncio.run(handler.fast_bus_discovery("1.1.1-1.1.5", timeout=0, listen_time=0))
 
         # Result structure is correct
         assert "devices" in result

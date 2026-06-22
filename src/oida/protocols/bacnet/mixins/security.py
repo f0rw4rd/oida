@@ -713,6 +713,7 @@ class SecurityMixin:
         PropertyIdentifier = types["PropertyIdentifier"]
         Real = types["Real"]
         Unsigned = types["Unsigned"]
+        BinaryPV = types["BinaryPV"]
         AbortPDU = types["AbortPDU"]
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
@@ -740,6 +741,13 @@ class SecurityMixin:
         obj_id = ObjectIdentifier((obj_type, instance))
         self.logger.display(f"  Testing on {obj_type}:{instance}")
 
+        # presentValue datatype is object-type dependent: Real for analog*,
+        # BinaryPV enumeration for binary*. Decoding and re-encoding with the
+        # wrong type makes a spec-compliant device reject every write with a
+        # datatype error, masking a real writable-priority weakness.
+        is_binary = obj_type in ("binaryOutput", "binaryValue")
+        cast_types = (BinaryPV, Unsigned) if is_binary else (Real,)
+
         # Read current value first
         ReadPropertyRequest_ = types["ReadPropertyRequest"]
         try:
@@ -753,7 +761,7 @@ class SecurityMixin:
             if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                 pv = getattr(response, "propertyValue", None)
                 if pv is not None and hasattr(pv, "cast_out"):
-                    for cast_type in (Real, Unsigned):
+                    for cast_type in cast_types:
                         try:
                             current_value = pv.cast_out(cast_type)
                             if current_value is not None:
@@ -771,6 +779,20 @@ class SecurityMixin:
 
         self.logger.display(f"  Current value: {current_value}")
 
+        # Encode the write value with the object's actual datatype so the
+        # write-back is non-destructive AND type-valid for this object.
+        if is_binary:
+            try:
+                write_value = BinaryPV(current_value)
+            except BaseException as e:
+                self.logger.debug(f"could not encode BinaryPV for write-back: {e}")
+                self.logger.warning(
+                    "  Could not encode current value as BinaryPV, skipping write test"
+                )
+                return
+        else:
+            write_value = Real(current_value)
+
         writable_priorities = []
 
         for priority in range(1, 17):
@@ -780,7 +802,7 @@ class SecurityMixin:
                 request = WritePropertyRequest(
                     objectIdentifier=obj_id,
                     propertyIdentifier=PropertyIdentifier("presentValue"),
-                    propertyValue=AnyAtomic(Real(current_value)),
+                    propertyValue=AnyAtomic(write_value),
                     priority=Unsigned(priority),
                 )
                 request.pduDestination = target_addr
@@ -837,70 +859,117 @@ class SecurityMixin:
         else:
             self.logger.display("  No priority levels accepted writes (device may reject all)")
 
+    async def _read_device_local_time(self, app, target_addr, device_id: int, timeout: float):
+        """Read the device object's localDate + localTime, returning a (date, time) pair.
+
+        Returns ``(date_value, time_value)`` on success, or ``None`` if either
+        property could not be read. Used to verify TimeSynchronization
+        out-of-band, since the service itself is unconfirmed and never ACKs.
+        """
+        types = _load_bacpypes3()
+        ReadPropertyRequest = types["ReadPropertyRequest"]
+        ObjectIdentifier = types["ObjectIdentifier"]
+        PropertyIdentifier = types["PropertyIdentifier"]
+        AbortPDU = types["AbortPDU"]
+        ErrorPDU = types["ErrorPDU"]
+        RejectPDU = types["RejectPDU"]
+        Error = types["Error"]
+        err_types = (AbortPDU, ErrorPDU, RejectPDU, Error)
+
+        dev_id = ObjectIdentifier(("device", device_id))
+        values = []
+        for prop in ("localDate", "localTime"):
+            try:
+                request = ReadPropertyRequest(
+                    objectIdentifier=dev_id,
+                    propertyIdentifier=PropertyIdentifier(prop),
+                )
+                request.pduDestination = target_addr
+                response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
+            except BaseException as e:
+                self.logger.debug(f"read {prop} for time-sync verification failed: {e}")
+                return None
+            if response is None or isinstance(response, err_types):
+                return None
+            values.append(getattr(response, "propertyValue", None))
+        return (values[0], values[1])
+
     async def _bacpypes3_test_time_sync(self, app, target_addr, device_id: int, timeout: float):
         """Test if device accepts unauthenticated time synchronization.
 
-        Sends a TimeSynchronization request with the current correct time.
-        If accepted, the device has no time sync authentication, which could
-        allow an attacker to desynchronize scheduling and logging.
+        TimeSynchronization is an UNCONFIRMED BACnet service: a compliant
+        device never sends an application-layer reply, so absence-of-reply
+        proves nothing about whether the write was applied. We therefore do
+        NOT treat ``response is None`` (or a timeout) as a finding. Instead we
+        verify out-of-band: read the device's localDate/localTime before and
+        after sending a deliberately skewed time, and only report a finding if
+        the clock actually moved.
         """
         types = _load_bacpypes3()
         TimeSynchronizationRequest = types["TimeSynchronizationRequest"]
         DateTime = types["DateTime"]
         Date = types["Date"]
         Time = types["Time"]
-        AbortPDU = types["AbortPDU"]
-        ErrorPDU = types["ErrorPDU"]
-        RejectPDU = types["RejectPDU"]
-        Error = types["Error"]
 
         self.logger.display("\n[Time Synchronization Test]")
-        self.logger.display("  Sending TimeSynchronization with current time...")
         self.logger.warning("  WARNING: This sends actual time sync requests!")
 
-        from datetime import datetime
+        from datetime import datetime, timedelta
 
-        now = datetime.now()
+        # Read the clock before, so we can detect an actual change.
+        before = await self._read_device_local_time(app, target_addr, device_id, timeout)
+
+        # Send a deliberately skewed time so a successful write is observable
+        # against the device's real clock when we re-read.
+        skewed = datetime.now() + timedelta(minutes=5)
+        self.logger.display("  Sending TimeSynchronization with a skewed time (+5 min)...")
 
         try:
             # TimeSynchronizationRequest has a single 'time' element of type
             # DateTime (date + time), not separate date=/time= kwargs.
             request = TimeSynchronizationRequest(
                 time=DateTime(
-                    date=Date((now.year - 1900, now.month, now.day, now.weekday() + 1)),
-                    time=Time((now.hour, now.minute, now.second, 0)),
+                    date=Date((skewed.year - 1900, skewed.month, skewed.day, skewed.weekday() + 1)),
+                    time=Time((skewed.hour, skewed.minute, skewed.second, 0)),
                 ),
             )
             request.pduDestination = target_addr
 
             try:
-                response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
-
-                # TimeSynchronization is unconfirmed, so no response = accepted
-                if response is None:
-                    self.logger.warning(
-                        "  [!] MEDIUM: Device accepted unauthenticated TimeSynchronization"
-                    )
-                    self.logger.warning("  [!] Attacker can desynchronize device clocks")
-                    self.logger.warning("  [!] Impact: Corrupted trend logs, wrong schedule timing")
-                elif isinstance(response, (ErrorPDU, Error)):
-                    self.logger.success("  [+] Device rejected TimeSynchronization")
-                elif isinstance(response, (AbortPDU, RejectPDU)):
-                    self.logger.display("  [-] Request aborted/rejected")
-                else:
-                    # Unconfirmed service - any non-error response means accepted
-                    self.logger.warning("  [!] MEDIUM: TimeSynchronization appears accepted")
-
+                await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
             except (asyncio.TimeoutError, TimeoutError):
-                # For unconfirmed services, timeout usually means accepted
-                self.logger.warning("  [!] MEDIUM: No rejection received (unconfirmed service)")
-                self.logger.display(
-                    "  Note: TimeSynchronization is unconfirmed - no response expected"
-                )
-
+                # Expected for an unconfirmed service — NOT evidence of anything.
+                pass
         except BaseException as e:
             self.logger.debug(f"Time sync test error: {e}")
             self.logger.display(f"  Time sync test failed: {e}")
+            return
+
+        # Verify out-of-band. Absence of an ACK is meaningless for an
+        # unconfirmed service, so we compare the clock before vs after.
+        after = await self._read_device_local_time(app, target_addr, device_id, timeout)
+
+        if before is None or after is None:
+            self.logger.display(
+                "  [?] Sent TimeSynchronization; result indeterminate "
+                "(unconfirmed service, could not read localDate/localTime to verify)"
+            )
+            return
+
+        if str(before) != str(after):
+            self.logger.security_finding(
+                "Unauthenticated time synchronization",
+                category="ACCESS_CONTROL",
+                detail=(
+                    "Device applied an unauthenticated TimeSynchronization "
+                    f"(localDate/localTime changed {before} -> {after}) - attacker can "
+                    "desynchronize clocks, corrupting trend logs and schedule timing"
+                ),
+            )
+        else:
+            self.logger.success(
+                "  [+] Device clock unchanged after TimeSynchronization (write not applied)"
+            )
 
     async def _bacpypes3_test_oos(self, app, target_addr, device_id: int, timeout: float):
         """Test if Out-of-Service flag can be set on control objects.

@@ -196,29 +196,19 @@ class DeviceNetPassiveListener(PySharkListenerBase):
         serial_num = self._parse_int(self.get_field(dn, "serial_number", None), None)
         dup_vendor = self._parse_int(self.get_field(dn, "dup_mac_id_vendor", None), None)
         if dup_vendor is None:
-            dup_vendor = self._parse_int(
-                self.get_field(dn, "dup_mac_id.vendor", None), None
-            )
-        dup_serial = self._parse_int(
-            self.get_field(dn, "dup_mac_id_serial_number", None), None
-        )
+            dup_vendor = self._parse_int(self.get_field(dn, "dup_mac_id.vendor", None), None)
+        dup_serial = self._parse_int(self.get_field(dn, "dup_mac_id_serial_number", None), None)
         if dup_serial is None:
-            dup_serial = self._parse_int(
-                self.get_field(dn, "dup_mac_id.serial_number", None), None
-            )
+            dup_serial = self._parse_int(self.get_field(dn, "dup_mac_id.serial_number", None), None)
 
         # Fragment info
         frag_type = self._parse_int(self.get_field(dn, "fragment_type", None), None)
         frag_count = self._parse_int(self.get_field(dn, "fragment_count", None), None)
 
         # Comm fault
-        comm_fault_val = self._parse_int(
-            self.get_field(dn, "comm_fault_value", None), None
-        )
+        comm_fault_val = self._parse_int(self.get_field(dn, "comm_fault_value", None), None)
         if comm_fault_val is None:
-            comm_fault_val = self._parse_int(
-                self.get_field(dn, "comm_fault.value", None), None
-            )
+            comm_fault_val = self._parse_int(self.get_field(dn, "comm_fault.value", None), None)
 
         # Build operation name and details
         direction = "request" if is_request else "response"

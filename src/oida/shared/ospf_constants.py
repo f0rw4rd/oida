@@ -23,12 +23,3 @@ OSPF_AUTH_TYPES = {
     1: "Simple Password",
     2: "Cryptographic (MD5)",
 }
-
-# OSPF network types
-OSPF_NETWORK_TYPES = {
-    1: "Point-to-Point",
-    2: "Broadcast",
-    3: "NBMA",
-    4: "Point-to-Multipoint",
-    5: "Virtual Link",
-}

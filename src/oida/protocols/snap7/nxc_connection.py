@@ -63,13 +63,30 @@ class s7(NetworkConnection):
             self.logger.debug(f"Connected to Siemens S7 device at {self.ip}:{self.args.port}")
             self.results["data"]["device_info"] = {"connected": True}
 
-            # Smart -P: if password value is a file path, brute-force with it
+            # Smart -P: if password value is a file path, brute-force with it.
+            # Brute-forcing a live PLC is an active, lockout-inducing operation
+            # (Siemens account-lockout / SCALANCE SIEM), so gate it behind
+            # --confirm exactly like --brute / --default-creds.
             password = getattr(self.args, "password", None)
             if password and os.path.isfile(password):
+                if not self._require_confirm("brute"):
+                    self.logger.fail(
+                        "Refusing password-file brute-force without --confirm "
+                        "(use --brute --wordlist <file> --confirm)"
+                    )
+                    return
+
                 from ...utils.login_scanner import format_wordlist_source
 
                 self.logger.display(f"Password file detected: {format_wordlist_source(password)}")
-                result = self.scanner.bruteforce_password(self.conn, wordlist_path=password)
+                rate_limit = getattr(self.args, "brute_rate", 0.5)
+                continue_on_success = getattr(self.args, "continue_on_success", False)
+                result = self.scanner.bruteforce_password(
+                    self.conn,
+                    wordlist_path=password,
+                    rate_limit=rate_limit,
+                    continue_on_success=continue_on_success,
+                )
                 if result and result.get("success"):
                     self.results["data"]["password_found"] = result.get("password")
                 self._store_action_result(result)

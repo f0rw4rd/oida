@@ -73,8 +73,11 @@ class KNXScanner(
         self.discovery_timeout = int(args.get("discovery-timeout", 5))
         self.operation_timeout = int(args.get("operation-timeout", 30))
 
-        # ICSLogger instance (NXC-style logging)
-        self.logger = logger
+        # ICSLogger instance (NXC-style logging). BaseScanner.__init__ already
+        # set up a real logger via _init_logger(); only override it when an
+        # explicit logger is passed (do not clobber it with None).
+        if logger is not None:
+            self.logger = logger
 
         # Internal state
         self.knx_instance = None

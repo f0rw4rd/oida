@@ -727,6 +727,67 @@ class TestV030Features:
 
 
 # ============================================================================
+# HART-SEC-003 lock-finding regression tests (discover path)
+# ============================================================================
+
+
+class TestDiscoverLockFinding:
+    """Regression tests for HART-SEC-003 dead-finding bug.
+
+    discover() used to never read lock_state, leaving it at the
+    LockState.UNKNOWN default. The old `device_locked = lock_state != UNLOCKED`
+    check then evaluated True for UNKNOWN (-1 != 0), permanently suppressing
+    HART-SEC-003 for HART 6+ devices.
+    """
+
+    def _scanner_with_device(self, lock_state, revision=7):
+        scanner = HARTScanner({"rhost": "127.0.0.1", "rport": 5094})
+        scanner.client = MagicMock()
+
+        info = HARTDeviceInfo()
+        info.protocol_revision = revision
+        info.write_protected = True  # keep HART-SEC-002 out of the way
+
+        scanner.read_device_info = MagicMock(return_value=info)
+        scanner.read_all_variables = MagicMock(return_value=[])
+        scanner.read_output_info = MagicMock(return_value={})
+        scanner.detect_wirelesshart = MagicMock(return_value={"is_wireless": False})
+        scanner.read_lock_state = MagicMock(return_value=lock_state)
+        return scanner
+
+    def _finding_ids(self, result):
+        return {f.get("id") for f in result.get("security_findings", [])}
+
+    def test_unlocked_hart7_emits_sec_003(self):
+        """A definitively UNLOCKED HART 7 device must emit HART-SEC-003."""
+        scanner = self._scanner_with_device(LockState.UNLOCKED)
+        result = scanner.discover()
+        assert "HART-SEC-003" in self._finding_ids(result)
+
+    def test_unknown_lock_state_emits_sec_003(self):
+        """UNKNOWN lock state (not verified) must NOT suppress HART-SEC-003.
+
+        This is the core regression: previously UNKNOWN masked the finding.
+        """
+        scanner = self._scanner_with_device(LockState.UNKNOWN)
+        result = scanner.discover()
+        assert scanner.read_lock_state.called
+        assert "HART-SEC-003" in self._finding_ids(result)
+
+    def test_locked_device_suppresses_sec_003(self):
+        """A definitively LOCKED device must NOT emit HART-SEC-003."""
+        scanner = self._scanner_with_device(LockState.LOCKED)
+        result = scanner.discover()
+        assert "HART-SEC-003" not in self._finding_ids(result)
+
+    def test_permanently_locked_suppresses_sec_003(self):
+        """A PERMANENTLY_LOCKED device must NOT emit HART-SEC-003."""
+        scanner = self._scanner_with_device(LockState.PERMANENTLY_LOCKED)
+        result = scanner.discover()
+        assert "HART-SEC-003" not in self._finding_ids(result)
+
+
+# ============================================================================
 # Pytest Markers
 # ============================================================================
 

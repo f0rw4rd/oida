@@ -97,7 +97,9 @@ class NTPFuzzer(BaseFuzzer):
             RequestInfo("NTP_Trap_Attack", "Control trap (CVE-2016-9311)", "cve"),
             # Boundary tests
             RequestInfo("NTP_Reference_ID_Boundary", "Reference ID boundary", "boundary"),
-            RequestInfo("NTP_Timestamp_Fraction_Boundary", "Timestamp fraction boundary", "boundary"),
+            RequestInfo(
+                "NTP_Timestamp_Fraction_Boundary", "Timestamp fraction boundary", "boundary"
+            ),
             RequestInfo("NTP_Leap_Indicator_Boundary", "Leap indicator boundary", "boundary"),
             RequestInfo("NTP_Version_Boundary", "Version field boundary", "boundary"),
             RequestInfo("NTP_Mode_Boundary", "Mode field boundary", "boundary"),

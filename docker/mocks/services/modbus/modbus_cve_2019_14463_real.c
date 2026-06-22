@@ -11,6 +11,13 @@
 #include <errno.h>
 #include <modbus/modbus.h>
 
+/* ASan manual poisoning API (resolved by the -fsanitize=address runtime).
+ * Lets us mark the bytes beyond the actually-received frame as off-limits, so
+ * libmodbus's over-read past the message is caught even though it stays inside
+ * the fixed 260-byte query[] allocation. */
+void __asan_poison_memory_region(void const volatile *addr, size_t size);
+void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
+
 #define PORT 5025
 
 int main(void) {
@@ -63,8 +70,12 @@ int main(void) {
 
             printf("[*] Received %d bytes, FC=0x%02x\n", rc, query[7]);
 
-            rc = modbus_reply(ctx, query, rc, mb_mapping);
-            if (rc == -1) {
+            /* Bytes past the received frame are not valid input: poison them so
+             * the CVE's over-read (FC 0x10, quantity >> byte_count) hits ASan. */
+            __asan_poison_memory_region(query + rc, sizeof(query) - rc);
+            int reply_rc = modbus_reply(ctx, query, rc, mb_mapping);
+            __asan_unpoison_memory_region(query, sizeof(query));
+            if (reply_rc == -1) {
                 printf("[!] modbus_reply failed: %s\n", modbus_strerror(errno));
             }
         }

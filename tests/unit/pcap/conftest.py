@@ -47,18 +47,35 @@ def dns_pcap():
 def _has_pyshark():
     try:
         import pyshark  # noqa: F401
-
-        return True
     except ImportError:
         return False
+    # pyshark is useless without the tshark binary it shells out to; require
+    # both so tshark-dependent tests skip cleanly instead of raising
+    # TSharkNotFoundException when only the Python package is present.
+    import shutil
+
+    return shutil.which("tshark") is not None
 
 
 HAS_PYSHARK = _has_pyshark()
 
 requires_pyshark = pytest.mark.skipif(
     not HAS_PYSHARK,
-    reason="pyshark not installed",
+    reason="pyshark or tshark not installed",
 )
+
+# git-lfs pointer signature -- pcap fixtures stored in LFS are <200-byte text
+# pointers until 'git lfs pull' fetches them.  tshark chokes on the pointer
+# text with TSharkCrashException; detect and skip instead.
+_LFS_POINTER_MAGIC = b"version https://git-lfs.github.com/spec/v1"
+
+
+def _is_lfs_pointer(path) -> bool:
+    try:
+        with open(path, "rb") as fh:
+            return fh.read(len(_LFS_POINTER_MAGIC)).startswith(_LFS_POINTER_MAGIC)
+    except OSError:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -69,6 +86,8 @@ requires_pyshark = pytest.mark.skipif(
 def _skip_unless_exists(path: Path):
     if not path.exists():
         pytest.fail(f"Fixture not found: {path}")
+    if _is_lfs_pointer(path):
+        pytest.skip(f"pcap fixture is an unfetched git-lfs pointer (run 'git lfs pull'): {path}")
 
 
 def _assert_pipeline_completed(result: dict):

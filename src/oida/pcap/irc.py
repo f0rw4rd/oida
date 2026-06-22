@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 
 @dataclass
@@ -46,11 +47,6 @@ class IRCCredential:
     def auth_method(self) -> str:
         """Return auth method for scanner credential loop."""
         return f"IRC/{self.credential_type}"
-
-    @property
-    def is_surfaceable(self) -> bool:
-        """Only PASS credentials should appear in the credential summary."""
-        return self.credential_type == "plaintext"
 
 
 class IRCPassiveListener(PySharkListenerBase):
@@ -93,6 +89,7 @@ class IRCPassiveListener(PySharkListenerBase):
 
         flow_id = self.get_flow_id(packet)
         src_port, dst_port = self.get_port_info(packet)
+        src_mac, dst_mac = self.get_mac_info(packet)
 
         command = self.get_field(irc, "request_command", "") or ""
         parameter = self.get_field(irc, "request_command_parameter", "") or ""
@@ -101,6 +98,11 @@ class IRCPassiveListener(PySharkListenerBase):
             return
 
         command_upper = str(command).upper().strip()
+        param_str = str(parameter).strip()
+
+        # Don't leak the raw server password into the always-on operations
+        # table; the credential table surfaces it instead.
+        display_param = "<redacted>" if command_upper == "PASS" and param_str else param_str
 
         # Record interaction
         now = datetime.now().isoformat()
@@ -110,8 +112,8 @@ class IRCPassiveListener(PySharkListenerBase):
             dst_ip,
             "request",
             f"IRC {command_upper}",
-            {"command": command_upper},
-            f"IRC {command_upper} {src_ip} -> {dst_ip}",
+            {"command": command_upper, "parameter": display_param},
+            f"IRC {command_upper} {display_param}".strip(),
             flow_id=flow_id,
             src_port=src_port,
             dst_port=dst_port,
@@ -138,8 +140,8 @@ class IRCPassiveListener(PySharkListenerBase):
                     timestamp=datetime.now().isoformat(),
                 )
                 self.credentials.append(cred)
-                self._update_devices(src_ip, dst_ip)
-                self.logger.info(f"IRC PASS: {password} from {src_ip} to {dst_ip}")
+                self._update_devices(src_ip, dst_ip, src_mac, dst_mac)
+                self.logger.debug(f"IRC PASS captured from {src_ip} to {dst_ip}")
 
         elif command_upper == "NICK" and parameter:
             nick = str(parameter).strip()
@@ -154,7 +156,7 @@ class IRCPassiveListener(PySharkListenerBase):
                     timestamp=datetime.now().isoformat(),
                 )
                 self.credentials.append(cred)
-                self._update_devices(src_ip, dst_ip)
+                self._update_devices(src_ip, dst_ip, src_mac, dst_mac)
 
         elif command_upper == "USER" and parameter:
             # USER params: <username> <mode> <unused> :<realname>
@@ -175,7 +177,7 @@ class IRCPassiveListener(PySharkListenerBase):
                     timestamp=datetime.now().isoformat(),
                 )
                 self.credentials.append(cred)
-                self._update_devices(src_ip, dst_ip)
+                self._update_devices(src_ip, dst_ip, src_mac, dst_mac)
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format a single interaction as a table row matching PROTOCOL_COLUMNS."""
@@ -196,27 +198,41 @@ class IRCPassiveListener(PySharkListenerBase):
                 return True
         return False
 
-    def _update_devices(self, client_ip: str, server_ip: str) -> None:
-        """Update device entries."""
-        server_key = f"irc-server:{server_ip}"
-        device, is_new = self._ensure_device(
-            server_key,
-            server_ip,
-            name=f"IRC Server ({server_ip})",
-            device_type="IRC Server",
-        )
-        if is_new:
-            device.irc_passive_data = {"role": "server", "protocol": "IRC/TCP"}
+    def _update_devices(
+        self,
+        client_ip: str,
+        server_ip: str,
+        client_mac: str = "",
+        server_mac: str = "",
+    ) -> None:
+        """Update device entries for both IRC server and client."""
+        if is_valid_discovered_ip(server_ip):
+            server_key = f"irc-server:{server_ip}"
+            server_vendor = lookup_mac_vendor(server_mac) if server_mac else ""
+            device, is_new = self._ensure_device(
+                server_key,
+                server_ip,
+                mac=server_mac,
+                name=f"IRC Server ({server_ip})",
+                device_type="IRC Server",
+                manufacturer=server_vendor if server_vendor and server_vendor != "Unknown" else "",
+            )
+            if is_new:
+                device.irc_passive_data = {"role": "server", "protocol": "IRC/TCP"}
 
-        client_key = f"irc-client:{client_ip}"
-        device, is_new = self._ensure_device(
-            client_key,
-            client_ip,
-            name=f"IRC Client ({client_ip})",
-            device_type="IRC Client",
-        )
-        if is_new:
-            device.irc_passive_data = {"role": "client", "protocol": "IRC/TCP"}
+        if is_valid_discovered_ip(client_ip):
+            client_key = f"irc-client:{client_ip}"
+            client_vendor = lookup_mac_vendor(client_mac) if client_mac else ""
+            device, is_new = self._ensure_device(
+                client_key,
+                client_ip,
+                mac=client_mac,
+                name=f"IRC Client ({client_ip})",
+                device_type="IRC Client",
+                manufacturer=client_vendor if client_vendor and client_vendor != "Unknown" else "",
+            )
+            if is_new:
+                device.irc_passive_data = {"role": "client", "protocol": "IRC/TCP"}
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all extracted credentials.

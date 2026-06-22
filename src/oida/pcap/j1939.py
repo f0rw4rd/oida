@@ -141,9 +141,6 @@ J1939_SPECIAL_ADDRESSES = {
 # Diagnostic PGNs that reveal vehicle health
 DIAGNOSTIC_PGNS = {65226, 65227, 65228, 65229, 65230, 65235, 65236, 64892}
 
-# PGNs related to address management
-ADDRESS_PGNS = {60928, 59904}
-
 
 @dataclass
 class J1939ECU:

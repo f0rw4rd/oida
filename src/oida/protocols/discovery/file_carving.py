@@ -26,6 +26,9 @@ _scapy_all = lazy_import("scapy.all", "discovery")
 
 logger = get_module_logger(__name__)
 
+# Maximum stream buffer size before we stop accumulating
+_STREAM_BUFFER_MAX = 100 * 1024 * 1024  # 100 MB
+
 # Scapy/discovery-specific signatures (different GIF footers, no min_size, extra PNG footer)
 FILE_SIGNATURES = {
     "JPEG": {
@@ -94,6 +97,9 @@ class FileCarvingListener(FileCarvingMixin, PassiveListenerBase):
         output_dir: Optional[str] = None,
     ):
         super().__init__(interface, timeout, nxc_logger)
+        # PassiveListenerBase only sets self.nxc_logger; FileCarvingMixin needs
+        # self.logger for _record_file/_save_file. Fall back to the module logger.
+        self.logger = nxc_logger or logger
         self._streams: Dict[Tuple[str, str, str], StreamBuffer] = {}
         self.files: List[ExtractedFile] = []
         self.output_dir = output_dir
@@ -140,5 +146,19 @@ class FileCarvingListener(FileCarvingMixin, PassiveListenerBase):
             )
 
         stream = self._streams[stream_key]
+
+        # Enforce maximum buffer size to bound memory and the O(n^2) re-scan.
+        if stream.capped:
+            return
+        if len(stream.data) + len(payload) > _STREAM_BUFFER_MAX:
+            self.logger.warning(
+                f"Stream buffer {stream_key} reached {_STREAM_BUFFER_MAX // (1024 * 1024)}MB cap, "
+                f"doing final carve and stopping accumulation"
+            )
+            stream.data.extend(payload)
+            self._try_extract_files(stream, force=True)
+            stream.capped = True
+            return
+
         stream.data.extend(payload)
         self._try_extract_files(stream)

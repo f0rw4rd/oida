@@ -161,9 +161,6 @@ class DeviceInfoMixin(_ScannerBase):
             try:
                 data = connection.read_szl(0x001C, 1)
                 parsed = SZLParser._parse_0x001c(bytes(data), 1)
-                if parsed.get("fw_version"):
-                    result["version"] = S7FirmwareVersion.from_string(parsed["fw_version"])
-                    result["version_str"] = parsed["fw_version"]
                 if not result["order_code"] and parsed.get("order_code"):
                     result["order_code"] = parsed["order_code"]
             except Exception as e:

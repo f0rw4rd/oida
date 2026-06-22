@@ -770,9 +770,10 @@ class TestListenComposesDiscoveryCallback(unittest.TestCase):
         # Both scanner._create_callbacks() and listen._create_monitor_callback()
         # resolve c104 via the shared _deps module (scanner imports it directly;
         # listen does `from . import _deps`), so a single patch covers both.
-        with patch(
-            "oida.protocols.iec104._deps._get_c104", return_value=mock_c104
-        ), patch("oida.protocols.iec104.listen.time.sleep", return_value=None):
+        with (
+            patch("oida.protocols.iec104._deps._get_c104", return_value=mock_c104),
+            patch("oida.protocols.iec104.listen.time.sleep", return_value=None),
+        ):
             scanner._run_listen_mode(MagicMock(), FakeConn())
         return captured["cb"]
 
@@ -813,6 +814,56 @@ class TestListenComposesDiscoveryCallback(unittest.TestCase):
             cb(MagicMock(), data)
 
         self.assertIn(ioa, scanner._discovered_points)
+
+
+class TestListenStepPositionVti(unittest.TestCase):
+    """Regression: listen-mode VTI (Type 5/32) decode.
+
+    Per IEC 60870-5-101/104 the VTI octet is:
+      - bit 8 (0x80): Transient flag (equipment in transit)
+      - bits 1-7    : a 7-bit two's-complement value in -64..+63
+    The previous listener masked bits 1-7 then negated on the transient bit,
+    so 0x7F decoded to 127 (and -127 when transient) instead of -1, and the
+    transient flag was lost. It must now match scanner._extract_value:
+    `raw - 128 if (vti & 0x40) else raw`, surfacing transient as a 'T' flag.
+    """
+
+    def _decode(self, vti_byte, qds=0x00):
+        scanner = make_scanner()
+        return scanner._parse_asdu_value(5, bytes([vti_byte, qds]))
+
+    def test_positive_value(self):
+        # 0x3F = 63, sign bit (0x40) clear -> +63
+        value, quality = self._decode(0x3F)
+        self.assertEqual(value, 63)
+        self.assertNotIn("T", quality)
+
+    def test_zero_value(self):
+        value, _ = self._decode(0x00)
+        self.assertEqual(value, 0)
+
+    def test_negative_one(self):
+        # 0x7F has sign bit set: 127 - 128 = -1 (was wrongly 127 before)
+        value, _ = self._decode(0x7F)
+        self.assertEqual(value, -1)
+
+    def test_minimum_value(self):
+        # 0x40 = sign bit only -> 64 - 128 = -64 (min of range)
+        value, _ = self._decode(0x40)
+        self.assertEqual(value, -64)
+
+    def test_transient_flag_does_not_negate_value(self):
+        # 0x80 | 0x05: transient bit set, magnitude 5. Value stays +5;
+        # transient is surfaced as a 'T' quality flag, not a sign flip.
+        value, quality = self._decode(0x85)
+        self.assertEqual(value, 5)
+        self.assertIn("T", quality.split(","))
+
+    def test_transient_with_negative_value(self):
+        # 0x80 | 0x7F: transient + two's-complement -1
+        value, quality = self._decode(0xFF)
+        self.assertEqual(value, -1)
+        self.assertIn("T", quality.split(","))
 
 
 if __name__ == "__main__":

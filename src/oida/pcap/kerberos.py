@@ -29,7 +29,7 @@ comprehensive Kerberos protocol parser.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import (
@@ -159,8 +159,6 @@ class KerberosPassiveListener(PySharkListenerBase):
         self.error_counts: Dict[Tuple[str, int, str, str], int] = {}
         # NetBIOS hostname map: client_ip -> hostname
         self.client_hostnames: Dict[str, str] = {}
-        # Seen errors for dedup in alerting
-        self._seen_errors: Set[Tuple[str, int, str, str]] = set()
 
     @property
     def credentials(self) -> List[KerberosHash]:
@@ -256,17 +254,6 @@ class KerberosPassiveListener(PySharkListenerBase):
             return ""
         parts = [p.strip() for p in raw.split(",") if p.strip()]
         return "/".join(parts) if parts else ""
-
-    @staticmethod
-    def _parse_etype(etype_str: str) -> int:
-        """Parse first etype from potentially comma-separated list."""
-        if not etype_str:
-            return 0
-        try:
-            return int(etype_str.split(",")[0])
-        except (ValueError, TypeError) as e:
-            logger.debug(f"Return value computation failed: {e}")
-            return 0
 
     @staticmethod
     def _has_crackable_etype(etype_str: str) -> int:
@@ -592,7 +579,9 @@ class KerberosPassiveListener(PySharkListenerBase):
                     pa_enc_ts_hex = str(self._resolve_value(pv, ""))
                     break
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if int(self._resolve_value(pt, 0))  2:: {e}")
+                self.logger.debug(
+                    f"Kerberos: failed to parse PA-DATA type for PA-ENC-TIMESTAMP: {e}"
+                )
                 continue
 
         if not pa_enc_ts_hex:
@@ -1007,9 +996,8 @@ class KerberosPassiveListener(PySharkListenerBase):
         protocol, hash_type, username, domain, server_ip, client_ip,
         hashcat_format.
         """
-        hashcat_lines = self.get_hashcat_hashes()
         result = []
-        for i, h in enumerate(self.hashes):
+        for h in self.hashes:
             result.append(
                 {
                     "protocol": "Kerberos",
@@ -1023,7 +1011,7 @@ class KerberosPassiveListener(PySharkListenerBase):
                     "server_ip": h.server_ip,
                     "client_ip": h.client_ip,
                     "timestamp": h.timestamp,
-                    "hashcat_format": hashcat_lines[i] if i < len(hashcat_lines) else "",
+                    "hashcat_format": h.hashcat_format,
                 }
             )
         return result
@@ -1078,17 +1066,7 @@ class KerberosPassiveListener(PySharkListenerBase):
         - 19600: Kerberos 5 TGS-REP etype 17 (AES128)
         - 19700: Kerberos 5 TGS-REP etype 18 (AES256)
         """
-        result = []
-        for h in self.hashes:
-            if h.hash_type == "AS-REQ" and h.etype == 23:
-                # Format: $krb5pa$23$user$realm$hash
-                result.append(f"$krb5pa$23${h.username}${h.domain}${h.hash_value}")
-            elif h.hash_type == "AS-REP":
-                # Format: $krb5asrep$etype$user@realm:hash
-                result.append(f"$krb5asrep${h.etype}${h.username}@{h.domain}:{h.hash_value}")
-            elif h.hash_type == "TGS-REP":
-                # Format: $krb5tgs$etype$*user$realm$spn*$hash
-                result.append(
-                    f"$krb5tgs${h.etype}$*{h.username}${h.domain}${h.service_name}*${h.hash_value}"
-                )
-        return result
+        # Delegate to the per-entry KerberosHash.hashcat_format property so the
+        # formatting stays consistent and never falls out of alignment with
+        # self.hashes (it returns "" for entries with no valid hashcat line).
+        return [h.hashcat_format for h in self.hashes if h.hashcat_format]

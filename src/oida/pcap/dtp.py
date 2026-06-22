@@ -39,13 +39,6 @@ from typing import Any, Dict, List
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import lookup_mac_vendor, normalize_mac
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-# DTP constants
-DTP_MULTICAST_MAC = "01:00:0c:cc:cc:cc"
 
 # DTP trunk status values (admin and operating)
 DTP_STATUS = {
@@ -334,5 +327,3 @@ class DTPPassiveListener(PySharkListenerBase):
 
         tables = [{"headers": headers, "rows": rows, "title": f"DTP Switches ({len(rows)})"}]
         return {"tables": tables, "alerts": alerts}
-
-

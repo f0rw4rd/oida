@@ -59,20 +59,6 @@ from ..protocols.discovery.core import (
 RTSP_PORT = 554
 RTSP_ALT_PORT = 8554
 
-# RTSP methods
-RTSP_METHODS = {
-    "OPTIONS",
-    "DESCRIBE",
-    "ANNOUNCE",
-    "SETUP",
-    "PLAY",
-    "PAUSE",
-    "TEARDOWN",
-    "GET_PARAMETER",
-    "SET_PARAMETER",
-    "RECORD",
-}
-
 
 @dataclass
 class RTSPCredential:
@@ -115,6 +101,7 @@ class RTSPPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "rtsp"
     DISPLAY_FILTER = "rtsp"
     REQUIRED_LAYERS = ("rtsp",)
+    SERVER_PORTS = (RTSP_PORT, RTSP_ALT_PORT)
     PROTOCOL_COLUMNS = (
         "method_status",
         "url",
@@ -175,14 +162,35 @@ class RTSPPassiveListener(PySharkListenerBase):
         src_mac, dst_mac = self.get_mac_info(packet)
         stream_id = self.get_stream_id(packet)
 
-        # Determine if request or response
+        # Determine if request or response.  RTSP is text-based like HTTP: a
+        # request line carries a method (OPTIONS/DESCRIBE/SETUP/PLAY...), a
+        # response line carries an "RTSP/1.0 <code>" status -- a clean,
+        # port-independent QR signal we feed as the cascade's native tier.  When
+        # a frame has neither (e.g. an interleaved/continuation segment), pass
+        # native=None so resolve_direction() falls through to the known-server-
+        # port tier (canonical 554/8554 plus user --decode-as / OVERRIDE_PREFS)
+        # and then the lower-port heuristic.
         method = str(self.get_field(rtsp, "method", "") or "")
         status = str(self.get_field(rtsp, "status", "") or "")
         status_code = str(self.get_field(rtsp, "status_code", "") or "")
 
-        is_request = bool(method)
-        is_response = bool(status) or bool(status_code)
-        direction = "response" if is_response and not is_request else "request"
+        has_status = bool(status) or bool(status_code)
+        if method:
+            native: Optional[bool] = True
+        elif has_status:
+            native = False
+        else:
+            native = None
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        direction = d.direction
 
         # Extract RTSP fields from named layer attributes
         url = str(self.get_field(rtsp, "url", "") or "")
@@ -261,19 +269,18 @@ class RTSPPassiveListener(PySharkListenerBase):
                 now,
             )
 
-        # Update device tracking
+        # Update device tracking.  Roles come from the resolved direction: the
+        # RTSP camera/server is d.server_ip, the viewer/client is d.client_ip.
+        camera_mac = src_mac if not d.is_request else dst_mac
+        client_mac = dst_mac if not d.is_request else src_mac
         self._update_devices(
-            src_ip,
-            dst_ip,
-            src_port,
-            dst_port,
-            method=method,
-            status=status,
+            d.server_ip,
+            d.client_ip,
+            camera_mac,
+            client_mac,
             url=url,
             server=server,
             user_agent=user_agent,
-            src_mac=src_mac,
-            dst_mac=dst_mac,
         )
 
     def _extract_raw_headers(self, rtsp_layer) -> Dict[str, str]:
@@ -426,33 +433,19 @@ class RTSPPassiveListener(PySharkListenerBase):
 
     def _update_devices(
         self,
-        src_ip: str,
-        dst_ip: str,
-        src_port: int,
-        dst_port: int,
-        method: str = "",
-        status: str = "",
+        camera_ip: str,
+        client_ip: str,
+        camera_mac: str = "",
+        client_mac: str = "",
         url: str = "",
         server: str = "",
         user_agent: str = "",
-        src_mac: str = "",
-        dst_mac: str = "",
     ) -> None:
-        """Update device entries for RTSP participants."""
-        # Camera/server is on port 554
-        if dst_port in (RTSP_PORT, RTSP_ALT_PORT):
-            camera_ip = dst_ip
-            client_ip = src_ip
-            camera_mac = dst_mac
-            client_mac = src_mac
-        elif src_port in (RTSP_PORT, RTSP_ALT_PORT):
-            camera_ip = src_ip
-            client_ip = dst_ip
-            camera_mac = src_mac
-            client_mac = dst_mac
-        else:
-            return
+        """Update device entries for RTSP participants.
 
+        Roles are pre-resolved by the caller via ``resolve_direction()``: the
+        camera/RTSP server is *camera_ip*, the viewer is *client_ip*.
+        """
         if is_valid_discovered_ip(camera_ip):
             vendor = lookup_mac_vendor(camera_mac) if camera_mac else ""
             device, is_new = self._ensure_device(

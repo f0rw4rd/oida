@@ -24,10 +24,6 @@ logger = logging.getLogger(__name__)
 _defusedxml = lazy_import("defusedxml", "PROFINET")
 
 
-# GSDML namespace
-NS = {"gsdml": "http://www.profibus.com/GSDML/2003/11/DeviceProfile"}
-
-
 @dataclass
 class RecordData:
     """PROFINET record data definition."""
@@ -177,19 +173,6 @@ def parse_gsdml(source) -> Optional[GSDMLDevice]:
 
         root = tree.getroot()
         device = GSDMLDevice()
-
-        # Try with namespace first, then without
-        def find(elem, path):
-            result = elem.find(f"gsdml:{path}", NS)
-            if result is None:
-                result = elem.find(path)
-            return result
-
-        def findall(elem, path):
-            result = elem.findall(f"gsdml:{path}", NS)
-            if not result:
-                result = elem.findall(path)
-            return result
 
         # Parse texts first (for resolving TextId references)
         for text_list in root.iter():

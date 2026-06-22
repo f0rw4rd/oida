@@ -868,10 +868,10 @@ class ModbusRTUFuzzer(BaseFuzzer):
         broadcast_write = Request(
             "RTU_Broadcast_Write",
             children=(
-                Byte("Slave_Address", 0x00),  # Broadcast
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", 0x00),  # Broadcast
                         Group("Function_Code", values=broadcast_write_fcs),
                         Word("Address", 0x0000, endian=">"),
                         Word("Value", 0xFF00, endian=">"),
@@ -891,10 +891,10 @@ class ModbusRTUFuzzer(BaseFuzzer):
         broadcast_read_invalid = Request(
             "RTU_Broadcast_Read_Invalid",
             children=(
-                Byte("Slave_Address", 0x00),
                 Block(
                     "PDU",
                     children=(
+                        Byte("Slave_Address", 0x00),
                         Group(
                             "Function_Code",
                             values=[

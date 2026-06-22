@@ -65,8 +65,15 @@ class ScannerWriteOpsMixin(_ScannerBase):
 
                 # Restore if requested
                 if restore_on_exit and result["original_value"] is not None:
-                    client.write_register(address, result["original_value"], device_id=self.unit_id)
-                    result["restored"] = True
+                    restore_result = client.write_register(
+                        address, result["original_value"], device_id=self.unit_id
+                    )
+                    result["restored"] = not restore_result.isError()
+                    if not result["restored"]:
+                        result["error"] = "Restore write failed; register left modified"
+                        self.logger.warning(
+                            f"Failed to restore register {address}; device left holding test value"
+                        )
 
             elif register_type == "coil":
                 read_result = client.read_coils(address, count=1, device_id=self.unit_id)
@@ -79,8 +86,15 @@ class ScannerWriteOpsMixin(_ScannerBase):
 
                 # Restore if requested
                 if restore_on_exit and result["original_value"] is not None:
-                    client.write_coil(address, result["original_value"], device_id=self.unit_id)
-                    result["restored"] = True
+                    restore_result = client.write_coil(
+                        address, result["original_value"], device_id=self.unit_id
+                    )
+                    result["restored"] = not restore_result.isError()
+                    if not result["restored"]:
+                        result["error"] = "Restore write failed; coil left modified"
+                        self.logger.warning(
+                            f"Failed to restore coil {address}; device left holding test value"
+                        )
 
         except Exception as e:
             self.logger.debug("write register safe failed: %s", e)
@@ -132,8 +146,15 @@ class ScannerWriteOpsMixin(_ScannerBase):
 
             # Restore if requested
             if restore_on_exit and result["original_values"]:
-                client.write_registers(address, result["original_values"], device_id=self.unit_id)
-                result["restored"] = True
+                restore_result = client.write_registers(
+                    address, result["original_values"], device_id=self.unit_id
+                )
+                result["restored"] = not restore_result.isError()
+                if not result["restored"]:
+                    result["error"] = "Restore write failed; registers left modified"
+                    self.logger.warning(
+                        f"Failed to restore registers at {address}; device left holding test values"
+                    )
 
         except Exception as e:
             self.logger.debug("write multiple registers failed: %s", e)
@@ -183,8 +204,15 @@ class ScannerWriteOpsMixin(_ScannerBase):
 
             # Restore if requested
             if restore_on_exit and result["original_values"]:
-                client.write_coils(address, result["original_values"], device_id=self.unit_id)
-                result["restored"] = True
+                restore_result = client.write_coils(
+                    address, result["original_values"], device_id=self.unit_id
+                )
+                result["restored"] = not restore_result.isError()
+                if not result["restored"]:
+                    result["error"] = "Restore write failed; coils left modified"
+                    self.logger.warning(
+                        f"Failed to restore coils at {address}; device left holding test values"
+                    )
 
         except Exception as e:
             self.logger.debug("write multiple coils failed: %s", e)

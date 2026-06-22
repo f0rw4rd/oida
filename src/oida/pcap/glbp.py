@@ -51,10 +51,9 @@ from ..shared.glbp_constants import (
     GLBP_VF_STATES,
     GLBP_VG_STATES,
 )
+from ..utils.ics_logger import get_module_logger
 
-import logging
-
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 class GLBPPassiveListener(PySharkListenerBase):
@@ -70,7 +69,6 @@ class GLBPPassiveListener(PySharkListenerBase):
     Usage:
         # Live capture
         listener = GLBPPassiveListener(interface="eth0", timeout=30)
-        devices = listener.scan()
         devices = listener.scan()
 
         # Testing - feed packets directly
@@ -230,62 +228,83 @@ class GLBPPassiveListener(PySharkListenerBase):
             device_type=f"Router ({role})",
             manufacturer=mac_vendor if mac_vendor and mac_vendor != "Unknown" else "Cisco",
         )
-        if is_new:
-            device.glbp_data = {
-                "version": version,
+        # Build/refresh glbp_data on every packet so role/state/priority changes
+        # (e.g. a Member promoted to AVG) are reflected, not frozen at first sight.
+        glbp_data = {
+            "version": version,
+            "group_id": group_id,
+            "owner_mac": owner_mac,
+            "vg_state": vg_state,
+            "vg_state_name": GLBP_VG_STATES.get(vg_state, f"Unknown({vg_state})"),
+            "vf_state": vf_state,
+            "vf_state_name": GLBP_VF_STATES.get(vf_state, f"Unknown({vf_state})"),
+            "priority": priority,
+            "weight": weight,
+            "virtual_ip": virtual_ip,
+            "virtual_mac": virtual_mac,
+            "forwarder_id": forwarder_id,
+            "hello_interval_ms": hello_interval,
+            "hold_interval_ms": hold_interval,
+            "auth_type": auth_type,
+            "auth_type_name": GLBP_AUTH_TYPES.get(auth_type, "Unknown"),
+            "is_avg": is_avg,
+            "is_avf": is_avf,
+            "protocol": "GLBP",
+            "multicast_dst": dst_ip,
+        }
+        if auth_password:
+            glbp_data["auth_password"] = auth_password
+        # Preserve a previously captured auth_password if this packet lacked one.
+        existing = getattr(device, "glbp_data", None)
+        if existing and existing.get("auth_password") and not auth_password:
+            glbp_data["auth_password"] = existing["auth_password"]
+        device.glbp_data = glbp_data
+
+        # Track GLBP group (dedup routers/forwarders by MAC so repeated
+        # Hello packets don't append duplicate rows on every capture).
+        group_key = str(group_id)
+        if group_key not in self.glbp_groups:
+            self.glbp_groups[group_key] = {
                 "group_id": group_id,
-                "owner_mac": owner_mac,
-                "vg_state": vg_state,
-                "vg_state_name": GLBP_VG_STATES.get(vg_state, f"Unknown({vg_state})"),
-                "vf_state": vf_state,
-                "vf_state_name": GLBP_VF_STATES.get(vf_state, f"Unknown({vf_state})"),
-                "priority": priority,
-                "weight": weight,
                 "virtual_ip": virtual_ip,
-                "virtual_mac": virtual_mac,
+                "routers": [],
+                "forwarders": [],
+            }
+        if virtual_ip and not self.glbp_groups[group_key].get("virtual_ip"):
+            self.glbp_groups[group_key]["virtual_ip"] = virtual_ip
+
+        router_info = {
+            "ip": src_ip,
+            "mac": device_mac,
+            "vg_state": GLBP_VG_STATES.get(vg_state, f"Unknown({vg_state})"),
+            "priority": priority,
+            "is_avg": is_avg,
+        }
+        routers = self.glbp_groups[group_key]["routers"]
+        for i, r in enumerate(routers):
+            if r.get("ip") == src_ip and r.get("mac") == device_mac:
+                routers[i] = router_info
+                break
+        else:
+            routers.append(router_info)
+
+        if virtual_mac:
+            forwarder_info = {
                 "forwarder_id": forwarder_id,
-                "hello_interval_ms": hello_interval,
-                "hold_interval_ms": hold_interval,
-                "auth_type": auth_type,
-                "auth_type_name": GLBP_AUTH_TYPES.get(auth_type, "Unknown"),
-                "is_avg": is_avg,
+                "virtual_mac": virtual_mac,
+                "vf_state": GLBP_VF_STATES.get(vf_state, f"Unknown({vf_state})"),
+                "weight": weight,
                 "is_avf": is_avf,
-                "protocol": "GLBP",
-                "multicast_dst": dst_ip,
             }
+            forwarders = self.glbp_groups[group_key]["forwarders"]
+            for i, f in enumerate(forwarders):
+                if f.get("virtual_mac") == virtual_mac:
+                    forwarders[i] = forwarder_info
+                    break
+            else:
+                forwarders.append(forwarder_info)
 
-            if auth_password:
-                device.glbp_data["auth_password"] = auth_password
-
-            # Track GLBP group
-            group_key = str(group_id)
-            if group_key not in self.glbp_groups:
-                self.glbp_groups[group_key] = {
-                    "group_id": group_id,
-                    "virtual_ip": virtual_ip,
-                    "routers": [],
-                    "forwarders": [],
-                }
-
-            router_info = {
-                "ip": src_ip,
-                "mac": device_mac,
-                "vg_state": GLBP_VG_STATES.get(vg_state, f"Unknown({vg_state})"),
-                "priority": priority,
-                "is_avg": is_avg,
-            }
-            self.glbp_groups[group_key]["routers"].append(router_info)
-
-            if virtual_mac:
-                forwarder_info = {
-                    "forwarder_id": forwarder_id,
-                    "virtual_mac": virtual_mac,
-                    "vf_state": GLBP_VF_STATES.get(vf_state, f"Unknown({vf_state})"),
-                    "weight": weight,
-                    "is_avf": is_avf,
-                }
-                self.glbp_groups[group_key]["forwarders"].append(forwarder_info)
-
+        if is_new:
             mac_info = f" MAC={device_mac}" if device_mac else ""
             vip_info = f" VIP={virtual_ip}" if virtual_ip else ""
             self.logger.debug(f"GLBP: {src_ip}{mac_info} group={group_id} {role}{vip_info}")
@@ -301,19 +320,27 @@ class GLBPPassiveListener(PySharkListenerBase):
             if not auth_password:
                 continue
             ip = device.ip_addresses[0] if device.ip_addresses else ""
+            auth_type = glbp_data.get("auth_type", 0)
+            auth_type_name = GLBP_AUTH_TYPES.get(auth_type, "Unknown")
+            # Canonical credential_type so the scanner credential loop
+            # (scanner.py: cred_type in ("plaintext", "community")) actually
+            # surfaces the captured GLBP auth string. Plain text (1) is
+            # crackable-free plaintext; MD5 string/chain (2/3) are hashes.
+            credential_type = "plaintext" if auth_type == 1 else "hash"
             creds.append(
                 {
                     "protocol": "GLBP",
-                    "credential_type": GLBP_AUTH_TYPES.get(
-                        glbp_data.get("auth_type", 0), "Unknown"
-                    ),
+                    "credential_type": credential_type,
+                    # GLBP auth has no separate user — the shared secret is the
+                    # whole credential. Surface it in the Username column (the
+                    # central cred table has no Password column) and also as
+                    # password for the scanner's per-cred display loop.
                     "username": auth_password,
+                    "password": auth_password,
                     "server_ip": ip,
                     "client_ip": ip,
-                    "auth_method": "GLBP",
+                    "auth_method": f"GLBP {auth_type_name}",
                     "group": glbp_data.get("group_id", 0),
                 }
             )
         return creds
-
-

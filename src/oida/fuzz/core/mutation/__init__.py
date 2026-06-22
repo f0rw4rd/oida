@@ -28,13 +28,12 @@ from .radamsa_native import (
 RadamsaMutator = NativeRadamsaMutator
 
 
-def get_mutator(seed: int = None, prefer_native: bool = True):
+def get_mutator(seed: int = None):
     """
     Get a mutator instance.
 
     Args:
         seed: Random seed for reproducibility
-        prefer_native: Ignored (kept for API compatibility). Always uses native.
 
     Returns:
         NativeRadamsaMutator instance

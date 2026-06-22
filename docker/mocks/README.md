@@ -38,6 +38,31 @@ docker-compose logs -f
 docker-compose down
 ```
 
+### Pre-built images (ghcr.io)
+
+Every buildable service carries an `image: ghcr.io/f0rw4rd/oida-mock-*:latest`
+tag in addition to its `build:` section, so the heavy compiled mocks
+(libiec61850, lib60870, dnp3-rs, OpENer, hipserver, …) can be **pulled**
+instead of compiled locally.
+
+```bash
+# Default: pull pre-built images, build only what isn't published yet
+python ../../services.py up            # core
+python ../../services.py up all        # core + CVE
+
+# Force a local rebuild (after editing a Dockerfile)
+python ../../services.py up --build
+
+# Skip the registry entirely and build missing images locally
+python ../../services.py up --no-pull
+```
+
+Images are (re)published by the `.github/workflows/mocks-publish.yml` workflow
+on pushes that touch `docker/mocks/**`. The CVE/vulnerable images are published
+too — they are deliberately-vulnerable **targets** for authorized testing, in
+the same spirit as [vulhub](https://github.com/vulhub/vulhub); see
+`VULNERABLE_SERVICES.md`.
+
 ### Using Docker directly
 
 ```bash

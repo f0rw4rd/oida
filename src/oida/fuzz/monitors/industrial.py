@@ -234,7 +234,6 @@ class IEC104Monitor(ProtocolMonitor):
         # IEC 104-specific state
         self.socket: Optional[socket.socket] = None
         self.state = IEC104States.DISCONNECTED
-        self.last_check = 0
 
     def _create_testfr(self) -> bytes:
         """Create TESTFR U-format frame (test frame activation)"""
@@ -352,25 +351,6 @@ class IEC104Monitor(ProtocolMonitor):
             # Reset socket so next attempt reconnects (fixes "Broken pipe" loops)
             self._reset_socket()
             return False
-
-    def pre_send(self, target=None, fuzz_data_logger=None, session=None):
-        """Check IEC 104 connection before sending fuzz data"""
-        self.test_case_count += 1
-
-        # Only check every check_interval test cases
-        if self.test_case_count % self.check_interval != 0:
-            return True
-
-        current_time = time.time()
-        if current_time - self.last_check >= 1.0:  # Rate limit to 1 check per second
-            if self.state in (IEC104States.DISCONNECTED, IEC104States.ERROR):
-                if not self._connect():
-                    return False
-            elif not self._check_alive(fuzz_data_logger):
-                self.state = IEC104States.ERROR
-                return False
-            self.last_check = current_time
-        return True
 
 
 class MMSMonitor(ProtocolMonitor):

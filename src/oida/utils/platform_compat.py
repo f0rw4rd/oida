@@ -46,7 +46,6 @@ def _pkg_root() -> Path:
 
 
 IS_MACOS = sys.platform == "darwin"
-IS_POSIX = os.name == "posix"
 
 
 # =============================================================================

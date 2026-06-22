@@ -428,6 +428,7 @@ class StatefulFuzzer(BaseFuzzer):
                 self.config.target_ip,
                 self.config.target_port,
                 protocol_name=self.PROTOCOL_NAME.upper(),
+                **self._timeout_overrides(),
             )
             # Enable resilient mode if -R flag is set (handles EAGAIN/connection resets)
             if getattr(self.config, "reuse_target_connection", False):

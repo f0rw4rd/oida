@@ -42,7 +42,6 @@ FCV = 0x10  # Frame count valid
 # =============================================================================
 
 ASDU_TYPE_ID_OFFSET = 6
-ASDU_VSQ_OFFSET = 7
 ASDU_COT_OFFSET = 8
 ASDU_CA_OFFSET = 9
 ASDU_IOA_OFFSET = 11
@@ -63,7 +62,6 @@ IEC101_IOA_OCTETS = 2
 # VSQ (Variable Structure Qualifier)
 # =============================================================================
 
-VSQ_COUNT_MASK = 0x7F
 VSQ_SINGLE_OBJECT = 0x01
 
 # IEC 104 Type ID definitions
@@ -235,7 +233,6 @@ CP56TIME2A_BASE_YEAR = 2000
 # =============================================================================
 
 ASDU_ADDRESS_MAX = 65535
-IOA_MAX = 16777215
 
 
 @dataclass

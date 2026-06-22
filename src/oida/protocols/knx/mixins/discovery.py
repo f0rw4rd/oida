@@ -357,45 +357,18 @@ class DiscoveryMixin:
 
         return info
 
-    async def _scan_bus_devices(self, knx: "XKNX", scan_range: str = None) -> List[Dict[str, Any]]:
+    async def _scan_bus_devices(self, knx: "XKNX", scan_range: str) -> List[Dict[str, Any]]:
         """Scan bus for devices using nm_individual_address_check"""
         self.logger.debug(f"Slow bus scan: range={scan_range}")
         devices = []
 
-        # Common KNX address ranges
-        COMMON_RANGES = [
-            ("1.1.1", "1.1.255"),  # Area 1, Line 1 (most common)
-            ("1.2.1", "1.2.255"),  # Area 1, Line 2
-            ("1.0.1", "1.0.15"),  # Area 1 backbone devices (limited)
-            ("2.1.1", "2.1.255"),  # Area 2, Line 1
-        ]
+        # Use parse_bus_ranges which handles comma-separated ranges correctly
+        from ..helpers import parse_bus_ranges
 
-        if scan_range:
-            # Use parse_bus_ranges which handles comma-separated ranges correctly
-            from ..helpers import parse_bus_ranges
-
-            device_addresses = [str(a) for a in parse_bus_ranges(scan_range)]
-            use_custom_range = True
-        else:
-            use_custom_range = False
+        device_addresses = [str(a) for a in parse_bus_ranges(scan_range)]
 
         try:
-            if use_custom_range:
-                self.logger.display(f"Bus scan: checking {len(device_addresses)} addresses")
-            else:
-                total_addrs = 0
-                for start, end in COMMON_RANGES:
-                    addrs = self._parse_device_range(f"{start}-{end}")
-                    total_addrs += len(addrs)
-
-                self.logger.display(
-                    f"Bus scan: checking {total_addrs} addresses across {len(COMMON_RANGES)} ranges"
-                )
-
-                # Flatten all common ranges into a single list
-                device_addresses = []
-                for start, end in COMMON_RANGES:
-                    device_addresses.extend(self._parse_device_range(f"{start}-{end}"))
+            self.logger.display(f"Bus scan: checking {len(device_addresses)} addresses")
 
             for addr_str in device_addresses:
                 try:
@@ -534,9 +507,7 @@ class DiscoveryMixin:
         # Sending the probe telegram is a live write onto the bus, so it is
         # gated behind --confirm like other dangerous KNX operations.
         if not self.args.get("confirm"):
-            self.logger.fail(
-                "--test-routing requires --confirm flag (DANGEROUS operation)"
-            )
+            self.logger.fail("--test-routing requires --confirm flag (DANGEROUS operation)")
             routing_test["error"] = "Missing --confirm flag"
             return routing_test
 

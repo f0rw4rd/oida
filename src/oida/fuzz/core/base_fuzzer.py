@@ -1391,52 +1391,6 @@ class BaseFuzzer(ABC):
                 f"Tested percentage: {tested_pct:.2f}% (expected: {expected_pct:.2f}%)"
             )
 
-    # State machine convenience methods
-
-    def enable_invalid_state_testing(self):
-        """
-        Enable attack mode: allow invalid state transitions
-
-        This is useful for fuzzing state confusion vulnerabilities.
-
-        Example:
-            fuzzer.enable_invalid_state_testing()
-            # Now can bypass state validation
-            fuzzer.force_invalid_state_transition("AUTHENTICATED")
-        """
-        if self.state_machine:
-            self.state_machine.enable_invalid_state_testing()
-            self.log.display("Invalid state testing enabled - fuzzer can violate state machine")
-        else:
-            self.log.warning("No state machine defined - invalid state testing not applicable")
-
-    def disable_invalid_state_testing(self):
-        """Re-enable state validation after attack testing"""
-        if self.state_machine:
-            self.state_machine.disable_invalid_state_testing()
-            self.log.display("Invalid state testing disabled - state validation re-enabled")
-
-    def force_invalid_state_transition(self, target_state: str):
-        """
-        Force a state transition bypassing validation (for attack testing)
-
-        Args:
-            target_state: State to transition to
-
-        Example:
-            # Test sending authenticated commands without login
-            fuzzer.force_invalid_state_transition("AUTHENTICATED")
-            # Now fuzzer thinks it's authenticated but never sent credentials
-
-        Raises:
-            StateTransitionError: If state machine not defined or transition fails
-        """
-        if not self.state_machine:
-            raise StateTransitionError("No state machine defined for this protocol")
-
-        self.log.warning(f"Forcing invalid state transition to: {target_state}")
-        self.state_machine.transition_to(target_state, force=True)
-
     def _start_progress_monitor(self):
         """Start background thread for progress updates.
 

@@ -428,7 +428,6 @@ class DiscoveryScanner(SerialScanner):
         if expected_network:
             # User specified single network
             self.interface_networks = [expected_network]
-            self.interface_network = expected_network  # For display
             logger.debug(f"Using user-specified network: {expected_network}")
         else:
             # Auto-detect all networks on interface
@@ -437,15 +436,11 @@ class DiscoveryScanner(SerialScanner):
             try:
                 all_networks = get_interface_networks(self.interface)
                 self.interface_networks = [cidr for _, cidr in all_networks]
-                self.interface_network = (
-                    self.interface_networks[0] if self.interface_networks else None
-                )
                 if self.interface_networks:
                     logger.debug(f"Auto-detected networks: {', '.join(self.interface_networks)}")
             except (ImportError, ValueError, RuntimeError) as e:
                 logger.debug(f"Could not detect interface networks: {e}")
                 self.interface_networks = []
-                self.interface_network = None
         self.out_of_scope_warnings: list = []  # List of OutOfScopeWarning
         self.warn_out_of_scope = not args.get("no_scope_warnings", False)
 

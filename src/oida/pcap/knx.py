@@ -127,26 +127,7 @@ APCI_READ_CODES = {0x0, 0x4, 0x6, 0x8, 0xC}
 # APCI codes classified as response operations (no count increment)
 APCI_RESPONSE_CODES = {0x1, 0x5, 0x7, 0x9, 0xD}
 
-# cEMI message codes (from cemi.mc field)
-CEMI_MESSAGE_CODES = {
-    0x11: "L_Data.req",
-    0x29: "L_Data.ind",
-    0x2E: "L_Data.con",
-    0x2B: "L_Busmon.ind",
-    0x10: "L_Raw.req",
-    0x2D: "L_Raw.ind",
-    0x2F: "L_Raw.con",
-    0xFC: "M_PropRead.req",
-    0xFB: "M_PropRead.con",
-    0xF6: "M_PropWrite.req",
-    0xF5: "M_PropWrite.con",
-    0xF7: "M_PropInfo.ind",
-    0xF1: "M_Reset.req",
-    0xF0: "M_Reset.ind",
-}
-
 # cEMI address type (from cemi.at field)
-ADDR_TYPE_INDIVIDUAL = 0
 ADDR_TYPE_GROUP = 1
 
 # KNX medium types

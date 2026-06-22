@@ -669,156 +669,6 @@ class InterfaceCapabilities:
     ipv6_addresses: List[str] = field(default_factory=list)
     mac_address: Optional[str] = None
 
-    # Local addresses to exclude from scanning
-    local_ipv4_addresses: List[str] = field(default_factory=list)
-    local_ipv6_addresses: List[str] = field(default_factory=list)
-
-    # Scanners that require IPv4
-    IPV4_REQUIRED_SCANNERS: List[str] = field(
-        default_factory=lambda: [
-            "ARP (active)",
-            "SSDP (active)",
-            "WS-Discovery",
-            "LLMNR",
-            "NetBIOS",
-            "Moxa",
-            "Lantronix",
-            "FINS/Omron",
-            "DHCP (active)",
-            "KNX",
-            "BACnet",
-            "EtherNet/IP",
-            "CODESYS",
-        ]
-    )
-
-    # Scanners that require IPv6
-    IPV6_REQUIRED_SCANNERS: List[str] = field(
-        default_factory=lambda: [
-            "IPv6 multicast ping",
-            "DHCPv6 (active)",
-            "mDNS IPv6",
-        ]
-    )
-
-    # Scanners that work with L2 only (no IP required)
-    L2_ONLY_SCANNERS: List[str] = field(
-        default_factory=lambda: [
-            "ARP (passive)",
-            "LLDP",
-            "CDP",
-            "STP",
-            "HSRP",
-            "IGMP",
-            "DCP/PROFINET",
-            "mDNS (passive)",
-            "SSDP (passive)",
-            "DHCP (passive)",
-            "DHCPv6 (passive)",
-            "IPv6 (passive)",
-            "FINS (passive)",
-        ]
-    )
-
-    def get_disabled_scanners(self) -> List[str]:
-        """Return list of scanners that won't work due to missing addresses."""
-        disabled = []
-        if not self.has_ipv4:
-            disabled.extend(self.IPV4_REQUIRED_SCANNERS)
-        if not self.has_ipv6:
-            disabled.extend(self.IPV6_REQUIRED_SCANNERS)
-        return disabled
-
-    def is_local_ip(self, ip: str) -> bool:
-        """Check if an IP address is local to this interface (should be excluded from scanning)."""
-        if not ip:
-            return False
-        # Check IPv4
-        if ip in self.local_ipv4_addresses:
-            return True
-        # Check IPv6 (normalize by removing %interface suffix)
-        normalized_ip = ip.split("%")[0] if "%" in ip else ip
-        if normalized_ip in self.local_ipv6_addresses:
-            return True
-        # Also check common loopback addresses
-        if ip.startswith("127.") or ip == "::1" or ip == "localhost":
-            return True
-        return False
-
-    def get_excluded_ips(self) -> List[str]:
-        """Return all local IPs that should be excluded from scan targets."""
-        excluded = list(self.local_ipv4_addresses) + list(self.local_ipv6_addresses)
-        # Add loopback
-        excluded.extend(["127.0.0.1", "::1", "localhost"])
-        return list(set(excluded))
-
-    def get_available_scanners(self) -> List[str]:
-        """Return list of scanners that will work."""
-        available = list(self.L2_ONLY_SCANNERS)
-        if self.has_ipv4:
-            available.extend(self.IPV4_REQUIRED_SCANNERS)
-        if self.has_ipv6:
-            available.extend(self.IPV6_REQUIRED_SCANNERS)
-        return available
-
-    def log_warnings(self) -> None:
-        """Log warnings about disabled scanners."""
-        if not self.has_ipv4 and not self.has_ipv6:
-            logger.warning(
-                f"Interface '{self.interface}' has no IP addresses - "
-                "only L2/passive scans will work"
-            )
-        elif not self.has_ipv4:
-            logger.warning(
-                f"Interface '{self.interface}' has no IPv4 address - "
-                f"disabled: {', '.join(self.IPV4_REQUIRED_SCANNERS)}"
-            )
-        elif not self.has_ipv6:
-            logger.warning(
-                f"Interface '{self.interface}' has no IPv6 address - "
-                f"IPv6 discovery will not work (disabled: {', '.join(self.IPV6_REQUIRED_SCANNERS)})"
-            )
-
-    def print_status(self) -> None:
-        """Print interface status to console using NXC-style logging."""
-        from ...utils.ics_logger import get_context
-
-        # Use NXC logger if context is set, otherwise plain module logger
-        ctx = get_context()
-        if ctx:
-            _display = ctx.display
-            _success = ctx.success
-            _warning = ctx.warning
-        else:
-            _display = logger.info
-            _success = logger.info
-            _warning = logger.warning
-
-        _display(f"Interface: {self.interface}")
-        _display(f"    MAC:  {self.mac_address or 'None'}")
-        _display(f"    IPv4: {self.ipv4_address or 'None'}")
-        if self.ipv6_addresses:
-            for i, ip6 in enumerate(self.ipv6_addresses):
-                label = "IPv6:" if i == 0 else "     "
-                ip_type = "(link-local)" if ip6.startswith("fe80") else "(global)"
-                _display(f"    {label} {ip6} {ip_type}")
-        else:
-            _display("    IPv6: None")
-            _warning("No IPv6 address - IPv6 discovery will not work")
-
-        # Show excluded local addresses
-        excluded = self.get_excluded_ips()
-        if excluded:
-            _display(f"Excluding locals: {', '.join(sorted(excluded))}")
-
-        disabled = self.get_disabled_scanners()
-        if disabled:
-            _warning(f"{len(disabled)} active scanners disabled due to missing addresses:")
-            for scanner in disabled:
-                _warning(f"    - {scanner}")
-        else:
-            _success("All scanners available")
-
 
 def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
     """Check interface for IPv4/IPv6 addresses and determine scanner compatibility.
@@ -836,7 +686,6 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
 
     Example:
         >>> caps = check_interface_capabilities("eth0")
-        >>> caps.log_warnings()  # Log warnings about disabled scanners
         >>> if caps.has_ipv4:
         ...     # Can run IPv4-based scans
         ...     pass
@@ -867,8 +716,6 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
                 ip = addr_info.get("addr")
                 if ip and not ip.startswith("127."):
                     caps.has_ipv4 = True
-                    # Store as local address to exclude from scanning
-                    caps.local_ipv4_addresses.append(ip)
                     if caps.ipv4_address is None:
                         caps.ipv4_address = ip  # Use first non-loopback IPv4
 
@@ -882,8 +729,6 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
                 if ip and not ip.startswith("::1"):
                     caps.has_ipv6 = True
                     caps.ipv6_addresses.append(ip)
-                    # Store as local address to exclude from scanning
-                    caps.local_ipv6_addresses.append(ip)
                     # Check for global (non-link-local) address
                     if not ip.startswith("fe80"):
                         caps.has_ipv6_global = True

@@ -20,44 +20,6 @@ from oida.utils.ics_logger import get_module_logger
 logger = get_module_logger(__name__)
 
 
-def is_ipv6(address: str) -> bool:
-    """
-    Check if a string is an IPv6 address
-
-    Args:
-        address: IP address string
-
-    Returns:
-        bool: True if IPv6, False otherwise
-    """
-    # Remove brackets if present (common in URLs)
-    addr = address.strip("[]")
-    try:
-        ipaddress.IPv6Address(addr)
-        return True
-    except (ValueError, ipaddress.AddressValueError) as e:
-        logger.debug(f"ipaddress.IPv6Address(addr): {e}")
-        return False
-
-
-def is_ipv4(address: str) -> bool:
-    """
-    Check if a string is an IPv4 address
-
-    Args:
-        address: IP address string
-
-    Returns:
-        bool: True if IPv4, False otherwise
-    """
-    try:
-        ipaddress.IPv4Address(address)
-        return True
-    except (ValueError, ipaddress.AddressValueError) as e:
-        logger.debug(f"ipaddress.IPv4Address(address): {e}")
-        return False
-
-
 def parse_targets(target_spec: str) -> List[str]:
     """
     Parse target specification into list of individual targets
@@ -456,40 +418,6 @@ def expand_targets_lazy(target_spec: str) -> Iterator[str]:
     # Single target - strip brackets for IPv6
     else:
         yield target_spec.strip("[]")
-
-
-def validate_target(target: str) -> bool:
-    """
-    Validate if a target string is a valid IP or hostname
-
-    Args:
-        target: Target string to validate
-
-    Returns:
-        bool: True if valid
-    """
-    # Try to parse as IP address
-    try:
-        ipaddress.ip_address(target)
-        return True
-    except ValueError as e:
-        logger.debug(f"ipaddress.ip_address(target): {e}")
-
-    # Check if it's a valid hostname
-    # Basic validation: alphanumeric, dots, hyphens
-    if not target:
-        return False
-
-    # Hostname rules (simplified)
-    allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-")
-    if not all(c in allowed_chars for c in target):
-        return False
-
-    # Don't start or end with special chars
-    if target[0] in ".-" or target[-1] in ".-":
-        return False
-
-    return True
 
 
 def count_targets(target_spec: str) -> int:

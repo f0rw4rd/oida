@@ -86,6 +86,20 @@ def _skip_unless_pyshark():
         pytest.skip("pyshark or tshark not available")
 
 
+# git-lfs pointer signature -- pcap fixtures stored in LFS are <200-byte text
+# pointers until 'git lfs pull' fetches them.  tshark crashes on the pointer
+# text; detect and skip instead of failing.
+_LFS_POINTER_MAGIC = b"version https://git-lfs.github.com/spec/v1"
+
+
+def _is_lfs_pointer(path) -> bool:
+    try:
+        with open(path, "rb") as fh:
+            return fh.read(len(_LFS_POINTER_MAGIC)).startswith(_LFS_POINTER_MAGIC)
+    except OSError:
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Packet loading (use_ek=True for production parity)
 # ---------------------------------------------------------------------------
@@ -113,6 +127,11 @@ def _load_packets(
 
     import pyshark
     from pyshark.capture.capture import TSharkCrashException
+
+    if _is_lfs_pointer(pcap_path):
+        pytest.skip(
+            f"pcap fixture is an unfetched git-lfs pointer (run 'git lfs pull'): {pcap_path}"
+        )
 
     cap_kwargs: dict = {"input_file": pcap_path}
     if display_filter:

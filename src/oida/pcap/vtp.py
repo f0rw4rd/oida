@@ -61,13 +61,6 @@ from typing import Any, Dict, List
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import lookup_mac_vendor, normalize_mac
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-# VTP constants
-VTP_MULTICAST_MAC = "01:00:0c:cc:cc:cc"
 
 # VTP message codes
 VTP_CODES = {
@@ -88,7 +81,6 @@ VTP_VLAN_TYPES = {
 
 # VTP VLAN status
 VTP_VLAN_STATUS_ACTIVE = 0x00
-VTP_VLAN_STATUS_SUSPENDED = 0x01
 
 
 class VTPPassiveListener(PySharkListenerBase):

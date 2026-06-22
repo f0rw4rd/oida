@@ -1076,13 +1076,27 @@ class SMTPFuzzer(BaseFuzzer):
             context=self._state_context,
         )
 
-        # Execute SMTP STARTTLS sequence (deferred when using mock connections)
+        # The STARTTLS upgrade sequence is *not* executed here.
+        # _define_state_machine() runs at session-creation time, before the
+        # fuzz loop opens the target connection, so driving EHLO/STARTTLS/the
+        # TLS handshake now would operate on a connection that is not yet open.
+        # Execution is deferred to fuzz_all() (mirroring the auth path) and the
+        # setup callbacks run over a dedicated socket (_get_auth_socket).
+        self.log.display(
+            "SMTP STARTTLS state machine created (upgrade deferred until connection ready)"
+        )
+
+    def _run_starttls_sequence(self) -> None:
+        """Drive the STARTTLS upgrade sequence over the dedicated auth socket.
+
+        Called from fuzz_all() once the target is reachable. Like the auth
+        path, the EHLO/STARTTLS/TLS handshake runs on _get_auth_socket() rather
+        than boofuzz's connection (which is not open yet).
+        """
         from ..core.connections.base import MockConnectionFactory
 
         if isinstance(self.connection_factory, MockConnectionFactory):
-            self.log.display(
-                "SMTP STARTTLS state machine created (execution deferred - mock connection)"
-            )
+            self.log.display("SMTP STARTTLS upgrade skipped (mock connection)")
             return
 
         self.log.display("Starting SMTP STARTTLS upgrade sequence")
@@ -1099,6 +1113,7 @@ class SMTPFuzzer(BaseFuzzer):
                 self.log.display("SMTP STARTTLS upgrade successful")
 
         except Exception as e:
+            self._close_auth_socket()
             self.log.fail(f"SMTP STARTTLS upgrade or authentication failed: {e}")
             raise
 
@@ -1132,7 +1147,7 @@ class SMTPFuzzer(BaseFuzzer):
             True if server responds with 250
         """
         try:
-            sock = self.session.targets[0]._target_connection
+            sock = self._get_auth_socket()
             ehlo_cmd = "EHLO fuzzer.example.com\r\n".encode()
             self.log.debug("Sending: EHLO fuzzer.example.com")
             sock.send(ehlo_cmd)
@@ -1161,7 +1176,7 @@ class SMTPFuzzer(BaseFuzzer):
             True if server responds with 220 (Ready to start TLS)
         """
         try:
-            sock = self.session.targets[0]._target_connection
+            sock = self._get_auth_socket()
             self.log.debug("Sending: STARTTLS")
             sock.send(b"STARTTLS\r\n")
 
@@ -1188,23 +1203,20 @@ class SMTPFuzzer(BaseFuzzer):
             True if SSL handshake successful
         """
         try:
-            sock = self.session.targets[0]._target_connection
+            sock = self._get_auth_socket()
 
-            # Create SSL context if not exists
-            if not hasattr(sock, "sslcontext"):
-                sock.sslcontext = ssl.create_default_context()
-                sock.sslcontext.check_hostname = False
-                sock.sslcontext.verify_mode = ssl.CERT_NONE
+            # Create SSL context (verification disabled: fuzzing arbitrary targets)
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
 
-            # Wrap the socket with SSL
+            # Wrap the dedicated auth socket with SSL and keep using it for the
+            # remaining EHLO/AUTH exchange over TLS.
             self.log.display("Performing SSL handshake")
-            sock._sock = sock.sslcontext.wrap_socket(
-                sock._sock, server_side=False, server_hostname=self.config.target_ip
+            self._auth_sock = ssl_context.wrap_socket(
+                sock, server_side=False, server_hostname=self.config.target_ip
             )
-
-            # Mark connection as secure
-            if hasattr(sock, "is_secure"):
-                sock.is_secure = True
+            self._auth_sock_is_secure = True
 
             self.log.display("SSL handshake successful")
             return True
@@ -1324,7 +1336,7 @@ class SMTPFuzzer(BaseFuzzer):
             True if still authenticated, False otherwise
         """
         try:
-            sock = self.session.targets[0]._target_connection
+            sock = self._get_auth_socket()
 
             # Send NOOP command (should work if authenticated)
             self.log.debug("Validating auth with NOOP command")
@@ -1354,17 +1366,17 @@ class SMTPFuzzer(BaseFuzzer):
             True if connection is still using TLS
         """
         try:
-            sock = self.session.targets[0]._target_connection
+            sock = self._get_auth_socket()
 
-            # Check if socket has SSL wrapper
-            if hasattr(sock, "_sock") and hasattr(sock._sock, "version"):
-                tls_version = sock._sock.version()
+            # The auth socket is an ssl.SSLSocket after _perform_ssl_handshake.
+            if hasattr(sock, "version"):
+                tls_version = sock.version()
                 self.log.debug(f"TLS version: {tls_version}")
                 return tls_version is not None
 
-            # Fallback: check is_secure flag
-            if hasattr(sock, "is_secure"):
-                return sock.is_secure
+            # Fallback: check secure flag set during the handshake
+            if getattr(self, "_auth_sock_is_secure", False):
+                return True
 
             # Cannot determine TLS state
             self.log.warning("Cannot validate TLS connection state")
@@ -1375,12 +1387,22 @@ class SMTPFuzzer(BaseFuzzer):
             return False
 
     def fuzz_all(self) -> None:
-        """Override fuzz_all to add SMTP authentication before fuzzing.
+        """Override fuzz_all to drive the SMTP pre-fuzz handshake before fuzzing.
 
-        SMTP requires EHLO + AUTH LOGIN before sending fuzz payloads.
-        Uses a separate socket for the handshake (like VNC/MMS/ADS).
+        Both the STARTTLS upgrade and AUTH LOGIN run here (not at
+        session-creation time), over a dedicated socket (like VNC/MMS/ADS),
+        because boofuzz's connection is not open yet when the state machine is
+        defined.
         """
-        if self.use_auth and self.state_machine:
+        use_starttls = self.config.get_option("use_starttls", False)
+
+        if use_starttls and self.state_machine:
+            self.log.display("SMTP fuzzing with STARTTLS enabled")
+            # _run_starttls_sequence drives EHLO -> STARTTLS -> TLS handshake
+            # (-> EHLO over TLS -> optional AUTH) on the dedicated auth socket.
+            self._run_starttls_sequence()
+            self._close_auth_socket()
+        elif self.use_auth and self.state_machine:
             self.log.display("SMTP fuzzing with authentication enabled")
             current_state = self.state_machine.get_current_state_name()
             if current_state != "AUTHENTICATED":

@@ -122,34 +122,6 @@ HL7_ORDER_EVENTS = {
     "R32": "Unsolicited Pre-Ordered Point-of-Care Result",
 }
 
-# HL7 segment types (common)
-HL7_SEGMENTS = {
-    "MSH": "Message Header",
-    "PID": "Patient Identification",
-    "PV1": "Patient Visit",
-    "PV2": "Patient Visit (Additional)",
-    "NK1": "Next of Kin",
-    "OBR": "Observation Request",
-    "OBX": "Observation/Result",
-    "ORC": "Common Order",
-    "AL1": "Allergy Information",
-    "DG1": "Diagnosis",
-    "IN1": "Insurance",
-    "GT1": "Guarantor",
-    "EVN": "Event Type",
-    "SCH": "Scheduling Activity",
-    "AIL": "Appointment Information (Location)",
-    "AIP": "Appointment Information (Personnel)",
-    "NTE": "Notes and Comments",
-    "MSA": "Message Acknowledgment",
-    "ERR": "Error",
-    "QPD": "Query Parameter Definition",
-    "RCP": "Response Control Parameter",
-    "TXA": "Transcription Document Header",
-    "FT1": "Financial Transaction",
-    "ZPI": "Custom Patient Info (Z-segment)",
-}
-
 # Segments containing PHI
 PHI_SEGMENTS = {"PID", "NK1", "GT1", "IN1", "AL1", "DG1", "OBX", "NTE"}
 
@@ -185,6 +157,7 @@ class HL7PassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "hl7"
     DISPLAY_FILTER = "hl7"
     REQUIRED_LAYERS = ("hl7",)
+    SERVER_PORTS = (2575,)
     PROTOCOL_COLUMNS = ("msg_type", "event", "sending_app", "receiving_app", "detail")
 
     def __init__(
@@ -284,14 +257,23 @@ class HL7PassiveListener(PySharkListenerBase):
         elif event_type:
             event_name = event_type
 
-        # Determine direction: messages to port 2575 are requests
-        if dst_port == 2575:
-            direction = "request"
-        elif src_port == 2575:
-            direction = "response"
-        else:
-            # Could be non-standard port; treat ACK as response
-            direction = "response" if msg_type == "ACK" else "request"
+        # Determine direction via the shared cascade.  An ACK message type is a
+        # clean port-independent response signal (native=False); everything else
+        # has no request/response indicator, so native=None falls through to the
+        # known-server-port tier (canonical 2575 plus any user --decode-as /
+        # OVERRIDE_PREFS override) and then the lower-port / first-seen
+        # heuristic.  Unlike the old `dst_port == 2575` checks this never drops
+        # traffic on a non-standard port.
+        native = False if msg_type == "ACK" else None
+        direction = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        ).direction
 
         details: Dict[str, Any] = {}
         if msg_type:

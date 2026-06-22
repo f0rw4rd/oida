@@ -8,8 +8,6 @@ matches the existing hl7/utils.py:send_probe pattern.
 """
 
 import socket
-import threading
-import time
 import unittest
 from unittest.mock import MagicMock
 
@@ -61,7 +59,6 @@ class TestHL7MonitorRecvCap(unittest.TestCase):
         original = socket.socket
         socket.socket = lambda *a, **kw: flood
         try:
-            t0 = time.time()
             response = mon._send_message()
         finally:
             socket.socket = original

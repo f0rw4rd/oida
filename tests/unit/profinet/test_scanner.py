@@ -198,13 +198,6 @@ class TestProfinetDeviceNewFields:
         device = ProfinetDevice(mac_address="00:11:22:33:44:55")
         assert device.firmware_version == ""
 
-    def test_device_epm_annotation_default(self):
-        """Test epm_annotation field defaults to empty string."""
-        from oida.protocols.profinet import ProfinetDevice
-
-        device = ProfinetDevice(mac_address="00:11:22:33:44:55")
-        assert device.epm_annotation == ""
-
     def test_device_pn_device_default(self):
         """Test _pn_device field defaults to None."""
         from oida.protocols.profinet import ProfinetDevice
@@ -227,7 +220,6 @@ class TestProfinetDeviceNewFields:
             alarms=[{"type": "Process", "slot": 1, "subslot": 1}],
             slots=[(0, 1, 0, 0), (1, 1, 0x10, 0x01)],
             firmware_version="V4.5.0",
-            epm_annotation="PROFINET RPC",
             _pn_device=pn_dev,
         )
 
@@ -236,7 +228,6 @@ class TestProfinetDeviceNewFields:
         assert len(device.alarms) == 1
         assert len(device.slots) == 2
         assert device.firmware_version == "V4.5.0"
-        assert device.epm_annotation == "PROFINET RPC"
         assert device._pn_device is pn_dev
 
     def test_device_alarms_not_shared(self):

@@ -49,19 +49,6 @@ class ADSCommandIDs:
     DEVICE_NOTIFICATION = 0x0008
     READ_WRITE = 0x0009
 
-    # All command IDs for quick coverage
-    ALL_COMMANDS = [
-        READ_DEVICE_INFO,
-        READ,
-        WRITE,
-        READ_STATE,
-        WRITE_CONTROL,
-        ADD_NOTIFICATION,
-        DEL_NOTIFICATION,
-        DEVICE_NOTIFICATION,
-        READ_WRITE,
-    ]
-
 
 # Index Group constants for memory access
 class ADSIndexGroups:
@@ -579,10 +566,12 @@ class ADSFuzzer(BaseFuzzer):
         """
 
         # ============================================================
-        # RESOLVE AMS NETID FROM CONFIG
+        # RESOLVE AMS NETID + PORTS FROM CONFIG
         # ============================================================
         target_netid = _netid_to_bytes(self.config.get_option("target_ams_netid", "127.0.0.1.1.1"))
         source_netid = _netid_to_bytes(self.config.get_option("source_ams_netid", "127.0.0.1.1.2"))
+        target_ams_port = self.config.get_option("target_ams_port", 851)
+        source_ams_port = self.config.get_option("source_ams_port", 32768)
 
         # ============================================================
         # HELPER FUNCTIONS
@@ -610,10 +599,12 @@ class ADSFuzzer(BaseFuzzer):
             children = [
                 # Target NetId: 6 bytes - typically server's NetId
                 Static("Target_NetId", target_netid),
-                Word("Target_Port", 851, endian="<"),  # TC3PLC1 port
+                Word(
+                    "Target_Port", target_ams_port, endian="<"
+                ),  # configured AMS port (851=TC3PLC1)
                 # Source NetId: 6 bytes - typically client's NetId
                 Static("Source_NetId", source_netid),
-                Word("Source_Port", 32768, endian="<"),  # Client port
+                Word("Source_Port", source_ams_port, endian="<"),  # configured client AMS port
                 Word("Command_ID", cmd, endian="<"),
                 Word("StateFlags", 0x0004, endian="<", fuzzable=False),  # ADS command request
             ]
@@ -653,10 +644,10 @@ class ADSFuzzer(BaseFuzzer):
                     children=(
                         # Target NetId: 6 bytes
                         Static("Target_NetId", target_netid),
-                        Word("Target_Port", 851, endian="<"),
+                        Word("Target_Port", target_ams_port, endian="<"),
                         # Source NetId: 6 bytes
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         # Cycle through all 9 command IDs
                         Group(
                             "Command_ID",
@@ -745,9 +736,9 @@ class ADSFuzzer(BaseFuzzer):
                     "AMS_Packet_Oversized",
                     children=(
                         Static("Target_NetId", target_netid),
-                        Word("Target_Port", 851, endian="<"),
+                        Word("Target_Port", target_ams_port, endian="<"),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.WRITE, endian="<"),
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         Size(
@@ -802,9 +793,9 @@ class ADSFuzzer(BaseFuzzer):
                                 b"\x01\x01\x01\x01\x01\x01",  # Uniform
                             ],
                         ),
-                        Word("Target_Port", 851, endian="<"),
+                        Word("Target_Port", target_ams_port, endian="<"),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.READ_DEVICE_INFO, endian="<"),
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         DWord("Data_Length", 0, endian="<", fuzzable=False),
@@ -840,7 +831,7 @@ class ADSFuzzer(BaseFuzzer):
                             ],
                         ),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.READ_DEVICE_INFO, endian="<"),
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         DWord("Data_Length", 0, endian="<", fuzzable=False),
@@ -860,9 +851,9 @@ class ADSFuzzer(BaseFuzzer):
                     "AMS_Packet_CmdBoundary",
                     children=(
                         Static("Target_NetId", target_netid),
-                        Word("Target_Port", 851, endian="<"),
+                        Word("Target_Port", target_ams_port, endian="<"),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Group(
                             "Command_ID_Boundary",
                             values=[
@@ -894,9 +885,9 @@ class ADSFuzzer(BaseFuzzer):
                     "AMS_Packet_StateFlags",
                     children=(
                         Static("Target_NetId", target_netid),
-                        Word("Target_Port", 851, endian="<"),
+                        Word("Target_Port", target_ams_port, endian="<"),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.READ_DEVICE_INFO, endian="<"),
                         Group(
                             "StateFlags_Boundary",
@@ -930,9 +921,9 @@ class ADSFuzzer(BaseFuzzer):
                     "AMS_Packet_Mismatch",
                     children=(
                         Static("Target_NetId", target_netid),
-                        Word("Target_Port", 851, endian="<"),
+                        Word("Target_Port", target_ams_port, endian="<"),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.READ, endian="<"),
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         # Data length doesn't match actual data
@@ -1130,7 +1121,7 @@ class ADSFuzzer(BaseFuzzer):
                             ],
                         ),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.READ_WRITE, endian="<"),
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         Size(
@@ -1553,7 +1544,7 @@ class ADSFuzzer(BaseFuzzer):
                             ],
                         ),
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.READ, endian="<"),
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         Size(
@@ -1669,9 +1660,9 @@ class ADSFuzzer(BaseFuzzer):
                                 b"\xc0\xa8\x01\x01\x01\x01",  # 192.168.1.1.1.1
                             ],
                         ),
-                        Word("Target_Port", 10000, endian="<"),  # AMS Router
+                        Word("Target_Port", 10000, endian="<"),  # AMS Router (route-manip target)
                         Static("Source_NetId", source_netid),
-                        Word("Source_Port", 32768, endian="<"),
+                        Word("Source_Port", source_ams_port, endian="<"),
                         Word("Command_ID", ADSCommandIDs.READ_WRITE, endian="<"),
                         Word("StateFlags", 0x0004, endian="<", fuzzable=False),
                         Size(

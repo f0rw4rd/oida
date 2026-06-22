@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 
 # =============================================================================
-# Fixtures for mocking pyradamsa (required by RadamsaMutator)
+# Fixtures for mocking pyradamsa (required by the Radamsa primitives)
 # =============================================================================
 
 

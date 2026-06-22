@@ -39,14 +39,10 @@ PyShark STP field reference (packet.stp.*):
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, List
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import lookup_mac_vendor, normalize_mac
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 # STP constants
@@ -122,7 +118,6 @@ class STPPassiveListener(PySharkListenerBase):
         nxc_logger=None,
     ):
         super().__init__(interface, timeout, nxc_logger)
-        self.root_bridges: Dict[str, Dict] = {}  # root_mac -> info
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format STP protocol-specific columns."""
@@ -230,13 +225,6 @@ class STPPassiveListener(PySharkListenerBase):
             flow_id=flow_id,
         )
 
-        # Track root bridge
-        if root_mac:
-            self.root_bridges[root_mac] = {
-                "root_mac": root_mac,
-                "root_priority": root_priority,
-            }
-
         # Create/update device using bridge MAC
         device_key = bridge_mac if bridge_mac else f"stp:{src_mac}"
         mac_vendor = lookup_mac_vendor(bridge_mac) if bridge_mac else ""
@@ -318,5 +306,3 @@ class STPPassiveListener(PySharkListenerBase):
             if flags & STP_FLAG_AGREEMENT:
                 flag_names.append("Agreement")
         return flag_names
-
-

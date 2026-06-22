@@ -28,17 +28,9 @@ from oida.protocols.modbus.decoder import (
     TYPE_ALIASES,
     REGISTERS_PER_TYPE,
     get_endian,
-    decode_float32,
-    decode_int32,
-    decode_uint32,
-    decode_string,
     decode_with_map,
     load_register_map,
     list_register_maps,
-    encode_float32,
-    encode_int32,
-    encode_uint32,
-    encode_string,
 )
 
 
@@ -946,62 +938,6 @@ class TestEdgeCases:
         result_signed = decoder_big.decode([0x8001], "i16")
         assert result_unsigned[0]["value"] == 32769
         assert result_signed[0]["value"] == -32767
-
-
-# =============================================================================
-# Test Convenience Functions
-# =============================================================================
-
-
-class TestConvenienceFunctions:
-    """Tests for module-level convenience functions."""
-
-    def test_decode_float32_basic(self):
-        """Test decode_float32 convenience function."""
-        # 1.0 = 0x3F800000
-        value = decode_float32([0x3F80, 0x0000])
-        assert value == 1.0
-
-    def test_decode_float32_with_word_order(self):
-        """Test decode_float32 with word order."""
-        # 1.0 with swapped words
-        value = decode_float32([0x0000, 0x3F80], word_order="little")
-        assert value == 1.0
-
-    def test_decode_float32_insufficient_regs(self):
-        """decode_float32 with insufficient registers."""
-        value = decode_float32([0x3F80])
-        assert value is None
-
-    def test_decode_int32_basic(self):
-        """Test decode_int32 convenience function."""
-        value = decode_int32([0x0000, 0x0064])  # 100
-        assert value == 100
-
-    def test_decode_int32_negative(self):
-        """Test decode_int32 with negative value."""
-        value = decode_int32([0xFFFF, 0xFFFF])  # -1
-        assert value == -1
-
-    def test_decode_uint32_basic(self):
-        """Test decode_uint32 convenience function."""
-        value = decode_uint32([0x0000, 0x0064])  # 100
-        assert value == 100
-
-    def test_decode_uint32_max(self):
-        """Test decode_uint32 with max value."""
-        value = decode_uint32([0xFFFF, 0xFFFF])
-        assert value == 4294967295
-
-    def test_decode_string_basic(self):
-        """Test decode_string convenience function."""
-        value = decode_string([0x4142, 0x4344])  # 'ABCD'
-        assert value == "ABCD"
-
-    def test_decode_string_with_max_length(self):
-        """Test decode_string with max_length."""
-        value = decode_string([0x4142, 0x4344], max_length=2)
-        assert value == "AB"
 
 
 # =============================================================================
@@ -2127,56 +2063,6 @@ class TestEncoderEdgeCases:
         """Encoding bits with spaces."""
         result = encoder_big.encode_bits("1111 1111 0000 0000")
         assert result == [0xFF00]
-
-
-# =============================================================================
-# Test Convenience Encode Functions
-# =============================================================================
-
-
-class TestConvenienceEncodeFunctions:
-    """Tests for module-level convenience encode functions."""
-
-    def test_encode_float32_basic(self):
-        """Test encode_float32 convenience function."""
-        result = encode_float32(1.0)
-        assert result == [0x3F80, 0x0000]
-
-    def test_encode_float32_with_word_order(self):
-        """Test encode_float32 with word order."""
-        result = encode_float32(1.0, word_order="little")
-        # With little word order, registers are swapped
-        assert result == [0x0000, 0x3F80]
-
-    def test_encode_int32_basic(self):
-        """Test encode_int32 convenience function."""
-        result = encode_int32(100)
-        assert result == [0x0000, 0x0064]
-
-    def test_encode_int32_negative(self):
-        """Test encode_int32 with negative value."""
-        result = encode_int32(-1)
-        assert result == [0xFFFF, 0xFFFF]
-
-    def test_encode_uint32_basic(self):
-        """Test encode_uint32 convenience function."""
-        result = encode_uint32(100)
-        assert result == [0x0000, 0x0064]
-
-    def test_encode_uint32_max(self):
-        """Test encode_uint32 with max value."""
-        result = encode_uint32(4294967295)
-        assert result == [0xFFFF, 0xFFFF]
-
-    def test_encode_string_basic(self):
-        """Test encode_string convenience function."""
-        result = encode_string("ABCD")
-        assert result == [0x4142, 0x4344]
-
-    def test_encode_string_with_length(self):
-        """Test encode_string with explicit length."""
-        result = encode_string("AB", length=4)
-        assert result == [0x4142, 0x0000]
 
 
 # =============================================================================

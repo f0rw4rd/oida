@@ -28,6 +28,5 @@ class ProfinetDevice:
     alarms: List[Dict[str, Any]] = field(default_factory=list)
     slots: List[Any] = field(default_factory=list)  # SlotInfo list from discover_slots
     firmware_version: str = ""
-    epm_annotation: str = ""
     _dcp_desc: Any = field(default=None, repr=False)  # Store DCPDeviceDescription for RPC
     _pn_device: Any = field(default=None, repr=False)  # Store library ProfinetDevice

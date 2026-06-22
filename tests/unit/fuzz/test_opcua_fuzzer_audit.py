@@ -356,8 +356,8 @@ class TestOPCUAAttackPatterns:
             if "state_confusion" in d.category.lower() or "State_Confusion" in d.name
         ]
         assert len(state_confusion) >= 1, (
-            f"Missing OPCUA_State_Confusion request — §4 sweep added it "
-            f"as a Group covering pre-session service-ID attacks."
+            "Missing OPCUA_State_Confusion request — §4 sweep added it "
+            "as a Group covering pre-session service-ID attacks."
         )
 
 

@@ -35,16 +35,21 @@ def registered_protocols(main_parser):
     return sorted(main_parser._subparsers_action.choices.keys())
 
 
-# Long-form output/verbosity flags consolidated on the main parser.
-# These were historically duplicated via add_common_args() / add_output_options()
-# and must NOT be re-added by protocol subparsers.
+# Long-form global flags that the main parser defines AND deliberately mirrors
+# onto every protocol subparser (via the shared std_parser parent) so they are
+# accepted both before and after the subcommand, e.g. `oida modbus HOST -v`.
 #
-# NOTE: Short flags like -o, -f, -d, -v are intentionally NOT listed here
-# because protocols legitimately reuse them for protocol-specific options
-# (e.g., -o for --outstation-addr in dnp3, -f for --force in discovery).
-# The subparser namespace is separate from the main parser, so short flag
-# reuse is fine — only the long-form duplicates cause real problems
-# (inconsistent --verbose action types, duplicate --output/--format dests).
+# The mirror is only safe when it is consistent with the main parser: same
+# action type, and default=SUPPRESS so an absent flag after the subcommand does
+# not clobber a value parsed before it. A protocol re-adding one of these with a
+# different action type or a real default would reintroduce the old clobbering
+# bug — that is the regression these tests now guard against.
+#
+# NOTE: Short flags like -o, -q, -t, -W are intentionally NOT mirrored, because
+# protocols legitimately reuse them for protocol-specific options (e.g. -o for
+# --outstation-addr in dnp3, -W for --decode-width in modbus). After the
+# subcommand those short flags keep their protocol meaning; the long forms above
+# carry the global meaning.
 CONSOLIDATED_LONG_FLAGS = {
     "--verbose",
     "--debug",
@@ -99,25 +104,51 @@ def test_no_duplicate_flags_in_protocol(main_parser, proto):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("proto", [pytest.param(p, id=p) for p in _get_registered_protos()])
-def test_no_duplicate_output_verbose_flags(main_parser, proto):
-    """Protocol subparsers must not re-define output/verbosity long flags.
+def _option_action_map(parser):
+    """Map each option string to its argparse Action on a parser."""
+    return {opt: a for a in parser._actions for opt in a.option_strings}
 
-    The main parser provides --verbose, --debug, --output, --format.
-    Protocols that re-add these (via add_common_args, add_output_options, or
-    manually) cause inconsistent behavior (e.g. --verbose as store_true vs count)
-    and confusing duplicate help entries.
+
+@pytest.mark.parametrize("proto", [pytest.param(p, id=p) for p in _get_registered_protos()])
+def test_consolidated_flags_mirrored_consistently(main_parser, proto):
+    """Each subparser mirrors the consolidated globals consistently and safely.
+
+    The main parser's --verbose/--debug/--output/--format are deliberately
+    mirrored onto every protocol subparser (via the shared std_parser parent) so
+    they also work AFTER the subcommand (`oida modbus HOST -v`). For that to be
+    correct the mirrored copy must:
+
+      * use the SAME action type as the main parser (so --verbose stays a count,
+        not a store_true), and
+      * default to argparse.SUPPRESS, so an absent flag after the subcommand
+        does not clobber the value parsed before it back to a default.
+
+    A protocol that re-adds one of these with a different action type or a real
+    default reintroduces the positional-clobbering bug; this test fails fast on
+    that.
     """
     if proto not in main_parser._subparsers_action.choices:
         pytest.skip(f"{proto} not registered (missing optional dep?)")
 
     sub = _get_subparser(main_parser, proto)
-    own_flags = set(_collect_option_strings(sub))
-    shadowed = own_flags & CONSOLIDATED_LONG_FLAGS
-    assert not shadowed, (
-        f"{proto}: flags {shadowed} duplicate main parser output/verbosity flags "
-        f"(remove add_common_args/add_output_options from proto_args.py)"
-    )
+    main_actions = _option_action_map(main_parser)
+    sub_actions = _option_action_map(sub)
+
+    for flag in CONSOLIDATED_LONG_FLAGS:
+        assert flag in sub_actions, (
+            f"{proto}: global {flag} not mirrored onto the subparser; it would only "
+            f"work before the subcommand. Ensure proto_args() forwards std_parser."
+        )
+        sub_action = sub_actions[flag]
+        main_action = main_actions[flag]
+        assert type(sub_action) is type(main_action), (
+            f"{proto}: {flag} mirrored as {type(sub_action).__name__} but main parser "
+            f"uses {type(main_action).__name__} — action types must match"
+        )
+        assert sub_action.default is argparse.SUPPRESS, (
+            f"{proto}: mirrored {flag} must default to argparse.SUPPRESS to avoid "
+            f"clobbering the value parsed before the subcommand (got {sub_action.default!r})"
+        )
 
 
 # ---------------------------------------------------------------------------

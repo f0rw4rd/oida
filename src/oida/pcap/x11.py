@@ -125,14 +125,6 @@ X11_EVENT_CODES = {
     35: "GenericEvent",
 }
 
-# Auth methods
-KNOWN_AUTH_METHODS = {
-    "MIT-MAGIC-COOKIE-1",
-    "MIT-KERBEROS-5",
-    "SUN-DES-1",
-    "XC-QUERY-SECURITY-1",
-}
-
 
 class X11PassiveListener(PySharkListenerBase):
     """Passive X11 traffic listener for display and credential extraction.
@@ -160,6 +152,7 @@ class X11PassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "x11"
     DISPLAY_FILTER = "x11"
     REQUIRED_LAYERS = ("x11",)
+    SERVER_PORTS = tuple(sorted(X11_PORTS))
     PROTOCOL_COLUMNS = ("operation", "auth_method", "detail")
 
     def __init__(
@@ -444,11 +437,21 @@ class X11PassiveListener(PySharkListenerBase):
 
         opcode_name = X11_OPCODES.get(opcode_num, f"Request({opcode_num})")
 
-        # Determine direction based on port
-        if dst_port in X11_PORTS or dst_ip in self._known_servers:
-            direction = "request"
-        else:
-            direction = "response"
+        # A core X11 request carries an opcode and always flows client -> server,
+        # a clean port-independent signal we feed as the cascade's native tier.
+        # resolve_direction() also folds in learned _known_servers via the
+        # known-server-port tier when native is absent, but here native settles
+        # it directly.
+        d = self.resolve_direction(
+            None,
+            native=True,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        direction = d.direction
 
         details: Dict[str, Any] = {
             "opcode": opcode_num,
@@ -692,16 +695,33 @@ class X11PassiveListener(PySharkListenerBase):
                 operation = f"ExtRequest({major_opc}.{minor_opc})"
                 details = {"major_opcode": str(major_opc), "minor_opcode": str(minor_opc)}
 
-        # Determine direction
-        if msg_type == "reply" or msg_type == "event":
-            # Replies and events come from server
-            direction = "response"
-        elif dst_port in X11_PORTS or dst_ip in self._known_servers:
-            direction = "request"
-        elif src_port in X11_PORTS or src_ip in self._known_servers:
-            direction = "response"
+        # Determine direction via the shared cascade.  Replies and events are
+        # server-originated (a clean native=False signal).  For requests /
+        # unknown frames we fold in the listener's own learned _known_servers
+        # set as a native hint (a frame to a known display = request, from a
+        # known display = response); otherwise native=None lets
+        # resolve_direction() use the known-server-port tier (the X11 6000-6063
+        # range plus user --decode-as / OVERRIDE_PREFS) and the lower-port
+        # heuristic.  Default to request when nothing distinguishes the sides
+        # (preserves the old fallback behaviour).
+        if msg_type in ("reply", "event"):
+            native = False
+        elif dst_ip in self._known_servers:
+            native = True
+        elif src_ip in self._known_servers:
+            native = False
         else:
-            direction = "request"
+            native = None
+        d = self.resolve_direction(
+            None,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        direction = d.direction
 
         self._record_interaction(
             now,

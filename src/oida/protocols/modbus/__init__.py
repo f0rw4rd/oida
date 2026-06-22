@@ -25,10 +25,6 @@ from .decoder import (
     DataType,
     TYPE_ALIASES,
     REGISTERS_PER_TYPE,
-    decode_float32,
-    decode_int32,
-    decode_uint32,
-    decode_string,
 )
 
 # Import from scanner module
@@ -64,10 +60,6 @@ __all__ = [
     "DataType",
     "TYPE_ALIASES",
     "REGISTERS_PER_TYPE",
-    "decode_float32",
-    "decode_int32",
-    "decode_uint32",
-    "decode_string",
     # Scanner exports
     "ModbusScanner",
     "ModbusFunctionCode",

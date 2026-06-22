@@ -131,7 +131,6 @@ class PostgreSQLSession:
     auth_type: str = ""
     salt: str = ""  # 4-byte salt as hex
     password_or_hash: str = ""
-    authenticated: Optional[bool] = None
     protocol_version: str = ""  # "3.0"
     server_params: Dict[str, str] = None  # type: ignore[assignment]
 
@@ -179,6 +178,7 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "pgsql"
     DISPLAY_FILTER = "pgsql"
     REQUIRED_LAYERS = ("pgsql",)
+    SERVER_PORTS = tuple(sorted(PGSQL_PORTS))
 
     PROTOCOL_COLUMNS = ("type", "operation", "details", "result")
 
@@ -215,13 +215,15 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
     # Direction detection
     # -------------------------------------------------------------------------
 
-    def _detect_direction(
-        self, pgsql_layer: Any, src_ip: str, dst_ip: str, src_port: int, dst_port: int
-    ) -> Optional[bool]:
-        """Detect packet direction using pgsql.frontend field.
+    def _detect_direction(self, pgsql_layer: Any) -> Optional[bool]:
+        """Detect packet direction from the protocol's own native signals.
 
         Returns True if client->server (frontend), False if server->client,
-        None if direction cannot be determined.
+        None when no native PostgreSQL signal is present.  The pgsql.frontend
+        field is authoritative; message-type implication is the secondary
+        native signal.  Port / known-server fallbacks are NOT done here -- they
+        are handled by the shared resolve_direction() cascade so non-standard
+        ports and user --decode-as overrides work uniformly.
         """
         frontend = self.get_field(pgsql_layer, "frontend", None)
         if frontend is not None:
@@ -268,18 +270,6 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
             "No data",
         ):
             return False  # Server -> Client
-
-        # Fallback: known servers
-        if src_ip in self._known_servers:
-            return False  # Source is known server -> server->client
-        if dst_ip in self._known_servers:
-            return True  # Dest is known server -> client->server
-
-        # Fallback: port heuristic
-        if dst_port in PGSQL_PORTS:
-            return True
-        if src_port in PGSQL_PORTS:
-            return False
 
         return None
 
@@ -340,30 +330,39 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         representation loses them.  We still record an interaction so the
         packet is not silently dropped.
 
-        Direction is inferred from known-server set and port heuristics.
+        Direction is inferred from the learned known-server set first (a
+        per-flow native-ish hint), then the shared resolve_direction() cascade
+        (known server port + lower-port / first-seen heuristic).
         """
-        # Direction from known servers / port heuristic
-        if src_ip in self._known_servers:
-            direction = "response"
-            server_ip, server_port = src_ip, src_port
-            client_ip, client_port = dst_ip, dst_port
-        elif dst_ip in self._known_servers:
-            direction = "request"
+        # A learned server endpoint is a useful hint here; feed it to
+        # resolve_direction as a native signal.  But the IP-based hint is
+        # ambiguous on loopback (src_ip == dst_ip, both 127.0.0.1), where it
+        # can't tell client from server -- skip it there and let the port tier
+        # (canonical 5432/5433 + user overrides) decide from src/dst_port.
+        # Otherwise native=None falls through to the port + heuristic tiers,
+        # never dropping the packet.
+        native: Optional[bool] = None
+        if src_ip != dst_ip:
+            if dst_ip in self._known_servers:
+                native = True  # dest is a known server -> client->server request
+            elif src_ip in self._known_servers:
+                native = False  # source is a known server -> server->client response
+        d = self.resolve_direction(
+            None,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        direction = d.direction
+        if d.is_request:
             server_ip, server_port = dst_ip, dst_port
             client_ip, client_port = src_ip, src_port
-        elif dst_port in PGSQL_PORTS:
-            direction = "request"
-            server_ip, server_port = dst_ip, dst_port
-            client_ip, client_port = src_ip, src_port
-        elif src_port in PGSQL_PORTS:
-            direction = "response"
-            server_ip, server_port = src_ip, src_port
-            client_ip, client_port = dst_ip, dst_port
         else:
-            # Fallback: treat src as sender
-            direction = "request"
-            server_ip, server_port = dst_ip, dst_port
-            client_ip, client_port = src_ip, src_port
+            server_ip, server_port = src_ip, src_port
+            client_ip, client_port = dst_ip, dst_port
 
         src_rec = client_ip if direction == "request" else server_ip
         dst_rec = server_ip if direction == "request" else client_ip
@@ -432,15 +431,23 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
             msg_type = "?"
             self.logger.debug(f"Missing pgsql.type field in packet {src_ip} -> {dst_ip}")
 
-        # Determine direction using pgsql.frontend (T2 field, but critical for correctness)
-        is_frontend = self._detect_direction(pgsql_layer, src_ip, dst_ip, src_port, dst_port)
-        if is_frontend is None:
-            # Cannot determine direction -- skip
-            self.logger.debug(
-                f"Cannot determine direction for pgsql packet {src_ip}:{src_port} -> "
-                f"{dst_ip}:{dst_port} type={msg_type}"
-            )
-            return
+        # Determine direction via the shared cascade.  pgsql.frontend (and the
+        # message-type implication) is an authoritative, port-independent native
+        # signal; when absent, native=None falls through to the known-server
+        # port tier (canonical 5432/5433 plus user --decode-as / OVERRIDE_PREFS
+        # overrides) and then the lower-port / first-seen heuristic, so the
+        # packet is never dropped on a non-standard port.
+        native = self._detect_direction(pgsql_layer)
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_frontend = d.is_request
 
         if is_frontend:
             # Client -> Server
@@ -725,7 +732,6 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         }
 
         if auth_type_int == AUTH_OK:
-            session.authenticated = True
             session.auth_type = session.auth_type or "none"
             if session.username and session.username != "?":
                 self._record_credential(session, success=True)
@@ -1441,7 +1447,7 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         protocol, hash_type, username, domain, server_ip, client_ip,
         hashcat_format.
         """
-        hashcat_lines = self.get_hashcat_format()
+        hashcat_lines = self.get_hashcat_hashes()
         result = []
         hashcat_idx = 0
         for cred in self.credentials:
@@ -1463,7 +1469,7 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
             hashcat_idx += 1
         return result
 
-    def get_hashcat_format(self) -> List[str]:
+    def get_hashcat_hashes(self) -> List[str]:
         """Get MD5 credentials in hashcat-compatible format.
 
         PostgreSQL MD5 hash = "md5" + md5(md5(password + user) + salt)

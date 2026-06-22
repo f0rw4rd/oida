@@ -43,10 +43,6 @@ class ModbusFunctionCodes:
     PROGRAM_STOP = b"\x47"
     PROGRAM_UPLOAD = b"\x48"
 
-    # User Defined Functions (65-72 decimal)
-    USER_DEFINED_START = b"\x41"
-    USER_DEFINED_END = b"\x48"
-
 
 class ModbusDiagnosticCodes:
     """Modbus diagnostic sub-function codes"""

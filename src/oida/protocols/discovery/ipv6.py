@@ -120,27 +120,34 @@ class IPv6Scanner:
             )
             sniffer.start()
 
-            # Send RS from all IPv6 addresses to maximize router discovery
-            for src_ipv6 in src_ipv6_list:
-                logger.debug(f"IPv6: Sending Router Solicitation from {src_ipv6}")
+            try:
+                # Send RS from all IPv6 addresses to maximize router discovery
+                for src_ipv6 in src_ipv6_list:
+                    logger.debug(f"IPv6: Sending Router Solicitation from {src_ipv6}")
 
-                # Router Solicitation to ff02::2 (all-routers)
-                pkt = (
-                    Ether(src=src_mac, dst="33:33:00:00:00:02")
-                    / IPv6(src=src_ipv6, dst=IPV6_ALL_ROUTERS, hlim=255)
-                    / ICMPv6ND_RS()
-                    / ICMPv6NDOptSrcLLAddr(lladdr=src_mac)
-                )
+                    # Router Solicitation to ff02::2 (all-routers)
+                    pkt = (
+                        Ether(src=src_mac, dst="33:33:00:00:00:02")
+                        / IPv6(src=src_ipv6, dst=IPV6_ALL_ROUTERS, hlim=255)
+                        / ICMPv6ND_RS()
+                        / ICMPv6NDOptSrcLLAddr(lladdr=src_mac)
+                    )
 
-                # Send RS
-                scapy_sendp(pkt, iface=self.interface, verbose=False)
+                    # Send RS
+                    scapy_sendp(pkt, iface=self.interface, verbose=False)
 
-                # Small delay between sends
-                time.sleep(0.1)
+                    # Small delay between sends
+                    time.sleep(0.1)
 
-            # Wait for RAs
-            time.sleep(min(self.timeout, 3))
-            sniffer.stop()
+                # Wait for RAs
+                time.sleep(min(self.timeout, 3))
+            finally:
+                # Always tear down the capture thread / raw socket
+                if hasattr(sniffer, "running") and sniffer.running:
+                    try:
+                        sniffer.stop()
+                    except Exception as e:
+                        logger.debug(f"IPv6 RS: sniffer stop error: {e}")
 
             if routers_found:
                 logger.info(f"IPv6 RS: {len(routers_found)} routers responded")
@@ -230,25 +237,32 @@ class IPv6Scanner:
             )
             sniffer.start()
 
-            # Send pings from all IPv6 addresses to maximize discovery
-            for src_ipv6 in src_ipv6_list:
-                logger.debug(f"IPv6: Pinging {target} ({target_type}) from {src_ipv6}")
+            try:
+                # Send pings from all IPv6 addresses to maximize discovery
+                for src_ipv6 in src_ipv6_list:
+                    logger.debug(f"IPv6: Pinging {target} ({target_type}) from {src_ipv6}")
 
-                pkt = (
-                    Ether(src=src_mac, dst=dst_mac)
-                    / IPv6(src=src_ipv6, dst=target, hlim=255)
-                    / ICMPv6EchoRequest(id=0x1234, seq=1, data=b"oida")
-                )
+                    pkt = (
+                        Ether(src=src_mac, dst=dst_mac)
+                        / IPv6(src=src_ipv6, dst=target, hlim=255)
+                        / ICMPv6EchoRequest(id=0x1234, seq=1, data=b"oida")
+                    )
 
-                # Send ping
-                scapy_sendp(pkt, iface=self.interface, verbose=False)
+                    # Send ping
+                    scapy_sendp(pkt, iface=self.interface, verbose=False)
 
-                # Small delay between sends
-                time.sleep(0.1)
+                    # Small delay between sends
+                    time.sleep(0.1)
 
-            # Wait for responses
-            time.sleep(min(self.timeout, 5))
-            sniffer.stop()
+                # Wait for responses
+                time.sleep(min(self.timeout, 5))
+            finally:
+                # Always tear down the capture thread / raw socket
+                if hasattr(sniffer, "running") and sniffer.running:
+                    try:
+                        sniffer.stop()
+                    except Exception as e:
+                        logger.debug(f"IPv6 ping: sniffer stop error: {e}")
 
             # Process responses - deduplicate by IPv6 address, keeping the MAC
             seen_addrs = {}

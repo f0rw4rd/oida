@@ -95,6 +95,32 @@ class TestEchoTest:
         res = s._diagnostic_echo_test(client, test_data=0x1234)
         assert res["match"] is False
 
+    def test_echo_zero_value_matches(self):
+        # Regression: a valid 0x0000 echo is falsy. The old `message or data`
+        # fallback turned it into None and reported match=False.
+        s = make_scanner()
+        client = MagicMock()
+        client.diag_query_data.return_value = _ok(0x0000)
+        res = s._diagnostic_echo_test(client, test_data=0x0000)
+        assert res["received"] == 0x0000
+        assert res["match"] is True
+
+    def test_echo_single_word_tuple_matches(self):
+        # Regression: pymodbus decodes a single-word echo into a 1-element tuple
+        # in some paths; comparing int test_data against the tuple gave match=False.
+        s = make_scanner()
+        client = MagicMock()
+        client.diag_query_data.return_value = _ok((0x1234,))
+        res = s._diagnostic_echo_test(client, test_data=0x1234)
+        assert res["match"] is True
+
+    def test_echo_single_word_list_matches(self):
+        s = make_scanner()
+        client = MagicMock()
+        client.diag_query_data.return_value = _ok([0x1234])
+        res = s._diagnostic_echo_test(client, test_data=0x1234)
+        assert res["match"] is True
+
     def test_echo_error_returns_none(self):
         s = make_scanner()
         client = MagicMock()

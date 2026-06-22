@@ -108,28 +108,6 @@ _CAP_NAMES = {
     "tpmr": "Two-port MAC Relay",
 }
 
-# Management address metadata field names
-_MGN_ADDR_FIELDS = (
-    "mgn_address_len",
-    "mgn_address_subtype",
-)
-
-# IEEE 802.3 MAC/PHY and aggregation field names
-_IEEE_802_3_FIELDS = (
-    "ieee_802_3_mac_phy_auto_neg_status",
-    "ieee_802_3_mac_phy_auto_neg_status_enabled",
-    "ieee_802_3_mdi_power_support_enabled",
-    "ieee_802_3_aggregation_status",
-    "ieee_802_3_aggregation_status_enabled",
-    "ieee_802_3_aggregated_port_id",
-)
-
-# IEEE 802.1 port/protocol VLAN field names
-_IEEE_802_1_FIELDS = (
-    "ieee_802_1_port_and_vlan_id_flag_enabled",
-    "ieee_802_1_port_proto_vlan_id",
-)
-
 
 class LLDPPassiveListener(PySharkListenerBase):
     """Passive LLDP traffic listener using PyShark.
@@ -425,5 +403,3 @@ def _extract_version(desc: str) -> str:
     if m:
         return m.group(1)
     return desc
-
-

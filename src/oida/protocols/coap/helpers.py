@@ -148,8 +148,9 @@ def _get_method_map() -> Dict[str, Any]:
         m["FETCH"] = aiocoap.FETCH
     if hasattr(aiocoap, "PATCH"):
         m["PATCH"] = aiocoap.PATCH
-    if hasattr(aiocoap, "IPATCH"):
-        m["IPATCH"] = aiocoap.IPATCH
+    ipatch = getattr(aiocoap, "iPATCH", None) or getattr(aiocoap.numbers.codes.Code, "iPATCH", None)
+    if ipatch is not None:
+        m["IPATCH"] = ipatch
     _method_map_cache["map"] = m
     return m
 
@@ -335,74 +336,6 @@ async def coap_get_blockwise(
 
     logger.debug("Block2 GET complete: %d bytes total", len(assembled))
     return code_str, bytes(assembled)
-
-
-async def coap_put_blockwise(
-    ctx,
-    uri: str,
-    payload: bytes,
-    block_size: int = 512,
-    timeout: float = DEFAULT_TIMEOUT,
-    content_format: Optional[int] = None,
-) -> Dict[str, Any]:
-    """PUT a large payload using Block1 upload (RFC 7959).
-
-    Splits *payload* into *block_size* chunks and sends each with the
-    Block1 option until the server has received all blocks.
-
-    Returns dict with keys: code, success.
-    """
-    aiocoap = _get_aiocoap()
-
-    szx = BLOCK_SIZES.get(block_size, 5)
-    total_blocks = (len(payload) + block_size - 1) // block_size
-    if total_blocks == 0:
-        total_blocks = 1
-
-    logger.debug(
-        "Block1 PUT %s: %d bytes in %d blocks (block_size=%d)",
-        uri,
-        len(payload),
-        total_blocks,
-        block_size,
-    )
-
-    for block_num in range(total_blocks):
-        start = block_num * block_size
-        end = min(start + block_size, len(payload))
-        chunk = payload[start:end]
-        more = block_num < total_blocks - 1
-
-        request = aiocoap.Message(code=aiocoap.PUT, uri=uri, payload=chunk)
-        request.opt.block1 = aiocoap.optiontypes.BlockOption.BlockwiseTuple(block_num, more, szx)
-        if content_format is not None:
-            request.opt.content_format = content_format
-
-        try:
-            response = await asyncio.wait_for(ctx.request(request).response, timeout=timeout)
-        except asyncio.TimeoutError:
-            logger.debug("Block1 PUT timeout at block %d/%d", block_num, total_blocks)
-            return {"code": "timeout", "success": False}
-        except Exception as e:
-            logger.debug("Block1 PUT error at block %d: %s", block_num, e)
-            return {"code": f"error:{e}", "success": False}
-
-        code_str = str(response.code)
-        logger.debug(
-            "Block1 PUT block %d/%d: %s (%d bytes)",
-            block_num + 1,
-            total_blocks,
-            code_str,
-            len(chunk),
-        )
-
-        # 2.31 Continue means server wants more blocks
-        if more and not code_str.startswith("2."):
-            logger.debug("Block1 PUT rejected at block %d: %s", block_num, code_str)
-            return {"code": code_str, "success": False}
-
-    # Final response code
-    return {"code": code_str, "success": code_str.startswith("2.")}
 
 
 async def try_dtls_psk(

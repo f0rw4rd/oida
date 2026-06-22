@@ -1,11 +1,10 @@
 name: PR quick check
 
-# Auto-gate for pull requests. The full 3.10/3.11/3.12 matrix in ci.yml is
-# manual (workflow_dispatch); this runs lint (seconds) + unit/contract tests on
-# a single Python version (a few minutes) so PRs get real, fast feedback.
+# Manual-only (to conserve Actions minutes): run from the Actions tab or
+# `gh workflow run pr.yml`. Runs lint (seconds) + unit/contract tests on a
+# single Python version; the full 3.10/3.11/3.12 matrix lives in ci.yml.
 on:
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read

@@ -568,7 +568,11 @@ class EepromOpsMixin(_ScannerBase):
                 return result
 
             slave = master.slaves[slave_pos]
-            word_addr = offset // 2  # Convert byte offset to word address
+
+            if offset < 0:
+                result["error"] = f"Invalid offset: 0x{offset:X}"
+                self.logger.fail(result["error"])
+                return result
 
             # Determine data size based on value
             if value <= 0xFFFF:
@@ -580,21 +584,45 @@ class EepromOpsMixin(_ScannerBase):
                 f"Writing EEPROM at 0x{offset:04X} = 0x{value:X} to slave {slave_pos + 1}..."
             )
 
-            # Write to EEPROM
-            if hasattr(slave, "eeprom_write"):
-                slave.eeprom_write(word_addr, data)
-                result["slave"] = slave_pos + 1
-                result["offset"] = f"0x{offset:04X}"
-                result["value"] = f"0x{value:X}"
-                result["success"] = True
-                self.logger.success("  EEPROM write successful")
-
-                # If writing in header area (0x00-0x0D), update CRC
-                if offset < 0x0E:
-                    self._update_eeprom_crc(slave)
-            else:
+            if not hasattr(slave, "eeprom_write"):
                 result["error"] = "eeprom_write not available"
                 self.logger.fail(result["error"])
+                return result
+
+            # EEPROM is word-addressed. An arbitrary byte offset (especially an
+            # odd one) does not align to a word boundary, and the value may also
+            # span more than one word. Read-modify-write the affected word(s) so
+            # the bytes land at exactly [offset, offset + len(data)) without
+            # clobbering the surrounding bytes of those words.
+            start_word = offset // 2
+            end_byte = offset + len(data)  # exclusive
+            end_word = (end_byte - 1) // 2  # inclusive
+
+            # Read the covering words into a byte buffer (2 bytes per word).
+            buf = bytearray()
+            for word_addr in range(start_word, end_word + 1):
+                word = slave.eeprom_read(word_addr)
+                buf.extend(word[:2])
+
+            # Splice the value bytes into the correct intra-word position.
+            splice_at = offset - start_word * 2
+            buf[splice_at : splice_at + len(data)] = data
+
+            # Write the merged word(s) back.
+            for i, word_addr in enumerate(range(start_word, end_word + 1)):
+                slave.eeprom_write(word_addr, bytes(buf[i * 2 : i * 2 + 2]))
+
+            result["slave"] = slave_pos + 1
+            result["offset"] = f"0x{offset:04X}"
+            result["value"] = f"0x{value:X}"
+            result["success"] = True
+            self.logger.success("  EEPROM write successful")
+
+            # If any modified byte falls in the header area (0x00-0x0D), the
+            # header CRC at byte 0x0E must be refreshed. Key this off the actual
+            # affected byte span, not just the start offset.
+            if offset < 0x0E:
+                self._update_eeprom_crc(slave)
 
         except Exception as e:
             result["error"] = str(e)

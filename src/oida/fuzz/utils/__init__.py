@@ -4,7 +4,6 @@ import subprocess
 
 from ...utils.ics_logger import get_logger
 
-# Module-level logger for utility functions
 _log = get_logger("FUZZ", "utils", 0)
 
 

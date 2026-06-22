@@ -463,8 +463,19 @@ class EtherNetIPScanner(
     # ------------------------------------------------------------------
 
     def connect(self) -> Any:
-        """Establish EtherNet/IP connection using pycomm3."""
+        """Establish EtherNet/IP connection using pycomm3.
+
+        If a driver is already open (e.g. the NXC connection layer opened one
+        during create_conn_obj()), reuse it instead of opening a second CIP
+        session. Many PLCs cap concurrent encapsulation sessions, so opening a
+        second connection per scan can be refused and doubles overhead.
+        """
         import logging
+
+        # Reuse an already-established driver rather than opening a 2nd session.
+        if self._pycomm3_driver is not None:
+            self.logger.debug("Reusing existing pycomm3 driver")
+            return self._pycomm3_driver
 
         # Suppress pycomm3 internal ERROR logs (e.g., "get_plc_info failed").
         # Stash the prior level so disconnect() can restore it — otherwise the

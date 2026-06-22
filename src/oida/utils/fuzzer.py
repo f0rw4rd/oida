@@ -402,6 +402,10 @@ def fuzz(
         for payload, desc in fuzz(count=50, min_len=4, max_len=64):
             send(payload)
     """
+    # Fail fast on an impossible length range instead of looping forever in PHASE 5.
+    if min_len > max_len:
+        raise ValueError(f"min_len ({min_len}) must not exceed max_len ({max_len})")
+
     # Use LRUSet for bounded memory during long fuzzing runs (P4 optimization)
     seen: LRUSet = LRUSet(maxsize=10000)
     yielded = 0
@@ -573,9 +577,13 @@ def fuzz(
             break
 
     # === PHASE 5: Random fill if still needed (P3 optimization) ===
+    # Bounded attempts so an exhausted value space (e.g. min_len==max_len==1 has
+    # only 256 distinct payloads) cannot spin forever once emit() always rejects.
     random_count = 0
-    while yielded < count:
-        length = random.randint(min_len, max_len) if max_len > min_len else max(min_len, 1)
+    attempts = 0
+    while yielded < count and attempts < count * 4:
+        attempts += 1
+        length = random.randint(min_len, max_len) if max_len > min_len else min_len
         data = _generate_random_bytes(length)
         random_count += 1
         if emit(data, f"random {length} bytes #{random_count}"):

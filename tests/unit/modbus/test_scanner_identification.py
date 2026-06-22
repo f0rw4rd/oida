@@ -583,7 +583,9 @@ class TestGatewayDetection:
         # Query different units
         results = {}
         for unit in [1, 5, 10, 15]:
-            result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=unit)
+            result = mock_client.read_device_information(
+                read_code=1, object_id=0x00, device_id=unit
+            )
             if not result.isError():
                 results[unit] = result.information[0x00].decode()
 

@@ -11,7 +11,6 @@ Uses pyiec61850-ng >= 1.6.1.0 high-level Python API:
 Requires: pip install 'pyiec61850-ng>=1.6.1.0'
 """
 
-import sys
 import time
 from collections import defaultdict
 from datetime import datetime
@@ -701,12 +700,6 @@ class GOOSEScanner(SerialScanner):
 metadata, run = create_protocol_module(
     GOOSEScanner, dependencies_check_func=lambda: not _pyiec61850_goose.is_available
 )
-
-
-if __name__ == "__main__":
-    from utils.cli import main  # type: ignore[import-not-found]
-
-    main(sys.argv, run, metadata)
 
 
 # Re-export NXC-style callable class

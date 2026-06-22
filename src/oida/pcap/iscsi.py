@@ -29,8 +29,10 @@ tshark fields used (packet.iscsi.*):
 - iscsi.scsicommand.expecteddatatransferlength: Transfer size
 """
 
+import re
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
@@ -138,6 +140,75 @@ LOGIN_STATUS = {
     "0x0302": "Out of resources",
 }
 
+# Login status codes that indicate an authentication/authorization failure --
+# surfaced as alerts so failed CHAP/login attempts are visible.
+LOGIN_FAILURE_STATUS = {"0x0201", "0x0202", "0x0203"}
+
+# CHAP login text key=value pairs. iSCSI carries CHAP over the login/text data
+# segment as RFC 7143 key=value text (CHAP_A/I/C/N/R), which Wireshark exposes
+# via the generic login keyvalue field rather than dedicated iscsi.chap.* fields.
+#   CHAP_A = algorithm (5 = MD5)
+#   CHAP_I = identifier (the "id" byte, used as hashcat salt position)
+#   CHAP_C = challenge (target -> initiator)
+#   CHAP_N = name (the CHAP username)
+#   CHAP_R = response (initiator -> target; the MD5 digest = the crackable hash)
+# Value is printable ASCII excluding the '=' separator and the RFC 7143 pair
+# delimiter ',' (plus whitespace/NUL) so a greedy match cannot swallow the
+# next key=value pair.  CHAP values themselves never contain '=' or ','.
+_CHAP_KV_RE = re.compile(rb"CHAP_([AICNR])=([\x21-\x2b\x2d-\x3c\x3e-\x7e]+)")
+
+
+@dataclass
+class ISCSICredential:
+    """Extracted iSCSI CHAP credential.
+
+    The CHAP response (CHAP_R) is an MD5 digest of (id || secret || challenge),
+    crackable offline with hashcat mode 4800 once the challenge and id are known.
+    """
+
+    username: str = ""  # CHAP_N
+    chap_id: str = ""  # CHAP_I
+    challenge: str = ""  # CHAP_C (hex)
+    response: str = ""  # CHAP_R (hex digest)
+    algorithm: str = ""  # CHAP_A (5 = MD5)
+    server_ip: str = ""  # target
+    server_port: int = 0
+    client_ip: str = ""  # initiator
+    timestamp: str = ""
+    credential_type: str = "hash"
+    auth_method: str = "CHAP"
+
+    @property
+    def hash_value(self) -> str:
+        """Canonical credential field: the CHAP MD5 response digest."""
+        return self.response
+
+    @property
+    def hashcat_format(self) -> str:
+        """hashcat mode 4800 line: ``response:challenge:id``.
+
+        Empty when the captured material is incomplete (no response, or no
+        challenge/id to anchor the hash) -- the scanner treats an empty
+        hashcat_format as "not crackable" and skips the bare-value line.
+        """
+        resp = self._strip_hex(self.response)
+        chal = self._strip_hex(self.challenge)
+        cid = self.chap_id
+        if not (resp and chal and cid):
+            return ""
+        # CHAP_I is decimal in the text protocol; hashcat 4800 expects the id
+        # as a two-hex-digit value.
+        try:
+            id_hex = f"{int(cid, 0) & 0xFF:02x}"
+        except (ValueError, TypeError):
+            id_hex = cid
+        return f"{resp}:{chal}:{id_hex}"
+
+    @staticmethod
+    def _strip_hex(val: str) -> str:
+        """Normalise a CHAP hex value (drop ``0x`` prefix and colons)."""
+        return str(val).strip().lower().removeprefix("0x").replace(":", "")
+
 
 class ISCSIPassiveListener(PySharkListenerBase):
     """Passive iSCSI traffic listener for storage area network discovery.
@@ -174,6 +245,14 @@ class ISCSIPassiveListener(PySharkListenerBase):
         self.initiator_names: Dict[str, set] = {}  # client_ip -> set of initiator IQNs
         # Track auth methods
         self.auth_methods: Dict[str, set] = {}  # server_ip -> set of auth methods
+        # Extracted CHAP credentials/hashes (consumed by the scanner cred loop)
+        self.credentials: List[ISCSICredential] = []
+        self._seen_creds: Set[Tuple[str, str, str]] = set()  # (user, server, response)
+        # Per-flow CHAP accumulator -- challenge (CHAP_C) and response (CHAP_R)
+        # arrive in separate PDUs, so correlate them by flow_id.
+        self._chap_state: Dict[str, Dict[str, str]] = {}
+        # Security alerts (login/auth failures)
+        self._alerts: List[Dict[str, str]] = []
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format iSCSI interaction as protocol-specific table columns."""
@@ -338,6 +417,23 @@ class ISCSIPassiveListener(PySharkListenerBase):
                 self.auth_methods[server_ip] = set()
             self.auth_methods[server_ip].add(auth_method)
 
+        # CHAP credential / hash extraction from login text segment.
+        server_port = dst_port if not is_response else src_port
+        self._extract_chap(iscsi, flow_id, client_ip, server_ip, server_port, now, opcode_name)
+
+        # Surface login/authentication failures as alerts.
+        if login_status_str in LOGIN_FAILURE_STATUS:
+            self._alerts.append(
+                {
+                    "level": "warning",
+                    "category": "control_alert",
+                    "message": (
+                        f"iSCSI LOGIN FAILURE: {client_ip} -> {server_ip} "
+                        f"[{login_status_name or login_status_str}]"
+                    ),
+                }
+            )
+
         # Create device entries
         if is_valid_discovered_ip(server_ip):
             server_vendor = lookup_mac_vendor(server_mac) if server_mac else ""
@@ -391,10 +487,147 @@ class ISCSIPassiveListener(PySharkListenerBase):
             + (f" target={target_name}" if target_name else "")
         )
 
+    # -------------------------------------------------------------------------
+    # CHAP credential extraction
+    # -------------------------------------------------------------------------
+
+    def _extract_chap(
+        self,
+        iscsi: Any,
+        flow_id: str,
+        client_ip: str,
+        server_ip: str,
+        server_port: int,
+        now: str,
+        opcode_name: str,
+    ) -> None:
+        """Extract CHAP key=value pairs from the iSCSI login text segment.
+
+        CHAP is carried as RFC 7143 text (``CHAP_A/I/C/N/R``) in the login/text
+        data segment.  Wireshark surfaces these via the generic login keyvalue
+        field rather than dedicated ``iscsi.chap.*`` fields, and the same
+        ``CHAP_x=y`` text is also present in the raw data segment.  We probe both
+        sources so extraction works regardless of which the active tshark build
+        exposes.  Challenge (``CHAP_C``) and response (``CHAP_R``) arrive in
+        separate PDUs, so we correlate them per ``flow_id``.
+        """
+        # Gather candidate text from named keyvalue fields and the data segment.
+        candidates: List[str] = []
+        for fname in (
+            "keyvalue",
+            "login_keyvalue",
+            "text_keyvalue",
+            "data",
+            "datasegment",
+            "ping_data",
+        ):
+            val = self.get_field(iscsi, fname, None)
+            if val:
+                candidates.append(str(val))
+
+        pairs: Dict[str, str] = {}
+        for text in candidates:
+            # Match both raw text and tshark's colon-hex byte rendering.
+            raw = text.encode("utf-8", errors="ignore")
+            for m in _CHAP_KV_RE.finditer(raw):
+                key = m.group(1).decode("ascii")
+                pairs[key] = m.group(2).decode("ascii", errors="ignore")
+
+        if not pairs:
+            return
+
+        if not flow_id:
+            # Without a flow id we cannot correlate challenge/response across
+            # PDUs; fall back to an endpoint-pair key so extraction still works.
+            flow_id = f"{client_ip}<->{server_ip}"
+        state = self._chap_state.setdefault(flow_id, {})
+        for key in ("A", "I", "C", "N", "R"):
+            if key in pairs and pairs[key]:
+                state[key] = pairs[key]
+        self.logger.debug(
+            f"iSCSI CHAP fields {sorted(pairs)} on flow {flow_id} "
+            f"({opcode_name}); accumulated {sorted(state)}"
+        )
+
+        # A response (CHAP_R) is the crackable material; record once we have it.
+        if "R" not in state:
+            return
+
+        username = state.get("N", "")
+        response = state.get("R", "")
+        dedup = (username, server_ip, response)
+        if dedup in self._seen_creds:
+            return
+        self._seen_creds.add(dedup)
+
+        cred = ISCSICredential(
+            username=username,
+            chap_id=state.get("I", ""),
+            challenge=state.get("C", ""),
+            response=response,
+            algorithm=state.get("A", ""),
+            server_ip=server_ip,
+            server_port=server_port,
+            client_ip=client_ip,
+            timestamp=now,
+        )
+        self.credentials.append(cred)
+        if cred.hashcat_format:
+            self.logger.info(
+                f"iSCSI CHAP hash: user={username or '?'} @ {server_ip}:{server_port} "
+                f"[hashcat 4800: {cred.hashcat_format}]"
+            )
+        else:
+            self.logger.info(
+                f"iSCSI CHAP (incomplete) user={username or '?'} @ {server_ip} "
+                "-- missing challenge/id, not crackable"
+            )
+
+    def get_credentials_summary(self) -> List[Dict[str, Any]]:
+        """Return CHAP credentials in scanner-compatible canonical-key form."""
+        return [
+            {
+                "protocol": "iSCSI",
+                "credential_type": cred.credential_type,
+                "auth_method": cred.auth_method,
+                "username": cred.username or "?",
+                "hash_value": cred.response,
+                "hashcat_format": cred.hashcat_format,
+                "server_ip": cred.server_ip,
+                "server_port": cred.server_port,
+                "client_ip": cred.client_ip,
+                "timestamp": cred.timestamp,
+            }
+            for cred in self.credentials
+        ]
+
+    def get_hashes_summary(self) -> List[Dict[str, Any]]:
+        """Return CHAP hashes for the unified hashes table / hashcat export."""
+        return [
+            {
+                "protocol": "iSCSI",
+                "hash_type": "CHAP-MD5",
+                "username": cred.username or "?",
+                "hash_value": cred.response,
+                "hashcat_format": cred.hashcat_format,
+                "server_ip": cred.server_ip,
+                "client_ip": cred.client_ip,
+            }
+            for cred in self.credentials
+        ]
+
     def harvest(self) -> Dict[str, Any]:
         """Return structured harvest data including target discovery tables."""
         base = super().harvest()
+        if not base:
+            base = {"tables": [], "alerts": []}
         tables = base.get("tables", [])
+        alerts = base.get("alerts", [])
+        for alert in self._alerts:
+            if alert not in alerts:
+                alerts.append(alert)
+        if alerts:
+            base["alerts"] = alerts
 
         # Add target discovery table
         target_rows = []

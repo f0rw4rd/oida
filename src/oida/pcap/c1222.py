@@ -82,9 +82,6 @@ C1222_SERVICES = {
 # Services that indicate write/configuration operations
 WRITE_SERVICES = {0x40}
 
-# Services that indicate authentication attempts
-AUTH_SERVICES = {0x50, 0x51, 0x52}  # LOGON, SECURITY, LOGOFF
-
 # Security-sensitive tables
 SENSITIVE_TABLES = {
     0: "General Configuration (ST-0)",
@@ -194,6 +191,7 @@ class C1222PassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "c1222"
     REQUIRED_LAYERS = ("c1222",)
     PROTOCOL_COLUMNS = ("service", "table", "offset", "count", "aptitle", "detail")
+    SERVER_PORTS = (1153,)
 
     def __init__(
         self,
@@ -271,16 +269,48 @@ class C1222PassiveListener(PySharkListenerBase):
             else "Unknown"
         )
 
-        # Response codes have bit 0 set (odd numbers are responses for
-        # READ/WRITE/IDENT/WAIT/NEGOTIATE); LOGON/SECURITY/LOGOFF are requests only
-        is_response = cmd_code is not None and cmd_code in (0x21, 0x31, 0x41, 0x55, 0x61, 0x70)
-        direction = "response" if is_response else "request"
+        # Classify request vs response from the C12.22 command code. Known
+        # response codes (odd-numbered replies for READ/WRITE/IDENT/WAIT/
+        # NEGOTIATE plus REGISTRATION Response) are responses; known request
+        # services (IDENT/REGISTRATION/READ/WRITE/LOGON/SECURITY/LOGOFF/WAIT/
+        # NEGOTIATE requests) are requests. Anything else (unknown or
+        # absent command code) is ambiguous.
+        _RESPONSE_CODES = {0x21, 0x31, 0x41, 0x55, 0x61, 0x70}
+        _REQUEST_CODES = {0x20, 0x27, 0x30, 0x40, 0x50, 0x51, 0x52, 0x54, 0x60}
+        is_response = cmd_code is not None and cmd_code in _RESPONSE_CODES
 
-        # Determine client/server: client sends to port 1153, server responds from it
-        if dst_port == 1153:
-            client_ip, server_ip = src_ip, dst_ip
+        # Native request/response signal for resolve_direction(): True=request,
+        # False=response, None=ambiguous (unknown/absent command code). Be
+        # conservative -- only assert direction when the command code is one we
+        # recognise as a request or a response.
+        if cmd_code in _RESPONSE_CODES:
+            native: Optional[bool] = False
+        elif cmd_code in _REQUEST_CODES:
+            native = True
         else:
-            client_ip, server_ip = dst_ip, src_ip
+            native = None
+
+        # Resolve client/server roles and direction. Tier 1 uses the native
+        # command-code signal above; tier 2 falls back to the canonical server
+        # port (1153, in SERVER_PORTS) plus any user --decode-as / OVERRIDE_PREFS
+        # overrides; tier 3 is the lower-port / first-seen heuristic. On the
+        # standard port with a recognised command code this reproduces the old
+        # "client sends to 1153" behaviour exactly, while also handling
+        # non-standard ports and ambiguous command codes robustly.
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request = d.is_request
+        client_ip, server_ip = d.client_ip, d.server_ip
+        direction = d.direction
+        src_mac, dst_mac = self.get_mac_info(packet)
+        client_mac, server_mac = (src_mac, dst_mac) if is_request else (dst_mac, src_mac)
 
         # Build details
         details: Dict[str, Any] = {
@@ -388,7 +418,7 @@ class C1222PassiveListener(PySharkListenerBase):
                     )
 
         # Update devices
-        self._update_devices(client_ip, server_ip, session_key)
+        self._update_devices(client_ip, server_ip, session_key, client_mac, server_mac)
 
     # ------------------------------------------------------------------
     # Session tracking
@@ -564,6 +594,8 @@ class C1222PassiveListener(PySharkListenerBase):
         client_ip: str,
         server_ip: str,
         session_key: Tuple[str, str],
+        client_mac: str = "",
+        server_mac: str = "",
     ) -> None:
         """Update device entries for C12.22 endpoints."""
         session = self.sessions[session_key]
@@ -574,6 +606,7 @@ class C1222PassiveListener(PySharkListenerBase):
             device, is_new = self._ensure_device(
                 device_key,
                 server_ip,
+                mac=server_mac,
                 device_type="Smart Meter (C12.22)",
             )
             device.c1222_passive_data = self._build_device_data("meter", session)
@@ -588,6 +621,7 @@ class C1222PassiveListener(PySharkListenerBase):
             device, is_new = self._ensure_device(
                 device_key,
                 client_ip,
+                mac=client_mac,
                 device_type="AMI Head-End (C12.22)",
             )
             device.c1222_passive_data = self._build_device_data("head_end", session)

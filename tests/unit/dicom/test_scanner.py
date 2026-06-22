@@ -167,8 +167,10 @@ class MockAE:
         """Add presentation context"""
         self._contexts.append(context)
 
-    def associate(self, host, port, ae_title="ANY", evt_handlers=None, tls_args=None):
+    def associate(self, host, port, ae_title="ANY", evt_handlers=None, tls_args=None, ext_neg=None):
         """Create mock association"""
+        self.last_ext_neg = ext_neg
+        self.last_tls_args = tls_args
         return MockAssociation()
 
 
@@ -465,6 +467,138 @@ class TestDICOMConnectionLogic(unittest.TestCase):
 
             self.assertFalse(result)
             self.assertFalse(scanner.results["data"]["connected"])
+
+    def _build_scanner(self, dicom, args):
+        """Construct a dicom NXC instance without running proto_flow."""
+        scanner = dicom.__new__(dicom)
+        scanner.args = args
+        scanner.db = None
+        scanner.ip = "192.168.1.100"
+        scanner.host = "192.168.1.100"
+        scanner.protocol_name = "dicom"
+        scanner.default_port = 11112
+        scanner.ae = None
+        scanner.assoc = None
+        scanner._cget_output_path = None
+        scanner._cget_received_files = []
+        scanner.results = {"data": {}}
+        scanner.calling_aet = "OIDA"
+        scanner.called_aet = "ANY"
+        scanner.logger = Mock()
+        return scanner
+
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    @patch("oida.protocols.dicom.AE")
+    def test_cget_negotiates_scp_role_via_ext_neg(self, mock_ae_class):
+        """C-GET (--get) must pass SCP role-selection items via ext_neg.
+
+        Regression for the bug where storage contexts were registered with the
+        default SCU role, so the SCP could never push C-STORE sub-operations
+        back and bulk export silently retrieved 0 images.
+        """
+        from oida.protocols.dicom import dicom, nxc_connection
+
+        self.mock_args.get = True
+        mock_ae = MockAE()
+        mock_ae_class.return_value = mock_ae
+
+        StoragePresentationContexts = nxc_connection._pynetdicom.StoragePresentationContexts
+        expected_uids = {str(ctx.abstract_syntax) for ctx in StoragePresentationContexts}
+
+        with patch.object(dicom, "proto_flow", return_value=None):
+            scanner = self._build_scanner(dicom, self.mock_args)
+            result = scanner.create_conn_obj()
+
+        self.assertTrue(result)
+        # ext_neg must be a non-empty list of role-selection items, one per
+        # requested storage SOP class, each requesting the SCP role.
+        self.assertIsNotNone(mock_ae.last_ext_neg)
+        self.assertTrue(len(mock_ae.last_ext_neg) > 0)
+        negotiated_uids = {str(item.sop_class_uid) for item in mock_ae.last_ext_neg}
+        self.assertEqual(negotiated_uids, expected_uids)
+        for item in mock_ae.last_ext_neg:
+            self.assertTrue(item.scp_role)
+            self.assertFalse(item.scu_role)
+
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    @patch("oida.protocols.dicom.AE")
+    def test_dump_all_negotiates_cget_contexts_and_role(self, mock_ae_class):
+        """--dump-all (without --get) must also negotiate C-GET storage roles."""
+        from oida.protocols.dicom import dicom
+
+        self.mock_args.get = False
+        self.mock_args.dump_all = True
+        mock_ae = MockAE()
+        mock_ae_class.return_value = mock_ae
+
+        with patch.object(dicom, "proto_flow", return_value=None):
+            scanner = self._build_scanner(dicom, self.mock_args)
+            result = scanner.create_conn_obj()
+
+        self.assertTrue(result)
+        self.assertIsNotNone(mock_ae.last_ext_neg)
+        self.assertTrue(len(mock_ae.last_ext_neg) > 0)
+        self.assertTrue(all(item.scp_role for item in mock_ae.last_ext_neg))
+
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    @patch("oida.protocols.dicom.AE")
+    def test_non_get_path_has_no_ext_neg(self, mock_ae_class):
+        """Plain C-ECHO scan must NOT negotiate any role selection items."""
+        from oida.protocols.dicom import dicom
+
+        mock_ae = MockAE()
+        mock_ae_class.return_value = mock_ae
+
+        with patch.object(dicom, "proto_flow", return_value=None):
+            scanner = self._build_scanner(dicom, self.mock_args)
+            result = scanner.create_conn_obj()
+
+        self.assertTrue(result)
+        self.assertIsNone(mock_ae.last_ext_neg)
+
+    @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
+    @patch("oida.protocols.dicom.AE")
+    def test_tls_args_forwarded_to_build_tls_context(self, mock_ae_class):
+        """--tls-* args must reach build_tls_context (not a hard-coded empty dict).
+
+        Regression for the bug where build_tls_context({}) was called, so
+        --tls-ca / --tls-cert / --tls-key / --tls-insecure were silently ignored
+        and the DICOM TLS session always ran at CERT_NONE / check_hostname=False.
+        """
+        from oida.protocols.dicom import dicom
+        from oida.utils import socket_helpers
+
+        self.mock_args.tls = True
+        self.mock_args.tls_ca = "/path/to/ca.pem"
+        self.mock_args.tls_cert = "/path/to/client.crt"
+        self.mock_args.tls_key = "/path/to/client.key"
+        self.mock_args.tls_insecure = False
+        mock_ae = MockAE()
+        mock_ae_class.return_value = mock_ae
+
+        captured = {}
+
+        def fake_build_tls_context(args, logger=None):
+            captured["args"] = args
+            import ssl
+
+            return ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+        with (
+            patch.object(dicom, "proto_flow", return_value=None),
+            patch.object(socket_helpers, "build_tls_context", fake_build_tls_context),
+            patch.object(socket_helpers, "check_tls_certificate", lambda **kw: None),
+        ):
+            scanner = self._build_scanner(dicom, self.mock_args)
+            result = scanner.create_conn_obj()
+
+        self.assertTrue(result)
+        # The args dict must be populated with the hyphenated keys the helper
+        # reads, sourced from the real --tls-* CLI args (not an empty dict).
+        self.assertEqual(captured["args"]["tls-ca"], "/path/to/ca.pem")
+        self.assertEqual(captured["args"]["tls-cert"], "/path/to/client.crt")
+        self.assertEqual(captured["args"]["tls-key"], "/path/to/client.key")
+        self.assertEqual(captured["args"]["tls-insecure"], False)
 
 
 class TestDICOMCEcho(unittest.TestCase):
@@ -2165,9 +2299,7 @@ class TestDICOMExtractAllTagsRecursionGuard(unittest.TestCase):
                 return any(find_error(v) for v in node)
             return False
 
-        self.assertTrue(
-            find_error(result), "expected a max-depth _extraction_error marker"
-        )
+        self.assertTrue(find_error(result), "expected a max-depth _extraction_error marker")
 
     @patch("oida.protocols.dicom.PYNETDICOM_AVAILABLE", True)
     def test_shallow_nested_sequences_still_extracted(self):

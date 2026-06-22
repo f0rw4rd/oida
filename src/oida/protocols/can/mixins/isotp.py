@@ -20,7 +20,7 @@ partial payload or ``None`` on missing / out-of-order CFs.
 """
 
 import time
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from ..constants import (
     ISOTP_CONSECUTIVE_FRAME,
@@ -62,7 +62,7 @@ class ISOTPMixin:
         request_id: int,
         response_id: int,
         timeout: float = 0.2,
-    ) -> Optional[bytes]:
+    ) -> Optional[Tuple[int, bytes]]:
         """Receive one ISO-TP message, sending Flow Control if multi-frame.
 
         Args:
@@ -73,8 +73,12 @@ class ISOTPMixin:
             timeout: overall deadline in seconds.
 
         Returns:
-            The de-framed payload (service byte first, PCI stripped, trimmed to
-            the declared length), or ``None`` if nothing usable arrived.
+            A ``(arbitration_id, payload)`` tuple where ``arbitration_id`` is the
+            real source ID of the frame that was accepted (important for OBD-II
+            broadcast probes, where any ECU in the response range may answer)
+            and ``payload`` is the de-framed message (service byte first, PCI
+            stripped, trimmed to the declared length). ``None`` if nothing
+            usable arrived.
         """
         end_time = time.time() + timeout
 
@@ -82,6 +86,7 @@ class ISOTPMixin:
         # 1. Wait for the first matching frame (SF or FF).
         # ------------------------------------------------------------------
         first: Optional[bytes] = None
+        source_id: Optional[int] = None
         while time.time() < end_time:
             remaining = end_time - time.time()
             if remaining <= 0:
@@ -100,9 +105,10 @@ class ISOTPMixin:
             if not data:
                 continue
             first = data
+            source_id = msg.arbitration_id
             break
 
-        if first is None:
+        if first is None or source_id is None:
             return None
 
         frame_type = first[0] & 0xF0
@@ -111,7 +117,8 @@ class ISOTPMixin:
         # 2. Single Frame: done, no FC / CF needed (keeps mocked-bus tests fast).
         # ------------------------------------------------------------------
         if frame_type == ISOTP_SINGLE_FRAME:
-            return self._assemble_isotp_data([first])
+            payload = self._assemble_isotp_data([first])
+            return None if payload is None else (source_id, payload)
 
         # ------------------------------------------------------------------
         # 3. First Frame: send Flow Control, then collect Consecutive Frames.
@@ -155,7 +162,8 @@ class ISOTPMixin:
                 frames.append(cf)
                 collected += len(cf[1:])
 
-            return self._assemble_isotp_data(frames)
+            payload = self._assemble_isotp_data(frames)
+            return None if payload is None else (source_id, payload)
 
         # Flow Control / unknown frame type as the first frame: nothing usable.
         return None

@@ -188,7 +188,6 @@ class CoAPPassiveListener(PySharkListenerBase):
     PROTOCOL_COLUMNS = ("method", "uri_path", "type", "content_format", "observe", "detail")
 
     # Standard CoAP ports
-    COAP_PORT = 5683
     COAPS_PORT = 5684
 
     def __init__(

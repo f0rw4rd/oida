@@ -322,15 +322,10 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
+                                                                # _encode_oid emits the full
+                                                                # OBJECT IDENTIFIER TLV
+                                                                # (06 <len> <body>), so no outer
+                                                                # tag/length wrapper here.
                                                                 SmartBytes(
                                                                     "OID1_Value",
                                                                     self._encode_oid(
@@ -579,15 +574,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 SmartBytes(
                                                                     "OID1_Value",
                                                                     self._encode_oid(
@@ -827,15 +813,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 # Walk from sysDescr
                                                                 SmartBytes(
                                                                     "OID1_Value",
@@ -1099,15 +1076,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                             Block(
                                                                 "VarBind1_Content",
                                                                 children=(
-                                                                    Static("OID1_Tag", b"\x06"),
-                                                                    Size(
-                                                                        "OID1_Length",
-                                                                        "OID1_Value",
-                                                                        endian=">",
-                                                                        output_format="binary",
-                                                                        length=1,
-                                                                        fuzzable=False,
-                                                                    ),
                                                                     # sysContact.0 - commonly writable
                                                                     SmartBytes(
                                                                         "OID1_Value",
@@ -1406,15 +1374,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 # usmStatsUnknownEngineIDs
                                                                 SmartBytes(
                                                                     "OID1_Value",
@@ -1672,15 +1631,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 SmartBytes(
                                                                     "OID1_Value",
                                                                     self._encode_oid(
@@ -2315,15 +2265,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 SmartBytes(
                                                                     "OID1_Value",
                                                                     self._encode_oid(
@@ -2562,15 +2503,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 SmartBytes(
                                                                     "OID1_Value",
                                                                     self._encode_oid(
@@ -2600,30 +2532,12 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind2_Content",
                                                             children=(
-                                                                Static("OID2_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID2_Length",
-                                                                    "OID2_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 SmartBytes(
                                                                     "OID2_Value",
                                                                     self._encode_oid(
                                                                         "1.3.6.1.6.3.1.1.4.1.0"
                                                                     ),
                                                                     fuzzable=True,
-                                                                ),
-                                                                Static("Value2_Tag", b"\x06"),
-                                                                Size(
-                                                                    "Value2_Length",
-                                                                    "Value2_Data",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
                                                                 ),
                                                                 SmartBytes(
                                                                     "Value2_Data",
@@ -2864,15 +2778,6 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind1_Content",
                                                             children=(
-                                                                Static("OID1_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID1_Length",
-                                                                    "OID1_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 SmartBytes(
                                                                     "OID1_Value",
                                                                     self._encode_oid(
@@ -2902,30 +2807,12 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         Block(
                                                             "VarBind2_Content",
                                                             children=(
-                                                                Static("OID2_Tag", b"\x06"),
-                                                                Size(
-                                                                    "OID2_Length",
-                                                                    "OID2_Value",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
-                                                                ),
                                                                 SmartBytes(
                                                                     "OID2_Value",
                                                                     self._encode_oid(
                                                                         "1.3.6.1.6.3.1.1.4.1.0"
                                                                     ),
                                                                     fuzzable=True,
-                                                                ),
-                                                                Static("Value2_Tag", b"\x06"),
-                                                                Size(
-                                                                    "Value2_Length",
-                                                                    "Value2_Data",
-                                                                    endian=">",
-                                                                    output_format="binary",
-                                                                    length=1,
-                                                                    fuzzable=False,
                                                                 ),
                                                                 SmartBytes(
                                                                     "Value2_Data",

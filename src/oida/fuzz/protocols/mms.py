@@ -311,7 +311,6 @@ class MMSFuzzer(BaseFuzzer):
     def __init__(self, config: FuzzerConfig, connection_factory=None):
         config.protocol_type = ProtocolType.TCP
         super().__init__(config, connection_factory)
-        self.request_sequence = None  # Initialize request sequence
 
         # StateContext for carrying state between transitions
         self._state_context = StateContext()
@@ -1653,9 +1652,6 @@ class MMSFuzzer(BaseFuzzer):
         # ==================== IED MODE: GOOSE/SV/SETTING GROUPS ====================
         if self.config.get_option("ied_mode", False):
             self._define_ied_protocol()
-
-        # Store last request for potential extension
-        self.request_sequence = session_req
 
     def _create_goose_subscription(self) -> bytes:
         """Create GOOSE subscription request"""

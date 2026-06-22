@@ -17,7 +17,9 @@ from oida.fuzz.monitors.agent import AgentMonitor
 class FakeAgent:
     """Minimal monitor-agent: handshake + STATUS/CRASH, one client at a time."""
 
-    def __init__(self, state="up", token=None, crash=None, drop_after_hello=False, drop_on_crash=False):
+    def __init__(
+        self, state="up", token=None, crash=None, drop_after_hello=False, drop_on_crash=False
+    ):
         self.state = state
         self.token = token
         self.crash = crash or {}

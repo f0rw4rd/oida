@@ -105,11 +105,6 @@ class MockCLI:
         else:
             self.use_enhanced_parser = use_enhanced_parser
 
-    def eprint(self, *args, **kwargs):
-        """Mock stderr print with logging"""
-        message = " ".join(str(arg) for arg in args)
-        self.logger.info(message)
-
     def log(self, message, level="info"):
         """Mock logging with consistent format"""
         if not message:
@@ -135,10 +130,6 @@ class MockCLI:
         # Log remaining lines without prefix
         for line in lines[1:]:
             self.logger.info(f"    {line}")
-
-    def report(self, kind, data):
-        """Mock report function - stores data but doesn't print (ICSLogger handles output)"""
-        # Silently store for database/export, ICSLogger handles console output
 
     def ret(self, result):
         """Mock return function"""
@@ -422,8 +413,3 @@ def run(metadata, module_callback, soft_check=None):
         args = req["params"]
         ret = callback(args)
         cli.ret(ret)
-
-
-def main():
-    """Entry point for standalone CLI usage."""
-    run({}, lambda args: None)

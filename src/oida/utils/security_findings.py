@@ -43,8 +43,18 @@ def _normalize_org_name(name: str) -> str:
     return name.strip()
 
 
-def _is_issuer_trusted(cert) -> bool:
-    """Check if the certificate's issuer appears to be from a trusted CA organization."""
+def _is_issuer_trusted(cert) -> Optional[bool]:
+    """Check whether the certificate's issuer chains to a trusted CA.
+
+    Tri-state result so callers can distinguish a genuine trust verdict from
+    an aborted check (fail-closed for a defensive assessment tool):
+
+        True  -- issuer subject DN exactly matches a system root CA subject.
+        False -- issuer does not match any root and is not from a known-trusted
+                 CA org, OR the system trust store is unexpectedly empty.
+        None  -- trust could not be evaluated (cryptography/ssl raised, etc.);
+                 the caller should surface this rather than silently assume trust.
+    """
     import ssl
     import warnings
     from cryptography import x509
@@ -54,8 +64,14 @@ def _is_issuer_trusted(cert) -> bool:
         ctx = ssl.create_default_context()
         system_cas = ctx.get_ca_certs(binary_form=True)
 
+        # An empty root store is not evidence of trust. Fail closed: treat the
+        # issuer as untrusted so the 'Untrusted CA' finding is still emitted.
         if not system_cas:
-            return True
+            logger.warning(
+                "System root store returned no CA certificates; "
+                "treating issuer as untrusted for assessment purposes"
+            )
+            return False
 
         issuer = cert.issuer
 
@@ -71,6 +87,8 @@ def _is_issuer_trusted(cert) -> bool:
                     warnings.simplefilter("ignore")
                     ca_cert = x509.load_der_x509_certificate(ca_der, default_backend())
 
+                # Exact subject-DN match is real evidence the issuer chains to a
+                # root in the store.
                 if ca_cert.subject == issuer:
                     return True
 
@@ -81,14 +99,19 @@ def _is_issuer_trusted(cert) -> bool:
                 logger.debug(f"with warnings.catch_warnings():: {e}")
                 continue
 
+        # An org-name match alone is a weak heuristic, not proof the issuer
+        # chains to that root; keep it but only as a fallback after the exact
+        # subject-DN comparison above has failed.
         if issuer_orgs & trusted_orgs:
             return True
 
         return False
 
     except Exception as e:
-        logger.debug(f"Operation failed: {e}")
-        return True
+        # Fail closed for assessment: we could not verify trust, so do not
+        # assume the issuer is trusted. Signal the uncertainty to the caller.
+        logger.warning(f"Could not verify issuer trust; treating as unverified: {e}")
+        return None
 
 
 def check_certificate(
@@ -148,7 +171,14 @@ def check_certificate(
             detail=f"Subject: {subject.rfc4514_string()}",
         )
     else:
-        if not _is_issuer_trusted(x509_cert):
+        trusted = _is_issuer_trusted(x509_cert)
+        if trusted is None:
+            issues.append("Could not verify issuer trust")
+            logger.security_finding(
+                "Certificate: Could not verify issuer trust",
+                detail=f"Trust evaluation aborted for issuer: {issuer.rfc4514_string()}",
+            )
+        elif trusted is False:
             issues.append("Untrusted CA (not in system root store)")
             logger.security_finding(
                 "Certificate: Untrusted CA",

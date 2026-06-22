@@ -53,7 +53,6 @@ from ..protocols.discovery.core import (
 )
 
 # WS-Discovery constants
-WSD_MULTICAST_ADDR = "239.255.255.250"
 WSD_PORT = 3702
 
 # WS-Discovery action types (extracted from SOAP action header)

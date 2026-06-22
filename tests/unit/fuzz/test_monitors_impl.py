@@ -472,6 +472,86 @@ class TestIEC104MonitorCheckAlive:
         assert result is False
 
 
+class TestIEC104MonitorCrashDetection:
+    """Regression tests: IEC104 health checks must route through _check_alive().
+
+    Previously IEC104Monitor overrode pre_send and, when DISCONNECTED/ERROR,
+    called _connect() directly instead of _check_alive(). After the first failed
+    check flipped state to ERROR, every later probe took the _connect()-only
+    branch, so a genuinely down target was reported "not alive" but never counted
+    toward failure_threshold, never recorded to the CrashTracker, and never
+    triggered recovery/restart. These tests pin the corrected behavior.
+    """
+
+    def _make_down_monitor(self):
+        """IEC104Monitor whose connect always fails (target is down)."""
+        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from src.oida.fuzz.monitors.base import CrashTracker
+
+        tracker = CrashTracker(target="192.168.1.1:2404")
+        monitor = IEC104Monitor(
+            "192.168.1.1",
+            check_interval=1,
+            retry_count=1,
+            failure_threshold=2,
+        )
+        # No recovery possible -> _check_alive raises BoofuzzFailure on crash.
+        monitor.max_recovery_attempts = 0
+        monitor.crash_tracker = tracker
+        # Simulate a target that is down: every connect attempt fails.
+        monitor._connect = Mock(return_value=False)
+        # Avoid sleeping in the retry/recovery loops.
+        monitor.last_check_time = None
+        return monitor, tracker
+
+    def test_pre_send_records_crash_when_target_down(self):
+        """A persistently-down target must be recorded as a crash via _check_alive."""
+        from boofuzz.exception import BoofuzzFailure
+
+        monitor, tracker = self._make_down_monitor()
+
+        # First probe: 1 failure (below threshold=2) -> reports alive, keeps fuzzing.
+        assert monitor.pre_send(fuzz_data_logger=Mock()) is True
+        assert monitor.consecutive_failures == 1
+        assert tracker.crash_count == 0
+
+        # Second probe: hits threshold -> crash detected. With
+        # max_recovery_attempts=0, recovery is impossible so BoofuzzFailure raises.
+        # Clear the rate-limit window so the check actually runs again.
+        monitor.last_check_time = None
+        with pytest.raises(BoofuzzFailure):
+            monitor.pre_send(fuzz_data_logger=Mock())
+
+        # The bug: crash was never recorded. Fix: crash IS recorded.
+        assert monitor.crashed is True
+        assert tracker.crash_count == 1
+
+    def test_post_send_records_crash_when_target_down(self):
+        """post_send must also drive crash accounting through _check_alive."""
+        from boofuzz.exception import BoofuzzFailure
+
+        monitor, tracker = self._make_down_monitor()
+
+        # test_case_count must be a multiple of check_interval for the check to run.
+        monitor.test_case_count = 1
+        assert monitor.post_send(fuzz_data_logger=Mock()) is True
+        assert monitor.consecutive_failures == 1
+
+        monitor.last_check_time = None
+        with pytest.raises(BoofuzzFailure):
+            monitor.post_send(fuzz_data_logger=Mock())
+
+        assert tracker.crash_count == 1
+
+    def test_no_bespoke_pre_send_override(self):
+        """IEC104Monitor must inherit pre_send/post_send from ProtocolMonitor."""
+        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from src.oida.fuzz.monitors.base import ProtocolMonitor
+
+        assert IEC104Monitor.pre_send is ProtocolMonitor.pre_send
+        assert IEC104Monitor.post_send is ProtocolMonitor.post_send
+
+
 # =============================================================================
 # Test MMSMonitor
 # =============================================================================
@@ -703,6 +783,128 @@ class TestBaseMonitorInterface:
 
         monitor = MMSMonitor("192.168.1.1")
         assert isinstance(monitor, BaseMonitor)
+
+
+# =============================================================================
+# Test CustomSSLSocketMonitor
+# =============================================================================
+
+
+def _make_ssl_monitor(target_ip="192.168.1.1", target_port=8443, **overrides):
+    """Build a CustomSSLSocketMonitor from a minimal FuzzerConfig.
+
+    retry_count / failure_threshold are monitor (not config) attributes, so they
+    are applied to the instance after construction.
+    """
+    from src.oida.fuzz.monitors.network import CustomSSLSocketMonitor
+    from src.oida.fuzz.core.config import FuzzerConfig
+
+    config = FuzzerConfig(target_ip=target_ip, target_port=target_port)
+    monitor = CustomSSLSocketMonitor(config)
+    for attr, value in overrides.items():
+        setattr(monitor, attr, value)
+    return monitor
+
+
+class TestCustomSSLSocketMonitorCreation:
+    """Tests for CustomSSLSocketMonitor instantiation."""
+
+    def test_basic_creation(self):
+        """CustomSSLSocketMonitor takes host/port from the FuzzerConfig."""
+        monitor = _make_ssl_monitor("10.0.0.5", 8281)
+        assert monitor.host == "10.0.0.5"
+        assert monitor.port == 8281
+        assert monitor.check_interval == 1
+
+    def test_is_protocol_monitor(self):
+        """Migrated to ProtocolMonitor so it inherits shared crash detection."""
+        from src.oida.fuzz.monitors.base import ProtocolMonitor
+
+        monitor = _make_ssl_monitor()
+        assert isinstance(monitor, ProtocolMonitor)
+        assert hasattr(monitor, "_check_alive_once")
+
+
+class TestCustomSSLSocketMonitorCheckAlive:
+    """Tests for CustomSSLSocketMonitor health-check logic."""
+
+    def test_check_alive_success(self):
+        """Successful TLS handshake returns True and resets failures."""
+        with patch("socket.socket"), patch("ssl.create_default_context") as mock_ctx:
+            secure_sock = MagicMock()
+            mock_ctx.return_value.wrap_socket.return_value = secure_sock
+
+            monitor = _make_ssl_monitor("192.168.1.1", 8443)
+            result = monitor._check_alive(Mock())
+
+            assert result is True
+            secure_sock.connect.assert_called_with(("192.168.1.1", 8443))
+            assert monitor.consecutive_failures == 0
+
+    def test_first_failure_does_not_raise(self):
+        """A single connect failure below threshold must NOT raise (retry/threshold).
+
+        Regression: the old BaseMonitor implementation raised BoofuzzFailure on the
+        very first connect blip, turning a transient hiccup into a false crash.
+        """
+        with patch("socket.socket"), patch("ssl.create_default_context") as mock_ctx:
+            secure_sock = MagicMock()
+            secure_sock.connect.side_effect = OSError("Connection refused")
+            mock_ctx.return_value.wrap_socket.return_value = secure_sock
+
+            monitor = _make_ssl_monitor(retry_count=1, failure_threshold=3)
+            result = monitor._check_alive(Mock())
+
+            assert result is True  # below threshold -> keep fuzzing
+            assert monitor.consecutive_failures == 1
+
+    def test_crash_after_threshold_raises(self):
+        """Repeated failures past the threshold raise BoofuzzFailure."""
+        from boofuzz.exception import BoofuzzFailure
+
+        with patch("socket.socket"), patch("ssl.create_default_context") as mock_ctx:
+            secure_sock = MagicMock()
+            secure_sock.connect.side_effect = OSError("Connection refused")
+            mock_ctx.return_value.wrap_socket.return_value = secure_sock
+
+            monitor = _make_ssl_monitor(retry_count=1, failure_threshold=1)
+            with pytest.raises(BoofuzzFailure):
+                monitor._check_alive(Mock())
+
+
+class TestCustomSSLSocketMonitorProbeRuns:
+    """Regression guard for the inverted rate-limit gate (finding #4)."""
+
+    def test_probe_actually_runs_across_pre_post_cycle(self):
+        """pre_send+post_send must actually contact the target at least once.
+
+        The old gate set last_check_time in pre_send and then short-circuited
+        post_send on (now - last_check_time < check_interval), so the TLS probe
+        never ran and a crashed target was reported healthy. This asserts the
+        handshake is attempted during a normal send cycle.
+        """
+        with patch("socket.socket"), patch("ssl.create_default_context") as mock_ctx:
+            secure_sock = MagicMock()
+            mock_ctx.return_value.wrap_socket.return_value = secure_sock
+
+            monitor = _make_ssl_monitor("192.168.1.1", 8443)
+            monitor.pre_send(target=Mock(), fuzz_data_logger=Mock())
+            monitor.post_send(target=Mock(), fuzz_data_logger=Mock())
+
+            # Old broken code: 0 connects. Fixed code: at least one real probe.
+            assert secure_sock.connect.call_count >= 1
+
+    def test_post_send_alone_probes(self):
+        """A fresh monitor's post_send runs the probe (no pre_send timer reset)."""
+        with patch("socket.socket"), patch("ssl.create_default_context") as mock_ctx:
+            secure_sock = MagicMock()
+            mock_ctx.return_value.wrap_socket.return_value = secure_sock
+
+            monitor = _make_ssl_monitor("192.168.1.1", 8443)
+            result = monitor.post_send(target=Mock(), fuzz_data_logger=Mock())
+
+            assert result is True
+            secure_sock.connect.assert_called_with(("192.168.1.1", 8443))
 
 
 if __name__ == "__main__":

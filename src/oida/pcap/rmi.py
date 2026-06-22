@@ -89,6 +89,7 @@ class RMIPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "rmi"
     REQUIRED_LAYERS = ("rmi",)
     PROTOCOL_COLUMNS = ("type", "protocol", "endpoint", "detail")
+    SERVER_PORTS = (1099,)
 
     # Decode-as hint needed because tshark doesn't auto-detect RMI
     DECODE_AS = {"tcp.port==1099": "rmi"}
@@ -101,7 +102,6 @@ class RMIPassiveListener(PySharkListenerBase):
     ):
         super().__init__(interface, timeout, nxc_logger)
         self.endpoints: Dict[str, Set[str]] = {}  # server_ip -> set of endpoint hostnames
-        self.protocol_versions: Dict[str, int] = {}  # server_ip -> version
         # Flows where Java serialized data was observed (deserialization attack
         # surface -- ysoserial / JNDI injection). Keyed (client_ip, server_ip).
         self.serialization_flows: Set[Tuple[str, str]] = set()
@@ -408,8 +408,21 @@ class RMIPassiveListener(PySharkListenerBase):
         into ``serialization_flows``.
         """
         has_serialization = ser_magic.lower() in ("0xaced", "44269", "aced")
-        # Direction: client -> server unless the source is the registry port.
-        is_request_dir = dst_port == 1099 or (src_port != 1099 and dst_port < src_port)
+        # Direction via the shared cascade.  A serialization-data continuation
+        # segment carries no stream token (magic / input / output), so there is
+        # no native QR signal -- resolve_direction() falls through to the
+        # known-server-port tier (canonical 1099 plus any user --decode-as /
+        # OVERRIDE_PREFS override) and then the lower-port heuristic.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request_dir = d.is_request
         direction = "request" if is_request_dir else "response"
 
         detail_parts = ["Data"]

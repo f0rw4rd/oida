@@ -138,8 +138,8 @@ class ScannerDiscoveryMixin(_ScannerBase):
 
         supported = {}
 
-        # Check if verbose FC output requested (--scan-fc, --fc, or --fc-all)
-        verbose_fc = self.scan_fc or self.fc_all or getattr(self, "function_code", None) is not None
+        # Check if verbose FC output requested (--scan-fc or --fc-all)
+        verbose_fc = self.scan_fc or self.fc_all
 
         # Use full range (1-127) if --fc-all, otherwise use --fc-range
         if self.fc_all:
@@ -153,10 +153,23 @@ class ScannerDiscoveryMixin(_ScannerBase):
 
         function_range = ProtocolParser.parse_address_range(fc_range_str)
 
+        # FCs whose GenericPDU.encode() emits a genuinely mutating write payload
+        # (force coil ON, write register/coils, read-write multiple). These would
+        # alter live device state, so they are skipped unless --confirm is set.
+        # FC 22 (Mask Write) uses AND=0xFFFF/OR=0x0000, a no-op, so it stays.
+        MUTATING_FCS = {5, 6, 15, 16, 23}
+        confirm = self._args_get("confirm", False)
+
         progress = ProgressTracker(len(function_range), logger=self.logger, show=verbose_fc)
 
         for func_code in function_range:
             progress.update()
+            if func_code in MUTATING_FCS and not confirm:
+                self.logger.debug(
+                    f"Skipping function code {func_code} during enumeration: it sends a "
+                    "mutating write payload — requires --confirm"
+                )
+                continue
             try:
                 # Create generic PDU with function code
                 pdu = GenericPDU(function_code=func_code)

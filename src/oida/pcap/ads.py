@@ -525,7 +525,7 @@ class ADSPassiveListener(PySharkListenerBase):
                     # XML/PDML mode: colon-separated hex "00:00:2c:..."
                     payload = bytes.fromhex(raw_str.replace(":", ""))
         except (ValueError, AttributeError, SyntaxError) as e:
-            logger.debug(f"if isinstance(raw, (bytes, bytearray)):: {e}")
+            logger.debug(f"ADS: failed to decode raw TCP payload to bytes: {e}")
             return ""
 
         # AMS/TCP header: reserved(2) + length(4) + AMS_header(32) = 38 bytes

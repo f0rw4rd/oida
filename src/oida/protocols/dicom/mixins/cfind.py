@@ -229,9 +229,7 @@ class CFindMixin(_ScannerBase):
         # Guard against attacker-controlled deeply nested sequences driving
         # Python recursion into stack exhaustion.
         if _depth > self._MAX_TAG_DEPTH:
-            result["_extraction_error"] = (
-                f"max nesting depth ({self._MAX_TAG_DEPTH}) exceeded"
-            )
+            result["_extraction_error"] = f"max nesting depth ({self._MAX_TAG_DEPTH}) exceeded"
             return result
 
         try:
@@ -251,9 +249,7 @@ class CFindMixin(_ScannerBase):
                         seq_items = []
                         for item in elem.value:
                             seq_items.append(
-                                self._extract_all_tags(
-                                    item, phi_only, _depth + 1, _counter
-                                )
+                                self._extract_all_tags(item, phi_only, _depth + 1, _counter)
                             )
                         if seq_items:
                             result[elem.keyword or f"Tag_{elem.tag}"] = seq_items
@@ -317,11 +313,9 @@ class CFindMixin(_ScannerBase):
         if dump_tags:
             # Display all extracted tags
             phi_count = 0
-            total_count = 0
             for tag_name, value in result.items():
                 if tag_name.endswith("_PRIVATE"):
                     continue  # Skip private marker flags
-                total_count += 1
                 is_phi = tag_name in PHI_TAGS
                 if is_phi:
                     phi_count += 1
