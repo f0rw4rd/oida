@@ -1,0 +1,45 @@
+diff --git a/tftpd.c b/tftpd.c
+index b9822c4..1981254 100644
+--- a/tftpd.c
++++ b/tftpd.c
+@@ -49,6 +49,12 @@
+ #include "tftpd_mtftp.h"
+ #endif
+ 
++/* ASan manual-poison API, resolved by the -fsanitize=address runtime.
++ * Used to place a moving fence around the recv'd request so the contained
++ * over-read in opt_parse_request()/argz_next() (CVE-2021-46671) is caught. */
++void __asan_poison_memory_region(void const volatile *addr, unsigned long size);
++void __asan_unpoison_memory_region(void const volatile *addr, unsigned long size);
++
+ #undef RATE_CONTROL
+ 
+ /*
+@@ -718,8 +724,27 @@ void *tftpd_receive_request(void *arg)
+                       sockaddr_get_port(&to));
+ 
+                /* read options from request */
++               /* --- ASan moving-fence (CVE-2021-46671, modbus-14462 technique) ---
++                * data_buffer is a single malloc(SEGSIZE+4)=516 byte allocation,
++                * but recvmsg() only filled data_size of them. opt_parse_request()
++                * -> argz_next() walks past the request's trailing bytes when the
++                * datagram does not end in a NUL, reading uninitialised heap that
++                * still lies INSIDE the 516-byte malloc -> the over-read is
++                * contained and native ASan stays silent. Poison the unused tail
++                * [data_buffer+data_size .. data_buffer+data_buffer_size) so the
++                * out-of-bounds read past the actual request becomes an observable
++                * ASan use-after-poison abort, then unpoison so the rest of the
++                * daemon keeps working. */
++               if (data_size >= 0 && data_size < data->data_buffer_size)
++                    __asan_poison_memory_region(
++                         data->data_buffer + data_size,
++                         (size_t)(data->data_buffer_size - data_size));
+                opt_parse_request(data->data_buffer, data_size,
+                                  data->tftp_options);
++               if (data_size >= 0 && data_size < data->data_buffer_size)
++                    __asan_unpoison_memory_region(
++                         data->data_buffer + data_size,
++                         (size_t)(data->data_buffer_size - data_size));
+                opt_request_to_string(data->tftp_options, string, MAXLEN);
+           }
+           else

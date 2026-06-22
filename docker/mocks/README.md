@@ -182,7 +182,7 @@ The container uses standard ICS protocol ports and can be configured for differe
 
 - **Host Network**: Use `--network host` for direct port access
 - **Bridge Network**: Default setup with port mapping
-- **Custom Network**: Configure with `docker-compose.yml`
+- **Custom Network**: Configure with `compose.yml`
 
 ## Troubleshooting
 
@@ -215,7 +215,7 @@ docker exec msf-ics-mock sh -c 'for port in 502 4840 2404 48898 102 44818; do ec
 ### Adding New Protocols
 1. Create new server script in `mock_services/`
 2. Add to `start_services.sh`
-3. Update `docker-compose.yml` ports
+3. Update `compose.yml` ports
 4. Update documentation
 
 ### Modifying Mock Data

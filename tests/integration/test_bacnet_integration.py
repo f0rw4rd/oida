@@ -383,12 +383,12 @@ class TestBACnetMockServer:
 
     def test_mock_server_script_exists(self):
         """Test that mock server script exists"""
-        mock_server = Path(__file__).parent.parent.parent / "docker/mocks/services/bacnet_server.py"
+        mock_server = Path(__file__).parent.parent.parent / "docker/mocks/services/bacnet/mock/bacnet_server.py"
         assert mock_server.exists(), f"Mock server not found at {mock_server}"
 
     def test_mock_server_help(self):
         """Test mock server help output [Category B]"""
-        mock_server = Path(__file__).parent.parent.parent / "docker/mocks/services/bacnet_server.py"
+        mock_server = Path(__file__).parent.parent.parent / "docker/mocks/services/bacnet/mock/bacnet_server.py"
         result = subprocess.run(
             [sys.executable, str(mock_server), "--help"],
             capture_output=True,

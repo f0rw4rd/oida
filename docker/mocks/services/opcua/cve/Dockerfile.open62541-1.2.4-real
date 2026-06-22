@@ -1,0 +1,59 @@
+# REAL CVE-2022-25761 - actual vulnerable open62541 v1.2.4 + AddressSanitizer
+#
+# DoS (CWE-770): no limit on the number of received SecureChannel chunks.
+# localMaxChunkCount/localMaxMessageSize default to 0 (unlimited), so streaming
+# INTERMEDIATE MSG chunks without a FINAL chunk grows the heap unboundedly.
+# Fixed in v1.2.5 / v1.3.1 by commit b79db1ac (default chunk/message limits).
+#
+# This is a resource-exhaustion DoS, NOT memory corruption, so ASan does not
+# abort on it. The harness self-watchdogs on RSS; the container is also run
+# under a hard memory limit (mem_limit in compose) so the kernel OOM-killer
+# reaps it (exit 137) if the watchdog were bypassed. ASan/UBSan still ride
+# along to catch any incidental memory error.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake python3 netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone https://github.com/open62541/open62541.git && \
+    cd open62541 && \
+    git checkout v1.2.4 && \
+    git submodule update --init --recursive && \
+    sed -i '/check_add_cc_flag("-Werror")/d' CMakeLists.txt && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DUA_ENABLE_AMALGAMATION=OFF \
+        -DUA_BUILD_EXAMPLES=OFF \
+        -DUA_LOGLEVEL=300 \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" \
+        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+        -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined" && \
+    make -j$(nproc) && make install
+
+WORKDIR /app
+COPY opcua_cve_2022_25761_real.c server.c
+# FUZZING_BUILD_MODE matches the library build so channelId/token/sequence checks
+# are skipped, exactly as in upstream tests/fuzz/fuzz_tcp_message.cc. Internal
+# SecureChannel header comes from the source tree.
+RUN gcc -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer \
+    -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
+    -o server server.c \
+    -I/usr/include \
+    -I/build/open62541/arch \
+    -I/build/open62541/src \
+    -I/build/open62541/deps \
+    -I/build/open62541/plugins/include \
+    -I/build/open62541/build/src_generated \
+    -lopen62541 -lpthread
+
+ENV LD_LIBRARY_PATH=/usr/lib
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 4840
+CMD ["./server"]

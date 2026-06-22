@@ -1,0 +1,110 @@
+# REAL DCMTK CVE-2024-47796 - improper array index validation in the "nowindow"
+# grayscale rendering path (CWE-125 OOB read), reached over the DICOM network.
+# Genuine OFFIS DCMTK 3.6.8 source + ASan/UBSan.  Cisco Talos TALOS-2024-2122.
+#
+# Crash class — heap-buffer-overflow READ (size 1) of the no-window optimization
+# LUT while rendering a monochrome image to a grayscale frame WITHOUT a VOI
+# window, caught by ASan's redzone poisoning of the lut heap allocation.
+#
+# Root cause (fixed in commit 89a6e399f1e17d08a8bc8cdaa05b2ac9a50cd4f6,
+# DCMTK-3.6.9):
+#   dcmimgle/include/dcmtk/dcmimgle/dimoopxt.h
+#   DiMonoOutputPixelTemplate<T1,T2,T3>::nowindow() (no-VOI-window path):
+#       const T3 *lut0 = lut - OFstatic_cast(T2, inter->getAbsMinimum()); // origin
+#       q = Data;
+#       for (i = Count; i != 0; --i)
+#           *(q++) = *(lut0 + (*(p++)));          // <-- dimoopxt.h:748
+#   The no-window optimization LUT `lut` has ocnt = getAbsMaxRange() entries.
+#   `lut0 = lut - getAbsMinimum()` is the "zero" entry and the loop indexes
+#   `lut0 + *p` for each intermediate pixel. A NEGATIVE Rescale Intercept
+#   ((0028,1052) = -1000 here) makes the modality-transformed minimum
+#   (getAbsMinimum()) strongly negative, so lut0 = lut + 1000... is pushed far
+#   past the small ocnt-entry lut and `*(lut0 + *p)` reads off the end of the lut
+#   heap allocation -> ASan heap-buffer-overflow READ. The companion lever is the
+#   geometry mismatch (Rows*Columns >> stored pixels) which the fix (same commit,
+#   dimoipxt.h) hardens by filling the unpopulated frame tail with getAbsMinimum()
+#   instead of zero. There is no bounds check on the LUT index.
+#
+#   VERIFIED symbolized trace (deterministic 3/3, matches Talos frame-for-frame):
+#     ==ERROR: AddressSanitizer: heap-buffer-overflow ... READ of size 1
+#       #0 DiMonoOutputPixelTemplate<short,int,unsigned char>::nowindow()  dimoopxt.h:748
+#       #1 DiMonoOutputPixelTemplate ctor                                  dimoopxt.h:125
+#       #2 DiMonoImage::getDataSint16()                                    dimoimg4.cc:77
+#       #3 DiMonoImage::getData()                                          dimoimg.cc:1515
+#       #4 DiMono2Image::getOutputData()                                   dimo2img.cc:141
+#       #5 DicomImage::getOutputData()                                     dcmimage.h:427
+#       #6 DVPresentationState::getPixelData()                             dvpstat.cc:1836
+#       #7 main                                                            dcmp2pgm.cc:531
+#
+#   nowindow() is the NO-WINDOW branch: it is taken when the image is rendered
+#   to a grayscale frame and NO VOI window / VOI LUT applies. The reception hook
+#   is `dcmp2pgm` (presentation-state -> PGM): it loads the image into a DEFAULT
+#   DVPresentationState (DVInterface) and renders via
+#   DVPresentationState::getPixelData() (dvpstat.cc) -> DiMonoImage::getData ->
+#   DiMonoOutputPixelTemplate::nowindow(). This is the exact crash path in the
+#   Talos backtrace (#6 DVPresentationState::getPixelData dvpstat.cc:1831,
+#   #7 main dcmp2pgm.cc). NOTE: the simpler `dcm2pnm` tool does NOT crash here --
+#   3.6.8's dcm2pnm clamps the processed pixel count to the actually-stored count
+#   ("setting number of pixels to be processed (PixelCount) to 64") so its
+#   nowindow() loop never over-reads. The presentation-state geometry path in
+#   dcmp2pgm derives Count from the rendered-frame size, NOT the input buffer, so
+#   it walks past the short pixel data.
+#
+# Reachable over the DICOM network (CWE-787, pre-auth): a single C-STORE-RQ
+# carrying a MONOCHROME2 Secondary-Capture image whose Rows*Columns is far
+# larger than the supplied Pixel Data. storescp accepts the object (+xa) and
+# stores it, then fires its --exec-on-reception hook `dcmp2pgm <received-file>`.
+# dcmp2pgm renders the mono pixel data through a default presentation state with
+# no VOI window -> nowindow() -> OOB -> ASan abort. The child's ASan trace is
+# forwarded to storescp's inherited stderr, so it lands in `docker logs`. This is
+# exactly the "DICOM file processing / DICOM-to-image conversion" vector the
+# advisory names, driven here by the inbound C-STORE.
+#
+# Vulnerable <= 3.6.8, fixed in 3.6.9. Server: storescp (dcmnet Storage SCP) +
+# dcmp2pgm (dcmpstat presentation-state grayscale renderer) as the reception
+# hook.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake netcat-openbsd python3 python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --no-cache-dir pynetdicom==2.0.2 pydicom==2.4.4
+
+WORKDIR /build
+RUN git clone --depth 1 --branch DCMTK-3.6.8 https://github.com/DCMTK/dcmtk.git
+
+WORKDIR /build/dcmtk/build
+# ASan+UBSan on the whole tree. Image-format deps are all OFF -- dcm2pnm can
+# still write PNM/raw grayscale without libpng/libtiff.
+RUN cmake \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DDCMTK_ENABLE_CXX11=ON \
+      -DDCMTK_WITH_OPENSSL=OFF -DDCMTK_WITH_ZLIB=OFF \
+      -DDCMTK_WITH_PNG=OFF -DDCMTK_WITH_TIFF=OFF -DDCMTK_WITH_XML=OFF \
+      -DDCMTK_WITH_ICONV=OFF -DDCMTK_WITH_ICU=OFF -DDCMTK_WITH_WRAP=OFF \
+      -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_CXX_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      .. && \
+    make -j"$(nproc)" storescp dcmp2pgm
+
+RUN mkdir -p /app && \
+    cp "$(find /build/dcmtk/build -name storescp -type f | head -1)" /app/storescp && \
+    cp "$(find /build/dcmtk/build -name dcmp2pgm -type f | head -1)" /app/dcmp2pgm && \
+    cp /build/dcmtk/dcmdata/data/dicom.dic /app/dicom.dic
+
+WORKDIR /app
+COPY poc_nowindow_2024-47796.py /app/poc.py
+COPY entrypoint-2024-47796.sh /app/entrypoint.sh
+RUN mkdir -p /app/storage && chmod +x /app/entrypoint.sh
+
+# Load the DICOM data dictionary so Rows/Columns/BitsAllocated/PixelData are
+# fully parsed; the dcmp2pgm nowindow() render path needs those attributes.
+ENV DCMDICTPATH=/app/dicom.dic
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+ENV DICOM_PORT=11112
+EXPOSE 11112
+CMD ["/app/entrypoint.sh"]

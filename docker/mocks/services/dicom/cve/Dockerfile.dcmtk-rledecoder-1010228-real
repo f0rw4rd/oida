@@ -1,0 +1,88 @@
+# REAL DCMTK CVE-2019-1010228 - heap buffer overflow (CWE-787) in the RLE
+# codec, reached over the DICOM network. Genuine OFFIS DCMTK 3.6.3 source +
+# ASan/UBSan.
+#
+# Crash class — heap-buffer-overflow (OOB READ) inside the RLE bit-stream
+# decoder, caught by ASan's redzone poisoning of the compressed fragment.
+#
+# Root cause (fixed in commit 40917614e, DCMTK-3.6.4):
+#   dcmdata/libsrc/dcrleccd.cc  DcmRLECodecDecoder::decode() resolves each
+#   stripe's start position from the attacker-controlled RLE offset table
+#   (rleHeader[i+1]). The offset-resolution loop
+#       while ((byteOffset > fragmentLength) && result.good()) { getItem(...); }
+#   sets `result` BAD when the offset points past the last pixel fragment, but
+#   3.6.3 does NOT bail out — it falls straight through to
+#       rledecoder.decompress(rleData + byteOffset, fragmentLength - byteOffset);
+#   with byteOffset > fragmentLength. `fragmentLength - byteOffset` is unsigned
+#   (Uint32) so it WRAPS to ~4 GB, and decompress() (dcrledec.h, the
+#   DcmRLEDecoder::decompress() named at file dcrledec.h:122 in the advisory)
+#   walks `rleData + byteOffset ...` far past the end of the heap fragment.
+#   The fix inserts exactly three lines after the offset loop:
+#       // something went wrong; most likely the byte offset ... is incorrect.
+#       if (result.bad()) return EC_CannotChangeRepresentation;
+#
+# Reachable over the DICOM network (CWE-787, CVSS 9.8, pre-auth): a single
+# C-STORE-RQ carrying an RLE Lossless (1.2.840.10008.1.2.5) encoded image whose
+# RLE segment offset table is malformed. storescp accepts the RLE presentation
+# context (+xa) and stores the object, then fires its --exec-on-reception hook
+# `dcmdrle <received-file>` -- dcmdrle is DCMTK's RLE-decode tool, it REGISTERS
+# the RLE codec and calls DcmDataset::chooseRepresentation(LittleEndianExplicit)
+# -> DcmRLECodecDecoder::decode() -> DcmRLEDecoder::decompress() server-side ->
+# OOB read in literal() -> ASan abort. (storescp itself refuses to combine
+# +xa/--accept-all with a forced uncompressed write TS, and dcmconv does not
+# register the RLE codec, so dcmdrle is the canonical server-side decoder -- it
+# is exactly the "DICOM file processing / DICOM-to-image conversion" vector the
+# advisory names, driven here by the inbound C-STORE.)
+#
+# Vulnerable <= 3.6.3, fixed in 3.6.4. Server: storescp (dcmnet Storage SCP, the
+# C-STORE receiver) + dcmdrle (dcmdata RLE decoder) as the reception hook. Only
+# ofstd/oflog/dcmdata/dcmnet + those two tools are built to keep the (otherwise
+# very large) DCMTK CMake build tractable.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake netcat-openbsd python3 python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --no-cache-dir pynetdicom==2.0.2 pydicom==2.4.4
+
+WORKDIR /build
+RUN git clone --depth 1 --branch DCMTK-3.6.3 https://github.com/DCMTK/dcmtk.git
+
+WORKDIR /build/dcmtk/build
+# ASan+UBSan on the whole tree. DCMTK-3.6.3 predates newer CMake policies, so we
+# pin the policies it complains about to OLD. Image-format deps are all OFF.
+RUN cmake \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DDCMTK_ENABLE_CXX11=ON \
+      -DCMAKE_POLICY_DEFAULT_CMP0021=OLD \
+      -DCMAKE_POLICY_DEFAULT_CMP0042=OLD \
+      -DCMAKE_POLICY_DEFAULT_CMP0048=OLD \
+      -DDCMTK_WITH_OPENSSL=OFF -DDCMTK_WITH_ZLIB=OFF \
+      -DDCMTK_WITH_PNG=OFF -DDCMTK_WITH_TIFF=OFF -DDCMTK_WITH_XML=OFF \
+      -DDCMTK_WITH_ICONV=OFF -DDCMTK_WITH_ICU=OFF -DDCMTK_WITH_WRAP=OFF \
+      -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_CXX_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+      -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+      .. && \
+    make -j"$(nproc)" storescp dcmdrle
+
+RUN mkdir -p /app && \
+    cp "$(find /build/dcmtk/build -name storescp -type f | head -1)" /app/storescp && \
+    cp "$(find /build/dcmtk/build -name dcmdrle  -type f | head -1)" /app/dcmdrle && \
+    cp /build/dcmtk/dcmdata/data/dicom.dic /app/dicom.dic
+
+WORKDIR /app
+COPY poc_rle_1010228.py /app/poc.py
+COPY entrypoint-1010228.sh /app/entrypoint.sh
+RUN mkdir -p /app/storage && chmod +x /app/entrypoint.sh
+
+# Load the DICOM data dictionary so the dataset (Rows/Columns/BitsAllocated/RLE
+# pixel data) is fully parsed; the decode() path needs those attributes.
+ENV DCMDICTPATH=/app/dicom.dic
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+ENV DICOM_PORT=11112
+EXPOSE 11112
+CMD ["/app/entrypoint.sh"]
