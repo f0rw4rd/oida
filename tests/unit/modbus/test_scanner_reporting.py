@@ -4,7 +4,6 @@ oida.protocols.modbus.scanner_mixins.reporting.ScannerReportingMixin
 (previously ~12% covered -- the existing suite never exercised it).
 
 Covers:
-- _decode_register_values: address annotation, multi-register grouping stride.
 - _build_decode_all_rows: hex / i16 (negative-only) / bits / printable-ASCII
   columns, non-int passthrough.
 - _build_decode_type_rows: single-register inline decode, multi-register
@@ -25,7 +24,12 @@ except ImportError:
 
 pytestmark = pytest.mark.skipif(not PYMODBUS_AVAILABLE, reason="pymodbus library not installed")
 
-from oida.protocols.modbus.decoder import ModbusDecoder, encode_float32
+from oida.protocols.modbus.decoder import ModbusDecoder, ModbusEncoder
+
+
+def encode_float32(value):
+    """Local helper: encode a float32 to 2 big-endian registers for fixtures."""
+    return ModbusEncoder("big", "big").encode_float32(value)
 
 
 def make_scanner(decode_type=None, decode_width=None, endian="big"):
@@ -37,32 +41,6 @@ def make_scanner(decode_type=None, decode_width=None, endian="big"):
     s.decode_width = decode_width
     s.endian = endian
     return s
-
-
-# ---------------------------------------------------------------------------
-# _decode_register_values
-# ---------------------------------------------------------------------------
-
-
-class TestDecodeRegisterValues:
-    def test_u16_addresses_annotated(self):
-        s = make_scanner()
-        out = s._decode_register_values({0: 10, 1: 20}, "u16")
-        assert [d["value"] for d in out] == [10, 20]
-        assert [d["address"] for d in out] == [0, 1]
-
-    def test_u32_groups_two_registers(self):
-        s = make_scanner()
-        # u32 from [0x0001, 0x0000] big/big -> 0x00010000
-        out = s._decode_register_values({0: 0x0001, 1: 0x0000}, "u32")
-        assert out[0]["value"] == 0x00010000
-        assert out[0]["address"] == 0  # stride of 2 -> base address
-
-    def test_f32_decode(self):
-        s = make_scanner()
-        regs = encode_float32(1.5)
-        out = s._decode_register_values({0: regs[0], 1: regs[1]}, "f32")
-        assert abs(out[0]["value"] - 1.5) < 1e-6
 
 
 # ---------------------------------------------------------------------------

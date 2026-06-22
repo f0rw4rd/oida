@@ -36,11 +36,9 @@ from datetime import datetime
 from typing import Any, Dict, List, Set
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip
+from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # mDNS constants
-MDNS_MULTICAST_ADDR = "224.0.0.251"
-MDNS_MULTICAST_V6 = "ff02::fb"
 MDNS_PORT = 5353
 
 
@@ -430,10 +428,12 @@ class MDNSPassiveListener(PySharkListenerBase):
         # Track querier as a device
         if is_valid_discovered_ip(src_ip):
             device_key = src_mac if src_mac else f"mdns:{src_ip}"
+            vendor = lookup_mac_vendor(src_mac) if src_mac else ""
             device, is_new = self._ensure_device(
                 device_key,
                 src_ip,
                 mac=src_mac if src_mac else "",
+                manufacturer=vendor if vendor and vendor != "Unknown" else "",
             )
             if is_new:
                 device.mdns_data = {
@@ -453,11 +453,13 @@ class MDNSPassiveListener(PySharkListenerBase):
             return
 
         device_key = src_mac if src_mac else f"mdns:{ip_addr}"
+        vendor = lookup_mac_vendor(src_mac) if src_mac else ""
         device, is_new = self._ensure_device(
             device_key,
             ip_addr,
             mac=src_mac if src_mac else "",
             name=hostname,
+            manufacturer=vendor if vendor and vendor != "Unknown" else "",
         )
         if is_new:
             device.mdns_data = {

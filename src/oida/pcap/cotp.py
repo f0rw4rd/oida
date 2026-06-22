@@ -71,7 +71,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip
+from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # COTP PDU type codes (upper 4 bits of the type byte)
 COTP_PDU_TYPES = {
@@ -98,36 +98,25 @@ KNOWN_TSAPS = {
     "00": "Default TSAP",
 }
 
-# Standard TCP port for COTP/TPKT
-COTP_PORT = 102
-
 # Thresholds for security alerts
 CR_FLOOD_THRESHOLD = 20  # CR frames from single source without CC
 
 
 @dataclass
 class COTPConnection:
-    """Track a COTP connection by reference pair."""
+    """Track a COTP connection by reference pair.
+
+    Only the fields consumed by the DR-probe alert in harvest() are kept;
+    per-connection volume/state tracking is surfaced via COTPEndpoint instead.
+    """
 
     src_ip: str
     dst_ip: str
     src_ref: int
     dst_ref: int
-    calling_tsap: str = ""
-    called_tsap: str = ""
-    cotp_class: int = -1
-    tpdu_size: int = 0
-    state: str = ""  # "CR_SENT", "ESTABLISHED", "DR_SENT", "CLOSED"
     cr_seen: bool = False
     cc_seen: bool = False
     dr_seen: bool = False
-    dc_seen: bool = False
-    dt_count: int = 0
-    er_count: int = 0
-    rj_count: int = 0
-    total_bytes: int = 0
-    first_seen: str = ""
-    last_seen: str = ""
 
 
 @dataclass
@@ -146,6 +135,7 @@ class COTPEndpoint:
     total_frames: int = 0
     tsaps_seen: Set[str] = field(default_factory=set)
     peer_ips: Set[str] = field(default_factory=set)
+    mac: str = ""  # last-seen ethernet MAC for vendor lookup
     first_seen: str = ""
     last_seen: str = ""
 
@@ -263,43 +253,36 @@ class COTPPassiveListener(PySharkListenerBase):
             )
 
         # Update endpoint tracking
+        src_mac, dst_mac = self.get_mac_info(packet)
         src_ep = self._ensure_endpoint(src_ip, now)
         dst_ep = self._ensure_endpoint(dst_ip, now)
         src_ep.total_frames += 1
         src_ep.peer_ips.add(dst_ip)
         dst_ep.peer_ips.add(src_ip)
+        if src_mac:
+            src_ep.mac = src_mac
+        if dst_mac:
+            dst_ep.mac = dst_mac
 
         # Update connection tracking based on PDU type
         direction = "request"
         if pdu_type_raw == 0xE0:  # CR
-            self._handle_cr(
-                src_ip,
-                dst_ip,
-                src_ref,
-                dst_ref,
-                calling_tsap,
-                called_tsap,
-                cotp_class,
-                tpdu_size,
-                now,
-            )
+            self._handle_cr(src_ip, dst_ip, src_ref, dst_ref)
             src_ep.cr_sent += 1
             dst_ep.cr_received += 1
             direction = "request"
         elif pdu_type_raw == 0xD0:  # CC
-            self._handle_cc(src_ip, dst_ip, src_ref, dst_ref, now)
+            self._handle_cc(src_ip, dst_ip, src_ref, dst_ref)
             src_ep.cc_sent += 1
             dst_ep.cc_received += 1
             direction = "response"
         elif pdu_type_raw == 0x80:  # DR
-            self._handle_dr(src_ip, dst_ip, src_ref, dst_ref, now)
+            self._handle_dr(src_ip, dst_ip, src_ref, dst_ref)
             src_ep.dr_sent += 1
             direction = "request"
         elif pdu_type_raw == 0xC0:  # DC
-            self._handle_dc(src_ip, dst_ip, src_ref, dst_ref, now)
             direction = "response"
         elif pdu_type_raw == 0xF0:  # DT
-            self._handle_dt(src_ip, dst_ip, src_ref, dst_ref, tpkt_length, now)
             src_ep.dt_count += 1
             direction = "request"
         elif pdu_type_raw == 0x70:  # ER
@@ -375,11 +358,6 @@ class COTPPassiveListener(PySharkListenerBase):
         dst_ip: str,
         src_ref: int,
         dst_ref: int,
-        calling_tsap: str,
-        called_tsap: str,
-        cotp_class: int,
-        tpdu_size: int,
-        now: str,
     ) -> None:
         """Handle Connection Request (CR)."""
         conn_key = f"{src_ip}:{src_ref}->{dst_ip}"
@@ -389,61 +367,22 @@ class COTPPassiveListener(PySharkListenerBase):
                 dst_ip=dst_ip,
                 src_ref=src_ref,
                 dst_ref=dst_ref,
-                first_seen=now,
-                last_seen=now,
             )
-        conn = self.connections[conn_key]
-        conn.cr_seen = True
-        conn.state = "CR_SENT"
-        conn.calling_tsap = calling_tsap
-        conn.called_tsap = called_tsap
-        conn.cotp_class = cotp_class
-        conn.tpdu_size = tpdu_size
-        conn.last_seen = now
+        self.connections[conn_key].cr_seen = True
 
-    def _handle_cc(self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int, now: str) -> None:
+    def _handle_cc(self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int) -> None:
         """Handle Connection Confirm (CC)."""
         # CC comes from the server back to the client
         # Look for matching CR: client_ip:client_ref -> server_ip
         conn_key = f"{dst_ip}:{dst_ref}->{src_ip}"
         if conn_key in self.connections:
-            conn = self.connections[conn_key]
-            conn.cc_seen = True
-            conn.dst_ref = src_ref
-            conn.state = "ESTABLISHED"
-            conn.last_seen = now
+            self.connections[conn_key].cc_seen = True
 
-    def _handle_dr(self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int, now: str) -> None:
+    def _handle_dr(self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int) -> None:
         """Handle Disconnect Request (DR)."""
         conn = self._find_connection(src_ip, dst_ip, src_ref, dst_ref)
         if conn:
             conn.dr_seen = True
-            conn.state = "DR_SENT"
-            conn.last_seen = now
-
-    def _handle_dc(self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int, now: str) -> None:
-        """Handle Disconnect Confirm (DC)."""
-        conn = self._find_connection(src_ip, dst_ip, src_ref, dst_ref)
-        if conn:
-            conn.dc_seen = True
-            conn.state = "CLOSED"
-            conn.last_seen = now
-
-    def _handle_dt(
-        self,
-        src_ip: str,
-        dst_ip: str,
-        src_ref: int,
-        dst_ref: int,
-        tpkt_length: int,
-        now: str,
-    ) -> None:
-        """Handle Data Transfer (DT)."""
-        conn = self._find_connection(src_ip, dst_ip, src_ref, dst_ref)
-        if conn:
-            conn.dt_count += 1
-            conn.total_bytes += tpkt_length
-            conn.last_seen = now
 
     def _find_connection(
         self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int
@@ -600,8 +539,10 @@ class COTPPassiveListener(PySharkListenerBase):
             return
 
         device_key = f"cotp:{ip}"
-        mac = ""
-        vendor = ""
+        mac = ep.mac
+        vendor = lookup_mac_vendor(mac) if mac else ""
+        if vendor == "Unknown":
+            vendor = ""
 
         # Determine role based on connection patterns
         if ep.cr_received > ep.cr_sent:

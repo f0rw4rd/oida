@@ -486,11 +486,6 @@ class ResilientTCPConnection(TCPSocketConnection):
                 )
             raise
 
-    @property
-    def reconnect_count(self):
-        """Number of times connection has been automatically reconnected."""
-        return self._reconnect_count
-
 
 def _create_permissive_ssl_context() -> ssl.SSLContext:
     """Create maximally permissive SSL/TLS context for fuzzing/testing.

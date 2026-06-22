@@ -25,7 +25,21 @@ from .constants import (
 from ...utils.lazy_import import lazy_import
 
 _aiocoap = lazy_import("aiocoap", "CoAP")
-_dtlssocket = lazy_import("DTLSSocket", "CoAP", install_hint="pip install DTLSSocket")
+# DTLSSocket is deliberately NOT a declared dependency of the `coap` extra
+# (dropped in 5c5b890 — it is painful to build and most CoAP scans never use
+# DTLS). aiocoap's tinydtls transport imports it at handshake time, so every
+# DTLS path (--dtls/--psk/--dtls-cert/--dtls-rpk) requires the operator to
+# install it manually. Probe via importlib rather than a lazy_import guard so
+# the requested-but-unavailable case fails loudly with an explicit message
+# instead of silently falling back to a cleartext scan.
+_DTLS_PIP_HINT = "pip install 'DTLSSocket; sys_platform != \"win32\"'"
+
+
+def _dtls_available() -> bool:
+    """True when the optional DTLSSocket backend can actually be imported."""
+    import importlib.util
+
+    return importlib.util.find_spec("DTLSSocket") is not None
 
 
 class coap(NetworkConnection):
@@ -79,11 +93,20 @@ class coap(NetworkConnection):
             getattr(self.args, "dtls", False) or dtls_cert or dtls_rpk or psk_arg or psk_id_arg
         )
 
-        if dtls_requested:
-            if not _dtlssocket.is_available:
-                self.logger.fail("DTLS requires DTLSSocket (pip install DTLSSocket)")
-                dtls_cert = dtls_key = dtls_ca = dtls_rpk = psk_arg = psk_id_arg = None
-                dtls_requested = False
+        if dtls_requested and not _dtls_available():
+            # DTLS was explicitly requested but the optional DTLSSocket backend
+            # is not installed. Abort loudly rather than silently downgrading to
+            # a cleartext CoAP scan — a user asking for DTLS-PSK/cert auth must
+            # never have their credentials/probes shipped over plaintext UDP.
+            self.logger.fail(
+                "DTLS support is unavailable: the DTLSSocket backend is not "
+                "installed (it was removed from the 'coap' extra). Install it "
+                "manually with: %s",
+                _DTLS_PIP_HINT,
+            )
+            self.results["success"] = False
+            self.results["error"] = "DTLS unavailable: DTLSSocket not installed"
+            return
 
         if dtls_cert and dtls_key:
             self.logger.debug("DTLS certificate authentication requested")

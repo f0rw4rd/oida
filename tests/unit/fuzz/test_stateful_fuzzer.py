@@ -214,6 +214,63 @@ class TestStatefulFuzzerStateMatching:
         assert "CUSTOM_STATE" in req_names
 
 
+class TestStatefulFuzzerSocketTimeouts:
+    """Regression tests for _create_socket forwarding timeouts (CODE_REVIEW #3).
+
+    The stateful data socket must honor CLI --recv/send-timeout overrides
+    (surfaced as config.recv_timeout/send_timeout) and the calibrated
+    recv_timeout, not stay pinned to the StatefulConnection 5.0s default.
+    """
+
+    def _build_fuzzer(self, recv_timeout, send_timeout):
+        import logging
+
+        from src.oida.fuzz.core.stateful_fuzzer import StatefulFuzzer
+
+        captured = {}
+
+        class FakeConnection:
+            def __init__(self, host, port, **kwargs):
+                captured["host"] = host
+                captured["port"] = port
+                captured.update(kwargs)
+
+        class FakeConfig:
+            target_ip = "10.0.0.1"
+            target_port = 2121
+            reuse_target_connection = False
+
+            def __init__(self):
+                self.recv_timeout = recv_timeout
+                self.send_timeout = send_timeout
+
+        class ConcreteStatefulFuzzer(StatefulFuzzer):
+            def _define_protocol(self):  # pragma: no cover - never executed
+                pass
+
+        fuzzer = object.__new__(ConcreteStatefulFuzzer)
+        fuzzer.CONNECTION_CLASS = FakeConnection
+        fuzzer.PROTOCOL_NAME = "ftp"
+        fuzzer.config = FakeConfig()
+        fuzzer.log = logging.getLogger("test_stateful_socket_timeouts")
+
+        fuzzer._create_socket()
+        return captured
+
+    def test_cli_overrides_forwarded(self):
+        """Non-default config timeouts are passed through, not the 5.0 default."""
+        captured = self._build_fuzzer(recv_timeout=42.0, send_timeout=7.0)
+        assert captured["recv_timeout"] == 42.0
+        assert captured["send_timeout"] == 7.0
+        assert captured["protocol_name"] == "FTP"
+
+    def test_unset_timeouts_fall_back_to_default(self):
+        """When config timeouts are unset, the 5.0 defaults are used."""
+        captured = self._build_fuzzer(recv_timeout=None, send_timeout=None)
+        assert captured["recv_timeout"] == 5.0
+        assert captured["send_timeout"] == 5.0
+
+
 class TestStatefulFuzzerNodeRegistration:
     """Tests for node registration logic.
 

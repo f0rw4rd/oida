@@ -25,9 +25,7 @@ EXPECTED_FAILURES = {
 }
 
 ALL_EXPECTED_FAILURES = (
-    EXPECTED_FAILURES["raw_socket"]
-    + EXPECTED_FAILURES["serial"]
-    + EXPECTED_FAILURES["radamsa"]
+    EXPECTED_FAILURES["raw_socket"] + EXPECTED_FAILURES["serial"] + EXPECTED_FAILURES["radamsa"]
 )
 
 

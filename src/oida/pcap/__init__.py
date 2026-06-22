@@ -117,7 +117,7 @@ _LAZY_IMPORTS = {
     "PTPPassiveListener": (".ptp", "PTPPassiveListener"),
     "OpenSAFETYPassiveListener": (".opensafety", "OpenSAFETYPassiveListener"),
     # Interaction tracking infrastructure
-    "ProtocolInteraction": (".interactions", "ProtocolInteraction"),
+    "ProtocolInteraction": (".pyshark_base", "ProtocolInteraction"),
     # File transfer
     "TFTPPassiveListener": (".tftp", "TFTPPassiveListener"),
     # File carving

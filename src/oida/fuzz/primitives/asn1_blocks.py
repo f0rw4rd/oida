@@ -204,7 +204,6 @@ class ASN1Primitive(Fuzzable):
         self._fuzz_length = fuzz_length
         self._fuzz_value = fuzz_value
         self._mutations: List[bytes] = []
-        self._mutation_index = 0
         self._generate_mutations()
 
     def _generate_mutations(self):
@@ -310,9 +309,12 @@ class ASN1Primitive(Fuzzable):
             return self._mutations[mutation_context.mutation_index]
         return self._mutations[0]  # Valid encoding
 
-    @property
-    def original_value(self):
-        """Return the original (valid) encoded value."""
+    def original_value(self, test_case_context=None):
+        """Return the original (valid) encoded value.
+
+        Matches boofuzz's Fuzzable.original_value contract: it is a method
+        (callable with an optional test_case_context), not a property.
+        """
         return self._mutations[0] if self._mutations else b""
 
 
@@ -342,7 +344,6 @@ class ASN1Integer(ASN1Primitive):
             context_tag: Optional context-specific tag number
         """
         self._int_value = default_value
-        self._context_tag = context_tag
 
         if context_tag is not None:
             tag = ASN1Tag.CONTEXT | context_tag
@@ -452,7 +453,6 @@ class ASN1OctetString(ASN1Primitive):
         max_len: int = 1024,
         context_tag: Optional[int] = None,
     ):
-        self._bytes_value = default_value
         self._max_len = max_len
 
         if context_tag is not None:
@@ -505,7 +505,6 @@ class ASN1BitString(ASN1Primitive):
         context_tag: Optional[int] = None,
     ):
         self._bits_value = default_value
-        self._unused_bits = unused_bits
 
         if context_tag is not None:
             tag = ASN1Tag.CONTEXT | context_tag
@@ -623,7 +622,6 @@ class ASN1VisibleString(ASN1Primitive):
         max_len: int = 256,
         context_tag: Optional[int] = None,
     ):
-        self._string_value = default_value
         self._max_len = max_len
 
         if context_tag is not None:
@@ -701,7 +699,7 @@ class ASN1Sequence(Fuzzable):
         """Get concatenated children content."""
         content = b""
         for child in self._children:
-            content += child.original_value
+            content += child.original_value()
         return content
 
     def _encode_sequence(self, content: bytes) -> bytes:
@@ -753,12 +751,12 @@ class ASN1Sequence(Fuzzable):
             partial = b""
             for j, child in enumerate(self._children):
                 if j != i:
-                    partial += child.original_value
+                    partial += child.original_value()
             self._mutations.append(self._encode_sequence(partial))
 
         # Duplicated children
         if self._children:
-            doubled = content + self._children[0].original_value
+            doubled = content + self._children[0].original_value()
             self._mutations.append(self._encode_sequence(doubled))
 
         # Deeply nested (stack exhaustion)
@@ -779,8 +777,12 @@ class ASN1Sequence(Fuzzable):
             return self._mutations[mutation_context.mutation_index]
         return self._mutations[0]
 
-    @property
-    def original_value(self):
+    def original_value(self, test_case_context=None):
+        """Return the original (valid) encoded value.
+
+        Method (not a property) to match boofuzz's Fuzzable.original_value
+        contract, which get_value() calls with test_case_context.
+        """
         return self._mutations[0] if self._mutations else b""
 
 

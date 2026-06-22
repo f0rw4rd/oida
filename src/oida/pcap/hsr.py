@@ -66,25 +66,6 @@ HSR_PATHS = {
     1: "PathB",
 }
 
-# HSR supervision TLV types
-HSR_TLV_TYPES = {
-    0: "End",
-    20: "HSR Node",
-    21: "HSR RedBox",
-    22: "VDAN",
-    23: "PRP Node",
-    30: "Duplicate Discard",
-    31: "Duplicate Accept",
-}
-
-# HSR node type labels based on behavior
-HSR_NODE_TYPES = {
-    "danh": "DANH (Doubly Attached Node HSR)",
-    "danp": "DANP (Doubly Attached Node PRP)",
-    "redbox": "RedBox (Redundancy Box)",
-    "vdan": "VDAN (Virtual DAN)",
-}
-
 
 @dataclass
 class HSRNode:

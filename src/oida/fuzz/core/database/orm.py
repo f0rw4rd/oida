@@ -8,10 +8,10 @@ using SQLAlchemy for improved type safety, maintainability, and query building.
 import json
 import os
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 from contextlib import contextmanager
 
-from sqlalchemy import select, and_, func, insert
+from sqlalchemy import select, and_, func, insert, case
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.engine import Engine
@@ -141,9 +141,24 @@ class SQLAlchemyDatabase(DatabaseInterface):
     def store_test_cases_bulk(self, test_cases: List[TestCaseDTO]) -> None:
         """Insert many test cases in a single transaction.
 
-        Uses SQLite ``INSERT OR REPLACE`` so existing rows with the same id
-        are overwritten (same semantics as ``store_test_case``'s ``merge``),
-        but without per-row SELECT/flush round-trips.
+        Uses an ``INSERT ... ON CONFLICT(id) DO UPDATE`` upsert so existing
+        rows with the same id are UPDATED in place (same semantics as
+        ``store_test_case``'s ``merge``), without per-row SELECT/flush
+        round-trips. ``OR REPLACE`` is deliberately avoided here: SQLite
+        REPLACE deletes the existing test_cases row before re-inserting, and
+        with ``PRAGMA foreign_keys=ON`` that delete cascades into the
+        ``crashes``/``payloads`` child rows (``ondelete=CASCADE``), silently
+        destroying already-persisted crash diagnostics for the same id.
+        DO UPDATE leaves the parent row's identity intact, so no cascade
+        fires and child rows survive.
+
+        The DO UPDATE branch never downgrades an already-recorded
+        crash/fail/error row to ``'pass'``: when the incoming row is a
+        ``'pass'`` and the stored row is NOT a ``'pass'``, the
+        ``result`` and crash-specific fields (``duration_ms``,
+        ``monitor_status``) are kept as-is. This guards against a late
+        ``'pass'`` flush (e.g. the end-of-session buffer flush) erasing the
+        record of which case crashed.
         """
         if not self._initialized:
             raise RuntimeError("Database not initialized. Call init_schema() first.")
@@ -167,7 +182,29 @@ class SQLAlchemyDatabase(DatabaseInterface):
         ]
 
         with self.get_session() as session:
-            stmt = sqlite_insert(TestCase).prefix_with("OR REPLACE")
+            base_stmt = sqlite_insert(TestCase)
+            excluded = base_stmt.excluded
+            # True when the incoming row would downgrade an already-recorded
+            # crash/fail/error to 'pass' — in that case keep the stored value.
+            downgrade = and_(excluded.result == "pass", TestCase.result != "pass")
+            stmt = base_stmt.on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "name": excluded.name,
+                    "timestamp": excluded.timestamp,
+                    "result": case((downgrade, TestCase.result), else_=excluded.result),
+                    "crc32": excluded.crc32,
+                    "target_ip": excluded.target_ip,
+                    "target_port": excluded.target_port,
+                    "protocol": excluded.protocol,
+                    "duration_ms": case(
+                        (downgrade, TestCase.duration_ms), else_=excluded.duration_ms
+                    ),
+                    "monitor_status": case(
+                        (downgrade, TestCase.monitor_status), else_=excluded.monitor_status
+                    ),
+                },
+            )
             session.execute(stmt, rows)
 
     def store_crash(self, crash: CrashDTO) -> None:
@@ -571,96 +608,6 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 "store_all_payloads": self._store_all_payloads,
             }
 
-    def search_test_cases(
-        self,
-        name_pattern: Optional[str] = None,
-        result_filter: Optional[str] = None,
-        target_ip: Optional[str] = None,
-        protocol: Optional[str] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        limit: int = 100,
-    ) -> List[TestCaseDTO]:
-        """
-        Search test cases with various filters.
-
-        Args:
-            name_pattern: Pattern to match in test case names (SQL LIKE syntax)
-            result_filter: Filter by result type
-            target_ip: Filter by target IP address
-            protocol: Filter by protocol name
-            start_date: Filter by start date (ISO format)
-            end_date: Filter by end date (ISO format)
-            limit: Maximum number of results
-
-        Returns:
-            List of matching TestCase DTOs
-        """
-        with self.get_session() as session:
-            query = select(TestCase)
-
-            # Apply filters
-            conditions = []
-
-            if name_pattern:
-                # Escape backslash first, then LIKE wildcards, to avoid double-escaping
-                escaped = name_pattern.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
-                conditions.append(TestCase.name.like(f"%{escaped}%", escape="\\"))
-
-            if result_filter:
-                conditions.append(TestCase.result == result_filter)
-
-            if target_ip:
-                conditions.append(TestCase.target_ip == target_ip)
-
-            if protocol:
-                conditions.append(TestCase.protocol == protocol)
-
-            if start_date:
-                conditions.append(TestCase.timestamp >= start_date)
-
-            if end_date:
-                conditions.append(TestCase.timestamp <= end_date)
-
-            if conditions:
-                query = query.where(and_(*conditions))
-
-            # Order and limit
-            query = query.order_by(TestCase.timestamp.desc()).limit(limit)
-
-            test_cases = session.execute(query).scalars().all()
-            return [self._to_dto(tc) for tc in test_cases]
-
-    def cleanup_old_data(self, days_to_keep: int = 30) -> int:
-        """
-        Remove test cases older than specified days.
-
-        Args:
-            days_to_keep: Number of days to keep data
-
-        Returns:
-            Number of deleted test cases
-        """
-        with self.get_session() as session:
-            # Calculate cutoff date
-            cutoff_date = (datetime.now() - timedelta(days=days_to_keep)).isoformat()
-
-            # Find old test cases
-            old_test_cases = (
-                session.execute(select(TestCase).where(TestCase.timestamp < cutoff_date))
-                .scalars()
-                .all()
-            )
-
-            count = len(old_test_cases)
-
-            # Delete them (cascades to crashes and payloads)
-            for tc in old_test_cases:
-                session.delete(tc)
-
-            ics_logger.display(f"Cleaned up {count} test cases older than {days_to_keep} days")
-            return count
-
     def store_crash_context(
         self,
         detected_at_id: int,
@@ -743,34 +690,6 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 "event": crash_event.to_dict(),
                 "context": [entry.to_dict() for entry in crash_event.context_entries],
             }
-
-    def get_crash_events(
-        self, protocol: Optional[str] = None, target_ip: Optional[str] = None, limit: int = 100
-    ) -> List[dict]:
-        """
-        Get all crash events, optionally filtered.
-
-        Args:
-            protocol: Optional filter by protocol
-            target_ip: Optional filter by target IP
-            limit: Maximum number of results
-
-        Returns:
-            List of crash event dictionaries
-        """
-        with self.get_session() as session:
-            query = select(CrashEvent)
-
-            if protocol:
-                query = query.where(CrashEvent.protocol == protocol)
-            if target_ip:
-                query = query.where(CrashEvent.target_ip == target_ip)
-
-            query = query.order_by(CrashEvent.timestamp.desc()).limit(limit)
-
-            crash_events = session.execute(query).scalars().all()
-
-            return [event.to_dict() for event in crash_events]
 
     def get_crash_context_payload(self, crash_event_id: int, test_case_id: int) -> Optional[bytes]:
         """

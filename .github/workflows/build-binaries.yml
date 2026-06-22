@@ -6,13 +6,10 @@ name: Build standalone binaries
 
 on:
   workflow_dispatch:
+  # Release tags still build binaries automatically; the PR re-validation
+  # trigger was removed to conserve Actions minutes (run manually instead).
   push:
     tags: ["v*"]
-  pull_request:
-    # Re-validate the build whenever the spec or this workflow changes.
-    paths:
-      - "oida.spec"
-      - ".github/workflows/build-binaries.yml"
 
 permissions:
   contents: read

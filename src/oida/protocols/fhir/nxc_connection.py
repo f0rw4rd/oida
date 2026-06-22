@@ -23,6 +23,7 @@ from .helpers import (
     capabilitystatement,
     fhirclient,
     is_fhirclient_available,
+    validate_credential_path,
 )
 from .mixins import CRUDMixin, SearchMixin, SecurityMixin
 
@@ -247,18 +248,39 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
                         return super().send(request, **kwargs)
 
                 adapter = TimeoutHTTPAdapter(timeout=timeout)
-                self.smart_client.server.session.mount("http://", adapter)
-                self.smart_client.server.session.mount("https://", adapter)
+                session = self.smart_client.server.session
+                session.mount("http://", adapter)
+                session.mount("https://", adapter)
 
+                # Mutual-TLS client cert/key. validate_credential_path blocks
+                # directory traversal and resolves to an absolute path. requests
+                # accepts either a combined cert+key file (cert="...") or a
+                # (cert, key) tuple when supplied separately.
+                tls_cert = getattr(self.args, "tls_cert", None)
+                tls_key = getattr(self.args, "tls_key", None)
+                if tls_cert:
+                    cert_path = validate_credential_path(tls_cert)
+                    if tls_key:
+                        session.cert = (cert_path, validate_credential_path(tls_key))
+                    else:
+                        session.cert = cert_path
+
+                # Verification precedence: --tls-insecure disables verification
+                # outright; otherwise a --tls-ca bundle overrides the default
+                # trust store for server-certificate verification.
                 if getattr(self.args, "tls_insecure", False):
-                    self.smart_client.server.session.verify = False
+                    session.verify = False
+                else:
+                    tls_ca = getattr(self.args, "tls_ca", None)
+                    if tls_ca:
+                        session.verify = validate_credential_path(tls_ca)
 
                 username = getattr(self.args, "username", None)
                 password = getattr(self.args, "password", None)
                 if username and password and not getattr(self.args, "brute", False):
                     from requests.auth import HTTPBasicAuth
 
-                    self.smart_client.server.session.auth = HTTPBasicAuth(username, password)
+                    session.auth = HTTPBasicAuth(username, password)
 
             self.logger.info(f"Configured FHIR client for {base_url}")
 

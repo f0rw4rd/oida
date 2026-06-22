@@ -27,7 +27,7 @@ class SpecialQueryMixin:
 
         msg = self._create_qbp_message("Q40", "WhoAmI")
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received WhoAmI response")
                 self._parse_response(response)
@@ -41,7 +41,7 @@ class SpecialQueryMixin:
 
         msg = self._create_qbp_message("Q13", "TabularPatientList")
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received RTB (Tabular Response)")
                 self._parse_response(response)
@@ -60,7 +60,7 @@ class SpecialQueryMixin:
 
         msg = self._create_qbp_immunization_message("Z34", patient_id)
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received RSP^Z32 (Immunization History Response)")
                 self._parse_response(response)
@@ -79,7 +79,7 @@ class SpecialQueryMixin:
 
         msg = self._create_qbp_immunization_message("Z44", patient_id)
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received RSP^Z42 (Immunization + Forecast Response)")
                 self._parse_response(response)

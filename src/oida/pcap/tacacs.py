@@ -317,7 +317,7 @@ class TACACSPassiveListener(PySharkListenerBase):
                 if int(seqno, 0) % 2 == 0:
                     direction = "response"
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if int(seqno, 0)  2  0:: {e}")
+                self.logger.debug(f"TACACS+: failed to parse seqno={seqno!r} for direction: {e}")
 
         # Build descriptive operation name
         parts = ["TACACS+"]

@@ -366,6 +366,17 @@ class PcapScanner:
                     "_run_pyshark_pipeline: decode_as after listener merge: %s", decode_as_final
                 )
 
+            # Inject the resolved port map into each listener so direction
+            # detection (resolve_direction) honours user --decode-as overrides
+            # and per-listener OVERRIDE_PREFS in addition to canonical ports.
+            for listener in listeners.values():
+                configure = getattr(listener, "configure_ports", None)
+                if callable(configure):
+                    try:
+                        configure(decode_as_final)
+                    except Exception as e:
+                        self.logger.debug("configure_ports failed for listener: %s", e)
+
             max_packets = self.args.get("max_packets")
             capture_kw: Dict[str, Any] = {
                 "keep_packets": False,

@@ -74,8 +74,7 @@ class TestProtoArgs(unittest.TestCase):
         subparsers = main_parser.add_subparsers()
         enip_parser = proto_args(subparsers, [parent])
 
-        args = enip_parser.parse_args(["192.168.1.100", "--list-identity", "--list-services"])
-        self.assertTrue(args.list_identity)
+        args = enip_parser.parse_args(["192.168.1.100", "--list-services"])
         self.assertTrue(args.list_services)
 
     def test_proto_args_cip_options(self):

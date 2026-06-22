@@ -54,7 +54,6 @@ RE_PJL_STATUS_DISPLAY = re.compile(r'DISPLAY\s*=\s*"([^"]*)"', re.IGNORECASE)
 RE_PJL_JOB_NAME = re.compile(r'NAME\s*=\s*"([^"]*)"', re.IGNORECASE)
 RE_PJL_SET_VAR = re.compile(r"(\w+)\s*=\s*(\S+)", re.IGNORECASE)
 RE_PJL_FSDIRLIST_NAME = re.compile(r'NAME\s*=\s*"([^"]*)"', re.IGNORECASE)
-RE_UEL = re.compile(rb"\x1b%-12345X", re.IGNORECASE)
 
 # PJL filesystem commands (security-sensitive)
 PJL_FS_COMMANDS = {
@@ -67,9 +66,6 @@ PJL_FS_COMMANDS = {
     "FSINIT",
     "FSAPPEND",
 }
-
-# PJL info commands
-PJL_INFO_COMMANDS = {"INFO", "DINQUIRE", "INQUIRE", "ECHO"}
 
 PJL_DEFAULT_PORT = 9100
 
@@ -99,6 +95,7 @@ class PJLPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "tcp.port == 9100"
     REQUIRED_LAYERS = ()  # No protocol-specific layer; we parse raw TCP
     PROTOCOL_COLUMNS = ("command", "detail")
+    SERVER_PORTS = (PJL_DEFAULT_PORT,)
 
     def __init__(
         self,
@@ -181,8 +178,22 @@ class PJLPassiveListener(PySharkListenerBase):
         if not payload:
             return
 
-        # Determine direction
-        is_server = src_port == PJL_DEFAULT_PORT
+        # Determine direction via the shared cascade.  PJL is a plaintext
+        # request/response protocol with no per-frame QR bit, so
+        # resolve_direction() falls through to the known-server-port tier
+        # (canonical 9100 plus any user --decode-as / OVERRIDE_PREFS override)
+        # and then the lower-port heuristic -- the server side is the printer.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        # is_server == src_ip is the printer (printer -> client response).
+        is_server = not d.is_request
         direction = "response" if is_server else "request"
         server_ip = src_ip if is_server else dst_ip
         client_ip = dst_ip if is_server else src_ip
@@ -319,7 +330,7 @@ class PJLPassiveListener(PySharkListenerBase):
                     payload_str = str(payload).replace(":", "")
                     return bytes.fromhex(payload_str)
         except (ValueError, AttributeError) as e:
-            self.logger.debug(f"if hasattr(packet, data):: {e}")
+            self.logger.debug(f"PJL: failed to extract raw payload bytes from packet: {e}")
         return None
 
     # -------------------------------------------------------------------------

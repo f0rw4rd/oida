@@ -240,6 +240,34 @@ class TestMonitorRegistry:
         monitor = create_monitor("nonexistent", "127.0.0.1")
         assert monitor is None
 
+    def test_validcase_not_in_name_based_registry(self):
+        """ValidCaseMonitor needs operator-supplied probe bytes the name-based
+        factory cannot provide, so it must not be selectable by name (otherwise
+        create_monitor silently returns None). It is wired from config via
+        BaseFuzzer._create_extra_monitors() instead."""
+        from oida.fuzz.monitors.registry import (
+            get_available_monitors,
+            get_monitor,
+            create_monitor,
+            _init_registry,
+        )
+
+        _init_registry()
+        assert "validcase" not in get_available_monitors()
+        assert get_monitor("validcase") is None
+        # Selecting it by name yields None (treated as unknown), not a silent
+        # construction failure of a registered-but-unusable monitor.
+        assert create_monitor("validcase", "127.0.0.1", port=502) is None
+
+    def test_validcase_monitor_still_constructible_directly(self):
+        """The ValidCaseMonitor class itself is fine; only the name-based factory
+        path was removed. Direct construction (the config-driven path) works."""
+        from oida.fuzz.monitors.network import ValidCaseMonitor
+
+        monitor = ValidCaseMonitor(host="127.0.0.1", port=502, probe=b"\x00\x01")
+        assert monitor is not None
+        assert monitor.probe == b"\x00\x01"
+
 
 class TestCombinedMonitorLogic:
     """Test CombinedMonitor AND/OR logic."""

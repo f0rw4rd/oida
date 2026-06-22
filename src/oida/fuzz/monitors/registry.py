@@ -145,7 +145,7 @@ def create_monitor(
 def _init_registry() -> None:
     """Initialize the monitor registry with all available monitors."""
     # Import monitors - use lazy imports to avoid circular dependencies
-    from .network import PingMonitor, SocketHealthMonitor, ValidCaseMonitor
+    from .network import PingMonitor, SocketHealthMonitor
     from .script import ScriptMonitor
     from .industrial import ModbusMonitor, IEC104Monitor, MMSMonitor, MQTTMonitor, OPCUAMonitor
     from .application import HTTPGetMonitor, FTPCommandMonitor, SMTPCommandMonitor, DNSQueryMonitor
@@ -155,7 +155,12 @@ def _init_registry() -> None:
     # Network monitors
     register_monitor("ping", PingMonitor, 100)
     register_monitor("socket", SocketHealthMonitor, 100)
-    register_monitor("validcase", ValidCaseMonitor, 10)
+    # NOTE: ValidCaseMonitor is intentionally NOT registered here. It requires
+    # operator-supplied probe (and optional expect) bytes that the name-based
+    # create_monitor() factory cannot provide, so registering it would only let
+    # callers select "validcase" and then silently get None. The valid-case
+    # probe is wired directly from config via
+    # BaseFuzzer._create_extra_monitors() (--valid-case / --valid-case-expect).
 
     # External-script / agent-style health check (needs command=)
     register_monitor("script", ScriptMonitor, 10)

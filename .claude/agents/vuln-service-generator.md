@@ -25,6 +25,8 @@ You NEVER create:
 - Logic bugs
 - Information disclosure
 
+> Scope note: the "NEVER" list bounds what you may **simulate as a fake**. It does NOT mean such CVEs aren't real — some genuine memory CVEs are info-disclosure/logic-shaped (e.g. an over-read that is *in-bounds of the buffer* but *out-of-bounds of the message*, leaking stale data into device state — CVE-2019-14462/63). Those are real and verifiable, but only via building the actual vulnerable library and detecting with **ASan manual poisoning** or a post-parse assertion, not via a canary fake. When a CVE is open-source and server-side, defer to the `mock-builder` agent's **Real CVE Mode** (build-from-source + sanitizers + critical verification) instead of hand-writing a simulation.
+
 ## Output Structure
 
 For each CVE/vulnerability, create exactly 3 files in the same directory:
@@ -160,10 +162,18 @@ s.close()
 6. Create minimal PoC that sends exactly the bytes needed to crash
 7. Test: PoC should cause container to exit with code 139 (SIGSEGV)
 
-## Validation
+## Validation (critical verification — never claim a crash without evidence)
 
-A successful implementation:
-- Container exits with code 139 after PoC runs
-- Server logs show "[CRASH]" message before exit
+You MUST actually build, run, and fire the PoC, then capture the evidence — do not assert success from inspection.
+
+A successful **fake** implementation:
+- Container exits non-zero after the PoC runs — `139` (SIGSEGV) for a canary/raw overflow, or `134` (SIGABRT) if you used `abort()`/ASan
+- `docker inspect -f '{{.State.ExitCode}}'` and `docker logs` both confirm it (show them)
+- The crash is reached **only by the trigger** — normal requests do not crash (no false positives)
 - PoC is under 15 lines
-- No false positives (normal requests don't crash)
+
+For a **real** (build-from-source) target, additionally:
+- Build with `-fsanitize=address,undefined`; the ASan report must name the **genuine vulnerable function/line** from the CVE's fix commit (a crash at the wrong place is not a pass)
+- If the bug is "contained" (over-read/off-by-one inside a fixed buffer), it will NOT crash natively — add ASan tail-poisoning of the receive buffer; if even that can't isolate it, say so and ship the fake for the crash
+
+Honesty rules: distinguish "the real vulnerable code runs" from "an observable crash occurred" — they are not the same. If it does not crash, report that and the reason (contained access / not network-reachable / bogus CVE); never silently substitute a canary fake and present it as the CVE.

@@ -120,7 +120,10 @@ class TestTestFunctionCodes:
             return s._test_function_codes(MagicMock())
 
     def test_supported_and_classified(self):
+        # fc_range includes write FC 5, which is gated behind --confirm; set it
+        # so the classification path for FC 5 is exercised as before.
         s = make_scanner(fc_range="1-5")
+        s.args = {"confirm": True}
 
         # GenericPDU is patched, so pdu.function_code is a Mock -- drive each FC
         # via a counter matching the 1..5 scan order instead.
@@ -164,3 +167,46 @@ class TestTestFunctionCodes:
 
         out = self._run(s, responder)
         assert out["supported"] == {}
+
+    def test_mutating_write_fcs_gated_behind_confirm(self):
+        """Mutating write FCs (5,6,15,16,23) must not be probed without --confirm,
+        but non-write FCs in the same range still are; --confirm re-enables them.
+
+        GenericPDU is patched, so the real FC is recovered from the constructor
+        call order: GenericPDU(function_code=fc) is invoked exactly once per FC
+        that survives the gate, immediately before execute_pdu. Capturing the
+        function_code kwarg gives the exact set of FCs that reach the wire.
+        """
+        fc_range = "1-6,15,16,22,23"
+        full = [1, 2, 3, 4, 5, 6, 15, 16, 22, 23]
+        mutating = {5, 6, 15, 16, 23}
+        non_mutating = [fc for fc in full if fc not in mutating]
+
+        def run_capture(args):
+            probed: list[int] = []
+
+            def fake_pdu(function_code=1, **kw):
+                probed.append(function_code)
+                return MagicMock(function_code=function_code)
+
+            def responder(client, pdu, unit):
+                return _ok([1])
+
+            s = make_scanner(fc_range=fc_range)
+            s.args = args
+            with (
+                patch("oida.protocols.modbus.scanner.execute_pdu", side_effect=responder),
+                patch("oida.protocols.modbus.scanner.GenericPDU", side_effect=fake_pdu),
+                patch("oida.utils.ProgressTracker"),
+            ):
+                s._test_function_codes(MagicMock())
+            return probed
+
+        # Without --confirm: mutating FCs are skipped before any PDU is built.
+        probed_no_confirm = run_capture({"confirm": False})
+        assert probed_no_confirm == non_mutating
+        assert not (set(probed_no_confirm) & mutating)
+
+        # With --confirm: every FC in the range is probed.
+        probed_confirm = run_capture({"confirm": True})
+        assert probed_confirm == full

@@ -134,16 +134,6 @@ class ConnectionHelper:
             raise
 
     @staticmethod
-    def test_tcp_port(host: str, port: int, timeout: int = 3) -> bool:
-        """Test if a TCP port is open"""
-        try:
-            with socket.create_connection((host, port), timeout=timeout):
-                return True
-        except OSError as e:
-            _logger.debug(f"with socket.create_connection((host, ...: {e}")
-            return False
-
-    @staticmethod
     def create_tls_tcp_connection(
         host: str,
         port: int,
@@ -251,21 +241,6 @@ class ProtocolParser:
             # Try single IP or hostname
             yield ip_range
 
-    @staticmethod
-    def parse_port_range(port_range: str) -> List[int]:
-        """Parse port range string"""
-        ports = []
-
-        for part in port_range.split(","):
-            part = part.strip()
-            if "-" in part:
-                start, end = map(int, part.split("-", 1))
-                ports.extend(range(start, end + 1))
-            else:
-                ports.append(int(part))
-
-        return [p for p in sorted(set(ports)) if 1 <= p <= 65535]
-
 
 class DataFormatter:
     """Helper class for formatting protocol data"""
@@ -306,61 +281,6 @@ class DataFormatter:
 
 class SecurityAnalyzer:
     """Helper class for common security analysis functions"""
-
-    @staticmethod
-    def analyze_authentication(
-        supports_auth: bool, requires_auth: bool, weak_credentials: List[str] = None
-    ) -> Dict[str, Any]:
-        """Analyze authentication security"""
-        analysis = {
-            "supports_authentication": supports_auth,
-            "requires_authentication": requires_auth,
-            "security_level": "high" if requires_auth else "low",
-            "issues": [],
-        }
-
-        if not supports_auth:
-            analysis["issues"].append("No authentication support")
-        elif not requires_auth:
-            analysis["issues"].append("Authentication not required")
-
-        if weak_credentials:
-            analysis["issues"].append(f"Weak credentials accepted: {weak_credentials}")
-            analysis["security_level"] = "low"
-
-        return analysis
-
-    @staticmethod
-    def analyze_encryption(encrypted: bool, cipher_info: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Analyze encryption security"""
-        analysis = {
-            "encrypted": encrypted,
-            "security_level": "high" if encrypted else "low",
-            "issues": [],
-        }
-
-        if not encrypted:
-            analysis["issues"].append("Communication not encrypted")
-        elif cipher_info:
-            analysis["cipher_info"] = cipher_info
-            # Could add cipher strength analysis here
-
-        return analysis
-
-    @staticmethod
-    def check_default_credentials(username: str, password: str) -> bool:
-        """Check if credentials are common defaults"""
-        common_defaults = [
-            ("admin", "admin"),
-            ("admin", "password"),
-            ("admin", ""),
-            ("root", "root"),
-            ("user", "user"),
-            ("guest", "guest"),
-            ("anonymous", ""),
-        ]
-
-        return (username.lower(), password.lower()) in common_defaults
 
     @staticmethod
     def assess_protocol_security(features: Dict[str, bool]) -> Dict[str, Any]:

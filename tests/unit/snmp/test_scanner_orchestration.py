@@ -171,6 +171,43 @@ class TestAnalyzeSecurity:
         s.logger.warning.assert_called()
 
 
+class TestAnalyzeSecurityFindingDetail:
+    """Regression: descriptions must reach the exported finding's ``detail``.
+
+    Previously every security_finding() call passed its description as the
+    second positional arg, which binds to ``category`` (signature is
+    security_finding(self, title, category="", detail="")). That dropped the
+    description from the exported finding dict (which only sets ``detail``).
+    Exercise the real ICSLogger so the positional/keyword binding is enforced.
+    """
+
+    def _real_logger_scanner(self, **kw):
+        from oida.protocols.snmp.scanner import SNMPScanner
+        from oida.utils.ics_logger import ICSLogger
+
+        args = {"host": "10.0.0.5", "port": 161, "timeout": 1, "snmp_version": "2c"}
+        args.update(kw)
+        s = SNMPScanner(args)
+        s.logger = ICSLogger("SNMP", "10.0.0.5", 161, verbose=False)
+        s.logger.clear_findings()
+        return s
+
+    def test_v1_findings_carry_detail(self):
+        s = self._real_logger_scanner(snmp_version="1")
+        s._analyze_security({"sys_info": {"sysContact": "x", "sysLocation": "y"}})
+        by_title = {f["title"]: f for f in s.logger.findings}
+
+        assert "no message integrity" in by_title["Legacy protocol"].get("detail", "")
+        assert "cleartext" in by_title["No encryption"].get("detail", "")
+
+    def test_default_credentials_finding_carries_detail(self):
+        s = self._real_logger_scanner(snmp_version="2c", community="public")
+        s._analyze_security({"sys_info": {"sysContact": "x", "sysLocation": "y"}})
+        by_title = {f["title"]: f for f in s.logger.findings}
+
+        assert "public" in by_title["Default credentials"].get("detail", "")
+
+
 # ---------------------------------------------------------------------------
 # _async_discover -- vendor parsing from sysObjectID
 # ---------------------------------------------------------------------------

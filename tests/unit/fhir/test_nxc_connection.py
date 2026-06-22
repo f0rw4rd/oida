@@ -26,6 +26,9 @@ def _make_mock_args(**overrides):
         timeout=30,
         tls=True,
         tls_insecure=False,
+        tls_cert=None,
+        tls_key=None,
+        tls_ca=None,
         verbose=0,
         debug=False,
         fhir_version="R4",
@@ -825,6 +828,87 @@ class TestCreateConnObj(unittest.TestCase):
             scanner.create_conn_obj()
 
         self.assertTrue(scanner.results["data"]["tls_enabled"])
+
+    def _run_with_mock_client(self, scanner):
+        """Run create_conn_obj with a mocked FHIRClient and return the session."""
+        mock_session = MagicMock()
+        mock_server = MagicMock()
+        mock_server.session = mock_session
+        mock_client = MagicMock()
+        mock_client.server = mock_server
+
+        with (
+            patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir,
+            patch.object(scanner, "_check_tls_certificate"),
+        ):
+            mock_fhir.FHIRClient.return_value = mock_client
+            scanner.smart_client = None
+            scanner.conn = None
+            result = scanner.create_conn_obj()
+        return result, mock_session
+
+    def test_mtls_cert_and_key_set_on_session(self):
+        """Separate --tls-cert/--tls-key produce a (cert, key) tuple on session.cert."""
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as d:
+            cert = os.path.join(d, "client.pem")
+            key = os.path.join(d, "client.key")
+            open(cert, "w").close()
+            open(key, "w").close()
+
+            scanner = _create_scanner(tls_cert=cert, tls_key=key)
+            result, session = self._run_with_mock_client(scanner)
+
+        self.assertTrue(result)
+        # Pre-fix: session.cert was never assigned (stays a MagicMock attribute).
+        self.assertEqual(session.cert, (os.path.realpath(cert), os.path.realpath(key)))
+
+    def test_mtls_combined_cert_only(self):
+        """A single --tls-cert (combined cert+key file) sets session.cert to the path."""
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as d:
+            cert = os.path.join(d, "combined.pem")
+            open(cert, "w").close()
+
+            scanner = _create_scanner(tls_cert=cert, tls_key=None)
+            result, session = self._run_with_mock_client(scanner)
+
+        self.assertTrue(result)
+        self.assertEqual(session.cert, os.path.realpath(cert))
+
+    def test_tls_ca_sets_verify_path(self):
+        """--tls-ca sets session.verify to the resolved CA bundle path."""
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as d:
+            ca = os.path.join(d, "ca.pem")
+            open(ca, "w").close()
+
+            scanner = _create_scanner(tls_ca=ca)
+            result, session = self._run_with_mock_client(scanner)
+
+        self.assertTrue(result)
+        self.assertEqual(session.verify, os.path.realpath(ca))
+
+    def test_tls_insecure_overrides_ca(self):
+        """--tls-insecure wins over --tls-ca: verification disabled."""
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as d:
+            ca = os.path.join(d, "ca.pem")
+            open(ca, "w").close()
+
+            scanner = _create_scanner(tls_ca=ca, tls_insecure=True)
+            result, session = self._run_with_mock_client(scanner)
+
+        self.assertTrue(result)
+        self.assertFalse(session.verify)
 
 
 class TestEnumHostInfo(unittest.TestCase):

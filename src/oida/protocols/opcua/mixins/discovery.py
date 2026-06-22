@@ -262,7 +262,12 @@ class DiscoveryMixin:
             try:
                 from oida.utils.security_findings import display_cert_info
 
-                display_cert_info(self.logger, server_cert, self.results.get("data"))
+                display_cert_info(
+                    self.logger,
+                    server_cert,
+                    protocol="opcua",
+                    results=self.results.get("data"),
+                )
             except Exception as e:
                 self.logger.debug("show endpoints summary failed: %s", e)
 

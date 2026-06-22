@@ -28,7 +28,6 @@ from ..protocols.discovery.core import (
 )
 
 # NTLM message types
-NTLMSSP_TYPE1 = 1  # Negotiate (0x00000001)
 NTLMSSP_TYPE2 = 2  # Challenge (0x00000002)
 NTLMSSP_TYPE3 = 3  # Authenticate (0x00000003)
 
@@ -212,7 +211,7 @@ class NTLMPassiveListener(PySharkListenerBase):
                     if ntlm_dict:
                         result = self._extract_ek_fields(ntlm_dict)
             except Exception as e:
-                self.logger.debug(f"if hasattr(layer, _all_fields):: {e}")
+                self.logger.debug(f"NTLM: failed to extract NTLMSSP fields from layer: {e}")
 
             if result:
                 break
@@ -305,10 +304,42 @@ class NTLMPassiveListener(PySharkListenerBase):
             else:
                 msg_type = int(msg_type_raw)
         except (ValueError, TypeError) as e:
-            self.logger.debug(f"if isinstance(msg_type_raw, str):: {e}")
+            self.logger.debug(f"NTLM: failed to parse message type: {e}")
             return
 
         stream_id = self.get_stream_id(packet)
+
+        # Build interaction details so the central operations table shows the
+        # user/domain/workstation/challenge (not just an empty "msg_type" row).
+        details: Dict[str, Any] = {"msg_type": msg_type}
+        if msg_type == NTLMSSP_TYPE2:
+            challenge = self._normalize_hex(fields.get("ntlmserverchallenge"))
+            if challenge:
+                details["challenge"] = challenge
+            target = (
+                fields.get("challenge.target_name")
+                or fields.get("challenge.target_info.nb_domain_name")
+                or fields.get("challenge.target_info.dns_domain_name")
+            )
+            if target:
+                details["domain"] = str(target)
+        elif msg_type == NTLMSSP_TYPE3:
+            user = fields.get("auth.username")
+            if user:
+                details["username"] = str(user)
+            dom = fields.get("auth.domain")
+            if dom:
+                details["domain"] = str(dom)
+            ws = fields.get("auth.hostname")
+            if ws:
+                details["workstation"] = str(ws)
+            nt_hash = self._normalize_hex(fields.get("auth.ntresponse", ""))
+            if nt_hash:
+                nt_len = len(nt_hash) // 2
+                if nt_len == 24:
+                    details["hash_type"] = "NTLMv1"
+                elif nt_len > 24:
+                    details["hash_type"] = "NTLMv2"
 
         # Record interaction
         now = datetime.now().isoformat()
@@ -320,7 +351,7 @@ class NTLMPassiveListener(PySharkListenerBase):
             dst_ip,
             "request" if msg_type in (1, 3) else "response",
             f"NTLMSSP {type_name}",
-            {"msg_type": msg_type},
+            details,
             f"NTLMSSP {type_name}",
             flow_id=flow_id,
             src_port=src_port,
@@ -621,13 +652,12 @@ class NTLMPassiveListener(PySharkListenerBase):
         hashcat_format.
         """
         result = []
-        hashcat_lines = self.get_hashcat_hashes()
-        hashcat_idx = 0
         for h in self.hashes:
             incomplete = not h.challenge
             if not incomplete:
-                hashcat_str = hashcat_lines[hashcat_idx] if hashcat_idx < len(hashcat_lines) else ""
-                hashcat_idx += 1
+                # Derive the hashcat string from the same object to avoid
+                # positional misalignment between two differently-filtered lists.
+                hashcat_str = h.hashcat_format or ""
             else:
                 hashcat_str = "[!] INCOMPLETE — missing server challenge (Type 2 not captured)"
             entry: Dict[str, Any] = {

@@ -14,7 +14,6 @@ Tests constants, lazy imports, and utility functions:
 
 import os
 import unittest
-from unittest.mock import patch
 
 
 class TestValidateCredentialPath(unittest.TestCase):
@@ -111,36 +110,6 @@ class TestGetFHIRValidationError(unittest.TestCase):
         err_class = _get_fhir_validation_error()
         with self.assertRaises(Exception):
             raise err_class("test error")
-
-    def test_fallback_class_when_module_fails(self):
-        """Test fallback class is returned when fhirabstractbase raises"""
-        from oida.protocols.fhir.helpers import _get_fhir_validation_error
-
-        # Create a plain object that raises on FHIRValidationError access
-        class FailingModule:
-            @property
-            def FHIRValidationError(self):
-                raise ImportError("module not available")
-
-        with patch("oida.protocols.fhir.helpers._fhirabstractbase", FailingModule()):
-            result = _get_fhir_validation_error()
-            self.assertTrue(isinstance(result, type))
-            self.assertTrue(issubclass(result, Exception))
-            self.assertEqual(result.__name__, "FHIRValidationError")
-
-    def test_fallback_class_is_raisable_from_fallback(self):
-        """Test the dynamically-created fallback class works"""
-        from oida.protocols.fhir.helpers import _get_fhir_validation_error
-
-        class FailingModule:
-            @property
-            def FHIRValidationError(self):
-                raise RuntimeError("unavailable")
-
-        with patch("oida.protocols.fhir.helpers._fhirabstractbase", FailingModule()):
-            err_class = _get_fhir_validation_error()
-            with self.assertRaises(Exception):
-                raise err_class("test error")
 
 
 class TestIsFhirclientAvailable(unittest.TestCase):

@@ -107,8 +107,6 @@ def test_disable_suppresses_single_request():
     full = _connected_names(_build(_make_config()))
     assert "CoAP_Cache_Control" in full
 
-    disabled = _connected_names(
-        _build(_make_config(disabled_requests=["CoAP_Cache_Control"]))
-    )
+    disabled = _connected_names(_build(_make_config(disabled_requests=["CoAP_Cache_Control"])))
     assert "CoAP_Cache_Control" not in disabled
     assert disabled == full - {"CoAP_Cache_Control"}

@@ -546,8 +546,15 @@ class dicom(
             # Probe all operations if --probe-ops is set
             probe_ops = getattr(self.args, "probe_ops", False)
 
-            # Add presentation contexts - C-GET (if --get or --probe-ops)
-            if getattr(self.args, "get", False) or probe_ops:
+            # Add presentation contexts - C-GET (if --get, --dump-all, or --probe-ops).
+            # --dump-all triggers _recursive_bulk_export() which issues C-GET, so it
+            # MUST negotiate the same QR-model + storage contexts as --get.
+            cget_storage_uids: list[str] = []
+            if (
+                getattr(self.args, "get", False)
+                or getattr(self.args, "dump_all", False)
+                or probe_ops
+            ):
                 self.ae.add_requested_context(sop["PatientRootQueryRetrieveInformationModelGet"])
                 self.ae.add_requested_context(sop["StudyRootQueryRetrieveInformationModelGet"])
                 # Add storage contexts for receiving images (limit to avoid 128 context limit)
@@ -558,6 +565,7 @@ class dicom(
                 )
                 for context in storage_contexts:
                     self.ae.add_requested_context(context.abstract_syntax)
+                    cget_storage_uids.append(str(context.abstract_syntax))
 
             # Add presentation contexts - C-MOVE (if --move or --probe-ops)
             if getattr(self.args, "move", False) or probe_ops:
@@ -646,12 +654,37 @@ class dicom(
             if getattr(self.args, "get", False) or getattr(self.args, "dump_all", False):
                 evt_handlers = [(evt.EVT_C_STORE, self._handle_store_for_cget)]
 
+            # C-GET requires the SCU to negotiate the SCP role on every storage
+            # context so the peer can push C-STORE sub-operations back over the
+            # same association. Without this role selection in ext_neg the handler
+            # never fires and bulk export silently retrieves 0 images.
+            ext_neg = None
+            if cget_storage_uids:
+                build_role = _pynetdicom.build_role
+                ext_neg = [
+                    build_role(uid, scp_role=True, scu_role=False) for uid in cget_storage_uids
+                ]
+
             # Set up TLS context if requested
             tls_args = None
             if use_tls:
                 from ...utils.socket_helpers import build_tls_context, check_tls_certificate
 
-                ssl_cx = build_tls_context({}, logger=self.logger)
+                tls_ca = getattr(self.args, "tls_ca", None)
+                tls_insecure = getattr(self.args, "tls_insecure", False)
+                ssl_cx = build_tls_context(
+                    {
+                        "tls-cert": getattr(self.args, "tls_cert", None),
+                        "tls-key": getattr(self.args, "tls_key", None),
+                        "tls-ca": tls_ca,
+                        "tls-insecure": tls_insecure,
+                    },
+                    logger=self.logger,
+                )
+                # A supplied CA without --tls-insecure means the operator wants
+                # real server-certificate verification, so enable hostname checking.
+                if tls_ca and not tls_insecure:
+                    ssl_cx.check_hostname = True
                 tls_args = (ssl_cx, self.ip)  # (ssl_context, server_hostname)
                 self.logger.display("Using DICOM TLS (Upper Layer Security)")
 
@@ -676,6 +709,7 @@ class dicom(
                 ae_title=self.called_aet,
                 evt_handlers=evt_handlers,
                 tls_args=tls_args,
+                ext_neg=ext_neg,
             )
 
             if self.assoc.is_established:

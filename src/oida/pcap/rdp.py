@@ -24,6 +24,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from ..protocols.discovery.core import is_valid_discovered_ip
 
 
 @dataclass
@@ -186,23 +187,33 @@ class RDPPassiveListener(PySharkListenerBase):
         return False
 
     def _update_devices(self, client_ip: str, server_ip: str) -> None:
-        """Update device entries."""
-        self._ensure_device(
-            f"rdp-server:{server_ip}",
-            server_ip,
-            name=f"RDP Server ({server_ip})",
-            device_type="Windows Server",
-            data_attr="rdp_passive_data",
-            protocol_data={"role": "server", "protocol": "RDP/TCP"},
-        )
-        self._ensure_device(
-            f"rdp-client:{client_ip}",
-            client_ip,
-            name=f"RDP Client ({client_ip})",
-            device_type="RDP Client",
-            data_attr="rdp_passive_data",
-            protocol_data={"role": "client", "protocol": "RDP/TCP"},
-        )
+        """Update device entries.
+
+        Validates both endpoints with ``is_valid_discovered_ip()`` so broadcast,
+        multicast, and link-local addresses never produce phantom device records.
+        """
+        if is_valid_discovered_ip(server_ip):
+            self._ensure_device(
+                f"rdp-server:{server_ip}",
+                server_ip,
+                name=f"RDP Server ({server_ip})",
+                device_type="Windows Server",
+                data_attr="rdp_passive_data",
+                protocol_data={"role": "server", "protocol": "RDP/TCP"},
+            )
+        else:
+            self.logger.debug(f"RDP: skipping invalid server IP {server_ip!r} for device tracking")
+        if is_valid_discovered_ip(client_ip):
+            self._ensure_device(
+                f"rdp-client:{client_ip}",
+                client_ip,
+                name=f"RDP Client ({client_ip})",
+                device_type="RDP Client",
+                data_attr="rdp_passive_data",
+                protocol_data={"role": "client", "protocol": "RDP/TCP"},
+            )
+        else:
+            self.logger.debug(f"RDP: skipping invalid client IP {client_ip!r} for device tracking")
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all extracted credentials using canonical key names."""

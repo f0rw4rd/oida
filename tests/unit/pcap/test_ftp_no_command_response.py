@@ -66,9 +66,7 @@ def test_ftp_frame_without_command_or_response_is_not_dropped_silently():
         )
     )
 
-    assert listener.interactions == [], (
-        "field-less ftp frame should not record an interaction"
-    )
+    assert listener.interactions == [], "field-less ftp frame should not record an interaction"
     assert any("no recognized" in msg for msg in debug_calls), (
         "expected a debug log noting the unrecognized ftp frame was not recorded"
     )

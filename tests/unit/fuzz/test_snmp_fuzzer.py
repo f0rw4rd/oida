@@ -699,21 +699,115 @@ class TestSNMPv3RequestGating:
 
     def test_enable_single_request_connects_only_that_request(self):
         """--enable SNMPv3_USMAuthFuzz connects only that request (was: zero requests)."""
-        connected = _connected_snmpv3_request_names(
-            enabled=["SNMPv3_USMAuthFuzz"], enable_set=True
-        )
+        connected = _connected_snmpv3_request_names(enabled=["SNMPv3_USMAuthFuzz"], enable_set=True)
         assert connected == ["SNMPv3_USMAuthFuzz"]
 
     def test_disable_single_request_drops_only_that_request(self):
         """--disable SNMPv3_Malformed drops exactly that request (was: no effect)."""
-        connected = _connected_snmpv3_request_names(
-            disabled=["SNMPv3_Malformed"], enable_set=True
-        )
+        connected = _connected_snmpv3_request_names(disabled=["SNMPv3_Malformed"], enable_set=True)
         from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
 
         advertised = {r.name for r in SNMPv3Fuzzer.get_request_definitions()}
         assert "SNMPv3_Malformed" not in connected
         assert set(connected) == advertised - {"SNMPv3_Malformed"}
+
+
+# =============================================================================
+# Test SNMPv3 Var-Bind OID Encoding (regression: OID was double-encoded)
+# =============================================================================
+#
+# Bug: every var-bind built its OID as Static("OID_Tag", b"\x06") + Size(...) +
+# SmartBytes(self._encode_oid(...)). But _encode_oid() already returns the full
+# OBJECT IDENTIFIER TLV (06 <len> <body>), so the wrapper produced
+# "06 <len> 06 08 <body>" on the wire -- not a valid OBJECT IDENTIFIER, breaking
+# the baseline/standard requests. Fix: emit the SmartBytes TLV directly with no
+# outer tag/length wrapper.
+
+
+def _rendered_snmpv3_requests(enable_set=True):
+    """Render every connected SNMPv3 request to bytes, no network."""
+    from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+
+    config = FuzzerConfig(
+        target_ip="192.168.1.100",
+        target_port=161,
+        protocol_type=ProtocolType.UDP,
+    )
+    config.protocol_options = {"enable_set": enable_set}
+
+    fuzzer = SNMPv3Fuzzer(config, connection_factory=MockConnectionFactory())
+
+    class _Collector:
+        def __init__(self):
+            self.requests = {}
+
+        def connect(self, request, *args, **kwargs):
+            self.requests[request.name] = request
+
+    collector = _Collector()
+    fuzzer._session = collector
+    fuzzer._define_protocol()
+    return {name: req.render() for name, req in collector.requests.items()}
+
+
+class TestSNMPv3VarBindOIDEncoding:
+    """Var-bind OIDs must be a single OBJECT IDENTIFIER, not double-encoded."""
+
+    # OIDs that appear as var-bind names / OID-valued data across the requests.
+    OIDS = [
+        "1.3.6.1.2.1.1.1.0",
+        "1.3.6.1.2.1.1.1",
+        "1.3.6.1.2.1.1",
+        "1.3.6.1.2.1.1.3.0",
+        "1.3.6.1.6.3.1.1.4.1.0",
+        "1.3.6.1.4.1.0.1",
+        "1.3.6.1.4.1.0.2",
+        "1.3.6.1.2.1.1.4.0",
+    ]
+
+    def test_no_double_encoded_oid_in_any_request(self):
+        """No rendered request contains the double-encoded form 06 <len> 06 ...."""
+        from src.oida.fuzz.protocols.snmp_common import encode_oid
+
+        renders = _rendered_snmpv3_requests()
+        assert renders, "no SNMPv3 requests were connected"
+
+        for oid in self.OIDS:
+            tlv = encode_oid(oid)  # full OBJECT IDENTIFIER TLV (06 <len> <body>)
+            double = b"\x06" + bytes([len(tlv)]) + tlv  # the buggy wrapper output
+            for name, blob in renders.items():
+                assert double not in blob, f"{name}: double-encoded OID {oid} on the wire"
+
+    def test_baseline_requests_carry_single_oid_tlv(self):
+        """Baseline requests embed the correct single OBJECT IDENTIFIER TLV."""
+        from src.oida.fuzz.protocols.snmp_common import encode_oid
+
+        renders = _rendered_snmpv3_requests()
+        sysdescr = encode_oid("1.3.6.1.2.1.1.1.0")
+
+        # Discovery walks sysDescr.0; the exact single TLV must appear verbatim.
+        assert "SNMPv3_Discovery" in renders, "SNMPv3_Discovery not connected"
+        assert sysdescr in renders["SNMPv3_Discovery"], "Discovery: missing single sysDescr OID TLV"
+
+    def test_rendered_oid_decodes_as_object_identifier(self):
+        """The embedded OID bytes decode as a single pyasn1 ObjectIdentifier."""
+        from pyasn1.codec.ber import decoder
+        from pyasn1.type import univ
+        from src.oida.fuzz.protocols.snmp_common import encode_oid
+
+        renders = _rendered_snmpv3_requests()
+        sysdescr = encode_oid("1.3.6.1.2.1.1.1.0")
+        blob = renders["SNMPv3_Discovery"]
+
+        idx = blob.find(sysdescr)
+        assert idx != -1, "sysDescr OID TLV not found in Discovery render"
+
+        decoded, rest = decoder.decode(blob[idx : idx + len(sysdescr)])
+        assert isinstance(decoded, univ.ObjectIdentifier)
+        assert str(decoded) == "1.3.6.1.2.1.1.1.0"
+        assert rest == b""
 
 
 if __name__ == "__main__":

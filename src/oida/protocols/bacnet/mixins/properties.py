@@ -373,20 +373,25 @@ class PropertiesMixin:
             else:
                 obj_id = ObjectIdentifier((obj_type, instance))
 
-            # Parse value
+            # Parse value. Mirror the synchronous _handle_write path: demote
+            # integer-valued floats to int so enumerations (e.g. binaryValue /
+            # multistateValue presentValue) and integer properties are not sent
+            # as Real, which a spec-compliant device rejects with a datatype error.
             try:
                 write_value = float(value_str)
+                if write_value.is_integer():
+                    write_value = int(write_value)
             except ValueError:
                 write_value = value_str
 
             priority = getattr(self.args, "priority", None)
 
-            if isinstance(write_value, float):
+            if isinstance(write_value, int):
+                prop_value = AnyAtomic(Unsigned(write_value))
+            elif isinstance(write_value, float):
                 prop_value = AnyAtomic(Real(write_value))
-            elif isinstance(write_value, str):
-                prop_value = AnyAtomic(CharacterString(write_value))
             else:
-                prop_value = AnyAtomic(Real(float(write_value)))
+                prop_value = AnyAtomic(CharacterString(write_value))
 
             kwargs = {
                 "objectIdentifier": obj_id,

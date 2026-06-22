@@ -37,16 +37,16 @@ def _build_gif(version: bytes) -> bytes:
     # sprinkled inside the data. Crucially the 00 3B two-byte sequence must
     # NOT appear in the body (so the fixed footer is unambiguous): each 0x3B
     # here is preceded by 0xFF, never 0x00.
-    body = b"\xFF\x3B" * 500  # 1000 bytes, contains 500 bare inner 0x3B
+    body = b"\xff\x3b" * 500  # 1000 bytes, contains 500 bare inner 0x3B
     # Canonical end of GIF: block terminator 0x00 followed by trailer 0x3B.
-    trailer = b"\x00\x3B"
+    trailer = b"\x00\x3b"
     return header + body + trailer
 
 
 def test_gif89a_full_recovery_with_inner_3b():
     gif = _build_gif(b"89a")
     # Sanity: an inner bare 0x3B occurs well before the real end.
-    assert gif.index(b"\x3B") < len(gif) - 2
+    assert gif.index(b"\x3b") < len(gif) - 2
 
     carver = _Carver()
     stream = StreamBuffer(src_ip="10.0.0.1", dst_ip="10.0.0.2", protocol="TCP")
@@ -59,7 +59,7 @@ def test_gif89a_full_recovery_with_inner_3b():
     # The carved file must reach the real trailer, not be truncated at an
     # inner 0x3B. With the buggy bare-0x3B footer this would be far shorter.
     assert carved.data == gif
-    assert carved.data.endswith(b"\x00\x3B")
+    assert carved.data.endswith(b"\x00\x3b")
 
 
 def test_gif87a_full_recovery_with_inner_3b():

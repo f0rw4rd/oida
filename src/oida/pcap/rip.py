@@ -379,5 +379,3 @@ class RIPPassiveListener(PySharkListenerBase):
             }
             result.append(entry)
         return result
-
-

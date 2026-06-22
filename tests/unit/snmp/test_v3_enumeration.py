@@ -184,6 +184,58 @@ class TestEnumV3:
         assert creds[0]["security_level"] == "authNoPriv"
         assert "Credential disclosure" in s.logger.finding_titles
 
+    def test_wrong_level_auth_credential_survives_failed_priv_brute(self):
+        """Phase 2 proves the auth password (WRONG_LEVEL = needs priv). If phase 3
+        never cracks the priv key, the proven auth credential must NOT be lost --
+        the export row must still carry auth_protocol + auth_pass."""
+        s = self._scanner(confirm_brute=True, snmp_auth_pass="public")
+        p1 = {"valid_users": [{"username": "admin", "level": "authRequired"}], "credentials": []}
+
+        # Phase 2 single-shot returns WRONG_LEVEL (auth ok, priv required);
+        # every phase-3 priv probe fails (WRONG_PRIV) so no full crack happens.
+        def probe(username, **kw):
+            if kw.get("sec_level") == "authPriv":
+                return "WRONG_PRIV"
+            return "WRONG_LEVEL"
+
+        with patch.object(s, "_enum_v3_users", return_value=p1):
+            with patch.object(s, "_probe_v3", side_effect=probe):
+                with patch("oida.utils.export_utils.export_table"):
+                    out = s._enum_v3()
+
+        creds = out["credentials"]
+        assert len(creds) == 1, "the proven auth credential was dropped"
+        cred = creds[0]
+        assert cred["username"] == "admin"
+        assert cred["auth_pass"] == "public"
+        assert cred["auth_protocol"]  # protocol captured
+        assert cred["security_level"] == "authRequired-priv"
+        assert "priv_pass" not in cred  # priv never cracked
+
+    def test_wrong_level_then_priv_success_upgrades_in_place(self):
+        """When phase 3 cracks the priv key, the phase-2 auth entry is upgraded to
+        authPriv in place -- exactly one credential row, fully populated."""
+        s = self._scanner(confirm_brute=True, snmp_auth_pass="public", snmp_priv_pass="privpass1")
+        p1 = {"valid_users": [{"username": "admin", "level": "authRequired"}], "credentials": []}
+
+        def probe(username, **kw):
+            if kw.get("sec_level") == "authPriv":
+                return "SUCCESS"
+            return "WRONG_LEVEL"
+
+        with patch.object(s, "_enum_v3_users", return_value=p1):
+            with patch.object(s, "_probe_v3", side_effect=probe):
+                with patch("oida.utils.export_utils.export_table"):
+                    out = s._enum_v3()
+
+        creds = out["credentials"]
+        assert len(creds) == 1, "duplicate credential rows for the same user"
+        cred = creds[0]
+        assert cred["username"] == "admin"
+        assert cred["security_level"] == "authPriv"
+        assert cred["auth_pass"] == "public"
+        assert cred["priv_pass"] == "privpass1"
+
     def test_target_user_skips_phase1(self):
         s = self._scanner(confirm_brute=True, enum_v3="bob", snmp_auth_pass="password1")
         # enum_v3="bob" -> target user, phase 1 skipped; bob marked authRequired.

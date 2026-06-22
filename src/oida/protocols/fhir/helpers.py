@@ -7,9 +7,6 @@ Constants, lazy imports, and utility functions shared by the FHIR module.
 import os
 
 from ...utils.lazy_import import lazy_import
-from ...utils.ics_logger import get_module_logger
-
-logger = get_module_logger(__name__)
 
 # =========================================================================
 # FHIR Server Vendor/Product Identification
@@ -124,12 +121,12 @@ servicerequest = lazy_import("fhirclient.models.servicerequest", "FHIR")
 
 
 def _get_fhir_validation_error():
-    """Get FHIRValidationError class for exception handling"""
-    try:
-        return _fhirabstractbase.FHIRValidationError
-    except Exception as e:
-        logger.debug("get fhir validation error failed: %s", e)
-        return type("FHIRValidationError", (Exception,), {})
+    """Get FHIRValidationError class for exception handling.
+
+    Only called once fhirclient is confirmed available, so the symbol
+    always resolves.
+    """
+    return _fhirabstractbase.FHIRValidationError
 
 
 def is_fhirclient_available() -> bool:

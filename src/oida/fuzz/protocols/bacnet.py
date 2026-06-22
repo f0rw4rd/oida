@@ -219,45 +219,6 @@ class BACnetFuzzer(BaseFuzzer):
             **self._timeout_overrides(recv_default=2.0),  # Wait up to 2 seconds for response
         )
 
-    def _create_bvlc_header(self, function: int = 0x0A, length: int = 0x000C) -> Block:
-        """Create standard BVLC header block.
-
-        Args:
-            function: BVLC function (0x0A=Unicast, 0x0B=Broadcast)
-            length: Total message length including BVLC header
-        """
-        return Block(
-            "BVLC_Header",
-            children=(
-                Byte("BVLL_Type", 0x81),  # BACnet/IP
-                Byte("BVLL_Function", function),
-                Word("BVLL_Length", length, endian=">"),
-            ),
-        )
-
-    def _create_npdu_unicast(self) -> Block:
-        """Create NPDU header for unicast (expecting reply)."""
-        return Block(
-            "NPDU_Header",
-            children=(
-                Byte("NPDU_Version", 0x01),
-                Byte("NPDU_Control", 0x04),  # Expecting reply
-            ),
-        )
-
-    def _create_npdu_broadcast(self) -> Block:
-        """Create NPDU header for broadcast."""
-        return Block(
-            "NPDU_Header",
-            children=(
-                Byte("NPDU_Version", 0x01),
-                Byte("NPDU_Control", 0x20),  # Destination specifier present
-                Word("DEST_Network", 0xFFFF, endian=">"),  # Global broadcast
-                Byte("DLEN", 0x00),  # Broadcast
-                Byte("HOP_Count", 0xFF),
-            ),
-        )
-
     def _define_protocol(self) -> None:
         """Define BACnet protocol structure with vulnerability patterns.
 

@@ -42,6 +42,8 @@ from ..protocols.discovery.core import (
     lookup_mac_vendor,
 )
 
+from ._iec_common import classify_rw, parse_asdu_field
+
 # Reuse the comprehensive ASDU type ID definitions from IEC 104
 from .iec104 import (
     TYPE_IDS,
@@ -341,13 +343,7 @@ class IEC101PassiveListener(PySharkListenerBase):
             session.ioa_seen.add(ioa)
 
         # Parse cause of transmission
-        cause_tx = 0
-        cause_tx_raw = self.get_field(asdu_layer, "causetx", None)
-        if cause_tx_raw:
-            try:
-                cause_tx = int(cause_tx_raw)
-            except (ValueError, TypeError):
-                pass
+        cause_tx = parse_asdu_field(self.get_field(asdu_layer, "causetx", None), 0)
 
         # Parse negative (P/N) bit
         is_negative = False
@@ -374,20 +370,14 @@ class IEC101PassiveListener(PySharkListenerBase):
         quality_list = self._extract_quality(asdu_layer, type_id)
 
         # Classify rw
-        if is_error_cot:
-            rw = "error"
-        elif type_id in _WRITE_TYPE_IDS:
-            rw = "write"
-        elif type_id in _READ_COMMAND_TYPE_IDS:
-            rw = "read"
-        elif type_id in _SYSTEM_TYPE_IDS:
-            rw = "control"
-        elif type_id in _FILE_TYPE_IDS:
-            rw = "file"
-        elif type_id <= 44:
-            rw = "read"
-        else:
-            rw = "write"
+        rw = classify_rw(
+            type_id,
+            is_error_cot,
+            write_ids=_WRITE_TYPE_IDS,
+            read_ids=_READ_COMMAND_TYPE_IDS,
+            system_ids=_SYSTEM_TYPE_IDS,
+            file_ids=_FILE_TYPE_IDS,
+        )
 
         details: Dict[str, Any] = {
             "type_id": type_id,

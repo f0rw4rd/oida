@@ -67,14 +67,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-# Protocol IDs (ff.hdr.proto_id, bits 7-2)
-FF_PROTO_IDS = {
-    0x00: "FDA",  # Fieldbus Device Access
-    0x01: "SM",  # System Management
-    0x02: "FMS",  # Fieldbus Message Specification
-    0x03: "LAN",  # LAN Redundancy
-}
-
 # FDA confirmed service IDs
 FDA_CONFIRMED_SERVICES = {
     1: "FDA_Open",

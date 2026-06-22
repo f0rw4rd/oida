@@ -488,7 +488,7 @@ class CANopenPassiveListener(PySharkListenerBase):
         elif is_write:
             node.sdo_writes += 1
             self._sdo_write_count += 1
-        elif not is_server_tx:
+        elif not is_server_tx and ccs_val == 2:  # Upload Initiate only
             node.sdo_reads += 1
 
         details: Dict[str, Any] = {

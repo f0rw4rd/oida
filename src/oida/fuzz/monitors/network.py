@@ -3,11 +3,8 @@
 import platform
 import socket
 import ssl
-import time
 from typing import Optional
 
-from boofuzz.exception import BoofuzzFailure
-from boofuzz.monitors import BaseMonitor
 
 from .base import ProtocolBaseline, ProtocolMonitor
 from ...utils.ics_logger import get_logger
@@ -149,49 +146,56 @@ class SocketHealthMonitor(ProtocolMonitor):
         return self._check_alive(fuzz_data_logger)
 
 
-class CustomSSLSocketMonitor(BaseMonitor):
+class CustomSSLSocketMonitor(ProtocolMonitor):
     """
     SSL/TLS socket health monitor with custom configuration.
 
-    Uses FuzzerConfig for target settings. Performs TLS handshake
-    without certificate verification (suitable for fuzzing self-signed targets).
+    Uses FuzzerConfig for target settings. Performs a TLS handshake without
+    certificate verification (suitable for fuzzing self-signed targets).
 
-    Note: This monitor has a simpler pattern that doesn't fit ProtocolMonitor,
-    so it inherits directly from BaseMonitor.
+    Built on ProtocolMonitor so it inherits the shared retry, failure-threshold,
+    rate-limiting, and crash-detection logic instead of hand-rolling its own
+    health gate (the previous BaseMonitor implementation reset its rate-limit
+    timer in pre_send right before checking it in post_send, so the probe almost
+    never ran, and it raised BoofuzzFailure on the very first connect blip).
 
     Args:
         config: FuzzerConfig with target_ip and target_port
     """
 
     def __init__(self, config: FuzzerConfig):
+        super().__init__(
+            host=config.target_ip,
+            port=config.target_port,
+            timeout=2.0,
+            check_interval=1,  # Check every test case
+        )
         self.fuzzer_config = config
-        self.last_check_time = None
-        self.check_interval = 1
+        # Preserve the original "FUZZ-SSL" log tag (the base would derive
+        # "FUZZ-CUSTOMSSLSOCKET" from the class name).
         self.logger = get_logger("FUZZ-SSL", config.target_ip, config.target_port)
 
-    def pre_send(self, target=None, fuzz_data_logger=None, session=None):
-        self.last_check_time = time.time()
-
-    def post_send(self, target=None, fuzz_data_logger=None, session=None):
-        if self.last_check_time and (time.time() - self.last_check_time < self.check_interval):
-            return True
-
+    def _check_alive_once(self, fuzz_data_logger=None) -> bool:
+        """Attempt a TLS handshake to verify the target is accepting connections."""
         sock = None
         secure_sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
+            sock.settimeout(self.timeout)
 
             context = ssl.create_default_context()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
             secure_sock = context.wrap_socket(sock)
 
-            secure_sock.connect((self.fuzzer_config.target_ip, self.fuzzer_config.target_port))
+            secure_sock.connect((self.host, self.port))
+            self.logger.debug("TLS handshake succeeded")
             return True
         except Exception as e:
-            self.logger.fail(f"Target down! {str(e)}")
-            raise BoofuzzFailure(f"Connection failed: {str(e)}")
+            self.logger.warning(f"TLS connect failed: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"CustomSSLSocketMonitor: connect failed - {e}")
+            return False
         finally:
             if secure_sock:
                 try:
@@ -203,6 +207,14 @@ class CustomSSLSocketMonitor(BaseMonitor):
                     sock.close()
                 except Exception as e:
                     self.logger.debug(f"sock.close(): {e}")
+
+    def pre_send(self, target=None, fuzz_data_logger=None, session=None):
+        """Check TLS connectivity before sending."""
+        return self._check_alive(fuzz_data_logger)
+
+    def post_send(self, target=None, fuzz_data_logger=None, session=None):
+        """Check TLS connectivity after sending."""
+        return self._check_alive(fuzz_data_logger)
 
 
 class ValidCaseMonitor(ProtocolMonitor):

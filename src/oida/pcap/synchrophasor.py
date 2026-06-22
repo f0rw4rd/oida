@@ -112,46 +112,6 @@ _DATA_ERRORS = {
     0xC000: "PMU error (not connected or not accessible)",
 }
 
-# Time quality indicator codes (synphasor.timeqal.timequalindic)
-_TIME_QUALITY = {
-    0x0: "Normal, clock locked",
-    0x1: "10 seconds",
-    0x2: "1 second",
-    0x3: "100 milliseconds",
-    0x4: "10 milliseconds",
-    0x5: "1 millisecond",
-    0x6: "100 microseconds",
-    0x7: "10 microseconds",
-    0x8: "1 microsecond",
-    0x9: "100 nanoseconds",
-    0xA: "Not used",
-    0xB: "Not used",
-    0xC: "Not used",
-    0xD: "Not used",
-    0xE: "Not used",
-    0xF: "Clock failure, time not reliable",
-}
-
-# PMU time quality codes (synphasor.data.pmu_tq)
-_PMU_TIME_QUALITY = {
-    0x00: "Not used (normal operation)",
-    0x40: "Max time error < 100 ns",
-    0x80: "Max time error < 1 us",
-    0xC0: "Max time error < 10 us",
-    0x100: "Max time error < 100 us",
-    0x140: "Max time error < 1 ms",
-    0x180: "Max time error < 10 ms",
-    0x1C0: "Time error > 10 ms or unknown",
-}
-
-# Unlock time codes (synphasor.data.t_unlock)
-_UNLOCK_TIME = {
-    0x00: "Sync locked or unlocked < 10 s",
-    0x10: "Unlocked > 10 s",
-    0x20: "Unlocked > 100 s",
-    0x30: "Unlocked > 1000 s",
-}
-
 
 def _resolve_frame_type(raw_val: int) -> str:
     """Resolve frame type from tshark value (handles both shifted and unshifted)."""
@@ -225,9 +185,6 @@ class SynchrophasorPassiveListener(PySharkListenerBase):
         "frame_type",
         "detail",
     )
-
-    # Default synchrophasor ports
-    _DEFAULT_PORTS = {4712, 4713}
 
     def __init__(
         self,
@@ -870,21 +827,4 @@ class SynchrophasorPassiveListener(PySharkListenerBase):
             }
             for s in self.sessions.values()
             if s.command_count > 0
-        ]
-
-    def get_pmu_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all discovered PMUs."""
-        return [
-            {
-                "idcode": pmu.idcode,
-                "ip": pmu.ip,
-                "station_name": pmu.station_name,
-                "num_phasors": pmu.num_phasors,
-                "data_rate": pmu.data_rate,
-                "nominal_freq": pmu.nominal_freq,
-                "data_frames": pmu.data_frames_seen,
-                "unsync_count": pmu.unsync_count,
-                "data_error_count": pmu.data_error_count,
-            }
-            for pmu in sorted(self.pmu_info.values(), key=lambda p: p.idcode)
         ]

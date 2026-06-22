@@ -1,23 +1,7 @@
 """GLBP (Gateway Load Balancing Protocol) shared constants.
 
-Used by both pcap/glbp.py (PyShark) and protocols/discovery/glbp.py (Scapy).
+Used by pcap/glbp.py (PyShark).
 """
-
-# GLBP constants
-GLBP_PORT = 3222
-GLBP_V4_MULTICAST = "224.0.0.102"
-GLBP_V6_MULTICAST = "ff02::66"
-
-# GLBP TLV types
-GLBP_TLV_HELLO = 1  # Virtual Gateway state/VIP advertisement
-GLBP_TLV_REQUEST_RESPONSE = 2  # Forwarder state/virtual MAC
-GLBP_TLV_AUTH = 3  # Authentication
-
-GLBP_TLV_NAMES = {
-    1: "Hello",
-    2: "Request/Response",
-    3: "Auth",
-}
 
 # Virtual Gateway (VG) states
 GLBP_VG_STATES = {

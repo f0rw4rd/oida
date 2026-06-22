@@ -45,7 +45,8 @@ class VRRPPassiveListener:
     """
 
     PROTOCOL_NAME = "vrrp-passive"
-    BPF_FILTER = "ip proto 112"
+    # proto 112 = VRRP. Match both IPv4 (VRRPv2/v3) and IPv6 (VRRPv3, ff02::12).
+    BPF_FILTER = "ip proto 112 or ip6 proto 112"
 
     def __init__(
         self,
@@ -91,7 +92,14 @@ class VRRPPassiveListener:
         try:
             from scapy.layers.vrrp import VRRP
 
-            if VRRP in packet:
+            # VRRPv3 (RFC 5798) dissects as a distinct scapy layer; guard the
+            # import in case the installed scapy predates VRRPv3 support.
+            try:
+                from scapy.layers.vrrp import VRRPv3
+            except ImportError:
+                VRRPv3 = None
+
+            if VRRP in packet or (VRRPv3 is not None and VRRPv3 in packet):
                 self._process_scapy_vrrp(packet)
         except Exception as e:
             logger.debug(f"VRRP packet error: {e}")
@@ -107,14 +115,36 @@ class VRRPPassiveListener:
         return self.discovered_devices
 
     def _process_scapy_vrrp(self, packet) -> None:
-        """Process VRRP packet using scapy's native VRRP layer."""
+        """Process VRRP packet using scapy's native VRRP / VRRPv3 layer."""
         try:
-            from scapy.all import IP, Ether
+            from scapy.all import IP, IPv6, Ether
             from scapy.layers.vrrp import VRRP
 
-            src_ip = packet[IP].src
-            dst_ip = packet[IP].dst
-            vrrp = packet[VRRP]
+            try:
+                from scapy.layers.vrrp import VRRPv3
+            except ImportError:
+                VRRPv3 = None
+
+            # VRRPv3 (RFC 5798) carries the same fields (version/type/vrid/
+            # priority/adv/addrlist) on a distinct scapy layer; select whichever
+            # is present so v3 advertisements are not silently dropped.
+            if VRRP in packet:
+                vrrp = packet[VRRP]
+            elif VRRPv3 is not None and VRRPv3 in packet:
+                vrrp = packet[VRRPv3]
+            else:
+                return
+
+            # VRRPv3 may ride over IPv6 (ff02::12), which has no IP layer.
+            if IP in packet:
+                src_ip = packet[IP].src
+                dst_ip = packet[IP].dst
+            elif IPv6 in packet:
+                src_ip = packet[IPv6].src
+                dst_ip = packet[IPv6].dst
+            else:
+                src_ip = ""
+                dst_ip = ""
 
             # Extract MAC from Ethernet layer if available
             src_mac = ""
@@ -171,7 +201,7 @@ class VRRPPassiveListener:
                         "is_address_owner": is_address_owner,
                         "virtual_ips": virtual_ips,
                         "adver_int": adver_int,
-                        "protocol": "VRRP",
+                        "protocol": "VRRPv3" if version == 3 else "VRRP",
                         "multicast_dst": dst_ip,
                     }
 

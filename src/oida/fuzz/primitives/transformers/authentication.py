@@ -325,54 +325,6 @@ class JWTTransformer(BaseTransformer):
 
         return payload_json
 
-    def verify(self, token: bytes, expected_sub: Optional[str] = None) -> bool:
-        """
-        Verify JWT signature and optionally check subject claim.
-
-        Args:
-            token: JWT token to verify
-            expected_sub: Expected "sub" claim value
-
-        Returns:
-            True if signature valid (and sub matches if provided)
-        """
-        try:
-            # Remove Bearer prefix
-            token = token.removeprefix(b"Bearer ")
-
-            parts = token.split(b".")
-            if len(parts) < 2:
-                return False
-
-            header_b64, payload_b64 = parts[0], parts[1]
-            signature_b64 = parts[2] if len(parts) > 2 else b""
-
-            # Verify signature
-            signing_input = header_b64 + b"." + payload_b64
-
-            if self.algorithm == "none":
-                # 'none' algorithm should have no signature
-                expected_sig = b""
-            else:
-                sig_raw = self.ALGORITHMS[self.algorithm](self.secret_key, signing_input)
-                expected_sig = self.base64url.encode(sig_raw)
-
-            if signature_b64 != expected_sig:
-                return False
-
-            # Verify subject claim if provided
-            if expected_sub:
-                payload_json = self.base64url.decode(payload_b64)
-                payload = json.loads(payload_json)
-                if payload.get("sub") != expected_sub:
-                    return False
-
-            return True
-
-        except Exception as e:
-            logger.debug(f"Operation failed: {e}")
-            return False
-
     @property
     def name(self) -> str:
         bearer = "-Bearer" if self.add_bearer else ""
@@ -460,7 +412,7 @@ class DigestAuthTransformer(BaseTransformer):
         elif algorithm == "SHA-256":
             self.hash_func = hashlib.sha256
         elif algorithm == "SHA-512-256":
-            self.hash_func = hashlib.sha512_256
+            self.hash_func = lambda data: hashlib.new("sha512_256", data)
         else:
             raise ValueError(f"Unsupported algorithm: {algorithm}")
 

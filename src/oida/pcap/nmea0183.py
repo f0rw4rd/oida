@@ -65,6 +65,7 @@ References:
 - Wireshark dissector: packet-nmea0183.c
 """
 
+import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -237,6 +238,10 @@ class NMEA0183PassiveListener(PySharkListenerBase):
         position_str = ""
         detail_str = ""
 
+        # Track source first so position/quality state exists before the
+        # sentence parsers consult it for spoofing detection.
+        self._track_source(src_ip, talker, sentence, now)
+
         # Parse sentence-specific fields
         if sentence == "GGA":
             position_str, detail_str = self._parse_gga(nmea, details, src_ip, now)
@@ -276,9 +281,6 @@ class NMEA0183PassiveListener(PySharkListenerBase):
             dst_port=dst_port,
             stream_id=stream_id,
         )
-
-        # Track source
-        self._track_source(src_ip, talker, sentence, now)
 
         # Update devices
         for ip, mac in ((src_ip, src_mac), (dst_ip, dst_mac)):
@@ -466,20 +468,23 @@ class NMEA0183PassiveListener(PySharkListenerBase):
         if lat is None or lon is None:
             return
         source = self.sources.get(src_ip)
-        if source is None or source.last_lat is None or source.last_lon is None:
+        if source is None:
             return
-        # Approximate distance in nautical miles (1 deg lat ~ 60 NM)
-        dlat = abs(lat - source.last_lat) * 60.0
-        # Longitude degrees vary with latitude
-        import math
-
-        dlon = abs(lon - source.last_lon) * 60.0 * math.cos(math.radians(lat))
-        dist_nm = math.sqrt(dlat * dlat + dlon * dlon)
-        if dist_nm > MAX_POSITION_JUMP_NM:
-            source.position_jumps += 1
-            self.logger.debug(
-                f"NMEA: GPS spoofing indicator from {src_ip}: position jump {dist_nm:.1f} NM"
-            )
+        # Only compare once we have a prior fix point for this source.
+        if source.last_lat is not None and source.last_lon is not None:
+            # Approximate distance in nautical miles (1 deg lat ~ 60 NM)
+            dlat = abs(lat - source.last_lat) * 60.0
+            # Longitude degrees vary with latitude
+            dlon = abs(lon - source.last_lon) * 60.0 * math.cos(math.radians(lat))
+            dist_nm = math.sqrt(dlat * dlat + dlon * dlon)
+            if dist_nm > MAX_POSITION_JUMP_NM:
+                source.position_jumps += 1
+                self.logger.debug(
+                    f"NMEA: GPS spoofing indicator from {src_ip}: position jump {dist_nm:.1f} NM"
+                )
+        # Persist the latest valid fix so the next update has a baseline.
+        source.last_lat = lat
+        source.last_lon = lon
 
     def _check_quality_change(self, src_ip: str, quality: str, now: str) -> None:
         """Track GPS quality indicator changes."""

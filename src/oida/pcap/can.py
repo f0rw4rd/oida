@@ -71,33 +71,6 @@ from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import lookup_mac_vendor
 
 
-# CAN ID ranges with typical meanings in automotive/industrial
-# These are informational -- CAN IDs are application-specific
-CAN_ID_PRIORITY_RANGES = {
-    (0x000, 0x07F): "highest priority (network management / safety)",
-    (0x080, 0x0FF): "high priority (time-critical control)",
-    (0x100, 0x17F): "above normal (powertrain / safety-related)",
-    (0x180, 0x1FF): "normal priority (sensor data)",
-    (0x200, 0x3FF): "normal priority (actuator commands / status)",
-    (0x400, 0x5FF): "below normal (diagnostic / configuration)",
-    (0x600, 0x6FF): "low priority (SDO / CANopen services)",
-    (0x700, 0x7FF): "lowest priority (NMT / heartbeat)",
-}
-
-# Error type descriptions
-CAN_ERROR_TYPES = {
-    "busoff": "Bus-off condition (node removed from bus)",
-    "buserror": "Bus error (bit/frame/stuff error)",
-    "ctrl": "Controller problem (overflow/warning/passive)",
-    "prot": "Protocol violation",
-    "trx": "Transceiver failure",
-    "ack": "No acknowledgment received",
-    "lostarb": "Lost arbitration",
-    "restarted": "Controller restarted after error",
-    "tx_timeout": "Transmit timeout",
-}
-
-
 @dataclass
 class CANNode:
     """Track a CAN node identified by its MAC address (caneth) or interface.

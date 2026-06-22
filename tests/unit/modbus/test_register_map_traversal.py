@@ -24,9 +24,7 @@ class TestRegisterMapTraversal(unittest.TestCase):
     def test_json_direct_path_loads(self):
         from oida.protocols.modbus.decoder import load_register_map
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", mode="w", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
             json.dump({"registers": {}, "model_id": 1}, f)
             json_path = f.name
 

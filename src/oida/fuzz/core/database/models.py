@@ -7,7 +7,7 @@ and session metadata.
 """
 
 from datetime import datetime
-from typing import Dict, Optional, List
+from typing import Optional, List
 from sqlalchemy import (
     Integer,
     BigInteger,
@@ -53,7 +53,7 @@ class TestCase(Base):
             "result",
             "timestamp",
         ),
-        # search_test_cases / triage UX wants to group by case name.
+        # Triage UX wants to group / look up test cases by case name.
         Index("idx_test_cases_name", "name"),
     )
 
@@ -417,9 +417,3 @@ def drop_all_tables(engine):
         engine: SQLAlchemy Engine instance
     """
     Base.metadata.drop_all(engine)
-
-
-# Type aliases for better type hints
-TestCaseList = List[TestCase]
-CrashList = List[Crash]
-MetadataDict = Dict[str, str]

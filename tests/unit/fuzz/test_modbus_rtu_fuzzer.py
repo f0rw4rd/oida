@@ -357,15 +357,72 @@ class TestModbusRTURequestDefinitions:
 
         source = inspect.getsource(ModbusRTUFuzzer._define_protocol)
         names = [d.name for d in ModbusRTUFuzzer.get_request_definitions()]
-        missing = [
-            name for name in names if f'is_request_enabled("{name}")' not in source
-        ]
+        missing = [name for name in names if f'is_request_enabled("{name}")' not in source]
         assert not missing, f"Advertised requests with no is_request_enabled() gate: {missing}"
 
     def test_combined_attacks_not_advertised(self):
         """RTU_Combined_Attacks was a phantom and must stay removed unless implemented."""
         names = [d.name for d in ModbusRTUFuzzer.get_request_definitions()]
         assert "RTU_Combined_Attacks" not in names
+
+
+class TestModbusRTUBroadcastCRC:
+    """Regression tests for broadcast-frame CRC coverage.
+
+    The broadcast requests (RTU_Broadcast_Write / RTU_Broadcast_Read_Invalid)
+    historically placed Byte("Slave_Address") as a sibling of Block("PDU")
+    while the Checksum still pointed at block_name="PDU". That excluded the
+    leading 0x00 broadcast slave-address byte from the CRC-16 input, so every
+    broadcast frame carried an invalid CRC and a conformant slave silently
+    dropped it. The Slave_Address must live inside the PDU block so the CRC
+    covers slave address + PDU per the Modbus RTU spec.
+    """
+
+    @pytest.fixture
+    def broadcast_fuzzer(self):
+        """RTU fuzzer with broadcast requests enabled and connected."""
+        config = FuzzerConfig(
+            target_ip="127.0.0.1",
+            target_port=502,
+            session_filename="modbus_rtu_broadcast_test",
+            protocol_options={
+                "serial_port": "/dev/ttyUSB0",
+                "baudrate": 9600,
+                "enable_broadcast": True,
+            },
+        )
+        return ModbusRTUFuzzer(
+            config=config,
+            connection_factory=MockConnectionFactory(),
+        )
+
+    @staticmethod
+    def _render_request(fuzzer, name):
+        """Render a connected boofuzz request node by name."""
+        for node in fuzzer.session.nodes.values():
+            if node.name == name:
+                return node.render()
+        raise AssertionError(f"request {name!r} not connected in session")
+
+    @pytest.mark.parametrize(
+        "request_name",
+        ["RTU_Broadcast_Write", "RTU_Broadcast_Read_Invalid"],
+    )
+    def test_broadcast_crc_covers_slave_address(self, broadcast_fuzzer, request_name):
+        """Rendered broadcast CRC must be computed over slave address + PDU."""
+        frame = self._render_request(broadcast_fuzzer, request_name)
+        body, crc = frame[:-2], frame[-2:]
+
+        # Broadcast frame leads with the 0x00 broadcast slave address.
+        assert body[0] == 0x00
+
+        crc_with_addr = broadcast_fuzzer._calculate_modbus_crc(body)
+        crc_without_addr = broadcast_fuzzer._calculate_modbus_crc(body[1:])
+
+        # The on-wire CRC must match the spec-correct (addr + PDU) computation.
+        assert crc == crc_with_addr
+        # And must NOT match the buggy PDU-only computation (guards regression).
+        assert crc != crc_without_addr
 
 
 class TestModbusRTUProtocolOptions:

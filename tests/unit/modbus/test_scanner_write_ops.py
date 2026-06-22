@@ -110,6 +110,31 @@ class TestWriteRegisterSafe:
         assert result["success"] is False
         assert "net" in result["error"]
 
+    def test_holding_failed_restore_reports_not_restored(self):
+        # Regression: a restore write rejected by the device (exception response)
+        # must NOT report restored=True — the live register is left modified.
+        s = make_scanner()
+        client = MagicMock()
+        client.read_holding_registers.return_value = _ok_reg([777])
+        # initial write succeeds, restore write returns an error response
+        client.write_register.side_effect = [_ok_reg([]), _err()]
+        result = s._write_register_safe(client, 10, 42, restore_on_exit=True)
+        assert result["success"] is True
+        assert result["restored"] is False
+        assert "Restore" in result["error"]
+        s.logger.warning.assert_called_once()
+
+    def test_coil_failed_restore_reports_not_restored(self):
+        s = make_scanner()
+        client = MagicMock()
+        client.read_coils.return_value = _ok_bits([True])
+        client.write_coil.side_effect = [_ok_bits([]), _err()]
+        result = s._write_register_safe(client, 3, 0, register_type="coil", restore_on_exit=True)
+        assert result["success"] is True
+        assert result["restored"] is False
+        assert "Restore" in result["error"]
+        s.logger.warning.assert_called_once()
+
 
 # ---------------------------------------------------------------------------
 # _write_multiple_registers / _write_multiple_coils
@@ -155,6 +180,29 @@ class TestWriteMultiple:
         result = s._write_multiple_coils(client, 0, [True])
         assert result["success"] is False
         assert "boom" in result["error"]
+
+    def test_registers_failed_restore_reports_not_restored(self):
+        # Regression: restore write_registers rejected -> restored must stay False.
+        s = make_scanner()
+        client = MagicMock()
+        client.read_holding_registers.return_value = _ok_reg([1, 2, 3])
+        client.write_registers.side_effect = [_ok_reg([]), _err()]
+        result = s._write_multiple_registers(client, 0, [9, 9, 9], restore_on_exit=True)
+        assert result["success"] is True
+        assert result["restored"] is False
+        assert "Restore" in result["error"]
+        s.logger.warning.assert_called_once()
+
+    def test_coils_failed_restore_reports_not_restored(self):
+        s = make_scanner()
+        client = MagicMock()
+        client.read_coils.return_value = _ok_bits([True, False])
+        client.write_coils.side_effect = [_ok_bits([]), _err()]
+        result = s._write_multiple_coils(client, 0, [False, True], restore_on_exit=True)
+        assert result["success"] is True
+        assert result["restored"] is False
+        assert "Restore" in result["error"]
+        s.logger.warning.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

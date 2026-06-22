@@ -38,6 +38,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 import logging
 
@@ -154,6 +155,7 @@ class BFDPassiveListener(PySharkListenerBase):
             return
 
         src_port, dst_port = self.get_port_info(packet)
+        src_mac, dst_mac = self.get_mac_info(packet)
         flow_id = self.get_flow_id(packet)
 
         # --- T1 field: bfd.version (EK: "version") ---
@@ -258,6 +260,8 @@ class BFDPassiveListener(PySharkListenerBase):
             version=version,
             my_disc=my_disc,
             detect_mult=detect_mult,
+            src_mac=src_mac,
+            dst_mac=dst_mac,
         )
 
         # Extract credentials only from auth-bearing packets
@@ -313,15 +317,22 @@ class BFDPassiveListener(PySharkListenerBase):
         version: int = -1,
         my_disc: str = "",
         detect_mult: str = "",
+        src_mac: str = "",
+        dst_mac: str = "",
     ) -> None:
         """Update device entries with BFD session state."""
-        for ip, role in [(src_ip, "sender"), (dst_ip, "receiver")]:
+        for ip, role, mac in [(src_ip, "sender", src_mac), (dst_ip, "receiver", dst_mac)]:
+            if not is_valid_discovered_ip(ip):
+                continue
             device_key = f"bfd:{ip}"
+            vendor = lookup_mac_vendor(mac) if mac else ""
             device, is_new = self._ensure_device(
                 device_key,
                 ip,
+                mac=mac or "",
                 name=f"BFD Peer ({ip})",
                 device_type="Router",
+                manufacturer=vendor if vendor and vendor != "Unknown" else "",
             )
             if is_new:
                 device.bfd_passive_data = {
@@ -358,5 +369,3 @@ class BFDPassiveListener(PySharkListenerBase):
             }
             for cred in self.credentials
         ]
-
-

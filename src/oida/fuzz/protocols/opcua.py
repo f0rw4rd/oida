@@ -109,6 +109,12 @@ class OPCUAFuzzer(BaseFuzzer):
         self.token_id = 0
         self.auth_token = None
 
+        # In use_session mode the asyncua client and its event loop are kept
+        # alive for the whole fuzz run so the extracted SecureChannelId/TokenId/
+        # AuthToken stay valid server-side; they are torn down in fuzz_all().
+        self._asyncua_client = None
+        self._asyncua_loop = None
+
         # StateContext for carrying state between transitions
         self._state_context = StateContext()
 
@@ -573,46 +579,54 @@ class OPCUAFuzzer(BaseFuzzer):
                 client.set_user(self.opcua_username)
                 client.set_password(self.opcua_password or "")
 
-            try:
-                await client.connect()
-                # Extract live protocol state from client internals
-                protocol = client.uaclient.protocol
-                conn = protocol._connection
-                self.secure_channel_id = conn.security_token.ChannelId
-                self.token_id = conn.security_token.TokenId
-                self.auth_token = protocol.authentication_token
-                # Store state in context for cross-state access
-                ctx = self._state_context
-                ctx.set("secure_channel_id", self.secure_channel_id)
-                ctx.set("token_id", self.token_id)
-                ctx.set("auth_token", self.auth_token)
+            await client.connect()
+            # Extract live protocol state from client internals
+            protocol = client.uaclient.protocol
+            conn = protocol._connection
+            self.secure_channel_id = conn.security_token.ChannelId
+            self.token_id = conn.security_token.TokenId
+            self.auth_token = protocol.authentication_token
+            # Store state in context for cross-state access
+            ctx = self._state_context
+            ctx.set("secure_channel_id", self.secure_channel_id)
+            ctx.set("token_id", self.token_id)
+            ctx.set("auth_token", self.auth_token)
 
-                # Use CryptoStateManager for nonce tracking. asyncua exposes the
-                # peer nonce as SecureConnection.remote_nonce (the old
-                # "server_nonce" attribute never existed, so the getattr default
-                # silently stored empty bytes). It inits to int 0 before the
-                # handshake completes, hence the isinstance guard.
-                remote_nonce = getattr(conn, "remote_nonce", b"")
-                ctx.crypto.set_nonce(
-                    "server_nonce",
-                    remote_nonce if isinstance(remote_nonce, bytes) else b"",
-                )
+            # Use CryptoStateManager for nonce tracking. asyncua exposes the
+            # peer nonce as SecureConnection.remote_nonce (the old
+            # "server_nonce" attribute never existed, so the getattr default
+            # silently stored empty bytes). It inits to int 0 before the
+            # handshake completes, hence the isinstance guard.
+            remote_nonce = getattr(conn, "remote_nonce", b"")
+            ctx.crypto.set_nonce(
+                "server_nonce",
+                remote_nonce if isinstance(remote_nonce, bytes) else b"",
+            )
 
-                self.log.display(
-                    f"Session established via asyncua - "
-                    f"ChannelId: {self.secure_channel_id}, "
-                    f"TokenId: {self.token_id}, "
-                    f"AuthToken: {self.auth_token}"
-                )
-            finally:
-                await client.disconnect()
+            self.log.display(
+                f"Session established via asyncua - "
+                f"ChannelId: {self.secure_channel_id}, "
+                f"TokenId: {self.token_id}, "
+                f"AuthToken: {self.auth_token}"
+            )
+            # Keep the client connected so the SecureChannel/session - and the
+            # ChannelId/TokenId/AuthToken extracted above - stay valid server-side
+            # for the whole fuzz run. Disconnecting here would invalidate the very
+            # channel/token every fuzzed MSG injects. Teardown happens in fuzz_all()
+            # once fuzzing completes.
+            return client
 
         try:
             loop = asyncio.new_event_loop()
-            loop.run_until_complete(_setup())
-            loop.close()
+            client = loop.run_until_complete(_setup())
+            # Do NOT close the loop yet: the connected client owns asyncio state
+            # bound to this loop and must be disconnected on the same loop in
+            # _teardown_asyncua_client() (called from fuzz_all()).
+            self._asyncua_loop = loop
+            self._asyncua_client = client
         except Exception as e:
             self.log.warning(f"Session setup failed (will fuzz with defaults): {e}")
+            self._teardown_asyncua_client()
             return
 
         connected = ProtocolState(
@@ -652,6 +666,40 @@ class OPCUAFuzzer(BaseFuzzer):
             f"OPC UA state machine initialized - SecureChannelId: {self.secure_channel_id}, "
             f"TokenId: {self.token_id}"
         )
+
+    def _teardown_asyncua_client(self) -> None:
+        """Disconnect the kept-alive asyncua client and close its event loop.
+
+        Idempotent and exception-safe: called once after fuzzing completes (or
+        on setup failure). Disconnect runs on the same loop the client was
+        connected on, since asyncua's connection state is bound to that loop.
+        """
+        client = self._asyncua_client
+        loop = self._asyncua_loop
+        self._asyncua_client = None
+        self._asyncua_loop = None
+        if loop is None:
+            return
+        try:
+            if client is not None:
+                loop.run_until_complete(client.disconnect())
+        except Exception as e:
+            self.log.debug(f"asyncua client teardown failed: {e}")
+        finally:
+            loop.close()
+
+    def fuzz_all(self) -> None:
+        """Fuzz OPC UA, keeping the use_session asyncua client alive throughout.
+
+        In use_session mode the SecureChannel/session established by
+        _define_state_machine() must remain connected for the whole run so the
+        extracted ChannelId/TokenId/AuthToken stay valid server-side. We tear the
+        client down only after fuzzing finishes.
+        """
+        try:
+            super().fuzz_all()
+        finally:
+            self._teardown_asyncua_client()
 
     def _define_protocol(self) -> None:
         """Define OPC UA protocol fuzzing structure"""

@@ -7,7 +7,6 @@ This module registers GOOSE-specific command-line arguments.
 import argparse
 
 from ...utils.proto_args_factory import (
-    add_target_argument,
     create_protocol_parser,
 )
 
@@ -37,11 +36,18 @@ Security Testing:
         epilog=examples_epilog,
     )
 
-    # Target argument: interface name for sniffing, or used with --mms-enum/--rgoose
-    add_target_argument(
-        goose_parser,
-        help_text="Network interface for GOOSE sniffing (e.g., eth0), "
-        "or target for --rgoose/--mms-enum modes",
+    # Target argument: interface name for sniffing. Optional because the
+    # MMS GoCB-enumeration mode (--mms-enum <ip>) and the R-GOOSE listener
+    # mode (--rgoose) carry their own target and do not need a positional;
+    # see cli.py which derives the run target from --mms-enum when the
+    # positional is absent. add_target_argument() registers a *required*
+    # positional, so register it directly here with nargs="?" instead.
+    goose_parser.add_argument(
+        "target",
+        nargs="?",
+        default="",
+        help="Network interface for GOOSE sniffing (e.g., eth0). "
+        "Optional in --mms-enum/--rgoose modes.",
     )
 
     # Capture options

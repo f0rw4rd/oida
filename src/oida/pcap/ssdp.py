@@ -93,14 +93,9 @@ class SSDPPassiveListener(PySharkListenerBase):
             return True
         # Fall back to checking for HTTP on port 1900
         if hasattr(packet, "http"):
-            try:
-                if hasattr(packet, "udp"):
-                    src_port = int(packet.udp.srcport)
-                    dst_port = int(packet.udp.dstport)
-                    if src_port == SSDP_PORT or dst_port == SSDP_PORT:
-                        return True
-            except (ValueError, AttributeError) as e:
-                self.logger.debug(f"if hasattr(packet, udp):: {e}")
+            src_port, dst_port = self.get_port_info(packet)
+            if src_port == SSDP_PORT or dst_port == SSDP_PORT:
+                return True
         return False
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
@@ -131,6 +126,7 @@ class SSDPPassiveListener(PySharkListenerBase):
 
         flow_id = self.get_flow_id(packet)
         src_port, dst_port = self.get_port_info(packet)
+        stream_id = self.get_stream_id(packet)
         src_mac, _ = self.get_mac_info(packet)
 
         # Extract SSDP fields from either ssdp or http layer
@@ -155,6 +151,7 @@ class SSDPPassiveListener(PySharkListenerBase):
             flow_id=flow_id,
             src_port=src_port,
             dst_port=dst_port,
+            stream_id=stream_id,
         )
 
         # Skip multicast/broadcast for device tracking

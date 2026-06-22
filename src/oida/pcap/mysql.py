@@ -1591,8 +1591,13 @@ class MySQLPassiveListener(PySharkListenerBase):
 
         return list(pairs.values())
 
-    def get_hashcat_format(self) -> List[str]:
+    def get_hashcat_hashes(self) -> List[str]:
         """Get credentials in hashcat-compatible format.
+
+        Canonical method name probed by the scanner's ``_export_hashcat``
+        (``--hashcat``).  Previously named ``get_hashcat_format``, which the
+        scanner never called, so MySQL hashes were silently dropped from the
+        hashcat export.
 
         Returns:
             List of hash strings for hashcat mode 11200:

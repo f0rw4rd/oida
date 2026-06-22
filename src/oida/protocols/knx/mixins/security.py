@@ -66,8 +66,11 @@ class SecurityMixin:
 
                         if resp and resp.payload:
                             level = resp.payload.level
-                            # Level 3 and 15 indicate no access
-                            if level != 3 and level != 15:
+                            # Level 15 is the unauthenticated / no-access
+                            # sentinel; levels 0-3 are all granted roles
+                            # (0 = highest privilege, 3 = lowest), so any
+                            # level other than 15 means the key authenticated.
+                            if level != 15:
                                 self.logger.success(
                                     f"[{i}/{total}] KEY FOUND: 0x{key_hex} -> level {level}"
                                 )
@@ -218,7 +221,18 @@ class SecurityMixin:
             self.logger.display("Skipping write tests (read-only mode)")
             return write_results
 
+        # Write-access testing actuates the bus (a real MemoryWrite transaction,
+        # even though it writes the original value back), so it is a DANGEROUS
+        # operation and must be gated behind --confirm like every other write
+        # path in this module.
+        if not self.args.get("confirm"):
+            self.logger.fail("--test-write requires --confirm flag (DANGEROUS operation)")
+            return write_results
+
         self.logger.display(f"Testing write access to {len(devices)} devices")
+
+        # Mirror _write_memory's guard: never write into system memory.
+        system_memory_end = getattr(self, "SYSTEM_MEMORY_END", 0x00FF)
 
         for device in devices:
             if not device.get("accessible"):
@@ -236,6 +250,12 @@ class SecurityMixin:
                     test_addresses = [0x0116]  # Safe test location
 
                     for mem_addr in test_addresses:
+                        if mem_addr <= system_memory_end:
+                            device_results["errors"].append(
+                                f"Memory {hex(mem_addr)}: in system memory range "
+                                f"(0x0000-{hex(system_memory_end)}), write skipped"
+                            )
+                            continue
                         try:
                             # Read original value (non-destructive write-back test).
                             resp = await p2p.request(

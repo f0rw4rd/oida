@@ -27,14 +27,7 @@ from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip
 
 # VNC security types
-VNC_SECURITY_NONE = 1
 VNC_SECURITY_VNC_AUTH = 2
-VNC_SECURITY_RA2 = 5
-VNC_SECURITY_RA2NE = 6
-VNC_SECURITY_TIGHT = 16
-VNC_SECURITY_ULTRA = 17
-VNC_SECURITY_TLS = 18
-VNC_SECURITY_VENCRYPT = 19
 
 # Well-known VNC port range
 _VNC_PORTS = frozenset(range(5900, 5910))
@@ -353,9 +346,7 @@ class VNCPassiveListener(PySharkListenerBase):
         if auth_result is not None:
             # RFB SecurityResult: tshark FT_BOOLEAN where TRUE means Failed,
             # FALSE (0) means OK/success. Invert accordingly.
-            result_str = (
-                "failed" if str(auth_result) in ("1", "True", "true") else "success"
-            )
+            result_str = "failed" if str(auth_result) in ("1", "True", "true") else "success"
             self._record_interaction(
                 now,
                 src_ip,

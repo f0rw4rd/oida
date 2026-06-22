@@ -127,9 +127,6 @@ SDO_COMMANDS = {
 # SDO write commands (security-relevant)
 SDO_WRITE_COMMANDS = {0x02, 0x04, 0x06}
 
-# NMT commands classified as dangerous / control operations
-NMT_CONTROL_COMMANDS = {0x01, 0x02, 0x03, 0x05, 0x06, 0x07, 0x08}
-
 # Managing Node default address
 MN_NODE_ID = 240
 
@@ -527,21 +524,4 @@ class EPLPassiveListener(PySharkListenerBase):
             }
             for node in self.nodes.values()
             if node.nmt_commands_sent > 0
-        ]
-
-    def get_nodes_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all observed EPL nodes."""
-        return [
-            {
-                "node_id": node.node_id,
-                "role": node.role,
-                "nmt_state": node.nmt_state,
-                "hostname": node.hostname,
-                "vendor_id": node.vendor_id,
-                "product_code": node.product_code,
-                "sdo_writes": node.sdo_write_count,
-                "sdo_reads": node.sdo_read_count,
-                "nmt_commands": node.nmt_commands_sent,
-            }
-            for node in sorted(self.nodes.values(), key=lambda n: n.node_id)
         ]

@@ -559,10 +559,6 @@ def lookup_device_name(order_code: str) -> Optional[str]:
     # Try exact match
     if normalized in SIEMENS_DEVICES:
         return SIEMENS_DEVICES[normalized]
-    # Try with space/dash variants
-    for variant in [normalized.replace("-", " "), normalized.replace(" ", "-")]:
-        if variant in SIEMENS_DEVICES:
-            return SIEMENS_DEVICES[variant]
     # Try prefix match (first 17 chars covers base order code)
     prefix = normalized[:17]
     for code, name in SIEMENS_DEVICES.items():

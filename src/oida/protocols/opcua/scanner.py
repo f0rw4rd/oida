@@ -167,10 +167,15 @@ class OPCUAScanner(NetworkScanner):
     def validate_target(self, host: str, port: int) -> bool:
         """Validate OPC UA target, allowing opc.tcp:// URLs"""
         if host.startswith("opc.tcp://"):
-            # Extract actual host from URL for validation
-            actual_host = host.replace("opc.tcp://", "").split(":")[0]
+            # Extract actual host from URL for validation. Delegate to the
+            # IPv6-aware parser so bracketed endpoints like opc.tcp://[::1]:4840
+            # are not mis-split into '[' the way the old naive splitter did.
+            from .helpers import _parse_opcua_url
+
+            actual_host, _, _ = _parse_opcua_url(host)
             try:
-                ipaddress.ip_address(actual_host)
+                # ip_address() rejects the bracketed form, so strip [] first.
+                ipaddress.ip_address(actual_host.strip("[]"))
                 return True
             except ValueError:
                 try:
@@ -747,11 +752,3 @@ class OPCUAScanner(NetworkScanner):
 metadata, run = create_protocol_module(
     OPCUAScanner, dependencies_check_func=lambda: not _asyncua.is_available
 )
-
-
-if __name__ == "__main__":
-    # CLI entry point
-    import sys
-    from ...utils.cli import main
-
-    main(sys.argv, run, metadata)

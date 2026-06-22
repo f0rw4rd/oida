@@ -458,6 +458,110 @@ Key rules:
 - Intentionally small buffers with comments marking the vulnerability
 - Comments at vulnerable code explaining exactly what's wrong
 
+## Real CVE Mode — build the actual vulnerable OSS (preferred over simulation when feasible)
+
+There are two ways to make a CVE container. Know which you're producing and why.
+
+- **Fake (simulation)** — hand-written C that *mimics* the bug with a deliberately tiny buffer + canary/`abort()`. Always crashes on the trigger, cheap, but it is **not the real code**. Good as a guaranteed fuzz/crash target.
+- **Real (build-from-source)** — clone the affected open-source project at the vulnerable version and run the **genuine flawed code** under sanitizers. Authentic, but it only produces an observable crash if the bug actually *escapes its allocation through the network path*.
+
+**Prefer Real** when the affected software is open-source and server-side; fall back to Fake when Real provably won't crash (see R2/R6). Keep both side by side: `Dockerfile.<proto>-cve-<id>-real` and `...-fake`, `<proto>_cve_<y>_<n>_real.c`.
+
+### R1 — Source & triage the CVE (OT Brain MCP)
+
+Use the brain tools, don't guess:
+- `search-cves` with `vendor=`, `cwe=`, `min_exploits=1`, `av_network=true`, `no_user_interaction=true`, `preauth=true` to find candidates.
+- `lookup-cve` with `depth="full"` for fix commits, affected versions, and public PoC repos (`github_pocs`).
+- Debian `security-tracker.debian.org/tracker/<CVE>` (via WebFetch) is the **authoritative source for the exact fix commit(s) and fixed version** → the vulnerable build tag is the last release *before* the fix.
+
+**Pick** CVEs that are: open-source (buildable), **server-side**, pre-auth (`AV:N/PR:N/UI:N`), and ideally a memory **write** (CWE-787) or allocator violation (double-free CWE-415 / UAF CWE-416).
+
+**Reject** (and say why):
+- **Bogus / disputed** — Debian marks "bogus"/"NOT-FOR-US", or the upstream issue is contested ("just a test-case bug"). E.g. CVE-2023-26793.
+- **Closed-source or client-side** — can't build, or the bug is in a master/client, not a network server (e.g. Schneider ModbusDrv.exe, Automated Solutions OPC master).
+- **"Bad use of API"** — overflow only via an app-supplied bogus length the network can't set; `recv` caps the wire frame first → unreachable (e.g. CVE-2024-10918).
+- **Duplicate** — different CVE id, same fix line as a container you already have (e.g. CVE-2024-36843 == CVE-2022-0367 at `modbus.c:980`). Label the existing one "also covers X"; don't build a clone.
+
+### R2 — Reachability & crash-class analysis (BEFORE building)
+
+Read the vulnerable source at the fix commit and classify the bug. **This decides whether a crash is even possible.**
+
+| Class | Example | Crashes under ASan natively? | Action |
+|---|---|---|---|
+| (a) crosses the allocation boundary — negative/underflow index, unbounded length | CVE-2022-0367 (FC 0x17 write_addr < start → write *before* heap chunk) | ✅ yes | build real + ASan, done |
+| (b) allocator violation — double-free / use-after-free | UAF on a freed pointer | ✅ yes, geometry-independent | build real + ASan |
+| (c) **contained** — over-read/over-write bounded by a fixed protocol buffer, or off-by-one into an adjacent field of the *same* allocation | CVE-2019-14462/63 (read ≤246 B inside the 260 B ADU buf); nanoMODBUS CVE-2026-54410 (+1 byte into adjacent `buf_idx`) | ❌ **no** — access stays inside the live allocation | needs **ASan manual poisoning** (R4) or a post-parse assertion; if neither is feasible, ship Fake |
+
+The governing law: **ASan/segfault only see *allocation* boundaries, not *message* boundaries.** A read that's out of bounds w.r.t. the Modbus message but inside the 260-byte buffer is invisible — it's a real *logic/info-disclosure* vuln, not a memory-safety one.
+
+Also map the **protocol pre-checks** the trigger must pass to reach the bug (e.g. libmodbus rejects `quantity > mapping size` *before* the vulnerable read — the PoC quantity must be within the map yet mismatch byte_count). Miss this and the server returns a clean exception instead of crashing.
+
+### R3 — Build the real vulnerable library with sanitizers
+
+```dockerfile
+FROM debian:bullseye
+RUN apt-get update && apt-get install -y \
+    git build-essential autoconf automake libtool pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+RUN git clone https://github.com/<owner>/<lib>.git && cd <lib> && \
+    git checkout <vulnerable-tag> && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr \
+        ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes \
+        CFLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+        LDFLAGS="-fsanitize=address,undefined" && \
+    make -j$(nproc) -C src && make -C src install
+WORKDIR /app
+COPY <proto>/<proto>_cve_<y>_<n>_real.c server.c
+RUN gcc -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer \
+    -o server server.c -I/usr/include -l<lib>
+ENV LD_LIBRARY_PATH=/usr/lib
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0   # UBSan log-only; ASan owns the abort
+CMD ["./server"]
+```
+
+Build gotchas (real, hit these):
+- **`undefined reference to rpl_malloc`** on old autoconf (e.g. libmodbus ≤3.1.4) → pass `ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes` to `configure`.
+- `make -C src install` skips the pkg-config `.pc` → link the harness with `-l<lib>` directly, not `$(pkg-config ...)`.
+- The **library itself** must be ASan-built — the vulnerable access happens inside it, so its loads/stores are the ones that must consult ASan's shadow.
+- For a project that ships its own server (e.g. libmodbus `tests/unit-test-server`), you can run that instead of writing a harness — it binds `127.0.0.1`, so fire the PoC in-container.
+
+### R4 — Smart ASan for contained bugs (manual poisoning)
+
+For class (c), retrofit detection by modeling the *protocol* boundary as a *memory* boundary. After each receive, poison the unused tail of the fixed buffer; unpoison before the next receive:
+
+```c
+void __asan_poison_memory_region(void const volatile *addr, size_t size);
+void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
+...
+int rc = modbus_receive(ctx, query);          /* rc = real bytes received */
+if (rc == -1) break;
+__asan_poison_memory_region(query + rc, sizeof(query) - rc);  /* tail = off-limits */
+modbus_reply(ctx, query, rc, mb_mapping);     /* over-read past rc -> use-after-poison */
+__asan_unpoison_memory_region(query, sizeof(query));          /* reset for next request */
+```
+
+This is a **moving fence inside the buffer** at the logical end of the message — it turns "out of the *message*" into something ASan can see, without touching the actual bytes. Caveat: it can't isolate an off-by-one that lands in a field *overlapping* the buffer's own allocation (nanoMODBUS `buf[260]` == `buf_idx`); for that use a guard-page allocator or a post-`recv` assertion (e.g. `assert(buf_idx unchanged)`).
+
+### R5 — PoC
+
+Minimal raw-socket Python, but it must **pass the protocol pre-checks from R2** to reach the bug (right function code, quantity within mapping bounds, byte_count mismatch, etc.). If the trigger is multi-step (prime the buffer, then under-count), include both frames on one connection.
+
+### R6 — Critical verification (MANDATORY — never claim a crash without evidence)
+
+1. `docker build`, `docker run -d`, wait for the listen banner, fire the PoC.
+2. Capture **both** `docker inspect -f '{{.State.Status}} exit={{.State.ExitCode}}'` **and** the ASan/UBSan report from `docker logs`.
+3. **Confirm the crash lands on the genuine vulnerable function/line** named by the CVE/fix commit (e.g. `modbus.c:980`, `modbus-data.c:89`) — a crash at the wrong place is not a pass.
+4. Emit a per-CVE **verdict**, honestly:
+   - ✅ **real crash** — ASan aborts at the expected line via the network path.
+   - ⚠️ **contained** — vuln path reached but no native crash; added poisoning → now aborts (or, if poisoning can't isolate it, document as behavioral-only and ship Fake for the crash).
+   - ❌ **not network-reachable** — bug needs API misuse; keep Fake, don't ship `-real`.
+   - ❌ **bogus / duplicate** — drop, or label an existing container as "also covers".
+
+Hard rules: distinguish "real library runs the vulnerable code" from "observable crash" — they are not the same. Never present a green result without the exit code + ASan trace. If it doesn't crash, say so and explain the class-(c)/reachability reason; do not quietly fall back to a canary fake and call it the CVE.
+
 ## Step 6 — Validate Output
 
 ### Compose Entry Checklist

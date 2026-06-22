@@ -575,11 +575,11 @@ def display_knxproj_data(data: Dict[str, Any], logger) -> None:
     topology = data.get("topology", {})
     if topology:
         logger.display("\n--- Topology ---")
-        for area_id, area in topology.items():
+        for area in topology.values():
             area_addr = area.get("address", "?")
             area_name = area.get("name", "Unknown")
             logger.display(f"Area {area_addr}: {area_name}")
-            for line_id, line in area.get("lines", {}).items():
+            for line in area.get("lines", {}).values():
                 line_addr = line.get("address", "?")
                 line_name = line.get("name", "")
                 device_count = len(line.get("devices", {}))

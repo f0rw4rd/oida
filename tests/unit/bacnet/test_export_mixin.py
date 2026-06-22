@@ -48,6 +48,30 @@ class TestParseObjectId(unittest.TestCase):
         result = scanner._parse_object_id("invalid")
         self.assertEqual(result, (0, 0))
 
+    def test_parse_non_numeric_instance_does_not_raise(self):
+        # Regression: a non-numeric instance (e.g. a garbled/hostile objectList
+        # entry) must yield (0, 0) instead of raising ValueError, which would
+        # propagate up and abort enumeration of the entire device.
+        scanner = _create_instance()
+        result = scanner._parse_object_id("analogInput:notanumber")
+        self.assertEqual(result, (0, 0))
+
+    def test_parse_empty_instance_does_not_raise(self):
+        # A trailing separator with no instance must not raise.
+        scanner = _create_instance()
+        result = scanner._parse_object_id("analogInput:")
+        self.assertEqual(result, (0, 0))
+
+    def test_parse_separator_only_single_part(self):
+        # When the split yields a single part (separator at the end with empty
+        # tail collapses, or just a lone token), parts[1] must not be indexed.
+        scanner = _create_instance()
+        # A colon at the start gives parts == ["", "5"] -> still 2 parts;
+        # but a value whose only separator-split yields one element is guarded
+        # by the no-separator branch. Exercise the comma path with a bad tail.
+        result = scanner._parse_object_id("analogInput,bad")
+        self.assertEqual(result, (0, 0))
+
     def test_parse_object_with_attributes(self):
         # bacpypes3-style object: type and instance both come from the single
         # objectIdentifier 2-tuple, not a separate objectType scalar.

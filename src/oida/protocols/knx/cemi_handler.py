@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Dict, Set, List, Any, TYPE_CHECKING
 
 from .helpers import (
-    _get_cemi_classes,
+    _get_cemi_message_code,
     _get_xknx_classes,
     parse_bus_ranges,
 )
@@ -59,8 +59,7 @@ class CustomCEMIHandler:
             f"fast_bus_discovery: range={bus_range}, timeout={timeout}s, listen={listen_time}s"
         )
 
-        # Get required classes (CEMIFrame is unused here)
-        _, _, CEMIMessageCode = _get_cemi_classes()
+        CEMIMessageCode = _get_cemi_message_code()
         _, _, _, _, _, Telegram, _, tpci = _get_xknx_classes()
 
         self.is_in_discovery = True

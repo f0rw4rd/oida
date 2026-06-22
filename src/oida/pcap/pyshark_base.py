@@ -55,6 +55,37 @@ class ProtocolInteraction:
         return "req" if self.direction == "request" else "res"
 
 
+@dataclass
+class DirectionResult:
+    """Resolved client/server roles and request/response direction for a packet.
+
+    Produced by :meth:`PySharkListenerBase.resolve_direction`.  ``confidence``
+    records *how* the direction was determined so callers (and output) can tell
+    an authoritative protocol signal from a heuristic guess:
+
+    - ``"native"``    -- protocol's own request/response field (most reliable,
+                          port-independent)
+    - ``"port"``      -- one endpoint is on a known server port (canonical
+                          default or a user ``--decode-as`` / OVERRIDE_PREFS map)
+    - ``"heuristic"`` -- first-seen-in-flow / lower-port fallback (least
+                          reliable; ``inferred`` is True)
+    - ``"unknown"``   -- nothing distinguished the endpoints
+    """
+
+    is_request: bool
+    client_ip: str
+    server_ip: str
+    client_port: int = 0
+    server_port: int = 0
+    confidence: str = "unknown"
+    inferred: bool = False
+
+    @property
+    def direction(self) -> str:
+        """``"request"`` / ``"response"`` label for ``_record_interaction``."""
+        return "request" if self.is_request else "response"
+
+
 class PySharkListenerBase(ABC):
     """Abstract base class for PyShark-based passive listeners.
 
@@ -84,6 +115,15 @@ class PySharkListenerBase(ABC):
     # columns; the common prefix (Dir, Src, Dst) is prepended automatically.
     PROTOCOL_COLUMNS: Tuple[str, ...] = ()  # subclass defines these
 
+    # Direction detection (see resolve_direction()).  SERVER_PORTS lists the
+    # canonical TCP/UDP port(s) the protocol's server listens on; it seeds the
+    # port-heuristic tier and is *unioned* with user --decode-as / OVERRIDE_PREFS
+    # overrides at runtime via configure_ports().  DISSECTOR_NAMES lists the
+    # tshark dissector name(s) used to match --decode-as entries to this
+    # listener (defaults to PROTOCOL_NAME when empty).
+    SERVER_PORTS: Tuple[int, ...] = ()
+    DISSECTOR_NAMES: Tuple[str, ...] = ()
+
     def __init__(
         self,
         interface: str,
@@ -104,6 +144,14 @@ class PySharkListenerBase(ABC):
 
         # Interaction tracking
         self.interactions: List["ProtocolInteraction"] = []
+
+        # Direction detection state.  _known_server_ports starts from the
+        # class-level canonical SERVER_PORTS and is extended at runtime by
+        # configure_ports() with user --decode-as / OVERRIDE_PREFS overrides.
+        # _flow_initiator maps a flow key -> the src_ip of the first packet
+        # seen in that flow, used by the first-seen direction heuristic.
+        self._known_server_ports: Set[int] = set(self.SERVER_PORTS)
+        self._flow_initiator: Dict[str, str] = {}
 
     def scan(self) -> Dict[str, "DiscoveredDevice"]:
         """Run live discovery scan."""
@@ -132,6 +180,15 @@ class PySharkListenerBase(ABC):
         try:
             capture_args = {
                 "interface": self.interface,
+                # Bound the capture inside tshark itself with an autostop
+                # duration.  Without this, sniff_continuously() blocks in
+                # tshark waiting for the next matching packet, so on a quiet
+                # interface (or a DISPLAY_FILTER that matches no traffic) the
+                # generator never yields and the wall-clock check below never
+                # runs -- the listener would hang well past self.timeout.
+                # tshark exits on its own after the duration, ending the
+                # generator even when zero packets arrive.
+                "custom_parameters": ["-a", f"duration:{int(self.timeout)}"],
             }
             if self.DISPLAY_FILTER:
                 capture_args["display_filter"] = self.DISPLAY_FILTER
@@ -141,6 +198,9 @@ class PySharkListenerBase(ABC):
             start_time = time.time()
             for packet in self._capture.sniff_continuously():
                 self._safe_process_packet(packet)
+                # Secondary guard: stop as soon as we have run for the
+                # requested duration even if tshark's autostop has not yet
+                # fired (e.g. a burst of buffered packets after the deadline).
                 if time.time() - start_time >= self.timeout:
                     break
 
@@ -608,6 +668,131 @@ class PySharkListenerBase(ABC):
         except Exception as e:
             self.logger.debug("get_stream_id failed: %s", e)
         return ""
+
+    # -------------------------------------------------------------------------
+    # Direction / endpoint-role detection
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def _port_from_filter_expr(expr: str) -> Optional[int]:
+        """Parse the port from a tshark decode-as filter, e.g. 'tcp.port==8502'."""
+        if "==" not in expr:
+            return None
+        try:
+            return int(expr.split("==", 1)[1].strip())
+        except (ValueError, IndexError):
+            return None
+
+    def configure_ports(self, decode_as_map: Optional[Dict[str, str]] = None) -> Set[int]:
+        """Extend this listener's known server ports from runtime overrides.
+
+        Called once by the scanner after it resolves the effective decode-as
+        map, so the port tier of :meth:`resolve_direction` honours non-standard
+        ports the user mapped to this protocol (e.g.
+        ``--decode-as 'tcp.port==8502,modbus'``).  The listener's own
+        ``OVERRIDE_PREFS`` port bindings are folded in too.
+
+        ``known_server_ports`` therefore becomes:
+        canonical ``SERVER_PORTS`` ∪ ``OVERRIDE_PREFS`` ports ∪ decode-as ports
+        whose dissector matches ``DISSECTOR_NAMES`` (default: ``PROTOCOL_NAME``).
+        """
+        names = {n.lower() for n in (self.DISSECTOR_NAMES or (self.PROTOCOL_NAME,)) if n}
+
+        if decode_as_map:
+            for filter_expr, dissector in decode_as_map.items():
+                if not dissector or dissector.lower() not in names:
+                    continue
+                port = self._port_from_filter_expr(filter_expr)
+                if port:
+                    self._known_server_ports.add(port)
+
+        # Fold in this listener's own OVERRIDE_PREFS port bindings (e.g.
+        # modbus's {"mbtcp.tcp.port": "502"}).  Only this listener's prefs are
+        # consulted, never another protocol's, so no cross-contamination.
+        own_prefs = getattr(self, "OVERRIDE_PREFS", None)
+        if own_prefs:
+            for pref_key, pref_val in own_prefs.items():
+                if not pref_key.lower().endswith((".tcp.port", ".udp.port", ".port")):
+                    continue
+                try:
+                    self._known_server_ports.add(int(str(pref_val).strip()))
+                except (ValueError, TypeError):
+                    continue
+
+        return self._known_server_ports
+
+    def resolve_direction(
+        self,
+        packet,
+        native: Optional[bool] = None,
+        *,
+        src_ip: Optional[str] = None,
+        dst_ip: Optional[str] = None,
+        src_port: Optional[int] = None,
+        dst_port: Optional[int] = None,
+        flow_id: Optional[str] = None,
+    ) -> DirectionResult:
+        """Resolve client/server roles + request/response direction for a packet.
+
+        Port-independent cascade, highest confidence first (see
+        :class:`DirectionResult`):
+
+        1. **native** -- caller passes ``True`` (request) / ``False`` (response)
+           read from the protocol's own request/response field (e.g.
+           ``dns.flags.response``, ``s7comm.header.rosctr``, ``cip.rr``). This
+           is single-packet, port-independent and authoritative.
+        2. **known server port** -- one endpoint is on a port in
+           ``self._known_server_ports`` (canonical ``SERVER_PORTS`` plus user
+           ``--decode-as`` / ``OVERRIDE_PREFS`` overrides). The server-port side
+           is the server.
+        3. **heuristic** -- no native signal and neither port is known: the
+           lower port is treated as the server (well-known < ephemeral); when
+           ports are equal/absent, the first endpoint seen in the flow is the
+           client. Result is marked ``inferred``.
+
+        Pass ``native=None`` for protocols with no request/response indicator
+        (e.g. Modbus) to fall through to tiers 2-3.  Unlike the old hardcoded
+        ``dst_port == 502`` checks, this never *drops* a packet on a
+        non-standard port -- it always returns a best-effort direction.
+        """
+        if src_ip is None or dst_ip is None:
+            s, d = self.get_ip_info(packet)
+            src_ip = s if src_ip is None else src_ip
+            dst_ip = d if dst_ip is None else dst_ip
+        if src_port is None or dst_port is None:
+            sp, dp = self.get_port_info(packet)
+            src_port = sp if src_port is None else src_port
+            dst_port = dp if dst_port is None else dst_port
+
+        def _request() -> DirectionResult:
+            return DirectionResult(True, src_ip, dst_ip, src_port, dst_port, conf, inferred)
+
+        def _response() -> DirectionResult:
+            return DirectionResult(False, dst_ip, src_ip, dst_port, src_port, conf, inferred)
+
+        # Tier 1: protocol-native request/response signal.
+        if native is not None:
+            conf, inferred = "native", False
+            return _request() if native else _response()
+
+        # Tier 2: known server port (canonical + user --decode-as / prefs).
+        dst_is_server = dst_port in self._known_server_ports
+        src_is_server = src_port in self._known_server_ports
+        if dst_is_server != src_is_server:  # exactly one side is a known server
+            conf, inferred = "port", False
+            return _request() if dst_is_server else _response()
+
+        # Tier 3: heuristic fallback.
+        conf, inferred = "heuristic", True
+        if src_port and dst_port and src_port != dst_port:
+            # Lower port == server (well-known ports are numerically smaller
+            # than ephemeral client ports).
+            return _request() if dst_port < src_port else _response()
+        # Ports equal/absent (L2, or both ephemeral): first endpoint seen in
+        # the flow is the client/initiator.
+        key = flow_id or self.get_flow_id(packet) or f"{src_ip}->{dst_ip}"
+        initiator = self._flow_initiator.setdefault(key, src_ip)
+        return _response() if initiator == dst_ip else _request()
 
     def _format_details_string(self, ix: ProtocolInteraction) -> str:
         """Build 'Col=val Col2=val2' from PROTOCOL_COLUMNS + _format_protocol_columns.

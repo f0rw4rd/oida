@@ -204,7 +204,6 @@ class DICOMAssociation:
     server_ip: str
     sop_classes: Set[str] = field(default_factory=set)
     commands_seen: Set[str] = field(default_factory=set)
-    impl_class_uid: str = ""
     impl_version: str = ""
     accepted: bool = False
     phi_exposed: bool = False
@@ -429,7 +428,6 @@ class DICOMPassiveListener(PySharkListenerBase):
             called_ae=called_ae,
             client_ip=src_ip,
             server_ip=dst_ip,
-            impl_class_uid=impl_uid,
             impl_version=impl_version,
             first_seen=now,
             last_seen=now,
@@ -511,8 +509,6 @@ class DICOMPassiveListener(PySharkListenerBase):
         if assoc_key in self.associations:
             self.associations[assoc_key].accepted = True
             self.associations[assoc_key].last_seen = now
-            if impl_uid:
-                self.associations[assoc_key].impl_class_uid = impl_uid
             if impl_version:
                 self.associations[assoc_key].impl_version = impl_version
 
@@ -629,7 +625,10 @@ class DICOMPassiveListener(PySharkListenerBase):
 
         # Check for PHI exposure in tag values
         if tag_raw is not None:
-            tag_int = self._parse_int(tag_raw, None, base=16)
+            # base 10 default: EK mode normalizes the FT_UINT32 dicom.tag to a
+            # decimal string (e.g. 0x00100010 -> "1048592"); XML-mode "0x"-prefixed
+            # hex is still auto-detected by _parse_int.
+            tag_int = self._parse_int(tag_raw, None)
             if tag_int is not None and tag_int in PHI_TAGS:
                 details["phi_tag"] = PHI_TAGS[tag_int]
                 details["phi_exposed"] = True

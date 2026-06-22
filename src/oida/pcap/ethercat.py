@@ -83,10 +83,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import lookup_mac_vendor
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # EtherCAT datagram command codes (ETG.1000.4)
 ECAT_COMMANDS: Dict[int, str] = {
@@ -125,9 +121,6 @@ COMMAND_RW: Dict[int, str] = {
     0x0D: "rw",
     0x0E: "rw",
 }
-
-# Write commands that might modify slave state (for alerting)
-WRITE_COMMANDS = {0x02, 0x03, 0x05, 0x06, 0x08, 0x09, 0x0B, 0x0C, 0x0D, 0x0E}
 
 # Notable ESC register offsets for enriched display
 ESC_REGISTER_NAMES: Dict[int, str] = {
@@ -242,15 +235,6 @@ MAILBOX_TYPE_COE = 3  # CAN over EtherCAT
 MAILBOX_TYPE_FOE = 4  # File over EtherCAT
 MAILBOX_TYPE_SOE = 5  # Servo over EtherCAT
 
-MAILBOX_TYPE_NAMES: Dict[int, str] = {
-    MAILBOX_TYPE_ERR: "ERR",
-    MAILBOX_TYPE_AOE: "AoE",
-    MAILBOX_TYPE_EOE: "EoE",
-    MAILBOX_TYPE_COE: "CoE",
-    MAILBOX_TYPE_FOE: "FoE",
-    MAILBOX_TYPE_SOE: "SoE",
-}
-
 # CoE types (ecat_mailbox.coe.type)
 COE_TYPE_EMERGENCY = 1
 COE_TYPE_SDO_REQ = 2
@@ -260,17 +244,6 @@ COE_TYPE_RXPDO = 5
 COE_TYPE_TXPDO_REMOTE = 6
 COE_TYPE_RXPDO_REMOTE = 7
 COE_TYPE_SDO_INFO = 8
-
-COE_TYPE_NAMES: Dict[int, str] = {
-    COE_TYPE_EMERGENCY: "Emergency",
-    COE_TYPE_SDO_REQ: "SDO Request",
-    COE_TYPE_SDO_RES: "SDO Response",
-    COE_TYPE_TXPDO: "TxPDO",
-    COE_TYPE_RXPDO: "RxPDO",
-    COE_TYPE_TXPDO_REMOTE: "TxPDO Remote",
-    COE_TYPE_RXPDO_REMOTE: "RxPDO Remote",
-    COE_TYPE_SDO_INFO: "SDO Info",
-}
 
 # SDO request command specifiers (ecat_mailbox.coe.sdoreq)
 SDO_REQ_DOWNLOAD = 1  # Initiate Download (write to device)
@@ -1404,8 +1377,8 @@ class EtherCATPassiveListener(PySharkListenerBase):
 
         return result
 
-    @staticmethod
     def _find_critical_od_writes(
+        self,
         master: EtherCATMaster,
     ) -> List[Tuple[str, str]]:
         """Find SDO download targets in critical OD ranges."""
@@ -1416,7 +1389,7 @@ class EtherCATPassiveListener(PySharkListenerBase):
                 idx_str = od_key.split(":")[0]
                 idx_val = int(idx_str, 16)
             except (ValueError, IndexError) as e:
-                logger.debug(f"Failed to get idx_str: {e}")
+                self.logger.debug(f"EtherCAT: OD index parse failed for {od_key!r}: {e}")
                 continue
             for range_lo, range_hi, category in CRITICAL_OD_RANGES:
                 if range_lo <= idx_val <= range_hi:
@@ -1442,28 +1415,11 @@ class EtherCATPassiveListener(PySharkListenerBase):
                 )
         return results
 
-    def get_sessions_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all observed EtherCAT masters."""
-        return [
-            {
-                "master_mac": master.mac,
-                "vendor": master.vendor,
-                "slaves_seen": len(master.slave_addrs_seen),
-                "frames": master.total_frames,
-                "datagrams": master.total_datagrams,
-                "reads": master.read_datagrams,
-                "writes": master.write_datagrams,
-                "wkc_zero": master.wkc_zero_count,
-            }
-            for master in self.masters.values()
-        ]
-
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _parse_hex_int(value, default=None):
+    def _parse_hex_int(self, value, default=None):
         """Parse a value that may be hex string or int."""
         if value is None:
             return default
@@ -1473,11 +1429,10 @@ class EtherCATPassiveListener(PySharkListenerBase):
                 return int(s, 16)
             return int(s, 0)
         except (ValueError, TypeError) as e:
-            logger.debug(f"EtherCAT: hex/decimal int parse failed for field value: {e}")
+            self.logger.debug(f"EtherCAT: hex/decimal int parse failed for {value!r}: {e}")
             return default
 
-    @staticmethod
-    def _parse_first_int(value, default=None):
+    def _parse_first_int(self, value, default=None):
         """Parse the first integer from a value that may be comma-separated.
 
         EK mode returns lists for broadcast register reads (e.g. "1,1,3,1,1").
@@ -1492,11 +1447,10 @@ class EtherCATPassiveListener(PySharkListenerBase):
                 s = s.split(",")[0].strip()
             return int(s)
         except (ValueError, TypeError) as e:
-            logger.debug(f"EtherCAT: first-int parse from comma-split field failed: {e}")
+            self.logger.debug(f"EtherCAT: first-int parse from comma-split field failed: {e}")
             return default
 
-    @staticmethod
-    def _parse_int_list(value) -> List[int]:
+    def _parse_int_list(self, value) -> List[int]:
         """Parse a comma-separated string into a list of integers.
 
         EK mode broadcast reads return per-slave values as "1,2,1,4".
@@ -1511,7 +1465,7 @@ class EtherCATPassiveListener(PySharkListenerBase):
                 try:
                     results.append(int(part))
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"results.append(int(part)): {e}")
+                    self.logger.debug(f"EtherCAT: int parse of list element {part!r} failed: {e}")
         return results
 
     @staticmethod

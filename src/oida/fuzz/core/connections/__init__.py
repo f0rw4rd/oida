@@ -22,7 +22,7 @@ def __getattr__(name):
     _boofuzz_attrs = {"TCPSocketConnection", "SSLSocketConnection", "UDPSocketConnection"}
     _base_attrs = {"BaseConnection", "ConnectionFactory", "MockConnection", "MockConnectionFactory"}
     _tcp_attrs = {"RealConnectionFactory", "IEC104SocketConnection", "ResilientTCPConnection"}
-    _raw_attrs = {"RawSocketConnection", "EthernetFrame"}
+    _raw_attrs = {"RawSocketConnection"}
     _serial_attrs = {"SerialConnection", "parse_serial_target"}
     _scapy_attrs = {"ScapyRawConnection"}
     _stateful_attrs = {"StatefulConnection", "TLSHandler", "TLSUpgradeMixin", "BannerConnection"}
@@ -65,9 +65,9 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _raw_attrs:
-        from .raw_socket import RawSocketConnection, EthernetFrame
+        from .raw_socket import RawSocketConnection
 
-        _cache.update({"RawSocketConnection": RawSocketConnection, "EthernetFrame": EthernetFrame})
+        _cache.update({"RawSocketConnection": RawSocketConnection})
         return _cache[name]
 
     if name in _serial_attrs:
@@ -116,7 +116,6 @@ __all__ = [
     "ResilientTCPConnection",
     # Raw socket
     "RawSocketConnection",
-    "EthernetFrame",
     # Serial
     "SerialConnection",
     "parse_serial_target",

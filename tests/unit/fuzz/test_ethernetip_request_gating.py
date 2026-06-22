@@ -116,9 +116,7 @@ def test_cip_class_enumeration_independently_selectable():
     CIP_Class_Enumeration could not suppress it.
     """
     # --enable CIP_Class_Enumeration alone connects exactly that request.
-    enabled = _connected_names(
-        _build(_make_config(enabled_requests=["CIP_Class_Enumeration"]))
-    )
+    enabled = _connected_names(_build(_make_config(enabled_requests=["CIP_Class_Enumeration"])))
     assert enabled == {"CIP_Class_Enumeration"}
 
     # --enable EIP_Baseline alone must NOT pull in CIP_Class_Enumeration.
@@ -128,7 +126,5 @@ def test_cip_class_enumeration_independently_selectable():
     # --disable CIP_Class_Enumeration suppresses it from the full default run.
     not_disabled = _connected_names(_build(_make_config()))
     assert "CIP_Class_Enumeration" in not_disabled
-    disabled = _connected_names(
-        _build(_make_config(disabled_requests=["CIP_Class_Enumeration"]))
-    )
+    disabled = _connected_names(_build(_make_config(disabled_requests=["CIP_Class_Enumeration"])))
     assert "CIP_Class_Enumeration" not in disabled

@@ -47,8 +47,6 @@ from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 AJP_FORWARD_REQUEST = "2"
 AJP_SEND_HEADERS = "4"
 AJP_END_RESPONSE = "5"
-AJP_SEND_BODY_CHUNK = "3"
-AJP_GET_BODY_CHUNK = "6"
 AJP_SHUTDOWN = "7"
 AJP_PING = "8"
 AJP_CPONG = "9"
@@ -232,8 +230,7 @@ class AJPPassiveListener(PySharkListenerBase):
             # Body-chunk (3/6) and any unrecognized AJP code have no dedicated
             # branch; log so the drop is observable instead of silent.
             self.logger.debug(
-                f"AJP packet not recorded: code={code_raw} ({code_name}) "
-                f"{src_ip} -> {dst_ip}"
+                f"AJP packet not recorded: code={code_raw} ({code_name}) {src_ip} -> {dst_ip}"
             )
 
     def _process_forward_request(

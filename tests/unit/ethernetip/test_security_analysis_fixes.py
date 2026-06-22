@@ -45,9 +45,7 @@ class TestCountWritableAttrs(unittest.TestCase):
 
     def test_old_bug_does_not_recur(self):
         """4 classes × len(class dict)=2 used to report 8 writable attrs."""
-        write_test = {
-            str(c): {"class_attributes": {}, "instances": {}} for c in range(4)
-        }
+        write_test = {str(c): {"class_attributes": {}, "instances": {}} for c in range(4)}
         # All four classes empty → zero writables. Old code returned 8.
         self.assertEqual(_count_writable_attrs(write_test), 0)
 
@@ -98,11 +96,7 @@ class TestAccessControlVerdict(unittest.TestCase):
                 "instances": {},
             }
         }
-        verdict = (
-            None
-            if not write_test_results
-            else _count_writable_attrs(write_test_results) == 0
-        )
+        verdict = None if not write_test_results else _count_writable_attrs(write_test_results) == 0
         self.assertTrue(verdict)
 
 

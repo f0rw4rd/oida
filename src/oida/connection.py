@@ -37,7 +37,6 @@ class connection(ABC):
                 self.create_conn_obj()
                 self.enum_host_info()
                 self.print_host_info()
-                self.login()
                 self.scan_registers()
     """
 
@@ -57,7 +56,6 @@ class connection(ABC):
         self.args = args
         self.db = db
         self.host = host
-        self.hostname = host
         self.conn = None
 
         # Get protocol and port for logger
@@ -160,8 +158,7 @@ class connection(ABC):
             # gethostbyname is IPv4-only. Use getaddrinfo so IPv6
             # hostnames (and AAAA-only records) resolve correctly.
             # Prefer the first result, whatever family it is — the
-            # caller's downstream socket code is now also IPv6-aware
-            # (see test_connection above).
+            # caller's downstream socket code is now also IPv6-aware.
             results = socket.getaddrinfo(host, None)
             if results:
                 return results[0][4][0]
@@ -170,19 +167,6 @@ class connection(ABC):
             # If resolution fails, return original (might be IP already)
             self.logger.debug(f"resolve host failed: {e}")
             return host
-
-    def get_host_fqdn(self) -> str:
-        """
-        Get fully qualified domain name for target
-
-        Returns:
-            str: FQDN or IP if FQDN unavailable
-        """
-        try:
-            return socket.getfqdn(self.ip)
-        except Exception as e:
-            self.logger.debug(f"get host fqdn failed: {e}")
-            return self.ip
 
     @abstractmethod
     def proto_flow(self):
@@ -304,18 +288,6 @@ class connection(ABC):
         self.logger.fail(f"{action_name} requires --confirm (dangerous operation)")
         return False
 
-    def login(self):
-        """
-        Authenticate to target (if applicable)
-
-        Default implementation is a no-op. Override if protocol
-        requires authentication.
-
-        Returns:
-            bool: True if authentication successful, False otherwise
-        """
-        return True
-
     def cleanup(self):
         """
         Cleanup connection and resources
@@ -395,51 +367,6 @@ class NetworkConnection(connection):
 
         super().__init__(args, db, host)
 
-    def test_connection(self) -> bool:
-        """
-        Test basic TCP connectivity to target
-
-        Returns:
-            bool: True if port is reachable
-        """
-        sock = None
-        try:
-            # Use getaddrinfo so we honor both IPv4 and IPv6 — the old
-            # AF_INET-only socket() refused every IPv6 target despite
-            # the framework documenting IPv6 support. Try each result
-            # in order; first reachable wins.
-            timeout = getattr(self.args, "timeout", 2)
-            try:
-                addrinfo = socket.getaddrinfo(self.ip, self.args.port, type=socket.SOCK_STREAM)
-            except socket.gaierror as e:
-                self.logger.debug(f"test connection: getaddrinfo failed: {e}")
-                return False
-            for family, socktype, proto, _, sockaddr in addrinfo:
-                try:
-                    sock = socket.socket(family, socktype, proto)
-                    sock.settimeout(timeout)
-                    if sock.connect_ex(sockaddr) == 0:
-                        return True
-                except OSError:
-                    continue
-                finally:
-                    if sock is not None:
-                        try:
-                            sock.close()
-                        except OSError:
-                            pass
-                        sock = None
-            return False
-        except Exception as e:
-            self.logger.debug(f"test connection failed: {e}")
-            return False
-        finally:
-            if sock:
-                try:
-                    sock.close()
-                except OSError as e:
-                    self.logger.debug(f"sock.close(): {e}")
-
 
 class SerialConnection(connection):
     """
@@ -454,23 +381,3 @@ class SerialConnection(connection):
         # For serial protocols, "host" might be an interface name
         self.interface = getattr(args, "interface", None) or host
         super().__init__(args, db, host)
-
-    def get_interface_info(self) -> Dict[str, Any]:
-        """
-        Get information about the network interface
-
-        Returns:
-            dict: Interface info (MAC, MTU, etc.)
-        """
-        from .utils import iface_info
-
-        try:
-            addrs = iface_info.ifaddresses(self.interface)
-            return {
-                "interface": self.interface,
-                "mac": addrs.get(iface_info.AF_LINK, [{}])[0].get("addr"),
-                "ipv4": addrs.get(iface_info.AF_INET, [{}])[0].get("addr"),
-            }
-        except Exception as e:
-            self.logger.debug(f"get interface info failed: {e}")
-            return {"interface": self.interface}

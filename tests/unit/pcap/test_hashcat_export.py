@@ -135,9 +135,7 @@ class TestKerberosRepServerPort:
 
         # Mirror process_packet's REP call: server_port must be the KDC's
         # src_port (88), NOT the client's ephemeral dst_port.
-        listener._process_as_rep(
-            kdc_ip, client_ip, "Kerberos", self._rep_layer(), kdc_port
-        )
+        listener._process_as_rep(kdc_ip, client_ip, "Kerberos", self._rep_layer(), kdc_port)
 
         assert len(listener.hashes) == 1
         h = listener.hashes[0]
@@ -321,3 +319,141 @@ class TestNTLMConcurrentHandshakeChallengePairing:
 
         assert len(listener.hashes) == 1
         assert listener.hashes[0].challenge == chal
+
+
+class TestKerberosHashesSummaryPairing:
+    """get_hashes_summary() must pair each hash with ITS OWN hashcat_format.
+
+    Regression for the index-misalignment bug in kerberos.py: the summary used
+    to advance a positional index into get_hashcat_hashes() for EVERY hash in
+    self.hashes, while get_hashcat_hashes() only emitted a line for AS-REQ when
+    etype == 23. But _process_as_req records AS-REQ hashes for etypes 17/18/23,
+    so an AS-REQ with an AES etype (17/18) produced no hashcat line yet still
+    advanced the index -- every subsequent hash then received the cracking
+    string belonging to a DIFFERENT (later) hash. The fix pairs each summary
+    entry with h.hashcat_format directly.
+    """
+
+    @staticmethod
+    def _hash(hash_type, etype, username, *, service_name="", hash_value="de:ad:be:ef"):
+        from oida.pcap.kerberos import KerberosHash
+
+        return KerberosHash(
+            hash_type=hash_type,
+            etype=etype,
+            username=username,
+            domain="CORP.EXAMPLE.COM",
+            service_name=service_name,
+            hash_value=hash_value,
+            server_ip="10.0.0.1",
+            client_ip="10.0.0.50",
+        )
+
+    def test_as_req_aes_etype_does_not_shift_pairing(self):
+        from oida.pcap.kerberos import KerberosPassiveListener
+
+        listener = KerberosPassiveListener(interface="lo", timeout=1)
+
+        # An AS-REQ with AES etype 18 produces NO hashcat line (only etype 23
+        # AS-REQ pre-auth is crackable), yet _process_as_req still records it.
+        # Ordered BEFORE the crackable AS-REP/TGS-REP, this is what used to
+        # corrupt the positional index.
+        listener.hashes = [
+            self._hash("AS-REQ", 18, "gap"),  # no hashcat line
+            self._hash("AS-REP", 23, "alice"),
+            self._hash("TGS-REP", 23, "bob", service_name="HTTP/web.corp"),
+        ]
+
+        summary = {e["username"]: e for e in listener.get_hashes_summary()}
+
+        # The non-crackable AS-REQ (AES) gets no hashcat line of its own.
+        assert summary["gap"]["hashcat_format"] == ""
+
+        # The crux: each crackable hash carries ITS OWN hashcat line.
+        for h in listener.hashes:
+            assert summary[h.username]["hashcat_format"] == h.hashcat_format
+
+        assert summary["alice"]["hashcat_format"].startswith("$krb5asrep$23$alice@")
+        assert summary["bob"]["hashcat_format"].startswith("$krb5tgs$23$*bob$")
+        # And not slipped onto the wrong entry.
+        assert "$krb5asrep" not in summary["gap"]["hashcat_format"]
+        assert "$krb5tgs" not in summary["alice"]["hashcat_format"]
+
+    def test_get_hashcat_hashes_matches_per_entry_property(self):
+        from oida.pcap.kerberos import KerberosPassiveListener
+
+        listener = KerberosPassiveListener(interface="lo", timeout=1)
+        listener.hashes = [
+            self._hash("AS-REQ", 18, "gap"),
+            self._hash("AS-REQ", 23, "preauth"),
+            self._hash("AS-REP", 23, "alice"),
+        ]
+
+        # get_hashcat_hashes() must emit exactly the non-empty per-entry lines.
+        assert listener.get_hashcat_hashes() == [
+            h.hashcat_format for h in listener.hashes if h.hashcat_format
+        ]
+        # The AES AS-REQ contributes nothing.
+        assert len(listener.get_hashcat_hashes()) == 2
+
+
+class TestNTLMHashesSummaryPairing:
+    """get_hashes_summary() must pair each hash with ITS OWN hashcat_format.
+
+    Regression for the index-misalignment bug: the summary used to advance a
+    positional index into get_hashcat_hashes() for EVERY hash that merely had a
+    challenge, while get_hashcat_hashes() only emits a line for crackable hashes
+    (NTLMv1, or NTLMv2 with nt_hash >= 32 hex). A challenge-bearing but
+    non-crackable hash (hash_type=='NTLM', the default when the NT response is
+    empty) emitted no line yet still advanced the index, so every subsequent
+    credential received the hashcat string belonging to a DIFFERENT hash.
+    """
+
+    @staticmethod
+    def _hash(hash_type, username, nt_hash, *, challenge="1122334455667788", lm_hash=""):
+        from oida.pcap.ntlm import NTLMHash
+
+        return NTLMHash(
+            hash_type=hash_type,
+            username=username,
+            domain="CORP",
+            workstation="",
+            challenge=challenge,
+            lm_hash=lm_hash,
+            nt_hash=nt_hash,
+            server_ip="10.0.0.9",
+            client_ip="10.0.0.5",
+        )
+
+    def test_noncrackable_challenge_hash_does_not_shift_pairing(self):
+        from oida.pcap.ntlm import NTLMPassiveListener
+
+        listener = NTLMPassiveListener(interface="lo", timeout=1)
+
+        nt_alice = "aa" * 24
+        nt_bob = "bb" * 24
+
+        # 'gap' has a server challenge (so it counts as complete) but hash_type
+        # 'NTLM' with an empty NT response yields NO hashcat line. It is ordered
+        # BEFORE the real NTLMv1 creds, which is what used to corrupt the index.
+        listener.hashes = [
+            self._hash("NTLM", "gap", ""),
+            self._hash("NTLMv1", "alice", nt_alice),
+            self._hash("NTLMv1", "bob", nt_bob),
+        ]
+
+        summary = {e["username"]: e for e in listener.get_hashes_summary()}
+
+        # The non-crackable hash gets no hashcat line of its own.
+        assert summary["gap"]["hashcat_format"] == ""
+
+        # The crux: each crackable cred must carry ITS OWN hashcat line, derived
+        # from its own NT response — not one shifted in from a neighbour.
+        for h in listener.hashes:
+            if h.hash_type == "NTLMv1":
+                assert summary[h.username]["hashcat_format"] == h.hashcat_format
+        assert summary["alice"]["hashcat_format"].endswith(f"{nt_alice}:1122334455667788")
+        assert summary["bob"]["hashcat_format"].endswith(f"{nt_bob}:1122334455667788")
+        # And not swapped with each other.
+        assert nt_bob not in summary["alice"]["hashcat_format"]
+        assert nt_alice not in summary["bob"]["hashcat_format"]

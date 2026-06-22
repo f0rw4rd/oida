@@ -487,7 +487,7 @@ class FINSPassiveListener(PySharkListenerBase):
                 else:
                     area_code = int(area_raw)
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if isinstance(area_raw, str) and area...: {e}")
+                self.logger.debug(f"FINS: failed to parse memory area code: {e}")
 
         area_name = FINS_MEMORY_AREAS.get(area_code, f"Area 0x{area_code:02x}")
         details["memory_area"] = area_name
@@ -501,7 +501,7 @@ class FINSPassiveListener(PySharkListenerBase):
                 else:
                     address = int(addr_raw)
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if isinstance(addr_raw, str) and addr...: {e}")
+                self.logger.debug(f"FINS: failed to parse memory address: {e}")
         details["address"] = address
 
         num_items = 1

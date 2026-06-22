@@ -53,9 +53,6 @@ SMI_TYPES = {
     4: "READ_CONFIG",
 }
 
-# Smart Install magic bytes (first 4 bytes of protocol)
-SMI_VERSION_V1 = 0x00000001
-
 
 class SmartInstallPassiveListener(PySharkListenerBase):
     """Passive Cisco Smart Install traffic listener.
@@ -74,6 +71,7 @@ class SmartInstallPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "smartinstall"
     DISPLAY_FILTER = "tcp.port == 4786"
     REQUIRED_LAYERS = ("tcp",)
+    SERVER_PORTS = (SMART_INSTALL_PORT,)
     PROTOCOL_COLUMNS = (
         "operation",
         "version",
@@ -130,8 +128,21 @@ class SmartInstallPassiveListener(PySharkListenerBase):
         src_mac, dst_mac = self.get_mac_info(packet)
         stream_id = self.get_stream_id(packet)
 
-        # Determine direction based on port
-        is_from_server = src_port == SMART_INSTALL_PORT
+        # Determine direction via the shared cascade.  Smart Install is a custom
+        # binary protocol with no per-frame QR bit, so resolve_direction() falls
+        # through to the known-server-port tier (canonical 4786 plus any user
+        # --decode-as / OVERRIDE_PREFS override) and then the lower-port
+        # heuristic.  is_from_server == the packet originated from the switch.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_from_server = not d.is_request
         direction = "response" if is_from_server else "request"
 
         # Try to parse Smart Install header from raw payload
@@ -203,15 +214,16 @@ class SmartInstallPassiveListener(PySharkListenerBase):
         # or a CVE alert for the destination IP.
         service_confirmed = smi_info is not None or is_from_server
 
-        # Update device tracking
+        # Update device tracking.  Roles come from the resolved direction:
+        # the client (director) sends to the switch (server listening on 4786).
         self._update_devices(
-            src_ip,
-            dst_ip,
-            src_port,
-            dst_port,
+            d.client_ip,
+            d.server_ip,
+            d.client_port,
+            d.server_port,
             operation_name,
-            src_mac=src_mac,
-            dst_mac=dst_mac,
+            src_mac=src_mac if d.is_request else dst_mac,
+            dst_mac=dst_mac if d.is_request else src_mac,
             service_confirmed=service_confirmed,
         )
 
@@ -267,10 +279,10 @@ class SmartInstallPassiveListener(PySharkListenerBase):
 
     def _update_devices(
         self,
-        src_ip: str,
-        dst_ip: str,
-        src_port: int,
-        dst_port: int,
+        director_ip: str,
+        switch_ip: str,
+        director_port: int,
+        switch_port: int,
         operation: str,
         src_mac: str = "",
         dst_mac: str = "",
@@ -278,24 +290,19 @@ class SmartInstallPassiveListener(PySharkListenerBase):
     ) -> None:
         """Update device entries for Smart Install participants.
 
-        ``service_confirmed`` must be True before the port-4786 endpoint is
+        Roles are pre-resolved by the caller via ``resolve_direction()``: the
+        *director* is the client side (it connects to the switch), the *switch*
+        is the server side (it listens on 4786).  ``src_mac`` / ``dst_mac`` are
+        the director-side and switch-side MACs respectively.
+
+        ``service_confirmed`` must be True before the switch endpoint is
         recorded as a Smart Install switch / CVE-2018-0171 exposure. Without
         it (a bare client SYN or scan probe to 4786 with no server response
         and no parseable SMI header) we have no evidence the service exists,
         so no switch device or CVE alert is created for the destination.
         """
-        # The device sending TO port 4786 is the director/client
-        # The device listening ON port 4786 is the switch/server
-        if dst_port == SMART_INSTALL_PORT:
-            director_ip = src_ip
-            switch_ip = dst_ip
-            director_mac = src_mac
-            switch_mac = dst_mac
-        else:
-            director_ip = dst_ip
-            switch_ip = src_ip
-            director_mac = dst_mac
-            switch_mac = src_mac
+        director_mac = src_mac
+        switch_mac = dst_mac
 
         if service_confirmed and is_valid_discovered_ip(switch_ip):
             vendor = lookup_mac_vendor(switch_mac) if switch_mac else ""

@@ -598,7 +598,6 @@ class MQTTScanner(
 
         # Internal state
         self.topics_discovered: Set[str] = set()
-        self.sparkplug_nodes: Dict[str, Any] = {}
         self.auth_result = None
         self._stop_listen = False
 

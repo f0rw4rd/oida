@@ -27,7 +27,6 @@ _scapy = lazy_import("scapy", "LLDP")
 
 # Module-level cache for scapy classes (populated by _load_scapy_classes)
 _scapy_classes: Dict[str, Any] = {}
-dependencies_missing = not _scapy.is_available
 
 logger = get_module_logger(__name__)
 

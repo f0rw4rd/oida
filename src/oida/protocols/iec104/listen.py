@@ -107,10 +107,11 @@ class ListenMixin:
             # Step position (Type 5, 32)
             elif type_id in [5, 32]:
                 vti = data[0]
-                value = vti & VTI_VALUE_MASK  # Position value
-                if vti & VTI_TRANSIENT:
-                    value = -value  # Transient state
+                raw = vti & VTI_VALUE_MASK  # 7-bit two's-complement value, -64..+63
+                value = raw - 128 if (vti & 0x40) else raw
                 quality = self._parse_quality_flags(data[1]) if len(data) > 1 else ""
+                if vti & VTI_TRANSIENT:  # Transient flag (equipment in transit)
+                    quality = f"{quality},T" if quality else "T"
                 return value, quality
 
             # Integrated totals (Type 15, 37)

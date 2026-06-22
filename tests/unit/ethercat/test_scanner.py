@@ -1568,6 +1568,60 @@ class TestErrorHandling(unittest.TestCase):
         result = scanner._execute_eeprom_write(master)
         self.assertFalse(result["success"])
 
+    def test_eeprom_write_odd_offset_preserves_neighbor(self):
+        """Odd byte offset writes the value byte at offset%2 without corrupting
+        the neighboring byte of the same word [Category A]"""
+        scanner = _make_scanner(**{"eeprom-write": "0x09:0xAB"}, confirm=True)
+        mock_slave = _make_mock_slave()
+        # Word 0x04 currently holds bytes 0x08=0x11, 0x09=0x22 (LE word 0x2211).
+        mock_slave.eeprom_read = Mock(return_value=b"\x11\x22\x00\x00")
+        mock_slave.eeprom_write = Mock()
+        master = _make_mock_master(slaves=[mock_slave])
+
+        result = scanner._execute_eeprom_write(master)
+
+        self.assertTrue(result["success"])
+        # Read-modify-write must read the covering word (0x04) first.
+        mock_slave.eeprom_read.assert_any_call(0x04)
+        # Value 0xAB lands on byte 0x09 (high byte), low byte 0x08 preserved.
+        # Resulting LE word = 0xAB11.
+        write_calls = [c for c in mock_slave.eeprom_write.call_args_list if c.args[0] == 0x04]
+        self.assertTrue(write_calls, "must write back word 0x04")
+        self.assertEqual(write_calls[0].args[1], struct.pack("<H", 0xAB11))
+
+    def test_eeprom_write_odd_offset_single_byte_value(self):
+        """An odd offset with a single significant byte modifies only the
+        target byte, leaving the word's low byte untouched [Category A]"""
+        scanner = _make_scanner(**{"eeprom-write": "0x11:0xCD"}, confirm=True)
+        mock_slave = _make_mock_slave()
+        # Word 0x08 holds bytes 0x10=0x33, 0x11=0x44 (LE word 0x4433).
+        mock_slave.eeprom_read = Mock(return_value=b"\x33\x44\x00\x00")
+        mock_slave.eeprom_write = Mock()
+        master = _make_mock_master(slaves=[mock_slave])
+
+        result = scanner._execute_eeprom_write(master)
+
+        self.assertTrue(result["success"])
+        write_calls = [c for c in mock_slave.eeprom_write.call_args_list if c.args[0] == 0x08]
+        self.assertTrue(write_calls)
+        # High byte (0x11) -> 0xCD, low byte (0x10) 0x33 preserved -> LE word 0xCD33.
+        self.assertEqual(write_calls[0].args[1], struct.pack("<H", 0xCD33))
+
+    def test_eeprom_write_odd_offset_in_header_refreshes_crc(self):
+        """Odd offset inside the header area still triggers a CRC refresh
+        keyed off the affected byte span [Category A]"""
+        scanner = _make_scanner(**{"eeprom-write": "0x09:0xAB"}, confirm=True)
+        mock_slave = _make_mock_slave()
+        mock_slave.eeprom_read = Mock(return_value=b"\x00\x00\x00\x00")
+        mock_slave.eeprom_write = Mock()
+        master = _make_mock_master(slaves=[mock_slave])
+
+        scanner._execute_eeprom_write(master)
+
+        # CRC is stored at word 0x07; refreshing it means a write to word 0x07.
+        crc_writes = [c for c in mock_slave.eeprom_write.call_args_list if c.args[0] == 0x07]
+        self.assertTrue(crc_writes, "header write must refresh CRC at word 0x07")
+
     def test_set_alias_invalid_slave(self):
         """Test set alias with invalid slave [Category C]"""
         scanner = _make_scanner(**{"set-alias": "99:100"}, confirm=True)

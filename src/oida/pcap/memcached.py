@@ -112,6 +112,7 @@ class MemcachedPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "memcached"
     DISPLAY_FILTER = "memcache"
     REQUIRED_LAYERS = ("memcache",)
+    SERVER_PORTS = (MEMCACHED_PORT,)
     PROTOCOL_COLUMNS = ("command", "key", "detail")
 
     def __init__(
@@ -471,14 +472,11 @@ class MemcachedPassiveListener(PySharkListenerBase):
                     f"Memcache packet with no recognized fields from "
                     f"{src_ip}:{src_port} -> {dst_ip}:{dst_port}"
                 )
-                # Determine direction from port
-                if src_port in MEMCACHED_PORTS or src_ip in self._known_servers:
-                    direction = "response"
-                    self._known_servers.add(src_ip)
-                elif dst_port in MEMCACHED_PORTS or dst_ip in self._known_servers:
-                    direction = "request"
-                else:
-                    direction = "response"
+                # Determine direction via the shared cascade (native=None: a raw
+                # unrecognized payload carries no request/response signal).
+                _, _, _, _, direction = self._resolve_roles(
+                    None, src_ip, dst_ip, src_port, dst_port, flow_id
+                )
 
                 self._record_interaction(
                     now,
@@ -493,6 +491,42 @@ class MemcachedPassiveListener(PySharkListenerBase):
                     dst_port=dst_port,
                     stream_id=stream_id,
                 )
+
+    def _resolve_roles(
+        self,
+        native: Optional[bool],
+        src_ip: str,
+        dst_ip: str,
+        src_port: int,
+        dst_port: int,
+        flow_id: str,
+    ) -> Tuple[str, int, str, int, str]:
+        """Resolve (server_ip, server_port, client_ip, client_port, direction).
+
+        Memcached's text protocol has no clean request/response indicator, so
+        callers pass native=None and let the shared cascade decide: a learned
+        server endpoint is folded in as a native hint, otherwise the
+        known-server-port tier (canonical 11211 + user --decode-as /
+        OVERRIDE_PREFS overrides) and the lower-port / first-seen heuristic
+        classify -- never dropping on a non-standard port.  Learns the resolved
+        server into ``_known_servers``.
+        """
+        if native is None:
+            if dst_ip in self._known_servers:
+                native = True
+            elif src_ip in self._known_servers:
+                native = False
+        d = self.resolve_direction(
+            None,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        self._known_servers.add(d.server_ip)
+        return d.server_ip, d.server_port, d.client_ip, d.client_port, d.direction
 
     def _process_text_command(
         self,
@@ -509,23 +543,15 @@ class MemcachedPassiveListener(PySharkListenerBase):
         stream_id: str,
     ) -> None:
         """Process a text protocol command."""
-        # Determine direction
-        if dst_port in MEMCACHED_PORTS or dst_ip in self._known_servers:
-            client_ip, _ = src_ip, src_port
-            server_ip, server_port = dst_ip, dst_port
+        # Determine direction via the shared cascade (native=None: text protocol
+        # has no request/response bit).
+        server_ip, server_port, client_ip, _, direction = self._resolve_roles(
+            None, src_ip, dst_ip, src_port, dst_port, flow_id
+        )
+        if client_ip == src_ip:
             client_mac, server_mac = src_mac, dst_mac
-            direction = "request"
-        elif src_port in MEMCACHED_PORTS or src_ip in self._known_servers:
-            server_ip, server_port = src_ip, src_port
-            client_ip, _ = dst_ip, dst_port
-            server_mac, client_mac = src_mac, dst_mac
-            direction = "response"
-            self._known_servers.add(server_ip)
         else:
-            client_ip, _ = src_ip, src_port
-            server_ip, server_port = dst_ip, dst_port
-            client_mac, server_mac = src_mac, dst_mac
-            direction = "request"
+            client_mac, server_mac = dst_mac, src_mac
 
         self.commands_seen[command] = self.commands_seen.get(command, 0) + 1
 
@@ -669,22 +695,20 @@ class MemcachedPassiveListener(PySharkListenerBase):
         """Process binary protocol packet."""
         opcode_name = BIN_OPCODES.get(opcode_raw, BIN_OPCODES.get(str(opcode_raw), "Unknown"))
 
-        # Determine direction from binary magic byte or port.
-        # magic=0x80 (128) = request, magic=0x81 (129) = response.
-        is_response = str(bin_type) in ("0x81", "129", "81")
-        if is_response:
-            server_ip, server_port = src_ip, src_port
-            client_ip, _ = dst_ip, dst_port
-            direction = "response"
-            self._known_servers.add(server_ip)
-        elif dst_port in MEMCACHED_PORTS or dst_ip in self._known_servers:
-            client_ip, _ = src_ip, src_port
-            server_ip, server_port = dst_ip, dst_port
-            direction = "request"
+        # Determine direction via the shared cascade.  The binary magic byte is
+        # an authoritative, port-independent native signal: 0x81 (129) =
+        # response, 0x80 (128) = request.  When the magic byte is absent/unknown
+        # native=None falls through to the known-server-port tier and heuristic.
+        bin_type_str = str(bin_type)
+        if bin_type_str in ("0x81", "129", "81"):
+            native: Optional[bool] = False
+        elif bin_type_str in ("0x80", "128", "80"):
+            native = True
         else:
-            client_ip, _ = src_ip, src_port
-            server_ip, server_port = dst_ip, dst_port
-            direction = "request"
+            native = None
+        server_ip, server_port, client_ip, _, direction = self._resolve_roles(
+            native, src_ip, dst_ip, src_port, dst_port, flow_id
+        )
 
         self.commands_seen[opcode_name] = self.commands_seen.get(opcode_name, 0) + 1
 

@@ -1,137 +1,17 @@
 """
-Radamsa-based mutation engine for OIDA fuzzer
+Seed loading utilities for the OIDA fuzzer.
 
-Provides mutation capabilities using the pyradamsa library for:
-1. Raw seed-based fuzzing
-2. Field-level mutations (alternative to boofuzz's built-in libraries)
+Provides the SeedLoader helper for loading raw seed corpora from
+directories, glob patterns, or in-memory strings.
 """
 
 from pathlib import Path
-from typing import List, Iterator, Optional
+from typing import List
 import glob
 
 from ....utils.ics_logger import get_logger
 
 _log = get_logger("RADAMSA", "mutator", 0)
-
-
-class RadamsaMutator:
-    """
-    Mutation engine using pyradamsa
-
-    Generates mutations from seed data using Radamsa's mutation algorithms.
-    Supports both batch generation and streaming mutations.
-    """
-
-    def __init__(self, seeds: Optional[List[bytes]] = None):
-        """
-        Initialize Radamsa mutator
-
-        Args:
-            seeds: List of seed data to mutate (optional)
-        """
-        self.seeds = seeds or []
-        self._radamsa = None
-        self._init_radamsa()
-
-    def _init_radamsa(self):
-        """Initialize pyradamsa library"""
-        try:
-            import pyradamsa
-
-            self._radamsa = pyradamsa.Radamsa()
-            _log.display("Radamsa mutator initialized successfully")
-        except ImportError:
-            raise RuntimeError(
-                "pyradamsa not installed!\n"
-                "Install with: pip install pyradamsa\n"
-                "Or add to requirements: pip install -e .[radamsa]"
-            )
-
-    def add_seed(self, seed: bytes):
-        """Add a seed to the mutation pool"""
-        self.seeds.append(seed)
-
-    def mutate(self, data: bytes, seed: Optional[int] = None) -> bytes:
-        """
-        Generate a single mutation
-
-        Args:
-            data: Data to mutate
-            seed: Random seed for reproducibility (optional)
-
-        Returns:
-            Mutated data
-        """
-        if self._radamsa is None:
-            self._init_radamsa()
-
-        return self._radamsa.fuzz(data, seed=seed)
-
-    def mutate_batch(self, data: bytes, count: int, start_seed: int = 0) -> List[bytes]:
-        """
-        Generate multiple mutations of the same data
-
-        Args:
-            data: Data to mutate
-            count: Number of mutations to generate
-            start_seed: Starting seed value
-
-        Returns:
-            List of mutated data
-        """
-        mutations = []
-        for i in range(count):
-            mutated = self.mutate(data, seed=start_seed + i)
-            mutations.append(mutated)
-        return mutations
-
-    def mutation_stream(self, count: int = 100) -> Iterator[bytes]:
-        """
-        Generate mutations from seed pool as a stream
-
-        Args:
-            count: Number of mutations to generate
-
-        Yields:
-            Mutated data
-        """
-        if not self.seeds:
-            raise ValueError("No seeds loaded. Add seeds with add_seed() first.")
-
-        for i in range(count):
-            seed_idx = i % len(self.seeds)
-            seed_data = self.seeds[seed_idx]
-            yield self.mutate(seed_data, seed=i)
-
-    def save_mutations_to_files(self, output_dir: str, count: int) -> List[str]:
-        """
-        Generate mutations and save to files (for use with boofuzz FromFile)
-
-        Args:
-            output_dir: Directory to save mutation files
-            count: Number of mutations to generate
-
-        Returns:
-            List of file paths
-        """
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
-
-        if not self.seeds:
-            raise ValueError("No seeds loaded")
-
-        generated_files = []
-        for i, mutated in enumerate(self.mutation_stream(count)):
-            filepath = Path(output_dir) / f"mutation_{i:05d}.bin"
-            with open(filepath, "wb") as f:
-                f.write(mutated)
-            generated_files.append(str(filepath))
-
-            if (i + 1) % 100 == 0:
-                _log.display(f"Generated {i + 1}/{count} mutations...")
-
-        _log.display(f"Saved {len(generated_files)} mutations to {output_dir}")
-        return generated_files
 
 
 class SeedLoader:

@@ -31,7 +31,7 @@ class QueryMixin:
 
         msg = self._create_qry_message()
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received QRY response")
                 self._parse_response(response)
@@ -57,7 +57,7 @@ class QueryMixin:
 
         msg = self._create_qry_r02_message()
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received ORF response")
                 self._parse_response(response)
@@ -72,7 +72,7 @@ class QueryMixin:
 
         msg = self._create_qbp_q31_message()
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received RSP^K31 response")
                 self._parse_response(response)
@@ -87,7 +87,7 @@ class QueryMixin:
 
         msg = self._create_osq_q06_message()
         if msg:
-            response = self._send_mllp_message(msg)
+            response = self._send_query_message(msg)
             if response:
                 self.logger.success("Received OSR response")
                 self._parse_response(response)

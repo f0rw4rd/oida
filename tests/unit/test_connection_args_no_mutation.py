@@ -49,14 +49,6 @@ class TestArgsCopySemantics(unittest.TestCase):
         # The patched _resolve_host uses getaddrinfo.
         self.assertIn("socket.getaddrinfo(host, None)", src)
 
-    def test_test_connection_iterates_families(self):
-        import pathlib
-
-        src = pathlib.Path("src/oida/connection.py").read_text()
-        # Iterates address families instead of hard-coded AF_INET.
-        self.assertIn("for family, socktype, proto", src)
-        self.assertIn("sock.connect_ex(sockaddr)", src)
-
 
 if __name__ == "__main__":
     unittest.main()

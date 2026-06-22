@@ -137,8 +137,8 @@ class IPsecPassiveListener(PySharkListenerBase):
         super().__init__(interface, timeout, nxc_logger)
         # Track vendor IDs per endpoint
         self.vendor_ids: Dict[str, List[str]] = {}  # ip -> list of vendor names
-        # Track crypto proposals per endpoint
-        self.crypto_proposals: Dict[str, List[Dict[str, str]]] = {}
+        # Track Aggressive Mode flows (PSK hash exposure) for harvest alerts
+        self._aggressive_flows: List[tuple] = []  # (src_ip, dst_ip)
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format IPsec/IKE interaction as protocol-specific table columns."""
@@ -307,9 +307,14 @@ class IPsecPassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
-        # Flag aggressive mode as security concern
+        # Flag aggressive mode as security concern. Record the flow so harvest()
+        # surfaces it as a structured alert that reaches the scanner pipeline
+        # (not just a log line that never makes it into results/exports).
         if exchange_short == "Aggressive":
-            self.logger.warning(
+            pair = (src_ip, dst_ip)
+            if pair not in self._aggressive_flows:
+                self._aggressive_flows.append(pair)
+            self.logger.debug(
                 f"IKE Aggressive Mode detected: {src_ip} -> {dst_ip} (PSK hash may be captured)"
             )
 
@@ -366,9 +371,10 @@ class IPsecPassiveListener(PySharkListenerBase):
         )
 
     def harvest(self) -> Dict[str, Any]:
-        """Return structured harvest data including vendor ID tables."""
-        base = super().harvest()
+        """Return structured harvest data including vendor ID tables + alerts."""
+        base = super().harvest() or {}
         tables = base.get("tables", [])
+        alerts = base.get("alerts", [])
 
         # Add vendor ID table
         vendor_rows = []
@@ -384,6 +390,21 @@ class IPsecPassiveListener(PySharkListenerBase):
                 }
             )
 
+        # Aggressive Mode -> structured alert (PSK hash crackable offline)
+        for src_ip, dst_ip in self._aggressive_flows:
+            alerts.append(
+                {
+                    "level": "fail",
+                    "category": "ike_aggressive_mode",
+                    "message": (
+                        f"IKE AGGRESSIVE MODE: {src_ip} -> {dst_ip} "
+                        "(PSK hash exposed in handshake, crackable offline)"
+                    ),
+                }
+            )
+
         if tables:
             base["tables"] = tables
+        if alerts:
+            base["alerts"] = alerts
         return base

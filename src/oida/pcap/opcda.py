@@ -259,6 +259,11 @@ class OPCDAPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "dcom"
     REQUIRED_LAYERS = ("dcom",)
     PROTOCOL_COLUMNS = ("interface", "operation", "hresult", "detail")
+    # DCOM endpoint mapper / OXID resolver. Actual object calls use dynamically
+    # allocated high ports (handled by should_process_packet via REQUIRED_LAYERS),
+    # but 135 is the canonical well-known server port and seeds the direction
+    # port-heuristic (unioned with user --decode-as / OVERRIDE_PREFS at runtime).
+    SERVER_PORTS = (135,)
 
     def __init__(
         self,
@@ -364,18 +369,29 @@ class OPCDAPassiveListener(PySharkListenerBase):
             if hresult is not None:
                 hresult_name = HRESULT_NAMES.get(hresult, "")
 
-        # Determine direction: responses have HRESULT
+        # HRESULT presence is the protocol's response *content* signal (responses
+        # carry an HRESULT, requests do not).  It drives HRESULT semantics and
+        # request-only operation counting below, so keep it as-is.  It is NOT a
+        # clean dcerpc packet-type field, however, so we do NOT feed it to
+        # resolve_direction as a native signal (be conservative -> native=None);
+        # the known-server-port tier (135) reproduces the old role assignment for
+        # standard-port traffic while adding non-standard-port / --decode-as
+        # robustness.
         is_response = hresult is not None
         direction = "response" if is_response else "request"
 
-        # Determine client/server roles
-        if is_response:
-            client_ip, server_ip = dst_ip, src_ip
-        elif dst_port == 135:
-            # OXID resolver / endpoint mapper request
-            client_ip, server_ip = src_ip, dst_ip
-        else:
-            client_ip, server_ip = src_ip, dst_ip
+        # Determine client/server roles via the shared direction resolver.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        client_ip, server_ip = d.client_ip, d.server_ip
+        client_mac, server_mac = (src_mac, dst_mac) if d.is_request else (dst_mac, src_mac)
 
         # Track IPID -> interface mapping for opnum resolution
         if ipid and iface_name:
@@ -403,13 +419,13 @@ class OPCDAPassiveListener(PySharkListenerBase):
         if not is_opcda:
             return
 
-        # Track OXID to IP mapping
+        # Track OXID to IP mapping.  The OXID belongs to the exporting server, so
+        # map it to the resolved server side rather than re-deriving from
+        # HRESULT presence (keeps OXID->IP consistent with role resolution and
+        # robust on non-standard ports).
         if oxid:
             oxid_str = str(oxid).strip()
-            if is_response:
-                self._oxid_to_ip[oxid_str] = src_ip
-            else:
-                self._oxid_to_ip[oxid_str] = dst_ip
+            self._oxid_to_ip[oxid_str] = server_ip
 
         # Build operation label
         if iface_name and op_name:
@@ -526,15 +542,17 @@ class OPCDAPassiveListener(PySharkListenerBase):
             if hresult != 0:
                 session.error_count += 1
 
-        # Update devices
-        self._update_devices(client_ip, server_ip, src_mac, dst_mac, is_opcda, iface_name)
+        # Update devices.  Pass role-resolved MACs (client_mac/server_mac) so the
+        # server device gets the server-side MAC even on responses / reversed
+        # flows, instead of blindly using the raw packet src/dst.
+        self._update_devices(client_ip, server_ip, client_mac, server_mac, is_opcda, iface_name)
 
     def _update_devices(
         self,
         client_ip: str,
         server_ip: str,
-        src_mac: str,
-        dst_mac: str,
+        client_mac: str,
+        server_mac: str,
         is_opcda: bool,
         iface_name: str,
     ) -> None:
@@ -546,11 +564,11 @@ class OPCDAPassiveListener(PySharkListenerBase):
         # Server device
         if is_valid_discovered_ip(server_ip):
             server_key = f"opcda:{server_ip}"
-            server_vendor = lookup_mac_vendor(dst_mac) if dst_mac else ""
+            server_vendor = lookup_mac_vendor(server_mac) if server_mac else ""
             device, is_new = self._ensure_device(
                 server_key,
                 server_ip,
-                mac=dst_mac,
+                mac=server_mac,
                 device_type=server_type,
                 manufacturer=server_vendor,
             )
@@ -563,11 +581,11 @@ class OPCDAPassiveListener(PySharkListenerBase):
         # Client device
         if is_valid_discovered_ip(client_ip):
             client_key = f"opcda-client:{client_ip}"
-            client_vendor = lookup_mac_vendor(src_mac) if src_mac else ""
+            client_vendor = lookup_mac_vendor(client_mac) if client_mac else ""
             device, is_new = self._ensure_device(
                 client_key,
                 client_ip,
-                mac=src_mac,
+                mac=client_mac,
                 device_type=client_type,
                 manufacturer=client_vendor,
             )
@@ -716,14 +734,6 @@ class OPCDAPassiveListener(PySharkListenerBase):
                             ),
                         }
                     )
-
-            # Detect OXID resolver queries from unexpected sources
-            # (any client querying port 135 is doing DCOM discovery)
-            for ix in self.interactions:
-                if ix.dst_port == 135 and ix.direction == "request":
-                    if ix.src_ip == session.client_ip:
-                        # Already covered by normal flow; only alert once per session
-                        break
 
         return result
 

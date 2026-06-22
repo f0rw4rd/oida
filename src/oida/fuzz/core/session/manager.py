@@ -176,6 +176,13 @@ class TestCaseManager:
         # Track crash count for statistics
         self._crash_count: int = 0
 
+        # Ids already persisted to the DB by a crash-context flush. The rolling
+        # buffer is intentionally NOT cleared after a flush (it keeps providing
+        # crash context for later cases), so the final 'pass' flush must skip
+        # these ids — re-inserting them as 'pass' would downgrade the recorded
+        # crash/fail row and erase its crash-specific fields.
+        self._persisted_ids: set[int] = set()
+
         # Store session metadata for replay validation
         self._store_session_metadata()
 
@@ -365,6 +372,11 @@ class TestCaseManager:
 
         self.database.store_test_cases_bulk(cases_to_store)
 
+        # Remember which ids are now persisted so the final 'pass' flush in
+        # save_session_progress(final=True) does not re-insert (and downgrade)
+        # them. The buffer itself is left intact for ongoing crash context.
+        self._persisted_ids.update(tc.id for tc in cases_to_store)
+
         # Second pass: Store crash record (after test case exists)
         if crash_payload is not None:
             crash = Crash(
@@ -464,21 +476,24 @@ class TestCaseManager:
                     target_ip = getattr(cfg, "target_ip", None)
                     target_port = getattr(cfg, "target_port", None)
                     protocol = getattr(cfg, "protocol", None)
-                    self.database.store_test_cases_bulk(
-                        [
-                            TestCase(
-                                id=tc_id,
-                                name=name,
-                                timestamp=ts,
-                                result="pass",
-                                crc32=crc,
-                                target_ip=target_ip,
-                                target_port=target_port,
-                                protocol=protocol,
-                            )
-                            for (tc_id, name, _payload, ts, crc) in buffered
-                        ]
-                    )
+                    # Skip ids already persisted as crash context — re-inserting
+                    # them as 'pass' would clobber the recorded crash/fail row.
+                    pending = [
+                        TestCase(
+                            id=tc_id,
+                            name=name,
+                            timestamp=ts,
+                            result="pass",
+                            crc32=crc,
+                            target_ip=target_ip,
+                            target_port=target_port,
+                            protocol=protocol,
+                        )
+                        for (tc_id, name, _payload, ts, crc) in buffered
+                        if tc_id not in self._persisted_ids
+                    ]
+                    if pending:
+                        self.database.store_test_cases_bulk(pending)
             # Only print on final save (Ctrl+C or end of session)
             if final:
                 line = (

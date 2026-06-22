@@ -202,6 +202,7 @@ class S7commPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "s7comm"
     DISPLAY_FILTER = "s7comm"
     REQUIRED_LAYERS = ("s7comm",)
+    SERVER_PORTS = (102,)
     PROTOCOL_COLUMNS = ("operation", "area", "db", "address", "size", "data")
 
     # S7comm write function codes (security-relevant)
@@ -272,33 +273,32 @@ class S7commPassiveListener(PySharkListenerBase):
             redid_raw = self.get_field(s7comm, "header.redid", None)
         redid_str = str(redid_raw) if redid_raw is not None else ""
 
-        # Determine client/PLC roles using port 102 (PLC always listens
-        # on 102).  ROSCTR-only detection fails for Download/Upload where
-        # the PLC sends Job (ROSCTR=1) to request block data from the
-        # client, reversing the normal Job=client pattern.
-        if dst_port == 102:
-            client_ip, plc_ip = src_ip, dst_ip
-            client_mac, plc_mac = src_mac, dst_mac
-            is_request = True
-        elif src_port == 102:
-            client_ip, plc_ip = dst_ip, src_ip
-            client_mac, plc_mac = dst_mac, src_mac
-            is_request = False
+        # Determine client/PLC roles via the shared cascade.  ROSCTR is the
+        # protocol-native request/response signal: 1=Job -> request,
+        # 2=Ack / 3=AckData -> response; 7=Userdata is bidirectional (no clean
+        # native signal -> None, falls through to known-server-port 102 plus any
+        # user --decode-as / OVERRIDE_PREFS override, then the lower-port
+        # heuristic).  Native priority means a PLC-originated Job during a
+        # Download/Upload is correctly classified as a request (Job=request
+        # regardless of which endpoint sends it).
+        if rosctr == 0x01:
+            native: Optional[bool] = True
+        elif rosctr in (0x02, 0x03):
+            native = False
         else:
-            # Non-standard port — use ROSCTR as fallback
-            if rosctr == 0x01:
-                client_ip, plc_ip = src_ip, dst_ip
-                client_mac, plc_mac = src_mac, dst_mac
-                is_request = True
-            elif rosctr in (0x02, 0x03):
-                client_ip, plc_ip = dst_ip, src_ip
-                client_mac, plc_mac = dst_mac, src_mac
-                is_request = False
-            else:
-                # Best guess: treat src as client
-                client_ip, plc_ip = src_ip, dst_ip
-                client_mac, plc_mac = src_mac, dst_mac
-                is_request = True
+            native = None
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request = d.is_request
+        client_ip, plc_ip = d.client_ip, d.server_ip
+        client_mac, plc_mac = (src_mac, dst_mac) if is_request else (dst_mac, src_mac)
 
         direction = "request" if is_request else "response"
 
@@ -314,7 +314,7 @@ class S7commPassiveListener(PySharkListenerBase):
                 else:
                     func_code = int(func_raw)
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"if isinstance(func_raw, str) and func...: {e}")
+                self.logger.debug(f"S7comm: failed to parse function code: {e}")
 
         func_name = S7_FUNCTIONS.get(func_code, f"Func 0x{func_code:02x}")
 

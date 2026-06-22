@@ -47,6 +47,7 @@ def _get_mock_types():
         "PropertyIdentifier": Mock(return_value=Mock()),
         "Real": Mock(return_value=Mock()),
         "Unsigned": Mock(return_value=Mock()),
+        "BinaryPV": Mock(return_value=Mock()),
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
         "RejectPDU": RejectPDU,

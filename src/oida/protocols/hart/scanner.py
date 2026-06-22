@@ -107,10 +107,6 @@ class LockState:
 class PhysicalSignaling:
     """HART physical signaling codes (from Command 0 response)"""
 
-    BELL_202 = 0
-    RESERVED_1 = 1
-    FSK = 2
-    RESERVED_3 = 3
     WIRELESS_HART = 4
 
     NAMES = {
@@ -340,10 +336,18 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
                 result.security_findings.extend(wireless_info.get("security_findings", []))
 
             if device_info:
-                # Only treat the device as "unlocked" when we definitively read
-                # UNLOCKED — otherwise (LOCKED / PERMANENTLY_LOCKED / UNKNOWN)
-                # don't emit the HART-SEC-003 "lock not enabled" finding.
-                device_locked = device_info.lock_state != LockState.UNLOCKED
+                # read_device_info() never populates lock_state, so read it
+                # explicitly (Command 76) before the security analysis — otherwise
+                # it stays at the LockState.UNKNOWN default and HART-SEC-003 is
+                # silently suppressed on every HART 6+ device.
+                device_info.lock_state = self.read_lock_state()
+                # Only treat the device as "locked" when we definitively read a
+                # locked state. UNKNOWN / NOT_SUPPORTED / UNLOCKED all mean the
+                # lock is not confirmed enabled, so HART-SEC-003 should fire.
+                device_locked = device_info.lock_state in (
+                    LockState.LOCKED,
+                    LockState.PERMANENTLY_LOCKED,
+                )
                 result.security_findings.extend(
                     analyze_protocol_security(
                         device_info.protocol_revision,

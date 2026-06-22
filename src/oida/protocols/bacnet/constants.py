@@ -93,6 +93,7 @@ def _load_bacpypes3() -> Dict[str, Any]:
         WhoIsRequest,
     )
     from bacpypes3.basetypes import (
+        BinaryPV,
         DateTime,
         DeviceStatus,
         PropertyIdentifier,
@@ -130,6 +131,7 @@ def _load_bacpypes3() -> Dict[str, Any]:
             "CharacterString": CharacterString,
             "Unsigned": Unsigned,
             "Real": Real,
+            "BinaryPV": BinaryPV,
             "Date": Date,
             "Time": Time,
             "DateTime": DateTime,

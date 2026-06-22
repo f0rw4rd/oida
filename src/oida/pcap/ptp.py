@@ -93,12 +93,6 @@ PTP_MESSAGE_TYPES = {
 # Event messages (timing-critical, port 319)
 EVENT_MESSAGES = {0x0, 0x1, 0x2, 0x3}
 
-# General messages (non-timing, port 320)
-GENERAL_MESSAGES = {0x8, 0x9, 0xA, 0xB, 0xC, 0xD}
-
-# Security-relevant message types
-SECURITY_RELEVANT = {0xB, 0xC, 0xD}  # Announce, Signaling, Management
-
 # PTP time sources
 PTP_TIME_SOURCES = {
     0x10: "Atomic Clock",
@@ -199,8 +193,6 @@ class PTPClock:
     is_grandmaster: bool = False
     announce_count: int = 0
     sync_count: int = 0
-    management_count: int = 0
-    signaling_count: int = 0
     total_messages: int = 0
     first_seen: str = ""
     last_seen: str = ""
@@ -331,10 +323,6 @@ class PTPPassiveListener(PySharkListenerBase):
             clock.sync_count += 1
         elif msg_type == 0xB:
             clock.announce_count += 1
-        elif msg_type == 0xD:
-            clock.management_count += 1
-        elif msg_type == 0xC:
-            clock.signaling_count += 1
 
         # Determine direction label
         # PTP event messages are timing-critical; general messages are informational
@@ -713,21 +701,3 @@ class PTPPassiveListener(PySharkListenerBase):
                     unique_alerts.append(alert)
             result.setdefault("alerts", []).extend(unique_alerts)
         return result
-
-    def get_clocks_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all observed PTP clocks."""
-        return [
-            {
-                "clock_identity": c.clock_identity,
-                "domains": sorted(c.domains),
-                "is_grandmaster": c.is_grandmaster,
-                "gm_clock_id": c.gm_clock_id,
-                "gm_priority1": c.gm_priority1,
-                "gm_clock_class": c.gm_clock_class,
-                "total_messages": c.total_messages,
-                "sync_count": c.sync_count,
-                "announce_count": c.announce_count,
-                "management_count": c.management_count,
-            }
-            for c in self.clocks.values()
-        ]

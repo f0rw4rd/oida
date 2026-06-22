@@ -755,7 +755,7 @@ class EtherCATScanner(
                 continue
 
             slave_results = []
-            for index, subindex, name, dtype, read_size in all_objects:
+            for index, subindex, name, dtype, _read_size in all_objects:
                 try:
                     data = slave.sdo_read(index, subindex)
                     if data is None:

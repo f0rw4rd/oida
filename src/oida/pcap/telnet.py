@@ -152,7 +152,6 @@ class TelnetPassiveListener(PySharkListenerBase):
         # Live capture
         listener = TelnetPassiveListener(interface="eth0", timeout=60)
         devices = listener.scan()
-        devices = listener.scan()
 
         # Access extracted credentials
         for cred in listener.credentials:
@@ -171,6 +170,7 @@ class TelnetPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "telnet"
     DISPLAY_FILTER = "telnet"
     REQUIRED_LAYERS = ("telnet",)
+    SERVER_PORTS = (23,)
 
     PROTOCOL_COLUMNS = ("type", "detail", "info")
 
@@ -266,15 +266,25 @@ class TelnetPassiveListener(PySharkListenerBase):
 
         telnet_layer = packet.telnet
 
-        # Determine direction
-        direction = "request" if dst_port == 23 else "response"
-        if dst_port == 23:
-            client_ip, server_ip, server_port = src_ip, dst_ip, dst_port
-        elif src_port == 23:
-            client_ip, server_ip, server_port = dst_ip, src_ip, src_port
-        else:
-            # Neither port is 23 -- cannot determine direction
-            return
+        # Determine direction via the shared cascade.  Telnet has no
+        # request/response indicator in the wire format, so native=None: the
+        # known-server-port tier (canonical 23 plus any user --decode-as /
+        # OVERRIDE_PREFS override) classifies, falling back to the lower-port /
+        # first-seen heuristic.  Unlike the old `dst_port == 23` checks this
+        # never drops traffic on a non-standard port.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request = d.is_request
+        direction = d.direction
+        client_ip, server_ip = d.client_ip, d.server_ip
+        server_port = d.server_port
 
         session = self._get_session(client_ip, server_ip)
         if server_port and not session.server_port:
@@ -396,7 +406,7 @@ class TelnetPassiveListener(PySharkListenerBase):
                 stream_id=self.get_stream_id(packet),
             )
 
-            if dst_port == 23:
+            if is_request:
                 self._process_client_packet(client_ip, server_ip, telnet_data)
             else:
                 self._process_server_packet(client_ip, server_ip, telnet_data)

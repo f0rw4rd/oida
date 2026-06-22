@@ -18,15 +18,6 @@ from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip
 
 # DNS record types
-DNS_TYPE_A = 1  # IPv4 address
-DNS_TYPE_AAAA = 28  # IPv6 address
-DNS_TYPE_PTR = 12  # Pointer (reverse DNS)
-DNS_TYPE_CNAME = 5  # Canonical name (alias)
-DNS_TYPE_MX = 15  # Mail exchange
-DNS_TYPE_TXT = 16  # Text record
-DNS_TYPE_NS = 2  # Name server
-DNS_TYPE_SOA = 6  # Start of authority
-
 DNS_TYPE_NAMES = {
     1: "A",
     2: "NS",
@@ -45,6 +36,7 @@ DNS_TYPE_NAMES = {
     249: "TKEY",
     250: "TSIG",
 }
+
 
 # Human-readable opcode names
 DNS_OPCODE_NAMES = {
@@ -70,9 +62,6 @@ DNS_RCODE_NAMES = {
     10: "NotZone",
 }
 
-# Reverse mapping for PyShark type names to numeric codes
-DNS_TYPE_FROM_NAME = {v: k for k, v in DNS_TYPE_NAMES.items()}
-
 
 class DNSPassiveListener(PySharkListenerBase):
     """Passive DNS traffic listener using PyShark.
@@ -92,7 +81,6 @@ class DNSPassiveListener(PySharkListenerBase):
     Usage:
         # Live capture
         listener = DNSPassiveListener(interface="eth0", timeout=30)
-        devices = listener.scan()
         devices = listener.scan()
 
         # Testing - feed packets directly
@@ -400,29 +388,26 @@ class DNSPassiveListener(PySharkListenerBase):
         responses = []
         hostname_mappings: Dict[str, List[str]] = {}
 
-        # Get all DNS fields for comprehensive parsing
-        all_fields = self.get_all_fields(dns)
-
         # Parse A records (IPv4)
-        self._parse_a_records(dns, all_fields, responses, hostname_mappings)
+        self._parse_a_records(dns, responses, hostname_mappings)
 
         # Parse AAAA records (IPv6)
-        self._parse_aaaa_records(dns, all_fields, responses, hostname_mappings)
+        self._parse_aaaa_records(dns, responses, hostname_mappings)
 
         # Parse PTR records (reverse DNS)
-        self._parse_ptr_records(dns, all_fields, responses, hostname_mappings)
+        self._parse_ptr_records(dns, responses, hostname_mappings)
 
         # Parse CNAME records (aliases)
-        self._parse_cname_records(dns, all_fields, responses)
+        self._parse_cname_records(dns, responses)
 
         # Parse MX records (mail exchange)
-        self._parse_mx_records(dns, all_fields, responses)
+        self._parse_mx_records(dns, responses)
 
         # Parse NS records (name server)
-        self._parse_ns_records(dns, all_fields, responses)
+        self._parse_ns_records(dns, responses)
 
         # Parse SOA records (start of authority)
-        self._parse_soa_records(dns, all_fields, responses)
+        self._parse_soa_records(dns, responses)
 
         # Parse TSIG records (transaction signature)
         self._parse_tsig_records(dns, responses)
@@ -514,7 +499,6 @@ class DNSPassiveListener(PySharkListenerBase):
     def _parse_a_records(
         self,
         dns,
-        all_fields: Dict[str, str],
         responses: List[Dict],
         hostname_mappings: Dict[str, List[str]],
     ) -> None:
@@ -540,15 +524,9 @@ class DNSPassiveListener(PySharkListenerBase):
                 hostname_mappings[rrname].append(answer)
             self.logger.debug(f"DNS: A record {rrname} -> {answer}")
 
-        # Also check all_fields for multiple A records
-        for key, value in all_fields.items():
-            if key.startswith("dns.a") and key != "dns.a":
-                continue  # Already handled by primary
-
     def _parse_aaaa_records(
         self,
         dns,
-        all_fields: Dict[str, str],
         responses: List[Dict],
         hostname_mappings: Dict[str, List[str]],
     ) -> None:
@@ -577,7 +555,6 @@ class DNSPassiveListener(PySharkListenerBase):
     def _parse_ptr_records(
         self,
         dns,
-        all_fields: Dict[str, str],
         responses: List[Dict],
         hostname_mappings: Dict[str, List[str]],
     ) -> None:
@@ -608,7 +585,6 @@ class DNSPassiveListener(PySharkListenerBase):
     def _parse_cname_records(
         self,
         dns,
-        all_fields: Dict[str, str],
         responses: List[Dict],
     ) -> None:
         """Parse CNAME records (aliases) from DNS response."""
@@ -632,7 +608,6 @@ class DNSPassiveListener(PySharkListenerBase):
     def _parse_mx_records(
         self,
         dns,
-        all_fields: Dict[str, str],
         responses: List[Dict],
     ) -> None:
         """Parse MX records (mail exchange) from DNS response."""
@@ -657,7 +632,6 @@ class DNSPassiveListener(PySharkListenerBase):
     def _parse_ns_records(
         self,
         dns,
-        all_fields: Dict[str, str],
         responses: List[Dict],
     ) -> None:
         """Parse NS records (name server) from DNS response."""
@@ -678,7 +652,6 @@ class DNSPassiveListener(PySharkListenerBase):
     def _parse_soa_records(
         self,
         dns,
-        all_fields: Dict[str, str],
         responses: List[Dict],
     ) -> None:
         """Parse SOA records (start of authority) from DNS response."""

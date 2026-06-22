@@ -1913,9 +1913,7 @@ class TestEnhancedUDSScannerMock(unittest.TestCase):
         mock_bus = MagicMock()
         mock_bus.recv.return_value = None
 
-        routines = self.scanner.uds_routine_scan(
-            mock_bus, 0x7E0, routine_range=(0x0000, 0x0005)
-        )
+        routines = self.scanner.uds_routine_scan(mock_bus, 0x7E0, routine_range=(0x0000, 0x0005))
 
         self.assertIsInstance(routines, list)
         mock_bus.send.assert_called()
@@ -1937,31 +1935,6 @@ class TestEnhancedUDSScannerMock(unittest.TestCase):
 
         self.assertTrue(result)
         mock_bus.send.assert_called_once()
-
-    @patch("oida.protocols.can.scanner._python_can")
-    def test_uds_tester_present_keepalive(self, mock_can_lazy):
-        """Test UDS TesterPresent keep-alive."""
-        mock_can = MagicMock()
-        mock_can_lazy.return_value = mock_can
-        mock_bus = MagicMock()
-
-        result = self.scanner.uds_tester_present_keepalive(mock_bus, 0x7E0)
-
-        self.assertTrue(result)
-        mock_bus.send.assert_called_once()
-
-    @patch("oida.protocols.can.scanner._python_can")
-    def test_uds_tester_present_suppress_response(self, mock_can_lazy):
-        """Test TesterPresent with response suppression."""
-        mock_can = MagicMock()
-        mock_can_lazy.return_value = mock_can
-        mock_bus = MagicMock()
-
-        result = self.scanner.uds_tester_present_keepalive(mock_bus, 0x7E0, suppress_response=True)
-        self.assertTrue(result)
-
-        result = self.scanner.uds_tester_present_keepalive(mock_bus, 0x7E0, suppress_response=False)
-        self.assertTrue(result)
 
     def test_seed_analysis_duplicates(self):
         """Test seed analysis detects duplicates."""

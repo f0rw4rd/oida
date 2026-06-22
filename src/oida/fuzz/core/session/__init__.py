@@ -20,13 +20,6 @@ from .commands import (
     RealCommandRunner,
     MockCommandRunner,
 )
-from .test_case import (
-    TestCaseRegistry,
-    TestCaseDefinition,
-    ProtocolFeature,
-    HTTPFeature,
-    TCPFeature,
-)
 from .state_machine import (
     StateMachine,
     ProtocolState,
@@ -79,12 +72,6 @@ __all__ = [
     "CommandRunner",
     "RealCommandRunner",
     "MockCommandRunner",
-    # Test cases
-    "TestCaseRegistry",
-    "TestCaseDefinition",
-    "ProtocolFeature",
-    "HTTPFeature",
-    "TCPFeature",
     # State machine
     "StateMachine",
     "ProtocolState",

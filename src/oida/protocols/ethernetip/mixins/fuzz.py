@@ -10,7 +10,7 @@ Handles CIP attribute fuzz testing:
 
 from __future__ import annotations
 
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -178,7 +178,10 @@ class FuzzMixin(_ScannerBase):
                     class_attrs = attr_data.get("class_attributes", {})
                     orig_info = class_attrs.get(attr_id_int, class_attrs.get(attr_id, {}))
                     orig_raw = orig_info.get("raw", "")
-                    orig_value = bytes.fromhex(orig_raw) if orig_raw else b"\x00"
+                    # None (not a fabricated \x00) when no genuine original was
+                    # captured, so the restore step is skipped rather than writing
+                    # a synthetic value back to the device.
+                    orig_value = bytes.fromhex(orig_raw) if orig_raw else None
                     orig_type = orig_info.get("type", "")
 
                     fuzz_result = self._fuzz_single_attribute(
@@ -208,7 +211,10 @@ class FuzzMixin(_ScannerBase):
                         inst_data = instances.get(inst_id_int, instances.get(inst_id, {}))
                         orig_info = inst_data.get(attr_id_int, inst_data.get(attr_id, {}))
                         orig_raw = orig_info.get("raw", "")
-                        orig_value = bytes.fromhex(orig_raw) if orig_raw else b"\x00"
+                        # None (not a fabricated \x00) when no genuine original was
+                        # captured, so the restore step is skipped rather than writing
+                        # a synthetic value back to the device.
+                        orig_value = bytes.fromhex(orig_raw) if orig_raw else None
                         orig_type = orig_info.get("type", "")
 
                         fuzz_result = self._fuzz_single_attribute(
@@ -236,7 +242,7 @@ class FuzzMixin(_ScannerBase):
         class_id: int,
         instance: int,
         attr_id: int,
-        original_value: bytes,
+        original_value: Optional[bytes],
         attr_name: str = "",
         cip_type: str = "",
         iterations: int = 100,
@@ -248,7 +254,8 @@ class FuzzMixin(_ScannerBase):
             class_id: CIP class ID
             instance: Instance number (0 for class attributes)
             attr_id: Attribute ID
-            original_value: Original attribute value as bytes
+            original_value: Original attribute value as bytes, or None when no
+                genuine original was captured (restore is then skipped).
             attr_name: Attribute name for logging
             cip_type: CIP data type (USINT, UINT, DWORD, STRING, etc.)
             iterations: Number of fuzz iterations (default: 100)
@@ -340,7 +347,10 @@ class FuzzMixin(_ScannerBase):
                 else:
                     results["errors"].append(str(e))
 
-        # Attempt to restore original value only if something was accepted
+        # Attempt to restore only when a genuine original was captured AND a
+        # payload was accepted. original_value is None (or empty) when no real
+        # prior value exists, so we never write a fabricated placeholder back to
+        # the device nor falsely claim the original was restored.
         if original_value and results["interesting"]:
             try:
                 restore_result = conn.generic_message(

@@ -160,7 +160,7 @@ class CoeOpsMixin(_ScannerBase):
 
                         # Get name and type for export
                         name = self._get_coe_object_name(idx, 0)
-                        type_str, val_str = self._format_sdo_value(data.hex(), len(data))
+                        type_str, _ = self._format_sdo_value(data.hex(), len(data))
 
                         obj_entry = {
                             "index": f"0x{idx:04X}",

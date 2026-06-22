@@ -180,9 +180,6 @@ NM_WRITE_COMMANDS = {
     0x72,  # Write memory, checksum recalc, device escape
 }
 
-# Domain length to byte count mapping
-DOMAIN_LENGTHS = {0: 0, 1: 1, 2: 3, 3: 6}
-
 
 def _format_lon_address(subnet: Optional[int], node: Optional[int]) -> str:
     """Format a LON subnet/node address."""
@@ -590,33 +587,3 @@ class LonTalkPassiveListener(PySharkListenerBase):
                     }
                 )
         return nm_senders
-
-    def get_nodes_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all observed LON nodes."""
-        return [
-            {
-                "address": f"{node.subnet}/{node.node}",
-                "domain": node.domain,
-                "groups": sorted(node.groups),
-                "auth_seen": node.auth_seen,
-                "nv_count": len(node.nv_selectors),
-                "nv_updates": node.nv_update_count,
-                "nm_commands": node.nm_commands_recv,
-            }
-            for node in sorted(self.nodes.values(), key=lambda n: (n.subnet, n.node))
-        ]
-
-    def get_security_summary(self) -> Dict[str, Any]:
-        """Get security posture summary for LON network."""
-        total_nodes = len(self.nodes)
-        auth_nodes = sum(1 for n in self.nodes.values() if n.auth_seen)
-        no_auth_nodes = total_nodes - auth_nodes
-        nm_targets = sum(1 for n in self.nodes.values() if n.nm_commands_recv > 0)
-
-        return {
-            "total_nodes": total_nodes,
-            "nodes_with_auth": auth_nodes,
-            "nodes_without_auth": no_auth_nodes,
-            "nm_command_targets": nm_targets,
-            "auth_coverage": f"{auth_nodes}/{total_nodes}" if total_nodes else "N/A",
-        }

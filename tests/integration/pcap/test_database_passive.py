@@ -173,7 +173,7 @@ class TestPgsqlPassiveEK:
             "pgsql/credslayer_pgsql.pcap",
             min_devices=0,
         )
-        hashcat = listener.get_hashcat_format()
+        hashcat = listener.get_hashcat_hashes()
         assert len(hashcat) >= 1, "Expected at least one hashcat line"
         for line in hashcat:
             parts = line.split(":")
@@ -208,10 +208,17 @@ class TestPgsqlPassiveEK:
         # Check that requests come from client and responses from server
         for ix in listener.interactions:
             if ix.direction == "request":
-                # Requests: src should be client (not port 5432)
-                assert ix.operation in ("Startup", "Password", "Termination", "Query"), (
-                    f"Unexpected request operation: {ix.operation}"
-                )
+                # Requests: src should be client (not port 5432). "Multi-message"
+                # appears when EK mode collapses several client PG messages into
+                # one TCP segment -- a legitimate client-side request (the server
+                # side produces the same operation in the response branch below).
+                assert ix.operation in (
+                    "Startup",
+                    "Password",
+                    "Termination",
+                    "Query",
+                    "Multi-message",
+                ), f"Unexpected request operation: {ix.operation}"
             elif ix.direction == "response":
                 # Responses: src should be server. "Multi-message" appears when
                 # the listener merges several PG messages from one TCP segment
@@ -416,8 +423,9 @@ class TestMySQLPassiveEK:
                 for h in hashes:
                     assert h.get("protocol") == "MySQL"
 
-            # get_hashcat_format should return formatted hashes
-            hashcat = listener.get_hashcat_format()
+            # get_hashcat_hashes should return formatted hashes
+            # (canonical name probed by the scanner's --hashcat export)
+            hashcat = listener.get_hashcat_hashes()
             if hashcat:
                 for line in hashcat:
                     assert "$mysqlna$" in line, f"Bad hashcat format: {line}"

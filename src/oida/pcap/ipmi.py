@@ -62,16 +62,6 @@ PAYLOAD_TYPES = {
     "21": "RAKP Message 4",
 }
 
-# IPMI privilege levels
-PRIVILEGE_LEVELS = {
-    "0": "Reserved",
-    "1": "Callback",
-    "2": "User",
-    "3": "Operator",
-    "4": "Administrator",
-    "5": "OEM Proprietary",
-}
-
 
 @dataclass
 class IPMICredential:
@@ -111,6 +101,16 @@ class IPMICredential:
         """Scanner credential loop compatibility (server port for display)."""
         return self.dest_port
 
+    @property
+    def hash_value(self) -> str:
+        """Canonical credential field: the RAKP-2 HMAC for hash-type creds.
+
+        The scanner credential loop reads ``cred.hash_value`` directly; expose
+        the crackable RAKP HMAC here so RAKP creds surface in the hash column
+        without a fallback chain.
+        """
+        return self.rakp_hash
+
 
 class IPMIPassiveListener(PySharkListenerBase):
     """Passive IPMI traffic listener for BMC discovery and credential extraction.
@@ -132,6 +132,7 @@ class IPMIPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "ipmi"
     DISPLAY_FILTER = "ipmi_session || rmcp"
     REQUIRED_LAYERS = ("ipmi_session", "rmcp")
+    SERVER_PORTS = (623,)
     PROTOCOL_COLUMNS = ("auth_type", "payload_type", "session_id", "detail")
 
     def __init__(
@@ -186,13 +187,38 @@ class IPMIPassiveListener(PySharkListenerBase):
             payload_type = str(self.get_field(ipmi, "payloadtype", "") or "")
             payload_type_name = PAYLOAD_TYPES.get(payload_type, payload_type)
 
-        # Determine direction. IPMI/RMCP runs on UDP/623 by convention, but the
-        # BMC can sit behind NAT/port-forwarding or appear on a non-standard
-        # port. Use the canonical port if either side has it; otherwise fall
-        # back to "lower port wins" (the BMC listens on the smaller fixed port,
-        # the client uses an ephemeral high port) — same heuristic as the
-        # modbus/iec104/mms cluster.
-        is_to_bmc = dst_port == 623 or (dst_port != 623 and src_port != 623 and dst_port < src_port)
+        # Determine direction via the shared cascade.  RMCP+ payload types carry
+        # a clean request/response signal: Open Session / RAKP odd-numbered
+        # messages (1,3) are client -> BMC requests, the even responses
+        # (Open Session Response, RAKP 2,4) are BMC -> client.  We feed that as
+        # the authoritative native tier.  When the payload type is unknown
+        # (plain IPMI message / SOL), native=None falls through to the
+        # known-server-port tier (canonical 623 plus any user --decode-as /
+        # OVERRIDE_PREFS override) and then the lower-port heuristic.
+        native: Optional[bool] = None
+        if payload_type_name:
+            if (
+                "Response" in payload_type_name
+                or "RAKP Message 2" in payload_type_name
+                or "RAKP Message 4" in payload_type_name
+            ):
+                native = False
+            elif (
+                "Request" in payload_type_name
+                or "RAKP Message 1" in payload_type_name
+                or "RAKP Message 3" in payload_type_name
+            ):
+                native = True
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_to_bmc = d.is_request
         direction = "request" if is_to_bmc else "response"
 
         # Build operation

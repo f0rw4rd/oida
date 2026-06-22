@@ -714,16 +714,22 @@ class SNMPScanner(
         """Analyze SNMP scan results for security findings."""
         if self.version == "1":
             self.logger.security_finding(
-                "Legacy protocol", "SNMPv1 supported (no message integrity)"
+                "Legacy protocol",
+                category="AUTHENTICATION",
+                detail="SNMPv1 supported (no message integrity)",
             )
         if self.version in ("1", "2c"):
             self.logger.security_finding(
-                "No encryption", f"SNMPv{self.version} sends community strings in cleartext"
+                "No encryption",
+                category="ENCRYPTION",
+                detail=f"SNMPv{self.version} sends community strings in cleartext",
             )
 
         if self.version in ("1", "2c") and self.community == "public":
             self.logger.security_finding(
-                "Default credentials", "Default community string 'public' accepted"
+                "Default credentials",
+                category="AUTHENTICATION",
+                detail="Default community string 'public' accepted",
             )
 
         sys_info = result.get("sys_info", {})

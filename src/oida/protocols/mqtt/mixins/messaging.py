@@ -135,6 +135,7 @@ class MessagingMixin:
             "messages": stats.message_count,
             "topics": len(stats.topics_seen),
             "bytes": stats.bytes_received,
+            "retained": stats.retained_count,
             "rate": stats.rate,
         }
 
@@ -250,6 +251,7 @@ class MessagingMixin:
                 "messages": stats.message_count,
                 "topics": len(stats.topics_seen),
                 "bytes": stats.bytes_received,
+                "retained": stats.retained_count,
             },
         }
 

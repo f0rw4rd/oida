@@ -55,10 +55,6 @@ class EthernetFuzzer(BaseFuzzer):
     ETHERTYPE_LLDP = 0x88CC
     ETHERTYPE_8021X = 0x888E  # 802.1X Authentication
     ETHERTYPE_LACP = 0x8809  # Link Aggregation
-    ETHERTYPE_PTP = 0x88F7  # Precision Time Protocol
-    ETHERTYPE_CFM = 0x8902  # Connectivity Fault Management
-    ETHERTYPE_FCOE = 0x8906  # Fibre Channel over Ethernet
-    ETHERTYPE_ROCE = 0x8915  # RDMA over Converged Ethernet
 
     PROTOCOL_OPTIONS = {
         "interface": {

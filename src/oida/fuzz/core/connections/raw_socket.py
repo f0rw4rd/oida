@@ -1,12 +1,10 @@
 """
 Raw Socket Connection for Low-Level Protocol Fuzzing
 
-Provides raw socket functionality for IP, IPv6, and ICMP fuzzing with
-Ethernet frame construction support.
+Provides raw socket functionality for IP, IPv6, and ICMP fuzzing.
 """
 
 import socket
-import struct
 from typing import Optional
 
 import logging
@@ -119,23 +117,10 @@ class RawSocketConnection:
             data, addr = self._sock.recvfrom(max_bytes)
             return data
         except socket.timeout as e:
-            logger.debug(f"data, addr  self._sock.recvfrom(max_b...: {e}")
+            logger.debug(f"recvfrom timed out: {e}")
             return b""
         except Exception as e:
             raise ConnectionError(f"Failed to receive data: {e}")
-
-    def set_timeout(self, timeout: float):
-        """Set socket timeout"""
-        if self._sock:
-            self._sock.settimeout(timeout)
-
-    def get_max_send(self) -> int:
-        """Get maximum send size"""
-        return self.max_raw_size
-
-    def get_max_recv(self) -> int:
-        """Get maximum receive size"""
-        return self.max_raw_size
 
     # Compatibility methods for boofuzz interface
     def __enter__(self):
@@ -155,54 +140,3 @@ class RawSocketConnection:
         """Connection info string for boofuzz logging"""
         sock_type_str = self._sock_type if self._sock_type else "unknown"
         return f"raw-{sock_type_str}://{self.host}:{self.port}"
-
-
-class EthernetFrame:
-    """Helper class for building Ethernet frames"""
-
-    @staticmethod
-    def build(
-        dest_mac: bytes,
-        src_mac: bytes,
-        ethertype: int,
-        payload: bytes,
-        vlan_id: Optional[int] = None,
-    ) -> bytes:
-        """
-        Build an Ethernet frame
-
-        Args:
-            dest_mac: Destination MAC (6 bytes)
-            src_mac: Source MAC (6 bytes)
-            ethertype: EtherType (0x0800 for IPv4, 0x86DD for IPv6)
-            payload: Frame payload
-            vlan_id: Optional VLAN ID for 802.1Q tagging
-
-        Returns:
-            Complete Ethernet frame
-        """
-        frame = dest_mac + src_mac
-
-        if vlan_id is not None:
-            # Add 802.1Q VLAN tag
-            frame += struct.pack(">HH", 0x8100, vlan_id & 0x0FFF)
-
-        frame += struct.pack(">H", ethertype)
-        frame += payload
-
-        # Add padding if needed (minimum Ethernet frame is 64 bytes including CRC)
-        if len(frame) < 60:
-            frame += b"\x00" * (60 - len(frame))
-
-        return frame
-
-    @staticmethod
-    def parse_mac(mac_string: str) -> bytes:
-        """Convert MAC address string to bytes"""
-        parts = mac_string.replace(":", "").replace("-", "")
-        return bytes.fromhex(parts)
-
-    @staticmethod
-    def format_mac(mac_bytes: bytes) -> str:
-        """Convert MAC bytes to string format"""
-        return ":".join(f"{b:02x}" for b in mac_bytes)

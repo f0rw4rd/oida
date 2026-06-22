@@ -106,7 +106,6 @@ class CoAPFuzzer(BaseFuzzer):
         if config:
             config.protocol_type = ProtocolType.UDP
         super().__init__(config, connection_factory)
-        self.protocol_name = "CoAP"
 
     def _create_socket(self):
         """Create UDP socket for CoAP with proper bind and timeout for receiving responses.

@@ -231,7 +231,6 @@ class TASE2Scanner(
             "data_points": [],
             "transfer_sets": [],
             "control_points": [],
-            "device_tags": [],
             "conformance_blocks": [],
             "security_analysis": {},
         }
@@ -283,6 +282,12 @@ class TASE2Scanner(
                     self.logger.warning("--test-write requires --confirm; skipping write tests")
                 else:
                     self._test_write_access(connection, results)
+
+            # Information Messages (Block 4) - populate results["im_stores"] when
+            # Block 4 is accessible so _analyze_security can fold IM-store risk
+            # (F18/F19) into the security findings. No-ops if no domains.
+            if results["supported_features"].get("block4"):
+                self._discover_information_messages(connection, results)
 
             # Security analysis
             results["security_analysis"] = self._analyze_security(results)

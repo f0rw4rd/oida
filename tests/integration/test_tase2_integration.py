@@ -616,7 +616,7 @@ class TestTASE2ScannerEdgeCases(unittest.TestCase):
 # Security Finding Tests
 # ============================================================================
 #
-# These tests call _analyze_security() and _analyze_im_security() directly
+# These tests call _analyze_security() directly
 # with crafted result dicts. Each test targets a specific security finding
 # or recommendation. No Docker mock is needed because we exercise the pure
 # analysis logic.
@@ -1115,6 +1115,110 @@ class TestTASE2FindingIMSecurity(unittest.TestCase):
             len(concerns),
             0,
             f"Expected no IM concerns when block4 disabled; got: {concerns}",
+        )
+
+
+@dataclass
+class MockInfoBuffer:
+    """Mock TASE.2 Information Message buffer (mirrors pyiec61850-ng InformationBuffer)."""
+
+    name: str
+    max_size: int
+    entry_count: int
+    domain: str = ""
+
+
+class _MockIMConnection:
+    """Minimal TASE.2 connection exposing only the IM-store surface that
+    get_information_message_stores() consumes, so the discover -> security path
+    can be exercised end-to-end without Docker."""
+
+    def __init__(self, buffers_by_domain):
+        self._buffers_by_domain = buffers_by_domain
+
+    def get_info_buffers(self, domain):
+        return self._buffers_by_domain.get(domain, [])
+
+
+class TestTASE2IMSecurityWiring(unittest.TestCase):
+    """[F18-F19] End-to-end wiring: prove IM-store risk flows from the discover
+    path into the final security analysis WITHOUT calling _analyze_im_security
+    directly. This is the regression guard that the capability is connected."""
+
+    def test_im_findings_surface_through_discover_and_security(self):
+        """im_stores populated by _discover_information_messages must drive
+        F18/F19 concerns in _analyze_security output [Category A]."""
+        scanner = _make_scanner()
+
+        # A large, writable IM store -> should trip both F18 and F19.
+        conn = _MockIMConnection(
+            {
+                "ICC1": [
+                    MockInfoBuffer(name="IM_BigWritable", max_size=600, entry_count=10),
+                ],
+            }
+        )
+
+        results = _make_base_results(
+            domains=[{"name": "ICC1"}],
+            supported_features={"block1": True, "block4": True},
+            conformance_blocks=[],
+        )
+
+        # Drive the real discovery hook (NOT _analyze_im_security directly).
+        scanner._discover_information_messages(conn, results)
+
+        self.assertIn(
+            "im_stores",
+            results,
+            "discover hook must populate results['im_stores'] when block4 is accessible",
+        )
+        self.assertEqual(len(results["im_stores"]), 1)
+
+        # Now the real security path must fold the IM-store risk into concerns.
+        analysis = scanner._analyze_security(results)
+        concerns = analysis["concerns"]
+
+        # F15 base "enabled" line - emitted exactly once (de-dup verified).
+        enabled = [c for c in concerns if "Block 4 (Information Messages) enabled" in c]
+        self.assertEqual(
+            len(enabled),
+            1,
+            f"Block 4 'enabled' line must appear exactly once (no dup); got: {concerns}",
+        )
+
+        # F18 large-capacity exfiltration.
+        self.assertTrue(
+            [c for c in concerns if "exfiltration" in c.lower()],
+            f"Expected F18 exfiltration concern in final analysis; got: {concerns}",
+        )
+
+        # F19 write-injection risk.
+        self.assertTrue(
+            [c for c in concerns if "injection" in c.lower()],
+            f"Expected F19 injection concern in final analysis; got: {concerns}",
+        )
+
+    def test_no_im_findings_when_block4_absent(self):
+        """With block4 disabled, the discover hook is a no-op and no IM concerns
+        appear even if a store would otherwise be discoverable [Category A]."""
+        scanner = _make_scanner()
+        conn = _MockIMConnection(
+            {"ICC1": [MockInfoBuffer(name="IM_Store", max_size=1000, entry_count=100)]}
+        )
+        results = _make_base_results(
+            domains=[{"name": "ICC1"}],
+            supported_features={"block1": True, "block4": False},
+        )
+
+        # Even if discovery runs, _analyze_im_security guards on block4.
+        scanner._discover_information_messages(conn, results)
+        analysis = scanner._analyze_security(results)
+        concerns = analysis["concerns"]
+
+        self.assertFalse(
+            [c for c in concerns if "Information Messages" in c],
+            f"No Block 4 concerns expected when block4 is disabled; got: {concerns}",
         )
 
 

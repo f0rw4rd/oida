@@ -199,13 +199,22 @@ class TestUpdatePatient(unittest.TestCase):
         )
 
         mock_existing = MagicMock()
-        mock_existing.update.return_value = True
+        mock_existing.as_json.return_value = {"resourceType": "Patient", "id": "PT001"}
         mock_patient.Patient.read.return_value = mock_existing
+
+        rebuilt = MagicMock()
+        rebuilt.update.return_value = True
+        mock_patient.Patient.return_value = rebuilt
 
         host._update_patient()
 
-        self.assertEqual(mock_existing.gender, "male")
-        self.assertEqual(mock_existing.active, True)
+        # Allowed fields are merged into the resource JSON and the resource is
+        # rebuilt via the model constructor (so fhirclient converts dicts to
+        # typed sub-models), not set via raw setattr.
+        mock_patient.Patient.assert_called_once_with(
+            {"resourceType": "Patient", "id": "PT001", "gender": "male", "active": True}
+        )
+        rebuilt.update.assert_called_once()
         host.logger.success.assert_called()
 
     @patch("oida.protocols.fhir.mixins.crud.patient")
@@ -218,15 +227,21 @@ class TestUpdatePatient(unittest.TestCase):
         )
 
         mock_existing = MagicMock()
-        mock_existing.update.return_value = True
+        mock_existing.as_json.return_value = {"resourceType": "Patient", "id": "PT001"}
         mock_patient.Patient.read.return_value = mock_existing
+
+        rebuilt = MagicMock()
+        rebuilt.update.return_value = True
+        mock_patient.Patient.return_value = rebuilt
 
         host._update_patient()
 
         # 'id' should be skipped with warning
         host.logger.warning.assert_called()
-        # 'gender' should be set
-        self.assertEqual(mock_existing.gender, "female")
+        # 'gender' should be merged into the rebuilt resource; 'id' excluded.
+        mock_patient.Patient.assert_called_once_with(
+            {"resourceType": "Patient", "id": "PT001", "gender": "female"}
+        )
 
     @patch("oida.protocols.fhir.mixins.crud.patient")
     def test_update_with_cli_given_name(self, mock_patient):
@@ -331,8 +346,12 @@ class TestUpdatePatient(unittest.TestCase):
         )
 
         mock_existing = MagicMock()
-        mock_existing.update.return_value = None
+        mock_existing.as_json.return_value = {"resourceType": "Patient", "id": "PT001"}
         mock_patient.Patient.read.return_value = mock_existing
+
+        rebuilt = MagicMock()
+        rebuilt.update.return_value = None
+        mock_patient.Patient.return_value = rebuilt
 
         host._update_patient()
         host.logger.fail.assert_called()
@@ -346,6 +365,60 @@ class TestUpdatePatient(unittest.TestCase):
         host._update_patient()
         host.logger.fail.assert_called()
         self.assertIn("error", host.results["data"]["updated_patient"])
+
+
+class TestUpdatePatientRealModel(unittest.TestCase):
+    """Regression tests against the real fhirclient Patient model.
+
+    These do NOT mock the `patient` module, so they exercise fhirclient's
+    dict -> typed sub-model conversion. The previous implementation did
+    setattr(existing, "name", [{...}]) with a raw dict, which made
+    existing.update() raise FHIRValidationError; that error was swallowed
+    and surfaced only as a generic 'failed' message.
+    """
+
+    def test_structured_field_does_not_raise(self):
+        """JSON with a structured `name` must update cleanly (was: swallowed error)."""
+        from oida.protocols.fhir.mixins import crud
+
+        host = MockCRUDHost(
+            confirm=True,
+            update_patient="PT001",
+            patient_data=(
+                '{"name": [{"use": "official", "family": "Doe", "given": ["Jane"]}],'
+                ' "gender": "female"}'
+            ),
+        )
+
+        existing = crud.patient.Patient({"resourceType": "Patient", "id": "PT001"})
+        captured = {}
+
+        def fake_update(self_resource, server):
+            captured["json"] = self_resource.as_json()
+            return {"resourceType": "Patient", "id": "PT001"}
+
+        with patch.object(crud.patient.Patient, "read", return_value=existing):
+            with patch.object(crud.patient.Patient, "update", fake_update, create=True):
+                host._update_patient()
+
+        # No swallowed FHIRValidationError -> success, not fail.
+        host.logger.success.assert_called()
+        host.logger.fail.assert_not_called()
+        # The structured name survived the dict -> HumanName conversion.
+        self.assertEqual(captured["json"]["name"][0]["family"], "Doe")
+        self.assertEqual(captured["json"]["name"][0]["given"], ["Jane"])
+        self.assertEqual(captured["json"]["gender"], "female")
+
+    def test_old_setattr_path_would_raise(self):
+        """Document the original defect: raw setattr makes as_json() raise."""
+        from oida.protocols.fhir.mixins import crud
+        from fhirclient.models.fhirabstractbase import FHIRValidationError
+
+        existing = crud.patient.Patient({"resourceType": "Patient", "id": "PT001"})
+        # This is exactly what the buggy code did.
+        existing.name = [{"use": "official", "family": "Doe", "given": ["Jane"]}]
+        with self.assertRaises(FHIRValidationError):
+            existing.as_json()
 
 
 class TestDeletePatient(unittest.TestCase):

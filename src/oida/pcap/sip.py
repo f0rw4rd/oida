@@ -46,6 +46,7 @@ class SIPDigestCredential:
     nc: str = ""
     cnonce: str = ""
     algorithm: str = "MD5"
+    method: str = "REGISTER"
     server_ip: str = ""
     server_port: int = 0
     client_ip: str = ""
@@ -67,7 +68,7 @@ class SIPDigestCredential:
         return (
             f"$sip$*{self.uri}*{self.realm}*{self.username}*"
             f"{self.nonce}*{self.nc}*{self.cnonce}*{self.qop}*"
-            f"REGISTER*{self.response}"
+            f"{self.method}*{self.response}"
         )
 
     @property
@@ -264,8 +265,11 @@ class SIPPassiveListener(PySharkListenerBase):
                 stream_id=self.get_stream_id(packet),
             )
 
-        # Extract SIP Digest authentication from any packet with auth headers
-        self._extract_digest_auth(sip_layer, src_ip, dst_ip, dst_port)
+        # Extract SIP Digest authentication from any packet with auth headers.
+        # Prefer the CSeq method (reflects the request method the digest was
+        # computed over), falling back to the request line method.
+        digest_method = str(cseq_method or method or "REGISTER").strip() or "REGISTER"
+        self._extract_digest_auth(sip_layer, src_ip, dst_ip, dst_port, digest_method)
 
         if method:
             # SIP request
@@ -557,7 +561,14 @@ class SIPPassiveListener(PySharkListenerBase):
                     "protocol": "SIP/UDP",
                 }
 
-    def _extract_digest_auth(self, sip_layer, src_ip: str, dst_ip: str, dst_port: int = 0) -> None:
+    def _extract_digest_auth(
+        self,
+        sip_layer,
+        src_ip: str,
+        dst_ip: str,
+        dst_port: int = 0,
+        method: str = "REGISTER",
+    ) -> None:
         """Extract SIP Digest authentication credentials from Authorization header."""
         # Check for auth fields (from Authorization or Proxy-Authorization headers)
         username = str(self.get_field(sip_layer, "auth_username", "") or "").strip()
@@ -590,6 +601,7 @@ class SIPPassiveListener(PySharkListenerBase):
             nc=nc,
             cnonce=cnonce,
             algorithm=algorithm,
+            method=(method or "REGISTER").strip() or "REGISTER",
             server_ip=dst_ip,
             server_port=dst_port,
             client_ip=src_ip,
@@ -643,6 +655,7 @@ class SIPPassiveListener(PySharkListenerBase):
                     "nc": cred.nc,
                     "cnonce": cred.cnonce,
                     "algorithm": cred.algorithm,
+                    "method": cred.method,
                     "server_ip": cred.server_ip,
                     "client_ip": cred.client_ip,
                     "timestamp": cred.timestamp,
@@ -660,7 +673,7 @@ class SIPPassiveListener(PySharkListenerBase):
             result.append(
                 f"$sip$*{cred.uri}*{cred.realm}*{cred.username}*"
                 f"{cred.nonce}*{cred.nc}*{cred.cnonce}*{cred.qop}*"
-                f"REGISTER*{cred.response}"
+                f"{cred.method}*{cred.response}"
             )
         return result
 
@@ -682,20 +695,4 @@ class SIPPassiveListener(PySharkListenerBase):
                 "end_time": call.end_time,
             }
             for call in self.calls.values()
-        ]
-
-    def get_active_calls(self) -> List[VoIPCall]:
-        """Get currently active calls."""
-        return [
-            call
-            for call in self.calls.values()
-            if call.state in (CallState.INVITED, CallState.IN_CALL)
-        ]
-
-    def get_completed_calls(self) -> List[VoIPCall]:
-        """Get completed calls."""
-        return [
-            call
-            for call in self.calls.values()
-            if call.state in (CallState.COMPLETED, CallState.CANCELLED, CallState.REJECTED)
         ]

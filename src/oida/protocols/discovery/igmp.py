@@ -62,7 +62,6 @@ class IGMPPassiveListener(PassiveListenerBase):
         # Live capture
         listener = IGMPPassiveListener(interface="eth0", timeout=30)
         devices = listener.scan()
-        devices = listener.scan()
 
         # Testing - feed packets directly
         listener = IGMPPassiveListener(interface="eth0")

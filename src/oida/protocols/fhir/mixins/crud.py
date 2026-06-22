@@ -87,11 +87,18 @@ class CRUDMixin:
 
             if patient_json:
                 updates = json.loads(patient_json)
+                # Merge allowed fields into the existing resource's JSON and
+                # rebuild through the model constructor so fhirclient performs
+                # the dict -> typed sub-model conversion (HumanName, FHIRDate,
+                # etc.). Raw setattr() of plain dicts/lists bypasses this and
+                # makes existing.update() raise FHIRValidationError.
+                merged = existing.as_json()
                 for key, value in updates.items():
                     if key in ALLOWED_PATIENT_FIELDS:
-                        setattr(existing, key, value)
+                        merged[key] = value
                     else:
                         self.logger.warning(f"Skipping unknown field: {key}")
+                existing = patient.Patient(merged)
             else:
                 given = getattr(self.args, "patient_given_name", None)
                 family = getattr(self.args, "patient_family_name", None)

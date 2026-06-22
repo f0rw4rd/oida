@@ -51,13 +51,6 @@ NTP_MODES = {
     7: "private",
 }
 
-# Stratum descriptions
-STRATUM_NAMES = {
-    0: "unspecified",
-    1: "primary (GPS/atomic)",
-    16: "unsynchronized",
-}
-
 # Well-known reference IDs for stratum 1
 REFID_NAMES = {
     "GOES": "Geostationary Orbit Environment Satellite",

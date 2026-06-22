@@ -131,6 +131,7 @@ class ModbusPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "mbtcp"  # Modbus/TCP protocol
     REQUIRED_LAYERS = ("mbtcp",)
     OVERRIDE_PREFS = {"mbtcp.tcp.port": "502"}
+    SERVER_PORTS = (502,)
     PROTOCOL_COLUMNS = ("tx_id", "unit", "fc", "function", "address", "count", "data")
 
     def __init__(
@@ -327,7 +328,7 @@ class ModbusPassiveListener(PySharkListenerBase):
                         function_code = int(fc_str)
                     fc_found = True
                 except (ValueError, TypeError) as e:
-                    self.logger.debug(f"if isinstance(fc_str, str) and fc_str...: {e}")
+                    self.logger.debug(f"Modbus: failed to parse function code: {e}")
 
         if not fc_found:
             # No function code at all -- MBAP-only frame (e.g. keepalive or
@@ -348,25 +349,25 @@ class ModbusPassiveListener(PySharkListenerBase):
             )
             return
 
-        # Determine direction. Modbus-TCP defaults to port 502 but the spec
-        # allows any TCP port — gateways and security devices commonly relay
-        # over non-standard ports. Use the canonical port if either side has
-        # it; otherwise fall back to "lower port wins" (server side has the
-        # smaller fixed port; client side has an ephemeral high port).
-        if dst_port == 502 or (dst_port != 502 and src_port != 502 and dst_port < src_port):
-            # Request: src is client, dst is server
-            client_ip = src_ip
-            server_ip = dst_ip
-            client_mac = src_mac
-            server_mac = dst_mac
-            is_request = True
-        else:
-            # Response: src is server, dst is client
-            client_ip = dst_ip
-            server_ip = src_ip
-            client_mac = dst_mac
-            server_mac = src_mac
-            is_request = False
+        # Determine direction via the shared cascade.  Modbus/TCP has no
+        # request/response bit in the MBAP header, but exception responses set
+        # the function-code high bit (>= 0x80) -- a port-independent native
+        # response signal.  Otherwise resolve_direction() falls through to the
+        # known-server-port tier (canonical 502 plus any user --decode-as /
+        # OVERRIDE_PREFS override) and then the lower-port heuristic.
+        native = False if function_code & 0x80 else None
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request = d.is_request
+        client_ip, server_ip = d.client_ip, d.server_ip
+        client_mac, server_mac = (src_mac, dst_mac) if is_request else (dst_mac, src_mac)
 
         # Extract address information from modbus layer
         address_info = None
@@ -496,11 +497,18 @@ class ModbusPassiveListener(PySharkListenerBase):
         silently dropped.
         """
         now = datetime.now().isoformat()
-        # Direction: same lower-port-wins fallback as the main path.
-        is_request_dir = dst_port == 502 or (
-            dst_port != 502 and src_port != 502 and dst_port < src_port
+        # Direction via the shared cascade (MBAP-only frame: no func code, so no
+        # native signal -- known-server-port then lower-port fallback).
+        d = self.resolve_direction(
+            None,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
         )
-        direction = "request" if is_request_dir else "response"
+        direction = d.direction
         details: Dict[str, Any] = {
             "unit_id": unit_id,
             "function_code": "?",
@@ -527,7 +535,7 @@ class ModbusPassiveListener(PySharkListenerBase):
         )
 
         # Still update session and devices for visibility
-        if is_request_dir:
+        if d.is_request:
             client_ip, server_ip = src_ip, dst_ip
             client_mac, server_mac = src_mac, dst_mac
         else:
@@ -691,7 +699,7 @@ class ModbusPassiveListener(PySharkListenerBase):
             if vals:
                 return vals
         except Exception as e:
-            logger.debug(f"for fld in getattr(layer, field_name)...: {e}")
+            logger.debug(f"Modbus: failed to parse field values via XML all_fields: {e}")
         # EK mode: get_field() normalises lists to "v1,v2,..." strings
         # and bools to "True"/"False" (coil/discrete bit values).
         raw_str = str(raw)

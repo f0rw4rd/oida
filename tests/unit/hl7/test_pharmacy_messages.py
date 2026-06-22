@@ -214,6 +214,22 @@ class TestHL7SegmentParserPharmacy(unittest.TestCase):
         self.assertIn("DispenseDate", result)
         self.assertIn("DrugCode", result)
 
+    def test_parse_rxd_segment_units_from_rxd5(self):
+        """_parse_rxd_segment 'Units' must come from RXD-5 (Actual Dispense
+        Units), not RXD-6 (Actual Strength), per HL7 v2.5 §4.4.6."""
+        from hl7apy.parser import parse_segment
+
+        from oida.protocols.hl7.segments import HL7SegmentParser
+
+        # RXD-4=30 (amount), RXD-5=TAB (dispense units), RXD-6=500 (strength).
+        # Distinct values so an off-by-one is observable.
+        rxd_segment = "RXD|1|12345^Amoxicillin^NDC|20240115130000|30|TAB|500"
+        seg = parse_segment(rxd_segment)
+        result = HL7SegmentParser._parse_rxd_segment(seg)
+
+        self.assertEqual(result["Units"], "TAB")
+        self.assertNotEqual(result["Units"], "500")
+
 
 class MockSocket:
     """Mock socket for testing MLLP connections"""

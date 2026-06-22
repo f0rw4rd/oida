@@ -187,6 +187,7 @@ class PCOMPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "pcomtcp"
     REQUIRED_LAYERS = ("pcomtcp",)
     PROTOCOL_COLUMNS = ("mode", "unit", "command", "address", "detail")
+    SERVER_PORTS = (20256,)
 
     def __init__(
         self,
@@ -225,20 +226,24 @@ class PCOMPassiveListener(PySharkListenerBase):
         elif protocol_mode == 1:
             mode_name = "Binary"
 
-        # Determine direction. PCOM/TCP defaults to port 20256 but the dissector
-        # binds to any port via decode-as; use the canonical port if either side
-        # has it, otherwise fall back to "lower port wins" (the PLC's listening
-        # port is the smaller fixed port vs the client's ephemeral high port).
-        if dst_port == 20256 or (dst_port != 20256 and src_port != 20256 and dst_port < src_port):
-            is_request = True
-            client_ip, plc_ip = src_ip, dst_ip
-            client_mac, plc_mac = src_mac, dst_mac
-        else:
-            is_request = False
-            client_ip, plc_ip = dst_ip, src_ip
-            client_mac, plc_mac = dst_mac, src_mac
-
-        direction = "request" if is_request else "response"
+        # Determine direction via the shared cascade.  PCOM/TCP has no clean
+        # single request/response field (ASCII and Binary share command codes
+        # across both directions), so pass native=None and let the port tier
+        # (canonical 20256 ∪ user --decode-as / OVERRIDE_PREFS) and the
+        # lower-port / first-seen heuristic decide.  The server side is the PLC.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_request = d.is_request
+        client_ip, plc_ip = d.client_ip, d.server_ip
+        client_mac, plc_mac = (src_mac, dst_mac) if is_request else (dst_mac, src_mac)
+        direction = d.direction
 
         # Process based on mode
         if hasattr(packet, "pcomascii"):

@@ -351,3 +351,41 @@ class TestFuzzIntegration:
         assert any(len(p) <= 1 for p in payloads) or any(
             p == b"\x00" * 4 or p == b"\xff" * 4 for p in payloads
         )
+
+
+# =============================================================================
+# Regression: PHASE 5 random-fill must not spin forever
+# =============================================================================
+
+
+class TestPhase5Termination:
+    """Guards against the unbounded PHASE 5 random-fill loop (MEDIUM finding)."""
+
+    def test_min_len_greater_than_max_len_raises(self):
+        """An impossible length range must fail fast, not loop forever."""
+        with pytest.raises(ValueError):
+            # Eagerly consume: generator body runs the validation on first next().
+            list(fuzz(count=10, min_len=1000, max_len=8))
+
+    def test_exhausted_value_space_terminates(self):
+        """min_len==max_len==1 yields at most 256 distinct payloads.
+
+        Requesting far more than that previously spun forever in PHASE 5 once
+        every possible single byte was already in the seen-set. With the
+        bounded attempt counter it must terminate and simply yield fewer.
+        """
+        # count*4 = 4000 attempts is plenty to exhaust 256 values, then stop.
+        results = list(fuzz(count=1000, min_len=1, max_len=1, data_type=""))
+
+        # Terminated (the assertion only runs if list() returned at all).
+        assert len(results) <= 1000
+        # All single-byte and unique.
+        payloads = [p for p, _ in results]
+        assert all(len(p) == 1 for p in payloads)
+        assert len(set(payloads)) == len(payloads)
+
+    def test_zero_length_range_terminates(self):
+        """min_len==max_len==0 has a single distinct payload (b'')."""
+        results = list(fuzz(count=500, min_len=0, max_len=0))
+        # Must terminate; only the empty payload fits the [0,0] bound.
+        assert all(p == b"" for p, _ in results)

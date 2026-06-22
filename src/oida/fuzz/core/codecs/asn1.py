@@ -394,27 +394,26 @@ class ASN1Builder:
         content = b"".join(items)
         return self.build_tlv(ASN1Tag.SET, content)
 
-    def build_context_specific(
-        self, tag_num: int, value: bytes, constructed: bool = False, explicit: bool = True
-    ) -> bytes:
+    def build_context_specific(self, tag_num: int, value: bytes, constructed: bool = True) -> bytes:
         """
-        Build a context-specific tagged value.
+        Build an explicitly-tagged context-specific value.
+
+        ``value`` is wrapped verbatim as the content of the context tag
+        (explicit tagging), so the context tag is constructed -- the inner
+        bytes are themselves a complete TLV. The ``constructed`` flag is kept
+        for source compatibility but the tag is always constructed, matching
+        the established MMS/ASN.1 encoding the callers depend on.
 
         Args:
             tag_num: Context-specific tag number
-            value: Value bytes (already encoded if explicit=True)
-            constructed: Whether the tag is constructed
-            explicit: Whether to use explicit tagging
+            value: Value bytes (a complete TLV)
+            constructed: Retained for API compatibility (always constructed)
 
         Returns:
             Context-specific tagged bytes
         """
-        tag = self.encode_tag(ASN1Tag.CLASS_CONTEXT, constructed or explicit, tag_num)
-        if explicit:
-            return tag + self.encode_length(len(value)) + value
-        else:
-            # Implicit: value is just the content, not a full TLV
-            return tag + self.encode_length(len(value)) + value
+        tag = self.encode_tag(ASN1Tag.CLASS_CONTEXT, True, tag_num)
+        return tag + self.encode_length(len(value)) + value
 
     def build_application(self, tag_num: int, value: bytes, constructed: bool = False) -> bytes:
         """

@@ -270,10 +270,13 @@ class TestASTMChecksum:
     """Test ASTM checksum calculation (framing mixin)"""
 
     def setup_method(self):
-        """The checksum is a pure method on FramingMixin; exercise it directly."""
+        """FramingMixin._calculate_checksum delegates to the attached
+        ASTMRecordBuilder; attach one and exercise the delegation path."""
         from oida.protocols.astm.mixins import FramingMixin
+        from oida.protocols.astm.records import ASTMRecordBuilder
 
         self.framing = FramingMixin()
+        self.framing.record_builder = ASTMRecordBuilder(version="E1394")
 
     def test_checksum_calculation(self):
         """Test checksum calculation is correct"""

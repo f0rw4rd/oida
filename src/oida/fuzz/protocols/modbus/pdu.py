@@ -20,7 +20,6 @@ from .constants import (
     EXCEPTION_CODES,
     EXCEPTION_FUNCTION_CODES,
     ICS_ADDRESS_BOUNDARIES,
-    INVALID_FUNCTION_CODES,
     MEMORY_AREA_BOUNDARIES,
     ModbusFunctionCodes,
     ModbusMEITypes,
@@ -609,17 +608,6 @@ def create_combined_high_addr_max_qty_pdu() -> Block:
 # ============================================================
 # Invalid/Malformed PDUs
 # ============================================================
-
-
-def create_invalid_fc_pdu() -> Block:
-    """Create invalid function codes PDU."""
-    return Block(
-        "PDU",
-        children=(
-            Group("Invalid_Function_Code", values=INVALID_FUNCTION_CODES),
-            Word("Dummy_Data", 0x0000, endian=">"),
-        ),
-    )
 
 
 def create_malformed_pdu() -> Block:

@@ -6,6 +6,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.modbus
+    image: ghcr.io/f0rw4rd/oida-mock-modbus:latest
     container_name: modbus-mock-server
     hostname: modbus-server
     ports:
@@ -31,6 +32,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.modbus-tls
+    image: ghcr.io/f0rw4rd/oida-mock-modbus-tls:latest
     container_name: modbus-tls-server
     hostname: modbus-tls
     ports:
@@ -64,6 +66,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.modbus-rtu-tcp
+    image: ghcr.io/f0rw4rd/oida-mock-modbus-rtu-tcp:latest
     container_name: modbus-rtu-tcp-server
     hostname: modbus-rtu-tcp
     ports:
@@ -91,6 +94,7 @@ services:
     build:
       context: ./services/conpot-modbus
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-conpot-modbus:latest
     container_name: modbus-conpot-server
     hostname: modbus-conpot
     ports:
@@ -116,6 +120,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.opcua
+    image: ghcr.io/f0rw4rd/oida-mock-opcua:latest
     container_name: opcua-mock-server
     hostname: opcua-server
     ports:
@@ -141,6 +146,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.ads
+    image: ghcr.io/f0rw4rd/oida-mock-ads:latest
     container_name: ads-mock-server
     hostname: ads-server
     ports:
@@ -166,6 +172,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.ethernetip
+    image: ghcr.io/f0rw4rd/oida-mock-ethernetip:latest
     container_name: ethernetip-mock-server
     hostname: ethernetip-server
     ports:
@@ -191,6 +198,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.bacnet
+    image: ghcr.io/f0rw4rd/oida-mock-bacnet:latest
     container_name: bacnet-mock-server
     hostname: bacnet-server
     ports:
@@ -217,6 +225,7 @@ services:
     build:
       context: ./services/conpot-bacnet
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-conpot-bacnet:latest
     container_name: bacnet-conpot-server
     hostname: bacnet-conpot
     ports:
@@ -245,6 +254,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.coap
+    image: ghcr.io/f0rw4rd/oida-mock-coap:latest
     container_name: coap-mock-server
     hostname: coap-server
     ports:
@@ -270,6 +280,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.coap-libcoap
+    image: ghcr.io/f0rw4rd/oida-mock-coap-libcoap:latest
     container_name: coap-libcoap-server
     hostname: coap-libcoap
     ports:
@@ -296,6 +307,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.coap-libcoap
+    image: ghcr.io/f0rw4rd/oida-mock-coap-libcoap:latest
     container_name: coap-dtls-server
     hostname: coap-dtls
     ports:
@@ -324,6 +336,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.coap-dtls-cert
+    image: ghcr.io/f0rw4rd/oida-mock-coap-dtls-cert:latest
     container_name: coap-dtls-cert-server
     hostname: coap-dtls-cert
     ports:
@@ -354,7 +367,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.mms
-    image: mms-libiec61850
+    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
     container_name: mms-libiec61850-server
     hostname: mms-server
     ports:
@@ -376,7 +389,7 @@ services:
       oida.ports: "102"
 
   mms-goose:
-    image: mms-libiec61850
+    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
     command: ["/usr/local/bin/server_example_goose"]
     container_name: mms-goose-server
     hostname: mms-goose
@@ -400,7 +413,7 @@ services:
       oida.ports: "10106"
 
   mms-control:
-    image: mms-libiec61850
+    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
     command: ["/usr/local/bin/server_example_control"]
     container_name: mms-control-server
     hostname: mms-control
@@ -424,7 +437,7 @@ services:
       oida.ports: "10107"
 
   mms-authentication:
-    image: mms-libiec61850
+    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
     command: ["/usr/local/bin/mms_tls_auth_server"]
     container_name: mms-authentication-server
     hostname: mms-authentication
@@ -455,6 +468,7 @@ services:
     build:
       context: ./services/iec104
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-iec104:latest
     container_name: iec104-lib60870-server
     hostname: iec104-server
     ports:
@@ -479,6 +493,7 @@ services:
     build:
       context: ./services/iec104
       dockerfile: Dockerfile.tls
+    image: ghcr.io/f0rw4rd/oida-mock-iec104-tls:latest
     container_name: iec104-tls-server
     hostname: iec104-tls
     ports:
@@ -510,6 +525,7 @@ services:
     build:
       context: ./services
       dockerfile: iec104/Dockerfile.python
+    image: ghcr.io/f0rw4rd/oida-mock-iec104-python:latest
     container_name: iec104-custom-types-server
     hostname: iec104-custom
     ports:
@@ -537,6 +553,7 @@ services:
     build:
       context: ./services/conpot-iec104
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-conpot-iec104:latest
     container_name: iec104-conpot-server
     hostname: iec104-conpot
     ports:
@@ -566,6 +583,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.snap7
+    image: ghcr.io/f0rw4rd/oida-mock-snap7:latest
     container_name: s7comm-snap7-server
     hostname: s7comm-snap7
     ports:
@@ -594,6 +612,7 @@ services:
     build:
       context: ./services/conpot-s7
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-conpot-s7:latest
     container_name: s7comm-conpot-server
     hostname: s7comm-conpot
     ports:
@@ -678,6 +697,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.knx-devices
+    image: ghcr.io/f0rw4rd/oida-mock-knx-devices:latest
     container_name: knx-bcu-emulator
     hostname: knx-devices
     depends_on:
@@ -709,6 +729,7 @@ services:
     build:
       context: ./services/mqtt
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
     container_name: mqtt-insecure-broker
     hostname: mqtt-insecure
     command: ["python3", "mqtt_broker_insecure.py"]
@@ -735,6 +756,7 @@ services:
     build:
       context: ./services/mqtt
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
     container_name: mqtt-auth-broker
     hostname: mqtt-auth
     command: ["python3", "mqtt_broker_auth.py"]
@@ -763,6 +785,7 @@ services:
     build:
       context: ./services/mqtt
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
     container_name: mqtt-sparkplug-broker
     hostname: mqtt-sparkplug
     command: ["python3", "mqtt_broker_sparkplug.py"]
@@ -789,6 +812,7 @@ services:
     build:
       context: ./services/mqtt
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
     container_name: mqtt-busy-broker
     hostname: mqtt-busy
     command: ["python3", "mqtt_broker_busy.py"]
@@ -815,6 +839,7 @@ services:
     build:
       context: ./services/mqtt
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
     container_name: mqtt-tls-broker
     hostname: mqtt-tls
     command: ["python3", "mqtt_broker_tls.py"]
@@ -844,6 +869,7 @@ services:
     build:
       context: ./services/mqtt
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
     container_name: mqtt-busy-tls-broker
     hostname: mqtt-busy-tls
     command: ["python3", "mqtt_broker_busy_tls.py"]
@@ -877,6 +903,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.opcua
+    image: ghcr.io/f0rw4rd/oida-mock-opcua:latest
     container_name: opcua-advanced-server
     hostname: opcua-advanced
     ports:
@@ -905,6 +932,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.opcua-gds
+    image: ghcr.io/f0rw4rd/oida-mock-opcua-gds:latest
     container_name: opcua-gds-server
     hostname: opcua-gds
     ports:
@@ -931,6 +959,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.opcua
+    image: ghcr.io/f0rw4rd/oida-mock-opcua:latest
     container_name: opcua-insecure-server
     hostname: opcua-insecure
     ports:
@@ -963,6 +992,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
     container_name: dnp3-basic-server
     hostname: dnp3-basic
     ports:
@@ -1001,6 +1031,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
     container_name: dnp3-complex-server
     hostname: dnp3-complex
     ports:
@@ -1039,6 +1070,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
     container_name: dnp3-tls-server
     hostname: dnp3-tls
     ports:
@@ -1081,6 +1113,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
     container_name: dnp3-addr1-server
     hostname: dnp3-addr1
     ports:
@@ -1117,6 +1150,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
     container_name: dnp3-addr10-server
     hostname: dnp3-addr10
     ports:
@@ -1153,6 +1187,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
     container_name: dnp3-addr100-server
     hostname: dnp3-addr100
     ports:
@@ -1189,6 +1224,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3-enhanced
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3-enhanced:latest
     container_name: dnp3-enhanced-server
     hostname: dnp3-enhanced
     ports:
@@ -1232,6 +1268,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dnp3-filetransfer
+    image: ghcr.io/f0rw4rd/oida-mock-dnp3-filetransfer:latest
     container_name: dnp3-filetransfer-server
     hostname: dnp3-filetransfer
     ports:
@@ -1272,6 +1309,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.opener
+    image: ghcr.io/f0rw4rd/oida-mock-opener:latest
     container_name: ethernetip-opener-server
     hostname: opener-device
     ports:
@@ -1299,6 +1337,7 @@ services:
     build:
       context: ./services/conpot-enip
       dockerfile: Dockerfile
+    image: ghcr.io/f0rw4rd/oida-mock-conpot-enip:latest
     container_name: ethernetip-conpot-server
     hostname: ethernetip-conpot
     ports:
@@ -1330,6 +1369,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hart-hipserver
+    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver:latest
     container_name: hart-hipserver
     hostname: hart-mock
     ports:
@@ -1356,6 +1396,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hart-hipserver-tls
+    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver-tls:latest
     container_name: hart-hipserver-tls
     hostname: hart-tls
     ports:
@@ -1382,6 +1423,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hart-hipserver
+    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver:latest
     container_name: hart-hipserver-secondary
     hostname: hart-secondary
     ports:
@@ -1408,6 +1450,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hart-hipserver
+    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver:latest
     container_name: hart-hipserver-tertiary
     hostname: hart-tertiary
     ports:
@@ -1440,6 +1483,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hart
+    image: ghcr.io/f0rw4rd/oida-mock-hart:latest
     container_name: hart-pymock
     hostname: hart-pymock
     ports:
@@ -1468,6 +1512,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hart
+    image: ghcr.io/f0rw4rd/oida-mock-hart:latest
     container_name: hart-pymock-multidrop
     hostname: hart-pymock-multidrop
     ports:
@@ -1499,6 +1544,7 @@ services:
   snmp-mock:
     build:
       context: ./services/snmp
+    image: ghcr.io/f0rw4rd/oida-mock-snmp:latest
     container_name: snmp-mock-server
     hostname: snmp-mock
     ports:
@@ -1525,6 +1571,7 @@ services:
   snmp-v3only:
     build:
       context: ./services/snmp
+    image: ghcr.io/f0rw4rd/oida-mock-snmp:latest
     container_name: snmp-v3only-server
     hostname: snmp-v3only
     ports:
@@ -1549,6 +1596,7 @@ services:
   snmp-switch:
     build:
       context: ./services/snmp
+    image: ghcr.io/f0rw4rd/oida-mock-snmp:latest
     container_name: snmp-switch-server
     hostname: snmp-switch
     ports:
@@ -1584,6 +1632,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.sunspec
+    image: ghcr.io/f0rw4rd/oida-mock-sunspec:latest
     container_name: modbus-sunspec-server
     hostname: modbus-sunspec
     ports:
@@ -1613,6 +1662,7 @@ services:
     build:
       context: ./services/http2
       dockerfile: Dockerfile.nghttp2
+    image: ghcr.io/f0rw4rd/oida-mock-http2-nghttp2:latest
     container_name: http2-nghttp2-server
     hostname: http2-nghttp2
     ports:
@@ -1645,6 +1695,7 @@ services:
     build:
       context: ./services/http2
       dockerfile: Dockerfile.python
+    image: ghcr.io/f0rw4rd/oida-mock-http2-python:latest
     container_name: http2-python-server
     hostname: http2-python
     ports:
@@ -1745,6 +1796,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.astm
+    image: ghcr.io/f0rw4rd/oida-mock-astm:latest
     container_name: astm-data-server
     hostname: astm-data
     ports:
@@ -1777,6 +1829,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.ocpp
+    image: ghcr.io/f0rw4rd/oida-mock-ocpp:latest
     container_name: ocpp-insecure-csms
     hostname: ocpp-insecure
     ports:
@@ -1812,6 +1865,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.can
+    image: ghcr.io/f0rw4rd/oida-mock-can:latest
     container_name: can-mock-server
     hostname: can-mock
     network_mode: host
@@ -1842,6 +1896,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.ethercat
+    image: ghcr.io/f0rw4rd/oida-mock-ethercat:latest
     container_name: ethercat-slave-device
     hostname: ethercat-slave
     network_mode: host
@@ -1876,6 +1931,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.ethercat
+    image: ghcr.io/f0rw4rd/oida-mock-ethercat:latest
     container_name: ethercat-slave-veth
     hostname: ethercat-veth
     cap_add:
@@ -1907,6 +1963,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.profinet
+    image: ghcr.io/f0rw4rd/oida-mock-profinet:latest
     container_name: profinet-pnet-device
     hostname: profinet-device
     network_mode: host
@@ -1938,6 +1995,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.goose
+    image: ghcr.io/f0rw4rd/oida-mock-goose:latest
     container_name: goose-l2-publisher
     hostname: goose-publisher
     network_mode: host
@@ -1978,6 +2036,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.vnc
+    image: ghcr.io/f0rw4rd/oida-mock-vnc:latest
     container_name: vnc-mock-server
     hostname: vnc-mock
     ports:
@@ -2000,6 +2059,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.ftp
+    image: ghcr.io/f0rw4rd/oida-mock-ftp:latest
     container_name: ftp-mock-server
     hostname: ftp-mock
     ports:
@@ -2022,6 +2082,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.smtp
+    image: ghcr.io/f0rw4rd/oida-mock-smtp:latest
     container_name: smtp-mock-server
     hostname: smtp-mock
     ports:
@@ -2068,6 +2129,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hl7
+    image: ghcr.io/f0rw4rd/oida-mock-hl7:latest
     container_name: hl7-mock-server
     hostname: hl7-server
     ports:
@@ -2096,6 +2158,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.hl7-node
+    image: ghcr.io/f0rw4rd/oida-mock-hl7-node:latest
     container_name: hl7-node-mock-server
     hostname: hl7-node
     ports:
@@ -2125,6 +2188,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dicom
+    image: ghcr.io/f0rw4rd/oida-mock-dicom:latest
     container_name: dicom-mock-server
     hostname: dicom-server
     ports:
@@ -2152,6 +2216,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.dicom
+    image: ghcr.io/f0rw4rd/oida-mock-dicom:latest
     container_name: dicom-strict-server
     hostname: dicom-strict
     ports:
@@ -2180,6 +2245,7 @@ services:
     build:
       context: ./services
       dockerfile: Dockerfile.fhir
+    image: ghcr.io/f0rw4rd/oida-mock-fhir:latest
     container_name: fhir-mock-server
     hostname: fhir-server
     ports:

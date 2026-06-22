@@ -15,7 +15,7 @@ import importlib
 import importlib.util
 import importlib.machinery
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 from oida.utils.ics_logger import get_module_logger
 from oida.utils.lazy_import import PROTOCOL_DEPENDENCIES
@@ -365,94 +365,3 @@ class ProtocolLoader:
         except Exception as e:
             logger.warning(f"Could not load proto_args for {protocol_name}: {e}")
             raise
-
-    def get_protocol_names(self) -> List[str]:
-        """
-        Get list of all available protocol names
-
-        Returns:
-            list: Sorted list of protocol names
-        """
-        return sorted(self.get_protocols().keys())
-
-    def check_protocol_dependencies(self, protocol_name: str) -> bool:
-        """
-        Check if protocol dependencies are satisfied
-
-        Args:
-            protocol_name: Name of the protocol
-
-        Returns:
-            bool: True if all dependencies are available
-        """
-        try:
-            protocol_class = self.get_protocol_class(protocol_name)
-
-            # Check if protocol has a check_dependencies method
-            if hasattr(protocol_class, "check_dependencies"):
-                # Try both static method and instance method patterns
-                try:
-                    return protocol_class.check_dependencies()
-                except TypeError:
-                    # Might need an instance
-                    instance = protocol_class.__new__(protocol_class)
-                    if hasattr(instance, "check_dependencies"):
-                        return instance.check_dependencies()
-
-            # No dependency checking available
-            return True
-
-        except Exception as e:
-            logger.debug(f"Error checking dependencies for {protocol_name}: {e}")
-            return False
-
-    def get_protocol_info(self, protocol_name: str) -> Dict[str, Any]:
-        """
-        Get detailed information about a protocol
-
-        Args:
-            protocol_name: Name of the protocol
-
-        Returns:
-            dict: Protocol information including paths, class, etc.
-        """
-        protocols = self.get_protocols()
-
-        if protocol_name not in protocols:
-            raise ValueError(f"Protocol '{protocol_name}' not found")
-
-        info = protocols[protocol_name].copy()
-
-        try:
-            protocol_class = self.get_protocol_class(protocol_name)
-            info["class"] = protocol_class.__name__
-            info["docstring"] = protocol_class.__doc__
-
-            # Try to get protocol metadata
-            if hasattr(protocol_class, "get_protocol_name"):
-                try:
-                    instance = protocol_class.__new__(protocol_class)
-                    info["protocol_name"] = instance.get_protocol_name()
-                except Exception as _frozen_exc:
-                    logger.debug(f"Failed to get instance: {_frozen_exc}")
-
-            if hasattr(protocol_class, "get_default_port"):
-                try:
-                    instance = protocol_class.__new__(protocol_class)
-                    info["default_port"] = instance.get_default_port()
-                except Exception as _frozen_exc:
-                    logger.debug(f"Failed to get instance: {_frozen_exc}")
-
-        except Exception as e:
-            logger.debug(f"Could not get full info for {protocol_name}: {e}")
-
-        return info
-
-    def reload_protocols(self):
-        """
-        Clear the protocol cache and force re-discovery
-
-        Useful for testing or if protocol files change during runtime.
-        """
-        self._protocols_cache = None
-        logger.debug("Protocol cache cleared")

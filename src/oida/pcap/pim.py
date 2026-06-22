@@ -40,10 +40,6 @@ from ..shared.pim_constants import (
     PIM_TYPES,
 )
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 # Checksum status values from tshark
 _CKSUM_STATUS = {
@@ -231,7 +227,9 @@ class PIMPassiveListener(PySharkListenerBase):
             extra_details["ip_version"] = ip_version if ip_version else "?"
 
             reg_flag = self.get_field(pim, "register_flag", None)
-            extra_details["register_flag"] = self._parse_int(reg_flag, 0) if reg_flag is not None else "?"
+            extra_details["register_flag"] = (
+                self._parse_int(reg_flag, 0) if reg_flag is not None else "?"
+            )
 
             border_raw = self.get_field(pim, "register_flag_border", None)
             extra_details["register_border"] = _to_bool(border_raw)
@@ -262,13 +260,17 @@ class PIMPassiveListener(PySharkListenerBase):
             extra_details["addr_family_name"] = _ADDR_FAMILY.get(af_val, f"Unknown({af_val})")
 
             ngroups = self.get_field(pim, "numgroups", None)
-            extra_details["num_groups"] = self._parse_int(ngroups, 0) if ngroups is not None else "?"
+            extra_details["num_groups"] = (
+                self._parse_int(ngroups, 0) if ngroups is not None else "?"
+            )
 
             njoins = self.get_field(pim, "numjoins", None)
             extra_details["num_joins"] = self._parse_int(njoins, 0) if njoins is not None else "?"
 
             nprunes = self.get_field(pim, "numprunes", None)
-            extra_details["num_prunes"] = self._parse_int(nprunes, 0) if nprunes is not None else "?"
+            extra_details["num_prunes"] = (
+                self._parse_int(nprunes, 0) if nprunes is not None else "?"
+            )
 
             # Upstream neighbor (IPv6 or IPv4)
             upstream = self.get_field(pim, "upstream_neighbor_ip6", None)

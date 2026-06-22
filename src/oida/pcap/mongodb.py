@@ -69,28 +69,6 @@ OPCODE_NAMES = {
 # Operations that modify data (security-relevant)
 WRITE_OPCODES = {"OP_UPDATE", "OP_INSERT", "OP_DELETE"}
 
-# Admin database commands that indicate auth or config
-ADMIN_COMMANDS = {
-    "isMaster",
-    "ismaster",
-    "hello",
-    "buildInfo",
-    "buildinfo",
-    "getLog",
-    "replSetGetStatus",
-    "serverStatus",
-    "listDatabases",
-    "listCollections",
-    "saslStart",
-    "saslContinue",
-    "authenticate",
-    "createUser",
-    "dropUser",
-    "updateUser",
-    "grantRolesToUser",
-    "revokeRolesFromUser",
-}
-
 
 class MongoDBPassiveListener(PySharkListenerBase):
     """Passive MongoDB traffic listener for database activity extraction.
@@ -113,6 +91,7 @@ class MongoDBPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "mongodb"
     DISPLAY_FILTER = "mongo"
     REQUIRED_LAYERS = ("mongo",)
+    SERVER_PORTS = tuple(sorted(MONGODB_PORTS))
     PROTOCOL_COLUMNS = ("operation", "database", "collection", "detail")
 
     def __init__(
@@ -164,32 +143,42 @@ class MongoDBPassiveListener(PySharkListenerBase):
         response_to = self.get_field(mongo, "response_to", "")
         responds_to_request = bool(response_to) and str(response_to) != "0"
 
-        # Determine direction based on opcode / response_to
-        is_reply = opcode_name == "OP_REPLY" or (
-            opcode_name == "OP_MSG" and responds_to_request
+        # Determine direction via the shared cascade.  OP_REPLY and an OP_MSG
+        # carrying a non-zero response_to are authoritative, port-independent
+        # response signals (native=False).  A client OP_MSG command / OP_QUERY
+        # etc. has no reply marker, so native=None falls through to the
+        # known-server-port tier (canonical 27017-27019 plus learned servers and
+        # any user --decode-as / OVERRIDE_PREFS override) and then the
+        # lower-port / first-seen heuristic -- never dropping the packet.
+        is_reply = opcode_name == "OP_REPLY" or (opcode_name == "OP_MSG" and responds_to_request)
+        native = False if is_reply else None
+
+        # Preserve the learned-server hint: when one endpoint is already known to
+        # be a server, fold that into the native signal so it outranks the port
+        # heuristic (matches the previous _known_servers behaviour).
+        if native is None:
+            if dst_ip in self._known_servers:
+                native = True
+            elif src_ip in self._known_servers:
+                native = False
+
+        d = self.resolve_direction(
+            packet,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
         )
-        if is_reply:
-            # Server -> Client
-            server_ip, server_port = src_ip, src_port
-            client_ip, _ = dst_ip, dst_port
+        direction = d.direction
+        if d.is_request:
+            client_ip, server_ip, server_port = d.client_ip, d.server_ip, d.server_port
+            client_mac, server_mac = src_mac, dst_mac
+        else:
+            client_ip, server_ip, server_port = d.client_ip, d.server_ip, d.server_port
             server_mac, client_mac = src_mac, dst_mac
             self._known_servers.add(server_ip)
-            direction = "response"
-        else:
-            # Client -> Server (or use port heuristic)
-            if dst_port in MONGODB_PORTS or dst_ip in self._known_servers:
-                client_ip, _ = src_ip, src_port
-                server_ip, server_port = dst_ip, dst_port
-                client_mac, server_mac = src_mac, dst_mac
-            elif src_port in MONGODB_PORTS or src_ip in self._known_servers:
-                server_ip, server_port = src_ip, src_port
-                client_ip, _ = dst_ip, dst_port
-                server_mac, client_mac = src_mac, dst_mac
-            else:
-                client_ip, _ = src_ip, src_port
-                server_ip, server_port = dst_ip, dst_port
-                client_mac, server_mac = src_mac, dst_mac
-            direction = "request"
 
         # Extract collection/database info
         full_collection = str(self.get_field(mongo, "full_collection_name", "") or "")
@@ -210,28 +199,6 @@ class MongoDBPassiveListener(PySharkListenerBase):
         # Extract BSON element names and values
         element_names = self.get_field(mongo, "element_name", "")
         element_value_str = self.get_field(mongo, "element_value_string", "")
-        self.get_field(mongo, "element_value_int", "")  # available for future use
-
-        # Build operation description
-        op_detail = ""
-        if opcode_name == "OP_QUERY":
-            op_detail = f"Query {full_collection}"
-            if number_to_return:
-                op_detail += f" limit={number_to_return}"
-        elif opcode_name == "OP_INSERT":
-            op_detail = f"Insert into {full_collection}"
-        elif opcode_name == "OP_UPDATE":
-            op_detail = f"Update {full_collection}"
-        elif opcode_name == "OP_DELETE":
-            op_detail = f"Delete from {full_collection}"  # nosec B608 — human-readable log label, not SQL
-        elif opcode_name == "OP_GET_MORE":
-            op_detail = f"GetMore cursor={cursor_id}"
-        elif opcode_name == "OP_REPLY":
-            op_detail = f"Reply docs={number_returned}"
-            if cursor_id and str(cursor_id) != "0":
-                op_detail += f" cursor={cursor_id}"
-        elif opcode_name == "OP_MSG":
-            op_detail = "OP_MSG"
 
         # Check for authentication-related commands
         auth_detected = False
@@ -240,19 +207,9 @@ class MongoDBPassiveListener(PySharkListenerBase):
             for cmd in ("saslStart", "saslContinue", "authenticate"):
                 if cmd in names_str:
                     auth_detected = True
-                    op_detail = f"Auth: {cmd}"
                     self._record_auth_attempt(
                         client_ip, server_ip, server_port, cmd, element_value_str or ""
                     )
-                    break
-
-        # Check for admin commands
-        if element_names and database_name in ("admin", "local", "config"):
-            names_str = str(element_names)
-            for cmd in ADMIN_COMMANDS:
-                if cmd in names_str:
-                    if not auth_detected:
-                        op_detail = f"Admin: {cmd}"
                     break
 
         # Build interaction details
@@ -280,7 +237,6 @@ class MongoDBPassiveListener(PySharkListenerBase):
         query_failure = self.get_field(mongo, "reply_flags_queryfailure", None)
         if query_failure and str(query_failure).lower() in ("1", "true"):
             details["query_failure"] = True
-            op_detail += " [QUERY FAILURE]"
 
         summary = f"MongoDB {opcode_name} {client_ip}->{server_ip}"
         if full_collection:

@@ -86,18 +86,6 @@ class VRRPCredential:
         return self.md5_hash
 
 
-# VRRP constants
-VRRP_MULTICAST_V4 = "224.0.0.18"
-VRRP_MULTICAST_V6 = "ff02::12"
-VRRP_PROTOCOL = 112
-
-# VRRP states
-VRRP_STATES = {
-    0: "Initialize",
-    1: "Backup",
-    2: "Master",
-}
-
 # VRRP auth types (v2 only; 254 is Cisco MD5 extension)
 VRRP_AUTH_TYPES = {
     0: "None",
@@ -107,7 +95,6 @@ VRRP_AUTH_TYPES = {
 }
 
 # Checksum validation status values (tshark)
-CHECKSUM_STATUS_GOOD = 1
 CHECKSUM_STATUS_BAD = 2
 
 
@@ -399,5 +386,3 @@ class VRRPPassiveListener(PySharkListenerBase):
                 entry["hash_value"] = cred.md5_hash
             results.append(entry)
         return results
-
-

@@ -533,5 +533,3 @@ class OSPFPassiveListener(PySharkListenerBase):
                 entry["crypt_seq_nbr"] = cred.crypt_seq_nbr
             result.append(entry)
         return result
-
-

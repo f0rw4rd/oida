@@ -691,22 +691,6 @@ class CCPScanResult:
 CANOPEN_NODE_ID_MIN = 1
 CANOPEN_NODE_ID_MAX = 127
 
-# Function code bases (already defined above but consolidated here for reference):
-# CANOPEN_NMT_ID = 0x000       # NMT module control (broadcast)
-# CANOPEN_SYNC_ID = 0x080      # SYNC (broadcast)
-# CANOPEN_EMCY_BASE = 0x080    # Emergency: 0x081-0x0FF
-# CANOPEN_TPDO1_BASE = 0x180   # TPDO1: 0x181-0x1FF
-# CANOPEN_RPDO1_BASE = 0x200   # RPDO1: 0x201-0x27F
-# CANOPEN_TPDO2_BASE = 0x280   # TPDO2: 0x281-0x2FF
-# CANOPEN_RPDO2_BASE = 0x300   # RPDO2: 0x301-0x37F
-# CANOPEN_TPDO3_BASE = 0x380   # TPDO3: 0x381-0x3FF
-# CANOPEN_RPDO3_BASE = 0x400   # RPDO3: 0x401-0x47F
-# CANOPEN_TPDO4_BASE = 0x480   # TPDO4: 0x481-0x4FF
-# CANOPEN_RPDO4_BASE = 0x500   # RPDO4: 0x501-0x57F
-# CANOPEN_SDO_TX_BASE = 0x580  # SDO server->client (response): 0x581-0x5FF
-# CANOPEN_SDO_RX_BASE = 0x600  # SDO client->server (request): 0x601-0x67F
-# CANOPEN_HEARTBEAT_BASE = 0x700  # Heartbeat/NMT error control: 0x701-0x77F
-
 CANOPEN_TIMESTAMP_ID = 0x100  # TIME stamp object (optional)
 CANOPEN_LSS_TX_ID = 0x7E4  # LSS master->slave
 CANOPEN_LSS_RX_ID = 0x7E5  # LSS slave->master

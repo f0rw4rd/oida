@@ -7,7 +7,7 @@ PatientName=None. CODE_REVIEW.md HIGH.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 
 class TestPatientNameWildcard(unittest.TestCase):

@@ -11,10 +11,6 @@ eliminating the need for repetitive metadata dictionaries in each protocol file.
 from typing import Dict, List, Any, Callable, Type, Optional
 
 
-# Global registry of protocols
-_protocol_registry: Dict[str, Dict[str, Any]] = {}
-
-
 def register_protocol(
     name: str,
     description: str,
@@ -82,15 +78,6 @@ def register_protocol(
 
         # Store metadata on the class
         scanner_class._protocol_metadata = metadata
-
-        # Register in global registry
-        protocol_key = scanner_class.__name__.replace("Scanner", "").lower()
-        _protocol_registry[protocol_key] = {
-            "class": scanner_class,
-            "metadata": metadata,
-            "name": name,
-            "default_port": default_port,
-        }
 
         return scanner_class
 

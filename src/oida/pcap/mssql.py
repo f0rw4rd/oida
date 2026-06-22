@@ -63,19 +63,6 @@ TDS_LOGIN7 = 16  # TDS7 Login packet (0x10)
 TDS_SSPI = 17  # SSPI authentication (0x11)
 TDS_PRELOGIN = 18  # Pre-login (0x12)
 
-TDS_TYPE_NAMES = {
-    TDS_SQL_BATCH: "SQL Batch",
-    TDS_RPC: "RPC",
-    TDS_RESPONSE: "Response",
-    TDS_ATTENTION: "Attention",
-    TDS_BULK_LOAD: "Bulk Load",
-    TDS_FEDERATED_AUTH: "Fed Auth",
-    TDS_TRANS_MGR: "Transaction Mgr",
-    TDS_LOGIN7: "Login7",
-    TDS_SSPI: "SSPI",
-    TDS_PRELOGIN: "Pre-Login",
-}
-
 # Well-known stored procedure IDs (from MS-TDS)
 RPC_PROC_IDS = {
     "1": "sp_cursor",
@@ -110,8 +97,6 @@ SQL_EXEC_KEYWORDS = {"EXEC", "EXECUTE"}
 SQL_READ_KEYWORDS = {"SELECT"}
 SQL_TRANSACTION_KEYWORDS = {"BEGIN", "COMMIT", "ROLLBACK", "SAVE"}
 SQL_SET_KEYWORDS = {"SET", "USE", "GRANT", "REVOKE", "DENY"}
-
-MSSQL_DEFAULT_PORT = 1433
 
 
 @dataclass
@@ -1265,7 +1250,7 @@ class MSSQLPassiveListener(PySharkListenerBase):
             buf = sspi_buffer.replace(":", "").upper()
             if buf.startswith("4E544C4D53535000"):  # "NTLMSSP\0"
                 details["auth_type"] = "SSPI/NTLM"
-            elif buf.startswith("6082") or buf.startswith("6082"):
+            elif buf.startswith("6082") or buf.startswith("6182"):
                 details["auth_type"] = "SSPI/Kerberos"
 
         # Track the flow as a login flow

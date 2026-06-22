@@ -79,6 +79,52 @@ def _args(**kw):
     return ns
 
 
+class _ShortChunkReader(_Reader):
+    """Serves a short (but non-final) chunk mid-stream before EOF.
+
+    Models the OPC UA Read method returning fewer bytes than requested
+    without signalling EOF (allowed on server buffer boundaries). EOF is
+    only the empty chunk after all bytes have been served.
+    """
+
+    def __init__(self, args, chunk_sizes):
+        # chunk_sizes: explicit byte counts to serve per Read call; the loop
+        # must keep reading until it observes an empty chunk.
+        total = sum(chunk_sizes)
+        super().__init__(args, total_bytes=total)
+        self._schedule = list(chunk_sizes)
+
+    async def _call_method(self, method, *args):
+        if method is self._methods["0:Read"]:
+            if self._schedule:
+                n = self._schedule.pop(0)
+                self._served += n
+                return b"A" * n
+            return b""  # EOF
+        return await super()._call_method(method, *args)
+
+
+class TestReadFileShortChunk(unittest.TestCase):
+    def test_short_nonfinal_chunk_does_not_truncate(self):
+        # Middle Read returns fewer than chunk_size (4096) bytes but is NOT
+        # EOF: more data follows. The buggy `while bytes_read == chunk_size`
+        # loop stopped here and reported a truncated size.
+        cap = 1024 * 1024
+        reader = _ShortChunkReader(
+            _args(max_read_bytes=cap),
+            chunk_sizes=[4096, 100, 4096, 2000],  # 100 is a short non-final read
+        )
+        asyncio.run(reader._read_file())
+
+        self.assertIn("file_read", reader.results["data"])
+        self.assertEqual(
+            reader.results["data"]["file_read"]["size"],
+            4096 + 100 + 4096 + 2000,
+        )
+        reader.logger.fail.assert_not_called()
+        self.assertTrue(reader.closed)
+
+
 class TestReadFileSizeCap(unittest.TestCase):
     def test_default_cap_is_used_when_arg_absent(self):
         # No max_read_bytes arg -> the module default ceiling applies.

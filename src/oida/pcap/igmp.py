@@ -67,7 +67,6 @@ class IGMPPassiveListener(PySharkListenerBase):
         # Live capture
         listener = IGMPPassiveListener(interface="eth0", timeout=30)
         devices = listener.scan()
-        devices = listener.scan()
 
         # Testing - feed packets directly
         listener = IGMPPassiveListener(interface="eth0")
@@ -412,5 +411,3 @@ class IGMPPassiveListener(PySharkListenerBase):
         except Exception as e:
             self.logger.debug(f"IGMP parse failed: {e}")
             return None
-
-

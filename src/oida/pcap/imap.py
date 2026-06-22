@@ -48,7 +48,7 @@ PyShark IMAP field reference (packet.imap.*):
 """
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -82,6 +82,12 @@ class IMAPSession:
     server_ip: str
     server_port: int = 0
     data_buffer: str = ""
+    # Per-method "credential already extracted" flags. Once a method has
+    # yielded a credential for this session, its DOTALL regex is no longer
+    # re-run over the (re-accumulating) buffer -- this both stops the O(n^2)
+    # re-scan and avoids repeatedly re-matching the same already-recorded
+    # credential. Keys: "LOGIN", "PLAIN", "CRAM-MD5".
+    extracted: Set[str] = field(default_factory=set)
 
 
 class IMAPPassiveListener(PySharkListenerBase):
@@ -124,6 +130,14 @@ class IMAPPassiveListener(PySharkListenerBase):
         "server_banner",
     )
     IMAP_PORTS = (143, 993)
+
+    # Bound the per-session regex-extraction buffer. IMAP auth exchanges that
+    # the DOTALL fallback cares about (LOGIN / AUTHENTICATE PLAIN / CRAM-MD5)
+    # complete within a handful of small lines, so the most recent few KB are
+    # always enough. Capping the buffer turns the per-packet re-scan from
+    # O(n^2) / unbounded-memory (peer-controlled wire traffic) into bounded
+    # work, closing the passive-capture DoS vector.
+    MAX_BUFFER = 8192
 
     # IMAP command tag pattern (e.g., "a001 ", "A1 ")
     IMAP_TAG = r"[A-Za-z0-9]{1,6}\s+"
@@ -349,6 +363,7 @@ class IMAPPassiveListener(PySharkListenerBase):
                         if username and self._is_new_credential(
                             session, "LOGIN", username, password
                         ):
+                            session.extracted.add("LOGIN")
                             cred = IMAPCredential(
                                 auth_method="LOGIN",
                                 credential_type="plaintext",
@@ -428,6 +443,11 @@ class IMAPPassiveListener(PySharkListenerBase):
         if server_port and not session.server_port:
             session.server_port = server_port
         session.data_buffer += packet_data
+        # Cap the buffer to a bounded sliding window: keep only the most recent
+        # MAX_BUFFER bytes so a long-lived / high-volume session cannot grow it
+        # without limit nor force ever-larger DOTALL scans.
+        if len(session.data_buffer) > self.MAX_BUFFER:
+            session.data_buffer = session.data_buffer[-self.MAX_BUFFER :]
 
         # Try to extract credentials from accumulated session data
         self._try_extract_credentials(session)
@@ -468,12 +488,17 @@ class IMAPPassiveListener(PySharkListenerBase):
 
     def _try_plaintext_login(self, session: IMAPSession, session_text: str) -> None:
         """Extract plaintext LOGIN credentials."""
+        # Already recorded a LOGIN credential for this session: stop re-running
+        # the DOTALL search over the re-accumulating buffer every packet.
+        if "LOGIN" in session.extracted:
+            return
         match = self.IMAP_PLAINTEXT_LOGIN_REGEX.search(session_text)
         if match:
             username = match.group("Username").strip("\"'")
             password = match.group("Password").strip("\"'")
 
             if self._is_new_credential(session, "LOGIN", username, password):
+                session.extracted.add("LOGIN")
                 cred = IMAPCredential(
                     auth_method="LOGIN",
                     credential_type="plaintext",
@@ -488,12 +513,15 @@ class IMAPPassiveListener(PySharkListenerBase):
 
     def _try_auth_plain(self, session: IMAPSession, session_text: str) -> None:
         """Extract AUTHENTICATE PLAIN credentials (Base64)."""
+        if "PLAIN" in session.extracted:
+            return
         match = self.IMAP_AUTH_PLAIN_REGEX.search(session_text)
         if match:
             creds_b64 = match.group("CredentialsBase64")
             username, password = self._decode_auth_plain(creds_b64)
 
             if username and self._is_new_credential(session, "PLAIN", username, password):
+                session.extracted.add("PLAIN")
                 cred = IMAPCredential(
                     auth_method="PLAIN",
                     credential_type="plaintext",
@@ -508,6 +536,8 @@ class IMAPPassiveListener(PySharkListenerBase):
 
     def _try_cram_md5(self, session: IMAPSession, session_text: str) -> None:
         """Extract CRAM-MD5 challenge/response."""
+        if "CRAM-MD5" in session.extracted:
+            return
         match = self.IMAP_CRAM_MD5_REGEX.search(session_text)
         if match:
             challenge = match.group("Challenge")
@@ -517,6 +547,7 @@ class IMAPPassiveListener(PySharkListenerBase):
             username = self._extract_cram_md5_username(response)
 
             if username and self._is_new_hash(session, "CRAM-MD5", username, response):
+                session.extracted.add("CRAM-MD5")
                 cred = IMAPCredential(
                     auth_method="CRAM-MD5",
                     credential_type="hash",

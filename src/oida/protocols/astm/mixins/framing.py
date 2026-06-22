@@ -4,9 +4,7 @@ ASTM Framing Mixin
 Handles ENQ/ACK handshake, frame sending/receiving, and checksum calculation.
 """
 
-from typing import Optional
-
-from ..records import STX, ETX, EOT, ENQ, ACK, NAK, ETB, CR, LF
+from ..records import STX, ETX, EOT, ENQ, ACK, NAK, CR, LF
 
 
 class FramingMixin:
@@ -48,17 +46,62 @@ class FramingMixin:
             self.logger.debug(f"EOT error: {e}")
             return False
 
+    def _read_application_ack(self, timeout: float = 2.0) -> bool:
+        """Check for an application-level acknowledgement after a transmission.
+
+        A frame-level ACK (the single ACK byte _send_frame waits on) only
+        confirms data-link receipt + checksum per ASTM E1381 — a conformant
+        receiver ACKs any well-formed frame *before* the LIS application has
+        validated or persisted the record. To distinguish that link-level ACK
+        from genuine application acceptance, we look for the receiver opening
+        its own transmission (server-initiated ENQ followed by a data record
+        such as a Comment/Manufacturer/status reply) after our EOT.
+
+        Returns True only if the peer sends an ENQ and follows it with at least
+        one STX-framed record — i.e. an application-level response. A bare
+        timeout (no server transmission) returns False.
+        """
+        if not self.conn:
+            return False
+
+        prev_timeout = None
+        try:
+            try:
+                prev_timeout = self.conn.gettimeout()
+            except Exception:
+                prev_timeout = None
+            self.conn.settimeout(timeout)
+
+            first = self.conn.recv(1)
+            if first != ENQ:
+                return False
+
+            # Server wants to transmit — ACK its ENQ and read the first frame.
+            self.conn.sendall(ACK)
+            frame = self.conn.recv(1024)
+            # An application reply carries an STX-framed record. EOT alone (the
+            # server immediately ending its transmission) is not an acceptance.
+            return bool(frame) and STX in frame
+        except TimeoutError:
+            self.logger.debug("No application-level response (timeout)")
+            return False
+        except Exception as e:
+            self.logger.debug(f"Application ACK read error: {e}")
+            return False
+        finally:
+            try:
+                if prev_timeout is not None:
+                    self.conn.settimeout(prev_timeout)
+            except Exception:
+                pass
+
     def _calculate_checksum(self, data: bytes) -> bytes:
         """Calculate modulus-256 checksum as 2-char hex.
 
         Delegates to ASTMRecordBuilder so the framing and builder paths can
-        never drift; falls back to a local computation only if no builder is
-        attached yet.
+        never drift. record_builder is always attached before framing runs.
         """
-        if getattr(self, "record_builder", None) is not None:
-            return self.record_builder._calculate_checksum(data)
-        total = sum(data) % 256
-        return f"{total:02X}".encode()
+        return self.record_builder._calculate_checksum(data)
 
     def _send_frame(self, record_data: str) -> bool:
         """Send ASTM framed data with checksum"""
@@ -97,78 +140,3 @@ class FramingMixin:
         except Exception as e:
             self.logger.debug(f"Frame send error: {e}")
             return False
-
-    def _receive_frame(self) -> Optional[str]:
-        """Receive and validate ASTM frame"""
-        if not self.conn:
-            return None
-
-        MAX_FRAME_SIZE = 64 * 1024  # 64KB per frame (ASTM frames are small)
-        try:
-            # Read until we get a complete frame
-            data = bytearray()
-            while True:
-                chunk = self.conn.recv(1024)
-                if not chunk:
-                    break
-                data.extend(chunk)
-                if len(data) > MAX_FRAME_SIZE:
-                    return None
-                if CR + LF in data:
-                    break
-
-            if not data:
-                return None
-
-            # Strip STX
-            if data.startswith(STX):
-                data = data[1:]
-
-            # Find ETX or ETB
-            etx_pos = data.find(ETX)
-            etb_pos = data.find(ETB)
-
-            if etx_pos == -1 and etb_pos == -1:
-                self.logger.debug("No ETX/ETB found in frame")
-                return None
-
-            end_pos = etx_pos if etx_pos != -1 else etb_pos
-
-            # Extract frame content (frame_num + record_data)
-            frame_content = data[: end_pos + 1]
-
-            # Validate checksum (2 bytes after ETX/ETB).
-            # If the buffer doesn't contain the full checksum yet, that's
-            # a short read — the old code silently fell through to ACK,
-            # accepting truncated frames as valid. Treat short-read the
-            # same as checksum mismatch: NAK and bail.
-            if len(data) <= end_pos + 3:
-                self.logger.debug(
-                    f"Short read: frame ends at {end_pos} but buffer is only "
-                    f"{len(data)} bytes — checksum truncated"
-                )
-                self.conn.sendall(NAK)
-                return None
-
-            received_checksum = data[end_pos + 1 : end_pos + 3]
-            calculated_checksum = self._calculate_checksum(frame_content)
-            if received_checksum != calculated_checksum:
-                self.logger.debug(
-                    f"Checksum mismatch: {received_checksum!r} vs {calculated_checksum!r}"
-                )
-                self.conn.sendall(NAK)
-                return None
-
-            # Send ACK
-            self.conn.sendall(ACK)
-
-            # Return record data (skip frame number)
-            record_data = frame_content[1:-1].decode("utf-8", errors="ignore")
-            return record_data
-
-        except TimeoutError as e:
-            self.logger.debug("receive frame failed: %s", e)
-            return None
-        except Exception as e:
-            self.logger.debug(f"Frame receive error: {e}")
-            return None

@@ -406,16 +406,9 @@ class knx(NetworkConnection):
             self.results["data"]["device_info"] = {"connected": True, "enum_error": str(e)}
 
     def print_host_info(self):
-        """Display KNX device information."""
-        if getattr(self.args, "quiet", False):
-            return
-
-        info = self.results["data"].get("device_info", {})
-        port = getattr(self.args, "port", 3671)
-
-        self.logger.success(f"KNX/EIB: {self.host}:{port}")
-        if info.get("connection_type"):
-            self.logger.display(f"    Mode: {info['connection_type']}")
+        """Abstract-contract no-op; knx overrides proto_flow() which never calls
+        this. The KNX/IP gateway banner is emitted by enum_host_info /
+        _discover_gateway during the scan flow."""
 
     def _execute_scan(self):
         """Execute KNX scanning."""

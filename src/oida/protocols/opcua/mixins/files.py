@@ -204,7 +204,6 @@ class FilesMixin:
                 # Read in chunks (max 4KB per read typically)
                 file_content = b""
                 chunk_size = 4096
-                bytes_read = chunk_size
 
                 # Cap the total read to bound memory growth: the server-advertised
                 # Size is untrusted, so we never let an unbounded/oversized stream
@@ -214,19 +213,20 @@ class FilesMixin:
                     max_read_bytes = DEFAULT_MAX_READ_BYTES
                 truncated = False
 
-                while bytes_read == chunk_size:
+                # The OPC UA Read method may return fewer bytes than requested
+                # without signalling EOF (e.g. on server buffer boundaries), so
+                # we only stop on an empty/None chunk, never on a short read.
+                while True:
                     chunk = await file_node.call_method(read_method, file_handle, chunk_size)
-                    if chunk:
-                        file_content += bytes(chunk)
-                        bytes_read = len(chunk)
-                        if len(file_content) >= max_read_bytes:
-                            truncated = True
-                            self.logger.fail(
-                                f"File exceeds max read size ({max_read_bytes} bytes) - "
-                                "aborting read to bound memory use"
-                            )
-                            break
-                    else:
+                    if not chunk:
+                        break
+                    file_content += bytes(chunk)
+                    if len(file_content) >= max_read_bytes:
+                        truncated = True
+                        self.logger.fail(
+                            f"File exceeds max read size ({max_read_bytes} bytes) - "
+                            "aborting read to bound memory use"
+                        )
                         break
 
                 if truncated:

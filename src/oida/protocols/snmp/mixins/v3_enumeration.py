@@ -371,6 +371,22 @@ class V3EnumerationMixin(_ScannerBase):
                                 "auth_protocol": auth_proto,
                             }
                         )
+                        # Record the proven auth credential immediately so it
+                        # survives even if phase 3 never cracks the priv key.
+                        # Phase 3 upgrades this entry to authPriv on SUCCESS.
+                        credentials.append(
+                            {
+                                "username": username,
+                                "auth_pass": password,
+                                "auth_protocol": auth_proto,
+                                "security_level": "authRequired-priv",
+                            }
+                        )
+                        self.logger.security_finding(
+                            "Credential disclosure",
+                            f"SNMPv3 auth credentials found (priv required): "
+                            f"user '{username}' pass '{password}'",
+                        )
                         found = True
                         break
 
@@ -452,16 +468,31 @@ class V3EnumerationMixin(_ScannerBase):
                                 f"(auth={auth_proto}/{auth_pass}, "
                                 f"priv={priv_proto}/{priv_pass})"
                             )
-                            credentials.append(
-                                {
-                                    "username": username,
-                                    "auth_pass": auth_pass,
-                                    "auth_protocol": auth_proto,
-                                    "priv_pass": priv_pass,
-                                    "priv_protocol": priv_proto,
-                                    "security_level": "authPriv",
-                                }
+                            # Upgrade the auth-only entry recorded in phase 2
+                            # (security_level 'authRequired-priv') to authPriv
+                            # in place; fall back to appending if not present.
+                            full_cred = {
+                                "username": username,
+                                "auth_pass": auth_pass,
+                                "auth_protocol": auth_proto,
+                                "priv_pass": priv_pass,
+                                "priv_protocol": priv_proto,
+                                "security_level": "authPriv",
+                            }
+                            existing = next(
+                                (
+                                    c
+                                    for c in credentials
+                                    if c["username"] == username
+                                    and c.get("security_level") == "authRequired-priv"
+                                ),
+                                None,
                             )
+                            if existing is not None:
+                                existing.clear()
+                                existing.update(full_cred)
+                            else:
+                                credentials.append(full_cred)
                             self.logger.security_finding(
                                 "Credential disclosure",
                                 f"SNMPv3 full credentials: user '{username}' "

@@ -91,16 +91,12 @@ def _get_individual_address():
 
 
 @lru_cache(maxsize=1)
-def _get_cemi_classes() -> Tuple:
-    """Get cEMI classes for frame handling.
-
-    Returns:
-        Tuple of (CEMIHandler, CEMIFrame, CEMIMessageCode)
-    """
+def _get_cemi_message_code():
+    """Get the cEMI CEMIMessageCode class for frame handling."""
     _get_xknx()
-    from xknx.cemi import CEMIHandler, CEMIFrame, CEMIMessageCode
+    from xknx.cemi import CEMIMessageCode
 
-    return (CEMIHandler, CEMIFrame, CEMIMessageCode)
+    return CEMIMessageCode
 
 
 @lru_cache(maxsize=1)
@@ -128,10 +124,8 @@ def _get_apci_classes() -> Dict[str, Any]:
         ADCRead,
         ADCResponse,
         GroupValueWrite,
-        GroupValueRead,
         AuthorizeRequest,
         AuthorizeResponse,
-        Restart,
         IndividualAddressSerialRead,
         IndividualAddressSerialResponse,
     )
@@ -153,10 +147,8 @@ def _get_apci_classes() -> Dict[str, Any]:
         "ADCRead": ADCRead,
         "ADCResponse": ADCResponse,
         "GroupValueWrite": GroupValueWrite,
-        "GroupValueRead": GroupValueRead,
         "AuthorizeRequest": AuthorizeRequest,
         "AuthorizeResponse": AuthorizeResponse,
-        "Restart": Restart,
         "IndividualAddressSerialRead": IndividualAddressSerialRead,
         "IndividualAddressSerialResponse": IndividualAddressSerialResponse,
     }

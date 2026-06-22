@@ -380,9 +380,7 @@ class TestRealConnectionFactoryTimeouts:
         from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
         from src.oida.fuzz.core.config import FuzzerConfig
 
-        config = FuzzerConfig(
-            target_ip="127.0.0.1", target_port=502, reuse_target_connection=True
-        )
+        config = FuzzerConfig(target_ip="127.0.0.1", target_port=502, reuse_target_connection=True)
         conn = RealConnectionFactory().create_connection(config)
 
         assert conn._recv_timeout == 5.0

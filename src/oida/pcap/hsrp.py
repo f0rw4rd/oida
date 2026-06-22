@@ -293,9 +293,7 @@ class HSRPPassiveListener(PySharkListenerBase):
             group = self._parse_int(self.get_field(hsrp, "group", "0"), 0)
 
             # Virtual IP -- tshark field is hsrp.virt_ip (not virtual_ip)
-            virtual_ip = str(
-                self.get_field_any(hsrp, "virt_ip", "virtual_ip", default="")
-            )
+            virtual_ip = str(self.get_field_any(hsrp, "virt_ip", "virtual_ip", default=""))
 
             # Authentication data (plaintext for v1)
             auth_data = str(self.get_field(hsrp, "auth_data", ""))
@@ -361,14 +359,10 @@ class HSRPPassiveListener(PySharkListenerBase):
                 self.get_field_any(hsrp, "hsrp2_holdtime", "holdtime", default="10000"),
                 10000,
             )
-            virtual_ip = str(
-                self.get_field_any(hsrp, "hsrp2_virt_ip", "virtual_ip", default="")
-            )
+            virtual_ip = str(self.get_field_any(hsrp, "hsrp2_virt_ip", "virtual_ip", default=""))
 
             # Identifier (MAC address) from v2
-            identifier = str(
-                self.get_field_any(hsrp, "hsrp2_identifier", "identifier", default="")
-            )
+            identifier = str(self.get_field_any(hsrp, "hsrp2_identifier", "identifier", default=""))
 
             # IP version (hsrp2.ipversion in EK mode)
             ip_version = self._parse_int(
@@ -399,9 +393,7 @@ class HSRPPassiveListener(PySharkListenerBase):
 
             # Authentication -- check for text auth or MD5 auth.
             # Text auth (TLV type 3)
-            auth_data = str(
-                self.get_field_any(hsrp, "hsrp2_auth_data", "auth_data", default="")
-            )
+            auth_data = str(self.get_field_any(hsrp, "hsrp2_auth_data", "auth_data", default=""))
             if auth_data:
                 auth_data = auth_data.replace("\x00", "").strip()
                 if auth_data:
@@ -450,5 +442,3 @@ class HSRPPassiveListener(PySharkListenerBase):
 
 # Alias for v2 variant (same implementation handles both versions)
 HSRPv2PassiveListener = HSRPPassiveListener
-
-

@@ -32,29 +32,12 @@ class ReducedString(String):
     - Length boundaries (power-of-2 sizes)
     - Control characters
 
-    Supports protocol-specific custom payloads that can be registered per-protocol.
-
     Usage:
-        # Basic usage
         ReducedString(name="field", default_value="test", max_len=256)
-
-        # With protocol-specific payloads
-        ReducedString(name="field", default_value="test", max_len=256,
-                      protocol_name="http")
-
-        # Register custom payloads for a protocol
-        ReducedString.register_protocol_payloads("http", [
-            "GET / HTTP/0.9",     # HTTP version edge case
-            "GET / HTTP/3.0",     # Future/invalid version
-            "\x00 / HTTP/1.1",    # NULL in method
-        ])
 
     Reduction can be further customized via class variables:
         ReducedString.reduction_level = "balanced"  # or "aggressive"
     """
-
-    # Protocol-specific payload registry
-    _protocol_payloads = {}
 
     # Reduced fuzz library - removed command injection and XSS
     _fuzz_library = [
@@ -142,96 +125,6 @@ class ReducedString(String):
     # Reduction level configuration
     reduction_level = "balanced"  # "balanced" or "aggressive"
 
-    def __init__(self, name=None, default_value="", protocol_name=None, *args, **kwargs):
-        """
-        Initialize ReducedString with optional protocol-specific payloads.
-
-        Args:
-            name: Field name
-            default_value: Default value
-            protocol_name: Protocol name to load custom payloads from registry
-            *args, **kwargs: Passed to parent String class
-        """
-        super(ReducedString, self).__init__(name=name, default_value=default_value, *args, **kwargs)
-        self.protocol_name = protocol_name
-
-        # If protocol_name specified, merge protocol-specific payloads
-        if protocol_name and protocol_name in self._protocol_payloads:
-            self._instance_fuzz_library = list(self._fuzz_library)  # Copy class library
-            self._instance_fuzz_library.extend(self._protocol_payloads[protocol_name])
-        else:
-            self._instance_fuzz_library = self._fuzz_library
-
-    @property
-    def _fuzz_library_to_use(self):
-        """Get the fuzz library to use (instance-specific or class-level)."""
-        return getattr(self, "_instance_fuzz_library", self._fuzz_library)
-
-    @classmethod
-    def register_protocol_payloads(cls, protocol_name: str, payloads: list):
-        """
-        Register custom payloads for a specific protocol.
-
-        Args:
-            protocol_name: Name of the protocol (e.g., "http", "ftp", "modbus")
-            payloads: List of protocol-specific fuzz strings
-
-        Example:
-            ReducedString.register_protocol_payloads("http", [
-                "GET / HTTP/0.9",           # Edge case: HTTP/0.9
-                "GET / HTTP/3.0",           # Invalid version
-                "GET / HTTP/1.1\\r\\n" * 100,  # Header overflow
-                "TRACE / HTTP/1.1",         # Dangerous method
-            ])
-
-            # Now all ReducedString instances with protocol_name="http"
-            # will include these payloads
-            ReducedString(name="method", default_value="GET", protocol_name="http")
-        """
-        if protocol_name not in cls._protocol_payloads:
-            cls._protocol_payloads[protocol_name] = []
-
-        # Add new payloads, avoiding duplicates
-        for payload in payloads:
-            if payload not in cls._protocol_payloads[protocol_name]:
-                cls._protocol_payloads[protocol_name].append(payload)
-
-    @classmethod
-    def get_protocol_payloads(cls, protocol_name: str) -> list:
-        """
-        Get registered payloads for a protocol.
-
-        Args:
-            protocol_name: Protocol name
-
-        Returns:
-            List of custom payloads for the protocol, or empty list if none
-        """
-        return cls._protocol_payloads.get(protocol_name, [])
-
-    @classmethod
-    def list_protocols(cls) -> list:
-        """
-        List all protocols with registered custom payloads.
-
-        Returns:
-            List of protocol names
-        """
-        return list(cls._protocol_payloads.keys())
-
-    @classmethod
-    def clear_protocol_payloads(cls, protocol_name: str = None):
-        """
-        Clear protocol-specific payloads.
-
-        Args:
-            protocol_name: Protocol to clear, or None to clear all
-        """
-        if protocol_name is None:
-            cls._protocol_payloads = {}
-        elif protocol_name in cls._protocol_payloads:
-            del cls._protocol_payloads[protocol_name]
-
     @classmethod
     def set_reduction_level(cls, level: str):
         """
@@ -275,12 +168,9 @@ class ReducedString(String):
             raise ValueError(f"Unknown reduction level: {level}. Use 'balanced' or 'aggressive'")
 
     @classmethod
-    def get_stats(cls, protocol_name: str = None):
+    def get_stats(cls):
         """
         Return statistics about current mutation counts.
-
-        Args:
-            protocol_name: If specified, include protocol-specific payload count
 
         Returns:
             Dictionary with mutation statistics
@@ -292,21 +182,13 @@ class ReducedString(String):
             * len(cls._long_string_deltas)
         )
 
-        stats = {
+        return {
             "reduction_level": cls.reduction_level,
             "fuzz_library_count": fuzz_count,
             "long_string_count": long_count,
             "extra_long_count": len(cls._extra_long_string_lengths),
             "total_per_field": fuzz_count + long_count,
-            "registered_protocols": len(cls._protocol_payloads),
         }
-
-        if protocol_name:
-            protocol_payload_count = len(cls.get_protocol_payloads(protocol_name))
-            stats["protocol_payload_count"] = protocol_payload_count
-            stats["total_with_protocol"] = fuzz_count + long_count + protocol_payload_count
-
-        return stats
 
 
 # Convenience function for getting statistics

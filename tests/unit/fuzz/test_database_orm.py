@@ -293,6 +293,50 @@ class TestSQLAlchemyDatabaseCrashes:
         assert retrieved is not None
         assert retrieved.test_case_id == tc_id
 
+    def test_bulk_rewrite_preserves_crash(self, db):
+        """Bulk-rewriting a test case id must not cascade-delete its crash row.
+
+        Regression for the OR-REPLACE bug: SQLite REPLACE deleted the parent
+        test_cases row before re-insert, which cascaded (FK ondelete=CASCADE,
+        PRAGMA foreign_keys=ON) and destroyed the already-persisted crash.
+        The on_conflict_do_update upsert must update the row in place instead.
+        """
+        from src.oida.fuzz.core.database.interface import TestCase as TestCaseDTO, Crash as CrashDTO
+
+        # Persist a test case, then attach a crash to it.
+        tc = TestCaseDTO(
+            id=5,
+            name="crash_case",
+            timestamp=datetime.now().isoformat(),
+            result="crash",
+            crc32=0,
+            target_ip="10.0.0.1",
+            target_port=502,
+            protocol="modbus",
+        )
+        db.store_test_cases_bulk([tc])
+        db.store_crash(CrashDTO(test_case_id=5, payload=b"\xde\xad\xbe\xef", crash_info="boom"))
+        assert db.get_crash(5) is not None
+
+        # Bulk-rewrite the SAME id (as the session-end flush does, with result='pass').
+        rewritten = TestCaseDTO(
+            id=5,
+            name="crash_case",
+            timestamp=datetime.now().isoformat(),
+            result="pass",
+            crc32=0,
+            target_ip="10.0.0.1",
+            target_port=502,
+            protocol="modbus",
+        )
+        db.store_test_cases_bulk([rewritten])
+
+        # Crash row must survive the re-write.
+        survived = db.get_crash(5)
+        assert survived is not None
+        assert survived.test_case_id == 5
+        assert survived.payload == b"\xde\xad\xbe\xef"
+
 
 class TestSQLAlchemyDatabaseMetadata:
     """Tests for session metadata operations."""

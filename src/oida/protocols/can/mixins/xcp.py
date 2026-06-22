@@ -123,9 +123,7 @@ class XCPMixin:
             # busy bus produces XCPScanResult rows pairing a request_id that
             # never elicited the response with the slave's real response_id).
             expected_resp_id = req_id + XCP_RESP_ID_OFFSET
-            resp = self._recv_xcp_response(
-                bus, timeout=0.05, expected_id=expected_resp_id
-            )
+            resp = self._recv_xcp_response(bus, timeout=0.05, expected_id=expected_resp_id)
             if resp is None:
                 continue
 

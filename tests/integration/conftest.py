@@ -317,6 +317,58 @@ def check_udp_port_open(host: str, port: int, timeout: int = 3) -> bool:
         return False
 
 
+# Cached result of the Docker-daemon reachability probe (per process).
+_docker_daemon_status: Optional[Tuple[bool, Optional[str]]] = None
+
+
+def check_docker_daemon() -> Tuple[bool, Optional[str]]:
+    """Probe once whether the Docker daemon is reachable. Cached per process.
+
+    Returns (ok, error_message). When unreachable, error_message is the first
+    stderr line from ``docker info`` — typically the real cause (daemon down,
+    permission denied on the socket, or CLI not installed) rather than the
+    generic "service not started".
+    """
+    global _docker_daemon_status
+    if _docker_daemon_status is not None:
+        return _docker_daemon_status
+    try:
+        result = subprocess.run(
+            ["docker", "info", "--format", "{{.ServerVersion}}"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            _docker_daemon_status = (True, None)
+        else:
+            lines = (result.stderr or result.stdout).strip().splitlines()
+            msg = lines[0] if lines else f"docker info exited {result.returncode}"
+            _docker_daemon_status = (False, msg)
+    except FileNotFoundError:
+        _docker_daemon_status = (False, "docker CLI not found on PATH")
+    except (subprocess.TimeoutExpired, OSError) as e:
+        _docker_daemon_status = (False, f"docker info failed: {e}")
+    return _docker_daemon_status
+
+
+def _unavailable_reason(name: str, port: int, transport: str = "port") -> str:
+    """Build a skip/fail message, surfacing a dead Docker daemon as the real cause.
+
+    When the daemon is unreachable, every mock is unstartable for the same
+    underlying reason — report that once, accurately, instead of a misleading
+    "run: python services.py up" (which won't help if you can't reach Docker).
+    """
+    ok, err = check_docker_daemon()
+    if not ok:
+        return (
+            f"Docker daemon unreachable ({err}) — cannot start '{name}'. "
+            f"Add your user to the 'docker' group, start the daemon, or pre-start "
+            f"the mocks with: sudo python services.py up"
+        )
+    return f"{name} mock not available ({transport} {port}) (run: python services.py up)"
+
+
 # Protocols that use UDP instead of TCP for their primary port
 UDP_PROTOCOLS: Set[str] = {"coap", "bacnet"}
 
@@ -341,11 +393,8 @@ def ensure_mock(protocol_name: str) -> None:
         reachable = check_port_open(MOCK_HOST, port, timeout=2)
 
     if not reachable:
-        msg = f"{protocol_name} mock not available on port {port} (run: python services.py up)"
-        if os.environ.get("OIDA_SKIP_MISSING_SERVICES"):
-            pytest.skip(msg)
-        else:
-            pytest.fail(msg)
+        transport = "UDP port" if protocol_name in UDP_PROTOCOLS else "port"
+        _service_unavailable(_unavailable_reason(protocol_name, port, transport))
 
 
 # ---------------------------------------------------------------------------
@@ -563,6 +612,20 @@ def pytest_collection_finish(session):
     if not to_start:
         return
 
+    # Fail fast: one quick daemon probe before the slow `compose up --build`.
+    # If Docker itself is unreachable, building/starting is doomed — skip it and
+    # let the per-test guards report the real reason (cached, so it's instant).
+    ok, err = check_docker_daemon()
+    if not ok:
+        print(
+            f"\n[docker_setup] Docker daemon unreachable: {err}\n"
+            f"[docker_setup] {len(to_start)} service(s) cannot be started; "
+            f"docker-dependent tests will fail with this reason.\n"
+            f"[docker_setup] Fix: add your user to the 'docker' group, start the "
+            f"daemon, or pre-start mocks with `sudo python services.py up`."
+        )
+        return
+
     cmd = [
         "docker",
         "compose",
@@ -666,11 +729,11 @@ def _check_required_containers(request, docker_setup):
             elif service in UDP_SERVICES:
                 port = SERVICE_HEALTH_PORT.get(service)
                 if port and not check_udp_port_open(MOCK_HOST, port, timeout=2):
-                    _service_unavailable(f"Container '{service}' not available (UDP port {port})")
+                    _service_unavailable(_unavailable_reason(service, port, "UDP port"))
             else:
                 port = SERVICE_HEALTH_PORT.get(service)
                 if port and not check_port_open(MOCK_HOST, port, timeout=2):
-                    _service_unavailable(f"Container '{service}' not available (port {port})")
+                    _service_unavailable(_unavailable_reason(service, port))
 
 
 # ---------------------------------------------------------------------------
