@@ -111,6 +111,7 @@ def _load_packets(
     display_filter: str | None = None,
     max_packets: int = _MAX_TEST_PACKETS,
     decode_as: dict | None = None,
+    override_prefs: dict | None = None,
     _retries: int = 2,
 ) -> list:
     """Load packets from *pcap_path* using pyshark.FileCapture.
@@ -138,6 +139,8 @@ def _load_packets(
         cap_kwargs["display_filter"] = display_filter
     if decode_as:
         cap_kwargs["decode_as"] = decode_as
+    if override_prefs:
+        cap_kwargs["override_prefs"] = override_prefs
     if _ek_mode_available:
         cap_kwargs["use_ek"] = True
 
@@ -161,6 +164,7 @@ def _load_packets(
                 display_filter=display_filter,
                 max_packets=max_packets,
                 decode_as=decode_as,
+                override_prefs=override_prefs,
                 _retries=_retries - 1,
             )
         raise
@@ -244,7 +248,18 @@ def _run_listener_test(
     cls = getattr(mod, class_name)
     listener = cls(interface="lo", timeout=10)
     listener._x509 = True
-    packets = _load_packets(pcap, display_filter=display_filter, decode_as=decode_as)
+    # Mirror the production PcapScanner pipeline: forward the listener's
+    # OVERRIDE_PREFS to tshark so prefs like
+    # ``tcp.analyze_sequence_numbers=FALSE`` (which surfaces otherwise-dropped
+    # MongoDB OP_INSERT segments) take effect under the same capture the
+    # listener sees at runtime.
+    override_prefs = getattr(cls, "OVERRIDE_PREFS", None) or None
+    packets = _load_packets(
+        pcap,
+        display_filter=display_filter,
+        decode_as=decode_as,
+        override_prefs=override_prefs,
+    )
     devices = listener.feed_packets(iter(packets))
 
     assert isinstance(devices, dict)

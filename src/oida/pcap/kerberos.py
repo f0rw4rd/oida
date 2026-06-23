@@ -228,6 +228,26 @@ class KerberosPassiveListener(PySharkListenerBase):
             return ""
         return str(val)
 
+    def _count_field_components(self, layer, name: str) -> int:
+        """Count the components of a repeated Kerberos field.
+
+        In pyshark EK mode a repeated field is exposed either as a Python list
+        (one entry per occurrence) or, after get_field() normalisation, as a
+        comma-separated string. A single occurrence is a scalar. This returns
+        the number of components, 0 when the field is absent.
+        """
+        raw = getattr(layer, name, None)
+        raw = self._resolve_value(raw, None)
+        if raw is None:
+            return 0
+        if isinstance(raw, (list, tuple)):
+            return len(raw)
+        # Scalar or already-joined string: count comma-separated parts.
+        s = str(raw)
+        if not s:
+            return 0
+        return len([p for p in s.split(",") if p.strip()])
+
     @staticmethod
     def _parse_principal(raw: str) -> str:
         """Parse principal from CNameString/SNameString.
@@ -324,19 +344,37 @@ class KerberosPassiveListener(PySharkListenerBase):
         # kerberos.sname_string: count of SNameString components (T1: sequence count)
         sname_string_count = self.get_field(krb_layer, "sname_string", default="")
 
-        # kerberos.name_string: generic KerberosString sequence count (T1)
+        # kerberos.name_string: generic KerberosString sequence count (T1).
+        # tshark exposes the generic SEQUENCE_OF_KerberosString count via
+        # kerberos.name_string, but in practice the name-string components are
+        # surfaced as the CNameString / SNameString lists. Count the actual
+        # KerberosString components present (client + server principal parts).
         name_string_count = self.get_field(krb_layer, "name_string", default="")
+        if not name_string_count:
+            ns = self._count_field_components(krb_layer, "CNameString") + (
+                self._count_field_components(krb_layer, "SNameString")
+            )
+            name_string_count = ns if ns else ""
 
-        # kerberos.encryptedAuthenticator_cipher: AP-REQ authenticator cipher (T1)
-        encrypted_authenticator = self.get_field(
-            krb_layer, "encryptedAuthenticator_cipher", default=""
-        )
+        # AP-REQ authenticator cipher (T1). tshark 4.4.x has no
+        # kerberos.encryptedAuthenticator_cipher token; the encrypted
+        # authenticator inside an AP-REQ is exposed as kerberos.cipher and is
+        # reliably flagged by the presence of kerberos.ap_options.
+        ap_options = self.get_field(krb_layer, "ap_options", default="")
+        has_cipher = self.get_field(krb_layer, "cipher", default="")
+        encrypted_authenticator = bool(ap_options) and bool(has_cipher)
 
-        # kerberos.rEQ_SEQUENCE_OF_PA_DATA: count of PA-DATA in requests (T1)
-        pa_req_count = self.get_field(krb_layer, "rEQ_SEQUENCE_OF_PA_DATA", default="")
-
-        # kerberos.rEP_SEQUENCE_OF_PA_DATA: count of PA-DATA in replies (T1)
-        pa_rep_count = self.get_field(krb_layer, "rEP_SEQUENCE_OF_PA_DATA", default="")
+        # PA-DATA counts (T1). tshark has no rEQ_/rEP_SEQUENCE_OF_PA_DATA token;
+        # the PA-DATA entries are exposed via the repeated kerberos.padata_type
+        # field. Count its components and bucket by request vs reply msg type.
+        pa_data_count = self._count_field_components(krb_layer, "padata_type")
+        # Combined packets (e.g. AS-REQ+AP-REQ "10,14") count as requests.
+        msg_types_present = {
+            int(p) for p in msg_type_str.split(",") if p.strip().isdigit()
+        }
+        is_request = bool(msg_types_present & {KRB_AS_REQ, KRB_TGS_REQ})
+        pa_req_count = pa_data_count if (pa_data_count and is_request) else ""
+        pa_rep_count = pa_data_count if (pa_data_count and not is_request) else ""
 
         # kerberos.kdc-req-body.etype: count of requested etypes (T1)
         # Note: the EK field name uses underscore: "kdc-req-body_etype"

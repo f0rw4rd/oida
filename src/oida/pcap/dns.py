@@ -667,17 +667,52 @@ class DNSPassiveListener(PySharkListenerBase):
             if soa_mname:
                 rec["mname"] = self._clean_name(str(soa_mname))
             if soa_rname:
-                rec["rname"] = self._clean_name(str(soa_rname))
-            # Email-form of the responsible-party name (first label becomes
-            # the local part) -- the zone admin contact.
-            soa_rname_email = self.get_field(dns, "soa_rname_name")
-            if soa_rname_email:
-                rec["rname_email"] = self._clean_name(str(soa_rname_email))
+                rname = self._clean_name(str(soa_rname))
+                rec["rname"] = rname
+                # Email-form of the responsible-party name: in DNS SOA the
+                # rname's first label is the local part, so the first
+                # *unescaped* dot becomes '@' (e.g. hostmaster.example.com ->
+                # hostmaster@example.com). Escaped dots ('\.') stay literal.
+                rname_email = self._soa_rname_to_email(rname)
+                if rname_email:
+                    rec["rname_email"] = rname_email
             ttl = self._get_ttl(dns)
             if ttl is not None:
                 rec["ttl"] = ttl
             responses.append(rec)
             self.logger.debug(f"DNS: SOA record mname={soa_mname} rname={soa_rname}")
+
+    @staticmethod
+    def _soa_rname_to_email(rname: str) -> str:
+        """Convert an SOA rname to email form.
+
+        The first *unescaped* dot separates the local part from the domain and
+        is replaced by '@'. Backslash-escaped dots ('\\.') are part of the
+        local part and are unescaped in place. Returns "" if there is no
+        unescaped dot to split on.
+        """
+        if not rname:
+            return ""
+        local_chars: List[str] = []
+        i = 0
+        n = len(rname)
+        while i < n:
+            ch = rname[i]
+            if ch == "\\" and i + 1 < n:
+                # Escaped character (commonly '\.') -- keep the next char literal.
+                local_chars.append(rname[i + 1])
+                i += 2
+                continue
+            if ch == ".":
+                # First unescaped dot: everything after is the domain.
+                domain = rname[i + 1 :]
+                if not domain:
+                    return ""
+                return f"{''.join(local_chars)}@{domain}"
+            local_chars.append(ch)
+            i += 1
+        # No unescaped dot found -- not an email-form name.
+        return ""
 
     def _parse_tsig_records(
         self,
