@@ -1,0 +1,136 @@
+{
+  "amqp.py": {
+    "method_method_class": "broken"
+  },
+  "c1222.py": {
+    "called_ap_invocation_id": "broken",
+    "called_ap_title": "broken",
+    "calling_ap_invocation_id": "broken",
+    "calling_ap_title": "broken"
+  },
+  "cotp.py": {
+    "tsap": "broken",
+    "tsap_called": "broken",
+    "tsap_calling": "broken"
+  },
+  "dhcp.py": {
+    "option_agent_information_option": "broken",
+    "option_boot_file_name": "broken",
+    "option_client_id": "broken",
+    "option_domain_search": "broken",
+    "option_fqdn_name": "broken",
+    "option_message_type": "broken"
+  },
+  "dns.py": {
+    "qr": "broken"
+  },
+  "eigrp.py": {
+    "ip_int_dest": "broken",
+    "ip_int_prefix_len": "broken",
+    "sw_version_eigrp_major": "broken",
+    "sw_version_eigrp_minor": "broken",
+    "sw_version_ios_major": "broken",
+    "sw_version_ios_minor": "broken"
+  },
+  "glbp.py": {
+    "auth_authstring": "broken",
+    "forwarder_fwd_number": "broken",
+    "forwarder_fwd_state": "broken",
+    "forwarder_fwd_virtual_mac": "broken",
+    "forwarder_fwd_weight": "broken",
+    "hello_hellotime": "broken",
+    "hello_holdtime": "broken",
+    "hello_vg_state": "broken",
+    "hello_virtual_ipv4": "broken",
+    "hello_virtual_ipv6": "broken"
+  },
+  "http.py": {
+    "x_powered_by": "broken"
+  },
+  "ibmmq.py": {
+    "md_putapplname": "broken"
+  },
+  "igmp.py": {
+    "record_maddr": "broken"
+  },
+  "ipsec.py": {
+    "exchtype": "broken",
+    "tf_attr_key_length": "broken",
+    "tf_attr_life_type": "broken"
+  },
+  "iscsi.py": {
+    "login.auth_method": "broken",
+    "login.initiator_name": "broken",
+    "login.session_type": "broken",
+    "login.target_name": "broken",
+    "login_auth_method": "broken",
+    "login_initiator_name": "broken",
+    "login_session_type": "broken",
+    "login_target_name": "broken"
+  },
+  "mms.py": {
+    "objectName_domain_specific_itemId": "broken"
+  },
+  "modbus.py": {
+    "regval16": "synthetic"
+  },
+  "nfs.py": {
+    "fattr3_mode": "broken",
+    "nfsstat3": "broken"
+  },
+  "opcda.py": {
+    "resp.hresult": "broken",
+    "resp_hresult": "broken"
+  },
+  "opensafety.py": {
+    "msg_crc_type": "broken",
+    "msg_crc_valid": "broken",
+    "msg_ct": "broken",
+    "msg_sadr": "broken",
+    "msg_scm_udid": "broken",
+    "msg_sdn": "broken",
+    "msg_sn_udid": "broken",
+    "msg_snmt_service": "broken",
+    "msg_spdo_payload": "broken",
+    "msg_ssdo_sacmd": "broken",
+    "msg_ssdo_sod_index": "broken",
+    "msg_ssdo_sod_subindex": "broken"
+  },
+  "pim.py": {
+    "address_list_ip4": "broken"
+  },
+  "profinet.py": {
+    "service_type_response": "synthetic",
+    "service_type_selection": "synthetic"
+  },
+  "ptp.py": {
+    "v2_an_gm_clockaccuracy": "broken",
+    "v2_an_gm_clockclass": "broken",
+    "v2_an_gm_clockidentity": "broken",
+    "v2_an_gm_offsetscaledlogvariance": "broken",
+    "v2_an_gm_priority1": "broken",
+    "v2_an_gm_priority2": "broken",
+    "v2_an_stepsremoved": "broken",
+    "v2_an_timesource": "broken",
+    "v2_correctionns": "broken",
+    "v2_messageid": "broken",
+    "v2_mm_managementid": "broken"
+  },
+  "sip.py": {
+    "rtpmap_encoding_name": "broken"
+  },
+  "snmp.py": {
+    "var_bind_str": "broken"
+  },
+  "tls.py": {
+    "handshake_ja3_hash": "broken",
+    "handshake_ja3s_hash": "broken",
+    "handshake_ja4s": "broken"
+  },
+  "wsdiscovery.py": {
+    "endpoint_reference": "broken",
+    "metadata_version": "broken",
+    "scopes": "broken",
+    "xaddrs": "broken"
+  }
+}
