@@ -23,7 +23,7 @@ COPY services/ /app/services/
 COPY configs/ /app/configs/
 
 # Create log directory
-RUN mkdir -p /var/log/msf-ics
+RUN mkdir -p /var/log/oida
 
 # Copy supervisor config
 COPY configs/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

@@ -81,6 +81,6 @@
     }
   },
   "extended_info": {
-    "$schema": "https://raw.githubusercontent.com/msf-ics/schemas/main/modbus-register-map.json"
+    "$schema": "https://raw.githubusercontent.com/oida/schemas/main/modbus-register-map.json"
   }
 }

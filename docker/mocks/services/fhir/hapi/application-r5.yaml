@@ -1,0 +1,27 @@
+# HAPI FHIR JPA Server Starter - R5 permissive config
+#
+# Upstream: https://github.com/hapifhir/hapi-fhir-jpaserver-starter
+# License:  Apache-2.0 (official image hapiproject/hapi, nothing vendored here)
+#
+# Same genuine HAPI FHIR JPA server but serving FHIR R5. The CapabilityStatement
+# at /fhir/metadata reports fhirVersion 5.0.0, which is what distinguishes this
+# service from the R4 ones for OIDA's fhir scanner. Layered via
+# spring.config.additional-location (overrides only the keys below; inherits the
+# bundled embedded-H2 datasource and bean wiring). Embedded H2, no external DB.
+hapi:
+  fhir:
+    fhir_version: R5
+    server_address: http://localhost:8091/fhir
+    allow_external_references: true
+    allow_multiple_delete: true
+    allow_placeholder_references: true
+    cors:
+      allow_Credentials: false
+      allowed_origin:
+        - '*'
+    tester:
+      home:
+        name: OIDA HAPI FHIR R5 (permissive)
+        server_address: http://localhost:8091/fhir
+        refuse_to_fetch_third_party_urls: false
+        fhir_version: R5

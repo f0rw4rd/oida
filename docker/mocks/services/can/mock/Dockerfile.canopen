@@ -1,0 +1,41 @@
+# Real CANopen slave node for testing OIDA's `oida can --canopen-*` scanner.
+#
+# Runs a GENUINE CANopen device (canopen.LocalNode) on a SocketCAN virtual bus
+# (vcan0) created at container start. Emits CiA-301 heartbeats and answers SDO
+# uploads of the standard identity objects (0x1000/0x1008/0x1018/...).
+#
+# SPDX-License-Identifier: MIT
+#   - python-canopen .......... MIT        (https://github.com/christiansandberg/canopen)
+#   - python-can .............. LGPL-3.0    (https://github.com/hardbyte/python-can)
+# No binaries are committed; the CANopen stack is pulled from PyPI at build time.
+#
+# CAN is L2/non-routable: this container creates vcan0 in its OWN network
+# namespace, so a scanner must share that netns (docker run --network
+# container:<this>). Requires NET_ADMIN (or privileged) to bring up the link.
+
+FROM python:3.11-slim
+
+# iproute2 -> `ip link add ... type vcan` (entrypoint); procps -> `pgrep` (healthcheck).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends iproute2 procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pin the real CANopen stack. canopen 2.x pulls a compatible python-can.
+RUN pip install --no-cache-dir "canopen==2.3.0" "python-can==4.6.1"
+
+WORKDIR /app
+COPY canopen_node.py /app/canopen_node.py
+COPY canopen-entrypoint.sh /app/canopen-entrypoint.sh
+RUN chmod +x /app/canopen-entrypoint.sh
+
+ENV PYTHONUNBUFFERED=1 \
+    CANOPEN_CHANNEL=vcan0 \
+    CANOPEN_NODE_ID=1 \
+    CANOPEN_PROFILE=401
+
+# Healthcheck: confirm vcan0 is up AND the python process is alive.
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 --start-period=8s \
+    CMD ip link show "${CANOPEN_CHANNEL}" 2>/dev/null | grep -q "state UP\|<NOARP,UP" \
+        && pgrep -f canopen_node.py >/dev/null || exit 1
+
+ENTRYPOINT ["/app/canopen-entrypoint.sh"]

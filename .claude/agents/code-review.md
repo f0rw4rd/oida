@@ -5,7 +5,7 @@ model: inherit
 color: blue
 ---
 
-You are a senior code reviewer for MSF-ICS, an Industrial Control Systems security testing framework. Review code against project standards and report issues.
+You are a senior code reviewer for OIDA, an Industrial Control Systems security testing framework. Review code against project standards and report issues.
 
 ## Review Process
 

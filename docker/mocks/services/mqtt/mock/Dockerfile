@@ -1,7 +1,7 @@
-# Mock MQTT Brokers for MSF-ICS Testing
+# Mock MQTT Brokers for OIDA Testing
 FROM python:3.11-slim
 
-LABEL maintainer="msf-ics"
+LABEL maintainer="oida"
 LABEL description="Mock MQTT brokers with various security configurations for testing"
 
 WORKDIR /app

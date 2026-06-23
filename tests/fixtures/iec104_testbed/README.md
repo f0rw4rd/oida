@@ -1,6 +1,6 @@
 # IEC 60870-5-104 Test Server
 
-A comprehensive test server for developing and testing IEC 104 scanner functionality in MSF-ICS.
+A comprehensive test server for developing and testing IEC 104 scanner functionality in OIDA.
 
 ## Features
 
@@ -99,19 +99,19 @@ Examples:
   ./iec104_test_server 2404 --verbose   # Verbose output
 ```
 
-## Testing with MSF-ICS
+## Testing with OIDA
 
 Once the server is running, you can test it with the IEC 104 scanner:
 
 ```bash
 # Basic scan
-msf-ics iec104 127.0.0.1
+oida iec104 127.0.0.1
 
 # Full discovery
-msf-ics iec104 127.0.0.1 --scan-mode all --ioa-range 0-1000
+oida iec104 127.0.0.1 --scan-mode all --ioa-range 0-1000
 
 # Test commands (caution!)
-msf-ics iec104 127.0.0.1 --scan-mode writes
+oida iec104 127.0.0.1 --scan-mode writes
 ```
 
 ## Server Behavior
@@ -198,5 +198,5 @@ Either run as root or use a port > 1024:
 
 ## License
 
-This test server is part of MSF-ICS and is licensed under MIT.
+This test server is part of OIDA and is licensed under MIT.
 The lib60870 dependency is licensed under GPLv3 or commercial license.

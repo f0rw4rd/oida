@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Calimero KNXnet/IP server settings for MSF-ICS testing
+<!-- Calimero KNXnet/IP server settings for OIDA testing
      Uses "emulate" subnet to simulate process communication:
      - Group address reads return last-written values
      - Datapoints file defines known DPTs and initial state
      - Additional addresses 1.1.1-1.1.5 represent bus devices
 -->
-<knxServer name="msf-ics-knx" friendlyName="MSF-ICS KNX Mock Server">
+<knxServer name="oida-knx" friendlyName="OIDA KNX Mock Server">
 	<discovery listenNetIf="all" outgoingNetIf="all" />
 	<serviceContainer activate="true" routing="true" networkMonitoring="true"
 		netif="any" udpPort="3671" securedServices="optional">

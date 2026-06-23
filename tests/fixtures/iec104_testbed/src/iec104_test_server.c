@@ -1,7 +1,7 @@
 /*
  * IEC 60870-5-104 Test Server
  *
- * Comprehensive test bed for MSF-ICS IEC 104 scanner development.
+ * Comprehensive test bed for OIDA IEC 104 scanner development.
  * Supports multiple data types, file transfer, and command handling.
  *
  * Based on lib60870-C library (https://github.com/mz-automation/lib60870)

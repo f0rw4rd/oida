@@ -1,10 +1,10 @@
-# MSF-ICS Integration Tests
+# OIDA Integration Tests
 
-Comprehensive integration tests for MSF-ICS scanners against Docker mock services.
+Comprehensive integration tests for OIDA scanners against Docker mock services.
 
 ## Overview
 
-This test suite validates that all MSF-ICS protocol scanners work correctly against realistic mock industrial services running in a Docker container.
+This test suite validates that all OIDA protocol scanners work correctly against realistic mock industrial services running in a Docker container.
 
 ## Test Structure
 
@@ -116,7 +116,7 @@ pytest pytest_tests.py -v
 pytest pytest_tests.py::TestModbus -v
 
 # Run with coverage
-pytest pytest_tests.py --cov=../../msf_ics --cov-report=html
+pytest pytest_tests.py --cov=../../oida --cov-report=html
 
 # Run performance tests
 pytest pytest_tests.py -k "stress" -v
@@ -130,9 +130,9 @@ pytest pytest_tests.py -m "slow" -v
 ### Environment Variables
 
 ```bash
-export MSF_ICS_TEST_HOST=127.0.0.1     # Mock services host
-export MSF_ICS_TEST_TIMEOUT=30         # Default timeout
-export MSF_ICS_TEST_VERBOSE=1          # Verbose output
+export OIDA_TEST_HOST=127.0.0.1     # Mock services host
+export OIDA_TEST_TIMEOUT=30         # Default timeout
+export OIDA_TEST_VERBOSE=1          # Verbose output
 ```
 
 ### Protocol Ports
@@ -158,7 +158,7 @@ export MSF_ICS_TEST_VERBOSE=1          # Verbose output
 
 ```
 ==========================================
-MSF-ICS Mock Services Integration Tests
+OIDA Mock Services Integration Tests
 ==========================================
 
 Testing MODBUS scanner...
@@ -217,7 +217,7 @@ make test-opcua
 pip install pymodbus asyncua c104 pyads cpppo
 
 # Check dependencies
-python -c "import msf_ics; print('MSF-ICS imported successfully')"
+python -c "import oida; print('OIDA imported successfully')"
 ```
 
 #### Permission Issues
@@ -238,14 +238,14 @@ python run_tests.py --verbose --verbose
 
 # Debug individual scanner
 python -c "
-from msf_ics.protocols.modbus import ModbusScanner
+from oida.protocols.modbus import ModbusScanner
 scanner = ModbusScanner({'rhost': '127.0.0.1', 'rport': 502, 'debug': True})
 result = scanner.run_scan()
 print(result)
 "
 
 # Check container internals
-docker exec -it msf-ics-mock-test bash
+docker exec -it oida-mock-test bash
 ```
 
 ## Continuous Integration
@@ -253,7 +253,7 @@ docker exec -it msf-ics-mock-test bash
 ### GitHub Actions Example
 
 ```yaml
-name: MSF-ICS Integration Tests
+name: OIDA Integration Tests
 
 on: [push, pull_request]
 
@@ -360,7 +360,7 @@ class TestNewProtocol:
 3. **Add to Makefile**:
 ```makefile
 test-newprotocol:
-    $(PYTHON) -c "from msf_ics.protocols.newprotocol import NewProtocolScanner; ..."
+    $(PYTHON) -c "from oida.protocols.newprotocol import NewProtocolScanner; ..."
 ```
 
 ### Extending Mock Services
@@ -392,4 +392,4 @@ Expected performance baselines:
 
 ## License
 
-This test suite is part of the MSF-ICS project and follows the same license terms.
+This test suite is part of the OIDA project and follows the same license terms.

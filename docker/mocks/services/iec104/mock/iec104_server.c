@@ -1,7 +1,7 @@
 /*
  * IEC 60870-5-104/101 Mock Server
  *
- * A comprehensive mock server using lib60870 for testing MSF-ICS IEC 104/101 scanner.
+ * A comprehensive mock server using lib60870 for testing OIDA IEC 104/101 scanner.
  * Supports multiple data types, general interrogation, commands, and file transfer.
  *
  * IEC 104 Mode (TCP):

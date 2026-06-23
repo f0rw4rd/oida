@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: MIT
+#
+# OIDA TwinCAT ADS/AMS mock - REAL Beckhoff stack.
+#
+# Builds a usermode AMS/TCP router + symbolic ADS server from the official
+# Beckhoff TwinCAT.Ads .NET packages (MIT, (c)Beckhoff Automation 2024),
+# restored from public nuget.org at build time. No binaries are committed to
+# the repo - only the .csproj/.cs/appsettings/NuGet.Config text sources.
+#
+# Build context: ./services/ads/mock  (project lives in ./twincat)
+
+# ---- build stage ----
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Restore first (better layer caching). NuGet.Config pins nuget.org only.
+COPY twincat/NuGet.Config twincat/OidaTwinCatMock.csproj ./twincat/
+RUN dotnet restore "twincat/OidaTwinCatMock.csproj" --configfile twincat/NuGet.Config
+
+# Build + publish.
+COPY twincat/ ./twincat/
+RUN dotnet publish "twincat/OidaTwinCatMock.csproj" \
+        -c Release -o /app/publish /p:UseAppHost=false
+
+# ---- runtime stage ----
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish ./
+
+# AMS/TCP (external clients such as pyads connect here).
+EXPOSE 48898/tcp
+
+# Profile differences are supplied via OIDA_* / AmsRouter__* env vars in compose.yml.
+ENTRYPOINT ["dotnet", "OidaTwinCatMock.dll"]

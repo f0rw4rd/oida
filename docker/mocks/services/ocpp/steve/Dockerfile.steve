@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SteVe (SteckdosenVerwaltung) - real OCPP 1.2/1.5/1.6 Central System (CSMS)
+# Upstream: https://github.com/steve-community/steve  (GPL-3.0-or-later)
+#
+# SteVe is licensed under the GNU General Public License v3.0+. This Dockerfile
+# obtains SteVe purely as SOURCE (a shallow git clone of a pinned release tag)
+# and BUILDS it FROM SOURCE with Maven. NO prebuilt SteVe jar/war/binary is
+# committed to this repository or distributed with it - only this Dockerfile
+# and the text config/SQL files alongside it are committed. The resulting
+# steve.war is produced on the user's own machine from upstream source, so we
+# redistribute neither modified nor unmodified SteVe binaries (GPL-compliant).
+# A matching LICENSE/README note lives in ./README.md in this directory.
+#
+# WHY THE WAR IS BUILT AT CONTAINER START (not at `docker build` time):
+# SteVe's Maven build runs Flyway DB migrations + jOOQ code generation against
+# a LIVE MariaDB (it generates type-safe DAO classes from the real schema).
+# A live DB is therefore required during `mvn package`. `docker build` has no
+# DB on the compose network, so - exactly like upstream's official Dockerfile -
+# we wait for MariaDB (via dockerize) and run `./mvnw package` in the CMD, then
+# launch the freshly built WAR. The clone happens at image-build time; the
+# Maven build + run happen at container start.
+#
+# ---------------------------------------------------------------------------
+# Build args
+#   STEVE_TAG  - upstream git tag to build (default: a pinned release)
+# ---------------------------------------------------------------------------
+
+FROM eclipse-temurin:21-jdk
+
+ARG STEVE_TAG=steve-3.13.0
+
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV DOCKERIZE_VERSION=v0.19.0
+
+# git: clone SteVe source.  curl: dockerize download + HTTP healthcheck.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -sfL "https://github.com/powerman/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-$(uname -s)-$(uname -m)" \
+        | install /dev/stdin /usr/local/bin/dockerize
+
+WORKDIR /code
+
+# Clone ONLY the pinned release tag (shallow) - source, not binaries. Doing the
+# clone at build time bakes the source into the image so no host bind-mount is
+# needed; the WAR itself is built at container start (see header).
+RUN git clone --depth 1 --branch "${STEVE_TAG}" \
+        https://github.com/steve-community/steve.git . \
+    && git rev-parse HEAD > /code/STEVE_GIT_SHA
+
+# Warm the Maven dependency cache at build time so container-start builds are
+# faster and work offline-ish. `mvnw package` still re-runs at start (it needs
+# the DB for jOOQ codegen), but dependencies are already local.
+RUN ./mvnw --batch-mode -Pdocker,mariadb dependency:go-offline -DskipTests || true
+
+EXPOSE 8180 8443
+
+# Per-config Spring property overrides are supplied via JAVA_OPTS in compose
+# (relaxed binding: -Dspring.datasource.url=..., -Dserver.port=...,
+# -Dsteve.ocpp.auto-register-unknown-stations=..., -Dserver.ssl.*=...).
+ENV JAVA_OPTS=""
+
+# Build-time DB coordinates for Flyway + jOOQ codegen. These override the
+# `db.ip`/`db.schema` defaults in application-docker.properties (which assume
+# upstream's `mariadb` host). jOOQ-generated DAOs are schema-shape-agnostic, so
+# building against one schema yields a WAR that works against all of them; the
+# RUNTIME schema/host is chosen separately via JAVA_OPTS (-Dspring.datasource.*).
+ENV DB_WAIT_HOST=ocpp-steve-db
+ENV DB_WAIT_PORT=3306
+ENV BUILD_DB_IP=ocpp-steve-db
+ENV BUILD_DB_PORT=3306
+ENV BUILD_DB_SCHEMA=stevedb
+ENV BUILD_DB_USER=steve
+ENV BUILD_DB_PASSWORD=changeme
+
+# 1) wait for MariaDB (host alias resolved on the compose network),
+# 2) build the WAR from the pinned source (Flyway + jOOQ need the live DB),
+# 3) run it with the per-config Spring overrides from JAVA_OPTS.
+CMD dockerize -wait "tcp://${DB_WAIT_HOST}:${DB_WAIT_PORT}" -timeout 120s && \
+    ./mvnw --batch-mode clean package -Pdocker,mariadb \
+        -Ddb.ip="${BUILD_DB_IP}" -Ddb.port="${BUILD_DB_PORT}" \
+        -Ddb.schema="${BUILD_DB_SCHEMA}" \
+        -Ddb.user="${BUILD_DB_USER}" -Ddb.password="${BUILD_DB_PASSWORD}" \
+        -Djdk.tls.client.protocols="TLSv1,TLSv1.1,TLSv1.2" && \
+    exec java -XX:MaxRAMPercentage=75 ${JAVA_OPTS} -jar target/steve.war

@@ -160,14 +160,14 @@ Avg rate: 4.6 msg/s
 
 **Topic filter**
 ```bash
-msf-ics mqtt 192.168.1.100 --listen --listen-topics "factory/#"
-msf-ics mqtt 192.168.1.100 --listen --listen-topics "spBv1.0/+/DDATA/#"
+oida mqtt 192.168.1.100 --listen --listen-topics "factory/#"
+oida mqtt 192.168.1.100 --listen --listen-topics "spBv1.0/+/DDATA/#"
 ```
 
 **Payload filter (regex)**
 ```bash
-msf-ics mqtt 192.168.1.100 --listen --listen-filter "alarm|error|fault"
-msf-ics mqtt 192.168.1.100 --listen --listen-filter "temperature.*[3-9][0-9]"  # Temp > 30
+oida mqtt 192.168.1.100 --listen --listen-filter "alarm|error|fault"
+oida mqtt 192.168.1.100 --listen --listen-filter "temperature.*[3-9][0-9]"  # Temp > 30
 ```
 
 ### Use Cases

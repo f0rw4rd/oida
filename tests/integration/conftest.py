@@ -145,7 +145,14 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "opcua": ["opcua-mock", "opcua-advanced", "opcua-gds", "opcua-insecure"],
     "ethernetip": ["ethernetip-mock", "ethernetip-opener"],
     "ads": ["ads-mock"],
-    "bacnet": ["bacnet-mock", "bacnet-conpot"],
+    "bacnet": [
+        "bacnet-mock",
+        "bacnet-conpot",
+        # Real bacnet-stack C device (GPL-2.0-w-GCC-exc), distinct profiles
+        "bacnet-realstack-rtu",
+        "bacnet-realstack-building",
+        "bacnet-realstack-vav",
+    ],
     "iec104": ["iec104-lib60870", "iec104-custom-types", "iec104-conpot", "iec104-tls"],
     "mms": ["mms-libiec61850", "mms-goose", "mms-control", "mms-authentication"],
     "s7comm": ["s7comm-snap7"],
@@ -158,7 +165,15 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
         "mqtt-tls",
         "mqtt-busy-tls",
     ],
-    "hart": ["hart-mock", "hart-tls", "hart-secondary", "hart-tertiary"],
+    "hart": [
+        "hart-mock",
+        "hart-tls",
+        "hart-secondary",
+        "hart-tertiary",
+        # Real FieldComm HART-IP stack (hipserver + hipflowapp, Apache-2.0)
+        "hart-hipflow-hart5",
+        "hart-hipflow-hart7",
+    ],
     "snmp": ["snmp-mock", "snmp-switch", "snmp-v3only"],
     "dnp3": [
         "dnp3-basic",
@@ -170,11 +185,24 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
         "dnp3-enhanced",
         "dnp3-filetransfer",
     ],
-    "astm": ["astm-mock", "astm-hematology", "astm-data"],
+    "astm": [
+        "astm-mock",
+        "astm-hematology",
+        "astm-data",
+        # Real python-astm LIS stack (E1381/E1394, BSD)
+        "astm-realstack-chemistry",
+        "astm-realstack-hematology",
+    ],
     "ocpp": ["ocpp-insecure"],
     "dicom": ["dicom-mock", "dicom-strict"],
     "hl7": ["hl7-node-mock", "hl7-mock"],
-    "fhir": ["fhir-mock"],
+    "fhir": [
+        "fhir-mock",
+        # Real HAPI FHIR servers (Apache-2.0) — R4, R5, R4 strict-validation
+        "fhir-hapi-r4",
+        "fhir-hapi-r5",
+        "fhir-hapi-r4-strict",
+    ],
     "http2": ["http2-nghttp2", "http2-python"],
     "vnc": ["vnc-mock"],
     "ftp": ["ftp-mock"],
@@ -256,6 +284,21 @@ SERVICE_HEALTH_PORT: Dict[str, int] = {
     "fhir-mock": 8081,
     "bacnet-mock": 47808,
     "bacnet-conpot": 47812,
+    # --- Real OSS mock stacks -------------------------------------------------
+    # HART: hipflow maps both UDP and TCP on the host port, so TCP probe works.
+    "hart-hipflow-hart5": 5100,
+    "hart-hipflow-hart7": 5102,
+    # ASTM: real python-astm LIS, TCP.
+    "astm-realstack-chemistry": 1397,
+    "astm-realstack-hematology": 1398,
+    # FHIR: real HAPI servers, HTTP/TCP.
+    "fhir-hapi-r4": 8090,
+    "fhir-hapi-r5": 8091,
+    "fhir-hapi-r4-strict": 8092,
+    # BACnet: real bacnet-stack device, UDP (health via check_udp_port_open).
+    "bacnet-realstack-rtu": 47820,
+    "bacnet-realstack-building": 47821,
+    "bacnet-realstack-vav": 47822,
 }
 
 # Timeout configurations
@@ -431,6 +474,9 @@ UDP_SERVICES: Set[str] = {
     # BACnet — port 47808/UDP, cannot be health-checked via TCP
     "bacnet-mock",
     "bacnet-conpot",
+    "bacnet-realstack-rtu",
+    "bacnet-realstack-building",
+    "bacnet-realstack-vav",
     # SNMP — port 161/UDP (mapped to 10161/10162/10164), cannot be health-checked via TCP
     "snmp-mock",
     "snmp-switch",

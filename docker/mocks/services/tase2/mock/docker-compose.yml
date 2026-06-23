@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  tase2-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oida-tase2
+    ports:
+      - "102:102"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1', 102)); s.close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - ics-network
+
+networks:
+  ics-network:
+    driver: bridge

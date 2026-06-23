@@ -6,7 +6,7 @@
 <IEC104Config version="1.0">
     <General>
         <StationName>TEST_RTU_001</StationName>
-        <Manufacturer>MSF-ICS Test</Manufacturer>
+        <Manufacturer>OIDA Test</Manufacturer>
         <Model>Virtual RTU</Model>
         <FirmwareVersion>1.0.0</FirmwareVersion>
         <SerialNumber>TESTBED-2024-001</SerialNumber>

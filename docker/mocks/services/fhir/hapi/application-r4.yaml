@@ -1,0 +1,29 @@
+# HAPI FHIR JPA Server Starter - R4 permissive config
+#
+# Upstream: https://github.com/hapifhir/hapi-fhir-jpaserver-starter
+# License:  Apache-2.0 (official image hapiproject/hapi, nothing vendored here)
+#
+# Genuine HAPI FHIR JPA server backed by the image's default embedded H2
+# database (no external DB). This file is layered via
+# spring.config.additional-location, so it ONLY overrides the keys below and
+# inherits everything else (datasource, dialect, bean wiring) from the bundled
+# application.yaml. Anonymous, permissive, empty store.
+hapi:
+  fhir:
+    fhir_version: R4
+    # Server self-reports its base URL in the CapabilityStatement.
+    server_address: http://localhost:8090/fhir
+    # Permissive: no validation, allow everything, CORS open.
+    allow_external_references: true
+    allow_multiple_delete: true
+    allow_placeholder_references: true
+    cors:
+      allow_Credentials: false
+      allowed_origin:
+        - '*'
+    tester:
+      home:
+        name: OIDA HAPI FHIR R4 (permissive)
+        server_address: http://localhost:8090/fhir
+        refuse_to_fetch_third_party_urls: false
+        fhir_version: R4

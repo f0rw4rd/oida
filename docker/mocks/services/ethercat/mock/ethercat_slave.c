@@ -13,7 +13,7 @@
  *
  * Usage: sudo ./ethercat_slave -i eth0 [-p position] [-v]
  *
- * (c) 2025 OIDA / MSF-ICS Project
+ * (c) 2025 OIDA / OIDA Project
  * For authorized security testing only.
  */
 
@@ -51,11 +51,11 @@
 #define MAX_DATAGRAM_DATA       256
 
 /* Mock device identity */
-#define VENDOR_ID               0x000003E7  /* 999 = MSF-ICS Mock */
+#define VENDOR_ID               0x000003E7  /* 999 = OIDA Mock */
 #define PRODUCT_CODE            0x00001001
 #define REVISION                0x00010000
 #define SERIAL_NUMBER           0x12345678
-#define DEVICE_NAME             "MSF-ICS Mock EtherCAT Slave"
+#define DEVICE_NAME             "OIDA Mock EtherCAT Slave"
 
 /* ============================================================================
  * EtherCAT Protocol Constants (ETG.1000)
@@ -668,7 +668,7 @@ static void init_object_dictionary(slave_ctx_t *s)
     od_add(s, 0x1001, 0, DTYPE_UINT8, "Error Register", &v8, 1);
 
     /* Device Name (0x1008) */
-    str = "MSF-ICS Mock";
+    str = "OIDA Mock";
     od_add(s, 0x1008, 0, DTYPE_STRING, "Device Name", str, strlen(str));
 
     /* Hardware Version (0x1009) */
@@ -912,7 +912,7 @@ static void handle_foe(slave_ctx_t *s, const uint8_t *request, uint16_t req_len)
 
         /* Generate simulated file content */
         snprintf((char *)foe->file_data, sizeof(foe->file_data),
-                 "MSF-ICS Mock EtherCAT Slave\n"
+                 "OIDA Mock EtherCAT Slave\n"
                  "File: %s\n"
                  "Vendor: 0x%08X\n"
                  "Product: 0x%08X\n"
@@ -1846,7 +1846,7 @@ static void main_loop(slave_ctx_t *s)
 
 static void usage(const char *prog)
 {
-    printf("EtherCAT Mock Slave - OIDA / MSF-ICS\n\n");
+    printf("EtherCAT Mock Slave - OIDA / OIDA\n\n");
     printf("Usage: %s -i <interface> [options]\n\n", prog);
     printf("Options:\n");
     printf("  -i, --interface IFACE   Network interface (required)\n");
@@ -1912,7 +1912,7 @@ int main(int argc, char *argv[])
     printf("========================================\n");
     printf(" Interface: %s\n", g_slave.ifname);
     printf(" Position:  %d\n", g_slave.position);
-    printf(" Vendor:    0x%08X (MSF-ICS Mock)\n", VENDOR_ID);
+    printf(" Vendor:    0x%08X (OIDA Mock)\n", VENDOR_ID);
     printf(" Product:   0x%08X\n", PRODUCT_CODE);
     printf(" Serial:    0x%08X\n", SERIAL_NUMBER);
     printf(" Log level: %s\n",

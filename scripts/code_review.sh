@@ -1,6 +1,6 @@
 #!/bin/bash
-# Senior Code Review Script for MSF-ICS Protocol Modules
-# Usage: ./scripts/code_review.sh msf_ics/protocols/MODULE_NAME
+# Senior Code Review Script for OIDA Protocol Modules
+# Usage: ./scripts/code_review.sh oida/protocols/MODULE_NAME
 #
 # This script performs a comprehensive code review checking:
 # 1. Import hygiene (no local imports)
@@ -32,8 +32,8 @@ NC='\033[0m' # No Color
 
 # Check arguments
 if [ -z "$1" ]; then
-    echo -e "${RED}Usage: $0 msf_ics/protocols/MODULE_NAME${NC}"
-    echo "Example: $0 msf_ics/protocols/modbus"
+    echo -e "${RED}Usage: $0 oida/protocols/MODULE_NAME${NC}"
+    echo "Example: $0 oida/protocols/modbus"
     exit 1
 fi
 
