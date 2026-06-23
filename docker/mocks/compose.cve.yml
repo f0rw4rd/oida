@@ -10,8 +10,8 @@ services:
 
   smtp-mock:
     build:
-      context: ./services/smtp/cve
-      dockerfile: Dockerfile.mock
+      context: ./services/smtp/mock
+      dockerfile: Dockerfile.smtp
     image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-smtp-mock:latest
     container_name: smtp-mock-server
     hostname: smtp-mock

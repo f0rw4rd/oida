@@ -65,7 +65,7 @@ python ../../services.py push --batch 6   # smaller batches if buildkit drops jo
 Re-run it after editing `docker/mocks/**`; bake's content-addressed cache only
 rebuilds and re-pushes what actually changed. It batches the work (buildkit
 chokes on 100+ concurrent compiles + remote pushes) and skips targets whose
-build context is missing on disk (e.g. the never-committed `services/memcached/cve`).
+build context is missing on disk.
 
 ```bash
 # Default: pull pre-built images, build only what isn't published yet
