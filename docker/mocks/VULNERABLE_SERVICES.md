@@ -198,16 +198,6 @@ docker-compose --profile vuln-hl7 up -d
 | 2577 | hl7-cve-2019-17564 | CVE-2019-17564 | RCE |
 | 2578 | hl7-cve-2018-11797 | CVE-2018-11797 | DoS via malformed messages |
 
-### Memcached
-```bash
-docker-compose --profile vuln-memcached up -d
-```
-| Port | Service | CVE | Vulnerability |
-|------|---------|-----|---------------|
-| 11214 | memcached-cve-2021-45958 | CVE-2021-45958 | Binary protocol buffer overflow |
-| 11215 | memcached-cve-2020-10931 | CVE-2020-10931 | extstore use-after-free |
-| 11216 | memcached-cve-2018-1000127 | CVE-2018-1000127 | Integer overflow |
-
 ---
 
 ## Individual Service Launch
