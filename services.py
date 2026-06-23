@@ -8,6 +8,7 @@ Usage:
     python services.py logs [service...]
     python services.py list
     python services.py ports
+    python services.py push                  # build & push all mock images to $OIDA_REGISTRY
     python services.py up-goose
     python services.py up-proto <group>
     ...
@@ -25,6 +26,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Callable
@@ -93,6 +95,24 @@ def _run(
     elif suppress_stderr:
         kwargs["stderr"] = subprocess.DEVNULL
     return subprocess.run(cmd, **kwargs)  # noqa: S603
+
+
+def _load_dotenv() -> None:
+    """Load ``docker/mocks/.env`` into the environment.
+
+    ``docker compose`` auto-loads it for compose runs, but ``buildx bake`` and our
+    own target enumeration need ``OIDA_REGISTRY`` present in ``os.environ``.
+    Existing environment values win (so an explicit export overrides the file).
+    """
+    env_file = COMPOSE_DIR / ".env"
+    if not env_file.exists():
+        return
+    for raw in env_file.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        os.environ.setdefault(key.strip(), val.strip())
 
 
 def check_port(port: int, label: str, *, udp: bool = False, host: str | None = None) -> bool:
@@ -237,12 +257,14 @@ def _pull(
     profiles: tuple[str, ...] = (),
     services: tuple[str, ...] = (),
 ) -> None:
-    """Best-effort pull of pre-built images from ghcr.io.
+    """Best-effort pull of pre-built images from the configured registry.
 
-    Buildable services carry an ``image:`` pointing at ghcr.io/f0rw4rd/oida-mock-*,
-    so ``pull`` grabs the published image when available. Failures (offline, image
-    not yet published, third-party images) are swallowed — the subsequent ``up``
-    builds whatever is still missing locally.
+    Buildable services carry an ``image:`` of ``$OIDA_REGISTRY/oida-mock-*``,
+    so ``pull`` grabs the published image when available. ``OIDA_REGISTRY`` is
+    required (compose fails hard if unset); set it in a gitignored
+    ``docker/mocks/.env`` — see ``docker/mocks/.env.example``. Failures (offline,
+    image not yet published, third-party images) are swallowed — the subsequent
+    ``up`` builds whatever is still missing locally.
     """
     profile_args: list[str] = []
     for p in profiles:
@@ -364,6 +386,94 @@ def cmd_build(args: argparse.Namespace) -> int:
         # (#15) Unknown stack should error
         print(f"{RED}[!!]{RST} Unknown stack: {stack}. Use 'core', 'cve', or 'all'.")
         return 1
+    return 0
+
+
+def cmd_push(args: argparse.Namespace) -> int:
+    """Build every buildable mock image and push it to ``$OIDA_REGISTRY``.
+
+    This is the registry sync command: re-run it after editing ``docker/mocks/**``
+    and bake's content-addressed cache only rebuilds/re-pushes what changed.
+
+    Two warts are handled so it stays one command:
+    - Targets whose build context is missing on disk (e.g. the never-committed
+      ``services/memcached/cve``) are skipped — a raw ``bake --push`` aborts the
+      whole graph on the first missing context.
+    - Work is split into small sequential batches so buildkit isn't swamped by
+      100+ concurrent compiles + remote pushes (which drops jobs and aborts).
+    """
+    _load_dotenv()
+    registry = os.environ.get("OIDA_REGISTRY")
+    if not registry:
+        print(
+            f"{RED}[!!]{RST} OIDA_REGISTRY is unset. Copy docker/mocks/.env.example "
+            f"to docker/mocks/.env and set your registry."
+        )
+        return 1
+
+    # Enumerate every bake target from the compose files (profiles are ignored
+    # by bake, so this covers core mocks + all CVE services).
+    bake_files = ["-f", COMPOSE_CORE, "-f", COMPOSE_CVE]
+    res = _run(["docker", "buildx", "bake", *bake_files, "--print"], check=False, capture=True)
+    if res.returncode != 0:
+        print(f"{RED}[!!]{RST} 'docker buildx bake --print' failed:\n{res.stderr}")
+        return 1
+    targets = json.loads(res.stdout).get("target", {})
+
+    # Drop targets whose build context dir is missing; rewrite the rest to
+    # absolute paths so the generated per-batch bake files resolve regardless of
+    # the current working directory.
+    valid: dict[str, dict] = {}
+    skipped: list[str] = []
+    for name, spec in targets.items():
+        ctx = spec.get("context", ".")
+        ctx_abs = ctx if os.path.isabs(ctx) else str((COMPOSE_DIR / ctx).resolve())
+        if not Path(ctx_abs).is_dir():
+            skipped.append(name)
+            continue
+        spec["context"] = ctx_abs
+        valid[name] = spec
+
+    if skipped:
+        print(
+            f"{YELLOW}[~~]{RST} Skipping {len(skipped)} target(s) with a missing build "
+            f"context: {', '.join(sorted(skipped))}"
+        )
+
+    names = sorted(valid)
+    if not names:
+        print(f"{RED}[!!]{RST} No buildable targets found.")
+        return 1
+    print(f"{BLUE}=== Pushing {len(names)} mock images to {registry} ==={RST}")
+
+    failed: list[str] = []
+    for start in range(0, len(names), args.batch):
+        chunk = names[start : start + args.batch]
+        bn = start // args.batch + 1
+        defn = {
+            "target": {n: valid[n] for n in chunk},
+            "group": {"default": {"targets": chunk}},
+        }
+        fh = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+        try:
+            json.dump(defn, fh)
+            fh.close()
+            print(f"{CYAN}--- batch {bn}: {', '.join(chunk)} ---{RST}")
+            cmd = ["docker", "buildx", "bake", "-f", fh.name, "--push"]
+            ok = _run(cmd, check=False).returncode == 0
+            if not ok:
+                print(f"{YELLOW}[~~]{RST} batch {bn} failed; retrying once...")
+                ok = _run(cmd, check=False).returncode == 0
+            if not ok:
+                print(f"{RED}[!!]{RST} batch {bn} failed again")
+                failed.extend(chunk)
+        finally:
+            os.unlink(fh.name)
+
+    if failed:
+        print(f"{RED}[!!]{RST} {len(failed)} target(s) failed: {', '.join(failed)}")
+        return 1
+    print(f"{GREEN}[OK]{RST} Pushed {len(names)} images to {registry}")
     return 0
 
 
@@ -869,7 +979,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_up.add_argument(
         "--build",
         action="store_true",
-        help="Force a local image rebuild instead of pulling pre-built images from ghcr.io",
+        help="Force a local image rebuild instead of pulling pre-built images from $OIDA_REGISTRY",
     )
     p_up.add_argument(
         "--no-pull",
@@ -886,6 +996,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_build = sub.add_parser("build", help="Build images without starting")
     p_build.add_argument("stack", nargs="?", default="core", help="Stack to build (default: core)")
+
+    p_push = sub.add_parser("push", help="Build & push all mock images to $OIDA_REGISTRY")
+    p_push.add_argument(
+        "--batch",
+        type=int,
+        default=10,
+        help="Targets to build+push per batch (default: 10; lower if buildkit drops jobs)",
+    )
 
     sub.add_parser("clean", help="Remove containers, volumes, and local images")
 
@@ -916,6 +1034,7 @@ COMMAND_DISPATCH: dict[str, Callable[[argparse.Namespace], int]] = {
     "status": cmd_status,
     "logs": cmd_logs,
     "build": cmd_build,
+    "push": cmd_push,
     "clean": cmd_clean,
     "list": cmd_list,
     "ports": cmd_ports,

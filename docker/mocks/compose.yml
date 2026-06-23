@@ -6,7 +6,7 @@ services:
     build:
       context: ./services/modbus/mock
       dockerfile: Dockerfile.modbus
-    image: ghcr.io/f0rw4rd/oida-mock-modbus:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus:latest
     container_name: modbus-mock-server
     hostname: modbus-server
     ports:
@@ -32,7 +32,7 @@ services:
     build:
       context: ./services/modbus/mock
       dockerfile: Dockerfile.modbus-tls
-    image: ghcr.io/f0rw4rd/oida-mock-modbus-tls:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-tls:latest
     container_name: modbus-tls-server
     hostname: modbus-tls
     ports:
@@ -66,7 +66,7 @@ services:
     build:
       context: ./services/modbus/mock
       dockerfile: Dockerfile.modbus-rtu-tcp
-    image: ghcr.io/f0rw4rd/oida-mock-modbus-rtu-tcp:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-rtu-tcp:latest
     container_name: modbus-rtu-tcp-server
     hostname: modbus-rtu-tcp
     ports:
@@ -94,7 +94,7 @@ services:
     build:
       context: ./services/modbus/mock/conpot
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-conpot-modbus:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-modbus:latest
     container_name: modbus-conpot-server
     hostname: modbus-conpot
     ports:
@@ -120,7 +120,7 @@ services:
     build:
       context: ./services/opcua/mock
       dockerfile: Dockerfile.opcua
-    image: ghcr.io/f0rw4rd/oida-mock-opcua:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
     container_name: opcua-mock-server
     hostname: opcua-server
     ports:
@@ -146,7 +146,7 @@ services:
     build:
       context: ./services/ads/mock
       dockerfile: Dockerfile.ads
-    image: ghcr.io/f0rw4rd/oida-mock-ads:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ads:latest
     container_name: ads-mock-server
     hostname: ads-server
     ports:
@@ -172,7 +172,7 @@ services:
     build:
       context: ./services/ads/mock
       dockerfile: Dockerfile.ads-twincat
-    image: ghcr.io/f0rw4rd/oida-mock-ads-twincat:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ads-twincat:latest
     container_name: ads-twincat-motor
     hostname: ads-twincat-motor
     ports:
@@ -207,7 +207,7 @@ services:
     build:
       context: ./services/ads/mock
       dockerfile: Dockerfile.ads-twincat
-    image: ghcr.io/f0rw4rd/oida-mock-ads-twincat:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ads-twincat:latest
     container_name: ads-twincat-hvac
     hostname: ads-twincat-hvac
     ports:
@@ -242,7 +242,7 @@ services:
     build:
       context: ./services/ethernetip/mock
       dockerfile: Dockerfile.ethernetip
-    image: ghcr.io/f0rw4rd/oida-mock-ethernetip:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethernetip:latest
     container_name: ethernetip-mock-server
     hostname: ethernetip-server
     ports:
@@ -268,7 +268,7 @@ services:
     build:
       context: ./services/bacnet/mock
       dockerfile: Dockerfile.bacnet
-    image: ghcr.io/f0rw4rd/oida-mock-bacnet:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet:latest
     container_name: bacnet-mock-server
     hostname: bacnet-server
     ports:
@@ -295,7 +295,7 @@ services:
     build:
       context: ./services/bacnet/mock/conpot
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-conpot-bacnet:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-bacnet:latest
     container_name: bacnet-conpot-server
     hostname: bacnet-conpot
     ports:
@@ -329,7 +329,7 @@ services:
       dockerfile: Dockerfile.bacnet-realstack
       args:
         BACNET_TAG: bacnet-stack-1.4.4
-    image: ghcr.io/f0rw4rd/oida-mock-bacnet-realstack:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-realstack:latest
     container_name: bacnet-realstack-rtu
     hostname: bacnet-rtu
     ports:
@@ -360,7 +360,7 @@ services:
       dockerfile: Dockerfile.bacnet-realstack
       args:
         BACNET_TAG: bacnet-stack-1.4.4
-    image: ghcr.io/f0rw4rd/oida-mock-bacnet-realstack:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-realstack:latest
     container_name: bacnet-realstack-building
     hostname: bacnet-building
     ports:
@@ -391,7 +391,7 @@ services:
       dockerfile: Dockerfile.bacnet-realstack
       args:
         BACNET_TAG: bacnet-stack-1.4.4
-    image: ghcr.io/f0rw4rd/oida-mock-bacnet-realstack:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-realstack:latest
     container_name: bacnet-realstack-vav
     hostname: bacnet-vav
     ports:
@@ -423,7 +423,7 @@ services:
     build:
       context: ./services/coap/mock
       dockerfile: Dockerfile.coap
-    image: ghcr.io/f0rw4rd/oida-mock-coap:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap:latest
     container_name: coap-mock-server
     hostname: coap-server
     ports:
@@ -449,7 +449,7 @@ services:
     build:
       context: ./services/coap/mock
       dockerfile: Dockerfile.coap-libcoap
-    image: ghcr.io/f0rw4rd/oida-mock-coap-libcoap:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-libcoap:latest
     container_name: coap-libcoap-server
     hostname: coap-libcoap
     ports:
@@ -476,7 +476,7 @@ services:
     build:
       context: ./services/coap/mock
       dockerfile: Dockerfile.coap-libcoap
-    image: ghcr.io/f0rw4rd/oida-mock-coap-libcoap:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-libcoap:latest
     container_name: coap-dtls-server
     hostname: coap-dtls
     ports:
@@ -505,7 +505,7 @@ services:
     build:
       context: ./services/coap/mock
       dockerfile: Dockerfile.coap-dtls-cert
-    image: ghcr.io/f0rw4rd/oida-mock-coap-dtls-cert:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-dtls-cert:latest
     container_name: coap-dtls-cert-server
     hostname: coap-dtls-cert
     ports:
@@ -536,7 +536,7 @@ services:
     build:
       context: ./services/mms/mock
       dockerfile: Dockerfile.mms
-    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
     container_name: mms-libiec61850-server
     hostname: mms-server
     ports:
@@ -558,7 +558,7 @@ services:
       oida.ports: "102"
 
   mms-goose:
-    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
     command: ["/usr/local/bin/server_example_goose"]
     container_name: mms-goose-server
     hostname: mms-goose
@@ -582,7 +582,7 @@ services:
       oida.ports: "10106"
 
   mms-control:
-    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
     command: ["/usr/local/bin/server_example_control"]
     container_name: mms-control-server
     hostname: mms-control
@@ -606,7 +606,7 @@ services:
       oida.ports: "10107"
 
   mms-authentication:
-    image: ghcr.io/f0rw4rd/oida-mock-mms:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
     command: ["/usr/local/bin/mms_tls_auth_server"]
     container_name: mms-authentication-server
     hostname: mms-authentication
@@ -637,7 +637,7 @@ services:
     build:
       context: ./services/iec104/mock
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-iec104:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104:latest
     container_name: iec104-lib60870-server
     hostname: iec104-server
     ports:
@@ -662,7 +662,7 @@ services:
     build:
       context: ./services/iec104/mock
       dockerfile: Dockerfile.tls
-    image: ghcr.io/f0rw4rd/oida-mock-iec104-tls:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104-tls:latest
     container_name: iec104-tls-server
     hostname: iec104-tls
     ports:
@@ -694,7 +694,7 @@ services:
     build:
       context: ./services/iec104/mock
       dockerfile: Dockerfile.python
-    image: ghcr.io/f0rw4rd/oida-mock-iec104-python:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104-python:latest
     container_name: iec104-custom-types-server
     hostname: iec104-custom
     ports:
@@ -722,7 +722,7 @@ services:
     build:
       context: ./services/iec104/mock/conpot
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-conpot-iec104:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-iec104:latest
     container_name: iec104-conpot-server
     hostname: iec104-conpot
     ports:
@@ -752,7 +752,7 @@ services:
     build:
       context: ./services/s7comm/mock
       dockerfile: Dockerfile.snap7
-    image: ghcr.io/f0rw4rd/oida-mock-snap7:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snap7:latest
     container_name: s7comm-snap7-server
     hostname: s7comm-snap7
     ports:
@@ -781,7 +781,7 @@ services:
     build:
       context: ./services/s7comm/mock/conpot
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-conpot-s7:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-s7:latest
     container_name: s7comm-conpot-server
     hostname: s7comm-conpot
     ports:
@@ -866,7 +866,7 @@ services:
     build:
       context: ./services/knx/mock
       dockerfile: Dockerfile.knx-devices
-    image: ghcr.io/f0rw4rd/oida-mock-knx-devices:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-knx-devices:latest
     container_name: knx-bcu-emulator
     hostname: knx-devices
     depends_on:
@@ -898,7 +898,7 @@ services:
     build:
       context: ./services/mqtt/mock
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
     container_name: mqtt-insecure-broker
     hostname: mqtt-insecure
     command: ["python3", "mqtt_broker_insecure.py"]
@@ -925,7 +925,7 @@ services:
     build:
       context: ./services/mqtt/mock
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
     container_name: mqtt-auth-broker
     hostname: mqtt-auth
     command: ["python3", "mqtt_broker_auth.py"]
@@ -954,7 +954,7 @@ services:
     build:
       context: ./services/mqtt/mock
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
     container_name: mqtt-sparkplug-broker
     hostname: mqtt-sparkplug
     command: ["python3", "mqtt_broker_sparkplug.py"]
@@ -981,7 +981,7 @@ services:
     build:
       context: ./services/mqtt/mock
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
     container_name: mqtt-busy-broker
     hostname: mqtt-busy
     command: ["python3", "mqtt_broker_busy.py"]
@@ -1008,7 +1008,7 @@ services:
     build:
       context: ./services/mqtt/mock
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
     container_name: mqtt-tls-broker
     hostname: mqtt-tls
     command: ["python3", "mqtt_broker_tls.py"]
@@ -1038,7 +1038,7 @@ services:
     build:
       context: ./services/mqtt/mock
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-mqtt:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
     container_name: mqtt-busy-tls-broker
     hostname: mqtt-busy-tls
     command: ["python3", "mqtt_broker_busy_tls.py"]
@@ -1072,7 +1072,7 @@ services:
     build:
       context: ./services/opcua/mock
       dockerfile: Dockerfile.opcua
-    image: ghcr.io/f0rw4rd/oida-mock-opcua:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
     container_name: opcua-advanced-server
     hostname: opcua-advanced
     ports:
@@ -1101,7 +1101,7 @@ services:
     build:
       context: ./services/opcua/mock
       dockerfile: Dockerfile.opcua-gds
-    image: ghcr.io/f0rw4rd/oida-mock-opcua-gds:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua-gds:latest
     container_name: opcua-gds-server
     hostname: opcua-gds
     ports:
@@ -1128,7 +1128,7 @@ services:
     build:
       context: ./services/opcua/mock
       dockerfile: Dockerfile.opcua
-    image: ghcr.io/f0rw4rd/oida-mock-opcua:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
     container_name: opcua-insecure-server
     hostname: opcua-insecure
     ports:
@@ -1161,7 +1161,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
     container_name: dnp3-basic-server
     hostname: dnp3-basic
     ports:
@@ -1200,7 +1200,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
     container_name: dnp3-complex-server
     hostname: dnp3-complex
     ports:
@@ -1239,7 +1239,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
     container_name: dnp3-tls-server
     hostname: dnp3-tls
     ports:
@@ -1282,7 +1282,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
     container_name: dnp3-addr1-server
     hostname: dnp3-addr1
     ports:
@@ -1319,7 +1319,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
     container_name: dnp3-addr10-server
     hostname: dnp3-addr10
     ports:
@@ -1356,7 +1356,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
     container_name: dnp3-addr100-server
     hostname: dnp3-addr100
     ports:
@@ -1393,7 +1393,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3-enhanced
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3-enhanced:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3-enhanced:latest
     container_name: dnp3-enhanced-server
     hostname: dnp3-enhanced
     ports:
@@ -1437,7 +1437,7 @@ services:
     build:
       context: ./services/dnp3/mock
       dockerfile: Dockerfile.dnp3-filetransfer
-    image: ghcr.io/f0rw4rd/oida-mock-dnp3-filetransfer:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3-filetransfer:latest
     container_name: dnp3-filetransfer-server
     hostname: dnp3-filetransfer
     ports:
@@ -1478,7 +1478,7 @@ services:
     build:
       context: ./services/ethernetip/mock
       dockerfile: Dockerfile.opener
-    image: ghcr.io/f0rw4rd/oida-mock-opener:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opener:latest
     container_name: ethernetip-opener-server
     hostname: opener-device
     ports:
@@ -1506,7 +1506,7 @@ services:
     build:
       context: ./services/ethernetip/mock/conpot
       dockerfile: Dockerfile
-    image: ghcr.io/f0rw4rd/oida-mock-conpot-enip:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-enip:latest
     container_name: ethernetip-conpot-server
     hostname: ethernetip-conpot
     ports:
@@ -1538,7 +1538,7 @@ services:
     build:
       context: ./services/hart/mock
       dockerfile: Dockerfile.hart-hipserver
-    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver:latest
     container_name: hart-hipserver
     hostname: hart-mock
     ports:
@@ -1570,7 +1570,7 @@ services:
       args:
         HART_VERSION: "5"
         DEVICE_TAG: "FLOW5DEV"
-    image: ghcr.io/f0rw4rd/oida-mock-hart-hipflow-hart5:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipflow-hart5:latest
     container_name: hart-hipflow-hart5
     hostname: hart-hipflow-hart5
     ports:
@@ -1601,7 +1601,7 @@ services:
       args:
         HART_VERSION: "7"
         DEVICE_TAG: "FLOW7DEV"
-    image: ghcr.io/f0rw4rd/oida-mock-hart-hipflow-hart7:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipflow-hart7:latest
     container_name: hart-hipflow-hart7
     hostname: hart-hipflow-hart7
     ports:
@@ -1627,7 +1627,7 @@ services:
     build:
       context: ./services/hart/mock
       dockerfile: Dockerfile.hart-hipserver-tls
-    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver-tls:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver-tls:latest
     container_name: hart-hipserver-tls
     hostname: hart-tls
     ports:
@@ -1654,7 +1654,7 @@ services:
     build:
       context: ./services/hart/mock
       dockerfile: Dockerfile.hart-hipserver
-    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver:latest
     container_name: hart-hipserver-secondary
     hostname: hart-secondary
     ports:
@@ -1681,7 +1681,7 @@ services:
     build:
       context: ./services/hart/mock
       dockerfile: Dockerfile.hart-hipserver
-    image: ghcr.io/f0rw4rd/oida-mock-hart-hipserver:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver:latest
     container_name: hart-hipserver-tertiary
     hostname: hart-tertiary
     ports:
@@ -1714,7 +1714,7 @@ services:
     build:
       context: ./services/hart/mock
       dockerfile: Dockerfile.hart
-    image: ghcr.io/f0rw4rd/oida-mock-hart:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart:latest
     container_name: hart-pymock
     hostname: hart-pymock
     ports:
@@ -1743,7 +1743,7 @@ services:
     build:
       context: ./services/hart/mock
       dockerfile: Dockerfile.hart
-    image: ghcr.io/f0rw4rd/oida-mock-hart:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart:latest
     container_name: hart-pymock-multidrop
     hostname: hart-pymock-multidrop
     ports:
@@ -1775,7 +1775,7 @@ services:
   snmp-mock:
     build:
       context: ./services/snmp/mock
-    image: ghcr.io/f0rw4rd/oida-mock-snmp:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp:latest
     container_name: snmp-mock-server
     hostname: snmp-mock
     ports:
@@ -1802,7 +1802,7 @@ services:
   snmp-v3only:
     build:
       context: ./services/snmp/mock
-    image: ghcr.io/f0rw4rd/oida-mock-snmp:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp:latest
     container_name: snmp-v3only-server
     hostname: snmp-v3only
     ports:
@@ -1827,7 +1827,7 @@ services:
   snmp-switch:
     build:
       context: ./services/snmp/mock
-    image: ghcr.io/f0rw4rd/oida-mock-snmp:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp:latest
     container_name: snmp-switch-server
     hostname: snmp-switch
     ports:
@@ -1863,7 +1863,7 @@ services:
     build:
       context: ./services/modbus/mock
       dockerfile: Dockerfile.sunspec
-    image: ghcr.io/f0rw4rd/oida-mock-sunspec:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-sunspec:latest
     container_name: modbus-sunspec-server
     hostname: modbus-sunspec
     ports:
@@ -1893,7 +1893,7 @@ services:
     build:
       context: ./services/http2/mock
       dockerfile: Dockerfile.nghttp2
-    image: ghcr.io/f0rw4rd/oida-mock-http2-nghttp2:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-http2-nghttp2:latest
     container_name: http2-nghttp2-server
     hostname: http2-nghttp2
     ports:
@@ -1926,7 +1926,7 @@ services:
     build:
       context: ./services/http2/mock
       dockerfile: Dockerfile.python
-    image: ghcr.io/f0rw4rd/oida-mock-http2-python:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-http2-python:latest
     container_name: http2-python-server
     hostname: http2-python
     ports:
@@ -2027,7 +2027,7 @@ services:
     build:
       context: ./services/astm/mock
       dockerfile: Dockerfile.astm
-    image: ghcr.io/f0rw4rd/oida-mock-astm:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-astm:latest
     container_name: astm-data-server
     hostname: astm-data
     ports:
@@ -2056,7 +2056,7 @@ services:
     build:
       context: ./services/astm/mock
       dockerfile: Dockerfile.astm-real
-    image: ghcr.io/f0rw4rd/oida-mock-astm-real:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-astm-real:latest
     container_name: astm-realstack-chemistry
     hostname: astm-chemistry
     ports:
@@ -2085,7 +2085,7 @@ services:
     build:
       context: ./services/astm/mock
       dockerfile: Dockerfile.astm-real
-    image: ghcr.io/f0rw4rd/oida-mock-astm-real:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-astm-real:latest
     container_name: astm-realstack-hematology
     hostname: astm-hematology-real
     ports:
@@ -2118,7 +2118,7 @@ services:
     build:
       context: ./services/ocpp/mock
       dockerfile: Dockerfile.ocpp
-    image: ghcr.io/f0rw4rd/oida-mock-ocpp:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp:latest
     container_name: ocpp-insecure-csms
     hostname: ocpp-insecure
     ports:
@@ -2186,7 +2186,7 @@ services:
       dockerfile: Dockerfile.steve
       args:
         STEVE_TAG: steve-3.13.0
-    image: ghcr.io/f0rw4rd/oida-mock-ocpp-steve:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp-steve:latest
     container_name: ocpp-steve-open
     hostname: ocpp-steve-open
     depends_on:
@@ -2218,7 +2218,7 @@ services:
   # Config 2: REGISTERED-ONLY — rejects unknown chargeBoxIds (auto-register
   # false). Only pre-registered (via web UI/API) charge boxes are accepted.
   ocpp-steve-registered:
-    image: ghcr.io/f0rw4rd/oida-mock-ocpp-steve:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp-steve:latest
     container_name: ocpp-steve-registered
     hostname: ocpp-steve-registered
     depends_on:
@@ -2252,7 +2252,7 @@ services:
   # Config 3: SECURE — HTTPS/WSS with a self-signed PKCS12 keystore generated
   # at container start; rejects unknown chargeBoxIds. wss:// on 8543.
   ocpp-steve-secure:
-    image: ghcr.io/f0rw4rd/oida-mock-ocpp-steve:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp-steve:latest
     container_name: ocpp-steve-secure
     hostname: ocpp-steve-secure
     depends_on:
@@ -2321,7 +2321,7 @@ services:
     build:
       context: ./services/can/mock
       dockerfile: Dockerfile.can
-    image: ghcr.io/f0rw4rd/oida-mock-can:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-can:latest
     container_name: can-mock-server
     hostname: can-mock
     network_mode: host
@@ -2369,7 +2369,7 @@ services:
     build:
       context: ./services/can/mock
       dockerfile: Dockerfile.canopen
-    image: ghcr.io/f0rw4rd/oida-mock-canopen:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-canopen:latest
     container_name: canopen-401-io
     hostname: canopen-401-io
     privileged: true              # NET_ADMIN to create/up vcan0; cap_add also works
@@ -2405,7 +2405,7 @@ services:
     build:
       context: ./services/can/mock
       dockerfile: Dockerfile.canopen
-    image: ghcr.io/f0rw4rd/oida-mock-canopen:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-canopen:latest
     container_name: canopen-402-drive
     # Share canopen-401-io's netns so BOTH nodes sit on the SAME vcan0 bus and
     # a single `oida can vcan0 --canopen-scan` discovers both. The link is
@@ -2446,7 +2446,7 @@ services:
     build:
       context: ./services/ethercat/mock
       dockerfile: Dockerfile.ethercat
-    image: ghcr.io/f0rw4rd/oida-mock-ethercat:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethercat:latest
     container_name: ethercat-slave-device
     hostname: ethercat-slave
     network_mode: host
@@ -2481,7 +2481,7 @@ services:
     build:
       context: ./services/ethercat/mock
       dockerfile: Dockerfile.ethercat
-    image: ghcr.io/f0rw4rd/oida-mock-ethercat:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethercat:latest
     container_name: ethercat-slave-veth
     hostname: ethercat-veth
     cap_add:
@@ -2544,7 +2544,7 @@ services:
     build:
       context: ./services/ethercat/mock
       dockerfile: Dockerfile.ethercat-kickcat
-    image: ghcr.io/f0rw4rd/oida-mock-ethercat-kickcat:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethercat-kickcat:latest
     container_name: ethercat-kickcat-slaves
     hostname: ethercat-kickcat
     cap_add:
@@ -2593,7 +2593,7 @@ services:
       args:
         APP_VENDOR_ID: "0x002A"
         APP_DEVICE_ID: "0x0301"
-    image: ghcr.io/f0rw4rd/oida-mock-profinet:siemens-et200sp
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-profinet:siemens-et200sp
     container_name: profinet-siemens-et200sp
     hostname: profinet-siemens
     cap_add:
@@ -2630,7 +2630,7 @@ services:
       args:
         APP_VENDOR_ID: "0x0120"
         APP_DEVICE_ID: "0x0002"
-    image: ghcr.io/f0rw4rd/oida-mock-profinet:beckhoff-el6631
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-profinet:beckhoff-el6631
     container_name: profinet-beckhoff-el6631
     hostname: profinet-beckhoff
     cap_add:
@@ -2661,7 +2661,7 @@ services:
     build:
       context: ./services/goose/mock
       dockerfile: Dockerfile.goose-real
-    image: ghcr.io/f0rw4rd/oida-mock-goose-real:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-goose-real:latest
     container_name: goose-l2-publisher
     hostname: goose-publisher
     network_mode: host
@@ -2699,7 +2699,7 @@ services:
     build:
       context: ./services/goose/mock
       dockerfile: Dockerfile.goose-real
-    image: ghcr.io/f0rw4rd/oida-mock-goose-real:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-goose-real:latest
     container_name: goose-l2-publisher-breaker
     hostname: goose-publisher-breaker
     network_mode: host
@@ -2739,7 +2739,7 @@ services:
     build:
       context: ./services/vnc/mock
       dockerfile: Dockerfile.vnc
-    image: ghcr.io/f0rw4rd/oida-mock-vnc:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-vnc:latest
     container_name: vnc-mock-server
     hostname: vnc-mock
     ports:
@@ -2762,7 +2762,7 @@ services:
     build:
       context: ./services/ftp/mock
       dockerfile: Dockerfile.ftp
-    image: ghcr.io/f0rw4rd/oida-mock-ftp:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp:latest
     container_name: ftp-mock-server
     hostname: ftp-mock
     ports:
@@ -2785,7 +2785,7 @@ services:
     build:
       context: ./services/smtp/mock
       dockerfile: Dockerfile.smtp
-    image: ghcr.io/f0rw4rd/oida-mock-smtp:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-smtp:latest
     container_name: smtp-mock-server
     hostname: smtp-mock
     ports:
@@ -2832,7 +2832,7 @@ services:
     build:
       context: ./services/hl7/mock
       dockerfile: Dockerfile.hl7
-    image: ghcr.io/f0rw4rd/oida-mock-hl7:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hl7:latest
     container_name: hl7-mock-server
     hostname: hl7-server
     ports:
@@ -2861,7 +2861,7 @@ services:
     build:
       context: ./services/hl7/mock
       dockerfile: Dockerfile.hl7-node
-    image: ghcr.io/f0rw4rd/oida-mock-hl7-node:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hl7-node:latest
     container_name: hl7-node-mock-server
     hostname: hl7-node
     ports:
@@ -2891,7 +2891,7 @@ services:
     build:
       context: ./services/dicom/mock
       dockerfile: Dockerfile.dicom
-    image: ghcr.io/f0rw4rd/oida-mock-dicom:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dicom:latest
     container_name: dicom-mock-server
     hostname: dicom-server
     ports:
@@ -2919,7 +2919,7 @@ services:
     build:
       context: ./services/dicom/mock
       dockerfile: Dockerfile.dicom
-    image: ghcr.io/f0rw4rd/oida-mock-dicom:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dicom:latest
     container_name: dicom-strict-server
     hostname: dicom-strict
     ports:
@@ -2948,7 +2948,7 @@ services:
     build:
       context: ./services/fhir/mock
       dockerfile: Dockerfile.fhir
-    image: ghcr.io/f0rw4rd/oida-mock-fhir:latest
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-fhir:latest
     container_name: fhir-mock-server
     hostname: fhir-server
     ports:

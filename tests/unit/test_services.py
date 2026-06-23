@@ -182,6 +182,17 @@ class TestArgparse:
         args = parser.parse_args(["build", "cve"])
         assert args.stack == "cve"
 
+    def test_push_default(self):
+        parser = dev.build_parser()
+        args = parser.parse_args(["push"])
+        assert args.command == "push"
+        assert args.batch == 10
+
+    def test_push_batch(self):
+        parser = dev.build_parser()
+        args = parser.parse_args(["push", "--batch", "4"])
+        assert args.batch == 4
+
     def test_clean(self):
         parser = dev.build_parser()
         args = parser.parse_args(["clean"])
@@ -231,6 +242,20 @@ class TestArgparse:
         registered = set(subparsers_action.choices.keys())
         dispatched = set(dev.COMMAND_DISPATCH.keys())
         assert registered == dispatched, f"Missing dispatch: {registered - dispatched}"
+
+
+class TestPushCommand:
+    """Test cmd_push registry guard."""
+
+    def test_push_fails_hard_without_registry(self, monkeypatch):
+        """Unset OIDA_REGISTRY must abort before touching docker."""
+        monkeypatch.setattr(dev, "_load_dotenv", lambda: None)
+        monkeypatch.delenv("OIDA_REGISTRY", raising=False)
+        args = SimpleNamespace(batch=10)
+        with patch("subprocess.run") as m:
+            rc = dev.cmd_push(args)
+        assert rc == 1
+        m.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

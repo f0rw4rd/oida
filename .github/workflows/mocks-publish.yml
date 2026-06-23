@@ -8,6 +8,11 @@ name: Publish mock images
 # `gh workflow run mocks-publish.yml` after changing docker/mocks/**.
 on:
   workflow_dispatch:
+    inputs:
+      registry:
+        description: "Registry + namespace prefix to push to (no trailing slash)"
+        required: false
+        default: ghcr.io/f0rw4rd
 
 permissions:
   contents: read
@@ -41,6 +46,11 @@ jobs:
       # so the vuln-services CVE images are included automatically.
       - name: Build & push all mock images
         working-directory: docker/mocks
+        env:
+          # compose/bake fail hard if OIDA_REGISTRY is unset (no default in the
+          # compose files). Locally this comes from a gitignored .env; in CI we
+          # feed it from the dispatch input (default ghcr.io/f0rw4rd).
+          OIDA_REGISTRY: ${{ inputs.registry }}
         run: |
           docker buildx bake \
             -f compose.yml \
