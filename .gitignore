@@ -15,6 +15,11 @@ ref/
 # direnv local env — kept local
 .envrc
 
+# Private registry URL for mock-image push/pull — keep LOCAL, never commit.
+# Template lives at docker/mocks/.env.example (committed).
+.env
+docker/mocks/.env
+
 # Fuzz session / test databases (root-level scratch)
 oida_fuzz_session.db
 fuzzer_session.db

@@ -38,12 +38,34 @@ docker-compose logs -f
 docker-compose down
 ```
 
-### Pre-built images (ghcr.io)
+### Pre-built images (`$OIDA_REGISTRY`)
 
-Every buildable service carries an `image: ghcr.io/f0rw4rd/oida-mock-*:latest`
+Every buildable service carries an `image: ${OIDA_REGISTRY}/oida-mock-*:latest`
 tag in addition to its `build:` section, so the heavy compiled mocks
 (libiec61850, lib60870, dnp3-rs, OpENer, hipserver, …) can be **pulled**
 instead of compiled locally.
+
+`OIDA_REGISTRY` is **required** — compose/bake fail hard if it is unset (no
+default, so nothing pushes/pulls the wrong registry by accident). Set it once in
+a gitignored `.env`; the real URL never lands in git:
+
+```bash
+cp .env.example .env          # then edit OIDA_REGISTRY (host[:port]/namespace, no trailing slash)
+docker login <your-registry>  # if private
+```
+
+**Publishing / keeping the registry in sync** — one command builds every
+buildable mock and pushes it:
+
+```bash
+python ../../services.py push        # reads OIDA_REGISTRY from .env
+python ../../services.py push --batch 6   # smaller batches if buildkit drops jobs under load
+```
+
+Re-run it after editing `docker/mocks/**`; bake's content-addressed cache only
+rebuilds and re-pushes what actually changed. It batches the work (buildkit
+chokes on 100+ concurrent compiles + remote pushes) and skips targets whose
+build context is missing on disk (e.g. the never-committed `services/memcached/cve`).
 
 ```bash
 # Default: pull pre-built images, build only what isn't published yet

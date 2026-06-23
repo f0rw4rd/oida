@@ -74,6 +74,7 @@ python services.py logs [service...]            # Follow container logs
 python services.py down                         # Stop services
 python services.py list                         # Show available service groups
 python services.py ports                        # Show port mappings
+python services.py push                         # Build & push all mock images to $OIDA_REGISTRY (.env)
 ```
 
 Mock services provide safe targets for testing:
