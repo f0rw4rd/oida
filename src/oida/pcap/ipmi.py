@@ -381,6 +381,11 @@ class IPMIPassiveListener(PySharkListenerBase):
             raw = getattr(packet.data, "data", None)
         if not raw:
             return b""
+        # EK mode hands the data layer back as a native ``bytes`` object,
+        # whereas XML mode renders it as a colon/space separated hex string
+        # ("00:00:fb:..."). Accept both rather than blindly hex-decoding.
+        if isinstance(raw, (bytes, bytearray)):
+            return bytes(raw)
         try:
             return bytes.fromhex(str(raw).replace(":", "").replace(" ", ""))
         except ValueError:

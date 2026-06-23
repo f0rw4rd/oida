@@ -107,9 +107,14 @@ DCP_SERVICE_NAMES = {
     DCP_SERVICE_HELLO: "DCP-Hello",
 }
 
-# DCP service_type bits
+# DCP service_type bits (pn_dcp.service_type is a FT_UINT8 bitfield)
 DCP_TYPE_REQUEST = 0  # bit pattern: neither response nor selection
-DCP_TYPE_RESPONSE_BIT = 0x01  # response flag (bit 0)
+DCP_TYPE_RESPONSE_BIT = 0x01  # response flag (bit 0): 0=request, 1=response success
+# "Selection" / Phase-2 flag lives in the high bits of the service_type octet.
+# tshark exposes pn_dcp.service_type.response / .selection as bitfield children,
+# but in EK mode (and older tshark builds) only the parent byte is emitted, so we
+# derive both bits from the byte rather than relying on separate EK keys.
+DCP_TYPE_SELECTION_BIT = 0x40  # selection flag (bit 6)
 
 # DCE/RPC PDU packet types (dcerpc.pkt_type). PNIO-CM acyclic services ride on
 # DCE/RPC, whose PDU type is the authoritative request/response signal.
@@ -411,16 +416,27 @@ class PROFINETPassiveListener(PySharkListenerBase):
         service_type = self._parse_int(self.get_field(dcp, "service_type"))
         is_response = bool(service_type & DCP_TYPE_RESPONSE_BIT)
 
-        # DCP service_type sub-fields (EK exposes individual bits)
-        # Use raw get_field to distinguish "missing" from "value is 0".
+        # DCP service_type sub-fields. Wireshark models these as bitfield
+        # children of pn_dcp.service_type, but in EK mode (and tshark <= 4.4.x)
+        # only the parent byte is emitted -- the .response / .selection keys are
+        # absent. Prefer the explicit child field when present, otherwise decode
+        # the bit straight from the service_type byte so the flags are always
+        # available. service_type is None only when the field is missing entirely.
         _raw_st_response = self.get_field(dcp, "service_type_response")
-        service_type_response = (
-            self._parse_int(_raw_st_response) if _raw_st_response is not None else None
-        )
+        if _raw_st_response is not None:
+            service_type_response = self._parse_int(_raw_st_response)
+        elif service_type is not None:
+            service_type_response = service_type & DCP_TYPE_RESPONSE_BIT
+        else:
+            service_type_response = None
+
         _raw_st_selection = self.get_field(dcp, "service_type_selection")
-        service_type_selection = (
-            self._parse_int(_raw_st_selection) if _raw_st_selection is not None else None
-        )
+        if _raw_st_selection is not None:
+            service_type_selection = self._parse_int(_raw_st_selection)
+        elif service_type is not None:
+            service_type_selection = (service_type & DCP_TYPE_SELECTION_BIT) >> 6
+        else:
+            service_type_selection = None
 
         # DCP transaction ID for request/response correlation
         _raw_xid = self.get_field(dcp, "xid")

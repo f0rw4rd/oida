@@ -19,8 +19,10 @@ tshark fields used:
   2=SimpleAck, 3=ComplexAck, 4=SegmentAck, 5=Error, 6=Reject, 7=Abort)
 - bacapp.confirmed_service: Confirmed service choice (FT_UINT8)
 - bacapp.unconfirmed_service: Unconfirmed service choice (FT_UINT8)
-- bacapp.objectType: Object type (FT_UINT32, upper 10 bits)
-- bacapp.objectIdentifier: Combined object identifier (FT_UINT32)
+- bacapp.objectType: Object type (FT_UINT32, upper 10 bits of the
+  BACnetObjectIdentifier).  tshark does NOT emit a combined
+  ``bacapp.objectIdentifier``; the composite object id and the device id
+  are synthesized here from objectType + instance_number.
 - bacapp.instance_number: Instance number (FT_UINT32, lower 22 bits)
 - bacapp.property_identifier: Property ID (FT_UINT32)
 - bacapp.invoke_id: Invoke ID for request/response correlation (FT_UINT8)
@@ -29,7 +31,6 @@ tshark fields used:
 - bacapp.reject_reason: Reject reason for Reject PDUs (FT_UINT8)
 - bacapp.abort_reason: Abort reason for Abort PDUs (FT_UINT8)
 - bacapp.sequence_number: Sequence number for segmented transfers (FT_UINT8)
-- bacapp.deviceIdentifier: Device object identifier (FT_UINT32)
 - bacapp.processId: Process identifier for subscriptions (FT_UINT32)
 - bacapp.present_value.real: Present value float (FT_DOUBLE)
 - bacapp.present_value.uint: Present value unsigned (FT_UINT64)
@@ -448,16 +449,16 @@ class BACnetPassiveListener(PySharkListenerBase):
         if who_is_high is None:
             who_is_high = self.get_field(bacapp, "who_is.high_limit", None)
 
-        # Extract objectIdentifier (combined type+instance composite)
-        obj_id_raw = self.get_field(bacapp, "objectIdentifier", None)
+        # Synthesize the combined objectIdentifier.
+        #
+        # tshark (4.4.x) does NOT emit a ``bacapp.objectIdentifier`` field: the
+        # 32-bit BACnetObjectIdentifier is dissected into ``bacapp.objectType``
+        # (top 10 bits, mask 0xffc00000) and ``bacapp.instance_number`` (low 22
+        # bits, mask 0x3fffff).  Reconstruct the composite per ASHRAE 135 so
+        # downstream consumers get the single canonical object id.
         obj_identifier = None
-        if obj_id_raw is not None:
-            try:
-                # May be a list in multi-object packets; take first value
-                val = obj_id_raw if not isinstance(obj_id_raw, list) else obj_id_raw[0]
-                obj_identifier = int(val)
-            except (ValueError, TypeError) as e:
-                self.logger.debug(f"BACnet: objectIdentifier int parse failed: {e}")
+        if obj_type is not None and instance is not None:
+            obj_identifier = ((obj_type & 0x3FF) << 22) | (instance & 0x3FFFFF)
 
         # Extract error/reject/abort details
         error_class = None
@@ -502,15 +503,16 @@ class BACnetPassiveListener(PySharkListenerBase):
             except (ValueError, TypeError) as e:
                 self.logger.debug(f"Failed to get seq_num: {e}")
 
-        # Extract device identifier
-        dev_id_raw = self.get_field(bacapp, "deviceIdentifier", None)
+        # Synthesize the device identifier.
+        #
+        # As with objectIdentifier, tshark emits no ``bacapp.deviceIdentifier``
+        # field.  A BACnet device identity is just an objectIdentifier whose
+        # object type is Device (8).  When this packet references a Device
+        # object, expose its composite id as the device_identifier so device
+        # enrichment can key on it.
         device_identifier = None
-        if dev_id_raw is not None:
-            try:
-                val = dev_id_raw if not isinstance(dev_id_raw, list) else dev_id_raw[0]
-                device_identifier = int(val)
-            except (ValueError, TypeError) as e:
-                self.logger.debug(f"BACnet: deviceIdentifier int parse failed: {e}")
+        if obj_type == 8 and instance is not None:
+            device_identifier = (8 << 22) | (instance & 0x3FFFFF)
 
         # Extract process identifier (subscriptions/notifications)
         proc_id_raw = self.get_field(bacapp, "processId", None)

@@ -194,11 +194,21 @@ class OSPFPassiveListener(PySharkListenerBase):
         else:
             checksum = str(checksum_raw)
 
-        # T1 field: "instance_id" -- OSPF instance identifier
+        # T1 field: "instance_id" -- OSPF instance identifier.
+        # The Instance ID field is an OSPFv3-only header field (it multiplexes
+        # multiple OSPF instances onto a single link).  OSPFv2 packets do not
+        # carry it at all, so tshark exposes no `ospf.instance_id` for them and
+        # get_field() correctly returns None.  An OSPFv2 packet is, by
+        # definition, the single implicit instance 0 -- so default to "0" for
+        # v2 instead of "?".  Only a v3 packet that genuinely lacks the field
+        # (malformed) stays "?".
         instance_id_raw = self.get_field(ospf, "instance_id", None)
         if instance_id_raw is None or str(instance_id_raw).strip() == "":
-            instance_id = "?"
-            self.logger.debug(f"Missing instance_id in OSPF packet from {src_ip}")
+            if version == 2:
+                instance_id = "0"
+            else:
+                instance_id = "?"
+                self.logger.debug(f"Missing instance_id in OSPFv{version} packet from {src_ip}")
         else:
             instance_id = str(instance_id_raw)
 

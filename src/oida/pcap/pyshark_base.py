@@ -507,23 +507,50 @@ class PySharkListenerBase(ABC):
                     normalize_mac(raw_dst) if raw_dst else "",
                 )
             if hasattr(packet, "arcnet"):
-                try:
-                    fd = object.__getattribute__(packet.arcnet, "_fields_dict")
-                except AttributeError:
-                    fd = None
-                if isinstance(fd, dict):
-                    src = fd.get("arcnet_arcnet_src", "")
-                    dst = fd.get("arcnet_arcnet_dst", "")
-                    if isinstance(src, list):
-                        src = src[0] if src else ""
-                    if isinstance(dst, list):
-                        dst = dst[0] if dst else ""
-                    src = f"AR:{int(src):02x}" if str(src).isdigit() else ""
-                    dst = f"AR:{int(dst):02x}" if str(dst).isdigit() else ""
-                    return src, dst
+                arc = packet.arcnet
+                src = self._arcnet_node(self._resolve_value(getattr(arc, "src", None), None))
+                dst = self._arcnet_node(self._resolve_value(getattr(arc, "dst", None), None))
+                if not src and not dst:
+                    # Attribute access failed (encapsulated/list layer); read raw.
+                    try:
+                        fd = object.__getattribute__(arc, "_fields_dict")
+                    except AttributeError:
+                        fd = None
+                    if isinstance(fd, dict):
+                        raw_src = fd.get("arcnet_arcnet_src", "")
+                        raw_dst = fd.get("arcnet_arcnet_dst", "")
+                        if isinstance(raw_src, list):
+                            raw_src = raw_src[0] if raw_src else ""
+                        if isinstance(raw_dst, list):
+                            raw_dst = raw_dst[0] if raw_dst else ""
+                        src = self._arcnet_node(raw_src)
+                        dst = self._arcnet_node(raw_dst)
+                return src, dst
         except Exception as e:
             self.logger.debug(f"get_mac_info failed: {e}")
         return "", ""
+
+    @staticmethod
+    def _arcnet_node(raw: Any) -> str:
+        """Format an ARCNET 8-bit node id as ``AR:NN``.
+
+        tshark exposes ``arcnet.src``/``arcnet.dst`` as a hex string
+        (``"0xc0"``) in raw ``_fields_dict`` but as a plain int when accessed
+        as an EK attribute.  ``str(x).isdigit()`` rejected the ``0x`` form and
+        silently dropped every ARCNET-framed BACnet packet.  Accept int, plain
+        decimal, and ``0x``-prefixed hex.
+        """
+        if raw is None or raw == "":
+            return ""
+        try:
+            if isinstance(raw, int):
+                node = raw
+            else:
+                s = str(raw).strip()
+                node = int(s, 16) if s.lower().startswith("0x") else int(s, 0)
+        except (ValueError, TypeError):
+            return ""
+        return f"AR:{node:02x}"
 
     # -------------------------------------------------------------------------
     # Value parsing helpers (shared across listeners)

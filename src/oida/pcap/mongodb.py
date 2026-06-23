@@ -94,6 +94,17 @@ class MongoDBPassiveListener(PySharkListenerBase):
     SERVER_PORTS = tuple(sorted(MONGODB_PORTS))
     PROTOCOL_COLUMNS = ("operation", "database", "collection", "detail")
 
+    # tshark's TCP sequence-number analysis suppresses the MongoDB
+    # subdissector on any segment it flags as a retransmission / out-of-order
+    # frame.  Real captures routinely contain such segments (and crafted ones
+    # whose sequence numbers wrap past 2^32), which means whole MongoDB
+    # messages -- including OP_INSERT(2002) writes -- get dissected only as raw
+    # TCP and never reach this listener.  Disabling sequence analysis lets
+    # tshark hand us those messages as MONGO so the write operation is
+    # recorded.  Both the live capture and the FileCapture pipeline forward
+    # OVERRIDE_PREFS to tshark.
+    OVERRIDE_PREFS = {"tcp.analyze_sequence_numbers": "FALSE"}
+
     def __init__(
         self,
         interface: str,

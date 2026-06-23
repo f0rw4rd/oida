@@ -1136,8 +1136,10 @@ class MMSPassiveListener(PySharkListenerBase):
         # so get_field() returns None.  Use has_field() for presence detection.
         if self._has_layer_field(acse, "aarq_element"):
             aarq_details: Dict[str, Any] = {"has_auth": bool(auth_value)}
-            # ACSE protocol version advertised by the calling AE (FT_BYTES bitstring)
-            aarq_ver = str(self.get_field(acse, "aARQ_protocol_version", "") or "").strip()
+            # ACSE protocol version advertised by the calling AE (FT_BYTES bitstring).
+            # tshark exposes both AARQ and AARE versions under the shared
+            # acse.protocol_version token (EK key acse_acse_protocol_version).
+            aarq_ver = str(self.get_field(acse, "protocol_version", "") or "").strip()
             if aarq_ver:
                 aarq_details["acse_protocol_version"] = aarq_ver
             self._record_interaction(
@@ -1155,8 +1157,10 @@ class MMSPassiveListener(PySharkListenerBase):
             )
         elif self._has_layer_field(acse, "aare_element"):
             aare_details: Dict[str, Any] = {"has_auth": bool(auth_value)}
-            # ACSE protocol version advertised by the responding AE (FT_BYTES bitstring)
-            aare_ver = str(self.get_field(acse, "aARE_protocol_version", "") or "").strip()
+            # ACSE protocol version advertised by the responding AE (FT_BYTES bitstring).
+            # Shared token acse.protocol_version (EK key acse_acse_protocol_version)
+            # covers both AARQ and AARE; the surrounding element selects direction.
+            aare_ver = str(self.get_field(acse, "protocol_version", "") or "").strip()
             if aare_ver:
                 aare_details["acse_protocol_version"] = aare_ver
             # Extract association result code
