@@ -5,7 +5,6 @@ Uses the framework factory pattern for consistent CLI flags.
 """
 
 from ...utils.proto_args_factory import (
-    add_full_width_and_json_log,
     create_protocol_parser,
 )
 
@@ -159,10 +158,8 @@ Listener categories:
         ),
     )
 
-    # Output Options (--full-width / -W and --json-log; -o/-f/-v/-d come from
-    # the main parser). Without this, -W/--full-width is only accepted *before*
-    # the subcommand and the assets table always truncates to terminal width.
-    output_group = pcap_parser.add_argument_group("Output Options")
-    add_full_width_and_json_log(output_group, include_short=True)
+    # Output Options (--full-width, --json-log, -o/-f/-v/-d) come from the shared
+    # std_parser parent (cli.py), which injects them into every protocol
+    # subparser, so they are accepted both before and after the subcommand.
 
     return pcap_parser
