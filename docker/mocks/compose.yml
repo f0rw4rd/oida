@@ -92,7 +92,7 @@ services:
   # Conpot Modbus TCP Honeypot (Honeynet Project)
   modbus-conpot:
     build:
-      context: ./services/conpot-modbus
+      context: ./services/modbus/mock/conpot
       dockerfile: Dockerfile
     image: ghcr.io/f0rw4rd/oida-mock-conpot-modbus:latest
     container_name: modbus-conpot-server
@@ -165,8 +165,78 @@ services:
       start_period: 10s
     labels:
       oida.group: "ads"
-      oida.description: "Beckhoff ADS/TwinCAT simulator, AMS router, no auth"
+      oida.description: "Beckhoff ADS/TwinCAT simulation (Python sim, no auth)"
       oida.ports: "48898"
+
+  ads-twincat-motor:
+    build:
+      context: ./services/ads/mock
+      dockerfile: Dockerfile.ads-twincat
+    image: ghcr.io/f0rw4rd/oida-mock-ads-twincat:latest
+    container_name: ads-twincat-motor
+    hostname: ads-twincat-motor
+    ports:
+      - "48901:48898"
+    environment:
+      # Router NetId MUST match the container IP + ".1.1" (pyads default scheme).
+      - AmsRouter__Name=OIDA-TwinCAT-Motor
+      - AmsRouter__NetId=172.30.0.51.1.1
+      - AmsRouter__LoopbackExternalSubnet=172.30.0.0/16
+      # Symbol-server profile (motor controller).
+      - OIDA_DEVICE_NAME=OIDA-Motor
+      - OIDA_DEVICE_VERSION=3.1.4024
+      - OIDA_ADS_STATE=Run
+      - OIDA_DEVICE_STATE=0
+      - OIDA_SYMBOLS=GVL.MotorSpeed:REAL:1480.5,GVL.Current:REAL:12.7,GVL.Running:BOOL:1,GVL.Temperature:INT:42
+    restart: unless-stopped
+    networks:
+      ics-network:
+        ipv4_address: 172.30.0.51
+    healthcheck:
+      test: ["CMD", "dotnet", "OidaTwinCatMock.dll", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    labels:
+      oida.group: "ads"
+      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - motor controller profile, AmsNetId 172.30.0.51.1.1, AMS port 851, state RUN"
+      oida.ports: "48901"
+
+  ads-twincat-hvac:
+    build:
+      context: ./services/ads/mock
+      dockerfile: Dockerfile.ads-twincat
+    image: ghcr.io/f0rw4rd/oida-mock-ads-twincat:latest
+    container_name: ads-twincat-hvac
+    hostname: ads-twincat-hvac
+    ports:
+      - "48902:48898"
+    environment:
+      # Router NetId MUST match the container IP + ".1.1" (pyads default scheme).
+      - AmsRouter__Name=OIDA-TwinCAT-HVAC
+      - AmsRouter__NetId=172.30.0.52.1.1
+      - AmsRouter__LoopbackExternalSubnet=172.30.0.0/16
+      # Symbol-server profile (HVAC controller).
+      - OIDA_DEVICE_NAME=OIDA-HVAC
+      - OIDA_DEVICE_VERSION=2.11.2305
+      - OIDA_ADS_STATE=Config
+      - OIDA_DEVICE_STATE=0
+      - OIDA_SYMBOLS=GVL.RoomTemp:REAL:21.5,GVL.Setpoint:REAL:22.0,GVL.FanSpeed:INT:60,GVL.HeatCall:BOOL:0
+    restart: unless-stopped
+    networks:
+      ics-network:
+        ipv4_address: 172.30.0.52
+    healthcheck:
+      test: ["CMD", "dotnet", "OidaTwinCatMock.dll", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    labels:
+      oida.group: "ads"
+      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - HVAC controller profile, AmsNetId 172.30.0.52.1.1, AMS port 851, state CONFIG"
+      oida.ports: "48902"
 
   ethernetip-mock:
     build:
@@ -223,7 +293,7 @@ services:
   # Conpot BACnet/IP Honeypot (Honeynet Project)
   bacnet-conpot:
     build:
-      context: ./services/conpot-bacnet
+      context: ./services/bacnet/mock/conpot
       dockerfile: Dockerfile
     image: ghcr.io/f0rw4rd/oida-mock-conpot-bacnet:latest
     container_name: bacnet-conpot-server
@@ -246,6 +316,105 @@ services:
       oida.group: "bacnet"
       oida.description: "Conpot BACnet/IP honeypot, Alerton VAV-DD controller sim, device 36113, WhoIs/ReadProperty"
       oida.ports: "47812/udp"
+
+  # Real bacnet-stack (Steve Karg) bacserv server - genuine BACnet/IP software,
+  # built from source at tag bacnet-stack-1.4.4 (no binaries committed).
+  # Three profiles (rtu/building/vav) share one image, differ by device
+  # instance, name, vendor id, model, and object inventory.
+  # NOTE: bacpypes3 Who-Is auto-discovery is broadcast-based and does not
+  # traverse Docker's UDP port-map; scan with `--device-id <instance>`.
+  bacnet-realstack-rtu:
+    build:
+      context: ./services/bacnet/mock/realstack
+      dockerfile: Dockerfile.bacnet-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+    image: ghcr.io/f0rw4rd/oida-mock-bacnet-realstack:latest
+    container_name: bacnet-realstack-rtu
+    hostname: bacnet-rtu
+    ports:
+      - "47820:47808/udp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=rtu
+      - BACNET_DEVICE_INSTANCE=11001
+      - BACNET_DEVICE_NAME=RTU-Compact-A
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-u", "localhost", "47808"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnet"
+      oida.group: "bacnet"
+      oida.description: "Real bacnet-stack 1.4.4 bacserv, RTU profile, device 11001, vendor 260, small AI/AO/BI/BO point set"
+      oida.ports: "47820/udp"
+
+  bacnet-realstack-building:
+    build:
+      context: ./services/bacnet/mock/realstack
+      dockerfile: Dockerfile.bacnet-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+    image: ghcr.io/f0rw4rd/oida-mock-bacnet-realstack:latest
+    container_name: bacnet-realstack-building
+    hostname: bacnet-building
+    ports:
+      - "47821:47808/udp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=building
+      - BACNET_DEVICE_INSTANCE=22002
+      - BACNET_DEVICE_NAME=Building-Supervisor
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-u", "localhost", "47808"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnet"
+      oida.group: "bacnet"
+      oida.description: "Real bacnet-stack 1.4.4 bacserv, large building-controller profile, device 22002, vendor 15, 12 AI / 8 AO / 10 BI / 6 BO + setpoints"
+      oida.ports: "47821/udp"
+
+  bacnet-realstack-vav:
+    build:
+      context: ./services/bacnet/mock/realstack
+      dockerfile: Dockerfile.bacnet-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+    image: ghcr.io/f0rw4rd/oida-mock-bacnet-realstack:latest
+    container_name: bacnet-realstack-vav
+    hostname: bacnet-vav
+    ports:
+      - "47822:47808/udp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=vav
+      - BACNET_DEVICE_INSTANCE=33003
+      - BACNET_DEVICE_NAME=VAV-Box-12
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-u", "localhost", "47808"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnet"
+      oida.group: "bacnet"
+      oida.description: "Real bacnet-stack 1.4.4 bacserv, VAV terminal-unit profile, device 33003, vendor 5, COV-friendly AV/MSV present-values"
+      oida.ports: "47822/udp"
 
   # ============================================================================
   # CoAP Mock Server
@@ -551,7 +720,7 @@ services:
   # Custom template: 8 data categories (Type 1/3/11/13/45/46/49/50), COA=1
   iec104-conpot:
     build:
-      context: ./services/conpot-iec104
+      context: ./services/iec104/mock/conpot
       dockerfile: Dockerfile
     image: ghcr.io/f0rw4rd/oida-mock-conpot-iec104:latest
     container_name: iec104-conpot-server
@@ -610,7 +779,7 @@ services:
   # Conpot S7comm Honeypot (Honeynet Project)
   s7comm-conpot:
     build:
-      context: ./services/conpot-s7
+      context: ./services/s7comm/mock/conpot
       dockerfile: Dockerfile
     image: ghcr.io/f0rw4rd/oida-mock-conpot-s7:latest
     container_name: s7comm-conpot-server
@@ -1094,7 +1263,7 @@ services:
       - DNP3_SOFTWARE_VERSION=2.1.0
       - DNP3_HARDWARE_VERSION=Rev-A
     volumes:
-      - ./services/dnp3-certs:/app/certs
+      - ./services/dnp3/mock/certs:/app/certs
     restart: unless-stopped
     networks:
       - ics-network
@@ -1335,7 +1504,7 @@ services:
   # Conpot EtherNet/IP Honeypot (Honeynet Project)
   ethernetip-conpot:
     build:
-      context: ./services/conpot-enip
+      context: ./services/ethernetip/mock/conpot
       dockerfile: Dockerfile
     image: ghcr.io/f0rw4rd/oida-mock-conpot-enip:latest
     container_name: ethernetip-conpot-server
@@ -1391,6 +1560,68 @@ services:
       oida.group: "hart"
       oida.description: "HART-IP primary master, UDP + TCP, universal commands, no auth"
       oida.ports: "5094/udp, 5094/tcp"
+
+  # FieldComm hipserver + hipflowapp, compiled HART 5 (universal rev 5, short
+  # Cmd 0 identity, tag FLOW5DEV). Built from source, no committed binaries.
+  hart-hipflow-hart5:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipflow
+      args:
+        HART_VERSION: "5"
+        DEVICE_TAG: "FLOW5DEV"
+    image: ghcr.io/f0rw4rd/oida-mock-hart-hipflow-hart5:latest
+    container_name: hart-hipflow-hart5
+    hostname: hart-hipflow-hart5
+    ports:
+      - "5100:5094/udp"   # HART-IP UDP
+      - "5100:5094/tcp"   # HART-IP TCP (same port per TP10300)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP FieldComm hipflowapp flow device, HART 5 (universal rev 5), mfr 0xF9 type 0xFD tag FLOW5DEV, PV mass-flow kg/h, no auth"
+      oida.ports: "5100/udp, 5100/tcp"
+
+  # FieldComm hipserver + hipflowapp, compiled HART 7 (universal rev 7, extended
+  # Cmd 0 identity with profile/device-var-count, tag FLOW7DEV).
+  hart-hipflow-hart7:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipflow
+      args:
+        HART_VERSION: "7"
+        DEVICE_TAG: "FLOW7DEV"
+    image: ghcr.io/f0rw4rd/oida-mock-hart-hipflow-hart7:latest
+    container_name: hart-hipflow-hart7
+    hostname: hart-hipflow-hart7
+    ports:
+      - "5102:5094/udp"   # HART-IP UDP
+      - "5102:5094/tcp"   # HART-IP TCP (same port per TP10300)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP FieldComm hipflowapp flow device, HART 7 (universal rev 7), mfr 0xF9 type 0xFD tag FLOW7DEV, PV mass-flow kg/h, no auth"
+      oida.ports: "5102/udp, 5102/tcp"
 
   hart-tls:
     build:
@@ -1821,6 +2052,64 @@ services:
       oida.description: "ASTM LIS data server (Cobas 8000 profile), accepts all connections, sample results"
       oida.ports: "1396"
 
+  astm-realstack-chemistry:
+    build:
+      context: ./services/astm/mock
+      dockerfile: Dockerfile.astm-real
+    image: ghcr.io/f0rw4rd/oida-mock-astm-real:latest
+    container_name: astm-realstack-chemistry
+    hostname: astm-chemistry
+    ports:
+      - "1397:15200"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ASTM_PORT=15200
+      - ASTM_INSTRUMENT=Roche-Cobas-8000
+      - ASTM_MODEL=c702-chemistry
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 15200), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "astm"
+      oida.description: "REAL ASTM LIS (python-astm, BSD, built from PyPI) - Roche Cobas 8000 chemistry analyzer profile"
+      oida.ports: "1397"
+
+  astm-realstack-hematology:
+    build:
+      context: ./services/astm/mock
+      dockerfile: Dockerfile.astm-real
+    image: ghcr.io/f0rw4rd/oida-mock-astm-real:latest
+    container_name: astm-realstack-hematology
+    hostname: astm-hematology-real
+    ports:
+      - "1398:15200"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ASTM_PORT=15200
+      - ASTM_INSTRUMENT=Sysmex-XN-1000
+      - ASTM_MODEL=XN-hematology
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 15200), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "astm"
+      oida.description: "REAL ASTM LIS (python-astm, BSD, built from PyPI) - Sysmex XN-1000 hematology analyzer profile"
+      oida.ports: "1398"
+
   # ============================================================================
   # OCPP (Open Charge Point Protocol) Mock CSMS
   # ============================================================================
@@ -1852,6 +2141,173 @@ services:
       oida.group: "ocpp"
       oida.description: "OCPP 1.6/2.0.1 CSMS, insecure ws://9000 + secure ws://9001 (CP001:SecureKey123)"
       oida.ports: "9000, 9001"
+
+  # ============================================================================
+  # SteVe (real OCPP 1.2/1.5/1.6 Central System / CSMS)
+  # GPL-3.0 — built from source at image-build time, NO binaries committed.
+  # See ./services/ocpp/steve/README.md for the license note + config matrix.
+  # One MariaDB backend + three SteVe app containers sharing one built image,
+  # differing only by runtime Spring -D overrides and per-config DB schema.
+  # ============================================================================
+
+  ocpp-steve-db:
+    image: mariadb:10.11.16
+    container_name: ocpp-steve-db
+    hostname: ocpp-steve-db
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=stevedb
+      - MYSQL_USER=steve
+      - MYSQL_PASSWORD=changeme
+      - TZ=+00:00
+    volumes:
+      - ocpp-steve-db-data:/var/lib/mysql
+      - ./services/ocpp/steve/initdb:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "SteVe OCPP CSMS MariaDB backend (steve:changeme), schemas: stevedb_open/registered/secure"
+      oida.ports: ""
+
+  # Config 1: OPEN — auto-registers unknown stations, accepts BootNotification
+  # from ANY chargeBoxId. ws:// on 8180.
+  ocpp-steve-open:
+    build:
+      context: ./services/ocpp/steve
+      dockerfile: Dockerfile.steve
+      args:
+        STEVE_TAG: steve-3.13.0
+    image: ghcr.io/f0rw4rd/oida-mock-ocpp-steve:latest
+    container_name: ocpp-steve-open
+    hostname: ocpp-steve-open
+    depends_on:
+      ocpp-steve-db:
+        condition: service_healthy
+    ports:
+      - "8180:8180"     # SteVe HTTP — web UI :/steve/manager, ws OCPP
+    environment:
+      - TZ=UTC
+      - BUILD_DB_SCHEMA=stevedb_open
+      - JAVA_OPTS=-Dspring.datasource.url=jdbc:mariadb://ocpp-steve-db:3306/stevedb_open
+        -Dserver.address=0.0.0.0 -Dserver.port=8180
+        -Dsteve.ocpp.auto-register-unknown-stations=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8180/steve/manager/signin || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "Real SteVe OCPP 1.6J CSMS (open), ws://8180/steve/websocket/CentralSystemService/<id>, auto-registers any CP, web UI admin:1234"
+      oida.ports: "8180"
+
+  # Config 2: REGISTERED-ONLY — rejects unknown chargeBoxIds (auto-register
+  # false). Only pre-registered (via web UI/API) charge boxes are accepted.
+  ocpp-steve-registered:
+    image: ghcr.io/f0rw4rd/oida-mock-ocpp-steve:latest
+    container_name: ocpp-steve-registered
+    hostname: ocpp-steve-registered
+    depends_on:
+      ocpp-steve-db:
+        condition: service_healthy
+      ocpp-steve-open:
+        condition: service_started
+    ports:
+      - "8181:8180"     # SteVe HTTP (registered-only)
+    environment:
+      - TZ=UTC
+      - BUILD_DB_SCHEMA=stevedb_registered
+      - JAVA_OPTS=-Dspring.datasource.url=jdbc:mariadb://ocpp-steve-db:3306/stevedb_registered
+        -Dserver.address=0.0.0.0 -Dserver.port=8180
+        -Dsteve.ocpp.auto-register-unknown-stations=false
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8180/steve/manager/signin || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "Real SteVe OCPP 1.6J CSMS (registered-only), ws://8181/steve/..., rejects unknown CP (auto-register off), web UI admin:1234"
+      oida.ports: "8181"
+
+  # Config 3: SECURE — HTTPS/WSS with a self-signed PKCS12 keystore generated
+  # at container start; rejects unknown chargeBoxIds. wss:// on 8543.
+  ocpp-steve-secure:
+    image: ghcr.io/f0rw4rd/oida-mock-ocpp-steve:latest
+    container_name: ocpp-steve-secure
+    hostname: ocpp-steve-secure
+    depends_on:
+      ocpp-steve-db:
+        condition: service_healthy
+      ocpp-steve-open:
+        condition: service_started
+    ports:
+      - "8543:8443"     # SteVe HTTPS — wss OCPP + web UI over TLS
+    environment:
+      - TZ=UTC
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -e
+        KS=/tmp/steve-keystore.p12
+        if [ ! -f "$$KS" ]; then
+          keytool -genkeypair -alias steve -keyalg RSA -keysize 2048 \
+            -validity 3650 -storetype PKCS12 -keystore "$$KS" \
+            -storepass changeit -keypass changeit \
+            -dname "CN=ocpp-steve-secure, O=OIDA, C=DE" \
+            -ext "SAN=dns:ocpp-steve-secure,dns:localhost,ip:127.0.0.1"
+        fi
+        dockerize -wait tcp://ocpp-steve-db:3306 -timeout 120s
+        ./mvnw --batch-mode clean package -Pdocker,mariadb \
+          -Ddb.ip=ocpp-steve-db -Ddb.port=3306 -Ddb.schema=stevedb_secure \
+          -Ddb.user=steve -Ddb.password=changeme \
+          -Djdk.tls.client.protocols="TLSv1,TLSv1.1,TLSv1.2"
+        exec java -XX:MaxRAMPercentage=75 \
+          -Dspring.datasource.url=jdbc:mariadb://ocpp-steve-db:3306/stevedb_secure \
+          -Dserver.address=0.0.0.0 \
+          -Dserver.port=8443 \
+          -Dhttp.enabled=false \
+          -Dserver.ssl.enabled=true \
+          -Dserver.ssl.key-store-type=PKCS12 \
+          -Dserver.ssl.key-store="$$KS" \
+          -Dserver.ssl.key-store-password=changeit \
+          -Dserver.ssl.key-alias=steve \
+          -Dsteve.ocpp.auto-register-unknown-stations=false \
+          -jar target/steve.war
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSk -o /dev/null https://localhost:8443/steve/manager/signin || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "Real SteVe OCPP 1.6J CSMS (secure/TLS), wss://8543/steve/..., self-signed keystore, rejects unknown CP, web UI admin:1234"
+      oida.ports: "8543"
 
   # ============================================================================
   # CAN Bus Mock (UDP multicast — no kernel modules needed)
@@ -1891,6 +2347,100 @@ services:
       oida.group: "can"
       oida.description: "CAN bus gateway sim, UDP multicast 239.0.0.1:43113, host networking"
       oida.ports: "43113/udp"
+
+  # ----------------------------------------------------------------------------
+  # Real CANopen nodes (genuine canopen.LocalNode stack on SocketCAN vcan0).
+  #
+  # Unlike can-mock (a UDP-multicast SIMULATION), these run an actual CiA-301
+  # CANopen device: heartbeat producer + SDO server answering identity-object
+  # uploads (0x1000/0x1008/0x1018/...). Each service creates its OWN vcan0 in
+  # its OWN network namespace at start-up, so it needs NET_ADMIN (privileged
+  # here for portability; cap_add: [NET_ADMIN] also works on most hosts).
+  #
+  # CAN is L2 / NON-ROUTABLE: there are no TCP/UDP ports to publish, and a
+  # scanner CANNOT reach the bus over ics-network. To scan, share the node's
+  # netns:  docker run --rm --network container:canopen-401-io \
+  #             -v $PWD:/oida -w /oida python:3.11-slim \
+  #             sh -c 'pip install -e ".[can,fuzz]" && oida can vcan0 --canopen-scan'
+  # Two co-resident nodes on one bus: start canopen-402-drive with
+  #   network_mode: "container:canopen-401-io"  (already wired below).
+  # ----------------------------------------------------------------------------
+  canopen-401-io:
+    build:
+      context: ./services/can/mock
+      dockerfile: Dockerfile.canopen
+    image: ghcr.io/f0rw4rd/oida-mock-canopen:latest
+    container_name: canopen-401-io
+    hostname: canopen-401-io
+    privileged: true              # NET_ADMIN to create/up vcan0; cap_add also works
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - CANOPEN_CHANNEL=vcan0
+      - CANOPEN_NODE_ID=1
+      - CANOPEN_PROFILE=401       # CiA-401 Generic I/O -> device type 0x00000191
+      - CANOPEN_VENDOR_ID=0x000002AA
+      - CANOPEN_PRODUCT_CODE=0x00000401
+      - CANOPEN_REVISION=0x00010003
+      - CANOPEN_SERIAL=0x10000001
+      - CANOPEN_DEVICE_NAME=OIDA-IO-401
+      - CANOPEN_HW_VERSION=HW-1.0
+      - CANOPEN_SW_VERSION=IO-2.1.0
+      - CANOPEN_HEARTBEAT_MS=1000
+    restart: unless-stopped
+    profiles: ["can", "canopen"]
+    healthcheck:
+      test: ["CMD-SHELL", "ip link show vcan0 | grep -q UP && pgrep -f canopen_node.py >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+    labels:
+      oida.protocol: "can"
+      oida.group: "can"
+      oida.description: "Real CANopen node, node-id 1, CiA-401 Generic I/O, vcan0 (SocketCAN). Scan via shared netns: --network container:canopen-401-io"
+      oida.ports: "none (L2 CAN bus, vcan0)"
+
+  canopen-402-drive:
+    build:
+      context: ./services/can/mock
+      dockerfile: Dockerfile.canopen
+    image: ghcr.io/f0rw4rd/oida-mock-canopen:latest
+    container_name: canopen-402-drive
+    # Share canopen-401-io's netns so BOTH nodes sit on the SAME vcan0 bus and
+    # a single `oida can vcan0 --canopen-scan` discovers both. The link is
+    # already created+UP by canopen-401-io; this container only adds node 4.
+    network_mode: "container:canopen-401-io"
+    depends_on:
+      canopen-401-io:
+        condition: service_healthy
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - CANOPEN_CHANNEL=vcan0
+      - CANOPEN_NODE_ID=4
+      - CANOPEN_PROFILE=402       # CiA-402 Drives/Motion -> device type 0x00000192
+      - CANOPEN_VENDOR_ID=0x0000012D
+      - CANOPEN_PRODUCT_CODE=0x00040200
+      - CANOPEN_REVISION=0x00020001
+      - CANOPEN_SERIAL=0x40000007
+      - CANOPEN_DEVICE_NAME=OIDA-DRIVE-402
+      - CANOPEN_HW_VERSION=DRV-HW-2.0
+      - CANOPEN_SW_VERSION=DRV-3.4.1
+      - CANOPEN_HEARTBEAT_MS=1000
+    restart: unless-stopped
+    profiles: ["can", "canopen"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f canopen_node.py >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+    labels:
+      oida.protocol: "can"
+      oida.group: "can"
+      oida.description: "Real CANopen node, node-id 4, CiA-402 Drives/Motion, co-resident on canopen-401-io's vcan0 bus"
+      oida.ports: "none (L2 CAN bus, shared vcan0)"
 
   ethercat-slave:
     build:
@@ -1959,24 +2509,105 @@ services:
       oida.description: "EtherCAT slave with veth pair, bridge networking, self-contained testing"
       oida.ports: "L2"
 
-  profinet-device:
+  # ── EtherCAT slaves: REAL software slave simulator (leducp/KickCAT) ───────
+  #
+  # Replaces the hand-written ethercat_slave.c sim with leducp/KickCAT's
+  # `network_simulator`, built FROM SOURCE (no committed binaries; CeCILL-C,
+  # attribution + LICENSE bundled at /opt/oida/KickCAT-LICENSE in the image).
+  # KickCAT is a real EtherCAT Slave Controller emulator (EmulatedESC: ESC
+  # registers, SyncManagers, FMMUs, EEPROM/SII compiled from ESI XML, CoE
+  # mailbox, DC clock). Two DISTINCT slaves are daisy-chained on the bus, each
+  # built from its own vendor ESI XML:
+  #   Slave 1  EVS-NET-01  vendor 0x029C (INGENIA-CAT)  product 0x03B11002  rev 0x00050005  (DS402 servo drive, 11 in / 11 out)
+  #   Slave 2  Relax       vendor 0x06A5 (Wandercraft)  product 0x00B0CAD0  rev 0x00000001  (XMC4800 dev board, 2 in / 0 out)
+  #
+  # WHY IT IS SOEM-DISCOVERABLE (the whole point -- `oida ethercat` is a SOEM
+  # master via pysoem): given a PLAIN interface name (not "tap:server"),
+  # network_simulator opens a real PF_PACKET/SOCK_RAW socket on that Linux
+  # interface (EtherType 0x88A4) -- the same L2 mechanism SOEM uses. The
+  # entrypoint creates an internal veth pair (ecatsimA <-> ecatsimB); the
+  # simulator binds ecatsimA, and any SOEM master in this container's netns
+  # targets ecatsimB.
+  #
+  # REACHABILITY (verified end-to-end with the REAL `oida ethercat` CLI):
+  #   EtherCAT is raw Layer 2, non-routable -- NO TCP/UDP ports. The slaves are
+  #   reachable ONLY inside this container's network namespace. Scan from the
+  #   SAME netns, either:
+  #     (a) sidecar sharing the netns:
+  #           docker run --rm --network container:ethercat-kickcat-slaves \
+  #             --cap-add NET_RAW --cap-add NET_ADMIN <oida-image> \
+  #             oida ethercat ecatsimB
+  #     (b) or run oida inside this container's netns however you prefer.
+  #   Verified output: 2 slaves, distinct vendor/product/revision + PDO layouts.
+  #   Requires CAP_NET_RAW (raw socket) + CAP_NET_ADMIN (veth + promisc).
+  ethercat-kickcat-slaves:
     build:
-      context: ./services/profinet/mock
-      dockerfile: Dockerfile.profinet
-    image: ghcr.io/f0rw4rd/oida-mock-profinet:latest
-    container_name: profinet-pnet-device
-    hostname: profinet-device
-    network_mode: host
+      context: ./services/ethercat/mock
+      dockerfile: Dockerfile.ethercat-kickcat
+    image: ghcr.io/f0rw4rd/oida-mock-ethercat-kickcat:latest
+    container_name: ethercat-kickcat-slaves
+    hostname: ethercat-kickcat
     cap_add:
       - NET_RAW
       - NET_ADMIN
     environment:
       - TZ=UTC
-      - PNET_STATION_NAME=pnmock-device
+      - ECAT_IF_SLAVE=ecatsimA
+      - ECAT_IF_SCAN=ecatsimB
+    restart: unless-stopped
+    profiles: ["ethercat"]
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.protocol: "ethercat"
+      oida.group: "ethercat"
+      oida.description: "Real software EtherCAT slaves (KickCAT network_simulator, source-built), 2 distinct identities (Ingenia EVS-NET-01 + Infineon XMC4800 Relax), raw L2 0x88A4, SOEM/pysoem-discoverable via internal veth pair (scan ecatsimB from same netns)"
+      oida.ports: "L2"
+
+  # ── PROFINET IO devices: real, source-built p-net (rtlabs) stack ──────────
+  #
+  # Two DISTINCT configs from ONE Dockerfile. vendor_id / device_id are baked
+  # at IMAGE-BUILD time via build args (the GSDML header #ifndef-guards them so
+  # -DAPP_GSDML_* wins), therefore each config needs its OWN image tag -- unlike
+  # the bacnet-realstack pattern where variants differ only at runtime. Station
+  # name stays runtime via PNET_STATION_NAME (-s).
+  #
+  # REACHABILITY (verified on the wire with tcpdump + tshark + the real OIDA
+  # scanner): a Docker user-defined bridge (ics-network) FORWARDS the DCP
+  # Identify-All multicast (dst 01:0e:cf:00:00:00, EtherType 0x8892) between
+  # sibling containers. A scanner container on ics-network -- or a host-side
+  # `sudo oida profinet <docker-bridge-iface>` -- discovers BOTH devices with a
+  # single Identify-All. No veth/netns/macvlan tricks needed.
+  #
+  # Config A: Siemens ET 200SP  -- vendor 0x002A (SIEMENS AG), device 0x0301
+  profinet-siemens-et200sp:
+    build:
+      context: ./services/profinet/mock
+      dockerfile: Dockerfile.profinet
+      args:
+        APP_VENDOR_ID: "0x002A"
+        APP_DEVICE_ID: "0x0301"
+    image: ghcr.io/f0rw4rd/oida-mock-profinet:siemens-et200sp
+    container_name: profinet-siemens-et200sp
+    hostname: profinet-siemens
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - PNET_STATION_NAME=siemens-et200sp
       - PNET_INTERFACE=eth0
       - PNET_VERBOSITY=2
     restart: unless-stopped
     profiles: ["profinet"]
+    networks:
+      - ics-network
     healthcheck:
       # No listening port (raw L2 device); health = the pn_dev process (PID 1)
       # is alive, which only happens once it has bound the interface.
@@ -1988,14 +2619,49 @@ services:
     labels:
       oida.protocol: "profinet"
       oida.group: "profinet"
-      oida.description: "PROFINET IO device sim, DCP discovery, raw L2 frames, host networking"
+      oida.description: "Real p-net PROFINET IO device, station siemens-et200sp, vendor 0x002A (SIEMENS AG) device 0x0301, DCP Identify-All over raw L2 (0x8892) on ics-network bridge"
+      oida.ports: "L2"
+
+  # Config B: Beckhoff EL6631   -- vendor 0x0120 (Beckhoff), device 0x0002
+  profinet-beckhoff-el6631:
+    build:
+      context: ./services/profinet/mock
+      dockerfile: Dockerfile.profinet
+      args:
+        APP_VENDOR_ID: "0x0120"
+        APP_DEVICE_ID: "0x0002"
+    image: ghcr.io/f0rw4rd/oida-mock-profinet:beckhoff-el6631
+    container_name: profinet-beckhoff-el6631
+    hostname: profinet-beckhoff
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - PNET_STATION_NAME=beckhoff-el6631
+      - PNET_INTERFACE=eth0
+      - PNET_VERBOSITY=2
+    restart: unless-stopped
+    profiles: ["profinet"]
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q pn_dev /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "profinet"
+      oida.group: "profinet"
+      oida.description: "Real p-net PROFINET IO device, station beckhoff-el6631, vendor 0x0120 (Beckhoff) device 0x0002, DCP Identify-All over raw L2 (0x8892) on ics-network bridge"
       oida.ports: "L2"
 
   goose-l2-publisher:
     build:
       context: ./services/goose/mock
-      dockerfile: Dockerfile.goose
-    image: ghcr.io/f0rw4rd/oida-mock-goose:latest
+      dockerfile: Dockerfile.goose-real
+    image: ghcr.io/f0rw4rd/oida-mock-goose-real:latest
     container_name: goose-l2-publisher
     hostname: goose-publisher
     network_mode: host
@@ -2006,18 +2672,19 @@ services:
       - TZ=UTC
       - GOOSE_INTERFACE=${GOOSE_INTERFACE:-eth0}
       - GOOSE_APPID=0x1000
-      - GOOSE_GOCB_REF=simpleIOGenericIO/LLN0$$GO$$gcb01
-      - GOOSE_DATASET_REF=simpleIOGenericIO/LLN0$$dataset1
-      - GOOSE_INTERVAL=1.0
-      - GOOSE_STATE_INTERVAL=10.0
+      - GOOSE_GOCB_REF=simpleIOGenericIO/LLN0$$GO$$gcbAnalogValues
+      - GOOSE_DATASET_REF=simpleIOGenericIO/LLN0$$AnalogValues
+      - GOOSE_GO_ID=OIDA-GOOSE-Analog
       - GOOSE_CONF_REV=1
+      - GOOSE_INTERVAL_MS=1000
+      - GOOSE_STATE_INTERVAL_MS=10000
+      - GOOSE_DST_LAST_OCTET=1
     restart: unless-stopped
     profiles: ["goose-l2"]
     healthcheck:
       # No listening port (raw L2 publisher); health = the publisher process
-      # (PID 1, the exec'd python3) is alive. It only reaches the loop after the
-      # raw socket binds, so this also catches an interface/bind failure.
-      test: ["CMD-SHELL", "grep -q python /proc/1/comm || exit 1"]
+      # (PID 1, the goose_publisher_real C binary) is alive past raw-socket bind.
+      test: ["CMD-SHELL", "grep -q goose /proc/1/comm || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -2025,7 +2692,43 @@ services:
     labels:
       oida.protocol: "goose"
       oida.group: "goose"
-      oida.description: "IEC 61850 GOOSE L2 publisher, multicast frames, host networking, requires root"
+      oida.description: "REAL IEC 61850 GOOSE publisher (libiec61850, GPLv3, built from source) - analog-values dataset, AppID 0x1000"
+      oida.ports: "L2"
+
+  goose-l2-publisher-breaker:
+    build:
+      context: ./services/goose/mock
+      dockerfile: Dockerfile.goose-real
+    image: ghcr.io/f0rw4rd/oida-mock-goose-real:latest
+    container_name: goose-l2-publisher-breaker
+    hostname: goose-publisher-breaker
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - GOOSE_INTERFACE=${GOOSE_INTERFACE:-eth0}
+      - GOOSE_APPID=0x2000
+      - GOOSE_GOCB_REF=simpleIOGenericIO/LLN0$$GO$$gcbBreaker
+      - GOOSE_DATASET_REF=simpleIOGenericIO/LLN0$$BreakerStatus
+      - GOOSE_GO_ID=OIDA-GOOSE-Breaker
+      - GOOSE_CONF_REV=2
+      - GOOSE_INTERVAL_MS=500
+      - GOOSE_STATE_INTERVAL_MS=5000
+      - GOOSE_DST_LAST_OCTET=2
+    restart: unless-stopped
+    profiles: ["goose-l2"]
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q goose /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.protocol: "goose"
+      oida.group: "goose"
+      oida.description: "REAL IEC 61850 GOOSE publisher (libiec61850, GPLv3, built from source) - breaker-status dataset, AppID 0x2000, 500ms retrans"
       oida.ports: "L2"
 
   # ============================================================================
@@ -2264,8 +2967,109 @@ services:
       start_period: 10s
     labels:
       oida.group: "fhir"
-      oida.description: "FHIR R4 REST API (no auth)"
+      oida.description: "FHIR R4 REST API simulation (Python stdlib, no auth)"
       oida.ports: "8081"
+
+  # ============================================================================
+  # HAPI FHIR JPA Server (REAL) - official hapiproject/hapi image (Apache-2.0)
+  # https://github.com/hapifhir/hapi-fhir-jpaserver-starter
+  # Genuine Spring-Boot FHIR server, embedded H2 (no external DB). Nothing is
+  # vendored - the official image is pulled at runtime; only mounted yaml config
+  # (./services/fhir/hapi/) is committed. CapabilityStatement at /fhir/metadata.
+  # ============================================================================
+
+  fhir-hapi-r4:
+    image: hapiproject/hapi:v8.6.5-1
+    container_name: fhir-hapi-r4-server
+    hostname: fhir-hapi-r4
+    ports:
+      - "8090:8080"     # FHIR R4 REST API (real HAPI JPA, permissive)
+    environment:
+      - TZ=UTC
+      # Additive: layer our overrides ON TOP of the image's bundled
+      # application.yaml (do NOT replace it - replacing drops keys the app
+      # needs and breaks bean wiring). Arg form passed as a Spring env override.
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:///configs/application.yaml
+    volumes:
+      - ./services/fhir/hapi/application-r4.yaml:/configs/application.yaml:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      # Image is distroless (only `java` is present - no curl/sh/wget), so this
+      # is a JVM-liveness check; the real /fhir/metadata round-trip is verified
+      # from the host. Same pattern as the knx-devices Java mock.
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    labels:
+      oida.group: "fhir"
+      oida.description: "HAPI FHIR JPA server (real, Apache-2.0), FHIR R4, embedded H2, permissive, no auth"
+      oida.ports: "8090"
+
+  fhir-hapi-r5:
+    image: hapiproject/hapi:v8.6.5-1
+    container_name: fhir-hapi-r5-server
+    hostname: fhir-hapi-r5
+    ports:
+      - "8091:8080"     # FHIR R5 REST API (real HAPI JPA, permissive)
+    environment:
+      - TZ=UTC
+      # Additive: layer our overrides ON TOP of the image's bundled
+      # application.yaml (do NOT replace it - replacing drops keys the app
+      # needs and breaks bean wiring). Arg form passed as a Spring env override.
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:///configs/application.yaml
+    volumes:
+      - ./services/fhir/hapi/application-r5.yaml:/configs/application.yaml:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      # Image is distroless (only `java` is present - no curl/sh/wget), so this
+      # is a JVM-liveness check; the real /fhir/metadata round-trip is verified
+      # from the host. Same pattern as the knx-devices Java mock.
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    labels:
+      oida.group: "fhir"
+      oida.description: "HAPI FHIR JPA server (real, Apache-2.0), FHIR R5, embedded H2, permissive, no auth"
+      oida.ports: "8091"
+
+  fhir-hapi-r4-strict:
+    image: hapiproject/hapi:v8.6.5-1
+    container_name: fhir-hapi-r4-strict-server
+    hostname: fhir-hapi-r4-strict
+    ports:
+      - "8092:8080"     # FHIR R4 REST API (real HAPI JPA, validating/strict)
+    environment:
+      - TZ=UTC
+      # Additive: layer our overrides ON TOP of the image's bundled
+      # application.yaml (do NOT replace it - replacing drops keys the app
+      # needs and breaks bean wiring). Arg form passed as a Spring env override.
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:///configs/application.yaml
+    volumes:
+      - ./services/fhir/hapi/application-r4-strict.yaml:/configs/application.yaml:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      # Image is distroless (only `java` is present - no curl/sh/wget), so this
+      # is a JVM-liveness check; the real /fhir/metadata round-trip is verified
+      # from the host. Same pattern as the knx-devices Java mock.
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    labels:
+      oida.group: "fhir"
+      oida.description: "HAPI FHIR JPA server (real, Apache-2.0), FHIR R4, request+response validation, external refs blocked"
+      oida.ports: "8092"
 
   # ============================================================================
   # Orthanc PACS Server (Full-Featured DICOM)
@@ -2279,7 +3083,7 @@ services:
       - "4242:4242"       # DICOM (standard port 104 equivalent)
       - "8042:8042"       # Web UI / REST API
     volumes:
-      - ./services/orthanc/orthanc.json:/etc/orthanc/orthanc.json:ro
+      - ./services/dicom/mock/orthanc.json:/etc/orthanc/orthanc.json:ro
       - orthanc-data:/var/lib/orthanc/db
     environment:
       - TZ=UTC
@@ -2345,7 +3149,7 @@ services:
       - DATABASE_PASSWORD=mirth
       - VMOPTIONS=-Xmx512m
     volumes:
-      - ./services/mirth/channels:/opt/connect/channels:ro
+      - ./services/hl7/mock/mirth/channels:/opt/connect/channels:ro
       - mirth-appdata:/opt/connect/appdata
     restart: unless-stopped
     networks:
@@ -2373,3 +3177,4 @@ volumes:
   orthanc-data:
   mirth-db-data:
   mirth-appdata:
+  ocpp-steve-db-data:

@@ -1,0 +1,105 @@
+# EtherCAT Mock Slaves -- REAL software slave simulator (leducp/KickCAT)
+# =============================================================================
+# Builds leducp/KickCAT's `network_simulator` FROM SOURCE (no committed
+# binaries). KickCAT ships a real EtherCAT Slave Controller emulator
+# (EmulatedESC: ESC registers, SyncManagers, FMMUs, EEPROM/SII compiled from
+# ESI XML, CoE mailbox, DC clock) plus a frame-routing fabric (EmulatedNetwork).
+#
+# Why this works against OIDA: `oida ethercat` is a SOEM master (via pysoem).
+# When network_simulator is given a PLAIN interface name (NOT "tap:server"),
+# its createSockets() helper instantiates KickCAT's raw `Socket`, which opens a
+# PF_PACKET/SOCK_RAW socket on a real Linux interface (lib/src/OS/Linux/
+# Socket.cc, EtherType 0x88A4) -- the same L2 mechanism SOEM uses. A foreign
+# SOEM master on the peer end of a veth pair therefore enumerates the slaves.
+# Verified: `oida ethercat <peer>` reports both slaves with distinct
+# vendor/product/revision and PDO layouts.
+#
+# Upstream:  https://github.com/leducp/KickCAT  (pinned commit below)
+# License:   CeCILL-C (OSI-approved, GPL-compatible). The full LICENSE is
+#            copied into the runtime image at /opt/oida/KickCAT-LICENSE.
+#            SPDX-License-Identifier: CECILL-C
+# Attribution: KickCAT (c) its authors; see the bundled LICENSE. This image
+#            redistributes an unmodified source build of network_simulator.
+#
+# Build deps (network_simulator only): nlohmann-json3-dev, libtinyxml2-dev
+#   (ESI parser) and p-ranav/argparse (header-only, built+installed from a
+#   pinned release tag because Debian bookworm has no libargparse-dev).
+#
+# Reachability: EtherCAT is raw Layer 2, non-routable, NO TCP/UDP ports. The
+#   simulated slaves live only inside this container's network namespace on an
+#   internal veth pair. Scan from the SAME netns:
+#       docker exec ethercat-kickcat-slaves oida ethercat ecatsimB
+#   Requires CAP_NET_RAW (raw socket) + CAP_NET_ADMIN (veth + promisc).
+# =============================================================================
+
+# --- Build stage ---------------------------------------------------------
+FROM debian:bookworm-slim AS builder
+
+ARG KICKCAT_COMMIT=bf87d384850f9b04d58488e7acb65d0c1e3aa103
+ARG ARGPARSE_TAG=v3.1
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        g++ cmake make git ca-certificates \
+        nlohmann-json3-dev libtinyxml2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# p-ranav/argparse (header-only) -- install its CMake config from a pinned tag
+# so KickCAT's `find_package(argparse CONFIG REQUIRED)` resolves.
+RUN git clone --depth 1 --branch "${ARGPARSE_TAG}" \
+        https://github.com/p-ranav/argparse.git /tmp/argparse \
+    && cmake -S /tmp/argparse -B /tmp/argparse/build \
+        -DARGPARSE_BUILD_TESTS=OFF -DARGPARSE_BUILD_SAMPLES=OFF \
+    && cmake --install /tmp/argparse/build \
+    && rm -rf /tmp/argparse
+
+# KickCAT: build ONLY the network_simulator target (no master/slave examples,
+# no tools, no GUIs, no unit tests -> minimal dependency surface).
+RUN git clone https://github.com/leducp/KickCAT.git /opt/KickCAT \
+    && cd /opt/KickCAT \
+    && git checkout "${KICKCAT_COMMIT}" \
+    && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_MASTER_EXAMPLES=OFF \
+        -DBUILD_SLAVE_EXAMPLES=OFF \
+        -DBUILD_UNIT_TESTS=OFF \
+        -DBUILD_SIMULATION=ON \
+        -DBUILD_TOOLS=OFF \
+        -DENABLE_ESI_PARSER=ON \
+        -DKICKCAT_INSTALL=OFF \
+    && cmake --build build --target network_simulator -j"$(nproc)" \
+    && strip build/simulation/network_simulator
+
+# --- Runtime stage -------------------------------------------------------
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        iproute2 \
+        procps \
+        libtinyxml2-9 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/KickCAT/build/simulation/network_simulator \
+        /usr/local/bin/network_simulator
+COPY --from=builder /opt/KickCAT/LICENSE /opt/oida/KickCAT-LICENSE
+RUN chmod +x /usr/local/bin/network_simulator
+
+# Slave configs + their ESI XML device descriptions (two DISTINCT identities).
+COPY kickcat/slave_configs/ /opt/oida/slave_configs/
+
+# Entrypoint + healthcheck
+COPY kickcat/entrypoint.sh /entrypoint.sh
+COPY kickcat/healthcheck.sh /healthcheck.sh
+RUN chmod +x /entrypoint.sh /healthcheck.sh
+
+# EtherCAT uses EtherType 0x88A4 (Layer 2) -- no TCP/UDP ports to expose.
+# CAP_NET_RAW   : PF_PACKET / SOCK_RAW socket for the simulator.
+# CAP_NET_ADMIN : create the internal veth pair + set promisc.
+ENV ECAT_IF_SLAVE="ecatsimA"
+ENV ECAT_IF_SCAN="ecatsimB"
+
+LABEL oida.protocol="ethercat"
+LABEL oida.group="ethercat"
+LABEL oida.description="Real software EtherCAT slaves (KickCAT network_simulator), 2 distinct identities, raw L2 0x88A4, SOEM-discoverable"
+
+ENTRYPOINT ["/entrypoint.sh"]

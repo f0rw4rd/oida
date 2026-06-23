@@ -6,7 +6,7 @@ Uses structured JSON log assertions for precise validation.
 
 Mock Server Data (from docker/mocks/services/knx/):
   Calimero KNXnet/IP Server:
-    Server Name:          "msf-ics-knx" / friendly "MSF-ICS KNX Mock Server"
+    Server Name:          "oida-knx" / friendly "OIDA KNX Mock Server"
     Individual Address:   1.1.0
     Additional Addresses: 1.1.10 - 1.1.20 (11 tunneling addresses)
     Medium:               PL110
@@ -117,8 +117,8 @@ from .conftest import MOCK_HOST
 # ---------------------------------------------------------------------------
 # Known Mock Data Constants (from Calimero server-config.xml)
 # ---------------------------------------------------------------------------
-MOCK_SERVER_NAME = "msf-ics-knx"
-MOCK_FRIENDLY_NAME = "msf-ics knx mock server"
+MOCK_SERVER_NAME = "oida-knx"
+MOCK_FRIENDLY_NAME = "oida knx mock server"
 MOCK_INDIVIDUAL_ADDR = "1.1.0"
 MOCK_MEDIUM = "pl110"
 MOCK_KNX_PORT = 3671
@@ -227,7 +227,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
                 "gateway",
                 "1.1.0",
                 "searchresponse",
-                "msf-ics",
+                "oida",
                 "knx/ip",
                 "tunneling",
                 "tunnelling",
@@ -264,7 +264,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
                 "tunneling",
                 "routing",
                 "1.1.0",
-                "msf-ics",
+                "oida",
             ]
         ), f"Expected gateway discovery results in output, got: {text[:500]}"
 
@@ -1663,7 +1663,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
                 "gateway",
                 "knx",
                 "1.1.0",
-                "msf-ics",
+                "oida",
                 "tunnelling",
                 "tunneling",
                 "routing",

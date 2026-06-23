@@ -83,6 +83,8 @@ MANIFEST
 
 # Unit test / coverage reports
 htmlcov/
+# Scanner/test output artifacts (e.g. DICOM C-GET/C-STORE retrievals written to cwd)
+dicom_output/
 .tox/
 .nox/
 .coverage
@@ -90,6 +92,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 .hypothesis/
 .pytest_cache/

@@ -277,6 +277,14 @@ markers = [
 
 [tool.coverage.run]
 source = ["oida"]
+# parallel + relative_files let the three test lanes (unit / integration /
+# coverage), each run as a SEPARATE pytest invocation with its own xdist
+# workers, write uniquely-suffixed .coverage.* files that `coverage combine`
+# merges into one total. relative_files keeps paths comparable when the
+# integration lane runs mocks from a different CWD (else combine double-counts).
+# Driven by `scripts/run-all-tests.sh --coverage`.
+parallel = true
+relative_files = true
 omit = [
     "*/tests/*",
     "*/test_*",

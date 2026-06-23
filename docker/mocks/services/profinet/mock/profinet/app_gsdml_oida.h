@@ -27,12 +27,20 @@ extern "C" {
 
 /* GSDML tag: VendorID
  * Using PROFINET test vendor ID range.
- * Real Siemens = 0x002A, Beckhoff = 0x0004, Phoenix = 0x0119
- * We use rt-labs default for compatibility with the sample GSDML file. */
+ * Real Siemens = 0x002A, Beckhoff = 0x0120, Phoenix = 0x0119
+ * We use rt-labs default for compatibility with the sample GSDML file.
+ *
+ * Wrapped in #ifndef so a compile-time -DAPP_GSDML_VENDOR_ID=0x002A
+ * (injected via CMAKE_C_FLAGS at image build time) overrides it WITHOUT
+ * editing this source. See Dockerfile.profinet ARG APP_VENDOR_ID. */
+#ifndef APP_GSDML_VENDOR_ID
 #define APP_GSDML_VENDOR_ID 0x0493
+#endif
 
-/* GSDML tag: DeviceID */
+/* GSDML tag: DeviceID (override via -DAPP_GSDML_DEVICE_ID=...) */
+#ifndef APP_GSDML_DEVICE_ID
 #define APP_GSDML_DEVICE_ID 0x0002
+#endif
 
 /* Used in DCP communication - OEM identification */
 #define APP_GSDML_OEM_VENDOR_ID 0xcafe
@@ -48,7 +56,9 @@ extern "C" {
 #define APP_GSDML_PROFILE_SPEC_TYPE   0x5678
 #define APP_GSDML_IM_REVISION_COUNTER 0
 
+#ifndef APP_GSDML_EXAMPLE_SERIAL_NUMBER
 #define APP_GSDML_EXAMPLE_SERIAL_NUMBER "OIDA-001"
+#endif
 
 /* I&M1 initial values */
 #define APP_GSDML_TAG_FUNCTION "OIDA Mock Device"
@@ -62,10 +72,14 @@ extern "C" {
    (PNET_SUPPORTED_IM1 | PNET_SUPPORTED_IM2 | PNET_SUPPORTED_IM3)
 
 /* GSDML tag: OrderNumber */
+#ifndef APP_GSDML_ORDER_ID
 #define APP_GSDML_ORDER_ID "OIDA-PN-DEV-001"
+#endif
 
 /* GSDML tag: ModuleInfo / Name */
+#ifndef APP_GSDML_PRODUCT_NAME
 #define APP_GSDML_PRODUCT_NAME "OIDA PROFINET IO Device"
+#endif
 
 /* GSDML tag: MinDeviceInterval - 1 ms (32 * 31.25us) */
 #define APP_GSDML_MIN_DEVICE_INTERVAL 32

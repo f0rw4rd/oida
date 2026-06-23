@@ -7,11 +7,11 @@ uses raw Layer 2 Ethernet (EtherType 0x88A4), there is no TCP port to mock via
 Docker -- we must patch pysoem calls directly.
 
 Mock Data (matching docker/mocks/services/ethercat_slave.c):
-  Vendor ID:      0x000003E7 (999 = MSF-ICS Mock)
+  Vendor ID:      0x000003E7 (999 = OIDA Mock)
   Product Code:   0x00001001
   Revision:       0x00010000
   Serial Number:  0x12345678
-  Device Name:    "MSF-ICS Mock EtherCAT Slave"
+  Device Name:    "OIDA Mock EtherCAT Slave"
   States:         PRE-OP (0x02), SAFE-OP (0x04)
   CoE objects:    Device Type (0x1000), Error Register (0x1001),
                   Device Name (0x1008), HW Version (0x1009),
@@ -44,7 +44,7 @@ MOCK_VENDOR_ID = 0x000003E7
 MOCK_PRODUCT_CODE = 0x00001001
 MOCK_REVISION = 0x00010000
 MOCK_SERIAL_NUMBER = 0x12345678
-MOCK_DEVICE_NAME = "MSF-ICS Mock EtherCAT Slave"
+MOCK_DEVICE_NAME = "OIDA Mock EtherCAT Slave"
 MOCK_HW_VERSION = "1.0.0"
 MOCK_FW_VERSION = "2.1.0"
 MOCK_FOE_FIRMWARE_SIZE = 512
@@ -119,7 +119,7 @@ def _build_eeprom_image():
 
     # --- STRINGS category (type 10) ---
     strings_payload = bytearray()
-    test_strings = [MOCK_DEVICE_NAME, "MSF-ICS", "EK-Mock-0001"]
+    test_strings = [MOCK_DEVICE_NAME, "OIDA", "EK-Mock-0001"]
     strings_payload.append(len(test_strings))
     for s in test_strings:
         encoded = s.encode("ascii")
@@ -302,7 +302,7 @@ def _make_mock_slave(
 def _make_mock_master(slaves=None, expected_wkc=3):
     """Create a mock pysoem master with slave list."""
     if slaves is None:
-        slaves = [_make_mock_slave(), _make_mock_slave(name="MSF-ICS Mock Slave 2")]
+        slaves = [_make_mock_slave(), _make_mock_slave(name="OIDA Mock Slave 2")]
 
     master = Mock()
     master.slaves = slaves

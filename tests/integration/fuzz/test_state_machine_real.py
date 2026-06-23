@@ -238,7 +238,7 @@ class TestADSReal:
 
 # ============================================================================
 # EtherNet/IP: CONNECTED → SESSION_REGISTERED
-# Docker: ethernetip-mock (msf-ics-mock) on port 44818
+# Docker: ethernetip-mock (oida-mock) on port 44818
 # ============================================================================
 
 

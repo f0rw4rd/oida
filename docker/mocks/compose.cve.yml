@@ -38,7 +38,7 @@ services:
   dns-dnsmasq-cve-2020-25681:
     build:
       context: ./services/dns/cve
-      dockerfile: Dockerfile.dnsmasq-2.85
+      dockerfile: Dockerfile.dnsmasq-cve-2020-25681
     image: ghcr.io/f0rw4rd/oida-mock-dns-dnsmasq-2-85:latest
     container_name: dns-cve-2020-25681
     hostname: dns-dnspooq
@@ -64,7 +64,7 @@ services:
   dns-cve-2020-25682:
     build:
       context: ./services/dns/cve
-      dockerfile: Dockerfile.dnsmasq-2.83
+      dockerfile: Dockerfile.dnsmasq-cve-2020-25682
     image: ghcr.io/f0rw4rd/oida-mock-dns-dnsmasq-2-83:latest
     container_name: dns-cve-2020-25682
     hostname: dns-dnspooq-2
@@ -94,7 +94,7 @@ services:
   ftp-vsftpd-cve-2021-3618:
     build:
       context: ./services/ftp/cve
-      dockerfile: Dockerfile.vsftpd-3.0.3
+      dockerfile: Dockerfile.vsftpd-cve-2021-3618
     image: ghcr.io/f0rw4rd/oida-mock-ftp-vsftpd-3-0-3:latest
     container_name: ftp-cve-2021-3618
     hostname: vsftpd-alpaca
@@ -119,7 +119,7 @@ services:
   ftp-proftpd-cve-2015-3306:
     build:
       context: ./services/ftp/cve
-      dockerfile: Dockerfile.proftpd-1.3.5
+      dockerfile: Dockerfile.proftpd-cve-2015-3306
     image: ghcr.io/f0rw4rd/oida-mock-ftp-proftpd-1-3-5:latest
     container_name: ftp-cve-2015-3306
     hostname: proftpd-modcopy
@@ -144,7 +144,7 @@ services:
   ftp-proftpd-cve-2019-12815:
     build:
       context: ./services/ftp/cve
-      dockerfile: Dockerfile.proftpd-1.3.5a
+      dockerfile: Dockerfile.proftpd-cve-2019-12815
     image: ghcr.io/f0rw4rd/oida-mock-ftp-proftpd-1-3-5a:latest
     container_name: ftp-cve-2019-12815
     hostname: proftpd-filecopy
@@ -327,35 +327,6 @@ services:
   # ============================================================================
   # Modbus CVE
   # ============================================================================
-
-  modbus-vuln:
-    build:
-      context: ./services/modbus/cve
-      dockerfile: Dockerfile.modbus-vuln-fake
-    image: ghcr.io/f0rw4rd/oida-mock-modbus-vuln-fake:latest
-    container_name: modbus-vuln-server
-    hostname: modbus-vuln
-    profiles: ["vuln-services", "vuln-modbus"]
-    ports:
-      - "5020:5020"
-    environment:
-      - TZ=UTC
-      - MODBUS_PORT=5020
-    restart: "no"
-    networks:
-      - ics-network
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "5020"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
-    labels:
-      - "oida.group=modbus"
-      - "oida.ports=5020"
-      - "oida.protocol=modbus"
-      - "oida.severity=high"
-      - "oida.description=Modbus vulnerable demo server"
 
   modbus-cve-2024-10918:
     build:
@@ -686,7 +657,7 @@ services:
   iec104-asdu-oob:
     build:
       context: ./services/iec104/cve
-      dockerfile: Dockerfile.iec104-asdu-oob-real
+      dockerfile: Dockerfile.iec104-cve-ghsa-7v97-asdu-oob-real
     image: ghcr.io/f0rw4rd/oida-mock-iec104-asdu-oob-real:latest
     container_name: iec104-asdu-oob
     profiles: ["vuln-services", "vuln-iec104"]
@@ -799,7 +770,7 @@ services:
   ethernetip-cve-2022-43604-real:
     build:
       context: ./services/ethernetip/cve
-      dockerfile: Dockerfile.opener-getattrlist-43604-real
+      dockerfile: Dockerfile.opener-cve-2022-43604-getattrlist-real
     image: ghcr.io/f0rw4rd/oida-mock-ethernetip-cve-2022-43604-real:latest
     container_name: ethernetip-cve-2022-43604-real
     profiles: ["vuln-services", "vuln-ethernetip"]
@@ -822,7 +793,7 @@ services:
   ethernetip-cve-2022-43605-real:
     build:
       context: ./services/ethernetip/cve
-      dockerfile: Dockerfile.opener-setattrlist-43605-real
+      dockerfile: Dockerfile.opener-cve-2022-43605-setattrlist-real
     image: ghcr.io/f0rw4rd/oida-mock-ethernetip-cve-2022-43605-real:latest
     container_name: ethernetip-cve-2022-43605-real
     profiles: ["vuln-services", "vuln-ethernetip"]
@@ -845,7 +816,7 @@ services:
   ethernetip-cve-2022-43606-real:
     build:
       context: ./services/ethernetip/cve
-      dockerfile: Dockerfile.opener-largeforwardopen-43606-real
+      dockerfile: Dockerfile.opener-cve-2022-43606-largeforwardopen-real
     image: ghcr.io/f0rw4rd/oida-mock-ethernetip-cve-2022-43606-real:latest
     container_name: ethernetip-cve-2022-43606-real
     profiles: ["vuln-services", "vuln-ethernetip"]
@@ -933,57 +904,34 @@ services:
   # OPC UA CVE (real -real builds; ASan/UBSan instrumented)
   # ============================================================================
 
-  opcua-cve-2022-25761-real:
+  opcua-cve-2026-1301-real:
     build:
       context: ./services/opcua/cve
-      dockerfile: Dockerfile.open62541-1.2.4-real
-    image: ghcr.io/f0rw4rd/oida-mock-opcua-cve-2022-25761-real:latest
-    container_name: opcua-cve-2022-25761-real
+      dockerfile: Dockerfile.open62541-cve-2026-1301-real
+    image: ghcr.io/f0rw4rd/oida-mock-opcua-cve-2026-1301-real:latest
+    container_name: opcua-cve-2026-1301-real
+    hostname: opcua-pubsub-json-oob
     profiles: ["vuln-services", "vuln-opcua"]
     ports:
       - "14841:4840"
     environment:
       - ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
-      - UBSAN_OPTIONS=abort_on_error=1:halt_on_error=1
-    mem_limit: 1g
+      - UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
     restart: "no"
     networks:
       - ics-network
     labels:
       - "oida.group=opcua"
       - "oida.ports=14841"
-      - "oida.cve=CVE-2022-25761"
+      - "oida.cve=CVE-2026-1301"
       - "oida.protocol=opcua"
       - "oida.severity=high"
-      - "oida.description=open62541 1.2.4 CVE-2022-25761 (real, crash-verified)"
-
-  opcua-cve-2024-53429-real:
-    build:
-      context: ./services/opcua/cve
-      dockerfile: Dockerfile.open62541-1.4.6-real
-    image: ghcr.io/f0rw4rd/oida-mock-opcua-cve-2024-53429-real:latest
-    container_name: opcua-cve-2024-53429-real
-    profiles: ["vuln-services", "vuln-opcua"]
-    ports:
-      - "14842:4840"
-    environment:
-      - ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
-      - UBSAN_OPTIONS=abort_on_error=1:halt_on_error=1
-    restart: "no"
-    networks:
-      - ics-network
-    labels:
-      - "oida.group=opcua"
-      - "oida.ports=14842"
-      - "oida.cve=CVE-2024-53429"
-      - "oida.protocol=opcua"
-      - "oida.severity=high"
-      - "oida.description=open62541 1.4.6 CVE-2024-53429 (real, crash-verified)"
+      - "oida.description=open62541 1.5-rc JSON PubSub decoder heap OOB write (keyFrameFields index unchecked, pre-auth) - genuine ASan heap-buffer-overflow"
 
   opcua-cve-2020-36429-real:
     build:
       context: ./services/opcua/cve
-      dockerfile: Dockerfile.open62541-1.0.1-real
+      dockerfile: Dockerfile.open62541-cve-2020-36429-real
     image: ghcr.io/f0rw4rd/oida-mock-opcua-cve-2020-36429-real:latest
     container_name: opcua-cve-2020-36429-real
     profiles: ["vuln-services", "vuln-opcua"]
@@ -1080,7 +1028,7 @@ services:
   dicom-cve-2024-34508:
     build:
       context: ./services/dicom/cve
-      dockerfile: Dockerfile.dcmtk-getstring-34508-real
+      dockerfile: Dockerfile.dcmtk-cve-2024-34508-getstring-real
     image: ghcr.io/f0rw4rd/oida-mock-dicom-cve-2024-34508-real:latest
     container_name: dicom-cve-2024-34508
     profiles: ["vuln-services", "vuln-dicom"]
@@ -1105,7 +1053,7 @@ services:
   dicom-cve-2019-1010228:
     build:
       context: ./services/dicom/cve
-      dockerfile: Dockerfile.dcmtk-rledecoder-1010228-real
+      dockerfile: Dockerfile.dcmtk-cve-2019-1010228-rledecoder-real
     image: ghcr.io/f0rw4rd/oida-mock-dicom-cve-2019-1010228-real:latest
     container_name: dicom-cve-2019-1010228
     profiles: ["vuln-services", "vuln-dicom"]
@@ -1130,7 +1078,7 @@ services:
   dicom-cve-2024-47796:
     build:
       context: ./services/dicom/cve
-      dockerfile: Dockerfile.dcmtk-nowindow-2024-47796-real
+      dockerfile: Dockerfile.dcmtk-cve-2024-47796-nowindow-real
     image: ghcr.io/f0rw4rd/oida-mock-dicom-cve-2024-47796-real:latest
     container_name: dicom-cve-2024-47796
     profiles: ["vuln-services", "vuln-dicom"]
@@ -1242,58 +1190,6 @@ services:
       - "oida.protocol=http2"
       - "oida.severity=critical"
       - "oida.description=nghttp2 1.5.0 CVE-2015-8659 (real, crash-verified)"
-
-  nghttp2-cve-2020-11080:
-    build:
-      context: ./services/http2/cve
-      dockerfile: Dockerfile.nghttp2-1.40.0-cve-2020-11080-real
-    image: ghcr.io/f0rw4rd/oida-mock-nghttp2-cve-2020-11080-real:latest
-    container_name: nghttp2-cve-2020-11080
-    profiles: ["vuln-services", "vuln-http2"]
-    ports:
-      - "18092:8080"
-    environment:
-      - PORT=8080
-      - ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
-      - UBSAN_OPTIONS=abort_on_error=1:halt_on_error=1
-    restart: "no"
-    networks:
-      - ics-network
-    labels:
-      - "oida.group=http2"
-      - "oida.ports=18092"
-      - "oida.cve=CVE-2020-11080"
-      - "oida.protocol=http2"
-      - "oida.severity=high"
-      - "oida.description=nghttp2 1.40.0 CVE-2020-11080 (real, crash-verified)"
-
-  nghttp2-cve-2019-9513:
-    build:
-      context: ./services/http2/cve
-      dockerfile: Dockerfile.nghttp2-1.39.1-cve-2019-9513-real
-    image: ghcr.io/f0rw4rd/oida-mock-nghttp2-cve-2019-9513-real:latest
-    container_name: nghttp2-cve-2019-9513
-    profiles: ["vuln-services", "vuln-http2"]
-    ports:
-      - "18093:80"
-    environment:
-      - PORT=80
-      - ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
-      - UBSAN_OPTIONS=abort_on_error=1:halt_on_error=1
-    restart: "no"
-    networks:
-      - ics-network
-    labels:
-      - "oida.group=http2"
-      - "oida.ports=18093"
-      - "oida.cve=CVE-2019-9513"
-      - "oida.protocol=http2"
-      - "oida.severity=high"
-      - "oida.description=nghttp2 1.39.1 CVE-2019-9513 Resource Loop (real, crash-verified)"
-
-  # ============================================================================
-  # SMTP CVE (exim, real -real builds; container_name overrides per spec)
-  # ============================================================================
 
   smtp-exim-cve-2019-16928-real:
     build:
@@ -1477,33 +1373,6 @@ services:
       - "oida.protocol=dhcp"
       - "oida.severity=high"
       - "oida.description=busybox udhcp CVE-2018-20679 (real, crash-verified)"
-
-  dhcp-cve-2010-2156-real:
-    build:
-      context: ./services/dhcp/cve
-      dockerfile: Dockerfile.isc-dhcp-cve-2010-2156-real
-    image: ghcr.io/f0rw4rd/oida-mock-dhcp-cve-2010-2156-real:latest
-    container_name: dhcp-cve-2010-2156-real
-    profiles: ["vuln-services", "vuln-dhcp"]
-    ports:
-      - "16701:67/udp"
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    restart: "no"
-    networks:
-      - ics-network
-    labels:
-      - "oida.group=dhcp"
-      - "oida.ports=16701/udp"
-      - "oida.cve=CVE-2010-2156"
-      - "oida.protocol=dhcp"
-      - "oida.severity=high"
-      - "oida.description=ISC dhcp CVE-2010-2156 (real, crash-verified)"
-
-  # ============================================================================
-  # mDNS CVE (avahi, real -real builds)
-  # ============================================================================
 
   avahi-cve-2023-38469-real:
     build:

@@ -1,0 +1,10 @@
+# Real ASTM mock - genuine python-astm (kxepal) E1381/E1394 protocol stack.
+# Source: https://github.com/kxepal/python-astm  (PyPI: astm 0.5.0, BSD)
+# Installed from PyPI at build time; NO vendored binaries. Needs Python <=3.9
+# (python-astm predates the collections.abc move).
+FROM python:3.9-slim
+RUN pip install --no-cache-dir astm==0.5.0
+COPY astm_realstack_server.py /app/server.py
+ENV ASTM_PORT=15200
+EXPOSE 15200
+CMD ["python", "/app/server.py"]

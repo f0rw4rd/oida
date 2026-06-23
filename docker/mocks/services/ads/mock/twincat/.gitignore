@@ -1,0 +1,7 @@
+# Never commit .NET build output. The mock is built inside Docker; a local
+# `dotnet build`/`dotnet publish` would otherwise leak compiled binaries here.
+bin/
+obj/
+*.dll
+*.exe
+*.pdb

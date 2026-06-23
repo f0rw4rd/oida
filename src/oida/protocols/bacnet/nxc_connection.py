@@ -17,6 +17,7 @@ uses mixins for feature-specific handler methods:
 
 import asyncio
 import random
+import socket
 from typing import Any, Optional
 
 from ...connection import NetworkConnection
@@ -282,6 +283,107 @@ class bacnet(
             self.args.identify = True
             self.args.services = True
 
+    # Flags whose handlers may emit a GlobalBroadcast / local-broadcast PDU and
+    # therefore require bacpypes3's broadcast transport to be stood up (a /24
+    # local mask). A plain targeted unicast read needs none of these and runs on
+    # a /32 mask that avoids the subnet-broadcast bind (Errno 99).
+    _BROADCAST_FLAGS = frozenset(
+        {
+            "who_is",
+            "who_has",
+            "enum_bbmd",
+            "enum_fdt",
+            "enum_routers",
+            "test_bbmd_injection",
+            "networks",
+            "scan_all_networks",
+        }
+    )
+
+    def _needs_broadcast_transport(self, target: str) -> bool:
+        """Decide whether this scan requires bacpypes3's broadcast transport.
+
+        True when the target itself is a broadcast address, or when any
+        requested operation emits a GlobalBroadcast / local-broadcast PDU
+        (discovery, BBMD/router enumeration, remote-network scans). False for a
+        targeted unicast read, which then uses a /32 mask to avoid the
+        subnet-broadcast socket bind that fails on docker-bridge / NAT nets.
+        """
+        if str(target).strip().lower() in ("broadcast", "255.255.255.255"):
+            return True
+        # --scan-network <n> takes an int (0 is valid), so test for None.
+        if getattr(self.args, "scan_network", None) is not None:
+            return True
+        return any(getattr(self.args, flag, False) for flag in self._BROADCAST_FLAGS)
+
+    def _acquire_local_udp_port(self, local_ip: str) -> int:
+        """Pick a local UDP port that is currently free to bind on ``local_ip``.
+
+        bacpypes3 binds its local datagram endpoint with SO_REUSEPORT (Linux) and
+        retries forever on failure, so a blindly chosen ``random.randint`` port
+        that is already held (TIME_WAIT from a prior scan, a docker port-map, or
+        another process bound there) makes the local endpoint silently spin in
+        the retry loop — the app never sends, every ReadProperty times out, and
+        the scan reports "Could not read device properties" (surfaced in the
+        wild as OSError [Errno 98] Address already in use).
+
+        Bind-test candidate ports with the SAME reuse options bacpypes3 will use
+        so the probe is representative, returning the first that binds. If every
+        candidate is contended, fall back to the OS-assigned ephemeral port (0):
+        bacpypes3 treats a 0 local port as no_broadcast (ipv4/__init__.py), which
+        is acceptable for the unicast path that already runs broadcast-free.
+        """
+        candidates = [random.randint(47810, 48000) for _ in range(8)]  # nosec B311
+        for port in candidates:
+            probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                # Mirror bacpypes3's local endpoint, which sets reuse_port on
+                # non-Windows; without it the probe's view of "free" diverges
+                # from the real bind.
+                if hasattr(socket, "SO_REUSEPORT"):
+                    try:
+                        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                    except OSError:
+                        pass
+                probe.bind((local_ip, port))
+                return port
+            except OSError:
+                continue
+            finally:
+                probe.close()
+        # Every candidate contended — let the OS assign an ephemeral port.
+        self.logger.debug(
+            "BACnet: no free local UDP port in 47810-48000 range; using ephemeral port"
+        )
+        return 0
+
+    def _build_bacpypes3_app(self, NormalApplication, device, local_ip, mask, local_port):
+        """Build a bacpypes3 NormalApplication, degrading to unicast on failure.
+
+        If standing up the requested (broadcast-capable) /24 application fails —
+        e.g. the subnet-broadcast bind raises Errno 99 on a docker-bridge / NAT
+        net — fall back to a /32 unicast-only application rather than aborting
+        the scan. The fallback loses local broadcast discovery but keeps every
+        unicast ReadProperty working.
+        """
+        from .constants import _load_bacpypes3
+
+        Address = _load_bacpypes3()["Address"]
+
+        local_addr = Address(f"{local_ip}/{mask}:{local_port}")
+        try:
+            return local_addr, NormalApplication(device, local_addr)
+        except OSError as e:
+            if mask == 32:
+                raise
+            self.logger.warning(
+                f"Broadcast transport setup failed ({e}); "
+                "degrading to unicast-only (no local broadcast discovery)"
+            )
+            local_addr = Address(f"{local_ip}/32:{local_port}")
+            return local_addr, NormalApplication(device, local_addr)
+
     def _raw_scan(self):
         """BACnet scan using bacpypes3 library for remote devices"""
         asyncio.run(self._async_raw_scan())
@@ -311,15 +413,50 @@ class bacnet(
             systemStatus=DeviceStatus.operational,
         )
 
-        local_port = random.randint(47810, 48000)  # nosec B311
         from ...utils.socket_helpers import get_local_ip
 
         local_ip, _err = get_local_ip(target)
 
-        local_addr = Address(f"{local_ip}/24:{local_port}")
-        app = NormalApplication(device, local_addr)
+        # Choose a local UDP port that is actually free to bind. A blind random
+        # port can collide (TIME_WAIT, docker port-map, another binder); because
+        # bacpypes3 retries its local bind forever on EADDRINUSE, that collision
+        # surfaces as a hung/timed-out ReadProperty rather than a clean error.
+        local_port = self._acquire_local_udp_port(local_ip)
+
+        # Local-address mask selection.
+        #
+        # bacpypes3's IPv4 transport stands up a *separate broadcast endpoint*
+        # whenever the local address has a real broadcast domain — it does
+        # sock.bind(<subnet-broadcast-addr>) (e.g. x.y.z.255). On a docker
+        # bridge / NAT / multi-homed net that subnet-broadcast address is not
+        # locally assignable, so the bind fails with
+        # OSError: [Errno 99] Cannot assign requested address inside an async
+        # callback (IPv4DatagramServer.set_broadcast_transport_protocol). That
+        # failure aborts the whole ReadProperty even though the unicast side
+        # bound fine, surfacing as "Could not read device properties".
+        #
+        # A targeted unicast ReadProperty needs no broadcast domain, so we give
+        # it a /32 host mask: bacpypes3 sees addrBroadcastTuple == addrTuple and
+        # skips the broadcast endpoint entirely (no bind(<broadcast>) → no
+        # Errno 99). Unicast app.request() to a host:port pduDestination is
+        # unaffected — only the inbound broadcast listener is suppressed.
+        #
+        # The /24 broadcast path is preserved for operations that genuinely emit
+        # a GlobalBroadcast / local-broadcast (Who-Is/Who-Has discovery, BBMD/
+        # FDT/router enumeration, remote-network scans, BBMD injection): those
+        # need the broadcast transport to *send*.
+        mask = 24 if self._needs_broadcast_transport(target) else 32
+
+        local_addr, app = self._build_bacpypes3_app(
+            NormalApplication, device, local_ip, mask, local_port
+        )
         try:
-            self.logger.success(f"Connected via {local_ip}:{local_port}")
+            # local_port == 0 means every candidate was contended and we asked
+            # the OS for an ephemeral port; the concrete number is only known
+            # after bacpypes3's async bind settles, so label it rather than
+            # printing a misleading ":0".
+            shown_port = local_port if local_port else "ephemeral"
+            self.logger.success(f"Connected via {local_ip}:{shown_port}")
 
             target_addr = Address(f"{target}:{port}")
 

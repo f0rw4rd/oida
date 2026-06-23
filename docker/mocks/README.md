@@ -1,6 +1,6 @@
-# MSF-ICS Mock Services Docker Container
+# OIDA Mock Services Docker Container
 
-This Docker container provides mock implementations of various Industrial Control System (ICS) protocols for testing the MSF-ICS security testing framework.
+This Docker container provides mock implementations of various Industrial Control System (ICS) protocols for testing the OIDA security testing framework.
 
 ## Supported Protocols
 
@@ -21,7 +21,7 @@ The container includes mock servers for the following network-based ICS protocol
 - **Dynamic Behavior**: Values change over time to simulate real equipment
 - **Framework-Based**: Uses existing libraries (pymodbus, asyncua, cpppo, etc.) where possible
 - **Comprehensive Coverage**: Supports discovery, read, and write operations
-- **Security Testing Ready**: Designed specifically for MSF-ICS scanner testing
+- **Security Testing Ready**: Designed specifically for OIDA scanner testing
 
 ## Quick Start
 
@@ -67,45 +67,45 @@ the same spirit as [vulhub](https://github.com/vulhub/vulhub); see
 
 ```bash
 # Build the container
-docker build -t msf-ics-mock .
+docker build -t oida-mock .
 
 # Run the container
 docker run -d \
-  --name msf-ics-mock \
+  --name oida-mock \
   -p 502:502 \
   -p 4840:4840 \
   -p 2404:2404 \
   -p 48898:48898 \
   -p 102:102 \
   -p 44818:44818 \
-  msf-ics-mock
+  oida-mock
 
 # View logs
-docker logs -f msf-ics-mock
+docker logs -f oida-mock
 ```
 
-## Testing with MSF-ICS
+## Testing with OIDA
 
-Once the container is running, you can test each protocol with the MSF-ICS scanners:
+Once the container is running, you can test each protocol with the OIDA scanners:
 
 ```bash
 # Test Modbus
-python -c "from msf_ics.protocols.modbus import ModbusScanner; scanner = ModbusScanner({'rhost': 'localhost', 'rport': 502}); print(scanner.run_scan())"
+python -c "from oida.protocols.modbus import ModbusScanner; scanner = ModbusScanner({'rhost': 'localhost', 'rport': 502}); print(scanner.run_scan())"
 
 # Test OPC UA
-python -c "from msf_ics.protocols.opcua import OPCUAScanner; scanner = OPCUAScanner({'rhost': 'localhost', 'rport': 4840}); print(scanner.run_scan())"
+python -c "from oida.protocols.opcua import OPCUAScanner; scanner = OPCUAScanner({'rhost': 'localhost', 'rport': 4840}); print(scanner.run_scan())"
 
 # Test IEC 104
-python -c "from msf_ics.protocols.iec104 import IEC104Scanner; scanner = IEC104Scanner({'rhost': 'localhost', 'rport': 2404}); print(scanner.run_scan())"
+python -c "from oida.protocols.iec104 import IEC104Scanner; scanner = IEC104Scanner({'rhost': 'localhost', 'rport': 2404}); print(scanner.run_scan())"
 
 # Test ADS
-python -c "from msf_ics.protocols.ads import ADSScanner; scanner = ADSScanner({'rhost': 'localhost', 'rport': 48898}); print(scanner.run_scan())"
+python -c "from oida.protocols.ads import ADSScanner; scanner = ADSScanner({'rhost': 'localhost', 'rport': 48898}); print(scanner.run_scan())"
 
 # Test MMS
-python -c "from msf_ics.protocols.mms import MMSScanner; scanner = MMSScanner({'rhost': 'localhost', 'rport': 102}); print(scanner.run_scan())"
+python -c "from oida.protocols.mms import MMSScanner; scanner = MMSScanner({'rhost': 'localhost', 'rport': 102}); print(scanner.run_scan())"
 
 # Test EtherNet/IP
-python -c "from msf_ics.protocols.ethernetip import EtherNetIPScanner; scanner = EtherNetIPScanner({'rhost': 'localhost', 'rport': 44818}); print(scanner.run_scan())"
+python -c "from oida.protocols.ethernetip import EtherNetIPScanner; scanner = EtherNetIPScanner({'rhost': 'localhost', 'rport': 44818}); print(scanner.run_scan())"
 ```
 
 ## Mock Data Details
@@ -114,7 +114,7 @@ python -c "from msf_ics.protocols.ethernetip import EtherNetIPScanner; scanner =
 - **Device**: Mock Industrial PLC
 - **Registers**: 100 each of coils, discrete inputs, holding registers, input registers
 - **Data**: Temperature, pressure, flow sensors; motor controls; valve positions
-- **Vendor**: MSF-ICS Mock
+- **Vendor**: OIDA Mock
 
 ### OPC UA (Port 4840)
 - **Device**: Industrial Controller
@@ -153,15 +153,15 @@ python -c "from msf_ics.protocols.ethernetip import EtherNetIPScanner; scanner =
 The container includes health checks that verify all services are responding:
 ```bash
 # Check container health
-docker inspect msf-ics-mock | grep Health -A 10
+docker inspect oida-mock | grep Health -A 10
 ```
 
 ### Logs
 Service logs are available in the container and can be mapped to host:
 ```bash
 # View specific service logs
-docker exec msf-ics-mock tail -f /var/log/msf-ics/modbus.log
-docker exec msf-ics-mock tail -f /var/log/msf-ics/opcua.log
+docker exec oida-mock tail -f /var/log/oida/modbus.log
+docker exec oida-mock tail -f /var/log/oida/opcua.log
 ```
 
 ### Service Control
@@ -170,10 +170,10 @@ docker exec msf-ics-mock tail -f /var/log/msf-ics/opcua.log
 docker-compose restart
 
 # Check running processes
-docker exec msf-ics-mock ps aux
+docker exec oida-mock ps aux
 
 # Access container shell
-docker exec -it msf-ics-mock bash
+docker exec -it oida-mock bash
 ```
 
 ## Network Configuration
@@ -197,7 +197,7 @@ The container uses standard ICS protocol ports and can be configured for differe
 # Run with debug output
 docker run -it --rm \
   -p 502:502 -p 4840:4840 -p 2404:2404 -p 48898:48898 -p 102:102 -p 44818:44818 \
-  msf-ics-mock bash
+  oida-mock bash
 
 # Start services manually for debugging
 cd /app/mock_services
@@ -207,7 +207,7 @@ python3 modbus_server.py
 ### Service Status
 ```bash
 # Check which services are running
-docker exec msf-ics-mock sh -c 'for port in 502 4840 2404 48898 102 44818; do echo -n "Port $port: "; nc -z localhost $port && echo "UP" || echo "DOWN"; done'
+docker exec oida-mock sh -c 'for port in 502 4840 2404 48898 102 44818; do echo -n "Port $port: "; nc -z localhost $port && echo "UP" || echo "DOWN"; done'
 ```
 
 ## Development
@@ -236,4 +236,4 @@ Edit the individual server files to customize:
 
 ## License
 
-This mock service container is part of the MSF-ICS project and follows the same license terms.
+This mock service container is part of the OIDA project and follows the same license terms.

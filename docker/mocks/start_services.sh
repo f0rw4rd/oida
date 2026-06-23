@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Start script for all mock ICS services
-echo "Starting MSF-ICS Mock Services Container..."
+echo "Starting OIDA Mock Services Container..."
 
 # Create log directory
-mkdir -p /var/log/msf-ics
+mkdir -p /var/log/oida
 
 # Function to start a service and log output
 start_service() {
     local service_name=$1
     local script_path=$2
-    local log_file="/var/log/msf-ics/${service_name}.log"
+    local log_file="/var/log/oida/${service_name}.log"
     
     echo "Starting ${service_name}..."
     python3 "${script_path}" > "${log_file}" 2>&1 &
@@ -69,8 +69,8 @@ for service in modbus opcua iec104 ads mms ethernetip; do
 done
 
 echo ""
-echo "Logs are available in /var/log/msf-ics/"
-echo "Container is ready for testing with MSF-ICS scanners"
+echo "Logs are available in /var/log/oida/"
+echo "Container is ready for testing with OIDA scanners"
 echo ""
 
 # Function to handle shutdown

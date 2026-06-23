@@ -20,11 +20,11 @@ EtherCAT Architecture:
 
 Mock Server Data (from docker/mocks/services/ethercat_slave.c):
   When the raw-socket mock IS available:
-    Vendor ID:      0x000003E7 (999 = MSF-ICS Mock)
+    Vendor ID:      0x000003E7 (999 = OIDA Mock)
     Product Code:   0x00001001
     Revision:       0x00010000
     Serial Number:  0x12345678
-    Device Name:    "MSF-ICS Mock EtherCAT Slave"
+    Device Name:    "OIDA Mock EtherCAT Slave"
     States:         INIT, PRE-OP, SAFE-OP, OP, BOOT
     CoE objects:    Device Type (0x1000), Error Register (0x1001),
                     Device Name (0x1008), HW Version (0x1009),
@@ -1077,8 +1077,8 @@ _MOCK_VENDOR_ID = 0x000003E7
 _MOCK_PRODUCT_CODE = 0x00001001
 _MOCK_REVISION = 0x00010000
 _MOCK_SERIAL = 0x12345678
-_MOCK_DEVICE_NAME = "MSF-ICS Mock EtherCAT Slave"
-_MOCK_OD_DEVICE_NAME = "MSF-ICS Mock"  # CoE 0x1008 Device Name object
+_MOCK_DEVICE_NAME = "OIDA Mock EtherCAT Slave"
+_MOCK_OD_DEVICE_NAME = "OIDA Mock"  # CoE 0x1008 Device Name object
 _MOCK_HW_VERSION = "1.0"
 _MOCK_SW_VERSION = "1.0.0"
 

@@ -1,11 +1,46 @@
-# PROFINET IO Device Emulation using p-net stack
-# Emulates a PROFINET IO Device that responds to DCP Identify,
-# LLDP, and basic PROFINET IO communication.
-# https://github.com/rtlabs-com/p-net (kolonialno fork for buildable version)
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# OIDA PROFINET IO Device Emulation -- real, source-built p-net stack.
+#
+# p-net (https://github.com/rtlabs-com/p-net) is dual-licensed:
+#   GPL-3.0-or-later OR a commercial license from rt-labs AB.
+# It is built FROM SOURCE at image-build time here and is NOT redistributed
+# as a binary in this repository. No p-net binary or source is committed to
+# OIDA; only this Dockerfile, a customized GSDML header, and helper scripts.
+#
+# ---------------------------------------------------------------------------
+# WHICH p-net is built and WHY
+# ---------------------------------------------------------------------------
+# The canonical upstream is rtlabs-com/p-net. As of 2026-06 the public mirror
+# of that repo has been STRIPPED of the build system: tag `public/v1.0.2`
+# (and the default branch) ship only src/{device,drivers,common} -- there is
+# NO root CMakeLists.txt, NO samples/pn_dev, and NO src/ports/linux. It
+# therefore CANNOT produce a Linux `pn_dev` IO-device binary.
+#
+# We therefore build the kolonialno/profinet fork, PINNED to an immutable
+# commit SHA (not a floating branch) so the image is reproducible. That fork
+# at this SHA carries the full buildable layout: root CMakeLists.txt,
+# samples/pn_dev/{app_gsdml.c,app_utils.c,...}, src/ports/linux/ Linux port,
+# and cmake/Linux.cmake which compiles app_gsdml.c into the pn_dev target.
+#
+# If upstream ever re-publishes a buildable Linux sample, switch PNET_REPO to
+# https://github.com/rtlabs-com/p-net and PNET_REF to the chosen tag.
+# ---------------------------------------------------------------------------
 
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+# --- Pinned source (fork SHA, immutable) ----------------------------------
+ARG PNET_REPO=https://github.com/kolonialno/profinet.git
+ARG PNET_REF=ea5e5540b2be55c4dfadffda39b948632c104daa
+
+# --- Compile-time device identity (overridable per service, no source edit)-
+# Injected into the p-net build via CMAKE_C_FLAGS as -DAPP_GSDML_VENDOR_ID /
+# -DAPP_GSDML_DEVICE_ID. The GSDML header (app_gsdml_oida.h) wraps these in
+# #ifndef guards, so the -D wins. Station name stays runtime (-s / env).
+ARG APP_VENDOR_ID=0x0493
+ARG APP_DEVICE_ID=0x0002
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,21 +49,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     ca-certificates \
     iproute2 \
+    iputils-ping \
+    tcpdump \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone p-net (kolonialno fork has CMakeLists.txt and Linux port layer)
-RUN git clone --recurse-submodules --depth 1 \
-    https://github.com/kolonialno/profinet.git /p-net
+# Clone the pinned fork. Cannot use --branch with a bare SHA, so clone then
+# checkout the immutable commit.
+RUN git clone --recurse-submodules "${PNET_REPO}" /p-net \
+    && cd /p-net \
+    && git checkout "${PNET_REF}" \
+    && git submodule update --init --recursive
 
-# Copy custom GSDML header with configurable device identity
+# Copy custom GSDML header with configurable device identity (#ifndef-guarded)
 COPY profinet/app_gsdml_oida.h /p-net/samples/pn_dev/app_gsdml.h
 
-# Relax compiler warnings - p-net uses -Werror which can break on newer GCC
+# Relax compiler warnings - p-net uses -Werror (in CMakeLists.txt AND in
+# cmake/Linux.cmake target_compile_options) which newer GCC trips on.
 RUN find /p-net -type f \( -name "CMakeLists.txt" -o -name "*.cmake" \) \
     -exec sed -i 's/-Werror//g' {} \;
 
-# Build p-net for Linux with verbose logging and extra slots
+# Build p-net for Linux. APP_VENDOR_ID / APP_DEVICE_ID are injected globally
+# via CMAKE_C_FLAGS; -D flags are processed before the header is included, so
+# the #ifndef guards in app_gsdml.h take the injected values.
 WORKDIR /p-net/build
 RUN cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -42,7 +85,8 @@ RUN cmake .. \
     -DPF_LLDP_LOG=ON \
     -DPF_RPC_LOG=ON \
     -DPF_ALARM_LOG=ON \
-    && make -j$(nproc)
+    -DCMAKE_C_FLAGS="-DAPP_GSDML_VENDOR_ID=${APP_VENDOR_ID} -DAPP_GSDML_DEVICE_ID=${APP_DEVICE_ID}" \
+    && make -j"$(nproc)" pn_dev
 
 # Install the binary
 RUN cp /p-net/build/pn_dev /usr/local/bin/pn_dev \
@@ -69,8 +113,15 @@ ENV PNET_STATION_NAME="oida-pn-device"
 ENV PNET_INTERFACE="eth0"
 ENV PNET_VERBOSITY="2"
 
-# PROFINET uses Layer 2 (raw Ethernet) - no TCP/UDP ports to expose
-# DCP uses EtherType 0x8892, LLDP uses 0x88CC
-# These require --network=host or macvlan for real L2 access
+# PROFINET uses Layer 2 (raw Ethernet) - no TCP/UDP ports to expose.
+# DCP uses EtherType 0x8892 (dest MAC 01:0e:cf:00:00:00), LLDP uses 0x88CC.
+#
+# REACHABILITY (verified empirically 2026-06): a Docker USER-DEFINED bridge
+# (e.g. ics-network) DOES forward the DCP Identify-All multicast
+# (dst 01:0e:cf:00:00:00 / EtherType 0x8892) between sibling containers, and
+# the device's raw-socket responder answers across it. So a scanner container
+# on the SAME ics-network reaches this device with no veth/netns tricks --
+# a single Identify-All discovers every pn_dev on the bridge in one shot.
+# (network_mode: host also works for a host-side scanner.)
 
 ENTRYPOINT ["/entrypoint.sh"]

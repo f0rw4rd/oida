@@ -1,0 +1,79 @@
+{
+  "Name": "OIDA-PACS",
+  "StorageDirectory": "/var/lib/orthanc/db",
+  "IndexDirectory": "/var/lib/orthanc/db",
+
+  "HttpServerEnabled": true,
+  "HttpPort": 8042,
+  "HttpDescribeErrors": true,
+  "HttpCompressionEnabled": true,
+
+  "DicomServerEnabled": true,
+  "DicomAet": "ORTHANC_PACS",
+  "DicomPort": 4242,
+  "DicomCheckCalledAet": false,
+  "DicomCheckModalityHost": false,
+
+  "DefaultEncoding": "Latin1",
+  "AcceptedTransferSyntaxes": [
+    "1.2.840.10008.1.2",
+    "1.2.840.10008.1.2.1",
+    "1.2.840.10008.1.2.2",
+    "1.2.840.10008.1.2.4.50",
+    "1.2.840.10008.1.2.4.51",
+    "1.2.840.10008.1.2.4.57",
+    "1.2.840.10008.1.2.4.70",
+    "1.2.840.10008.1.2.4.80",
+    "1.2.840.10008.1.2.4.81",
+    "1.2.840.10008.1.2.4.90",
+    "1.2.840.10008.1.2.4.91",
+    "1.2.840.10008.1.2.5"
+  ],
+
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false,
+  "SslEnabled": false,
+
+  "DicomModalities": {
+    "OIDA": ["OIDA", "localhost", 11112],
+    "ANY": ["ANY", "localhost", 11112],
+    "WORKSTATION": ["WORKSTATION", "localhost", 11112]
+  },
+
+  "OrthancPeers": {},
+
+  "DicomAlwaysAllowEcho": true,
+  "DicomAlwaysAllowFind": true,
+  "DicomAlwaysAllowGet": true,
+  "DicomAlwaysAllowMove": true,
+  "DicomAlwaysAllowStore": true,
+
+  "UnknownSopClassAccepted": true,
+
+  "QueryRetrieveSize": 1000,
+  "CaseSensitivePN": false,
+
+  "StableAge": 60,
+  "LimitFindResults": 0,
+  "LimitFindInstances": 0,
+
+  "StorageCompression": false,
+  "OverwriteInstances": true,
+
+  "DicomWeb": {
+    "Enable": true,
+    "Root": "/dicom-web/",
+    "EnableWado": true,
+    "WadoRoot": "/wado",
+    "Host": "localhost",
+    "Ssl": false,
+    "StowMaxInstances": 10,
+    "StowMaxSize": 10,
+    "QidoCaseSensitive": false
+  },
+
+  "Worklists": {
+    "Enable": true,
+    "Database": "/var/lib/orthanc/worklists"
+  }
+}
