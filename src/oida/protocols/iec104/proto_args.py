@@ -11,7 +11,6 @@ from ...utils.proto_args_factory import (
     add_dangerous_options,
     add_listen_options,
     add_tls_options,
-    add_full_width_and_json_log,
 )
 
 
@@ -268,11 +267,10 @@ Examples:
         help="[experimental] Activate parameter set (Type 113, P_AC_NA_1). Value: 1=act, 2=deact, 3=both",
     )
 
-    # Output Options (--full-width, --json-log only — -o/-f/-v/-d come from main parser)
-    # Cannot use add_output_options() because -W is already taken by --write-single,
-    # so we use the lower-level helper that skips the -W short alias.
-    output_group = iec104_parser.add_argument_group("Output Options")
-    add_full_width_and_json_log(output_group, include_short=False)
+    # Output Options (--full-width, --json-log, -o/-f/-v/-d) are injected into
+    # every protocol subparser via the shared std_parser parent (cli.py), so
+    # iec104 must not re-declare them — and especially not --full-width's -W
+    # short alias, which iec104 reuses for --write-single.
 
     # Listen Mode (--listen, --listen-time, --listen-output, --listen-filter)
     listen_group = add_listen_options(iec104_parser)
