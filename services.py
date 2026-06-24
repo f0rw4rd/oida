@@ -19,6 +19,8 @@ Install: no extra dependencies (stdlib only).
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
+import hashlib
 import json
 import os
 import re
@@ -152,6 +154,99 @@ def _git_dirty_services(contexts: dict[str, str]) -> set[str]:
         if st.returncode == 0 and st.stdout.strip():
             dirty.add(name)
     return dirty
+
+
+# ---------------------------------------------------------------------------
+# Content-hash image tags
+# ---------------------------------------------------------------------------
+#
+# Each mock image is tagged with a hash derived from its build definition
+# (build context + dockerfile + build args), so a tag deterministically
+# identifies a source state. This lets `push` skip images already in the
+# registry and de-dups services that share one build context (they compute the
+# same tag, so the image is built once). `:latest` is kept as a floating
+# convenience pointer alongside the hash tag.
+
+
+def _dir_digest(path: str) -> str:
+    """SHA-256 over a directory's file paths + contents (fallback when the
+    context isn't in git HEAD, e.g. never committed)."""
+    h = hashlib.sha256()
+    root = Path(path)
+    for p in sorted(root.rglob("*")):
+        if p.is_file():
+            h.update(p.relative_to(root).as_posix().encode())
+            try:
+                h.update(p.read_bytes())
+            except OSError:
+                h.update(b"<unreadable>")
+    return h.hexdigest()
+
+
+def _image_specs(config: dict) -> dict[str, dict]:
+    """Map image base ref (no ``:tag``) -> build spec for buildable services.
+
+    Returns ``{base: {"context": abs, "dockerfile": str, "args": dict,
+    "services": [names]}}``. Services that share an image base are collapsed
+    into one entry (the build context is identical), which is what de-dups the
+    push set.
+    """
+    specs: dict[str, dict] = {}
+    for name, svc in (config.get("services") or {}).items():
+        build = svc.get("build")
+        image = svc.get("image", "")
+        if not build or not image:
+            continue
+        base = image.rsplit(":", 1)[0]
+        ctx = build.get("context") if isinstance(build, dict) else build
+        if not ctx:
+            continue
+        ctx_abs = ctx if os.path.isabs(ctx) else str((COMPOSE_DIR / ctx).resolve())
+        dockerfile = (
+            build.get("dockerfile", "Dockerfile") if isinstance(build, dict) else "Dockerfile"
+        )
+        args = build.get("args") if isinstance(build, dict) else None
+        if isinstance(args, list):  # compose may emit ["K=V", ...]
+            args = dict(a.split("=", 1) for a in args if "=" in a)
+        args = args or {}
+        entry = specs.setdefault(
+            base, {"context": ctx_abs, "dockerfile": dockerfile, "args": args, "services": []}
+        )
+        entry["services"].append(name)
+    return specs
+
+
+def _content_tag(spec: dict) -> str:
+    """Deterministic 12-hex content tag for one image build spec.
+
+    Uses the git tree SHA of the build context (changes iff tracked files in
+    that context change), folded with the dockerfile name + build args. Falls
+    back to an on-disk digest when the context isn't tracked in HEAD.
+    """
+    ctx = spec["context"]
+    relpath = os.path.relpath(ctx, PROJECT_ROOT)
+    tree = _run(["git", "rev-parse", f"HEAD:{relpath}"], check=False, capture=True)
+    seed = tree.stdout.strip() if tree.returncode == 0 and tree.stdout.strip() else _dir_digest(ctx)
+    h = hashlib.sha256()
+    h.update(seed.encode())
+    h.update(os.path.basename(spec["dockerfile"]).encode())
+    for k in sorted(spec["args"]):
+        h.update(f"{k}={spec['args'][k]}".encode())
+    return h.hexdigest()[:12]
+
+
+def _image_tags(config: dict) -> dict[str, str]:
+    """Map image base ref -> computed content tag for every buildable image."""
+    return {base: _content_tag(spec) for base, spec in _image_specs(config).items()}
+
+
+def _registry_has(ref: str) -> bool:
+    """True if *ref* (``repo:tag``) exists in its registry.
+
+    Uses ``docker manifest inspect`` — the reliable probe (``buildx imagetools
+    inspect`` was observed to false-negative under registry load).
+    """
+    return _run(["docker", "manifest", "inspect", ref], check=False, capture=True).returncode == 0
 
 
 def check_port(port: int, label: str, *, udp: bool = False, host: str | None = None) -> bool:
@@ -484,10 +579,14 @@ def cmd_build(args: argparse.Namespace) -> int:
 
 
 def cmd_push(args: argparse.Namespace) -> int:
-    """Build every buildable mock image and push it to ``$OIDA_REGISTRY``.
+    """Build and push mock images to ``$OIDA_REGISTRY``, skipping unchanged ones.
 
-    This is the registry sync command: re-run it after editing ``docker/mocks/**``
-    and bake's content-addressed cache only rebuilds/re-pushes what changed.
+    Each image is tagged with a content hash of its build definition (see
+    ``_content_tag``) plus a floating ``:latest``. Before building, push checks
+    whether ``<image>:<hash>`` already exists in the registry and skips it if so
+    — so re-running with no source changes does nothing, and only edited mocks
+    rebuild. Services sharing a build context collapse to one image (built once).
+    Pass ``--force`` to rebuild + re-push everything regardless of presence.
 
     Two warts are handled so it stays one command:
     - Targets whose build context is missing on disk (e.g. the never-committed
@@ -505,8 +604,15 @@ def cmd_push(args: argparse.Namespace) -> int:
         )
         return 1
 
-    # Enumerate every bake target from the compose files (profiles are ignored
-    # by bake, so this covers core mocks + all CVE services).
+    config = _get_compose_config([*_all_args(), "--profile", "vuln-services"])
+    tags = _image_tags(config)  # image base ref -> content hash
+    if not tags:
+        print(f"{RED}[!!]{RST} No buildable images found.")
+        return 1
+
+    # Bake targets carry the build defs (context/dockerfile/args). Group them by
+    # image base and keep one representative per base (shared-context services
+    # build the same image — that's the de-dup).
     bake_files = ["-f", COMPOSE_CORE, "-f", COMPOSE_CVE]
     res = _run(["docker", "buildx", "bake", *bake_files, "--print"], check=False, capture=True)
     if res.returncode != 0:
@@ -514,38 +620,72 @@ def cmd_push(args: argparse.Namespace) -> int:
         return 1
     targets = json.loads(res.stdout).get("target", {})
 
-    # Drop targets whose build context dir is missing; rewrite the rest to
-    # absolute paths so the generated per-batch bake files resolve regardless of
-    # the current working directory.
-    valid: dict[str, dict] = {}
-    skipped: list[str] = []
+    rep: dict[str, tuple[str, dict]] = {}  # image base -> (target name, spec)
+    missing_ctx: list[str] = []
     for name, spec in targets.items():
+        tgt_tags = spec.get("tags") or []
+        if not tgt_tags:
+            continue
+        base = tgt_tags[0].rsplit(":", 1)[0]
         ctx = spec.get("context", ".")
         ctx_abs = ctx if os.path.isabs(ctx) else str((COMPOSE_DIR / ctx).resolve())
         if not Path(ctx_abs).is_dir():
-            skipped.append(name)
+            missing_ctx.append(name)
             continue
+        if base in rep:
+            continue  # one representative per distinct image
+        spec = dict(spec)
         spec["context"] = ctx_abs
-        valid[name] = spec
+        rep[base] = (name, spec)
 
-    if skipped:
+    if missing_ctx:
         print(
-            f"{YELLOW}[~~]{RST} Skipping {len(skipped)} target(s) with a missing build "
-            f"context: {', '.join(sorted(skipped))}"
+            f"{YELLOW}[~~]{RST} Skipping {len(missing_ctx)} target(s) with a missing build "
+            f"context: {', '.join(sorted(missing_ctx))}"
         )
 
-    names = sorted(valid)
-    if not names:
-        print(f"{RED}[!!]{RST} No buildable targets found.")
-        return 1
-    print(f"{BLUE}=== Pushing {len(names)} mock images to {registry} ==={RST}")
+    # Partition by registry presence of the content tag. The presence probes
+    # are independent registry round-trips, so run them concurrently (a serial
+    # sweep of ~120 images costs minutes; threaded it's seconds).
+    candidates = [
+        (base, tname, spec, tags[base])
+        for base, (tname, spec) in sorted(rep.items())
+        if tags.get(base)
+    ]
+    if args.force:
+        present_bases: set[str] = set()
+    else:
+        print(f"{YELLOW}[*]{RST} Checking registry for {len(candidates)} images...")
+        workers = min(48, len(candidates)) or 1
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+            flags = ex.map(lambda c: _registry_has(f"{c[0]}:{c[3]}"), candidates)
+            present_bases = {c[0] for c, ok in zip(candidates, flags) if ok}
 
+    to_build: dict[str, dict] = {}  # target name -> spec (tags rewritten to :hash + :latest)
+    present = 0
+    for base, tname, spec, tag in candidates:
+        if base in present_bases:
+            present += 1
+            continue
+        spec = dict(spec)
+        spec["tags"] = [f"{base}:{tag}", f"{base}:latest"]
+        to_build[tname] = spec
+
+    print(
+        f"{BLUE}=== {len(rep)} distinct images: {present} already published, "
+        f"{len(to_build)} to build/push ==={RST}"
+    )
+    if not to_build:
+        print(f"{GREEN}[OK]{RST} Registry already up to date — nothing to build.")
+        return 0
+
+    names = sorted(to_build)
     failed: list[str] = []
     for start in range(0, len(names), args.batch):
         chunk = names[start : start + args.batch]
         bn = start // args.batch + 1
         defn = {
-            "target": {n: valid[n] for n in chunk},
+            "target": {n: to_build[n] for n in chunk},
             "group": {"default": {"targets": chunk}},
         }
         fh = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
@@ -568,6 +708,37 @@ def cmd_push(args: argparse.Namespace) -> int:
         print(f"{RED}[!!]{RST} {len(failed)} target(s) failed: {', '.join(failed)}")
         return 1
     print(f"{GREEN}[OK]{RST} Pushed {len(names)} images to {registry}")
+    return 0
+
+
+def cmd_tags(args: argparse.Namespace) -> int:
+    """Print the content-hash tag computed for each distinct mock image.
+
+    Read-only: lets you eyeball the tags (and the service-sharing/de-dup) before
+    `push`/`up` use them. Services that share a build context collapse to one
+    image and share a tag.
+    """
+    _load_dotenv()
+    config = _get_compose_config([*_all_args(), "--profile", "vuln-services"])
+    specs = _image_specs(config)
+    if not specs:
+        print(
+            f"{RED}[!!]{RST} No buildable images found (is OIDA_REGISTRY set in docker/mocks/.env?)."
+        )
+        return 1
+
+    total_services = sum(len(s["services"]) for s in specs.values())
+    print(
+        f"{BLUE}=== {len(specs)} distinct images across {total_services} services "
+        f"(de-dup saves {total_services - len(specs)} redundant builds) ==={RST}"
+    )
+    for base in sorted(specs):
+        spec = specs[base]
+        tag = _content_tag(spec)
+        name = base.rsplit("/", 1)[-1]
+        svcs = sorted(spec["services"])
+        shared = f"  {DIM}<- {', '.join(svcs)}{RST}" if len(svcs) > 1 else ""
+        print(f"  {name:<42} {GREEN}:{tag}{RST}{shared}")
     return 0
 
 
@@ -965,12 +1136,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_build = sub.add_parser("build", help="Build images without starting")
     p_build.add_argument("stack", nargs="?", default="core", help="Stack to build (default: core)")
 
-    p_push = sub.add_parser("push", help="Build & push all mock images to $OIDA_REGISTRY")
+    p_push = sub.add_parser(
+        "push", help="Build & push mock images to $OIDA_REGISTRY (skips unchanged)"
+    )
     p_push.add_argument(
         "--batch",
         type=int,
         default=10,
         help="Targets to build+push per batch (default: 10; lower if buildkit drops jobs)",
+    )
+    p_push.add_argument(
+        "--force",
+        action="store_true",
+        help="Rebuild and re-push every image even if its content tag is already published",
     )
 
     sub.add_parser("clean", help="Remove containers, volumes, and local images")
@@ -979,6 +1157,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("list", help="List all available services (reads compose labels)")
     sub.add_parser("ports", help="Show port mappings of currently running containers")
     sub.add_parser("groups", help="List oida.group values from compose (valid `up <group>` args)")
+    sub.add_parser("tags", help="Show the content-hash tag computed for each distinct image")
 
     # CVE command
     p_cve = sub.add_parser("up-cve", help="Start specific CVE protocol group")
@@ -1006,6 +1185,7 @@ COMMAND_DISPATCH: dict[str, Callable[[argparse.Namespace], int]] = {
     "up-cve": cmd_up_cve,
     "up-proto": cmd_up_proto,
     "groups": cmd_groups,
+    "tags": cmd_tags,
 }
 
 
@@ -1025,7 +1205,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # (#9) Docker pre-flight check for commands that need it. `list`/`groups`
     # only read compose labels (no daemon required).
-    label_only = ("list", "groups")
+    label_only = ("list", "groups", "tags")
     needs_docker = args.command not in label_only
     if needs_docker and not _check_docker():
         return 1
