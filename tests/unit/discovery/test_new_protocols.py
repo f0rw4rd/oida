@@ -377,6 +377,7 @@ class TestIGMPQueryScanner:
         assert igmp_scanner.timeout == 1.0
         assert igmp_scanner.discovered_devices == {}
 
+
 # ============================================================================
 # DHCPv6 Tests
 # ============================================================================
@@ -424,6 +425,7 @@ class TestDHCPv6ServerScanner:
         assert dhcpv6_scanner.interface == "eth0"
         assert dhcpv6_scanner.timeout == 1.0
         assert dhcpv6_scanner.discovered_devices == {}
+
 
 # ============================================================================
 # DHCP Tests

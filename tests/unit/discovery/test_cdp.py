@@ -101,6 +101,7 @@ class TestCDPPassiveListenerScan:
         finally:
             lazy_mod._available = orig_available
 
+
 class TestCDPFrameParsing:
     """Test CDP frame parsing through scapy's CDP layers"""
 

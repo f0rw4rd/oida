@@ -1261,6 +1261,24 @@ class DiscoveredDevice:
     jenkins_data: Optional[Dict[str, Any]] = None  # Jenkins CI servers
     pcanywhere_data: Optional[Dict[str, Any]] = None  # pcAnywhere hosts
 
+    # Camera / surveillance active discovery data
+    sadp_data: Optional[Dict[str, Any]] = None  # Hikvision SADP cameras/NVRs
+    dahua_data: Optional[Dict[str, Any]] = None  # Dahua DHDiscover cameras/NVRs
+
+    # Energy / solar active discovery data
+    sma_data: Optional[Dict[str, Any]] = None  # SMA Speedwire inverters/energy meters
+
+    # AV / lighting-control active discovery data
+    crestron_data: Optional[Dict[str, Any]] = None  # Crestron CIP control systems
+    artnet_data: Optional[Dict[str, Any]] = None  # Art-Net lighting nodes
+
+    # BMC / network-equipment active discovery data
+    ipmi_data: Optional[Dict[str, Any]] = None  # ASF-RMCP / IPMI BMCs (iLO/iDRAC/AMT)
+    ubiquiti_data: Optional[Dict[str, Any]] = None  # Ubiquiti devices (UDP 10001)
+    mndp_data: Optional[Dict[str, Any]] = None  # MikroTik MNDP neighbors
+    addp_data: Optional[Dict[str, Any]] = None  # Digi ADDP serial device servers
+    slp_data: Optional[Dict[str, Any]] = None  # SLP service agents / advertised URLs
+
     # BruteShark-inspired passive discovery data
     dns_passive_data: Optional[Dict[str, Any]] = None  # DNS hostname→IP mappings
     smb_passive_data: Optional[Dict[str, Any]] = None  # SMB/NTLM Windows host discovery

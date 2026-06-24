@@ -42,6 +42,25 @@ from oida.utils.export_utils import configure_from_args
 from oida.utils.ics_logger import get_module_logger
 from oida import __version__
 
+try:
+    from termcolor import colored as _colored
+except ImportError:  # pragma: no cover - termcolor is a hard dependency
+
+    def _colored(text, *args, **kwargs):  # type: ignore[misc]
+        return text
+
+
+def _supports_color() -> bool:
+    """Color only on an interactive terminal, and honor NO_COLOR."""
+    return sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+
+
+def _c(text: str, *args, **kwargs) -> str:
+    """termcolor wrapper that degrades to plain text when piped/redirected."""
+    if not _supports_color():
+        return text
+    return _colored(text, *args, **kwargs)
+
 
 # Configure logging - suppress noisy libraries
 logging.basicConfig(level=logging.ERROR, format="%(message)s")
@@ -637,70 +656,141 @@ def setup_logging(args):
 
 def print_banner():
     """Print OIDA banner"""
-    print(f"""
-     ██████╗ ██╗██████╗  █████╗
-    ██╔═══██╗██║██╔══██╗██╔══██╗
-    ██║   ██║██║██║  ██║███████║
-    ██║   ██║██║██║  ██║██╔══██║
-    ╚██████╔╝██║██████╔╝██║  ██║
-     ╚═════╝ ╚═╝╚═════╝ ╚═╝  ╚═╝  v{__version__}
+    art = _c(
+        "     ██████╗ ██╗██████╗  █████╗\n"
+        "    ██╔═══██╗██║██╔══██╗██╔══██╗\n"
+        "    ██║   ██║██║██║  ██║███████║\n"
+        "    ██║   ██║██║██║  ██║██╔══██║\n"
+        "    ╚██████╔╝██║██████╔╝██║  ██║\n"
+        "     ╚═════╝ ╚═╝╚═════╝ ╚═╝  ╚═╝",
+        "cyan",
+        attrs=["bold"],
+    )
+    version = _c(f"v{__version__}", "dark_grey")
+    tagline = _c("Scan. Fuzz. Assess. Responsible in OT.", "white", attrs=["bold"])
+    url = _c("https://getoida.dev", "blue")
+    print(f"\n{art}  {version}\n\n    {tagline}\n    {url}\n")
 
-    Scan. Fuzz. Assess. Responsible in OT.
-    https://getoida.dev
-""")
 
-
-# Subcommands that are utilities, not scannable protocols.
+# Subcommands that are utilities, not scannable wire protocols. These are
+# surfaced under "Discovery & tooling" rather than mixed into the protocol
+# list, since they don't take a single <target> the way a scanner does.
 _NON_PROTOCOL_SUBCOMMANDS = {"serial", "fuzz"}
 
+# Passive/active modules that read traffic or sweep a network rather than
+# scan one wire protocol — grouped with the tooling, not the scanners.
+_CORE_TOOLING = {"discovery", "pcap"}
 
-def _protocol_listing(parser) -> List[Tuple[str, str]]:
-    """Build the (display_name, help) protocol list from the live parser.
+# Display grouping for the no-arg usage screen, keyed on canonical names.
+# Anything registered but unlisted here falls into "Other protocols", so a
+# newly added scanner still shows up — it just lands in the catch-all until
+# it's slotted into a section. (title, color, {canonical names})
+_PROTOCOL_CATEGORIES: List[Tuple[str, str, set]] = [
+    (
+        "OT / industrial",
+        "cyan",
+        {
+            "modbus",
+            "opcua",
+            "snap7",
+            "iec104",
+            "ads",
+            "ethernetip",
+            "dnp3",
+            "mms",
+            "tase2",
+            "goose",
+            "ethercat",
+            "profinet",
+            "hart",
+            "knx",
+            "bacnet",
+            "can",
+        },
+    ),
+    ("IoT / application", "green", {"mqtt", "coap", "ocpp", "snmp"}),
+    ("Healthcare", "magenta", {"hl7", "fhir", "dicom", "astm"}),
+]
+
+
+def _subcommand_help(parser) -> Dict[str, Tuple[str, str]]:
+    """Map every registered subcommand to (display_name, help_text).
 
     Reads the help strings argparse already stores on each registered
     subparser, so the no-arg usage screen can never drift from the actual
-    set of dynamically loaded protocols.
+    set of dynamically loaded protocols. display_name folds in aliases
+    (e.g. ``snap7 (s7)``); the dict key stays the canonical name.
     """
     action = getattr(parser, "_subparsers_action", None)
     if action is None:
-        return []
+        return {}
 
     # canonical name -> aliases (reverse of PROTOCOL_ALIASES)
     aliases: Dict[str, List[str]] = {}
     for alias, canonical in PROTOCOL_ALIASES.items():
         aliases.setdefault(canonical, []).append(alias)
 
-    listing: List[Tuple[str, str]] = []
+    result: Dict[str, Tuple[str, str]] = {}
     for pseudo in action._choices_actions:
         name = pseudo.dest
-        if name in _NON_PROTOCOL_SUBCOMMANDS:
-            continue
         display = name
         if name in aliases:
             display = f"{name} ({', '.join(sorted(aliases[name]))})"
-        listing.append((display, pseudo.help or ""))
+        result[name] = (display, pseudo.help or "")
+    return result
 
-    listing.sort(key=lambda row: row[0])
-    return listing
+
+def _print_section(title: str, color: str, rows: List[Tuple[str, str]], width: int) -> None:
+    """Print one colored section header followed by its name/help rows."""
+    if not rows:
+        return
+    print(_c(title, color, attrs=["bold"]))
+    for display, help_text in sorted(rows):
+        print(f"  {_c(display.ljust(width), color)}  {help_text}")
+    print("")
 
 
 def _show_usage_and_exit(parser=None) -> int:
-    """Show usage information when no arguments provided"""
+    """Show grouped, colored usage information when no arguments provided."""
     print_banner()
-    print("Usage: oida <protocol> <target> [options]")
-    print("")
-    print("Available protocols:")
+    print(f"{_c('Usage:', 'yellow', attrs=['bold'])} oida <protocol> <target> [options]\n")
 
-    listing = _protocol_listing(parser) if parser is not None else []
-    if listing:
-        width = max(len(name) for name, _ in listing)
-        for name, help_text in listing:
-            print(f"  {name.ljust(width)}  {help_text}")
-    else:
+    subcommands = _subcommand_help(parser) if parser is not None else {}
+    if not subcommands:
         print("  (unable to enumerate protocols; run 'oida <protocol> -h')")
+        print("\nRun 'oida <protocol> -h' for protocol-specific options")
+        return 0
 
-    print("")
-    print("Run 'oida <protocol> -h' for protocol-specific options")
+    # Consistent column width across every section so help text lines up.
+    width = max((len(display) for display, _ in subcommands.values()), default=0)
+    categorized: set = set()
+
+    # Scannable protocols, grouped by domain.
+    for title, color, names in _PROTOCOL_CATEGORIES:
+        rows = [subcommands[n] for n in names if n in subcommands]
+        categorized.update(n for n in names if n in subcommands)
+        _print_section(title, color, rows, width)
+
+    # Anything registered but not slotted into a category above (excluding
+    # the tooling subcommands handled separately) — keeps new protocols visible.
+    other = [
+        info
+        for name, info in subcommands.items()
+        if name not in categorized
+        and name not in _CORE_TOOLING
+        and name not in _NON_PROTOCOL_SUBCOMMANDS
+    ]
+    _print_section("Other protocols", "white", other, width)
+
+    # Discovery / passive / fuzzing — not single-target wire scanners.
+    tooling = [
+        subcommands[n]
+        for n in (*sorted(_CORE_TOOLING), *sorted(_NON_PROTOCOL_SUBCOMMANDS))
+        if n in subcommands
+    ]
+    _print_section("Discovery & tooling", "blue", tooling, width)
+
+    print(f"Run {_c('oida <protocol> -h', 'yellow')} for protocol-specific options")
     return 0
 
 
@@ -810,6 +900,7 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
 # Protocol name aliases (CLI name -> loader name)
 PROTOCOL_ALIASES = {
     "s7": "snap7",  # oida s7 -> snap7.py
+    "discover": "discovery",  # oida discover -> discovery (verb form)
 }
 
 # Serial protocols (use serial port as target instead of IP)

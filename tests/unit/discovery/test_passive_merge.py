@@ -8,8 +8,6 @@ CODE_REVIEW.md HIGH.
 """
 
 import unittest
-from datetime import datetime
-from unittest.mock import MagicMock
 
 
 class _DummyDevice:

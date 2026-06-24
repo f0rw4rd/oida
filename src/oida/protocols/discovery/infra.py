@@ -1383,3 +1383,332 @@ class PCAnywhereScanner:
             if device and device.pcanywhere_data is not None:
                 device.pcanywhere_data["status"] = status
                 logger.debug(f"pcAnywhere: {ip} status: {status}")
+
+
+# IANA enterprise numbers commonly seen in ASF Presence Pong replies.
+_ASF_IANA_VENDORS = {
+    343: "Intel",
+    674: "Dell",
+    11: "HP/HPE",
+    2: "IBM",
+    47488: "Supermicro",
+    4542: "ASF",  # the ASF spec enterprise itself
+}
+
+
+class IPMIScanner:
+    """ASF-RMCP / IPMI BMC discovery (UDP 623).
+
+    Sends an ASF Presence Ping; a Presence Pong identifies a baseboard
+    management controller (HP iLO, Dell iDRAC, Supermicro, Intel AMT/vPro).
+    The Pong's supported-entities byte tells us whether IPMI is supported.
+
+    Protocol (per DMTF DSP0136 + gopacket layers/asf.go):
+    - RMCP header (4 bytes): 06 00 FF 06   (ver 1.0, seq 0xFF, class 0x06=ASF)
+    - ASF header (8 bytes): enterprise 00 00 11 BE (4542) + msg-type + tag
+        + reserved 00 + data-len
+    - Presence Ping  msg-type = 0x80, data-len = 0x00  -> 12-byte probe
+    - Presence Pong  msg-type = 0x40, data-len = 0x10  + 16-byte data block:
+        enterprise(4 BE) + OEM(4) + supported-entities(1) + interactions(1)
+        + reserved(6). Entities bit7 (0x80) = IPMI supported, bit0 = ASFv1.
+
+    OT-safety: safe — a single read-only capability ping, no auth touched.
+
+    References:
+    - https://www.dmtf.org/sites/default/files/standards/documents/DSP0136.pdf
+    - https://github.com/google/gopacket/blob/master/layers/asf.go
+    - https://github.com/google/gopacket/blob/master/layers/asf_presencepong.go
+    """
+
+    PORT = 623
+    ASF_ENTERPRISE = 4542  # 0x000011BE
+    MSG_PRESENCE_PING = 0x80
+    MSG_PRESENCE_PONG = 0x40
+    _MESSAGE_TAG = 0x10  # caller-chosen; echoed back in the Pong
+
+    def __init__(
+        self,
+        interface: str,
+        subnet: Optional[str] = None,
+        timeout: float = 5.0,
+    ):
+        self.interface = validate_interface(interface)
+        self.subnet = validate_subnet(subnet)
+        self.timeout = validate_timeout(timeout)
+        self.discovered_devices: Dict[str, DiscoveredDevice] = {}
+        self._lock = threading.Lock()
+
+    def _build_probe(self) -> bytes:
+        """Build the 12-byte ASF Presence Ping."""
+        rmcp = b"\x06\x00\xff\x06"  # ver, reserved, seq=0xFF, class=0x06 (ASF)
+        asf = (
+            struct.pack(">I", self.ASF_ENTERPRISE)  # 00 00 11 BE
+            + bytes((self.MSG_PRESENCE_PING,))  # message type 0x80
+            + bytes((self._MESSAGE_TAG,))  # message tag
+            + b"\x00"  # reserved
+            + b"\x00"  # data length = 0
+        )
+        return rmcp + asf
+
+    def scan(self) -> Dict[str, DiscoveredDevice]:
+        """Broadcast the Presence Ping and collect Pong replies."""
+        sock = None
+        try:
+            sock = create_udp_socket(self.interface, timeout=0.5, broadcast=True)
+            probe = self._build_probe()
+            broadcast_addrs = get_all_broadcast_addresses(self.interface, self.subnet)
+            for i, addr in enumerate(broadcast_addrs):
+                sendto(sock, probe, (addr, self.PORT))
+                logger.debug(f"IPMI: sent ASF Presence Ping to {addr}:{self.PORT}")
+                if i < len(broadcast_addrs) - 1:
+                    time.sleep(0.1)
+
+            start_time = time.time()
+            while time.time() - start_time < self.timeout:
+                try:
+                    data, addr = sock.recvfrom(4096)
+                    device = self._parse_response(data, addr[0])
+                    if device:
+                        with self._lock:
+                            self.discovered_devices[addr[0]] = device
+                            logger.debug(f"IPMI: found BMC at {addr[0]}")
+                except TimeoutError:
+                    continue
+                except OSError as e:
+                    logger.debug(f"IPMI socket error: {e}")
+
+            logger.info(f"IPMI found {len(self.discovered_devices)} BMCs")
+        except OSError as e:
+            logger.warning(f"IPMI discovery socket error: {e}")
+        except Exception as e:
+            logger.warning(f"IPMI discovery failed: {e}")
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except OSError as e:
+                    logger.debug(f"sock.close(): {e}")
+        return self.discovered_devices
+
+    def _parse_response(self, data: bytes, ip: str) -> Optional[DiscoveredDevice]:
+        """Parse an ASF Presence Pong into a DiscoveredDevice.
+
+        Full Pong = RMCP(4) + ASF header(8) + data block(16) = 28 bytes. We
+        validate the RMCP ASF class and the Pong message type, then read the
+        supported-entities byte (offset 20) for the IPMI flag.
+        """
+        # Need at least through the supported-entities byte at offset 20.
+        if len(data) < 21:
+            return None
+        # RMCP version 1.0 (0x06) and class 0x06 (ASF) at byte 3.
+        if data[0] != 0x06 or (data[3] & 0x7F) != 0x06:
+            return None
+        # ASF message type (offset 8) must be Presence Pong.
+        if data[8] != self.MSG_PRESENCE_PONG:
+            return None
+
+        # 16-byte data block begins at offset 12.
+        entities = data[20]
+        interactions = data[21] if len(data) >= 22 else 0
+        block_enterprise = struct.unpack_from(">I", data, 12)[0] if len(data) >= 16 else 0
+        oem = data[16:20].hex() if len(data) >= 20 else ""
+
+        ipmi_supported = bool(entities & 0x80)
+        asfv1 = bool(entities & 0x01)
+        security_ext = bool(interactions & 0x80)
+        dash = bool(interactions & 0x20)
+
+        vendor = _ASF_IANA_VENDORS.get(block_enterprise, "")
+
+        ipmi_data: Dict[str, Any] = {
+            "ipmi_supported": ipmi_supported,
+            "asf_v1": asfv1,
+            "security_extensions": security_ext,
+            "dash": dash,
+            "iana_enterprise": block_enterprise,
+            "oem": oem,
+        }
+        if vendor:
+            ipmi_data["vendor"] = vendor
+
+        device_type = "BMC (IPMI)" if ipmi_supported else "ASF-RMCP Device"
+        description = "IPMI baseboard management controller" if ipmi_supported else "ASF device"
+
+        return DiscoveredDevice(
+            ip_addresses=[ip] if ip else [],
+            name=f"{vendor} BMC ({ip})" if vendor else f"BMC ({ip})",
+            manufacturer=vendor or "Unknown",
+            device_type=device_type,
+            description=description,
+            discovered_by=["ipmi"],
+            discovery_reasons=["ipmi:asf-pong"],
+            first_seen=datetime.now().isoformat(),
+            last_seen=datetime.now().isoformat(),
+            ipmi_data=ipmi_data,
+        )
+
+
+class SLPScanner:
+    """Service Location Protocol discovery (UDP 427, mcast 239.255.255.253).
+
+    A multicast SrvRqst for ``service:service-agent`` makes SLP service agents
+    (VMware ESXi, printers, IPMI, many appliances) reply, surfacing advertised
+    service URLs.
+
+    Protocol (per RFC 2608):
+    - SLP v2 header: version(0x02) + function-id + length(3 BE) + flags(2)
+        + next-ext-offset(3) + XID(2) + lang-tag-len(2) + lang-tag.
+    - SrvRqst body: PRList, service-type, scope-list, predicate, SLP-SPI
+        (each a uint16-BE length + UTF-8 string).
+    - Replies: SrvRply(2) = error(2)+url-count(2)+URL entries; SAAdvert(11)
+        and DAAdvert(8) carry the agent's own URL.
+
+    OT-safety: caution — SLP is a known amplification vector (CVE-2023-29552);
+    we send a single multicast SrvRqst and never spoof the source.
+
+    References:
+    - https://www.ietf.org/rfc/rfc2608.txt
+    """
+
+    MULTICAST_ADDR = "239.255.255.253"
+    PORT = 427
+    FUNC_SRVRQST = 1
+    FUNC_SRVRPLY = 2
+    FUNC_DAADVERT = 8
+    FUNC_SAADVERT = 11
+
+    def __init__(
+        self,
+        interface: str,
+        subnet: Optional[str] = None,
+        timeout: float = 5.0,
+    ):
+        self.interface = validate_interface(interface)
+        self.subnet = validate_subnet(subnet)
+        self.timeout = validate_timeout(timeout)
+        self.discovered_devices: Dict[str, DiscoveredDevice] = {}
+        self._lock = threading.Lock()
+
+    def _build_probe(self, service_type: str = "service:service-agent") -> bytes:
+        """Build a multicast SrvRqst for the given service type, scope DEFAULT."""
+        lang = b"en"
+
+        def s(b: bytes) -> bytes:
+            return struct.pack(">H", len(b)) + b
+
+        body = (
+            s(b"")  # PRList (empty)
+            + s(service_type.encode("utf-8"))
+            + s(b"DEFAULT")  # scope-list
+            + s(b"")  # predicate
+            + s(b"")  # SLP SPI
+        )
+        # Header is 14 bytes + lang tag; total length spans header+body.
+        total_len = 14 + len(lang) + len(body)
+        header = (
+            bytes((2, self.FUNC_SRVRQST))  # version, function-id
+            + total_len.to_bytes(3, "big")  # length (24-bit)
+            + struct.pack(">H", 0x2000)  # flags: REQUEST MCAST
+            + (0).to_bytes(3, "big")  # next extension offset
+            + struct.pack(">H", 1)  # XID
+            + struct.pack(">H", len(lang))  # lang tag length
+            + lang
+        )
+        return header + body
+
+    def scan(self) -> Dict[str, DiscoveredDevice]:
+        sock = None
+        try:
+            sock = create_udp_socket(self.interface, timeout=2.0, multicast_ttl=2)
+            sendto(sock, self._build_probe(), (self.MULTICAST_ADDR, self.PORT))
+            logger.debug(f"SLP: sent SrvRqst to {self.MULTICAST_ADDR}:{self.PORT}")
+
+            start_time = time.time()
+            while time.time() - start_time < self.timeout:
+                try:
+                    data, addr = sock.recvfrom(8192)
+                    device = self._parse_response(data, addr[0])
+                    if device:
+                        with self._lock:
+                            self.discovered_devices[addr[0]] = device
+                            logger.debug(f"SLP: found {addr[0]}")
+                except TimeoutError:
+                    pass
+                except OSError as e:
+                    logger.debug(f"SLP socket error: {e}")
+
+            logger.info(f"SLP found {len(self.discovered_devices)} agents")
+        except OSError as e:
+            logger.warning(f"SLP discovery socket error: {e}")
+        except Exception as e:
+            logger.warning(f"SLP discovery failed: {e}")
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except OSError as e:
+                    logger.debug(f"sock.close(): {e}")
+        return self.discovered_devices
+
+    def _parse_response(self, data: bytes, ip: str) -> Optional[DiscoveredDevice]:
+        """Parse an SLP reply (SrvRply / SAAdvert / DAAdvert) into a device."""
+        if len(data) < 16 or data[0] != 0x02:
+            return None
+        func = data[1]
+        lang_len = struct.unpack_from(">H", data, 12)[0]
+        body_off = 14 + lang_len
+        if body_off > len(data):
+            return None
+        body = data[body_off:]
+
+        urls: list = []
+        kind = ""
+        try:
+            if func == self.FUNC_SRVRPLY:
+                kind = "SrvRply"
+                # error-code(2) + url-entry-count(2) + entries
+                if len(body) < 4:
+                    return None
+                count = struct.unpack_from(">H", body, 2)[0]
+                pos = 4
+                for _ in range(count):
+                    # reserved(1) + lifetime(2) + url-len(2) + url + auth-count(1)
+                    if pos + 5 > len(body):
+                        break
+                    url_len = struct.unpack_from(">H", body, pos + 3)[0]
+                    url = body[pos + 5 : pos + 5 + url_len].decode("utf-8", "replace")
+                    urls.append(url)
+                    pos += 5 + url_len + 1  # skip auth-count (assume 0 auth blocks)
+            elif func == self.FUNC_SAADVERT:
+                kind = "SAAdvert"
+                # URL-len(2) + URL
+                if len(body) >= 2:
+                    url_len = struct.unpack_from(">H", body, 0)[0]
+                    urls.append(body[2 : 2 + url_len].decode("utf-8", "replace"))
+            elif func == self.FUNC_DAADVERT:
+                kind = "DAAdvert"
+                # error(2) + boot-timestamp(4) + URL-len(2) + URL
+                if len(body) >= 8:
+                    url_len = struct.unpack_from(">H", body, 6)[0]
+                    urls.append(body[8 : 8 + url_len].decode("utf-8", "replace"))
+            else:
+                return None
+        except (struct.error, UnicodeDecodeError) as e:
+            logger.debug(f"SLP parse error: {e}")
+            return None
+
+        urls = [u for u in urls if u]
+        slp_data: Dict[str, Any] = {"message": kind, "urls": urls}
+
+        return DiscoveredDevice(
+            ip_addresses=[ip] if ip else [],
+            name=f"SLP Agent ({ip})",
+            manufacturer="",
+            device_type="SLP Service Agent",
+            description=f"SLP {kind}: {', '.join(urls)}" if urls else f"SLP {kind}",
+            discovered_by=["slp"],
+            discovery_reasons=[f"slp:{kind}"],
+            first_seen=datetime.now().isoformat(),
+            last_seen=datetime.now().isoformat(),
+            slp_data=slp_data,
+        )

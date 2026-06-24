@@ -310,9 +310,7 @@ class TestLLMNRScan:
         scanner = llmnr_scanner_class("eth0", timeout=1)
 
         with patch("oida.protocols.discovery.network.get_interface_ip", return_value="192.0.2.1"):
-            with patch(
-                "oida.protocols.discovery.network.get_interface_network", return_value=None
-            ):
+            with patch("oida.protocols.discovery.network.get_interface_network", return_value=None):
                 with patch("socket.socket") as mock_socket_class:
                     mock_socket = MagicMock()
                     mock_socket_class.return_value = mock_socket
