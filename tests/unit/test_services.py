@@ -14,7 +14,7 @@ Tests cover:
 - _wait_service_healthy direct tests
 - cmd_build unknown stack error
 - JSON parse error in _get_compose_config
-- Data-driven per-protocol commands
+- groups command + data-driven `up <group>` (core + CVE span)
 """
 
 from __future__ import annotations
@@ -220,14 +220,17 @@ class TestArgparse:
         assert args.command == "up-proto"
         assert args.group == "hart"
 
-    @pytest.mark.parametrize(
-        "cmd",
-        list(dev.PROTO_SPECS.keys()),
-    )
-    def test_per_protocol_commands(self, cmd):
+    def test_groups_command_parses(self):
         parser = dev.build_parser()
-        args = parser.parse_args([cmd])
-        assert args.command == cmd
+        args = parser.parse_args(["groups"])
+        assert args.command == "groups"
+
+    def test_removed_per_protocol_commands_rejected(self):
+        """The old PROTO_SPECS up-<x> commands are gone; argparse must reject them."""
+        parser = dev.build_parser()
+        for old in ("up-goose", "up-mqtt", "up-modbus-vuln", "up-opener"):
+            with pytest.raises(SystemExit):
+                parser.parse_args([old])
 
     def test_all_commands_have_dispatch(self):
         """Every parser subcommand should have a dispatch handler."""
@@ -907,11 +910,15 @@ class TestPortsCommand:
 class TestUpCommand:
     """Test the up command with different stack values."""
 
+    @staticmethod
+    def _up_args(stack, *, build=False, no_pull=False, quiet_pull=False):
+        return SimpleNamespace(stack=stack, build=build, no_pull=no_pull, quiet_pull=quiet_pull)
+
     def test_up_core(self, mock_run):
         with patch.object(dev, "wait_healthy", return_value=True):
-            result = dev.cmd_up(SimpleNamespace(stack="core"))
+            result = dev.cmd_up(self._up_args("core", build=True))
         assert result == 0
-        # Should call docker compose up with core file
+        # Should call docker compose up with core file + --build (build path skips pull)
         mock_run.assert_called()
         first_call_args = mock_run.call_args_list[0][0][0]
         assert dev.COMPOSE_CORE in first_call_args
@@ -920,7 +927,7 @@ class TestUpCommand:
 
     def test_up_cve(self, mock_run):
         with patch.object(dev, "wait_healthy", return_value=True):
-            result = dev.cmd_up(SimpleNamespace(stack="cve"))
+            result = dev.cmd_up(self._up_args("cve", no_pull=True))
         assert result == 0
         first_call_args = mock_run.call_args_list[0][0][0]
         assert dev.COMPOSE_CVE in first_call_args
@@ -929,19 +936,31 @@ class TestUpCommand:
 
     def test_up_all(self, mock_run):
         with patch.object(dev, "wait_healthy", return_value=True):
-            result = dev.cmd_up(SimpleNamespace(stack="all"))
+            result = dev.cmd_up(self._up_args("all", no_pull=True))
         assert result == 0
 
-    def test_up_unknown_stack_delegates_to_up_proto(self, mock_run):
-        """Unknown stack names should delegate to up-proto logic."""
+    def test_up_quiet_pull_threads_through(self, mock_run):
+        """--quiet-pull should suppress pull stderr (default shows docker progress)."""
+        with patch.object(dev, "wait_healthy", return_value=True):
+            with patch.object(dev, "_pull") as mock_pull:
+                dev.cmd_up(self._up_args("core", quiet_pull=True))
+        assert mock_pull.call_args.kwargs["quiet"] is True
+        with patch.object(dev, "wait_healthy", return_value=True):
+            with patch.object(dev, "_pull") as mock_pull:
+                dev.cmd_up(self._up_args("core"))
+        assert mock_pull.call_args.kwargs["quiet"] is False  # loud by default
+
+    def test_up_unknown_stack_delegates_to_group_path(self, mock_run):
+        """Unknown stack names should delegate to the data-driven group path."""
         with patch.object(dev, "_up_proto_impl", return_value=0) as mock_proto:
-            result = dev.cmd_up(SimpleNamespace(stack="hart"))
+            result = dev.cmd_up(self._up_args("hart"))
         assert result == 0
-        mock_proto.assert_called_once_with("hart")
+        mock_proto.assert_called_once_with("hart", quiet_pull=False)
 
     def test_up_returns_1_on_unhealthy(self, mock_run):
         with patch.object(dev, "wait_healthy", return_value=False):
-            result = dev.cmd_up(SimpleNamespace(stack="core"))
+            with patch.object(dev, "_pull"):
+                result = dev.cmd_up(self._up_args("core"))
         assert result == 1
 
 
@@ -1156,187 +1175,91 @@ class TestUpCveCommand:
 
 
 # ---------------------------------------------------------------------------
-# Per-protocol command Tests (data-driven)
+# groups command + data-driven `up <group>` Tests
 # ---------------------------------------------------------------------------
 
 
-class TestPerProtocolCommands:
-    """Test data-driven per-protocol up-* commands via PROTO_SPECS."""
+class TestGroupsCommand:
+    """`groups` lists oida.group values; `up <group>` spans core + CVE members."""
 
-    @pytest.mark.smoke
-    def test_proto_specs_comprehensive(self):
-        """All expected per-protocol commands should be in PROTO_SPECS."""
-        expected = {
-            "up-goose",
-            "up-ocpp",
-            "up-can",
-            "up-hart",
-            "up-mqtt",
-            "up-opcua",
-            "up-snmp",
-            "up-snmp-v3only",
-            "up-http2",
-            "up-astm",
-            "up-fhir",
-            "up-opener",
-            "up-modbus-vuln",
+    def test_all_groups_helper_ignores_unlabeled(self):
+        config = {
+            "services": {
+                "a": {"labels": {"oida.group": "x"}},
+                "b": {"labels": {"oida.group": "y"}},
+                "c": {"labels": {}},  # no oida.group -> ignored
+            }
         }
-        assert set(dev.PROTO_SPECS.keys()) == expected
+        assert dev._all_groups(config) == {"x", "y"}
 
-    def test_generic_handler_starts_services(self, mock_run, capsys):
-        """Generic handler should compose up with the right services."""
-        spec = dev.PROTO_SPECS["up-fhir"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                dev._cmd_up_proto_generic(SimpleNamespace(), spec)
-        # Verify compose up was called with correct services
-        call_args = mock_run.call_args_list[0][0][0]
-        assert "fhir-mock" in call_args
-        assert "up" in call_args
-        assert "-d" in call_args
-        mock_check.assert_called_once_with(8081, "FHIR R4")
+    def test_groups_lists_distinct_groups(self, capsys):
+        core = {
+            "services": {
+                "modbus-mock": {"labels": {"oida.group": "modbus"}},
+                "hart-mock": {"labels": {"oida.group": "hart"}},
+            }
+        }
+        full = {
+            "services": {
+                "modbus-mock": {"labels": {"oida.group": "modbus"}},
+                "modbus-cve-x": {"labels": {"oida.group": "modbus"}},
+                "hart-mock": {"labels": {"oida.group": "hart"}},
+                "dns-cve-x": {"labels": {"oida.group": "dns"}},  # CVE-only group
+            }
+        }
+        # cmd_groups reads core then full
+        with patch.object(dev, "_get_compose_config", side_effect=[core, full]):
+            rc = dev.cmd_groups(SimpleNamespace())
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "modbus" in out and "hart" in out
+        assert "dns" in out  # CVE-only group is surfaced
+        assert "core + 1 cve" in out  # modbus shows the union split
 
-    def test_up_goose(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-goose"]
-        handler(SimpleNamespace())
-        call_args = mock_run.call_args_list[0][0][0]
-        assert "--profile" in call_args
-        assert "goose-l2" in call_args
-        assert "goose-l2-publisher" in call_args
+    def test_groups_empty_returns_1(self, capsys):
+        with patch.object(dev, "_get_compose_config", side_effect=[{}, {}]):
+            rc = dev.cmd_groups(SimpleNamespace())
+        assert rc == 1
 
-    def test_up_ocpp_checks_ports(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-ocpp"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                handler(SimpleNamespace())
-        assert mock_check.call_count == 2
-        mock_check.assert_any_call(9000, "OCPP Insecure")
-        mock_check.assert_any_call(9001, "OCPP Secure")
+    def test_up_group_spans_both_compose_files(self, mock_run):
+        """_up_proto_impl must read config with BOTH -f files + vuln-services profile."""
+        seen = {}
 
-    def test_up_can_starts_with_profile(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-can"]
-        handler(SimpleNamespace())
-        call_args = mock_run.call_args_list[0][0][0]
-        assert "--profile" in call_args
-        assert "can" in call_args
-        assert "can-mock" in call_args
+        def fake_config(compose_args):
+            seen["args"] = compose_args
+            return {
+                "services": {
+                    "modbus-mock": {
+                        "labels": {
+                            "oida.group": "modbus",
+                            "oida.ports": "502",
+                            "oida.description": "core",
+                        },
+                        "profiles": [],
+                    },
+                    "modbus-cve-x": {
+                        "labels": {
+                            "oida.group": "modbus",
+                            "oida.ports": "5022",
+                            "oida.description": "cve",
+                        },
+                        "profiles": ["vuln-services", "vuln-modbus"],
+                    },
+                }
+            }
 
-    def test_up_hart_checks_udp_and_tcp(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-hart"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port_udp", return_value=True) as mock_udp:
-                with patch.object(dev, "check_port", return_value=True) as mock_tcp:
-                    handler(SimpleNamespace())
-        mock_udp.assert_called_once_with(5094, "HART-IP UDP")
-        mock_tcp.assert_called_once_with(5095, "HART-IP TCP")
-
-    def test_up_mqtt_starts_six_services(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-mqtt"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True):
-                handler(SimpleNamespace())
-        call_args = mock_run.call_args_list[0][0][0]
-        for svc in [
-            "mqtt-insecure",
-            "mqtt-auth",
-            "mqtt-sparkplug",
-            "mqtt-busy",
-            "mqtt-tls",
-            "mqtt-busy-tls",
-        ]:
-            assert svc in call_args
-
-    def test_up_opcua_checks_three_ports(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-opcua"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                handler(SimpleNamespace())
-        assert mock_check.call_count == 3
-        mock_check.assert_any_call(4841, "OPC UA Advanced")
-        mock_check.assert_any_call(4842, "OPC UA Insecure")
-        mock_check.assert_any_call(4850, "OPC UA GDS")
-
-    def test_up_snmp_checks_udp(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-snmp"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port_udp", return_value=True) as mock_udp:
-                handler(SimpleNamespace())
-        mock_udp.assert_called_once_with(10161, "SNMP")
-
-    def test_up_snmp_v3only_checks_udp(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-snmp-v3only"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port_udp", return_value=True) as mock_udp:
-                handler(SimpleNamespace())
-        mock_udp.assert_called_once_with(10164, "SNMP-v3only")
-
-    def test_up_http2_checks_ports(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-http2"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                handler(SimpleNamespace())
-        mock_check.assert_any_call(8280, "HTTP/2 nghttp2 TLS")
-        mock_check.assert_any_call(9443, "HTTP/2 Python TLS")
-
-    def test_up_astm_checks_three_ports(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-astm"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                handler(SimpleNamespace())
-        assert mock_check.call_count == 3
-        mock_check.assert_any_call(1394, "ASTM E1394")
-        mock_check.assert_any_call(1395, "ASTM Hematology")
-        mock_check.assert_any_call(1396, "ASTM Data")
-
-    def test_up_fhir_checks_port(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-fhir"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                handler(SimpleNamespace())
-        mock_check.assert_called_once_with(8081, "FHIR R4")
-
-    def test_up_opener_checks_port(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-opener"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                handler(SimpleNamespace())
-        mock_check.assert_called_once_with(44819, "OpENer EtherNet/IP")
-
-    def test_up_modbus_vuln_starts_all_services(self, mock_run, capsys):
-        handler = dev.COMMAND_DISPATCH["up-modbus-vuln"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True) as mock_check:
-                handler(SimpleNamespace())
-        call_args = mock_run.call_args_list[0][0][0]
-        for svc in [
-            "modbus-vuln",
-            "modbus-sunspec",
-            "modbus-cve-2024-10918",
-            "modbus-cve-2022-0367",
-            "modbus-cve-2023-26793",
-            "modbus-cve-2019-14462",
-            "modbus-cve-2019-14463",
-        ]:
-            assert svc in call_args
-        mock_check.assert_any_call(5020, "Modbus Vuln")
-        mock_check.assert_any_call(5502, "Modbus SunSpec")
-
-    def test_info_lines_printed(self, mock_run, capsys):
-        """Info lines should be printed after port checks."""
-        handler = dev.COMMAND_DISPATCH["up-ocpp"]
-        with patch("time.sleep"):
-            with patch.object(dev, "check_port", return_value=True):
-                handler(SimpleNamespace())
-        captured = capsys.readouterr()
-        assert "ws://localhost:9000/CP_001" in captured.out
-        assert "ws://localhost:9001/CP_001" in captured.out
-
-    def test_no_ports_no_sleep(self, mock_run, capsys):
-        """Commands with no ports should not sleep."""
-        handler = dev.COMMAND_DISPATCH["up-goose"]
-        with patch("time.sleep") as mock_sleep:
-            handler(SimpleNamespace())
-        mock_sleep.assert_not_called()
+        with patch.object(dev, "_get_compose_config", side_effect=fake_config):
+            with patch.object(dev, "_wait_service_healthy", return_value=True):
+                rc = dev._up_proto_impl("modbus")
+        assert rc == 0
+        # config read spans both compose files with the CVE umbrella profile
+        assert dev.COMPOSE_CORE in seen["args"]
+        assert dev.COMPOSE_CVE in seen["args"]
+        assert "--profile" in seen["args"] and "vuln-services" in seen["args"]
+        # the CVE member's vuln-modbus profile was auto-collected for `up`
+        up_call = next(c[0][0] for c in mock_run.call_args_list if "up" in c[0][0])
+        assert "vuln-modbus" in up_call
+        assert "modbus-mock" in up_call and "modbus-cve-x" in up_call
 
 
 # ---------------------------------------------------------------------------
@@ -1668,7 +1591,14 @@ class TestCommandDispatch:
         for name, handler in dev.COMMAND_DISPATCH.items():
             assert callable(handler), f"Handler for '{name}' is not callable"
 
-    def test_dispatch_covers_all_proto_specs(self):
-        """Every PROTO_SPECS entry should have a dispatch entry."""
-        for name in dev.PROTO_SPECS:
-            assert name in dev.COMMAND_DISPATCH, f"Missing dispatch for PROTO_SPECS['{name}']"
+    def test_dispatch_matches_parser_subcommands(self):
+        """Dispatch keys must exactly match the parser's registered subcommands."""
+        parser = dev.build_parser()
+        subparsers_action = next(
+            a for a in parser._subparsers._actions if hasattr(a, "_parser_class")
+        )
+        registered = set(subparsers_action.choices.keys())
+        assert registered == set(dev.COMMAND_DISPATCH.keys())
+
+    def test_groups_command_dispatched(self):
+        assert dev.COMMAND_DISPATCH.get("groups") is dev.cmd_groups
