@@ -178,10 +178,10 @@ services:
     ports:
       - "48901:48898"
     environment:
-      # Router NetId MUST match the container IP + ".1.1" (pyads default scheme).
+      # NetId and loopback subnet are derived at startup from the container's
+      # own interface (<ip>.1.1 / <network>), so no static IP pin, hardcoded
+      # NetId, or pinned subnet is needed.
       - AmsRouter__Name=OIDA-TwinCAT-Motor
-      - AmsRouter__NetId=172.30.0.51.1.1
-      - AmsRouter__LoopbackExternalSubnet=172.30.0.0/16
       # Symbol-server profile (motor controller).
       - OIDA_DEVICE_NAME=OIDA-Motor
       - OIDA_DEVICE_VERSION=3.1.4024
@@ -190,8 +190,7 @@ services:
       - OIDA_SYMBOLS=GVL.MotorSpeed:REAL:1480.5,GVL.Current:REAL:12.7,GVL.Running:BOOL:1,GVL.Temperature:INT:42
     restart: unless-stopped
     networks:
-      ics-network:
-        ipv4_address: 172.30.0.51
+      - ics-network
     healthcheck:
       test: ["CMD", "dotnet", "OidaTwinCatMock.dll", "--healthcheck"]
       interval: 30s
@@ -200,7 +199,7 @@ services:
       start_period: 40s
     labels:
       oida.group: "ads"
-      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - motor controller profile, AmsNetId 172.30.0.51.1.1, AMS port 851, state RUN"
+      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - motor controller profile, AmsNetId derived from container IP, AMS port 851, state RUN"
       oida.ports: "48901"
 
   ads-twincat-hvac:
@@ -213,10 +212,10 @@ services:
     ports:
       - "48902:48898"
     environment:
-      # Router NetId MUST match the container IP + ".1.1" (pyads default scheme).
+      # NetId and loopback subnet are derived at startup from the container's
+      # own interface (<ip>.1.1 / <network>), so no static IP pin, hardcoded
+      # NetId, or pinned subnet is needed.
       - AmsRouter__Name=OIDA-TwinCAT-HVAC
-      - AmsRouter__NetId=172.30.0.52.1.1
-      - AmsRouter__LoopbackExternalSubnet=172.30.0.0/16
       # Symbol-server profile (HVAC controller).
       - OIDA_DEVICE_NAME=OIDA-HVAC
       - OIDA_DEVICE_VERSION=2.11.2305
@@ -225,8 +224,7 @@ services:
       - OIDA_SYMBOLS=GVL.RoomTemp:REAL:21.5,GVL.Setpoint:REAL:22.0,GVL.FanSpeed:INT:60,GVL.HeatCall:BOOL:0
     restart: unless-stopped
     networks:
-      ics-network:
-        ipv4_address: 172.30.0.52
+      - ics-network
     healthcheck:
       test: ["CMD", "dotnet", "OidaTwinCatMock.dll", "--healthcheck"]
       interval: 30s
@@ -235,7 +233,7 @@ services:
       start_period: 40s
     labels:
       oida.group: "ads"
-      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - HVAC controller profile, AmsNetId 172.30.0.52.1.1, AMS port 851, state CONFIG"
+      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - HVAC controller profile, AmsNetId derived from container IP, AMS port 851, state CONFIG"
       oida.ports: "48902"
 
   ethernetip-mock:
@@ -3167,10 +3165,12 @@ services:
 
 networks:
   ics-network:
+    # No subnet/ipam pin: Docker picks a free subnet from its default address
+    # pools, so the stack can't clash with a host that already routes a given
+    # range (VPN, another bridge, etc.). Nothing depends on a fixed range -
+    # the ADS mocks derive their AMS NetId and loopback subnet from whatever
+    # interface Docker assigns them.
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.30.0.0/16
 
 volumes:
   logs:

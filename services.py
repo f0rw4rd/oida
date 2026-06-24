@@ -115,6 +115,69 @@ def _load_dotenv() -> None:
         os.environ.setdefault(key.strip(), val.strip())
 
 
+def _all_compose_services(compose_args: list[str], profile_args: list[str]) -> list[str]:
+    """All service names in the (profile-filtered) compose project, or [] on error."""
+    res = _run(
+        _compose_cmd(*compose_args, *profile_args, "config", "--services"),
+        check=False,
+        capture=True,
+    )
+    if res.returncode != 0:
+        return []
+    return [s for s in res.stdout.split() if s]
+
+
+def _buildable_contexts(compose_args: list[str], profile_args: list[str]) -> dict[str, str]:
+    """Map service name -> absolute build-context dir, for services with a ``build:``.
+
+    Used by the drift guard to tell which on-disk source belongs to which mock
+    image. Returns ``{}`` on any error (config interpolation failure, etc.) so
+    callers degrade to the plain pull-everything path.
+    """
+    res = _run(
+        _compose_cmd(*compose_args, *profile_args, "config", "--format", "json"),
+        check=False,
+        capture=True,
+    )
+    if res.returncode != 0 or not res.stdout.strip():
+        return {}
+    try:
+        cfg = json.loads(res.stdout)
+    except json.JSONDecodeError:
+        return {}
+    out: dict[str, str] = {}
+    for name, svc in (cfg.get("services") or {}).items():
+        build = svc.get("build")
+        if not build:
+            continue
+        ctx = build.get("context") if isinstance(build, dict) else build
+        if not ctx:
+            continue
+        ctx_abs = ctx if os.path.isabs(ctx) else str((COMPOSE_DIR / ctx).resolve())
+        out[name] = ctx_abs
+    return out
+
+
+def _git_dirty_services(contexts: dict[str, str]) -> set[str]:
+    """Subset of *contexts* whose build-context has uncommitted git changes.
+
+    This is the drift guard: a service is "locally modified" when ``git status``
+    reports tracked changes or untracked files anywhere under its build context.
+    Returns an empty set outside a git work tree (graceful no-op).
+    """
+    probe = _run(
+        ["git", "rev-parse", "--is-inside-work-tree"], check=False, capture=True
+    )
+    if probe.returncode != 0:
+        return set()
+    dirty: set[str] = set()
+    for name, ctx in contexts.items():
+        st = _run(["git", "status", "--porcelain", "--", ctx], check=False, capture=True)
+        if st.returncode == 0 and st.stdout.strip():
+            dirty.add(name)
+    return dirty
+
+
 def check_port(port: int, label: str, *, udp: bool = False, host: str | None = None) -> bool:
     """Check whether a TCP or UDP port is reachable.
 
@@ -265,16 +328,53 @@ def _pull(
     ``docker/mocks/.env`` — see ``docker/mocks/.env.example``. Failures (offline,
     image not yet published, third-party images) are swallowed — the subsequent
     ``up`` builds whatever is still missing locally.
+
+    Drift guard: image tags are the mutable ``:latest``, so a plain pull would
+    overwrite a locally-built image with the published one. When a buildable
+    mock's source has uncommitted git changes, we therefore exclude it from the
+    pull and rebuild it locally instead — so editing a mock and re-running
+    ``up`` can never silently run the stale published image. (See the
+    ads-twincat dynamic-NetId work for the bug this prevents.)
     """
     profile_args: list[str] = []
     for p in profiles:
         profile_args.extend(["--profile", p])
-    print(f"{YELLOW}[*]{RST} Pulling pre-built images (will build locally on miss)...")
-    _run(
-        _compose_cmd(*compose_args, *profile_args, "pull", "--ignore-pull-failures", *services),
-        check=False,
-        suppress_stderr=True,
-    )
+
+    _load_dotenv()  # ensure OIDA_REGISTRY is present for `compose config`
+    contexts = _buildable_contexts(compose_args, profile_args)
+    if services:
+        contexts = {n: c for n, c in contexts.items() if n in services}
+    dirty = _git_dirty_services(contexts)
+
+    if dirty:
+        print(
+            f"{YELLOW}[*]{RST} Skipping pull for locally-modified service(s) "
+            f"(will build instead): {', '.join(sorted(dirty))}"
+        )
+        if services:
+            pull_list = [s for s in services if s not in dirty]
+        else:
+            pull_list = [
+                s for s in _all_compose_services(compose_args, profile_args) if s not in dirty
+            ]
+    else:
+        pull_list = list(services)  # empty tuple => pull everything
+
+    # Pull pre-built images (skip entirely if every requested service is dirty).
+    if pull_list or not dirty:
+        print(f"{YELLOW}[*]{RST} Pulling pre-built images (will build locally on miss)...")
+        _run(
+            _compose_cmd(
+                *compose_args, *profile_args, "pull", "--ignore-pull-failures", *pull_list
+            ),
+            check=False,
+            suppress_stderr=True,
+        )
+
+    # Rebuild locally-modified services over any stale published image.
+    if dirty:
+        print(f"{YELLOW}[~]{RST} Building locally-modified service(s): {', '.join(sorted(dirty))}")
+        _run(_compose_cmd(*compose_args, *profile_args, "build", *sorted(dirty)), check=False)
 
 
 def _check_docker() -> bool:
