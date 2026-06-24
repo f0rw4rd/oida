@@ -68,14 +68,22 @@ mypy src/oida/
 ### Mock Servers (for testing)
 ```bash
 # Manage mock ICS services (Docker-based) via services.py
-python services.py up [core|cve|all|<group>]   # Bring up mocks
+python services.py up [core|cve|all|<group>]   # Bring up mocks (<group> = core + CVE members)
+python services.py up <group> --quiet-pull      # default shows docker pull progress; this hides it
 python services.py status                       # Show which services are running/healthy
 python services.py logs [service...]            # Follow container logs
 python services.py down                         # Stop services
 python services.py list                         # Show available service groups
+python services.py groups                       # List oida.group values (valid `up <group>` args)
 python services.py ports                        # Show port mappings
 python services.py push                         # Build & push all mock images to $OIDA_REGISTRY (.env)
 ```
+
+Service metadata (groups, ports, profiles) is read live from the compose
+`oida.*` labels — there is no hardcoded service registry in `services.py`.
+`up <group>` resolves every member of an `oida.group` across **both**
+`compose.yml` and `compose.cve.yml` (core + vulnerable), auto-selecting the
+`vuln-*`/profile each member declares.
 
 Mock services provide safe targets for testing:
 - Modbus (port 502), OPC UA (4840), IEC 104 (2404)

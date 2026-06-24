@@ -2,15 +2,15 @@
 """OIDA service manager — manages mock ICS services for testing and development.
 
 Usage:
-    python services.py up [core|cve|all|<group>]
+    python services.py up [core|cve|all|<group>]   # <group> starts core + CVE members
     python services.py down
     python services.py status
     python services.py logs [service...]
     python services.py list
+    python services.py groups                 # list oida.group values (valid `up <group>` args)
     python services.py ports
-    python services.py push                  # build & push all mock images to $OIDA_REGISTRY
-    python services.py up-goose
-    python services.py up-proto <group>
+    python services.py push                   # build & push all mock images to $OIDA_REGISTRY
+    python services.py up-cve <proto>         # start a vuln-<proto> CVE group
     ...
 
 Install: no extra dependencies (stdlib only).
@@ -115,38 +115,16 @@ def _load_dotenv() -> None:
         os.environ.setdefault(key.strip(), val.strip())
 
 
-def _all_compose_services(compose_args: list[str], profile_args: list[str]) -> list[str]:
-    """All service names in the (profile-filtered) compose project, or [] on error."""
-    res = _run(
-        _compose_cmd(*compose_args, *profile_args, "config", "--services"),
-        check=False,
-        capture=True,
-    )
-    if res.returncode != 0:
-        return []
-    return [s for s in res.stdout.split() if s]
-
-
-def _buildable_contexts(compose_args: list[str], profile_args: list[str]) -> dict[str, str]:
+def _buildable_contexts(config: dict) -> dict[str, str]:
     """Map service name -> absolute build-context dir, for services with a ``build:``.
 
     Used by the drift guard to tell which on-disk source belongs to which mock
-    image. Returns ``{}`` on any error (config interpolation failure, etc.) so
-    callers degrade to the plain pull-everything path.
+    image. *config* is a parsed compose config (see ``_get_compose_config``);
+    an empty/partial config simply yields no contexts, so callers degrade to the
+    plain pull-everything path.
     """
-    res = _run(
-        _compose_cmd(*compose_args, *profile_args, "config", "--format", "json"),
-        check=False,
-        capture=True,
-    )
-    if res.returncode != 0 or not res.stdout.strip():
-        return {}
-    try:
-        cfg = json.loads(res.stdout)
-    except json.JSONDecodeError:
-        return {}
     out: dict[str, str] = {}
-    for name, svc in (cfg.get("services") or {}).items():
+    for name, svc in (config.get("services") or {}).items():
         build = svc.get("build")
         if not build:
             continue
@@ -165,9 +143,7 @@ def _git_dirty_services(contexts: dict[str, str]) -> set[str]:
     reports tracked changes or untracked files anywhere under its build context.
     Returns an empty set outside a git work tree (graceful no-op).
     """
-    probe = _run(
-        ["git", "rev-parse", "--is-inside-work-tree"], check=False, capture=True
-    )
+    probe = _run(["git", "rev-parse", "--is-inside-work-tree"], check=False, capture=True)
     if probe.returncode != 0:
         return set()
     dirty: set[str] = set()
@@ -289,7 +265,11 @@ def wait_healthy(compose_args: list[str], *, timeout: int = WAIT_HEALTHY_TIMEOUT
 
 
 def _get_compose_config(compose_args: list[str]) -> dict:
-    """Get parsed compose config as a dict."""
+    """Get parsed compose config as a dict.
+
+    Include ``--profile <name>`` in *compose_args* to surface profile-gated
+    services in the output (see callers that prepend ``[*_all_args(), ...]``).
+    """
     cmd = _compose_cmd(*compose_args, "config", "--format", "json")
     result = _run(cmd, capture=True, check=False)
     if result.returncode != 0 or not result.stdout.strip():
@@ -314,11 +294,22 @@ def _resolve_services_by_group(
     return sorted(services)
 
 
+def _all_groups(config: dict) -> set[str]:
+    """Distinct non-empty oida.group label values present in a compose config."""
+    groups: set[str] = set()
+    for svc_def in config.get("services", {}).values():
+        g = svc_def.get("labels", {}).get("oida.group", "")
+        if g:
+            groups.add(g)
+    return groups
+
+
 def _pull(
     compose_args: list[str],
     *,
     profiles: tuple[str, ...] = (),
     services: tuple[str, ...] = (),
+    quiet: bool = False,
 ) -> None:
     """Best-effort pull of pre-built images from the configured registry.
 
@@ -326,7 +317,7 @@ def _pull(
     so ``pull`` grabs the published image when available. ``OIDA_REGISTRY`` is
     required (compose fails hard if unset); set it in a gitignored
     ``docker/mocks/.env`` — see ``docker/mocks/.env.example``. Failures (offline,
-    image not yet published, third-party images) are swallowed — the subsequent
+    image not yet published, third-party images) are expected — the subsequent
     ``up`` builds whatever is still missing locally.
 
     Drift guard: image tags are the mutable ``:latest``, so a plain pull would
@@ -335,13 +326,18 @@ def _pull(
     pull and rebuild it locally instead — so editing a mock and re-running
     ``up`` can never silently run the stale published image. (See the
     ads-twincat dynamic-NetId work for the bug this prevents.)
+
+    By default the pull runs with normal docker output (progress bars + the
+    expected ``--ignore-pull-failures`` warnings). Pass ``quiet=True`` to hide
+    that stderr (used by ``up --quiet-pull`` for CI/scripted runs).
     """
     profile_args: list[str] = []
     for p in profiles:
         profile_args.extend(["--profile", p])
 
     _load_dotenv()  # ensure OIDA_REGISTRY is present for `compose config`
-    contexts = _buildable_contexts(compose_args, profile_args)
+    config = _get_compose_config([*compose_args, *profile_args])
+    contexts = _buildable_contexts(config)
     if services:
         contexts = {n: c for n, c in contexts.items() if n in services}
     dirty = _git_dirty_services(contexts)
@@ -354,9 +350,7 @@ def _pull(
         if services:
             pull_list = [s for s in services if s not in dirty]
         else:
-            pull_list = [
-                s for s in _all_compose_services(compose_args, profile_args) if s not in dirty
-            ]
+            pull_list = [s for s in (config.get("services") or {}) if s not in dirty]
     else:
         pull_list = list(services)  # empty tuple => pull everything
 
@@ -368,7 +362,7 @@ def _pull(
                 *compose_args, *profile_args, "pull", "--ignore-pull-failures", *pull_list
             ),
             check=False,
-            suppress_stderr=True,
+            suppress_stderr=quiet,
         )
 
     # Rebuild locally-modified services over any stale published image.
@@ -417,7 +411,7 @@ def cmd_up(args: argparse.Namespace) -> int:
     if stack == "core":
         print(f"{BLUE}=== Starting Core Services ==={RST}")
         if not args.build and not args.no_pull:
-            _pull(_core_args())
+            _pull(_core_args(), quiet=args.quiet_pull)
         _run(_compose_cmd(*_core_args(), "up", "-d", *build_flag))
         ok = wait_healthy(_all_args())
         return 0 if ok else 1
@@ -426,14 +420,14 @@ def cmd_up(args: argparse.Namespace) -> int:
         label = "Core + CVE" if stack == "cve" else "All"
         print(f"{BLUE}=== Starting {label} Services ==={RST}")
         if not args.build and not args.no_pull:
-            _pull(_all_args(), profiles=("vuln-services",))
+            _pull(_all_args(), profiles=("vuln-services",), quiet=args.quiet_pull)
         _run(_compose_cmd(*_all_args(), "--profile", "vuln-services", "up", "-d", *build_flag))
         ok = wait_healthy(_all_args())
         return 0 if ok else 1
 
     else:
-        # Treat as protocol group name — delegate to up-proto logic
-        return _up_proto_impl(stack)
+        # Treat as protocol group name — delegate to the data-driven group path
+        return _up_proto_impl(stack, quiet_pull=args.quiet_pull)
 
 
 def cmd_down(args: argparse.Namespace) -> int:
@@ -793,22 +787,23 @@ def cmd_up_cve(args: argparse.Namespace) -> int:
     return 0
 
 
-def _up_proto_impl(group: str) -> int:
-    """Start services by oida.group label (shared implementation)."""
-    compose_args = _core_args()
-    # (#3) Call _get_compose_config once and pass it through
-    config = _get_compose_config(compose_args)
+def _up_proto_impl(group: str, *, quiet_pull: bool = False) -> int:
+    """Start every service in an oida.group — core AND CVE members.
+
+    Reads config with the ``vuln-services`` umbrella profile active so CVE
+    members of the group resolve (mirrors ``cmd_list``); the actual profiles to
+    enable are then collected per-service from each resolved service's
+    ``profiles:`` field, so ``vuln-*`` and core profiles (goose-l2, …) get
+    picked up automatically.
+    """
+    compose_args = _all_args()
+    config = _get_compose_config([*compose_args, "--profile", "vuln-services"])
     services = _resolve_services_by_group(group, compose_args, config=config)
 
     if not services:
         print(f"{RED}[!!]{RST} No services found with oida.group={group}")
-        print("    Available groups:")
-        groups: set[str] = set()
-        for svc_def in config.get("services", {}).values():
-            g = svc_def.get("labels", {}).get("oida.group", "")
-            if g:
-                groups.add(g)
-        for g in sorted(groups):
+        print("    Available groups (or run: services.py groups):")
+        for g in sorted(_all_groups(config)):
             print(f"      {g}")
         return 1
 
@@ -825,7 +820,7 @@ def _up_proto_impl(group: str) -> int:
                 profile_args.extend(["--profile", p])
 
     # Pull pre-built images first, then start (building anything still missing)
-    _pull(compose_args, profiles=tuple(seen_profiles), services=tuple(services))
+    _pull(compose_args, profiles=tuple(seen_profiles), services=tuple(services), quiet=quiet_pull)
     cmd = _compose_cmd(*compose_args, *profile_args, "up", "-d", *services)
     _run(cmd)
 
@@ -896,167 +891,35 @@ def _wait_service_healthy(service: str, compose_args: list[str], *, timeout: int
 
 
 def cmd_up_proto(args: argparse.Namespace) -> int:
-    """Start services by oida.group label."""
+    """Start services by oida.group label (alias of `up <group>`)."""
     return _up_proto_impl(args.group)
 
 
-# ---------------------------------------------------------------------------
-# Data-driven per-protocol commands (#6)
-# ---------------------------------------------------------------------------
-
-PROTO_SPECS: dict[str, dict] = {
-    "up-goose": {
-        "header": "GOOSE L2 Publisher",
-        "services": ["goose-l2-publisher"],
-        "ports": [],
-        "compose_args": ["--profile", "goose-l2"],
-        "info_lines": [],
-    },
-    "up-ocpp": {
-        "header": "OCPP Mock CSMS",
-        "services": ["ocpp-insecure"],
-        "ports": [(9000, "OCPP Insecure", False), (9001, "OCPP Secure", False)],
-        "compose_args": [],
-        "info_lines": [
-            f"{GREEN}[+]{RST} Insecure CSMS: ws://localhost:9000/CP_001",
-            f"{GREEN}[+]{RST} Secure CSMS:   ws://localhost:9001/CP_001 (CP001:SecureKey123)",
-        ],
-    },
-    "up-can": {
-        "header": "CAN Bus Mock Server",
-        "services": ["can-mock"],
-        "ports": [],
-        "compose_args": ["--profile", "can"],
-        "info_lines": [
-            f"{GREEN}[OK]{RST} CAN mock started on UDP multicast 239.0.0.1:43113 (host networking)",
-        ],
-    },
-    "up-hart": {
-        "header": "HART Mock Servers",
-        "services": ["hart-mock", "hart-secondary", "hart-tertiary"],
-        "ports": [(5094, "HART-IP UDP", True), (5095, "HART-IP TCP", False)],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-mqtt": {
-        "header": "MQTT Mock Brokers",
-        "services": [
-            "mqtt-insecure",
-            "mqtt-auth",
-            "mqtt-sparkplug",
-            "mqtt-busy",
-            "mqtt-tls",
-            "mqtt-busy-tls",
-        ],
-        "ports": [
-            (1883, "MQTT Insecure", False),
-            (1884, "MQTT Auth", False),
-            (8883, "MQTT TLS", False),
-        ],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-opcua": {
-        "header": "OPC UA Mock Servers",
-        "services": ["opcua-advanced", "opcua-gds", "opcua-insecure"],
-        "ports": [
-            (4841, "OPC UA Advanced", False),
-            (4842, "OPC UA Insecure", False),
-            (4850, "OPC UA GDS", False),
-        ],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-snmp": {
-        "header": "SNMP Mock Server",
-        "services": ["snmp-mock"],
-        "ports": [(10161, "SNMP", True)],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-snmp-v3only": {
-        "header": "SNMPv3-Only Mock Server",
-        "services": ["snmp-v3only"],
-        "ports": [(10164, "SNMP-v3only", True)],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-http2": {
-        "header": "HTTP/2 Mock Servers",
-        "services": ["http2-nghttp2", "http2-python"],
-        "ports": [
-            (8280, "HTTP/2 nghttp2 TLS", False),
-            (9443, "HTTP/2 Python TLS", False),
-        ],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-astm": {
-        "header": "ASTM Mock Servers",
-        "services": ["astm-mock", "astm-hematology", "astm-data"],
-        "ports": [
-            (1394, "ASTM E1394", False),
-            (1395, "ASTM Hematology", False),
-            (1396, "ASTM Data", False),
-        ],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-fhir": {
-        "header": "FHIR Mock Server",
-        "services": ["fhir-mock"],
-        "ports": [(8081, "FHIR R4", False)],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-opener": {
-        "header": "OpENer EtherNet/IP Server",
-        "services": ["ethernetip-opener"],
-        "ports": [(44819, "OpENer EtherNet/IP", False)],
-        "compose_args": [],
-        "info_lines": [],
-    },
-    "up-modbus-vuln": {
-        "header": "Modbus Vuln + SunSpec Servers",
-        "services": [
-            "modbus-vuln",
-            "modbus-sunspec",
-            "modbus-cve-2024-10918",
-            "modbus-cve-2022-0367",
-            "modbus-cve-2023-26793",
-            "modbus-cve-2019-14462",
-            "modbus-cve-2019-14463",
-        ],
-        "ports": [
-            (5020, "Modbus Vuln", False),
-            (5502, "Modbus SunSpec", False),
-        ],
-        "compose_args": [],
-        "info_lines": [],
-    },
-}
-
-
-def _cmd_up_proto_generic(args: argparse.Namespace, spec: dict) -> int:
-    """Generic handler for data-driven per-protocol commands."""
+def cmd_groups(args: argparse.Namespace) -> int:
+    """List every oida.group value from compose labels (valid `up <group>` args)."""
     _ = args
-    print(f"{BLUE}=== Starting {spec['header']} ==={RST}")
-    spec_profiles = tuple(spec["compose_args"][1::2])  # ["--profile", p, ...] -> (p, ...)
-    _pull(_core_args(), profiles=spec_profiles, services=tuple(spec["services"]))
-    compose = _compose_cmd(*_core_args(), *spec["compose_args"], "up", "-d", *spec["services"])
-    _run(compose)
+    core = _get_compose_config(_core_args())
+    full = _get_compose_config([*_all_args(), "--profile", "vuln-services"])
+    groups = _all_groups(full)
+    if not groups:
+        print(
+            f"{RED}[!!]{RST} No service groups found (is docker/mocks/.env set with OIDA_REGISTRY?)"
+        )
+        return 1
 
-    if spec["ports"]:
-        time.sleep(STARTUP_DELAY)
-        for port, label, is_udp in spec["ports"]:
-            if is_udp:
-                check_port_udp(port, label)
-            else:
-                check_port(port, label)
-
-    for line in spec.get("info_lines", []):
-        print(line)
-
+    print(f"{BLUE}=== Service groups ({len(groups)}) ==={RST}")
+    for g in sorted(groups):
+        n_core = len(_resolve_services_by_group(g, [], config=core))
+        n_total = len(_resolve_services_by_group(g, [], config=full))
+        n_cve = n_total - n_core
+        if n_core and n_cve:
+            origin = f"{n_core} core + {n_cve} cve"
+        elif n_cve:
+            origin = f"{n_cve} cve"
+        else:
+            origin = f"{n_core} core"
+        print(f"  {GREEN}{g:<18}{RST} {DIM}{origin}{RST}")
+    print(f"\n{DIM}Start one with:  services.py up <group>{RST}")
     return 0
 
 
@@ -1086,6 +949,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip the registry pull; build any missing images locally",
     )
+    p_up.add_argument(
+        "--quiet-pull",
+        action="store_true",
+        help="Hide docker pull progress/warnings (default shows normal docker output)",
+    )
 
     sub.add_parser("down", help="Stop all mock services")
     sub.add_parser("restart", help="Restart mock services")
@@ -1110,18 +978,15 @@ def build_parser() -> argparse.ArgumentParser:
     # Discovery commands
     sub.add_parser("list", help="List all available services (reads compose labels)")
     sub.add_parser("ports", help="Show port mappings of currently running containers")
+    sub.add_parser("groups", help="List oida.group values from compose (valid `up <group>` args)")
 
     # CVE command
     p_cve = sub.add_parser("up-cve", help="Start specific CVE protocol group")
     p_cve.add_argument("proto", help="CVE protocol group (smtp, dns, mqtt, ...)")
 
-    # Generic proto command
+    # Generic proto command — alias of `up <group>`
     p_proto = sub.add_parser("up-proto", help="Start services by oida.group label")
     p_proto.add_argument("group", help="Protocol group name")
-
-    # Per-protocol commands — registered from PROTO_SPECS
-    for name, spec in PROTO_SPECS.items():
-        sub.add_parser(name, help=f"Start {spec['header']}")
 
     return parser
 
@@ -1140,21 +1005,8 @@ COMMAND_DISPATCH: dict[str, Callable[[argparse.Namespace], int]] = {
     "ports": cmd_ports,
     "up-cve": cmd_up_cve,
     "up-proto": cmd_up_proto,
+    "groups": cmd_groups,
 }
-
-
-def _make_handler(spec: dict) -> Callable[[argparse.Namespace], int]:
-    """Create a closure-based handler for a protocol spec."""
-
-    def handler(args: argparse.Namespace) -> int:
-        return _cmd_up_proto_generic(args, spec)
-
-    return handler
-
-
-# Add per-protocol commands to dispatch
-for _name, _spec in PROTO_SPECS.items():
-    COMMAND_DISPATCH[_name] = _make_handler(_spec)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1171,13 +1023,15 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 1
 
-    # (#9) Docker pre-flight check for commands that need it
-    needs_docker = args.command not in ("list",)  # list could work offline with cached config
+    # (#9) Docker pre-flight check for commands that need it. `list`/`groups`
+    # only read compose labels (no daemon required).
+    label_only = ("list", "groups")
+    needs_docker = args.command not in label_only
     if needs_docker and not _check_docker():
         return 1
 
     # (#10) Compose file check for commands that need compose
-    needs_compose = args.command not in ("list",)
+    needs_compose = args.command not in label_only
     if needs_compose and not _check_compose_file():
         return 1
 
