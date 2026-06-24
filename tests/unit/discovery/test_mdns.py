@@ -3,7 +3,7 @@ Tests for MDNSScanner class
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 import threading
 
 zeroconf = pytest.importorskip("zeroconf", reason="zeroconf not installed")
@@ -320,3 +320,19 @@ class TestMDNSServiceInfo:
 
         assert props["key"] == "value"
         assert props["str_key"] == "str_value"
+
+
+class TestMDNSServiceTypeCoverage:
+    """Guard the OT-relevant service types browsed by the mDNS scanner.
+
+    OPC UA discovery (FindServersOnNetwork / LDS-ME) rides mDNS via the
+    _opcua-tcp._tcp service type — confirm it stays in the browse list.
+    """
+
+    def test_opcua_and_ot_service_types_present(self):
+        from oida.protocols.discovery.core import MDNS_SERVICE_TYPES
+
+        assert "_opcua-tcp._tcp.local." in MDNS_SERVICE_TYPES
+        # A few other OT/IoT types we rely on staying present.
+        for st in ("_modbus._tcp.local.", "_mqtt._tcp.local.", "_matterc._udp.local."):
+            assert st in MDNS_SERVICE_TYPES

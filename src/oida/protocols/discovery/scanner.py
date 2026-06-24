@@ -71,7 +71,11 @@ from .network import (
 )
 from .ntp import NTPPassiveListener
 from .ssdp import SSDPScanner, SSDPPassiveListener, WSDiscoveryScanner
-from .vendor import LantronixScanner, MoxaScanner
+from .vendor import LantronixScanner, MoxaScanner, ADDPScanner
+from .cameras import HikvisionSADPScanner, DahuaDHDiscoverScanner
+from .energy import SMASpeedwireScanner
+from .av import CrestronCIPScanner, ArtNetScanner
+from .netgear import UbiquitiScanner, MNDPScanner
 from .infra import (
     HIDScanner,
     MSSQLBrowserScanner,
@@ -82,6 +86,8 @@ from .infra import (
     XDMCPScanner,
     JenkinsScanner,
     PCAnywhereScanner,
+    IPMIScanner,
+    SLPScanner,
 )
 from .vrrp import VRRPPassiveListener
 
@@ -193,6 +199,25 @@ _SCANNER_CONFIGS = {
     "lantronix": (LantronixScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "ics"),
     "ipv6-ping": (IPv6Scanner, lambda s: (s.interface, s.timeout), 10, "ics"),
     "fins": (FINSScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "ics"),
+    # Camera / surveillance multicast probes
+    "sadp": (HikvisionSADPScanner, lambda s: (s.interface, s.timeout), 10, "broadcast"),
+    "dahua": (DahuaDHDiscoverScanner, lambda s: (s.interface, s.timeout), 10, "broadcast"),
+    # Energy / solar multicast probes
+    "sma": (SMASpeedwireScanner, lambda s: (s.interface, s.timeout), 10, "broadcast"),
+    # AV / lighting-control broadcast probes
+    "crestron": (
+        CrestronCIPScanner,
+        lambda s: (s.interface, s.subnet, s.timeout),
+        10,
+        "broadcast",
+    ),
+    "artnet": (ArtNetScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
+    # BMC / network-equipment broadcast probes
+    "ipmi": (IPMIScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
+    "ubiquiti": (UbiquitiScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
+    "mndp": (MNDPScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
+    "addp": (ADDPScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
+    "slp": (SLPScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
     # IT infrastructure broadcast probes
     "hid": (HIDScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
     "mssql": (MSSQLBrowserScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
@@ -334,6 +359,36 @@ class DiscoveryScanner(SerialScanner):
         )
         self.enable_fins = (
             self.active_mode and not self.arp_only_mode and not args.get("no-fins", False)
+        )
+        self.enable_sadp = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-sadp", False)
+        )
+        self.enable_dahua = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-dahua", False)
+        )
+        self.enable_sma = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-sma", False)
+        )
+        self.enable_crestron = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-crestron", False)
+        )
+        self.enable_artnet = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-artnet", False)
+        )
+        self.enable_ipmi = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-ipmi", False)
+        )
+        self.enable_ubiquiti = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-ubiquiti", False)
+        )
+        self.enable_mndp = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-mndp", False)
+        )
+        self.enable_addp = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-addp", False)
+        )
+        self.enable_slp = (
+            self.active_mode and not self.arp_only_mode and not args.get("no-slp", False)
         )
         self.enable_dhcpv6_servers = (
             self.active_mode and not self.arp_only_mode and not args.get("no-dhcp", False)
@@ -858,6 +913,36 @@ class DiscoveryScanner(SerialScanner):
             # FINS/Omron PLC discovery
             if self.enable_fins:
                 scan_tasks.append(("fins", lambda: self._run_scanner("fins")))
+            # Hikvision SADP camera/NVR discovery
+            if self.enable_sadp:
+                scan_tasks.append(("sadp", lambda: self._run_scanner("sadp")))
+            # Dahua DHDiscover camera/NVR discovery
+            if self.enable_dahua:
+                scan_tasks.append(("dahua", lambda: self._run_scanner("dahua")))
+            # SMA Speedwire inverter / energy-meter discovery
+            if self.enable_sma:
+                scan_tasks.append(("sma", lambda: self._run_scanner("sma")))
+            # Crestron CIP AV control-system discovery
+            if self.enable_crestron:
+                scan_tasks.append(("crestron", lambda: self._run_scanner("crestron")))
+            # Art-Net lighting-node discovery
+            if self.enable_artnet:
+                scan_tasks.append(("artnet", lambda: self._run_scanner("artnet")))
+            # IPMI / ASF-RMCP BMC discovery
+            if self.enable_ipmi:
+                scan_tasks.append(("ipmi", lambda: self._run_scanner("ipmi")))
+            # Ubiquiti device discovery
+            if self.enable_ubiquiti:
+                scan_tasks.append(("ubiquiti", lambda: self._run_scanner("ubiquiti")))
+            # MikroTik MNDP discovery
+            if self.enable_mndp:
+                scan_tasks.append(("mndp", lambda: self._run_scanner("mndp")))
+            # Digi ADDP serial-device-server discovery
+            if self.enable_addp:
+                scan_tasks.append(("addp", lambda: self._run_scanner("addp")))
+            # SLP service-agent discovery
+            if self.enable_slp:
+                scan_tasks.append(("slp", lambda: self._run_scanner("slp")))
             # DHCPv6 server discovery
             if self.enable_dhcpv6_servers:
                 scan_tasks.append(("dhcpv6-servers", lambda: self._run_scanner("dhcpv6-servers")))

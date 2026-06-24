@@ -4,13 +4,15 @@ Vendor-specific device discovery scanners.
 Contains:
 - MoxaScanner: Moxa serial device server discovery (UDP 4800)
 - LantronixScanner: Lantronix serial device server discovery (UDP 30718)
+- ADDPScanner: Digi ADDP serial device server discovery (UDP 2362)
 """
 
 import socket
+import struct
 import threading
 import time
 from datetime import datetime
-from typing import Dict, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 from .core import (
     DiscoveredDevice,
@@ -332,4 +334,171 @@ class LantronixScanner:
             first_seen=datetime.now().isoformat(),
             last_seen=datetime.now().isoformat(),
             lantronix_data=lantronix_data,
+        )
+
+
+class ADDPScanner:
+    """Digi ADDP (Advanced Device Discovery Protocol) discovery (UDP 2362).
+
+    Digi serial device servers (and Anybus/OEM gear using ADDP) answer a
+    multicast "discover all" request with a TLV record carrying MAC, IP,
+    netmask, gateway, name, hardware type and firmware.
+
+    Protocol (per christophgysin/addp reference implementation):
+    - Multicast 224.0.5.128:2362.
+    - Header (8 bytes): magic "DIGI" + type(2 BE) + size(2 BE).
+    - Discovery request (14 bytes): 44 49 47 49 00 01 00 06 + FF*6 (all MACs).
+        type 0x0001 = Discovery Request, payload = 6-byte target MAC.
+    - Discovery response: type 0x0002, payload = TLV stream where each field is
+        type(1) + length(1) + value. Field codes: 0x01 MAC(6), 0x02 IP(4),
+        0x03 netmask(4), 0x04 name, 0x06 hw-type, 0x08 firmware, 0x0b gateway(4),
+        0x0d device, 0x12 serial-port-count, 0x14 version, ...
+
+    OT-safety: safe — a single read-only multicast discovery request (the
+    config/reboot opcodes that need the "dbps" password are never sent).
+
+    References:
+    - https://raw.githubusercontent.com/christophgysin/addp/master/doc/protocol
+    - https://raw.githubusercontent.com/christophgysin/addp/master/src/addp/packet/field.h
+    """
+
+    MULTICAST_ADDR = "224.0.5.128"
+    PORT = 2362
+    MAGIC = b"DIGI"
+    TYPE_DISCOVERY_REQUEST = 0x0001
+    TYPE_DISCOVERY_RESPONSE = 0x0002
+
+    # ADDP field type code -> (key, kind). kind: str / mac / ip / u8 / u16 / u32 / hex
+    _TLV = {
+        0x01: ("mac", "mac"),
+        0x02: ("ip", "ip"),
+        0x03: ("netmask", "ip"),
+        0x04: ("network_name", "str"),
+        0x05: ("domain", "str"),
+        0x06: ("hardware_type", "str"),
+        0x07: ("hardware_rev", "str"),
+        0x08: ("firmware", "str"),
+        0x09: ("result_message", "str"),
+        0x0B: ("gateway", "ip"),
+        0x0D: ("device_name", "str"),
+        0x0E: ("realport", "u32"),
+        0x10: ("dhcp", "u8"),
+        0x12: ("serial_ports", "u8"),
+        0x13: ("realport_ssl", "u32"),
+        0x14: ("version", "hex"),
+        0x15: ("vendor_guid", "hex"),
+    }
+
+    def __init__(self, interface: str, subnet: Optional[str] = None, timeout: int = 10):
+        self.interface = validate_interface(interface)
+        self.subnet = validate_subnet(subnet)
+        self.timeout = validate_timeout(timeout)
+        self.discovered_devices: Dict[str, DiscoveredDevice] = {}
+        self._lock = threading.Lock()
+
+    def _build_probe(self) -> bytes:
+        """Build the 14-byte ADDP discovery request (all-MAC target)."""
+        target_mac = b"\xff" * 6
+        return (
+            self.MAGIC
+            + struct.pack(">HH", self.TYPE_DISCOVERY_REQUEST, len(target_mac))
+            + target_mac
+        )
+
+    def scan(self) -> Dict[str, DiscoveredDevice]:
+        sock = None
+        try:
+            sock = create_udp_socket(self.interface, timeout=2.0, multicast_ttl=2)
+            sendto(sock, self._build_probe(), (self.MULTICAST_ADDR, self.PORT))
+            logger.debug(f"ADDP: sent discovery to {self.MULTICAST_ADDR}:{self.PORT}")
+
+            start_time = time.time()
+            while time.time() - start_time < self.timeout:
+                try:
+                    data, addr = sock.recvfrom(4096)
+                    device = self._parse_response(data, addr[0])
+                    if device:
+                        with self._lock:
+                            key = device.ip_addresses[0] if device.ip_addresses else addr[0]
+                            self.discovered_devices[key] = device
+                            logger.debug(f"ADDP: found {key}")
+                except TimeoutError:
+                    pass
+                except OSError as e:
+                    logger.debug(f"ADDP socket error: {e}")
+
+            logger.info(f"ADDP found {len(self.discovered_devices)} devices")
+        except OSError as e:
+            logger.warning(f"ADDP discovery socket error: {e}")
+        except Exception as e:
+            logger.warning(f"ADDP discovery failed: {e}")
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except OSError as e:
+                    logger.debug(f"sock.close(): {e}")
+        return self.discovered_devices
+
+    def _parse_response(self, data: bytes, ip: str) -> Optional[DiscoveredDevice]:
+        """Parse an ADDP Discovery Response (DIGI header + TLV stream)."""
+        if len(data) < 8 or data[:4] != self.MAGIC:
+            return None
+        ptype, size = struct.unpack_from(">HH", data, 4)
+        if ptype != self.TYPE_DISCOVERY_RESPONSE:
+            return None
+
+        payload = data[8 : 8 + size] if size else data[8:]
+        fields: Dict[str, Any] = {}
+        mac = ""
+        reported_ip = ""
+        pos = 0
+        while pos + 2 <= len(payload):
+            ftype = payload[pos]
+            flen = payload[pos + 1]
+            value = payload[pos + 2 : pos + 2 + flen]
+            if len(value) < flen:
+                break  # truncated field
+            pos += 2 + flen
+
+            entry = self._TLV.get(ftype)
+            if not entry:
+                continue
+            key, kind = entry
+            if kind == "str":
+                fields[key] = value.split(b"\x00", 1)[0].decode("utf-8", "replace").strip()
+            elif kind == "mac" and len(value) >= 6:
+                mac = ":".join(f"{b:02x}" for b in value[:6])
+                fields["mac"] = mac
+            elif kind == "ip" and len(value) >= 4:
+                addr = ".".join(str(b) for b in value[:4])
+                fields[key] = addr
+                if key == "ip":
+                    reported_ip = addr
+            elif kind == "u8" and len(value) >= 1:
+                fields[key] = value[0]
+            elif kind == "u32" and len(value) >= 4:
+                fields[key] = struct.unpack(">I", value[:4])[0]
+            elif kind == "hex":
+                fields[key] = value.hex()
+
+        if not fields:
+            return None
+
+        name = fields.get("device_name") or fields.get("network_name", "")
+        hw = fields.get("hardware_type", "")
+        ip_addresses = [reported_ip] if reported_ip else ([ip] if ip else [])
+        return DiscoveredDevice(
+            mac_address=mac,
+            ip_addresses=ip_addresses,
+            name=name or f"Digi Device ({ip})",
+            manufacturer="Digi",
+            model=hw,
+            device_type="Serial Device Server",
+            description=f"Digi {hw} {fields.get('firmware', '')}".strip(),
+            discovered_by=["addp"],
+            discovery_reasons=["addp:response"],
+            first_seen=datetime.now().isoformat(),
+            last_seen=datetime.now().isoformat(),
+            addp_data=fields,
         )
