@@ -85,6 +85,19 @@ First stable release.
 
 ### Changed
 
+- **`services.py` mock management is now fully data-driven from compose
+  labels.** The hardcoded `PROTO_SPECS` table (14 `up-<proto>` subcommands
+  with duplicated service lists/ports/profiles) was removed; service
+  metadata is read live from the `oida.*` labels in `compose.yml` /
+  `compose.cve.yml`. `up <group>` now resolves every member of an
+  `oida.group` across **both** compose files (core + CVE) and auto-selects
+  the `vuln-*`/profile each member declares — previously it only saw core
+  services and missed CVE members (and CVE-only groups like `dns`/`smtp`
+  were unreachable). New `groups` command lists the valid group names.
+  `python services.py up` now shows normal docker pull progress by default;
+  pass `--quiet-pull` to suppress it. The 14 `up-<proto>` commands
+  (`up-goose`, `up-mqtt`, …) are removed — use `up <group>` or
+  `up-cve <proto>` instead.
 - **`NetworkConnection.__init__`** auto-calls `proto_logger()` before
   `proto_flow()`. Subclasses no longer need to call it as their first line
   (the 26 redundant calls were stripped). See `docs/ARCHITECTURE.md` for
