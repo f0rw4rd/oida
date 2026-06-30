@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any, Dict, TYPE_CHECKING
 
 from ....utils import SecurityAnalyzer
+from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -100,20 +101,26 @@ class SecurityAnalysisMixin(_ScannerBase):
                     "CIP Security not configured (Factory Default) - no authentication/encryption"
                 )
                 self.logger.security_finding(
-                    "No authentication", detail="CIP Security in Factory Default state"
+                    "No authentication",
+                    category=Category.AUTHENTICATION,
+                    detail="CIP Security in Factory Default state",
                 )
             else:
                 analysis["concerns"].append(
                     "CIP Security not supported - no authentication/encryption"
                 )
                 self.logger.security_finding(
-                    "No authentication", detail="CIP Security not supported"
+                    "No authentication",
+                    category=Category.AUTHENTICATION,
+                    detail="CIP Security not supported",
                 )
 
         if not has_tls:
             analysis["concerns"].append("TLS/DTLS not supported - traffic is unencrypted")
             self.logger.security_finding(
-                "No encryption", detail="TLS/DTLS not supported on port 2221"
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="CIP Security (TLS/DTLS) not supported - traffic is unencrypted",
             )
 
         # Controller mode security concerns
@@ -128,7 +135,9 @@ class SecurityAnalysisMixin(_ScannerBase):
                     f"Controller in editable mode ({mode}) - program can be modified"
                 )
                 self.logger.security_finding(
-                    "Insecure configuration", detail=f"Controller in editable mode: {mode}"
+                    "Insecure configuration",
+                    category=Category.CONFIGURATION,
+                    detail=f"Controller in editable mode: {mode}",
                 )
 
             # Check if keyswitch is in REMOTE position (mode changeable via software)
@@ -144,6 +153,7 @@ class SecurityAnalysisMixin(_ScannerBase):
                 analysis["concerns"].append("Controller has active fault condition")
                 self.logger.security_finding(
                     "Insecure configuration",
+                    category=Category.CONFIGURATION,
                     detail="Controller in faulted state - may indicate safety issue",
                 )
 
@@ -165,7 +175,9 @@ class SecurityAnalysisMixin(_ScannerBase):
             if writable_count > 0:
                 analysis["concerns"].append(f"{writable_count} writable attributes found")
                 self.logger.security_finding(
-                    "Writable access", detail=f"{writable_count} CIP attributes are writable"
+                    "Writable access",
+                    category=Category.ACCESS_CONTROL,
+                    detail=f"{writable_count} CIP attributes are writable",
                 )
 
         # Dangerous tags
@@ -179,7 +191,9 @@ class SecurityAnalysisMixin(_ScannerBase):
                 tag_names = ", ".join([t["tag"] for t in high_risk[:3]])
                 self.logger.fail(f"DANGER: {len(high_risk)} safety-critical tags accessible")
                 self.logger.security_finding(
-                    "Insecure configuration", detail=f"Safety-critical tags accessible: {tag_names}"
+                    "Insecure configuration",
+                    category=Category.CONFIGURATION,
+                    detail=f"Safety-critical tags accessible: {tag_names}",
                 )
             else:
                 analysis["concerns"].append(
@@ -188,6 +202,7 @@ class SecurityAnalysisMixin(_ScannerBase):
                 tag_names = ", ".join([t["tag"] for t in dangerous_tags[:3]])
                 self.logger.security_finding(
                     "Insecure configuration",
+                    category=Category.CONFIGURATION,
                     detail=f"Potentially dangerous tags accessible: {tag_names}",
                 )
 

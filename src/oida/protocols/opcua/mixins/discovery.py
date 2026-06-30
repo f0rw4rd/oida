@@ -202,6 +202,7 @@ class DiscoveryMixin:
         all_auth_types = set()
         has_anon_endpoint = False
         has_mode_none = False  # No signing/encryption on messages
+        has_mode_invalid = False  # MessageSecurityMode.Invalid advertised (spec violation)
         has_policy_none = False  # No security policy defined
         has_sign_only = False  # Sign but no encrypt
         deprecated_policies = set()
@@ -232,6 +233,8 @@ class DiscoveryMixin:
                             has_anon_endpoint = True
 
             # Track specific security issues
+            if mode == "Invalid":
+                has_mode_invalid = True
             if mode in ("None", "None_"):
                 has_mode_none = True
             if policy == "None":
@@ -252,7 +255,7 @@ class DiscoveryMixin:
         # Display endpoint info
         auth_str = ",".join(sorted(all_auth_types)) if all_auth_types else "?"
         self.logger.display(f"Endpoints: {len(endpoints)} [{auth_str}]")
-        for mode in ["None_", "Sign", "SignAndEncrypt"]:
+        for mode in ["Invalid", "None_", "Sign", "SignAndEncrypt"]:
             if mode in modes:
                 policies = ", ".join(sorted(modes[mode]))
                 self.logger.display(f"  {mode}: {policies}")
@@ -275,6 +278,11 @@ class DiscoveryMixin:
         issues = []
         if has_anon_endpoint:
             issues.append("Anonymous authentication allowed")
+        if has_mode_invalid:
+            issues.append(
+                "SecurityMode Invalid: endpoint advertises an invalid/unspecified "
+                "message security mode (OPC UA spec violation)"
+            )
         if has_mode_none:
             issues.append("SecurityMode None: traffic is unencrypted and unsigned")
         if has_policy_none:
@@ -298,6 +306,7 @@ class DiscoveryMixin:
 
         # Store in results
         self.results["data"]["auth_types"] = list(all_auth_types)
+        self.results["data"]["has_mode_invalid"] = has_mode_invalid
         self.results["data"]["has_mode_none"] = has_mode_none
         self.results["data"]["has_policy_none"] = has_policy_none
         self.results["data"]["has_sign_only"] = has_sign_only
@@ -327,3 +336,10 @@ class DiscoveryMixin:
                 self.results["data"]["untrusted_cert_test"] = cert_result
             else:
                 self.logger.display("No secure endpoints (Sign/SignAndEncrypt) to test cert trust")
+
+            # Self-signed USER certificate acceptance (distinct from the app/
+            # secure-channel cert above): does the server accept an untrusted
+            # self-signed X509 user identity token? Only meaningful when an
+            # endpoint advertises a Certificate user token.
+            user_cert_result = await self._test_self_signed_user_cert_acceptance(endpoints)
+            self.results["data"]["untrusted_user_cert_test"] = user_cert_result

@@ -6,6 +6,8 @@ Handles security analysis and finding reporting.
 
 from typing import Any, Dict, List
 
+from oida.utils.common_types import Category
+
 
 class SecurityMixin:
     """Mixin providing MQTT security analysis."""
@@ -24,7 +26,9 @@ class SecurityMixin:
                 }
             )
             self.logger.security_finding(
-                "Anonymous access", detail="Anonymous authentication allowed"
+                "Anonymous access",
+                category=Category.AUTHENTICATION,
+                detail="Anonymous authentication allowed",
             )
 
         # $SYS exposure
@@ -38,7 +42,9 @@ class SecurityMixin:
                 }
             )
             self.logger.security_finding(
-                "Insecure configuration", detail=f"$SYS topics exposed ({sys_count} topics)"
+                "Insecure configuration",
+                category=Category.CONFIGURATION,
+                detail=f"$SYS topics exposed ({sys_count} topics)",
             )
 
         # Wildcard subscriptions
@@ -53,6 +59,7 @@ class SecurityMixin:
             )
             self.logger.security_finding(
                 "Insecure configuration",
+                category=Category.CONFIGURATION,
                 detail=f"Wildcard subscriptions allowed ({topic_count} topics)",
             )
 
@@ -68,7 +75,9 @@ class SecurityMixin:
             )
             for cred in valid_creds:
                 self.logger.security_finding(
-                    "Default credentials", detail=f"Username: {cred.get('username', 'unknown')}"
+                    "Default credentials",
+                    category=Category.AUTHENTICATION,
+                    detail=f"Username: {cred.get('username', 'unknown')}",
                 )
 
         # No TLS
@@ -80,6 +89,10 @@ class SecurityMixin:
                     "description": "Connection is not encrypted (no TLS)",
                 }
             )
-            self.logger.security_finding("No encryption", detail="Communication is unencrypted")
+            self.logger.security_finding(
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="Communication is unencrypted",
+            )
 
         return issues

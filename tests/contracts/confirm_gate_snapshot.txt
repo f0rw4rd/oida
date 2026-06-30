@@ -99,6 +99,7 @@ ocpp:test_ws_hijack
 ocpp:ws_brute
 opcua:call_method
 opcua:test_subscription_limits
+pcap:hashcat
 profinet:confirm
 profinet:detect_write_only
 profinet:fuzz
@@ -110,5 +111,5 @@ profinet:write_im2
 profinet:write_im3
 profinet:write_index
 snap7:fuzz_max_targets
-snap7:password
+snap7:restart
 snmp:default_creds

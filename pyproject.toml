@@ -50,20 +50,24 @@ dependencies = [
 # ── Per-protocol extras (extra name = protocol directory name) ──
 ads = ["pyads==3.5.2"]
 bacnet = ["BAC0==2025.9.15", "PyYAML==6.0.3"]
+# BACnet/SC rides the BACnet app layer (bacpypes3, pulled via BAC0) over a
+# TLS+WebSocket secure datalink: websockets for the transport, cryptography for
+# the automatic certificate-hygiene checks.
+bacnetsc = ["BAC0==2025.9.15", "PyYAML==6.0.3", "websockets==16.0", "cryptography>=43.0.0"]
 can = ["python-can==4.6.1"]
 coap = ["aiocoap==0.4.17", "cbor2==6.1.2"]
 dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
 discovery = ["zeroconf==0.149.16", "scapy==2.7.0", "psutil==7.2.2", "profinet-py==0.6.2", "defusedxml==0.7.1"]
 dnp3 = ["yadnp3==3.2.1.1"]
 ethercat = ["pysoem==1.1.13; sys_platform != 'win32'"]
-ethernetip = ["pycomm3==1.2.16"]
+ethernetip = ["pycomm3==1.2.16", "cryptography>=43.0.0"]
 fhir = ["fhirclient==4.4.0", "requests==2.34.2"]
-goose = ["pyiec61850-ng==1.6.1.3"]
+goose = ["pyiec61850-ng==1.6.1.4"]
 hart = ["hartip-py==0.3.0"]
 hl7 = ["hl7apy==1.3.5"]
 iec104 = ["c104==2.2.1"]
 knx = ["xknx==3.15.0", "xknxproject==3.9.0"]
-mms = ["pyiec61850-ng==1.6.1.3"]
+mms = ["pyiec61850-ng==1.6.1.4"]
 modbus = ["pymodbus==3.13.0", "PyYAML==6.0.3"]
 mqtt = ["paho-mqtt==2.1.0"]
 opcua = ["asyncua==1.1.8"]
@@ -74,15 +78,17 @@ pcap = ["oida-pyshark==0.6.1.post1"]
 profinet = ["profinet-py==0.6.2"]
 snap7 = ["python-snap7==3.0.0"]
 snmp = ["pysnmp==7.1.27"]
-tase2 = ["pyiec61850-ng==1.6.1.3"]
+tase2 = ["pyiec61850-ng==1.6.1.4"]
 astm = []
-ocpp = ["websockets==16.0"]
+ocpp = ["websockets==16.0", "cryptography>=43.0.0"]
+# Serial transports (IEC-101/104 serial, DNP3 serial, generic serial discovery)
+serial = ["pyserial==3.5"]
 # ── Non-protocol extras ──
-fuzz = ["boofuzz==0.4.2", "sqlalchemy==2.0.50", "pyasn1==0.6.3", "crc==7.1.0", "h2==4.3.0", "scapy==2.7.0"]
+fuzz = ["boofuzz==0.4.2", "sqlalchemy==2.0.50", "pyasn1==0.6.3", "crc==7.1.0", "h2==4.3.0", "scapy==2.7.0", "brotli==1.2.0", "cryptography>=43.0.0"]
 all = [
-    "oida[ads,astm,bacnet,can,coap,dicom,discovery,dnp3,ethercat]",
+    "oida[ads,astm,bacnet,bacnetsc,can,coap,dicom,discovery,dnp3,ethercat]",
     "oida[ethernetip,fhir,goose,hart,hl7,iec104,knx,mms]",
-    "oida[modbus,mqtt,ocpp,opcua,pcap,profinet,snap7,snmp,tase2,fuzz]",
+    "oida[modbus,mqtt,ocpp,opcua,pcap,profinet,snap7,snmp,tase2,serial,fuzz]",
 ]
 dev = [
     "pytest>=9.0.3",
@@ -257,6 +263,7 @@ markers = [
     "astm: ASTM/LIS protocol tests",
     "dnp3: DNP3 protocol tests",
     "bacnet: BACnet protocol tests",
+    "bacnetsc: BACnet/SC (Secure Connect) protocol tests",
     "tase2: TASE.2/ICCP protocol tests",
     "discovery: Discovery protocol tests",
     "hart: HART protocol tests",

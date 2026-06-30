@@ -447,7 +447,7 @@ class TestEnumCredentials:
         assert users[0]["username"] == "admin"
         assert users[0]["password"] == "secret123"
         assert users[0]["level"] == "3"
-        assert any("H3C credential found" in t for t in scanner.logger.finding_titles)
+        assert any("H3C credential found" in d for d in scanner.logger.finding_details)
 
     def test_process_arg_credential_detection(self, scanner):
         from oida.protocols.snmp.constants import HOST_RESOURCE_OIDS as H

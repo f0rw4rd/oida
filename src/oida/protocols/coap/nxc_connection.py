@@ -5,6 +5,7 @@
 import time as _time
 
 from ...connection import NetworkConnection
+from ...utils.common_types import Category
 from ...utils.payload import resolve_file_payload
 
 from .scanner import CoAPScanner
@@ -273,18 +274,20 @@ class coap(NetworkConnection):
                 if dtls:
                     self.logger.security_finding(
                         "NoSec mode (DTLS available)",
-                        "ENCRYPTION",
-                        "LwM2M /0/0/2 = NoSec but DTLS responded on port %d -- "
+                        category=Category.ENCRYPTION,
+                        detail="LwM2M /0/0/2 = NoSec but DTLS responded on port %d -- "
                         "device may not be using DTLS for its LwM2M session" % dtls_port,
                     )
                 else:
                     self.logger.security_finding(
-                        "NoSec mode", "ENCRYPTION", "No transport security (LwM2M /0/0/2 = NoSec)"
+                        "NoSec mode",
+                        category=Category.ENCRYPTION,
+                        detail="No transport security (LwM2M /0/0/2 = NoSec)",
                     )
                 self.logger.security_finding(
                     "No authentication",
-                    "AUTHENTICATION",
-                    "NoSec mode has no client/server authentication "
+                    category=Category.AUTHENTICATION,
+                    detail="NoSec mode has no client/server authentication "
                     "(no PSK, RPK, or Certificate configured in LwM2M /0/0/2)",
                 )
 
@@ -292,8 +295,8 @@ class coap(NetworkConnection):
             if unauth:
                 self.logger.security_finding(
                     "Unauthenticated writes",
-                    "AUTHORIZATION",
-                    "PUT accepted without auth: %s" % ", ".join(unauth),
+                    category=Category.ACCESS_CONTROL,
+                    detail="PUT accepted without auth: %s" % ", ".join(unauth),
                 )
 
     def _execute_features(self):

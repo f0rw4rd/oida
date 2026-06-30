@@ -24,6 +24,8 @@ Easy CLI examples:
     oida ocpp ws://host:9000/CP_001 -E                  # Probe OCPP versions
 """
 
+from oida.utils.common_types import Category
+
 from .scanner import (
     OCPPScanner,
     metadata,
@@ -629,10 +631,20 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             self.logger.success(f"Connected to OCPP endpoint at {self._target_url}")
             self.logger.security_finding(
                 "Anonymous access",
+                category=Category.AUTHENTICATION,
                 detail="Anonymous connection accepted (no credentials provided)",
             )
         elif self.conn:
             self.logger.success(f"Connected to OCPP endpoint at {self._target_url}")
+
+        # Plaintext transport finding: only on a confirmed connection over plain
+        # ws:// (no TLS). wss:// endpoints are encrypted, so skip the finding.
+        if self.conn and self._target_url.startswith("ws://"):
+            self.logger.security_finding(
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="OCPP over ws:// -- charge point traffic in cleartext (no TLS)",
+            )
 
         if not self.conn:
             err = getattr(self.scanner, "_last_connect_error", None)

@@ -71,13 +71,9 @@ class snmp(NetworkConnection):
         else:
             self.results["success"] = True
 
-    def print_host_info(self):
-        """Display scan summary — banner already shown by scanner inline."""
-        # ICS logger exposes `findings` (property), not get_findings(); the old
-        # hasattr guard was always False so this summary never printed.
-        findings = getattr(self.logger, "findings", [])
-        if findings:
-            self.logger.display(f"    {len(findings)} security finding(s) collected")
+    # print_host_info() intentionally not overridden: the per-scan findings
+    # tally is now printed uniformly for every protocol by NetworkConnection's
+    # teardown in connection.py (was previously a hand-rolled line here only).
 
     @staticmethod
     def check_dependencies() -> bool:

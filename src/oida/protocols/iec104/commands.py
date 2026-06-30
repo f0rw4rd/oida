@@ -6,6 +6,8 @@ Provides write operations (single, double, step, setpoint) and command fuzzing.
 
 from typing import Dict, Any
 
+from oida.utils.common_types import Category
+
 
 class CommandMixin:
     """Mixin providing IEC 104 write and fuzz operations.
@@ -566,6 +568,7 @@ class CommandMixin:
                 if success:
                     self.logger.security_finding(
                         "Control command accepted",
+                        category=Category.ACCESS_CONTROL,
                         detail=f"{type_name} at IOA={ioa} activated (unauthenticated command execution)",
                     )
                     result["accepted"].append(type_name)

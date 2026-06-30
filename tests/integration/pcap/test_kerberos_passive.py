@@ -45,6 +45,46 @@ class TestKerberosPassiveEK:
         hashcat_lines = listener.get_hashcat_hashes()
         assert len(hashcat_lines) >= 1, "No hashcat-format hashes produced"
 
+    def test_kerberos_hash_value_is_clean_hex(self):
+        """Regression: the cipher blob must be a single clean hex string.
+
+        Guards two bugs:
+          1) get_field() rendered multi-value bytes fields as Python b'...'
+             reprs instead of hex.
+          2) AS-REP/TGS-REP comma-joined ALL kerberos.cipher occurrences (ticket
+             enc-part + KDC-REP enc-part) instead of selecting the one crackable
+             blob -- leaving a comma in the "hash".
+        """
+        import re
+
+        listener, _devices, _result = _run_listener_test(
+            "kerberos",
+            "KerberosPassiveListener",
+            "kerberos",
+            "kerberos/bruteshark_kerberos_v5_tcp.pcap",
+            expect_details=["msg_type"],
+        )
+
+        # Raw recorded hash_value: pure lowercase hex, nothing else.
+        assert listener.hashes, "Expected at least one extracted hash"
+        for h in listener.hashes:
+            assert re.fullmatch(r"[0-9a-f]+", h.hash_value), (
+                f"hash_value is not clean hex: {h.hash_value[:60]!r}"
+            )
+            assert len(h.hash_value) % 2 == 0, "hex blob must be whole bytes"
+
+        # Hashcat/John lines must carry no bytes-repr or comma artifacts, and
+        # the edata blob (always the single longest $-/:-separated field) must
+        # be clean hex. The exact per-mode field layout is pinned by
+        # tests/unit/pcap/test_kerberos_hash_vectors.py; here we just guard
+        # against the corruption bugs. (Note: the AES salt field is REALM+user,
+        # legitimately non-hex, so we only assert the longest field is hex.)
+        for line in listener.get_hashcat_hashes():
+            assert "b'" not in line and 'b"' not in line, f"bytes-repr leaked: {line[:60]}"
+            assert "," not in line, f"comma-joined ciphers leaked: {line[:60]}"
+            longest = max(re.split(r"[$:]", line), key=len)
+            assert re.fullmatch(r"[0-9a-f]+", longest), f"edata blob not hex: {longest[:60]!r}"
+
 
 class TestKerberosErrorCodeExtraction:
     """T1 field: kerberos.error_code -- KRB-ERROR detection."""

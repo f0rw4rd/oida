@@ -609,6 +609,13 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
         LwM2M NoSec yet answers DTLS -- a contradiction none of the mocks expose, so it
         is exercised against the real DTLS-PSK server in TestCoAPDTLSInterop instead.
         """
+        # This pins the *attempted-DTLS* failure path: the scanner must try the
+        # handshake and hard-fail. Without the client DTLSSocket backend the
+        # scanner short-circuits with "DTLS support is unavailable" and exits 0
+        # before reaching that path, so the contract is only meaningful when the
+        # backend is installed — its absence is a failure, not a skip.
+        if not _dtls_client_backend_available():
+            pytest.fail(_DTLS_BACKEND_MISSING)
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -733,8 +740,11 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             f"{[f.get('data', {}).get('finding') for f in findings]}"
         )
         write_data = write_findings[0].get("data", {})
-        assert write_data.get("category") == "AUTHORIZATION", (
-            f"Expected category 'AUTHORIZATION', got: {write_data.get('category')}"
+        # The free-text "AUTHORIZATION" category was consolidated onto the canonical
+        # Category enum (no AUTHORIZATION member); an unauthenticated write is an
+        # access-control failure, so the scanner now emits ACCESS_CONTROL.
+        assert write_data.get("category") == "ACCESS_CONTROL", (
+            f"Expected category 'ACCESS_CONTROL', got: {write_data.get('category')}"
         )
         details = write_data.get("details", "").lower()
         assert "put accepted" in details, (
@@ -1647,17 +1657,46 @@ def _libcoap_available() -> bool:
     return check_udp_port_open(MOCK_HOST, LIBCOAP_PORT, timeout=3)
 
 
-def _dtls_available() -> bool:
-    """Check if the DTLS container is running and healthy.
+def _dtls_client_backend_available() -> bool:
+    """True if the client-side DTLS backend (DTLSSocket) is importable.
 
-    The libcoap DTLS server silently drops malformed ClientHello probes,
-    so we check Docker container health instead of UDP probing.
+    The scanner performs DTLS via aiocoap's DTLSSocket transport. That backend
+    was removed from the 'coap' extra and is an optional manual install, so the
+    scanner cleanly reports "DTLS support is unavailable" and exits 0 when it is
+    missing. A DTLS test that drives a handshake cannot pass without it, so we
+    must gate on the client library — not just the server container.
+    """
+    try:
+        import DTLSSocket  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+# Actionable hint when the optional tinydtls PSK backend is missing. It is an
+# sdist-only C build (autotools + compiler), which is why it is not in the
+# 'coap' extra. DTLS tests treat its absence as a FAILURE, not a skip.
+_DTLS_BACKEND_MISSING = (
+    "DTLS client backend (DTLSSocket) not installed — the coap-dtls-server "
+    "container IS the DTLS endpoint, but the aiocoap tinydtls/PSK transport is "
+    "an optional C build. Install it with:\n"
+    "  sudo apt-get install -y autoconf automake libtool pkg-config python3-dev\n"
+    "  uv pip install 'DTLSSocket==0.2.3' --no-binary :all:"
+)
+
+
+def _dtls_container_healthy(container: str) -> bool:
+    """True if the named Docker container reports a healthy healthcheck.
+
+    The libcoap DTLS server silently drops malformed ClientHello probes, so we
+    check Docker health instead of UDP probing.
     """
     import subprocess
 
     try:
         result = subprocess.run(
-            ["docker", "inspect", "--format", "{{.State.Health.Status}}", "coap-dtls-server"],
+            ["docker", "inspect", "--format", "{{.State.Health.Status}}", container],
             capture_output=True,
             text=True,
             timeout=5,
@@ -1665,6 +1704,23 @@ def _dtls_available() -> bool:
         return result.stdout.strip() == "healthy"
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return False
+
+
+def _dtls_blocker() -> Optional[str]:
+    """Return why PSK-DTLS interop can't run, or None if it can.
+
+    Distinguishes the two independent prerequisites — client backend vs. server
+    container — so the failure message names the real blocker instead of always
+    blaming the container (which is usually up; the backend is what's missing).
+
+    DTLS tests call ``pytest.fail()`` (not skip) on a non-None result: a missing
+    DTLS prerequisite is surfaced loudly rather than silently passed over.
+    """
+    if not _dtls_client_backend_available():
+        return _DTLS_BACKEND_MISSING
+    if not _dtls_container_healthy("coap-dtls-server"):
+        return f"coap-dtls-server container not running/healthy on {MOCK_HOST}:{DTLS_PORT}"
+    return None
 
 
 @pytest.mark.coap
@@ -1859,6 +1915,22 @@ class TestCoAPLibcoapInterop:
 
 
 @pytest.mark.coap
+class TestCoAPDTLSPrerequisites:
+    """Hard gate for the DTLS client backend.
+
+    The DTLS interop tests need aiocoap's tinydtls/PSK transport (the DTLSSocket
+    package). It is an sdist-only C build kept out of the 'coap' extra, so it is
+    easy to forget. This test FAILS (not skips) when the backend is missing, so a
+    DTLS-capable environment that lacks it is surfaced loudly instead of letting
+    the whole DTLS suite silently no-op.
+    """
+
+    def test_dtls_client_backend_installed(self):
+        """DTLSSocket must be importable — fail with install instructions if not."""
+        assert _dtls_client_backend_available(), _DTLS_BACKEND_MISSING
+
+
+@pytest.mark.coap
 class TestCoAPDTLSInterop:
     """Tests for CoAP DTLS-PSK server (libcoap with OpenSSL).
 
@@ -1869,13 +1941,15 @@ class TestCoAPDTLSInterop:
 
     def test_dtls_port_responds(self):
         """Verify DTLS server responds to probe on port 5684 [Category A]"""
-        if not _dtls_available():
-            pytest.skip(f"DTLS CoAP container not available on {MOCK_HOST}:{DTLS_PORT}")
+        reason = _dtls_blocker()
+        if reason:
+            pytest.fail(reason)
 
     def test_plain_coap_rejected_on_dtls_port(self, cli_runner):
         """Plain CoAP scan against DTLS port fails gracefully [Category C]"""
-        if not _dtls_available():
-            pytest.skip("DTLS container not available")
+        reason = _dtls_blocker()
+        if reason:
+            pytest.fail(reason)
 
         result = cli_runner.run(
             "coap",
@@ -1911,8 +1985,9 @@ class TestCoAPDTLSInterop:
         connection on port 5684. If DTLSSocket is available and
         credentials are correct, DTLS output should appear.
         """
-        if not _dtls_available():
-            pytest.skip("DTLS container not available")
+        reason = _dtls_blocker()
+        if reason:
+            pytest.fail(reason)
 
         # Scan on port 5684 with -D flag
         result = cli_runner.run(
@@ -1940,8 +2015,9 @@ class TestCoAPDTLSInterop:
         the encrypted session. This is the positive-path DTLS test: it asserts
         a real handshake, not merely that a "dtls" string appeared.
         """
-        if not _dtls_available():
-            pytest.skip("DTLS container not available")
+        reason = _dtls_blocker()
+        if reason:
+            pytest.fail(reason)
 
         result = cli_runner.run(
             "coap",
@@ -1976,8 +2052,9 @@ class TestCoAPDTLSInterop:
         the DTLS handshake must fail and the scanner must report failure rather
         than falsely succeeding or downgrading to cleartext.
         """
-        if not _dtls_available():
-            pytest.skip("DTLS container not available")
+        reason = _dtls_blocker()
+        if reason:
+            pytest.fail(reason)
 
         result = cli_runner.run(
             "coap",

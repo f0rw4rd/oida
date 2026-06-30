@@ -190,10 +190,14 @@ class RecordingLogger(MagicMock):
 
     @property
     def finding_details(self):
+        # security_finding(title, ..., detail=..., category=...) — the
+        # descriptive text lives in the `detail=` keyword arg (positional in
+        # older call sites), so fold both positional args and kwarg values in.
         out = []
         for c in self.security_finding.call_args_list:
-            args = list(c.args)
-            out.append(" | ".join(str(a) for a in args))
+            parts = [str(a) for a in c.args]
+            parts.extend(str(v) for v in c.kwargs.values())
+            out.append(" | ".join(parts))
         return out
 
 

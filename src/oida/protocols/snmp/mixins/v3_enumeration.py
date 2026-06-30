@@ -13,6 +13,8 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Dict, List
 
+from oida.utils.common_types import Category
+
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -39,7 +41,10 @@ class V3EnumerationMixin(_ScannerBase):
             "WRONG_AUTH"   - authenticationFailure
             "WRONG_LEVEL"  - unsupportedSecurityLevel (user needs higher sec level)
             "WRONG_PRIV"   - decryptionError
-            "TIMEOUT"      - timeout or other error
+            "TIMEOUT"      - host sent no reply before the timeout
+            "ERROR"        - probe failed for a non-network reason (exception or
+                             an unrecognized pysnmp error indication); the detail
+                             is stashed in ``self._last_v3_error``
         """
         from pysnmp.hlapi.asyncio import (
             ContextData,
@@ -97,9 +102,14 @@ class V3EnumerationMixin(_ScannerBase):
 
         try:
             err, error_status, error_index = asyncio.run(_do_probe())
-        except Exception as e:
-            self.logger.debug(f"v3 probe exception for {username}: {e}")
+        except (TimeoutError, asyncio.TimeoutError):
             return "TIMEOUT"
+        except Exception as e:
+            # Not a timeout -- a real failure (bad transport, pysnmp internals,
+            # unsupported algo). Don't masquerade it as a silent no-response.
+            self._last_v3_error = f"{type(e).__name__}: {e}"
+            self.logger.debug(f"v3 probe error for {username}: {self._last_v3_error}")
+            return "ERROR"
 
         if err is None:
             # Auth succeeded at SNMP engine level -- check PDU error_status
@@ -127,8 +137,18 @@ class V3EnumerationMixin(_ScannerBase):
             return "WRONG_LEVEL"
         elif "DecryptionError" in err_cls or "decryptionError" in err_str:
             return "WRONG_PRIV"
-        else:
+        elif (
+            "RequestTimedOut" in err_cls
+            or "timeout" in err_str.lower()
+            or "No SNMP response received" in err_str
+        ):
             return "TIMEOUT"
+        else:
+            # An error indication we don't recognize -- surface it instead of
+            # silently treating it as a no-response.
+            self._last_v3_error = f"{err_cls}: {err_str}"
+            self.logger.debug(f"v3 probe unrecognized error for {username}: {self._last_v3_error}")
+            return "ERROR"
 
     def _enum_v3_users(self, usernames: List[str]) -> Dict:
         """Phase 1: Enumerate valid SNMPv3 usernames via noAuthNoPriv probes.
@@ -142,32 +162,62 @@ class V3EnumerationMixin(_ScannerBase):
         p1_total = len(usernames)
         # Abort only after repeated no-response (dead/filtered host), not on a
         # single dropped UDP datagram -- and keep any users already discovered.
-        max_consecutive_timeouts = max(3, p1_total // 10)
-        consecutive_timeouts = 0
+        max_consecutive_dead = max(3, p1_total // 10)
+        consecutive_dead = 0
+        # Distinguish "host responded but no users" from "host never replied at
+        # all" (dead/filtered port). Any non-timeout/-error result is a reply.
+        host_responded = False
+        # Track non-network failures separately so the abort/summary names the
+        # real cause instead of blaming the network.
+        probe_errors = 0
 
         for p1_idx, username in enumerate(usernames, 1):
             self.logger.progress(p1_idx, p1_total)
             result = self._probe_v3(username, sec_level="noAuthNoPriv")
 
-            if result == "TIMEOUT":
-                consecutive_timeouts += 1
-                if consecutive_timeouts >= max_consecutive_timeouts:
+            # TIMEOUT (no reply) and ERROR (probe blew up) both yield no usable
+            # answer and both feed the abort streak, but they're reported apart.
+            if result in ("TIMEOUT", "ERROR"):
+                consecutive_dead += 1
+                if result == "ERROR":
+                    probe_errors += 1
+                if consecutive_dead >= max_consecutive_dead:
                     self.logger.progress(p1_idx, p1_total, end="\n")
-                    self.logger.warning(
-                        f"SNMP: {consecutive_timeouts} consecutive no-responses -- "
-                        "aborting v3 user enumeration"
-                    )
-                    return {"valid_users": valid_users, "credentials": credentials}
+                    if probe_errors:
+                        self.logger.warning(
+                            f"SNMP: aborting v3 user enumeration after {consecutive_dead} "
+                            f"failed probes (last error: "
+                            f"{getattr(self, '_last_v3_error', 'unknown')})"
+                        )
+                    else:
+                        self.logger.warning(
+                            f"SNMP: {consecutive_dead} consecutive no-responses -- "
+                            "aborting v3 user enumeration"
+                        )
+                    return {
+                        "valid_users": valid_users,
+                        "credentials": credentials,
+                        "host_responded": host_responded,
+                        "probe_errors": probe_errors,
+                    }
                 if self.brute_rate > 0:
                     time.sleep(self.brute_rate)
                 continue
-            consecutive_timeouts = 0
+            consecutive_dead = 0
+            # SHORT_KEY is a locally-skipped probe, not a reply from the host.
+            if result != "SHORT_KEY":
+                host_responded = True
 
             if result == "INVALID_USER":
                 self.logger.debug(f"  {username}: invalid")
             elif result == "SUCCESS":
+                # Finalize progress, and key the finding per-user so multiple
+                # open users each print/export (dedup is by title+category).
+                self.logger.progress(p1_idx, p1_total, end="\n")
                 self.logger.security_finding(
-                    "No authentication", f"SNMPv3 noAuthNoPriv access: user '{username}'"
+                    f"No authentication (user '{username}')",
+                    category=Category.AUTHENTICATION,
+                    detail=f"SNMPv3 noAuthNoPriv access: user '{username}'",
                 )
                 valid_users.append({"username": username, "level": "noAuthNoPriv"})
                 credentials.append(
@@ -177,11 +227,14 @@ class V3EnumerationMixin(_ScannerBase):
                     }
                 )
             elif result == "WRONG_LEVEL":
-                self.logger.debug(f"{username}: valid (requires auth)")
+                # Finalize the progress line before printing so it isn't clobbered.
+                self.logger.progress(p1_idx, p1_total, end="\n")
+                self.logger.success(f"Valid SNMPv3 user: '{username}' (requires auth)")
                 valid_users.append({"username": username, "level": "authRequired"})
             elif result == "WRONG_AUTH":
                 # Shouldn't happen at noAuthNoPriv, but treat as valid
-                self.logger.debug(f"{username}: valid (unexpected auth error)")
+                self.logger.progress(p1_idx, p1_total, end="\n")
+                self.logger.success(f"Valid SNMPv3 user: '{username}' (requires auth)")
                 valid_users.append({"username": username, "level": "authRequired"})
 
             if self.brute_rate > 0:
@@ -190,7 +243,12 @@ class V3EnumerationMixin(_ScannerBase):
         if p1_total > 0:
             self.logger.progress(p1_total, p1_total, end="\n")
 
-        return {"valid_users": valid_users, "credentials": credentials}
+        return {
+            "valid_users": valid_users,
+            "credentials": credentials,
+            "host_responded": host_responded,
+            "probe_errors": probe_errors,
+        }
 
     def _enum_v3(self) -> Dict:
         """Orchestrate 3-phase SNMPv3 enumeration.
@@ -277,14 +335,31 @@ class V3EnumerationMixin(_ScannerBase):
                 for u in target_users:
                     valid_users.append({"username": u, "level": "authRequired"})
 
+        host_responded = True
+        probe_errors = 0
         if not self.enum_v3_target_user:
             p1_result = self._enum_v3_users(usernames)
             valid_users.extend(p1_result["valid_users"])
             credentials.extend(p1_result["credentials"])
+            host_responded = p1_result.get("host_responded", True)
+            probe_errors = p1_result.get("probe_errors", 0)
 
         if not valid_users:
-            self.logger.info("SNMP v3 enum: no valid usernames found")
-            return {"valid_users": [], "credentials": []}
+            if probe_errors:
+                self.logger.fail(
+                    f"SNMP v3 enum: probes against {self.host}:{self.port} failed with "
+                    f"errors (last: {getattr(self, '_last_v3_error', 'unknown')}) -- "
+                    "not a network timeout; check the target/options"
+                )
+            elif not host_responded:
+                self.logger.fail(
+                    f"SNMP v3 enum: no response from {self.host}:{self.port} -- "
+                    "host is down, the port is wrong, or SNMP is filtered "
+                    "(no UDP reply to any probe)"
+                )
+            else:
+                self.logger.info("SNMP v3 enum: host responded but no valid usernames found")
+            return {"valid_users": [], "credentials": [], "host_responded": host_responded}
 
         # Users that need auth brute-force
         auth_needed = [u for u in valid_users if u["level"] == "authRequired"]
@@ -352,7 +427,8 @@ class V3EnumerationMixin(_ScannerBase):
                         )
                         self.logger.security_finding(
                             "Credential disclosure",
-                            f"SNMPv3 credentials found: user '{username}' pass '{password}'",
+                            category=Category.INFO_DISCLOSURE,
+                            detail=f"SNMPv3 credentials found: user '{username}' pass '{password}'",
                         )
                         found = True
                         break
@@ -384,7 +460,8 @@ class V3EnumerationMixin(_ScannerBase):
                         )
                         self.logger.security_finding(
                             "Credential disclosure",
-                            f"SNMPv3 auth credentials found (priv required): "
+                            category=Category.INFO_DISCLOSURE,
+                            detail=f"SNMPv3 auth credentials found (priv required): "
                             f"user '{username}' pass '{password}'",
                         )
                         found = True
@@ -495,7 +572,8 @@ class V3EnumerationMixin(_ScannerBase):
                                 credentials.append(full_cred)
                             self.logger.security_finding(
                                 "Credential disclosure",
-                                f"SNMPv3 full credentials: user '{username}' "
+                                category=Category.INFO_DISCLOSURE,
+                                detail=f"SNMPv3 full credentials: user '{username}' "
                                 f"auth='{auth_pass}' priv='{priv_pass}'",
                             )
                             found = True

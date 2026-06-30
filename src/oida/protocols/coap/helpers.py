@@ -20,7 +20,7 @@ from .constants import BLOCK_SIZES, DEFAULT_TIMEOUT
 logger = get_module_logger(__name__)
 
 _aiocoap = lazy_import("aiocoap", "CoAP")
-_cbor2 = lazy_import("cbor2", "CoAP", install_hint="pip install cbor2")
+_cbor2 = lazy_import("cbor2", "CoAP", install_hint="pip install oida[coap]")
 
 
 def is_aiocoap_available() -> bool:

@@ -142,6 +142,9 @@ class ConnectionHelper:
         use_tls: bool = False,
         tls_cert: str | None = None,
         tls_key: str | None = None,
+        tls_ca: str | None = None,
+        tls_insecure: bool = False,
+        server_hostname: str | None = None,
         protocol: str = "tcp",
         endpoint_label: str = "endpoint",
         logger=None,
@@ -154,6 +157,12 @@ class ConnectionHelper:
         timeout : socket timeout in seconds
         use_tls : wrap the socket in TLS when True
         tls_cert, tls_key : paths forwarded to ``build_tls_context``
+        tls_ca : CA bundle path; when supplied (and not ``tls_insecure``) the
+            server certificate is verified (CERT_REQUIRED + hostname check)
+        tls_insecure : skip server verification even if ``tls_ca`` is given
+        server_hostname : SNI / hostname-verification name for the handshake;
+            defaults to ``host``. Pass the original DNS name (not a resolved IP)
+            so SAN matching works when verifying against a CA.
         protocol : short protocol name used in cert display (e.g. "astm", "hl7")
         endpoint_label : human label for log messages (e.g. "ASTM endpoint", "MLLP endpoint")
         logger : NXC-style logger (must support .info / .success / .debug)
@@ -174,10 +183,21 @@ class ConnectionHelper:
                 from .socket_helpers import build_tls_context
 
                 ssl_context = build_tls_context(
-                    {"tls-cert": tls_cert, "tls-key": tls_key},
+                    {
+                        "tls-cert": tls_cert,
+                        "tls-key": tls_key,
+                        "tls-ca": tls_ca,
+                        "tls-insecure": tls_insecure,
+                    },
                     logger=log,
                 )
-                sock = ssl_context.wrap_socket(sock, server_hostname=host)
+                # A CA bundle without --tls-insecure means the operator wants
+                # real verification, so enforce hostname matching too.
+                if tls_ca and not tls_insecure:
+                    ssl_context.check_hostname = True
+                sock = ssl_context.wrap_socket(
+                    sock, server_hostname=server_hostname or host
+                )
 
                 try:
                     cert_der = sock.getpeercert(binary_form=True)

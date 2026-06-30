@@ -128,12 +128,12 @@ Then re-run tests one final time to confirm linting didn't break anything.
 ## Test Commands Reference
 
 ```bash
-# Run all tests
-python run_tests.py
+# Run all tests (lane script — `pytest tests/` in one pass hangs on integration sockets)
+./scripts/run-all-tests.sh
 
 # Run specific categories
-python run_tests.py unit
-python run_tests.py integration
+./scripts/run-all-tests.sh unit
+./scripts/run-all-tests.sh integration
 
 # Run specific test file
 python -m pytest tests/unit/knx/test_scanner.py -v --tb=short

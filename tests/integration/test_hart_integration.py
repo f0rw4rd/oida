@@ -1920,14 +1920,17 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             ]
         ), f"Expected quick mode output: {text[:500]}"
 
+    @pytest.mark.timeout(180)
     @pytest.mark.flaky(reruns=2, reruns_delay=3)
     def test_full_mode(self, cli_runner, target, port):
         """Test --full full scan mode [Category B]
 
-        Flaky under heavy parallel load only: --full runs command enumeration +
-        security analysis, which opens many sessions against the hipserver mock
-        and can hit its session-pool cap under `-n 8` contention (see
-        docs/TESTING.md). Completes in ~7s in isolation. Retried, not a bug.
+        --full enumerates the full HART command set (~49 commands) plus security
+        analysis. Against the FieldComm hipserver mock, whose per-command
+        response latency makes the sweep legitimately exceed the default 60s
+        per-test budget, so this test gets an explicit 180s timeout (and a
+        matching subprocess timeout). The hart_service xdist_group serializes it,
+        so this is response latency, not session-pool contention.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1937,7 +1940,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--full",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=150,
         )
 
         assert result.returncode in [0, 1]

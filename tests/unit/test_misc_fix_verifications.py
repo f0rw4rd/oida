@@ -39,13 +39,12 @@ class TestKnxCemiHandlerFinallyRestore(unittest.TestCase):
         self.assertLess(finally_idx, restore_idx)
 
 
-class TestAstmFramingChecksumGuard(unittest.TestCase):
-    def test_short_read_NAKs_instead_of_silently_ACKing(self):
-        src = _read("src/oida/protocols/astm/mixins/framing.py")
-        # Short read on checksum bytes now NAKs.
-        self.assertIn("Short read:", src)
-        # And there's an explicit NAK + return for that branch.
-        self.assertIn("self.conn.sendall(NAK)", src)
+# NOTE: TestAstmFramingChecksumGuard (the "Short read:" frame-receive NAK guard)
+# was removed. The guarded method, FramingMixin._receive_frame, no longer exists:
+# the ASTM scanner is a client that sends records and probes for an
+# application-level reply via _read_application_ack() instead of receiving and
+# checksum-validating inbound data frames. The link-level-ACK-vs-application-ACK
+# behaviour is covered by tests/unit/astm/test_application_ack.py.
 
 
 class TestSnap7ModuleLoggerRefactor(unittest.TestCase):

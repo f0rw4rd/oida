@@ -7,7 +7,7 @@ from typing import Dict
 
 from ...connection import NetworkConnection
 
-from . import MMSScanner, _Lib, _pyiec61850
+from . import MMSScanner, _Lib, _pyiec61850, _write_under_fc
 
 
 class mms(NetworkConnection):
@@ -131,38 +131,22 @@ class mms(NetworkConnection):
         probe is non-destructive, and return the first FC that the server
         accepts. Returns None if none accept a write.
         """
-        mms_value = None
         try:
-            for fc in (
-                _Lib.iec61850.IEC61850_FC_CO,
-                _Lib.iec61850.IEC61850_FC_SP,
-                _Lib.iec61850.IEC61850_FC_MX,
-            ):
-                read_result = _Lib.iec61850.IedConnection_readObject(self.conn, reference, fc)
-                current, _, _ = _Lib.unpack_result(read_result)
-                if current is None:
+            for fc in (_Lib.FC.CO, _Lib.FC.SP, _Lib.FC.MX):
+                try:
+                    value = self.scanner._normalize_read(self.conn.read_value(reference, fc=fc))
+                except _Lib.ReadError:
                     continue
-                value = self.scanner._extract_mms_value(current)
-                _Lib.safe_mms_value_delete(current)
-                mms_value = self.scanner._create_mms_value(value)
-                if mms_value is None:
+                if value is None:
                     continue
-                write_result = _Lib.iec61850.IedConnection_writeObject(
-                    self.conn, reference, fc, mms_value
-                )
-                _, _, ok = _Lib.unpack_result(write_result)
-                _Lib.safe_mms_value_delete(mms_value)
-                mms_value = None
-                if ok:
-                    self.logger.debug(f"  {reference} writable under FC {fc}")
+                if _write_under_fc(self.conn, reference, value, fc):
+                    self.logger.debug(f"  {reference} writable under {fc.name}")
                     return fc
             self.logger.debug(f"  No writable FC discovered for {reference}; defaulting to FC_MX")
             return None
         except Exception as e:
             self.logger.debug(f"Failed to discover writable FC for {reference}: {e}")
             return None
-        finally:
-            _Lib.safe_mms_value_delete(mms_value)
 
     def _fuzz_data_object(self, reference: str, iterations: int) -> None:
         """Fuzz a single MMS data object."""
@@ -183,7 +167,7 @@ class mms(NetworkConnection):
         # write, which keeps the read path working for a dry/permission-denied
         # target.
         write_fc = self._discover_writable_fc(reference)
-        read_fc = write_fc if write_fc is not None else _Lib.iec61850.IEC61850_FC_MX
+        read_fc = write_fc if write_fc is not None else _Lib.FC.MX
 
         # Original typed Python value captured by read_value(); used for an
         # end-of-run restore that reconstructs the correct MmsValue type rather
@@ -194,17 +178,12 @@ class mms(NetworkConnection):
         def read_value():
             """Read value and convert to bytes for fuzzing."""
             nonlocal original_typed, original_typed_set
-            mms_value = None
             try:
-                result = _Lib.iec61850.IedConnection_readObject(
-                    self.conn, reference, read_fc
-                )
-                mms_value, _, _ = _Lib.unpack_result(result)
+                value = self.scanner._normalize_read(self.conn.read_value(reference, fc=read_fc))
 
-                if mms_value is None:
+                if value is None:
                     return b"\x00\x00\x00\x00"
 
-                value = self.scanner._extract_mms_value(mms_value)
                 if not original_typed_set:
                     original_typed = value
                     original_typed_set = True
@@ -220,52 +199,33 @@ class mms(NetworkConnection):
                         return b"\x00\x00\x00\x00"
                 else:
                     return str(value).encode()[:16]
+            except _Lib.ReadError:
+                return b"\x00\x00\x00\x00"
             except Exception as e:
                 self.logger.debug(f"Failed to read fuzz target value: {e}")
                 return b"\x00\x00\x00\x00"
-            finally:
-                _Lib.safe_mms_value_delete(mms_value)
 
         def write_value(data):
-            """Write fuzzed bytes as integer value."""
-            mms_value = None
+            """Write fuzzed bytes as integer value (under the discovered FC)."""
             try:
                 value = int.from_bytes(data[:4].ljust(4, b"\x00"), "little", signed=True)
-                mms_value = _Lib.iec61850.MmsValue_newInteger(value)
-                result = _Lib.iec61850.IedConnection_writeObject(
-                    self.conn, reference, read_fc, mms_value
-                )
-                _, _, ok = _Lib.unpack_result(result)
-                return ok
+                return _write_under_fc(self.conn, reference, value, read_fc)
             except Exception as e:
                 self.logger.debug(f"Failed to write fuzz payload: {e}")
                 return False
-            finally:
-                _Lib.safe_mms_value_delete(mms_value)
 
         def restore_value(value):
-            """Restore the pre-fuzz value using its original MMS type.
+            """Restore the pre-fuzz value using its original Python type.
 
-            Reconstructs the MmsValue from the typed Python value via
-            _create_mms_value so a float/bool/string is written back with the
-            correct type instead of being reinterpreted as a signed integer.
+            write_value marshals the typed Python value itself, so a
+            float/bool/string is written back with the correct type instead of
+            being reinterpreted as a signed integer.
             """
-            mms_value = None
             try:
-                mms_value = self.scanner._create_mms_value(value)
-                if mms_value is None:
-                    self.logger.debug(f"Could not build MmsValue to restore {value!r}")
-                    return False
-                result = _Lib.iec61850.IedConnection_writeObject(
-                    self.conn, reference, read_fc, mms_value
-                )
-                _, _, ok = _Lib.unpack_result(result)
-                return ok
+                return _write_under_fc(self.conn, reference, value, read_fc)
             except Exception as e:
                 self.logger.debug(f"Failed to restore original value: {e}")
                 return False
-            finally:
-                _Lib.safe_mms_value_delete(mms_value)
 
         original = read_value()
         successful, failed, anomalies, crashes = 0, 0, 0, 0

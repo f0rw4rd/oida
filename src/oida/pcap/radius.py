@@ -20,6 +20,7 @@ CHAP-Password contains the CHAP identifier + MD5 response hash.
 Reference: RFC 2865 (RADIUS), RFC 2866 (Accounting)
 """
 
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -90,9 +91,13 @@ class RADIUSCredential:
     credential_type: str = "hash"
     chap_password: str = ""  # CHAP-Password attribute (hex, ident + MD5 hash)
     chap_ident: str = ""  # CHAP identifier byte
+    chap_challenge: str = ""  # CHAP-Challenge attribute (hex); falls back to authenticator
     message_authenticator: str = ""  # HMAC-MD5 Message-Authenticator (hex)
     filter_id: str = ""  # Filter-Id from Access-Accept/Challenge
     nas_port: str = ""  # NAS-Port attribute
+    # MS-CHAPv2 (Microsoft VSA, vendor 311): hashcat 5500 (NetNTLMv1)
+    mschap_challenge: str = ""  # MS-CHAP-Challenge (16-byte AuthenticatorChallenge, hex)
+    mschap2_response: str = ""  # MS-CHAP2-Response (49 bytes: flags+PeerChal+resv+NTresp, hex)
 
     @property
     def password(self) -> str:
@@ -101,17 +106,57 @@ class RADIUSCredential:
 
     @property
     def auth_method(self) -> str:
-        """Return auth method distinguishing PAP vs CHAP."""
+        """Return auth method distinguishing PAP vs CHAP vs MS-CHAPv2."""
+        if self.mschap2_response:
+            return "RADIUS-MSCHAPv2"
         if self.chap_password:
             return "RADIUS-CHAP"
         return "RADIUS-PAP"
 
     @property
+    def hashcat_format(self) -> str:
+        """Crackable hash line for RADIUS auth.
+
+        - MS-CHAPv2 (MS-CHAP-Challenge + MS-CHAP2-Response) -> NetNTLMv1
+          (hashcat 5500): ``user::::<NTresponse>:<8-byte challenge>`` where the
+          8-byte challenge = SHA1(PeerChallenge ‖ AuthenticatorChallenge ‖
+          username)[:8]. (asleap/chapcrack derivation.)
+        - CHAP-Password -> generic CHAP-MD5 (hashcat 4800):
+          ``<MD5 response>:<challenge>:<id>`` where the challenge is the
+          CHAP-Challenge attribute, or the Request-Authenticator if absent.
+
+        PAP (User-Password) is XOR-obfuscated and not crackable without the
+        shared secret, so it yields "" (no fabricated hash).
+        """
+        if self.mschap2_response and self.mschap_challenge and self.username:
+            resp = self.mschap2_response.replace(":", "").lower()
+            authchal = self.mschap_challenge.replace(":", "").lower()
+            # MS-CHAP2-Response value (RFC 2548, 50 bytes):
+            #   Ident(1) Flags(1) PeerChallenge(16) Reserved(8) NT-Response(24)
+            # -> peer_challenge = hex[4:36], nt_response = hex[52:100].
+            if len(resp) >= 100 and len(authchal) >= 32:
+                peer_challenge = bytes.fromhex(resp[4:36])
+                nt_response = resp[52:100]
+                challenge8 = hashlib.sha1(  # noqa: S324 - protocol-defined, not for security
+                    peer_challenge + bytes.fromhex(authchal[:32]) + self.username.encode()
+                ).digest()[:8]
+                return f"{self.username}::::{nt_response}:{challenge8.hex()}"
+
+        if self.chap_password and len(self.chap_password) >= 34:
+            cid = self.chap_password[:2]
+            response = self.chap_password[2:34]
+            challenge = (self.chap_challenge or self.authenticator).replace(":", "").lower()
+            if response and challenge:
+                return f"{response}:{challenge}:{cid}"
+        return ""
+
+    @property
     def hash_value(self) -> str:
-        """Authentication hash for offline cracking.
+        """Raw captured auth material (display/forensics).
 
         For PAP: XOR-encrypted User-Password (requires shared secret).
-        For CHAP: CHAP-Password MD5 response hash.
+        For CHAP: the CHAP-Password attribute. The crackable hashcat line is the
+        separate ``hashcat_format`` property.
         """
         return self.encrypted_password or self.chap_password
 
@@ -320,6 +365,20 @@ class RADIUSPassiveListener(PySharkListenerBase):
         # CHAP identifier (T2 field: radius.CHAP_Ident)
         chap_ident = self._get_radius_field(fields, "radius.chap_ident")
 
+        # CHAP-Challenge attribute (type 60). When absent, RFC 2865 says the
+        # Request-Authenticator IS the challenge -- the property falls back to it.
+        chap_challenge = self._get_radius_field(fields, "radius.chap_challenge")
+        if isinstance(chap_challenge, str):
+            chap_challenge = chap_challenge.replace(":", "")
+
+        # MS-CHAPv2 (Microsoft VSAs, vendor 311) -> hashcat 5500.
+        mschap_challenge = self._get_radius_field(fields, "radius.ms_chap_challenge")
+        if isinstance(mschap_challenge, str):
+            mschap_challenge = mschap_challenge.replace(":", "")
+        mschap2_response = self._get_radius_field(fields, "radius.ms_chap2_response")
+        if isinstance(mschap2_response, str):
+            mschap2_response = mschap2_response.replace(":", "")
+
         cred = RADIUSCredential(
             username=username,
             realm=realm,
@@ -334,8 +393,11 @@ class RADIUSPassiveListener(PySharkListenerBase):
             timestamp=datetime.now().isoformat(),
             chap_password=chap_password,
             chap_ident=chap_ident,
+            chap_challenge=chap_challenge,
             message_authenticator=msg_auth,
             nas_port=nas_port,
+            mschap_challenge=mschap_challenge,
+            mschap2_response=mschap2_response,
         )
 
         # Store for response correlation
@@ -499,6 +561,14 @@ class RADIUSPassiveListener(PySharkListenerBase):
                 entry["nas_port"] = c.nas_port
             result.append(entry)
         return result
+
+    def get_hashcat_hashes(self) -> List[str]:
+        """Crackable RADIUS hashes: CHAP-Password (4800) and MS-CHAPv2 (5500).
+
+        Delegates to the per-credential property. PAP (User-Password) is not
+        crackable without the shared secret, so it yields "" and is skipped.
+        """
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]
 
     def get_users_by_realm(self) -> Dict[str, List[str]]:
         """Get users grouped by realm."""

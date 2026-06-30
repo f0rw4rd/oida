@@ -709,7 +709,6 @@ class TestReplayStoredPayload:
 class TestReplayEchoProtocol:
     """Test replay with echo protocol (simpler than HTTP)."""
 
-    @pytest.mark.skip(reason="Echo fuzzer has request name mismatch bug - unrelated to replay")
     def test_echo_replay(self, temp_session, available_port):
         """Test replay with echo protocol."""
         pytest.importorskip("boofuzz")

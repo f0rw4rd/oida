@@ -582,45 +582,63 @@ def print_table(
 
         # Print data rows (with redundancy compression)
         compress = not _config.get("full_width", False)
-        # Compare structural columns — skip first (#) and last (Details)
-        compare_slice = slice(1, -1) if len(str_headers) > 2 else slice(None)
+        # Collapse only rows that are identical in their *structural* columns.
+        # A leading "#" index and a trailing free-text "Details" column are
+        # noise for that comparison -- but skip them only when the headers
+        # actually say so. Blindly dropping the first/last column collapses
+        # rows that genuinely differ (e.g. an SNMPv3 table keyed on Username
+        # with no index column, whose other columns are all identical).
+        n_cols = len(str_headers)
+        start = 1 if n_cols > 1 and str_headers[0].strip() in ("#", "No", "No.", "Index") else 0
+        end = n_cols
+        if (end - start) > 1 and str_headers[-1].strip().lower() in ("details", "detail"):
+            end = n_cols - 1
+        # Never leave an empty comparison window -- fall back to all columns.
+        if end <= start:
+            start, end = 0, n_cols
+        compare_slice = slice(start, end)
 
-        prev_key = None
-        prev_row = None
-        dup_count = 0
+        # Only collapse a run of structurally-identical rows once it gets long
+        # enough to be noise. Short runs (<= this many) are printed in full so a
+        # handful of repeated rows stay visible with their individual indices.
+        collapse_threshold = 10
 
-        def _flush_dups(count):
-            if count < 1:
+        def _print_row(row):
+            line = "|"
+            for i, cell in enumerate(row):
+                line += f" {cell:<{col_widths[i] - 2}} " + "|"
+            output(maybe_truncate(line))
+
+        def _flush_run(run):
+            if not run:
                 return
-            if count == 1 and prev_row is not None:
-                line = "|"
-                for i, cell in enumerate(prev_row):
-                    line += f" {cell:<{col_widths[i] - 2}} " + "|"
-                output(maybe_truncate(line))
+            if len(run) <= collapse_threshold:
+                for r in run:
+                    _print_row(r)
                 return
+            # Long run: show the first row, then summarize the rest.
+            _print_row(run[0])
+            count = len(run) - 1
             label = f"...  {count} identical row{'s' if count != 1 else ''}"
             total_inner = sum(col_widths) + len(col_widths) - 1
             line = "| " + f"{label:<{total_inner - 2}}" + " |"
             output(maybe_truncate(line))
 
+        prev_key = None
+        run = []
+
         for row in str_data:
             key = tuple(row[compare_slice]) if compress else None
 
-            if compress and key == prev_key:
-                dup_count += 1
+            if compress and run and key == prev_key:
+                run.append(row)
                 continue
 
-            _flush_dups(dup_count)
-            dup_count = 0
+            _flush_run(run)
+            run = [row]
             prev_key = key
-            prev_row = row
 
-            data_row = "|"
-            for i, cell in enumerate(row):
-                data_row += f" {cell:<{col_widths[i] - 2}} " + "|"
-            output(maybe_truncate(data_row))
-
-        _flush_dups(dup_count)
+        _flush_run(run)
 
         # Print bottom separator
         output(maybe_truncate(separator))

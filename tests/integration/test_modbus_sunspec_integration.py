@@ -452,10 +452,16 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             f"Expected active production finding. Got findings: {finding_titles}"
         )
 
-        # Verify OPERATIONAL_RISK category
-        op_findings = _get_security_findings_by_category(log, "OPERATIONAL_RISK")
-        assert len(op_findings) > 0, (
-            "Expected OPERATIONAL_RISK category finding for active production"
+        # The free-text "OPERATIONAL_RISK" category was consolidated onto the
+        # canonical Category enum (no OPERATIONAL_RISK member); an actively-producing
+        # inverter whose controls are writable is an access-control exposure, so the
+        # active-production finding now lands under ACCESS_CONTROL. Assert the
+        # active-production finding specifically carries that category (still strict).
+        ac_findings = _get_security_findings_by_category(log, "ACCESS_CONTROL")
+        ac_titles = [f.get("data", {}).get("finding", "").lower() for f in ac_findings]
+        assert any(FINDING_ACTIVE_PRODUCTION in t for t in ac_titles), (
+            f"Expected the active-production finding under ACCESS_CONTROL. "
+            f"ACCESS_CONTROL finding titles: {ac_titles}"
         )
 
         # Verify the detail mentions MPPT or power
@@ -612,10 +618,16 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
         log = result.scan_log
 
-        # Check that we have findings from each expected category
+        # Check that we have findings from each expected canonical category.
+        # "OPERATIONAL_RISK" was a pre-refactor free-text category with no member in
+        # the canonical Category enum; its findings (active production, writable
+        # controls) were folded into ACCESS_CONTROL. The SunSpec assessment still
+        # spans three distinct canonical categories: AUTHENTICATION (no security
+        # models), ACCESS_CONTROL (writable controls / active production), and
+        # ENCRYPTION (plaintext Modbus/TCP).
         auth_findings = _get_security_findings_by_category(log, "AUTHENTICATION")
         ac_findings = _get_security_findings_by_category(log, "ACCESS_CONTROL")
-        op_findings = _get_security_findings_by_category(log, "OPERATIONAL_RISK")
+        enc_findings = _get_security_findings_by_category(log, "ENCRYPTION")
 
         assert len(auth_findings) >= 1, (
             f"Expected >= 1 AUTHENTICATION finding, got {len(auth_findings)}"
@@ -623,9 +635,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
         assert len(ac_findings) >= 1, (
             f"Expected >= 1 ACCESS_CONTROL finding, got {len(ac_findings)}"
         )
-        assert len(op_findings) >= 1, (
-            f"Expected >= 1 OPERATIONAL_RISK finding, got {len(op_findings)}"
-        )
+        assert len(enc_findings) >= 1, f"Expected >= 1 ENCRYPTION finding, got {len(enc_findings)}"
 
     # ========================================================================
     # Connection Lifecycle

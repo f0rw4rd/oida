@@ -196,6 +196,11 @@ class TestMMSDefinitionExecution:
                 "mms",
                 fuzz_session,
                 enabled_requests=[request_name],
+                # MMS_ACSE_Auth is gated behind the enable_auth opt-in (auth/cert
+                # packets are deliberately off by default). Enable it so the
+                # request actually loads when it is the whitelisted one; harmless
+                # for the other request_names (their whitelist excludes auth).
+                protocol_options={"enable_auth": True},
             )
             try:
                 fuzzer = fuzzer_class(config=config)
@@ -206,10 +211,6 @@ class TestMMSDefinitionExecution:
                 pass
             except ImportError as e:
                 pytest.skip(f"Missing dependency: {e}")
-            except Exception as e:
-                if "No requests specified" in str(e):
-                    pytest.skip(f"Request '{request_name}' not loadable: {e}")
-                raise
 
 
 # ============================================================================

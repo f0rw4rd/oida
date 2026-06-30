@@ -26,7 +26,7 @@ from ...utils.lazy_import import lazy_import
 from .segments import HL7SegmentBuilder, HL7SegmentParser
 from .utils import MLLP_END, MLLP_START, extract_ack_code, strip_mllp, wrap_mllp  # noqa: F401 (MLLP_START re-exported)
 
-_hl7apy = lazy_import("hl7apy", "HL7", install_hint="pip install hl7apy")
+_hl7apy = lazy_import("hl7apy", "HL7", install_hint="pip install oida[hl7]")
 
 
 __all__ = ["HL7SegmentBuilder", "HL7SegmentParser", "hl7", "HL7APY_AVAILABLE"]
@@ -318,7 +318,7 @@ class hl7(
 
         if not HL7APY_AVAILABLE:
             self.logger.fail(
-                "hl7apy library required for HL7 protocol. Install with: pip install hl7apy"
+                "hl7apy library required for HL7 protocol. Install with: pip install oida[hl7]"
             )
             self.results["success"] = False
             self.results["error"] = "hl7apy dependency not available"
@@ -470,6 +470,11 @@ class hl7(
                 use_tls=use_tls,
                 tls_cert=getattr(self.args, "tls_cert", None),
                 tls_key=getattr(self.args, "tls_key", None),
+                tls_ca=getattr(self.args, "tls_ca", None),
+                tls_insecure=getattr(self.args, "tls_insecure", False),
+                # Verify the cert against the original hostname (not the resolved
+                # IP) so DNS-SAN certs match when --tls-ca is supplied.
+                server_hostname=getattr(self, "host", None) or self.ip,
                 protocol="hl7",
                 endpoint_label="MLLP endpoint",
                 logger=self.logger,
@@ -517,6 +522,17 @@ class hl7(
             response = self._send_mllp_message(test_msg)
             if response:
                 self._parse_response(response)
+
+                # Confirmed successful MLLP exchange. MLLP is TLS-optional;
+                # without TLS, PHI is transmitted in cleartext on the wire.
+                if not getattr(self.args, "tls", False):
+                    self.results["data"].setdefault("security_findings", []).append(
+                        {
+                            "operation": "MLLP",
+                            "issue": "No encryption",
+                            "description": ("HL7 MLLP without TLS -- PHI transmitted in cleartext"),
+                        }
+                    )
 
     def print_host_info(self):
         """Display discovered HL7 endpoint info"""

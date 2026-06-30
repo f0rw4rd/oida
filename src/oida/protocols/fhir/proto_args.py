@@ -214,6 +214,7 @@ Examples:
     search_group = fhir_parser.add_argument_group("Resource Search")
 
     search_group.add_argument(
+        "-p",
         "--search-patients",
         action="store_true",
         help="Search for Patient resources",

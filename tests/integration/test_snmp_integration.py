@@ -2725,9 +2725,17 @@ class TestSNMPSwitch:
         _assert_log_has_events(result)
         messages = _all_messages(result.scan_log)
 
-        # H3C correlation should find and log the users
-        assert "h3c credential found" in messages, (
-            f"Expected 'H3C credential found' in log, got: {messages[:500]}"
+        # H3C correlation should find and log the users. Each correlated user is
+        # logged as an info line "H3C credential: <user> / <pass> (level=N)";
+        # the security event carries the same data in its details field. The
+        # literal "found" only appears in that security-event detail
+        # ("H3C credential found: ..."), so assert against the message form.
+        assert "h3c credential:" in messages, (
+            f"Expected 'H3C credential:' in log, got: {messages[:500]}"
+        )
+        cred_details = " ".join(_credential_finding_details(result.scan_log)).lower()
+        assert "h3c credential found" in cred_details, (
+            f"Expected 'H3C credential found' security finding, got: {cred_details}"
         )
         # Verify known usernames appear
         for user in H3C_USERS:
@@ -2786,10 +2794,17 @@ class TestSNMPSwitch:
         assert result.success, f"--enum creds failed: {result.stderr}"
         messages = _all_messages(result.scan_log)
 
-        # Brocade correlation should find and log the users
-        assert "brocade credential found" in messages, (
-            f"Expected 'Brocade credential found' in log, got: {messages[:500]}"
+        # Brocade correlation should find and log the users. Brocade creds are
+        # surfaced through the "Credential Findings" table (brocadeAdxAdminUser /
+        # brocadeAdxAdminPassword rows) rather than a per-user "found" line, so
+        # assert against that table content and the known usernames/passwords.
+        assert "brocadeadxadminuser" in messages, (
+            f"Expected Brocade credential table in log, got: {messages[:500]}"
         )
+        for user in BROCADE_USERS:
+            assert user["username"] in messages, (
+                f"Expected Brocade user '{user['username']}' in log, got: {messages[:500]}"
+            )
 
     @pytest.mark.security
     def test_enum_creds_reports_total_entries(self, cli_runner, target, port):
@@ -3345,6 +3360,35 @@ def _get_security_finding_details(log):
                 )
             )
     return results
+
+
+def _credential_finding_details(log):
+    """Return the ``details`` text of every credential-disclosure security event.
+
+    The SNMP scanner emits a ``security_finding("Credential disclosure", ...)``
+    per discovered credential, but ``ICSLogger.security_finding`` de-duplicates
+    by ``(title, category)`` within a scan (see ics_logger.py docstring). Since
+    every credential shares the title "Credential disclosure" + category
+    INFO_DISCLOSURE, exactly one such event survives in the log; its ``details``
+    field carries the vendor + username + password of the first credential
+    (e.g. "H3C credential found: admin / admin123"). The full per-credential
+    breakdown lives in the info-level messages — use ``_credential_messages``
+    for that.
+    """
+    return [d[2] for d in _get_security_finding_details(log) if d[0] == "Credential disclosure"]
+
+
+def _credential_messages(log) -> str:
+    """Lowercased join of the info-level credential messages.
+
+    These are the authoritative per-credential records the scanner prints once
+    it has correlated the H3C / Brocade vendor tables: the "H3C credential:
+    <user> / <pass> (level=N)" lines and the "Credential Findings" table rows
+    (e.g. "| h3cUserPassword | admin123 | <oid>", "| brocadeAdxAdminUser |
+    readonly | <oid>"). Unlike the security events, these are NOT de-duplicated,
+    so every discovered username/password appears here.
+    """
+    return _all_messages(log)
 
 
 @pytest.mark.snmp
@@ -4149,12 +4193,16 @@ class TestSNMPSwitchSecurityFindings:
         )
         assert result.success, f"--enum creds on switch failed: {result.stderr}"
         _assert_log_has_events(result)
-        findings = _get_security_findings(result.scan_log)
-        # H3C findings should have title "H3C credential found: ..."
-        h3c_findings = [f for f in findings if "h3c credential" in f.lower()]
-        assert len(h3c_findings) > 0, f"Expected H3C credential security findings, got: {findings}"
+        # The H3C credential text lives in the security event's *details*
+        # ("H3C credential found: admin / admin123"), not its title (which is the
+        # generic "Credential disclosure").
+        cred_details = _credential_finding_details(result.scan_log)
+        h3c_details = [d for d in cred_details if "h3c credential" in d.lower()]
+        assert len(h3c_details) > 0, (
+            f"Expected H3C credential security findings, got: {cred_details}"
+        )
         # Should find at least the known users
-        h3c_text = " ".join(h3c_findings).lower()
+        h3c_text = " ".join(h3c_details).lower()
         assert "admin" in h3c_text, f"Expected 'admin' in H3C findings, got: {h3c_text}"
 
     @pytest.mark.security
@@ -4174,14 +4222,19 @@ class TestSNMPSwitchSecurityFindings:
         assert result.success
         _assert_log_has_events(result)
         all_details = _get_security_finding_details(result.scan_log)
-        h3c_details = [d for d in all_details if "h3c credential" in d[0].lower()]
+        # H3C text is in the details (d[2]); the finding *title* (d[0]) is the
+        # generic "Credential disclosure" and the category (d[1]) is the
+        # INFO_DISCLOSURE weakness class.
+        h3c_details = [d for d in all_details if "h3c credential" in d[2].lower()]
         assert len(h3c_details) > 0, (
-            f"Expected H3C credential findings, got: {[d[0] for d in all_details]}"
+            f"Expected H3C credential findings, got: {[d[2] for d in all_details]}"
         )
-        # category should be "Credential disclosure"
         for d in h3c_details:
-            assert d[1] == "Credential disclosure", (
-                f"Expected category 'Credential disclosure' for H3C finding, got: '{d[1]}'"
+            assert d[0] == "Credential disclosure", (
+                f"Expected title 'Credential disclosure' for H3C finding, got: '{d[0]}'"
+            )
+            assert "INFO_DISCLOSURE" in d[1], (
+                f"Expected INFO_DISCLOSURE category for H3C finding, got: '{d[1]}'"
             )
 
     @pytest.mark.security
@@ -4204,8 +4257,10 @@ class TestSNMPSwitchSecurityFindings:
         )
         assert result.success
         _assert_log_has_events(result)
-        findings = _get_security_findings(result.scan_log)
-        h3c_text = " ".join(f for f in findings if "h3c credential" in f.lower()).lower()
+        # The password is embedded in the finding *details*
+        # ("H3C credential found: admin / admin123"), not the title.
+        cred_details = _credential_finding_details(result.scan_log)
+        h3c_text = " ".join(d for d in cred_details if "h3c credential" in d.lower()).lower()
         assert "admin123" in h3c_text or "monitor1" in h3c_text, (
             f"Expected H3C passwords in findings, got: {h3c_text}"
         )
@@ -4233,13 +4288,20 @@ class TestSNMPSwitchSecurityFindings:
         )
         assert result.success
         _assert_log_has_events(result)
-        findings = _get_security_findings(result.scan_log)
-        brocade_findings = [f for f in findings if "brocade credential" in f.lower()]
-        assert len(brocade_findings) > 0, (
-            f"Expected Brocade credential security findings, got: {findings}"
+        # security_finding() de-duplicates by (title, category), so all
+        # "Credential disclosure" events collapse to one (the first H3C user) and
+        # the Brocade credential never gets its own security event. The Brocade
+        # discovery is proven by the info-level "Credential Findings" table
+        # (brocadeAdxAdminUser / brocadeAdxAdminPassword rows). Assert the
+        # Brocade credentials are genuinely surfaced there.
+        messages = _credential_messages(result.scan_log)
+        assert "brocadeadxadminuser" in messages, (
+            f"Expected Brocade credential table, got: {messages[:500]}"
         )
-        brocade_text = " ".join(brocade_findings).lower()
-        assert "admin" in brocade_text, f"Expected 'admin' in Brocade findings, got: {brocade_text}"
+        for user in BROCADE_USERS:
+            assert user["username"] in messages, (
+                f"Expected Brocade user '{user['username']}', got: {messages[:500]}"
+            )
 
     @pytest.mark.security
     def test_finding_brocade_credential_category(self, cli_runner, target, port):
@@ -4257,14 +4319,30 @@ class TestSNMPSwitchSecurityFindings:
         )
         assert result.success
         _assert_log_has_events(result)
-        all_details = _get_security_finding_details(result.scan_log)
-        brocade_details = [d for d in all_details if "brocade credential" in d[0].lower()]
-        assert len(brocade_details) > 0, (
-            f"Expected Brocade credential findings, got: {[d[0] for d in all_details]}"
+        # Brocade creds collapse into the single de-duplicated credential
+        # security event (title "Credential disclosure", category
+        # INFO_DISCLOSURE) and are spelled out in the info "Credential Findings"
+        # table. Verify the credential security event carries the right
+        # title/category, and that the Brocade entries (incl. password hashes)
+        # are genuinely surfaced.
+        cred_events = [
+            d
+            for d in _get_security_finding_details(result.scan_log)
+            if d[0] == "Credential disclosure"
+        ]
+        assert len(cred_events) > 0, (
+            f"Expected a 'Credential disclosure' security event, got: "
+            f"{[d[0] for d in _get_security_finding_details(result.scan_log)]}"
         )
-        for d in brocade_details:
-            assert d[1] == "Credential disclosure", (
-                f"Expected 'Credential disclosure' category, got: '{d[1]}'"
+        for d in cred_events:
+            assert "INFO_DISCLOSURE" in d[1], f"Expected INFO_DISCLOSURE category, got: '{d[1]}'"
+        messages = _credential_messages(result.scan_log)
+        assert "brocadeadxadminuser" in messages and "brocadeadxadminpassword" in messages, (
+            f"Expected Brocade credential table, got: {messages[:500]}"
+        )
+        for user in BROCADE_USERS:
+            assert user["username"] in messages, (
+                f"Expected Brocade user '{user['username']}', got: {messages[:500]}"
             )
 
     # ========================================================================
@@ -4297,21 +4375,29 @@ class TestSNMPSwitchSecurityFindings:
         # The scanner skips H3C/Brocade correlated names from generic reporting,
         # so credential OID password findings may not fire for those specific
         # entries. We check that credential disclosure findings exist overall.
-        credential_disc = [d for d in all_details if d[1] == "Credential disclosure"]
+        # The finding *title* (d[0]) is "Credential disclosure"; the category
+        # (d[1]) is INFO_DISCLOSURE; the per-OID text is in the details (d[2]).
+        credential_disc = [d for d in all_details if d[0] == "Credential disclosure"]
         assert len(credential_disc) > 0, (
             f"Expected Credential disclosure findings, got: {[d[0] for d in all_details]}"
         )
-        # Check if any password-specific OID findings exist (bonus coverage)
+        # Prove the credential password is actually disclosed in the details.
+        disc_text = " ".join(d[2] for d in credential_disc).lower()
+        assert "admin123" in disc_text or "password" in disc_text, (
+            f"Expected a disclosed credential in details, got: {disc_text}"
+        )
+        # Check if any password-specific OID findings exist (bonus coverage).
+        # "Credential OID '<name>': password='...'" text lives in the details.
         password_oid_findings = [
             d
             for d in all_details
-            if "credential oid" in d[0].lower() and "password" in d[0].lower()
+            if "credential oid" in d[2].lower() and "password" in d[2].lower()
         ]
-        # Log for debugging — password OID findings are optional since
-        # H3C/Brocade entries are correlated and excluded from generic reporting
+        # Password OID findings are optional since H3C/Brocade entries are
+        # correlated and excluded from generic reporting.
         if password_oid_findings:
-            assert all(d[1] == "Credential disclosure" for d in password_oid_findings), (
-                f"Password OID findings should be 'Credential disclosure', "
+            assert all(d[0] == "Credential disclosure" for d in password_oid_findings), (
+                f"Password OID findings should have title 'Credential disclosure', "
                 f"got: {password_oid_findings}"
             )
 
@@ -4338,17 +4424,33 @@ class TestSNMPSwitchSecurityFindings:
         )
         assert result.success
         _assert_log_has_events(result)
-        findings = _get_security_findings(result.scan_log)
-        h3c_count = sum(1 for f in findings if "h3c" in f.lower())
-        brocade_count = sum(1 for f in findings if "brocade" in f.lower())
-        # At least one from each vendor
-        assert h3c_count > 0, f"Expected H3C findings, got: {findings}"
-        assert brocade_count > 0, f"Expected Brocade findings, got: {findings}"
-        # Total credential disclosure findings should be >= 5
-        # (3 H3C + 2 Brocade at minimum)
-        total = h3c_count + brocade_count
-        assert total >= 5, (
-            f"Expected >= 5 vendor credential findings (3 H3C + 2 Brocade), got {total}: {findings}"
+        # security_finding() collapses the repeated "Credential disclosure"
+        # events into one, so the per-vendor, per-credential breakdown is proven
+        # via the info-level "Credential Findings" table rather than via distinct
+        # security events. Require every known H3C and Brocade username AND
+        # password to actually appear — 3 H3C (admin/admin123, monitor/monitor1,
+        # operator/oper@tor) + 2 Brocade (admin, readonly) = 5 credentials.
+        messages = _credential_messages(result.scan_log)
+        assert "h3c credential:" in messages, f"Expected H3C credentials, got: {messages[:500]}"
+        assert "brocadeadxadminuser" in messages, (
+            f"Expected Brocade credentials, got: {messages[:500]}"
+        )
+        discovered = 0
+        for user in H3C_USERS:
+            assert user["username"] in messages, (
+                f"Expected H3C user '{user['username']}', got: {messages[:500]}"
+            )
+            assert user["password"] in messages, (
+                f"Expected H3C password '{user['password']}', got: {messages[:500]}"
+            )
+            discovered += 1
+        for user in BROCADE_USERS:
+            assert user["username"] in messages, (
+                f"Expected Brocade user '{user['username']}', got: {messages[:500]}"
+            )
+            discovered += 1
+        assert discovered >= 5, (
+            f"Expected >= 5 vendor credentials (3 H3C + 2 Brocade), got {discovered}"
         )
 
 

@@ -41,7 +41,7 @@ from .constants import (
 )
 
 # Lazy import for websockets dependency
-_websockets = lazy_import("websockets", "OCPP", install_hint="pip install websockets>=12.0")
+_websockets = lazy_import("websockets", "OCPP", install_hint="pip install oida[ocpp]")
 
 # Backward compatibility flag
 dependencies_missing = not _websockets.is_available
@@ -145,7 +145,7 @@ class OCPPScanner(NetworkScanner):
     def check_dependencies(self) -> bool:
         if not _websockets.is_available:
             self.logger.fail(
-                "websockets library required. Install with: pip install websockets>=12.0"
+                "websockets library required. Install with: pip install oida[ocpp]"
             )
             return False
         return True
@@ -355,10 +355,15 @@ class OCPPScanner(NetworkScanner):
 
             result = loop.run_until_complete(_try_connect())
             if result is not None:
-                # Store this loop under the name disconnect() actually reads
-                # (_event_loop). The old _brute_loop name had no reader, so the
-                # per-probe loop was never closed (resource leak).
-                self._event_loop = loop
+                # Associate this per-probe loop with the connection it created,
+                # NOT with self._event_loop. Overwriting self._event_loop would
+                # clobber the main connection's loop, and disconnect()ing the
+                # probe would then close it — silently breaking the IdTag brute
+                # pass (which runs afterwards on self.conn via self._event_loop)
+                # and leaking the original loop.
+                if not hasattr(self, "_probe_loops"):
+                    self._probe_loops = {}
+                self._probe_loops[id(result)] = loop
                 return result
             loop.close()
             return None
@@ -367,24 +372,37 @@ class OCPPScanner(NetworkScanner):
             return None
 
     def disconnect(self, connection: Any) -> None:
-        """Close WebSocket connection."""
-        if connection:
-            self.logger.debug("Closing WebSocket connection")
+        """Close WebSocket connection and its associated event loop.
+
+        Brute-force probe connections carry their own loop (registered in
+        ``_probe_loops``); tearing one down must not touch ``self._event_loop``,
+        the main connection's loop that the IdTag brute pass reuses afterwards.
+        The primary connection has no entry in ``_probe_loops`` and falls back
+        to ``self._event_loop``.
+        """
+        if not connection:
+            return
+        self.logger.debug("Closing WebSocket connection")
+        probe_loops = getattr(self, "_probe_loops", None)
+        loop = None
+        if probe_loops is not None:
+            loop = probe_loops.pop(id(connection), None)
+        if loop is None:
+            loop = getattr(self, "_event_loop", None)
+        if loop is None:
+            return
+        try:
+            if not loop.is_closed():
+                loop.run_until_complete(connection.close())
+                self.logger.debug("WebSocket connection closed cleanly")
+        except Exception as e:
+            self.logger.debug(f"Error closing WebSocket: {e}")
+        finally:
             try:
-                loop = getattr(self, "_event_loop", None)
-                if loop and not loop.is_closed():
-                    loop.run_until_complete(connection.close())
+                if not loop.is_closed():
                     loop.close()
-                    self.logger.debug("WebSocket connection closed cleanly")
             except Exception as e:
-                self.logger.debug(f"Error closing WebSocket: {e}")
-            finally:
-                if hasattr(self, "_event_loop"):
-                    try:
-                        if not self._event_loop.is_closed():
-                            self._event_loop.close()
-                    except Exception as e:
-                        self.logger.debug(f"Event loop close error: {e}")
+                self.logger.debug(f"Event loop close error: {e}")
 
     def _send_and_receive(
         self, connection: Any, message: str, timeout: Optional[int] = None

@@ -6,9 +6,9 @@ removing ~84% of irrelevant test cases (XSS, command injection, etc.) while keep
 payloads useful for finding protocol implementation bugs.
 
 Reduction summary:
-- Fuzz library: 109 → 24 payloads (78% reduction)
-- Long strings: 1,680 → 270 combinations (84% reduction)
-- Total per field: ~1,800 → ~294 test cases (84% reduction)
+- Fuzz library: 109 → 27 payloads (75% reduction)
+- Long strings: 1,680 → 480 combinations (71% reduction)
+- Total per field: ~1,789 → ~507 test cases (72% reduction)
 """
 
 import logging
@@ -131,7 +131,7 @@ class ReducedString(String):
         Set reduction level for all ReducedString instances.
 
         Args:
-            level: "balanced" (294 mutations) or "aggressive" (114 mutations)
+            level: "balanced" (507 mutations) or "aggressive" (38 mutations)
         """
         if level == "aggressive":
             # Further reduce for speed

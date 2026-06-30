@@ -177,3 +177,269 @@ class TestBacnetRealStack:
         text = _text(result)
         assert "errno 99" not in text, f"broadcast-bind bug regressed: {text[:500]}"
         assert "vav-box-12" in text, f"VAV device identity not read: {text[:500]}"
+
+    def test_building_deep_inventory(self, cli_runner):
+        """The building profile layers diverse object types on top of the analog/
+        binary points: CharacterString / Integer / Life-Safety values and File
+        objects. Enumeration must surface them (only the real C stack creates
+        them, with BACFILE enabled for the File object)."""
+        _require_udp(47821, "bacnet-realstack-building")
+        result = cli_runner.run(
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "-e",
+            timeout=40,
+        )
+        text = _text(result)
+        assert "errno 99" not in text, f"broadcast-bind bug regressed: {text[:500]}"
+        for obj_type in ("characterstringvalue", "integervalue", "lifesafetypoint", "file"):
+            assert obj_type in text, f"deep-inventory object {obj_type!r} missing: {text[:800]}"
+
+    def test_building_atomic_read_file(self, cli_runner):
+        """The building profile exposes File objects backed by real on-disk files
+        (entrypoint seeds them; pathnames are relative for the posix backend).
+        AtomicReadFile must return the genuine file content."""
+        _require_udp(47821, "bacnet-realstack-building")
+        result = cli_runner.run(
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "--read-file",
+            "101",
+            timeout=40,
+        )
+        text = _text(result)
+        assert "errno 99" not in text, f"broadcast-bind bug regressed: {text[:500]}"
+        # config.ini content seeded by entrypoint.sh — only a working
+        # AtomicReadFile against the real file produces these bytes.
+        assert "reinit_password_set" in text, (
+            f"file content not read via AtomicReadFile: {text[:800]}"
+        )
+
+    def test_call_write_read_roundtrip(self, cli_runner):
+        """--call writeProperty then --call readProperty must round-trip a value
+        through the real stack (exercises the service-invocation dispatcher)."""
+        _require_udp(47821, "bacnet-realstack-building")
+        base = ["bacnet", MOCK_HOST, "--port", "47821", "--device-id", "22002"]
+        w = cli_runner.run(*base, "--call", "write", "AV:1:pv:73.5", "--confirm", timeout=40)
+        assert "acknowledged" in _text(w), f"WriteProperty via --call not acked: {_text(w)[:500]}"
+        r = cli_runner.run(*base, "--call", "read", "AV:1:pv", timeout=40)
+        assert "73.5" in _text(r), f"value did not round-trip via --call: {_text(r)[:500]}"
+
+    def test_call_confirm_gate(self, cli_runner):
+        """A mutating --call without --confirm must refuse before touching the device."""
+        _require_udp(47821, "bacnet-realstack-building")
+        result = cli_runner.run(
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "--call",
+            "write",
+            "AV:1:pv:1.0",
+            timeout=30,
+        )
+        assert "confirm" in _text(result), f"mutating --call not gated: {_text(result)[:500]}"
+
+    def test_call_extra_service_handlers(self, cli_runner):
+        """profile.inc registers AddListElement/RemoveListElement/LifeSafetyOperation/
+        AcknowledgeAlarm handlers the stock bacserv lacks. LifeSafetyOperation must
+        be acknowledged (not 'unrecognized-service')."""
+        _require_udp(47821, "bacnet-realstack-building")
+        result = cli_runner.run(
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "--call",
+            "lso",
+            "lifeSafetyPoint:101:silence",
+            "--confirm",
+            timeout=40,
+        )
+        text = _text(result)
+        assert "unrecognized-service" not in text, (
+            f"LifeSafetyOperation handler not registered on the mock: {text[:500]}"
+        )
+        assert "acknowledged" in text, f"LifeSafetyOperation not acked: {text[:500]}"
+
+    def test_list_services_catalog(self, cli_runner):
+        """--list-services prints the invokable catalog without needing a device."""
+        result = cli_runner.run(
+            "bacnet", MOCK_HOST, "--port", "47821", "--list-services", timeout=20
+        )
+        text = _text(result)
+        assert "service catalog" in text, f"--list-services did not print catalog: {text[:400]}"
+        assert "writefile" in text and "reinit" in text, f"catalog incomplete: {text[:400]}"
+
+    # One entry per callable service. Each must DISPATCH and produce a *handled*
+    # result against the real stack — a device ack / value / Reject / Error is
+    # all fine; a CLI-side failure (arg-parse bug, missing handler, unhandled
+    # exception in the request builder) is not. Targets are chosen to be
+    # non-destructive to other tests: dcc uses `enable` (never mutes the device),
+    # writefile is covered separately, create wildcard-creates, delete targets a
+    # non-existent instance. Verifies all 23 inline builders, not just a sample.
+    _CALL_CASES = [
+        ("read", ["read", "AV:1:pv"], False),
+        ("rpm", ["rpm", "AV:1:pv,AV:101:pv"], False),
+        ("whois", ["whois"], False),
+        ("whohas", ["whohas", "device:22002"], False),
+        ("readrange", ["readrange", "trendLog:1"], False),
+        ("eventinfo", ["eventinfo"], False),
+        ("alarmsummary", ["alarmsummary"], False),
+        ("readfile", ["readfile", "101"], False),
+        ("write", ["write", "AV:1:pv:50.0"], True),
+        ("wpm", ["wpm", "AV:1:pv:50.0,AV:101:pv:50.0"], True),
+        ("cov", ["cov", "AV:1:30"], True),
+        ("create", ["create", "analogValue"], True),
+        ("delete", ["delete", "analogValue:99999"], True),
+        ("timesync", ["timesync", "2026-06-24T12:00:00"], True),
+        ("utctimesync", ["utctimesync", "2026-06-24T12:00:00"], True),
+        # Wrong password on purpose: exercises the reinit dispatch/builder
+        # without actually warm-starting (rebooting) the shared mock mid-suite,
+        # which would race the tests parametrized after this one. A successful
+        # reinit is covered separately by the brute-force test.
+        ("reinit", ["reinit", "warmstart:wrongpw"], True),
+        ("dcc", ["dcc", "enable:0:filister"], True),
+        ("lso", ["lso", "lifeSafetyPoint:101:silence"], True),
+        ("ackalarm", ["ackalarm", "1:analogInput:101:normal"], True),
+        ("wg", ["wg", "1:5:72.5"], True),
+        ("textmessage", ["textmessage", "hello"], True),
+        ("addlist", ["addlist", "AV:1:priorityArray:1"], True),
+        ("rmlist", ["rmlist", "AV:1:priorityArray:1"], True),
+    ]
+
+    @pytest.mark.parametrize(
+        "token,call_args,needs_confirm", _CALL_CASES, ids=[c[0] for c in _CALL_CASES]
+    )
+    def test_call_service_dispatches(self, cli_runner, token, call_args, needs_confirm):
+        """Every callable service builds a valid request and is dispatched."""
+        _require_udp(47821, "bacnet-realstack-building")
+        args = [
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "--call",
+            *call_args,
+        ]
+        if needs_confirm:
+            args.append("--confirm")
+        result = cli_runner.run(*args, timeout=40)
+        text = _text(result)
+        assert "[call]" in text, f"--call {token} never dispatched: {text[:600]}"
+        # OIDA must exit cleanly (0 ok / 1 finding) — not crash.
+        assert result.returncode in (0, 1), f"--call {token} crashed (rc={result.returncode})"
+        # CLI-side bug markers from our own dispatcher/builders — none may appear.
+        # (A device Reject/Error, or a bacpypes3-internal logged traceback while
+        # decoding an odd device response, is NOT our bug and is allowed.)
+        for bug in ("bad arguments for", "no handler implemented", "failed:"):
+            assert bug not in text, f"--call {token} dispatch bug ({bug!r}): {text[:600]}"
+
+    def _wordlist(self, tmp_path):
+        wl = tmp_path / "pw.txt"
+        wl.write_text("admin\nfilister\nOIDA-Reinit\n")
+        return str(wl)
+
+    def test_brute_force_dcc_only(self, cli_runner, tmp_path):
+        """--brute-force-dcc cracks ONLY the DCC password (filister), and must
+        not report the ReinitializeDevice credential."""
+        _require_udp(47821, "bacnet-realstack-building")
+        result = cli_runner.run(
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "--brute-force-dcc",
+            "--passwords",
+            self._wordlist(tmp_path),
+            "--confirm",
+            timeout=60,
+        )
+        text = _text(result)
+        assert "devicecommunicationcontrol: 'filister'" in text, f"DCC not cracked: {text[:600]}"
+        assert "reinitializedevice:" not in text, (
+            f"reinit ran under --brute-force-dcc: {text[:600]}"
+        )
+
+    def test_brute_force_reinit_only(self, cli_runner, tmp_path):
+        """--brute-force-reinit cracks ONLY the ReinitializeDevice password."""
+        _require_udp(47821, "bacnet-realstack-building")
+        result = cli_runner.run(
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "--brute-force-reinit",
+            "--passwords",
+            self._wordlist(tmp_path),
+            "--confirm",
+            timeout=60,
+        )
+        text = _text(result)
+        assert "reinitializedevice: 'oida-reinit'" in text, f"reinit not cracked: {text[:600]}"
+        assert "devicecommunicationcontrol:" not in text, (
+            f"dcc ran under --brute-force-reinit: {text[:600]}"
+        )
+
+    def test_brute_force_distinct_dcc_and_reinit_passwords(self, cli_runner, tmp_path):
+        """DCC and ReinitializeDevice are INDEPENDENT passwords; --brute-force
+        (run-all) cracks BOTH and reports two *different* credentials.
+
+        The building profile sets DCC='filister' (stock default) and
+        reinit='OIDA-Reinit' (changed) — proving the two services are gated
+        independently."""
+        _require_udp(47821, "bacnet-realstack-building")
+        result = cli_runner.run(
+            "bacnet",
+            MOCK_HOST,
+            "--port",
+            "47821",
+            "--device-id",
+            "22002",
+            "--brute-force",
+            "--passwords",
+            self._wordlist(tmp_path),
+            "--confirm",
+            timeout=90,
+        )
+        text = _text(result)
+        assert "devicecommunicationcontrol: 'filister'" in text, (
+            f"DCC password not cracked: {text[:600]}"
+        )
+        assert "reinitializedevice: 'oida-reinit'" in text, (
+            f"ReinitializeDevice password not cracked: {text[:600]}"
+        )
+
+    def test_call_atomic_write_file_roundtrip(self, cli_runner, tmp_path):
+        """AtomicWriteFile (upload) writes a real file the device serves back.
+
+        Targets file:103 (audit.log) so it never clobbers file:101 (config.ini)
+        asserted by test_building_atomic_read_file."""
+        _require_udp(47821, "bacnet-realstack-building")
+        payload = tmp_path / "payload.bin"
+        payload.write_text("oida --call upload marker 4711\n")
+        base = ["bacnet", MOCK_HOST, "--port", "47821", "--device-id", "22002"]
+        w = cli_runner.run(*base, "--call", "writefile", f"103:{payload}", "--confirm", timeout=40)
+        assert "bytes from" in _text(w), f"AtomicWriteFile not acked: {_text(w)[:500]}"
+        r = cli_runner.run(*base, "--read-file", "103", timeout=40)
+        assert "oida --call upload marker 4711" in _text(r), (
+            f"uploaded content did not round-trip: {_text(r)[:500]}"
+        )

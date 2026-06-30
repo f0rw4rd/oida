@@ -281,7 +281,11 @@ Examples:
     )
 
     # Fuzzing & dangerous operations (--confirm, --fuzz, --fuzz-iterations)
-    fuzz_group = add_dangerous_options(iec104_parser, include_fuzz=True, fuzz_default_iterations=20)
+    # IEC 104 fuzzes a single --fuzz-ioa, so --fuzz-max-targets (a multi-target
+    # cap) does not apply — omit it instead of advertising an unused flag.
+    fuzz_group = add_dangerous_options(
+        iec104_parser, include_fuzz=True, fuzz_default_iterations=20, include_max_targets=False
+    )
     fuzz_group.add_argument(
         "--test-commands",
         action="store_true",

@@ -5,6 +5,7 @@
 from typing import Dict, Any
 
 from ...connection import NetworkConnection
+from ...utils.common_types import Category
 from .scanner import DNP3Scanner, _yadnp3
 
 
@@ -97,6 +98,19 @@ class dnp3(NetworkConnection):
         """Enumerate DNP3 device information"""
         if not self.conn:
             return
+
+        # DNP3 is plaintext by design. DNP3-SA (Secure Authentication) is
+        # effectively dead — SAv2/v5 saw almost no adoption and is deprecated;
+        # it only ever provided message authentication, never encryption.
+        # Wrapping DNP3 in TLS (IEC 62351 / DNP3-over-TLS) is the recommended
+        # path. We are on a confirmed-live connection here, so emit the finding.
+        self.logger.security_finding(
+            "No encryption",
+            category=Category.ENCRYPTION,
+            detail="DNP3 has no transport encryption - wrap in TLS (IEC 62351); "
+            "DNP3-SA is deprecated and authentication-only, not a substitute",
+        )
+
         self.logger.debug("Enumerating device information...")
         transport = getattr(self.args, "transport", "tcp") or "tcp"
         self.results["data"]["device_info"] = {

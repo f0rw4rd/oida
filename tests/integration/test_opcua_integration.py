@@ -83,14 +83,15 @@ Flag Coverage Matrix (proto_args.py):
   --history-max             [B] test_history_read_with_time_range
   --history-raw             [B] test_history_raw
   --history-start           [C] test_history_invalid_datetime
-  --read-file               [C] test_read_file_invalid_node
+  --read-file               [B] test_file_output, [C] test_read_file_invalid_node
+  --file-output             [B] test_file_output
   --write-file              [C] test_write_file_requires_confirm
   --file-data               [C] test_write_file_requires_confirm
-  --username/--password     [A] test_valid_credentials, [C] test_invalid_credentials
-  --brute                   [B] test_brute_force_with_file
+  --username/--password     [A] test_valid_credentials, [C] test_invalid_credentials;
+                            file-driven brute: test_security_finding_brute_force_valid_creds_advanced
   --brute-rate              [B] test_brute_delay
   --default-creds           [B] test_default_creds
-  --mode                    [B] test_security_modes
+  --mode                    [B] test_security_modes, test_security_mode_sign_and_encrypt
   --policy                  [B] test_security_policy_basic256, test_security_policy_basic256sha256
   --certificate/--privatekey [C] test_certificate_auth_missing_files
   --test-cert-trust         [B] test_cert_trust
@@ -2739,19 +2740,86 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Skipped Tests (require hardware or unsupported features)
     # ========================================================================
 
-    @pytest.mark.skip(reason="--wordlist requires pre-built wordlist file and slow brute force")
-    def test_brute_wordlist(self, cli_runner, mock_host, mock_ports):
-        """Test --wordlist brute force option [Skip]"""
-        pass
+    # NOTE: --wordlist / --brute were removed from the OPC UA CLI — they were
+    # never read by the scanner (brute-force is driven by --username FILE /
+    # --password FILE, see test_security_finding_brute_force_valid_creds_advanced).
 
-    @pytest.mark.skip(reason="--file-output requires a writable temp path and successful file read")
+    @pytest.mark.containers("opcua-insecure")
     def test_file_output(self, cli_runner, mock_host, mock_ports):
-        """Test --file-output option for saving downloaded files [Skip]"""
-        pass
+        """Test --read-file --file-output writes the downloaded file to disk [Category B]
 
-    @pytest.mark.skip(
-        reason="SignAndEncrypt mode requires certificate setup that may not work in CI"
-    )
+        The mock exposes a real OPC UA FileType node (ns=2;i=240, "readme.txt")
+        implementing Open/Read/Close, so --read-file actually transfers content
+        and --file-output persists it locally.
+
+        NOTE: safe_file_path() confines --file-output to the CLI process CWD, so
+        the destination is created under CWD (pytest's tmp_path is outside it)
+        and cleaned up afterwards.
+        """
+        import os
+        import tempfile
+        from pathlib import Path
+
+        fd, out_name = tempfile.mkstemp(prefix="opcua_dl_", suffix=".txt", dir=os.getcwd())
+        os.close(fd)
+        out_path = Path(out_name)
+        try:
+            target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+            result = cli_runner.run(
+                self.protocol_name,
+                target,
+                "--read-file",
+                "ns=2;i=240",
+                "--file-output",
+                str(out_path),
+                format="json",
+                json_log=True,
+                timeout=30,
+            )
+
+            assert result.returncode in [0, 1], f"Unexpected returncode: {result.returncode}"
+            text = _combined_text(result, result.scan_log)
+            # The scanner must report a successful read of the FileType content.
+            assert "bytes" in text.lower() or "saved" in text.lower(), (
+                f"Expected a successful file read in output. Got: {text[:500]}"
+            )
+            # --file-output must have persisted the transferred bytes.
+            data = out_path.read_bytes()
+            assert len(data) > 0, f"Downloaded file is empty. Output: {text[:500]}"
+            assert b"OIDA" in data or b"mock" in data.lower(), (
+                f"Unexpected file content: {data[:200]!r}"
+            )
+        finally:
+            out_path.unlink(missing_ok=True)
+
+    @pytest.mark.security
+    @pytest.mark.containers("opcua-advanced")
     def test_security_mode_sign_and_encrypt(self, cli_runner, mock_host, mock_ports):
-        """Test SignAndEncrypt security mode [Skip]"""
-        pass
+        """Test --mode SignAndEncrypt against the secure endpoint [Category B]
+
+        The scanner auto-generates a self-signed client cert, so encrypted
+        channels work without external cert setup (same path exercised by
+        test_security_policy_basic256). Assertions are tolerant: the secure
+        mock may or may not offer the exact policy/mode pair, but the scan must
+        not crash and must produce output.
+        """
+        target = self.get_target(mock_host, mock_ports["opcua"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--policy",
+            "Basic256Sha256",
+            "--mode",
+            "SignAndEncrypt",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+
+        assert result.returncode != -1, "SignAndEncrypt scan timed out"
+        assert result.returncode in [0, 1], (
+            f"SignAndEncrypt unexpected returncode: {result.returncode}"
+        )
+        assert result.stdout or result.stderr, "Should produce output"
+        if result.scan_log is not None and len(result.scan_log) > 0:
+            _assert_log_event_structure(result.scan_log)

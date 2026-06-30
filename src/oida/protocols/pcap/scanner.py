@@ -22,7 +22,7 @@ from ...utils.lazy_import import lazy_import
 
 logger = get_module_logger(__name__)
 
-_pyshark = lazy_import("pyshark", "pcap", install_hint="pip install oida-pyshark")
+_pyshark = lazy_import("pyshark", "pcap", install_hint="pip install oida[pcap]")
 _file_extraction = lazy_import(
     "oida.protocols.discovery.file_extraction", "pcap", install_hint="pip install oida[pcap]"
 )
@@ -264,7 +264,7 @@ class PcapScanner:
         self.logger.debug("Active listeners: %s", ", ".join(sorted(listeners.keys())))
 
         if not _pyshark.is_available:
-            self.logger.info("PyShark not available - install pyshark: pip install pyshark")
+            self.logger.info("PyShark not available - install pyshark: pip install oida[pcap]")
             return 0
 
         # Pre-fetch total packet count for progress display (header-only, no decode)
@@ -384,6 +384,15 @@ class PcapScanner:
                 "display_filter": display_filter,
                 "override_prefs": override_prefs if override_prefs else None,
             }
+            # Routing-protocol keyed-MD5/HMAC hashes (JtR net-md5 / eigrp) need
+            # the raw routing-packet bytes as the salt. Enable raw capture only
+            # when a routing listener is active, so the per-packet raw-payload
+            # cost is not paid by every scan.
+            # NB: include_raw works WITH use_ek (raw bytes added alongside the EK
+            # fields); do NOT also set use_json -- that switches pyshark to the
+            # JSON parser and breaks the listeners' EK-mode field access.
+            if {"ospf", "rip", "eigrp"} & set(listeners):
+                capture_kw["include_raw"] = True
             if max_packets:
                 # Pass tshark -c flag to stop after N packets (FileCapture has no packet_count)
                 existing = capture_kw.get("custom_parameters") or []
@@ -458,6 +467,11 @@ class PcapScanner:
                     )
                 else:
                     raise
+
+            # Routing listeners (ospf/rip/eigrp) need the raw packet bytes as the
+            # net-md5/eigrp salt, but pyshark cannot return EK fields AND raw
+            # bytes in one pass. Fill the salts now via a small filtered JSON pass.
+            self._fill_routing_salts(listeners)
 
             elapsed = time.time() - t0
             self.logger.debug(
@@ -765,15 +779,83 @@ class PcapScanner:
 
         return packet_count
 
+    def _fill_routing_salts(self, listeners: Dict[str, Any]) -> None:
+        """Fill OSPF/RIP/EIGRP credential ``net_salt`` from raw packet bytes.
+
+        The main pipeline runs in EK mode (field access), where pyshark does not
+        populate raw layer bytes. The JtR net-md5/eigrp salt is the raw routing
+        packet (minus the appended digest), so we do one extra filtered pass in
+        JSON+include_raw mode and match each raw packet to a credential by its
+        (unique) digest, which the EK pass already extracted.
+        """
+        routing = {n: listeners[n] for n in ("ospf", "rip", "eigrp") if n in listeners}
+        if not routing or not getattr(self, "pcap_file", None):
+            return
+        # digest(hex) -> creds awaiting a salt
+        need: Dict[str, List[Any]] = {}
+        for listener in routing.values():
+            for cred in getattr(listener, "credentials", []):
+                dg = (getattr(cred, "auth_data", "") or "").replace(":", "").lower()
+                if getattr(cred, "credential_type", "") == "hash" and dg and not getattr(
+                    cred, "net_salt", ""
+                ):
+                    need.setdefault(dg, []).append(cred)
+        if not need:
+            return
+        try:
+            cap = _pyshark.FileCapture(
+                self.pcap_file,
+                include_raw=True,
+                use_json=True,
+                keep_packets=False,
+                display_filter="ospf || rip || eigrp",
+            )
+        except Exception as e:
+            self.logger.debug("_fill_routing_salts: capture failed: %s", e)
+            return
+        try:
+            for packet in cap:
+                for attr in ("ospf_raw", "rip_raw", "eigrp_raw"):
+                    raw_layer = getattr(packet, attr, None)
+                    if raw_layer is None:
+                        continue
+                    raw = str(getattr(raw_layer, "value", "") or "").replace(":", "").lower()
+                    if not raw:
+                        continue
+                    for dg, creds in need.items():
+                        if len(raw) > len(dg) and raw.endswith(dg):
+                            salt = raw[: -len(dg)]
+                            for cred in creds:
+                                if not cred.net_salt:
+                                    cred.net_salt = salt
+        except Exception as e:
+            self.logger.debug("_fill_routing_salts: raw pass error: %s", e)
+        finally:
+            try:
+                cap.close()
+            except Exception:
+                pass
+
     def _export_hashcat(self, listeners: Dict[str, Any]) -> None:
         """Collect and export hashcat-compatible hashes from all listeners."""
         # Protocol -> hashcat mode comment
         mode_comments = {
-            "ntlm": "# NTLM — NTLMv1 (mode 5500), NTLMv2 (mode 5600)",
-            "kerberos": "# Kerberos — AS-REQ (7500), AS-REP (18200), TGS-REP (13100/19600/19700)",
-            "http": "# HTTP Digest (mode 11400)",
-            "sip": "# SIP Digest (mode 11400)",
-            "vnc": "# VNC DES (mode 5600)",
+            "ntlm": "# NTLM — NTLMv1 (hashcat 5500), NTLMv2 (hashcat 5600)",
+            "kerberos": "# Kerberos — AS-REQ (7500/19800/19900), AS-REP (18200/john), "
+            "TGS-REP (13100/19600/19700)",
+            "http": "# HTTP Digest — John the Ripper `hdaa` (no hashcat mode)",
+            "sip": "# SIP Digest (hashcat 11400)",
+            "vnc": "# VNC — John the Ripper `vnc` (no hashcat mode)",
+            "ipmi": "# IPMI 2.0 RAKP — HMAC-SHA1 (hashcat 7300)",
+            "mysql": "# MySQL CRAM (hashcat 11200)",
+            "pgsql": "# PostgreSQL CRAM-MD5 (hashcat 11100)",
+            "iscsi": "# iSCSI CHAP — MD5 (hashcat 4800)",
+            "imap": "# CRAM-MD5 (hashcat 10200)",
+            "smtp": "# CRAM-MD5 (hashcat 10200)",
+            "tacacs": "# TACACS+ — encrypted AUTHEN, recovers shared secret (hashcat 16100)",
+            "ospf": "# OSPF crypto-auth — John net-md5/net-sha1 (no hashcat mode)",
+            "rip": "# RIPv2 keyed-auth — John net-md5/net-sha1 (no hashcat mode)",
+            "radius": "# RADIUS — CHAP-Password (hashcat 4800), MS-CHAPv2 (hashcat 5500)",
         }
 
         all_hashes: List[str] = []

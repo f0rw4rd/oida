@@ -7,18 +7,17 @@ Provides security analysis, auditing checks, and certificate validation function
 import asyncio
 import os
 
+from oida.utils.common_types import Category
+
 from ....utils.lazy_import import lazy_import
 
 _asyncua_cert_gen = lazy_import(
-    "asyncua.crypto.cert_gen", "OPC UA", install_hint="pip install asyncua"
+    "asyncua.crypto.cert_gen", "OPC UA", install_hint="pip install oida[opcua]"
 )
 _asyncua_sec_policies = lazy_import(
-    "asyncua.crypto.security_policies", "OPC UA", install_hint="pip install asyncua"
+    "asyncua.crypto.security_policies", "OPC UA", install_hint="pip install oida[opcua]"
 )
-_asyncua_validator = lazy_import(
-    "asyncua.crypto.validator", "OPC UA", install_hint="pip install asyncua"
-)
-_cryptography_x509 = lazy_import("cryptography", "OPC UA", install_hint="pip install cryptography")
+_cryptography_x509 = lazy_import("cryptography", "OPC UA", install_hint="pip install oida[opcua]")
 
 
 class SecurityMixin:
@@ -46,7 +45,9 @@ class SecurityMixin:
             security_info["auditing"] = auditing_enabled
             if not auditing_enabled:
                 self.logger.security_finding(
-                    "Insecure configuration", detail="Auditing disabled - no activity logging"
+                    "Insecure configuration",
+                    category=Category.CONFIGURATION,
+                    detail="Auditing disabled - no activity logging",
                 )
             else:
                 self.logger.display("  Auditing: enabled")
@@ -341,8 +342,6 @@ class SecurityMixin:
 
             setup_self_signed_certificate = _asyncua_cert_gen.setup_self_signed_certificate
             SecurityPolicyBasic256Sha256 = _asyncua_sec_policies.SecurityPolicyBasic256Sha256
-            CertificateValidator = _asyncua_validator.CertificateValidator
-            CertificateValidatorOptions = _asyncua_validator.CertificateValidatorOptions
             ExtendedKeyUsageOID = _cryptography_x509.x509.oid.ExtendedKeyUsageOID
 
             self.logger.display("Testing if server accepts untrusted client certs...")
@@ -374,9 +373,14 @@ class SecurityMixin:
                 test_client = Client(url=url, timeout=10)
                 test_client.application_uri = app_uri
 
-                # Don't validate server cert (we're testing server's validation of us)
-                validator = CertificateValidator(CertificateValidatorOptions.EXT_VALIDATION)
-                test_client.certificate_validator = validator
+                # Deliberately leave certificate_validator unset (asyncua's
+                # default = None => accept any server cert). We are probing
+                # whether the *server* trusts *our* untrusted client cert; we
+                # must not abort because the server's own cert is imperfect.
+                # Setting EXT_VALIDATION here made the client reject servers
+                # whose cert lacked a matching URI / KeyUsage, masking the
+                # actual result (the server's cert is assessed by
+                # _check_certificate instead).
 
                 await test_client.set_security(
                     SecurityPolicyBasic256Sha256,
@@ -406,25 +410,51 @@ class SecurityMixin:
                     "Could not determine if server accepts untrusted certs (timeout)"
                 )
             except Exception as e:
-                err_str = str(e).lower()
-                err_type = type(e).__name__.lower()
-                # Only explicit cert-rejection status codes prove the server
-                # validated our untrusted cert against its trust list. Generic
-                # "timeout"/"certificate" substrings are too broad — an error that
-                # merely mentions a certificate does not imply a trust decision.
-                if any(
-                    x in err_str or x in err_type
+                err = (str(e) + " " + type(e).__name__).lower()
+                # Channel/cert-trust rejection: the server validated our untrusted
+                # application cert and refused the secure channel. This is the ONLY
+                # outcome that proves the server is not vulnerable. These are
+                # specific trust-decision codes — a bare "badcertificate" substring
+                # also matches format errors (BadCertificateUriInvalid /
+                # TimeInvalid) that say nothing about the trust list, so it is
+                # excluded; BadCertificateInvalid IS included because servers use
+                # it as a catch-all when refusing an untrusted client cert.
+                channel_rejected = any(
+                    x in err
                     for x in [
-                        "badcertificate",
                         "badsecuritychecksfailed",
                         "securitychecksfailed",
+                        "badcertificateuntrusted",
+                        "badcertificateinvalid",
                         "untrusted",
-                        "rejected",
                     ]
-                ):
+                )
+                # Session-level auth failure: reaching ActivateSession means the
+                # secure channel was ALREADY established with our untrusted cert
+                # (create_session ran the server's cert validation and passed) —
+                # only the anonymous user identity was refused. This is evidence
+                # the app-cert trust check is weak, NOT a rejection. The old code
+                # lumped these codes into "rejected" (false negative); they now
+                # surface the channel acceptance and ask for creds to confirm.
+                #
+                # NOTE: the *user*-cert probe (_test_self_signed_user_cert_acceptance)
+                # deliberately treats these same codes as a clean rejection — there
+                # the user cert IS the trust-checked identity, so a refusal is the
+                # correct-secure outcome. Do not "unify" the two lists.
+                session_reached = any(x in err for x in ["baduseraccessdenied", "badidentitytoken"])
+                if channel_rejected:
                     result["tested"] = True
                     result["rejection_reason"] = str(e)[:100]
                     self.logger.success("Server rejects untrusted client certificates")
+                elif session_reached:
+                    result["tested"] = False
+                    result["status"] = "inconclusive"
+                    result["channel_established"] = True
+                    result["error"] = str(e)[:100]
+                    self.logger.warning(
+                        "Secure channel established with untrusted client cert, but no "
+                        "anonymous session — rerun with -u/-p to confirm app-cert trust"
+                    )
                 else:
                     # Unrelated/ambiguous error — cannot conclude either way.
                     result["tested"] = False
@@ -442,6 +472,204 @@ class SecurityMixin:
                 os.unlink(cert_path)
             if key_path and key_path.exists():
                 os.unlink(key_path)
+
+        return result
+
+    async def _test_self_signed_user_cert_acceptance(self, endpoints) -> dict:
+        """Test if the server accepts an untrusted self-signed X509 *user* certificate.
+
+        This is distinct from ``_test_self_signed_cert_acceptance`` (which tests
+        the application / secure-channel certificate). Here we present a freshly
+        generated self-signed certificate as a **user identity token**
+        (``X509IdentityToken``). A server that activates a session with it does
+        not validate user certificates against a trust list — equivalent to
+        OpalOPC plugin 10016.
+
+        Only meaningful on endpoints that advertise a ``Certificate`` user
+        token; returns ``{"applicable": False}`` otherwise.
+
+        We prefer a ``SecurityPolicy=None`` cert-token endpoint so the result
+        isolates the *user*-cert trust decision. The policy-endpoint fallback
+        (when no None endpoint exists) opens a secure channel with an auto app
+        cert first, so a server that rejects that *app* cert at the channel
+        layer would surface as a user-cert rejection — a known limitation of
+        the fallback path; the None-policy path is unaffected.
+        """
+        import tempfile
+        import socket
+        from pathlib import Path
+        from ..helpers import _get_client_class, ua
+
+        result = {
+            "applicable": False,
+            "accepts_untrusted_user_cert": False,
+            "tested": False,
+        }
+
+        # 1. Applicability: find endpoints advertising a Certificate user token.
+        cert_token_endpoints = []
+        for ep in endpoints:
+            for token in getattr(ep, "UserIdentityTokens", None) or []:
+                ttype = getattr(token, "TokenType", None)
+                tname = ttype.name if hasattr(ttype, "name") else str(ttype)
+                if tname == "Certificate":
+                    cert_token_endpoints.append(ep)
+                    break
+
+        if not cert_token_endpoints:
+            self.logger.debug("No Certificate user-token endpoint; skipping user-cert trust test")
+            return result
+
+        result["applicable"] = True
+
+        # Prefer an endpoint with SecurityPolicy None (no app/secure-channel
+        # cert required) so we isolate the *user* cert trust decision; fall back
+        # to a policy endpoint (needs a secure channel we set up with an
+        # auto-generated app cert).
+        def _policy(ep):
+            return (ep.SecurityPolicyUri or "").split("#")[-1]
+
+        target = next((ep for ep in cert_token_endpoints if _policy(ep) == "None"), None)
+        needs_secure_channel = target is None
+        if target is None:
+            target = cert_token_endpoints[0]
+
+        cert_path = None
+        key_path = None
+        app_cert_path = None
+        app_key_path = None
+        try:
+            if not _asyncua_cert_gen.is_available or not _cryptography_x509.is_available:
+                self.logger.debug("asyncua crypto or cryptography not available")
+                result["error"] = "asyncua crypto not available"
+                return result
+
+            setup_self_signed_certificate = _asyncua_cert_gen.setup_self_signed_certificate
+            ExtendedKeyUsageOID = _cryptography_x509.x509.oid.ExtendedKeyUsageOID
+
+            self.logger.display("Testing if server accepts untrusted self-signed user certs...")
+
+            temp_dir = Path(tempfile.gettempdir())
+            cert_path = temp_dir / f"oida_user_{os.getpid()}.der"
+            key_path = temp_dir / f"oida_user_{os.getpid()}.pem"
+            host_name = socket.gethostname()
+            app_uri = f"urn:{host_name}:oida:untrusted-user"
+
+            await setup_self_signed_certificate(
+                key_path,
+                cert_path,
+                app_uri,
+                host_name,
+                [ExtendedKeyUsageOID.CLIENT_AUTH],
+                {
+                    "countryName": "XX",
+                    "organizationName": "Attacker",
+                    "commonName": "Untrusted User",
+                },
+            )
+
+            # Connect to the address we actually reached, not the endpoint's
+            # advertised EndpointUrl — servers often advertise their own
+            # hostname / 0.0.0.0 which is unroutable from the scanner. asyncua
+            # selects the endpoint by security policy (set_security / None), not
+            # by the URL path, so the reachable URL is both sufficient and safer.
+            url = self._original_url or (
+                target.EndpointUrl or f"opc.tcp://{self.host}:{getattr(self.args, 'port', 4840)}"
+            )
+
+            try:
+                Client = _get_client_class()
+                test_client = Client(url=url, timeout=getattr(self.args, "timeout", 10))
+                test_client.application_uri = app_uri
+
+                # Deliberately leave certificate_validator unset (asyncua's
+                # default = None, i.e. accept any server cert). We are probing
+                # whether the *server* trusts *our* untrusted user cert; we must
+                # not abort because the server's own cert is imperfect (the
+                # server cert is assessed separately by _check_certificate).
+
+                # Policy endpoint: stand up a secure channel with an auto app cert
+                # so we can reach activate_session at all.
+                if needs_secure_channel:
+                    app_cert_path = temp_dir / f"oida_user_app_{os.getpid()}.der"
+                    app_key_path = temp_dir / f"oida_user_app_{os.getpid()}.pem"
+                    await setup_self_signed_certificate(
+                        app_key_path,
+                        app_cert_path,
+                        app_uri,
+                        host_name,
+                        [ExtendedKeyUsageOID.CLIENT_AUTH],
+                        {"countryName": "XX", "organizationName": "OIDA"},
+                    )
+                    await test_client.set_security(
+                        _asyncua_sec_policies.SecurityPolicyBasic256Sha256,
+                        certificate=str(app_cert_path),
+                        private_key=str(app_key_path),
+                        mode=ua.MessageSecurityMode.SignAndEncrypt,
+                    )
+
+                # Present the untrusted self-signed cert as the USER identity.
+                await test_client.load_client_certificate(str(cert_path))
+                await test_client.load_private_key(str(key_path))
+
+                await test_client.connect()
+                await test_client.disconnect()
+
+                # Session activated with an untrusted self-signed user cert.
+                result["accepts_untrusted_user_cert"] = True
+                result["tested"] = True
+                self.logger.security_finding(
+                    "Self-signed user certificate accepted",
+                    category=Category.AUTHENTICATION,
+                    detail="Server activates sessions with untrusted self-signed X509 user "
+                    "identity tokens (no user-cert trust validation)",
+                )
+
+            except asyncio.TimeoutError:
+                result["tested"] = False
+                result["status"] = "inconclusive"
+                result["error"] = "Connection timeout (could not determine)"
+                self.logger.warning(
+                    "Could not determine if server accepts untrusted user certs (timeout)"
+                )
+            except Exception as e:
+                err_str = str(e).lower()
+                err_type = type(e).__name__.lower()
+                # Only codes that represent a *trust* decision about the user
+                # certificate count as a clean rejection. Cert-format errors
+                # (BadCertificateUriInvalid / TimeInvalid / UseNotAllowed) say
+                # nothing about trust and must fall through to "inconclusive".
+                if any(
+                    x in err_str or x in err_type
+                    for x in [
+                        "badcertificateuntrusted",
+                        "badidentitytoken",  # Rejected / Invalid
+                        "badsecuritychecksfailed",
+                        "securitychecksfailed",
+                        "baduseraccessdenied",
+                        "untrusted",
+                        "rejected",
+                    ]
+                ):
+                    result["tested"] = True
+                    result["rejection_reason"] = str(e)[:100]
+                    self.logger.success("Server rejects untrusted self-signed user certificates")
+                else:
+                    result["tested"] = False
+                    result["status"] = "inconclusive"
+                    result["error"] = str(e)[:100]
+                    self.logger.warning(
+                        "Could not determine if server accepts untrusted user certs"
+                    )
+                    self.logger.debug(f"User-cert test error: {e}")
+
+        except Exception as e:
+            self.logger.debug(f"Self-signed user cert test error: {e}")
+            result["error"] = str(e)
+        finally:
+            for p in (cert_path, key_path, app_cert_path, app_key_path):
+                if p and p.exists():
+                    os.unlink(p)
 
         return result
 

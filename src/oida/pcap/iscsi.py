@@ -616,6 +616,14 @@ class ISCSIPassiveListener(PySharkListenerBase):
             for cred in self.credentials
         ]
 
+    def get_hashcat_hashes(self) -> List[str]:
+        """iSCSI CHAP hashes in hashcat mode-4800 format (``response:challenge:id``).
+
+        Delegates to the per-credential property so incomplete pairs (missing
+        challenge/response/id) are skipped rather than exported as bogus lines.
+        """
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]
+
     def harvest(self) -> Dict[str, Any]:
         """Return structured harvest data including target discovery tables."""
         base = super().harvest()

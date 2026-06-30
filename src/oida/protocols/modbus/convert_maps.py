@@ -45,7 +45,7 @@ from ...utils.lazy_import import lazy_import
 
 logger = get_module_logger(__name__)
 
-_yaml = lazy_import("yaml", "Modbus", install_hint="pip install pyyaml")
+_yaml = lazy_import("yaml", "Modbus", install_hint="pip install oida[modbus]")
 
 
 # =============================================================================
@@ -106,7 +106,7 @@ def convert_solarman_yaml(filepath: Path) -> Optional[Dict[str, Any]]:
                 registers: [0x00BA]
     """
     if not _yaml.is_available:
-        logger.error("PyYAML required. Install with: pip install pyyaml")
+        logger.error("PyYAML required. Install with: pip install oida[modbus]")
         return None
 
     try:

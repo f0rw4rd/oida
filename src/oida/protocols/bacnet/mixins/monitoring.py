@@ -6,6 +6,7 @@ Handles schedules, calendars, alarms, trendlogs, priority arrays, and life safet
 
 import asyncio
 from ..constants import _load_bacpypes3, CONTROL_POINT_TYPES
+from oida.utils.common_types import Category
 
 
 class MonitoringMixin:
@@ -421,7 +422,7 @@ class MonitoringMixin:
         if findings:
             self.logger.security_finding(
                 "Insecure configuration",
-                category="LIFE_SAFETY",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{len(findings)} life safety object(s) found - control fire/security systems",
             )
             for finding in findings[:10]:
@@ -487,7 +488,7 @@ class MonitoringMixin:
         if findings:
             self.logger.security_finding(
                 "Insecure configuration",
-                category="LIFE_SAFETY",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{len(findings)} life safety properties accessible - could disable fire/security alarms",
             )
             for finding in findings[:5]:
@@ -1013,7 +1014,7 @@ class MonitoringMixin:
         if security_concerns:
             self.logger.security_finding(
                 "Insecure configuration",
-                category="PID",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{len(security_concerns)} PID security concern(s) - parameter manipulation can destabilize control systems",
             )
             for concern in security_concerns:

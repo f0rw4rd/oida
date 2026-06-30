@@ -38,6 +38,7 @@ from .mixins import (
     RawQueryMixin,
     HostEnumerationMixin,
 )
+from oida.utils.common_types import Category
 
 _pysnmp = lazy_import("pysnmp", "SNMP")
 
@@ -455,7 +456,8 @@ class SNMPScanner(
                         f"(user={self.username}, level={self.security_level})"
                     )
                 elif not v3_results.get("valid_users"):
-                    self.logger.warning("SNMP: no valid SNMPv3 users found")
+                    # _enum_v3 already emitted a specific reason (no response vs.
+                    # responded-but-no-users); don't pile on a vaguer line.
                     return results
 
             # Phase 1: Community brute-force (--default-creds)
@@ -715,20 +717,20 @@ class SNMPScanner(
         if self.version == "1":
             self.logger.security_finding(
                 "Legacy protocol",
-                category="AUTHENTICATION",
+                category=Category.AUTHENTICATION,
                 detail="SNMPv1 supported (no message integrity)",
             )
         if self.version in ("1", "2c"):
             self.logger.security_finding(
                 "No encryption",
-                category="ENCRYPTION",
+                category=Category.ENCRYPTION,
                 detail=f"SNMPv{self.version} sends community strings in cleartext",
             )
 
         if self.version in ("1", "2c") and self.community == "public":
             self.logger.security_finding(
                 "Default credentials",
-                category="AUTHENTICATION",
+                category=Category.AUTHENTICATION,
                 detail="Default community string 'public' accepted",
             )
 

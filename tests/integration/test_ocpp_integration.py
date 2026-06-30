@@ -241,6 +241,19 @@ class MockOCPPServer:
         elif action == "StopTransaction":
             return [3, msg_id, {"idTagInfo": {"status": "Accepted"}}]
 
+        # --- OCPP 2.0.1 dangerous operations: an insecure CSMS accepts them all
+        # (mirrors the real ocpp-insecure-csms mock), so the security probes can
+        # demonstrate the corresponding CRITICAL findings.
+        elif action in (
+            "SetNetworkProfile",
+            "InstallCertificate",
+            "DeleteCertificate",
+            "SetDisplayMessage",
+            "ClearDisplayMessage",
+            "CustomerInformation",
+        ):
+            return [3, msg_id, {"status": "Accepted"}]
+
         elif action in self.UNIMPLEMENTED_ACTIONS:
             return [4, msg_id, "NotImplemented", f"{action} not implemented", {}]
 
@@ -787,8 +800,13 @@ class TestOCPPErrorHandling:
 class TestOCPPNewFeaturesIntegration:
     """Test the 8 new OCPP scanner features against the mock server."""
 
-    def _make_test_obj(self, ocpp_server):
-        """Create a FakeOCPP instance connected to the mock server."""
+    def _make_test_obj(self, ocpp_server, version="1.6"):
+        """Create a FakeOCPP instance connected to the mock server.
+
+        version: forces the WebSocket subprotocol (e.g. "2.0.1" negotiates only
+        ocpp2.0.1, giving a guaranteed-2.0.1 session for the 2.0.1-specific
+        security probes).
+        """
         from oida.protocols.ocpp.scanner import OCPPScanner
         from oida.protocols.ocpp.mixins.discovery import DiscoveryMixin
         from oida.protocols.ocpp.mixins.security import SecurityMixin
@@ -798,7 +816,7 @@ class TestOCPPNewFeaturesIntegration:
         class FakeOCPP(DiscoveryMixin, SecurityMixin, MessagesMixin):
             pass
 
-        args = {"target-url": ocpp_server.ws_url, "version": "1.6"}
+        args = {"target-url": ocpp_server.ws_url, "version": version}
         scanner = OCPPScanner(args)
         conn = scanner.connect()
         assert conn is not None, "FakeOCPP setup: scanner connection failed"
@@ -808,7 +826,7 @@ class TestOCPPNewFeaturesIntegration:
         obj.logger = Mock()
         obj.results = {
             "success": True,
-            "data": {"target_url": ocpp_server.ws_url, "ocpp_version": "1.6"},
+            "data": {"target_url": ocpp_server.ws_url, "ocpp_version": version},
         }
         obj.scanner = scanner
         obj.args = Mock()
@@ -1879,60 +1897,81 @@ class TestOCPPSecurityFindings:
             scanner.disconnect(conn)
 
     # ========================================================================
-    # OCPP 2.0.1 Extended Probes (skipped - mock uses 1.6 by default)
+    # OCPP 2.0.1 Extended Probes
+    #
+    # Forcing version="2.0.1" makes the scanner negotiate only the ocpp2.0.1
+    # subprotocol, so the connection is guaranteed 2.0.1 (no random 1.6/2.0.1
+    # negotiation). The mock accepts these dangerous 2.0.1 operations (insecure
+    # CSMS), so each probe must emit its CRITICAL finding.
     # ========================================================================
 
     @pytest.mark.security
-    @pytest.mark.skip(
-        reason="Mock negotiates 1.6 or 2.0.1 randomly; "
-        "2.0.1-specific probes require guaranteed 2.0.1 connection"
-    )
     def test_finding_set_network_profile(self, ocpp_server):
-        """Test SetNetworkProfile finding: CSMS redirect accepted. [Category A]
-
-        Trigger: test_network_profile() on OCPP 2.0.1 connection.
-        Requires OCPP 2.0.1 mock endpoint.
-        """
-        pass
+        """Test SetNetworkProfile finding: CSMS redirect accepted. [Category A]"""
+        obj, scanner, conn = self._make_test_obj(ocpp_server, version="2.0.1")
+        try:
+            assert obj._is_v201(), "expected a guaranteed OCPP 2.0.1 session"
+            obj.test_network_profile()
+            result = obj.results["data"].get("network_profile_test")
+            assert result is not None, "probe did not run (2.0.1 guard skipped it?)"
+            assert result.get("status") == "Accepted", f"expected Accepted, got {result}"
+            issues = self._get_finding_issues(obj)
+            assert any("SetNetworkProfile" in i for i in issues), (
+                f"expected SetNetworkProfile finding, got: {issues}"
+            )
+        finally:
+            scanner.disconnect(conn)
 
     @pytest.mark.security
-    @pytest.mark.skip(
-        reason="Mock negotiates 1.6 or 2.0.1 randomly; "
-        "2.0.1-specific probes require guaranteed 2.0.1 connection"
-    )
     def test_finding_install_certificate(self, ocpp_server):
-        """Test InstallCertificate finding: rogue root CA accepted. [Category A]
-
-        Trigger: test_install_certificate() on OCPP 2.0.1 connection.
-        Requires OCPP 2.0.1 mock endpoint.
-        """
-        pass
+        """Test InstallCertificate finding: rogue root CA accepted. [Category A]"""
+        obj, scanner, conn = self._make_test_obj(ocpp_server, version="2.0.1")
+        try:
+            assert obj._is_v201(), "expected a guaranteed OCPP 2.0.1 session"
+            obj.test_install_certificate()
+            result = obj.results["data"].get("install_cert_test")
+            assert result is not None, "probe did not run (2.0.1 guard skipped it?)"
+            assert result.get("install_status") == "Accepted", f"expected Accepted, got {result}"
+            issues = self._get_finding_issues(obj)
+            assert any("InstallCertificate" in i for i in issues), (
+                f"expected InstallCertificate finding, got: {issues}"
+            )
+        finally:
+            scanner.disconnect(conn)
 
     @pytest.mark.security
-    @pytest.mark.skip(
-        reason="Mock negotiates 1.6 or 2.0.1 randomly; "
-        "2.0.1-specific probes require guaranteed 2.0.1 connection"
-    )
     def test_finding_display_message(self, ocpp_server):
-        """Test SetDisplayMessage finding: social engineering vector. [Category A]
-
-        Trigger: test_display_message() on OCPP 2.0.1 connection.
-        Requires OCPP 2.0.1 mock endpoint.
-        """
-        pass
+        """Test SetDisplayMessage finding: social engineering vector. [Category A]"""
+        obj, scanner, conn = self._make_test_obj(ocpp_server, version="2.0.1")
+        try:
+            assert obj._is_v201(), "expected a guaranteed OCPP 2.0.1 session"
+            obj.test_display_message()
+            result = obj.results["data"].get("display_message_test")
+            assert result is not None, "probe did not run (2.0.1 guard skipped it?)"
+            assert result.get("set_status") == "Accepted", f"expected Accepted, got {result}"
+            issues = self._get_finding_issues(obj)
+            assert any("SetDisplayMessage" in i for i in issues), (
+                f"expected SetDisplayMessage finding, got: {issues}"
+            )
+        finally:
+            scanner.disconnect(conn)
 
     @pytest.mark.security
-    @pytest.mark.skip(
-        reason="Mock negotiates 1.6 or 2.0.1 randomly; "
-        "2.0.1-specific probes require guaranteed 2.0.1 connection"
-    )
     def test_finding_customer_info(self, ocpp_server):
-        """Test CustomerInformation finding: PII exfiltration. [Category A]
-
-        Trigger: test_customer_info() on OCPP 2.0.1 connection.
-        Requires OCPP 2.0.1 mock endpoint.
-        """
-        pass
+        """Test CustomerInformation finding: PII exfiltration. [Category A]"""
+        obj, scanner, conn = self._make_test_obj(ocpp_server, version="2.0.1")
+        try:
+            assert obj._is_v201(), "expected a guaranteed OCPP 2.0.1 session"
+            obj.test_customer_info()
+            result = obj.results["data"].get("customer_info_test")
+            assert result is not None, "probe did not run (2.0.1 guard skipped it?)"
+            assert result.get("status") == "Accepted", f"expected Accepted, got {result}"
+            issues = self._get_finding_issues(obj)
+            assert any("CustomerInformation" in i for i in issues), (
+                f"expected CustomerInformation finding, got: {issues}"
+            )
+        finally:
+            scanner.disconnect(conn)
 
     @pytest.mark.security
     def test_finding_default_credentials(self, ocpp_server):

@@ -435,7 +435,7 @@ class TestASN1Integer:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1Integer
 
         field = ASN1Integer("test_int", 42)
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0x02  # INTEGER tag
         assert result[-1] == 42
 
@@ -460,7 +460,7 @@ class TestASN1Integer:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1Integer
 
         field = ASN1Integer("test_int", 42, context_tag=0)
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0x80  # Context[0]
 
     def test_non_fuzzable(self):
@@ -479,7 +479,7 @@ class TestASN1Boolean:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1Boolean
 
         field = ASN1Boolean("test_bool", True)
-        result = field.original_value
+        result = field.original_value()
         assert result == b"\x01\x01\xff"
 
     def test_creation_false(self):
@@ -487,7 +487,7 @@ class TestASN1Boolean:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1Boolean
 
         field = ASN1Boolean("test_bool", False)
-        result = field.original_value
+        result = field.original_value()
         assert result == b"\x01\x01\x00"
 
     def test_mutations_include_invalid_values(self):
@@ -508,7 +508,7 @@ class TestASN1OctetString:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1OctetString
 
         field = ASN1OctetString("test_bytes", b"")
-        result = field.original_value
+        result = field.original_value()
         assert result == b"\x04\x00"
 
     def test_creation_with_data(self):
@@ -516,7 +516,7 @@ class TestASN1OctetString:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1OctetString
 
         field = ASN1OctetString("test_bytes", b"hello")
-        result = field.original_value
+        result = field.original_value()
         assert result == b"\x04\x05hello"
 
     def test_mutations_include_long_strings(self):
@@ -537,7 +537,7 @@ class TestASN1OID:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1OID
 
         field = ASN1OID("test_oid", "1.2.3")
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0x06  # OID tag
 
     def test_mutations_include_common_oids(self):
@@ -557,7 +557,7 @@ class TestASN1Null:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1Null
 
         field = ASN1Null("test_null")
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0x05  # NULL tag
         assert result[1] == 0x00  # Zero length
 
@@ -579,7 +579,7 @@ class TestASN1VisibleString:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1VisibleString
 
         field = ASN1VisibleString("test_str", "hello")
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0x1A  # VisibleString tag
         assert b"hello" in result
 
@@ -601,7 +601,7 @@ class TestASN1Sequence:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1Sequence
 
         field = ASN1Sequence("test_seq")
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0x30  # SEQUENCE tag
         assert result[1] == 0x00  # Zero length
 
@@ -611,7 +611,7 @@ class TestASN1Sequence:
 
         child = ASN1Integer("int_child", 42, fuzzable=False)
         field = ASN1Sequence("test_seq", children=[child])
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0x30  # SEQUENCE tag
         assert b"\x02\x01\x2a" in result  # Contains INTEGER 42
 
@@ -641,7 +641,7 @@ class TestASN1Sequence:
         from src.oida.fuzz.primitives.asn1_blocks import ASN1Sequence
 
         field = ASN1Sequence("test_seq", context_tag=1)
-        result = field.original_value
+        result = field.original_value()
         assert result[0] == 0xA1  # Context[1] constructed
 
 

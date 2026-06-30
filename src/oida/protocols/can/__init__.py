@@ -6,7 +6,7 @@ security testing. Supports passive traffic sniffing, UDS/OBD-II
 service discovery, CANopen node detection, and raw frame operations.
 
 Dependency: python-can >= 4.0.0
-    pip install python-can
+    pip install oida[can]
 """
 
 # Re-export the NXC-style connection class

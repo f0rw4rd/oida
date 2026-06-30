@@ -375,7 +375,6 @@ class EnumerationMixin(_ScannerBase):
             headers,
             table_data,
             title=(f"PROFINET Record Indices ({', '.join(title_parts)})"),
-            logger=self.logger,
         )
 
         if options["test_write"] or options["detect_write_only"]:

@@ -121,11 +121,21 @@ class PollingMixin(_ScannerBase):
             else:
                 reason = self._error_detail()
                 self.logger.warning(f"Integrity poll failed ({reason})")
-                results["operations"]["integrity_poll"] = {"success": False, "error": reason}
+                results.setdefault("operations", {})["integrity_poll"] = {
+                    "success": False,
+                    "error": reason,
+                }
+                # A timeout almost always means we are polling the wrong link
+                # address. Point the operator at address enumeration.
+                if "timeout" in reason:
+                    self.logger.display(
+                        "Wrong link address? Enumerate with --scan-range 0-15 "
+                        "or set --outstation-addr <n>"
+                    )
 
         except Exception as e:
             self.logger.fail(f"Integrity poll error: {type(e).__name__}: {e}")
-            results["operations"]["integrity_poll"] = {
+            results.setdefault("operations", {})["integrity_poll"] = {
                 "success": False,
                 "error": str(e),
             }
@@ -235,52 +245,27 @@ class PollingMixin(_ScannerBase):
                             return str(v).strip()
                     return None
 
-                # Group 1: Product line
-                line1_parts = []
-                vendor = _val(254)
-                product = _val(252)
-                conformance = _val(250)
-                if product:
-                    line1_parts.append(f"Product: {product}")
-                if vendor:
-                    line1_parts.append(f"Vendor: {vendor}")
-                elif product:
+                # Emit one "tag: value" per line, in attribute order:
+                # product/identity, then version/serial, then identity/location.
+                labelled = [
+                    ("Product", _val(252)),
+                    ("Vendor", _val(254)),
+                    ("Conformance", _val(250)),
+                    ("SW", _val(242)),
+                    ("HW", _val(243)),
+                    ("Serial", _val(249)),
+                    ("Device", _val(247)),
+                    ("Owner", _val(248)),
+                    ("Location", _val(245)),
+                    ("ID", _val(246)),
+                ]
+                if _val(252) and not _val(254):
                     self.logger.debug("Vendor attribute not provided by outstation")
-                if conformance:
-                    line1_parts.append(f"Conformance: {conformance}")
-                if line1_parts:
-                    self.logger.display(" | ".join(line1_parts))
-
-                # Group 2: Version / serial
-                line2_parts = []
-                sw = _val(242)
-                hw = _val(243)
-                serial = _val(249)
-                if sw:
-                    line2_parts.append(f"SW: {sw}")
-                if hw:
-                    line2_parts.append(f"HW: {hw}")
-                if serial:
-                    line2_parts.append(f"Serial: {serial}")
-                if line2_parts:
-                    self.logger.display(" | ".join(line2_parts))
-
-                # Group 3: Identity / location
-                line3_parts = []
-                device_name = _val(247)
-                owner = _val(248)
-                location = _val(245)
-                id_code = _val(246)
-                if device_name:
-                    line3_parts.append(f"Device: {device_name}")
-                if owner:
-                    line3_parts.append(f"Owner: {owner}")
-                if location:
-                    line3_parts.append(f"Location: {location}")
-                if id_code:
-                    line3_parts.append(f"ID: {id_code}")
-                if line3_parts:
-                    self.logger.display(" | ".join(line3_parts))
+                present = [(label, value) for label, value in labelled if value]
+                if present:
+                    self.logger.display("Device Information")
+                    for label, value in present:
+                        self.logger.display(f"  {label}: {value}")
 
                 for var_num, label in SECURITY_RELEVANT_ATTRS:
                     if var_num in by_var:

@@ -14,6 +14,8 @@ import struct
 import time
 from typing import TYPE_CHECKING, Any, Dict
 
+from oida.utils.common_types import Category
+
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -163,7 +165,9 @@ class VersionDetectionMixin(_ScannerBase):
         # Security finding for v1
         if "1" in supported:
             self.logger.security_finding(
-                "Legacy protocol", "SNMPv1 supported (no message integrity)"
+                "Legacy protocol",
+                category=Category.PROTOCOL_EXPOSURE,
+                detail="SNMPv1 supported (no message integrity)",
             )
 
         # Best version selection: prefer v2c (GETBULK) > v3 > v1

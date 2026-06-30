@@ -176,12 +176,13 @@ class TestPgsqlPassiveEK:
         hashcat = listener.get_hashcat_hashes()
         assert len(hashcat) >= 1, "Expected at least one hashcat line"
         for line in hashcat:
-            parts = line.split(":")
-            assert len(parts) >= 2, f"Bad hashcat format (expected user:hash:salt): {line}"
-            # Username should be first
-            assert parts[0], f"Empty username in hashcat line: {line}"
-            # Hash should contain 'md5' prefix
-            assert "md5" in parts[1], f"Hash missing md5 prefix: {line}"
+            # hashcat mode 11100: $postgres$user*salt*hash (md5 prefix stripped,
+            # 32-hex digest). Replaces the old non-standard user:hash:salt form.
+            assert line.startswith("$postgres$"), f"not a mode-11100 line: {line}"
+            user, salt, digest = line[len("$postgres$") :].split("*")
+            assert user, f"empty username: {line}"
+            assert not digest.startswith("md5"), f"md5 prefix not stripped: {line}"
+            assert len(digest) == 32 and all(c in "0123456789abcdef" for c in digest)
 
     def test_pgsql_harvest_returns_dict(self):
         """Verify harvest returns a dict."""

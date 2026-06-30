@@ -4,7 +4,7 @@ VNC Passive Listener for authentication extraction (PyShark-based).
 Passively captures VNC/RFB authentication to extract:
 - Server challenge (16 bytes)
 - Client encrypted response (16 bytes)
-- Output in hashcat format for offline cracking
+- Output in John the Ripper `vnc` format for offline cracking
 
 RFB Protocol flow:
 1. Server sends protocol version
@@ -14,7 +14,9 @@ RFB Protocol flow:
 5. VNC Auth (type 2): Server sends 16-byte challenge
 6. Client sends 16-byte DES-encrypted response
 
-Hashcat mode 5600 (VNC): challenge:response
+Cracking: John the Ripper `vnc` format (1.9.0-Jumbo-1+), line
+``$vnc$*<challenge>*<response>`` (the same line vncpcap2john produces).
+NOTE: hashcat has NO VNC mode; mode 5600 is NetNTLMv2, unrelated to VNC.
 
 Reference: RFB Protocol Specification
 """
@@ -75,12 +77,16 @@ class VNCCredential:
 
     @property
     def hash_value(self) -> str:
-        """Challenge:response pair for hashcat."""
+        """Challenge:response pair."""
         return f"{self.challenge}:{self.response}"
 
     @property
     def hashcat_format(self) -> str:
-        """Hashcat-compatible hash string (mode 5600)."""
+        """John the Ripper `vnc` format line: ``$vnc$*<challenge>*<response>``.
+
+        (Property name kept for the generic credential-export hook; this is a
+        John format, not a hashcat mode — hashcat has no VNC mode.)
+        """
         # Both halves are required to crack; the listener already skips
         # challenge-less responses, but guard here too so an incomplete pair is
         # never emitted as a deliverable hash.
@@ -796,11 +802,13 @@ class VNCPassiveListener(PySharkListenerBase):
         return [phase, detail, info]
 
     def get_hashcat_hashes(self) -> List[str]:
-        """Get hashes in hashcat format (mode 5600 - VNC).
+        """Get cracking lines in John the Ripper `vnc` format.
 
-        Format: $vnc$*CHALLENGE*RESPONSE
+        Format: ``$vnc$*CHALLENGE*RESPONSE`` (hashcat has no VNC mode).
+        Delegates to the per-credential property so incomplete pairs (missing
+        challenge or response) are skipped rather than emitted as ``$vnc$**``.
         """
-        return [f"$vnc$*{c.challenge}*{c.response}" for c in self.credentials]
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
         """Get summary of extracted credentials using canonical key names."""

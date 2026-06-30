@@ -313,6 +313,195 @@ class PropertiesMixin:
                     self.logger.debug(f"bacpypes3 read present values failed: {e}")
                     continue
 
+    async def _bacpypes3_read_one(
+        self, app, target_addr, obj_type: str, instance: int, prop: str, timeout: float
+    ) -> Any:
+        """Read a single property over the live bacpypes3 ``app`` and decode it.
+
+        The synchronous ``_read_property`` goes through ``self.bacnet`` (BAC0),
+        which is ``None`` in the default bacpypes3 path. This is the app-based
+        equivalent used by the raw-path dump.
+
+        Two tiers:
+
+        1. ``app.read_property`` -- bacpypes3 resolves the datatype from the
+           object class and hands back a fully decoded value, so enumerations
+           render symbolically (``active`` / ``quiet``) and constructed types
+           (priorityArray, references, schedules) decode to JSON-friendly
+           structures instead of opaque blobs.
+        2. Raw ``ReadProperty`` + ``cast_out`` fallback for *custom / proprietary*
+           types whose datatype bacpypes3 cannot resolve -- there tier 1 either
+           raises or returns the ``-no object class-`` sentinel, so we decode the
+           wire value with a best-effort primitive cast instead.
+
+        Returns a JSON-serializable value, or ``None`` on timeout / error / an
+        undecodable value.
+        """
+        try:
+            value = await asyncio.wait_for(
+                app.read_property(target_addr, f"{obj_type}:{instance}", prop),
+                timeout=min(timeout, 3.0),
+            )
+            rendered = self._render_bacnet_value(value)
+            if rendered is not None:
+                return rendered
+            # tier 1 produced nothing usable (AnyAtomic / -no object class-
+            # sentinel for a proprietary type) -> fall through to the raw read.
+        except (asyncio.TimeoutError, TimeoutError) as e:
+            self.logger.debug(f"bacpypes3 read {obj_type}:{instance}:{prop} timed out: {e}")
+            return None
+        except BaseException as e:
+            # Unknown / proprietary property or object type, segmentation, etc.
+            self.logger.debug(f"bacpypes3 read_property {obj_type}:{instance}:{prop}: {e}")
+
+        return await self._bacpypes3_read_raw(app, target_addr, obj_type, instance, prop, timeout)
+
+    def _render_bacnet_value(self, value) -> Any:
+        """Turn a decoded bacpypes3 value into a JSON-serializable Python value.
+
+        Handles the spread the dump sees: enumerations -> symbolic name,
+        atomics -> native int/float/str, statusFlags -> named set bits,
+        constructed types / arrays -> JSON. Returns ``None`` for values that
+        could not be resolved (so the caller can drop to a raw read).
+        """
+        if value is None:
+            return None
+
+        from bacpypes3.primitivedata import Enumerated
+
+        # Enumerated (BinaryPV, ShedState, LifeSafetyState, ...) subclasses int;
+        # we want the symbolic label ("active"), not the raw ordinal.
+        if isinstance(value, Enumerated):
+            text = str(value).strip()
+            return text or int(value)
+
+        # statusFlags / similar BitStrings -> named flags ("in-alarm,fault").
+        if type(value).__name__ == "StatusFlags":
+            names = ["in-alarm", "fault", "overridden", "out-of-service"]
+            try:
+                set_flags = [n for n, b in zip(names, list(value)) if int(b)]
+                return ",".join(set_flags) if set_flags else "normal"
+            except BaseException as e:
+                self.logger.debug(f"statusFlags render failed: {e}")
+
+        # CharacterString subclasses str; also catches bacpypes3's
+        # "-no object class-" sentinel for object types it has no class for.
+        if isinstance(value, str):
+            text = value.strip()
+            return None if text in ("-no object class-", "") else value
+
+        # Real/Unsigned/Integer/Boolean subclass float/int -> use the native value.
+        if isinstance(value, (bool, int, float)):
+            return value
+
+        # An AnyAtomic wrapper means bacpypes3 left it undecoded -> raw fallback.
+        if type(value).__name__ == "AnyAtomic":
+            return None
+
+        # Constructed types (sequences/choices) and arrays -> JSON via bacpypes3.
+        try:
+            from bacpypes3.json import sequence_to_json
+
+            return sequence_to_json(value)
+        except BaseException as e:
+            self.logger.debug(f"sequence_to_json failed: {e}")
+
+        if isinstance(value, (list, tuple)):
+            rendered = []
+            for element in value:
+                rendered.append(self._render_bacnet_value(element))
+            return rendered
+
+        text = str(value).strip()
+        return text or None
+
+    async def _bacpypes3_read_raw(
+        self, app, target_addr, obj_type: str, instance: int, prop: str, timeout: float
+    ) -> Any:
+        """Raw ReadProperty + cast_out -- the fallback for custom/proprietary types.
+
+        bacpypes3 cannot type-resolve a proprietary object/property, so we read
+        the wire value and best-effort cast it across primitive datatypes
+        (OctetString -> hex). Never returns the opaque ``<Any object at 0x...>``
+        repr -- an undecodable value yields ``None``.
+        """
+        types = _load_bacpypes3()
+        ReadPropertyRequest = types["ReadPropertyRequest"]
+        ObjectIdentifier = types["ObjectIdentifier"]
+        PropertyIdentifier = types["PropertyIdentifier"]
+        CharacterString = types["CharacterString"]
+        Unsigned = types["Unsigned"]
+        Real = types["Real"]
+        AbortPDU = types["AbortPDU"]
+        ErrorPDU = types["ErrorPDU"]
+        RejectPDU = types["RejectPDU"]
+        Error = types["Error"]
+
+        try:
+            request = ReadPropertyRequest(
+                objectIdentifier=ObjectIdentifier((obj_type, instance)),
+                propertyIdentifier=PropertyIdentifier(prop),
+            )
+            request.pduDestination = target_addr
+            response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
+        except (asyncio.TimeoutError, TimeoutError) as e:
+            self.logger.debug(f"bacpypes3 raw read {obj_type}:{instance}:{prop} timed out: {e}")
+            return None
+        except BaseException as e:
+            self.logger.debug(f"bacpypes3 raw read {obj_type}:{instance}:{prop} failed: {e}")
+            return None
+
+        if not response or isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
+            return None
+
+        pv = getattr(response, "propertyValue", None)
+        if pv is None or not hasattr(pv, "cast_out"):
+            return None
+
+        for cast_type in (Real, Unsigned, CharacterString):
+            try:
+                value = pv.cast_out(cast_type)
+                if value is not None:
+                    return value
+            except BaseException as e:
+                self.logger.debug(f"bacpypes3 cast_out({cast_type.__name__}) failed: {e}")
+                continue
+
+        try:
+            from bacpypes3.primitivedata import (
+                Boolean,
+                Date,
+                Double,
+                Enumerated,
+                Integer,
+                OctetString,
+                Time,
+            )
+
+            broad_types = (Enumerated, Boolean, Integer, Double, Date, Time, OctetString)
+        except BaseException as e:
+            self.logger.debug(f"bacpypes3 broad-type import failed: {e}")
+            broad_types = ()
+
+        for cast_type in broad_types:
+            try:
+                value = pv.cast_out(cast_type)
+            except BaseException as e:
+                self.logger.debug(f"bacpypes3 cast_out({cast_type.__name__}) failed: {e}")
+                continue
+            if value is None:
+                continue
+            if cast_type is OctetString:
+                try:
+                    return bytes(value).hex()
+                except BaseException:
+                    return str(value)
+            return value
+
+        # Undecodable / structured proprietary value: drop it rather than
+        # emitting an opaque object repr.
+        return None
+
     def _read_property(self, address: str, obj_type: str, instance: int, prop: str) -> Any:
         """Read a BACnet property"""
         try:

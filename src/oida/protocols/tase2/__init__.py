@@ -20,7 +20,7 @@ from .scanner import TASE2Scanner
 from .nxc_connection import tase2
 
 _pyiec61850_tase2 = lazy_import(
-    "pyiec61850.tase2", "TASE.2", install_hint="pip install pyiec61850-ng"
+    "pyiec61850.tase2", "TASE.2", install_hint="pip install oida[tase2]"
 )
 
 __all__ = ["tase2", "TASE2Scanner", "metadata", "run"]

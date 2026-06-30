@@ -7,12 +7,27 @@ workflow methods directly with a mocked MMSScanner and mocked native _Lib.
 """
 
 import argparse
+from enum import IntEnum
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from oida.protocols.mms.nxc_connection import mms
 from oida.protocols.mms import _Lib
+
+
+class _FC(IntEnum):
+    """Stand-in for pyiec61850.mms.FC."""
+
+    ST = 0
+    MX = 1
+    SP = 2
+    DC = 5
+    CO = 12
+
+
+class _ReadError(Exception):
+    """Stand-in for pyiec61850.mms.ReadError."""
 
 
 def _make(**arg_overrides):
@@ -214,57 +229,59 @@ class TestHandleFuzz:
 
 
 class TestFuzzDataObject:
+    """Fuzz loop tests against a high-level MMSClient connection.
+
+    ``self.conn`` is an MMSClient mock (``read_value`` stubbed); writes go
+    through the module-level ``_write_under_fc`` shim (patched here). The
+    scanner's ``_normalize_read`` is wired to pass its argument through so the
+    raw ``read_value`` return is what the fuzz loop sees.
+    """
+
     def _prep(self, **arg_overrides):
         inst = _make(**arg_overrides)
         inst.conn = MagicMock()
         inst.scanner = MagicMock()
+        # _normalize_read is a no-op passthrough for these tests; the scanner is
+        # a MagicMock, so wire it explicitly.
+        inst.scanner._normalize_read.side_effect = lambda v: v
         inst.logger = MagicMock()
         return inst
 
     def test_read_value_int_to_signed_le_bytes(self):
         # Drives _fuzz_data_object's inner read/write closures via a fuzz()
-        # that yields a single payload, then asserts the native write got
-        # the round-tripped little-endian signed int.
+        # that yields a single payload, then asserts the write shim received
+        # the round-tripped little-endian signed int under the discovered FC.
         inst = self._prep(fuzz=True, confirm=True, fuzz_iterations=1)
-        inst.scanner._extract_mms_value.return_value = -1  # signed -> 0xffffffff
-        lib = MagicMock()
-        lib.IEC61850_FC_MX = 0
-        lib.IEC61850_FC_CO = 1
-        lib.MmsValue_newInteger.return_value = MagicMock()
+        inst.conn.read_value.return_value = -1  # signed value read back
 
         with (
             patch.object(_Lib, "require"),
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_mms_value_delete"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=True) as wuf,
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):
             inst._fuzz_data_object("LD0/A", 1)
 
         # write_value packs payload[:4] little-endian signed -> 1
-        int_args = [c.args[0] for c in lib.MmsValue_newInteger.call_args_list]
-        assert 1 in int_args  # the fuzz payload \x01\x00\x00\x00 -> 1
+        written_values = [c.args[2] for c in wuf.call_args_list]
+        assert 1 in written_values  # the fuzz payload \x01\x00\x00\x00 -> 1
         # a status line was emitted
         assert inst.logger.display.called
 
     def test_anomaly_detected_when_readback_differs(self):
-        # original read = 0x00000000; write succeeds; readback differs from
-        # both the payload and the original -> anomaly counter + warning.
+        # original read = 0; writes succeed; readback differs from both the
+        # payload and the original -> anomaly counter + warning.
         inst = self._prep(fuzz=True, confirm=True, fuzz_iterations=1)
-        # _extract_mms_value returns changing values: first call (original) 0,
-        # then for each readback returns 999 (an unrelated value).
-        inst.scanner._extract_mms_value.side_effect = [0, 999, 0]
-        lib = MagicMock()
-        lib.IEC61850_FC_MX = 0
-        lib.IEC61850_FC_CO = 1
-        lib.MmsValue_newInteger.return_value = MagicMock()
+        # read_value returns: probe(0), original(0), readback(999), restore-read N/A.
+        inst.conn.read_value.side_effect = [0, 0, 999, 0, 0, 0]
 
         with (
             patch.object(_Lib, "require"),
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_mms_value_delete"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=True),
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x05\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):
@@ -276,118 +293,73 @@ class TestFuzzDataObject:
 
     def test_float_original_restored_with_typed_value_not_bogus_int(self):
         # Regression: a non-integer object (float) must be restored to its
-        # ORIGINAL typed value via _create_mms_value, never reinterpreted as a
-        # signed integer from its packed bytes (which would corrupt the device).
+        # ORIGINAL typed value (the float), never reinterpreted as a signed
+        # integer from its packed bytes (which would corrupt the device).
         inst = self._prep(fuzz=True, confirm=True, fuzz_iterations=1)
-        # original read = float; readbacks keep returning the same float.
-        inst.scanner._extract_mms_value.return_value = 23.4
-        sentinel_restore = MagicMock(name="restored_mms_value")
-        inst.scanner._create_mms_value.return_value = sentinel_restore
-        lib = MagicMock()
-        lib.IEC61850_FC_MX = 0
-        lib.IEC61850_FC_CO = 1
-        lib.MmsValue_newInteger.return_value = MagicMock()
+        # every read returns the same float
+        inst.conn.read_value.return_value = 23.4
 
         with (
             patch.object(_Lib, "require"),
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_mms_value_delete"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=True) as wuf,
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):
             inst._fuzz_data_object("LD0/A", 1)
 
-        # Restore must go through _create_mms_value with the ORIGINAL float,
-        # so the correct MmsValue type is reconstructed. (_create_mms_value is
-        # also used by the writable-FC probe, so assert it was called with the
-        # typed float rather than asserting an exact call count.)
-        create_args = [c.args[0] for c in inst.scanner._create_mms_value.call_args_list]
-        assert 23.4 in create_args
-        # And the typed restore MmsValue must be the one written back last.
-        last_write = lib.IedConnection_writeObject.call_args_list[-1]
-        assert last_write.args[-1] is sentinel_restore
+        written_values = [c.args[2] for c in wuf.call_args_list]
+        # The final restore write must pass the ORIGINAL typed float, so
+        # python_to_mms_value reconstructs the correct MMS type downstream.
+        assert wuf.call_args_list[-1].args[2] == 23.4
         # The packed float bytes (0x41bb3333 -> 1102957363) must NEVER be
         # written back as an integer during restore.
-        restored_ints = [c.args[0] for c in lib.MmsValue_newInteger.call_args_list]
-        assert 1102957363 not in restored_ints
+        assert 1102957363 not in written_values
 
     def test_fuzz_write_uses_discovered_fc_not_hardcoded_co(self):
         # Regression: the object is writable ONLY under FC_SP (a setpoint), not
         # FC_CO. The fuzz writer must target the discovered FC_SP, otherwise
-        # every write fails (successful=0) and no real fuzzing happens. Asserts
-        # the fuzz-iteration write does NOT use the hardcoded FC_CO.
+        # every write fails (successful=0) and no real fuzzing happens.
         inst = self._prep(fuzz=True, confirm=True, fuzz_iterations=1)
-        inst.scanner._extract_mms_value.return_value = 7
-        inst.scanner._create_mms_value.return_value = MagicMock(name="restore_value")
+        inst.conn.read_value.return_value = 7
 
-        lib = MagicMock()
-        lib.IEC61850_FC_MX = 0
-        lib.IEC61850_FC_CO = 1
-        lib.IEC61850_FC_SP = 2
-        lib.IEC61850_FC_ST = 3
-        # Unique sentinel so we can pinpoint the fuzz-payload write (which goes
-        # through MmsValue_newInteger) vs. the discovery-probe/restore writes
-        # (which go through scanner._create_mms_value).
-        fuzz_payload_value = MagicMock(name="fuzz_payload_mms_value")
-        lib.MmsValue_newInteger.return_value = fuzz_payload_value
-
-        # Native calls return an FC-tagged tuple so the unpack_result stub can
-        # decide success per-FC: only FC_SP accepts a write; reads always work.
-        def read_object(conn, ref, fc):
-            return ("R", fc)
-
-        def write_object(conn, ref, fc, val):
-            return ("W", fc)
-
-        lib.IedConnection_readObject.side_effect = read_object
-        lib.IedConnection_writeObject.side_effect = write_object
-
-        mms_value_obj = MagicMock(name="read_mms_value")
-
-        def unpack(result):
-            kind, fc = result
-            if kind == "R":
-                return (mms_value_obj, 0, True)
-            # write succeeds only under FC_SP (the discovered writable FC)
-            return (None, 0, fc == lib.IEC61850_FC_SP)
+        # _write_under_fc accepts a write only under FC_SP.
+        def fake_write(client, reference, value, fc):
+            return fc == _FC.SP
 
         with (
             patch.object(_Lib, "require"),
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", side_effect=unpack),
-            patch.object(_Lib, "safe_mms_value_delete"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch(
+                "oida.protocols.mms.nxc_connection._write_under_fc", side_effect=fake_write
+            ) as wuf,
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):
             inst._fuzz_data_object("LD0/Setpoint", 1)
 
-        # Isolate the FC used for the actual fuzz-payload write (val is the
-        # MmsValue_newInteger sentinel) from probe/restore writes.
-        fuzz_write_fcs = [
-            c.args[2]
-            for c in lib.IedConnection_writeObject.call_args_list
-            if c.args[3] is fuzz_payload_value
-        ]
+        # The fuzz-payload write packs the int 1; isolate those writes.
+        fuzz_write_fcs = [c.args[3] for c in wuf.call_args_list if c.args[2] == 1]
         assert fuzz_write_fcs, "expected the fuzz payload to be written at least once"
         # The fuzz write must target the DISCOVERED FC_SP, never the old
         # hardcoded FC_CO.
-        assert all(fc == lib.IEC61850_FC_SP for fc in fuzz_write_fcs)
-        assert lib.IEC61850_FC_CO not in fuzz_write_fcs
+        assert all(fc == _FC.SP for fc in fuzz_write_fcs)
+        assert _FC.CO not in fuzz_write_fcs
         # Reads must use the same discovered FC_SP, never the old FC_MX default.
-        read_fcs = [c.args[2] for c in lib.IedConnection_readObject.call_args_list]
-        assert lib.IEC61850_FC_MX not in read_fcs
+        read_fcs = [c.kwargs["fc"] for c in inst.conn.read_value.call_args_list]
+        assert _FC.MX not in read_fcs
 
     def test_read_value_none_returns_zero_bytes(self):
         inst = self._prep(fuzz=True, confirm=True)
-        lib = MagicMock()
-        lib.IEC61850_FC_MX = 0
-        lib.IEC61850_FC_CO = 1
+        inst.conn.read_value.return_value = None
+
         with (
             patch.object(_Lib, "require"),
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(None, 0, False)),
-            patch.object(_Lib, "safe_mms_value_delete"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=False),
             patch("oida.utils.fuzzer.fuzz", return_value=[]),
             patch("time.sleep"),
         ):

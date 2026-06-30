@@ -6,7 +6,7 @@ security testing. Supports passive traffic sniffing, UDS/OBD-II
 service discovery, CANopen node detection, and raw frame operations.
 
 Dependency: python-can >= 4.0.0
-    pip install python-can
+    pip install oida[can]
 
 Layer 2 (NXC-style): Instantiation triggers the full scan workflow
 via proto_flow(). For standalone use, see scanner.py (Layer 1).
@@ -17,6 +17,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from ...connection import SerialConnection
+from ...utils.common_types import Category
 from ...utils.lazy_import import lazy_import
 from .constants import (
     CAN_STD_ID_MAX,
@@ -106,7 +107,7 @@ class can(ISOTPMixin, SerialConnection):
 
             raise DependencyError(
                 "python-can library required for CAN protocol.\n"
-                "Install with: pip install python-can>=4.0.0",
+                "Install with: pip install oida[can]",
                 protocol="CAN",
             )
 
@@ -265,6 +266,16 @@ class can(ISOTPMixin, SerialConnection):
         self.logger.display(f"[Sniff] Listening on {self.channel} for {self.sniff_time}s...")
         stats = self.scanner._sniff_traffic(self.conn, duration=self.sniff_time)
         self.scanner._print_traffic_stats(stats)
+
+        # Positive result: real CAN frames were observed on the bus. CAN is
+        # plaintext-by-design (no encryption/authentication at the protocol
+        # layer), so confirmed live traffic is itself the finding.
+        if stats.total_messages > 0:
+            self.logger.security_finding(
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="CAN bus has no encryption or authentication",
+            )
 
         self.results["data"]["traffic_stats"] = {
             "total_messages": stats.total_messages,

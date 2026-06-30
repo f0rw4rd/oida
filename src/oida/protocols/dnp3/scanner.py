@@ -187,13 +187,25 @@ class _MasterApp:
         """Create and return an IMasterApplication instance."""
         import opendnp3 as dnp3
 
+        # opendnp3 runs its own automatic tasks (startup integrity poll, auto
+        # event scan) on a worker thread, each firing OnTaskComplete. A single
+        # shared latch could not tell those apart from the read we launched, so
+        # wait_for_task used to return on whichever task finished first and we
+        # then read the SOEHandler at the wrong moment (empty/partial/stale
+        # data). We queue completions instead and filter by task type.
+        _AUTO_POLL_TYPES = (
+            dnp3.MasterTaskType.STARTUP_INTEGRITY_POLL,
+            dnp3.MasterTaskType.AUTO_EVENT_SCAN,
+        )
+        _USER_TASK = dnp3.MasterTaskType.USER_TASK
+
         class MasterApp(dnp3.IMasterApplication):
             def __init__(self):
                 super().__init__()
                 self.iin = None
-                self._task_event = threading.Event()
-                self._task_result = None
                 self._lock = threading.Lock()
+                self._cv = threading.Condition(self._lock)
+                self._completions = []
 
             def OnReceiveIIN(self, iin):
                 with self._lock:
@@ -203,9 +215,9 @@ class _MasterApp:
                 pass
 
             def OnTaskComplete(self, info):
-                with self._lock:
-                    self._task_result = info
-                self._task_event.set()
+                with self._cv:
+                    self._completions.append(info)
+                    self._cv.notify_all()
 
             def OnOpen(self):
                 pass
@@ -216,14 +228,34 @@ class _MasterApp:
             def AssignClassDuringStartup(self):
                 return False
 
-            def wait_for_task(self, timeout):
-                """Wait for the next task completion, return TaskInfo or None."""
-                self._task_event.clear()
-                got = self._task_event.wait(timeout=timeout)
-                if got:
-                    with self._lock:
-                        return self._task_result
-                return None
+            def arm(self):
+                """Drop queued completions so wait_for_task only sees the task
+                launched after this call (and any automatic tasks racing it,
+                which it then filters out)."""
+                with self._cv:
+                    self._completions.clear()
+
+            def wait_for_task(self, timeout, user_only=False):
+                """Wait for the next relevant task completion.
+
+                Automatic background polls are always ignored. When user_only
+                is set (the read path), only USER_TASK completions count, so a
+                coincident automatic poll can never be mistaken for our scan.
+                Returns the TaskInfo or None on timeout.
+                """
+                deadline = time.monotonic() + timeout
+                with self._cv:
+                    while True:
+                        for info in self._completions:
+                            if info.type in _AUTO_POLL_TYPES:
+                                continue
+                            if user_only and info.type != _USER_TASK:
+                                continue
+                            return info
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            return None
+                        self._cv.wait(remaining)
 
         return MasterApp()
 
@@ -444,6 +476,10 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         self._chan_listener = None
         self._log_handler = None
         self._connected = False
+        # TaskInfo from the most recent _sync_scan/_sync_task, so _error_detail
+        # can report the real TaskCompletion (e.g. response timeout) instead of
+        # falling back to "unknown reason".
+        self._last_task_info = None
 
         # Alias for backward compat with mixins that reference self._handler
         self._handler = None
@@ -478,8 +514,12 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
             timeout = float(self.op_timeout)
         dnp3 = self._dnp3
         config = dnp3.TaskConfig.Default()
+        # Arm before launching so a completion that fires before we start
+        # waiting is not lost, and only count the USER_TASK we issue here.
+        self._app.arm()
         scan_fn(self._master, self._scan_handler, config)
-        info = self._app.wait_for_task(timeout + 2.0)
+        info = self._app.wait_for_task(timeout + 2.0, user_only=True)
+        self._last_task_info = info
         if info is None:
             return False
         return info.result == dnp3.TaskCompletion.SUCCESS
@@ -494,8 +534,10 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
             timeout = float(self.op_timeout)
         dnp3 = self._dnp3
         config = dnp3.TaskConfig.Default()
+        self._app.arm()
         task_fn(self._master, config)
         info = self._app.wait_for_task(timeout + 2.0)
+        self._last_task_info = info
         if info is None:
             return False
         return info.result == dnp3.TaskCompletion.SUCCESS
@@ -1038,6 +1080,10 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
 
     def _error_detail(self, result=None) -> str:
         """Human-readable description of the last operation error."""
+        # Fall back to the TaskInfo captured by _sync_scan/_sync_task so a
+        # failed poll reports its real TaskCompletion instead of "unknown".
+        if result is None:
+            result = self._last_task_info
         if result is not None:
             # Check for TaskCompletion enum on result objects
             summary = getattr(result, "summary", None) or getattr(result, "result", None)
@@ -1049,7 +1095,12 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
                         f"bad response ({iin_err})" if iin_err else "bad response from outstation"
                     )
                 elif summary == dnp3.TaskCompletion.FAILURE_RESPONSE_TIMEOUT:
-                    return "response timeout"
+                    # The most common cause is addressing the wrong outstation
+                    # link address (default 1024); surface that hint.
+                    return (
+                        "response timeout - no reply from outstation "
+                        f"{self.outstation_address} (check --outstation-addr)"
+                    )
                 elif summary == dnp3.TaskCompletion.FAILURE_NO_COMMS:
                     return "no communications"
                 elif summary == dnp3.TaskCompletion.FAILURE_START_TIMEOUT:

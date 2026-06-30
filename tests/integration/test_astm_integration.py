@@ -83,6 +83,8 @@ from oida.protocols.astm.records import (
     ASTMRecordBuilder,
     STX,
     ETX,
+    EOT,
+    ENQ,
     ACK,
     NAK,
     CR,
@@ -190,6 +192,85 @@ def _make_mock_socket(recv_sequence=None):
 def _ack_sequence(n: int):
     """Return a list of n ACK responses (for ENQ + n frames)."""
     return [ACK] * n
+
+
+def _app_reply_frame() -> bytes:
+    """Build a realistic STX-framed application reply from a vulnerable LIS.
+
+    Models the server-initiated transmission a conformant receiver sends back
+    after our EOT: a data record (here a Comment record) wrapped in the ASTM
+    frame structure STX + frame_num + data + ETX + checksum + CR + LF. The
+    scanner's _read_application_ack() treats any frame containing STX as an
+    application-level acceptance.
+    """
+    builder = ASTMRecordBuilder()
+    data = builder.build_comment(comment_text="ACCEPTED").encode("utf-8")
+    frame_num = b"1"
+    checksum_data = frame_num + data + ETX
+    checksum = _astm_checksum(checksum_data)
+    return STX + checksum_data + checksum + CR + LF
+
+
+def _make_app_accepting_socket():
+    """Create a mock socket modelling a vulnerable LIS that acknowledges at the
+    APPLICATION level, not just the data link.
+
+    Stateful behaviour:
+      * Every 1-byte recv() during a transmission returns ACK (b"\\x06"), so
+        each frame the scanner sends (_send_enq / _send_frame) is link-ACKed.
+      * sendall() is watched for EOT (b"\\x04"). Once the scanner ends a
+        transmission with EOT, the LIS opens its own transmission: the NEXT
+        1-byte recv() (the _read_application_ack probe) returns ENQ, and the
+        following recv(1024) returns a real STX-framed record. This drives the
+        scanner's CRITICAL "application-level acknowledgement observed" path.
+
+    This re-arms after every EOT, so it works for multi-record scans (query +
+    order + result + enum) where each record runs its own EOT/app-ack cycle.
+    """
+    sock = MagicMock()
+    sock.close = MagicMock()
+    sock.settimeout = MagicMock()
+    sock.gettimeout = MagicMock(return_value=5.0)
+    sock.connect = MagicMock()
+    sock.getpeercert = MagicMock(return_value=None)
+
+    # phase transitions:
+    #   link   -> normal data link, every recv(1) is ACKed
+    #   armed  -> our EOT was just sent; a recv(1) with NO intervening sendall
+    #             is an application-ack probe and gets the server's ENQ
+    #   stx    -> probe ACKed our ENQ; the next recv(1024) gets the STX record
+    state = {"phase": "link"}
+
+    def mock_sendall(data):
+        if EOT in data:
+            # Our transmission ended. A genuine app-ack probe does recv(1)
+            # next with no further sendall, so arm. If instead the scanner
+            # sends another frame/ENQ (sendall) first, we disarm below.
+            state["phase"] = "armed"
+        elif state["phase"] == "armed":
+            # Scanner sent something other than a probe-read after EOT (e.g.
+            # the next transmission's ENQ). That EOT had no app-ack probe;
+            # treat the just-sent byte as a normal link frame to be ACKed.
+            state["phase"] = "link"
+
+    def mock_recv(bufsize=1024):
+        if bufsize == 1:
+            if state["phase"] == "armed":
+                # Application-ack probe (recv(1) straight after our EOT):
+                # the vulnerable LIS opens its own transmission with ENQ.
+                state["phase"] = "stx"
+                return ENQ
+            # Ordinary link-level frame acknowledgement.
+            return ACK
+        # Larger read: the application-ack probe's record read.
+        if state["phase"] == "stx":
+            state["phase"] = "link"
+            return _app_reply_frame()
+        raise socket.timeout("mock recv timeout")
+
+    sock.sendall = MagicMock(side_effect=mock_sendall)
+    sock.recv = MagicMock(side_effect=mock_recv)
+    return sock
 
 
 def _instantiate_astm_nxc(args, mock_sock=None):
@@ -664,8 +745,7 @@ class TestQueryRecord:
     @pytest.mark.security
     def test_send_query_security_finding(self):
         """Verify --send-query adds Query Access security finding [Category A]"""
-        recv_seq = _ack_sequence(20) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_query=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -794,8 +874,7 @@ class TestOrderRecord:
     @pytest.mark.security
     def test_order_injection_security_finding(self):
         """Verify order acceptance generates CRITICAL security finding [Category A]"""
-        recv_seq = _ack_sequence(25) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_order=True, confirm=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -813,8 +892,7 @@ class TestOrderRecord:
     @pytest.mark.security
     def test_order_cancellation_security_finding(self):
         """Verify order cancellation generates 'Order Cancellation Possible' finding [Category A]"""
-        recv_seq = _ack_sequence(25) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_order=True, confirm=True, action_code="C")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -837,8 +915,7 @@ class TestOrderRecord:
     @pytest.mark.security
     def test_order_deletion_security_finding(self):
         """Verify order deletion generates 'Order Deletion Possible' finding [Category A]"""
-        recv_seq = _ack_sequence(25) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_order=True, confirm=True, action_code="X")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -861,8 +938,7 @@ class TestOrderRecord:
     @pytest.mark.security
     def test_order_injection_finding_for_new_order(self):
         """Verify new order (action N) generates 'Order Injection Possible' finding [Category A]"""
-        recv_seq = _ack_sequence(25) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_order=True, confirm=True, action_code="N")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -883,8 +959,7 @@ class TestOrderRecord:
     @pytest.mark.security
     def test_order_finding_operation_field_matches_action(self):
         """Verify order finding operation field contains action description [Category A]"""
-        recv_seq = _ack_sequence(25) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_order=True, confirm=True, action_code="C")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -989,8 +1064,7 @@ class TestResultRecord:
     @pytest.mark.security
     def test_result_injection_security_finding(self):
         """Verify result acceptance generates CRITICAL security finding [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_result=True, confirm=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1008,8 +1082,7 @@ class TestResultRecord:
     @pytest.mark.security
     def test_result_correction_security_finding(self):
         """Verify result correction generates 'Result Correction Possible' finding [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_result=True, confirm=True, result_status="C")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1032,8 +1105,7 @@ class TestResultRecord:
     @pytest.mark.security
     def test_result_deletion_security_finding(self):
         """Verify result deletion generates 'Result Deletion Possible' finding [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_result=True, confirm=True, result_status="X")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1056,8 +1128,7 @@ class TestResultRecord:
     @pytest.mark.security
     def test_result_injection_finding_for_final_status(self):
         """Verify final result (status F) generates 'Result Injection Possible' [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_result=True, confirm=True, result_status="F")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1078,8 +1149,7 @@ class TestResultRecord:
     @pytest.mark.security
     def test_result_finding_operation_field_matches_status(self):
         """Verify result finding operation field contains status description [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_result=True, confirm=True, result_status="X")
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1100,8 +1170,7 @@ class TestResultRecord:
     @pytest.mark.security
     def test_correct_result_flag_triggers_correction_finding(self):
         """Verify --correct-result flag triggers correction finding [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_result=True, confirm=True, correct_result=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1118,8 +1187,7 @@ class TestResultRecord:
     @pytest.mark.security
     def test_delete_result_flag_triggers_deletion_finding(self):
         """Verify --delete-result flag triggers deletion finding [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(send_result=True, confirm=True, delete_result=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1238,8 +1306,7 @@ class TestEnumeration:
     @pytest.mark.security
     def test_enum_patients_phi_security_finding(self):
         """Verify patient enumeration adds HIGH severity PHI finding [Category A]"""
-        recv_seq = _ack_sequence(20) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(enum_patients=True, confirm=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1253,8 +1320,7 @@ class TestEnumeration:
     @pytest.mark.security
     def test_enum_tests_security_finding(self):
         """Verify test enumeration adds MEDIUM severity finding [Category A]"""
-        recv_seq = _ack_sequence(20) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(enum_tests=True)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
@@ -1579,8 +1645,7 @@ class TestSecurityAnalysis:
     @pytest.mark.security
     def test_combined_findings_cover_all_categories(self):
         """Verify a full scan produces findings across all severity levels [Category A]"""
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
+        mock_sock = _make_app_accepting_socket()
         args = _make_args(
             send_query=True,
             send_order=True,

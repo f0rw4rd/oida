@@ -909,12 +909,46 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             f"Expected confirm rejection message in output: {text[:500]}"
         )
 
-    @pytest.mark.skip(
-        reason="--test-write flag defined in proto_args.py but not dispatched in nxc_connection.py"
-    )
+    @pytest.mark.security
+    def test_test_write_requires_confirm(self, cli_runner, target, port, docker_services):
+        """Test --test-write without --confirm is rejected (dangerous action) [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--test-write",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+
+        text = _combined_text(result, result.scan_log)
+        assert any(term in text for term in ["confirm", "dangerous", "requires"]), (
+            f"Expected --confirm rejection for test-write: {text[:500]}"
+        )
+
+    @pytest.mark.security
     def test_test_write_flag(self, cli_runner, target, port, docker_services):
-        """Test --test-write safely tests write access [Skip]"""
-        pass
+        """Test --test-write with --confirm safely tests write access [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--test-write",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in ["write", "test", "access", "writable", "read-only", "failed", "error"]
+        ), f"Expected test-write attempt terms in output: {text[:500]}"
 
     # ========================================================================
     # CPU Control Tests (require --confirm)
@@ -2286,13 +2320,45 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             assert f.get("data", {}).get("finding"), f"Security event missing finding title: {f}"
 
     # ========================================================================
-    # Dead Flag Tests (skip with reason)
+    # Restart Tests (--restart -> cold restart, requires --confirm)
     # ========================================================================
 
-    @pytest.mark.skip(
-        reason="--restart flag added by add_control_options() but not dispatched in "
-        "nxc_connection.py _has_action() or _execute_action()"
-    )
+    @pytest.mark.security
+    def test_restart_requires_confirm(self, cli_runner, target, port, docker_services):
+        """Test --restart without --confirm is rejected (dangerous action) [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--restart",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+
+        text = _combined_text(result, result.scan_log)
+        assert any(term in text for term in ["confirm", "dangerous", "requires"]), (
+            f"Expected --confirm rejection for restart: {text[:500]}"
+        )
+
+    @pytest.mark.security
     def test_restart_flag(self, cli_runner, target, port, docker_services):
-        """Test --restart (dead flag, not implemented) [Skip]"""
-        pass
+        """Test --restart with --confirm attempts a cold restart [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--restart",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text for term in ["restart", "cold", "cpu", "executing", "failed", "error"]
+        ), f"Expected restart attempt terms in output: {text[:500]}"

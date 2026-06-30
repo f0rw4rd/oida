@@ -9,17 +9,19 @@ A server receiving a PRIORITY frame whose stream-id OR whose dependency
 (pri_spec->stream_id) points at an *idle* stream creates an NGHTTP2_STREAM_IDLE
 anchor node via nghttp2_session_open_stream(). That immediately calls
 nghttp2_session_keep_idle_stream() -> nghttp2_session_adjust_idle_stream().
-With default settings the idle-stream cap is nghttp2_max(2, ...) = 2, so the
-moment a 3rd idle stream exists the OLDEST idle stream (idle_stream_head) is
-handed to nghttp2_session_destroy_stream() and freed -- while it is still
+The idle-stream cap is nghttp2_max(2, min(max_concurrent_streams, ...)); with
+nghttpd advertising SETTINGS_MAX_CONCURRENT_STREAMS=100 the effective cap is
+~100, so once the idle-stream count crosses it the OLDEST idle stream
+(idle_stream_head) is handed to nghttp2_session_destroy_stream() and freed --
+while it is still
 referenced as the dependency parent the just-created stream is being inserted
 under (nghttp2_stream_dep_insert). The dependency-tree pointer ops then touch
 freed memory -> heap-use-after-free.
 
 To trigger we open a *chain* of idle anchor streams via PRIORITY frames so that
 each newly created idle stream depends on the previous idle stream, and we cross
-the cap of 2 idle streams, forcing the head (a stream still wired into the
-dependency tree) to be freed and then dereferenced.
+the effective idle-stream cap (~100), forcing the head (a stream still wired into
+the dependency tree) to be freed and then dereferenced.
 
 We implement raw HTTP/2 framing; no h2 library required.
 
@@ -72,8 +74,8 @@ def main():
     # In vulnerable v1.5.0 nghttp2_session_open_stream() runs, in this order:
     #   1. resolve `dep_stream` (the dependency parent -- may be an idle anchor)
     #   2. create the new idle anchor + keep_idle_stream() -> adjust_idle_stream()
-    #      IMMEDIATELY, which (cap = nghttp2_max(2,..) = 2) frees idle_stream_head
-    #      the instant a 3rd idle stream exists
+    #      IMMEDIATELY, which frees idle_stream_head the instant the idle-stream
+    #      count exceeds the effective cap (~100; see below)
     #   3. nghttp2_stream_dep_insert(dep_stream, stream)
     # If the head freed in (2) IS the `dep_stream` resolved in (1), step (3)
     # dereferences freed memory -> heap-use-after-free. The fix DEFERS

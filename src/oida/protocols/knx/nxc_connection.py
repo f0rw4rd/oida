@@ -17,6 +17,7 @@ from pathlib import Path
 
 from ...connection import NetworkConnection
 from ...utils import ics_logger as module
+from ...utils.common_types import Category
 
 from .scanner import (
     KNXScanner,
@@ -130,7 +131,7 @@ class knx(NetworkConnection):
 
             if is_multicast:
                 # Multicast discovery using xknx
-                self.logger.debug("Starting multicast gateway scan (timeout=3s)")
+                self.logger.display("Discovering KNX gateways via multicast (timeout 3s)...")
                 xknx_instance = _xknx_cls.XKNX()
                 try:
                     scanner = _xknx_cls.GatewayScanner(xknx_instance, timeout_in_seconds=3)
@@ -160,7 +161,10 @@ class knx(NetworkConnection):
                     await xknx_instance.stop()
             else:
                 # Unicast: Send SearchRequest directly to target IP
-                self.logger.debug(f"Sending unicast SearchRequest to {self.host}:{self.port}")
+                self.logger.display(
+                    f"Discovering KNX gateway at {self.host}:{self.port} "
+                    "(SearchRequest, timeout 3s)..."
+                )
                 gw_info = await self._unicast_search(self.host, self.port)
                 if gw_info:
                     self._display_gateway_info_dict(gw_info)
@@ -483,7 +487,9 @@ class knx(NetworkConnection):
                 )
                 if password:
                     self.logger.security_finding(
-                        "Weak password", f"KNX project password found: {password}"
+                        "Weak password",
+                        category=Category.AUTHENTICATION,
+                        detail=f"KNX project password found: {password}",
                     )
                 else:
                     self.logger.fail("Password not found in wordlist")

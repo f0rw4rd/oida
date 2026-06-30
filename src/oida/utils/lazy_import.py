@@ -225,8 +225,14 @@ _IMPORT_OVERRIDES: Dict[str, str] = {
     "pyyaml": "yaml",
 }
 
-# Extras that are NOT protocol directories
-_SKIP_EXTRAS = frozenset({"dev", "docs", "all", "fuzz"})
+# Extras that are NOT protocol directories.
+#  * "serial": a shared transport dependency (pyserial) consumed by IEC-101/104
+#    serial, DNP3 serial and the serial discovery CLI — no protocols/serial/.
+#  * "bacnetsc": BACnet/SC is no longer a standalone protocol; it folded into
+#    the bacnet command as the `--sc` transport mode. The extra is retained as
+#    the install target for the SC-only deps (websockets, cryptography) but has
+#    no protocols/bacnetsc/ package, so it must not be discovered as a command.
+_SKIP_EXTRAS = frozenset({"dev", "docs", "all", "fuzz", "serial", "bacnetsc"})
 
 
 def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:

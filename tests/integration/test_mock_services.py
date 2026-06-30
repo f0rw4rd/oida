@@ -39,6 +39,9 @@ def mock_service():
 
 @pytest.mark.dnp3
 @pytest.mark.mock_services
+@pytest.mark.xdist_group(
+    "dnp3_service"
+)  # share the single-master outstation; avoid worker contention
 class TestDNP3MockService:
     """Tests for DNP3 mock server data point enumeration."""
 
@@ -150,9 +153,7 @@ class TestDNP3MockService:
 
         # At least some attributes should be present, or the scanner reported why they're missing
         assert (
-            len(attr_found) >= 1
-            or "Attr" in output
-            or "No device attributes returned" in output
+            len(attr_found) >= 1 or "Attr" in output or "No device attributes returned" in output
         ), "Expected device attributes or explanation in output"
 
     def test_dnp3_binary_input_count(self, cli_runner, dnp3_port, mock_service):

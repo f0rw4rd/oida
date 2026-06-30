@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
 from ...connection import NetworkConnection
+from oida.utils.common_types import Category
 
 from .helpers import (
     FHIR_SECURITY_MODES,
@@ -75,7 +76,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         # Check dependencies
         if not is_fhirclient_available():
             self.logger.fail(
-                "fhirclient library not available. Install with: pip install fhirclient"
+                "fhirclient library not available. Install with: pip install oida[fhir]"
             )
             self.results["error"] = "fhirclient not installed"
             return
@@ -337,6 +338,16 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             self.results["data"]["connected"] = True
             self.logger.success(f"Connected to FHIR endpoint: {self._get_base_url()}")
 
+            # Cleartext gate: emit only when this confirmed-reachable endpoint was
+            # reached over plain HTTP (not HTTPS/TLS). tls_enabled is set in
+            # create_conn_obj() from base_url.startswith("https://").
+            if not self.results["data"].get("tls_enabled", True):
+                self.logger.security_finding(
+                    "No encryption",
+                    category=Category.ENCRYPTION,
+                    detail="FHIR server accessed over HTTP -- PHI transmitted in cleartext (no TLS)",
+                )
+
             try:
                 self.results["data"]["capability_statement"] = cap_stmt.as_json()
             except Exception as e:
@@ -533,7 +544,9 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             self.logger.display(f"  Security: {', '.join(filter(None, service_names))}")
         else:
             self.logger.security_finding(
-                "No authentication", detail="No security services configured (anonymous access)"
+                "No authentication",
+                category=Category.AUTHENTICATION,
+                detail="No security services configured (anonymous access)",
             )
 
         if security.get("cors_enabled"):

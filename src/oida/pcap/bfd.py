@@ -85,6 +85,17 @@ class BFDCredential:
         """Canonical credential field: password/digest for hash types."""
         return self.password if self.credential_type == "hash" else ""
 
+    @property
+    def hashcat_format(self) -> str:
+        """BFD Keyed MD5/SHA1 auth has NO offline cracking format.
+
+        It is a keyed digest over the BFD control packet, but neither hashcat
+        nor John ships a BFD mode. Any captured digest is kept as forensic info
+        only; we return "" so it is NOT presented as a deliverable/crackable
+        hash. (Simple Password / type 1 stays a plaintext credential.)
+        """
+        return ""
+
 
 class BFDPassiveListener(PySharkListenerBase):
     """Passive BFD traffic listener for authentication data extraction.

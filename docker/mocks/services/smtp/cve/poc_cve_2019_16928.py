@@ -59,7 +59,7 @@ def run(host: str, port: int, length: int) -> None:
 
     print()
     print("[*] Now inspect the server for the sanitizer crash:")
-    print("      docker logs smtp16928 2>&1 | grep -A30 -i 'AddressSanitizer\\|runtime error\\|string_vformat'")
+    print("      docker logs smtp-cve-2019-16928-real 2>&1 | grep -A30 -i 'AddressSanitizer\\|runtime error\\|string_vformat'")
     print("    Expect a heap-buffer-overflow / runtime error naming string_vformat (src/string.c).")
 
 

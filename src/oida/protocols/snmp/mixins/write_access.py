@@ -14,6 +14,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Dict
 
+from oida.utils.common_types import Category
+
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -47,7 +49,8 @@ class WriteAccessMixin(_ScannerBase):
         if result.get("writable"):
             self.logger.security_finding(
                 "Writable access",
-                f"WRITE ACCESS via {result['method']}: {result.get('detail', '')}",
+                category=Category.ACCESS_CONTROL,
+                detail=f"WRITE ACCESS via {result['method']}: {result.get('detail', '')}",
             )
         else:
             self.logger.info(f"  Result: read-only ({result.get('detail', 'no write access')})")
@@ -627,7 +630,8 @@ class WriteAccessMixin(_ScannerBase):
         if writable > 0:
             self.logger.security_finding(
                 "Writable OIDs found",
-                f"Walk-write {oid}: {writable}/{total} OIDs are writable",
+                category=Category.ACCESS_CONTROL,
+                detail=f"Walk-write {oid}: {writable}/{total} OIDs are writable",
             )
 
         # Export table -- only writable OIDs (details already filtered)

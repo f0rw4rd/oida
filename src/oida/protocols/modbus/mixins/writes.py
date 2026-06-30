@@ -16,6 +16,7 @@ from ..decoder import ModbusEncoder, parse_endian
 from ....utils.protocol_helpers import ProtocolParser
 
 from typing import TYPE_CHECKING
+from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -391,6 +392,6 @@ class WritesMixin(_ScannerBase):
         if writable:
             self.logger.security_finding(
                 "Writable access",
-                category="ACCESS_CONTROL",
+                category=Category.ACCESS_CONTROL,
                 detail=f"Found {len(writable)} writable {reg_type}",
             )

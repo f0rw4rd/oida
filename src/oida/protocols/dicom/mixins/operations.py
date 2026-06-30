@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..nxc_connection import _get_dcmread, _new_dataset, _sop
+from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -204,6 +205,7 @@ class OperationsMixin(_ScannerBase):
         if total_stats["images"] > 0:
             self.logger.security_finding(
                 "Mass data exfiltration",
+                category=Category.ACCESS_CONTROL,
                 detail=f"Exported {total_stats['images']} images from {total_stats['patients']} patients",
             )
 
@@ -268,6 +270,7 @@ class OperationsMixin(_ScannerBase):
             if len(self._cget_received_files) > 0:
                 self.logger.security_finding(
                     "Bulk image retrieval",
+                    category=Category.ACCESS_CONTROL,
                     detail=f"Retrieved {len(self._cget_received_files)} images without additional auth",
                 )
 
@@ -347,6 +350,7 @@ class OperationsMixin(_ScannerBase):
         if success_count > 0:
             self.logger.security_finding(
                 "Unrestricted upload",
+                category=Category.ACCESS_CONTROL,
                 detail=f"Server accepted {success_count} file uploads from unknown source",
             )
 
@@ -434,6 +438,7 @@ class OperationsMixin(_ScannerBase):
             if completed > 0:
                 self.logger.security_finding(
                     "Open transfer",
+                    category=Category.ACCESS_CONTROL,
                     detail=f"Server transferred {completed} images to external AET '{dest_aet}'",
                 )
 

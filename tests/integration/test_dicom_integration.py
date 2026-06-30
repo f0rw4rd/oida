@@ -130,8 +130,6 @@ Flag Coverage Matrix (proto_args.py):
   --deep-scan               [B] test_deep_scan_mode
   --fuzz (no --confirm)     [C] test_fuzz_requires_confirm
   --fuzz --confirm          [C] test_fuzz_with_confirm
-  --fuzz-pdu --confirm      [skip] flag defined but not consumed by scanner
-  --fuzz-dimse --confirm    [skip] flag defined but not consumed by scanner
   invalid host              [C] test_invalid_target (inherited)
   wrong port                [C] test_connection_refused (inherited)
 """
@@ -2130,46 +2128,6 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             assert "timestamp" in finding, f"Security finding {i} missing timestamp"
             assert "module" in finding, f"Security finding {i} missing module"
 
-    # ========================================================================
-    # Skipped: Dead flags (defined in proto_args but not consumed by scanner)
-    # ========================================================================
-
-    @pytest.mark.skip(reason="--fuzz-pdu flag defined in proto_args but not consumed by scanner")
-    @pytest.mark.fuzz
-    @pytest.mark.slow
-    def test_fuzz_pdu(self, cli_runner, target, port):
-        """Test --fuzz-pdu --confirm with limited iterations [Skipped: dead flag]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--fuzz-pdu",
-            "--confirm",
-            "--fuzz-iterations",
-            "3",
-            format="json",
-            timeout=60,
-        )
-
-        assert result.returncode != -1, "PDU fuzzing should not hang"
-
-    @pytest.mark.skip(reason="--fuzz-dimse flag defined in proto_args but not consumed by scanner")
-    @pytest.mark.fuzz
-    @pytest.mark.slow
-    def test_fuzz_dimse(self, cli_runner, target, port):
-        """Test --fuzz-dimse --confirm with limited iterations [Skipped: dead flag]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--fuzz-dimse",
-            "--confirm",
-            "--fuzz-iterations",
-            "3",
-            format="json",
-            timeout=60,
-        )
-
-        assert result.returncode != -1, "DIMSE fuzzing should not hang"
+    # NOTE: --fuzz-pdu / --fuzz-dimse tests were removed — those flags no longer
+    # exist on the DICOM CLI (fuzzing is driven by --fuzz, see test_fuzz_*
+    # C-FIND coverage above). They were never implemented as PDU/DIMSE modes.

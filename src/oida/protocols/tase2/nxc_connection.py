@@ -5,12 +5,13 @@
 from typing import Any, Optional
 
 from ...connection import NetworkConnection
+from ...utils.common_types import Category
 from ...utils.lazy_import import lazy_import
 
 from .scanner import TASE2Scanner
 
 _pyiec61850_tase2 = lazy_import(
-    "pyiec61850.tase2", "TASE.2", install_hint="pip install pyiec61850-ng"
+    "pyiec61850.tase2", "TASE.2", install_hint="pip install oida[tase2]"
 )
 
 
@@ -48,6 +49,17 @@ class tase2(NetworkConnection):
         self.conn = self.scanner.connect()
         if self.conn:
             self.logger.success(f"Connected to TASE.2 server at {self.ip}:{self.args.port}")
+            # TASE.2/ICCP over MMS is TLS-OPTIONAL (IEC 62351). This scanner has
+            # no TLS concept (no --tls arg, TASE2Client opened without a secure
+            # context), so TLS is never in use -- gate on use_tls just in case a
+            # secure path is ever added, and report cleartext on the confirmed
+            # connection.
+            if not getattr(self.scanner, "use_tls", False):
+                self.logger.security_finding(
+                    "No encryption",
+                    category=Category.ENCRYPTION,
+                    detail="TASE.2 / ICCP without TLS (IEC 62351) -- cleartext",
+                )
         else:
             self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
 

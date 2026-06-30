@@ -56,12 +56,14 @@ class TestNxcConnection:
         # missing_dependencies is excluded from the extra fail() log
         obj.logger.fail.assert_not_called()
 
-    def test_print_host_info_reports_finding_count(self):
+    def test_print_host_info_is_noop_tally_moved_to_teardown(self):
+        # The per-scan findings tally moved to NetworkConnection's proto_flow
+        # teardown (printed uniformly for every protocol); snmp deliberately no
+        # longer overrides print_host_info, so it is a no-op even with findings.
         obj = _bare_snmp()
         obj.logger.findings = [{"title": "x"}, {"title": "y"}]
         obj.print_host_info()
-        msg = " ".join(str(c.args[0]) for c in obj.logger.display.call_args_list if c.args)
-        assert "2 security finding" in msg
+        obj.logger.display.assert_not_called()
 
     def test_print_host_info_no_findings_silent(self):
         obj = _bare_snmp()

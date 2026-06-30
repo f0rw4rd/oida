@@ -64,6 +64,9 @@ _ALLOW = {
     # visible to every mixin.
     "output",
     "format",
+    # -q/--quiet is a global main-parser flag (like output/format); the SC
+    # transport mixin reads it to suppress host-info printing.
+    "quiet",
 }
 
 

@@ -45,12 +45,23 @@ class SMTPCredential:
     credential_type: str  # "plaintext" or "hash"
     username: str
     password: str = ""  # For plaintext
-    hash_value: str = ""  # For CRAM-MD5
-    challenge: str = ""  # For CRAM-MD5
+    hash_value: str = ""  # For CRAM-MD5 (wire base64 response)
+    challenge: str = ""  # For CRAM-MD5 (wire base64 challenge)
     server_ip: str = ""
     server_port: int = 0
     client_ip: str = ""
     timestamp: str = ""
+
+    @property
+    def hashcat_format(self) -> str:
+        """Hashcat-compatible hash string (mode 10200, CRAM-MD5).
+
+        ``$cram_md5$<base64-challenge>$<base64-response>`` -- both base64 on the
+        wire, passed through verbatim (verified against hashcat example_hashes).
+        """
+        if self.auth_method == "CRAM-MD5" and self.challenge and self.hash_value:
+            return f"$cram_md5${self.challenge}${self.hash_value}"
+        return ""
 
 
 @dataclass
@@ -706,6 +717,14 @@ class SMTPPassiveListener(PySharkListenerBase):
                 entry["challenge"] = cred.challenge
             result.append(entry)
         return result
+
+    def get_hashcat_hashes(self) -> List[str]:
+        """CRAM-MD5 credentials in hashcat mode-10200 format.
+
+        Delegates to the per-credential property; plaintext credentials yield ""
+        and are skipped.
+        """
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]
 
 
 def _parse_banner(rsp_param: str) -> str:

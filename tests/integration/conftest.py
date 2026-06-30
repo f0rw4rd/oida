@@ -33,12 +33,16 @@ MOCK_PORTS: Dict[str, int] = {
     "opcua": 4840,
     "opcua_auth": 4841,
     "opcua_insecure": 4842,
+    "opcua_usercert_vuln": 4843,
+    "opcua_usercert_trusted": 4844,
     "opcua_gds": 4850,
     "ethernetip": 44818,
     "ethernetip_opener": 44819,
     "ethernetip_opener_udp": 2223,
     "ethernetip_conpot": 44823,
     "ads": 48898,
+    "ads_twincat_motor": 48901,
+    "ads_twincat_hvac": 48902,
     "s7": 10102,
     "iec104": 2404,
     "iec104_custom": 2405,
@@ -65,6 +69,9 @@ MOCK_PORTS: Dict[str, int] = {
     "hl7_python": 2575,
     "hl7_tls": 2576,
     "fhir": 8081,
+    "fhir_hapi_r4": 8090,
+    "fhir_hapi_r5": 8091,
+    "fhir_hapi_r4_strict": 8092,
     "dicom_orthanc": 4242,
     "dicom_orthanc_web": 8042,
     "hl7_mirth_web": 8443,
@@ -89,6 +96,12 @@ MOCK_PORTS: Dict[str, int] = {
     # BACnet
     "bacnet": 47808,
     "bacnet_conpot": 47812,
+    "bacnet_realstack_rtu": 47820,
+    "bacnet_realstack_building": 47821,
+    "bacnet_realstack_vav": 47822,
+    # BACnet/SC (TCP — WSS/TLS direct-connect)
+    "bacnetsc_realstack_secure": 47830,
+    "bacnetsc_realstack_weak": 47831,
     # CoAP (UDP — uses check_udp_port_open via UDP_PROTOCOLS)
     "coap": 5683,
     "coap_libcoap": 5685,
@@ -105,6 +118,8 @@ MOCK_PORTS: Dict[str, int] = {
     "hart_pymock_udp": 5091,
     "hart_pymock_multidrop_tcp": 5092,
     "hart_pymock_multidrop_udp": 5093,
+    "hart_hipflow_hart5": 5100,
+    "hart_hipflow_hart7": 5102,
     # SNMP
     "snmp": 10161,
     "snmp_v3only": 10164,
@@ -121,9 +136,14 @@ MOCK_PORTS: Dict[str, int] = {
     "astm": 1394,
     "astm_hematology": 1395,
     "astm_data": 1396,
+    "astm_realstack_chemistry": 1397,
+    "astm_realstack_hematology": 1398,
     # OCPP
     "ocpp_ws": 9000,
     "ocpp_wss": 9001,
+    "ocpp_steve_open": 8180,
+    "ocpp_steve_registered": 8181,
+    "ocpp_steve_secure": 8543,
     # VNC / FTP / SMTP / HTTP (state machine testing)
     "vnc": 5900,
     "ftp": 2121,
@@ -152,6 +172,11 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
         "bacnet-realstack-rtu",
         "bacnet-realstack-building",
         "bacnet-realstack-vav",
+    ],
+    "bacnetsc": [
+        # Real bacnet-stack BSC device over WSS/TLS (secure + weak postures)
+        "bacnetsc-realstack-secure",
+        "bacnetsc-realstack-weak",
     ],
     "iec104": ["iec104-lib60870", "iec104-custom-types", "iec104-conpot", "iec104-tls"],
     "mms": ["mms-libiec61850", "mms-goose", "mms-control", "mms-authentication"],
@@ -210,7 +235,14 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "http": ["http-mock"],
     "coap": ["coap-mock", "coap-libcoap", "coap-dtls", "coap-dtls-cert"],
     "ethercat": ["ethercat-slave-veth"],
-    "profinet": ["profinet-device"],
+    # PROFINET's real mocks (profinet-siemens-et200sp / profinet-beckhoff-el6631)
+    # are L2/raw-socket devices behind the "profinet" compose profile, so the
+    # default harness cannot start them — they are gated per-test by
+    # skip_unless_l2_docker(). There is no plain-startable "profinet-device"
+    # service; listing one made `compose up` abort the whole L2 batch with
+    # "no such service". Leave empty: profinet tests self-skip when the profiled
+    # container isn't already running.
+    "profinet": [],
     "goose": ["goose-l2-publisher"],
     # CAN rides on UDP multicast (host networking) — no TCP port to probe.
     # Treated like an L2 service: lifecycle via compose, health via docker inspect.
@@ -299,6 +331,9 @@ SERVICE_HEALTH_PORT: Dict[str, int] = {
     "bacnet-realstack-rtu": 47820,
     "bacnet-realstack-building": 47821,
     "bacnet-realstack-vav": 47822,
+    # BACnet/SC: real bacnet-stack BSC device, TCP (WSS/TLS).
+    "bacnetsc-realstack-secure": 47830,
+    "bacnetsc-realstack-weak": 47831,
 }
 
 # Timeout configurations
@@ -461,8 +496,11 @@ L2_SERVICES: Set[str] = {
 # in check_l2_container_healthy). Services not listed here use the service name.
 L2_CONTAINER_NAME: Dict[str, str] = {
     "can-mock": "can-mock-server",
-    # marker uses the compose service name; the container is named differently
-    "profinet-device": "profinet-pnet-device",
+    # The profinet L2 tests health-check the logical "profinet-device" name; the
+    # real running container is the profiled p-net device profinet-siemens-et200sp
+    # (the old "profinet-pnet-device" name no longer exists), so the test could
+    # never recognise a live device and always skipped. Map to the real one.
+    "profinet-device": "profinet-siemens-et200sp",
 }
 
 # Services that use UDP instead of TCP — use check_udp_port_open().
@@ -516,6 +554,44 @@ def check_l2_container_healthy(
 
 # Backward-compatible alias
 check_ethercat_container_healthy = check_l2_container_healthy
+
+
+def check_service_container_healthy(service: str) -> bool:
+    """Detect an already-running, healthy mock for a compose *service*, any project.
+
+    Locates the container by its ``com.docker.compose.service`` label (so it
+    matches whether the mock was started by ``services.py`` under the ``mocks``
+    project or by the test harness under ``oida-test``) and reports True only if
+    it is running and its Docker HEALTHCHECK is ``healthy``.
+
+    This is the transport-agnostic pre-existing-service probe. It exists because
+    the CoAP-style UDP ping in ``check_udp_port_open`` only elicits a reply from
+    CoAP servers — SNMP and BACnet mocks never answer it, so port-probing them
+    yields a false negative. A false negative makes the harness try to ``compose
+    up`` a service whose fixed ``container_name`` is already taken, which aborts
+    the whole batch with a name conflict. Checking container health instead
+    correctly recognises the running mock and leaves it alone.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "docker",
+                "ps",
+                "--filter",
+                f"label=com.docker.compose.service={service}",
+                "--format",
+                "{{.Names}}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return False
+        names = [n for n in result.stdout.split() if n]
+        return any(check_l2_container_healthy(name) for name in names)
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        return False
 
 
 def get_docker_bridge_interface(
@@ -646,12 +722,24 @@ def pytest_collection_finish(session):
             if check_l2_container_healthy(L2_CONTAINER_NAME.get(svc, svc)):
                 _preexisting_services.add(svc)
         elif svc in UDP_SERVICES:
+            # Prefer container-health: the CoAP-style UDP ping only gets a reply
+            # from CoAP servers, so port-probing SNMP/BACnet mocks false-negatives
+            # and the harness then collides on their fixed container_name. Fall
+            # back to the UDP probe (covers CoAP and any non-container setup).
             port = SERVICE_HEALTH_PORT.get(svc)
-            if port and check_udp_port_open(MOCK_HOST, port, timeout=1):
+            if check_service_container_healthy(svc) or (
+                port and check_udp_port_open(MOCK_HOST, port, timeout=1)
+            ):
                 _preexisting_services.add(svc)
         else:
+            # TCP services: probe the configured health port, but fall back to
+            # container-health so services with no SERVICE_HEALTH_PORT entry
+            # (e.g. knx-devices) are still recognised when already running —
+            # otherwise the harness collides on their fixed container_name.
             port = SERVICE_HEALTH_PORT.get(svc)
-            if port and check_port_open(MOCK_HOST, port, timeout=1):
+            if (port and check_port_open(MOCK_HOST, port, timeout=1)) or (
+                not port and check_service_container_healthy(svc)
+            ):
                 _preexisting_services.add(svc)
 
     to_start = _needed_services - _preexisting_services
@@ -670,6 +758,34 @@ def pytest_collection_finish(session):
             f"[docker_setup] Fix: add your user to the 'docker' group, start the "
             f"daemon, or pre-start mocks with `sudo python services.py up`."
         )
+        return
+
+    # Drop services compose cannot start without a profile. Profile-gated L2
+    # mocks (goose-l2-publisher, ethercat-slave-veth, profinet-*) and any stale
+    # name are absent from the default `compose config --services` list; naming
+    # one explicitly in `compose up` makes the *whole* batch abort with "no such
+    # service", taking healthy services down with it. These L2 services are
+    # started out-of-band (services.py + profile) and otherwise self-skip per
+    # test via skip_unless_l2_docker(), so excluding them here is correct.
+    try:
+        cfg = subprocess.run(
+            ["docker", "compose", "-f", str(DOCKER_COMPOSE_PATH), "config", "--services"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        startable = {s for s in cfg.stdout.split() if s} if cfg.returncode == 0 else set()
+    except (subprocess.TimeoutExpired, OSError):
+        startable = set()
+    if startable:
+        skipped = to_start - startable
+        if skipped:
+            print(
+                f"\n[docker_setup] not startable without a compose profile "
+                f"(handled by per-test L2 skips): {sorted(skipped)}"
+            )
+        to_start = to_start & startable
+    if not to_start:
         return
 
     cmd = [
@@ -740,11 +856,32 @@ def docker_setup():
 
 @pytest.fixture(scope="session")
 def docker_cleanup():
-    """Stop only the services we started (leave pre-existing ones alone)."""
+    """Stop only the services we actually started (leave pre-existing ones alone).
+
+    Restricted to services compose can name: profile-gated / nonexistent L2
+    services (e.g. goose-l2-publisher, the stale profinet-device) are never
+    started by the default harness, so issuing `compose stop` for them aborts
+    teardown with "no such service". Filter to the real, plain-startable set —
+    the same constraint docker_setup applies on the way up.
+    """
     to_stop = _needed_services - _preexisting_services
+    if not to_stop:
+        return []  # Don't touch pre-existing services
+    try:
+        cfg = subprocess.run(
+            ["docker", "compose", "-f", str(DOCKER_COMPOSE_PATH), "config", "--services"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        startable = {s for s in cfg.stdout.split() if s} if cfg.returncode == 0 else set()
+    except (subprocess.TimeoutExpired, OSError):
+        startable = set()
+    if startable:
+        to_stop = to_stop & startable
     if to_stop:
         return ["stop " + " ".join(sorted(to_stop))]
-    return []  # Don't touch pre-existing services
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -938,6 +1075,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "dnp3: DNP3 protocol tests")
     config.addinivalue_line("markers", "http2: HTTP/2 protocol tests")
     config.addinivalue_line("markers", "bacnet: BACnet protocol tests")
+    config.addinivalue_line("markers", "bacnetsc: BACnet/SC (Secure Connect) protocol tests")
     config.addinivalue_line("markers", "mock_services: Mock service integration tests")
     config.addinivalue_line("markers", "ocpp: OCPP protocol tests")
     config.addinivalue_line("markers", "hart: HART protocol tests")

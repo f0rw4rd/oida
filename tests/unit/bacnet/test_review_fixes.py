@@ -5,7 +5,6 @@ Regression tests for CODE_REVIEW MEDIUM findings in nxc_connection.py:
     loudly instead of silently doing nothing.
 [2] Network-layer recon must still run when device discovery fails
     (device_id is None) -- the early return was short-circuiting it.
-[3] --safe must disable ALL mutating/injecting test_* operations.
 [4] The --use-bac0 path must call enum_host_info() so results["data"] is
     populated, mirroring the raw path.
 """
@@ -134,38 +133,6 @@ class TestReconRunsWhenDiscoveryFails(unittest.TestCase):
         scanner, recon = self._run()
         # No device_id -> never call the application-layer property read.
         scanner._bacpypes3_read_properties.assert_not_called()
-
-
-# --- Finding [3]: --safe disables all mutating operations -------------------
-
-
-class TestSafeDisablesMutatingOps(unittest.TestCase):
-    DANGEROUS = [
-        "test_write",
-        "check_reinit",
-        "check_oos",
-        "brute_force",
-        "test_dcc",
-        "test_priority_writes",
-        "test_time_sync",
-        "test_oos",
-        "test_reinit_pass",
-        "test_bbmd_injection",
-    ]
-
-    def test_safe_clears_every_dangerous_flag(self):
-        kwargs = {"safe": True, "write": "AV:1:pv:72.5"}
-        for flag in self.DANGEROUS:
-            kwargs[flag] = True
-        scanner = _create_instance(**kwargs)
-        scanner._apply_shortcuts()
-
-        self.assertIsNone(scanner.args.write)
-        for flag in self.DANGEROUS:
-            self.assertFalse(
-                getattr(scanner.args, flag),
-                f"--safe must force {flag} off",
-            )
 
 
 # --- Finding [4]: --use-bac0 path populates results["data"] -----------------

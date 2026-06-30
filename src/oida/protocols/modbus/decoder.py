@@ -31,7 +31,7 @@ from ...utils.ics_logger import get_module_logger
 logger = get_module_logger(__name__)
 
 # Lazy import for pymodbus - only loads when actually used
-_pymodbus = lazy_import("pymodbus", "Modbus", "pip install pymodbus>=3.12.0")
+_pymodbus = lazy_import("pymodbus", "Modbus", "pip install oida[modbus]")
 
 
 def _get_modbus_mixin():

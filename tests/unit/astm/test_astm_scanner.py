@@ -104,6 +104,48 @@ def _make_mock_socket(recv_values=None):
     return sock
 
 
+class _AppAcceptingSocket:
+    """Socket stub that ACKs every link-level frame, then returns a server
+    application-level reply after EOT.
+
+    Record/enum operations only raise their HIGH/CRITICAL findings when the LIS
+    returns an application-level acknowledgement (server-initiated ENQ followed
+    by an STX-framed record) — a bare frame ACK is link-level only. This stub
+    ACKs the ENQ/header/record/terminator frames, then, once EOT has been sent,
+    answers _read_application_ack's probe with ENQ + an STX record so the
+    "accepted" path under test is exercised. See test_application_ack.py for the
+    link-level-only (no reply) counterpart.
+    """
+
+    def __init__(self, app_reply=None):
+        self._app_reply = app_reply if app_reply is not None else (
+            STX + b"1C|1|Accepted" + ETX + b"00" + CR + LF
+        )
+        self._after_eot = False
+        self.sent = []
+
+    def settimeout(self, _t):
+        pass
+
+    def gettimeout(self):
+        return 5
+
+    def sendall(self, data):
+        self.sent.append(data)
+        if data == EOT:
+            self._after_eot = True
+
+    def recv(self, bufsize, flags=0):
+        if not self._after_eot:
+            return ACK
+        if bufsize == 1:
+            return ENQ
+        return self._app_reply
+
+    def close(self):
+        pass
+
+
 def _instantiate_scanner(args, mock_sock=None):
     """Instantiate the ASTM scanner with proto_flow patched out, then set conn."""
     with patch("oida.protocols.astm.proto_flow", create=True):
@@ -525,8 +567,7 @@ class TestSendQueryRecord:
     """Test _send_query_record()"""
 
     def test_query_accepted(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(), mock_sock)
 
         scanner._send_query_record()
@@ -572,8 +613,7 @@ class TestSendOrderRecord:
     """Test _send_order_record()"""
 
     def test_order_new_accepted(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(action_code="N"), mock_sock)
 
         scanner._send_order_record()
@@ -583,8 +623,7 @@ class TestSendOrderRecord:
         assert any("Order Injection" in f.get("issue", "") for f in findings)
 
     def test_order_cancel_accepted(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(cancel_order=True), mock_sock)
 
         scanner._send_order_record()
@@ -594,8 +633,7 @@ class TestSendOrderRecord:
         assert any("Order Cancellation" in f.get("issue", "") for f in findings)
 
     def test_order_delete_accepted(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(action_code="X"), mock_sock)
 
         scanner._send_order_record()
@@ -608,8 +646,7 @@ class TestSendResultRecord:
     """Test _send_result_record()"""
 
     def test_result_final_accepted(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(result_status="F"), mock_sock)
 
         scanner._send_result_record()
@@ -619,8 +656,7 @@ class TestSendResultRecord:
         assert any("Result Injection" in f.get("issue", "") for f in findings)
 
     def test_result_corrected(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(correct_result=True), mock_sock)
 
         scanner._send_result_record()
@@ -629,8 +665,7 @@ class TestSendResultRecord:
         assert any("Result Correction" in f.get("issue", "") for f in findings)
 
     def test_result_deleted(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(delete_result=True), mock_sock)
 
         scanner._send_result_record()
@@ -681,8 +716,7 @@ class TestEnumPatients:
     """Test _enum_patients()"""
 
     def test_enum_patients_accepted(self):
-        mock_sock = MagicMock()
-        mock_sock.recv.return_value = ACK
+        mock_sock = _AppAcceptingSocket()
         scanner = _instantiate_scanner(_make_args(), mock_sock)
 
         scanner._enum_patients()

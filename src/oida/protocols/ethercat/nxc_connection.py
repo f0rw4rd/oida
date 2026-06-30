@@ -6,6 +6,8 @@ from typing import Dict, Any
 
 from ...connection import SerialConnection
 
+from oida.utils.common_types import Category
+
 from . import EtherCATScanner
 
 import logging
@@ -57,6 +59,13 @@ class ethercat(SerialConnection):
         try:
             network_info = self.scanner._get_network_info(self.conn)
             self.results["data"]["device_info"] = network_info
+            # Confirmed device discovery: at least one EtherCAT slave responded.
+            if network_info.get("slave_count", 0) > 0:
+                self.logger.security_finding(
+                    "No encryption",
+                    category=Category.ENCRYPTION,
+                    detail="EtherCAT has no transport encryption",
+                )
         except Exception as e:
             self.logger.warning(f"Device enumeration failed: {e}")
             self.results["data"]["device_info"] = {"connected": True, "enum_error": str(e)}

@@ -82,7 +82,7 @@ class ScapyRawConnection:
 
         except ImportError as e:
             raise ImportError(
-                "Scapy is required for raw socket mode. Install with: pip install scapy"
+                "Scapy is required for raw socket mode. Install with: pip install oida[fuzz]"
             ) from e
 
     def open(self):

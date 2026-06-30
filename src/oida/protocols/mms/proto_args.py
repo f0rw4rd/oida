@@ -21,6 +21,23 @@ def proto_args(parser, parents):
         help_text="MMS/IEC 61850 scanner",
         description="Scan and interact with MMS/IEC 61850 devices",
         parents=parents,
+        epilog="""
+Examples:
+  oida mms 192.168.1.100                       # Connect + map the data model (tree)
+  oida mms 192.168.1.100 -i                    # Query server identity (vendor/model/revision)
+  oida mms 192.168.1.100 -l                    # Enumerate logical-device / node names only
+  oida mms 192.168.1.100 --read-values         # Read every discovered data object value
+  oida mms 192.168.1.100 --max-objects 200     # Cap discovery at 200 objects
+
+Reading specific objects (-r takes a reference substring, as printed in the tree):
+  oida mms 192.168.1.100 -r GGIO1.Mod          # Read one object by qualified LN.DO name
+  oida mms 192.168.1.100 -r LLN0               # Read everything under a logical node
+
+Write / fuzz testing (DANGEROUS - require --confirm):
+  oida mms 192.168.1.100 --test-write --confirm                  # Probe writable objects
+  oida mms 192.168.1.100 --fuzz --confirm                        # Fuzz writable objects
+  oida mms 192.168.1.100 --fuzz-reference GGIO1.SPCSO1 --confirm  # Fuzz one reference
+""",
     )
 
     # Add target argument

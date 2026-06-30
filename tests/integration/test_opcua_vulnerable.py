@@ -516,7 +516,7 @@ class TestOPCUADirectConnection:
                 assert len(namespaces) > 0
                 assert "http://vulnerable-ics.example.com" in namespaces
 
-        asyncio.get_event_loop().run_until_complete(_test())
+        asyncio.run(_test())
 
     def test_direct_method_call(self, vulnerable_opcua_server):
         """Test direct method call via asyncua client."""
@@ -534,4 +534,4 @@ class TestOPCUADirectConnection:
                 result = await controller.call_method(exec_method, "echo TEST_DIRECT")
                 assert "TEST_DIRECT" in result
 
-        asyncio.get_event_loop().run_until_complete(_test())
+        asyncio.run(_test())

@@ -152,6 +152,7 @@ class s7(NetworkConnection):
             "cpu_stop",
             "cpu_start",
             "cpu_hot_start",
+            "restart",
             "copy_ram_to_rom",
             "compress",
             # Block Ops
@@ -218,6 +219,7 @@ class s7(NetworkConnection):
             "cpu_stop",
             "cpu_start",
             "cpu_hot_start",
+            "restart",
             "copy_ram_to_rom",
             "compress",
             "download_db",
@@ -262,6 +264,7 @@ class s7(NetworkConnection):
         simple_actions = {
             "cpu_stop": ("Executing CPU STOP...", "cpu_stop"),
             "cpu_start": ("Executing CPU COLD START...", "cpu_cold_start"),
+            "restart": ("Executing CPU RESTART (cold restart)...", "cpu_cold_start"),
             "cpu_hot_start": ("Executing CPU HOT START...", "cpu_hot_start"),
             "copy_ram_to_rom": ("Copying RAM to ROM...", "copy_ram_to_rom"),
             "compress": ("Compressing memory...", "compress_memory"),
@@ -602,9 +605,17 @@ class s7(NetworkConnection):
         # self.args.monitor is a bool — the areas to watch come from
         # --monitor-areas (default I,Q,M), NOT from the --monitor flag itself.
         areas = getattr(self.args, "monitor_areas", None) or "I,Q,M"
-        interval = getattr(self.args, "monitor_interval", 0.5)
+        # --interval / --duration come from the shared add_monitor_options()
+        # factory, so their argparse dests are "interval"/"duration" (not the
+        # monitor_* namespace used by snap7's own --monitor-areas/-size/-bits).
+        # Reading monitor_interval/monitor_duration always missed and silently
+        # fell back to the 0.5s/infinite defaults, so --duration/--interval were
+        # ignored and monitor mode never self-terminated.
+        interval = getattr(self.args, "interval", None)
+        if interval is None:
+            interval = 0.5
         size = getattr(self.args, "monitor_size", 16)
-        duration = getattr(self.args, "monitor_duration", 0)
+        duration = getattr(self.args, "duration", None) or 0
         show_bits = getattr(self.args, "monitor_bits", False)
         return self.scanner.monitor(
             self.conn,

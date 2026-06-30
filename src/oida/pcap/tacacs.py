@@ -93,6 +93,10 @@ class TACACSCredential:
     authen_type: str = ""
     privilege_level: str = ""
     session_id: str = ""
+    # hashcat-16100 material (encrypted-body case): all hex
+    tacacs_session_hex: str = ""  # 4-byte session id
+    tacacs_cipher_hex: str = ""  # encrypted body bytes
+    tacacs_verseq_hex: str = ""  # version byte ‖ seq byte (e.g. "c002")
 
     @property
     def auth_method(self) -> str:
@@ -100,6 +104,27 @@ class TACACSCredential:
         if self.authen_type:
             return f"TACACS+/{self.authen_type}"
         return "TACACS+"
+
+    @property
+    def hash_value(self) -> str:
+        """Canonical credential field: the hashcat-16100 line for hash creds."""
+        return self.hashcat_format if self.credential_type == "hash" else ""
+
+    @property
+    def hashcat_format(self) -> str:
+        """Hashcat-compatible hash string (mode 16100, TACACS+).
+
+        ``$tacacs-plus$0$<session_id>$<ciphertext>$<version||seq>`` -- cracking
+        recovers the TACACS+ shared secret from an encrypted AUTHEN body.
+        Verified against the hashcat example_hashes mode-16100 vector. Returns ""
+        unless the session id + ciphertext + version/seq are all present.
+        """
+        if self.tacacs_session_hex and self.tacacs_cipher_hex and self.tacacs_verseq_hex:
+            return (
+                f"$tacacs-plus$0${self.tacacs_session_hex}$"
+                f"{self.tacacs_cipher_hex}${self.tacacs_verseq_hex}"
+            )
+        return ""
 
 
 class TACACSPassiveListener(PySharkListenerBase):
@@ -306,6 +331,11 @@ class TACACSPassiveListener(PySharkListenerBase):
             if not password:
                 password = str(self.get_field(tacacs, "password", "") or "").strip()
 
+        # Encrypted AUTHEN body -> hashcat 16100 (recovers the shared secret).
+        # This is the NORMAL (correctly-configured) case, where there is no
+        # cleartext user/password to extract -- so do it before the early return.
+        self._extract_encrypted_hash(packet, src_ip, dst_ip, src_port, dst_port)
+
         if not username and not password:
             return
 
@@ -508,6 +538,70 @@ class TACACSPassiveListener(PySharkListenerBase):
             d.get("privilege_level", "?"),
         ]
 
+    @staticmethod
+    def _tcp_payload_bytes(packet) -> bytes:
+        """Raw TCP payload (the full TACACS+ packet) for hash extraction."""
+        tcp = getattr(packet, "tcp", None)
+        if tcp is None:
+            return b""
+        p = getattr(tcp, "payload", None)
+        if isinstance(p, (bytes, bytearray)):
+            return bytes(p)
+        if not p:
+            return b""
+        try:
+            return bytes.fromhex(str(p).replace(":", "").replace(" ", ""))
+        except ValueError:
+            return b""
+
+    def _extract_encrypted_hash(
+        self, packet, src_ip: str, dst_ip: str, src_port: int, dst_port: int
+    ) -> None:
+        """Build a hashcat-16100 hash from an encrypted TACACS+ AUTHEN packet.
+
+        TACACS+ header (12 bytes): version(1) type(1) seq_no(1) flags(1)
+        session_id(4) length(4), followed by the encrypted body. The body is
+        recoverable only by cracking the shared secret -- mode 16100 does that
+        from session_id, version, seq_no and the encrypted bytes.
+        """
+        body = self._tcp_payload_bytes(packet)
+        if len(body) < 18:  # 12-byte header + >=6 bytes cipher
+            return
+        version, ptype, seq, flags = body[0], body[1], body[2], body[3]
+        if flags & 0x01:  # TAC_PLUS_UNENCRYPTED_FLAG -> cleartext, handled elsewhere
+            return
+        if ptype != 0x01:  # only AUTHEN (the 16100 known-plaintext case)
+            return
+        length = int.from_bytes(body[8:12], "big")
+        cipher = body[12 : 12 + length]
+        if len(cipher) < 6:
+            return
+        session_hex = body[4:8].hex()
+        verseq_hex = f"{version:02x}{seq:02x}"
+        key = ("tacacs16100", session_hex, verseq_hex)
+        if key in getattr(self, "_seen_hashes", set()):
+            return
+        self._seen_hashes = getattr(self, "_seen_hashes", set())
+        self._seen_hashes.add(key)
+        # BMC/server is the AUTHEN reply sender; record ip/port best-effort.
+        cred = TACACSCredential(
+            username="",
+            credential_type="hash",
+            server_ip=dst_ip,
+            server_port=dst_port or 49,
+            client_ip=src_ip,
+            timestamp=datetime.now().isoformat(),
+            session_id=session_hex,
+            tacacs_session_hex=session_hex,
+            tacacs_cipher_hex=cipher.hex(),
+            tacacs_verseq_hex=verseq_hex,
+        )
+        self.credentials.append(cred)
+        self.logger.info(
+            f"TACACS+ encrypted AUTHEN hash (mode 16100) session={session_hex} "
+            f"{src_ip} -> {dst_ip}"
+        )
+
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all extracted credentials."""
         return [
@@ -523,3 +617,11 @@ class TACACSPassiveListener(PySharkListenerBase):
             }
             for cred in self.credentials
         ]
+
+    def get_hashcat_hashes(self) -> List[str]:
+        """TACACS+ encrypted-AUTHEN hashes in hashcat mode-16100 format.
+
+        Delegates to the per-credential property; plaintext (misconfigured)
+        credentials yield "" and are skipped.
+        """
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]

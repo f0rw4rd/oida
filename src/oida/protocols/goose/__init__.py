@@ -8,7 +8,7 @@ Uses pyiec61850-ng >= 1.6.1.0 high-level Python API:
   - GooseSubscriber for GOOSE message capture
   - MMSClient + GoCBClient for MMS GoCB enumeration
 
-Requires: pip install 'pyiec61850-ng>=1.6.1.0'
+Requires: pip install oida[goose]
 """
 
 import time
@@ -29,11 +29,11 @@ from ...utils.lazy_import import lazy_import
 
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
 _pyiec61850_goose = lazy_import(
-    "pyiec61850.goose", "GOOSE", install_hint="pip install pyiec61850-ng"
+    "pyiec61850.goose", "GOOSE", install_hint="pip install oida[goose]"
 )
-_pyiec61850_mms = lazy_import("pyiec61850.mms", "GOOSE", install_hint="pip install pyiec61850-ng")
+_pyiec61850_mms = lazy_import("pyiec61850.mms", "GOOSE", install_hint="pip install oida[goose]")
 _pyiec61850_raw = lazy_import(
-    "pyiec61850.pyiec61850", "GOOSE", install_hint="pip install pyiec61850-ng"
+    "pyiec61850.pyiec61850", "GOOSE", install_hint="pip install oida[goose]"
 )
 
 

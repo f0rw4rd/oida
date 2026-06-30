@@ -129,8 +129,50 @@ class DiscoveryMixin:
                 self.logger.debug(f"handle identify failed: {e}")
                 self.logger.fail(f"Failed to identify device {device_id}: {e}")
 
+    async def _bacpypes3_who_is_instance(self, app, target_addr, timeout: float) -> Optional[int]:
+        """Send a directed Who-Is to the target and return the I-Am instance.
+
+        Returns the lowest instance reported (a single host normally answers with
+        one I-Am) or None if no device answered / Who-Is is unsupported.
+        """
+        try:
+            # Cap the wait: who_is resolves only after its own internal timeout
+            # elapses, so a long --timeout would otherwise stall the probe here.
+            who_is_timeout = max(1.0, min(3.0, timeout))
+            iams = await asyncio.wait_for(
+                app.who_is(address=target_addr, timeout=who_is_timeout),
+                timeout=who_is_timeout + 1.0,
+            )
+        except (asyncio.TimeoutError, TimeoutError) as e:
+            self.logger.debug(f"bacpypes3 directed Who-Is timed out: {e}")
+            return None
+        except BaseException as e:
+            self.logger.debug(f"bacpypes3 directed Who-Is failed: {e}")
+            return None
+
+        instances = []
+        for iam in iams or []:
+            try:
+                ident = iam.iAmDeviceIdentifier
+                # ObjectIdentifier behaves like a ('device', instance) 2-tuple.
+                instance = ident[1] if not isinstance(ident, int) else ident
+                instances.append(int(instance))
+            except BaseException as e:
+                self.logger.debug(f"bacpypes3 I-Am parse failed: {e}")
+                continue
+
+        return min(instances) if instances else None
+
     async def _bacpypes3_discover_device(self, app, target_addr, timeout: float) -> Optional[int]:
-        """Discover device ID by probing common IDs"""
+        """Discover the device instance.
+
+        A BACnet device instance is a 22-bit value (0..4194302), so brute-probing
+        a handful of common IDs misses any real device that did not happen to pick
+        one of them. The protocol-correct way is a directed Who-Is: the device
+        answers with an I-Am that carries its actual instance. We try that first
+        (one round trip, works for any instance) and only fall back to the
+        common-ID ReadProperty probe for stacks that ignore unicast Who-Is.
+        """
         types = _load_bacpypes3()
         ReadPropertyRequest = types["ReadPropertyRequest"]
         ObjectIdentifier = types["ObjectIdentifier"]
@@ -139,6 +181,11 @@ class DiscoveryMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+
+        instance = await self._bacpypes3_who_is_instance(app, target_addr, timeout)
+        if instance is not None:
+            self.logger.success(f"Discovered device ID: {instance} (via Who-Is)")
+            return instance
 
         common_ids = [1, 10, 100, 1000, 10000, 100000, 1234, 12345]
 

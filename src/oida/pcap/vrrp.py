@@ -85,6 +85,17 @@ class VRRPCredential:
         """Canonical credential field: MD5 digest for hash-type credentials."""
         return self.md5_hash
 
+    @property
+    def hashcat_format(self) -> str:
+        """VRRP keyed-MD5 (Cisco type 254) has NO offline cracking format.
+
+        It is a keyed MD5 over the VRRP packet, but neither hashcat nor John
+        ships a VRRP mode, and VRRPv3 dropped auth entirely. The digest is kept
+        as forensic info (hash_value), but we deliberately return "" so it is
+        NOT presented as a deliverable/crackable hash.
+        """
+        return ""
+
 
 # VRRP auth types (v2 only; 254 is Cisco MD5 extension)
 VRRP_AUTH_TYPES = {

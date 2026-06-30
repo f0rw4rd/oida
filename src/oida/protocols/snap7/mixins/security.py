@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from oida.utils.common_types import Category
+
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -143,7 +145,11 @@ class SecurityMixin(_ScannerBase):
                 )
 
                 # Log security finding
-                self.logger.security_finding("Insecure configuration", detail="put_get_enabled")
+                self.logger.security_finding(
+                    "Insecure configuration",
+                    category=Category.CONFIGURATION,
+                    detail="put_get_enabled",
+                )
 
             except Exception as e:
                 error_msg = str(e).lower()
@@ -231,7 +237,9 @@ class SecurityMixin(_ScannerBase):
                     results["password"] = test_password
                     results["found"].append(test_password)
                     self.logger.security_finding(
-                        "Weak password", f"S7 password found: {test_password}"
+                        "Weak password",
+                        category=Category.AUTHENTICATION,
+                        detail=f"S7 password found: {test_password}",
                     )
 
                     # Report to framework (S7 uses password-only, no username)
@@ -283,7 +291,11 @@ class SecurityMixin(_ScannerBase):
             self.report_credential("", "", host=host, port=port)
 
             # Report security finding
-            self.logger.security_finding("No authentication", detail="Empty password accepted")
+            self.logger.security_finding(
+                "No authentication",
+                category=Category.AUTHENTICATION,
+                detail="Empty password accepted",
+            )
 
         except Exception as e:
             self.logger.debug(f"Empty password rejected: {e}")
@@ -317,7 +329,9 @@ class SecurityMixin(_ScannerBase):
 
         # Report no encryption (S7 protocol is never encrypted)
         self.logger.security_finding(
-            "No encryption", detail="S7 protocol does not support encryption"
+            "No encryption",
+            category=Category.ENCRYPTION,
+            detail="S7 protocol does not support encryption",
         )
 
         # Add S7 specific concerns
@@ -329,10 +343,18 @@ class SecurityMixin(_ScannerBase):
         # "we couldn't read it".
         if protection_level == 1:
             analysis["concerns"].append("No protection - Full read/write access")
-            self.logger.security_finding("Insecure configuration", detail="protection_level=1")
+            self.logger.security_finding(
+                "Insecure configuration",
+                category=Category.CONFIGURATION,
+                detail="protection_level=1",
+            )
         elif protection_level == 2:
             analysis["concerns"].append("Write protection only - Read access available")
-            self.logger.security_finding("Insecure configuration", detail="protection_level=2")
+            self.logger.security_finding(
+                "Insecure configuration",
+                category=Category.CONFIGURATION,
+                detail="protection_level=2",
+            )
 
         db_count = len(results.get("data_blocks", []))
         if db_count > 0:
@@ -377,6 +399,7 @@ class SecurityMixin(_ScannerBase):
         if writable:
             self.logger.security_finding(
                 "Writable access",
+                category=Category.ACCESS_CONTROL,
                 detail=f"S7 memory areas are writable: {', '.join(writable)}",
             )
             for area in writable:

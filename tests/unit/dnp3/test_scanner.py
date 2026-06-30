@@ -1728,7 +1728,15 @@ class TestChannelRetryConfiguration:
         assert hasattr(config, "__class__")
 
     def test_build_channel_retry_with_no_reconnect(self):
-        """Test _build_channel_retry with no reconnect returns an opendnp3 ChannelRetry."""
+        """Test _build_channel_retry under --no-reconnect is binding-dependent.
+
+        --no-reconnect can only be honoured when the installed opendnp3 binding
+        exposes a NeverRetry / OpenRetryStrategy API. When it does, a
+        no-reconnect ChannelRetry is returned; when it does not, the scanner
+        warns loudly and (with no retry-min/max set) falls back to None rather
+        than handing back a retry object that would keep reconnecting. Both are
+        correct, so assert on whichever the binding supports.
+        """
         scanner = DNP3Scanner(
             {
                 "rhost": "127.0.0.1",
@@ -1737,9 +1745,16 @@ class TestChannelRetryConfiguration:
             }
         )
         config = scanner._build_channel_retry()
-        assert config is not None
-        # Returns an opendnp3.ChannelRetry object, not a dict
-        assert hasattr(config, "__class__")
+        if scanner._build_no_reconnect_retry(
+            scanner._dnp3.TimeDuration.Seconds(1),
+            scanner._dnp3.TimeDuration.Seconds(30),
+        ) is not None:
+            # Binding can disable reconnection -> a ChannelRetry is returned.
+            assert config is not None
+            assert hasattr(config, "__class__")
+        else:
+            # Binding cannot disable reconnection -> warn-and-fall-back to None.
+            assert config is None
 
 
 class TestBuildSAConfig:

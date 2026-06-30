@@ -10,6 +10,31 @@ from ..constants import (
     _load_bacpypes3,
     OBJECT_TYPES,
 )
+from ..service_catalog import SERVICE_NAMES, by_name
+from oida.utils.common_types import Category
+
+
+def _is_callable(service_name: str) -> bool:
+    spec = by_name(service_name)
+    return bool(spec and spec.callable)
+
+
+def _service_annotation(service_name: str) -> str:
+    """Inline annotation for a device-advertised service: how OIDA can act on it."""
+    spec = by_name(service_name)
+    if spec is None:
+        return ""
+    if not spec.callable:
+        if spec.risk == "indication":
+            return "  (detect-only: device-emitted / not invokable on a target)"
+        return "  (detect-only: no OIDA invoker yet)"
+    token = spec.aliases[0] if spec.aliases else spec.name
+    risk = {
+        "read": "read",
+        "write": "write — needs --confirm",
+        "control": "CONTROL/disruptive — needs --confirm",
+    }.get(spec.risk, spec.risk)
+    return f"  → --call {token}  ({risk})"
 
 
 class ObjectsMixin:
@@ -193,7 +218,7 @@ class ObjectsMixin:
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
 
-        self.logger.display("\n[BACnet Services]")
+        self.logger.display("[BACnet Services]")
 
         obj_id = ObjectIdentifier(("device", device_id))
 
@@ -223,44 +248,9 @@ class ObjectsMixin:
                                     break
                             if data:
                                 services = []
-                                service_names = [
-                                    "acknowledgeAlarm",
-                                    "confirmedCOVNotification",
-                                    "confirmedEventNotification",
-                                    "getAlarmSummary",
-                                    "getEnrollmentSummary",
-                                    "subscribeCOV",
-                                    "atomicReadFile",
-                                    "atomicWriteFile",
-                                    "addListElement",
-                                    "removeListElement",
-                                    "createObject",
-                                    "deleteObject",
-                                    "readProperty",
-                                    "readPropertyConditional",
-                                    "readPropertyMultiple",
-                                    "writeProperty",
-                                    "writePropertyMultiple",
-                                    "deviceCommunicationControl",
-                                    "confirmedPrivateTransfer",
-                                    "confirmedTextMessage",
-                                    "reinitializeDevice",
-                                    "vtOpen",
-                                    "vtClose",
-                                    "vtData",
-                                    "authenticate",
-                                    "requestKey",
-                                    "i-Am",
-                                    "i-Have",
-                                    "unconfirmedCOVNotification",
-                                    "unconfirmedEventNotification",
-                                    "unconfirmedPrivateTransfer",
-                                    "unconfirmedTextMessage",
-                                    "timeSynchronization",
-                                    "who-Has",
-                                    "who-Is",
-                                    "readRange",
-                                ]
+                                # Decode table is the catalog's ordered names, so
+                                # detection and --call invocation never drift.
+                                service_names = SERVICE_NAMES
                                 for i, byte in enumerate(data[1:] if len(data) > 1 else data):
                                     for bit in range(8):
                                         if byte & (1 << (7 - bit)):
@@ -269,11 +259,15 @@ class ObjectsMixin:
                                                 services.append(service_names[idx])
                                 if services:
                                     self.logger.success(f"  Supported services: {len(services)}")
-                                    for svc in services[:15]:
-                                        self.logger.display(f"    - {svc}")
-                                    if len(services) > 15:
+                                    for svc in services:
                                         self.logger.display(
-                                            f"    ... and {len(services) - 15} more"
+                                            f"    - {svc}{_service_annotation(svc)}"
+                                        )
+                                    callable_here = [s for s in services if _is_callable(s)]
+                                    if callable_here:
+                                        self.logger.display(
+                                            f"  {len(callable_here)} invokable via --call "
+                                            "(see --list-services for syntax)"
                                         )
         except BaseException as e:
             self.logger.debug(f"Could not read services: {e}")
@@ -314,12 +308,8 @@ class ObjectsMixin:
                                     self.logger.success(
                                         f"  Supported object types: {len(obj_types)}"
                                     )
-                                    for otype in obj_types[:15]:
+                                    for otype in obj_types:
                                         self.logger.display(f"    - {otype}")
-                                    if len(obj_types) > 15:
-                                        self.logger.display(
-                                            f"    ... and {len(obj_types) - 15} more"
-                                        )
         except BaseException as e:
             self.logger.debug(f"Could not read object types: {e}")
 
@@ -1057,7 +1047,7 @@ class ObjectsMixin:
         if security_concerns:
             self.logger.security_finding(
                 "Insecure configuration",
-                category="PROGRAM",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{len(security_concerns)} program security concern(s)",
             )
             for concern in security_concerns:
@@ -1069,7 +1059,7 @@ class ObjectsMixin:
             if writable_count > 0:
                 self.logger.security_finding(
                     "Writable access",
-                    category="ACCESS_CONTROL",
+                    category=Category.ACCESS_CONTROL,
                     detail=f"{writable_count} program(s) have accessible programChange property - may allow unauthorized state transitions",
                 )
         else:

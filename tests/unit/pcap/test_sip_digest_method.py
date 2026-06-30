@@ -60,8 +60,9 @@ def test_invite_digest_uses_invite_in_hashcat():
     h = hashes[0]
     assert "*INVITE*" in h, f"expected INVITE in hashcat hash, got: {h}"
     assert "*REGISTER*" not in h, f"hardcoded REGISTER leaked into INVITE hash: {h}"
-    # method sits between qop and the response digest.
-    assert h.endswith("*INVITE*deadbeefcafef00ddeadbeefcafef00d")
+    # hashcat 11400 layout: method is field 5; the line ends with the directive
+    # (MD5) then the response digest.
+    assert h.endswith("*MD5*deadbeefcafef00ddeadbeefcafef00d")
 
 
 def test_register_digest_still_uses_register():
@@ -98,5 +99,6 @@ def test_credential_method_stored_and_in_property():
         algorithm="MD5",
         method="SUBSCRIBE",
     )
-    assert "*SUBSCRIBE*deadbeef" in cred.hashcat_format
+    assert "*SUBSCRIBE*" in cred.hashcat_format
+    assert cred.hashcat_format.endswith("*MD5*deadbeef")
     assert "*REGISTER*" not in cred.hashcat_format

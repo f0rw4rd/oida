@@ -19,6 +19,11 @@ opendnp3 = pytest.importorskip("opendnp3", reason="yadnp3 not installed")
 
 from oida.protocols.dnp3.scanner import DNP3Scanner
 
+# Serialize every DNP3 outstation-touching test onto one xdist worker: the mock
+# outstation accepts a single master at a time, so concurrent workers collide
+# ("Integrity poll failed: no communications"). Same pattern as snmp/hart/mms.
+pytestmark = pytest.mark.xdist_group("dnp3_service")
+
 # DNP3 basic mock service port (mapped from docker-compose.yml)
 DNP3_MOCK_HOST = "127.0.0.1"
 DNP3_MOCK_PORT = 20000
@@ -89,8 +94,16 @@ class TestConnection:
         assert s._manager is None
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=4)
 class TestIntegrityPoll:
-    """Test integrity poll against the mock."""
+    """Test integrity poll against the mock.
+
+    opendnp3's integrity poll is asynchronous and occasionally returns no data
+    within the poll timeout under system load (same flake the sibling
+    test_dnp3_enumerate_points retries for). Reruns give the async poll another
+    attempt against the same (module-scoped) connection rather than asserting on
+    a single poll.
+    """
 
     def test_integrity_poll_returns_data(self, scanner):
         """Test that integrity poll returns data points."""

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 from ..constants import _xknx_cls  # noqa: E402
 from ....utils import SecurityAnalyzer
+from oida.utils.common_types import Category
 
 
 class SecurityMixin:
@@ -303,11 +304,17 @@ class SecurityMixin:
         analysis["concerns"] = []
 
         # Report no encryption
-        self.logger.security_finding("No encryption", detail="KNX protocol does not use encryption")
+        self.logger.security_finding(
+            "No encryption",
+            category=Category.ENCRYPTION,
+            detail="KNX protocol does not use encryption",
+        )
 
         # Report no authentication
         self.logger.security_finding(
-            "No authentication", detail="KNX protocol does not require authentication"
+            "No authentication",
+            category=Category.AUTHENTICATION,
+            detail="KNX protocol does not require authentication",
         )
 
         device_count = len(results.get("devices", []))
@@ -326,6 +333,7 @@ class SecurityMixin:
             # Report writable access
             self.logger.security_finding(
                 "Writable access",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{writable_devices} devices with unauthenticated write access",
             )
 
@@ -333,7 +341,9 @@ class SecurityMixin:
             analysis["concerns"].append("KNX routing is accessible")
             # Report insecure configuration
             self.logger.security_finding(
-                "Insecure configuration", detail="KNX routing is accessible without authentication"
+                "Insecure configuration",
+                category=Category.CONFIGURATION,
+                detail="KNX routing is accessible without authentication",
             )
 
         return analysis

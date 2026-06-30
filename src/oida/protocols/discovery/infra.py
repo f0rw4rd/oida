@@ -138,7 +138,7 @@ class HIDScanner:
         try:
             text = data.decode("ascii", errors="replace").strip()
         except Exception as e:
-            logger.debug(f"Eaton EH400 discovery response ASCII decode failed: {e}")
+            logger.debug(f"HID discovery response ASCII decode failed: {e}")
             return None
 
         if not text or ";" not in text:
@@ -1056,7 +1056,7 @@ class XDMCPScanner:
                     status = data[offset : offset + status_len].decode("ascii", errors="replace")
                     xdmcp_data["status"] = status
         except Exception as e:
-            logger.debug(f"if offset  2  len(data):: {e}")
+            logger.debug(f"XDMCP field parse failed: {e}")
 
         desc = f"XDMCP ({hostname})" if hostname else "XDMCP Display Manager"
         if status:

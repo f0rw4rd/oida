@@ -62,7 +62,7 @@ class CyclicMixin(_ScannerBase):
             or not _profinet_rt.is_available
         ):
             self.logger.fail(
-                "  Cyclic IO requires profinet-py with cyclic support: pip install profinet-py"
+                "  Cyclic IO requires profinet-py with cyclic support: pip install oida[profinet]"
             )
             return
 
