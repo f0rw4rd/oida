@@ -28,6 +28,8 @@ from .network import NetworkMixin
 from .monitoring import MonitoringMixin
 from .state import StateMixin
 from .export import ExportMixin
+from .call import CallMixin
+from .sc import SCMixin
 
 __all__ = [
     "ConnectionMixin",
@@ -40,4 +42,6 @@ __all__ = [
     "MonitoringMixin",
     "StateMixin",
     "ExportMixin",
+    "CallMixin",
+    "SCMixin",
 ]

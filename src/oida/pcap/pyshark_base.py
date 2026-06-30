@@ -163,7 +163,7 @@ class PySharkListenerBase(ABC):
             import pyshark  # noqa: F401
         except ImportError:
             raise ImportError(
-                f"{self.PROTOCOL_NAME} requires pyshark: pip install pyshark\n"
+                f"{self.PROTOCOL_NAME} requires pyshark: pip install oida[pcap]\n"
                 "Also requires tshark (Wireshark CLI) to be installed."
             )
 
@@ -346,7 +346,13 @@ class PySharkListenerBase(ABC):
             if isinstance(val, (int, float)):
                 return str(val)
             if isinstance(val, list):
-                parts = [str(self._resolve_value(v, "")) for v in val]
+                # Mirror the scalar branch: bytes elements must be hex, not a
+                # Python ``b'...'`` repr (which str() would produce and which
+                # corrupts e.g. Kerberos cipher blobs).
+                parts = []
+                for v in val:
+                    v = self._resolve_value(v, "")
+                    parts.append(v.hex(":") if isinstance(v, bytes) else str(v))
                 return ",".join(parts)
             return val
         except Exception as e:

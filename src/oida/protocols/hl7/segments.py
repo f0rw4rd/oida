@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 # Import hl7apy at module load. Availability is gated by HL7APY_AVAILABLE in
-# __init__.py (which prints a friendly "pip install hl7apy" hint); this local
+# __init__.py (which prints a friendly "pip install oida[hl7]" hint); this local
 # import just makes hl7apy.core.Segment available to the builder methods. If the
 # dep is missing, Segment stays None and builder calls raise inside their own
 # try/except.

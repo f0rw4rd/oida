@@ -1,18 +1,49 @@
 #!/usr/bin/env python3
 """Deep unit tests for MMSScanner orchestration / read / write / security paths.
 
-Covers _get_server_info (incl. the MmsError destroy-name fallback),
-_read_iec61850_attribute, _read_data_objects, the --test-write confirm /
-read-only gates, _write_data_object FC fallback, _analyze_security
-concern emission, _report_findings vuln emission, connect() error
-handling, and discover() dispatch (--identify / --variable).
+Covers _get_server_info (identity + device count), _read_iec61850_attribute,
+_read_data_objects (FC MX->ST fallback), the --test-write confirm / read-only
+gates, _write_data_object CO->SP->MX probe order, _analyze_security concern
+emission, _report_findings vuln emission, connect() success/failure, and
+discover() dispatch (--identify / --variable).
 
-The native binding is mocked at the _Lib level.
+The scanner runs on the high-level MMSClient: discovery/read tests pass a
+MagicMock() connection and stub its high-level methods; the FC / ReadError /
+MmsType surfaces are mocked at the _Lib boundary, and the write probe order is
+asserted by patching the module-level ``_write_under_fc`` shim.
 """
 
+from enum import IntEnum
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from oida.protocols.mms import MMSScanner, _Lib
+
+
+class _FC(IntEnum):
+    """Stand-in for pyiec61850.mms.FC."""
+
+    ST = 0
+    MX = 1
+    SP = 2
+    DC = 5
+    CO = 12
+
+
+class _MmsType(IntEnum):
+    """Stand-in for pyiec61850.mms.MmsType (tags _normalize_read consults)."""
+
+    ARRAY = 0
+    STRUCTURE = 1
+    DATA_ACCESS_ERROR = 15
+
+
+class _ReadError(Exception):
+    """Stand-in for pyiec61850.mms.ReadError."""
+
+
+class _ConnectionFailed(Exception):
+    """Stand-in for pyiec61850.mms.ConnectionFailedError."""
 
 
 def _scanner(**extra):
@@ -50,35 +81,44 @@ class TestInitGates:
 # connect()
 # --------------------------------------------------------------------------- #
 class TestConnect:
-    def test_connect_returns_none_when_create_fails(self):
+    def test_connect_success_returns_client(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IedConnection_create.return_value = None
-        with patch.object(_Lib, "require"), patch.object(_Lib, "iec61850", lib):
-            assert s.connect() is None
+        s.logger = MagicMock()
+        client = MagicMock()
+        with (
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "MMSClient", return_value=client) as ctor,
+        ):
+            assert s.connect() is client
+        ctor.assert_called_once_with(timeout=s.timeout * 1000)
+        client.connect.assert_called_once_with("127.0.0.1", 102)
+        # cleartext-transport finding emitted on a successful association
+        s.logger.security_finding.assert_called_once()
 
-    def test_connect_destroys_on_nonzero_error(self):
+    def test_connect_returns_none_on_connection_failed(self):
         s = _scanner()
-        lib = MagicMock()
-        conn = MagicMock()
-        lib.IedConnection_create.return_value = conn
-        # SWIG returns (None, error_code) tuple; non-zero => failure
-        lib.IedConnection_connect.return_value = (None, 2)
-        lib.IED_ERROR_OK = 0
-        lib.IED_ERROR_TIMEOUT = 6
-        with patch.object(_Lib, "require"), patch.object(_Lib, "iec61850", lib):
+        s.logger = MagicMock()
+        client = MagicMock()
+        client.connect.side_effect = _ConnectionFailed("refused")
+        with (
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "ConnectionFailedError", _ConnectionFailed),
+            patch.object(_Lib, "MMSClient", return_value=client),
+        ):
             assert s.connect() is None
-        lib.IedConnection_destroy.assert_called_once_with(conn)
+        s.logger.security_finding.assert_not_called()
 
-    def test_connect_success_returns_connection(self):
+    def test_connect_returns_none_on_unexpected_error(self):
         s = _scanner()
-        lib = MagicMock()
-        conn = MagicMock()
-        lib.IedConnection_create.return_value = conn
-        lib.IedConnection_connect.return_value = (None, 0)  # OK
-        with patch.object(_Lib, "require"), patch.object(_Lib, "iec61850", lib):
-            assert s.connect() is conn
-        lib.IedConnection_destroy.assert_not_called()
+        s.logger = MagicMock()
+        client = MagicMock()
+        client.connect.side_effect = RuntimeError("boom")
+        with (
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "ConnectionFailedError", _ConnectionFailed),
+            patch.object(_Lib, "MMSClient", return_value=client),
+        ):
+            assert s.connect() is None
 
 
 # --------------------------------------------------------------------------- #
@@ -87,70 +127,46 @@ class TestConnect:
 class TestGetServerInfo:
     def test_identity_fields_and_device_count(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IedConnection_getMmsConnection.return_value = MagicMock()
-        lib.MmsError_create.return_value = MagicMock()
+        connection = MagicMock()
+        connection.get_logical_devices.return_value = ["LD0", "LD1", "LD2"]
+        connection.get_server_identity.return_value = SimpleNamespace(
+            vendor="ACME", model="M1", revision="R2"
+        )
 
-        identity = MagicMock()
-        identity.vendorName = "ACME"
-        identity.modelName = "M1"
-        identity.revision = "R2"
-        lib.MmsConnection_identify.return_value = identity
-        # No MmsErrror_destroy attr; ensure fallback path is exercised.
-        del lib.MmsErrror_destroy
-
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "safe_to_char_p", side_effect=lambda x: x),
-            patch.object(_Lib, "safe_identity_destroy") as id_destroy,
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_linked_list_iter", return_value=iter(["LD0", "LD1", "LD2"])),
-            patch.object(_Lib, "safe_linked_list_destroy"),
-        ):
-            info = s._get_server_info(MagicMock())
+        info = s._get_server_info(connection)
 
         assert info["vendor"] == "ACME"
         assert info["model"] == "M1"
         assert info["revision"] == "R2"
         assert info["logical_device_count"] == 3
         assert info["supports_get_server_directory"] is True
-        id_destroy.assert_called_once_with(identity)
-        # correct-spelling fallback destroy was invoked on the error object
-        lib.MmsError_destroy.assert_called_once()
 
-    def test_typoed_destroy_name_preferred_when_present(self):
+    def test_blank_identity_omits_fields(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IedConnection_getMmsConnection.return_value = MagicMock()
-        err = MagicMock()
-        lib.MmsError_create.return_value = err
-        lib.MmsConnection_identify.return_value = None  # identity not available
+        connection = MagicMock()
+        connection.get_logical_devices.return_value = ["LD0"]
+        connection.get_server_identity.return_value = SimpleNamespace(
+            vendor=None, model=None, revision=None
+        )
 
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "safe_to_char_p", side_effect=lambda x: x),
-            patch.object(_Lib, "safe_identity_destroy"),
-            patch.object(_Lib, "unpack_result", return_value=(None, 0, False)),
-            patch.object(_Lib, "safe_linked_list_destroy"),
-        ):
-            info = s._get_server_info(MagicMock())
+        info = s._get_server_info(connection)
 
-        # the typo'd binding name is tried first
-        lib.MmsErrror_destroy.assert_called_once_with(err)
-        assert "vendor" not in info  # identity was None
+        assert "vendor" not in info
+        assert "model" not in info
+        assert "revision" not in info
+        assert info["logical_device_count"] == 1
         assert info["supports_get_server_directory"] is True
 
-    def test_no_mms_connection_still_returns_directory_flag(self):
+    def test_device_count_failure_still_returns_directory_flag(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IedConnection_getMmsConnection.return_value = None
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(None, 0, False)),
-            patch.object(_Lib, "safe_linked_list_destroy"),
-            patch.object(_Lib, "safe_identity_destroy"),
-        ):
-            info = s._get_server_info(MagicMock())
+        connection = MagicMock()
+        connection.get_server_identity.return_value = SimpleNamespace(
+            vendor=None, model=None, revision=None
+        )
+        connection.get_logical_devices.side_effect = RuntimeError("link down")
+
+        info = s._get_server_info(connection)
+
         assert info["supports_get_server_directory"] is True
         assert "logical_device_count" not in info
 
@@ -161,44 +177,27 @@ class TestGetServerInfo:
 class TestDiscoveryBuilders:
     def test_discover_logical_devices_builds_dicts(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IedConnection_getLogicalDeviceList.return_value = (MagicMock(), 0)
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_linked_list_iter", return_value=iter(["LD0", "LD1"])),
-            patch.object(_Lib, "safe_linked_list_destroy"),
-        ):
-            devs = s._discover_logical_devices(MagicMock())
+        connection = MagicMock()
+        connection.get_logical_devices.return_value = ["LD0", "LD1"]
+        devs = s._discover_logical_devices(connection)
         assert [d["name"] for d in devs] == ["LD0", "LD1"]
         assert all(d["accessible"] for d in devs)
 
     def test_get_logical_nodes_builds_full_reference(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IedConnection_getLogicalDeviceDirectory.return_value = (MagicMock(), 0)
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_linked_list_iter", return_value=iter(["LLN0", "MMXU1"])),
-            patch.object(_Lib, "safe_linked_list_destroy"),
-        ):
-            nodes = s._get_logical_nodes(MagicMock(), "LD0")
+        connection = MagicMock()
+        connection.get_logical_nodes.return_value = ["LLN0", "MMXU1"]
+        nodes = s._get_logical_nodes(connection, "LD0")
+        connection.get_logical_nodes.assert_called_once_with("LD0")
         assert nodes[0]["full_reference"] == "LD0/LLN0"
         assert nodes[1]["full_reference"] == "LD0/MMXU1"
 
     def test_get_data_objects_builds_dotted_reference(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.ACSI_CLASS_DATA_OBJECT = 0
-        lib.IedConnection_getLogicalNodeDirectory.return_value = (MagicMock(), 0)
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_linked_list_iter", return_value=iter(["Mod", "Beh"])),
-            patch.object(_Lib, "safe_linked_list_destroy"),
-        ):
-            objs = s._get_data_objects(MagicMock(), "LD0", "LLN0")
+        connection = MagicMock()
+        connection.get_data_objects.return_value = ["Mod", "Beh"]
+        objs = s._get_data_objects(connection, "LD0", "LLN0")
+        connection.get_data_objects.assert_called_once_with("LD0", "LLN0")
         assert objs[0]["full_reference"] == "LD0/LLN0.Mod"
         assert objs[0]["readable"] is False
         assert objs[1]["full_reference"] == "LD0/LLN0.Beh"
@@ -221,58 +220,56 @@ class TestDiscoveryBuilders:
 class TestReadPaths:
     def test_read_attribute_dollar_to_dot_and_value(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IEC61850_FC_DC = 0
+        connection = MagicMock()
+        connection.read_value.return_value = "SIEMENS"
         with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True)),
-            patch.object(_Lib, "safe_mms_value_delete"),
-            patch.object(s, "_extract_mms_value", return_value="SIEMENS"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch.object(_Lib, "MmsType", _MmsType),
         ):
-            val = s._read_iec61850_attribute(MagicMock(), "LD0", "LPHD$DC$PhyNam$vendor")
+            val = s._read_iec61850_attribute(connection, "LD0", "LPHD$DC$PhyNam$vendor")
         assert val == "SIEMENS"
-        # the reference must have $ replaced with .
-        ref_used = lib.IedConnection_readObject.call_args[0][1]
+        # the reference must have $ replaced with . and be read under FC_DC
+        ref_used = connection.read_value.call_args[0][0]
         assert ref_used == "LD0/LPHD.DC.PhyNam.vendor"
+        assert connection.read_value.call_args.kwargs["fc"] == _FC.DC
 
-    def test_read_attribute_not_ok_returns_none(self):
+    def test_read_attribute_read_error_returns_none(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IEC61850_FC_DC = 0
+        connection = MagicMock()
+        connection.read_value.side_effect = _ReadError("denied")
         with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(None, 1, False)),
-            patch.object(_Lib, "safe_mms_value_delete"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch.object(_Lib, "MmsType", _MmsType),
         ):
-            assert s._read_iec61850_attribute(MagicMock(), "LD0", "x") is None
+            assert s._read_iec61850_attribute(connection, "LD0", "x") is None
 
     def test_read_data_objects_success_and_failure_buckets(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IEC61850_FC_MX = 0
-        lib.IEC61850_FC_ST = 1
         objs = [
             {"full_reference": "LD0/MMXU1.A"},
             {"full_reference": "LD0/MMXU1.B"},
         ]
 
-        # First object reads OK, second returns None (fails both FCs).
-        unpack_returns = iter(
-            [
-                (MagicMock(), 0, True),  # obj A, FC_MX -> ok
-                (None, 1, False),  # obj B, FC_MX
-                (None, 1, False),  # obj B, FC_ST
-            ]
-        )
+        # obj A reads 42 under FC_MX; obj B returns the DATA_ACCESS_ERROR
+        # placeholder (normalized to None) under both MX and ST -> failed bucket.
+        err_placeholder = f"<MmsValue type={int(_MmsType.DATA_ACCESS_ERROR)}>"
+
+        def read_value(ref, fc):
+            if ref == "LD0/MMXU1.A":
+                return 42
+            return err_placeholder
+
+        connection = MagicMock()
+        connection.read_value.side_effect = read_value
 
         with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", side_effect=lambda r: next(unpack_returns)),
-            patch.object(_Lib, "safe_mms_value_delete"),
-            patch.object(s, "_extract_mms_value", return_value=42),
-            patch.object(s, "_get_mms_type_name", return_value="integer"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch.object(_Lib, "MmsType", _MmsType),
         ):
-            res = s._read_data_objects(MagicMock(), objs)
+            res = s._read_data_objects(connection, objs)
 
         assert res["total_tested"] == 2
         assert len(res["successful_reads"]) == 1
@@ -285,18 +282,40 @@ class TestReadPaths:
         assert objs[0]["readable"] is True
         assert objs[0]["value"] == 42
 
+    def test_read_data_objects_mx_falls_back_to_st(self):
+        # MX raises ReadError; ST returns a value -> success under ST.
+        s = _scanner()
+        objs = [{"full_reference": "LD0/MMXU1.A"}]
+
+        def read_value(ref, fc):
+            if fc == _FC.MX:
+                raise _ReadError("not measurement")
+            return 7  # FC_ST
+
+        connection = MagicMock()
+        connection.read_value.side_effect = read_value
+
+        with (
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch.object(_Lib, "MmsType", _MmsType),
+        ):
+            res = s._read_data_objects(connection, objs)
+
+        assert len(res["successful_reads"]) == 1
+        assert res["successful_reads"][0]["value"] == 7
+
     def test_read_data_objects_records_exception(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IEC61850_FC_MX = 0
-        lib.IEC61850_FC_ST = 1
         objs = [{"full_reference": "LD0/MMXU1.A"}]
+        connection = MagicMock()
+        connection.read_value.side_effect = RuntimeError("link down")
         with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", side_effect=RuntimeError("link down")),
-            patch.object(_Lib, "safe_mms_value_delete"),
+            patch.object(_Lib, "FC", _FC),
+            patch.object(_Lib, "ReadError", _ReadError),
+            patch.object(_Lib, "MmsType", _MmsType),
         ):
-            res = s._read_data_objects(MagicMock(), objs)
+            res = s._read_data_objects(connection, objs)
         assert len(res["failed_reads"]) == 1
         assert "link down" in res["failed_reads"][0]["error"]
 
@@ -342,47 +361,49 @@ class TestWritePaths:
         assert res["failed_writes"][0]["reference"] == "LD0/A"
         assert len(res["successful_writes"]) == 0
 
-    def test_write_data_object_tries_fc_fallback(self):
+    def test_write_data_object_probes_co_sp_mx_in_order(self):
+        # CO and SP rejected, MX accepted -> True, and the probe order is exactly
+        # CO -> SP -> MX (impact order).
         s = _scanner()
-        lib = MagicMock()
-        lib.IEC61850_FC_CO = 0
-        lib.IEC61850_FC_SP = 1
-        lib.IEC61850_FC_MX = 2
-        # First two FCs fail, third succeeds.
-        oks = iter([(None, 0, False), (None, 0, False), (None, 0, True)])
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", side_effect=lambda r: next(oks)),
-            patch.object(_Lib, "safe_mms_value_delete"),
-            patch.object(s, "_create_mms_value", return_value=MagicMock()),
-        ):
-            assert s._write_data_object(MagicMock(), "LD0/A", 5, "integer") is True
-        assert lib.IedConnection_writeObject.call_count == 3
+        conn = MagicMock()
 
-    def test_write_data_object_none_value_returns_false(self):
-        s = _scanner()
-        lib = MagicMock()
+        accepted = {_FC.MX}
+
+        def fake_write(client, reference, value, fc):
+            assert client is conn
+            assert reference == "LD0/A"
+            assert value == 5
+            return fc in accepted
+
         with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "safe_mms_value_delete"),
-            patch.object(s, "_create_mms_value", return_value=None),
+            patch.object(_Lib, "FC", _FC),
+            patch("oida.protocols.mms._write_under_fc", side_effect=fake_write) as wuf,
         ):
-            assert s._write_data_object(MagicMock(), "LD0/A", object(), None) is False
-        lib.IedConnection_writeObject.assert_not_called()
+            assert s._write_data_object(conn, "LD0/A", 5) is True
+
+        probed_fcs = [c.args[3] for c in wuf.call_args_list]
+        assert probed_fcs == [_FC.CO, _FC.SP, _FC.MX]
+
+    def test_write_data_object_returns_on_first_success(self):
+        # CO accepted -> SP/MX never probed.
+        s = _scanner()
+        with (
+            patch.object(_Lib, "FC", _FC),
+            patch("oida.protocols.mms._write_under_fc", return_value=True) as wuf,
+        ):
+            assert s._write_data_object(MagicMock(), "LD0/A", 5) is True
+        assert wuf.call_count == 1
+        assert wuf.call_args.args[3] == _FC.CO
 
     def test_write_data_object_all_fc_fail(self):
         s = _scanner()
-        lib = MagicMock()
-        lib.IEC61850_FC_CO = 0
-        lib.IEC61850_FC_SP = 1
-        lib.IEC61850_FC_MX = 2
         with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "unpack_result", return_value=(None, 0, False)),
-            patch.object(_Lib, "safe_mms_value_delete"),
-            patch.object(s, "_create_mms_value", return_value=MagicMock()),
+            patch.object(_Lib, "FC", _FC),
+            patch("oida.protocols.mms._write_under_fc", return_value=False) as wuf,
         ):
             assert s._write_data_object(MagicMock(), "LD0/A", 5) is False
+        # all three constraints attempted
+        assert wuf.call_count == 3
 
 
 # --------------------------------------------------------------------------- #

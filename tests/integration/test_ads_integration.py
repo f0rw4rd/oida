@@ -95,7 +95,7 @@ Flag Coverage Matrix (proto_args.py):
   --download-program        [B] test_download_program
   --scan-ethercat           [C] test_scan_ethercat
   --scan-coe                [C] test_scan_coe
-  --coe-range               [skip] requires --scan-coe, tested implicitly
+  --coe-range               [C] test_coe_range_standalone (inert-modifier warning)
   --read-coe                [C] test_read_coe
   --write-coe               [C] test_write_coe_without_confirm, test_write_coe_with_confirm
   --scan-coe-access         [C] test_scan_coe_access_without_confirm, test_scan_coe_access_with_confirm
@@ -2141,9 +2141,36 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         """Test --watch for symbol monitoring [Skip -- blocking]"""
         pass
 
-    @pytest.mark.skip(
-        reason="--coe-range is an implicit modifier for --scan-coe, not independently testable"
-    )
-    def test_coe_range_standalone(self):
-        """Test --coe-range without --scan-coe [Skip -- modifier only]"""
-        pass
+    def test_coe_range_standalone(self, cli_runner, target, port, docker_services):
+        """--coe-range without a CoE operation warns and is inert [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--coe-range",
+            "0x2000-0x3000",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+
+        # Guard path must not crash
+        assert result.returncode != -11, "--coe-range standalone caused a crash"
+
+        # The scanner warns that the modifier is inert without a CoE operation
+        # (src/oida/protocols/ads/nxc_connection.py:177-187).
+        text = _combined_text(result, result.scan_log if result.scan_log else None)
+        assert "no effect without" in text and "coe-range" in text, (
+            f"--coe-range without --scan-coe should emit the inert-modifier warning; "
+            f"got: {text[:400]}"
+        )
+
+        if result.scan_log is not None and len(result.scan_log) > 0:
+            _assert_log_event_structure(result.scan_log)
+            # The guard is recorded at WARNING level, not buried as info.
+            assert any(
+                e.get("level", "").upper() == "WARNING"
+                and "no effect without" in e.get("message", "").lower()
+                for e in result.scan_log.events
+            ), "inert-modifier notice should be a WARNING-level event"

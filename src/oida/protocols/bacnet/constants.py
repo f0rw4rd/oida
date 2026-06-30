@@ -223,6 +223,11 @@ OBJECT_TYPES = {
     57: "elevatorGroup",
     58: "escalator",
     59: "lift",
+    60: "staging",
+    61: "auditLog",
+    62: "auditReporter",
+    63: "color",
+    64: "colorTemperature",
 }
 
 # Reverse mapping for lookups

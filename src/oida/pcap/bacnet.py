@@ -46,6 +46,7 @@ References:
 - Wireshark dissector: packet-bacapp.c
 """
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -229,6 +230,33 @@ BACNET_ABORT_REASONS = {
 
 
 @dataclass
+class BACnetCredential:
+    """Extracted BACnet cleartext password.
+
+    DeviceCommunicationControl (svc 17) and ReinitializeDevice (svc 20) carry an
+    optional CharacterString password in the request APDU. It is sent in the
+    clear, so a passive capture recovers it directly (no hash/cracking).
+    """
+
+    password: str
+    service: str  # "DeviceCommunicationControl" | "ReinitializeDevice"
+    client_ip: str = ""
+    server_ip: str = ""
+    server_port: int = 0
+    timestamp: str = ""
+    credential_type: str = "plaintext"
+
+    @property
+    def username(self) -> str:
+        """BACnet device-management passwords have no associated username."""
+        return ""
+
+    @property
+    def auth_method(self) -> str:
+        return f"BACnet/{self.service}"
+
+
+@dataclass
 class BACnetSession:
     """Track BACnet session statistics."""
 
@@ -265,6 +293,8 @@ class BACnetPassiveListener(PySharkListenerBase):
     ):
         super().__init__(interface, timeout, nxc_logger)
         self.sessions: Dict[Tuple[str, str], BACnetSession] = {}
+        self.credentials: List[BACnetCredential] = []
+        self._seen_creds: Set[Tuple[str, str, str]] = set()
 
     def process_packet(self, packet) -> None:
         """Process BACnet packet and extract interactions."""
@@ -379,6 +409,11 @@ class BACnetPassiveListener(PySharkListenerBase):
             self.logger.debug(
                 f"BACnet: no service choice for apdu_type={apdu_type}, recording generic {svc_name}"
             )
+
+        # DeviceCommunicationControl (17) / ReinitializeDevice (20) carry an
+        # optional cleartext password in the request APDU -- extract it.
+        if direction == "request" and svc_code in (17, 20):
+            self._extract_password(bacapp, svc_code, src_ip, dst_ip, packet)
 
         # Extract object type and instance
         obj_type_raw = self.get_field(bacapp, "objectType", None)
@@ -639,6 +674,68 @@ class BACnetPassiveListener(PySharkListenerBase):
             dst_mac,
             device_identifier=device_identifier,
         )
+
+    # tshark dissects the DCC/Reinit password as an UNNAMED field, but its
+    # human-readable form survives in the bacapp ``text`` field as e.g.
+    # "Password: UTF-8 'secret'". Pull the quoted value out of there.
+    _PW_RE = re.compile(r"Password:[^']*'(.*)'\s*$")
+
+    def _extract_password(self, bacapp, svc_code, src_ip, dst_ip, packet) -> None:
+        """Extract the cleartext DCC/ReinitializeDevice password from the APDU."""
+        raw = getattr(bacapp, "text", None)
+        if isinstance(raw, (list, tuple)):
+            items = [str(x) for x in raw]
+        elif raw is not None:
+            items = [str(raw)]
+        else:
+            joined = self.get_field(bacapp, "text", "")
+            items = str(joined).split(",") if joined else []
+
+        password = None
+        for item in items:
+            m = self._PW_RE.search(item)
+            if m:
+                password = m.group(1)
+                break
+        if not password:
+            return
+
+        service = "ReinitializeDevice" if svc_code == 20 else "DeviceCommunicationControl"
+        key = (service, password, dst_ip)
+        if key in self._seen_creds:
+            return
+        self._seen_creds.add(key)
+        _, dst_port = self.get_port_info(packet)
+        self.credentials.append(
+            BACnetCredential(
+                password=password,
+                service=service,
+                client_ip=src_ip,
+                server_ip=dst_ip,
+                server_port=dst_port or 47808,
+                timestamp=datetime.now().isoformat(),
+            )
+        )
+        self.logger.info(
+            f"BACnet {service} password from {src_ip} -> {dst_ip}: '{password}'"
+        )
+
+    def get_credentials_summary(self) -> List[Dict[str, Any]]:
+        """Cleartext BACnet device-management passwords (DCC / ReinitializeDevice)."""
+        return [
+            {
+                "protocol": "BACnet",
+                "credential_type": "plaintext",
+                "auth_method": c.auth_method,
+                "username": "",
+                "password": c.password,
+                "server_ip": c.server_ip,
+                "client_ip": c.client_ip,
+                "server_port": c.server_port,
+                "timestamp": c.timestamp,
+            }
+            for c in self.credentials
+        ]
 
     @staticmethod
     def _build_summary(

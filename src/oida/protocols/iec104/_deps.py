@@ -10,7 +10,7 @@ from ...utils.lazy_import import lazy_import
 _c104 = lazy_import("c104", "IEC 104")
 
 # Lazy import for pyserial (IEC 101 serial mode, optional)
-_serial = lazy_import("serial", "IEC 101", install_hint="pip install pyserial")
+_serial = lazy_import("serial", "IEC 101", install_hint="pip install oida[serial]")
 
 # Export for test compatibility
 PYSERIAL_AVAILABLE = _serial.is_available

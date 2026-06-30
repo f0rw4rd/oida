@@ -233,6 +233,38 @@ Security Testing:
         help="Test write access (requires --confirm)",
     )
 
+    # Cyclic IO (real-time data exchange)
+    cyclic_group = profinet_parser.add_argument_group("Cyclic IO")
+
+    cyclic_group.add_argument(
+        "--cyclic",
+        action="store_true",
+        help="Establish a cyclic IO AR and exchange real-time process data",
+    )
+
+    cyclic_group.add_argument(
+        "--cyclic-duration",
+        type=int,
+        default=5,
+        metavar="SECS",
+        help="Seconds to run the cyclic data exchange (default: 5)",
+    )
+
+    cyclic_group.add_argument(
+        "--cyclic-cycle-ms",
+        type=int,
+        default=128,
+        metavar="MS",
+        help="Cyclic send-clock interval in milliseconds (default: 128)",
+    )
+
+    cyclic_group.add_argument(
+        "--cyclic-slot",
+        action="append",
+        metavar="SLOT/SUB:IN:OUT",
+        help="Manually specify an IO slot (e.g., 1/1:8:8); repeatable",
+    )
+
     # Device targeting and write operations
     target_group = profinet_parser.add_argument_group("Device Targeting")
 

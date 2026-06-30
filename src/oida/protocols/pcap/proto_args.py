@@ -142,7 +142,13 @@ Listener categories:
         "--hashcat",
         action="store_true",
         default=False,
-        help="Export crackable hashes in hashcat-compatible format (NTLM, Kerberos, HTTP Digest, SIP, VNC)",
+        help=(
+            "Export crackable hashes for hashcat/John (writes hashcat.txt with -o, "
+            "else prints to console): NTLM 5500/5600, Kerberos, IPMI 7300, iSCSI 4800, "
+            "MySQL 11200, PostgreSQL 11100, SIP 11400, CRAM-MD5 10200, TACACS+ 16100, "
+            "RADIUS CHAP 4800 / MS-CHAPv2 5500; John-only for VNC, HTTP Digest (hdaa), "
+            "OSPF/RIP (net-md5)"
+        ),
     )
 
     # Protocol Dissection

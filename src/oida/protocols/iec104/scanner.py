@@ -19,6 +19,7 @@ from ...utils import (
 )
 from ...utils.protocol_helpers import ConnectionHelper
 from ...utils.cli import run as cli_run
+from oida.utils.common_types import Category
 
 from .constants import (
     IEC104_TYPE_IDS,
@@ -678,6 +679,15 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
             if not connection.is_connected:
                 client.stop()
                 return None
+
+            # Confirmed IEC 104 / APCI handshake over TCP. Plaintext by design
+            # unless IEC 62351-3 TLS is in use.
+            if not self.use_tls:
+                self.logger.security_finding(
+                    "No encryption",
+                    category=Category.ENCRYPTION,
+                    detail="IEC 104 has no transport encryption (cleartext)",
+                )
 
             return (client, connection)
 
@@ -1491,6 +1501,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                     )
             self.logger.security_finding(
                 "File transfer exposed",
+                category=Category.PROTOCOL_EXPOSURE,
                 detail="Server advertises file-transfer type IDs (120-127)",
             )
         else:
@@ -1566,6 +1577,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         if file_info.get("supported"):
             self.logger.security_finding(
                 "Writable access",
+                category=Category.ACCESS_CONTROL,
                 detail="File transfer capability exposed (Type IDs 120-127) - allows read/write/delete operations",
             )
             analysis["issues"].append("File transfer capability exposed (Type IDs 120-127)")
@@ -1576,6 +1588,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         if custom_count > 0:
             self.logger.security_finding(
                 "Insecure configuration",
+                category=Category.CONFIGURATION,
                 detail=f"{custom_count} custom/vendor-specific type IDs detected - potential proprietary extensions",
             )
             analysis["issues"].append(f"{custom_count} custom/vendor-specific type IDs detected")
@@ -1584,6 +1597,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         if points_count > 100:
             self.logger.security_finding(
                 "Anonymous access allowed",
+                category=Category.AUTHENTICATION,
                 detail=f"{points_count} data points accessible without authentication",
             )
             analysis["issues"].append(f"{points_count} data points accessible without auth")

@@ -185,13 +185,17 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         ), f"Expected EtherNet/IP scan output, got: {text[:500]}"
 
     def test_list_identity(self, cli_runner, target, port):
-        """Test ListIdentity UCMM command retrieves device info [Category A]"""
+        """Test ListIdentity UCMM command retrieves device info [Category A]
+
+        ListIdentity is now performed automatically as part of every scan
+        (enum_host_info() always issues it); the explicit ``--list-identity``
+        flag was removed in d823fc3. The default scan exercises the same path.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
             "--port",
             str(port),
-            "--list-identity",
             format="json",
             json_log=True,
             timeout=30,
@@ -223,13 +227,14 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         ListIdentity as 'Anonymous access allowed' was a false positive (one bogus
         CRITICAL per device) removed in commit 41d11682. This test guards against the
         regression while confirming the default security analysis still fires.
+        ListIdentity now runs automatically on every scan (the ``--list-identity``
+        flag was removed in d823fc3), so the default scan covers it.
         """
         result = cli_runner.run(
             self.protocol_name,
             target,
             "--port",
             str(port),
-            "--list-identity",
             format="json",
             json_log=True,
             timeout=30,

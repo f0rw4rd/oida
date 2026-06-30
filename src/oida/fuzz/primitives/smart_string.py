@@ -18,10 +18,10 @@ Usage:
     SmartStringPrimitive("addr", "1.2.3.4:80", context=StringContext.IP_ADDRESS | StringContext.PORT)
 
 Mutation counts:
-    - ReducedString base: ~500 (length testing + filtered payloads)
+    - ReducedString base: ~560 (length testing + filtered payloads)
     - + Context-specific: +10-40 (depends on context)
     - + Radamsa: +10-25
-    - Total: ~550-600 per field
+    - Total: ~580-650 per field
 """
 
 from enum import Flag, auto

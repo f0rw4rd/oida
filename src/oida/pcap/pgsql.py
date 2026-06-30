@@ -106,12 +106,22 @@ class PostgreSQLCredential:
 
     @property
     def hashcat_format(self) -> str:
-        """Hashcat-compatible hash string."""
+        """Hashcat-compatible hash string (mode 11100, PostgreSQL CRAM (MD5)).
+
+        Format: ``$postgres$user*salt*hash`` where salt is the 4-byte server
+        salt as hex and hash is the 32-char MD5 digest WITHOUT the wire ``md5``
+        prefix. Verified against hashcat example_hashes mode 11100.
+        """
         # PostgreSQL MD5 cracking needs the server salt; without it (Type request
         # not captured) the hash is uncrackable, so return "" rather than a line
         # with an empty salt field.
         if self.auth_type == "md5" and self.password_or_hash and self.salt:
-            return f"{self.username}:{self.password_or_hash}:{self.salt}"
+            # Wire PasswordMessage is "md5<digest>"; mode 11100 wants the bare digest.
+            digest = self.password_or_hash
+            if digest.startswith("md5"):
+                digest = digest[3:]
+            salt = self.salt.replace(":", "").replace(",", "").lower()
+            return f"$postgres${self.username}*{salt}*{digest}"
         return ""
 
     @property
@@ -1472,21 +1482,15 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
     def get_hashcat_hashes(self) -> List[str]:
         """Get MD5 credentials in hashcat-compatible format.
 
-        PostgreSQL MD5 hash = "md5" + md5(md5(password + user) + salt)
-        The wire value already includes the "md5" prefix.
-
-        Hashcat mode 12 handles raw MD5 hashes; for PostgreSQL-specific
-        cracking use ``dynamic_1034`` in John the Ripper or a custom rule.
+        PostgreSQL MD5 hash = "md5" + md5(md5(password + user) + salt).
+        Emits hashcat mode 11100: ``$postgres$user*salt*hash``.
 
         Returns:
-            List of hash strings in format: username:hash:salt
+            List of mode-11100 hash strings.
         """
-        hashes = []
-        for cred in self.credentials:
-            if cred.auth_type == "md5" and cred.password_or_hash:
-                salt_hex = cred.salt or ""
-                hashes.append(f"{cred.username}:{cred.password_or_hash}:{salt_hex}")
-        return hashes
+        # Delegate to the per-credential hashcat_format property so the format
+        # stays consistent (it returns "" for entries with no crackable line).
+        return [cred.hashcat_format for cred in self.credentials if cred.hashcat_format]
 
     def harvest(self) -> Dict[str, Any]:
         """Return structured harvest data.

@@ -45,16 +45,21 @@ class TestHashcatExport:
 
     @requires_pyshark
     def test_http_digest_hashcat_format(self):
-        """HTTP Digest get_hashcat_hashes() returns $digest-md5$ prefix."""
+        """HTTP Digest get_hashcat_hashes() returns John `hdaa` format lines.
+
+        hashcat has no HTTP-digest mode; the crackable format is John's hdaa
+        (``user:$response$...``), NOT the bogus ``$digest-md5$``.
+        """
         listener = _get_listener_direct(
             FIXTURES_ROOT / "http" / "bruteshark_http_digest.pcap", "http"
         )
         hashes = listener.get_hashcat_hashes()
         if hashes:
             for h in hashes:
-                assert h.startswith("$digest-md5$"), (
-                    f"HTTP digest hash should start with $digest-md5$, got: {h[:40]}"
+                assert ":$response$" in h, (
+                    f"HTTP digest hash should be John hdaa (':$response$'), got: {h[:60]}"
                 )
+                assert "$digest-md5$" not in h, "the fabricated $digest-md5$ format must be gone"
 
     @requires_pyshark
     def test_vnc_hashcat_format(self):
@@ -122,7 +127,10 @@ class TestKerberosRepServerPort:
             "etype": "23",
             "CNameString": "alice",
             "realm": "CORP.EXAMPLE.COM",
-            "encryptedTicketData_cipher": "de:ad:be:ef",
+            # The listener selects the crackable blob from kerberos.cipher
+            # occurrences via _cipher_occurrences(), which reads the "cipher"
+            # attribute (a Kerberos reply exposes the enc-parts under that name).
+            "cipher": "de:ad:be:ef",
         }
         if sname is not None:
             fields["SNameString"] = sname
@@ -335,9 +343,13 @@ class TestKerberosHashesSummaryPairing:
     """
 
     @staticmethod
-    def _hash(hash_type, etype, username, *, service_name="", hash_value="de:ad:be:ef"):
+    def _hash(hash_type, etype, username, *, service_name="", hash_value=None):
         from oida.pcap.kerberos import KerberosHash
 
+        # A realistic enc-part length so hashcat_format's checksum split applies
+        # (RC4 needs > 32 hex, AES > 24). 80 hex chars satisfies both.
+        if hash_value is None:
+            hash_value = "ab" * 40
         return KerberosHash(
             hash_type=hash_type,
             etype=etype,
@@ -349,24 +361,23 @@ class TestKerberosHashesSummaryPairing:
             client_ip="10.0.0.50",
         )
 
-    def test_as_req_aes_etype_does_not_shift_pairing(self):
+    def test_unsupported_etype_does_not_shift_pairing(self):
         from oida.pcap.kerberos import KerberosPassiveListener
 
         listener = KerberosPassiveListener(interface="lo", timeout=1)
 
-        # An AS-REQ with AES etype 18 produces NO hashcat line (only etype 23
-        # AS-REQ pre-auth is crackable), yet _process_as_req still records it.
-        # Ordered BEFORE the crackable AS-REP/TGS-REP, this is what used to
-        # corrupt the positional index.
+        # An AS-REP with an unsupported etype (1 = DES) produces NO hashcat line,
+        # yet is still recorded. Ordered BEFORE the crackable AS-REP/TGS-REP,
+        # this is what used to corrupt the positional index.
         listener.hashes = [
-            self._hash("AS-REQ", 18, "gap"),  # no hashcat line
+            self._hash("AS-REP", 1, "gap"),  # unsupported etype -> no hashcat line
             self._hash("AS-REP", 23, "alice"),
             self._hash("TGS-REP", 23, "bob", service_name="HTTP/web.corp"),
         ]
 
         summary = {e["username"]: e for e in listener.get_hashes_summary()}
 
-        # The non-crackable AS-REQ (AES) gets no hashcat line of its own.
+        # The non-crackable entry gets no hashcat line of its own.
         assert summary["gap"]["hashcat_format"] == ""
 
         # The crux: each crackable hash carries ITS OWN hashcat line.
@@ -384,7 +395,7 @@ class TestKerberosHashesSummaryPairing:
 
         listener = KerberosPassiveListener(interface="lo", timeout=1)
         listener.hashes = [
-            self._hash("AS-REQ", 18, "gap"),
+            self._hash("AS-REP", 1, "gap"),  # unsupported etype -> no line
             self._hash("AS-REQ", 23, "preauth"),
             self._hash("AS-REP", 23, "alice"),
         ]
@@ -393,7 +404,7 @@ class TestKerberosHashesSummaryPairing:
         assert listener.get_hashcat_hashes() == [
             h.hashcat_format for h in listener.hashes if h.hashcat_format
         ]
-        # The AES AS-REQ contributes nothing.
+        # The unsupported-etype entry contributes nothing.
         assert len(listener.get_hashcat_hashes()) == 2
 
 

@@ -42,7 +42,12 @@ RUN sed -i 's@#include "bacnet/basic/object/device.h"@#include "bacnet/basic/obj
 
 # Build the BACnet/IP datalink server (bacserv). LEGACY=true matches the
 # build target used elsewhere in this repo for this app.
-RUN make BACDL=bip LEGACY=true -s -C apps server && \
+#
+# MAKE_DEFINE=-DBACFILE=1 enables the File object (AtomicReadFile/WriteFile):
+# upstream only defines BACFILE for the BSC datalink, so a plain BACDL=bip build
+# compiles bacfile.c but excludes OBJECT_FILE from the device object-table and
+# drops the file-service handlers. The building profile's File objects need it.
+RUN make BACDL=bip LEGACY=true MAKE_DEFINE=-DBACFILE=1 -s -C apps server && \
     test -x apps/server/bacserv && \
     cp apps/server/bacserv /usr/local/bin/bacserv
 

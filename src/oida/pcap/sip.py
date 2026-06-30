@@ -64,12 +64,47 @@ class SIPDigestCredential:
 
     @property
     def hashcat_format(self) -> str:
-        """Hashcat-compatible hash string (mode 11400)."""
-        return (
-            f"$sip$*{self.uri}*{self.realm}*{self.username}*"
-            f"{self.nonce}*{self.nc}*{self.cnonce}*{self.qop}*"
-            f"{self.method}*{self.response}"
-        )
+        """Hashcat-compatible hash string (mode 11400, SIP digest).
+
+        hashcat 11400 needs 14 ``*``-separated fields after ``$sip$*`` (verified
+        against hashcat module_11400.c and the example_hashes vector):
+
+            server*client*user*realm*method*URI_prefix*URI_resource*URI_suffix*
+            nonce*cnonce*nc*qop*directive*response
+
+        The digest request-URI (e.g. ``sip:host``) is split into
+        prefix/resource/suffix; hashcat rebuilds ``prefix:resource+suffix``.
+        server/client URIs and the directive are metadata (not part of the MD5),
+        so only user/realm/method/URI/nonce/cnonce/nc/qop/response must be right.
+        """
+        if not (self.response and self.nonce):
+            return ""
+        uri = self.uri or ""
+        if ":" in uri:
+            uri_prefix, uri_resource = uri.split(":", 1)
+        else:
+            uri_prefix, uri_resource = "sip", uri
+        uri_suffix = ""
+        directive = self.algorithm or "MD5"
+        fields = [
+            self.server_ip,
+            self.client_ip,
+            self.username,
+            self.realm,
+            self.method,
+            uri_prefix,
+            uri_resource,
+            uri_suffix,
+            self.nonce,
+            self.cnonce,
+            self.nc,
+        ]
+        # hashcat 11400 OMITS the qop field for RFC2069 (no-qop) digests rather
+        # than leaving an empty slot; it is only present for qop=auth/auth-int.
+        if self.qop:
+            fields.append(self.qop)
+        fields += [directive, self.response]
+        return "$sip$*" + "*".join(fields)
 
     @property
     def credential_type(self) -> str:
@@ -664,18 +699,12 @@ class SIPPassiveListener(PySharkListenerBase):
         return result
 
     def get_hashcat_hashes(self) -> List[str]:
-        """Get SIP Digest hashes in hashcat-compatible format.
+        """Get SIP Digest hashes in hashcat mode-11400 format.
 
-        Hashcat mode 11400: SIP digest authentication (same as HTTP Digest).
+        Delegates to the per-credential property (14-field layout) so the format
+        stays consistent and incomplete entries are skipped.
         """
-        result = []
-        for cred in self.credentials:
-            result.append(
-                f"$sip$*{cred.uri}*{cred.realm}*{cred.username}*"
-                f"{cred.nonce}*{cred.nc}*{cred.cnonce}*{cred.qop}*"
-                f"{cred.method}*{cred.response}"
-            )
-        return result
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]
 
     def get_calls_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all tracked calls."""

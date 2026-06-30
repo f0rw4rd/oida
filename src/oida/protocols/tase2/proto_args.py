@@ -34,7 +34,7 @@ Scan TASE.2/ICCP servers used for inter-control center communications
 in the electric utility industry. Supports discovery of domains (VCC/ICC),
 data points, transfer sets, and control operations.
 
-Requires: pyiec61850-ng (pip install pyiec61850-ng)
+Requires: pyiec61850-ng (pip install oida[tase2])
         """,
         parents=parents,
     )
@@ -375,5 +375,5 @@ Examples:
   oida tase2 192.168.1.100 --read-message ICC1/OperatorMessages/MSG001
   oida tase2 192.168.1.100 --test-im
 
-Note: Requires pyiec61850-ng. Install with: pip install pyiec61850-ng
+Note: Requires pyiec61850-ng. Install with: pip install oida[tase2]
 """

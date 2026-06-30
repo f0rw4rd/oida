@@ -144,7 +144,7 @@ def encode_ber_object_identifier(oid_string: str, tag_value: int = 0x06) -> byte
 
     Examples:
         >>> encode_ber_object_identifier("1.0.9506.2.3").hex()
-        '0605280ca22203'
+        '060528ca220203'
     """
     if tag_value == ASN1Tag.OBJECT_IDENTIFIER:
         return _builder.build_object_identifier(oid_string)
@@ -197,7 +197,7 @@ def encode_ber_context_tag(tag_number: int, contents: bytes, constructed: bool =
         >>> encode_ber_context_tag(0, b'\\x01', False).hex()
         '800101'
         >>> encode_ber_context_tag(1, encode_ber_integer(42), True).hex()
-        'a104020102a'
+        'a10302012a'
     """
     if tag_number > 30:
         raise ValueError("Tag numbers > 30 require long form (not yet implemented)")

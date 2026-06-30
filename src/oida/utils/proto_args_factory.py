@@ -349,6 +349,7 @@ def add_dangerous_options(
     include_write: bool = False,
     fuzz_default_iterations: int = 10,
     group_name: str | None = None,
+    include_max_targets: bool = True,
 ):
     """
     Add active testing options group (fuzzing, write, control operations).
@@ -362,6 +363,10 @@ def add_dangerous_options(
         include_write: Whether to include write operation arguments
         fuzz_default_iterations: Default number of fuzz iterations
         group_name: Override the argument group name (default: auto-detect)
+        include_max_targets: Whether to include --fuzz-max-targets. Protocols
+            that fuzz a single fixed target (e.g. IEC 104 fuzzes one --fuzz-ioa)
+            never read it, so they pass ``False`` rather than advertise a dead
+            flag. Only meaningful when ``include_fuzz`` is True.
 
     Returns:
         argparse._ArgumentGroup: The options group for further customization
@@ -395,13 +400,14 @@ def add_dangerous_options(
             help=f"Number of fuzz iterations per target (default: {fuzz_default_iterations})",
         )
 
-        dangerous_group.add_argument(
-            "--fuzz-max-targets",
-            type=int,
-            default=10,
-            metavar="N",
-            help="Maximum number of targets to fuzz (default: 10)",
-        )
+        if include_max_targets:
+            dangerous_group.add_argument(
+                "--fuzz-max-targets",
+                type=int,
+                default=10,
+                metavar="N",
+                help="Maximum number of targets to fuzz (default: 10)",
+            )
 
     if include_write:
         dangerous_group.add_argument(
@@ -835,6 +841,7 @@ def add_brute_options(
     include_wordlist: bool = True,
     include_rate: bool = True,
     default_rate: float = 1.0,
+    include_brute: bool = True,
 ):
     """
     Add credential brute-force options group.
@@ -844,17 +851,22 @@ def add_brute_options(
         include_wordlist: Whether to include --wordlist argument
         include_rate: Whether to include rate limiting argument
         default_rate: Default attempts per second
+        include_brute: Whether to include the --brute toggle. Protocols whose
+            brute-force is driven by file inputs (e.g. OPC UA's
+            ``--username FILE``/``--password FILE``) and never read ``--brute``
+            should pass ``False`` so the flag isn't advertised as a dead option.
 
     Returns:
         argparse._ArgumentGroup: The brute-force options group
     """
     brute_group = parser.add_argument_group("Credential Testing")
 
-    brute_group.add_argument(
-        "--brute",
-        action="store_true",
-        help="Enable credential brute-force",
-    )
+    if include_brute:
+        brute_group.add_argument(
+            "--brute",
+            action="store_true",
+            help="Enable credential brute-force",
+        )
 
     brute_group.add_argument(
         "--default-creds",
@@ -914,12 +926,6 @@ def add_control_options(parser, confirm_required: bool = True):
         "--cpu-stop",
         action="store_true",
         help=f"Stop CPU/PLC execution{confirm_note}",
-    )
-
-    control_group.add_argument(
-        "--restart",
-        action="store_true",
-        help=f"Restart device{confirm_note}",
     )
 
     return control_group

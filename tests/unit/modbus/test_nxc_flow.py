@@ -31,9 +31,13 @@ class FakeLogger:
         self.display_msgs = []
         self.warning_msgs = []
         self.fail_msgs = []
+        self.findings = []
 
     def display(self, msg=""):
         self.display_msgs.append(msg)
+
+    def security_finding(self, title, category="", detail=""):
+        self.findings.append({"title": title, "category": str(category), "detail": detail})
 
     def warning(self, msg):
         self.warning_msgs.append(msg)

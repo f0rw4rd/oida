@@ -659,6 +659,82 @@ class TestPrintTable(unittest.TestCase):
         result = print_table([], ["A", "B"])
         self.assertTrue(result)
 
+    @staticmethod
+    def _capture(rows, headers, **kwargs):
+        """Run print_table and return the joined console output."""
+        logger = MagicMock()
+        lines = []
+        logger.display = MagicMock(side_effect=lines.append)
+        logger.prefix_width = 0
+        print_table(rows, headers, logger=logger, **kwargs)
+        return "\n".join(lines)
+
+    def test_print_table_keeps_rows_differing_in_first_column(self):
+        """Regression: rows differing only in the first (non-index) column must
+        NOT be collapsed as identical. The first column here is real data
+        (Username), not a throwaway '#' index."""
+        headers = [
+            "Username",
+            "Security Level",
+            "Auth Protocol",
+            "Auth Password",
+            "Priv Protocol",
+            "Priv Password",
+        ]
+        rows = [
+            ["admin", "authRequired", "", "", "", ""],
+            ["operator", "authRequired", "", "", "", ""],
+            ["engineer", "authRequired", "", "", "", ""],
+            ["monitor", "authRequired", "", "", "", ""],
+        ]
+        out = self._capture(rows, headers)
+        self.assertNotIn("identical row", out)
+        for name in ("admin", "operator", "engineer", "monitor"):
+            self.assertIn(name, out)
+
+    def test_print_table_compresses_long_identical_run(self):
+        """A genuine '#' index + 'Details' table collapses rows that are
+        identical in their structural columns -- but only once the run exceeds
+        the collapse threshold (10). The first row prints, the rest summarize."""
+        headers = ["#", "Type", "Value", "Details"]
+        rows = [[str(i), "foo", "bar", f"detail-{i}"] for i in range(13)]
+        out = self._capture(rows, headers)
+        self.assertIn("identical row", out)
+        self.assertIn("detail-0", out)
+        self.assertNotIn("detail-12", out)
+
+    def test_print_table_keeps_short_identical_run(self):
+        """A short run of structurally-identical rows (<= threshold) is printed
+        in full instead of being collapsed, so a handful of repeats stay
+        visible with their individual index/detail columns."""
+        headers = ["#", "Type", "Value", "Details"]
+        rows = [
+            ["1", "foo", "bar", "detail-a"],
+            ["2", "foo", "bar", "detail-b"],
+            ["3", "foo", "bar", "detail-c"],
+        ]
+        out = self._capture(rows, headers)
+        self.assertNotIn("identical row", out)
+        self.assertIn("detail-a", out)
+        self.assertIn("detail-b", out)
+        self.assertIn("detail-c", out)
+
+    def test_print_table_full_width_disables_compression(self):
+        """--full-width / full_width config shows every row verbatim."""
+        headers = ["#", "Type", "Value", "Details"]
+        rows = [
+            ["1", "foo", "bar", "detail-a"],
+            ["2", "foo", "bar", "detail-b"],
+        ]
+        _config["full_width"] = True
+        try:
+            out = self._capture(rows, headers)
+        finally:
+            _config["full_width"] = False
+        self.assertNotIn("identical row", out)
+        self.assertIn("detail-a", out)
+        self.assertIn("detail-b", out)
+
 
 class TestIntegration(unittest.TestCase):
     """Integration tests for export workflow"""

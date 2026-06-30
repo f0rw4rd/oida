@@ -24,26 +24,6 @@
   "dns.py": {
     "qr": "broken"
   },
-  "eigrp.py": {
-    "ip_int_dest": "broken",
-    "ip_int_prefix_len": "broken",
-    "sw_version_eigrp_major": "broken",
-    "sw_version_eigrp_minor": "broken",
-    "sw_version_ios_major": "broken",
-    "sw_version_ios_minor": "broken"
-  },
-  "glbp.py": {
-    "auth_authstring": "broken",
-    "forwarder_fwd_number": "broken",
-    "forwarder_fwd_state": "broken",
-    "forwarder_fwd_virtual_mac": "broken",
-    "forwarder_fwd_weight": "broken",
-    "hello_hellotime": "broken",
-    "hello_holdtime": "broken",
-    "hello_vg_state": "broken",
-    "hello_virtual_ipv4": "broken",
-    "hello_virtual_ipv6": "broken"
-  },
   "http.py": {
     "x_powered_by": "broken"
   },
@@ -104,17 +84,8 @@
     "service_type_selection": "synthetic"
   },
   "ptp.py": {
-    "v2_an_gm_clockaccuracy": "broken",
-    "v2_an_gm_clockclass": "broken",
-    "v2_an_gm_clockidentity": "broken",
-    "v2_an_gm_offsetscaledlogvariance": "broken",
-    "v2_an_gm_priority1": "broken",
-    "v2_an_gm_priority2": "broken",
-    "v2_an_stepsremoved": "broken",
     "v2_an_timesource": "broken",
-    "v2_correctionns": "broken",
-    "v2_messageid": "broken",
-    "v2_mm_managementid": "broken"
+    "v2_messageid": "broken"
   },
   "sip.py": {
     "rtpmap_encoding_name": "broken"

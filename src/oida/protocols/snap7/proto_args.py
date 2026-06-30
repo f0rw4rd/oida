@@ -326,8 +326,13 @@ Examples:
         help="Output file for --upload-db or --upload-block",
     )
 
-    # CPU Control (--cpu-start, --cpu-stop, --restart)
+    # CPU Control (--cpu-start, --cpu-stop)
     control_group = add_control_options(s7_parser)
+    control_group.add_argument(
+        "--restart",
+        action="store_true",
+        help="Restart CPU (cold restart, equivalent to power-cycle; requires --confirm)",
+    )
     control_group.add_argument(
         "--cpu-hot-start",
         action="store_true",

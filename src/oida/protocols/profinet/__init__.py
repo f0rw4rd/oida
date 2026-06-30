@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 from ...connection import NetworkConnection
 from ...utils.lazy_import import lazy_import
 from ...utils.permissions import check_raw_socket_capability
+from oida.utils.common_types import Category
 from .gsdml_parser import parse_gsdml, GSDMLDevice
 from .models import ProfinetDevice
 from .mixins import RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin
@@ -80,7 +81,7 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         """Main protocol execution flow."""
 
         if not _profinet.is_available:
-            self.logger.fail("profinet-py not installed (pip install profinet-py)")
+            self.logger.fail("profinet-py not installed (pip install oida[profinet])")
             return
 
         if self.rpc_only:
@@ -203,6 +204,12 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         finally:
             con.close()
 
+        # Confirmed device: RPC connection succeeded above (failures return early).
+        self.logger.security_finding(
+            "No encryption",
+            category=Category.ENCRYPTION,
+            detail="PROFINET has no transport encryption",
+        )
         self.discovered_devices[device.ip_address] = device
 
     def enum_host_info(self):
@@ -305,6 +312,12 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
 
     def _display_device(self, device: ProfinetDevice):
         """Display device info in NXC style."""
+        # Confirmed device discovery via DCP (per-scan dedup collapses the loop).
+        self.logger.security_finding(
+            "No encryption",
+            category=Category.ENCRYPTION,
+            detail="PROFINET has no transport encryption",
+        )
         if device.ip_address and device.ip_address != "0.0.0.0":
             name_part = f" ({device.name_of_station})" if device.name_of_station else ""
             self.logger.success(f"{device.ip_address}{name_part} - {device.mac_address}")

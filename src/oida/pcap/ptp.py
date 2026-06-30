@@ -51,7 +51,7 @@ tshark fields used:
 - ptp.v2.an.gm.offsetscaledlogvariance: Grandmaster variance (FT_UINT16)
 - ptp.v2.an.stepsremoved: Steps removed (FT_UINT16)
 - ptp.v2.an.timesource: Time source (FT_UINT8)
-- ptp.v2.mm.managementid: Management message ID (FT_UINT16)
+- ptp.v2.mm.managementId: Management message ID (FT_UINT16)
 - ptp.v2.mm.action: Management action (FT_UINT8)
 
 Security notes:
@@ -278,7 +278,7 @@ class PTPPassiveListener(PySharkListenerBase):
         clock_id = str(self.get_field(ptp_layer, "v2_clockidentity") or "")
         port_num = self._parse_int(self.get_field(ptp_layer, "v2_sourceportid"), 0)
         seq_id = self._parse_int(self.get_field(ptp_layer, "v2_sequenceid"), 0)
-        correction_ns = self.get_field(ptp_layer, "v2_correctionns")
+        correction_ns = self.get_field(ptp_layer, "v2_correction_ns")
         log_interval = self.get_field(ptp_layer, "v2_logmessageperiod")
 
         # Flags
@@ -366,15 +366,18 @@ class PTPPassiveListener(PySharkListenerBase):
         details: Dict[str, Any],
     ) -> str:
         """Process PTP Announce message and extract grandmaster info."""
-        gm_clock_id = str(self.get_field(ptp_layer, "v2_an_gm_clockidentity") or "")
-        gm_p1 = self._parse_int(self.get_field(ptp_layer, "v2_an_gm_priority1"), 255)
-        gm_p2 = self._parse_int(self.get_field(ptp_layer, "v2_an_gm_priority2"), 255)
-        gm_class = self._parse_int(self.get_field(ptp_layer, "v2_an_gm_clockclass"), 255)
-        gm_accuracy = self._parse_int(self.get_field(ptp_layer, "v2_an_gm_clockaccuracy"), 0xFE)
-        gm_variance = self._parse_int(
-            self.get_field(ptp_layer, "v2_an_gm_offsetscaledlogvariance"), 0xFFFF
+        gm_clock_id = str(self.get_field(ptp_layer, "v2_an_grandmasterclockidentity") or "")
+        gm_p1 = self._parse_int(self.get_field(ptp_layer, "v2_an_priority1"), 255)
+        gm_p2 = self._parse_int(self.get_field(ptp_layer, "v2_an_priority2"), 255)
+        gm_class = self._parse_int(self.get_field(ptp_layer, "v2_an_grandmasterclockclass"), 255)
+        gm_accuracy = self._parse_int(
+            self.get_field(ptp_layer, "v2_an_grandmasterclockaccuracy"), 0xFE
         )
-        steps_removed = self._parse_int(self.get_field(ptp_layer, "v2_an_stepsremoved"), 0)
+        gm_variance = self._parse_int(
+            self.get_field(ptp_layer, "v2_an_grandmasterclockvariance"), 0xFFFF
+        )
+        steps_removed = self._parse_int(self.get_field(ptp_layer, "v2_an_localstepsremoved"), 0)
+        # Announce has no dedicated tshark timeSource field; left as default.
         time_source = self._parse_int(self.get_field(ptp_layer, "v2_an_timesource"), 0)
 
         # Update clock's grandmaster info
@@ -426,7 +429,7 @@ class PTPPassiveListener(PySharkListenerBase):
         details: Dict[str, Any],
     ) -> None:
         """Process PTP Management message."""
-        mgmt_id_raw = self.get_field(ptp_layer, "v2_mm_managementid")
+        mgmt_id_raw = self.get_field(ptp_layer, "v2_mm_managementId")
         mgmt_id = self._parse_int(mgmt_id_raw, None)
         action_raw = self.get_field(ptp_layer, "v2_mm_action")
         action_val = self._parse_int(action_raw, None)

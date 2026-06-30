@@ -71,6 +71,26 @@ class OSPFCredential:
     crypt_key_id: str = ""  # MD5 key identifier
     crypt_data_length: str = ""  # MD5 auth data length in octets
     crypt_seq_nbr: str = ""  # Cryptographic sequence number (replay detection)
+    net_salt: str = ""  # OSPF packet hex WITHOUT the digest trailer (net-md5 salt)
+
+    @property
+    def hashcat_format(self) -> str:
+        """John the Ripper net-md5 / net-sha1 line for OSPF crypto auth.
+
+        ``$netmd5$<packet-without-digest>$<digest>`` where the salt is the OSPF
+        packet bytes up to (not including) the appended keyed digest; JtR
+        computes ``MD5(salt || key_padded_16)``. hashcat has no mode for this.
+        Verified against JtR's net-md5 format (cracks a re-keyed OSPF fixture).
+        Returns "" unless the raw packet salt + digest are both present.
+        """
+        if self.credential_type != "hash" or not self.net_salt or not self.auth_data:
+            return ""
+        digest = self.auth_data.replace(":", "").lower()
+        if len(digest) == 32:  # 16-byte MD5
+            return f"$netmd5${self.net_salt}${digest}"
+        if len(digest) == 40:  # 20-byte SHA-1 (OSPF HMAC-SHA1)
+            return f"$netsha1${self.net_salt}${digest}"
+        return ""
 
     @property
     def username(self) -> str:
@@ -226,8 +246,17 @@ class OSPFPassiveListener(PySharkListenerBase):
         if auth_type == 0:
             self.get_field(ospf, "auth_none", None)
 
+        # Raw OSPF packet bytes (the net-md5 salt source) -- only present when
+        # the pipeline runs with include_raw (enabled for routing listeners).
+        raw_layer = getattr(packet, "ospf_raw", None)
+        ospf_raw_hex = ""
+        if raw_layer is not None:
+            ospf_raw_hex = str(getattr(raw_layer, "value", "") or "").replace(":", "").lower()
+
         # Extract authentication credentials (includes T1 crypto fields)
-        self._extract_credentials(ospf, auth_type, auth_type_name, src_ip, router_id, area_id)
+        self._extract_credentials(
+            ospf, auth_type, auth_type_name, src_ip, router_id, area_id, ospf_raw_hex
+        )
 
         # Parse Hello-specific fields (msg_type == 1)
         hello_info: Dict[str, Any] = {}
@@ -362,6 +391,7 @@ class OSPFPassiveListener(PySharkListenerBase):
         src_ip: str,
         router_id: str,
         area_id: str,
+        ospf_raw_hex: str = "",
     ) -> None:
         """Extract authentication credentials from OSPF packet."""
         if auth_type == 1:
@@ -406,6 +436,15 @@ class OSPFPassiveListener(PySharkListenerBase):
                     seq_nbr = "?"
                     self.logger.debug(f"Missing auth_crypt_seq_nbr in MD5 packet from {src_ip}")
 
+                # net-md5 salt = OSPF packet bytes WITHOUT the appended digest.
+                # The digest is the trailing N bytes (N = crypt data length); the
+                # OSPF header length field already excludes it, so strip the last
+                # len(digest) hex chars from the raw packet.
+                net_salt = ""
+                digest_clean = crypt_data.replace(":", "").lower()
+                if ospf_raw_hex and digest_clean and ospf_raw_hex.endswith(digest_clean):
+                    net_salt = ospf_raw_hex[: -len(digest_clean)]
+
                 cred_key = (src_ip, auth_type, crypt_data)
                 if cred_key not in self._seen_creds:
                     self._seen_creds.add(cred_key)
@@ -421,6 +460,7 @@ class OSPFPassiveListener(PySharkListenerBase):
                         crypt_key_id=key_id,
                         crypt_data_length=data_length,
                         crypt_seq_nbr=seq_nbr,
+                        net_salt=net_salt,
                     )
                     self.credentials.append(cred)
                     self.logger.info(
@@ -543,3 +583,12 @@ class OSPFPassiveListener(PySharkListenerBase):
                 entry["crypt_seq_nbr"] = cred.crypt_seq_nbr
             result.append(entry)
         return result
+
+    def get_hashcat_hashes(self) -> List[str]:
+        """Get OSPF crypto-auth hashes as John net-md5/net-sha1 lines.
+
+        (hashcat has no OSPF mode; these crack with ``john --format=net-md5``.)
+        Requires the pipeline to run with include_raw so the packet salt is
+        available; entries without it yield "" and are skipped.
+        """
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]

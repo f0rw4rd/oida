@@ -9,9 +9,11 @@ Run:
     pytest tests/integration/test_binary_smoke.py -v -m binary
 """
 
+import importlib.util
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -92,11 +94,8 @@ def _is_frozen_diag_traceback(stderr):
     return all("_discover_frozen" in block or "FROZEN_DIAG" in block for block in blocks)
 
 
-@pytest.fixture(scope="session")
-def oida_bin():
-    """Resolve dist/oida binary, skip all tests if it doesn't exist."""
-    project_root = Path(__file__).resolve().parent.parent.parent
-    dist = project_root / "dist"
+def _resolve_binary(dist):
+    """Return the first existing, executable oida binary under dist/, or None."""
     candidates = [
         # onedir (COLLECT) layout — the shipped, non-invasive build.
         dist / "oida" / "oida",
@@ -108,8 +107,64 @@ def oida_bin():
     for p in candidates:
         if p.is_file() and os.access(p, os.X_OK):
             return p
+    return None
 
-    pytest.skip("Binary not found in dist/ (run: pyinstaller oida.spec --clean)")
+
+def _build_binary(project_root):
+    """Build dist/oida via PyInstaller. Hard-fail (not skip) on any problem."""
+    if importlib.util.find_spec("PyInstaller") is None:
+        pytest.fail(
+            "PyInstaller is not installed in this environment, so the release "
+            "binary cannot be built for the smoke suite. Install it with "
+            "`uv pip install pyinstaller` (it is intentionally not a runtime "
+            "or dev dependency), then re-run."
+        )
+
+    spec = project_root / "oida.spec"
+    if not spec.is_file():
+        pytest.fail(f"oida.spec not found at {spec}; cannot build the binary.")
+
+    # Mirror the CI invocation: pyinstaller oida.spec --clean --noconfirm
+    cmd = [sys.executable, "-m", "PyInstaller", str(spec), "--clean", "--noconfirm"]
+    proc = subprocess.run(
+        cmd,
+        cwd=str(project_root),
+        capture_output=True,
+        text=True,
+        timeout=900,
+    )
+    if proc.returncode != 0:
+        tail = "\n".join((proc.stdout + proc.stderr).strip().splitlines()[-40:])
+        pytest.fail(
+            f"PyInstaller build failed (exit {proc.returncode}):\n{tail}"
+        )
+
+
+@pytest.fixture(scope="session")
+def oida_bin():
+    """Resolve dist/oida, auto-building it via PyInstaller if it's missing.
+
+    The smoke suite is a hard gate: if the binary isn't present we build it
+    rather than skip, and surface a real test failure if the build can't be
+    produced. This keeps `pytest tests/` honest about release-binary health.
+    """
+    project_root = Path(__file__).resolve().parent.parent.parent
+    dist = project_root / "dist"
+
+    found = _resolve_binary(dist)
+    if found is not None:
+        return found
+
+    _build_binary(project_root)
+
+    built = _resolve_binary(dist)
+    if built is None:
+        pytest.fail(
+            "PyInstaller build reported success but no executable oida binary "
+            f"was found under {dist}. Expected dist/oida/oida (onedir) or "
+            "dist/oida (onefile)."
+        )
+    return built
 
 
 @pytest.mark.binary

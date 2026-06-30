@@ -207,7 +207,7 @@ def parse_knxproj(file_path: str, password: Optional[str] = None) -> Dict[str, A
     logger.debug(f"Parsing knxproj: {file_path}, password={'set' if password else 'none'}")
     XKNXProj = _get_xknxproject()
     if XKNXProj is None:
-        raise ImportError("xknxproject not installed (pip install xknxproject)")
+        raise ImportError("xknxproject not installed (pip install oida[knx])")
 
     proj = XKNXProj(Path(file_path), password=password)
     data = proj.parse()

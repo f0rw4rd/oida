@@ -3,6 +3,7 @@
 """HART NXC-style callable class."""
 
 from ...connection import NetworkConnection
+from ...utils.common_types import Category
 from ...utils.lazy_import import lazy_import
 from .scanner import HARTScanner, PhysicalSignaling
 from .hartip import get_device_type_name
@@ -287,16 +288,21 @@ class hart(NetworkConnection):
             if protocol_rev <= 5:
                 self.logger.security_finding(
                     "Outdated protocol version",
-                    f"HART rev {protocol_rev} - NO encryption or authentication",
+                    category=Category.PROTOCOL_EXPOSURE,
+                    detail=f"HART rev {protocol_rev} - NO encryption or authentication",
                 )
             elif protocol_rev == 6:
                 self.logger.security_finding(
-                    "Outdated protocol version", "HART 6 - No encryption, optional device lock"
+                    "Outdated protocol version",
+                    category=Category.PROTOCOL_EXPOSURE,
+                    detail="HART 6 - No encryption, optional device lock",
                 )
 
             if not write_protected:
                 self.logger.security_finding(
-                    "Writable access", "Write protection DISABLED - device is writable"
+                    "Writable access",
+                    category=Category.ACCESS_CONTROL,
+                    detail="Write protection DISABLED - device is writable",
                 )
         else:
             self.logger.warning("Could not retrieve device identification")
@@ -326,7 +332,8 @@ class hart(NetworkConnection):
                 self.logger.fail("  [!] NO ENCRYPTION - plaintext HART-IP")
                 self.logger.security_finding(
                     "No encryption",
-                    "No TLS/DTLS - plaintext HART-IP (required for conformance since 2020)",
+                    category=Category.ENCRYPTION,
+                    detail="No TLS/DTLS - plaintext HART-IP (required for conformance since 2020)",
                 )
 
         if device_info:
@@ -691,7 +698,9 @@ class hart(NetworkConnection):
 
         if lock_state == LockState.UNLOCKED:
             self.logger.security_finding(
-                "No authentication", "Device is UNLOCKED - configuration writable"
+                "No authentication",
+                category=Category.AUTHENTICATION,
+                detail="Device is UNLOCKED - configuration writable",
             )
         elif lock_state == LockState.LOCKED:
             self.logger.success("Device is LOCKED - configuration protected")
@@ -724,7 +733,11 @@ class hart(NetworkConnection):
 
         if result.get("success"):
             code = result.get("password", "")
-            self.logger.security_finding("Weak password", f"Device lock code found: '{code}'")
+            self.logger.security_finding(
+                "Weak password",
+                category=Category.AUTHENTICATION,
+                detail=f"Device lock code found: '{code}'",
+            )
         elif result.get("error"):
             self.logger.fail(f"Bruteforce failed: {result['error']}")
         else:

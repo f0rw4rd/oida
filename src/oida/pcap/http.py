@@ -71,11 +71,20 @@ class HTTPCredential:
 
     @property
     def hashcat_format(self) -> str:
-        """Hashcat-compatible hash string (mode 11400)."""
-        if self.auth_type == "Digest":
+        """John the Ripper `hdaa` format line for HTTP Digest auth.
+
+        ``user:$response$<response>$<user>$<realm>$<method>$<uri>$<nonce>$<nc>$<cnonce>$<qop>``
+
+        NOTE: hashcat has NO HTTP-digest mode (mode 11400 is SIP, signature
+        ``$sip$``, NOT ``$digest-md5$`` — which is not a real format for any
+        tool). HTTP Digest is cracked with ``john --format=hdaa``. Property name
+        kept for the generic credential-export hook. Verified against John's
+        HDAA_README example.
+        """
+        if self.auth_type == "Digest" and self.response and self.nonce:
             return (
-                f"$digest-md5${self.realm}${self.username}${self.method}${self.uri}$"
-                f"{self.nonce}${self.nc}${self.cnonce}${self.qop}${self.response}"
+                f"{self.username}:$response${self.response}${self.username}${self.realm}$"
+                f"{self.method}${self.uri}${self.nonce}${self.nc}${self.cnonce}${self.qop}"
             )
         return ""
 
@@ -749,20 +758,13 @@ class HTTPPassiveListener(PySharkListenerBase):
         return result
 
     def get_hashcat_hashes(self) -> List[str]:
-        """Get HTTP Digest hashes in hashcat-compatible format.
+        """Get HTTP Digest cracking lines in John the Ripper `hdaa` format.
 
-        Hashcat mode 11400: HTTP Digest authentication.
-        Format: $digest-md5$realm$user$method$uri$nonce$nc$cnonce$qop$response
+        hashcat has no HTTP-digest mode; HTTP Digest is cracked with
+        ``john --format=hdaa``. Delegates to the per-credential property so the
+        format stays consistent and incomplete entries are skipped.
         """
-        result = []
-        for cred in self.credentials:
-            if cred.auth_type == "Digest":
-                # Format for hashcat
-                result.append(
-                    f"$digest-md5${cred.realm}${cred.username}${cred.method}${cred.uri}$"
-                    f"{cred.nonce}${cred.nc}${cred.cnonce}${cred.qop}${cred.response}"
-                )
-        return result
+        return [cred.hashcat_format for cred in self.credentials if cred.hashcat_format]
 
     def get_url_map(self) -> Dict[str, List[Dict[str, Any]]]:
         """Get URL map: "ip:port" -> list of endpoint dicts sorted by hit_count desc."""

@@ -53,7 +53,10 @@ class TestPacketCoverage:
         # 1. Count packets via tshark (ground truth for the full pcap)
         tshark_count = _count_tshark_packets(pcap, display_filter, decode_as)
         if tshark_count == 0:
-            pytest.skip(f"tshark found 0 packets for filter '{display_filter}'")
+            pytest.skip(
+                f"tshark found 0 packets for filter '{display_filter}' "
+                f"in {case['pcap']} (module {case['module']})"
+            )
 
         # 2. Run listener (note: _load_packets caps at _MAX_TEST_PACKETS)
         mod = importlib.import_module(f"oida.pcap.{case['module']}")

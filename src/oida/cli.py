@@ -406,11 +406,19 @@ def gen_cli_args():
 
     # Custom parser class that shows subcommand help on errors
     class SubcommandHelpParser(argparse.ArgumentParser):
-        """Parser that shows subcommand-specific help on errors."""
+        """Parser that shows subcommand-specific help on errors.
+
+        On the *main* parser (``_is_main``) ``-h`` reuses the same colored,
+        domain-grouped protocol listing as the no-arg screen, instead of
+        argparse's flat ``{serial,fuzz,ads,...}`` dump. Subparsers created
+        from this class inherit the type but keep ``_is_main`` False, so
+        per-protocol ``oida <proto> -h`` renders normally.
+        """
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self._subparsers_action = None
+            self._is_main = False
 
         def error(self, message):
             """Show subcommand help when an error occurs in a subcommand."""
@@ -421,12 +429,48 @@ def gen_cli_args():
             else:
                 super().error(message)
 
+        def format_help(self):
+            """Render global options via argparse, then append the grouped,
+            colored protocol sections — keeping ``oida -h`` consistent with
+            the no-arg screen and free of the giant subparser-choices blob.
+            """
+            if not self._is_main:
+                return super().format_help()
+
+            formatter = self._get_formatter()
+            formatter.add_usage(self.usage, self._actions, self._mutually_exclusive_groups)
+            formatter.add_text(self.description)
+
+            # Render every argument group EXCEPT the subparsers group (the flat
+            # protocol dump) — that is replaced by the grouped sections below.
+            for action_group in self._action_groups:
+                if any(
+                    isinstance(a, argparse._SubParsersAction) for a in action_group._group_actions
+                ):
+                    continue
+                formatter.start_section(action_group.title)
+                formatter.add_text(action_group.description)
+                formatter.add_arguments(action_group._group_actions)
+                formatter.end_section()
+
+            parts = [_banner_str(), formatter.format_help()]
+            sections = _format_protocol_sections(self)
+            if sections is not None:
+                parts.append(sections)
+            parts.append(
+                f"Run {_c('oida <protocol> -h', 'yellow')} for protocol-specific options\n"
+            )
+            return "\n".join(parts)
+
     # Create main parser
     parser = SubcommandHelpParser(
         prog="oida",
-        description="Industrial Control Systems Security Testing Framework",
+        description="O.I.D.A. = OT / ICS Dynamic Assessment framework",
         epilog="For protocol-specific help: oida <protocol> --help",
     )
+    # Only the top-level parser gets the grouped/colored -h treatment; the
+    # dynamically created subparsers stay False (set in __init__).
+    parser._is_main = True
 
     # Global options
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -501,6 +545,7 @@ def gen_cli_args():
         title="Available Protocols",
         dest="protocol",
         required=True,
+        metavar="<protocol>",
         help="Protocol to use for scanning",
     )
 
@@ -654,8 +699,8 @@ def setup_logging(args):
         set_verbose(True)
 
 
-def print_banner():
-    """Print OIDA banner"""
+def _banner_str() -> str:
+    """Return the colored OIDA banner block (no trailing newline collapse)."""
     art = _c(
         "     ██████╗ ██╗██████╗  █████╗\n"
         "    ██╔═══██╗██║██╔══██╗██╔══██╗\n"
@@ -667,9 +712,14 @@ def print_banner():
         attrs=["bold"],
     )
     version = _c(f"v{__version__}", "dark_grey")
-    tagline = _c("Scan. Fuzz. Assess. Responsible in OT.", "white", attrs=["bold"])
+    tagline = _c("Scan. Fuzz. Assess. Responsibly in OT.", "white", attrs=["bold"])
     url = _c("https://getoida.dev", "blue")
-    print(f"\n{art}  {version}\n\n    {tagline}\n    {url}\n")
+    return f"\n{art}  {version}\n\n    {tagline}\n    {url}\n"
+
+
+def print_banner():
+    """Print OIDA banner"""
+    print(_banner_str())
 
 
 # Subcommands that are utilities, not scannable wire protocols. These are
@@ -740,36 +790,38 @@ def _subcommand_help(parser) -> Dict[str, Tuple[str, str]]:
     return result
 
 
-def _print_section(title: str, color: str, rows: List[Tuple[str, str]], width: int) -> None:
-    """Print one colored section header followed by its name/help rows."""
+def _section_str(title: str, color: str, rows: List[Tuple[str, str]], width: int) -> str:
+    """Build one colored section header followed by its name/help rows."""
     if not rows:
-        return
-    print(_c(title, color, attrs=["bold"]))
+        return ""
+    lines = [_c(title, color, attrs=["bold"])]
     for display, help_text in sorted(rows):
-        print(f"  {_c(display.ljust(width), color)}  {help_text}")
-    print("")
+        lines.append(f"  {_c(display.ljust(width), color)}  {help_text}")
+    lines.append("")
+    return "\n".join(lines)
 
 
-def _show_usage_and_exit(parser=None) -> int:
-    """Show grouped, colored usage information when no arguments provided."""
-    print_banner()
-    print(f"{_c('Usage:', 'yellow', attrs=['bold'])} oida <protocol> <target> [options]\n")
+def _format_protocol_sections(parser=None) -> Optional[str]:
+    """Build the grouped, colored protocol listing shared by the no-arg
+    screen and ``oida -h``.
 
+    Returns None when the protocol set cannot be enumerated, so callers can
+    fall back to a plain hint.
+    """
     subcommands = _subcommand_help(parser) if parser is not None else {}
     if not subcommands:
-        print("  (unable to enumerate protocols; run 'oida <protocol> -h')")
-        print("\nRun 'oida <protocol> -h' for protocol-specific options")
-        return 0
+        return None
 
     # Consistent column width across every section so help text lines up.
     width = max((len(display) for display, _ in subcommands.values()), default=0)
     categorized: set = set()
+    blocks: List[str] = []
 
     # Scannable protocols, grouped by domain.
     for title, color, names in _PROTOCOL_CATEGORIES:
         rows = [subcommands[n] for n in names if n in subcommands]
         categorized.update(n for n in names if n in subcommands)
-        _print_section(title, color, rows, width)
+        blocks.append(_section_str(title, color, rows, width))
 
     # Anything registered but not slotted into a category above (excluding
     # the tooling subcommands handled separately) — keeps new protocols visible.
@@ -780,7 +832,7 @@ def _show_usage_and_exit(parser=None) -> int:
         and name not in _CORE_TOOLING
         and name not in _NON_PROTOCOL_SUBCOMMANDS
     ]
-    _print_section("Other protocols", "white", other, width)
+    blocks.append(_section_str("Other protocols", "white", other, width))
 
     # Discovery / passive / fuzzing — not single-target wire scanners.
     tooling = [
@@ -788,8 +840,23 @@ def _show_usage_and_exit(parser=None) -> int:
         for n in (*sorted(_CORE_TOOLING), *sorted(_NON_PROTOCOL_SUBCOMMANDS))
         if n in subcommands
     ]
-    _print_section("Discovery & tooling", "blue", tooling, width)
+    blocks.append(_section_str("Discovery & tooling", "blue", tooling, width))
 
+    return "\n".join(b for b in blocks if b)
+
+
+def _show_usage_and_exit(parser=None) -> int:
+    """Show grouped, colored usage information when no arguments provided."""
+    print_banner()
+    print(f"{_c('Usage:', 'yellow', attrs=['bold'])} oida <protocol> <target> [options]\n")
+
+    sections = _format_protocol_sections(parser)
+    if sections is None:
+        print("  (unable to enumerate protocols; run 'oida <protocol> -h')")
+        print("\nRun 'oida <protocol> -h' for protocol-specific options")
+        return 0
+
+    print(sections)
     print(f"Run {_c('oida <protocol> -h', 'yellow')} for protocol-specific options")
     return 0
 
@@ -815,7 +882,7 @@ def _list_serial_ports(for_iec101: bool = False) -> int:
                 print(f"  {port.device}  - {desc} ({hwid})")
         return 0
     except ImportError:
-        logger.error("pyserial not available. Install with: pip install pyserial")
+        logger.error("pyserial not available. Install with: pip install oida[serial]")
         return 1
 
 

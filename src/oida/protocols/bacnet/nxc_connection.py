@@ -37,6 +37,8 @@ from .mixins import (
     MonitoringMixin,
     StateMixin,
     ExportMixin,
+    CallMixin,
+    SCMixin,
 )
 
 
@@ -51,26 +53,18 @@ class bacnet(
     MonitoringMixin,
     StateMixin,
     ExportMixin,
+    CallMixin,
+    SCMixin,
     NetworkConnection,
 ):
-    """BACnet/IP Protocol Scanner (NXC-style)"""
+    """BACnet Protocol Scanner (NXC-style).
 
-    # Mutating/injecting operations that --safe must force off. `write` is a
-    # str/None flag handled separately; everything here is a store_true flag.
-    _DANGEROUS_FLAGS = frozenset(
-        {
-            "test_write",
-            "check_reinit",
-            "check_oos",
-            "brute_force",
-            "test_dcc",
-            "test_priority_writes",
-            "test_time_sync",
-            "test_oos",
-            "test_reinit_pass",
-            "test_bbmd_injection",
-        }
-    )
+    Defaults to BACnet/IP over UDP. With ``--sc`` it instead rides the BACnet
+    application layer over BACnet/SC (Secure Connect: TLS 1.3 + X.509 over a
+    ``wss://`` WebSocket); see :class:`SCMixin`. Every inherited action
+    (ReadProperty, enumeration, ``--call``, ...) runs unchanged over either
+    transport.
+    """
 
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.protocol_name = "bacnet"
@@ -78,6 +72,13 @@ class bacnet(
         self.bacnet = None  # BAC0 connection
         self.devices = {}  # Discovered devices {device_id: device_info}
         self.objects = {}  # Enumerated objects {device_id: [objects]}
+        # --sc engages the BACnet/SC transport (SCMixin). It rewrites the
+        # wss:// target to a bare host (so the base resolves/labels it) and
+        # stashes the normalized URI + port on args; must run BEFORE the base
+        # __init__ resolves the host.
+        self._sc_mode = bool(getattr(args, "sc", False))
+        if self._sc_mode:
+            host = self._sc_init(args, host)
         super().__init__(args, db, host)
 
     def enum_host_info(self):
@@ -92,6 +93,10 @@ class bacnet(
 
     def print_host_info(self):
         """Print discovered BACnet device information"""
+        if getattr(self, "_sc_mode", False):
+            self._sc_print_host_info()
+            return
+
         if getattr(self.args, "quiet", False):
             return
 
@@ -114,6 +119,12 @@ class bacnet(
     def proto_flow(self):
         """Main BACnet scanning workflow"""
 
+        # BACnet/SC transport (--sc) reuses every inherited action but over a
+        # wss:// TLS link instead of UDP; dispatch to the SC flow (SCMixin).
+        if getattr(self, "_sc_mode", False):
+            self._sc_proto_flow()
+            return
+
         # Warm up the bacpypes3 lazy import on first use (faster CLI startup).
         # Mixins read types via _load_bacpypes3()[...] locals, so no global
         # injection is needed.
@@ -121,6 +132,12 @@ class bacnet(
 
         # Handle convenience shortcuts
         self._apply_shortcuts()
+
+        # --list-services is a pure catalog dump: no device, no connection.
+        # Checked after shortcuts so it short-circuits before any networking.
+        if getattr(self.args, "list_services", False):
+            self._handle_list_services()
+            return
 
         # Routing decision: bacpypes3 (raw UDP, fully asyncio-native) is
         # the default for all targets. BAC0 stays available as an
@@ -246,16 +263,6 @@ class bacnet(
             self.args.check_trendlogs = True
             self.args.enum_life_safety = True
             self.args.check_bacnet_sc = True
-
-        if getattr(self.args, "safe", False):
-            # --safe must suppress every mutating/injecting operation, not just
-            # the obvious writes. Anything that issues a write, time-sync,
-            # reinit, DCC or BBMD injection (even behind --confirm) belongs here
-            # so the safety contract holds end-to-end. Keep this as a single
-            # set so new dangerous test_* flags are covered by default.
-            self.args.write = None
-            for dangerous_flag in self._DANGEROUS_FLAGS:
-                setattr(self.args, dangerous_flag, False)
 
         # Assessment shortcuts
         if getattr(self.args, "assess_network", False):
@@ -401,7 +408,7 @@ class bacnet(
         device_id = getattr(self.args, "device_id", None)
         timeout = getattr(self.args, "timeout", 5.0)
 
-        self.logger.display("Connecting via bacpypes3...")
+        self.logger.display(f"Connecting to {target}:{port}...")
 
         local_device_id = random.randint(900000, 999999)  # nosec B311
         device = DeviceObject(
@@ -456,227 +463,13 @@ class bacnet(
             # after bacpypes3's async bind settles, so label it rather than
             # printing a misleading ":0".
             shown_port = local_port if local_port else "ephemeral"
-            self.logger.success(f"Connected via {local_ip}:{shown_port}")
+            self.logger.success(
+                f"Connected to BACnet/IP {target}:{port} (local {local_ip}:{shown_port})"
+            )
 
             target_addr = Address(f"{target}:{port}")
 
-            if device_id is None:
-                self.logger.display("Probing for device ID...")
-                try:
-                    device_id = await self._bacpypes3_discover_device(app, target_addr, timeout)
-                except BaseException as e:
-                    self.logger.debug(f"async raw scan failed: {e}")
-                    device_id = None
-                if device_id is None:
-                    # Do NOT return here: a pure BBMD/router need not answer
-                    # Who-Is/ReadProperty(device), but the network-layer recon
-                    # block below (enum_bbmd/fdt/routers/who_has/networks/
-                    # bbmd_injection) operates at the BVLL / network layer and
-                    # must still run. Skip only the device-property-dependent
-                    # work by leaving device_id None and falling through.
-                    self.logger.warning("Could not discover device ID")
-                    self.logger.display("Use --device-id to specify the BACnet device instance")
-
-            properties = None
-            if device_id is not None:
-                self.logger.display(f"Reading device {device_id} properties...")
-
-                # Isolate the application-layer property read: a transient
-                # rejection/abort (or a BBMD/router that simply doesn't answer
-                # ReadProperty(device, ...)) must not take down the whole scan,
-                # because the network-layer recon below operates at the BVLL /
-                # network layer and does not depend on these properties.
-                try:
-                    properties = await self._bacpypes3_read_properties(
-                        app, target_addr, device_id, timeout
-                    )
-                except BaseException as e:
-                    self.logger.warning(f"Device property read failed: {e}")
-                    properties = None
-
-            if properties:
-                self.devices[device_id] = {
-                    "device_id": device_id,
-                    "address": f"{target}:{port}",
-                    **properties,
-                }
-
-                self.logger.success(f"Device {device_id} found:")
-                for prop, value in properties.items():
-                    if value and prop not in ("device_id",):
-                        display_name = prop.replace("_", " ").title()
-                        self.logger.success(f"  {display_name}: {value}")
-
-                # Enumerate objects if requested
-                if getattr(self.args, "enumerate_objects", False):
-                    await self._bacpypes3_enumerate_objects(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "services", False):
-                    await self._bacpypes3_enumerate_services(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "read", None):
-                    await self._bacpypes3_read_single_property(app, target_addr, timeout)
-
-                if getattr(self.args, "present_value", False):
-                    await self._bacpypes3_read_present_values(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "rpm", False):
-                    await self._bacpypes3_read_property_multiple(
-                        app, target_addr, device_id, timeout
-                    )
-
-                # File operations
-                if getattr(self.args, "files", False):
-                    await self._bacpypes3_enumerate_files(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "read_file", None):
-                    await self._bacpypes3_read_file(app, target_addr, self.args.read_file, timeout)
-
-                # Authentication check
-                if getattr(self.args, "check_anonymous", False):
-                    await self._bacpypes3_check_auth(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "brute_force", False):
-                    if not getattr(self.args, "confirm", False):
-                        self.logger.fail("--brute-force requires --confirm flag")
-                    else:
-                        await self._bacpypes3_brute_force(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "test_dcc", False):
-                    if not getattr(self.args, "confirm", False):
-                        self.logger.fail("--test-dcc requires --confirm flag")
-                    else:
-                        await self._bacpypes3_test_dcc(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "test_reinit_pass", False):
-                    if not getattr(self.args, "confirm", False):
-                        self.logger.fail("--test-reinit-pass requires --confirm flag")
-                    else:
-                        await self._bacpypes3_test_reinit(app, target_addr, device_id, timeout)
-
-                # Priority write testing
-                if getattr(self.args, "test_priority_writes", False):
-                    if not getattr(self.args, "confirm", False):
-                        self.logger.fail("--test-priority-writes requires --confirm flag")
-                    else:
-                        await self._bacpypes3_test_priority_writes(
-                            app, target_addr, device_id, timeout
-                        )
-
-                # Time sync test
-                if getattr(self.args, "test_time_sync", False):
-                    if not getattr(self.args, "confirm", False):
-                        self.logger.fail("--test-time-sync requires --confirm flag")
-                    else:
-                        await self._bacpypes3_test_time_sync(app, target_addr, device_id, timeout)
-
-                # Out-of-Service test
-                if getattr(self.args, "test_oos", False):
-                    await self._bacpypes3_test_oos(app, target_addr, device_id, timeout)
-
-                # Configuration security checks
-                if getattr(self.args, "check_schedules", False):
-                    await self._bacpypes3_check_schedules(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "check_calendars", False):
-                    await self._bacpypes3_check_calendars(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "check_alarms", False):
-                    await self._bacpypes3_check_alarms(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "check_trendlogs", False):
-                    await self._bacpypes3_check_trendlogs(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "check_priority", False):
-                    await self._bacpypes3_check_priority(app, target_addr, device_id, timeout)
-
-                # Life safety checks
-                if getattr(self.args, "enum_life_safety", False):
-                    await self._bacpypes3_enum_life_safety(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "check_life_safety", False):
-                    await self._bacpypes3_check_life_safety(app, target_addr, device_id, timeout)
-
-                # COV subscriptions
-                if getattr(self.args, "cov", False):
-                    await self._bacpypes3_subscribe_cov(app, target_addr, device_id, timeout)
-
-                # ReadRange for trend logs
-                if getattr(self.args, "read_range", False):
-                    await self._bacpypes3_read_range(app, target_addr, device_id, timeout)
-
-                # Protocol security checks
-                if getattr(self.args, "check_bacnet_sc", False):
-                    await self._bacpypes3_check_bacnet_sc(app, target_addr, device_id, timeout)
-
-                # Advanced enumeration
-                if getattr(self.args, "deep_enum", False):
-                    await self._bacpypes3_deep_enum(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "enum_programs", False):
-                    await self._bacpypes3_enum_programs(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "enum_loops", False):
-                    await self._bacpypes3_enum_loops(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "vendor_scan", False):
-                    await self._bacpypes3_vendor_scan(app, target_addr, device_id, timeout)
-
-                if getattr(self.args, "discover_mstp", False):
-                    await self._bacpypes3_discover_mstp(app, target_addr, device_id, timeout)
-
-                # Write property (bacpypes3 path)
-                if getattr(self.args, "write", None):
-                    await self._bacpypes3_write_single_property(app, target_addr, timeout)
-
-                # Dump device state
-                if getattr(self.args, "dump", False):
-                    self._handle_dump()
-            elif device_id is not None:
-                # The device may exist but reject/abort application-layer
-                # ReadProperty (common for pure BBMDs/routers). Don't let that
-                # silently swallow the BVLL / network-layer recon below, which
-                # does not depend on these properties — just warn and continue.
-                # (When device_id is None we already warned about discovery.)
-                self.logger.warning(
-                    f"Could not read device {device_id} properties; "
-                    "continuing with network-layer reconnaissance"
-                )
-
-            # Network-layer reconnaissance (BBMD/FDT/routers/Who-Has/remote
-            # networks). Hoisted out of the `if properties:` block above: these
-            # operate at the BVLL / network layer and must run regardless of
-            # whether the device answered application-layer property reads.
-            if getattr(self.args, "who_has", None):
-                await self._bacpypes3_who_has(app, target_addr, self.args.who_has, timeout)
-
-            if getattr(self.args, "enum_bbmd", False):
-                await self._bacpypes3_enum_bbmd(app, target_addr, timeout)
-
-            if getattr(self.args, "enum_fdt", False):
-                await self._bacpypes3_enum_fdt(app, target_addr, timeout)
-
-            if getattr(self.args, "enum_routers", False):
-                await self._bacpypes3_enum_routers(app, target_addr, timeout)
-
-            if getattr(self.args, "test_bbmd_injection", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--test-bbmd-injection requires --confirm flag")
-                else:
-                    await self._bacpypes3_test_bbmd_injection(app, target_addr, timeout)
-
-            # Remote network discovery
-            if getattr(self.args, "networks", False):
-                await self._bacpypes3_discover_networks(app, target_addr, timeout)
-
-            if getattr(self.args, "scan_network", None) is not None:
-                await self._bacpypes3_scan_remote_network(
-                    app, target_addr, self.args.scan_network, timeout
-                )
-
-            if getattr(self.args, "scan_all_networks", False):
-                await self._bacpypes3_scan_all_networks(app, target_addr, timeout)
-
+            await self._bacpypes3_run_actions(app, target_addr, device_id, timeout)
         finally:
             app.close()
 
@@ -685,3 +478,246 @@ class bacnet(
         # (and results["data"]) come back empty despite a successful scan.
         self.enum_host_info()
         self._export_results()
+
+    async def _bacpypes3_run_actions(self, app, target_addr, device_id, timeout):
+        """Run every requested bacpypes3 action against an already-built app.
+
+        Extracted from _async_raw_scan so transport-variant subclasses (the
+        BACnet/SC sibling builds an SC-backed app + a virtual target address)
+        reuse the entire feature-dispatch body unchanged: the actions only need
+        `app` + `target_addr` and are otherwise transport-agnostic.
+        """
+        if device_id is None:
+            self.logger.display("Probing for device ID...")
+            try:
+                device_id = await self._bacpypes3_discover_device(app, target_addr, timeout)
+            except BaseException as e:
+                self.logger.debug(f"async raw scan failed: {e}")
+                device_id = None
+            if device_id is None:
+                # Do NOT return here: a pure BBMD/router need not answer
+                # Who-Is/ReadProperty(device), but the network-layer recon
+                # block below (enum_bbmd/fdt/routers/who_has/networks/
+                # bbmd_injection) operates at the BVLL / network layer and
+                # must still run. Skip only the device-property-dependent
+                # work by leaving device_id None and falling through.
+                self.logger.warning("Could not discover device ID")
+                self.logger.display("Use --device-id to specify the BACnet device instance")
+
+        properties = None
+        if device_id is not None:
+            self.logger.display(f"Reading device {device_id} properties...")
+
+            # Isolate the application-layer property read: a transient
+            # rejection/abort (or a BBMD/router that simply doesn't answer
+            # ReadProperty(device, ...)) must not take down the whole scan,
+            # because the network-layer recon below operates at the BVLL /
+            # network layer and does not depend on these properties.
+            try:
+                properties = await self._bacpypes3_read_properties(
+                    app, target_addr, device_id, timeout
+                )
+            except BaseException as e:
+                self.logger.warning(f"Device property read failed: {e}")
+                properties = None
+
+        if properties:
+            self.devices[device_id] = {
+                "device_id": device_id,
+                "address": str(target_addr),
+                **properties,
+            }
+
+            self.logger.success(f"Device {device_id} found:")
+            for prop, value in properties.items():
+                if value and prop not in ("device_id",):
+                    display_name = prop.replace("_", " ").title()
+                    self.logger.success(f"  {display_name}: {value}")
+
+            # Enumerate objects if requested
+            if getattr(self.args, "enumerate_objects", False):
+                await self._bacpypes3_enumerate_objects(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "services", False):
+                await self._bacpypes3_enumerate_services(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "read", None):
+                await self._bacpypes3_read_single_property(app, target_addr, timeout)
+
+            if getattr(self.args, "present_value", False):
+                await self._bacpypes3_read_present_values(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "rpm", False):
+                await self._bacpypes3_read_property_multiple(app, target_addr, device_id, timeout)
+
+            # File operations
+            if getattr(self.args, "files", False):
+                await self._bacpypes3_enumerate_files(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "read_file", None):
+                await self._bacpypes3_read_file(app, target_addr, self.args.read_file, timeout)
+
+            # Authentication check
+            if getattr(self.args, "check_anonymous", False):
+                await self._bacpypes3_check_auth(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "brute_force", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--brute-force requires --confirm flag")
+                else:
+                    await self._bacpypes3_brute_force(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "brute_force_dcc", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--brute-force-dcc requires --confirm flag")
+                else:
+                    await self._bacpypes3_brute_force_dcc(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "brute_force_reinit", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--brute-force-reinit requires --confirm flag")
+                else:
+                    await self._bacpypes3_brute_force_reinit(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "test_dcc", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--test-dcc requires --confirm flag")
+                else:
+                    await self._bacpypes3_test_dcc(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "test_reinit_pass", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--test-reinit-pass requires --confirm flag")
+                else:
+                    await self._bacpypes3_test_reinit(app, target_addr, device_id, timeout)
+
+            # Priority write testing
+            if getattr(self.args, "test_priority_writes", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--test-priority-writes requires --confirm flag")
+                else:
+                    await self._bacpypes3_test_priority_writes(app, target_addr, device_id, timeout)
+
+            # Time sync test
+            if getattr(self.args, "test_time_sync", False):
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--test-time-sync requires --confirm flag")
+                else:
+                    await self._bacpypes3_test_time_sync(app, target_addr, device_id, timeout)
+
+            # Out-of-Service test
+            if getattr(self.args, "test_oos", False):
+                await self._bacpypes3_test_oos(app, target_addr, device_id, timeout)
+
+            # Configuration security checks
+            if getattr(self.args, "check_schedules", False):
+                await self._bacpypes3_check_schedules(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "check_calendars", False):
+                await self._bacpypes3_check_calendars(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "check_alarms", False):
+                await self._bacpypes3_check_alarms(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "check_trendlogs", False):
+                await self._bacpypes3_check_trendlogs(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "check_priority", False):
+                await self._bacpypes3_check_priority(app, target_addr, device_id, timeout)
+
+            # Life safety checks
+            if getattr(self.args, "enum_life_safety", False):
+                await self._bacpypes3_enum_life_safety(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "check_life_safety", False):
+                await self._bacpypes3_check_life_safety(app, target_addr, device_id, timeout)
+
+            # COV subscriptions
+            if getattr(self.args, "cov", False):
+                await self._bacpypes3_subscribe_cov(app, target_addr, device_id, timeout)
+
+            # ReadRange for trend logs
+            if getattr(self.args, "read_range", False):
+                await self._bacpypes3_read_range(app, target_addr, device_id, timeout)
+
+            # Protocol security checks
+            if getattr(self.args, "check_bacnet_sc", False):
+                await self._bacpypes3_check_bacnet_sc(app, target_addr, device_id, timeout)
+
+            # Advanced enumeration
+            if getattr(self.args, "deep_enum", False):
+                await self._bacpypes3_deep_enum(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "enum_programs", False):
+                await self._bacpypes3_enum_programs(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "enum_loops", False):
+                await self._bacpypes3_enum_loops(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "vendor_scan", False):
+                await self._bacpypes3_vendor_scan(app, target_addr, device_id, timeout)
+
+            if getattr(self.args, "discover_mstp", False):
+                await self._bacpypes3_discover_mstp(app, target_addr, device_id, timeout)
+
+            # Write property (bacpypes3 path)
+            if getattr(self.args, "write", None):
+                await self._bacpypes3_write_single_property(app, target_addr, timeout)
+
+            # Dump device state. Use the app-based async dump: the sync
+            # _handle_dump reads via self.bacnet (BAC0), which is None in
+            # this path, so it would emit bare instance numbers only.
+            if getattr(self.args, "dump", False):
+                await self._async_handle_dump(app, target_addr, device_id, timeout)
+        elif device_id is not None:
+            # The device may exist but reject/abort application-layer
+            # ReadProperty (common for pure BBMDs/routers). Don't let that
+            # silently swallow the BVLL / network-layer recon below, which
+            # does not depend on these properties — just warn and continue.
+            # (When device_id is None we already warned about discovery.)
+            self.logger.warning(
+                f"Could not read device {device_id} properties; "
+                "continuing with network-layer reconnaissance"
+            )
+
+        # Invoke an arbitrary BACnet service (--call SERVICE args). Hoisted out
+        # of the `if properties:` block: --call only needs a device_id + the
+        # app, not the device's property read (which a router/BBMD or a device
+        # needing an explicit --device-id may reject). Runs whenever we have a
+        # device_id; _bacpypes3_call_service no-ops if --call wasn't given.
+        if device_id is not None and getattr(self.args, "call", None):
+            await self._bacpypes3_call_service(app, target_addr, device_id, timeout)
+
+        # Network-layer reconnaissance (BBMD/FDT/routers/Who-Has/remote
+        # networks). Hoisted out of the `if properties:` block above: these
+        # operate at the BVLL / network layer and must run regardless of
+        # whether the device answered application-layer property reads.
+        if getattr(self.args, "who_has", None):
+            await self._bacpypes3_who_has(app, target_addr, self.args.who_has, timeout)
+
+        if getattr(self.args, "enum_bbmd", False):
+            await self._bacpypes3_enum_bbmd(app, target_addr, timeout)
+
+        if getattr(self.args, "enum_fdt", False):
+            await self._bacpypes3_enum_fdt(app, target_addr, timeout)
+
+        if getattr(self.args, "enum_routers", False):
+            await self._bacpypes3_enum_routers(app, target_addr, timeout)
+
+        if getattr(self.args, "test_bbmd_injection", False):
+            if not getattr(self.args, "confirm", False):
+                self.logger.fail("--test-bbmd-injection requires --confirm flag")
+            else:
+                await self._bacpypes3_test_bbmd_injection(app, target_addr, timeout)
+
+        # Remote network discovery
+        if getattr(self.args, "networks", False):
+            await self._bacpypes3_discover_networks(app, target_addr, timeout)
+
+        if getattr(self.args, "scan_network", None) is not None:
+            await self._bacpypes3_scan_remote_network(
+                app, target_addr, self.args.scan_network, timeout
+            )
+
+        if getattr(self.args, "scan_all_networks", False):
+            await self._bacpypes3_scan_all_networks(app, target_addr, timeout)

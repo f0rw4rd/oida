@@ -43,6 +43,7 @@ from .sunspec_constants import (
     SUNSPEC_NOT_IMPLEMENTED,
     SUNSPEC_SECURITY_MODELS,
 )
+from oida.utils.common_types import Category
 
 
 def _load_sunspec_maps() -> Dict[int, dict]:
@@ -695,7 +696,7 @@ class SunSpecMixin(_ScannerBase):
         if not found_security:
             self.logger.security_finding(
                 "No SunSpec security models (3-9) present",
-                category="AUTHENTICATION",
+                category=Category.AUTHENTICATION,
                 detail=(
                     "Device has no Secure Dataset models -- all Modbus registers "
                     "readable/writable without authentication"
@@ -739,7 +740,7 @@ class SunSpecMixin(_ScannerBase):
         if writable_controls:
             self.logger.security_finding(
                 f"{len(writable_controls)} writable control register(s) exposed",
-                category="ACCESS_CONTROL",
+                category=Category.ACCESS_CONTROL,
                 detail="Critical DER control registers accessible without authentication",
             )
 
@@ -754,21 +755,21 @@ class SunSpecMixin(_ScannerBase):
             if conn_exposed:
                 self.logger.security_finding(
                     "Inverter connect/disconnect register (Conn) is writable",
-                    category="ACCESS_CONTROL",
+                    category=Category.ACCESS_CONTROL,
                     detail="Model 123 Conn register can disconnect inverter from grid via single Modbus write",
                 )
 
             if set_op_exposed:
                 self.logger.security_finding(
                     "Battery connect/disconnect register (SetOp) is writable",
-                    category="ACCESS_CONTROL",
+                    category=Category.ACCESS_CONTROL,
                     detail="Model 802 SetOp can disconnect battery system via Modbus write",
                 )
 
             if stor_ctl_exposed:
                 self.logger.security_finding(
                     "Battery storage control mode (StorCtl_Mod) is writable",
-                    category="ACCESS_CONTROL",
+                    category=Category.ACCESS_CONTROL,
                     detail="Model 124 StorCtl_Mod controls charge/discharge behavior",
                 )
 
@@ -807,7 +808,7 @@ class SunSpecMixin(_ScannerBase):
                 detail_parts.append(f"AC power={ac_power_w:.0f}W")
             self.logger.security_finding(
                 "Inverter actively producing with writable controls exposed",
-                category="OPERATIONAL_RISK",
+                category=Category.ACCESS_CONTROL,
                 detail=f"Device is online and generating power ({', '.join(detail_parts)})",
             )
 
@@ -819,7 +820,7 @@ class SunSpecMixin(_ScannerBase):
             if isinstance(loc_rem, dict) and loc_rem.get("raw") == 0:
                 self.logger.security_finding(
                     "Battery in REMOTE control mode",
-                    category="OPERATIONAL_RISK",
+                    category=Category.ACCESS_CONTROL,
                     detail="Battery accepts remote commands -- writable registers are live",
                 )
 
@@ -842,7 +843,7 @@ class SunSpecMixin(_ScannerBase):
                     if w_rtg >= 100_000 and writable_controls:
                         self.logger.security_finding(
                             f"High-capacity DER ({capacity_str}) with exposed controls",
-                            category="OPERATIONAL_RISK",
+                            category=Category.ACCESS_CONTROL,
                             detail=(
                                 "Utility-scale device with writable control registers -- "
                                 "grid stability impact if manipulated"

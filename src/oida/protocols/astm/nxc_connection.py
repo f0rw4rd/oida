@@ -19,6 +19,7 @@ from .records import (
     ASTM_VENDOR_MAP,
 )
 from .mixins import FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin
+from oida.utils.common_types import Category
 
 
 class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkConnection):
@@ -428,7 +429,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
         else:
             self.logger.security_finding(
                 "No encryption",
-                category="ENCRYPTION",
+                category=Category.ENCRYPTION,
                 detail="ASTM communication is unencrypted (plaintext)",
             )
 

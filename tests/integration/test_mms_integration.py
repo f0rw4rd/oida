@@ -820,10 +820,17 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             f"Expected data model discovery over plaintext. Got: {log_text[:400]}"
         )
 
-        # Verify no TLS-related messages appear (connection is unencrypted)
-        assert "tls" not in log_text and "ssl" not in log_text, (
-            "Unexpected TLS/SSL references in plaintext connection"
+        # The cleartext connection must be reported as a no-encryption finding.
+        # (The finding's own wording legitimately contains "no TLS", so we assert
+        # the finding is present rather than banning the substring "tls".)
+        assert "no encryption" in log_text or "cleartext" in log_text, (
+            f"Expected a no-encryption finding on the plaintext connection. Got: {log_text[:400]}"
         )
+        # No evidence of an actually-negotiated TLS/SSL session.
+        assert not any(
+            term in log_text
+            for term in ["tls handshake", "tls established", "ssl handshake", "encrypted channel"]
+        ), "Unexpected TLS/SSL session references in plaintext connection"
 
     @pytest.mark.security
     def test_finding_logical_devices_accessible(self, cli_runner, target, port):

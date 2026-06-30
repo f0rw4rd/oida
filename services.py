@@ -4,7 +4,7 @@
 Usage:
     python services.py up [core|cve|all|<group>]   # <group> starts core + CVE members
     python services.py down
-    python services.py status
+    python services.py status [filter] [-v]   # health overview; -v adds per-container detail
     python services.py logs [service...]
     python services.py list
     python services.py groups                 # list oida.group values (valid `up <group>` args)
@@ -544,14 +544,129 @@ def cmd_restart(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    """Show status of running containers."""
-    _ = args
-    print(f"{BLUE}=== OIDA Mock Services Status ==={RST}")
-    print("")
-    result = _run(_compose_cmd(*_all_args(), "ps"), check=False)
-    if result.returncode != 0:
-        print("  No containers found")
-    print("")
+    """Show a compact health overview of the mock containers.
+
+    Groups containers by their ``oida.group`` label and prints per-group
+    healthy/starting/issue counts, then lists every container that is
+    unhealthy or stopped so problems stand out — instead of dumping the raw
+    wide ``docker compose ps`` table.
+
+    To drill in: ``status <filter>`` narrows to containers whose name or group
+    matches *filter*, and ``-v/--verbose`` adds a per-container Name/Status/Ports
+    table (filtered too). For live output, use ``logs <service>``.
+    """
+    filt = (getattr(args, "filter", None) or "").lower()
+    verbose = bool(getattr(args, "verbose", False))
+    print(f"{BOLD}{CYAN}=== OIDA Mock Services Status ==={RST}")
+    print()
+
+    # ``-a`` so exited/stopped containers show up as issues, not silent gaps.
+    ps_cmd = _compose_cmd(*_all_args(), "ps", "-a", "--format", "json")
+    result = _run(ps_cmd, capture=True, check=False)
+    if result.returncode != 0 or not result.stdout.strip():
+        print(f"  {DIM}No containers found. Start with: python services.py up{RST}")
+        print()
+        return 0
+
+    containers = []
+    for line in result.stdout.strip().split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            containers.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+
+    if not containers:
+        print(f"  {DIM}No containers found. Start with: python services.py up{RST}")
+        print()
+        return 0
+
+    # group -> [healthy, starting, issues, total]
+    groups: dict[str, list[int]] = {}
+    issues: list[tuple[str, str]] = []  # (name, reason)
+    detail: list[tuple[str, str, str, str]] = []  # (name, state-class, status, ports)
+
+    for c in containers:
+        name = c.get("Name", "")
+        state = (c.get("State") or "").lower()
+        health = (c.get("Health") or "").lower()
+
+        m = re.search(r"oida\.group=([^,]*)", c.get("Labels", ""))
+        group = (m.group(1) if m else "") or "other"
+
+        if filt and filt not in name.lower() and filt not in group.lower():
+            continue
+
+        counts = groups.setdefault(group, [0, 0, 0, 0])
+        counts[3] += 1
+
+        if state == "running" and health in ("healthy", "", "none"):
+            counts[0] += 1
+            cls = "ok"
+        elif state == "running" and health == "starting":
+            counts[1] += 1
+            cls = "starting"
+        elif state == "running" and health == "unhealthy":
+            counts[2] += 1
+            cls = "bad"
+            issues.append((name, "unhealthy"))
+        else:
+            counts[2] += 1
+            cls = "bad"
+            reason = state or "unknown"
+            exit_code = c.get("ExitCode")
+            if state == "exited" and exit_code is not None:
+                reason = f"exited ({exit_code})"
+            issues.append((name, reason))
+
+        detail.append((name, cls, c.get("Status", ""), c.get("Ports", "")))
+
+    if not groups:
+        print(f"  {DIM}No containers match filter: {filt!r}{RST}")
+        print()
+        return 0
+
+    print(f"  {BOLD}{CYAN}{'GROUP':<16} {'HEALTHY':>8} {'STARTING':>9} {'ISSUES':>7} {'TOTAL':>6}{RST}")
+    print(f"  {DIM}{'---':<16} {'---':>8} {'---':>9} {'---':>7} {'---':>6}{RST}")
+    tot = [0, 0, 0, 0]
+    for group in sorted(groups):
+        healthy, starting, bad, total = groups[group]
+        for i, v in enumerate((healthy, starting, bad, total)):
+            tot[i] += v
+        h = f"{GREEN}{healthy:>8}{RST}" if healthy else f"{DIM}{healthy:>8}{RST}"
+        s = f"{YELLOW}{starting:>9}{RST}" if starting else f"{DIM}{starting:>9}{RST}"
+        b = f"{RED}{bad:>7}{RST}" if bad else f"{DIM}{bad:>7}{RST}"
+        print(f"  {group:<16} {h} {s} {b} {total:>6}")
+
+    print(f"  {DIM}{'---':<16} {'---':>8} {'---':>9} {'---':>7} {'---':>6}{RST}")
+    print(f"  {BOLD}{'TOTAL':<16}{RST} {tot[0]:>8} {tot[1]:>9} {tot[2]:>7} {tot[3]:>6}")
+    print()
+
+    if issues:
+        print(f"  {BOLD}{RED}Issues ({len(issues)}):{RST}")
+        for name, reason in sorted(issues):
+            print(f"    {name:<32} {RED}{reason}{RST}")
+    else:
+        scope = f"matching {filt!r}" if filt else "containers"
+        print(f"  {GREEN}[OK]{RST} All {tot[3]} {scope} healthy.")
+    print()
+
+    if verbose:
+        colour = {"ok": GREEN, "starting": YELLOW, "bad": RED}
+        print(f"  {BOLD}{CYAN}{'CONTAINER':<32} {'STATUS':<28} PORTS{RST}")
+        print(f"  {DIM}{'---':<32} {'---':<28} ---{RST}")
+        for name, cls, status, ports in sorted(detail):
+            dot = f"{colour[cls]}●{RST}"
+            print(f"  {dot} {name:<30} {status:<28} {DIM}{ports}{RST}")
+        print()
+    else:
+        print(
+            f"  {DIM}Details: status -v [filter] · per-container · "
+            f"logs <service> for live output{RST}"
+        )
+        print()
     return 0
 
 
@@ -1128,7 +1243,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("down", help="Stop all mock services")
     sub.add_parser("restart", help="Restart mock services")
-    sub.add_parser("status", help="Show status of running containers")
+    p_status = sub.add_parser("status", help="Show a health overview of the containers")
+    p_status.add_argument(
+        "filter", nargs="?", default=None, help="Only show containers matching this name or group"
+    )
+    p_status.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Also print a per-container Name/Status/Ports table",
+    )
 
     p_logs = sub.add_parser("logs", help="Follow logs (optionally for a specific service)")
     p_logs.add_argument("service", nargs="*", default=[], help="Service name(s)")

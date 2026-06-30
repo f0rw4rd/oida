@@ -318,18 +318,15 @@ class EIGRPPassiveListener(PySharkListenerBase):
             }
             hold_time = self._parse_int(self.get_field(eigrp, "par_holdtime", "15"), 15)
 
-        # Software version fields
-        ios_major = self.get_field(eigrp, "sw_version_ios_major", None)
-        if ios_major is not None:
-            ios_minor = self.get_field(eigrp, "sw_version_ios_minor", "0")
-            eigrp_major = self.get_field(eigrp, "sw_version_eigrp_major", "0")
-            eigrp_minor = self.get_field(eigrp, "sw_version_eigrp_minor", "0")
-            software_version = f"IOS {ios_major}.{ios_minor}, EIGRP {eigrp_major}.{eigrp_minor}"
+        # Software version (SW Version TLV) — reuse the decoded release_version /
+        # tlv_version above (there are no eigrp.sw_version.* fields).
+        if release_version:
+            software_version = f"IOS {release_version}, EIGRP {tlv_version}"
 
         # --- Route extraction (IPv4 internal) ---
-        ip_prefix = self.get_field(eigrp, "ip_int_dest", None)
+        ip_prefix = self.get_field(eigrp, "ipv4_destination", None)
         if ip_prefix is not None:
-            prefix_len_str = self.get_field(eigrp, "ip_int_prefix_len", "0")
+            prefix_len_str = self.get_field(eigrp, "ipv4_prefixlen", "0")
             routes.append(
                 {
                     "network": str(ip_prefix),

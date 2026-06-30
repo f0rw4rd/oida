@@ -18,6 +18,7 @@ The class uses mixins for feature-specific handler methods:
 """
 
 from ...connection import NetworkConnection
+from ...utils.common_types import Category
 from ...utils.exceptions import DependencyError
 from ...utils.lazy_import import lazy_import
 
@@ -845,7 +846,7 @@ class modbus(
         if not _pymodbus.is_available:
             raise DependencyError(
                 "pymodbus library required for Modbus protocol.\n"
-                "Install with: pip install pymodbus>=3.8.0",
+                "Install with: pip install oida[modbus]",
                 protocol="Modbus",
             )
 
@@ -877,6 +878,14 @@ class modbus(
         """Enumerate Modbus device information"""
         if not self.conn:
             return
+
+        # Modbus/TCP is plaintext by design (no TLS in the protocol). We are
+        # on a confirmed-live connection here, so emit the no-encryption finding.
+        self.logger.security_finding(
+            "No encryption",
+            category=Category.ENCRYPTION,
+            detail="Modbus/TCP has no transport encryption (cleartext)",
+        )
 
         # Get server info via scanner (scanner logs details)
         server_info = self.scanner._get_server_info(self.conn)

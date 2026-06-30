@@ -8,6 +8,8 @@ Each check is triggered by its own CLI flag.
 import base64
 import time
 
+from oida.utils.common_types import Category
+
 from ..constants import (
     SECURITY_CONFIG_KEYS,
     SENSITIVE_CONFIG_KEYS,
@@ -82,6 +84,7 @@ class SecurityMixin:
         if not username:
             self.logger.security_finding(
                 "Anonymous access",
+                category=Category.AUTHENTICATION,
                 detail="Anonymous WebSocket connection allowed (no HTTP Basic Auth)",
             )
             self._add_finding(
@@ -104,6 +107,7 @@ class SecurityMixin:
         if status == "Accepted":
             self.logger.security_finding(
                 "No authentication",
+                category=Category.AUTHENTICATION,
                 detail="Unknown charge point accepted by CSMS via BootNotification",
             )
             self._add_finding(
@@ -139,6 +143,7 @@ class SecurityMixin:
             if key_name == "AuthorizationKey" and key_value:
                 self.logger.security_finding(
                     "Insecure configuration",
+                    category=Category.CONFIGURATION,
                     detail="AuthorizationKey exposed in configuration",
                 )
                 self._add_finding(
@@ -150,6 +155,7 @@ class SecurityMixin:
             if key_name in SECURITY_CONFIG_KEYS and not readonly:
                 self.logger.security_finding(
                     "Writable access",
+                    category=Category.ACCESS_CONTROL,
                     detail=f"Security config key '{key_name}' is writable",
                 )
                 self._add_finding(
@@ -613,6 +619,7 @@ class SecurityMixin:
                 if status == "Accepted":
                     self.logger.security_finding(
                         "Writable access",
+                        category=Category.ACCESS_CONTROL,
                         detail=f"ChangeConfiguration({HARMLESS_CONFIG_KEY}) accepted without auth",
                     )
                     self._add_finding(
@@ -704,6 +711,7 @@ class SecurityMixin:
             if status in ("Accepted", "RebootRequired"):
                 self.logger.security_finding(
                     "Writable access",
+                    category=Category.ACCESS_CONTROL,
                     detail=f"Security-sensitive key '{sensitive_key}' is writable ({status})",
                 )
                 self._add_finding(
@@ -1221,6 +1229,7 @@ class SecurityMixin:
                 if conn is not None:
                     self.logger.security_finding(
                         "Default credentials",
+                        category=Category.AUTHENTICATION,
                         detail=f"Valid HTTP Basic Auth: {username}:{password}",
                     )
                     valid_creds.append({"username": username, "password": password})
@@ -1302,6 +1311,7 @@ class SecurityMixin:
                         if status == "Accepted":
                             self.logger.security_finding(
                                 "Default credentials",
+                                category=Category.AUTHENTICATION,
                                 detail=f"Valid IdTag accepted: {tag}",
                             )
                             valid_tags.append({"id_tag": tag, "status": status})

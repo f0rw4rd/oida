@@ -25,7 +25,7 @@ from .mixins import (
 )
 
 _pyiec61850_tase2 = lazy_import(
-    "pyiec61850.tase2", "TASE.2", install_hint="pip install pyiec61850-ng"
+    "pyiec61850.tase2", "TASE.2", install_hint="pip install oida[tase2]"
 )
 
 

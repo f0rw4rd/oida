@@ -48,6 +48,25 @@ class RIPCredential:
     auth_data: str = ""  # For MD5/SHA auth data
     router_ip: str = ""
     timestamp: str = ""
+    net_salt: str = ""  # RIP packet hex WITHOUT the digest trailer (net-md5 salt)
+
+    @property
+    def hashcat_format(self) -> str:
+        """John net-md5 / net-sha1 line for RIPv2 keyed-auth.
+
+        ``$netmd5$<packet-without-digest>$<digest>``; JtR computes
+        ``MD5(salt || key_padded_16)``. hashcat has no RIP mode. The salt
+        (raw packet bytes) is filled by the scanner's raw pass. Returns "" until
+        both salt and digest are present.
+        """
+        if self.credential_type != "hash" or not self.net_salt or not self.auth_data:
+            return ""
+        digest = self.auth_data.replace(":", "").lower()
+        if len(digest) == 32:
+            return f"$netmd5${self.net_salt}${digest}"
+        if len(digest) == 40:
+            return f"$netsha1${self.net_salt}${digest}"
+        return ""
 
     @property
     def username(self) -> str:
@@ -379,3 +398,12 @@ class RIPPassiveListener(PySharkListenerBase):
             }
             result.append(entry)
         return result
+
+    def get_hashcat_hashes(self) -> List[str]:
+        """Get RIPv2 keyed-auth hashes as John net-md5/net-sha1 lines.
+
+        (hashcat has no RIP mode; crack with ``john --format=net-md5``.) The raw
+        packet salt is filled by the scanner's raw pass; entries without it are
+        skipped.
+        """
+        return [c.hashcat_format for c in self.credentials if c.hashcat_format]

@@ -1332,6 +1332,32 @@ LISTENER_PCAP_CASES: list[dict] = [
 import glob as _glob
 
 
+# Per-pcap decode_as overrides for the coverage sweep.
+#
+# COVERAGE_ALL_PCAPS globs EVERY pcap in a protocol's fixture dir and runs it
+# through that protocol's single display filter.  A few fixtures carry the
+# right protocol on a NON-STANDARD port that tshark won't heuristically
+# dissect, so the sweep would skip them with "tshark found 0 packets".
+# Mapping the port to an explicit decode_as makes tshark (and the listener)
+# actually parse them, so they're exercised instead of silently skipped.
+#
+# Only files that genuinely contain the target protocol belong here.  Fixtures
+# that legitimately lack the protocol (encrypted MQ in ibmmq/mq-sample.cap,
+# the corrupt rmi/wireshark_rmi.pcap, the portmap-free NFS captures under
+# rpcbind/) are intentionally left to skip.
+_COVERAGE_DECODE_AS: dict[str, dict] = {
+    "opcua/wireshark_opcua.pcap": {"tcp.port==12001": "opcua"},
+    "opcua/wireshark_opcua_icsmaster.pcap": {"tcp.port==12001": "opcua"},
+    "opcua/cisagov_open62541_client-server_mainloop-not-localhost-non-standard-port.pcap": {
+        "tcp.port==48010": "opcua"
+    },
+    "telnet/credslayer_telnet_hidden.pcap": {"tcp.port==1337": "telnet"},
+    # MQTT on non-standard ports — without decode_as tshark sees only TCP.
+    "mqtt/emreekin_mqtt_example.pcap": {"tcp.port==13600": "mqtt"},
+    "mqtt/ndpi_coap_mqtt.pcap": {"tcp.port==17501": "mqtt"},
+}
+
+
 def _build_coverage_all_pcaps() -> list[dict]:
     """Expand LISTENER_PCAP_CASES to cover ALL pcaps in each protocol's fixture dir."""
     # Deduplicate: one entry per (module, cls, filter) → fixture subdirectory
@@ -1358,6 +1384,9 @@ def _build_coverage_all_pcaps() -> list[dict]:
                 continue
             filename = os.path.basename(filepath)
             rel_path = f"{info['subdir']}/{filename}"
+            # Per-pcap override (non-standard-port fixtures) takes precedence
+            # over the filter-level decode_as inherited from LISTENER_PCAP_CASES.
+            decode_as = _COVERAGE_DECODE_AS.get(rel_path, info.get("decode_as"))
             cases.append(
                 {
                     "id": f"{info['module']}::{filename}",
@@ -1365,7 +1394,7 @@ def _build_coverage_all_pcaps() -> list[dict]:
                     "cls": info["cls"],
                     "filter": info["filter"],
                     "pcap": rel_path,
-                    "decode_as": info.get("decode_as"),
+                    "decode_as": decode_as,
                 }
             )
     return cases

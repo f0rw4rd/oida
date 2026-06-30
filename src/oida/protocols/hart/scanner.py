@@ -274,13 +274,26 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
 
             # TLS/PSK support: if PSK credentials provided, pass to client
             if self.psk_identity and self.psk_key:
+                # The library's TLS-PSK callback returns the key bytes verbatim,
+                # so the documented hex string must be decoded to raw bytes here
+                # (e.g. AES-128 expects 16 bytes). Passing the ASCII hex through
+                # un-decoded silently breaks the handshake.
+                try:
+                    psk_key_bytes = bytes.fromhex(
+                        self.psk_key.replace(" ", "").replace("0x", "")
+                    )
+                except ValueError:
+                    self.logger.error(
+                        f"Invalid --psk-key: '{self.psk_key}' is not valid hex"
+                    )
+                    return None
                 # TLS only works over TCP
                 if self.transport == "udp":
                     self.logger.debug("TLS requires TCP; switching from UDP to TCP")
                     kwargs["protocol"] = "tcp"
                     self.transport = "tcp"
                 kwargs["psk_identity"] = self.psk_identity
-                kwargs["psk_key"] = self.psk_key
+                kwargs["psk_key"] = psk_key_bytes
                 if self.cipher_suite:
                     kwargs["ciphers"] = self.cipher_suite
 

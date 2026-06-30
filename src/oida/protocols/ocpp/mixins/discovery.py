@@ -22,7 +22,7 @@ from ..constants import (
 _security_findings = lazy_import(
     "oida.utils.security_findings",
     "ocpp",
-    install_hint="pip install cryptography",
+    install_hint="pip install oida[ocpp]",
 )
 
 
@@ -457,9 +457,7 @@ class DiscoveryMixin:
             for key_info in config.get("keys", []):
                 key = str(key_info.get("key", ""))
                 value = key_info.get("value", "")
-                if key and value and any(
-                    hint in key.lower() for hint in self._FIRMWARE_KEY_HINTS
-                ):
+                if key and value and any(hint in key.lower() for hint in self._FIRMWARE_KEY_HINTS):
                     info.setdefault(key, value)
 
         get_config_msg = self._build_get_configuration(

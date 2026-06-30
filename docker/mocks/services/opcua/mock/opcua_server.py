@@ -21,6 +21,12 @@ from asyncua.server.user_managers import User, UserRole
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+# Server application URI. MUST equal the URI in the server certificate's
+# SubjectAltName, otherwise clients performing standard certificate validation
+# (URI check) reject the server cert with BadCertificateUriInvalid before any
+# user-auth decision is reached.
+SERVER_APP_URI = "urn:oida:mock:opcua:server"
+
 # ============================================================================
 # Global state for methods
 # ============================================================================
@@ -109,12 +115,71 @@ def execute_command(parent, command: str):
 
 
 # ============================================================================
+# OPC UA FileType — a real readable file served via Open/Read/Close
+# ============================================================================
+# Unlike the metadata-only "file" objects below, this node implements the
+# standard FileType methods so an OPC UA client (e.g. OIDA's --read-file) can
+# actually transfer the content. Backs an in-memory buffer; mode is ignored
+# (read-only). Handle state is process-global, which is fine for a mock.
+README_FILE_CONTENT = (
+    b"OIDA mock OPC UA FileType node.\n"
+    b"Served by the Open/Read/Close methods so --read-file / --file-output\n"
+    b"integration tests exercise a real file transfer instead of a stub.\n"
+)
+_FILE_HANDLES: dict = {}  # handle -> current read offset
+_NEXT_FILE_HANDLE = [0]
+
+
+@uamethod
+def file_open(parent, mode):
+    """FileType Open: returns a UInt32 file handle (mode bitmask ignored)."""
+    _NEXT_FILE_HANDLE[0] += 1
+    handle = _NEXT_FILE_HANDLE[0]
+    _FILE_HANDLES[handle] = 0
+    log.info(f"FileType Open(mode={mode}) -> handle {handle}")
+    return ua.Variant(handle, ua.VariantType.UInt32)
+
+
+@uamethod
+def file_read(parent, handle, length):
+    """FileType Read: returns up to `length` bytes from the current offset."""
+    offset = _FILE_HANDLES.get(int(handle), 0)
+    chunk = README_FILE_CONTENT[offset : offset + int(length)]
+    _FILE_HANDLES[int(handle)] = offset + len(chunk)
+    return ua.Variant(bytes(chunk), ua.VariantType.ByteString)
+
+
+@uamethod
+def file_close(parent, handle):
+    """FileType Close: drops the handle's read state."""
+    _FILE_HANDLES.pop(int(handle), None)
+    log.info(f"FileType Close(handle={handle})")
+
+
+# ============================================================================
 # User Manager for authentication
 # ============================================================================
 class CustomUserManager:
-    """Custom user manager with predefined test credentials"""
+    """Custom user manager with predefined test credentials.
 
-    def __init__(self):
+    Username/password auth is always supported. X509 user-identity (client
+    certificate) handling is governed by ``cert_mode``:
+
+    - ``"reject"`` (default): reject every client user certificate. The server
+      still *advertises* a Certificate user token (asyncua does so whenever a
+      signing policy is enabled), so a scanner sees the token but no untrusted
+      cert is accepted — the securely-configured baseline.
+    - ``"permissive"``: accept ANY user certificate whose signature verifies
+      (asyncua proves key possession before calling us). This is the
+      *vulnerable* config — self-signed certs are trusted automatically,
+      i.e. OpalOPC plugin 10016 / OIDA's self-signed-user-cert finding.
+    - ``"trusted"``: accept ONLY a pre-registered trusted client certificate
+      (compared by DER bytes). A self-signed/unknown cert is rejected, while
+      the legitimate operator cert authenticates — exercises both normal and
+      fake client-cert auth against one target.
+    """
+
+    def __init__(self, cert_mode: str = "reject", trusted_cert_der: bytes = None):
         # Define test users: username -> (password, role)
         self.users = {
             "admin": ("admin", UserRole.Admin),
@@ -122,11 +187,17 @@ class CustomUserManager:
             "readonly": ("readonly", UserRole.User),
             "user": ("user", UserRole.User),
         }
+        self.cert_mode = cert_mode
+        self.trusted_cert_der = trusted_cert_der
 
     def get_user(self, iserver, username=None, password=None, certificate=None):
-        """Authenticate user and return User object or None"""
-        log.info(f"Authentication attempt: user='{username}'")
+        """Authenticate user and return User object or None."""
+        # X509 user-identity token: asyncua passes the verified peer cert here
+        # (its signature already proven) and leaves username/password None.
+        if certificate is not None:
+            return self._get_cert_user(certificate)
 
+        log.info(f"Authentication attempt: user='{username}'")
         if username in self.users:
             expected_password, role = self.users[username]
             if password == expected_password:
@@ -134,6 +205,23 @@ class CustomUserManager:
                 return User(role=role, name=username)
 
         log.warning(f"Authentication failed: {username}")
+        return None
+
+    def _get_cert_user(self, certificate):
+        """Trust decision for an X509 user-identity certificate."""
+        if self.cert_mode == "permissive":
+            log.warning("Cert auth ACCEPTED (permissive mode - any user cert trusted)")
+            return User(role=UserRole.User, name="cert-user")
+
+        if self.cert_mode == "trusted":
+            if self.trusted_cert_der and certificate == self.trusted_cert_der:
+                log.info("Cert auth successful: pre-registered trusted client cert")
+                return User(role=UserRole.User, name="trusted-cert-user")
+            log.warning("Cert auth REJECTED: certificate not in trust list")
+            return None
+
+        # "reject" / default: never trust a client user certificate.
+        log.warning("Cert auth REJECTED (reject mode - no user certs trusted)")
         return None
 
 
@@ -346,7 +434,43 @@ async def create_opcua_namespace(server: Server):
     )
     await recipe_file.add_variable("ns=2;i=233", "OpenCount", 0, ua.VariantType.UInt16)
 
-    log.info("Created Files folder with 4 file nodes (2 writable)")
+    # Readable FileType node (ns=2;i=240) — implements Open/Read/Close so the
+    # content can actually be transferred. Browse names are in namespace 0
+    # ("0:Size", "0:Open", ...) to match the standard FileType the OIDA scanner
+    # resolves via get_child("0:Open"). The nodeids stay in ns=2 to avoid
+    # colliding with the standard address space.
+    readme_file = await files_folder.add_object("ns=2;i=240", "readme.txt")
+    await readme_file.add_variable(
+        ua.NodeId(241, 2),
+        ua.QualifiedName("Size", 0),
+        len(README_FILE_CONTENT),
+        varianttype=ua.VariantType.UInt64,
+    )
+    await readme_file.add_variable(
+        ua.NodeId(242, 2),
+        ua.QualifiedName("Writable", 0),
+        False,
+        varianttype=ua.VariantType.Boolean,
+    )
+    byte_in = [ua.Argument("Mode", ua.NodeId(ua.ObjectIds.Byte), ua.ValueRank.Scalar)]
+    handle_out = [ua.Argument("FileHandle", ua.NodeId(ua.ObjectIds.UInt32), ua.ValueRank.Scalar)]
+    read_in = [
+        ua.Argument("FileHandle", ua.NodeId(ua.ObjectIds.UInt32), ua.ValueRank.Scalar),
+        ua.Argument("Length", ua.NodeId(ua.ObjectIds.Int32), ua.ValueRank.Scalar),
+    ]
+    data_out = [ua.Argument("Data", ua.NodeId(ua.ObjectIds.ByteString), ua.ValueRank.Scalar)]
+    handle_in = [ua.Argument("FileHandle", ua.NodeId(ua.ObjectIds.UInt32), ua.ValueRank.Scalar)]
+    await readme_file.add_method(
+        ua.NodeId(243, 2), ua.QualifiedName("Open", 0), file_open, byte_in, handle_out
+    )
+    await readme_file.add_method(
+        ua.NodeId(244, 2), ua.QualifiedName("Read", 0), file_read, read_in, data_out
+    )
+    await readme_file.add_method(
+        ua.NodeId(245, 2), ua.QualifiedName("Close", 0), file_close, handle_in, []
+    )
+
+    log.info("Created Files folder with 5 file nodes (2 writable, 1 readable FileType)")
 
     return {
         "sensors": [temp1, temp2, pressure1, pressure2, flow_rate],
@@ -362,7 +486,7 @@ async def create_opcua_namespace(server: Server):
             diagnostics_node,
             exec_cmd_node,
         ],
-        "files": [config_file, log_file, firmware_file, recipe_file],
+        "files": [config_file, log_file, firmware_file, recipe_file, readme_file],
     }
 
 
@@ -427,7 +551,7 @@ async def setup_security(server: Server, enable_security: bool = True):
 
     # Generate self-signed certificates for testing
     try:
-        cert_dir = "/tmp/opcua_certs"
+        cert_dir = os.environ.get("OPCUA_CERT_DIR", "/tmp/opcua_certs")
         os.makedirs(cert_dir, exist_ok=True)
 
         cert_path = os.path.join(cert_dir, "server_cert.der")
@@ -470,7 +594,7 @@ async def setup_security(server: Server, enable_security: bool = True):
                 .add_extension(
                     x509.SubjectAlternativeName(
                         [
-                            x509.UniformResourceIdentifier("urn:oida:mock:opcua:server"),
+                            x509.UniformResourceIdentifier(SERVER_APP_URI),
                         ]
                     ),
                     critical=False,
@@ -498,6 +622,10 @@ async def setup_security(server: Server, enable_security: bool = True):
         await server.load_certificate(cert_path)
         await server.load_private_key(key_path)
 
+        # Align the advertised ApplicationUri with the cert's SAN URI so that
+        # standards-compliant clients (URI validation) accept the server cert.
+        await server.set_application_uri(SERVER_APP_URI)
+
         # Enable multiple security policies
         server.set_security_policy(
             [
@@ -516,19 +644,73 @@ async def setup_security(server: Server, enable_security: bool = True):
         server.set_security_policy([ua.SecurityPolicyType.NoSecurity])
 
 
+async def ensure_trusted_client_cert(cert_dir: str):
+    """Generate (once) a trusted client cert/key pair for X509 user auth.
+
+    Returns ``(cert_der_bytes, cert_path, key_path)``. The cert is the operator
+    identity the server trusts in ``OPCUA_USER_CERT_MODE=trusted``; a client
+    presenting it (cert + key) authenticates successfully, while any other
+    self-signed cert is rejected. Paths are logged so they can be copied out of
+    the container (``docker cp``) or read directly when run as a subprocess.
+    """
+    from asyncua.crypto.cert_gen import setup_self_signed_certificate
+    from cryptography.x509.oid import ExtendedKeyUsageOID
+
+    cert_path = os.path.join(cert_dir, "trusted_client.der")
+    key_path = os.path.join(cert_dir, "trusted_client_key.pem")
+    app_uri = "urn:oida:mock:opcua:trusted-client"
+
+    if not os.path.exists(cert_path) or not os.path.exists(key_path):
+        from pathlib import Path
+
+        await setup_self_signed_certificate(
+            Path(key_path),
+            Path(cert_path),
+            app_uri,
+            "oida-trusted-client",
+            [ExtendedKeyUsageOID.CLIENT_AUTH],
+            {"countryName": "US", "organizationName": "OIDA Mock", "commonName": "Trusted Client"},
+        )
+        log.info(f"Generated trusted client certificate: {cert_path}")
+
+    with open(cert_path, "rb") as f:
+        cert_der = f.read()
+
+    log.info("Trusted client cert (use these to authenticate as the operator):")
+    log.info(f"  certificate: {cert_path}")
+    log.info(f"  private key: {key_path}")
+    return cert_der, cert_path, key_path
+
+
 async def main():
     """Start the mock OPC UA server"""
     port = int(os.environ.get("OPCUA_PORT", "4840"))
     enable_security = os.environ.get("OPCUA_SECURITY", "true").lower() == "true"
     enable_auth = os.environ.get("OPCUA_AUTH", "true").lower() == "true"
+    # X509 user-cert trust policy: reject (default) | permissive | trusted
+    cert_mode = os.environ.get("OPCUA_USER_CERT_MODE", "reject").lower()
+
+    # X509 user-cert modes require a signing policy (security) and the user
+    # manager (auth) to make the trust decision — force both on.
+    if cert_mode in ("trusted", "permissive"):
+        enable_security = True
+        enable_auth = True
 
     log.info(f"Starting Enhanced Mock OPC UA Server on port {port}")
     log.info(f"Security: {'enabled' if enable_security else 'disabled'}")
     log.info(f"Authentication: {'enabled' if enable_auth else 'disabled (anonymous only)'}")
+    log.info(f"User-cert mode: {cert_mode}")
+
+    # In "trusted" mode, mint the operator cert the server will trust.
+    trusted_cert_der = None
+    if cert_mode == "trusted":
+        cert_dir = os.environ.get("OPCUA_CERT_DIR", "/tmp/opcua_certs")
+        os.makedirs(cert_dir, exist_ok=True)
+        trusted_cert_der, _, _ = await ensure_trusted_client_cert(cert_dir)
 
     # Create server with optional user manager
     if enable_auth:
-        user_manager = CustomUserManager()
+        user_manager = CustomUserManager(cert_mode=cert_mode, trusted_cert_der=trusted_cert_der)
         server = Server(user_manager=user_manager)
         log.info(
             "User authentication enabled (admin/admin, operator/operator123, readonly/readonly)"

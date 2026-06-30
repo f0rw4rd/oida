@@ -41,10 +41,10 @@ from .helpers import (
 )
 
 _asyncua_sec_policies = lazy_import(
-    "asyncua.crypto.security_policies", "OPC UA", install_hint="pip install asyncua"
+    "asyncua.crypto.security_policies", "OPC UA", install_hint="pip install oida[opcua]"
 )
 _asyncua_validator = lazy_import(
-    "asyncua.crypto.validator", "OPC UA", install_hint="pip install asyncua"
+    "asyncua.crypto.validator", "OPC UA", install_hint="pip install oida[opcua]"
 )
 # Import mixins for modular functionality
 from .mixins import (

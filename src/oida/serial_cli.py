@@ -127,7 +127,7 @@ def handle_serial_command(args: argparse.Namespace) -> int:
     """
     if not check_serial_available():
         print("Error: pyserial is not installed.", file=sys.stderr)
-        print("Install with: pip install pyserial", file=sys.stderr)
+        print("Install with: pip install oida[serial]", file=sys.stderr)
         return 1
 
     if not hasattr(args, "serial_action") or args.serial_action is None:

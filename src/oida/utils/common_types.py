@@ -5,7 +5,30 @@
 Common type definitions and utility functions for ICS protocol scanners.
 """
 
+from enum import Enum
 from typing import Optional
+
+
+class Category(str, Enum):
+    """Closed taxonomy for security findings -- a single axis: *what the
+    weakness is*.
+
+    Severity / impact is intentionally NOT modelled as a field. The
+    consequence of a finding (operational risk, life-safety, pivot, etc.)
+    belongs in the finding's ``detail`` string, not in a parallel enum.
+
+    Reported via ``ICSLogger.security_finding(title, category=Category.X)``.
+    """
+
+    AUTHENTICATION = "AUTHENTICATION"  # missing/weak/default creds, anonymous, no RBAC
+    ACCESS_CONTROL = "ACCESS_CONTROL"  # writable without auth, unauthenticated writes/commands
+    ENCRYPTION = "ENCRYPTION"  # cleartext, NoSec, no TLS/DTLS
+    INFO_DISCLOSURE = "INFO_DISCLOSURE"  # credential/PII/config leak, excessive retention
+    CONFIGURATION = "CONFIGURATION"  # insecure defaults, auditing off, IP forwarding
+    PROTOCOL_EXPOSURE = "PROTOCOL_EXPOSURE"  # dangerous service reachable, legacy protocol
+
+    def __str__(self) -> str:
+        return self.value
 
 
 def parse_bool(value):

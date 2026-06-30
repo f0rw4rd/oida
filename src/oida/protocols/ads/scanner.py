@@ -26,6 +26,7 @@ from ...utils import (
 )
 from ...utils.cli import run as cli_run
 from ...utils.exceptions import DependencyError
+from oida.utils.common_types import Category
 
 # ADS protocol constants (shared with passive listener)
 from .constants import (
@@ -1017,7 +1018,9 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         # ADS has no authentication by design
         issues.append("No authentication mechanism (ADS protocol limitation)")
         self.logger.security_finding(
-            "No authentication", detail="ADS protocol has no authentication mechanism"
+            "No authentication",
+            category=Category.AUTHENTICATION,
+            detail="ADS protocol has no authentication mechanism",
         )
 
         # Encryption assessment based on TwinCAT version
@@ -1026,37 +1029,50 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             issues.append("Weak encryption: TwinCAT 3.x uses static encryption key")
             self.logger.security_finding(
                 "Insecure configuration",
+                category=Category.CONFIGURATION,
                 detail="TwinCAT 3.x credential encryption uses static key - traffic decryptable",
             )
             # Credential sniffing possible
             issues.append("Credentials can be sniffed and decrypted")
             self.logger.security_finding(
                 "[CREDENTIALS] Credential exposure",
+                category=Category.INFO_DISCLOSURE,
                 detail="Login credentials use static encryption key - sniffing/replay attacks possible",
             )
         else:
             # TwinCAT 2.x - clear text
             issues.append("No encryption support (TwinCAT 2.x clear text protocol)")
             self.logger.security_finding(
-                "No encryption", detail="TwinCAT 2.x communicates in clear text"
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="TwinCAT 2.x communicates in clear text",
             )
 
         if readable_count > 0:
             issues.append(f"{readable_count} symbols readable without authentication")
             self.logger.security_finding(
                 "Anonymous access allowed",
+                category=Category.AUTHENTICATION,
                 detail=f"{readable_count} symbols readable without authentication",
             )
         if writable_count > 0:
             issues.append(f"{writable_count} symbols writable without authentication")
             self.logger.security_finding(
                 "Writable access",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{writable_count} symbols writable without authentication",
             )
         if accessible_memory > 0:
             issues.append(f"{accessible_memory} memory areas directly accessible")
+            # Directly-readable memory without auth is an access-control exposure.
+            # It must NOT reuse ("Insecure configuration", CONFIGURATION): the
+            # TwinCAT-static-key finding above already claims that (title, category)
+            # key, and security_finding() de-dups on that pair, which silently
+            # dropped this distinct memory finding. ACCESS_CONTROL is both the
+            # correct class and a unique key.
             self.logger.security_finding(
                 "Insecure configuration",
+                category=Category.ACCESS_CONTROL,
                 detail=f"{accessible_memory} memory areas directly accessible",
             )
 

@@ -113,7 +113,14 @@ class StateMixin:
 
             dump_data["devices"][device_id] = device_dump
 
-        # Output dump
+        self._emit_dump(dump_data)
+
+    def _emit_dump(self, dump_data):
+        """Write a built dump to -o FILE, or render it to the console.
+
+        Shared by the BAC0 (sync) and bacpypes3 (async) dump builders so both
+        paths serialize and report identically.
+        """
         output_path = getattr(self.args, "output", None)
         output_format = getattr(self.args, "format", "json")
 
@@ -132,9 +139,121 @@ class StateMixin:
 
             self.logger.success(f"Dump saved to {dump_file}")
         else:
-            for device_id, device_dump in dump_data["devices"].items():
-                total_objects = sum(len(objs) for objs in device_dump["objects"].values())
-                self.logger.display(f"  Device {device_id}: {total_objects} objects dumped")
+            # No -o given: the operator asked to dump but has nowhere to look.
+            # Print the per-object detail we already read to the console instead
+            # of discarding it behind a bare count, and point at -o for a file.
+            self._print_dump_to_console(dump_data)
+
+    async def _async_handle_dump(self, app, target_addr, device_id, timeout):
+        """Full device state dump over the live bacpypes3 ``app`` (raw path).
+
+        The synchronous ``_handle_dump`` reads each property through
+        ``self.bacnet`` (BAC0), which is ``None`` in the default path -- so it
+        could only list bare instance numbers. This reads every object's
+        properties via ``app`` instead, then reuses ``_emit_dump`` to save or
+        print, matching the BAC0 path's output.
+        """
+        if not self.objects:
+            self._handle_enumerate_objects()
+
+        if device_id is None or not self.objects.get(device_id):
+            self.logger.warning(
+                "Dump skipped: no objects enumerated. Pass --enumerate-objects "
+                "first and ensure the device answered (pass --device-id for "
+                "remote unicast)."
+            )
+            return
+
+        self.logger.display("\n[Object Dump]")
+
+        object_types_filter = getattr(self.args, "object_types", None)
+        if object_types_filter:
+            object_types_filter = set(t.strip().lower() for t in object_types_filter.split(","))
+        control_points_only = getattr(self.args, "control_points", False)
+        values_only = getattr(self.args, "values_only", False)
+
+        device_info = self.devices.get(device_id, {})
+        address = device_info.get("address", self.host)
+        device_dump = {
+            "device_id": device_id,
+            "address": address,
+            "info": device_info,
+            "objects": {},
+        }
+
+        for obj_type_name, instances in self.objects.get(device_id, {}).items():
+            if object_types_filter and obj_type_name.lower() not in object_types_filter:
+                continue
+            if control_points_only and obj_type_name not in CONTROL_POINT_TYPES:
+                continue
+
+            type_objects = []
+            for instance in instances:
+                obj_data = {"instance": instance}
+                obj_data["name"] = await self._bacpypes3_read_one(
+                    app, target_addr, obj_type_name, instance, "objectName", timeout
+                )
+                obj_data["presentValue"] = await self._bacpypes3_read_one(
+                    app, target_addr, obj_type_name, instance, "presentValue", timeout
+                )
+                if not values_only:
+                    obj_data["description"] = await self._bacpypes3_read_one(
+                        app, target_addr, obj_type_name, instance, "description", timeout
+                    )
+                    obj_data["statusFlags"] = await self._bacpypes3_read_one(
+                        app, target_addr, obj_type_name, instance, "statusFlags", timeout
+                    )
+                type_objects.append(obj_data)
+
+            if type_objects:
+                device_dump["objects"][obj_type_name] = type_objects
+
+        dump_data = {
+            "timestamp": datetime.now().isoformat(),
+            "devices": {device_id: device_dump},
+        }
+        self._emit_dump(dump_data)
+
+    def _print_dump_to_console(self, dump_data):
+        """Render an in-memory dump to the console (used when no -o is given).
+
+        Builds one table row per object and emits it through the framework's
+        standard ``print_table`` exporter (terminal-width aware, same look as
+        every other protocol's tabular output).
+        """
+        from ....utils.export_utils import print_table
+
+        headers = ["Name", "Type", "Instance", "Present Value", "Description", "Status"]
+
+        for device_id, device_dump in dump_data["devices"].items():
+            objects_by_type = device_dump.get("objects", {})
+            total_objects = sum(len(objs) for objs in objects_by_type.values())
+            address = device_dump.get("address", self.host)
+
+            rows = []
+            for obj_type_name in sorted(objects_by_type):
+                for obj in objects_by_type[obj_type_name]:
+                    rows.append(
+                        [
+                            obj.get("name") or "",
+                            obj_type_name,
+                            obj.get("instance"),
+                            "" if obj.get("presentValue") is None else obj.get("presentValue"),
+                            obj.get("description") or "",
+                            obj.get("error") or obj.get("statusFlags") or "",
+                        ]
+                    )
+
+            # Drop columns that are empty across every row so a values-only dump
+            # doesn't show blank Description/Status columns.
+            keep = [i for i in range(len(headers)) if any(str(row[i]).strip() for row in rows)]
+            active_headers = [headers[i] for i in keep]
+            active_rows = [[row[i] for i in keep] for row in rows]
+
+            title = f"  Device {device_id} @ {address} - {total_objects} objects"
+            print_table(active_rows, active_headers, title=title, logger=self.logger)
+
+        self.logger.display("  Pass -o FILE (with --format json|yaml) to save this dump to disk.")
 
     def _handle_diff(self):
         """Compare current state against baseline"""

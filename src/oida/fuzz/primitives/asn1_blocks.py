@@ -12,14 +12,14 @@ These primitives understand ASN.1 TLV (Tag-Length-Value) structure and can:
 
 Usage:
     from oida.fuzz.primitives.asn1_blocks import (
-        ASN1Integer, ASN1OctetString, ASN1Sequence, ASN1Boolean
+        ASN1Integer, ASN1OctetString, ASN1Sequence, ASN1OID
     )
 
     # In protocol definition:
-    s_asn1_integer("invoke_id", 1)
-    s_asn1_sequence("request", children=[
-        s_asn1_oid("service_oid", "1.0.9506.2.3"),
-        s_asn1_octet_string("data", b"test"),
+    ASN1Integer("invoke_id", 1)
+    ASN1Sequence("request", children=[
+        ASN1OID("service_oid", "1.0.9506.2.3"),
+        ASN1OctetString("data", b"test"),
     ])
 """
 

@@ -1,258 +1,172 @@
 #!/usr/bin/env python3
-"""Deep unit tests for MMSScanner value/type handling and write helpers.
+"""Deep unit tests for MMSScanner value/type handling and the write adapter.
 
-The pyiec61850-ng native binding is not importable in CI, so we patch the
-class-level _Lib.iec61850 namespace with a fake that carries the MMS_*
-type constants and MmsValue_* accessor functions the scanner calls. Each
-test asserts the *converted Python value*, not the mock.
+The scanner runs on pyiec61850-ng's high-level ``MMSClient`` (>= 1.6.1.4), which
+already converts MmsValues to native Python types and exposes FC-aware writes
+and a working ``get_server_identity``. The old SWIG-level extractors
+(``_extract_mms_value`` / ``_get_mms_type_name`` / ``_create_mms_value`` /
+``_extract_error_code`` / ``_get_error_name``) are gone; their behaviour is now
+split between:
+
+* ``MMSScanner._python_type_name`` (pure, labels a converted Python value),
+* ``MMSScanner._normalize_read`` (maps read_value()'s lossy "<MmsValue type=N>"
+  placeholder back to None / "<structure>" / "<array>"), and
+* the module-level ``_write_under_fc`` adapter (bool wrapper over
+  ``MMSClient.write_value(ref, val, fc=fc)``).
+
+(Server identity now goes straight through ``MMSClient.get_server_identity()``;
+its use is covered in test_scanner_internals' ``_get_server_info`` tests.)
+
+These tests mock only at the documented boundaries: the high-level enums
+(``_Lib.MmsType`` / ``_Lib.FC``), ``_Lib.WriteError``, and the client's own
+``write_value`` method.
 """
 
+from enum import IntEnum
 from unittest.mock import MagicMock, patch
 
-from oida.protocols.mms import MMSScanner, _Lib
+from oida.protocols.mms import MMSScanner, _Lib, _write_under_fc
 
 
-# Distinct integer "type tags" mirroring the SWIG MMS_* enum constants.
-TYPE_TAGS = {
-    "MMS_DATA_ACCESS_ERROR": 0,
-    "MMS_BOOLEAN": 1,
-    "MMS_INTEGER": 2,
-    "MMS_UNSIGNED": 3,
-    "MMS_FLOAT": 4,
-    "MMS_VISIBLE_STRING": 5,
-    "MMS_STRING": 6,
-    "MMS_BIT_STRING": 7,
-    "MMS_STRUCTURE": 8,
-    "MMS_ARRAY": 9,
-}
+class _WriteError(Exception):
+    """Stand-in for pyiec61850.mms.WriteError."""
 
 
-def _fake_lib():
-    """A MagicMock standing in for _Lib.iec61850 with MMS_* constants set."""
-    lib = MagicMock()
-    for name, tag in TYPE_TAGS.items():
-        setattr(lib, name, tag)
-    return lib
+class _MmsType(IntEnum):
+    """Stand-in for pyiec61850.mms.MmsType (only the tags _normalize_read uses)."""
+
+    ARRAY = 0
+    STRUCTURE = 1
+    DATA_ACCESS_ERROR = 15
+
+
+class _FC(IntEnum):
+    """Stand-in for pyiec61850.mms.FC (the constraints the write shim issues)."""
+
+    ST = 0
+    MX = 1
+    SP = 2
+    DC = 5
+    CO = 12
 
 
 def _scanner():
     return MMSScanner({"rhost": "127.0.0.1", "rport": 102, "timeout": 5})
 
 
-class TestExtractMmsValue:
-    def setup_method(self):
-        self.scanner = _scanner()
+# --------------------------------------------------------------------------- #
+# _python_type_name  (pure, no mocks)
+# --------------------------------------------------------------------------- #
+class TestPythonTypeName:
+    def test_bool_before_int(self):
+        # bool is a subclass of int, so the bool branch must win.
+        assert MMSScanner._python_type_name(True) == "boolean"
+        assert MMSScanner._python_type_name(False) == "boolean"
 
-    def test_none_returns_none(self):
-        assert self.scanner._extract_mms_value(None) is None
-
-    def test_access_error_returns_none(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_DATA_ACCESS_ERROR"]
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._extract_mms_value(MagicMock()) is None
-
-    def test_boolean(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_BOOLEAN"]
-        lib.MmsValue_getBoolean.return_value = True
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._extract_mms_value(MagicMock()) is True
-
-    def test_signed_integer_uses_toInt32(self):
-        # The signed/unsigned fix: MMS_INTEGER must use toInt32 so negative
-        # values come back negative, not as a huge unsigned number.
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_INTEGER"]
-        lib.MmsValue_toInt32.return_value = -42
-        lib.MmsValue_toUint32.return_value = 4294967254  # would-be unsigned reading
-        with patch.object(_Lib, "iec61850", lib):
-            val = self.scanner._extract_mms_value(MagicMock())
-        assert val == -42
-        lib.MmsValue_toInt32.assert_called_once()
-        lib.MmsValue_toUint32.assert_not_called()
-
-    def test_unsigned_integer_uses_toUint32(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_UNSIGNED"]
-        lib.MmsValue_toUint32.return_value = 4000000000
-        lib.MmsValue_toInt32.return_value = -294967296
-        with patch.object(_Lib, "iec61850", lib):
-            val = self.scanner._extract_mms_value(MagicMock())
-        assert val == 4000000000
-        lib.MmsValue_toUint32.assert_called_once()
-        lib.MmsValue_toInt32.assert_not_called()
+    def test_integer(self):
+        assert MMSScanner._python_type_name(42) == "integer"
+        assert MMSScanner._python_type_name(-7) == "integer"
 
     def test_float(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_FLOAT"]
-        lib.MmsValue_toFloat.return_value = 3.14
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._extract_mms_value(MagicMock()) == 3.14
+        assert MMSScanner._python_type_name(3.14) == "float"
 
-    def test_visible_string_goes_through_safe_to_char_p(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_VISIBLE_STRING"]
-        lib.MmsValue_toString.return_value = "raw_ptr"
-        with (
-            patch.object(_Lib, "iec61850", lib),
-            patch.object(_Lib, "safe_to_char_p", return_value="HELLO") as char_p,
-        ):
-            assert self.scanner._extract_mms_value(MagicMock()) == "HELLO"
-        char_p.assert_called_once_with("raw_ptr")
+    def test_structure_placeholder(self):
+        assert MMSScanner._python_type_name("<structure>") == "structure"
 
-    def test_bit_string_as_integer(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_BIT_STRING"]
-        lib.MmsValue_getBitStringAsInteger.return_value = 0b1011
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._extract_mms_value(MagicMock()) == 11
+    def test_array_placeholder(self):
+        assert MMSScanner._python_type_name("<array>") == "array"
 
-    def test_structure_and_array_placeholders(self):
-        lib = _fake_lib()
-        with patch.object(_Lib, "iec61850", lib):
-            lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_STRUCTURE"]
-            assert self.scanner._extract_mms_value(MagicMock()) == "<structure>"
-            lib.MmsValue_getType.return_value = TYPE_TAGS["MMS_ARRAY"]
-            assert self.scanner._extract_mms_value(MagicMock()) == "<array>"
+    def test_plain_string(self):
+        assert MMSScanner._python_type_name("SIEMENS") == "string"
 
-    def test_unknown_type_returns_none(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = 999
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._extract_mms_value(MagicMock()) is None
+    def test_list_and_tuple_are_array(self):
+        assert MMSScanner._python_type_name([1, 2]) == "array"
+        assert MMSScanner._python_type_name((1, 2)) == "array"
 
-    def test_exception_during_get_type_returns_none(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.side_effect = RuntimeError("boom")
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._extract_mms_value(MagicMock()) is None
+    def test_dict_is_structure(self):
+        assert MMSScanner._python_type_name({"a": 1}) == "structure"
+
+    def test_other_falls_back_to_type_name(self):
+        assert MMSScanner._python_type_name(b"raw") == "bytes"
 
 
-class TestGetMmsTypeName:
+# --------------------------------------------------------------------------- #
+# _normalize_read  (needs _Lib.MmsType)
+# --------------------------------------------------------------------------- #
+class TestNormalizeRead:
     def setup_method(self):
         self.scanner = _scanner()
 
-    def test_none_value(self):
-        assert self.scanner._get_mms_type_name(None) == "unknown"
+    def test_scalar_passes_through_unchanged(self):
+        # Scalars never look like a placeholder, so MmsType is never consulted.
+        assert self.scanner._normalize_read(42) == 42
+        assert self.scanner._normalize_read(-1) == -1
+        assert self.scanner._normalize_read(3.14) == 3.14
+        assert self.scanner._normalize_read(True) is True
 
-    def test_known_type_names(self):
-        lib = _fake_lib()
-        with patch.object(_Lib, "iec61850", lib):
-            for tag, expected in [
-                ("MMS_BOOLEAN", "boolean"),
-                ("MMS_INTEGER", "integer"),
-                ("MMS_UNSIGNED", "unsigned"),
-                ("MMS_FLOAT", "float"),
-                ("MMS_VISIBLE_STRING", "visible_string"),
-                ("MMS_BIT_STRING", "bit_string"),
-                ("MMS_STRUCTURE", "structure"),
-                ("MMS_ARRAY", "array"),
-            ]:
-                lib.MmsValue_getType.return_value = TYPE_TAGS[tag]
-                assert self.scanner._get_mms_type_name(MagicMock()) == expected
+    def test_ordinary_string_passes_through(self):
+        with patch.object(_Lib, "MmsType", _MmsType):
+            assert self.scanner._normalize_read("SIEMENS") == "SIEMENS"
 
-    def test_unknown_type_falls_back_to_type_n(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.return_value = 77
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._get_mms_type_name(MagicMock()) == "type_77"
+    def test_data_access_error_maps_to_none(self):
+        with patch.object(_Lib, "MmsType", _MmsType):
+            assert self.scanner._normalize_read("<MmsValue type=15>") is None
 
-    def test_exception_returns_unknown(self):
-        lib = _fake_lib()
-        lib.MmsValue_getType.side_effect = RuntimeError("x")
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._get_mms_type_name(MagicMock()) == "unknown"
+    def test_structure_placeholder_label(self):
+        with patch.object(_Lib, "MmsType", _MmsType):
+            assert self.scanner._normalize_read("<MmsValue type=1>") == "<structure>"
 
+    def test_array_placeholder_label(self):
+        with patch.object(_Lib, "MmsType", _MmsType):
+            assert self.scanner._normalize_read("<MmsValue type=0>") == "<array>"
 
-class TestCreateMmsValue:
-    def setup_method(self):
-        self.scanner = _scanner()
+    def test_unknown_type_tag_passes_placeholder_through(self):
+        # A tag that isn't error/structure/array stays as the raw placeholder.
+        with patch.object(_Lib, "MmsType", _MmsType):
+            assert self.scanner._normalize_read("<MmsValue type=7>") == "<MmsValue type=7>"
 
-    def test_bool_routes_to_newBoolean(self):
-        lib = _fake_lib()
-        lib.MmsValue_newBoolean.return_value = "BOOLOBJ"
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._create_mms_value(True) == "BOOLOBJ"
-        lib.MmsValue_newBoolean.assert_called_once_with(True)
+    def test_non_numeric_tag_is_not_a_placeholder(self):
+        # Malformed tag: not int()-parseable -> returned verbatim, no crash.
+        with patch.object(_Lib, "MmsType", _MmsType):
+            assert self.scanner._normalize_read("<MmsValue type=xx>") == "<MmsValue type=xx>"
 
-    def test_int_routes_to_newInteger(self):
-        lib = _fake_lib()
-        lib.MmsValue_newInteger.return_value = "INTOBJ"
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._create_mms_value(7) == "INTOBJ"
-        lib.MmsValue_newInteger.assert_called_once_with(7)
-
-    def test_float_routes_to_newFloat(self):
-        lib = _fake_lib()
-        lib.MmsValue_newFloat.return_value = "FLTOBJ"
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._create_mms_value(1.5) == "FLTOBJ"
-        lib.MmsValue_newFloat.assert_called_once_with(1.5)
-
-    def test_str_routes_to_newVisibleString(self):
-        lib = _fake_lib()
-        lib.MmsValue_newVisibleString.return_value = "STROBJ"
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._create_mms_value("hi") == "STROBJ"
-        lib.MmsValue_newVisibleString.assert_called_once_with("hi")
-
-    def test_other_type_coerced_to_integer(self):
-        lib = _fake_lib()
-        lib.MmsValue_newInteger.return_value = "INTOBJ"
-        with patch.object(_Lib, "iec61850", lib):
-            # A non-bool/int/float/str object that int()-coerces hits the
-            # else branch -> newInteger(int(value)). Decimal qualifies.
-            from decimal import Decimal
-
-            assert self.scanner._create_mms_value(Decimal("123")) == "INTOBJ"
-        lib.MmsValue_newInteger.assert_called_once_with(123)
-
-    def test_creation_exception_returns_none(self):
-        lib = _fake_lib()
-        lib.MmsValue_newInteger.side_effect = RuntimeError("nope")
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._create_mms_value(5) is None
+    def test_none_passes_through(self):
+        assert self.scanner._normalize_read(None) is None
 
 
-class TestErrorCodeHelpers:
-    def setup_method(self):
-        self.scanner = _scanner()
+# --------------------------------------------------------------------------- #
+# _write_under_fc  (bool adapter over MMSClient.write_value)
+# --------------------------------------------------------------------------- #
+class TestWriteUnderFC:
+    def test_successful_write_passes_fc_and_returns_true(self):
+        client = MagicMock()
+        client.write_value.return_value = True
 
-    def test_extract_error_code_from_tuple(self):
-        # SWIG returns (None, error_code); pick the int.
-        assert MMSScanner._extract_error_code((None, 5)) == 5
+        with patch.object(_Lib, "WriteError", _WriteError):
+            ok = _write_under_fc(client, "LD0/A.SP", 5, _FC.SP)
 
-    def test_extract_error_code_plain_int(self):
-        assert MMSScanner._extract_error_code(3) == 3
+        assert ok is True
+        client.write_value.assert_called_once_with("LD0/A.SP", 5, fc=_FC.SP)
 
-    def test_extract_error_code_tuple_without_int(self):
-        assert MMSScanner._extract_error_code((None, None)) == -1
+    def test_write_value_falsy_returns_false(self):
+        client = MagicMock()
+        client.write_value.return_value = False
 
-    def test_extract_error_code_unknown_type(self):
-        assert MMSScanner._extract_error_code("weird") == -1
+        with patch.object(_Lib, "WriteError", _WriteError):
+            assert _write_under_fc(client, "LD0/A", 5, _FC.MX) is False
 
-    def test_get_error_name_known(self):
-        lib = _fake_lib()
-        lib.IED_ERROR_OK = 0
-        lib.IED_ERROR_TIMEOUT = 6
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._get_error_name(6) == "Timeout"
+    def test_write_error_is_swallowed_to_false(self):
+        # A rejected FC raises WriteError; the probe loop wants a bool so the
+        # adapter swallows it and lets the caller try the next constraint.
+        client = MagicMock()
+        client.write_value.side_effect = _WriteError("object-does-not-exist")
 
-    def test_get_error_name_unknown_code(self):
-        lib = _fake_lib()
-        # set distinct values so the dict has no entry matching 123
-        for i, attr in enumerate(
-            [
-                "IED_ERROR_OK",
-                "IED_ERROR_NOT_CONNECTED",
-                "IED_ERROR_ALREADY_CONNECTED",
-                "IED_ERROR_CONNECTION_LOST",
-                "IED_ERROR_SERVICE_NOT_SUPPORTED",
-                "IED_ERROR_CONNECTION_REJECTED",
-                "IED_ERROR_TIMEOUT",
-            ]
-        ):
-            setattr(lib, attr, i)
-        with patch.object(_Lib, "iec61850", lib):
-            assert self.scanner._get_error_name(123) == "Error code 123"
+        with patch.object(_Lib, "WriteError", _WriteError):
+            assert _write_under_fc(client, "LD0/A", 5, _FC.CO) is False
+
+    def test_other_exception_returns_false(self):
+        client = MagicMock()
+        client.write_value.side_effect = RuntimeError("link down")
+
+        with patch.object(_Lib, "WriteError", _WriteError):
+            assert _write_under_fc(client, "LD0/A", 5, _FC.SP) is False

@@ -3,6 +3,7 @@
 """GOOSE NXC-style callable class."""
 
 from ...connection import SerialConnection
+from ...utils.common_types import Category
 from ...utils.permissions import check_raw_socket_capability
 
 from . import GOOSEScanner
@@ -87,6 +88,16 @@ class goose(SerialConnection):
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
 
+        # Positive result: GOOSE frames were actually captured on the wire.
+        # GOOSE (IEC 61850) is plaintext-by-design with no native encryption
+        # or authentication, so confirmed captured frames are the finding.
+        if scan_results and scan_results.get("goose_messages"):
+            self.logger.security_finding(
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="GOOSE (IEC 61850) has no encryption or authentication",
+            )
+
     def cleanup(self):
         """Cleanup GOOSE connection."""
         if self.conn:
@@ -105,6 +116,6 @@ class goose(SerialConnection):
         from ...utils.lazy_import import lazy_import
 
         _pyiec61850_goose = lazy_import(
-            "pyiec61850.goose", "GOOSE", install_hint="pip install pyiec61850-ng"
+            "pyiec61850.goose", "GOOSE", install_hint="pip install oida[goose]"
         )
         return _pyiec61850_goose.is_available

@@ -21,7 +21,10 @@ import threading
 import traceback
 from datetime import datetime, timezone
 from termcolor import colored
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .common_types import Category
 
 logger = logging.getLogger(__name__)
 
@@ -361,6 +364,20 @@ class ICSLogger:
             _clear_progress_line()
             print(msg)
 
+    def _emit(self, sigil: str, body: str) -> None:
+        """Print ``<prefix> <sigil> <body>``, hoisting any leading newlines.
+
+        Callers routinely pass messages like ``"\\n[Section]"`` to get a blank
+        separator line before a section header. Naively prefixing that yields
+        ``PROTO host [*] \\n[Section]`` -- an orphaned prefix+sigil on one line
+        and the unprefixed text on the next. Instead, pull the leading newlines
+        out and emit them as real blank lines above the prefixed content, all
+        under a single lock so the separator stays attached to its line.
+        """
+        n = len(body) - len(body.lstrip("\n"))
+        line = self._format(f"{sigil} {body[n:]}")
+        self._print(("\n" * n + line) if n else line)
+
     @staticmethod
     def _fmt(msg: str, args: tuple) -> str:
         """Apply %-style formatting if args are provided."""
@@ -420,21 +437,21 @@ class ICSLogger:
         """Display informational message [*]."""
         formatted = self._fmt(msg, args)
         sigil = colored("[*]", "blue", attrs=["bold"])
-        self._print(self._format(f"{sigil} {formatted}"))
+        self._emit(sigil, formatted)
         self._json_log("info", "info", formatted)
 
     def success(self, msg: str, *args) -> None:
         """Display success/positive finding [+]."""
         formatted = self._fmt(msg, args)
         sigil = colored("[+]", "green", attrs=["bold"])
-        self._print(self._format(f"{sigil} {formatted}"))
+        self._emit(sigil, formatted)
         self._json_log("info", "info", formatted)
 
     def fail(self, msg: str, *args) -> None:
         """Display failure/negative result [-]."""
         formatted = self._fmt(msg, args)
         sigil = colored("[-]", "red", attrs=["bold"])
-        self._print(self._format(f"{sigil} {formatted}"))
+        self._emit(sigil, formatted)
         self._json_log("error", "protocol_error", formatted)
 
     def highlight(self, msg: str, *args) -> None:
@@ -447,7 +464,7 @@ class ICSLogger:
         """Display warning message [!]."""
         formatted = self._fmt(msg, args)
         sigil = colored("[!]", "yellow", attrs=["bold"])
-        self._print(self._format(f"{sigil} {formatted}"))
+        self._emit(sigil, formatted)
         self._json_log("warning", "security", formatted)
 
     # Compatibility aliases for existing code using standard logger methods
@@ -464,7 +481,7 @@ class ICSLogger:
         formatted = self._fmt(msg, args)
         if self.verbose:
             sigil = colored("[D]", "cyan")
-            self._print(self._format(f"{sigil} {formatted}"))
+            self._emit(sigil, formatted)
         # Always write to JSON log regardless of verbose setting
         self._json_log("debug", "debug", formatted)
 
@@ -529,7 +546,9 @@ class ICSLogger:
             else:
                 print(f"{sigil} {msg}", end=end or "\n", flush=True)
 
-    def security_finding(self, title: str, category: str = "", detail: str = "") -> None:
+    def security_finding(
+        self, title: str, category: "str | Category" = "", detail: str = ""
+    ) -> None:
         """
         Display and collect a security finding.
 
@@ -538,18 +557,39 @@ class ICSLogger:
 
         Args:
             title: Finding title (e.g., "No encryption")
-            category: Category name (e.g., "AUTHENTICATION", "ENCRYPTION")
+            category: Weakness class -- prefer a ``common_types.Category``
+                member (e.g. ``Category.AUTHENTICATION``); plain strings are
+                accepted for back-compat.
             detail: Additional details
+
+        Findings are de-duplicated within a scan by ``(title, category)``: if
+        the same weakness has already been reported for this target, the
+        repeat call is silently dropped (no console line, no export entry, no
+        JSON log). The findings buffer is per-thread and cleared per scan, so
+        dedup is naturally scoped to a single host -- the same finding on a
+        different target in a sweep is still reported. This stops the common
+        case of a scanner and its mixins both reporting the same broker-level
+        issue (e.g. "No encryption") from printing twice.
         """
+        category = str(category) if category else ""
+
+        # Drop intra-scan duplicates keyed on (title, category).
+        if any(
+            f.get("title") == title and f.get("category", "") == category for f in self._findings
+        ):
+            return
+
         # Collect for export
         entry: Dict[str, str] = {"title": title}
+        if category:
+            entry["category"] = category
         if detail:
             entry["detail"] = detail
         self._findings.append(entry)
 
         # Print immediately
         cat_str = f"[{category}] " if category else ""
-        msg = colored(f"FINDING: {cat_str}{title}", "yellow", attrs=["bold"])
+        msg = colored(f"{cat_str}{title}", "yellow", attrs=["bold"])
         if detail:
             msg += colored(f" - {detail}", "yellow")
         sigil = colored("[!]", "yellow", attrs=["bold"])

@@ -188,7 +188,7 @@ _SCANNER_CONFIGS = {
         "broadcast",
     ),
     "igmp-query": (IGMPQueryScanner, lambda s: (s.interface, s.timeout), 10, "broadcast"),
-    "netmanage": (NetManageScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "broadcast"),
+    "netmanage": (NetManageScanner, lambda s: (s.interface, s.timeout), 10, "broadcast"),
     # ICS-specific protocols
     "knx": (KNXScanner, lambda s: (s.interface, s.timeout), 10, "ics"),
     "bacnet": (BACnetScanner, lambda s: (s.interface, s.subnet, s.timeout), 10, "ics"),
@@ -1643,7 +1643,7 @@ class DiscoveryScanner(SerialScanner):
     def _run_dcp_active(self) -> Dict[str, DiscoveredDevice]:
         """Run DCP active identify (PROFINET)"""
         if not _profinet.is_available:
-            logger.debug("DCP: profinet-py not installed (pip install profinet-py)")
+            logger.debug("DCP: profinet-py not installed (pip install oida[discovery])")
             return {}
         profinet = _profinet()
         from profinet.dcp import read_response, DCPDeviceDescription

@@ -126,7 +126,10 @@ class connection(ABC):
                 self.cleanup()
             except Exception as e:
                 self.logger.debug(f"cleanup failed: {e}")
-            # Attach security findings to results for export
+            # Attach security findings to results for export. (A one-line
+            # console tally used to print here; suppressed for now — findings
+            # still print inline as they're discovered, and ride along in the
+            # exported results.)
             if self.logger:
                 findings = self.logger.to_list()
                 if findings:
@@ -250,15 +253,15 @@ class connection(ABC):
         Must be implemented by child class.
         """
 
-    @abstractmethod
     def print_host_info(self):
         """
-        Print discovered host information
+        Print discovered host information.
 
-        Should display the information gathered by enum_host_info()
-        in a user-friendly format. Respect verbosity flags.
-
-        Must be implemented by child class.
+        Optional override: display the info gathered by enum_host_info() in a
+        user-friendly format, respecting verbosity flags. The uniform security-
+        findings tally is printed for every protocol by the teardown in
+        proto_flow(), so protocols with no extra banner (e.g. SNMP) can rely on
+        this no-op default.
         """
 
     def require_confirm(self, action_name: str) -> bool:

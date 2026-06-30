@@ -155,30 +155,30 @@ class GLBPPassiveListener(PySharkListenerBase):
         version = self._parse_int(self.get_field(glbp, "version", "0"), 0)
         group_id = self._parse_int(self.get_field(glbp, "group", "0"), 0)
 
-        # Owner ID (MAC address)
-        owner_mac = str(self.get_field(glbp, "owner_id", ""))
+        # Owner ID (MAC address) — glbp.ownerid
+        owner_mac = str(self.get_field(glbp, "ownerid", ""))
         device_mac = owner_mac if owner_mac else src_mac
 
-        # Hello TLV fields (Virtual Gateway)
-        vg_state = self._parse_int(self.get_field(glbp, "hello_vg_state", "0"), 0)
+        # Hello TLV fields (Virtual Gateway) — glbp.hello.*
+        vg_state = self._parse_int(self.get_field(glbp, "hello_vgstate", "0"), 0)
         priority = self._parse_int(self.get_field(glbp, "hello_priority", "0"), 0)
-        hello_interval = self._parse_int(self.get_field(glbp, "hello_hellotime", "0"), 0)
-        hold_interval = self._parse_int(self.get_field(glbp, "hello_holdtime", "0"), 0)
-        virtual_ip = str(self.get_field(glbp, "hello_virtual_ipv4", ""))
+        hello_interval = self._parse_int(self.get_field(glbp, "hello_helloint", "0"), 0)
+        hold_interval = self._parse_int(self.get_field(glbp, "hello_holdint", "0"), 0)
+        virtual_ip = str(self.get_field(glbp, "hello_virtualipv4", ""))
 
         # Try alternate field names
         if not virtual_ip:
-            virtual_ip = str(self.get_field(glbp, "hello_virtual_ipv6", ""))
+            virtual_ip = str(self.get_field(glbp, "hello_virtualipv6", ""))
 
-        # Forwarder TLV fields (Virtual Forwarder)
-        forwarder_id = self._parse_int(self.get_field(glbp, "forwarder_fwd_number", "0"), 0)
-        vf_state = self._parse_int(self.get_field(glbp, "forwarder_fwd_state", "0"), 0)
-        weight = self._parse_int(self.get_field(glbp, "forwarder_fwd_weight", "0"), 0)
-        virtual_mac = str(self.get_field(glbp, "forwarder_fwd_virtual_mac", ""))
+        # Forwarder (Req/Resp) TLV fields (Virtual Forwarder) — glbp.reqresp.*
+        forwarder_id = self._parse_int(self.get_field(glbp, "reqresp_forwarder", "0"), 0)
+        vf_state = self._parse_int(self.get_field(glbp, "reqresp_vfstate", "0"), 0)
+        weight = self._parse_int(self.get_field(glbp, "reqresp_weight", "0"), 0)
+        virtual_mac = str(self.get_field(glbp, "reqresp_virtualmac", ""))
 
-        # Authentication TLV
-        auth_type = self._parse_int(self.get_field(glbp, "auth_type", "0"), 0)
-        auth_password = str(self.get_field(glbp, "auth_authstring", ""))
+        # Authentication TLV — glbp.auth.*
+        auth_type = self._parse_int(self.get_field(glbp, "auth_authtype", "0"), 0)
+        auth_password = str(self.get_field(glbp, "auth_plainpass", ""))
 
         # Compute role flags from state values
         is_avg = vg_state == 0x20  # Active Virtual Gateway

@@ -1620,9 +1620,11 @@ all = [
     { name = "asyncua" },
     { name = "bac0" },
     { name = "boofuzz" },
+    { name = "brotli" },
     { name = "c104" },
     { name = "cbor2" },
     { name = "crc" },
+    { name = "cryptography" },
     { name = "defusedxml" },
     { name = "fhirclient" },
     { name = "h2" },
@@ -1639,6 +1641,7 @@ all = [
     { name = "pyiec61850-ng" },
     { name = "pymodbus" },
     { name = "pynetdicom" },
+    { name = "pyserial" },
     { name = "pysnmp" },
     { name = "pysoem", marker = "sys_platform != 'win32'" },
     { name = "python-can" },
@@ -1656,6 +1659,12 @@ all = [
 bacnet = [
     { name = "bac0" },
     { name = "pyyaml" },
+]
+bacnetsc = [
+    { name = "bac0" },
+    { name = "cryptography" },
+    { name = "pyyaml" },
+    { name = "websockets" },
 ]
 can = [
     { name = "python-can" },
@@ -1707,6 +1716,7 @@ ethercat = [
     { name = "pysoem", marker = "sys_platform != 'win32'" },
 ]
 ethernetip = [
+    { name = "cryptography" },
     { name = "pycomm3" },
 ]
 fhir = [
@@ -1715,7 +1725,9 @@ fhir = [
 ]
 fuzz = [
     { name = "boofuzz" },
+    { name = "brotli" },
     { name = "crc" },
+    { name = "cryptography" },
     { name = "h2" },
     { name = "pyasn1" },
     { name = "scapy" },
@@ -1748,6 +1760,7 @@ mqtt = [
     { name = "paho-mqtt" },
 ]
 ocpp = [
+    { name = "cryptography" },
     { name = "websockets" },
 ]
 opcua = [
@@ -1758,6 +1771,9 @@ pcap = [
 ]
 profinet = [
     { name = "profinet-py" },
+]
+serial = [
+    { name = "pyserial" },
 ]
 snap7 = [
     { name = "python-snap7" },
@@ -1774,12 +1790,18 @@ requires-dist = [
     { name = "aiocoap", marker = "extra == 'coap'", specifier = "==0.4.17" },
     { name = "asyncua", marker = "extra == 'opcua'", specifier = "==1.1.8" },
     { name = "bac0", marker = "extra == 'bacnet'", specifier = "==2025.9.15" },
+    { name = "bac0", marker = "extra == 'bacnetsc'", specifier = "==2025.9.15" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.9.3" },
     { name = "boofuzz", marker = "extra == 'fuzz'", specifier = "==0.4.2" },
     { name = "brotli", marker = "extra == 'dev'", specifier = ">=1.2.0" },
+    { name = "brotli", marker = "extra == 'fuzz'", specifier = "==1.2.0" },
     { name = "c104", marker = "extra == 'iec104'", specifier = "==2.2.1" },
     { name = "cbor2", marker = "extra == 'coap'", specifier = "==6.1.2" },
     { name = "crc", marker = "extra == 'fuzz'", specifier = "==7.1.0" },
+    { name = "cryptography", marker = "extra == 'bacnetsc'", specifier = ">=43.0.0" },
+    { name = "cryptography", marker = "extra == 'ethernetip'", specifier = ">=43.0.0" },
+    { name = "cryptography", marker = "extra == 'fuzz'", specifier = ">=43.0.0" },
+    { name = "cryptography", marker = "extra == 'ocpp'", specifier = ">=43.0.0" },
     { name = "defusedxml", marker = "extra == 'dev'", specifier = ">=0.7.1" },
     { name = "defusedxml", marker = "extra == 'discovery'", specifier = "==0.7.1" },
     { name = "docker", marker = "extra == 'dev'", specifier = ">=7.1.0" },
@@ -1792,9 +1814,9 @@ requires-dist = [
     { name = "msgpack", marker = "extra == 'dev'", specifier = ">=1.1.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.1,<5" },
-    { name = "oida", extras = ["ads", "astm", "bacnet", "can", "coap", "dicom", "discovery", "dnp3", "ethercat"], marker = "extra == 'all'" },
+    { name = "oida", extras = ["ads", "astm", "bacnet", "bacnetsc", "can", "coap", "dicom", "discovery", "dnp3", "ethercat"], marker = "extra == 'all'" },
     { name = "oida", extras = ["ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms"], marker = "extra == 'all'" },
-    { name = "oida", extras = ["fuzz", "modbus", "mqtt", "ocpp", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2"], marker = "extra == 'all'" },
+    { name = "oida", extras = ["fuzz", "modbus", "mqtt", "ocpp", "opcua", "pcap", "profinet", "serial", "snap7", "snmp", "tase2"], marker = "extra == 'all'" },
     { name = "oida-pyshark", marker = "extra == 'pcap'", specifier = "==0.6.1.post1" },
     { name = "paho-mqtt", marker = "extra == 'mqtt'", specifier = "==2.1.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
@@ -1805,12 +1827,13 @@ requires-dist = [
     { name = "pyasn1", marker = "extra == 'fuzz'", specifier = "==0.6.3" },
     { name = "pycomm3", marker = "extra == 'ethernetip'", specifier = "==1.2.16" },
     { name = "pydicom", marker = "extra == 'dicom'", specifier = "==3.0.2" },
-    { name = "pyiec61850-ng", marker = "extra == 'goose'", specifier = "==1.6.1.3" },
-    { name = "pyiec61850-ng", marker = "extra == 'mms'", specifier = "==1.6.1.3" },
-    { name = "pyiec61850-ng", marker = "extra == 'tase2'", specifier = "==1.6.1.3" },
+    { name = "pyiec61850-ng", marker = "extra == 'goose'", specifier = "==1.6.1.4" },
+    { name = "pyiec61850-ng", marker = "extra == 'mms'", specifier = "==1.6.1.4" },
+    { name = "pyiec61850-ng", marker = "extra == 'tase2'", specifier = "==1.6.1.4" },
     { name = "pymodbus", marker = "extra == 'modbus'", specifier = "==3.13.0" },
     { name = "pynetdicom", marker = "extra == 'dicom'", specifier = "==3.0.4" },
     { name = "pyserial", specifier = "==3.5" },
+    { name = "pyserial", marker = "extra == 'serial'", specifier = "==3.5" },
     { name = "pysnmp", marker = "extra == 'snmp'", specifier = "==7.1.27" },
     { name = "pysoem", marker = "sys_platform != 'win32' and extra == 'ethercat'", specifier = "==1.1.13" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
@@ -1823,6 +1846,7 @@ requires-dist = [
     { name = "python-can", marker = "extra == 'can'", specifier = "==4.6.1" },
     { name = "python-snap7", marker = "extra == 'snap7'", specifier = "==3.0.0" },
     { name = "pyyaml", marker = "extra == 'bacnet'", specifier = "==6.0.3" },
+    { name = "pyyaml", marker = "extra == 'bacnetsc'", specifier = "==6.0.3" },
     { name = "pyyaml", marker = "extra == 'modbus'", specifier = "==6.0.3" },
     { name = "requests", marker = "extra == 'fhir'", specifier = "==2.34.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.1" },
@@ -1834,13 +1858,14 @@ requires-dist = [
     { name = "termcolor", specifier = "==3.3.0" },
     { name = "tqdm", specifier = "==4.67.3" },
     { name = "vulture", marker = "extra == 'dev'", specifier = ">=2.16" },
+    { name = "websockets", marker = "extra == 'bacnetsc'", specifier = "==16.0" },
     { name = "websockets", marker = "extra == 'ocpp'", specifier = "==16.0" },
     { name = "xknx", marker = "extra == 'knx'", specifier = "==3.15.0" },
     { name = "xknxproject", marker = "extra == 'knx'", specifier = "==3.9.0" },
     { name = "yadnp3", marker = "extra == 'dnp3'", specifier = "==3.2.1.1" },
     { name = "zeroconf", marker = "extra == 'discovery'", specifier = "==0.149.16" },
 ]
-provides-extras = ["ads", "bacnet", "can", "coap", "dicom", "discovery", "dnp3", "ethercat", "ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms", "modbus", "mqtt", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2", "astm", "ocpp", "fuzz", "all", "dev", "docs"]
+provides-extras = ["ads", "bacnet", "bacnetsc", "can", "coap", "dicom", "discovery", "dnp3", "ethercat", "ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms", "modbus", "mqtt", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2", "astm", "ocpp", "serial", "fuzz", "all", "dev", "docs"]
 
 [[package]]
 name = "oida-pyshark"
@@ -2085,19 +2110,19 @@ wheels = [
 
 [[package]]
 name = "pyiec61850-ng"
-version = "1.6.1.3"
+version = "1.6.1.4"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/e5/3ba16b6d248c71d1d9bd922cdeaa5c59208881a1715c773689476500fdcb/pyiec61850_ng-1.6.1.3-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5563210f8c4287cedacb680240f9de680a1e43bb842002d8c926af941b0931f6", size = 1325613, upload-time = "2026-06-05T21:20:04.222Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/1d/d6550bbb6c55f17371a2e8e4505b4b0fd54ddb7653478014b4d466a0ed96/pyiec61850_ng-1.6.1.3-cp310-cp310-win_amd64.whl", hash = "sha256:8e5c6df64ee99e9b508ea151114ccf5182cb43e71588fe9c2e15c6799671a2b5", size = 1107591, upload-time = "2026-06-05T21:20:05.676Z" },
-    { url = "https://files.pythonhosted.org/packages/65/2c/ff96fc14a669b92e06b2dee2834ae5fa49bc84985600b6dec7a0be23da0b/pyiec61850_ng-1.6.1.3-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9d6f8d1f7702c99134d0f089344cbd40981684ab7877a69c4358e8b76c8b2850", size = 1325591, upload-time = "2026-06-05T21:20:07.491Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/8c/dd261a46a328f18c0fc91371c05dd549fba2d50f3661934c83a95cbcfa91/pyiec61850_ng-1.6.1.3-cp311-cp311-win_amd64.whl", hash = "sha256:dd4ffbe67dde394648263c42df6c4252a147d82348cb5aedce2d8f486f22a9f4", size = 1107529, upload-time = "2026-06-05T21:20:08.748Z" },
-    { url = "https://files.pythonhosted.org/packages/14/61/f43db77683864981046559275dc6b2442dc3939ee0fc7547f4ece74e616c/pyiec61850_ng-1.6.1.3-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6901d7f0e9a6054061d22634551ffd18933042ab5c68737fa67ca011beb0b2ab", size = 1325836, upload-time = "2026-06-05T21:20:09.907Z" },
-    { url = "https://files.pythonhosted.org/packages/2e/6a/bcc6345e3c5651f286a79179b06c5cbd7686a9b35089d60748e9bdfa2ef8/pyiec61850_ng-1.6.1.3-cp312-cp312-win_amd64.whl", hash = "sha256:2cd8f04cdf62c1e02ef2ae5e256410161d9f2b8cf50a014c7d2be39da317af14", size = 1110051, upload-time = "2026-06-05T21:20:11.216Z" },
-    { url = "https://files.pythonhosted.org/packages/68/65/666218a657d9249ce48c97ce3f1349e4e0626e7824b93f6c2dca1cf44f40/pyiec61850_ng-1.6.1.3-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ca0867292bbecb5aba2897eae606684144bd813083e68c728796f5f2b0e5b1cd", size = 1322947, upload-time = "2026-06-05T21:20:12.318Z" },
-    { url = "https://files.pythonhosted.org/packages/b5/59/0a6b8bb2928483f5527d169becc94f2b9f9bb54f48ac2cb2db1fa017c0d7/pyiec61850_ng-1.6.1.3-cp313-cp313-win_amd64.whl", hash = "sha256:b2fc7ce033b8d1aad4ad449f0507fda5ec62dba09003028838e78bfc240a4e9e", size = 1109908, upload-time = "2026-06-05T21:20:13.342Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/6e/7a847070bb9155cb862e90c5543954dffed76fb0d877f43d0c6d12169b90/pyiec61850_ng-1.6.1.3-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:440c69a978c7575956683f3df85b28fc7df8912a0a1cac7ec4371af76affaf0d", size = 1323233, upload-time = "2026-06-05T21:20:14.503Z" },
-    { url = "https://files.pythonhosted.org/packages/72/82/8eb21bb83d22b04cae4b3efb8ffd8710d9ce9ba59badbd206c8ec0010a4f/pyiec61850_ng-1.6.1.3-cp314-cp314-win_amd64.whl", hash = "sha256:a39ac906ec29929f420903797e4ec2324cac96fa3191dff6da52e8b376a75ef5", size = 1136090, upload-time = "2026-06-05T21:20:15.716Z" },
+    { url = "https://files.pythonhosted.org/packages/08/a7/9ced74cc353f4d3050da520f745be757f80c21cd4bc00ba022542e0cb508/pyiec61850_ng-1.6.1.4-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:14c851ef56a80ea3de0fb76f92f34071f703653812f01a04d6c97a9e6b1be92d", size = 1326105, upload-time = "2026-06-25T01:59:29.051Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/07/c811d2b92c2a1a3237482c14a59cf1d3e6605416bdcb0be10c73ab3bab6d/pyiec61850_ng-1.6.1.4-cp310-cp310-win_amd64.whl", hash = "sha256:112fe2916211426acc222e4ef1694f676b109287341a1acd0079442165cd79ff", size = 1087125, upload-time = "2026-06-25T01:59:30.591Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/f6/26b1f5c276dbc6956a3142d718f3bdeb87713ebe9d7cb9fef5d6f83fa15e/pyiec61850_ng-1.6.1.4-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0f5fef6087314720675b7d17273776d50b66b762d3205e4ada13daacf1b978d8", size = 1326106, upload-time = "2026-06-25T01:59:32.431Z" },
+    { url = "https://files.pythonhosted.org/packages/18/2e/3dc4ca6d3a02dda4638193619b3b99013996bd46f2e87ba8f0567fe8a924/pyiec61850_ng-1.6.1.4-cp311-cp311-win_amd64.whl", hash = "sha256:fa08bf159dc905ae095685d09c4f84b3ae4cd168ce6ba8055485e349019c2275", size = 1087193, upload-time = "2026-06-25T01:59:33.961Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/6a/6c3ac61e92bcb56e61a3b512e1ae2ed966a26a006c74444678dbe97ae597/pyiec61850_ng-1.6.1.4-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8604d0f386390ce1e612471779ed0b2a9a7ecff6546e737cdaa21b736b57048c", size = 1325941, upload-time = "2026-06-25T01:59:35.574Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/e7/0debff075731313b447a6e4c635458d53baccaa1732d45571247fc23f1d1/pyiec61850_ng-1.6.1.4-cp312-cp312-win_amd64.whl", hash = "sha256:40e821830829f90a975e86fc218a3ade3055e4c0a01b5b60f2fa8bc4a9ba23f3", size = 1116759, upload-time = "2026-06-25T01:59:37.085Z" },
+    { url = "https://files.pythonhosted.org/packages/86/33/a7ce881f4c900ea8424be5cbb00cbe5ab42dc9c3cc0f1a3368e7073b6d30/pyiec61850_ng-1.6.1.4-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:762de0ca257261936a55f78dd65f818511efa774760cebce7e9a4bda85f34519", size = 1323209, upload-time = "2026-06-25T01:59:38.521Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/83/5c367b9a13ddbe9fca5041eea8448cc372f854cfebb4bf52c5f751454f86/pyiec61850_ng-1.6.1.4-cp313-cp313-win_amd64.whl", hash = "sha256:0158f0a45d4360dc104fb220fbf1bcc2fa134a1df0211f868959a6cbb02b2e12", size = 1116909, upload-time = "2026-06-25T01:59:40.098Z" },
+    { url = "https://files.pythonhosted.org/packages/08/21/0b77916962f213dc54d2c27bb7d8d46ee927964fe6757ac1de129f2e8e7f/pyiec61850_ng-1.6.1.4-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:de01dd29e9380709ffd9f957d99678955546b9a3ca8a9040c34272649212ddf3", size = 1323357, upload-time = "2026-06-25T01:59:41.471Z" },
+    { url = "https://files.pythonhosted.org/packages/5a/2d/6c16229208c0017ab8f04fc4ecd4ee1ae3b47d01b5c8270bd5ecc1846341/pyiec61850_ng-1.6.1.4-cp314-cp314-win_amd64.whl", hash = "sha256:8d57ef95879446901b200a264e9ccfdb0da1c67f814e076677f8120af646c999", size = 1143419, upload-time = "2026-06-25T01:59:42.827Z" },
 ]
 
 [[package]]

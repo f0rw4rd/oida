@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 from ...connection import NetworkConnection
 from .scanner import MQTTScanner, dependencies_missing
+from oida.utils.common_types import Category
 
 
 class mqtt(NetworkConnection):
@@ -161,7 +162,7 @@ class mqtt(NetworkConnection):
         if not getattr(self.args, "tls", False):
             self.logger.security_finding(
                 "No encryption",
-                category="ENCRYPTION",
+                category=Category.ENCRYPTION,
                 detail="Plaintext connection (no TLS)",
             )
 

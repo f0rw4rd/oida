@@ -414,6 +414,84 @@ services:
       oida.description: "Real bacnet-stack 1.4.4 bacserv, VAV terminal-unit profile, device 33003, vendor 5, COV-friendly AV/MSV present-values"
       oida.ports: "47822/udp"
 
+  # --- BACnet/SC (Secure Connect) real-stack mocks --------------------------
+  # Genuine bacnet-stack BSC server (BACDL=bsc) in direct-connect accept mode
+  # over WSS/TLS. The SECURE image is built STRICT=1 (mutual-auth required +
+  # TLS 1.3 floor); the WEAK image is the stock binary (accepts anonymous/rogue
+  # clients + TLS 1.2) — used to validate OIDA's automatic TLS findings fire.
+  # The container mints its own PKI on first boot into /certs (a named volume),
+  # which the integration tests read to present a client cert.
+  bacnetsc-realstack-secure:
+    build:
+      context: ./services/bacnetsc/mock/realstack
+      dockerfile: Dockerfile.bacnetsc-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+        STRICT: "1"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnetsc-realstack-secure:latest
+    container_name: bacnetsc-realstack-secure
+    hostname: bacnetsc-secure
+    ports:
+      - "47830:47800/tcp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=building
+      - BACNET_DEVICE_INSTANCE=44004
+      - BACNET_DEVICE_NAME=BACnetSC-Secure-Supervisor
+      - BACNET_SC_DIRECT_PORT=47800
+    volumes:
+      - bacnetsc-secure-certs:/certs
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "47800"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnetsc"
+      oida.group: "bacnetsc"
+      oida.description: "Real bacnet-stack 1.4.4 BSC device over WSS/TLS, STRICT posture (mutual auth required, TLS 1.3), direct-connect on 47830, device 44004"
+      oida.ports: "47830/tcp"
+
+  bacnetsc-realstack-weak:
+    build:
+      context: ./services/bacnetsc/mock/realstack
+      dockerfile: Dockerfile.bacnetsc-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+        STRICT: "0"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnetsc-realstack-weak:latest
+    container_name: bacnetsc-realstack-weak
+    hostname: bacnetsc-weak
+    ports:
+      - "47831:47800/tcp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=building
+      - BACNET_DEVICE_INSTANCE=44005
+      - BACNET_DEVICE_NAME=BACnetSC-Weak-Supervisor
+      - BACNET_SC_DIRECT_PORT=47800
+      - BACNET_SC_WEAK=1
+    volumes:
+      - bacnetsc-weak-certs:/certs
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "47800"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnetsc"
+      oida.group: "bacnetsc"
+      oida.description: "Real bacnet-stack 1.4.4 BSC device over WSS/TLS, WEAK posture (accepts anonymous/rogue client + TLS 1.2), direct-connect on 47831, device 44005"
+      oida.ports: "47831/tcp"
+
   # ============================================================================
   # CoAP Mock Server
   # ============================================================================
@@ -1150,6 +1228,62 @@ services:
       oida.group: "opcua"
       oida.description: "OPC UA server, no security policy, anonymous access, no encryption"
       oida.ports: "4842"
+
+  opcua-usercert-vuln:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
+    container_name: opcua-usercert-vuln-server
+    hostname: opcua-usercert-vuln
+    ports:
+      - "4843:4840"     # OPC UA - trusts ANY self-signed X509 user cert (vulnerable)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_USER_CERT_MODE=permissive
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA server that trusts ANY self-signed user certificate (insecure X509 user auth)"
+      oida.ports: "4843"
+
+  opcua-usercert-trusted:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
+    container_name: opcua-usercert-trusted-server
+    hostname: opcua-usercert-trusted
+    ports:
+      - "4844:4840"     # OPC UA - trusts only one registered operator cert (secure baseline)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_USER_CERT_MODE=trusted
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA server trusting one registered user cert (in /tmp/opcua_certs; docker cp to use)"
+      oida.ports: "4844"
 
   # ============================================================================
   # DNP3 Mock Services (stepfunc dnp3 Rust crate - pure-Rust outstation)
@@ -3178,3 +3312,5 @@ volumes:
   mirth-db-data:
   mirth-appdata:
   ocpp-steve-db-data:
+  bacnetsc-secure-certs:
+  bacnetsc-weak-certs:

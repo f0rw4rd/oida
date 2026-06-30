@@ -151,7 +151,6 @@ class TestBACnetScannerInit(unittest.TestCase):
         self.mock_args.quick = False
         self.mock_args.discover = False
         self.mock_args.full = False
-        self.mock_args.safe = False
         self.mock_args.confirm = False
         self.mock_args.port = 47808
         self.mock_args.timeout = 3.0
@@ -208,7 +207,6 @@ class TestBACnetShortcuts(unittest.TestCase):
         self.mock_args.quick = False
         self.mock_args.discover = False
         self.mock_args.full = False
-        self.mock_args.safe = False
         self.mock_args.write = None
         self.mock_args.test_write = False
         self.mock_args.check_reinit = False
@@ -270,22 +268,6 @@ class TestBACnetShortcuts(unittest.TestCase):
             self.assertTrue(scanner.args.enumerate_objects)
             self.assertTrue(scanner.args.enumerate_properties)
             self.assertTrue(scanner.args.assess)
-
-    def test_safe_shortcut(self):
-        """Test --safe shortcut disables dangerous operations"""
-        self.mock_args.safe = True
-        self.mock_args.write = "test:1:value:100"
-        self.mock_args.test_write = True
-
-        with patch.object(self.bacnet, "__init__", lambda self, args, db, host: None):
-            scanner = object.__new__(self.bacnet)
-            scanner.args = self.mock_args
-            scanner._apply_shortcuts()
-
-            self.assertIsNone(scanner.args.write)
-            self.assertFalse(scanner.args.test_write)
-            self.assertFalse(scanner.args.check_reinit)
-            self.assertFalse(scanner.args.check_oos)
 
     def test_assess_shortcut(self):
         """Test --assess shortcut enables all security checks"""
@@ -710,11 +692,9 @@ class TestBACnetProtocolOptions(unittest.TestCase):
             "test_write": False,
             "enumerate_writable": True,
             "check_reinit": False,
-            "safe": True,
         }
 
         self.assertTrue(options["assess"])
-        self.assertTrue(options["safe"])
 
 
 class TestBACnetAddressFormat(unittest.TestCase):
@@ -764,7 +744,6 @@ class TestBACnetClassInitialization(unittest.TestCase):
         self.mock_args.quick = False
         self.mock_args.discover = False
         self.mock_args.full = False
-        self.mock_args.safe = False
         self.mock_args.confirm = False
         self.mock_args.port = 47808
         self.mock_args.timeout = 3.0

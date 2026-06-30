@@ -68,7 +68,6 @@ def create_mock_args(**overrides):
         "quick": False,
         "discover": False,
         "full": False,
-        "safe": False,
         "confirm": False,
         "port": 47808,
         "timeout": 3.0,

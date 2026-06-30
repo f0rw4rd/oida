@@ -65,17 +65,12 @@ def _connect_raises(exc):
     avail = mock.Mock(is_available=True)
     avail.setup_self_signed_certificate = mock.AsyncMock(return_value=None)
     sec_pol = mock.Mock(SecurityPolicyBasic256Sha256=object())
-    validator = mock.Mock(
-        CertificateValidator=lambda *a, **k: object(),
-        CertificateValidatorOptions=mock.Mock(EXT_VALIDATION=1),
-    )
     x509 = mock.Mock(is_available=True)
     x509.x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH = 1
 
     with (
         mock.patch.object(sec_mod, "_asyncua_cert_gen", avail),
         mock.patch.object(sec_mod, "_asyncua_sec_policies", sec_pol),
-        mock.patch.object(sec_mod, "_asyncua_validator", validator),
         mock.patch.object(sec_mod, "_cryptography_x509", x509),
         mock.patch("oida.protocols.opcua.helpers._get_client_class", return_value=_FakeClient),
     ):
@@ -111,6 +106,47 @@ class TestSelfSignedCertInconclusive(unittest.TestCase):
         self.assertIn("rejection_reason", result)
         self.assertFalse(result["accepts_untrusted_client_cert"])
         self.assertEqual(len(h.logger.success_calls), 1)
+
+    def test_bad_certificate_invalid_is_a_rejection(self):
+        # Servers use BadCertificateInvalid as a catch-all when refusing an
+        # untrusted client cert — it must count as a clean rejection, not get
+        # lost to "inconclusive".
+        h, result = self._run(Exception("BadCertificateInvalid"))
+        self.assertTrue(result.get("tested"))
+        self.assertIn("rejection_reason", result)
+        self.assertFalse(result["accepts_untrusted_client_cert"])
+        self.assertEqual(len(h.logger.success_calls), 1)
+
+    def test_session_level_denial_is_not_a_rejection(self):
+        # BadUserAccessDenied happens at ActivateSession — the secure channel was
+        # already built with our untrusted cert. The old code mis-reported this as
+        # "Server rejects untrusted client certificates" (false negative).
+        h, result = self._run(Exception("BadUserAccessDenied"))
+        self.assertFalse(result.get("tested"))
+        self.assertEqual(result.get("status"), "inconclusive")
+        self.assertTrue(result.get("channel_established"))
+        self.assertNotIn("rejection_reason", result)
+        self.assertEqual(h.logger.success_calls, [])
+
+    def test_identity_token_rejected_is_not_a_cert_rejection(self):
+        # "rejected" substring used to match here too — but BadIdentityTokenRejected
+        # is session-level, i.e. the channel accepted the cert.
+        h, result = self._run(Exception("BadIdentityTokenRejected"))
+        self.assertFalse(result.get("tested"))
+        self.assertEqual(result.get("status"), "inconclusive")
+        self.assertTrue(result.get("channel_established"))
+        self.assertEqual(h.logger.success_calls, [])
+
+    def test_cert_format_error_is_inconclusive_not_rejection(self):
+        # BadCertificateUriInvalid is a format/URI error, not a trust decision.
+        # The old broad "badcertificate" substring wrongly classified it as a
+        # rejection (vuln-clean).
+        h, result = self._run(Exception("BadCertificateUriInvalid"))
+        self.assertFalse(result.get("tested"))
+        self.assertEqual(result.get("status"), "inconclusive")
+        self.assertNotIn("rejection_reason", result)
+        self.assertNotIn("channel_established", result)
+        self.assertEqual(h.logger.success_calls, [])
 
 
 if __name__ == "__main__":

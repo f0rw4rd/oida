@@ -30,6 +30,7 @@ from .constants import (
     IEC101_CA_OCTETS,
     IEC101_IOA_OCTETS,
 )
+from oida.utils.common_types import Category
 
 
 class IEC101Mixin:
@@ -256,7 +257,7 @@ class IEC101Mixin:
         """Establish IEC 101 serial connection"""
         from ...utils.lazy_import import lazy_import
 
-        _serial = lazy_import("serial", "IEC 101", install_hint="pip install pyserial")
+        _serial = lazy_import("serial", "IEC 101", install_hint="pip install oida[serial]")
         serial = _serial()  # load pyserial module
         parity_map = {
             "N": serial.PARITY_NONE,
@@ -554,13 +555,19 @@ class IEC101Mixin:
 
         # Report security findings
         self.logger.security_finding(
-            "No authentication", detail="IEC 101 protocol limitation - no authentication mechanism"
+            "No authentication",
+            category=Category.AUTHENTICATION,
+            detail="IEC 101 protocol limitation - no authentication mechanism",
         )
         self.logger.security_finding(
-            "No encryption", detail="IEC 101 protocol limitation - unencrypted serial communication"
+            "No encryption",
+            category=Category.ENCRYPTION,
+            detail="IEC 101 protocol limitation - unencrypted serial communication",
         )
         self.logger.security_finding(
-            "Insecure configuration", detail="Physical access to serial line grants full control"
+            "Insecure configuration",
+            category=Category.CONFIGURATION,
+            detail="Physical access to serial line grants full control",
         )
 
         analysis["issues"].append("No authentication (IEC 101 limitation)")

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
+from oida.utils.common_types import Category
+
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -88,7 +90,9 @@ class ControlMixin(_ScannerBase):
                 point["writable"] = True
                 writable_count += 1
                 self.logger.security_finding(
-                    "Writable access", f"TASE.2 writable point: {point['domain']}/{point['name']}"
+                    "Writable access",
+                    category=Category.ACCESS_CONTROL,
+                    detail=f"TASE.2 writable point: {point['domain']}/{point['name']}",
                 )
 
             except Exception:

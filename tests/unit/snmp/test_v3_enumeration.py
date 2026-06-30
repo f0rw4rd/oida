@@ -66,9 +66,12 @@ class TestProbeV3Classifier:
         ):
             assert scanner._probe_v3("admin", sec_level="noAuthNoPriv") == "TIMEOUT"
 
-    def test_unrecognized_error_is_timeout(self, scanner):
+    def test_unrecognized_error_is_error(self, scanner):
+        # An unrecognized pysnmp error indication is surfaced as ERROR (with the
+        # detail stashed in _last_v3_error), not silently masqueraded as a
+        # no-response TIMEOUT. See _probe_v3 docstring.
         with self._patch_run((ValueError("weird transport glitch"), 0, 0)):
-            assert scanner._probe_v3("admin", sec_level="noAuthNoPriv") == "TIMEOUT"
+            assert scanner._probe_v3("admin", sec_level="noAuthNoPriv") == "ERROR"
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +86,8 @@ class TestEnumV3Users:
             out = scanner._enum_v3_users(["admin"])
         assert out["valid_users"] == [{"username": "admin", "level": "noAuthNoPriv"}]
         assert out["credentials"][0]["username"] == "admin"
-        assert "No authentication" in scanner.logger.finding_titles
+        # Finding title is user-specific, e.g. "No authentication (user 'admin')".
+        assert any("No authentication" in t for t in scanner.logger.finding_titles)
 
     def test_wrong_level_marks_auth_required(self, scanner):
         scanner.brute_rate = 0
@@ -142,7 +146,8 @@ class TestEnumV3:
         with patch.object(s, "_enum_v3_users", return_value={"valid_users": [], "credentials": []}):
             with patch("oida.utils.export_utils.export_table"):
                 out = s._enum_v3()
-        assert out == {"valid_users": [], "credentials": []}
+        # _enum_v3 also reports whether the host answered at all (host_responded).
+        assert out == {"valid_users": [], "credentials": [], "host_responded": True}
 
     def test_all_noauth_users_short_circuit_before_phase2(self):
         s = self._scanner()

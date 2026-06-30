@@ -3,10 +3,12 @@
 """
 MMS (Manufacturing Message Specification) Protocol Scanner
 
-Uses pyiec61850-ng with safe wrappers for memory management.
-Requires pyiec61850-ng >= 1.6.0.9 (with pyiec61850.mms submodule).
+Built on pyiec61850-ng's high-level ``pyiec61850.mms.MMSClient`` for connection,
+identity, discovery, reads and FC-aware writes.
+Requires pyiec61850-ng >= 1.6.1.4 (FC-aware ``write_value`` and a working
+``get_server_identity``; with the ``pyiec61850.mms`` submodule).
 
-Requires: pip install pyiec61850-ng
+Requires: pip install oida[mms]
 """
 
 import time
@@ -21,42 +23,69 @@ from ...utils import (
     parse_bool,
     safe_int_conversion,
 )
+from ...utils.common_types import Category
 from ...utils.exceptions import DependencyError
 from ...utils.lazy_import import lazy_import
 from .fingerprint import FingerprintMatcher, FingerprintMatch
 
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
-_pyiec61850 = lazy_import("pyiec61850", "MMS", install_hint="pip install pyiec61850-ng")
-_pyiec61850_mms_utils = lazy_import(
-    "pyiec61850.mms.utils", "MMS", install_hint="pip install pyiec61850-ng"
-)
+_pyiec61850 = lazy_import("pyiec61850", "MMS", install_hint="pip install oida[mms]")
+_pyiec61850_mms = lazy_import("pyiec61850.mms", "MMS", install_hint="pip install oida[mms]")
 
 
 class _Lib:
-    """Lazy-loaded pyiec61850 bindings (class-based namespace, thread-safe)."""
+    """Lazy-loaded pyiec61850-ng high-level client (thread-safe namespace).
 
-    iec61850 = None
-    safe_to_char_p = None
-    safe_linked_list_iter = None
-    safe_linked_list_destroy = None
-    safe_mms_value_delete = None
-    safe_identity_destroy = None
-    unpack_result = None
+    The scanner runs entirely on the package's high-level ``MMSClient`` wrapper,
+    which handles connection lifecycle, identity decoding, name-list iteration
+    and MmsValue<->Python marshalling internally. Requires pyiec61850-ng
+    >= 1.6.1.4, which fixed ``write_value`` (now FC-aware) and
+    ``get_server_identity`` (earlier builds called a binding function that did
+    not exist). The one residual rough edge — ``read_value``'s lossy converter
+    returning a ``"<MmsValue type=N>"`` placeholder for complex/error types — is
+    smoothed over by ``MMSScanner._normalize_read``.
+    """
+
+    MMSClient = None
+    FC = None
+    MmsType = None
+    ServerIdentity = None
+    MMSError = None
+    ConnectionFailedError = None
+    ReadError = None
+    WriteError = None
 
     @classmethod
     def require(cls):
-        """Load pyiec61850-ng bindings (raises DependencyError if missing)."""
-        if cls.iec61850 is not None:
+        """Load pyiec61850-ng (raises DependencyError if missing)."""
+        if cls.MMSClient is not None:
             return
 
-        cls.iec61850 = _pyiec61850.pyiec61850
-        utils = _pyiec61850_mms_utils()
-        cls.safe_to_char_p = utils.safe_to_char_p
-        cls.safe_linked_list_iter = utils.safe_linked_list_iter
-        cls.safe_linked_list_destroy = utils.safe_linked_list_destroy
-        cls.safe_mms_value_delete = utils.safe_mms_value_delete
-        cls.safe_identity_destroy = utils.safe_identity_destroy
-        cls.unpack_result = utils.unpack_result
+        mms = _pyiec61850_mms()
+        cls.MMSClient = mms.MMSClient
+        cls.FC = mms.FC
+        cls.MmsType = mms.MmsType
+        cls.ServerIdentity = mms.ServerIdentity
+        cls.MMSError = mms.MMSError
+        cls.ConnectionFailedError = mms.ConnectionFailedError
+        cls.ReadError = mms.ReadError
+        cls.WriteError = mms.WriteError
+
+
+def _write_under_fc(client: Any, reference: str, value: Any, fc: Any) -> bool:
+    """Write ``value`` to ``reference`` under an explicit functional constraint.
+
+    A thin bool-returning adapter over ``MMSClient.write_value(ref, val, fc=fc)``
+    (FC-aware as of pyiec61850-ng 1.6.1.4). The write/fuzz probe loops try each
+    FC in turn and move on when one is rejected, so they want a boolean rather
+    than the ``WriteError`` the high-level method raises on failure.
+    """
+    try:
+        return bool(client.write_value(reference, value, fc=fc))
+    except _Lib.WriteError:
+        return False
+    except Exception:
+        return False
 
 
 protocol_options = {
@@ -100,7 +129,7 @@ protocol_options = {
 class MMSScanner(NetworkScanner):
     """IEC 61850 MMS Scanner implementing the base scanner interface.
 
-    Uses pyiec61850-ng safe wrappers for memory management.
+    Runs on pyiec61850-ng's high-level MMSClient (see module docstring).
     """
 
     def __init__(self, args: Dict[str, Any]):
@@ -141,81 +170,47 @@ class MMSScanner(NetworkScanner):
         return _pyiec61850.is_available
 
     def connect(self) -> Any:
-        """Establish IEC 61850 MMS connection."""
+        """Establish IEC 61850 MMS connection.
+
+        Returns the high-level ``MMSClient`` (the "connection" object threaded
+        through ``discover``/``disconnect`` and the NXC fuzz path), or ``None``
+        on failure.
+        """
         host, port = self.get_target_info()
 
         _Lib.require()
 
         try:
-            connection = _Lib.iec61850.IedConnection_create()
-            if connection is None:
-                self.logger.fail("Failed to create IedConnection object")
-                return None
-
-            result = _Lib.iec61850.IedConnection_connect(connection, host, port)
-            error_code = self._extract_error_code(result)
-
-            if error_code != 0:
-                error_name = self._get_error_name(error_code)
-                self.logger.fail(f"Connection failed to {host}:{port}: {error_name}")
-                _Lib.iec61850.IedConnection_destroy(connection)
-                return None
+            client = _Lib.MMSClient(timeout=self.timeout * 1000)
+            client.connect(host, int(port))
 
             self.logger.debug(f"Connected to IEC 61850 server at {host}:{port}")
-            return connection
+            # Confirmed MMS / IEC 61850 association over TCP — cleartext by design.
+            self.logger.security_finding(
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="MMS / IEC 61850 transmitted in cleartext (no TLS)",
+            )
+            return client
 
         except DependencyError:
             raise
+        except _Lib.ConnectionFailedError as e:
+            self.logger.fail(f"Connection failed to {host}:{port}: {e}")
+            return None
         except Exception as e:
             self.logger.fail(f"Failed to create IEC 61850 connection: {e}")
             return None
 
-    @staticmethod
-    def _extract_error_code(result) -> int:
-        """Extract integer error code from pyiec61850-ng SWIG result.
-
-        The SWIG binding returns a tuple (None, error_code) instead of a plain int.
-        """
-        if isinstance(result, tuple):
-            for item in reversed(result):
-                if isinstance(item, int):
-                    return item
-            return -1
-        if isinstance(result, int):
-            return result
-        return -1
-
-    def _get_error_name(self, error_code: int) -> str:
-        """Convert error code to human-readable name."""
-        error_names = {
-            _Lib.iec61850.IED_ERROR_OK: "OK",
-            _Lib.iec61850.IED_ERROR_NOT_CONNECTED: "Not connected",
-            _Lib.iec61850.IED_ERROR_ALREADY_CONNECTED: "Already connected",
-            _Lib.iec61850.IED_ERROR_CONNECTION_LOST: "Connection lost",
-            _Lib.iec61850.IED_ERROR_SERVICE_NOT_SUPPORTED: "Service not supported",
-            _Lib.iec61850.IED_ERROR_CONNECTION_REJECTED: "Connection rejected",
-            _Lib.iec61850.IED_ERROR_TIMEOUT: "Timeout",
-        }
-        return error_names.get(error_code, f"Error code {error_code}")
-
     def disconnect(self, connection: Any) -> None:
-        """Close IEC 61850 MMS connection with proper thread cleanup."""
+        """Close the IEC 61850 MMS connection."""
         if connection is None:
             return
 
         try:
-            try:
-                _Lib.iec61850.IedConnection_close(connection)
-            except Exception as e:
-                self.logger.debug(f"Error during IedConnection_close: {e}")
-
+            connection.disconnect()
             time.sleep(0.05)
-
-            try:
-                _Lib.iec61850.IedConnection_destroy(connection)
-            except Exception as e:
-                self.logger.debug(f"Error during IedConnection_destroy: {e}")
-
+            self.logger.debug("Connection closed")
         except Exception as e:
             self.logger.debug(f"Error disconnecting: {e}")
 
@@ -289,63 +284,31 @@ class MMSScanner(NetworkScanner):
         return results
 
     def _get_server_info(self, connection: Any) -> Dict[str, Any]:
-        """Get basic server information with safe memory handling."""
+        """Get basic server information (identity + logical-device count)."""
         info = {}
-        identity = None
-        device_list = None
-        mms_error = None
 
         try:
-            mms_conn = _Lib.iec61850.IedConnection_getMmsConnection(connection)
-
-            if mms_conn:
-                mms_error = _Lib.iec61850.MmsError_create()
-                identity = _Lib.iec61850.MmsConnection_identify(mms_conn, mms_error)
-
-                if identity is not None:
-                    vendor = _Lib.safe_to_char_p(identity.vendorName)
-                    model = _Lib.safe_to_char_p(identity.modelName)
-                    revision = _Lib.safe_to_char_p(identity.revision)
-
-                    if vendor:
-                        info["vendor"] = vendor
-                        self.logger.success(f"Vendor: {vendor}")
-                    if model:
-                        info["model"] = model
-                        self.logger.success(f"Model: {model}")
-                    if revision:
-                        info["revision"] = revision
-                        self.logger.display(f"Revision: {revision}")
-                else:
-                    self.logger.display("MMS Identity: Not available")
-
+            identity = connection.get_server_identity()
+            if identity.vendor:
+                info["vendor"] = identity.vendor
+                self.logger.success(f"Vendor: {identity.vendor}")
+            if identity.model:
+                info["model"] = identity.model
+                self.logger.success(f"Model: {identity.model}")
+            if identity.revision:
+                info["revision"] = identity.revision
+                self.logger.display(f"Revision: {identity.revision}")
+            if not (identity.vendor or identity.model or identity.revision):
+                self.logger.display("MMS Identity: Not available")
         except Exception as e:
             self.logger.debug(f"Error getting MMS identity: {e}")
-        finally:
-            _Lib.safe_identity_destroy(identity)
-            if mms_error is not None:
-                # NB: the pyiec61850-ng binding exposes this with a typo'd name
-                # ("MmsErrror_destroy"); fall back to the correct spelling in
-                # case a future build fixes it.
-                destroy = getattr(_Lib.iec61850, "MmsErrror_destroy", None) or getattr(
-                    _Lib.iec61850, "MmsError_destroy", None
-                )
-                if destroy is not None:
-                    destroy(mms_error)
 
         try:
-            result = _Lib.iec61850.IedConnection_getLogicalDeviceList(connection)
-            device_list, error_code, ok = _Lib.unpack_result(result)
-
-            if ok and device_list is not None:
-                device_count = sum(1 for _ in _Lib.safe_linked_list_iter(device_list))
-                info["logical_device_count"] = device_count
-                self.logger.display(f"IEC 61850 Server has {device_count} logical devices")
-
+            device_count = len(connection.get_logical_devices())
+            info["logical_device_count"] = device_count
+            self.logger.display(f"IEC 61850 Server has {device_count} logical devices")
         except Exception as e:
             self.logger.debug(f"Failed to get logical device list: {e}")
-        finally:
-            _Lib.safe_linked_list_destroy(device_list)
 
         info["supports_get_server_directory"] = True
         return info
@@ -377,26 +340,43 @@ class MMSScanner(NetworkScanner):
     def _read_iec61850_attribute(
         self, connection: Any, domain: str, attr_path: str
     ) -> Optional[str]:
-        """Read an IEC 61850 data attribute by path."""
-        mms_value = None
-
+        """Read an IEC 61850 data attribute by path (under FC_DC)."""
         try:
             ref = f"{domain}/{attr_path.replace('$', '.')}"
-            result = _Lib.iec61850.IedConnection_readObject(
-                connection, ref, _Lib.iec61850.IEC61850_FC_DC
-            )
-            mms_value, error_code, ok = _Lib.unpack_result(result)
-
-            if ok and mms_value is not None:
-                return self._extract_mms_value(mms_value)
-
+            value = self._normalize_read(connection.read_value(ref, fc=_Lib.FC.DC))
+            return str(value) if value is not None else None
+        except _Lib.ReadError:
             return None
-
         except Exception as e:
             self.logger.debug(f"Failed to read {domain}/{attr_path}: {e}")
             return None
-        finally:
-            _Lib.safe_mms_value_delete(mms_value)
+
+    @staticmethod
+    def _normalize_read(value: Any) -> Any:
+        """Normalize MMSClient.read_value()'s lossy converter output.
+
+        The high-level read_value() returns a "<MmsValue type=N>" placeholder
+        string for any type its scalar converter doesn't handle, including
+        DATA_ACCESS_ERROR. Map that error placeholder to None (so the FC
+        fallback and "failed read" accounting behave as before), and render
+        structure/array placeholders as the friendly "<structure>"/"<array>"
+        labels the old extractor produced. Scalars pass through untouched.
+        """
+        if not (
+            isinstance(value, str) and value.startswith("<MmsValue type=") and value.endswith(">")
+        ):
+            return value
+        try:
+            tag = int(value[len("<MmsValue type=") : -1])
+        except ValueError:
+            return value
+        if tag == int(_Lib.MmsType.DATA_ACCESS_ERROR):
+            return None
+        if tag == int(_Lib.MmsType.STRUCTURE):
+            return "<structure>"
+        if tag == int(_Lib.MmsType.ARRAY):
+            return "<array>"
+        return value
 
     def _report_fingerprint(self, fingerprint: FingerprintMatch) -> None:
         """Report fingerprint results."""
@@ -419,17 +399,14 @@ class MMSScanner(NetworkScanner):
     def _discover_logical_devices(self, connection: Any) -> List[Dict[str, Any]]:
         """Discover logical devices on the server."""
         logical_devices = []
-        device_list = None
 
         try:
-            result = _Lib.iec61850.IedConnection_getLogicalDeviceList(connection)
-            device_list, error_code, ok = _Lib.unpack_result(result)
+            device_names = connection.get_logical_devices()
 
-            if not ok or device_list is None:
+            if not device_names:
                 self.logger.display("Logical Devices: None accessible")
                 return logical_devices
 
-            device_names = list(_Lib.safe_linked_list_iter(device_list))
             self.logger.display(f"Discovering {len(device_names)} logical devices")
 
             for device_name in device_names:
@@ -441,8 +418,6 @@ class MMSScanner(NetworkScanner):
 
         except Exception as e:
             self.logger.fail(f"Error discovering logical devices: {e}")
-        finally:
-            _Lib.safe_linked_list_destroy(device_list)
 
         return logical_devices
 
@@ -487,17 +462,9 @@ class MMSScanner(NetworkScanner):
     def _get_logical_nodes(self, connection: Any, device_name: str) -> List[Dict[str, Any]]:
         """Get logical nodes for a device."""
         logical_nodes = []
-        node_list = None
 
         try:
-            result = _Lib.iec61850.IedConnection_getLogicalDeviceDirectory(connection, device_name)
-            node_list, error_code, ok = _Lib.unpack_result(result)
-
-            if not ok or node_list is None:
-                self.logger.debug(f"No logical nodes found for {device_name}")
-                return logical_nodes
-
-            for ln_name in _Lib.safe_linked_list_iter(node_list):
+            for ln_name in connection.get_logical_nodes(device_name):
                 ln_info = {
                     "name": ln_name,
                     "device": device_name,
@@ -509,8 +476,6 @@ class MMSScanner(NetworkScanner):
 
         except Exception as e:
             self.logger.debug(f"Error getting logical nodes for {device_name}: {e}")
-        finally:
-            _Lib.safe_linked_list_destroy(node_list)
 
         return logical_nodes
 
@@ -519,20 +484,10 @@ class MMSScanner(NetworkScanner):
     ) -> List[Dict[str, Any]]:
         """Get data objects for a logical node."""
         data_objects = []
-        object_list = None
 
         try:
             ln_ref = f"{device_name}/{ln_name}"
-            result = _Lib.iec61850.IedConnection_getLogicalNodeDirectory(
-                connection, ln_ref, _Lib.iec61850.ACSI_CLASS_DATA_OBJECT
-            )
-            object_list, error_code, ok = _Lib.unpack_result(result)
-
-            if not ok or object_list is None:
-                self.logger.debug(f"No data objects found for {ln_ref}")
-                return data_objects
-
-            for do_name in _Lib.safe_linked_list_iter(object_list):
+            for do_name in connection.get_data_objects(device_name, ln_name):
                 do_info = {
                     "name": do_name,
                     "logical_node": ln_name,
@@ -548,8 +503,6 @@ class MMSScanner(NetworkScanner):
 
         except Exception as e:
             self.logger.debug(f"Error getting data objects for {device_name}/{ln_name}: {e}")
-        finally:
-            _Lib.safe_linked_list_destroy(object_list)
 
         return data_objects
 
@@ -564,24 +517,28 @@ class MMSScanner(NetworkScanner):
 
         for do in data_objects:
             read_results["total_tested"] += 1
-            mms_value = None
 
             try:
-                for fc in [_Lib.iec61850.IEC61850_FC_MX, _Lib.iec61850.IEC61850_FC_ST]:
-                    result = _Lib.iec61850.IedConnection_readObject(
-                        connection, do["full_reference"], fc
-                    )
-                    mms_value, error_code, ok = _Lib.unpack_result(result)
+                # Measurements live under MX, status points under ST, and
+                # name-plate / description objects (NamPlt, PhyNam) under DC.
+                # Try them in that order so description objects — which return
+                # DATA_ACCESS_ERROR under MX/ST — are read from their real FC
+                # instead of being dropped.
+                value = None
+                for fc in (_Lib.FC.MX, _Lib.FC.ST, _Lib.FC.DC):
+                    try:
+                        value = self._normalize_read(
+                            connection.read_value(do["full_reference"], fc=fc)
+                        )
+                        if value is not None:
+                            break
+                    except _Lib.ReadError:
+                        continue
 
-                    if ok and mms_value is not None:
-                        break
-
-                if mms_value is not None:
-                    python_value = self._extract_mms_value(mms_value)
-
+                if value is not None:
                     do["readable"] = True
-                    do["value"] = python_value
-                    do["data_type"] = self._get_mms_type_name(mms_value)
+                    do["value"] = value
+                    do["data_type"] = self._python_type_name(value)
 
                     read_results["successful_reads"].append(
                         {
@@ -603,8 +560,6 @@ class MMSScanner(NetworkScanner):
                 read_results["failed_reads"].append(
                     {"reference": do["full_reference"], "error": str(e)}
                 )
-            finally:
-                _Lib.safe_mms_value_delete(mms_value)
 
             progress.update()
 
@@ -613,62 +568,32 @@ class MMSScanner(NetworkScanner):
         self.logger.display(f"Read test complete: {ok} successful, {fail} failed")
         return read_results
 
-    def _extract_mms_value(self, mms_value: Any) -> Any:
-        """Extract Python value from MmsValue."""
-        if mms_value is None:
-            return None
+    @staticmethod
+    def _python_type_name(value: Any) -> str:
+        """Label a value read via MMSClient by its Python type.
 
-        try:
-            mms_type = _Lib.iec61850.MmsValue_getType(mms_value)
-
-            if mms_type == _Lib.iec61850.MMS_DATA_ACCESS_ERROR:
-                return None
-            elif mms_type == _Lib.iec61850.MMS_BOOLEAN:
-                return _Lib.iec61850.MmsValue_getBoolean(mms_value)
-            elif mms_type == _Lib.iec61850.MMS_INTEGER:
-                return _Lib.iec61850.MmsValue_toInt32(mms_value)
-            elif mms_type == _Lib.iec61850.MMS_UNSIGNED:
-                return _Lib.iec61850.MmsValue_toUint32(mms_value)
-            elif mms_type == _Lib.iec61850.MMS_FLOAT:
-                return _Lib.iec61850.MmsValue_toFloat(mms_value)
-            elif mms_type in [_Lib.iec61850.MMS_VISIBLE_STRING, _Lib.iec61850.MMS_STRING]:
-                ptr = _Lib.iec61850.MmsValue_toString(mms_value)
-                return _Lib.safe_to_char_p(ptr)
-            elif mms_type == _Lib.iec61850.MMS_BIT_STRING:
-                return _Lib.iec61850.MmsValue_getBitStringAsInteger(mms_value)
-            elif mms_type == _Lib.iec61850.MMS_STRUCTURE:
-                return "<structure>"
-            elif mms_type == _Lib.iec61850.MMS_ARRAY:
-                return "<array>"
-            else:
-                return None
-
-        except Exception as e:
-            self.logger.debug(f"Failed to get mms_type: {e}")
-            return None
-
-    def _get_mms_type_name(self, mms_value: Any) -> str:
-        """Get MMS type name."""
-        if mms_value is None:
-            return "unknown"
-
-        try:
-            mms_type = _Lib.iec61850.MmsValue_getType(mms_value)
-            type_names = {
-                _Lib.iec61850.MMS_BOOLEAN: "boolean",
-                _Lib.iec61850.MMS_INTEGER: "integer",
-                _Lib.iec61850.MMS_UNSIGNED: "unsigned",
-                _Lib.iec61850.MMS_FLOAT: "float",
-                _Lib.iec61850.MMS_VISIBLE_STRING: "visible_string",
-                _Lib.iec61850.MMS_STRING: "string",
-                _Lib.iec61850.MMS_BIT_STRING: "bit_string",
-                _Lib.iec61850.MMS_STRUCTURE: "structure",
-                _Lib.iec61850.MMS_ARRAY: "array",
-            }
-            return type_names.get(mms_type, f"type_{mms_type}")
-        except Exception as e:
-            self.logger.debug(f"Failed to get mms_type: {e}")
-            return "unknown"
+        MMSClient.read_value() already converts the MmsValue to a native Python
+        type, so the MMS type is no longer directly available; the python type
+        is a faithful enough label for display/export. Complex MMS types are
+        normalized by _normalize_read() to "<structure>"/"<array>" placeholders.
+        """
+        if isinstance(value, bool):
+            return "boolean"
+        if isinstance(value, int):
+            return "integer"
+        if isinstance(value, float):
+            return "float"
+        if isinstance(value, str):
+            if value == "<structure>":
+                return "structure"
+            if value == "<array>":
+                return "array"
+            return "string"
+        if isinstance(value, (list, tuple)):
+            return "array"
+        if isinstance(value, dict):
+            return "structure"
+        return type(value).__name__
 
     def _test_write_access(
         self, connection: Any, data_objects: List[Dict[str, Any]]
@@ -696,9 +621,7 @@ class MMSScanner(NetworkScanner):
             write_results["total_tested"] += 1
 
             try:
-                success = self._write_data_object(
-                    connection, do["full_reference"], do["value"], do.get("data_type")
-                )
+                success = self._write_data_object(connection, do["full_reference"], do["value"])
 
                 if success:
                     do["writable"] = True
@@ -721,55 +644,19 @@ class MMSScanner(NetworkScanner):
         self.logger.display(f"Write test complete: {ok} writable, {fail} not writable")
         return write_results
 
-    def _write_data_object(
-        self, connection: Any, reference: str, value: Any, data_type: str = None
-    ) -> bool:
-        """Write a value to a data object."""
-        mms_value = None
+    def _write_data_object(self, connection: Any, reference: str, value: Any) -> bool:
+        """Write a value to a data object, probing CO -> SP -> MX.
 
-        try:
-            mms_value = self._create_mms_value(value, data_type)
-
-            if mms_value is None:
-                return False
-
-            for fc in [
-                _Lib.iec61850.IEC61850_FC_CO,
-                _Lib.iec61850.IEC61850_FC_SP,
-                _Lib.iec61850.IEC61850_FC_MX,
-            ]:
-                result = _Lib.iec61850.IedConnection_writeObject(
-                    connection, reference, fc, mms_value
-                )
-                _, _, ok = _Lib.unpack_result(result)
-
-                if ok:
-                    return True
-
-            return False
-
-        except Exception as e:
-            self.logger.debug(f"Error writing to {reference}: {e}")
-            return False
-        finally:
-            _Lib.safe_mms_value_delete(mms_value)
-
-    def _create_mms_value(self, value: Any, data_type: str = None) -> Any:
-        """Create MmsValue from Python value."""
-        try:
-            if isinstance(value, bool):
-                return _Lib.iec61850.MmsValue_newBoolean(value)
-            elif isinstance(value, int):
-                return _Lib.iec61850.MmsValue_newInteger(value)
-            elif isinstance(value, float):
-                return _Lib.iec61850.MmsValue_newFloat(value)
-            elif isinstance(value, str):
-                return _Lib.iec61850.MmsValue_newVisibleString(value)
-            else:
-                return _Lib.iec61850.MmsValue_newInteger(int(value))
-        except Exception as e:
-            self.logger.debug(f"Failed to create MmsValue: {e}")
-            return None
+        A data object is writable under whichever functional constraint the
+        server accepts (control objects under CO, setpoints under SP, some
+        measurements under MX); try them in impact order and return on the
+        first success. Uses the FC-aware write shim because the high-level
+        write_value() is FC_ST-only (see /tmp/issue).
+        """
+        for fc in (_Lib.FC.CO, _Lib.FC.SP, _Lib.FC.MX):
+            if _write_under_fc(connection, reference, value, fc):
+                return True
+        return False
 
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze security configuration."""
@@ -813,12 +700,53 @@ class MMSScanner(NetworkScanner):
         self.report_host_info(host)
         self.report_service_info(host, port=port, name="iec61850-mms", proto="tcp")
 
-        for device in results.get("logical_devices", []):
-            self.logger.display(f"IEC 61850 Logical Device: {device['name']}")
+        self._report_data_model(results.get("logical_devices", []))
 
         security_analysis = results.get("security_analysis", {})
         for concern in security_analysis.get("concerns", []):
             self.report_vulnerability(host, "iec61850_security", description=concern)
+
+    def _report_data_model(self, logical_devices: List[Dict[str, Any]]) -> None:
+        """Print the discovered IEC 61850 data model as an indented tree.
+
+        Counts alone ("3 logical nodes and 23 data objects") don't tell an
+        operator what is actually present on the device. Walk the nested
+        logical-device -> logical-node -> data-object hierarchy and print the
+        names, with read values / writable flags when those scans ran.
+        """
+        for device in logical_devices:
+            self.logger.success(f"Logical Device: {device['name']}")
+
+            logical_nodes = device.get("logical_nodes", [])
+            for ln in logical_nodes:
+                data_objects = ln.get("data_objects", [])
+                self.logger.display(f"  LN {ln['name']} ({len(data_objects)} objects)")
+
+                for do in data_objects:
+                    # Print the qualified LN.DO name (e.g. GGIO1.Mod): it
+                    # disambiguates objects that repeat across nodes (Mod, Beh,
+                    # Health, NamPlt all appear under several LNs) and is a valid
+                    # substring for -r/--variable, so it can be copied straight
+                    # from this tree into a follow-up read.
+                    ref = f"{ln['name']}.{do['name']}"
+                    self.logger.display(f"    {ref}{self._format_do_detail(do)}")
+
+    @staticmethod
+    def _format_do_detail(do: Dict[str, Any]) -> str:
+        """Build the trailing ' = value (type) [W]' annotation for a data object.
+
+        Only the parts that were actually populated by a read/write scan are
+        shown; in plain discovery mode this returns an empty string so the tree
+        stays compact.
+        """
+        parts = []
+        if do.get("readable") and do.get("value") is not None:
+            value = do["value"]
+            data_type = do.get("data_type")
+            parts.append(f" = {value}" + (f" ({data_type})" if data_type else ""))
+        if do.get("writable"):
+            parts.append(" [WRITABLE]")
+        return "".join(parts)
 
 
 # Create metadata and run function using protocol module factory

@@ -647,6 +647,7 @@ _INTENTIONAL_MALFORMED_KEYWORDS = (
     "9999",
     "large",
     "long",
+    "short",
     "zero",
     "sweep",
 )

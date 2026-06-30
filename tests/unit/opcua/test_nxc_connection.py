@@ -52,7 +52,12 @@ class TestOpcuaClassInit(unittest.TestCase):
     @patch("oida.protocols.opcua.nxc_connection._parse_opcua_url")
     @patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__")
     def test_init_sets_protocol_name(self, mock_super, mock_parse, mock_normalize):
-        """Test that __init__ sets protocol_name to 'opcua'"""
+        """Test that __init__ sets protocol_name to the 'OPC UA' display name.
+
+        Layer-2 connection classes carry a human-readable protocol_name used in
+        the NXC-style banner/log lines (e.g. "Modbus", "IEC 104", "EtherNet/IP"),
+        not the lowercase loader key. opcua follows that convention with "OPC UA".
+        """
         mock_normalize.return_value = "opc.tcp://192.168.1.100:4840"
         mock_parse.return_value = ("192.168.1.100", 4840, "")
         mock_super.return_value = None
@@ -63,7 +68,7 @@ class TestOpcuaClassInit(unittest.TestCase):
         db = Mock()
         instance = opcua(args, db, "192.168.1.100")
 
-        self.assertEqual(instance.protocol_name, "opcua")
+        self.assertEqual(instance.protocol_name, "OPC UA")
 
     @patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url")
     @patch("oida.protocols.opcua.nxc_connection._parse_opcua_url")

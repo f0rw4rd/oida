@@ -3,11 +3,15 @@
 Comprehensive test suite for MMS (IEC 61850) protocol scanner
 Tests both mock interactions and real protocol functionality
 
-Note: Tests use @patch to mock the pyiec61850 library functions since
-we use raw SWIG bindings, not a high-level wrapper API.
+The scanner runs on pyiec61850-ng's high-level ``MMSClient``. Discovery /
+read / server-info tests pass a ``MagicMock()`` standing in for that client
+(``connection``) and stub its high-level methods (``get_logical_devices`` etc.);
+connect() tests patch ``_Lib.MMSClient`` / ``_Lib.require`` so no real socket
+is opened.
 """
 
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
 from oida.protocols.mms import MMSScanner, _Lib
@@ -54,154 +58,123 @@ class TestMMSScannerInit(unittest.TestCase):
 
 
 class TestMMSMockOperations(unittest.TestCase):
-    """Test MMS scanner with mocked pyiec61850 library"""
+    """Test MMS scanner against a mocked high-level MMSClient connection."""
 
     def setUp(self):
         """Set up test environment"""
         self.scanner = MMSScanner({"rhost": "127.0.0.1", "rport": 102, "timeout": 5})
 
-    def _create_mock_linked_list(self, items):
-        """Create a mock LinkedList that yields items via LinkedList_getNext/getData"""
-        mock_lib = MagicMock()
+    def test_discover_logical_devices_with_mock(self):
+        """_discover_logical_devices delegates to connection.get_logical_devices()."""
+        connection = MagicMock()
+        connection.get_logical_devices.return_value = ["LD0", "LD1"]
 
-        # Create mock list nodes
-        nodes = []
-        for item in items:
-            node = MagicMock()
-            node.data = item.encode() if isinstance(item, str) else item
-            nodes.append(node)
+        result = self.scanner._discover_logical_devices(connection)
 
-        # Add terminal None
-        nodes.append(None)
+        connection.get_logical_devices.assert_called_once_with()
+        self.assertEqual([d["name"] for d in result], ["LD0", "LD1"])
+        self.assertTrue(all(d["accessible"] for d in result))
 
-        # Setup getNext to return each node in sequence
-        head = MagicMock()
-        call_count = [0]
+    def test_get_logical_nodes_with_mock(self):
+        """_get_logical_nodes delegates to connection.get_logical_nodes(device)."""
+        connection = MagicMock()
+        connection.get_logical_nodes.return_value = ["LLN0", "MMXU1"]
 
-        def mock_get_next(node):
-            if call_count[0] >= len(nodes):
-                return None
-            result = nodes[call_count[0]]
-            call_count[0] += 1
-            return result
+        result = self.scanner._get_logical_nodes(connection, "PROT")
 
-        mock_lib.LinkedList_getNext.side_effect = mock_get_next
+        connection.get_logical_nodes.assert_called_once_with("PROT")
+        self.assertEqual([n["name"] for n in result], ["LLN0", "MMXU1"])
+        self.assertEqual(result[0]["full_reference"], "PROT/LLN0")
 
-        # Setup getData to return the data
-        def mock_get_data(node):
-            if node is None or not hasattr(node, "data"):
-                return None
-            return id(node)  # Return address-like value for ctypes conversion
+    def test_get_data_objects_with_mock(self):
+        """_get_data_objects delegates to connection.get_data_objects(device, ln)."""
+        connection = MagicMock()
+        connection.get_data_objects.return_value = ["Mod", "Beh"]
 
-        mock_lib.LinkedList_getData.side_effect = mock_get_data
+        result = self.scanner._get_data_objects(connection, "PROT", "LLN0")
 
-        return mock_lib, head
+        connection.get_data_objects.assert_called_once_with("PROT", "LLN0")
+        self.assertEqual([o["name"] for o in result], ["Mod", "Beh"])
+        self.assertEqual(result[0]["full_reference"], "PROT/LLN0.Mod")
 
-    @patch.object(_Lib, "safe_linked_list_destroy")
-    @patch.object(_Lib, "safe_linked_list_iter", return_value=iter([]))
-    @patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True))
-    @patch.object(_Lib, "iec61850")
-    def test_discover_logical_devices_with_mock(
-        self, mock_lib, mock_unpack, mock_iter, mock_destroy
-    ):
-        """Test _discover_logical_devices with mocked library"""
-        mock_linked_list = MagicMock()
-        mock_lib.IedConnection_getLogicalDeviceList.return_value = (mock_linked_list, 0)
-
-        mock_connection = MagicMock()
-        result = self.scanner._discover_logical_devices(mock_connection)
-
-        mock_lib.IedConnection_getLogicalDeviceList.assert_called_once_with(mock_connection)
-        self.assertEqual(len(result), 0)
-
-    @patch.object(_Lib, "safe_linked_list_destroy")
-    @patch.object(_Lib, "safe_linked_list_iter", return_value=iter([]))
-    @patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True))
-    @patch.object(_Lib, "iec61850")
-    def test_get_logical_nodes_with_mock(self, mock_lib, mock_unpack, mock_iter, mock_destroy):
-        """Test _get_logical_nodes with mocked library"""
-        mock_linked_list = MagicMock()
-        mock_lib.IedConnection_getLogicalDeviceDirectory.return_value = (mock_linked_list, 0)
-
-        mock_connection = MagicMock()
-        result = self.scanner._get_logical_nodes(mock_connection, "PROT")
-
-        mock_lib.IedConnection_getLogicalDeviceDirectory.assert_called_once_with(
-            mock_connection, "PROT"
+    def test_get_server_info_with_mock(self):
+        """_get_server_info combines get_server_identity() and device count."""
+        connection = MagicMock()
+        connection.get_logical_devices.return_value = ["LD0", "LD1"]
+        connection.get_server_identity.return_value = SimpleNamespace(
+            vendor="TestVendor", model="TestModel", revision="1.0"
         )
-        self.assertEqual(len(result), 0)
 
-    @patch.object(_Lib, "safe_linked_list_destroy")
-    @patch.object(_Lib, "safe_linked_list_iter", return_value=iter([]))
-    @patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True))
-    @patch.object(_Lib, "iec61850")
-    def test_get_data_objects_with_mock(self, mock_lib, mock_unpack, mock_iter, mock_destroy):
-        """Test _get_data_objects with mocked library"""
-        mock_linked_list = MagicMock()
-        mock_lib.IedConnection_getLogicalNodeDirectory.return_value = (mock_linked_list, 0)
-        mock_lib.ACSI_CLASS_DATA_OBJECT = 0
-
-        mock_connection = MagicMock()
-        result = self.scanner._get_data_objects(mock_connection, "PROT", "LLN0")
-
-        self.assertEqual(len(result), 0)
-
-    @patch.object(_Lib, "safe_linked_list_destroy")
-    @patch.object(_Lib, "safe_linked_list_iter", return_value=iter([]))
-    @patch.object(_Lib, "unpack_result", return_value=(MagicMock(), 0, True))
-    @patch.object(_Lib, "safe_identity_destroy")
-    @patch.object(_Lib, "safe_to_char_p", side_effect=lambda x: x)
-    @patch.object(_Lib, "iec61850")
-    def test_get_server_info_with_mock(
-        self, mock_lib, mock_char_p, mock_id_destroy, mock_unpack, mock_iter, mock_destroy
-    ):
-        """Test _get_server_info with mocked library"""
-        mock_mms_conn = MagicMock()
-        mock_lib.IedConnection_getMmsConnection.return_value = mock_mms_conn
-
-        mock_error = MagicMock()
-        mock_lib.MmsError_create.return_value = mock_error
-
-        mock_identity = MagicMock()
-        mock_identity.vendorName = "TestVendor"
-        mock_identity.modelName = "TestModel"
-        mock_identity.revision = "1.0"
-        mock_lib.MmsConnection_identify.return_value = mock_identity
-
-        mock_connection = MagicMock()
-        result = self.scanner._get_server_info(mock_connection)
+        result = self.scanner._get_server_info(connection)
 
         self.assertEqual(result.get("vendor"), "TestVendor")
         self.assertEqual(result.get("model"), "TestModel")
         self.assertEqual(result.get("revision"), "1.0")
+        self.assertEqual(result.get("logical_device_count"), 2)
 
     def test_empty_logical_devices(self):
         """Test handling of empty logical device list"""
-        with (
-            patch.object(_Lib, "safe_linked_list_destroy"),
-            patch.object(_Lib, "unpack_result", return_value=(None, 0, False)),
-            patch.object(_Lib, "iec61850") as mock_lib,
-        ):
-            mock_lib.IedConnection_getLogicalDeviceList.return_value = (None, 0)
+        connection = MagicMock()
+        connection.get_logical_devices.return_value = []
 
-            mock_connection = MagicMock()
-            result = self.scanner._discover_logical_devices(mock_connection)
+        result = self.scanner._discover_logical_devices(connection)
 
-            self.assertEqual(len(result), 0)
+        self.assertEqual(len(result), 0)
 
     def test_exception_handling_in_discovery(self):
         """Test exception handling during discovery"""
+        connection = MagicMock()
+        connection.get_logical_devices.side_effect = Exception("Connection lost")
+
+        result = self.scanner._discover_logical_devices(connection)
+
+        # Should return empty list, not crash
+        self.assertEqual(len(result), 0)
+
+    def test_connect_returns_client_and_emits_finding(self):
+        """connect() builds an MMSClient, calls .connect(host, port), returns it."""
+        client = MagicMock()
+        self.scanner.logger = MagicMock()
         with (
-            patch.object(_Lib, "safe_linked_list_destroy"),
-            patch.object(_Lib, "iec61850") as mock_lib,
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "MMSClient", return_value=client) as ctor,
         ):
-            mock_lib.IedConnection_getLogicalDeviceList.side_effect = Exception("Connection lost")
+            result = self.scanner.connect()
 
-            mock_connection = MagicMock()
-            result = self.scanner._discover_logical_devices(mock_connection)
+        self.assertIs(result, client)
+        ctor.assert_called_once_with(timeout=self.scanner.timeout * 1000)
+        client.connect.assert_called_once_with("127.0.0.1", 102)
+        # cleartext-transport security finding is emitted on success
+        self.scanner.logger.security_finding.assert_called_once()
 
-            # Should return empty list, not crash
-            self.assertEqual(len(result), 0)
+    def test_connect_returns_none_on_connection_failed(self):
+        """connect() returns None when MMSClient.connect raises ConnectionFailedError."""
+
+        class _ConnFailed(Exception):
+            pass
+
+        client = MagicMock()
+        client.connect.side_effect = _ConnFailed("refused")
+        self.scanner.logger = MagicMock()
+        with (
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "ConnectionFailedError", _ConnFailed),
+            patch.object(_Lib, "MMSClient", return_value=client),
+        ):
+            result = self.scanner.connect()
+
+        self.assertIsNone(result)
+        self.scanner.logger.security_finding.assert_not_called()
+
+    def test_disconnect_delegates_to_client(self):
+        """disconnect() calls connection.disconnect()."""
+        connection = MagicMock()
+        self.scanner.disconnect(connection)
+        connection.disconnect.assert_called_once_with()
+
+    def test_disconnect_none_is_noop(self):
+        """disconnect(None) must not raise."""
+        self.scanner.disconnect(None)
 
     def test_disconnected_operations(self):
         """Test run_scan handles a failed connection gracefully (no real socket).
@@ -330,23 +303,16 @@ class TestMMSIntegration(unittest.TestCase):
             self.assertEqual(scanner.port, config["rport"])
             self.assertEqual(scanner.timeout, config["timeout"])
 
-    @patch.object(_Lib, "safe_linked_list_destroy")
-    @patch.object(_Lib, "safe_linked_list_iter", return_value=iter([]))
-    @patch.object(_Lib, "safe_identity_destroy")
-    @patch.object(_Lib, "unpack_result", return_value=(None, 0, False))
-    @patch.object(_Lib, "safe_to_char_p", return_value=None)
-    @patch.object(_Lib, "iec61850")
-    def test_discover_method_returns_expected_structure(
-        self, mock_lib, mock_char_p, mock_unpack, mock_id_destroy, mock_iter, mock_destroy
-    ):
+    def test_discover_method_returns_expected_structure(self):
         """Test that discover() returns expected result structure"""
-        mock_lib.IedConnection_getMmsConnection.return_value = None
-        mock_lib.IedConnection_getLogicalDeviceList.return_value = (None, 0)
-
         scanner = MMSScanner({"rhost": "127.0.0.1", "rport": 102})
-        mock_conn = MagicMock()
+        connection = MagicMock()
+        connection.get_logical_devices.return_value = []
+        connection.get_server_identity.return_value = SimpleNamespace(
+            vendor=None, model=None, revision=None
+        )
 
-        result = scanner.discover(mock_conn)
+        result = scanner.discover(connection)
 
         expected_keys = [
             "server_info",

@@ -22,6 +22,7 @@ from ...utils import (
 )
 from ...utils.protocol_helpers import ConnectionHelper
 from ...utils.default_credentials import load_credentials
+from oida.utils.common_types import Category
 
 from .helpers import (
     _asyncua,
@@ -715,13 +716,19 @@ class OPCUAScanner(NetworkScanner):
                 severity="high",
             )
             # Centralized security finding
-            self.logger.security_finding("Anonymous access allowed")
+            self.logger.security_finding(
+                "Anonymous access allowed", category=Category.AUTHENTICATION
+            )
 
         # Check encryption support
         endpoints = results.get("endpoints", [])
         has_encryption = any(ep.get("security_mode") not in ["None", None] for ep in endpoints)
         if not has_encryption:
-            self.logger.security_finding("No encryption", detail="No secure endpoints available")
+            self.logger.security_finding(
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="No secure endpoints available",
+            )
 
         # Report valid credentials with the password that actually validated
         # for each user (falling back to self.password only if unrecorded).
@@ -744,7 +751,9 @@ class OPCUAScanner(NetworkScanner):
             )
             # Centralized security finding
             self.logger.security_finding(
-                "Writable access", detail=f"{len(writable_nodes)} writable nodes"
+                "Writable access",
+                category=Category.ACCESS_CONTROL,
+                detail=f"{len(writable_nodes)} writable nodes",
             )
 
 

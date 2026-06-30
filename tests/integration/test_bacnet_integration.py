@@ -274,7 +274,6 @@ class TestBACnetScanner:
         args.quick = False
         args.discover = False
         args.full = False
-        args.safe = False
         args.confirm = False
         args.port = 47808
         args.timeout = 3.0
@@ -340,23 +339,6 @@ class TestBACnetScanner:
             assert scanner.args.identify is True
             assert scanner.args.enumerate_objects is True
 
-    def test_apply_shortcuts_safe(self, mock_args):
-        """Test --safe shortcut disables dangerous operations"""
-        from oida.protocols.bacnet import bacnet
-
-        mock_args.safe = True
-        mock_args.write = "test:1:value:100"
-        mock_args.test_write = True
-
-        with patch.object(bacnet, "__init__", lambda self, args, db, host: None):
-            scanner = object.__new__(bacnet)
-            scanner.args = mock_args
-            scanner._apply_shortcuts()
-
-            assert scanner.args.write is None
-            assert scanner.args.test_write is False
-            assert scanner.args.check_reinit is False
-
     def test_parse_object_id_tuple(self, mock_args):
         """Test parsing object ID from tuple"""
         from oida.protocols.bacnet import bacnet
@@ -383,12 +365,18 @@ class TestBACnetMockServer:
 
     def test_mock_server_script_exists(self):
         """Test that mock server script exists"""
-        mock_server = Path(__file__).parent.parent.parent / "docker/mocks/services/bacnet/mock/bacnet_server.py"
+        mock_server = (
+            Path(__file__).parent.parent.parent
+            / "docker/mocks/services/bacnet/mock/bacnet_server.py"
+        )
         assert mock_server.exists(), f"Mock server not found at {mock_server}"
 
     def test_mock_server_help(self):
         """Test mock server help output [Category B]"""
-        mock_server = Path(__file__).parent.parent.parent / "docker/mocks/services/bacnet/mock/bacnet_server.py"
+        mock_server = (
+            Path(__file__).parent.parent.parent
+            / "docker/mocks/services/bacnet/mock/bacnet_server.py"
+        )
         result = subprocess.run(
             [sys.executable, str(mock_server), "--help"],
             capture_output=True,
@@ -1283,8 +1271,11 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
         assert "2 life safety object" in details.lower(), (
             f"Life safety finding should report the 2 mock objects: {details!r}"
         )
-        assert ls_findings[0]["data"].get("category") == "LIFE_SAFETY", (
-            f"Life safety finding category should be LIFE_SAFETY: {ls_findings[0]['data']!r}"
+        # The free-text "LIFE_SAFETY" category was consolidated onto the canonical
+        # Category enum (which has no LIFE_SAFETY member); life-safety object access
+        # is an access-control exposure, so the scanner now emits ACCESS_CONTROL.
+        assert ls_findings[0]["data"].get("category") == "ACCESS_CONTROL", (
+            f"Life safety finding category should be ACCESS_CONTROL: {ls_findings[0]['data']!r}"
         )
 
     @pytest.mark.security
@@ -1379,8 +1370,11 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
         assert pid_findings, (
             "Mock has aggressively tuned PID loops; expected a PID 'Insecure configuration' finding"
         )
-        assert pid_findings[0]["data"].get("category") == "PID", (
-            f"PID finding category should be PID: {pid_findings[0]['data']!r}"
+        # The free-text "PID" category was consolidated onto the canonical Category
+        # enum (no PID member); manipulable PID loop parameters are an access-control
+        # exposure, so the scanner now emits ACCESS_CONTROL.
+        assert pid_findings[0]["data"].get("category") == "ACCESS_CONTROL", (
+            f"PID finding category should be ACCESS_CONTROL: {pid_findings[0]['data']!r}"
         )
 
     # ========================================================================

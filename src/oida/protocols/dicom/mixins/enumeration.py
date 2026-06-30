@@ -20,6 +20,7 @@ from ..nxc_connection import (
     _sop,
 )
 from ....utils.platform_compat import _pkg_root
+from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -147,6 +148,7 @@ class EnumerationMixin(_ScannerBase):
         if len(valid_aets) > 5 or "ANY" in valid_aets or "*" in valid_aets:
             self.logger.security_finding(
                 "No authentication",
+                category=Category.AUTHENTICATION,
                 detail="Server accepts many AE Titles - weak AET whitelist",
             )
 
