@@ -128,7 +128,10 @@ jobs:
 
       - name: Smoke test the binary
         if: runner.os == 'Windows'
-        run: uv run pytest tests/integration/test_binary_smoke.py -m binary -q
+        # pyproject sets timeout_method = "signal" (SIGALRM/setitimer), which is
+        # Unix-only and makes pytest-timeout crash with an INTERNALERROR on
+        # Windows. Override to the cross-platform "thread" method for this run.
+        run: uv run pytest tests/integration/test_binary_smoke.py -m binary -q -o timeout_method=thread
 
       - name: Determine archive name (with version)
         # Tag builds (v1.2.3) use the tag; otherwise the packaged oida version
