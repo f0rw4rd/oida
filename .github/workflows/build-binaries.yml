@@ -137,6 +137,11 @@ jobs:
         # Tag builds (v1.2.3) use the tag; otherwise the packaged oida version
         # plus a short commit suffix so dev artifacts are distinguishable.
         # `shell: bash` so the same script runs on the Windows runner too.
+        # always(): still package + upload the built binary when the smoke test
+        # failed, so it can be pulled for debugging. The job itself stays red
+        # (the smoke step has no continue-on-error), so a smoke-failing binary
+        # never publishes via a real release.
+        if: always()
         shell: bash
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
@@ -149,12 +154,12 @@ jobs:
           echo "archive -> oida-${v}${suffix}-${{ matrix.label }}.${{ matrix.ext }}"
 
       - name: Package onedir folder (Linux)
-        if: runner.os == 'Linux'
+        if: always() && runner.os == 'Linux'
         # Single named archive with a top-level oida/ dir.
         run: tar -C dist -czf "$ARCHIVE" oida
 
       - name: Package onedir folder (Windows)
-        if: runner.os == 'Windows'
+        if: always() && runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path dist/oida -DestinationPath "$env:ARCHIVE"
 
@@ -196,6 +201,7 @@ jobs:
 
       # ── Integrity + provenance (after signing, so they cover the signed file) ─
       - name: Generate SHA-256 checksum
+        if: always()
         shell: bash
         run: sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
 
@@ -211,6 +217,7 @@ jobs:
           subject-path: ${{ env.ARCHIVE }}
 
       - name: Upload artifact
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: ${{ matrix.artifact }}
