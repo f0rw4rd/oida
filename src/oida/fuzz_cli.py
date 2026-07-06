@@ -281,9 +281,17 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         default=100,
         help="Monitor check interval (default: 100)",
     )
-    from .fuzz.monitors.registry import MONITOR_REGISTRY
+    # The monitor registry pulls in boofuzz (the optional 'fuzz' extra). Only
+    # the monitor *names* are needed here for help text, so a missing extra must
+    # not break CLI init for every other protocol (e.g. `oida modbus`). Degrade
+    # gracefully: still register the fuzz subcommand; it errors with a clear
+    # "install oida[fuzz]" message at run time via check_dependencies.
+    try:
+        from .fuzz.monitors.registry import MONITOR_REGISTRY
 
-    available_monitors = ", ".join(sorted(MONITOR_REGISTRY.keys()))
+        available_monitors = ", ".join(sorted(MONITOR_REGISTRY.keys()))
+    except Exception:
+        available_monitors = "requires the 'fuzz' extra (pip install oida[fuzz])"
     fuzz_parser.add_argument(
         "--monitors",
         "-M",
@@ -907,8 +915,18 @@ def show_protocol_requests(protocol):
 
 def run_fuzzing(args, protocol, target):
     """Run the actual fuzzing with NXC-style output"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS
-    from .fuzz import FuzzerApplication
+    try:
+        from .fuzz.protocols import PROTOCOL_FUZZERS
+        from .fuzz import FuzzerApplication
+    except ImportError as e:
+        # The fuzzer is built on boofuzz (the optional 'fuzz' extra). Give a
+        # clear, actionable message instead of a raw ModuleNotFoundError.
+        logger.error(
+            "Fuzzing requires the 'fuzz' extra (missing dependency: %s). "
+            "Install it with: pip install oida[fuzz]",
+            e.name or e,
+        )
+        return 1
 
     # Validate protocol
     try:
