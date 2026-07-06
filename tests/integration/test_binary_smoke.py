@@ -54,13 +54,26 @@ KNOWN_FROZEN_FAILURES = {"codesys"}
 
 
 def _run(bin_path, *args, timeout=30):
-    """Run the binary and return CompletedProcess."""
-    return subprocess.run(
+    """Run the binary and return CompletedProcess.
+
+    On the GitHub Actions Windows runner, capture_output can hand back
+    stdout/stderr as ``None`` even when the binary printed output — verified on
+    a real Windows box that ``oida.exe --help`` emits the full protocol list
+    over a captured pipe, so this is a runner/harness quirk, not a binary bug.
+    Coalesce ``None`` -> ``""`` so assertions are robust to it (and still fail
+    loudly if output is genuinely absent, rather than crashing on ``NoneType``).
+    """
+    result = subprocess.run(
         [str(bin_path), *args],
         capture_output=True,
         text=True,
         timeout=timeout,
     )
+    if result.stdout is None:
+        result.stdout = ""
+    if result.stderr is None:
+        result.stderr = ""
+    return result
 
 
 def _is_frozen_diag_traceback(stderr):
@@ -181,9 +194,14 @@ class TestBinarySmoke:
         """oida --help exits 0 and lists all protocol names."""
         result = _run(oida_bin, "--help")
         assert result.returncode == 0, f"stderr: {result.stderr}"
-        output = result.stdout.lower()
-        for proto in ALL_PROTOCOLS:
-            assert proto in output, f"Protocol {proto!r} missing from --help output"
+        # Check both streams: help goes to stdout, but combine defensively so a
+        # runner-specific stdout/stderr split can't fail a working binary.
+        output = (result.stdout + "\n" + result.stderr).lower()
+        missing = [proto for proto in ALL_PROTOCOLS if proto not in output]
+        assert not missing, (
+            f"Protocols missing from --help output: {missing}\n"
+            f"rc={result.returncode}\nstdout={result.stdout!r}\nstderr={result.stderr!r}"
+        )
 
     @pytest.mark.parametrize("protocol", ALL_PROTOCOLS)
     def test_protocol_help(self, oida_bin, protocol):
