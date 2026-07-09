@@ -69,6 +69,15 @@ _pkgs_to_collect: set = set()
 for _dist in _wanted_dists:
     _pkgs_to_collect |= _dist_to_imports.get(_dist, {_dist})
 
+# ── base (non-extra) deps that ship non-Python data files ────────────────────
+# The loop above only sees requirements gated by an `extra ==` marker, so base
+# runtime deps are skipped. manuf2 ships a ~3MB data file (manuf2/manuf, the
+# Wireshark OUI database) with no .py extension that MacParser() loads at
+# runtime for MAC-vendor lookup (oida.utils.ics_logger, discovery/stats). Without
+# collect_all it's dropped from the bundle and the frozen binary raises IOError
+# on any MAC lookup. Add such base packages here explicitly.
+_pkgs_to_collect |= {"manuf2"}
+
 _collected, _skipped = [], []
 for _pkg in sorted(_pkgs_to_collect):
     try:
