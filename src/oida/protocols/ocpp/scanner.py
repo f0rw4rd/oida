@@ -26,6 +26,7 @@ from ...utils import (
     NetworkScanner,
     parse_bool,
 )
+from ...utils.socket_helpers import build_tls_context
 from ...utils.lazy_import import lazy_import
 
 from .constants import (
@@ -144,9 +145,7 @@ class OCPPScanner(NetworkScanner):
 
     def check_dependencies(self) -> bool:
         if not _websockets.is_available:
-            self.logger.fail(
-                "websockets library required. Install with: pip install oida[ocpp]"
-            )
+            self.logger.fail("websockets library required. Install with: pip install oida[ocpp]")
             return False
         return True
 
@@ -190,25 +189,20 @@ class OCPPScanner(NetworkScanner):
         if not self.tls:
             return None
 
-        _log = getattr(self, "logger", None)
-        if _log:
-            _log.debug(
-                f"Building SSL context: insecure={self.tls_insecure}, "
-                f"ca={'set' if self.tls_ca else 'default'}, "
-                f"client_cert={'set' if self.tls_cert else 'none'}"
-            )
-
-        ctx = ssl.create_default_context()
-
-        if self.tls_insecure:
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-
-        if self.tls_ca:
-            ctx.load_verify_locations(self.tls_ca)
-
-        if self.tls_cert and self.tls_key:
-            ctx.load_cert_chain(certfile=self.tls_cert, keyfile=self.tls_key)
+        # Use the central permissive-by-default TLS builder (matches every other
+        # protocol): CERT_NONE unless a --tls-ca is supplied, so self-signed
+        # charge points connect without requiring --tls-insecure. Previously this
+        # rolled its own ssl.create_default_context() (verify ON by default),
+        # which was the odd one out and broke against typical self-signed WSS.
+        ctx = build_tls_context(
+            {
+                "tls-cert": self.tls_cert or None,
+                "tls-key": self.tls_key or None,
+                "tls-ca": self.tls_ca or None,
+                "tls-insecure": self.tls_insecure,
+            },
+            logger=getattr(self, "logger", None),
+        )
 
         return ctx
 

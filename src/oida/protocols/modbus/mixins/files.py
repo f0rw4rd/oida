@@ -25,13 +25,20 @@ class FilesMixin(_ScannerBase):
     def _handle_file_read(self, file_spec: str):
         """Handle file record read (FC 20)"""
         try:
-            file_num, record_num = map(int, file_spec.split(":"))
+            parts = file_spec.split(":")
+            if len(parts) == 2:
+                file_num, record_num = int(parts[0]), int(parts[1])
+                record_length = 1
+            elif len(parts) == 3:
+                file_num, record_num, record_length = (int(p) for p in parts)
+            else:
+                raise ValueError("expected FILE:RECORD or FILE:RECORD:LEN")
         except ValueError:
-            self.logger.fail(f"Invalid file spec: {file_spec} (use FILE:RECORD)")
+            self.logger.fail(f"Invalid file spec: {file_spec} (use FILE:RECORD[:LEN])")
             return
 
         self.logger.display(f"Reading file {file_num} record {record_num}...")
-        result = self.scanner._read_file_record(self.conn, file_num, record_num)
+        result = self.scanner._read_file_record(self.conn, file_num, record_num, record_length)
         if result:
             self.results["data"]["file_record"] = result
             self.logger.display(f"[File Record] File {file_num}, Record {record_num}:")

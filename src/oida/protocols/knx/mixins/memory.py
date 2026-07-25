@@ -275,7 +275,14 @@ class MemoryMixin:
         return result
 
     def _parse_memory_range(self, memory_arg: str) -> tuple:
-        """Parse memory dump argument (START:LENGTH)"""
+        """Parse memory dump argument (START:LENGTH)
+
+        Returns (start, length) on success, or (None, None) on malformed
+        input so the caller never falls back to a default address. Silently
+        substituting a hardcoded default (0x0100:256) would dump memory from
+        a real device the operator never asked to read — matches the
+        rejecting-sentinel pattern used by ``_parse_group_write``.
+        """
         try:
             parts = memory_arg.split(":")
             if len(parts) != 2:
@@ -288,7 +295,7 @@ class MemoryMixin:
             return start, length
         except Exception as e:
             self.logger.fail(f"Invalid memory range format '{memory_arg}': {e}")
-            return 0x0100, 256  # Default
+            return None, None
 
     def _parse_memory_write(self, write_arg: str) -> tuple:
         """Parse memory write argument (ADDR:DATA)"""

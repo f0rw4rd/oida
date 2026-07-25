@@ -7,7 +7,6 @@ declared as a parser argument or has a default in some mixin
 __init__.
 """
 
-import ast
 import pathlib
 import re
 import unittest

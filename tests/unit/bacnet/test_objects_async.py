@@ -271,7 +271,7 @@ class TestEnumProgramsFindings(unittest.TestCase):
         titles = [c.args[0] for c in findings]
         cats = [c.kwargs["category"] for c in findings]
         self.assertIn("Insecure configuration", titles)
-        self.assertIn("Writable access", titles)
+        self.assertIn("Program control exposed", titles)
         # Both are canonical ACCESS_CONTROL.
         self.assertTrue(all(cat == Category.ACCESS_CONTROL for cat in cats))
         # The concern detail lists the active-load + pending-change + location.

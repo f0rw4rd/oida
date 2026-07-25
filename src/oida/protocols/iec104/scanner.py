@@ -19,7 +19,10 @@ from ...utils import (
 )
 from ...utils.protocol_helpers import ConnectionHelper
 from ...utils.cli import run as cli_run
+from ...utils.ics_logger import get_module_logger
 from oida.utils.common_types import Category
+
+logger = get_module_logger(__name__)
 
 from .constants import (
     IEC104_TYPE_IDS,
@@ -247,14 +250,21 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
     def _parse_write_arg(raw: Optional[str]):
         """Parse 'IOA[:VALUE]' string into (ioa_int, value_str_or_None).
 
-        Returns (None, None) when raw is None (flag not given).
+        Returns (None, None) when raw is None (flag not given) or malformed.
         """
         if raw is None:
             return None, None
-        if ":" in raw:
-            ioa_str, value = raw.split(":", 1)
-            return int(ioa_str), value
-        return int(raw), None
+        # Guard the int() conversions so a malformed arg (e.g. --write-single
+        # foo:bar) fails cleanly instead of aborting __init__ with a raw
+        # ValueError traceback (mirrors the --read-ioa parser's behavior).
+        try:
+            if ":" in raw:
+                ioa_str, value = raw.split(":", 1)
+                return int(ioa_str), value
+            return int(raw), None
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid IOA in '{raw}' (expected IOA[:VALUE] with integer IOA)")
+            return None, None
 
     def get_protocol_name(self) -> str:
         return "IEC 104"
@@ -1602,17 +1612,23 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
             )
             analysis["issues"].append(f"{points_count} data points accessible without auth")
 
-        analysis.update(
-            SecurityAnalyzer.assess_protocol_security(
-                {
-                    "authentication": False,
-                    "authorization": False,
-                    "encryption": self.use_tls,
-                    "integrity_check": self.use_tls,
-                    "access_control": False,
-                }
-            )
+        assessment = SecurityAnalyzer.assess_protocol_security(
+            {
+                "authentication": False,
+                "authorization": False,
+                "encryption": self.use_tls,
+                "integrity_check": self.use_tls,
+                "access_control": False,
+            }
         )
+        # assess_protocol_security() returns its own generic "issues" list
+        # (e.g. "Missing authentication"); merging it in with dict.update()
+        # would otherwise clobber the IEC104-specific findings (file
+        # transfer, custom types, unauth access) collected above. Pop it
+        # off and append instead so both sets of findings survive.
+        generic_issues = assessment.pop("issues", [])
+        analysis.update(assessment)
+        analysis["issues"].extend(generic_issues)
 
         return analysis
 

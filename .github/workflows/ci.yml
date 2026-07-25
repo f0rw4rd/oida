@@ -1,8 +1,12 @@
 name: CI
 
 on:
-  # Manual-only: run from the Actions tab (or `gh workflow run ci.yml`).
-  # Auto push/PR triggers were removed intentionally — CI is opt-in.
+  # CI runs automatically. It was previously manual-only, and the result was
+  # that it never ran at all: 628k LOC landed with no automated check, and the
+  # vulture gate sat red on committed code unnoticed. See AI_SLOP_AUDIT.md.
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
   workflow_call:  # Allow release.yml to reuse this as a pre-publish quality gate
 
@@ -41,11 +45,30 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format --check src/oida/
 
-      - name: Vulture dead code
-        run: uv run vulture src/oida/ .vulture_whitelist.py --min-confidence 80
+      # Strict rules (BLE001, ARG, RUF012, TRY, ...) still have thousands of
+      # pre-existing violations, so they are enforced on changed files only.
+      # Needs full history to diff against the base ref.
+      - name: Ruff strict (changed files)
+        run: |
+          git fetch --no-tags --depth=50 origin "${GITHUB_BASE_REF:-main}" || true
+          ./scripts/quality/lint-changed.sh "origin/${GITHUB_BASE_REF:-main}"
 
+      # Confidence 60, not 80: at 80 vulture only sees unused variables, and
+      # every dead method/class in the audit sits in the 60-79 band.
+      - name: Vulture dead code (ratcheted)
+        run: uv run python scripts/quality/vulture_gate.py
+
+      - name: Cross-file structural duplication
+        run: uv run python scripts/quality/structural_clones.py src/oida --baseline .quality/clones.json --fail-on-new
+
+      - name: Low-assurance test detection
+        run: uv run python scripts/quality/test_quality.py tests/ --baseline .quality/tests.json
+
+      # B110/B112 are no longer skipped — they were the mechanism behind three
+      # security checks that reported "clean" after crashing. Existing sites are
+      # baselined; new ones fail.
       - name: Bandit security lint
-        run: uv run bandit -r src/oida/ -c pyproject.toml -q
+        run: uv run bandit -r src/oida/ -c pyproject.toml -b .quality/bandit-baseline.json -q
 
   test:
     name: Tests (Python ${{ matrix.python-version }})

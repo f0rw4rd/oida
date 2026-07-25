@@ -356,8 +356,14 @@ class MemoryMixin(_ScannerBase):
 
     def write_timers(self, conn: Any, start: int, data: bytes) -> Dict[str, Any]:
         """Write to timers (S7-300/400 only)"""
+        # Timers are 2 bytes each; an odd-length payload used to be silently
+        # truncated (len(data)//2 dropped the trailing byte with no
+        # indication to the caller that part of their write was discarded).
+        if len(data) % 2 != 0:
+            msg = f"Timer data must be an even number of bytes (2 per timer), got {len(data)}"
+            self.logger.fail(msg)
+            return {"success": False, "error": msg}
         try:
-            # Timers are 2 bytes each
             amount = len(data) // 2
             conn.tm_write(start, amount, bytearray(data))
             self.logger.success(f"Written {amount} timer(s) starting at T{start}")
@@ -369,8 +375,13 @@ class MemoryMixin(_ScannerBase):
 
     def write_counters(self, conn: Any, start: int, data: bytes) -> Dict[str, Any]:
         """Write to counters (S7-300/400 only)"""
+        # Counters are 2 bytes each; see write_timers() for why odd-length
+        # payloads must be rejected rather than silently truncated.
+        if len(data) % 2 != 0:
+            msg = f"Counter data must be an even number of bytes (2 per counter), got {len(data)}"
+            self.logger.fail(msg)
+            return {"success": False, "error": msg}
         try:
-            # Counters are 2 bytes each
             amount = len(data) // 2
             conn.ct_write(start, amount, bytearray(data))
             self.logger.success(f"Written {amount} counter(s) starting at C{start}")

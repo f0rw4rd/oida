@@ -93,16 +93,16 @@ class hart(NetworkConnection):
             self._handle_enumerate_device_specific()
 
         # Calibration / write command probes (dangerous — require --confirm)
-        if getattr(self.args, "probe_calibration", False) or getattr(
-            self.args, "probe_write", False
-        ):
+        probe_calibration = getattr(self.args, "probe_calibration", False)
+        probe_write = getattr(self.args, "probe_write", False)
+        if probe_calibration or probe_write:
             if not getattr(self.args, "confirm", False):
                 self.logger.fail(
                     "--probe-calibration/--probe-write transmit live calibration/write "
                     "commands to the device — requires --confirm"
                 )
             else:
-                self._handle_command_probes()
+                self._handle_command_probes(calibration=probe_calibration, write=probe_write)
 
         # Security analysis
         if security_analysis:
@@ -151,8 +151,16 @@ class hart(NetworkConnection):
             "fuzz",
             "write_poll_addr",
             "write_tag",
+            "write_message",
             "master_reset",
             "raw_command",
+            "unlock",
+            "lock",
+            "self_test",
+            "reset_config_flag",
+            "check_lock",
+            "bruteforce_lock",
+            "list_sub_devices",
         ]
         return any(getattr(self.args, action, False) for action in actions)
 
@@ -456,7 +464,13 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        cmd_range = getattr(self.args, "command_range", "128-253")
+        # --command-range defaults to "0-48" (shared with other actions), which
+        # clamps this sweep to an empty range. Device-specific commands live at
+        # 128-253, so fall back to that when the operator left --command-range at
+        # its default; an explicit range is still honored (clamped to 128-253).
+        cmd_range = getattr(self.args, "command_range", "0-48")
+        if str(cmd_range) == "0-48":
+            cmd_range = "128-253"
         if "-" in str(cmd_range):
             start, end = map(int, str(cmd_range).split("-"))
         else:
@@ -474,13 +488,17 @@ class hart(NetworkConnection):
         else:
             self.logger.display("No device-specific commands responded")
 
-    def _handle_command_probes(self):
+    def _handle_command_probes(self, calibration: bool = True, write: bool = True):
         """Probe calibration/write command accessibility via security analysis.
 
-        --probe-calibration / --probe-write surface the write- and
-        dangerous-command accessibility checks from security_analysis(), which
-        are gated behind --confirm because they transmit real (empty-payload)
-        write/calibration commands to the live device.
+        --probe-write surfaces "Write command accessible" findings (Cmd 6/17/18/
+        19/35/44/50); --probe-calibration surfaces "Dangerous command accessible"
+        findings (Cmd 42 Master Reset/43/45/46 trim). Both are sourced from the
+        same security_analysis() probe pass but filtered to the requested
+        category so the two flags are no longer functional duplicates. Gated
+        behind --confirm (checked again here as defense-in-depth even though
+        proto_flow already gates the call) because both probes transmit real
+        (empty-payload) write/calibration commands to the live device.
         """
         if not self.scanner:
             return
@@ -494,7 +512,16 @@ class hart(NetworkConnection):
 
         self.logger.display("Probing write/calibration command accessibility...")
         findings = self.scanner.security_analysis()
-        probe_findings = [f for f in findings if "command accessible" in f.get("issue", "").lower()]
+
+        probe_findings = []
+        if write:
+            probe_findings.extend(
+                f for f in findings if "write command accessible" in f.get("issue", "").lower()
+            )
+        if calibration:
+            probe_findings.extend(
+                f for f in findings if "dangerous command accessible" in f.get("issue", "").lower()
+            )
         self.results["data"]["command_probes"] = probe_findings
 
         if probe_findings:

@@ -288,6 +288,21 @@ class KerberosPassiveListener(PySharkListenerBase):
             return 0
         return len([p for p in s.split(",") if p.strip()])
 
+    def _field_occurrences(self, layer, name: str) -> List[Any]:
+        """Return each occurrence of a repeated Kerberos field as a list.
+
+        Reads via ``getattr`` (not ``get_field``) so paired repeated fields such
+        as ``padata_type`` / ``padata_value`` keep one element per occurrence.
+        ``get_field`` collapses them to a single comma-joined string (e.g.
+        ``"2,128"``), which destroys the pairing and breaks ``int()`` parsing.
+        Returns an empty list when the field is absent.
+        """
+        raw = getattr(layer, name, None)
+        raw = self._resolve_value(raw, None)
+        if raw is None:
+            return []
+        return list(raw) if isinstance(raw, (list, tuple)) else [raw]
+
     def _cipher_occurrences(self, layer, name: str = "cipher") -> List[str]:
         """Return each occurrence of a Kerberos cipher field as clean hex.
 
@@ -660,24 +675,26 @@ class KerberosPassiveListener(PySharkListenerBase):
         """
         _f = self._get_layer_field
 
-        # Get padata_type and padata_value as raw lists from the layer
-        raw_types = self.get_field(krb_layer, "padata_type", default=None)
-        raw_values = self.get_field(krb_layer, "padata_value", default=None)
-        if raw_types is None or raw_values is None:
+        # Get padata_type and padata_value as raw lists from the layer. These
+        # MUST be read via getattr (not get_field), which comma-joins repeated
+        # fields into "2,128" and breaks the type<->value pairing below.
+        raw_types = self._field_occurrences(krb_layer, "padata_type")
+        raw_values = self._field_occurrences(krb_layer, "padata_value")
+        if not raw_types or not raw_values:
             return
-
-        # Normalize to lists
-        if not isinstance(raw_types, list):
-            raw_types = [raw_types]
-        if not isinstance(raw_values, list):
-            raw_values = [raw_values]
 
         # Find the PA-ENC-TIMESTAMP (type 2) entry
         pa_enc_ts_hex = None
         for pt, pv in zip(raw_types, raw_values):
             try:
                 if int(self._resolve_value(pt, 0)) == 2:
-                    pa_enc_ts_hex = str(self._resolve_value(pv, ""))
+                    # padata_value is FT_BYTES: in EK mode (production) raw
+                    # getattr yields Python `bytes`, so convert to hex here —
+                    # str(bytes) would give a b'...' repr that _parse_encrypted_
+                    # data's bytes.fromhex() rejects, silently losing the hash.
+                    # (Mirrors _cipher_occurrences' bytes handling.)
+                    pv_val = self._resolve_value(pv, "")
+                    pa_enc_ts_hex = pv_val.hex() if isinstance(pv_val, bytes) else str(pv_val)
                     break
             except (ValueError, TypeError) as e:
                 self.logger.debug(

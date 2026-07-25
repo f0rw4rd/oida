@@ -393,9 +393,7 @@ class TestScanSlots(unittest.TestCase):
     @patch("time.sleep")
     @patch("oida.protocols.snap7.scanner._identify_main_slot")
     @patch("oida.protocols.snap7.scanner._suppress_snap7_logging")
-    def test_scan_slots_paces_phase1_modern_plc(
-        self, mock_suppress, mock_main_slot, mock_sleep
-    ):
+    def test_scan_slots_paces_phase1_modern_plc(self, mock_suppress, mock_main_slot, mock_sleep):
         """Regression: when a modern PLC is found in phase 1 (phase 2 skipped),
         both phase-1 probes are still paced, including the non-responding one."""
         mock_suppress.return_value.__enter__ = Mock(return_value=None)

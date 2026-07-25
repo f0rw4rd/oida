@@ -52,6 +52,52 @@ def _scanner(**extra):
     return MMSScanner(base)
 
 
+class TestTlsConfig:
+    """--tls builds a TLSConfig with validation OFF by default (pentest default)."""
+
+    def test_no_tls_returns_none(self):
+        assert _scanner()._build_tls_config() is None
+        assert _scanner(tls=False)._build_tls_config() is None
+
+    def test_tls_default_disables_validation(self):
+        cfg = _scanner(tls=True)._build_tls_config()
+        assert cfg is not None
+        # Encrypted but unauthenticated: insecure=True, no CA/pin.
+        assert cfg.insecure is True
+
+    def test_tls_ca_enables_validation(self):
+        cfg = _scanner(tls=True, **{"tls-ca": "ca.crt"})._build_tls_config()
+        assert cfg.insecure is False
+        assert cfg.ca_certs == ["ca.crt"]
+
+    def test_tls_pin_enables_validation(self):
+        cfg = _scanner(tls=True, **{"tls-pin": "server.crt"})._build_tls_config()
+        assert cfg.insecure is False
+
+    def test_tls_client_cert_sets_mutual(self):
+        cfg = _scanner(
+            tls=True, **{"tls-client-cert": "cl.crt", "tls-client-key": "cl.key"}
+        )._build_tls_config()
+        assert cfg.own_cert == "cl.crt" and cfg.own_key == "cl.key"
+        assert cfg.insecure is True  # still no server validation without CA/pin
+
+    def test_connect_uses_tls_port_and_passes_config(self):
+        # --tls switches the default plaintext port (102) to the TLS port and
+        # threads the TLSConfig into MMSClient.
+        s = _scanner(tls=True)
+        client = MagicMock()
+        client.connect.return_value = True
+        with (
+            patch.object(_Lib, "require"),
+            patch.object(_Lib, "MMSClient", return_value=client) as ctor,
+        ):
+            s.connect()
+        assert ctor.call_args.kwargs.get("tls") is not None
+        # connect() called with the TLS port (3782), not 102.
+        called_port = client.connect.call_args.args[1]
+        assert called_port == 3782
+
+
 # --------------------------------------------------------------------------- #
 # __init__ flag/gate behaviour
 # --------------------------------------------------------------------------- #
@@ -344,13 +390,36 @@ class TestWritePaths:
         objs = [
             {"full_reference": "LD0/A", "readable": True, "value": 5},
             {"full_reference": "LD0/B", "readable": False, "value": 1},  # skipped
-            {"full_reference": "LD0/C", "readable": True, "value": None},  # skipped
+            {"full_reference": "LD0/C", "readable": True, "value": None},  # unreadable on demand
         ]
-        with patch.object(s, "_write_data_object", return_value=True) as w:
-            res = s._test_write_access(MagicMock(), objs)
+        # Objects without a cached value are read on demand; make those reads
+        # return nothing so LD0/C stays unwritable (isolates the filter).
+        conn = MagicMock()
+        conn.read_value.return_value = None
+        with (
+            patch.object(_Lib, "FC", _FC),
+            patch.object(s, "_write_data_object", return_value=True) as w,
+        ):
+            res = s._test_write_access(conn, objs)
         assert res["total_tested"] == 1
         assert res["successful_writes"][0]["reference"] == "LD0/A"
         assert objs[0]["writable"] is True
+        w.assert_called_once()
+
+    def test_test_write_reads_values_on_demand(self):
+        # --test-write must work without a prior --read-values pass: an object
+        # with no cached value is read on demand and then written.
+        s = _scanner(**{"test-write": True, "confirm": True})
+        objs = [{"full_reference": "LD0/X", "readable": False, "value": None}]
+        conn = MagicMock()
+        conn.read_value.return_value = 42
+        with (
+            patch.object(_Lib, "FC", _FC),
+            patch.object(s, "_write_data_object", return_value=True) as w,
+        ):
+            res = s._test_write_access(conn, objs)
+        assert res["total_tested"] == 1
+        assert objs[0]["value"] == 42 and objs[0]["readable"] is True
         w.assert_called_once()
 
     def test_test_write_records_failed_write(self):
@@ -411,6 +480,10 @@ class TestWritePaths:
 # --------------------------------------------------------------------------- #
 class TestSecurityAndReport:
     def test_analyze_security_concerns_listed(self):
+        # Benign discovery counts (logical devices, data objects, reads) are
+        # informational, not vulnerabilities, and must NOT appear in
+        # concerns. Only the write-without-auth finding (and the underlying
+        # missing-auth/encryption/integrity issues) should be reported.
         s = _scanner()
         results = {
             "logical_devices": [{"name": "LD0"}, {"name": "LD1"}],
@@ -420,17 +493,24 @@ class TestSecurityAndReport:
         }
         analysis = s._analyze_security(results)
         concerns = analysis["concerns"]
-        assert "2 logical devices accessible" in concerns
-        assert "3 data objects discovered" in concerns
-        assert "1 data objects readable" in concerns
-        assert "1 data objects writable" in concerns
+        assert "2 logical devices accessible" not in concerns
+        assert "3 data objects discovered" not in concerns
+        assert "1 data objects readable" not in concerns
+        assert "1 data objects writable without authentication" in concerns
+        # Real auth/encryption issues from the assessor are surfaced too.
+        assert any("authentication" in c.lower() for c in concerns)
+        assert any("encryption" in c.lower() for c in concerns)
 
     def test_analyze_security_access_control_flag(self):
         s = _scanner()
-        # no writable objects -> access_control True was passed to assessor
+        # no writable objects -> access_control True was passed to assessor,
+        # so "Missing access control" is not among the issues; the other
+        # missing-auth/encryption/integrity issues still are.
         no_write = s._analyze_security({"write_test_results": {"successful_writes": []}})
         assert isinstance(no_write, dict)
-        assert no_write["concerns"] == []
+        assert not any("writable" in c.lower() for c in no_write["concerns"])
+        assert not any("access control" in c.lower() for c in no_write["concerns"])
+        assert any("authentication" in c.lower() for c in no_write["concerns"])
 
     def test_report_findings_emits_vuln_per_concern(self):
         s = _scanner()

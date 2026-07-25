@@ -38,7 +38,13 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         """Parse slot argument: '1' or '1/1' or '1/0x8001'.
 
         Returns:
-            (slot, subslot) tuple, or (slot, None) if no subslot specified
+            (slot, subslot) tuple, or (None, None) if no --slot was given at all.
+
+        Raises:
+            ValueError: slot_str was given but isn't parseable. Callers must
+                surface this rather than swallow it -- silently falling back to
+                (None, None) here means "no filter", which widens a targeted
+                probe (e.g. a typo'd --slot) into a full scan.
         """
         if not slot_str:
             return (None, None)
@@ -49,7 +55,10 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             subslot = int(parts[1], 0) if len(parts) > 1 else None
             return (slot, subslot)
         except ValueError:
-            return (None, None)
+            raise ValueError(
+                f"invalid --slot value {slot_str!r} (expected 'SLOT' or 'SLOT/SUBSLOT', "
+                "e.g. '1' or '2/1')"
+            ) from None
 
     def __init__(self, args, db, host):
         # Check if RPC-only mode (target is IP, not interface).
@@ -159,6 +168,31 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             or self._arg("enum_range", None)
         )
 
+        # RPC-only mode implements only I&M / diagnosis / index enumeration /
+        # fuzz. Flags below need the DCP/AR feature path and are not wired here;
+        # warn instead of silently ignoring them (device info still prints,
+        # which otherwise makes "-R --topology" etc. look like they worked).
+        _unsupported = [
+            name
+            for name, dest in (
+                ("--read-index", "read_index"),
+                ("--write-index", "write_index"),
+                ("--test-write", "test_write"),
+                ("--topology", "topology"),
+                ("--module-diff", "module_diff"),
+                ("--alarms", "alarms"),
+                ("--slots", "slots"),
+                ("--write-im1", "write_im1"),
+                ("--write-im2", "write_im2"),
+                ("--write-im3", "write_im3"),
+            )
+            if self._arg(dest, None)
+        ]
+        if _unsupported:
+            self.logger.warning(
+                "RPC-only mode (-R) does not support " + ", ".join(_unsupported) + "; ignored"
+            )
+
         if not (read_im or read_diag or enum_idx):
             self.logger.display(
                 "No RPC operations specified (use --read-im, --read-diagnosis, or --enum)"
@@ -167,7 +201,6 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
 
         try:
             con = profinet_mod.RPCCon(mock_desc, timeout=self.timeout)
-            self._apply_rpc_port(con)
 
             # For RPC-only, try AR establishment with a locally-administered MAC
             fake_mac = bytes([0x02, 0x00, 0x00, 0x00, 0x00, 0x01])

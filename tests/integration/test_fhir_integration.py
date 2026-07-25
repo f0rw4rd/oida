@@ -980,34 +980,6 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             f"Expected cross-patient test output: {text[:500]}"
         )
 
-    @pytest.mark.security
-    @pytest.mark.skip(
-        reason="Brute force requires --confirm and credential files; "
-        "mock has no auth to validate against"
-    )
-    def test_finding_default_credentials_basic_auth(self, cli_runner, target, port, mock_service):
-        """Test that brute force detects valid Basic Auth credentials [Category B - skip]
-
-        Would require --brute --default-creds --confirm flags and the mock
-        to support HTTP Basic Auth validation. The mock accepts all requests
-        regardless of auth, so this would always find 'Default credentials'.
-        """
-        pass
-
-    @pytest.mark.security
-    @pytest.mark.skip(
-        reason="OAuth2 brute force requires token endpoint and credentials; "
-        "mock has no OAuth2 token endpoint"
-    )
-    def test_finding_default_credentials_oauth2(self, cli_runner, target, port, mock_service):
-        """Test that brute force detects valid OAuth2 credentials [Category B - skip]
-
-        Would require the mock to implement an OAuth2 token endpoint at
-        /fhir/auth/token. The mock's CapabilityStatement advertises this URL
-        but it is not actually implemented.
-        """
-        pass
-
     # ========================================================================
     # Authentication Tests (non-finding)
     # ========================================================================

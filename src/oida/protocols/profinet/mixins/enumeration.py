@@ -410,7 +410,11 @@ class EnumerationMixin(_ScannerBase):
     ) -> None:
         """Enumerate available record indices with table display."""
         options = self._get_enum_options()
-        filter_slot, filter_subslot = self._parse_slot_arg(options["slot_arg"])
+        try:
+            filter_slot, filter_subslot = self._parse_slot_arg(options["slot_arg"])
+        except ValueError as e:
+            self.logger.fail(f"  {e}")
+            return
 
         # Safety checks for write operations
         if options["test_write"] and not self._arg("confirm", False):

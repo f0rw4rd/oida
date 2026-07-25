@@ -103,13 +103,15 @@ class dnp3(NetworkConnection):
         # effectively dead — SAv2/v5 saw almost no adoption and is deprecated;
         # it only ever provided message authentication, never encryption.
         # Wrapping DNP3 in TLS (IEC 62351 / DNP3-over-TLS) is the recommended
-        # path. We are on a confirmed-live connection here, so emit the finding.
-        self.logger.security_finding(
-            "No encryption",
-            category=Category.ENCRYPTION,
-            detail="DNP3 has no transport encryption - wrap in TLS (IEC 62351); "
-            "DNP3-SA is deprecated and authentication-only, not a substitute",
-        )
+        # path. Only flag missing encryption when this scan is NOT over TLS —
+        # otherwise a --tls session is falsely reported as plaintext.
+        if not getattr(self.args, "tls", False):
+            self.logger.security_finding(
+                "No encryption",
+                category=Category.ENCRYPTION,
+                detail="DNP3 has no transport encryption - wrap in TLS (IEC 62351); "
+                "DNP3-SA is deprecated and authentication-only, not a substitute",
+            )
 
         self.logger.debug("Enumerating device information...")
         transport = getattr(self.args, "transport", "tcp") or "tcp"

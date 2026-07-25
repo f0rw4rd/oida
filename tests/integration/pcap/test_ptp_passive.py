@@ -50,9 +50,7 @@ class TestPTPGrandmasterChangeAlert:
             listener._check_security(0xB, "Announce", "10.0.0.1", "10.0.0.2", details)
 
         gm_alerts = [a for a in listener._alerts if a["category"] == "ptp_gm_change"]
-        assert len(gm_alerts) == 1, (
-            f"expected exactly one GM-change alert, got {len(gm_alerts)}"
-        )
+        assert len(gm_alerts) == 1, f"expected exactly one GM-change alert, got {len(gm_alerts)}"
 
     def test_two_distinct_changes_alert_twice(self):
         from oida.pcap.ptp import PTPPassiveListener

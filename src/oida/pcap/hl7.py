@@ -265,7 +265,7 @@ class HL7PassiveListener(PySharkListenerBase):
         # heuristic.  Unlike the old `dst_port == 2575` checks this never drops
         # traffic on a non-standard port.
         native = False if msg_type == "ACK" else None
-        direction = self.resolve_direction(
+        d = self.resolve_direction(
             packet,
             native=native,
             src_ip=src_ip,
@@ -273,7 +273,8 @@ class HL7PassiveListener(PySharkListenerBase):
             src_port=src_port,
             dst_port=dst_port,
             flow_id=flow_id,
-        ).direction
+        )
+        direction = d.direction
 
         details: Dict[str, Any] = {}
         if msg_type:
@@ -327,10 +328,13 @@ class HL7PassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
-        # Track interface
+        # Track interface. Key on the *resolved* client/server roles, not raw
+        # src_ip/dst_ip -- an ACK response (server->client) would otherwise
+        # create a role-reversed duplicate interface entry keyed on its
+        # reversed (src, dst) pair.
         self._track_interface(
-            src_ip,
-            dst_ip,
+            d.client_ip,
+            d.server_ip,
             sending_app,
             receiving_app,
             msg_type,
@@ -385,8 +389,8 @@ class HL7PassiveListener(PySharkListenerBase):
 
     def _track_interface(
         self,
-        src_ip: str,
-        dst_ip: str,
+        client_ip: str,
+        server_ip: str,
         sending_app: str,
         receiving_app: str,
         msg_type: str,
@@ -395,14 +399,14 @@ class HL7PassiveListener(PySharkListenerBase):
         has_phi: bool,
         now: str,
     ) -> None:
-        """Track an HL7 interface."""
-        key = (src_ip, dst_ip)
+        """Track an HL7 interface. Callers must pass resolved client/server IPs."""
+        key = (client_ip, server_ip)
         if key not in self.interfaces:
             self.interfaces[key] = HL7Interface(
                 sending_app=sending_app or "",
                 receiving_app=receiving_app or "",
-                client_ip=src_ip,
-                server_ip=dst_ip,
+                client_ip=client_ip,
+                server_ip=server_ip,
                 first_seen=now,
                 last_seen=now,
             )

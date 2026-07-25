@@ -132,6 +132,27 @@ class IPv6Fuzzer(BaseFuzzer):
             RequestInfo("IPv6_HopByHop_Options_Overflow", "Hop-by-hop overflow", "cve"),
             RequestInfo("IPv6_Recursive_Fragmentation", "Recursive fragmentation", "cve"),
             RequestInfo("IPv6_Option_Removal_Overflow", "Option removal overflow", "cve"),
+            # Black-box malformation techniques (AMNESIA:33 / RFC 6946 classes)
+            RequestInfo(
+                "IPv6_HBH_ZeroLen_Option_Loop",
+                "Hop-by-Hop zero-length options walk-loop (AMNESIA:33)",
+                "amnesia33",
+            ),
+            RequestInfo(
+                "IPv6_HBH_Option_Len_OverRead",
+                "Hop-by-Hop option length over-reads past header end",
+                "amnesia33",
+            ),
+            RequestInfo(
+                "IPv6_Atomic_Fragment",
+                "Atomic fragment (offset=0, M=0) per RFC 6946",
+                "boundary",
+            ),
+            RequestInfo(
+                "IPv6_ND_Option_ZeroLen",
+                "Neighbor Discovery option with Length=0 (ND loop)",
+                "nd",
+            ),
         ]
 
     def __init__(self, config: FuzzerConfig, connection_factory=None):
@@ -1318,6 +1339,189 @@ class IPv6Fuzzer(BaseFuzzer):
         )
 
         # =============================================================
+        # Black-box malformation techniques (build unconditionally so they
+        # connect under DEFAULT flags; no include_extensions gate).
+        # =============================================================
+
+        # AMNESIA:33 infinite-loop class: Hop-by-Hop Options header carrying a
+        # run of TLV options whose Opt-Data-Len byte = 0. A parser that walks by
+        # "advance += Opt_Data_Len" (instead of 2 + Opt_Data_Len) never moves
+        # past a zero-length option and spins forever. Header is 8 bytes:
+        # NH(1) + HdrExtLen(1) + 6 option bytes = three (type,len=0) TLVs.
+        ipv6_hbh_zerolen_loop = Request(
+            "IPv6_HBH_ZeroLen_Option_Loop",
+            children=(
+                Block(
+                    "IPv6_Header_HBHZero",
+                    children=(
+                        DWord(
+                            "Version_TC_FL",
+                            (6 << 28) | (traffic_class << 20) | flow_label,
+                            endian=">",
+                            fuzzable=True,
+                        ),
+                        Word("Payload_Length", 8, endian=">", fuzzable=True),
+                        Byte("Next_Header", 0, fuzzable=False),  # Hop-by-Hop
+                        Byte("Hop_Limit", hop_limit, fuzzable=True),
+                        SmartBytes(
+                            "Source_IP", self._ipv6_to_bytes(source_ip), size=16, fuzzable=True
+                        ),
+                        SmartBytes("Dest_IP", self._ipv6_to_bytes(dest_ip), size=16, fuzzable=True),
+                    ),
+                ),
+                Block(
+                    "HopByHop_ZeroLen_Options",
+                    children=(
+                        Byte("Next_Header", next_header, fuzzable=True),
+                        Byte("Hdr_Ext_Len", 0, fuzzable=False),  # 8-byte header
+                        # Three back-to-back zero-length options (type != Pad1).
+                        Byte("Opt1_Type", 0x1E, fuzzable=True),  # experimental option
+                        Byte("Opt1_Data_Len", 0, fuzzable=False),  # <-- zero length
+                        Byte("Opt2_Type", 0x1E, fuzzable=True),
+                        Byte("Opt2_Data_Len", 0, fuzzable=False),  # <-- zero length
+                        Byte("Opt3_Type", 0x1E, fuzzable=True),
+                        Byte("Opt3_Data_Len", 0, fuzzable=False),  # <-- zero length
+                    ),
+                ),
+            ),
+        )
+
+        # 1-byte over-read class: a Hop-by-Hop option whose Opt-Data-Len byte is
+        # the LAST byte of the 8-byte header and declares more option data than
+        # remains. Layout: NH + HdrExtLen + Pad1 + Pad1 + Pad1 + Pad1 + OptType +
+        # OptDataLen(=0xFF). The 0xFF says "255 more bytes" but the header ends
+        # immediately, so a parser reading Opt-Data-Len bytes over-reads.
+        ipv6_hbh_len_overread = Request(
+            "IPv6_HBH_Option_Len_OverRead",
+            children=(
+                Block(
+                    "IPv6_Header_HBHOver",
+                    children=(
+                        DWord(
+                            "Version_TC_FL",
+                            (6 << 28) | (traffic_class << 20) | flow_label,
+                            endian=">",
+                            fuzzable=True,
+                        ),
+                        Word("Payload_Length", 8, endian=">", fuzzable=True),
+                        Byte("Next_Header", 0, fuzzable=False),  # Hop-by-Hop
+                        Byte("Hop_Limit", hop_limit, fuzzable=True),
+                        SmartBytes(
+                            "Source_IP", self._ipv6_to_bytes(source_ip), size=16, fuzzable=True
+                        ),
+                        SmartBytes("Dest_IP", self._ipv6_to_bytes(dest_ip), size=16, fuzzable=True),
+                    ),
+                ),
+                Block(
+                    "HopByHop_OverRead_Options",
+                    children=(
+                        Byte("Next_Header", next_header, fuzzable=True),
+                        Byte("Hdr_Ext_Len", 0, fuzzable=False),  # 8-byte header
+                        Byte("Pad1_A", 0x00, fuzzable=False),
+                        Byte("Pad1_B", 0x00, fuzzable=False),
+                        Byte("Pad1_C", 0x00, fuzzable=False),
+                        Byte("Pad1_D", 0x00, fuzzable=False),
+                        # Option type in the 2nd-to-last byte, length in the last.
+                        Byte("Opt_Type", 0x1E, fuzzable=True),
+                        # Declares 255 data bytes but zero remain -> over-read.
+                        Byte("Opt_Data_Len", 0xFF, fuzzable=True),
+                    ),
+                ),
+            ),
+        )
+
+        # RFC 6946 atomic fragment: Fragment header with fragment offset = 0 AND
+        # M (More) bit = 0. Fragment_Offset_Flags = 0x0000 (offset<<3 | 0 | M=0).
+        # Stacks that route any packet bearing a Fragment header through the
+        # reassembly path mishandle these.
+        ipv6_atomic_fragment = Request(
+            "IPv6_Atomic_Fragment",
+            children=(
+                Block(
+                    "IPv6_Header_Atomic",
+                    children=(
+                        DWord(
+                            "Version_TC_FL",
+                            (6 << 28) | (traffic_class << 20) | flow_label,
+                            endian=">",
+                            fuzzable=True,
+                        ),
+                        Word("Payload_Length", 16, endian=">", fuzzable=True),
+                        Byte("Next_Header", 44, fuzzable=False),  # Fragment
+                        Byte("Hop_Limit", hop_limit, fuzzable=True),
+                        SmartBytes(
+                            "Source_IP", self._ipv6_to_bytes(source_ip), size=16, fuzzable=True
+                        ),
+                        SmartBytes("Dest_IP", self._ipv6_to_bytes(dest_ip), size=16, fuzzable=True),
+                    ),
+                ),
+                Block(
+                    "Fragment_Header_Atomic",
+                    children=(
+                        Byte("Next_Header", next_header, fuzzable=True),
+                        Byte("Reserved1", 0, fuzzable=True),
+                        # offset=0, res=0, M=0 -> atomic fragment
+                        Word("Fragment_Offset_Flags", 0x0000, endian=">", fuzzable=True),
+                        DWord("Identification", 0xA70C1C00, endian=">", fuzzable=True),
+                    ),
+                ),
+                Block(
+                    "Atomic_Fragment_Data",
+                    children=(SmartBytes("Data", b"ATOMICFR", size=8, fuzzable=True),),
+                ),
+            ),
+        )
+
+        # Classic ND infinite-loop: a Neighbor Discovery message (Router
+        # Advertisement) carrying an option whose Length field = 0. ND option
+        # lengths are in units of 8 bytes; Length=0 is illegal and a parser that
+        # advances by (Length * 8) never progresses past the option.
+        ipv6_nd_option_zerolen = Request(
+            "IPv6_ND_Option_ZeroLen",
+            children=(
+                Block(
+                    "IPv6_Header_NDZero",
+                    children=(
+                        DWord(
+                            "Version_TC_FL",
+                            (6 << 28) | (traffic_class << 20) | flow_label,
+                            endian=">",
+                            fuzzable=True,
+                        ),
+                        Word("Payload_Length", 24, endian=">", fuzzable=True),
+                        Byte("Next_Header", 58, fuzzable=False),  # ICMPv6
+                        Byte("Hop_Limit", 255, fuzzable=True),  # Must be 255 for ND
+                        SmartBytes(
+                            "Source_IP", self._ipv6_to_bytes("fe80::1"), size=16, fuzzable=True
+                        ),
+                        SmartBytes(
+                            "Dest_IP", self._ipv6_to_bytes("ff02::1"), size=16, fuzzable=True
+                        ),
+                    ),
+                ),
+                Block(
+                    "ICMPv6_RA_ZeroOpt",
+                    children=(
+                        Byte("Type", 134, fuzzable=True),  # Router Advertisement
+                        Byte("Code", 0, fuzzable=True),
+                        Word("Checksum", 0, endian=">", fuzzable=True),
+                        Byte("Cur_Hop_Limit", 64, fuzzable=True),
+                        Byte("Flags", 0x00, fuzzable=True),
+                        Word("Router_Lifetime", 1800, endian=">", fuzzable=True),
+                        DWord("Reachable_Time", 0, endian=">", fuzzable=True),
+                        DWord("Retrans_Timer", 0, endian=">", fuzzable=True),
+                        # Source Link-Layer Address option with Length = 0
+                        Byte("Option_Type", 1, fuzzable=True),  # SLLA
+                        Byte("Option_Length", 0, fuzzable=False),  # <-- illegal zero length
+                        SmartBytes(
+                            "Option_Body", self._mac_to_bytes(source_mac), size=6, fuzzable=True
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # =============================================================
         # Connect requests in mutation order. boofuzz fuzzes requests in
         # connect() order, so earlier groups are exercised first; the
         # group labels below are ordering buckets, not a wall-clock schedule.
@@ -1381,3 +1585,13 @@ class IPv6Fuzzer(BaseFuzzer):
             self.session.connect(ipv6_mld)
         if dhcpv6_mode and self.is_request_enabled("IPv6_DHCPv6_Solicit"):
             self.session.connect(ipv6_dhcpv6)
+
+        # Black-box malformation techniques (AMNESIA:33 / RFC 6946 classes)
+        if self.is_request_enabled("IPv6_HBH_ZeroLen_Option_Loop"):
+            self.session.connect(ipv6_hbh_zerolen_loop)
+        if self.is_request_enabled("IPv6_HBH_Option_Len_OverRead"):
+            self.session.connect(ipv6_hbh_len_overread)
+        if self.is_request_enabled("IPv6_Atomic_Fragment"):
+            self.session.connect(ipv6_atomic_fragment)
+        if self.is_request_enabled("IPv6_ND_Option_ZeroLen"):
+            self.session.connect(ipv6_nd_option_zerolen)

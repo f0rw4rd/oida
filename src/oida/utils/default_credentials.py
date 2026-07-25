@@ -453,7 +453,7 @@ def parse_credential_input(value: str):
                     values.append(line)
             return values, True
     except (IOError, OSError) as e:
-        _logger.debug(f"with open(value, r) as f:: {e}")
+        _logger.debug(f"Failed to open credential file: {e}")
 
     return [value], False
 

@@ -25,6 +25,12 @@ _security_findings = lazy_import(
     install_hint="pip install oida[ocpp]",
 )
 
+# OCPP-J CALLERROR codes that mean the charge point rejected the action at the
+# authorization layer, not that the action is exposed. Classifying these as
+# "supported" would invert the real security posture (a correctly-secured CP
+# would be reported as having accessible dangerous actions).
+_AUTH_BLOCKED_ERRORS = {"SecurityError", "GenericError"}
+
 
 class DiscoveryMixin:
     """Mixin for OCPP version detection and endpoint enumeration"""
@@ -144,19 +150,36 @@ class DiscoveryMixin:
         except Exception as e:
             self.logger.debug(f"Heartbeat failed: {e}")
 
-    # Actions that may have side-effects when probed with empty payloads
+    # Actions that may have side-effects when probed with empty payloads.
+    # Covers both OCPP 1.6 and 2.0.1 names, since an empty-payload probe of
+    # any of these can mutate charge-point state (e.g. ClearChargingProfile {}
+    # is a valid "clear all matching profiles" request).
     _DANGEROUS_ACTIONS = {
+        # OCPP 1.6
         "Reset",
         "UpdateFirmware",
         "ChangeConfiguration",
         "RemoteStartTransaction",
         "RemoteStopTransaction",
         "SetChargingProfile",
+        "ClearChargingProfile",
         "UnlockConnector",
         "ClearCache",
         "SendLocalList",
         "ChangeAvailability",
         "GetDiagnostics",
+        # OCPP 2.0.1 equivalents
+        "SetVariables",
+        "RequestStartTransaction",
+        "RequestStopTransaction",
+        "GetLog",
+        "SetNetworkProfile",
+        "InstallCertificate",
+        "DeleteCertificate",
+        "SendLocalAuthorizationList",
+        "TriggerMessage",
+        "SetMonitoringBase",
+        "ClearVariableMonitoring",
     }
 
     def _handle_enumerate_actions(self):
@@ -218,9 +241,15 @@ class DiscoveryMixin:
                     supported.append(action)
                 elif msg_type == MessageType.CALLERROR:
                     error_code = payload.get("error_code", "")
-                    if error_code == "NotImplemented":
-                        not_implemented.append(action)
-                    elif error_code == "NotSupported":
+                    if error_code in ("NotImplemented", "NotSupported"):
+                        (
+                            not_implemented if error_code == "NotImplemented" else not_supported
+                        ).append(action)
+                    elif error_code in _AUTH_BLOCKED_ERRORS:
+                        # SecurityError / GenericError mean the action was
+                        # rejected by the charge point's authorization layer,
+                        # not that it is accessible. Treat as blocked so it does
+                        # not inflate the dangerous-actions finding.
                         not_supported.append(action)
                     else:
                         # Other errors (FormationViolation, etc.) mean the action

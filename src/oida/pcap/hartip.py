@@ -438,7 +438,9 @@ class HARTIPPassiveListener(PySharkListenerBase):
             addr_str = ""
 
         # Response fields (only present in responses)
-        response_code = self._parse_int(self.get_field(hart_layer, "pt_response_code"))
+        response_code = self._parse_int(
+            self.get_field(hart_layer, "pt_response_code"), default=None
+        )
         device_status_raw = self._parse_int(self.get_field(hart_layer, "pt_device_status"), base=16)
 
         # Classify read/write

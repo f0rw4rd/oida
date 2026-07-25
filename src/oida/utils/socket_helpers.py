@@ -86,6 +86,12 @@ def build_tls_context(
         try:
             context.load_verify_locations(cafile=tls_ca)
             context.verify_mode = ssl.CERT_REQUIRED
+            # A pinned CA is meaningless without hostname/SAN matching: otherwise
+            # any cert chaining to the trusted CA passes, allowing MITM. Enable
+            # hostname verification (verify_mode is already CERT_REQUIRED here, so
+            # this is a legal transition). Callers must pass the DNS name (or an IP
+            # present in the cert's SAN) as ``server_hostname``.
+            context.check_hostname = True
             if logger:
                 logger.display(f"Verifying server certificate against CA: {tls_ca}")
         except Exception as e:

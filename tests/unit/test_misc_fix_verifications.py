@@ -60,7 +60,7 @@ class TestSnap7ModuleLoggerRefactor(unittest.TestCase):
         self.assertIn('self.logger.debug(f"db_write failed:', src)
         self.assertIn('self.logger.debug(f"write_area({label}) failed:', src)
         # Guard against regression to the module-level logger in the fuzz path.
-        self.assertNotIn("logger.debug(f\"write_area", src.replace("self.logger", ""))
+        self.assertNotIn('logger.debug(f"write_area', src.replace("self.logger", ""))
 
 
 class TestFuzzHttp2MonitorReturnsBool(unittest.TestCase):
@@ -92,8 +92,7 @@ class TestAdsScanCoeUngated(unittest.TestCase):
         start = src.find("_CONFIRM_REQUIRED_FLAGS = {")
         end = src.find("}", start)
         block = src[start:end]
-        self.assertNotIn('"scan_coe"', block,
-                         "--scan-coe must not be gated as dangerous")
+        self.assertNotIn('"scan_coe"', block, "--scan-coe must not be gated as dangerous")
 
 
 class TestDnp3ReadOctetRangeFilter(unittest.TestCase):

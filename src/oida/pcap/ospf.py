@@ -396,7 +396,11 @@ class OSPFPassiveListener(PySharkListenerBase):
         """Extract authentication credentials from OSPF packet."""
         if auth_type == 1:
             # Simple Password authentication
-            auth_data = str(self.get_field(ospf, "auth_data", "") or "").strip()
+            # Simple-password cleartext is dissected as ospf.auth.simple
+            # (EK attr auth_simple), not ospf.auth.data.
+            auth_data = str(
+                self.get_field_any(ospf, "auth_simple", "ospf.auth.simple", default="") or ""
+            ).strip()
             if auth_data:
                 cred_key = (src_ip, auth_type, auth_data)
                 if cred_key not in self._seen_creds:

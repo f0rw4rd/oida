@@ -138,6 +138,21 @@ class IPv4Fuzzer(BaseFuzzer):
             RequestInfo("IPv4_Corrupted_Checksum", "Checksum validation bypass tests", "boundary"),
             RequestInfo("IPv4_Incorrect_Length", "Length field validation attacks", "boundary"),
             RequestInfo("IPv4_Malformed", "Malformed packet structure tests", "boundary"),
+            RequestInfo(
+                "IPv4_IHL_Underflow",
+                "IHL field < 5 (header length below 20-byte minimum)",
+                "boundary",
+            ),
+            RequestInfo(
+                "IPv4_Fragment_MF_Misaligned",
+                "MF=1 fragment with non-8-byte-aligned offset and length (reassembly bug)",
+                "exploit",
+            ),
+            RequestInfo(
+                "IPv4_Lone_Tail_Fragment",
+                "Lone tail fragment: MF=0, large non-zero offset, no head (missing-head reassembly)",
+                "exploit",
+            ),
             # Phase 4: Standard packet types
             RequestInfo("IPv4_Basic", "Basic IPv4 packet fuzzing", "protocol"),
             RequestInfo("IPv4_TCP", "IPv4 with TCP payload", "protocol"),
@@ -699,6 +714,132 @@ class IPv4Fuzzer(BaseFuzzer):
                         SmartBytes("Source_IP", b"\x00\x00\x00\x00", size=4, fuzzable=True),
                         SmartBytes("Dest_IP", b"\xff\xff\xff\xff", size=4, fuzzable=True),
                     ),
+                ),
+            ),
+        )
+
+        # IHL Underflow - IHL field lies below the 20-byte (IHL=5) minimum.
+        # The version/IHL byte is mutated through a Group (0x40..0x44 => IHL 0..4)
+        # while the rest stays a valid IPv4 packet so the parser reaches the IHL check.
+        ipv4_ihl_underflow = Request(
+            "IPv4_IHL_Underflow",
+            children=(
+                Block(
+                    "IP_Header",
+                    children=(
+                        # Version=4, IHL=0..4 (all below the legal minimum of 5)
+                        Group(
+                            "Bad_Version_IHL",
+                            values=[
+                                b"\x40",  # IHL=0
+                                b"\x41",  # IHL=1
+                                b"\x42",  # IHL=2
+                                b"\x43",  # IHL=3
+                                b"\x44",  # IHL=4
+                            ],
+                        ),
+                        Byte("TOS", tos, fuzzable=False),
+                        Word("Total_Length", 40, endian=">", fuzzable=False),
+                        Word("Identification", identification + 700, endian=">", fuzzable=False),
+                        Word("Flags_FragOffset", 0x4000, endian=">", fuzzable=False),
+                        Byte("TTL", ttl, fuzzable=False),
+                        Byte("Protocol", protocol, fuzzable=False),
+                        Checksum(
+                            "Checksum",
+                            block_name="IP_Header",
+                            algorithm="ipv4",
+                            length=2,
+                            endian=">",
+                            fuzzable=False,
+                        ),
+                        SmartBytes(
+                            "Source_IP", self._ip_to_bytes(source_ip), size=4, fuzzable=False
+                        ),
+                        SmartBytes("Dest_IP", self._ip_to_bytes(dest_ip), size=4, fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "Payload",
+                    children=(
+                        SmartString("Data", "ihl-underflow-test", max_len=100, fuzzable=False),
+                    ),
+                ),
+            ),
+        )
+
+        # Fragment with MF=1 whose payload length is NOT a multiple of 8, at a
+        # fragment offset that is not 8-byte aligned. Non-final fragments are
+        # required to be 8-byte aligned; this targets reassembly length-assumption bugs.
+        ipv4_fragment_mf_misaligned = Request(
+            "IPv4_Fragment_MF_Misaligned",
+            children=(
+                Block(
+                    "IP_Header",
+                    children=(
+                        Byte("Version_IHL", 0x45, fuzzable=False),
+                        Byte("TOS", tos, fuzzable=False),
+                        # 20-byte header + 13-byte payload = 33 (not a multiple of 8)
+                        Word("Total_Length", 33, endian=">", fuzzable=False),
+                        Word("Identification", identification + 710, endian=">", fuzzable=False),
+                        # MF=1 (0x2000) with fragment offset 3 (byte 24, not 8-byte aligned)
+                        Word("Flags_FragOffset", 0x2003, endian=">", fuzzable=False),
+                        Byte("TTL", ttl, fuzzable=False),
+                        Byte("Protocol", protocol, fuzzable=False),
+                        Checksum(
+                            "Checksum",
+                            block_name="IP_Header",
+                            algorithm="ipv4",
+                            length=2,
+                            endian=">",
+                            fuzzable=False,
+                        ),
+                        SmartBytes(
+                            "Source_IP", self._ip_to_bytes(source_ip), size=4, fuzzable=False
+                        ),
+                        SmartBytes("Dest_IP", self._ip_to_bytes(dest_ip), size=4, fuzzable=False),
+                    ),
+                ),
+                # 13-byte payload (not a multiple of 8)
+                Block(
+                    "Fragment_Data",
+                    children=(SmartBytes("Data", b"MISALIGNED_13", size=13, fuzzable=True),),
+                ),
+            ),
+        )
+
+        # Lone tail fragment: MF=0 with a large non-zero fragment offset and no
+        # preceding first fragment. Targets reassembly with a missing head.
+        ipv4_lone_tail_fragment = Request(
+            "IPv4_Lone_Tail_Fragment",
+            children=(
+                Block(
+                    "IP_Header",
+                    children=(
+                        Byte("Version_IHL", 0x45, fuzzable=False),
+                        Byte("TOS", tos, fuzzable=False),
+                        Word("Total_Length", 28, endian=">", fuzzable=False),
+                        Word("Identification", identification + 720, endian=">", fuzzable=False),
+                        # MF=0, large non-zero fragment offset 0x00B9 (byte 1480), no head
+                        Word("Flags_FragOffset", 0x00B9, endian=">", fuzzable=False),
+                        Byte("TTL", ttl, fuzzable=False),
+                        Byte("Protocol", protocol, fuzzable=False),
+                        Checksum(
+                            "Checksum",
+                            block_name="IP_Header",
+                            algorithm="ipv4",
+                            length=2,
+                            endian=">",
+                            fuzzable=False,
+                        ),
+                        SmartBytes(
+                            "Source_IP", self._ip_to_bytes(source_ip), size=4, fuzzable=False
+                        ),
+                        SmartBytes("Dest_IP", self._ip_to_bytes(dest_ip), size=4, fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "Fragment_Data",
+                    children=(SmartBytes("Data", b"LONETAIL", size=8, fuzzable=True),),
                 ),
             ),
         )
@@ -1307,6 +1448,15 @@ class IPv4Fuzzer(BaseFuzzer):
 
         if self.is_request_enabled("IPv4_Malformed"):
             self.session.connect(ipv4_malformed)
+
+        if self.is_request_enabled("IPv4_IHL_Underflow"):
+            self.session.connect(ipv4_ihl_underflow)  # IHL < 5 header underflow
+
+        if self.is_request_enabled("IPv4_Fragment_MF_Misaligned"):
+            self.session.connect(ipv4_fragment_mf_misaligned)  # MF=1, non-8-aligned
+
+        if self.is_request_enabled("IPv4_Lone_Tail_Fragment"):
+            self.session.connect(ipv4_lone_tail_fragment)  # MF=0, missing head
 
         # ==================== PHASE 5: STANDARD PACKET TYPES (~2 min) ====================
         # Basic protocol fuzzing for full coverage

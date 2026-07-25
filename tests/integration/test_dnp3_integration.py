@@ -1626,48 +1626,11 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
 
         assert not result.success, "Invalid octet group should fail"
 
-    # ========================================================================
-    # Serial Transport Tests (skipped - requires hardware)
-    # ========================================================================
-
-    @pytest.mark.skip(reason="Serial transport requires physical serial device")
-    def test_serial_transport(self, cli_runner, target, port, docker_services):
-        """Test serial transport [Skip - requires hardware]"""
-        pass
-
-    @pytest.mark.skip(reason="Serial transport requires physical serial device")
-    def test_serial_baud_rate(self, cli_runner, target, port, docker_services):
-        """Test serial baud rate configuration [Skip - requires hardware]"""
-        pass
-
-    @pytest.mark.skip(reason="Serial transport requires physical serial device")
-    def test_serial_parity(self, cli_runner, target, port, docker_services):
-        """Test serial parity configuration [Skip - requires hardware]"""
-        pass
-
-    @pytest.mark.skip(reason="Serial transport requires physical serial device")
-    def test_serial_data_bits(self, cli_runner, target, port, docker_services):
-        """Test serial data bits configuration [Skip - requires hardware]"""
-        pass
-
-    @pytest.mark.skip(reason="Serial transport requires physical serial device")
-    def test_serial_stop_bits(self, cli_runner, target, port, docker_services):
-        """Test serial stop bits configuration [Skip - requires hardware]"""
-        pass
-
-    # ========================================================================
-    # Secure Authentication v5 Tests (skipped - requires SA library support)
-    # ========================================================================
-
-    @pytest.mark.skip(reason="SA v5 requires compatible outstation and opendnp3 SA build")
-    def test_secure_authentication(self, cli_runner, target, port, docker_services):
-        """Test Secure Authentication v5 [Skip - requires SA support]"""
-        pass
-
-    @pytest.mark.skip(reason="SA v5 requires compatible outstation and opendnp3 SA build")
-    def test_sa_key_validation(self, cli_runner, target, port, docker_services):
-        """Test SA v5 key hex format validation [Skip - requires SA support]"""
-        pass
+    # NOT COVERED (no test exists — do not add skipped placeholders for these):
+    #   - Serial transport (--serial, baud/parity/data-bits/stop-bits): needs a
+    #     physical serial device.
+    #   - Secure Authentication v5: needs a compatible outstation and an
+    #     opendnp3 build with SA support.
 
     # ========================================================================
     # UDP Transport Tests

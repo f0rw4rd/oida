@@ -1827,9 +1827,9 @@ requires-dist = [
     { name = "pyasn1", marker = "extra == 'fuzz'", specifier = "==0.6.3" },
     { name = "pycomm3", marker = "extra == 'ethernetip'", specifier = "==1.2.16" },
     { name = "pydicom", marker = "extra == 'dicom'", specifier = "==3.0.2" },
-    { name = "pyiec61850-ng", marker = "extra == 'goose'", specifier = "==1.6.1.7" },
-    { name = "pyiec61850-ng", marker = "extra == 'mms'", specifier = "==1.6.1.7" },
-    { name = "pyiec61850-ng", marker = "extra == 'tase2'", specifier = "==1.6.1.7" },
+    { name = "pyiec61850-ng", marker = "extra == 'goose'", specifier = "==1.6.1.9" },
+    { name = "pyiec61850-ng", marker = "extra == 'mms'", specifier = "==1.6.1.9" },
+    { name = "pyiec61850-ng", marker = "extra == 'tase2'", specifier = "==1.6.1.9" },
     { name = "pymodbus", marker = "extra == 'modbus'", specifier = "==3.13.0" },
     { name = "pynetdicom", marker = "extra == 'dicom'", specifier = "==3.0.4" },
     { name = "pyserial", specifier = "==3.5" },
@@ -2110,19 +2110,19 @@ wheels = [
 
 [[package]]
 name = "pyiec61850-ng"
-version = "1.6.1.7"
+version = "1.6.1.9"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/19/7d/230ec2ce60c9561356240a8a313b9c32794a0ab3a3859441b98f624292b7/pyiec61850_ng-1.6.1.7-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:aca7c31a611a0eaa41eec74c6f4649eb2af71ecfca1a427825552644ee8aa9f2", size = 1346423, upload-time = "2026-07-01T22:39:41.605Z" },
-    { url = "https://files.pythonhosted.org/packages/6c/49/6800b3e16f0d41c5edb02abfc0eaf819acdee222f8d6ad691eb7be0b8694/pyiec61850_ng-1.6.1.7-cp310-cp310-win_amd64.whl", hash = "sha256:c191b36b0535042854084e635543cdda7cf6fe07a04da21b4e7ef8b066161ff0", size = 1109643, upload-time = "2026-07-01T22:39:43.916Z" },
-    { url = "https://files.pythonhosted.org/packages/b0/b2/b55f230b025be3d56728454fd434c10089c63639fb13daafa3ef5b3dfb68/pyiec61850_ng-1.6.1.7-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:407595ba8d48413f80a3da3434d4cbb3b4e43987718c1722155ba0574470d671", size = 1346453, upload-time = "2026-07-01T22:39:45.688Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/0a/b4fe09a6b8a384bef4b212544bec0e2a63a1a1d564e1e27cfc7b0a83b833/pyiec61850_ng-1.6.1.7-cp311-cp311-win_amd64.whl", hash = "sha256:cfc4557613df6182cc7899c133c5b9dcd1d9c9bf56352b55f42548f8ee28ac2d", size = 1109617, upload-time = "2026-07-01T22:39:47.33Z" },
-    { url = "https://files.pythonhosted.org/packages/03/b4/9532b4f012bd5b234b51e9ca3dd7ebf0514ab3391022f22b76c4fe44dc3a/pyiec61850_ng-1.6.1.7-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fa120345885f02b5bf5816f554bb9128da9170629a64e67eb386bc69b71a1355", size = 1347057, upload-time = "2026-07-01T22:39:48.917Z" },
-    { url = "https://files.pythonhosted.org/packages/de/7e/fb80cafc09c3eb77775ab2ab32014bff8152bcacc406b5a796fba59bcab9/pyiec61850_ng-1.6.1.7-cp312-cp312-win_amd64.whl", hash = "sha256:bbf0026c54bc26ff772e383d8fd0137bf65b230dde8b502bc74fbe7e82e639a6", size = 1113021, upload-time = "2026-07-01T22:39:50.608Z" },
-    { url = "https://files.pythonhosted.org/packages/cd/36/88d420c3122c0fc482620bce1818b5659dd6e1e378190c86dd7e67e279e1/pyiec61850_ng-1.6.1.7-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:96e8df47aa8a6e496734f7adccd19a8a09f3d86411d34a6ce196417190a3196d", size = 1343411, upload-time = "2026-07-01T22:39:52.506Z" },
-    { url = "https://files.pythonhosted.org/packages/52/aa/f38f6d41edc7d0d457cac2561310034150d12bbb8fe786ee0c69555e9edb/pyiec61850_ng-1.6.1.7-cp313-cp313-win_amd64.whl", hash = "sha256:adbf4491b7c05175ee1522dcaece2f55f4577b960af372b232f9664bc4da94f7", size = 1112928, upload-time = "2026-07-01T22:39:54.706Z" },
-    { url = "https://files.pythonhosted.org/packages/c7/a3/0a0a0ba8afbcad3b098501e2298cdf263d45aa5bde01f7cd28f31d640bae/pyiec61850_ng-1.6.1.7-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ff65768e59710659d3fe7418019b3f7bdc007890412c01699c2b0e741b374190", size = 1343664, upload-time = "2026-07-01T22:39:56.511Z" },
-    { url = "https://files.pythonhosted.org/packages/13/3c/02886d92614cf88c6ea08f4e132308f2b787d7c0c539479aaa2e6ac1f4ec/pyiec61850_ng-1.6.1.7-cp314-cp314-win_amd64.whl", hash = "sha256:19c45e5235e9f42b95e5260118904e47d5255627c8f1c42041076cf94dc24444", size = 1141337, upload-time = "2026-07-01T22:39:58.437Z" },
+    { url = "https://files.pythonhosted.org/packages/16/81/9f353d08e08e460fc4b6032b44c204d8b0092dc075f924dbd4b379faa71b/pyiec61850_ng-1.6.1.9-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:709f4f4917614da3d41e08c67579dc3b09da14b0b0b5c6b576a737f0366a015c", size = 1362083, upload-time = "2026-07-19T06:57:21.134Z" },
+    { url = "https://files.pythonhosted.org/packages/38/9a/c574612d6b6fca65ec04ffbb84e9995652c7e8057f15f1e735ed3b061a9e/pyiec61850_ng-1.6.1.9-cp310-cp310-win_amd64.whl", hash = "sha256:e299bb3ffbcb54be632011f0a306c068e4f84706d98ed0ebf4c1781797ecfa37", size = 1123988, upload-time = "2026-07-19T06:57:22.735Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/0d/51c8cdaf7eae97285c0d10f0313c2297e5fd916c86c43bc6eac91bbf5630/pyiec61850_ng-1.6.1.9-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6d50da1692d6c6ac5579e31c03f233dbd88089471977b43a1c158bc69d25c67b", size = 1362167, upload-time = "2026-07-19T06:57:24.677Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/c7/5855f0c760336ab11cb7f4b723e7daf9a59f7d881f21062e06f8f154b802/pyiec61850_ng-1.6.1.9-cp311-cp311-win_amd64.whl", hash = "sha256:f10f4d0b6d1a9673764287ededb4515da26975c9d2ac0c6c1ab9bccc799b6dd3", size = 1124062, upload-time = "2026-07-19T06:57:26.233Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/ff/66ef75b97ad5cc351a541a1d21e8394fa9c6f14f5a199108efcfb23c7876/pyiec61850_ng-1.6.1.9-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e5edeb08ae37658a7bde98e6286ea1b91c921ad6229e9dab9bfda2859c0bbd81", size = 1362292, upload-time = "2026-07-19T06:57:27.727Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/69/1ca756fa15739bbbac68e1ceeb117bdadda310bcd4eeb11361ebd87eee4f/pyiec61850_ng-1.6.1.9-cp312-cp312-win_amd64.whl", hash = "sha256:9d24aa89e19d3475bd17e709350a978c420afec582c625695e8abb653c6727e1", size = 1126602, upload-time = "2026-07-19T06:57:29.118Z" },
+    { url = "https://files.pythonhosted.org/packages/92/d8/d86fcc8e25351a74eb3ff898b1eea187445513753ed621547dd44eed52e4/pyiec61850_ng-1.6.1.9-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ce80bf79eab747c06d2f17e8a98e625dd87229c9bec019c5b0275d683c476eff", size = 1358452, upload-time = "2026-07-19T06:57:30.819Z" },
+    { url = "https://files.pythonhosted.org/packages/b8/78/5d0f0e749a2a50cee0c4d07fff65a0bc2b07e5c011a8b52d0e27df3c17b1/pyiec61850_ng-1.6.1.9-cp313-cp313-win_amd64.whl", hash = "sha256:434829758cd5892f3b9efb9ea47a4314f57fb1b08ca4ca3c9ab62baeeba341e0", size = 1126489, upload-time = "2026-07-19T06:57:32.381Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/83/76d1c789088300c071265a479b65e1d399e07cc2dfa20331d0025ce89486/pyiec61850_ng-1.6.1.9-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9fa4ac1dda1efcac30f319656689a5d3cc0ba9a198e1b372a5df94f4ac192ebd", size = 1358590, upload-time = "2026-07-19T06:57:33.893Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/e4/e1774f3add9bc179e145ef7cc6cb3f5e309ce5ea3854e24c9fd6a062b653/pyiec61850_ng-1.6.1.9-cp314-cp314-win_amd64.whl", hash = "sha256:c792380bc3ed02635bcb04c4e5893f77a8ab4802c8a29fbb61c1bb71382e37ee", size = 1154879, upload-time = "2026-07-19T06:57:35.779Z" },
 ]
 
 [[package]]

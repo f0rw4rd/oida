@@ -80,17 +80,18 @@ class _ReconHarness:
                 side_effect=RuntimeError("device aborted ReadProperty")
             )
         else:
-            scanner._bacpypes3_read_properties = AsyncMock(
-                return_value={"vendor_name": "ACME"}
-            )
+            scanner._bacpypes3_read_properties = AsyncMock(return_value={"vendor_name": "ACME"})
 
         types = _patch_app_and_types()
-        with patch(
-            "oida.protocols.bacnet.nxc_connection._load_bacpypes3",
-            return_value=types,
-        ), patch(
-            "oida.utils.socket_helpers.get_local_ip",
-            return_value=("192.168.1.10", None),
+        with (
+            patch(
+                "oida.protocols.bacnet.nxc_connection._load_bacpypes3",
+                return_value=types,
+            ),
+            patch(
+                "oida.utils.socket_helpers.get_local_ip",
+                return_value=("192.168.1.10", None),
+            ),
         ):
             asyncio.run(scanner._async_raw_scan())
 
@@ -101,9 +102,7 @@ class TestReconNotSkipped(unittest.TestCase):
     def test_empty_properties_still_runs_recon(self):
         scanner, recon = _ReconHarness("empty").run()
         for name, mock in recon.items():
-            self.assertTrue(
-                mock.called, f"{name} must still run when property read returns empty"
-            )
+            self.assertTrue(mock.called, f"{name} must still run when property read returns empty")
         # Operator must be told why properties were unavailable.
         warn_msgs = " ".join(str(c) for c in scanner.logger.warning.call_args_list)
         self.assertIn("propert", warn_msgs.lower())
@@ -111,9 +110,7 @@ class TestReconNotSkipped(unittest.TestCase):
     def test_property_read_exception_does_not_skip_recon(self):
         scanner, recon = _ReconHarness("raise").run()
         for name, mock in recon.items():
-            self.assertTrue(
-                mock.called, f"{name} must still run when property read raises"
-            )
+            self.assertTrue(mock.called, f"{name} must still run when property read raises")
         warn_msgs = " ".join(str(c) for c in scanner.logger.warning.call_args_list)
         self.assertIn("propert", warn_msgs.lower())
 

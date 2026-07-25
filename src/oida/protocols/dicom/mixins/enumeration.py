@@ -116,9 +116,18 @@ class EnumerationMixin(_ScannerBase):
                 assoc = ae.associate(self.ip, port, ae_title=self.called_aet)
 
                 if assoc.is_established:
-                    # Test with C-ECHO
-                    status = assoc.send_c_echo()
-                    assoc.release()
+                    # Test with C-ECHO. Release/abort no matter what --
+                    # send_c_echo() raising must not leak an established
+                    # association (open association + rate-limit/SIEM noise
+                    # on the target for every subsequent AET in the wordlist).
+                    try:
+                        status = assoc.send_c_echo()
+                    finally:
+                        try:
+                            if assoc.is_established:
+                                assoc.release()
+                        except Exception as release_exc:
+                            self.logger.debug(f"  [RELEASE ERROR] {aet}: {release_exc}")
 
                     if status and status.Status == 0x0000:
                         valid_aets.append(aet)

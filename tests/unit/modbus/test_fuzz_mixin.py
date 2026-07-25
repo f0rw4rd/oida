@@ -163,10 +163,11 @@ class TestFuzzFunctionCodes:
         inst = make_modbus()
 
         def send(conn, fc, payload, unit):
-            # FC 70 "supported", rest exceptions
+            # FC 70 "supported", rest exceptions. success=True marks a received
+            # response (normal or exception); a failed send would be success=False.
             if fc == 70:
-                return {"is_exception": False, "response_payload": b"\x01\x02"}
-            return {"is_exception": True}
+                return {"success": True, "is_exception": False, "response_payload": b"\x01\x02"}
+            return {"success": True, "is_exception": True}
 
         inst.scanner.send_custom_fc.side_effect = send
         stats = inst._fuzz_function_codes()
@@ -236,8 +237,10 @@ class TestFuzzFromMap:
         assert any("not found" in m for m in inst.logger.fail_msgs)
 
     def test_no_writable_registers(self):
+        # Register maps store "registers" as a dict keyed by name (see
+        # register_maps/generic.json), not a list.
         inst = make_modbus(SimpleNamespace(fuzz_all_access=False, fuzz_max_addresses=10))
-        reg_map = {"registers": [{"address": 0, "type": "u16", "access": "r"}]}
+        reg_map = {"registers": {"status": {"address": 0, "type": "u16", "access": "r"}}}
         with patch("oida.protocols.modbus.decoder.load_register_map", return_value=reg_map):
             stats = inst._fuzz_registers_from_map("m", 10)
         assert stats == {}
@@ -246,9 +249,9 @@ class TestFuzzFromMap:
     def test_writable_registers_fuzzed(self):
         inst = make_modbus(SimpleNamespace(fuzz_all_access=False, fuzz_max_addresses=10))
         reg_map = {
-            "registers": [
-                {"address": 5, "type": "u16", "access": "rw", "name": "sp"},
-            ]
+            "registers": {
+                "sp": {"address": 5, "type": "u16", "access": "rw", "name": "sp"},
+            }
         }
         inst.conn.write_register.return_value = _ok()
         with patch("oida.protocols.modbus.decoder.load_register_map", return_value=reg_map):

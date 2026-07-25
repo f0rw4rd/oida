@@ -429,17 +429,23 @@ class TestResponseErrorHandling:
         assert result.exception_code == 4
 
     def test_gateway_path_unavailable_exception(self, mock_client, scanner_args):
-        """Test handling Gateway Path Unavailable exception (code 10)."""
+        """Scanner records no readable registers when the gateway returns code 10.
+
+        The mock is the transport stub; the assertion is on what the *scanner*
+        produced. Asserting on mock_client's own return value would only restate
+        the line that configured it.
+        """
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 10
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=100)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0, 1, 2])
 
-        assert result.isError()
-        assert result.exception_code == 10
+        # An exception response must never be recorded as a readable register.
+        assert results == {}
 
     def test_gateway_target_device_failed_exception(self, mock_client, scanner_args):
         """Test handling Gateway Target Device Failed exception (code 11)."""

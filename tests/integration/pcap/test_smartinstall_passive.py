@@ -86,9 +86,7 @@ class TestSmartInstallCVEFalsePositive:
             for d in listener.discovered_devices.values()
             if "Switch" in (getattr(d, "device_type", "") or "")
         ]
-        assert not switch_devices, (
-            f"Scan SYN should not mint a switch device; got {switch_devices}"
-        )
+        assert not switch_devices, f"Scan SYN should not mint a switch device; got {switch_devices}"
         cve_devices = [
             d
             for d in listener.discovered_devices.values()

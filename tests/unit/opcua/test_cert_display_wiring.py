@@ -14,17 +14,13 @@ class TestCertDisplayWiring(unittest.TestCase):
     """Snapshot check: OPC UA mixins must invoke display_cert_info."""
 
     def test_discovery_mixin_calls_display_cert_info(self):
-        src = pathlib.Path(
-            "src/oida/protocols/opcua/mixins/discovery.py"
-        ).read_text()
+        src = pathlib.Path("src/oida/protocols/opcua/mixins/discovery.py").read_text()
         self.assertIn("display_cert_info", src)
         # And imports it from the shared helper.
         self.assertIn("from oida.utils.security_findings import display_cert_info", src)
 
     def test_security_mixin_calls_display_cert_info(self):
-        src = pathlib.Path(
-            "src/oida/protocols/opcua/mixins/security.py"
-        ).read_text()
+        src = pathlib.Path("src/oida/protocols/opcua/mixins/security.py").read_text()
         self.assertIn("display_cert_info", src)
 
     def test_helper_exposes_certificate_fields(self):

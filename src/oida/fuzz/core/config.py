@@ -109,6 +109,7 @@ class ProtocolType(Enum):
     IEC104 = "iec104"  # IEC 60870-5-104 with automatic STARTDT handshake
     ICMP = "icmp"  # ICMP raw sockets (kernel handles IP header and checksum)
     ICMPV6 = "icmpv6"  # ICMPv6 raw sockets (kernel handles IPv6 header and checksum)
+    IGMP = "igmp"  # IGMP raw sockets (kernel builds IP header; app supplies IGMP msg)
 
 
 @dataclass

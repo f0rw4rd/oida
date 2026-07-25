@@ -139,8 +139,10 @@ class TestParsers:
     def test_parse_memory_range_decimal(self, host):
         assert host._parse_memory_range("256:16") == (256, 16)
 
-    def test_parse_memory_range_invalid_returns_default(self, host):
-        assert host._parse_memory_range("bad") == (0x0100, 256)
+    def test_parse_memory_range_invalid_returns_sentinel(self, host):
+        # Malformed input must never fall back to a hardcoded default
+        # address — that would silently dump memory from a real device.
+        assert host._parse_memory_range("bad") == (None, None)
         assert host.logger.records["fail"]
 
     def test_parse_memory_write_hex_addr(self, host):

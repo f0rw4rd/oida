@@ -16,9 +16,32 @@ repos:
         types: [python]
         stages: [pre-commit]
       # --- pre-push: heavier checks ---
+      # Dead code at confidence 60, not 80. At 80 vulture reports only unused
+      # variables; the 247 unused methods and 95 unused classes found in
+      # AI_SLOP_AUDIT.md all sit in the 60-79 band. Ratcheted against
+      # .quality/vulture-baseline.txt, which should only ever get shorter.
       - id: vulture
-        name: dead code detection (vulture)
-        entry: vulture src/oida/ .vulture_whitelist.py --min-confidence 80
+        name: dead code detection (vulture, ratcheted)
+        entry: python scripts/quality/vulture_gate.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      # Cross-file structural duplication. jscpd finds 0.58% here because the
+      # duplication is copy-paste-then-rename; an AST-normalised pass is the
+      # only thing that sees it. Fails on clone clusters absent from baseline.
+      - id: structural-clones
+        name: cross-file structural duplication
+        entry: python scripts/quality/structural_clones.py src/oida --baseline .quality/clones.json --fail-on-new
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      # Tests that pass without asserting anything. A green suite is not
+      # assurance if 181 tests have no assertion and 23 are skip stubs.
+      - id: test-quality
+        name: low-assurance test detection
+        entry: python scripts/quality/test_quality.py tests/ --baseline .quality/tests.json
         language: system
         pass_filenames: false
         always_run: true

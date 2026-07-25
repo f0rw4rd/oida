@@ -532,21 +532,22 @@ class LLDPScanner(SerialScanner):
     def _parse_organization_specific(self, tlv) -> Optional[Dict[str, Any]]:
         """Parse organization-specific TLV"""
         try:
-            # org_code is an integer in scapy
+            # org_code is an integer OUI in scapy (e.g. 0x000ecf == 3791).
             if hasattr(tlv, "org_code"):
                 oui = tlv.org_code
-                oui_name = str(tlv.org_code)  # Scapy provides the name
+                oui_name = str(tlv.org_code)
             else:
                 return None
 
-            # Parse based on OUI value
-            if oui == 3791 or "PROFIBUS" in oui_name:  # PROFIBUS/PROFINET (0x000ecf = 3791)
+            # Parse based on the numeric OUI (the earlier `or "X" in oui_name`
+            # string checks were dead: oui_name is a decimal integer string).
+            if oui == 3791:  # PROFIBUS/PROFINET (0x000ecf)
                 return self._parse_profinet_tlv(tlv, oui_name)
-            elif oui == 4623 or "IEEE 802.3" in oui_name:  # IEEE 802.3 (0x00120f = 4623)
+            elif oui == 4623:  # IEEE 802.3 (0x00120f)
                 return self._parse_ieee_802_3_tlv(tlv, oui_name)
-            elif oui == 32962 or "IEEE 802.1" in oui_name:  # IEEE 802.1 (0x0080c2 = 32962)
+            elif oui == 32962:  # IEEE 802.1 (0x0080c2)
                 return self._parse_ieee_802_1_tlv(tlv, oui_name)
-            elif oui == 4795 or "TIA" in oui_name:  # LLDP-MED (0x0012bb = 4795)
+            elif oui == 4795:  # LLDP-MED / TIA (0x0012bb)
                 return self._parse_lldp_med_tlv(tlv, oui_name)
             else:
                 # Generic parsing for unknown OUIs

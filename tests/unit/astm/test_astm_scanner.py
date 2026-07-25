@@ -118,8 +118,8 @@ class _AppAcceptingSocket:
     """
 
     def __init__(self, app_reply=None):
-        self._app_reply = app_reply if app_reply is not None else (
-            STX + b"1C|1|Accepted" + ETX + b"00" + CR + LF
+        self._app_reply = (
+            app_reply if app_reply is not None else (STX + b"1C|1|Accepted" + ETX + b"00" + CR + LF)
         )
         self._after_eot = False
         self.sent = []
@@ -737,20 +737,34 @@ class TestProbeOperations:
     def test_probe_all_accepted(self):
         mock_sock = MagicMock()
         mock_sock.recv.return_value = ACK
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
+        scanner = _instantiate_scanner(_make_args(confirm=True), mock_sock)
 
         scanner._probe_operations()
 
         probe = scanner.results["data"].get("probe_results")
         assert probe is not None
-        assert len(probe["supported"]) == 6  # H, P, O, R, Q, C
+        assert len(probe["supported"]) == 6  # H, Q, C + P, O, R (with --confirm)
         assert len(probe["rejected"]) == 0
+
+    def test_probe_without_confirm_skips_write_records(self):
+        """Without --confirm only the read-only H/Q/C records are probed;
+        the write-capable P/O/R records are never transmitted to the LIS."""
+        mock_sock = MagicMock()
+        mock_sock.recv.return_value = ACK
+        scanner = _instantiate_scanner(_make_args(confirm=False), mock_sock)
+
+        scanner._probe_operations()
+
+        probe = scanner.results["data"]["probe_results"]
+        probed = {rt for rt, _ in probe["supported"] + probe["rejected"] + probe["timeout"]}
+        assert probed == {"H", "Q", "C"}
+        assert not probed & {"P", "O", "R"}
 
     def test_probe_all_rejected(self):
         mock_sock = MagicMock()
         # ENQ -> ACK, then header -> NAK for each record type
         mock_sock.recv.side_effect = [ACK, NAK] * 6
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
+        scanner = _instantiate_scanner(_make_args(confirm=True), mock_sock)
 
         scanner._probe_operations()
 
@@ -762,7 +776,7 @@ class TestProbeOperations:
     def test_probe_enq_timeout(self):
         mock_sock = MagicMock()
         mock_sock.recv.side_effect = socket.timeout()
-        scanner = _instantiate_scanner(_make_args(), mock_sock)
+        scanner = _instantiate_scanner(_make_args(confirm=True), mock_sock)
 
         scanner._probe_operations()
 

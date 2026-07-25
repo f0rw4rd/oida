@@ -121,30 +121,25 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
         timeout = getattr(self.args, "timeout", 10)
         use_tls = getattr(self.args, "tls", False)
 
-        # The shared create_tls_tcp_connection() helper only forwards
-        # tls-cert/tls-key, so --tls-ca / --tls-insecure would be silently
-        # dropped and the server certificate never verified (PHI MITM risk).
-        # Build the TLS socket here instead so all four flags are honored.
-        tls_ca = getattr(self.args, "tls_ca", None)
-        tls_insecure = getattr(self.args, "tls_insecure", False)
-
         port = getattr(self.args, "port", self.default_port)
 
         try:
-            if use_tls:
-                self.conn = self._create_tls_connection(
-                    port, timeout, tls_ca=tls_ca, tls_insecure=tls_insecure
-                )
-            else:
-                self.conn = ConnectionHelper.create_tls_tcp_connection(
-                    self.ip,
-                    port,
-                    timeout=timeout,
-                    use_tls=False,
-                    protocol="astm",
-                    endpoint_label="ASTM endpoint",
-                    logger=self.logger,
-                )
+            # The central helper forwards all four TLS flags to build_tls_context
+            # (a supplied --tls-ca triggers CERT_REQUIRED + hostname verification),
+            # so there is no need for a local TLS path.
+            self.conn = ConnectionHelper.create_tls_tcp_connection(
+                self.ip,
+                port,
+                timeout=timeout,
+                use_tls=use_tls,
+                tls_cert=getattr(self.args, "tls_cert", None),
+                tls_key=getattr(self.args, "tls_key", None),
+                tls_ca=getattr(self.args, "tls_ca", None),
+                tls_insecure=getattr(self.args, "tls_insecure", False),
+                protocol="astm",
+                endpoint_label="ASTM endpoint",
+                logger=self.logger,
+            )
             self.results["data"]["connected"] = True
             self.results["data"]["tls_enabled"] = use_tls
             return True
@@ -164,53 +159,6 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self.logger.fail(f"Connection failed: {e}")
             self.results["data"]["connected"] = False
             return False
-
-    def _create_tls_connection(self, port, timeout, *, tls_ca=None, tls_insecure=False):
-        """Wrap a TCP socket in TLS, honoring --tls-ca / --tls-insecure.
-
-        Unlike the shared create_tls_tcp_connection() helper (which only
-        forwards tls-cert/tls-key), this passes the CA bundle and insecure flag
-        through to build_tls_context() so a supplied --tls-ca actually triggers
-        CERT_REQUIRED server verification.
-        """
-        from ...utils.socket_helpers import build_tls_context
-
-        self.logger.info(f"Connecting to {self.ip}:{port}")
-        sock = ConnectionHelper.create_tcp_socket(self.ip, port, timeout=timeout)
-        try:
-            ssl_context = build_tls_context(
-                {
-                    "tls-cert": getattr(self.args, "tls_cert", None),
-                    "tls-key": getattr(self.args, "tls_key", None),
-                    "tls-ca": tls_ca,
-                    "tls-insecure": tls_insecure,
-                },
-                logger=self.logger,
-            )
-            if tls_ca and not tls_insecure:
-                ssl_context.check_hostname = True
-            tls_sock = ssl_context.wrap_socket(sock, server_hostname=self.ip)
-        except Exception:
-            sock.close()
-            raise
-
-        try:
-            cert_der = tls_sock.getpeercert(binary_form=True)
-            if cert_der:
-                from ...utils.security_findings import display_cert_info
-
-                display_cert_info(
-                    logger=self.logger,
-                    cert=cert_der,
-                    protocol="astm",
-                    target=f"{self.ip}:{port}",
-                    verbose=True,
-                )
-        except Exception as e:
-            self.logger.debug(f"Certificate check failed: {e}")
-
-        self.logger.success(f"Connected to ASTM endpoint at {self.ip}:{port} (TLS)")
-        return tls_sock
 
     def enum_host_info(self):
         """Test ASTM connection with ENQ/ACK handshake and header exchange"""

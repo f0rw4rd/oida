@@ -136,8 +136,9 @@ class SNMPScanner(
             if len(parts) >= 3:
                 self.priv_pass = parts[2]
                 self.security_level = "authPriv"
-            if len(parts) == 1:
-                self.security_level = "noAuthNoPriv"
+            # NOTE: splitting a string known to contain ":" always yields >= 2
+            # parts, so a bare noAuthNoPriv username can't come through here --
+            # that's still reachable via -u/--snmp-user without -A (see below).
             self.community = "public"
             self.logger.debug(
                 f"Auth parsed as v3: user={self.username}, level={self.security_level}"
@@ -436,7 +437,18 @@ class SNMPScanner(
                 if self.version in ("1", "2c"):
                     self.logger.fail("-E/--enum-v3 requires SNMPv3 (use -V 3 or -V auto)")
                     return results
-                if not self.confirm_brute:
+                # A single known auth password (-A pass, not a wordlist file) is a
+                # targeted credential test, not a brute-force -- mirrors the
+                # is_single_auth skip inside _enum_v3()'s phase 2 gate, so this
+                # outer gate doesn't block the exact case that phase 2 allows
+                # through (e.g. `-E admin -A admin123` with no --confirm).
+                is_single_credential = False
+                if self.auth_pass:
+                    from ...utils.default_credentials import parse_credential_input
+
+                    _pw_list, _ = parse_credential_input(self.auth_pass)
+                    is_single_credential = len(_pw_list) == 1
+                if not is_single_credential and not self.confirm_brute:
                     self.logger.fail("-E/--enum-v3 requires --confirm (active probing)")
                     return results
                 v3_results = self._enum_v3()

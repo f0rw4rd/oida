@@ -155,10 +155,17 @@ class HSRPassiveListener(PySharkListenerBase):
 
         now = datetime.now().isoformat()
 
-        # Determine if this is a supervision frame or a data frame
+        # Determine if this is a supervision frame or a data frame.
+        # HSR and PRP share the hsr_prp_supervision dissector, but an HSR
+        # supervision frame also carries an ``hsr`` layer while a PRP-only
+        # supervision frame does not. Require the ``hsr`` layer so PRP frames
+        # on a PRP network aren't misclaimed as phantom HSR nodes (the PRP
+        # listener handles those).
+        if not hasattr(packet, "hsr"):
+            return
         if hasattr(packet, "hsr_prp_supervision"):
             self._process_supervision(packet, src_mac, dst_mac, now)
-        elif hasattr(packet, "hsr"):
+        else:
             self._process_data_frame(packet, src_mac, dst_mac, now)
 
     # ------------------------------------------------------------------

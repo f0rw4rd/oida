@@ -277,14 +277,18 @@ class AMQPPassiveListener(PySharkListenerBase):
         # decodable method (Header/Body/Heartbeat), native=None falls through to
         # the known-server-port tier (canonical 5672/5671 plus user --decode-as /
         # OVERRIDE_PREFS) and then the lower-port heuristic.
-        is_response = method_name.endswith("-Ok") or method_name in (
+        # Start-Ok / Secure-Ok / Tune-Ok end in "-Ok" but are CLIENT-originated
+        # replies in the connection handshake, so they must not be classified as
+        # server responses (that would register the client as a phantom broker).
+        client_ok_methods = {"Start-Ok", "Secure-Ok", "Tune-Ok"}
+        is_response = method_name in (
             "Start",
             "Tune",
             "Deliver",
             "Return",
             "Get-Ok",
             "Get-Empty",
-        )
+        ) or (method_name.endswith("-Ok") and method_name not in client_ok_methods)
         native = (not is_response) if method_name else None
         d = self.resolve_direction(
             packet,

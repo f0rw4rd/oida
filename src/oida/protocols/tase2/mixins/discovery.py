@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
+from ....utils.protocol_helpers import safe_int_conversion
+
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -164,11 +166,14 @@ class DiscoveryMixin(_ScannerBase):
             pv = connection.read_point("", "TASE.2_Version")
             if pv and pv.value is not None:
                 if isinstance(pv.value, dict):
-                    version["major"] = pv.value.get("MajorVersionNumber", 0)
-                    version["minor"] = pv.value.get("MinorVersionNumber", 0)
+                    # Coerce -- a malformed/non-integer server response here
+                    # would otherwise raise TypeError at the `> 0` comparison
+                    # below, outside this try, aborting the whole discovery run.
+                    version["major"] = safe_int_conversion(pv.value.get("MajorVersionNumber", 0))
+                    version["minor"] = safe_int_conversion(pv.value.get("MinorVersionNumber", 0))
                 elif isinstance(pv.value, (list, tuple)) and len(pv.value) >= 2:
-                    version["major"] = int(pv.value[0])
-                    version["minor"] = int(pv.value[1])
+                    version["major"] = safe_int_conversion(pv.value[0])
+                    version["minor"] = safe_int_conversion(pv.value[1])
         except Exception as e:
             self.logger.debug(f"Could not read TASE.2_Version: {e}")
 

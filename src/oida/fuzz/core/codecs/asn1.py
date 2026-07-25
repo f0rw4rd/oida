@@ -10,7 +10,7 @@ References:
 - IEC 60870-6 (TASE.2)
 """
 
-from typing import List, Optional, Union
+from typing import List, Union
 
 
 class ASN1Tag:
@@ -68,10 +68,6 @@ class ASN1Builder:
     def __init__(self):
         """Initialize ASN1Builder."""
         self._fuzz_mode = False
-
-    def enable_fuzz_mode(self, enabled: bool = True) -> None:
-        """Enable or disable fuzzing mode for generating malformed data."""
-        self._fuzz_mode = enabled
 
     # =========================================================================
     # Core BER Encoding
@@ -238,34 +234,6 @@ class ASN1Builder:
 
         return self.build_tlv(ASN1Tag.INTEGER, bytes(octets))
 
-    def build_enumerated(self, value: int) -> bytes:
-        """Build an ENUMERATED primitive."""
-        # Same encoding as INTEGER
-        if value == 0:
-            octets = bytes([0x00])
-        elif value > 0:
-            octets_list: list[int] = []
-            n = value
-            while n > 0:
-                octets_list.insert(0, n & 0xFF)
-                n >>= 8
-            if octets_list[0] & 0x80:
-                octets_list.insert(0, 0x00)
-            octets = bytes(octets_list)
-        else:
-            n = value
-            neg_list: list[int] = []
-            while True:
-                neg_list.insert(0, n & 0xFF)
-                n >>= 8
-                if n == -1 and neg_list[0] & 0x80:
-                    break
-                if n == 0 and not (neg_list[0] & 0x80):
-                    break
-            octets = bytes(neg_list)
-
-        return self.build_tlv(ASN1Tag.ENUMERATED, octets)
-
     def build_null(self) -> bytes:
         """Build a NULL primitive."""
         return bytes([ASN1Tag.NULL, 0x00])
@@ -332,37 +300,9 @@ class ASN1Builder:
         """Build a VisibleString primitive."""
         return self.build_tlv(ASN1Tag.VISIBLE_STRING, text.encode("ascii"))
 
-    def build_ia5_string(self, text: str) -> bytes:
-        """Build an IA5String primitive."""
-        return self.build_tlv(ASN1Tag.IA5_STRING, text.encode("ascii"))
-
     def build_utf8_string(self, text: str) -> bytes:
         """Build a UTF8String primitive."""
         return self.build_tlv(ASN1Tag.UTF8_STRING, text.encode("utf-8"))
-
-    def build_generalized_time(self, timestamp: str) -> bytes:
-        """
-        Build a GeneralizedTime primitive.
-
-        Args:
-            timestamp: Time string (e.g., "20231215120000Z")
-
-        Returns:
-            BER-encoded GeneralizedTime
-        """
-        return self.build_tlv(ASN1Tag.GENERALIZED_TIME, timestamp.encode("ascii"))
-
-    def build_utc_time(self, timestamp: str) -> bytes:
-        """
-        Build a UTCTime primitive.
-
-        Args:
-            timestamp: Time string (e.g., "231215120000Z")
-
-        Returns:
-            BER-encoded UTCTime
-        """
-        return self.build_tlv(ASN1Tag.UTC_TIME, timestamp.encode("ascii"))
 
     # =========================================================================
     # Constructed Type Builders
@@ -380,19 +320,6 @@ class ASN1Builder:
         """
         content = b"".join(items)
         return self.build_tlv(ASN1Tag.SEQUENCE, content)
-
-    def build_set(self, *items: bytes) -> bytes:
-        """
-        Build a SET constructed type.
-
-        Args:
-            *items: BER-encoded items to include in set
-
-        Returns:
-            BER-encoded SET
-        """
-        content = b"".join(items)
-        return self.build_tlv(ASN1Tag.SET, content)
 
     def build_context_specific(self, tag_num: int, value: bytes, constructed: bool = True) -> bytes:
         """
@@ -413,21 +340,6 @@ class ASN1Builder:
             Context-specific tagged bytes
         """
         tag = self.encode_tag(ASN1Tag.CLASS_CONTEXT, True, tag_num)
-        return tag + self.encode_length(len(value)) + value
-
-    def build_application(self, tag_num: int, value: bytes, constructed: bool = False) -> bytes:
-        """
-        Build an application-tagged value.
-
-        Args:
-            tag_num: Application tag number
-            value: Value bytes
-            constructed: Whether the tag is constructed
-
-        Returns:
-            Application-tagged bytes
-        """
-        tag = self.encode_tag(ASN1Tag.CLASS_APPLICATION, constructed, tag_num)
         return tag + self.encode_length(len(value)) + value
 
     # =========================================================================
@@ -530,29 +442,6 @@ class ASN1Builder:
 
         return tag_bytes + self.encode_length(full_len) + truncated
 
-    def build_indefinite_length(
-        self, tag: int, content: bytes, end_of_contents: bool = True
-    ) -> bytes:
-        """
-        Build a TLV with indefinite length encoding.
-
-        Args:
-            tag: Tag byte (must be constructed)
-            content: Content bytes
-            end_of_contents: Whether to include end-of-contents marker
-
-        Returns:
-            TLV with indefinite length encoding
-        """
-        tag_bytes = bytes([tag | ASN1Tag.CONSTRUCTED])  # Force constructed
-
-        result = tag_bytes + bytes([0x80]) + content
-
-        if end_of_contents:
-            result += bytes([0x00, 0x00])  # End-of-contents
-
-        return result
-
     def build_nested_depth(self, tag: int, content: bytes, depth: int = 100) -> bytes:
         """
         Build deeply nested structures for stack exhaustion testing.
@@ -573,33 +462,6 @@ class ASN1Builder:
     # =========================================================================
     # MMS-Specific Helpers
     # =========================================================================
-
-    def build_mms_invoke_id(self, invoke_id: int) -> bytes:
-        """Build an MMS invokeID (Unsigned32)."""
-        return self.build_unsigned32(invoke_id)
-
-    def build_mms_object_name(self, name: str, domain: Optional[str] = None) -> bytes:
-        """
-        Build an MMS ObjectName.
-
-        Args:
-            name: Object name
-            domain: Domain name (None for VMD-specific)
-
-        Returns:
-            BER-encoded ObjectName
-        """
-        if domain is None:
-            # VMD-specific: [0] VisibleString
-            return self.build_context_specific(
-                0, self.build_visible_string(name)[2:], constructed=False
-            )
-        else:
-            # Domain-specific: [1] SEQUENCE { domainId, itemId }
-            seq = self.build_sequence(
-                self.build_visible_string(domain), self.build_visible_string(name)
-            )
-            return self.build_context_specific(1, seq, constructed=True)
 
 
 # Convenience singleton

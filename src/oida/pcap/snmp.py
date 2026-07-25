@@ -261,6 +261,30 @@ class SNMPPassiveListener(PySharkListenerBase):
         is_response = operation in ("RESPONSE", "REPORT")
         direction = "response" if is_response else "request"
 
+        # Determine which endpoint is the manager (client) vs the agent
+        # (server). GET/GET-NEXT/GET-BULK/SET are manager -> agent queries;
+        # RESPONSE/REPORT are agent -> manager replies; TRAPv1/TRAPv2/INFORM
+        # are agent-initiated notifications (also agent -> manager) even
+        # though `direction` above labels them "request" for display. Using
+        # `is_response` alone (agent iff response) swaps roles for every
+        # trap/inform. Fall back to the canonical agent port (161) / trap
+        # port (162) when the operation can't be classified (PDU_TYPES
+        # "UNKNOWN").
+        is_agent_sender = operation in ("RESPONSE", "REPORT", "TRAPv1", "TRAPv2", "INFORM")
+        if operation == "UNKNOWN":
+            if dst_port == 161:
+                is_agent_sender = False
+            elif src_port in (161, 162) or dst_port == 162:
+                is_agent_sender = True
+        if is_agent_sender:
+            manager_ip, agent_ip = dst_ip, src_ip
+            manager_mac, agent_mac = dst_mac, src_mac
+            agent_port = src_port
+        else:
+            manager_ip, agent_ip = src_ip, dst_ip
+            manager_mac, agent_mac = src_mac, dst_mac
+            agent_port = dst_port
+
         # Extract credential (community or v3 username)
         community = ""
         username = ""
@@ -451,28 +475,32 @@ class SNMPPassiveListener(PySharkListenerBase):
                 f"OID={oid_friendly or oid} value={value_str}"
             )
 
-        # Record credentials
+        # Record credentials.  Pass manager_ip/agent_ip (not raw src_ip/dst_ip)
+        # so the credential's client/server attribution matches who actually
+        # sent the query vs. who answered/notified (see is_agent_sender
+        # above) -- a response or trap has src_ip == the agent, not the
+        # manager.
         if community:
             self._record_credential(
                 community_or_username=community,
                 version=version,
                 credential_type="community",
-                src_ip=src_ip,
-                dst_ip=dst_ip,
-                dest_port=dst_port,
-                src_mac=src_mac or "",
-                dst_mac=dst_mac or "",
+                src_ip=manager_ip,
+                dst_ip=agent_ip,
+                dest_port=agent_port,
+                src_mac=manager_mac or "",
+                dst_mac=agent_mac or "",
             )
         if username:
             self._record_credential(
                 community_or_username=username,
                 version="v3",
                 credential_type="username",
-                src_ip=src_ip,
-                dst_ip=dst_ip,
-                dest_port=dst_port,
-                src_mac=src_mac or "",
-                dst_mac=dst_mac or "",
+                src_ip=manager_ip,
+                dst_ip=agent_ip,
+                dest_port=agent_port,
+                src_mac=manager_mac or "",
+                dst_mac=agent_mac or "",
             )
 
     def _get_operation(self, snmp) -> str:
@@ -570,8 +598,16 @@ class SNMPPassiveListener(PySharkListenerBase):
         src_mac: str = "",
         dst_mac: str = "",
     ) -> None:
-        """Record extracted SNMP credential."""
-        cred_key = (community_or_username, version, src_ip, dst_ip)
+        """Record extracted SNMP credential.
+
+        ``src_ip``/``dst_ip`` here are the manager (client) / agent (server)
+        IPs respectively -- callers must resolve manager vs. agent role
+        first (a response/trap/inform has the agent as the packet's src_ip,
+        not the manager) and pass those in, not the raw packet src/dst.
+        """
+        manager_ip, agent_ip = src_ip, dst_ip
+        manager_mac, agent_mac = src_mac, dst_mac
+        cred_key = (community_or_username, version, manager_ip, agent_ip)
         if cred_key in self._seen_creds:
             return
         self._seen_creds.add(cred_key)
@@ -579,8 +615,8 @@ class SNMPPassiveListener(PySharkListenerBase):
         cred = SNMPCredential(
             community_or_username=community_or_username,
             version=version,
-            source_ip=src_ip,
-            dest_ip=dst_ip,
+            source_ip=manager_ip,
+            dest_ip=agent_ip,
             dest_port=dest_port,
             timestamp=datetime.now().isoformat(),
             credential_type=credential_type,
@@ -589,23 +625,24 @@ class SNMPPassiveListener(PySharkListenerBase):
 
         type_str = "community string" if credential_type == "community" else "username"
         self.logger.info(
-            f"SNMP {version} {type_str}: {community_or_username} ({src_ip} -> {dst_ip}:{dest_port})"
+            f"SNMP {version} {type_str}: {community_or_username} "
+            f"({manager_ip} -> {agent_ip}:{dest_port})"
         )
 
         self._update_devices(
-            src_ip,
-            dst_ip,
+            manager_ip,
+            agent_ip,
             version,
             credential_type,
             community_or_username,
-            src_mac=src_mac,
-            dst_mac=dst_mac,
+            src_mac=manager_mac,
+            dst_mac=agent_mac,
         )
 
     def _update_devices(
         self,
-        src_ip: str,
-        dst_ip: str,
+        manager_ip: str,
+        agent_ip: str,
         version: str,
         credential_type: str,
         value: str,
@@ -613,10 +650,10 @@ class SNMPPassiveListener(PySharkListenerBase):
         dst_mac: str = "",
     ) -> None:
         """Update or create device entries for SNMP participants."""
-        if is_valid_discovered_ip(src_ip):
-            self._update_device(src_ip, "manager", version, credential_type, value, mac=src_mac)
-        if is_valid_discovered_ip(dst_ip):
-            self._update_device(dst_ip, "agent", version, credential_type, value, mac=dst_mac)
+        if is_valid_discovered_ip(manager_ip):
+            self._update_device(manager_ip, "manager", version, credential_type, value, mac=src_mac)
+        if is_valid_discovered_ip(agent_ip):
+            self._update_device(agent_ip, "agent", version, credential_type, value, mac=dst_mac)
 
     def _update_device(
         self,

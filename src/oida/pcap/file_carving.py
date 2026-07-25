@@ -106,7 +106,7 @@ class FileCarvingListener(FileCarvingMixin, PySharkListenerBase):
         output_dir: Optional[str] = None,
     ):
         super().__init__(interface, timeout, nxc_logger)
-        self._streams: Dict[Tuple[str, str, str], StreamBuffer] = {}
+        self._streams: Dict[Tuple[str, str, str, int, int, str], StreamBuffer] = {}
         self.files: List[ExtractedFile] = []
         self.output_dir = output_dir
 
@@ -135,7 +135,15 @@ class FileCarvingListener(FileCarvingMixin, PySharkListenerBase):
         else:
             return
 
-        stream_key = (src_ip, dst_ip, protocol)
+        # (src_ip, dst_ip, protocol) alone merges every concurrent
+        # connection between the same host pair into one buffer -- two
+        # simultaneous transfers get their payload bytes interleaved,
+        # producing spliced/corrupt carves. Add ports + the tshark
+        # tcp.stream/udp.stream index so each connection gets its own
+        # buffer.
+        src_port, dst_port = self.get_port_info(packet)
+        stream_id = self.get_stream_id(packet)
+        stream_key = (src_ip, dst_ip, protocol, src_port, dst_port, stream_id)
         if stream_key not in self._streams:
             self._streams[stream_key] = StreamBuffer(
                 src_ip=src_ip,
@@ -172,33 +180,33 @@ class FileCarvingListener(FileCarvingMixin, PySharkListenerBase):
 def _extract_payload(packet) -> Optional[bytes]:
     """Extract raw payload bytes from a PyShark packet.
 
-    Tries multiple PyShark fields to find raw data:
-    1. data.data - Generic data layer (colon-separated hex string)
-    2. tcp.payload - TCP payload (colon-separated hex string)
-    3. udp.payload - UDP payload (colon-separated hex string)
+    Tries multiple PyShark fields to find raw data (data.data, tcp.payload,
+    udp.payload). In EK mode (use_ek=True, the production pipeline) these
+    FT_BYTES fields arrive as ``bytes``; in XML mode they are colon-separated
+    hex strings. Both are handled — previously ``str(raw)`` on EK ``bytes``
+    produced a non-hex ``b'...'`` repr and every payload was silently dropped.
     """
-    hex_str = None
+    raw = None
 
     if hasattr(packet, "data"):
-        raw = getattr(packet.data, "data", None)
-        if raw:
-            hex_str = str(raw)
+        raw = getattr(packet.data, "data", None) or None
 
-    if hex_str is None and hasattr(packet, "tcp"):
-        raw = getattr(packet.tcp, "payload", None)
-        if raw:
-            hex_str = str(raw)
+    if raw is None and hasattr(packet, "tcp"):
+        raw = getattr(packet.tcp, "payload", None) or None
 
-    if hex_str is None and hasattr(packet, "udp"):
-        raw = getattr(packet.udp, "payload", None)
-        if raw:
-            hex_str = str(raw)
+    if raw is None and hasattr(packet, "udp"):
+        raw = getattr(packet.udp, "payload", None) or None
 
-    if not hex_str:
+    if raw is None:
         return None
 
+    # EK mode: already bytes -- use directly.
+    if isinstance(raw, (bytes, bytearray)):
+        return bytes(raw)
+
+    # XML mode: colon/space-separated hex string.
     try:
-        cleaned = hex_str.replace(":", "").replace(" ", "")
+        cleaned = str(raw).replace(":", "").replace(" ", "")
         if not cleaned:
             return None
         return bytes.fromhex(cleaned)

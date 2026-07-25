@@ -205,7 +205,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             self._create_observation()
 
         # Brute force credential testing
-        if getattr(self.args, "brute", False):
+        if getattr(self.args, "brute", False) or getattr(self.args, "default_creds", False):
             self._brute_force_credentials()
 
         # Analyze security
@@ -216,6 +216,60 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
 
         # Cleanup
         self._disconnect()
+
+    def _apply_session_config(self, client, timeout: Optional[float] = None) -> None:
+        """Apply timeout + TLS session settings to a FHIRClient's requests session.
+
+        Shared by create_conn_obj() and SecurityMixin._test_authentication()'s
+        ad-hoc probe clients, so every FHIRClient this scanner builds honors
+        --timeout/--tls-cert/--tls-key/--tls-insecure/--tls-ca instead of a probe
+        silently using unbounded default timeouts or unconfigured cert
+        verification against a self-signed/private-CA target.
+        """
+        if not (hasattr(client, "server") and client.server):
+            return
+
+        from requests.adapters import HTTPAdapter
+
+        class TimeoutHTTPAdapter(HTTPAdapter):
+            def __init__(self, timeout=30, *args, **kwargs):
+                self.timeout = timeout
+                super().__init__(*args, **kwargs)
+
+            def send(self, request, **kwargs):
+                kwargs.setdefault("timeout", self.timeout)
+                return super().send(request, **kwargs)
+
+        if timeout is None:
+            timeout = getattr(self.args, "timeout", 30)
+
+        adapter = TimeoutHTTPAdapter(timeout=timeout)
+        session = client.server.session
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        # Mutual-TLS client cert/key. validate_credential_path blocks
+        # directory traversal and resolves to an absolute path. requests
+        # accepts either a combined cert+key file (cert="...") or a
+        # (cert, key) tuple when supplied separately.
+        tls_cert = getattr(self.args, "tls_cert", None)
+        tls_key = getattr(self.args, "tls_key", None)
+        if tls_cert:
+            cert_path = validate_credential_path(tls_cert)
+            if tls_key:
+                session.cert = (cert_path, validate_credential_path(tls_key))
+            else:
+                session.cert = cert_path
+
+        # Verification precedence: --tls-insecure disables verification
+        # outright; otherwise a --tls-ca bundle overrides the default
+        # trust store for server-certificate verification.
+        if getattr(self.args, "tls_insecure", False):
+            session.verify = False
+        else:
+            tls_ca = getattr(self.args, "tls_ca", None)
+            if tls_ca:
+                session.verify = validate_credential_path(tls_ca)
 
     def create_conn_obj(self) -> bool:
         """Create FHIR client connection"""
@@ -237,44 +291,8 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             self.smart_client = fhirclient.FHIRClient(settings=settings)
 
             if hasattr(self.smart_client, "server") and self.smart_client.server:
-                from requests.adapters import HTTPAdapter
-
-                class TimeoutHTTPAdapter(HTTPAdapter):
-                    def __init__(self, timeout=30, *args, **kwargs):
-                        self.timeout = timeout
-                        super().__init__(*args, **kwargs)
-
-                    def send(self, request, **kwargs):
-                        kwargs.setdefault("timeout", self.timeout)
-                        return super().send(request, **kwargs)
-
-                adapter = TimeoutHTTPAdapter(timeout=timeout)
+                self._apply_session_config(self.smart_client, timeout=timeout)
                 session = self.smart_client.server.session
-                session.mount("http://", adapter)
-                session.mount("https://", adapter)
-
-                # Mutual-TLS client cert/key. validate_credential_path blocks
-                # directory traversal and resolves to an absolute path. requests
-                # accepts either a combined cert+key file (cert="...") or a
-                # (cert, key) tuple when supplied separately.
-                tls_cert = getattr(self.args, "tls_cert", None)
-                tls_key = getattr(self.args, "tls_key", None)
-                if tls_cert:
-                    cert_path = validate_credential_path(tls_cert)
-                    if tls_key:
-                        session.cert = (cert_path, validate_credential_path(tls_key))
-                    else:
-                        session.cert = cert_path
-
-                # Verification precedence: --tls-insecure disables verification
-                # outright; otherwise a --tls-ca bundle overrides the default
-                # trust store for server-certificate verification.
-                if getattr(self.args, "tls_insecure", False):
-                    session.verify = False
-                else:
-                    tls_ca = getattr(self.args, "tls_ca", None)
-                    if tls_ca:
-                        session.verify = validate_credential_path(tls_ca)
 
                 username = getattr(self.args, "username", None)
                 password = getattr(self.args, "password", None)

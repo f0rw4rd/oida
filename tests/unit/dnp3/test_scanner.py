@@ -1745,10 +1745,13 @@ class TestChannelRetryConfiguration:
             }
         )
         config = scanner._build_channel_retry()
-        if scanner._build_no_reconnect_retry(
-            scanner._dnp3.TimeDuration.Seconds(1),
-            scanner._dnp3.TimeDuration.Seconds(30),
-        ) is not None:
+        if (
+            scanner._build_no_reconnect_retry(
+                scanner._dnp3.TimeDuration.Seconds(1),
+                scanner._dnp3.TimeDuration.Seconds(30),
+            )
+            is not None
+        ):
             # Binding can disable reconnection -> a ChannelRetry is returned.
             assert config is not None
             assert hasattr(config, "__class__")

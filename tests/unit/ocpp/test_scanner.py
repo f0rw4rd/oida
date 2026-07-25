@@ -1383,17 +1383,20 @@ class TestSecurityMixin(unittest.TestCase):
 
     # --- _handle_check_auth ---
 
-    def test_check_auth_anonymous_generates_high_finding(self):
-        """Anonymous connection (no username) should produce HIGH severity finding."""
+    def test_check_auth_anonymous_generates_no_duplicate_finding(self):
+        """Anonymous connection (no username) must NOT add a second "Anonymous
+        access" finding: create_conn_obj() already reports it unconditionally
+        for every unauthenticated connection (regardless of --check-auth/
+        --security), so _handle_check_auth() re-adding it via _add_finding()
+        previously produced two differently-shaped entries in
+        results["data"]["security_findings"] for the same underlying issue.
+        """
         obj = self._make_instance()
         obj.args.username = None
 
         obj._handle_check_auth()
 
-        findings = self._get_findings(obj)
-        self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0]["severity"], "HIGH")
-        self.assertIn("Anonymous", findings[0]["issue"])
+        self.assertEqual(len(self._get_findings(obj)), 0)
 
     def test_check_auth_authenticated_no_finding(self):
         obj = self._make_instance()
@@ -2976,9 +2979,7 @@ class TestHandleFirmwareInfo(unittest.TestCase):
             "9.9",
             "hint-matched config key should be harvested",
         )
-        self.assertNotIn(
-            "HeartbeatInterval", info, "non-firmware key must not be harvested"
-        )
+        self.assertNotIn("HeartbeatInterval", info, "non-firmware key must not be harvested")
 
     def test_targeted_response_does_not_clobber_existing_hint_value(self):
         """setdefault semantics: prior hint value wins over a later empty/dup."""
@@ -2987,9 +2988,7 @@ class TestHandleFirmwareInfo(unittest.TestCase):
         obj.results["data"]["configuration"] = {
             "keys": [{"key": "FirmwareVersion", "value": "harvested-1.0"}]
         }
-        payload = {
-            "configurationKey": [{"key": "FirmwareVersion", "value": "targeted-2.0"}]
-        }
+        payload = {"configurationKey": [{"key": "FirmwareVersion", "value": "targeted-2.0"}]}
         obj.scanner._send_and_receive.return_value = json.dumps(
             [MessageType.CALLRESULT, "id1", payload]
         )
@@ -2998,9 +2997,7 @@ class TestHandleFirmwareInfo(unittest.TestCase):
 
         # Hint-scan runs first and populates via setdefault; the targeted loop
         # overwrites directly, so the targeted value is authoritative here.
-        self.assertEqual(
-            obj.results["data"]["firmware_info"]["FirmwareVersion"], "targeted-2.0"
-        )
+        self.assertEqual(obj.results["data"]["firmware_info"]["FirmwareVersion"], "targeted-2.0")
 
     def test_parses_ocpp201_get_variable_result(self):
         """2.x getVariableResult entries are parsed into firmware_info."""
@@ -3020,9 +3017,7 @@ class TestHandleFirmwareInfo(unittest.TestCase):
 
         obj._handle_firmware_info()
 
-        self.assertEqual(
-            obj.results["data"]["firmware_info"]["FirmwareVersion"], "2.0.1-rc"
-        )
+        self.assertEqual(obj.results["data"]["firmware_info"]["FirmwareVersion"], "2.0.1-rc")
 
     def test_no_details_still_records_empty_firmware_info(self):
         obj, _ = self._make_obj()

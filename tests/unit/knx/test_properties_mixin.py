@@ -188,9 +188,10 @@ class TestFormattersAndParsers:
     def test_parse_property_arg_ok(self, host):
         assert host._parse_property_arg("3:78") == (3, 78)
 
-    def test_parse_property_arg_default_on_error(self, host):
-        # malformed -> default (0, 78) and a fail logged
-        assert host._parse_property_arg("bad") == (0, 78)
+    def test_parse_property_arg_invalid_returns_sentinel(self, host):
+        # Malformed input must never fall back to a hardcoded default
+        # object/property — that would silently read from a real device.
+        assert host._parse_property_arg("bad") == (None, None)
         assert host.logger.records["fail"]
 
 

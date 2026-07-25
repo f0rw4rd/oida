@@ -131,16 +131,10 @@ class MonitorMixin(_ScannerBase):
         }
 
     def _parse_register_range(self, range_str: str) -> List[int]:
-        """Parse register range string into list of addresses."""
-        addresses = []
-        for part in range_str.split(","):
-            part = part.strip()
-            if "-" in part:
-                start, end = part.split("-", 1)
-                addresses.extend(range(int(start), int(end) + 1))
-            else:
-                addresses.append(int(part))
-        return sorted(set(addresses))
+        """Parse register range string into a list of addresses (central parser)."""
+        from ....utils import ProtocolParser
+
+        return ProtocolParser.parse_address_range(range_str)
 
     def _read_register_batch(self: "modbus", addresses: List[int], reg_type: str) -> Dict[int, int]:
         """Read a batch of registers efficiently.

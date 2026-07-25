@@ -641,10 +641,24 @@ class DICOMPassiveListener(PySharkListenerBase):
                     ):
                         assoc.phi_exposed = True
 
-        # Determine direction from PDV flags
-        # Bit 0: command(0) or data(1), Bit 1: last fragment
-        is_command = pdv_flags is not None and (pdv_flags & 0x01) == 0
-        direction = "request" if is_command else "response"
+        # Determine request/response direction.  The PDV command/data bit is
+        # orthogonal to RQ/RSP -- both a C-STORE-RQ and a C-STORE-RSP carry a
+        # command PDV -- so it cannot decide direction.  When a DIMSE command
+        # field (0000,0100) is present, bit 0x8000 marks the RSP variant
+        # (e.g. C-STORE-RQ 0x0001 vs C-STORE-RSP 0x8001).  Otherwise (data
+        # PDV, no command field) fall back to the port/flow heuristic.
+        if tag_value_16u is not None:
+            direction = "response" if (tag_value_16u & 0x8000) else "request"
+        else:
+            direction = self.resolve_direction(
+                None,
+                native=None,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=src_port,
+                dst_port=dst_port,
+                flow_id=flow_id,
+            ).direction
 
         # Build operation name
         operation = command_name or pdu_name

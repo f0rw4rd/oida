@@ -219,8 +219,6 @@ class SmartInstallPassiveListener(PySharkListenerBase):
         self._update_devices(
             d.client_ip,
             d.server_ip,
-            d.client_port,
-            d.server_port,
             operation_name,
             src_mac=src_mac if d.is_request else dst_mac,
             dst_mac=dst_mac if d.is_request else src_mac,
@@ -281,8 +279,6 @@ class SmartInstallPassiveListener(PySharkListenerBase):
         self,
         director_ip: str,
         switch_ip: str,
-        director_port: int,
-        switch_port: int,
         operation: str,
         src_mac: str = "",
         dst_mac: str = "",

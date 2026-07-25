@@ -21,7 +21,7 @@ class TestBBMDForeignDeviceRegistration(unittest.TestCase):
         # And the CRITICAL finding must require a real ACK code:
         # 'bvlciResultCode == 0' is the only path that adds a finding.
         # Make sure the old unconditional finding form is gone.
-        bad = "findings.append(\"Foreign device registration accepted\")"
+        bad = 'findings.append("Foreign device registration accepted")'
         self.assertNotIn(bad, src)
 
 

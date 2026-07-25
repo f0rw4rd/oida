@@ -358,7 +358,11 @@ class tase2(NetworkConnection):
                 self.logger.fail("Invalid format. Use DOMAIN/DEVICE:VALUE")
                 return
             domain, device = path_parts
-            value = int(value_str)
+            try:
+                value = int(value_str)
+            except ValueError:
+                self.logger.fail(f"Invalid value '{value_str}': must be an integer")
+                return
 
             self.logger.display(f"Operating {domain}/{device} with value {value}...")
             try:

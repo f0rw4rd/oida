@@ -303,7 +303,9 @@ class PropertiesMixin:
                                         value = pv.cast_out(cast_type)
                                         break
                                     except BaseException as e:
-                                        self.logger.debug(f"bacpypes3 read prese failed: {e}")
+                                        self.logger.debug(
+                                            f"bacpypes3 read presentValue failed: {e}"
+                                        )
                                         continue
 
                             if value is not None:

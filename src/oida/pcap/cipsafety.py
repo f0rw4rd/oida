@@ -99,6 +99,10 @@ from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip
 
 # CIP Safety Supervisor service codes
+# cipsafety.ssupervisor.sc service codes (matches Wireshark's value_string in
+# packet-cipssupervisor.c). The high range (0x4C+) is CIP-Safety-specific and
+# was previously off by one/two codes -- e.g. real Set_Password is 0x51, not
+# 0x4F -- which mislabelled password/config operations.
 SUPERVISOR_SERVICES = {
     0x01: "Get_Attributes_All",
     0x02: "Set_Attributes_All",
@@ -107,31 +111,49 @@ SUPERVISOR_SERVICES = {
     0x05: "Reset",
     0x06: "Start",
     0x07: "Stop",
+    0x08: "Create",
+    0x09: "Delete",
+    0x0A: "Multiple_Service_Packet",
+    0x0D: "Apply_Attributes",
     0x0E: "Get_Attribute_Single",
     0x10: "Set_Attribute_Single",
-    0x4B: "Recover",
-    0x4C: "Perform_Diagnostics",
-    0x4D: "Configure_Request",
-    0x4E: "Validate_Configuration",
-    0x4F: "Set_Password",
-    0x50: "Configuration_Lock",
-    0x51: "Mode_Change",
-    0x52: "Safety_Reset",
-    0x53: "Reset_Password",
-    0x54: "Propose_TUNID",
-    0x55: "Apply_TUNID",
+    0x11: "Find_Next_Object_Instance",
+    0x15: "Restore",
+    0x16: "Save",
+    0x17: "Nop",
+    0x18: "Get_Member",
+    0x19: "Set_Member",
+    0x1A: "Insert_Member",
+    0x1B: "Remove_Member",
+    0x1C: "Group_Sync",
+    0x4C: "Recover",
+    0x4E: "Perform_Diagnostics",
+    0x4F: "Configure_Request",
+    0x50: "Validate_Configuration",
+    0x51: "Set_Password",
+    0x52: "Configuration_Lock",
+    0x53: "Mode_Change",
+    0x54: "Safety_Reset",
+    0x55: "Reset_Password",
+    0x56: "Propose_TUNID",
+    0x57: "Apply_TUNID",
+    0x58: "Propose_TUNID_List",
+    0x59: "Apply_TUNID_List",
 }
 
 # Security-relevant supervisor services (configuration changes, password ops)
 SUPERVISOR_SECURITY_SERVICES = {
-    0x4D,  # Configure_Request
-    0x4F,  # Set_Password
-    0x50,  # Configuration_Lock
-    0x51,  # Mode_Change
-    0x52,  # Safety_Reset
-    0x53,  # Reset_Password
-    0x54,  # Propose_TUNID
-    0x55,  # Apply_TUNID
+    0x4F,  # Configure_Request
+    0x50,  # Validate_Configuration
+    0x51,  # Set_Password
+    0x52,  # Configuration_Lock
+    0x53,  # Mode_Change
+    0x54,  # Safety_Reset
+    0x55,  # Reset_Password
+    0x56,  # Propose_TUNID
+    0x57,  # Apply_TUNID
+    0x58,  # Propose_TUNID_List
+    0x59,  # Apply_TUNID_List
 }
 
 # Safety Validator states
@@ -394,7 +416,11 @@ class CIPSafetyPassiveListener(PySharkListenerBase):
         stream_id: str = "",
     ) -> None:
         """Process CIP Safety Supervisor service."""
-        svc_raw = self.get_field(layer, "sc", None)
+        # Supervisor object fields are dissected under the cipsafety.ssupervisor.*
+        # filter prefix (the layer surfaces as ``cipssupervisor`` but its fields
+        # keep the cipsafety prefix), so the fully-qualified name is what a real
+        # capture exposes; the bare alias is kept as a fallback for fixtures.
+        svc_raw = self.get_field_any(layer, "cipsafety.ssupervisor.sc", "sc")
         if svc_raw is None:
             # Try reading attribute fields directly (Get responses)
             self._process_supervisor_attributes(
@@ -417,54 +443,74 @@ class CIPSafetyPassiveListener(PySharkListenerBase):
         }
 
         # Extract supervisor-specific fields
-        if svc_code == 0x4D:  # Configure_Request
-            tunid = self.get_field(layer, "configure_request_tunid", None)
+        if svc_code == 0x4F:  # Configure_Request
+            tunid = self.get_field_any(
+                layer, "cipsafety.ssupervisor.configure_request.tunid", "configure_request_tunid"
+            )
             if tunid is not None:
                 details["tunid"] = str(tunid)
-            password = self.get_field(layer, "configure_request_password", None)
+            password = self.get_field_any(
+                layer,
+                "cipsafety.ssupervisor.configure_request.password",
+                "configure_request_password",
+            )
             if password is not None:
                 details["has_password"] = True
 
-        elif svc_code == 0x4F:  # Set_Password
+        elif svc_code == 0x51:  # Set_Password
             details["has_password"] = True
 
-        elif svc_code == 0x50:  # Configuration_Lock
-            lock_val = self.get_field(layer, "configure_lock_lock", None)
+        elif svc_code == 0x52:  # Configuration_Lock
+            lock_val = self.get_field_any(
+                layer, "cipsafety.ssupervisor.configure_lock.lock", "configure_lock_lock"
+            )
             if lock_val is not None:
                 details["lock_value"] = str(lock_val)
 
-        elif svc_code == 0x51:  # Mode_Change
-            mode_val = self.get_field(layer, "mode_change_value", None)
+        elif svc_code == 0x53:  # Mode_Change
+            mode_val = self.get_field_any(
+                layer, "cipsafety.ssupervisor.mode_change.value", "mode_change_value"
+            )
             if mode_val is not None:
                 details["mode_value"] = str(mode_val)
 
-        elif svc_code == 0x52:  # Safety_Reset
-            reset_type = self.get_field(layer, "reset_type", None)
+        elif svc_code == 0x54:  # Safety_Reset
+            reset_type = self.get_field_any(layer, "cipsafety.ssupervisor.reset.type", "reset_type")
             if reset_type is not None:
                 details["reset_type"] = str(reset_type)
 
         # Extract device info fields when present
-        mfg_name = self.get_field(layer, "manufacture_name", None)
+        mfg_name = self.get_field_any(
+            layer, "cipsafety.ssupervisor.manufacture_name", "manufacture_name"
+        )
         if mfg_name is not None:
             details["manufacturer_name"] = str(mfg_name)
-        model_num = self.get_field(layer, "manufacture_model_number", None)
+        model_num = self.get_field_any(
+            layer, "cipsafety.ssupervisor.manufacture_model_number", "manufacture_model_number"
+        )
         if model_num is not None:
             details["model_number"] = str(model_num)
-        serial_num = self.get_field(layer, "manufacture_serial_number", None)
+        serial_num = self.get_field_any(
+            layer, "cipsafety.ssupervisor.manufacture_serial_number", "manufacture_serial_number"
+        )
         if serial_num is not None:
             details["serial_number"] = str(serial_num)
-        sw_rev = self.get_field(layer, "sw_rev_level", None)
+        sw_rev = self.get_field_any(layer, "cipsafety.ssupervisor.sw_rev_level", "sw_rev_level")
         if sw_rev is not None:
             details["sw_revision"] = str(sw_rev)
-        hw_rev = self.get_field(layer, "hw_rev_level", None)
+        hw_rev = self.get_field_any(layer, "cipsafety.ssupervisor.hw_rev_level", "hw_rev_level")
         if hw_rev is not None:
             details["hw_revision"] = str(hw_rev)
-        dev_status = self.get_field(layer, "device_status", None)
+        dev_status = self.get_field_any(
+            layer, "cipsafety.ssupervisor.device_status", "device_status"
+        )
         if dev_status is not None:
             status_val = self._parse_int(dev_status, -1)
             status_name = SUPERVISOR_STATUS.get(status_val, str(dev_status))
             details["device_status"] = status_name
-        config_lock = self.get_field(layer, "configuration_lock", None)
+        config_lock = self.get_field_any(
+            layer, "cipsafety.ssupervisor.configuration_lock", "configuration_lock"
+        )
         if config_lock is not None:
             details["configuration_lock"] = str(config_lock)
 
@@ -495,11 +541,11 @@ class CIPSafetyPassiveListener(PySharkListenerBase):
 
         if is_security_event and not is_response:
             session.security_events += 1
-            if svc_code in (0x4F, 0x53):  # Password operations
+            if svc_code in (0x51, 0x55):  # Password operations (Set/Reset_Password)
                 session.password_operations += 1
-            if svc_code == 0x51:  # Mode change
+            if svc_code == 0x53:  # Mode change
                 session.mode_changes += 1
-            if svc_code == 0x52:  # Reset
+            if svc_code == 0x54:  # Reset (Safety_Reset)
                 session.resets += 1
 
             self._alerts.append(
@@ -529,16 +575,24 @@ class CIPSafetyPassiveListener(PySharkListenerBase):
         """Process supervisor attribute data (Get responses without service code)."""
         details: Dict[str, Any] = {"frame_type": "supervisor_attr"}
 
-        mfg_name = self.get_field(layer, "manufacture_name", None)
+        mfg_name = self.get_field_any(
+            layer, "cipsafety.ssupervisor.manufacture_name", "manufacture_name"
+        )
         if mfg_name is not None:
             details["manufacturer_name"] = str(mfg_name)
-        model_num = self.get_field(layer, "manufacture_model_number", None)
+        model_num = self.get_field_any(
+            layer, "cipsafety.ssupervisor.manufacture_model_number", "manufacture_model_number"
+        )
         if model_num is not None:
             details["model_number"] = str(model_num)
-        serial_num = self.get_field(layer, "manufacture_serial_number", None)
+        serial_num = self.get_field_any(
+            layer, "cipsafety.ssupervisor.manufacture_serial_number", "manufacture_serial_number"
+        )
         if serial_num is not None:
             details["serial_number"] = str(serial_num)
-        dev_status = self.get_field(layer, "device_status", None)
+        dev_status = self.get_field_any(
+            layer, "cipsafety.ssupervisor.device_status", "device_status"
+        )
         if dev_status is not None:
             status_val = self._parse_int(dev_status, -1)
             details["device_status"] = SUPERVISOR_STATUS.get(status_val, str(dev_status))
@@ -583,26 +637,39 @@ class CIPSafetyPassiveListener(PySharkListenerBase):
         stream_id: str = "",
     ) -> None:
         """Process CIP Safety Validator service."""
-        svc_raw = self.get_field(layer, "sc", None)
+        # Validator object fields are dissected under cipsafety.svalidator.*;
+        # the fully-qualified name is what a real capture exposes, with the bare
+        # alias kept as a fixture fallback.
+        svc_raw = self.get_field_any(layer, "cipsafety.svalidator.sc", "sc")
         svc_val = self._parse_int(svc_raw, 0) if svc_raw is not None else 0
         is_response = bool(svc_val & 0x80)
         direction = "response" if is_response else "request"
 
-        state_raw = self.get_field(layer, "state", None)
+        state_raw = self.get_field_any(layer, "cipsafety.svalidator.state", "state")
         state_val = self._parse_int(state_raw, -1) if state_raw is not None else -1
         state_name = (
             VALIDATOR_STATES.get(state_val, f"Unknown({state_val})") if state_val >= 0 else ""
         )
 
-        validator_type = self.get_field(layer, "type", None)
-        pc_flag = self.get_field(layer, "type_pc", None)
-        conn_type = self.get_field(layer, "type_conn_type", None)
-        fault_count = self.get_field(layer, "sconn_fault_count", None)
-        ping_epi = self.get_field(layer, "ping_epi", None)
-        data_conn_inst = self.get_field(layer, "data_conn_inst", None)
-        max_consumer = self.get_field(layer, "max_consumer_num", None)
-        max_data_age = self.get_field(layer, "max_data_age", None)
-        error_code = self.get_field(layer, "error_code", None)
+        validator_type = self.get_field_any(layer, "cipsafety.svalidator.type", "type")
+        pc_flag = self.get_field_any(layer, "cipsafety.svalidator.type.pc", "type_pc")
+        conn_type = self.get_field_any(
+            layer, "cipsafety.svalidator.type.conn_type", "type_conn_type"
+        )
+        fault_count = self.get_field_any(
+            layer, "cipsafety.svalidator.sconn_fault_count", "sconn_fault_count"
+        )
+        ping_epi = self.get_field_any(layer, "cipsafety.svalidator.ping_epi", "ping_epi")
+        data_conn_inst = self.get_field_any(
+            layer, "cipsafety.svalidator.data_conn_inst", "data_conn_inst"
+        )
+        max_consumer = self.get_field_any(
+            layer, "cipsafety.svalidator.max_consumer_num", "max_consumer_num"
+        )
+        max_data_age = self.get_field_any(
+            layer, "cipsafety.svalidator.max_data_age", "max_data_age"
+        )
+        error_code = self.get_field_any(layer, "cipsafety.svalidator.error_code", "error_code")
 
         details: Dict[str, Any] = {"frame_type": "validator"}
         if state_name:

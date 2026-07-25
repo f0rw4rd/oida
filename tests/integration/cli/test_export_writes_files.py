@@ -123,8 +123,7 @@ def cli_src():
 def test_cli_dispatcher_calls_export_results(cli_src):
     """cli.py main loop must invoke export_results for any -o flow."""
     assert "export_results(" in cli_src, (
-        "cli.py no longer calls export_results — silent-no-files class "
-        "of bugs would silently recur"
+        "cli.py no longer calls export_results — silent-no-files class of bugs would silently recur"
     )
 
 

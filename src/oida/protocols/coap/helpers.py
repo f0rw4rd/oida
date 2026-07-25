@@ -129,6 +129,39 @@ async def coap_get(ctx, uri: str, timeout: float = DEFAULT_TIMEOUT) -> Tuple[str
         return f"error:{e}", b""
 
 
+async def coap_get_checked(
+    ctx, uri: str, timeout: float = DEFAULT_TIMEOUT
+) -> Tuple[str, bytes, bool]:
+    """GET a CoAP resource, also reporting whether it is a truncated block-wise transfer.
+
+    aiocoap's default ``ctx.request()`` already negotiates and reassembles
+    Block2 (RFC 7959) transfers transparently, so by the time this returns
+    the payload is normally already complete and ``response.opt.block2`` is
+    cleared. This still checks the option explicitly (rather than inferring
+    truncation from payload size, which false-positives on any legitimately
+    large single response >= the configured block size) so callers can
+    decide whether an additional explicit block-wise GET is actually
+    warranted.
+
+    Returns (response_code_string, payload_bytes, block2_more).
+    On error returns (error_string, b"", False).
+    """
+    aiocoap = _get_aiocoap()
+    try:
+        request = aiocoap.Message(code=aiocoap.GET, uri=uri)
+        response = await asyncio.wait_for(ctx.request(request).response, timeout=timeout)
+        code_str = str(response.code)
+        block2 = getattr(response.opt, "block2", None)
+        more = bool(block2 is not None and block2.more)
+        return code_str, response.payload, more
+    except asyncio.TimeoutError as e:
+        logger.debug(f"Failed to get request: {e}")
+        return "timeout", b"", False
+    except Exception as e:
+        logger.debug("coap_get_checked %s failed: %s", uri, e)
+        return f"error:{e}", b"", False
+
+
 _method_map_cache: Dict[str, Dict[str, Any]] = {}
 
 
@@ -284,10 +317,24 @@ async def coap_get_blockwise(
     szx = BLOCK_SIZES.get(block_size, 5)  # default SZX=5 (512 bytes)
     assembled = bytearray()
     block_num = 0
+    # Local loop counter, independent of the server-controlled block number.
+    # A hostile server that keeps replying block_number=0/more=True/empty
+    # payload would otherwise pin block_num at 1 forever (neither the block-count
+    # nor the payload-size guard trips), hanging the scan thread indefinitely.
+    iterations = 0
 
     logger.debug("Block2 GET %s (block_size=%d, szx=%d)", uri, block_size, szx)
 
     while True:
+        if iterations >= MAX_BLOCKWISE_BLOCKS:
+            logger.warning(
+                "Block2 GET aborted: exceeded %d iterations without completing",
+                MAX_BLOCKWISE_BLOCKS,
+            )
+            return "aborted:too-many-blocks", bytes(assembled)
+        iterations += 1
+        prev_block_num = block_num
+        prev_assembled_len = len(assembled)
         request = aiocoap.Message(code=aiocoap.GET, uri=uri)
         # Set Block2 option: NUM=block_num, M=0 (we're requesting), SZX=szx
         request.opt.block2 = aiocoap.optiontypes.BlockOption.BlockwiseTuple(block_num, False, szx)
@@ -333,6 +380,16 @@ async def coap_get_blockwise(
 
         block_num = block2.block_number + 1
         szx = block2.size_exponent  # Server may negotiate a different SZX
+
+        # Bail if the server advanced neither the block number nor the payload:
+        # a well-behaved server always moves at least one of them forward, so
+        # standing still means it is stalling us (self-DoS guard).
+        if block_num <= prev_block_num and len(assembled) == prev_assembled_len:
+            logger.warning(
+                "Block2 GET aborted: server made no progress at block %d (no new payload)",
+                prev_block_num,
+            )
+            return "aborted:no-progress", bytes(assembled)
 
     logger.debug("Block2 GET complete: %d bytes total", len(assembled))
     return code_str, bytes(assembled)
@@ -672,7 +729,7 @@ def parse_payload(
             result["type"] = "json"
             return result
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            logger.debug(f"resultvalue  json.loads(payload.decod...: {e}")
+            logger.debug(f"JSON decode of CoAP payload failed: {e}")
 
     # Try UTF-8
     try:

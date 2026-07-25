@@ -246,7 +246,8 @@ class TestAnalyzeSecurity(unittest.TestCase):
         finding_calls = [c for c in self.host.logger.security_finding.call_args_list]
         self.assertTrue(
             any(
-                call.args and call.args[0] == "Insecure configuration"
+                call.args
+                and call.args[0] == "Insecure configuration"
                 and call.kwargs.get("detail") == "protection_level=1"
                 for call in finding_calls
             ),

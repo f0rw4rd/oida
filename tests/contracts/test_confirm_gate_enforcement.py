@@ -9,7 +9,7 @@ snapshot — here we exercise actual call paths.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 
 class _StubScanner:
@@ -43,8 +43,10 @@ class TestCanIdScanGate(unittest.TestCase):
         # The handler reads from self.args; call _handle_id_scan as bound method.
         # Bind directly to the stub without invoking can.__init__.
         Can._handle_id_scan(stub)
-        self.assertTrue(_has_confirm_fail(stub),
-                        f"--id-scan must refuse without --confirm, fail calls: {stub.logger.fail.call_args_list}")
+        self.assertTrue(
+            _has_confirm_fail(stub),
+            f"--id-scan must refuse without --confirm, fail calls: {stub.logger.fail.call_args_list}",
+        )
 
 
 class TestModbusRawFCGate(unittest.TestCase):
@@ -53,8 +55,10 @@ class TestModbusRawFCGate(unittest.TestCase):
 
         stub = _StubScanner(confirm=False, raw_fc=43, payload=None)
         RawFCMixin._handle_raw_fc(stub)
-        self.assertTrue(_has_confirm_fail(stub),
-                        f"--raw-fc must refuse without --confirm, fail calls: {stub.logger.fail.call_args_list}")
+        self.assertTrue(
+            _has_confirm_fail(stub),
+            f"--raw-fc must refuse without --confirm, fail calls: {stub.logger.fail.call_args_list}",
+        )
 
 
 class TestModbusDiagClearGate(unittest.TestCase):
@@ -62,9 +66,7 @@ class TestModbusDiagClearGate(unittest.TestCase):
         """diag with clear in test_list must refuse without --confirm."""
         import pathlib
 
-        src = pathlib.Path(
-            "src/oida/protocols/modbus/scanner_mixins/diagnostics.py"
-        ).read_text()
+        src = pathlib.Path("src/oida/protocols/modbus/scanner_mixins/diagnostics.py").read_text()
         self.assertIn('"--diag clear runs subfunction 0x0A', src)
         self.assertIn('"--diag restart runs subfunction 0x01', src)
 

@@ -262,6 +262,7 @@ def __getattr__(name):
     _network_attrs = {
         "PingMonitor",
         "SocketHealthMonitor",
+        "SNMPHealthMonitor",
         "CustomSSLSocketMonitor",
         "ValidCaseMonitor",
     }
@@ -312,6 +313,7 @@ def __getattr__(name):
         from .network import (
             PingMonitor,
             SocketHealthMonitor,
+            SNMPHealthMonitor,
             CustomSSLSocketMonitor,
             ValidCaseMonitor,
         )
@@ -320,6 +322,7 @@ def __getattr__(name):
             {
                 "PingMonitor": PingMonitor,
                 "SocketHealthMonitor": SocketHealthMonitor,
+                "SNMPHealthMonitor": SNMPHealthMonitor,
                 "CustomSSLSocketMonitor": CustomSSLSocketMonitor,
                 "ValidCaseMonitor": ValidCaseMonitor,
             }
@@ -453,6 +456,7 @@ __all__ = [
     # Network monitors
     "PingMonitor",
     "SocketHealthMonitor",
+    "SNMPHealthMonitor",
     "CustomSSLSocketMonitor",
     "ValidCaseMonitor",
     # External-script monitor

@@ -190,7 +190,14 @@ class mms(NetworkConnection):
                 if isinstance(value, bool):
                     return bytes([1 if value else 0])
                 elif isinstance(value, int):
-                    return value.to_bytes(4, "little", signed=True)
+                    try:
+                        return value.to_bytes(4, "little", signed=True)
+                    except OverflowError:
+                        # Value doesn't fit in a signed 32-bit window (e.g. a
+                        # 64-bit counter). Widen instead of letting the
+                        # generic except-Exception below silently collapse
+                        # the fuzz baseline to zero.
+                        return value.to_bytes(8, "little", signed=True)
                 elif isinstance(value, float):
                     try:
                         return struct.pack("<f", value)
@@ -206,13 +213,23 @@ class mms(NetworkConnection):
                 return b"\x00\x00\x00\x00"
 
         def write_value(data):
-            """Write fuzzed bytes as integer value (under the discovered FC)."""
+            """Write fuzzed bytes as integer value (under the discovered FC).
+
+            Returns the canonical 4-byte little-endian encoding of the value
+            actually written (not `data`, which may be a different length --
+            fuzz() yields payloads such as b"", b"\\x00", or original-length
+            mutations that rarely land on exactly 4 bytes) so the caller can
+            compare read-back against what was truly written instead of the
+            raw mutated payload.
+            """
             try:
                 value = int.from_bytes(data[:4].ljust(4, b"\x00"), "little", signed=True)
-                return _write_under_fc(self.conn, reference, value, read_fc)
+                if _write_under_fc(self.conn, reference, value, read_fc):
+                    return value.to_bytes(4, "little", signed=True)
+                return None
             except Exception as e:
                 self.logger.debug(f"Failed to write fuzz payload: {e}")
-                return False
+                return None
 
         def restore_value(value):
             """Restore the pre-fuzz value using its original Python type.
@@ -234,13 +251,14 @@ class mms(NetworkConnection):
             original, count=iterations
         ):  # fuzz() yields (bytes, desc) tuples
             try:
-                if write_value(payload):
+                written_bytes = write_value(payload)
+                if written_bytes is not None:
                     successful += 1
                     readback = read_value()
-                    if readback != payload and readback != original:
+                    if readback != written_bytes and readback != original:
                         anomalies += 1
                         self.logger.warning(
-                            f"  Anomaly: wrote {payload.hex()}, read {readback.hex()}"
+                            f"  Anomaly: wrote {written_bytes.hex()}, read {readback.hex()}"
                         )
                 else:
                     failed += 1

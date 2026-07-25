@@ -120,6 +120,7 @@ class NTPPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "ntp"
     DISPLAY_FILTER = "ntp"
     REQUIRED_LAYERS = ("ntp",)
+    SERVER_PORTS = (123,)
     PROTOCOL_COLUMNS = ("version", "mode", "stratum", "ref_id", "delay")
 
     def __init__(
@@ -204,8 +205,32 @@ class NTPPassiveListener(PySharkListenerBase):
         leap = str(leap_raw) if leap_raw is not None else "?"
         leap_name = LEAP_INDICATOR.get(leap, LEAP_INDICATOR.get(leap_raw, "unknown"))
 
-        # Determine direction based on mode
-        is_response = mode in ("4", "5", "2")  # server, broadcast, symmetric-passive
+        # Determine direction based on mode. Modes 0-5 have distinct
+        # client/server semantics (2=symmetric-passive, 4=server,
+        # 5=broadcast => response). Modes 6 (control) and 7 (private) reuse
+        # the SAME mode value for both a query and its reply, so mode alone
+        # can't tell direction -- consult the protocol's own response bit
+        # (ntp.ctrl.flags2.r / ntp.priv.flags.r) instead, falling back to the
+        # port-based cascade (SERVER_PORTS 123) if that bit wasn't decoded.
+        if mode in ("6", "7"):
+            response_bit = self.get_field(
+                ntp, "ctrl_flags2_r" if mode == "6" else "priv_flags_r", None
+            )
+            if response_bit is not None:
+                is_response = str(response_bit).strip().lower() in ("1", "true")
+            else:
+                d = self.resolve_direction(
+                    packet,
+                    native=None,
+                    src_ip=src_ip,
+                    dst_ip=dst_ip,
+                    src_port=src_port,
+                    dst_port=dst_port,
+                    flow_id=flow_id,
+                )
+                is_response = not d.is_request
+        else:
+            is_response = mode in ("4", "5", "2")  # server, broadcast, symmetric-passive
         direction = "response" if is_response else "request"
 
         # Build operation string
@@ -363,11 +388,20 @@ class NTPPassiveListener(PySharkListenerBase):
             return refid
 
         if stratum_int <= 1:
-            # Try to decode as ASCII
-            clean = refid.strip().upper()
+            # refid is FT_BYTES, delivered as colon-hex (e.g. '47:50:53:00'
+            # for "GPS"). Decode to ASCII before the ASCII-keyed REFID_NAMES
+            # lookup; without this the table never matches and every stratum
+            # 0/1 server shows raw hex. Guard for values already given as ASCII.
+            clean = refid.strip()
+            if ":" in clean:
+                try:
+                    clean = bytes.fromhex(clean.replace(":", "")).decode("ascii", "ignore")
+                except ValueError:
+                    pass
+            clean = clean.strip().strip("\x00").strip().upper()
             if clean in REFID_NAMES:
                 return f"{clean} ({REFID_NAMES[clean]})"
-            return clean
+            return clean or refid
 
         # For stratum 2+, refid is usually the upstream server IP (hex)
         # tshark may already return it as dotted decimal

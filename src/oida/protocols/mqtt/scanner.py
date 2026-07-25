@@ -322,9 +322,7 @@ from ...utils.lazy_import import lazy_import
 
 paho_client = lazy_import("paho.mqtt.client", "MQTT", install_hint="pip install oida[mqtt]")
 paho_enums = lazy_import("paho.mqtt.enums", "MQTT", install_hint="pip install oida[mqtt]")
-paho_properties = lazy_import(
-    "paho.mqtt.properties", "MQTT", install_hint="pip install oida[mqtt]"
-)
+paho_properties = lazy_import("paho.mqtt.properties", "MQTT", install_hint="pip install oida[mqtt]")
 paho_packettypes = lazy_import(
     "paho.mqtt.packettypes", "MQTT", install_hint="pip install oida[mqtt]"
 )
@@ -548,7 +546,6 @@ class MQTTScanner(
         self.use_tls = parse_bool(args.get("tls", False))
 
         # Topic enumeration - only when -e/--enumerate is set
-        self.topics_pattern = args.get("topics", "#")
         self.enumerate = parse_bool(args.get("enumerate", False))
         self.enumerate_sys = self.enumerate  # $SYS enumeration requires -e
         self.enumerate_sparkplug = self.enumerate  # Sparkplug enumeration requires -e
@@ -609,9 +606,7 @@ class MQTTScanner(
 
     def check_dependencies(self) -> bool:
         if not paho_client.is_available:
-            self.logger.fail(
-                "paho-mqtt library required. Install with: pip install oida[mqtt]"
-            )
+            self.logger.fail("paho-mqtt library required. Install with: pip install oida[mqtt]")
             return False
         return True
 

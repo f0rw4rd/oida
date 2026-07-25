@@ -38,6 +38,16 @@ PREVIOUSLY_INVISIBLE = {
     "IPv6_Incorrect_Length",
 }
 
+# Black-box malformation techniques (AMNESIA:33 / RFC 6946 classes). These
+# build unconditionally, so they are advertised, individually gated, AND
+# connected under default flags.
+BLACKBOX_TECHNIQUES = {
+    "IPv6_HBH_ZeroLen_Option_Loop",
+    "IPv6_HBH_Option_Len_OverRead",
+    "IPv6_Atomic_Fragment",
+    "IPv6_ND_Option_ZeroLen",
+}
+
 
 def _make_config(**overrides):
     config = FuzzerConfig(
@@ -105,4 +115,30 @@ def test_each_previously_invisible_request_is_disableable(name):
     connected = _connected_names(_build(_make_config(disabled_requests=[name])))
     assert name not in connected
     # Sanity: other default-connected requests survive the disable.
+    assert "IPv6_Basic" in connected
+
+
+def test_blackbox_techniques_are_advertised():
+    """The four AMNESIA:33 / RFC 6946 techniques appear in --list-requests."""
+    assert BLACKBOX_TECHNIQUES <= _advertised()
+
+
+def test_blackbox_techniques_connected_by_default():
+    """All four black-box techniques are wired up under default flags."""
+    connected = _connected_names(_build(_make_config()))
+    assert BLACKBOX_TECHNIQUES <= connected
+
+
+@pytest.mark.parametrize("name", sorted(BLACKBOX_TECHNIQUES))
+def test_each_blackbox_technique_is_selectable(name):
+    """--enable <name> connects exactly that request, proving it is gated."""
+    connected = _connected_names(_build(_make_config(enabled_requests=[name])))
+    assert connected == {name}
+
+
+@pytest.mark.parametrize("name", sorted(BLACKBOX_TECHNIQUES))
+def test_each_blackbox_technique_is_disableable(name):
+    """--disable <name> removes it while leaving other default requests connected."""
+    connected = _connected_names(_build(_make_config(disabled_requests=[name])))
+    assert name not in connected
     assert "IPv6_Basic" in connected

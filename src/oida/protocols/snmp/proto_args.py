@@ -286,7 +286,8 @@ Examples:
         default=0,
         metavar="N",
         dest="enum_limit",
-        help="Cap entries per enumeration table (0 = no limit, default: 0)",
+        help="Cap entries per enumeration table (0 = built-in default caps: "
+        "2000 for large tables, 500 for credential/IPv6; default: 0)",
     )
 
     # SNMPv3 enumeration & brute-force

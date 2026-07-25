@@ -784,7 +784,8 @@ class SecurityMixin:
 
         self.logger.display("\n[Priority Write Test - All 16 Levels]")
         self.logger.warning("  WARNING: This tests write access at each priority level")
-        self.logger.display("  Using non-destructive write-back of current value")
+        self.logger.display("  Writes back the current value, then relinquishes (writes Null to)")
+        self.logger.display("  each priority slot that accepted the write")
 
         # Find a commandable object to test
         test_obj = None
@@ -855,7 +856,10 @@ class SecurityMixin:
         else:
             write_value = Real(current_value)
 
+        from bacpypes3.primitivedata import Null
+
         writable_priorities = []
+        unrelinquished = []
 
         for priority in range(1, 17):
             priority_name = BACNET_PRIORITY_LEVELS.get(priority, f"Priority {priority}")
@@ -885,6 +889,40 @@ class SecurityMixin:
                         self.logger.warning(
                             f"    [!] Priority {priority:2d} ({priority_name}): WRITABLE"
                         )
+                        # Relinquish immediately: writing Null clears this
+                        # priority slot so the probe doesn't leave the
+                        # (possibly Life Safety) priority occupied.
+                        try:
+                            relinquish_request = WritePropertyRequest(
+                                objectIdentifier=obj_id,
+                                propertyIdentifier=PropertyIdentifier("presentValue"),
+                                propertyValue=AnyAtomic(Null()),
+                                priority=Unsigned(priority),
+                            )
+                            relinquish_request.pduDestination = target_addr
+                            relinquish_response = await asyncio.wait_for(
+                                app.request(relinquish_request), timeout=min(timeout, 3.0)
+                            )
+                            if not self._is_success_response(relinquish_response, err_types):
+                                unrelinquished.append(priority)
+                                self.logger.warning(
+                                    f"    [!] Priority {priority:2d}: relinquish rejected — "
+                                    "priority slot left occupied"
+                                )
+                        except (asyncio.TimeoutError, TimeoutError) as e:
+                            unrelinquished.append(priority)
+                            self.logger.debug(f"relinquish priority {priority} timed out: {e}")
+                            self.logger.warning(
+                                f"    [!] Priority {priority:2d}: relinquish timed out — "
+                                "priority slot may be left occupied"
+                            )
+                        except BaseException as e:
+                            unrelinquished.append(priority)
+                            self.logger.debug(f"relinquish priority {priority} failed: {e}")
+                            self.logger.warning(
+                                f"    [!] Priority {priority:2d}: relinquish failed ({e}) — "
+                                "priority slot may be left occupied"
+                            )
                     else:
                         self.logger.display(
                             f"    [-] Priority {priority:2d} ({priority_name}): rejected"
@@ -918,6 +956,13 @@ class SecurityMixin:
                 self.logger.warning(
                     "  [!] HIGH: Operator priority (8) writable - can override automation"
                 )
+            if unrelinquished:
+                self.logger.warning(
+                    f"  [!] Could not relinquish {len(unrelinquished)} priority level(s): "
+                    f"{unrelinquished} — manually verify/clear on the device"
+                )
+            else:
+                self.logger.display("  All writable priorities were relinquished (Null write-back)")
         else:
             self.logger.display("  No priority levels accepted writes (device may reject all)")
 

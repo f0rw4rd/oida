@@ -20,6 +20,7 @@ from typing import Dict, Optional
 from .core import DiscoveredDevice
 from ...utils.ics_logger import get_module_logger
 from ...utils.lazy_import import lazy_import
+from ...utils.rate_limiter import rate_limit
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 
@@ -261,6 +262,7 @@ class NetBIOSEnrichScanner:
         for ip, device_key in ips_to_query.items():
             try:
                 pkt = IP(dst=ip) / UDP(sport=137, dport=137) / Raw(load=nbns_query)
+                rate_limit()  # per-host probe loop must honor the global rate limit
                 resp = sr1(pkt, timeout=self.timeout, verbose=0)
 
                 if resp and Raw in resp:
@@ -385,6 +387,7 @@ class MDNSEnrichScanner:
                 else:
                     pkt = IP(dst="224.0.0.251") / UDP(sport=5353, dport=5353) / dns_query
 
+                rate_limit()  # per-host probe loop must honor the global rate limit
                 resp = sr1(pkt, iface=self.interface, timeout=self.timeout, verbose=0)
 
                 if resp and DNS in resp and resp[DNS].ancount > 0:

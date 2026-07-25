@@ -796,11 +796,11 @@ class DiscoveryScanner(SerialScanner):
         has_raw, raw_error = check_raw_socket_capability()
         if not has_raw:
             if raw_error == "permission_error":
+                from ...utils.permissions import raw_socket_help_lines
+
                 self.logger.fail("Raw socket access required")
-                self.logger.display("Run with: sudo oida discovery ...")
-                self.logger.display(
-                    "Or set capability: sudo setcap cap_net_raw+eip $(readlink -f $(which python3))"
-                )
+                for _line in raw_socket_help_lines():
+                    self.logger.display(_line)
             else:
                 self.logger.fail(raw_error)
             return results
@@ -1455,7 +1455,14 @@ class DiscoveryScanner(SerialScanner):
         """Get number of hosts in subnet."""
         try:
             network = ipaddress.IPv4Network(subnet, strict=False)
-            return len(list(network.hosts()))
+            # Usable-host count without materializing hosts(): a wide subnet
+            # (e.g. /8) would otherwise allocate ~16.7M address objects here,
+            # stalling/OOMing before the >255-host confirmation gate can warn.
+            # num_addresses minus the network + broadcast addresses matches
+            # len(list(network.hosts())) exactly; /31 and /32 reserve neither.
+            if network.prefixlen >= 31:
+                return network.num_addresses
+            return network.num_addresses - 2
         except ValueError as e:
             self.logger.debug("get arp host count failed: %s", e)
             return 0
@@ -1866,7 +1873,12 @@ class DiscoveryScanner(SerialScanner):
                 if existing:
                     # UPDATE: Merge into existing, track what changed
                     changes = existing.merge_from(device)
+                    # A previously-seen device is no longer "new"; clearing this
+                    # lets _report_findings emit UPD instead of labelling every
+                    # device NEW (is_new defaults True and was never reset).
+                    existing.is_new = False
                     if changes:
+                        existing.updated_fields = list(changes)
                         logger.debug(f"[{source}] Updated {existing_key}: +{changes}")
 
                     # If we now have MAC and were IP-keyed, re-key

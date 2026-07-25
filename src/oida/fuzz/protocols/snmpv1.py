@@ -1,6 +1,6 @@
 """SNMP v1 Protocol Fuzzer"""
 
-from boofuzz import Block, Byte, DWord, Request, Size, Static
+from boofuzz import Block, Byte, DWord, Group, Request, Size, Static
 
 from typing import List
 
@@ -9,7 +9,7 @@ from ..core.config import FuzzerConfig, ProtocolType
 from ..monitors import SocketHealthMonitor
 from ..primitives.asn1_blocks import BERSize
 from ..primitives.dynamic import SmartBytes, SmartString
-from .snmp_common import encode_oid, ip_to_bytes
+from .snmp_common import ber_length_group_values, encode_oid, ip_to_bytes, oid_content
 
 
 class SNMPv1Fuzzer(BaseFuzzer):
@@ -89,6 +89,18 @@ class SNMPv1Fuzzer(BaseFuzzer):
             RequestInfo("SNMP_Community_FormatString", "Format string in community", "high_crash"),
             RequestInfo(
                 "SNMP_Boundary_Values", "Integer boundary values (0, max, negative)", "boundary"
+            ),
+            # BER length-of-length mutation (community / OID / varbind-value TLVs)
+            RequestInfo(
+                "SNMP_BER_LengthOfLength",
+                "Long-form / indefinite BER length octets on inner TLVs "
+                "(CVE-2019-9162 / CVE-2020-14934 class)",
+                "high_crash",
+            ),
+            RequestInfo(
+                "SNMP_BER_Truncated_Length",
+                "Inner BER lengths declared shorter than actual content (community / OID / value)",
+                "boundary",
             ),
         ]
 
@@ -1235,6 +1247,212 @@ class SNMPv1Fuzzer(BaseFuzzer):
             ),
         )
 
+        # BER length-of-length mutation: emit malformed long-form / indefinite
+        # length octets at the inner community, OID and varbind-value TLVs. The
+        # definite-form Size fields used elsewhere auto-compute these octets, so
+        # the length-of-length machinery is otherwise never fuzzed -- exactly the
+        # parse path behind CVE-2019-9162 (net-snmp), CVE-2020-14934 (Contiki-NG),
+        # CVE-2015-5621 (net-snmp) and CVE-2022-24805 (kernel BER decoder). The
+        # outer SEQUENCE / PDU / varbindings lengths stay valid (auto-computed),
+        # so the agent parses a well-formed frame before choking on the inner length.
+        ber_length_of_length = Request(
+            "SNMP_BER_LengthOfLength",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize("Message_Length", "SNMP_Content", fuzzable=False),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x00"),
+                                # Community OCTET STRING with malformed length-of-length
+                                Static("Community_Tag", b"\x04"),
+                                Group(
+                                    "Community_LoL",
+                                    values=ber_length_group_values(len(community)),
+                                ),
+                                SmartString("Community_String", community, fuzzable=True),
+                                Static("PDU_Tag", b"\xa0"),
+                                Size(
+                                    "PDU_Length",
+                                    "PDU_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "PDU_Content",
+                                    children=(
+                                        Static("RequestID_Tag", b"\x02"),
+                                        Byte("RequestID_Length", 0x04, fuzzable=False),
+                                        DWord(
+                                            "RequestID", request_id + 200, endian=">", fuzzable=True
+                                        ),
+                                        Static("ErrorStatus", b"\x02\x01\x00"),
+                                        Static("ErrorIndex", b"\x02\x01\x00"),
+                                        Static("VarBindings_Tag", b"\x30"),
+                                        Size(
+                                            "VarBindings_Length",
+                                            "VarBindings_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "VarBindings_Content",
+                                            children=(
+                                                Static("VarBind1_Tag", b"\x30"),
+                                                Size(
+                                                    "VarBind1_Length",
+                                                    "VarBind1_Content",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                Block(
+                                                    "VarBind1_Content",
+                                                    children=(
+                                                        # OID with malformed length-of-length
+                                                        Static("OID1_Tag", b"\x06"),
+                                                        Group(
+                                                            "OID1_LoL",
+                                                            values=ber_length_group_values(
+                                                                len(
+                                                                    oid_content(
+                                                                        f"{oid_prefix}.1.1.0"
+                                                                    )
+                                                                )
+                                                            ),
+                                                        ),
+                                                        SmartBytes(
+                                                            "OID1_Value",
+                                                            oid_content(f"{oid_prefix}.1.1.0"),
+                                                            fuzzable=True,
+                                                        ),
+                                                        # Varbind value OCTET STRING with
+                                                        # malformed length-of-length
+                                                        Static("Value_Tag", b"\x04"),
+                                                        Group(
+                                                            "Value_LoL",
+                                                            values=ber_length_group_values(
+                                                                len(b"oida-ber")
+                                                            ),
+                                                        ),
+                                                        SmartBytes(
+                                                            "Value_String",
+                                                            b"oida-ber",
+                                                            fuzzable=True,
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # BER truncated length: inner definite-form lengths declared shorter than
+        # the content that actually follows (declared < actual) at the community,
+        # OID and varbind-value TLVs. Parsers that trust the declared length under-
+        # read the field and then desynchronise on the trailing bytes.
+        ber_truncated_length = Request(
+            "SNMP_BER_Truncated_Length",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize("Message_Length", "SNMP_Content", fuzzable=False),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x00"),
+                                # Community declares 2 bytes but carries more
+                                Static("Community_Tag", b"\x04"),
+                                Static("Community_TruncLen", b"\x02"),
+                                SmartBytes("Community_String", b"public-overflow", fuzzable=True),
+                                Static("PDU_Tag", b"\xa0"),
+                                Size(
+                                    "PDU_Length",
+                                    "PDU_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "PDU_Content",
+                                    children=(
+                                        Static("RequestID_Tag", b"\x02"),
+                                        Byte("RequestID_Length", 0x04, fuzzable=False),
+                                        DWord(
+                                            "RequestID", request_id + 201, endian=">", fuzzable=True
+                                        ),
+                                        Static("ErrorStatus", b"\x02\x01\x00"),
+                                        Static("ErrorIndex", b"\x02\x01\x00"),
+                                        Static("VarBindings_Tag", b"\x30"),
+                                        Size(
+                                            "VarBindings_Length",
+                                            "VarBindings_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "VarBindings_Content",
+                                            children=(
+                                                Static("VarBind1_Tag", b"\x30"),
+                                                Size(
+                                                    "VarBind1_Length",
+                                                    "VarBind1_Content",
+                                                    endian=">",
+                                                    output_format="binary",
+                                                    length=1,
+                                                    fuzzable=False,
+                                                ),
+                                                Block(
+                                                    "VarBind1_Content",
+                                                    children=(
+                                                        # OID declares 2 bytes but carries full body
+                                                        Static("OID1_Tag", b"\x06"),
+                                                        Static("OID1_TruncLen", b"\x02"),
+                                                        SmartBytes(
+                                                            "OID1_Value",
+                                                            oid_content(f"{oid_prefix}.1.1.0"),
+                                                            fuzzable=True,
+                                                        ),
+                                                        # Value declares 1 byte but carries more
+                                                        Static("Value_Tag", b"\x04"),
+                                                        Static("Value_TruncLen", b"\x01"),
+                                                        SmartBytes(
+                                                            "Value_String",
+                                                            b"oida-truncated",
+                                                            fuzzable=True,
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         # Connect requests to session
         self.session.connect(get_request)
         self.session.connect(get_next_request)
@@ -1255,6 +1473,10 @@ class SNMPv1Fuzzer(BaseFuzzer):
 
         # Boundary value testing
         self.session.connect(boundary_values)
+
+        # BER length-of-length mutation
+        self.session.connect(ber_length_of_length)
+        self.session.connect(ber_truncated_length)
 
         self.session.connect(trap_request)
 

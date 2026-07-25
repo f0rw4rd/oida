@@ -118,12 +118,32 @@ class DNSFuzzer(BaseFuzzer):
                 "Name compression pointer loop (CVE-2020-25681)",
                 "overflow",
             ),
+            RequestInfo(
+                "DNS_RDLength_Underflow",
+                "SRV RDLENGTH shorter than actual RDATA (NAME:WRECK over-read)",
+                "malformed",
+            ),
+            RequestInfo(
+                "DNS_Pointer_Forward",
+                "Compression pointer pointing forward past its own offset",
+                "compression",
+            ),
+            RequestInfo(
+                "DNS_Pointer_Past_Packet",
+                "Compression pointer offset beyond end of packet",
+                "compression",
+            ),
+            RequestInfo(
+                "DNS_Name_Over_255",
+                "Domain name exceeding 255-byte total limit",
+                "overflow",
+            ),
         ]
 
     def _define_protocol(self) -> None:
         """Define DNS protocol structure for fuzzing.
 
-        Builds and wires 64 requests (matching get_request_definitions()). Every
+        Builds and wires 68 requests (matching get_request_definitions()). Every
         Request constructed here is connected to the session in the tiered
         ordering block at the end of this method, so the advertised surface and
         the actually-fuzzed surface stay in sync. Breakdown:
@@ -134,6 +154,8 @@ class DNSFuzzer(BaseFuzzer):
         - 10 EDNS0 tests (OPTIONS, 3x COOKIES, EXTENDED_ERRORS, NSID, PADDING,
           KEY_TAG, EXPIRE, CHAIN)
         - 9 buffer-overflow / parsing attack patterns
+        - 4 NAME:WRECK patterns (SRV RDLENGTH under-read, forward pointer,
+          past-packet pointer, name > 255 bytes)
         - 4 UPDATE operations (ADD, DELETE, WITH_PREREQ, MALFORMED)
         - 3 header-flag combinations (AD, CD, AD+CD)
         - 16 RCODE response-parsing tests (NOERROR..BADTIME, incl. TSIG codes)
@@ -2679,6 +2701,187 @@ class DNSFuzzer(BaseFuzzer):
             ),
         )
 
+        # NAME:WRECK class - RDLENGTH under-read on an SRV resource record.
+        # The SRV RDATA fixed part is 6 bytes (priority + weight + port) before
+        # the target name. Advertising an RDLENGTH < 6 (0, 1, 5) while a longer
+        # RDATA follows makes a naive parser read the SRV fixed fields past the
+        # claimed record boundary - the classic mDNS SRV over-read shape.
+        dns_rdlength_underflow = Request(
+            "DNS_RDLength_Underflow",
+            children=(
+                Block(
+                    "DNS_Header_RDUnder",
+                    children=(
+                        Word("transaction_id", 0x4E57, endian=">"),  # "NW"
+                        Word("flags", 0x8180, endian=">"),  # Response
+                        Word("questions", 0x0001, endian=">"),
+                        Word("answers", 0x0001, endian=">"),
+                        Word("authority", 0x0000, endian=">"),
+                        Word("additional", 0x0000, endian=">"),
+                    ),
+                ),
+                Block(
+                    "DNS_Question_RDUnder",
+                    children=(
+                        # _http._tcp.oida.local (SRV)
+                        Byte("label1_length", 5),
+                        SmartString("label1", "_http", max_len=63),
+                        Byte("label2_length", 4),
+                        SmartString("label2", "_tcp", max_len=63),
+                        Byte("label3_length", 4),  # auto: len("oida")
+                        SmartString("label3", "oida", max_len=63),
+                        Byte("label4_length", 5),  # auto: len("local")
+                        SmartString("label4", "local", max_len=63),
+                        Byte("name_terminator", 0),
+                        Word("qtype", 0x0021, endian=">"),  # SRV = 33
+                        Word("qclass", 0x0001, endian=">"),
+                    ),
+                ),
+                Block(
+                    "DNS_Answer_RDUnder",
+                    children=(
+                        Word("name_ptr", 0xC00C, endian=">"),  # -> question name
+                        Word("type", 0x0021, endian=">"),  # SRV
+                        Word("class", 0x0001, endian=">"),
+                        DWord("ttl", 0x00000078, endian=">"),
+                        # RDLENGTH understated vs. the SRV RDATA that follows
+                        # (< 6, the SRV fixed part). Parser over-reads the tail.
+                        Group(
+                            "rdlength_underflow",
+                            values=[
+                                b"\x00\x00",  # 0 bytes claimed
+                                b"\x00\x01",  # 1 byte claimed
+                                b"\x00\x05",  # 5 bytes claimed (< 6 fixed part)
+                            ],
+                        ),
+                        # Actual SRV RDATA: priority + weight + port + target
+                        Word("srv_priority", 0x000A, endian=">"),
+                        Word("srv_weight", 0x0005, endian=">"),
+                        Word("srv_port", 0x1F90, endian=">"),  # 8080
+                        Byte("target_len", 4),  # auto: len("oida")
+                        SmartString("srv_target", "oida", max_len=63),
+                        Byte("target_term", 0),
+                    ),
+                ),
+            ),
+        )
+
+        # NAME:WRECK class - forward compression pointer. RFC 1035 pointers must
+        # reference a PRIOR occurrence; a pointer whose offset is later than its
+        # own position defeats loop-termination assumptions in naive parsers.
+        # Pointer sits at offset 12 (end of header) and targets offsets > 12.
+        dns_pointer_forward = Request(
+            "DNS_Pointer_Forward",
+            children=(
+                Block(
+                    "DNS_Header_PtrFwd",
+                    children=(
+                        Word("transaction_id", 0xF00D, endian=">"),
+                        Word("flags", 0x0100, endian=">"),
+                        Word("questions", 0x0001, endian=">"),
+                        Word("answers", 0x0000, endian=">"),
+                        Word("authority", 0x0000, endian=">"),
+                        Word("additional", 0x0000, endian=">"),
+                    ),
+                ),
+                Block(
+                    "DNS_Question_PtrFwd",
+                    children=(
+                        # Pointer at offset 12 pointing FORWARD (offset > 12),
+                        # followed by qtype/qclass so the packet has a tail.
+                        Group(
+                            "forward_pointer",
+                            values=[
+                                b"\xc0\x14",  # -> offset 20 (later than self)
+                                b"\xc0\x28",  # -> offset 40 (past current data)
+                                b"\xc0\x0e",  # -> offset 14 (2 bytes ahead)
+                                b"\xc0\x13\xc0\x14",  # forward chain
+                            ],
+                        ),
+                        Word("qtype", 0x0001, endian=">"),
+                        Word("qclass", 0x0001, endian=">"),
+                    ),
+                ),
+            ),
+        )
+
+        # NAME:WRECK class - compression pointer whose offset lands BEYOND the
+        # end of the packet. A parser that dereferences it without a bounds
+        # check reads out-of-bounds memory (AMNESIA:33 / NAME:WRECK over-read).
+        dns_pointer_past_packet = Request(
+            "DNS_Pointer_Past_Packet",
+            children=(
+                Block(
+                    "DNS_Header_PtrPast",
+                    children=(
+                        Word("transaction_id", 0xBADD, endian=">"),
+                        Word("flags", 0x0100, endian=">"),
+                        Word("questions", 0x0001, endian=">"),
+                        Word("answers", 0x0000, endian=">"),
+                        Word("authority", 0x0000, endian=">"),
+                        Word("additional", 0x0000, endian=">"),
+                    ),
+                ),
+                Block(
+                    "DNS_Question_PtrPast",
+                    children=(
+                        # Pointer offset far past the short packet's length.
+                        Group(
+                            "past_packet_pointer",
+                            values=[
+                                b"\xc0\xff",  # -> offset 255, beyond packet
+                                b"\xc0\x80",  # -> offset 128, beyond packet
+                                b"\xff\xff",  # -> offset 16383, max pointer
+                            ],
+                        ),
+                        Word("qtype", 0x0001, endian=">"),
+                        Word("qclass", 0x0001, endian=">"),
+                    ),
+                ),
+            ),
+        )
+
+        # NAME:WRECK class - total name length overflow. Each label stays within
+        # the 63-byte per-label cap, but five 63-byte labels chain to 320 name
+        # bytes, exceeding the 255-byte total-name limit (RFC 1035 3.1). Targets
+        # parsers that accumulate labels into a fixed 256-byte buffer.
+        dns_name_over_255 = Request(
+            "DNS_Name_Over_255",
+            children=(
+                Block(
+                    "DNS_Header_NameOver",
+                    children=(
+                        Word("transaction_id", 0x0FF5, endian=">"),
+                        Word("flags", 0x0100, endian=">"),
+                        Word("questions", 0x0001, endian=">"),
+                        Word("answers", 0x0000, endian=">"),
+                        Word("authority", 0x0000, endian=">"),
+                        Word("additional", 0x0000, endian=">"),
+                    ),
+                ),
+                Block(
+                    "DNS_Question_NameOver",
+                    children=(
+                        # 5 x (len=63 + 63 bytes) = 320 name bytes > 255 total,
+                        # each label individually legal (<= 63).
+                        Byte("l1_len", 63, fuzzable=False),
+                        Bytes("l1", b"A" * 63, size=63, fuzzable=False),
+                        Byte("l2_len", 63, fuzzable=False),
+                        Bytes("l2", b"B" * 63, size=63, fuzzable=False),
+                        Byte("l3_len", 63, fuzzable=False),
+                        Bytes("l3", b"C" * 63, size=63, fuzzable=False),
+                        Byte("l4_len", 63, fuzzable=False),
+                        Bytes("l4", b"D" * 63, size=63, fuzzable=False),
+                        Byte("l5_len", 63, fuzzable=False),
+                        Bytes("l5", b"E" * 63, size=63, fuzzable=False),
+                        Byte("name_terminator", 0),
+                        Word("qtype", 0x0001, endian=">"),
+                        Word("qclass", 0x0001, endian=">"),
+                    ),
+                ),
+            ),
+        )
+
         # ==================== TIERED REQUEST ORDERING ====================
         # Every Request defined above is wired into the session here so the
         # advertised fuzz surface (get_request_definitions) matches what is
@@ -2737,6 +2940,14 @@ class DNSFuzzer(BaseFuzzer):
             self.session.connect(dns_invalid_flags)  # Invalid header flags
         if self.is_request_enabled("DNS_MALFORMED_EDNS0"):
             self.session.connect(dns_malformed_edns0)  # Malformed EDNS0 extensions
+        if self.is_request_enabled("DNS_RDLength_Underflow"):
+            self.session.connect(dns_rdlength_underflow)  # NAME:WRECK SRV RDLENGTH under-read
+        if self.is_request_enabled("DNS_Pointer_Forward"):
+            self.session.connect(dns_pointer_forward)  # Forward compression pointer
+        if self.is_request_enabled("DNS_Pointer_Past_Packet"):
+            self.session.connect(dns_pointer_past_packet)  # Pointer beyond packet end
+        if self.is_request_enabled("DNS_Name_Over_255"):
+            self.session.connect(dns_name_over_255)  # Total name length > 255
 
         # TIER 5: DNSSEC QUERIES - Cryptographic extensions
         if self.is_request_enabled("DNS_DNSKEY_QUERY"):

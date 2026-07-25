@@ -115,7 +115,6 @@ class TestExtraThreadLocal(unittest.TestCase):
         t.join(5)
         self.assertEqual(other["host"], "h")
 
-
     def test_format_snapshots_extra_once(self):
         """_format() reads the per-thread prefix dict a single time.
 

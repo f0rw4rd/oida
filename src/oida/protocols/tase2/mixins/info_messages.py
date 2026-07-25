@@ -235,55 +235,6 @@ class InfoMessagesMixin(_ScannerBase):
 
         return result
 
-    def get_im_transfer_attributes(
-        self, connection: Any, domain: str, store: str
-    ) -> Dict[str, Any]:
-        """
-        Get type/structure information for an IM store.
-
-        Per IEC 60870-6-503, IM Transfer Set attributes include:
-        - info_reference: Information Reference for bilateral table access control
-        - local_reference: Local Reference for client identification
-        - scope: VCC or ICC
-
-        Args:
-            connection: Active TASE.2 connection
-            domain: Domain name
-            store: IM store name
-
-        Returns:
-            Dict with type info, info_reference, local_reference, scope,
-            field definitions, max capacity
-        """
-        from ..scanner import TASE2IMScope, TASE2IMStorageStatus
-
-        scope = TASE2IMScope.VCC if domain.upper().startswith("VCC") else TASE2IMScope.ICC
-        attributes = {
-            "domain": domain,
-            "store": store,
-            "scope": scope,
-            "error": None,
-        }
-
-        try:
-            # Get info from the buffer list
-            buffers = connection.get_info_buffers(domain)
-            for buf in buffers:
-                if buf.name == store:
-                    attributes["max_messages"] = buf.max_size
-                    attributes["current_count"] = buf.entry_count
-                    if buf.max_size and buf.entry_count >= buf.max_size:
-                        attributes["storage_status"] = TASE2IMStorageStatus.FULL
-                    else:
-                        attributes["storage_status"] = TASE2IMStorageStatus.AVAILABLE
-                    break
-
-        except Exception as e:
-            attributes["error"] = str(e)
-            self.logger.debug(f"Error getting IM attributes for {domain}/{store}: {e}")
-
-        return attributes
-
     def write_information_message(
         self,
         connection: Any,
@@ -331,7 +282,12 @@ class InfoMessagesMixin(_ScannerBase):
 
         try:
             content_bytes = content.encode("utf-8") if isinstance(content, str) else content
-            msg_id_int = int(priority)
+            # Use a real, unique message id per write. Previously this sent
+            # int(priority) as msg_id, so every message got the same id (5),
+            # colliding on read/delete round-trips. Priority is not a parameter
+            # of the library's send_info_message(), so it is not passed here.
+            self._next_im_msg_id = getattr(self, "_next_im_msg_id", 0) + 1
+            msg_id_int = self._next_im_msg_id
             success = connection.send_info_message(
                 domain,
                 info_ref=info_ref_int,

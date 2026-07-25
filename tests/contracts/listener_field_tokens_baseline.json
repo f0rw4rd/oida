@@ -2,12 +2,6 @@
   "amqp.py": {
     "method_method_class": "broken"
   },
-  "c1222.py": {
-    "called_ap_invocation_id": "broken",
-    "called_ap_title": "broken",
-    "calling_ap_invocation_id": "broken",
-    "calling_ap_title": "broken"
-  },
   "cotp.py": {
     "tsap": "broken",
     "tsap_called": "broken",
@@ -63,21 +57,8 @@
     "resp_hresult": "broken"
   },
   "opensafety.py": {
-    "msg_crc_type": "broken",
-    "msg_crc_valid": "broken",
-    "msg_ct": "broken",
-    "msg_sadr": "broken",
     "msg_scm_udid": "broken",
-    "msg_sdn": "broken",
-    "msg_sn_udid": "broken",
-    "msg_snmt_service": "broken",
-    "msg_spdo_payload": "broken",
-    "msg_ssdo_sacmd": "broken",
-    "msg_ssdo_sod_index": "broken",
-    "msg_ssdo_sod_subindex": "broken"
-  },
-  "pim.py": {
-    "address_list_ip4": "broken"
+    "msg_spdo_payload": "broken"
   },
   "profinet.py": {
     "service_type_response": "synthetic",

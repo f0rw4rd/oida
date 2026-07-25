@@ -35,6 +35,7 @@ class SecurityMixin:
                 "api_base": self._get_base_url(),
             }
             anon_client = fhirclient.FHIRClient(settings=anon_settings)
+            self._apply_session_config(anon_client)
 
             search = patient.Patient.where(struct={"_count": "1"})
             results = search.perform_resources(anon_client.server)
@@ -71,6 +72,7 @@ class SecurityMixin:
                 "access_token": "invalid_token_12345",
             }
             bad_client = fhirclient.FHIRClient(settings=bad_settings)
+            self._apply_session_config(bad_client)
 
             search = patient.Patient.where(struct={"_count": "1"})
             results = search.perform_resources(bad_client.server)
@@ -154,6 +156,29 @@ class SecurityMixin:
         delay = getattr(self.args, "brute_rate", 0.5)
         continue_on_success = getattr(self.args, "continue_on_success", False)
         tls_insecure = getattr(self.args, "tls_insecure", False)
+
+        # Baseline: if the endpoint serves data WITHOUT authentication, every
+        # credential pair below would return 200 and be falsely reported as
+        # valid. Detect that first and skip the brute force — it's an
+        # anonymous-access finding, not a credentials finding.
+        try:
+            baseline = requests.get(test_url, timeout=10, verify=not tls_insecure)
+            if baseline.status_code == 200:
+                self.logger.warning(
+                    "  Endpoint returns 200 without authentication — skipping brute force "
+                    "(every credential would false-positive). This is anonymous access."
+                )
+                self.logger.security_finding(
+                    "Anonymous access",
+                    category=Category.AUTHENTICATION,
+                    detail="Endpoint serves data without authentication (brute force skipped)",
+                )
+                self.results["data"]["brute_force"] = {
+                    "skipped": "endpoint allows unauthenticated access"
+                }
+                return
+        except requests.RequestException as e:
+            self.logger.debug(f"  Baseline anonymous check failed, proceeding: {e}")
 
         valid_creds = []
         tested = 0

@@ -11,8 +11,10 @@ from unittest.mock import MagicMock
 
 def _stub_types():
     """Mirror the dict structure _is_success_response expects."""
+
     class _Marker:
         pass
+
     return {
         "ErrorPDU": type("ErrorPDU", (_Marker,), {}),
         "Error": type("Error", (_Marker,), {}),

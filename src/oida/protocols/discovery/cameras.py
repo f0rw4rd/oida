@@ -30,7 +30,17 @@ import time
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
-from xml.etree import ElementTree
+
+try:
+    # Hikvision SADP ProbeMatch XML comes straight off the wire from untrusted
+    # devices — parse it with defusedxml to block XXE / XML-bomb attacks (same
+    # policy as ssdp.py). defusedxml.ElementTree re-exports ParseError.
+    from defusedxml import ElementTree
+except ImportError as _cam_xml_err:  # pragma: no cover — release-checked dep
+    raise ImportError(
+        "Camera SADP parsing requires defusedxml to protect against XXE / XML-bomb "
+        "attacks on untrusted device responses. Install with: pip install oida[discovery]"
+    ) from _cam_xml_err
 
 from .core import (
     DiscoveredDevice,

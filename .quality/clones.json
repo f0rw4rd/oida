@@ -1,0 +1,129 @@
+{
+  "total_duplicated_lines": 410,
+  "clusters": [
+    {
+      "id": "cabba8c57935",
+      "members": 5,
+      "duplicated_lines": 116,
+      "names": [
+        "IBMMQPassiveListener._update_client_device",
+        "IPPPassiveListener._update_client_device",
+        "MSSQLPassiveListener._update_client_device",
+        "PJLPassiveListener._update_client_device"
+      ],
+      "sites": [
+        "src/oida/pcap/ibmmq.py:590-618",
+        "src/oida/pcap/ipp.py:430-458",
+        "src/oida/pcap/mssql.py:1534-1562",
+        "src/oida/pcap/pjl.py:373-401",
+        "src/oida/pcap/tns.py:523-551"
+      ]
+    },
+    {
+      "id": "e56cc50f05db",
+      "members": 7,
+      "duplicated_lines": 94,
+      "names": [
+        "HARTIPPassiveListener._ensure_session",
+        "IEC101PassiveListener._ensure_session",
+        "IEC103PassiveListener._ensure_session",
+        "IEC104PassiveListener._ensure_session"
+      ],
+      "sites": [
+        "src/oida/pcap/hartip.py:643-656",
+        "src/oida/pcap/iec101.py:214-229",
+        "src/oida/pcap/iec103.py:343-358",
+        "src/oida/pcap/iec104.py:493-508",
+        "src/oida/pcap/knx.py:624-639",
+        "src/oida/pcap/profinet.py:1048-1063",
+        "src/oida/pcap/synchrophasor.py:302-317"
+      ]
+    },
+    {
+      "id": "45f85c1eded8",
+      "members": 5,
+      "duplicated_lines": 56,
+      "names": [
+        "DICOMPassiveListener.get_write_operations",
+        "DeviceNetPassiveListener.get_write_operations",
+        "EtherNetIPPassiveListener.get_read_operations",
+        "EtherNetIPPassiveListener.get_write_operations"
+      ],
+      "sites": [
+        "src/oida/pcap/devicenet.py:478-491",
+        "src/oida/pcap/dicom.py:878-891",
+        "src/oida/pcap/enip.py:801-814",
+        "src/oida/pcap/enip.py:816-829",
+        "src/oida/pcap/mms.py:1354-1367"
+      ]
+    },
+    {
+      "id": "0f84861cb646",
+      "members": 4,
+      "duplicated_lines": 45,
+      "names": [
+        "IEC104PassiveListener._get_ek_layer_dicts",
+        "KNXPassiveListener._get_ek_layer_dicts",
+        "ModbusPassiveListener._get_ek_layer_dicts",
+        "MySQLPassiveListener._get_ek_layer_dicts"
+      ],
+      "sites": [
+        "src/oida/pcap/iec104.py:980-994",
+        "src/oida/pcap/knx.py:472-485",
+        "src/oida/pcap/modbus.py:228-243",
+        "src/oida/pcap/mysql.py:1082-1097"
+      ]
+    },
+    {
+      "id": "b0320b04657b",
+      "members": 4,
+      "duplicated_lines": 36,
+      "names": [
+        "MemcachedPassiveListener.harvest",
+        "MongoDBPassiveListener.harvest",
+        "RedisPassiveListener.harvest",
+        "X11PassiveListener.harvest"
+      ],
+      "sites": [
+        "src/oida/pcap/memcached.py:857-868",
+        "src/oida/pcap/mongodb.py:420-431",
+        "src/oida/pcap/redis.py:725-736",
+        "src/oida/pcap/x11.py:878-889"
+      ]
+    },
+    {
+      "id": "01134c6ca2e7",
+      "members": 4,
+      "duplicated_lines": 33,
+      "names": [
+        "IBMMQPassiveListener.get_write_operations",
+        "MemcachedPassiveListener.get_write_operations",
+        "MongoDBPassiveListener.get_write_operations",
+        "RedisPassiveListener.get_write_operations"
+      ],
+      "sites": [
+        "src/oida/pcap/ibmmq.py:624-640",
+        "src/oida/pcap/memcached.py:845-855",
+        "src/oida/pcap/mongodb.py:408-418",
+        "src/oida/pcap/redis.py:713-723"
+      ]
+    },
+    {
+      "id": "9cb4e89de2a9",
+      "members": 4,
+      "duplicated_lines": 30,
+      "names": [
+        "C1222PassiveListener.harvest",
+        "CIPSafetyPassiveListener.harvest",
+        "MQTTPassiveListener.harvest",
+        "OpenSAFETYPassiveListener.harvest"
+      ],
+      "sites": [
+        "src/oida/pcap/c1222.py:760-769",
+        "src/oida/pcap/cipsafety.py:855-864",
+        "src/oida/pcap/mqtt.py:686-695",
+        "src/oida/pcap/opensafety.py:674-683"
+      ]
+    }
+  ]
+}

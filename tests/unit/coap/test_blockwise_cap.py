@@ -6,7 +6,6 @@ the scanner's bytearray to OOM. CODE_REVIEW.md HIGH.
 
 import asyncio
 import unittest
-from unittest.mock import MagicMock, AsyncMock
 
 
 class _Block2:
@@ -21,9 +20,6 @@ class _Block2:
 class _FakeResponse:
     def __init__(self, payload, more=True, block_number=0, szx=5):
         self.payload = payload
-        from oida.protocols.coap.helpers import (
-            _get_aiocoap as _,
-        )  # noqa: F401  ensure import side-effects
 
         class _Code:
             def __str__(self):

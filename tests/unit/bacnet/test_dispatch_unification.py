@@ -36,7 +36,7 @@ class TestDispatchUnification(unittest.TestCase):
         src = _read("src/oida/protocols/bacnet/nxc_connection.py")
         # Old buggy patterns
         self.assertNotIn('local_prefixes = ("192.168.", "10.", "172.")', src)
-        self.assertNotIn('any(self.host.startswith(p) for p in local_prefixes)', src)
+        self.assertNotIn("any(self.host.startswith(p) for p in local_prefixes)", src)
 
     def test_use_bac0_flag_declared(self):
         src = _read("src/oida/protocols/bacnet/proto_args.py")

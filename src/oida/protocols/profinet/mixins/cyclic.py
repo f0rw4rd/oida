@@ -90,9 +90,11 @@ class CyclicMixin(_ScannerBase):
             self.logger.display("  Discovering module topology...")
             try:
                 acyclic_con = RPCCon(device._dcp_desc, timeout=self.timeout)
-                acyclic_con.connect(src_mac)
-                raw_slots = acyclic_con.discover_slots()
-                acyclic_con.close()
+                try:
+                    acyclic_con.connect(src_mac)
+                    raw_slots = acyclic_con.discover_slots()
+                finally:
+                    acyclic_con.close()
                 time.sleep(1)  # Let device release AR
                 device_slots = [
                     (
@@ -166,6 +168,7 @@ class CyclicMixin(_ScannerBase):
             data_hold_factor=6,
         )
 
+        con = None
         try:
             con = RPCCon(device._dcp_desc, timeout=10.0)
 
@@ -175,7 +178,7 @@ class CyclicMixin(_ScannerBase):
                 while True:
                     con._socket.recvfrom(4096)
             except (TimeoutError, OSError) as e:
-                self.logger.debug(f"while True:: {e}")
+                self.logger.debug(f"cyclic exchange loop error: {e}")
             con._socket.settimeout(con.timeout)
 
             result = con.connect(src_mac, with_alarm_cr=True, iocr_setup=setup)
@@ -186,6 +189,8 @@ class CyclicMixin(_ScannerBase):
                 return
         except Exception as e:
             self.logger.fail(f"  IOCR connect failed: {e}")
+            if con is not None:
+                con.close()
             return
 
         self.logger.success(

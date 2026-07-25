@@ -9,12 +9,15 @@ Test Ordering Strategy (5 Phases):
     Phase 4 (5m-10m): Boundary attacks - Segment fuzzing, field limits
     Phase 5 (10m+): Deep fuzzing - Full message type mutations, edge cases
 
-CVE Coverage (HL7 Parser Vulnerabilities):
-- CVE-2023-45232: HL7 parser buffer overflow via oversized PID fields
-- CVE-2022-38756: Delimiter injection in patient name fields
-- CVE-2021-43267: MLLP frame handling memory corruption
-- CVE-2020-35497: Encoding character manipulation crashes
-- CVE-2019-18935: Segment terminator injection for command execution
+CVE Coverage (real HL7-over-MLLP wire parser vulnerabilities):
+- CVE-2025-53948: Sante PACS Server - crafted HL7 message crashes the main
+  thread (double-free, CWE-415) -> DoS. Exercised by oversized-field /
+  segment / MLLP-corruption requests.
+- CVE-2020-27260: Innokas VC150 - HL7 v2.x delimiter/segment injection
+  (CWE-74). Exercised by the delimiter/encoding injection requests.
+(Earlier revisions of this file cited CVE-2023-45232 / CVE-2022-38756 /
+CVE-2021-43267 / CVE-2020-35497 / CVE-2019-18935; those IDs are EDK2 / Micro
+Focus / Linux-TIPC / ovirt / Telerik bugs, NOT HL7, and have been removed.)
 
 Healthcare Protocol Security Notes:
 - HL7 parsers are often legacy code with minimal input validation
@@ -257,23 +260,23 @@ class HL7Fuzzer(BaseFuzzer):
             # Phase 2: High-crash tests (30s-2m) - Most likely to find crashes
             RequestInfo(
                 "HL7_Oversized_Fields",
-                "Oversized field buffer overflow (CVE-2023-45232)",
+                "Oversized field buffer overflow / crafted-message DoS (CVE-2025-53948)",
                 "overflow",
             ),
             RequestInfo(
                 "HL7_MLLP_Corruption",
-                "MLLP frame corruption memory attacks (CVE-2021-43267)",
+                "MLLP frame corruption / crafted-message crash (CVE-2025-53948)",
                 "overflow",
             ),
             # Phase 3: CVE-targeted operations (2m-5m)
             RequestInfo(
                 "HL7_Delimiter_Injection",
-                "Delimiter injection attacks (CVE-2022-38756)",
+                "HL7 v2.x delimiter/segment injection (CVE-2020-27260)",
                 "injection",
             ),
             RequestInfo(
                 "HL7_Encoding_Chars",
-                "Encoding character manipulation (CVE-2020-35497)",
+                "Encoding character manipulation / injection (CVE-2020-27260)",
                 "injection",
             ),
             # Phase 4: Boundary attacks (5m-10m)
@@ -416,7 +419,7 @@ class HL7Fuzzer(BaseFuzzer):
         adt_messages = Request(
             "HL7_ADT_Messages",
             children=(
-                Bytes("MLLP_Start", MLLP_START, fuzzable=True),
+                Bytes("MLLP_Start", MLLP_START, fuzzable=False),
                 Block(
                     "HL7_Message",
                     children=(
@@ -540,7 +543,7 @@ class HL7Fuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Bytes("MLLP_End", MLLP_END, fuzzable=True),
+                Bytes("MLLP_End", MLLP_END, fuzzable=False),
             ),
         )
 
@@ -550,7 +553,7 @@ class HL7Fuzzer(BaseFuzzer):
         oru_messages = Request(
             "HL7_ORU_Messages",
             children=(
-                Bytes("MLLP_Start", MLLP_START, fuzzable=True),
+                Bytes("MLLP_Start", MLLP_START, fuzzable=False),
                 Block(
                     "HL7_Message",
                     children=(
@@ -662,7 +665,7 @@ class HL7Fuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Bytes("MLLP_End", MLLP_END, fuzzable=True),
+                Bytes("MLLP_End", MLLP_END, fuzzable=False),
             ),
         )
 
@@ -672,7 +675,7 @@ class HL7Fuzzer(BaseFuzzer):
         orm_messages = Request(
             "HL7_ORM_Messages",
             children=(
-                Bytes("MLLP_Start", MLLP_START, fuzzable=True),
+                Bytes("MLLP_Start", MLLP_START, fuzzable=False),
                 Block(
                     "HL7_Message",
                     children=(
@@ -735,7 +738,7 @@ class HL7Fuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Bytes("MLLP_End", MLLP_END, fuzzable=True),
+                Bytes("MLLP_End", MLLP_END, fuzzable=False),
             ),
         )
 
@@ -745,7 +748,7 @@ class HL7Fuzzer(BaseFuzzer):
         query_messages = Request(
             "HL7_Query",
             children=(
-                Bytes("MLLP_Start", MLLP_START, fuzzable=True),
+                Bytes("MLLP_Start", MLLP_START, fuzzable=False),
                 Block(
                     "HL7_Message",
                     children=(
@@ -783,7 +786,7 @@ class HL7Fuzzer(BaseFuzzer):
                         ),
                     ),
                 ),
-                Bytes("MLLP_End", MLLP_END, fuzzable=True),
+                Bytes("MLLP_End", MLLP_END, fuzzable=False),
             ),
         )
 
@@ -862,7 +865,7 @@ class HL7Fuzzer(BaseFuzzer):
         segment_fuzzing = Request(
             "HL7_Segment_Fuzzing",
             children=(
-                Bytes("MLLP_Start", MLLP_START, fuzzable=True),
+                Bytes("MLLP_Start", MLLP_START, fuzzable=False),
                 Block(
                     "HL7_Message",
                     children=(
@@ -901,7 +904,7 @@ class HL7Fuzzer(BaseFuzzer):
                         Static("PID", "PID|1||12345^^^MRN||DOE^JOHN||19800101|M\r"),
                     ),
                 ),
-                Bytes("MLLP_End", MLLP_END, fuzzable=True),
+                Bytes("MLLP_End", MLLP_END, fuzzable=False),
             ),
         )
 
@@ -1166,21 +1169,21 @@ class HL7Fuzzer(BaseFuzzer):
 
         # ==================== PHASE 2: HIGH-CRASH TESTS (30s-2m) ====================
         # Most likely to cause crashes - run early for quick vulnerability discovery
-        # CVE-2023-45232: Buffer overflow via oversized fields
+        # CVE-2025-53948: crafted HL7 message crashes server (oversized fields)
         if self.is_request_enabled("HL7_Oversized_Fields"):
             self.session.connect(oversized_fields)
 
-        # CVE-2021-43267: MLLP frame handling memory corruption
+        # CVE-2025-53948: crafted HL7 over MLLP -> main-thread crash (DoS)
         if self.is_request_enabled("HL7_MLLP_Corruption"):
             self.session.connect(mllp_corruption)
 
         # ==================== PHASE 3: CVE-TARGETED ATTACKS (2m-5m) ====================
         # Known vulnerability patterns in HL7 parsers
-        # CVE-2022-38756: Delimiter injection in fields
+        # CVE-2020-27260: HL7 v2.x delimiter/segment injection
         if self.is_request_enabled("HL7_Delimiter_Injection"):
             self.session.connect(delimiter_injection)
 
-        # CVE-2020-35497: Encoding character manipulation
+        # CVE-2020-27260: encoding-character manipulation / injection
         if self.is_request_enabled("HL7_Encoding_Chars"):
             self.session.connect(encoding_chars)
 

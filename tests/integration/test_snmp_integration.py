@@ -4025,47 +4025,11 @@ class TestSNMPSecurityFindings:
                 f"Expected PID or password mention in finding, got: {combined}"
             )
 
-    # ========================================================================
-    # Writable remote mount finding (L3600)
-    # ========================================================================
-
-    @pytest.mark.security
-    @pytest.mark.skip(
-        reason="No writable remote mount configured in Linux mock's hrFSTable — "
-        "net-snmp does not expose hrFSAccess as readWrite for container "
-        "filesystems by default"
-    )
-    def test_finding_writable_remote_mount(self, cli_runner, target, port):
-        """Test 'Insecure configuration' for writable remote mount [Category A]"""
-        pass
-
-    # ========================================================================
-    # Default Windows account finding (L3826)
-    # ========================================================================
-
-    @pytest.mark.security
-    @pytest.mark.skip(
-        reason="No Windows mock container deployed in compose.yml — "
-        "Windows profile (snmpd-windows.conf) exists but has no "
-        "service entry; Guest/Administrator finding untestable"
-    )
-    def test_finding_default_windows_account(self, cli_runner, target, port):
-        """Test 'Insecure configuration' for default Windows account [Category A]"""
-        pass
-
-    # ========================================================================
-    # Admin share finding (L3837)
-    # ========================================================================
-
-    @pytest.mark.security
-    @pytest.mark.skip(
-        reason="No Windows mock container deployed in compose.yml — "
-        "Windows profile has C$/ADMIN$/IPC$ shares but no service "
-        "entry; admin share finding untestable"
-    )
-    def test_finding_admin_share_exposed(self, cli_runner, target, port):
-        """Test 'Insecure configuration' for admin shares [Category A]"""
-        pass
+    # NOT COVERED (no test exists — do not add skipped placeholders):
+    #   - Writable remote mount finding (scanner L3600)
+    #   - Default Windows account finding (scanner L3826)
+    #   - Admin share exposed finding (scanner L3837)
+    #   The mock does not serve the hrFS/host-resource tables these read.
 
     # ========================================================================
     # Combined findings: multiple findings in a single scan

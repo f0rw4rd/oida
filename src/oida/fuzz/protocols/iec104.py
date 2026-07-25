@@ -1266,23 +1266,6 @@ class IEC104Fuzzer(StatefulFuzzer):
         """
         self._iec104_state_machine.store_response("INTERROGATION", response, parsed_data or {})
 
-    def get_sequence_info(self) -> dict:
-        """Get current sequence number information.
-
-        State Machine V2 Pattern:
-        Use this for debugging and logging sequence state.
-
-        Returns:
-            Dictionary with send_seq, recv_seq, and state info
-        """
-        return {
-            "send_seq": self._iec104_state_machine.get_send_sequence(),
-            "recv_seq": self._iec104_state_machine.get_recv_sequence(),
-            "state": self._iec104_state_machine.get_current_state_name(),
-            "context_keys": self._state_context.keys(),
-            "responses_stored": self._state_context.response_keys(),
-        }
-
     def reset_protocol_state(self) -> None:
         """Reset protocol state for a new connection.
 

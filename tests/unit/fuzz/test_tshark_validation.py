@@ -657,6 +657,8 @@ _INTENTIONAL_MALFORMED_KEYWORDS = (
 _INTENTIONAL_MALFORMED: set = {
     "dns/DNS_No_Null_Term",  # deliberately omits the QNAME root label
     "dns/DNS_EDNS0_OPTIONS",  # CVE-2020-8616 oversized-option overflow
+    "dns/DNS_Pointer_Forward",  # NAME:WRECK forward compression pointer
+    "dns/DNS_Pointer_Past_Packet",  # NAME:WRECK pointer beyond packet end
     "dhcp/DHCP_OPTION_CHAIN",  # option-chain parser overflow attack
     "dhcp/DHCP_Option_Refcount",  # CVE-2022-2928 option refcount overflow
 }

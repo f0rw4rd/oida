@@ -139,6 +139,12 @@ class IPsecPassiveListener(PySharkListenerBase):
         self.vendor_ids: Dict[str, List[str]] = {}  # ip -> list of vendor names
         # Track Aggressive Mode flows (PSK hash exposure) for harvest alerts
         self._aggressive_flows: List[tuple] = []  # (src_ip, dst_ip)
+        # Track the initiator IP per ISPI. The IKE initiator SPI is chosen
+        # once by the initiator and stays constant for the entire exchange
+        # (SA_INIT through IKE_AUTH/CREATE_CHILD_SA/INFORMATIONAL); rspi is
+        # only all-zero on message 1, so it can't be used to tell requests
+        # from responses beyond that single packet.
+        self._initiator_by_ispi: Dict[str, str] = {}
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format IPsec/IKE interaction as protocol-specific table columns."""
@@ -195,8 +201,22 @@ class IPsecPassiveListener(PySharkListenerBase):
         ispi = str(self.get_field(isakmp, "ispi", "") or "")
         rspi = str(self.get_field(isakmp, "rspi", "") or "")
 
-        # Determine direction: if rspi is all zeros, this is an initiator message
-        is_initiator = rspi in ("", "0000000000000000", "00:00:00:00:00:00:00:00")
+        # Determine direction. rspi is all-zero only on message 1 (SA_INIT
+        # request); every later message in the exchange carries a populated
+        # rspi, so that alone can't distinguish initiator requests from
+        # responder responses past msg 1. Key on ispi instead -- it is
+        # assigned once by the initiator and stays constant for the whole
+        # exchange, so the endpoint that sent the all-zero-rspi packet (or,
+        # failing that, whichever endpoint is seen first for this ispi when
+        # capture starts mid-exchange) is the initiator for every later
+        # message sharing that ispi.
+        rspi_is_zero = rspi in ("", "0000000000000000", "00:00:00:00:00:00:00:00")
+        if ispi:
+            if rspi_is_zero or ispi not in self._initiator_by_ispi:
+                self._initiator_by_ispi[ispi] = src_ip
+            is_initiator = src_ip == self._initiator_by_ispi[ispi]
+        else:
+            is_initiator = rspi_is_zero
         direction = "request" if is_initiator else "response"
 
         # Flags

@@ -20,24 +20,24 @@ ref/
 .env
 docker/mocks/.env
 
-# Fuzz session / test databases (root-level scratch)
-oida_fuzz_session.db
-fuzzer_session.db
-http_cli_test.db
-modbus_crash_test.db
-modbus_rtu_broadcast_test.db
-modbus_unit_id_test.db
-test_fuzz_session.db
+# Fuzz session / scan databases. This was previously 13 individually-named
+# files, each added after a new stray .db appeared — and it still missed
+# ftp_t.db. One rule instead of a growing list of special cases.
+# No .db file in this repo is source; the only checked-in data is JSON/CSV.
+*.db
 # SQLite WAL/SHM sidecars — never source
 *.db-wal
 *.db-shm
-# Root-level fuzz/scan scratch DB families
-/cve*.db
-/killtest*.db
-/rd_rd*.db
-/spd*.db
-/spd2*.db
 boofuzz-results/
+
+# Agent/session scratch. NOT a blanket `.claude/` ignore: agent and workflow
+# definitions under .claude/agents/ and .claude/workflows/ are versioned on
+# purpose (19 tracked files). Only the per-session transient state is ignored.
+.claude/projects/
+.claude/scheduled_tasks.lock
+.claude-work/
+tmp.*
+/results/
 # Scan output / findings — may contain credentials or capture data, keep local
 findings/
 # Working notes / task scratch — kept local

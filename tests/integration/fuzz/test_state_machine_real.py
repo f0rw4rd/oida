@@ -770,7 +770,9 @@ class TestFTPReal:
 
         result = run_fuzz_capture(fuzzer, timeout_seconds=90)
         if result.get("exception") and isinstance(result["exception"], ConnectionError):
-            pytest.skip(f"FTP mock connection failed (mock may be starting up): {result['exception']}")
+            pytest.skip(
+                f"FTP mock connection failed (mock may be starting up): {result['exception']}"
+            )
         log = sm.get_transition_log()
         assert len(log) > 0, "Transition log should have entries after fuzz_all()"
 

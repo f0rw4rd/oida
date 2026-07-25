@@ -78,7 +78,8 @@ class TestLockfileShape(unittest.TestCase):
         content = pathlib.Path("uv.lock").read_text()
         package_count = content.count("[[package]]")
         self.assertGreater(
-            package_count, 50,
+            package_count,
+            50,
             f"uv.lock has only {package_count} packages — full env is ~300; "
             "lockfile is likely incomplete",
         )

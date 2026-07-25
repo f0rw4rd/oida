@@ -2263,18 +2263,3 @@ class TestProtoArgs:
 
 class TestLiveEndpointRequired:
     """Tests that require a real ASTM endpoint and are skipped."""
-
-    @pytest.mark.skip(reason="Requires live ASTM endpoint for TLS handshake")
-    def test_tls_connection_live(self):
-        """Test TLS connection to real ASTM endpoint [Skip]"""
-        pass
-
-    @pytest.mark.skip(reason="Requires live ASTM endpoint for server response")
-    def test_identify_server_live(self):
-        """Test server identification from real analyzer [Skip]"""
-        pass
-
-    @pytest.mark.skip(reason="Requires live ASTM endpoint for bidirectional exchange")
-    def test_receive_server_response_live(self):
-        """Test receiving server query response from real analyzer [Skip]"""
-        pass

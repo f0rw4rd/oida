@@ -91,18 +91,46 @@ class FileCarvingMixin:
 
                     for footer in footers:
                         footer_pos = data.find(footer, header_pos + len(header))
-                        if footer_pos != -1:
-                            end_pos = footer_pos + len(footer)
-                            file_size = end_pos - header_pos
+                        if footer_pos == -1:
+                            continue
 
-                            if file_size > max_size or file_size < min_size:
-                                pos = header_pos + len(header)
-                                continue
+                        end_pos = footer_pos + len(footer)
+                        if file_type == "ZIP":
+                            # The EOCD signature (504B0506) is only the first
+                            # 4 of the record's >=22 fixed bytes; ending the
+                            # carve right after the signature drops the
+                            # disk/central-directory count/size/offset
+                            # fields and the trailing comment, producing a
+                            # truncated/invalid archive. The comment length
+                            # is a little-endian uint16 at the last 2 of
+                            # those 22 fixed bytes -- read it so the carve
+                            # includes any archive comment too.
+                            eocd_fixed_end = footer_pos + 22
+                            if eocd_fixed_end > len(data):
+                                if not force:
+                                    # Fixed EOCD record not fully buffered
+                                    # yet; retry once more stream data
+                                    # arrives instead of carving a
+                                    # truncated file now.
+                                    continue
+                                eocd_fixed_end = len(data)
+                                comment_len = 0
+                            else:
+                                comment_len = int.from_bytes(
+                                    data[footer_pos + 20 : eocd_fixed_end], "little"
+                                )
+                            end_pos = min(eocd_fixed_end + comment_len, len(data))
 
-                            file_data = data[header_pos:end_pos]
-                            self._record_file(stream, file_type, extension, file_data)
-                            stream.extracted_offsets.append((header_pos, end_pos))
-                            break
+                        file_size = end_pos - header_pos
+
+                        if file_size > max_size or file_size < min_size:
+                            pos = header_pos + len(header)
+                            continue
+
+                        file_data = data[header_pos:end_pos]
+                        self._record_file(stream, file_type, extension, file_data)
+                        stream.extracted_offsets.append((header_pos, end_pos))
+                        break
 
                     pos = header_pos + len(header)
 
@@ -247,25 +275,6 @@ class FileCarvingMixin:
 
     # ---- public helpers ----
 
-    def save_files(self, output_dir: str) -> int:
-        """Save all extracted files to a directory."""
-        os.makedirs(output_dir, exist_ok=True)
-        count = 0
-
-        for f in self.files:
-            try:
-                filename = f"{f.md5_hash}{f.extension}"
-                filepath = os.path.join(output_dir, filename)
-                with open(filepath, "wb") as file:
-                    file.write(f.data)
-                count += 1
-                self.logger.debug(f"Saved: {filepath}")
-            except Exception as e:
-                self.logger.debug(f"Failed to save {f.md5_hash}: {e}")
-
-        self.logger.info(f"Saved {count} files to {output_dir}")
-        return count
-
     def get_files_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all extracted files (without data)."""
         return [
@@ -281,10 +290,6 @@ class FileCarvingMixin:
             }
             for f in self.files
         ]
-
-    def get_files_by_type(self, file_type: str) -> List[ExtractedFile]:
-        """Get all files of a specific type."""
-        return [f for f in self.files if f.file_type.upper() == file_type.upper()]
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get file extraction statistics."""

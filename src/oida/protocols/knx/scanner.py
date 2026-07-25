@@ -262,9 +262,12 @@ class KNXScanner(
             if memory_dump_arg:
                 individual_addr = self.args.get("individual-address", "1.1.1")
                 start, length = self._parse_memory_range(memory_dump_arg)
-                results["memory_dump"] = await self._dump_memory(
-                    knx, individual_addr, start, length
-                )
+                if start is None:
+                    results["memory_dump"] = {"error": f"Invalid memory range '{memory_dump_arg}'"}
+                else:
+                    results["memory_dump"] = await self._dump_memory(
+                        knx, individual_addr, start, length
+                    )
 
             # Memory write
             memory_write_arg = self.args.get("memory-write")
@@ -280,9 +283,14 @@ class KNXScanner(
             if property_read_arg:
                 individual_addr = self.args.get("individual-address", "1.1.1")
                 obj_idx, prop_id = self._parse_property_arg(property_read_arg)
-                results["property_read"] = await self._read_property(
-                    knx, individual_addr, obj_idx, prop_id
-                )
+                if obj_idx is None:
+                    results["property_read"] = {
+                        "error": f"Invalid property argument '{property_read_arg}'"
+                    }
+                else:
+                    results["property_read"] = await self._read_property(
+                        knx, individual_addr, obj_idx, prop_id
+                    )
 
             # Property write (raw hex)
             property_write_arg = self.args.get("property-write")
@@ -400,18 +408,24 @@ class KNXScanner(
             if memory_ext_arg:
                 individual_addr = self.args.get("individual-address", "1.1.1")
                 start, length = self._parse_memory_range(memory_ext_arg)
-                results["memory_ext"] = await self._dump_extended_memory(
-                    knx, individual_addr, start, length
-                )
+                if start is None:
+                    results["memory_ext"] = {"error": f"Invalid memory range '{memory_ext_arg}'"}
+                else:
+                    results["memory_ext"] = await self._dump_extended_memory(
+                        knx, individual_addr, start, length
+                    )
 
             # User memory dump
             memory_user_arg = self.args.get("memory-user")
             if memory_user_arg:
                 individual_addr = self.args.get("individual-address", "1.1.1")
                 start, length = self._parse_memory_range(memory_user_arg)
-                results["memory_user"] = await self._dump_user_memory(
-                    knx, individual_addr, start, length
-                )
+                if start is None:
+                    results["memory_user"] = {"error": f"Invalid memory range '{memory_user_arg}'"}
+                else:
+                    results["memory_user"] = await self._dump_user_memory(
+                        knx, individual_addr, start, length
+                    )
 
             # BCU authentication testing (single key, file, or range)
             auth_test_arg = self.args.get("auth-test")
@@ -497,7 +511,7 @@ class KNXScanner(
                 await asyncio.wait_for(knx.stop(), timeout=5.0)
             except asyncio.TimeoutError as e:
                 self.logger.debug(
-                    f"await asyncio.wait_for(knx.stop(), ti...: {e}"
+                    f"KNX stop timed out: {e}"
                 )  # Connection cleanup timeout - safe to ignore
             except Exception as e:
                 self.logger.debug(f"Error during connection cleanup: {e}")

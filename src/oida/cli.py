@@ -99,13 +99,21 @@ def load_config_file(config_path: str) -> Dict[str, Any]:
                     raise ValueError(
                         "YAML support requires PyYAML. Install with: pip install pyyaml"
                     )
-                return yaml.safe_load(f) or {}
+                data = yaml.safe_load(f) or {}
             elif suffix == ".json":
-                return json.load(f)
+                data = json.load(f)
             else:
                 raise ValueError(
                     f"Unsupported config file format: {suffix} (use .yaml, .yml, or .json)"
                 )
+        # A syntactically valid but non-mapping top level (a YAML/JSON list or
+        # scalar) would later crash merge_config_with_args's config.items().
+        # Reject it here so it flows through the ValueError handler in main().
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"Config file must contain a mapping at the top level, got {type(data).__name__}"
+            )
+        return data
     except (json.JSONDecodeError, *yaml_error) as e:
         raise ValueError(f"Failed to parse config file: {e}")
 
@@ -241,9 +249,23 @@ def _sanitize_table_filename(title: str) -> str:
     return name.strip("_.-") or "table"
 
 
-def _export_tables(tables: List[Dict[str, Any]], output_dir: str, nxc_logger=None) -> None:
-    """Write each harvest table as CSV + JSON in *output_dir*."""
+def _export_tables(
+    tables: List[Dict[str, Any]],
+    output_dir: str,
+    formats: List[str],
+    nxc_logger=None,
+) -> None:
+    """Write each harvest table to *output_dir*, one file per requested format.
+
+    Only the formats the user selected (via ``--format``) are written, so
+    ``--format json`` produces ``<table>.json`` and no ``.csv`` sibling, and
+    vice versa.
+    """
     _log = nxc_logger or get_logger("EXPORT", "", 0)
+    want_csv = "csv" in formats
+    want_json = "json" in formats
+    if not (want_csv or want_json):
+        return
     os.makedirs(output_dir, exist_ok=True)
     seen: Dict[str, int] = {}
     exported = 0
@@ -261,20 +283,24 @@ def _export_tables(tables: List[Dict[str, Any]], output_dir: str, nxc_logger=Non
         else:
             seen[stem] = 0
 
-        # CSV
-        csv_path = os.path.join(output_dir, f"{stem}.csv")
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(headers)
-            writer.writerows(rows)
+        written = []
+        if want_csv:
+            csv_path = os.path.join(output_dir, f"{stem}.csv")
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(headers)
+                writer.writerows(rows)
+            written.append("csv")
 
-        # JSON (list of dicts) — use structured json_rows when available
-        json_path = os.path.join(output_dir, f"{stem}.json")
-        json_data = table.get("json_rows") or [dict(zip(headers, row)) for row in rows]
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(json_data, f, indent=2, default=str)
+        if want_json:
+            # JSON (list of dicts) — use structured json_rows when available
+            json_path = os.path.join(output_dir, f"{stem}.json")
+            json_data = table.get("json_rows") or [dict(zip(headers, row)) for row in rows]
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(json_data, f, indent=2, default=str)
+            written.append("json")
 
-        _log.debug("Table exported: %s.csv / .json", stem)
+        _log.debug("Table exported: %s (%s)", stem, "/".join(written))
         exported += 1
 
     if exported:
@@ -388,9 +414,39 @@ def export_results(
         elif fmt == "xml":
             _log.warning("XML export not yet implemented")
 
-    # Write each harvest table as a dedicated CSV file
+    # Write each harvest table as dedicated file(s), honouring --format
     if all_tables:
-        _export_tables(all_tables, output_dir, nxc_logger=nxc_logger)
+        _export_tables(all_tables, output_dir, formats, nxc_logger=nxc_logger)
+
+
+def _select_parser_mode(argv, known_names):
+    """Decide how much of the protocol CLI parser to build.
+
+    Building every protocol's subparser imports every protocol package
+    (scapy / pydicom / c104 / snap7 / ...), which made even ``oida --help`` slow
+    to boot -- badly so in the frozen standalone binary. Returns ``(mode, name)``:
+
+      ("one", <proto>) -> fully register only <proto>, stub the rest  (fast)
+      ("stub", None)   -> stub every protocol: help / version / fuzz / serial /
+                          no subcommand -- none of those need a scanner  (fast)
+      ("all", None)    -> fully register everything: safe fallback for anything
+                          ambiguous (e.g. a global option value before the
+                          subcommand)  (same cost as before -- no regression)
+
+    It only narrows when the invoked subcommand is unambiguously a known protocol
+    (resolving aliases like ``s7`` -> ``snap7``, ``discover`` -> ``discovery``),
+    so it can only make common invocations faster, never break or slow an odd one.
+    """
+    positional = [t for t in argv[1:] if not t.startswith("-")]
+    if not positional:
+        return ("stub", None)
+    first = positional[0]
+    canonical = PROTOCOL_ALIASES.get(first, first)
+    if canonical in known_names:
+        return ("one", canonical)
+    if first in ("fuzz", "serial", "help"):
+        return ("stub", None)
+    return ("all", None)
 
 
 def gen_cli_args():
@@ -618,23 +674,48 @@ def gen_cli_args():
     p_loader = ProtocolLoader(str(protocols_dir))
     protocols = p_loader.get_protocols()
 
-    # Track if any protocols were registered
+    # Only fully build the subparser for the subcommand actually being invoked;
+    # stub the rest. Fully registering a protocol imports its (heavy) package, so
+    # doing it for all 26+ protocols on every launch made the CLI -- and the
+    # frozen binary especially -- slow to boot. See _select_parser_mode.
+    _mode, _selected = _select_parser_mode(sys.argv, set(protocols.keys()))
+
     protocols_registered = 0
+
+    def _add_stub_subparser(name):
+        """A lightweight placeholder subparser (no protocol import), enough to
+        list the command in --help and dispatch when it is actually selected."""
+        stub = subparsers.add_parser(
+            name,
+            help=f"{name} protocol (run 'oida {name} -h' for options)",
+            parents=[std_parser],
+        )
+        stub.add_argument(
+            "target",
+            nargs="?",
+            default="127.0.0.1",
+            help="Target IP, hostname, CIDR, range, or file",
+        )
+        stub.add_argument(
+            "--port",
+            type=int,
+            help="Target port (protocol default if not specified)",
+        )
 
     # Register each protocol's arguments
     for protocol_name in sorted(protocols.keys()):
         protocol_info = protocols[protocol_name]
+        full = (_mode == "all") or (_mode == "one" and protocol_name == _selected)
 
-        # Check if protocol has proto_args.py
-        if protocol_info.get("argspath"):
+        registered = False
+        if full and protocol_info.get("argspath"):
             try:
-                # Load proto_args module using dedicated method
+                # Load proto_args module using dedicated method (imports the
+                # protocol package -- only for the selected subcommand).
                 proto_args_module = p_loader.load_proto_args(protocol_name)
-
-                # Call proto_args() function to register arguments
                 if proto_args_module and hasattr(proto_args_module, "proto_args"):
                     proto_args_module.proto_args(subparsers, [std_parser])
-                    protocols_registered += 1
+                    registered = True
                     logger.debug(f"Registered protocol: {protocol_name}")
                 elif proto_args_module:
                     logger.warning(
@@ -643,26 +724,12 @@ def gen_cli_args():
                     )
             except Exception as e:
                 logger.warning("Protocol '%s' not available: %s", protocol_name, e)
-        else:
-            # No proto_args.py - create basic subparser
-            logger.debug(f"Creating default subparser for {protocol_name}")
-            protocol_parser = subparsers.add_parser(
-                protocol_name,
-                help=f"{protocol_name.upper()} protocol scanner",
-                parents=[std_parser],
-            )
-            protocol_parser.add_argument(
-                "target",
-                nargs="?",
-                default="127.0.0.1",
-                help="Target IP, hostname, CIDR, range, or file",
-            )
-            protocol_parser.add_argument(
-                "--port",
-                type=int,
-                help="Target port (protocol default if not specified)",
-            )
-            protocols_registered += 1
+
+        if not registered:
+            logger.debug(f"Creating stub subparser for {protocol_name}")
+            _add_stub_subparser(protocol_name)
+
+        protocols_registered += 1
 
     logger.debug(f"Registered {protocols_registered} protocols")
 
@@ -928,8 +995,13 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
     failed = 0
     successful = 0
 
-    # Create progress logger for NXC-style output
-    default_port = getattr(protocol_class, "default_port", 0)
+    # Create progress logger for NXC-style output.
+    # protocol_class.default_port is almost never set at class scope (Layer-2
+    # protocols set self.default_port in __init__; Layer-1 uses
+    # get_default_port(), an instance method) — args.port already carries the
+    # protocol's real default via add_network_options(..., default_port=N),
+    # so prefer it and only fall back to the (usually absent) class attribute.
+    default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
     progress_logger = get_logger(protocol_name.upper(), "*", default_port)
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
@@ -1415,7 +1487,7 @@ def main(argv: Optional[List[str]] = None):
     # Export results if requested
     if args.output:
         fmt = args.format if args.format != "console" else "json"
-        default_port = getattr(protocol_class, "default_port", 0)
+        default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
         export_logger = get_logger(protocol_name.upper(), "", default_port)
         try:
             export_results(results, args.output, fmt, protocol_name, nxc_logger=export_logger)
@@ -1476,7 +1548,13 @@ def scan_target(protocol_class, args, target: str):
             }
 
     except Exception as e:
-        logger.debug(f"Error scanning {target}: {e}")
+        # Reached only for failures that escape the scanner's own error
+        # handling (e.g. constructor/get_results bugs) — normal scan
+        # failures are already caught and logged non-debug inside
+        # BaseScanner.run_scan() / NetworkConnection's proto_flow wrapper.
+        # Log visibly here too, so unexpected crashes aren't silently
+        # swallowed unless -v/--debug is passed.
+        logger.error(f"Error scanning {target}: {e}")
         return {
             "host": target,
             "protocol": getattr(args, "protocol", "unknown"),

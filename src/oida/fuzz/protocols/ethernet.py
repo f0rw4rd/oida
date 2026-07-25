@@ -143,6 +143,16 @@ class EthernetFuzzer(BaseFuzzer):
                 "injection",
             ),
             RequestInfo(
+                "Ethernet_ARP_HwLen_ProtoLen_Mutation",
+                "ARP hwlen/protolen != 6/4 (header-read-before-length-check)",
+                "injection",
+            ),
+            RequestInfo(
+                "Ethernet_ARP_Truncated_Fields",
+                "ARP frames cut mid sender-IP / target-MAC (short-read)",
+                "injection",
+            ),
+            RequestInfo(
                 "Ethernet_LLDP_Injection", "LLDP TLV overflow attacks (CVE-2021-27853)", "injection"
             ),
             RequestInfo(
@@ -435,6 +445,93 @@ class EthernetFuzzer(BaseFuzzer):
                 Static("target_mac", b"\x00" * 6),
                 DWord("target_ip", 0xC0A80002, endian=">"),
                 Static("padding", b"\x00" * 18),
+            ),
+        )
+
+        # ARP hardware/protocol length mutation
+        # ARP hwlen/protolen are normally hardcoded 6/4 and never mutated. A
+        # parser that reads sender/target addresses using these length bytes
+        # without validating them (ARP-header-read-before-length-check) can be
+        # driven to over-/under-read. Keep the rest of the frame valid so the
+        # parser reaches the mutated fields.
+        arp_len_mutation = Request(
+            "ARP_HwLen_ProtoLen_Mutation",
+            children=(
+                Static("dst_mac", self._mac_to_bytes("ff:ff:ff:ff:ff:ff")),
+                Static("src_mac", self._mac_to_bytes(self.src_mac)),
+                Static("ethertype", struct.pack(">H", self.ETHERTYPE_ARP)),
+                Word("hw_type", 0x0001, endian=">"),  # Ethernet
+                Word("proto_type", 0x0800, endian=">"),  # IPv4
+                # Hardware address length - anything but the expected 6
+                Group(
+                    "hw_len",
+                    values=[
+                        b"\x00",  # zero-length hardware address
+                        b"\x01",  # under-length
+                        b"\x07",  # over by one
+                        b"\x08",  # over by two
+                        b"\xff",  # maximum
+                    ],
+                ),
+                # Protocol address length - anything but the expected 4
+                Group(
+                    "proto_len",
+                    values=[
+                        b"\x00",  # zero-length protocol address
+                        b"\x01",  # under-length
+                        b"\x05",  # over by one
+                        b"\x06",  # over by two
+                        b"\xff",  # maximum
+                    ],
+                ),
+                Word("operation", 1, endian=">"),  # normal ARP request
+                Static("sender_mac", self._mac_to_bytes(self.src_mac)),
+                DWord("sender_ip", 0xC0A80001, endian=">"),
+                Static("target_mac", b"\x00" * 6),
+                DWord("target_ip", 0xC0A80002, endian=">"),
+                Static("padding", b"\x00" * 18),
+            ),
+        )
+
+        # ARP truncated address fields
+        # The sender/target hardware/protocol address fields are never
+        # truncated by the standard requests. These raw frames declare a valid
+        # ARP header (htype=1, ptype=0x0800, hwlen=6, protolen=4, opcode=1) but
+        # cut the frame short mid sender-IP / target-MAC, so a parser that
+        # trusts the length bytes reads past the end of the buffer.
+        _arp_eth = (
+            self._mac_to_bytes("ff:ff:ff:ff:ff:ff")
+            + self._mac_to_bytes(self.src_mac)
+            + struct.pack(">H", self.ETHERTYPE_ARP)
+        )
+        _arp_hdr = (
+            struct.pack(">H", 0x0001)  # htype = Ethernet
+            + struct.pack(">H", 0x0800)  # ptype = IPv4
+            + b"\x06"  # hwlen = 6
+            + b"\x04"  # protolen = 4
+            + struct.pack(">H", 0x0001)  # opcode = request
+        )
+        _arp_sha = self._mac_to_bytes(self.src_mac)  # sender hardware addr (6)
+        _arp_spa = struct.pack(">I", 0xC0A80001)  # sender protocol addr (4)
+        _arp_tha = b"\x00" * 6  # target hardware addr (6)
+        arp_truncated = Request(
+            "ARP_Truncated_Fields",
+            children=(
+                Group(
+                    "arp_truncation",
+                    values=[
+                        # Cut right after opcode - no address fields at all
+                        _arp_eth + _arp_hdr,
+                        # Sender MAC present, sender IP missing entirely
+                        _arp_eth + _arp_hdr + _arp_sha,
+                        # Cut mid sender-IP (2 of 4 bytes)
+                        _arp_eth + _arp_hdr + _arp_sha + _arp_spa[:2],
+                        # Full sender, cut before target MAC
+                        _arp_eth + _arp_hdr + _arp_sha + _arp_spa,
+                        # Cut mid target-MAC (3 of 6 bytes)
+                        _arp_eth + _arp_hdr + _arp_sha + _arp_spa + _arp_tha[:3],
+                    ],
+                ),
             ),
         )
 
@@ -791,6 +888,12 @@ class EthernetFuzzer(BaseFuzzer):
 
         if self.is_request_enabled("Ethernet_ARP_Injection"):
             self.session.connect(arp_spoofing)
+
+        if self.is_request_enabled("Ethernet_ARP_HwLen_ProtoLen_Mutation"):
+            self.session.connect(arp_len_mutation)
+
+        if self.is_request_enabled("Ethernet_ARP_Truncated_Fields"):
+            self.session.connect(arp_truncated)
 
         if self.is_request_enabled("Ethernet_LLDP_Injection"):
             self.session.connect(lldp_injection)

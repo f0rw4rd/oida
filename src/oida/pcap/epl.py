@@ -62,7 +62,7 @@ EPL_MSG_TYPES = {
     5: "SoA",  # Start of Async phase
     6: "ASnd",  # Async Send (async data transfer)
     7: "AMNI",  # Active Managing Node Indication
-    255: "AInv",  # Active Invitation (PRes chaining)
+    13: "AInv",  # Asynchronous Invite (per tshark epl.mtyp value 13, not 255)
 }
 
 # EPL NMT states (epl.pres.stat, epl.soa.stat, epl.asnd.ires.state)

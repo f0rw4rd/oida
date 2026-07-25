@@ -6,7 +6,6 @@ from typing import Any, Optional
 
 from ...connection import NetworkConnection
 from .scanner import MQTTScanner, dependencies_missing
-from oida.utils.common_types import Category
 
 
 class mqtt(NetworkConnection):
@@ -158,16 +157,9 @@ class mqtt(NetworkConnection):
         skip a redundant ``success()`` here.
         """
 
-        # Warning if no TLS
-        if not getattr(self.args, "tls", False):
-            self.logger.security_finding(
-                "No encryption",
-                category=Category.ENCRYPTION,
-                detail="Plaintext connection (no TLS)",
-            )
-
-        # The anonymous-access finding is reported once in the scanner's
-        # _analyze_security() to avoid duplicate findings for the same broker.
+        # The "No encryption" and anonymous-access findings are each reported
+        # once, from the scanner's _analyze_security(), to avoid duplicate
+        # findings for the same broker.
 
     def _execute_scan(self):
         """Execute MQTT scanning"""
@@ -373,8 +365,14 @@ class mqtt(NetworkConnection):
             self.logger.warning("No topics available for fuzzing")
             return
 
+        # fuzz_publish_payloads() caps at MAX_FUZZ_TOPICS topics; log the
+        # effective count so it matches what actually gets fuzzed.
+        from .mixins.messaging import MAX_FUZZ_TOPICS
+
+        effective_topics = min(len(topics), MAX_FUZZ_TOPICS)
         self.logger.display(
-            f"Starting publish fuzzing on {len(topics)} topic(s) with {iterations} payloads each..."
+            f"Starting publish fuzzing on {effective_topics} topic(s) "
+            f"(of {len(topics)} discovered) with {iterations} payloads each..."
         )
 
         # Call scanner's fuzz method

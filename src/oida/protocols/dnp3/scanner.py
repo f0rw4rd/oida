@@ -1223,19 +1223,19 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
                         current_master.Shutdown()
                         current_master = None
                 except Exception as e:
-                    self.logger.debug(f"if current_master:: {e}")
+                    self.logger.debug(f"master shutdown failed: {e}")
                 try:
                     if current_channel:
                         current_channel.Shutdown()
                         current_channel = None
                 except Exception as e:
-                    self.logger.debug(f"if current_channel:: {e}")
+                    self.logger.debug(f"channel shutdown failed: {e}")
                 try:
                     if current_manager:
                         current_manager.Shutdown()
                         current_manager = None
                 except Exception as e:
-                    self.logger.debug(f"if current_manager:: {e}")
+                    self.logger.debug(f"manager shutdown failed: {e}")
 
             except KeyboardInterrupt:
                 self.logger.warning("Scan interrupted by user")
@@ -1245,7 +1245,7 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
                         try:
                             obj.Shutdown()
                         except Exception as e:
-                            self.logger.debug(f"obj.Shutdown(): {e}")
+                            self.logger.debug(f"DNP3 stack shutdown failed: {e}")
                 break
             except Exception as e:
                 self.logger.debug(f"Address {addr}: exception {type(e).__name__}: {e}")
@@ -1254,7 +1254,7 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
                         try:
                             obj.Shutdown()
                         except Exception as e:
-                            self.logger.debug(f"obj.Shutdown(): {e}")
+                            self.logger.debug(f"DNP3 stack shutdown failed: {e}")
                 current_master = None
                 current_channel = None
                 current_manager = None

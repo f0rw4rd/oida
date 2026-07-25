@@ -931,7 +931,7 @@ class DNP3PassiveListener(PySharkListenerBase):
                 try:
                     return int(parts[1], 16)
                 except (ValueError, TypeError) as e:
-                    logger.debug(f"Return value computation failed: {e}")
+                    logger.debug(f"int conversion failed: {e}")
         return None
 
     def _crc_status_info(self, dnp3) -> Dict[str, Any]:
@@ -1065,7 +1065,7 @@ class DNP3PassiveListener(PySharkListenerBase):
                 try:
                     return int(raw)
                 except (ValueError, TypeError) as e:
-                    self.logger.debug(f"Return value computation failed: {e}")
+                    self.logger.debug(f"int conversion failed: {e}")
         return None
 
     @staticmethod

@@ -177,10 +177,12 @@ class OperationsMixin(_ScannerBase):
             ds.SeriesInstanceUID = series["series_uid"]
 
             try:
-                # Event handler was bound at association time
+                # Event handler was bound at association time. Retrieve is
+                # keyed by Study+Series UID, so use StudyRoot (accepted by
+                # StudyRoot-only PACS that reject PatientRoot).
                 responses = self.assoc.send_c_get(
                     ds,
-                    _sop("PatientRootQueryRetrieveInformationModelGet"),
+                    _sop("StudyRootQueryRetrieveInformationModelGet"),
                 )
 
                 for status, identifier in responses:
@@ -215,6 +217,11 @@ class OperationsMixin(_ScannerBase):
             self.logger.fail("No active association for C-GET")
             return
 
+        # Targeted --get writes to a flat output dir. Reset the subdir flag in
+        # case a prior --dump-all in the same run set it True (it is never
+        # reset otherwise), which would scatter files into patient/study dirs.
+        self._cget_use_subdirs = False
+
         study_uid = getattr(self.args, "study_uid", "")
         series_uid = getattr(self.args, "series_uid", "")
         output_dir = getattr(self.args, "output_dir", "./dicom_output")
@@ -243,10 +250,13 @@ class OperationsMixin(_ScannerBase):
             ds.StudyInstanceUID = study_uid
 
         try:
-            # Use PatientRoot C-GET (event handler was bound at association time)
+            # Use StudyRoot C-GET (event handler was bound at association time).
+            # This retrieve is keyed by Study/Series UID with no PatientID, and
+            # many StudyRoot-only PACS reject PatientRoot outright — mirrors the
+            # model selection cfind.py uses for STUDY/SERIES queries.
             responses = self.assoc.send_c_get(
                 ds,
-                _sop("PatientRootQueryRetrieveInformationModelGet"),
+                _sop("StudyRootQueryRetrieveInformationModelGet"),
             )
 
             # Drain the response generator (files are written by the bound
@@ -392,10 +402,12 @@ class OperationsMixin(_ScannerBase):
             ds.StudyInstanceUID = study_uid
 
         try:
+            # StudyRoot Move: query is Study/Series-keyed with no PatientID, and
+            # StudyRoot-only PACS reject PatientRoot (mirrors cfind.py).
             responses = self.assoc.send_c_move(
                 ds,
                 dest_aet,
-                _sop("PatientRootQueryRetrieveInformationModelMove"),
+                _sop("StudyRootQueryRetrieveInformationModelMove"),
             )
 
             completed = 0

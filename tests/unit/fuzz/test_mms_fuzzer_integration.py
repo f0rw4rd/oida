@@ -230,7 +230,9 @@ class TestMMSRequestDefinitions:
         from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
-        assert len(definitions) == 14
+        # 14 original + 4 (DeleteNamedVariableList, BitString_UnusedBits,
+        # OctetString_Length_Lie, Structured_Nesting).
+        assert len(definitions) == 18
 
         for defn in definitions:
             assert defn.requires_state is not None, f"Request '{defn.name}' missing requires_state"
@@ -279,6 +281,11 @@ class TestMMSRequestDefinitions:
             "MMS_File_Services",
             "MMS_Read_Operations",
             "MMS_Reports",
+            # New typed-data-value / named-variable-list crash+boundary requests.
+            "MMS_DeleteNamedVariableList",
+            "MMS_BitString_UnusedBits",
+            "MMS_OctetString_Length_Lie",
+            "MMS_Structured_Nesting",
         }
         assert assoc_names == expected
 

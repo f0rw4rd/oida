@@ -24,7 +24,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 
 # Windows FILETIME epoch constants
@@ -133,11 +133,6 @@ class OPCUACodec:
         return struct.pack("<?", value)
 
     @staticmethod
-    def encode_sbyte(value: int) -> bytes:
-        """Encode SByte (1 byte, signed)."""
-        return struct.pack("<b", value)
-
-    @staticmethod
     def encode_byte(value: int) -> bytes:
         """Encode Byte (1 byte, unsigned)."""
         return struct.pack("<B", value)
@@ -228,36 +223,6 @@ class OPCUACodec:
     # ========================================================================
 
     @staticmethod
-    def decode_boolean(data: bytes, offset: int = 0) -> Tuple[bool, int]:
-        """Decode Boolean. Returns (value, new_offset)."""
-        return struct.unpack_from("<?", data, offset)[0], offset + 1
-
-    @staticmethod
-    def decode_byte(data: bytes, offset: int = 0) -> Tuple[int, int]:
-        """Decode Byte. Returns (value, new_offset)."""
-        return struct.unpack_from("<B", data, offset)[0], offset + 1
-
-    @staticmethod
-    def decode_uint16(data: bytes, offset: int = 0) -> Tuple[int, int]:
-        """Decode UInt16. Returns (value, new_offset)."""
-        return struct.unpack_from("<H", data, offset)[0], offset + 2
-
-    @staticmethod
-    def decode_int32(data: bytes, offset: int = 0) -> Tuple[int, int]:
-        """Decode Int32. Returns (value, new_offset)."""
-        return struct.unpack_from("<i", data, offset)[0], offset + 4
-
-    @staticmethod
-    def decode_uint32(data: bytes, offset: int = 0) -> Tuple[int, int]:
-        """Decode UInt32. Returns (value, new_offset)."""
-        return struct.unpack_from("<I", data, offset)[0], offset + 4
-
-    @staticmethod
-    def decode_uint64(data: bytes, offset: int = 0) -> Tuple[int, int]:
-        """Decode UInt64. Returns (value, new_offset)."""
-        return struct.unpack_from("<Q", data, offset)[0], offset + 8
-
-    @staticmethod
     def decode_string(data: bytes, offset: int = 0) -> Tuple[Optional[str], int]:
         """Decode String. Returns (value, new_offset)."""
         length = struct.unpack_from("<i", data, offset)[0]
@@ -265,14 +230,6 @@ class OPCUACodec:
             return None, offset + 4
         string_data = data[offset + 4 : offset + 4 + length]
         return string_data.decode("utf-8"), offset + 4 + length
-
-    @staticmethod
-    def decode_byte_string(data: bytes, offset: int = 0) -> Tuple[Optional[bytes], int]:
-        """Decode ByteString. Returns (value, new_offset)."""
-        length = struct.unpack_from("<i", data, offset)[0]
-        if length == -1:
-            return None, offset + 4
-        return data[offset + 4 : offset + 4 + length], offset + 4 + length
 
     # ========================================================================
     # NODEID ENCODING
@@ -317,59 +274,9 @@ class OPCUACodec:
         else:
             raise ValueError(f"Unknown NodeIdType: {nid_type}")
 
-    @staticmethod
-    def encode_node_id_numeric(namespace: int, identifier: int) -> bytes:
-        """Encode numeric NodeId with automatic type selection."""
-        return OPCUACodec.encode_node_id(NodeId(identifier, namespace))
-
     # ========================================================================
     # NODEID DECODING
     # ========================================================================
-
-    @staticmethod
-    def decode_node_id(data: bytes, offset: int = 0) -> Tuple[NodeId, int]:
-        """Decode NodeId. Returns (NodeId, new_offset)."""
-        nid_type = data[offset]
-        offset += 1
-
-        if nid_type == NodeIdType.TWO_BYTE:
-            identifier = data[offset]
-            return NodeId(identifier, 0, NodeIdType.TWO_BYTE), offset + 1
-
-        elif nid_type == NodeIdType.FOUR_BYTE:
-            namespace = data[offset]
-            identifier = struct.unpack_from("<H", data, offset + 1)[0]
-            return NodeId(identifier, namespace, NodeIdType.FOUR_BYTE), offset + 3
-
-        elif nid_type == NodeIdType.NUMERIC:
-            namespace = struct.unpack_from("<H", data, offset)[0]
-            identifier = struct.unpack_from("<I", data, offset + 2)[0]
-            return NodeId(identifier, namespace, NodeIdType.NUMERIC), offset + 6
-
-        elif nid_type == NodeIdType.STRING:
-            namespace = struct.unpack_from("<H", data, offset)[0]
-            identifier, new_offset = OPCUACodec.decode_string(data, offset + 2)
-            return NodeId(identifier, namespace, NodeIdType.STRING), new_offset
-
-        elif nid_type == NodeIdType.GUID:
-            namespace = struct.unpack_from("<H", data, offset)[0]
-            # GUID is 16 bytes
-            guid_bytes = data[offset + 2 : offset + 18]
-            # Parse OPC UA GUID format
-            d1 = struct.unpack_from("<I", guid_bytes, 0)[0]
-            d2 = struct.unpack_from("<H", guid_bytes, 4)[0]
-            d3 = struct.unpack_from("<H", guid_bytes, 6)[0]
-            d4 = guid_bytes[8:16]
-            identifier = uuid.UUID(fields=(d1, d2, d3, d4[0], d4[1], int.from_bytes(d4[2:], "big")))
-            return NodeId(identifier, namespace, NodeIdType.GUID), offset + 18
-
-        elif nid_type == NodeIdType.BYTE_STRING:
-            namespace = struct.unpack_from("<H", data, offset)[0]
-            identifier, new_offset = OPCUACodec.decode_byte_string(data, offset + 2)
-            return NodeId(identifier, namespace, NodeIdType.BYTE_STRING), new_offset
-
-        else:
-            raise ValueError(f"Unknown NodeIdType: {nid_type}")
 
     # ========================================================================
     # MESSAGE BUILDING
@@ -478,35 +385,6 @@ class OPCUACodec:
     # ========================================================================
     # ARRAY ENCODING
     # ========================================================================
-
-    @staticmethod
-    def encode_array(items: Optional[List[bytes]]) -> bytes:
-        """Encode array of pre-encoded items.
-
-        Args:
-            items: List of already-encoded items, or None for null array
-
-        Returns:
-            Length-prefixed array bytes
-        """
-        if items is None:
-            return struct.pack("<i", -1)
-        return struct.pack("<i", len(items)) + b"".join(items)
-
-    @staticmethod
-    def encode_uint32_array(values: Optional[List[int]]) -> bytes:
-        """Encode array of UInt32 values."""
-        if values is None:
-            return struct.pack("<i", -1)
-        return struct.pack("<i", len(values)) + struct.pack(f"<{len(values)}I", *values)
-
-    @staticmethod
-    def encode_string_array(values: Optional[List[str]]) -> bytes:
-        """Encode array of String values."""
-        if values is None:
-            return struct.pack("<i", -1)
-        encoded = [OPCUACodec.encode_string(s) for s in values]
-        return struct.pack("<i", len(encoded)) + b"".join(encoded)
 
 
 # Convenience aliases

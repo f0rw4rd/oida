@@ -127,7 +127,7 @@ def is_ipv6_range(target_spec: str) -> bool:
         ipaddress.IPv6Address(match.group(2))
         return True
     except (ValueError, ipaddress.AddressValueError) as e:
-        logger.debug(f"ipaddress.IPv6Address(match.group(1)): {e}")
+        logger.debug(f"Invalid IPv6 address: {e}")
         return False
 
 
@@ -355,7 +355,7 @@ def is_ip_range(target_spec: str) -> bool:
         ipaddress.IPv4Address(first_part)
         return True
     except Exception as e:
-        logger.debug(f"ipaddress.IPv4Address(first_part): {e}")
+        logger.debug(f"Invalid IPv4 address: {e}")
         return False
 
 
@@ -420,7 +420,7 @@ def expand_targets_lazy(target_spec: str) -> Iterator[str]:
         yield target_spec.strip("[]")
 
 
-def count_targets(target_spec: str) -> int:
+def count_targets(target_spec: str, _visited_files: set = None) -> int:
     """
     Count total number of targets without expanding them all
 
@@ -429,13 +429,14 @@ def count_targets(target_spec: str) -> int:
 
     Args:
         target_spec: Target specification string
+        _visited_files: Internal set to track visited files and prevent circular inclusion
 
     Returns:
         int: Number of targets
     """
     # Handle comma-separated (be careful with IPv6)
     if "," in target_spec and not is_ipv6_range(target_spec):
-        return sum(count_targets(t.strip()) for t in target_spec.split(","))
+        return sum(count_targets(t.strip(), _visited_files) for t in target_spec.split(","))
 
     # Protocol URLs are single targets
     if "://" in target_spec:
@@ -443,13 +444,22 @@ def count_targets(target_spec: str) -> int:
 
     # File
     if os.path.isfile(target_spec):
+        if _visited_files is None:
+            _visited_files = set()
+
+        real_path = os.path.realpath(target_spec)
+        if real_path in _visited_files:
+            logger.warning(f"Circular file inclusion detected, skipping: {target_spec}")
+            return 0
+        _visited_files.add(real_path)
+
         # Count without full expansion
         count = 0
         with open(target_spec, "r") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#"):
-                    count += count_targets(line)
+                    count += count_targets(line, _visited_files)
         return count
 
     # CIDR (IPv4 or IPv6)

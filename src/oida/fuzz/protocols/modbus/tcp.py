@@ -371,8 +371,8 @@ class ModbusFuzzer(BaseFuzzer):
         return Block(
             "MBAP_Header",
             children=(
-                Word("Transaction_ID", transaction_id, endian=">"),
-                Word("Protocol_ID", 0x0000, endian=">"),
+                Word("Transaction_ID", transaction_id, endian=">", fuzzable=False),
+                Word("Protocol_ID", 0x0000, endian=">", fuzzable=False),
                 Size(
                     "Length",
                     block_name="PDU",
@@ -380,8 +380,9 @@ class ModbusFuzzer(BaseFuzzer):
                     endian=">",
                     inclusive=False,
                     math=lambda x: x + 1,
+                    fuzzable=False,
                 ),
-                Byte("Unit_ID", 0x00),  # Broadcast address
+                Byte("Unit_ID", 0x00, fuzzable=False),  # Broadcast address
             ),
         )
 

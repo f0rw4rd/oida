@@ -83,30 +83,37 @@ class ClassExplorerMixin(_ScannerBase):
         # --confirm are set. Without --confirm we must not write-test, so the
         # write-back fallback is unavailable and we degrade to "R?"/unknown.
         write_test_ok = self.test_write and getattr(self, "confirm", False)
-        can_detect_perms = use_param_obj or write_test_ok
+        # NOTE: Parameter Object (0x0F) descriptor-based permission detection
+        # (get_permission_from_descriptor) is not wired into _determine_permission:
+        # there is no link-path mapping from an arbitrary (class, instance,
+        # attribute) being explored back to the Parameter Object instance that
+        # describes it. So the Parameter Object's mere presence must not be
+        # treated as a usable detection method - only the write-test can
+        # actually set can_detect_perms.
+        can_detect_perms = write_test_ok
 
         # Inform user about permission detection method
         if use_param_obj:
             self.logger.display(
                 f"Parameter Object (0x0F) available: {param_obj_info['num_instances']} parameters"
             )
-            if param_obj_info["full_support"]:
-                self.logger.display("  Using Parameter Object descriptors for permission detection")
+            if write_test_ok:
+                self.logger.display(
+                    "  Using write-test method (Set_Attribute_Single + error code interpretation)"
+                )
+                self.logger.display(
+                    "  Legend: R=read-only, RW=read/write, R?=needs auth, R*=state-dependent"
+                )
+            elif self.test_write:
+                self.logger.warning(
+                    "  --write write-back permission test requires --confirm (live writes)"
+                )
+                self.logger.display("  Perm column will show '???' (unknown)")
             else:
-                self.logger.display("  Parameter Object has stub support only")
-                if write_test_ok:
-                    self.logger.display("  Using write-test fallback for permission detection")
-                elif self.test_write:
-                    self.logger.warning(
-                        "  --write write-back permission test requires --confirm (live writes)"
-                    )
-                    can_detect_perms = False
-                else:
-                    self.logger.warning(
-                        "  Cannot detect permissions - use --write to test with write-back method"
-                    )
-                    can_detect_perms = False
-                use_param_obj = False  # Fall back to write testing if available
+                self.logger.warning(
+                    "  Cannot detect permissions - use --write to test with write-back method"
+                )
+                self.logger.display("  Perm column will show '???' (unknown)")
         elif write_test_ok:
             self.logger.display("Parameter Object (0x0F) not available")
             self.logger.display(

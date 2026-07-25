@@ -525,7 +525,7 @@ class ModbusScanner(
         if self.register_type in ["coil", "all"]:
             registers["coils"] = self._scan_register_type(client, "coils", address_range)
 
-        if self.register_type in ["discrete-input", "all"]:
+        if self.register_type in ["discrete", "all"]:
             registers["discrete_inputs"] = self._scan_register_type(
                 client, "discrete_inputs", address_range
             )
@@ -594,9 +594,14 @@ class ModbusScanner(
                 "timestamp": datetime.now().isoformat(),
             }
             if not self.read_only and register_type in ("coils", "holding_registers"):
-                results[addr]["writable"] = self._test_write_access(
+                # Use the safe same-value write test (write-back, no data
+                # change) here, not the destructive 42/43-flip test: an
+                # ordinary read scan with read-only=False should not mutate
+                # live registers without the explicit --confirm gate that
+                # _handle_test_write() requires for its destructive mode.
+                results[addr]["writable"] = self._test_write_access_safe(
                     client, register_type, addr, value
-                )
+                ).get("writable", False)
 
         errors = len(address_range) - len(results)
         if errors > 0:

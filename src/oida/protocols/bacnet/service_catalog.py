@@ -77,7 +77,10 @@ SERVICES: List[ServiceSpec] = [
         True,
         "_call_atomic_read_file",
         ("readfile",),
-        "fileInst[:start[:count]]",
+        # The handler reads the whole file (chunked via --file-access-method /
+        # --file-chunk-size); it doesn't take an explicit start/count, so
+        # don't advertise scoping we don't apply.
+        "fileInst",
     ),
     ServiceSpec(
         7,
@@ -276,7 +279,3 @@ def by_name(name: str) -> Optional[ServiceSpec]:
         if s.name == name:
             return s
     return None
-
-
-def callable_services() -> List[ServiceSpec]:
-    return [s for s in SERVICES if s.callable]

@@ -23,6 +23,14 @@ logger = logging.getLogger(__name__)
 # unsafe stdlib xml.etree parser.
 _defusedxml = lazy_import("defusedxml", "PROFINET")
 
+# Ceiling on the *uncompressed* size of the XML member extracted from a GSDML
+# ZIP. GSDML files are attacker-controlled (a device can hand out an
+# arbitrary .zip during discovery); zipfile happily reports/streams a member
+# whose decompressed size is many orders of magnitude larger than the
+# archive itself (a decompression bomb), which would otherwise be streamed
+# straight into ET.parse() uncapped.
+_MAX_GSDML_XML_SIZE = 100 * 1024 * 1024  # 100MB
+
 
 @dataclass
 class RecordData:
@@ -164,6 +172,17 @@ def parse_gsdml(source) -> Optional[GSDMLDevice]:
                         return None  # No XML file found in ZIP
                     # Use first XML (or largest if multiple)
                     xml_file = max(xml_files, key=lambda n: zf.getinfo(n).file_size)
+                    xml_size = zf.getinfo(xml_file).file_size
+                    if xml_size > _MAX_GSDML_XML_SIZE:
+                        logger.warning(
+                            "GSDML member %s declares %d bytes uncompressed "
+                            "(> %d byte limit) -- refusing to parse (possible "
+                            "decompression bomb)",
+                            xml_file,
+                            xml_size,
+                            _MAX_GSDML_XML_SIZE,
+                        )
+                        return None
                     with zf.open(xml_file) as f:
                         tree = ET.parse(f)
             else:

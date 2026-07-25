@@ -172,7 +172,7 @@ def _first_int(raw) -> int:
         try:
             return int(s, 16)
         except (ValueError, TypeError) as e:
-            logger.debug(f"Return value computation failed: {e}")
+            logger.debug(f"int conversion failed: {e}")
             return 0
 
 
@@ -318,22 +318,24 @@ class S7commPassiveListener(PySharkListenerBase):
 
         func_name = S7_FUNCTIONS.get(func_code, f"Func 0x{func_code:02x}")
 
-        # Handle Read/Write Var (requests AND AckData responses)
-        if func_code in (0x04, 0x05):
-            if is_request or rosctr == 0x03:
-                self._process_read_write(
-                    s7comm,
-                    src_ip,
-                    dst_ip,
-                    func_code,
-                    func_name,
-                    now,
-                    flow_id,
-                    is_request=is_request,
-                    src_port=src_port,
-                    dst_port=dst_port,
-                    stream_id=stream_id,
-                )
+        # Handle Read/Write Var (requests AND AckData responses). A bare Ack
+        # (ROSCTR=2, no data -- typically an error response with no data
+        # items) falls through to the catch-all below instead of being
+        # silently dropped here.
+        if func_code in (0x04, 0x05) and (is_request or rosctr == 0x03):
+            self._process_read_write(
+                s7comm,
+                src_ip,
+                dst_ip,
+                func_code,
+                func_name,
+                now,
+                flow_id,
+                is_request=is_request,
+                src_port=src_port,
+                dst_port=dst_port,
+                stream_id=stream_id,
+            )
 
         # Handle Userdata (SZL, diagnostics, security)
         elif rosctr == 0x07:

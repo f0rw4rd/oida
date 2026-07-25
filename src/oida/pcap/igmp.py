@@ -124,8 +124,10 @@ class IGMPPassiveListener(PySharkListenerBase):
     def harvest(self) -> Dict[str, Any]:
         """Harvest IGMP data, adding alerts for bad checksums."""
         result = super().harvest()
-        if not result:
-            return result
+        # Do NOT early-return on an empty result: super().harvest() returns {}
+        # whenever there are no write/control ops, which is always the case for
+        # IGMP — that would silently drop every bad-checksum alert below.
+        result = result or {}
         # Add bad checksum alerts
         for bc in self._bad_checksums:
             result.setdefault("alerts", []).append(

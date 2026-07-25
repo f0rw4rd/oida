@@ -190,8 +190,10 @@ class ARPScanner:
         # Log target subnet (debug level only)
         try:
             network = ipaddress.IPv4Network(target_subnet, strict=False)
-            target_ips = list(network.hosts())
-            logger.debug(f"ARP scanning {target_subnet} ({len(target_ips)} hosts)")
+            # Usable-host count without materializing every host just for a
+            # debug count (the scan below uses target_subnet directly via pdst).
+            usable = network.num_addresses if network.prefixlen >= 31 else network.num_addresses - 2
+            logger.debug(f"ARP scanning {target_subnet} ({usable} hosts)")
         except ValueError:
             logger.debug(f"ARP scanning {target_subnet}")
 

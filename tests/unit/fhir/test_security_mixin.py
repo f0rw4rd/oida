@@ -22,6 +22,9 @@ class MockSecurityHost(SecurityMixin):
         self.results = {"data": {}}
         self.smart_client = Mock()
         self.host = "https://fhir.example.com/r4"
+        # Real host class (fhir in nxc_connection.py) provides this; stub it
+        # here since _test_authentication() applies it to its probe clients.
+        self._apply_session_config = Mock()
 
         defaults = dict(
             patient_id=None,
@@ -480,14 +483,31 @@ class TestBruteForceCredentials(unittest.TestCase):
         host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0, confirm=True)
         host.results["data"]["server_info"] = {"security": {"oauth_endpoints": {}}}
 
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_get.return_value = mock_response
+        # First call is the unauthenticated baseline (must NOT be 200, else the
+        # brute force is skipped as anonymous access); subsequent calls are the
+        # authenticated attempts.
+        mock_get.side_effect = [Mock(status_code=401)] + [Mock(status_code=200)] * 10
 
         with patch.object(host, "_load_credentials", return_value=(["admin"], ["password"])):
             host._brute_force_credentials()
 
         self.assertTrue(len(host.results["data"]["brute_force"]["valid"]) > 0)
+        host.logger.security_finding.assert_called()
+
+    @patch("requests.get")
+    def test_anonymous_access_skips_brute_force(self, mock_get):
+        """When the endpoint returns 200 without auth, brute force is skipped
+        (every credential would otherwise false-positive)."""
+        host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0, confirm=True)
+
+        mock_get.return_value = Mock(status_code=200)  # baseline: no auth required
+
+        with patch.object(host, "_load_credentials", return_value=(["admin"], ["password"])):
+            host._brute_force_credentials()
+
+        # Only the single baseline request was sent; the credential loop was skipped.
+        self.assertEqual(mock_get.call_count, 1)
+        self.assertIn("skipped", host.results["data"]["brute_force"])
         host.logger.security_finding.assert_called()
 
     @patch("requests.get")
@@ -524,9 +544,9 @@ class TestBruteForceCredentials(unittest.TestCase):
             confirm=True,  # commit 9ae2a6c5 added a --confirm gate
         )
 
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_get.return_value = mock_response
+        # Baseline (unauthenticated) must be non-200 so the brute force runs;
+        # authenticated attempts then all succeed.
+        mock_get.side_effect = [Mock(status_code=401)] + [Mock(status_code=200)] * 10
 
         with patch.object(
             host, "_load_credentials", return_value=(["admin", "root"], ["pass1", "pass2"])

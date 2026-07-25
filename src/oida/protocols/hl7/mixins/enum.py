@@ -69,7 +69,14 @@ class EnumMixin:
                 )
 
         # Display results
-        total = len(attending) + len(referring) + len(consulting) + len(admitting) + len(ordering)
+        total = (
+            len(attending)
+            + len(referring)
+            + len(consulting)
+            + len(admitting)
+            + len(ordering)
+            + len(pharmacy_providers)
+        )
 
         if total == 0:
             self.logger.warning("No provider information found in responses")
@@ -179,9 +186,14 @@ class EnumMixin:
                 # RXE segment - Pharmacy/Treatment Encoded Order
                 elif segment.startswith("RXE|"):
                     # The RXE parser doesn't expose RXE-13, so extract it directly.
+                    # fields[0] is the segment ID ("RXE"), so RXE-13 lives at
+                    # fields[13] — get_field()'s 1-based indexing expects
+                    # fields[0] to already be field 1, so the equivalent
+                    # get_field() call needs index 14, not 13 (index 13 would
+                    # resolve to fields[12], i.e. RXE-12 / refills).
                     fields = segment.split("|")
                     if len(fields) > 13 and fields[13]:
-                        pharmacy.add(HL7SegmentParser.get_field(fields, 13))
+                        pharmacy.add(HL7SegmentParser.get_field(fields, 14))
 
         except Exception as e:
             self.logger.debug(f"Failed to extract providers: {e}")

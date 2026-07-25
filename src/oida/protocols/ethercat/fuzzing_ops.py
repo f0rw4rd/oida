@@ -183,10 +183,20 @@ class FuzzingOpsMixin(_ScannerBase):
 
             self.logger.display(f"    {slave.name}: {fuzz_count} PDO mutations tested")
 
-        # Reset outputs to zeros
+        # Reset outputs to zeros and push the safe state onto the wire --
+        # staging it in the local IOmap alone never reaches the slaves, leaving
+        # them energised at the last fuzzed output.
+        reset_any = False
         for slave, _ in slave_outputs:
             if slave.output:
                 slave.output = bytes(len(slave.output))
+                reset_any = True
+        if reset_any:
+            try:
+                master.send_processdata()
+                master.receive_processdata(2000)
+            except Exception as e:
+                self.logger.debug(f"  Output reset transmit failed: {e}")
 
         self.logger.display(f"  PDO fuzzing complete: {results['tests_performed']} tests")
         if results["anomalies"]:

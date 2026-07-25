@@ -573,7 +573,12 @@ class dicom(
                 self.ae.add_requested_context(sop["StudyRootQueryRetrieveInformationModelMove"])
 
             # Add presentation contexts - C-STORE (if --store, but not for probe - already added above)
-            if getattr(self.args, "store", False) and not probe_ops:
+            # Skip when C-GET (or --dump-all) already requested the full storage
+            # context list above: pynetdicom does not dedupe add_requested_context()
+            # calls, so re-adding here would push the association past its
+            # 128-context ceiling, raising a ValueError that gets reported as a
+            # generic "Connection failed" instead of the real cause.
+            if getattr(self.args, "store", False) and not probe_ops and not cget_storage_uids:
                 for context in StoragePresentationContexts:
                     self.ae.add_requested_context(context.abstract_syntax)
 
@@ -755,6 +760,17 @@ class dicom(
             except Exception as e:
                 self.logger.debug(f"Association release failed: {e}")
             self.assoc = None
+
+    def cleanup(self):
+        """Ensure the DICOM association is released even on an error path.
+
+        The base cleanup() only closes self.conn, but DICOM keeps its live
+        association in self.assoc (self.conn is never set), so without this an
+        exception in reporting/export would leak the socket + a half-open
+        association on the target PACS.
+        """
+        self._disconnect()
+        super().cleanup()
 
 
 # Module-level exports

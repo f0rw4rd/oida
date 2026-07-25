@@ -117,32 +117,54 @@ RESPONSE_OPCODES = {
     "Reject",
 }
 
-# Login status codes
+# Login status codes.
+# iscsi.login.status is FT_UINT16/BASE_HEX: XML mode renders it as a hex
+# string ("0x0201"), EK mode renders the raw decimal integer as a string
+# ("513"). Both forms are keyed here (mirrors OPCODES above) so lookups hit
+# regardless of pyshark mode.
 LOGIN_STATUS = {
     "0": "Success",
     "0x0000": "Success",
+    "256": "Target moved temporarily",
     "0x0100": "Target moved temporarily",
+    "257": "Target moved permanently",
     "0x0101": "Target moved permanently",
+    "512": "Initiator error",
     "0x0200": "Initiator error",
+    "513": "Authentication failure",
     "0x0201": "Authentication failure",
+    "514": "Authorization failure",
     "0x0202": "Authorization failure",
+    "515": "Not found",
     "0x0203": "Not found",
+    "516": "Target removed",
     "0x0204": "Target removed",
+    "517": "Unsupported version",
     "0x0205": "Unsupported version",
+    "518": "Too many connections",
     "0x0206": "Too many connections",
+    "519": "Missing parameter",
     "0x0207": "Missing parameter",
+    "520": "Can't include in session",
     "0x0208": "Can't include in session",
+    "521": "Session type not supported",
     "0x0209": "Session type not supported",
+    "522": "Session does not exist",
     "0x020a": "Session does not exist",
+    "523": "Invalid during login",
     "0x020b": "Invalid during login",
+    "768": "Target error",
     "0x0300": "Target error",
+    "769": "Service unavailable",
     "0x0301": "Service unavailable",
+    "770": "Out of resources",
     "0x0302": "Out of resources",
 }
 
 # Login status codes that indicate an authentication/authorization failure --
-# surfaced as alerts so failed CHAP/login attempts are visible.
-LOGIN_FAILURE_STATUS = {"0x0201", "0x0202", "0x0203"}
+# surfaced as alerts so failed CHAP/login attempts are visible. Both hex
+# (XML mode) and decimal (EK mode) forms, matching LOGIN_STATUS above.
+LOGIN_FAILURE_STATUS = {"0x0201", "0x0202", "0x0203", "513", "514", "515"}
 
 # CHAP login text key=value pairs. iSCSI carries CHAP over the login/text data
 # segment as RFC 7143 key=value text (CHAP_A/I/C/N/R), which Wireshark exposes

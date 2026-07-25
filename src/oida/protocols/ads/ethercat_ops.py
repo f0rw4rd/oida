@@ -24,7 +24,7 @@ These methods are mixed into ADSScanner via inheritance.
 import os
 import re
 import struct
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from ...utils import ProgressTracker
 
@@ -166,6 +166,10 @@ class EtherCATOpsMixin:
                                         "attributes": attrs,
                                     }
                                 )
+                                # Mark success as soon as we have a parsed entry
+                                # so a mid-enumeration error doesn't discard the
+                                # files already collected.
+                                result["success"] = True
                                 self.logger.display(
                                     f"  {'[DIR]' if is_dir else '[FILE]'} {filename}"
                                 )
@@ -211,53 +215,94 @@ class EtherCATOpsMixin:
             sys_conn.open()
             sys_conn.set_timeout(self.ads_timeout_ms)
 
-            try:
-                # Open file for reading
+            max_read = 65536
+            max_file_size = 100 * 1024 * 1024  # 100MB
+
+            def _open_handle() -> int:
                 # Write: flags(4) + path, Read: handle(4)
                 flags = ADS_FILE_FLAG["READ"] | ADS_FILE_FLAG["BINARY"]
                 open_data = struct.pack("<I", flags) + path.encode("utf-8") + b"\x00"
-
                 handle_data = _read_write_raw(sys_conn, ADS_IDX_GRP["FILE_OPEN"], 0, 4, open_data)
-
                 if handle_data and len(handle_data) >= 4:
-                    file_handle = struct.unpack("<I", handle_data)[0]
-                    self.logger.debug(f"  File handle: {file_handle}")
+                    handle = struct.unpack("<I", handle_data)[0]
+                    if handle > 0:
+                        return handle
+                return 0
 
-                    if file_handle > 0:
-                        # Read file content (up to 64KB chunks, 100MB total limit)
-                        content = b""
-                        max_read = 65536
-                        max_file_size = 100 * 1024 * 1024  # 100MB
-                        try:
-                            while True:
-                                chunk = _read_raw(
-                                    sys_conn, ADS_IDX_GRP["FILE_READ"], file_handle, max_read
+            def _close_handle(handle: int) -> None:
+                try:
+                    _write_raw(sys_conn, ADS_IDX_GRP["FILE_CLOSE"], handle, b"")
+                except Exception as e:
+                    self.logger.debug("file close failed: %s", e)
+
+            try:
+                file_handle = _open_handle()
+                self.logger.debug(f"  File handle: {file_handle}")
+
+                if file_handle > 0:
+                    # Pass 1 -- discover the size. FILE_READ is a sequential
+                    # stream and _read_raw uses a fixed ctypes buffer, so the
+                    # final partial chunk raises "Insufficient data (... M were
+                    # read)". That chunk's bytes are gone (the stream position
+                    # already advanced), so this pass only recovers whole 64KB
+                    # chunks plus the reported tail length.
+                    content = b""
+                    total_size: Optional[int] = None
+                    truncated = False
+                    try:
+                        while True:
+                            chunk = _read_raw(
+                                sys_conn, ADS_IDX_GRP["FILE_READ"], file_handle, max_read
+                            )
+                            if not chunk:
+                                break
+                            content += chunk
+                            if len(content) >= max_file_size:
+                                self.logger.warning(
+                                    f"  File exceeds {max_file_size // (1024 * 1024)}MB "
+                                    "limit, truncating"
                                 )
-                                if not chunk:
-                                    break
-                                content += chunk
-                                if len(content) > max_file_size:
-                                    self.logger.warning(
-                                        f"  File exceeds {max_file_size // (1024 * 1024)}MB limit, truncating"
-                                    )
-                                    break
-                                if len(chunk) < max_read:
-                                    break
-                        except Exception as e:
-                            # Error 1804 = EOF
-                            if "1804" not in str(e) and "1797" not in str(e):
-                                self.logger.debug(f"Read error: {e}")
+                                truncated = True
+                                break
+                            if len(chunk) < max_read:
+                                break
+                    except RuntimeError as e:
+                        m = re.search(r"(\d+)\s+were\s+read", str(e))
+                        if m:
+                            total_size = len(content) + int(m.group(1))
+                        elif "1804" not in str(e) and "1797" not in str(e):
+                            self.logger.debug(f"Read error: {e}")
+                    except Exception as e:
+                        if "1804" not in str(e) and "1797" not in str(e):
+                            self.logger.debug(f"Read error: {e}")
+                    _close_handle(file_handle)
 
-                        result["data"] = content
-                        result["size"] = len(content)
-                        result["success"] = True
-                        self.logger.success(f"  Read {len(content)} bytes")
+                    # Pass 2 -- if a short final chunk truncated us, re-open and
+                    # re-read in exact-sized chunks (the last sized to fit) so no
+                    # read short-reads and the partial tail is recovered intact.
+                    if not truncated and total_size is not None and total_size > len(content):
+                        want = min(total_size, max_file_size)
+                        handle2 = _open_handle()
+                        if handle2 > 0:
+                            try:
+                                rebuilt = b""
+                                remaining = want
+                                while remaining > 0:
+                                    n = min(max_read, remaining)
+                                    part = _read_raw(sys_conn, ADS_IDX_GRP["FILE_READ"], handle2, n)
+                                    if not part:
+                                        break
+                                    rebuilt += part
+                                    remaining -= len(part)
+                                content = rebuilt
+                            except Exception as e:
+                                self.logger.debug(f"File re-read failed: {e}")
+                            _close_handle(handle2)
 
-                        # Close handle
-                        try:
-                            _write_raw(sys_conn, ADS_IDX_GRP["FILE_CLOSE"], file_handle, b"")
-                        except Exception as e:
-                            self.logger.debug("file close failed: %s", e)
+                    result["data"] = content
+                    result["size"] = len(content)
+                    result["success"] = bool(content) or total_size == 0
+                    self.logger.success(f"  Read {len(content)} bytes")
 
             finally:
                 sys_conn.close()
@@ -1207,7 +1252,7 @@ class EtherCATOpsMixin:
         try:
             return _read_raw(master_conn, ADS_IDX_GRP["ECAT_EEPROM_READ"], offset, 2)
         except Exception as e:
-            self.logger.debug(f"Return value computation failed: {e}")
+            self.logger.debug(f"EEPROM word read failed: {e}")
             return None
 
     def _dump_eeprom_via_ads(self, slave_ports):
@@ -1281,7 +1326,7 @@ class EtherCATOpsMixin:
                         header["revision"] = struct.unpack_from("<I", raw_bytes, 0x18)[0]
                         header["serial"] = struct.unpack_from("<I", raw_bytes, 0x1C)[0]
                     except struct.error as e:
-                        self.logger.debug(f"headerstation_alias  struct.unpack_fr...: {e}")
+                        self.logger.debug(f"SII header fallback parse failed: {e}")
 
                 results[port] = {
                     "words": words,

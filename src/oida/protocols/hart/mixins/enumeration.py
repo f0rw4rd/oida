@@ -65,7 +65,7 @@ class EnumerationMixin(_ScannerBase):
                         result["long_tag"] = long_tag.strip()
                         result["detection_method"].append("long_tag_supported")
         except Exception as e:
-            self.logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"long-tag support probe failed: {e}")
 
         # Method 3: Try Command 768 (Read Network ID)
         try:
@@ -76,7 +76,7 @@ class EnumerationMixin(_ScannerBase):
                 result["network_id"] = network_id
                 result["detection_method"].append("network_id_768")
         except Exception as e:
-            self.logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"network-ID probe failed: {e}")
 
         # Method 4: Try Command 85 (Read Sub-Device Count) - Gateway detection
         try:
@@ -89,7 +89,7 @@ class EnumerationMixin(_ScannerBase):
                     result["is_wireless"] = True
                     result["detection_method"].append("gateway_sub_devices")
         except Exception as e:
-            self.logger.debug(f"Failed to get response: {e}")
+            self.logger.debug(f"gateway sub-device probe failed: {e}")
 
         # Add security findings for WirelessHART
         if result["is_wireless"]:

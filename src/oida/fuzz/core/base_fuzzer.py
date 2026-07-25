@@ -178,7 +178,14 @@ class BaseFuzzer(ABC):
         # Only use protocol-specific custom monitors if user didn't explicitly specify monitors
         # (config.monitor_config is set when user provides -M/--monitors)
         if self.config.monitor_config is None:
-            self.monitor.set_monitors(self.setup_custom_monitors())
+            # Only override the default monitors from _setup_monitor() when a
+            # subclass actually supplies custom ones. The base hook returns [],
+            # and set_monitors() only guards against None -- passing the empty
+            # list would wipe the configured crash monitors and silently disable
+            # crash detection for every fuzzer that doesn't override the hook.
+            custom_monitors = self.setup_custom_monitors()
+            if custom_monitors:
+                self.monitor.set_monitors(custom_monitors)
 
         # Log monitor configuration
         self._log_monitor_config()

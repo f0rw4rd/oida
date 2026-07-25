@@ -35,9 +35,7 @@ class TestNormalizeOpcuaUrl(unittest.TestCase):
         from oida.protocols.opcua.helpers import _normalize_opcua_url
 
         self.assertEqual(_normalize_opcua_url("[::1]"), "opc.tcp://[::1]:4840")
-        self.assertEqual(
-            _normalize_opcua_url("[2001:db8::1]"), "opc.tcp://[2001:db8::1]:4840"
-        )
+        self.assertEqual(_normalize_opcua_url("[2001:db8::1]"), "opc.tcp://[2001:db8::1]:4840")
 
     def test_ipv6_with_port_does_not_double(self):
         """Old bug: '[::1]:4840' became 'opc.tcp://[::1]:4840:4840'."""

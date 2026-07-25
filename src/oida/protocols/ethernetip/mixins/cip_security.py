@@ -20,7 +20,9 @@ from typing import Any, Dict, Optional, TYPE_CHECKING
 from ....utils.lazy_import import lazy_import
 from oida.utils.common_types import Category
 
-_cryptography = lazy_import("cryptography", "EtherNet/IP", install_hint="pip install oida[ethernetip]")
+_cryptography = lazy_import(
+    "cryptography", "EtherNet/IP", install_hint="pip install oida[ethernetip]"
+)
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

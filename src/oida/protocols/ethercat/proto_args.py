@@ -63,8 +63,8 @@ def proto_args(parser, parents):
         "-s",
         "--scan-range",
         type=str,
-        default="1-16",
-        help="Slave station address range (default: 1-16)",
+        default=None,
+        help="Slave station address range (default: all discovered slaves)",
     )
 
     ethercat_group.add_argument(

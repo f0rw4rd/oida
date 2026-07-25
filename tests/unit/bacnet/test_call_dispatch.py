@@ -296,10 +296,13 @@ class TestWriteFamilyHandlers(unittest.TestCase):
 
     def test_write_group_unconfirmed_dispatch(self):
         scanner = _create_instance()
-        app = Mock()  # unconfirmed: app.request used synchronously
-        app.request = Mock()
+        # Unconfirmed request, but app.request() still returns an awaitable
+        # (an APDUFuture in real bacpypes3) that must be awaited or the send
+        # task gets cancelled at app.close() before bytes hit the wire.
+        app = AsyncMock()
+        app.request = AsyncMock(return_value=None)
         asyncio.run(scanner._call_write_group(app, Mock(), 1001, 5.0, ["1:2:21.0:8"]))
-        app.request.assert_called()
+        app.request.assert_awaited()
         succ = " ".join(str(c.args[0]) for c in scanner.logger.success.call_args_list)
         self.assertIn("WriteGroup", succ)
 
@@ -377,10 +380,13 @@ class TestWriteFamilyHandlers(unittest.TestCase):
 
     def test_time_sync_explicit_time_dispatch(self):
         scanner = _create_instance()
-        app = Mock()  # unconfirmed
-        app.request = Mock()
+        # Unconfirmed request, but app.request() still returns an awaitable
+        # (an APDUFuture in real bacpypes3) that must be awaited or the send
+        # task gets cancelled at app.close() before bytes hit the wire.
+        app = AsyncMock()
+        app.request = AsyncMock(return_value=None)
         asyncio.run(scanner._call_time_sync(app, Mock(), 1001, 5.0, ["2024-01-02T03:04:05"]))
-        app.request.assert_called()
+        app.request.assert_awaited()
         succ = " ".join(str(c.args[0]) for c in scanner.logger.success.call_args_list)
         self.assertIn("TimeSync sent", succ)
 

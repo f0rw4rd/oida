@@ -18,7 +18,9 @@ from .conftest import _run_listener_test
 
 pytestmark = [pytest.mark.integration]
 
-EXPECTED = "$mysqlna$2766086c06065c031d2c0a6e1a33722f56282e14*d718d9899ef011dd86cb2a045e0c0303a8541c20"
+EXPECTED = (
+    "$mysqlna$2766086c06065c031d2c0a6e1a33722f56282e14*d718d9899ef011dd86cb2a045e0c0303a8541c20"
+)
 
 
 def test_mysql_native_hash_is_crackable_mode_11200():

@@ -112,7 +112,7 @@ def _read_coe_sdo(conn, index, subindex):
                 return _read_raw(conn, ig, offset, actual)
         return None
     except Exception as e:
-        logger.debug(f"Return value computation failed: {e}")
+        logger.debug(f"CoE SDO read failed: {e}")
         return None
 
 

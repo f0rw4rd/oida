@@ -45,6 +45,11 @@ _context = threading.local()
 _logger_cache: dict = {}
 _logger_cache_lock = threading.Lock()
 
+# Guards the check-then-addHandler in get_module_logger() so concurrent
+# first calls for the same module name can't each pass the "no handler yet"
+# check and both add a LogHandler (which would double-print every message).
+_module_logger_lock = threading.Lock()
+
 # Global lock for all console output — prevents interleaved lines when
 # multiple ThreadPoolExecutor workers print concurrently.
 _print_lock = threading.Lock()
@@ -74,7 +79,7 @@ def set_json_log_path(path: Optional[str]) -> None:
             try:
                 _json_log_file.close()
             except Exception as e:
-                logger.debug(f"_json_log_file.close(): {e}")
+                logger.debug(f"Failed to close JSON log file: {e}")
             _json_log_file = None
         _json_log_path = path
         if path is not None:
@@ -248,12 +253,15 @@ def get_module_logger(name: str) -> logging.Logger:
         Configured logging.Logger instance
     """
     logger = logging.getLogger(name)
-    # Add LogHandler if not already configured to route to our output
-    if not any(isinstance(h, LogHandler) for h in logger.handlers):
-        handler = LogHandler()
-        logger.addHandler(handler)
-        # Prevent duplicate output from root logger's basicConfig handler
-        logger.propagate = False
+    # Add LogHandler if not already configured to route to our output.
+    # Locked so two threads racing to first-touch the same module logger
+    # can't both pass the check and each add a handler.
+    with _module_logger_lock:
+        if not any(isinstance(h, LogHandler) for h in logger.handlers):
+            handler = LogHandler()
+            logger.addHandler(handler)
+            # Prevent duplicate output from root logger's basicConfig handler
+            logger.propagate = False
     return logger
 
 

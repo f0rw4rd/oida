@@ -308,7 +308,10 @@ class HTTPPassiveListener(PySharkListenerBase):
         """Process HTTP response and extract server info."""
         # Extract fields from PyShark HTTP layer
         server_banner = self.get_field(http_layer, "server", "") or ""
-        x_powered_by = self.get_field(http_layer, "x_powered_by", "") or ""
+        # There is no http.x_powered_by field in Wireshark; the X-Powered-By
+        # header only appears among the raw response header lines
+        # (http.response.line), so pull it out of there.
+        x_powered_by = self._extract_response_header(http_layer, "x-powered-by")
         content_type = self.get_field(http_layer, "content_type", "") or ""
         www_auth = self.get_field(http_layer, "www_authenticate", "") or ""
 
@@ -628,6 +631,23 @@ class HTTPPassiveListener(PySharkListenerBase):
             self.logger.debug(f"Digest header parse error: {e}")
         return result
 
+    def _extract_response_header(self, http_layer, header_name: str) -> str:
+        """Pull a single response header value out of the raw header lines.
+
+        Wireshark exposes non-dissected response headers only through the
+        repeated ``http.response.line`` field (comma-joined by get_field in EK
+        mode). ``header_name`` is matched case-insensitively without its colon.
+        """
+        raw = self.get_field(http_layer, "response_line", "") or ""
+        if not raw:
+            return ""
+        prefix = f"{header_name.lower()}:"
+        for line in raw.split(","):
+            stripped = line.strip()
+            if stripped.lower().startswith(prefix):
+                return stripped[len(prefix) :].strip()
+        return ""
+
     def _extract_technologies(self, server_banner: str, x_powered_by: str) -> List[str]:
         """Extract technology names from server headers."""
         technologies = []
@@ -793,12 +813,14 @@ class HTTPPassiveListener(PySharkListenerBase):
         protocol, hash_type, username, domain, server_ip, client_ip,
         hashcat_format.
         """
-        hashcat_lines = self.get_hashcat_hashes()
         result = []
-        hashcat_idx = 0
         for cred in self.credentials:
             if cred.auth_type != "Digest":
                 continue
+            # Read hashcat_format per-credential rather than zipping against the
+            # filtered get_hashcat_hashes() list by index: a Digest cred without
+            # a nonce is counted here but excluded there, so the index drifts and
+            # misattributes john lines / drops crackable hashes (cf. pgsql fix).
             result.append(
                 {
                     "protocol": "HTTP",
@@ -807,12 +829,9 @@ class HTTPPassiveListener(PySharkListenerBase):
                     "domain": cred.realm,
                     "server_ip": cred.server_ip,
                     "client_ip": cred.client_ip,
-                    "hashcat_format": (
-                        hashcat_lines[hashcat_idx] if hashcat_idx < len(hashcat_lines) else ""
-                    ),
+                    "hashcat_format": cred.hashcat_format,
                 }
             )
-            hashcat_idx += 1
         return result
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:

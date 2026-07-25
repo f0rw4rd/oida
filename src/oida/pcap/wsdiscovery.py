@@ -65,6 +65,14 @@ WSD_ACTIONS = {
     "ResolveMatches": "ResolveMatch",
 }
 
+# WSD_ACTIONS sorted longest-key-first for substring matching below.
+# "ProbeMatches"/"ResolveMatches" must be checked before their shorter
+# prefixes "Probe"/"Resolve" -- dict insertion order (shorter keys first)
+# made a ProbeMatches/ResolveMatches response match the shorter *request*
+# key first (e.g. "discovery/Probe" is a substring of
+# "discovery/ProbeMatches") and get mislabeled as the client-side action.
+WSD_ACTIONS_BY_LEN = sorted(WSD_ACTIONS.items(), key=lambda kv: len(kv[0]), reverse=True)
+
 # Common WS-Discovery device type prefixes
 DEVICE_TYPE_PREFIXES = {
     "dn:NetworkVideoTransmitter": "ONVIF Camera",
@@ -270,7 +278,7 @@ class WSDiscoveryPassiveListener(PySharkListenerBase):
         action = "Unknown"
         for key, val in all_fields.items():
             val_str = str(val).lower()
-            for action_key, action_name in WSD_ACTIONS.items():
+            for action_key, action_name in WSD_ACTIONS_BY_LEN:
                 if action_key.lower() in key.lower() or action_key.lower() in val_str:
                     action = action_name
                     break
@@ -315,7 +323,7 @@ class WSDiscoveryPassiveListener(PySharkListenerBase):
 
         # Determine action from SOAP Action header or element names
         action = "Unknown"
-        for action_key, action_name in WSD_ACTIONS.items():
+        for action_key, action_name in WSD_ACTIONS_BY_LEN:
             # Check for action in wsa:Action text or element name
             if f"discovery/{action_key}" in all_text or f"wsd:{action_key}" in all_text:
                 action = action_name

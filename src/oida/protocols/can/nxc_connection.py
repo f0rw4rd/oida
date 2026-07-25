@@ -580,7 +580,14 @@ class can(ISOTPMixin, SerialConnection):
     # -------------------------------------------------------------------
 
     def _handle_uds_sessions(self) -> None:
-        """Handle UDS session enumeration."""
+        """Handle UDS session enumeration (requires --confirm)."""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--uds-sessions switches the ECU into programming/extended "
+                "diagnostic sessions (disruptive on a live bus) — requires --confirm"
+            )
+            return
+
         req_id = self._get_uds_target_id()
         if req_id is None:
             return
@@ -659,7 +666,14 @@ class can(ISOTPMixin, SerialConnection):
         }
 
     def _handle_uds_routines(self) -> None:
-        """Handle UDS RoutineControl enumeration."""
+        """Handle UDS RoutineControl enumeration (requires --confirm)."""
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--uds-routines runs RoutineControl startRoutine (executes ECU "
+                "routines: actuator tests, resets) — requires --confirm"
+            )
+            return
+
         req_id = self._get_uds_target_id()
         if req_id is None:
             return

@@ -59,3 +59,32 @@ def check_raw_socket_capability() -> Tuple[bool, Optional[str]]:
         # Fallback for other errors (e.g., AF_PACKET not available on non-Linux)
         error_msg = f"Unable to create raw socket: {e}"
         return False, error_msg
+
+
+def raw_socket_help_lines() -> list:
+    """Actionable "how to grant raw-socket access" lines for the current runtime.
+
+    Correct for BOTH a normal Python install and a frozen PyInstaller standalone
+    binary. The previous hardcoded ``setcap ... $(which python3)`` is wrong for a
+    frozen build (there is no python3 to setcap) and dangerous for a normal one
+    (it grants CAP_NET_RAW to the shared interpreter). Here the setcap target is
+    always the *actual* executable of this process (``sys.executable``): the oida
+    binary when frozen, the interpreter otherwise.
+    """
+    invocation = os.path.basename(sys.argv[0]) if sys.argv and sys.argv[0] else "oida"
+    lines = [f"Run with sudo:  sudo {invocation} ..."]
+
+    if sys.platform == "win32":
+        lines.append("Or run the terminal / oida as Administrator.")
+        return lines
+
+    target = os.path.realpath(sys.executable) if sys.executable else "<executable>"
+    lines.append(f"Or grant the capability:  sudo setcap cap_net_raw+eip {target}")
+    if getattr(sys, "frozen", False):
+        # onedir: setcap on the binary works. onefile: the bootloader re-execs an
+        # extracted temp copy, so the capability may not carry over — say so.
+        lines.append(
+            "  (single-file build? setcap may not persist through extraction — "
+            "prefer sudo, or use the directory build)"
+        )
+    return lines

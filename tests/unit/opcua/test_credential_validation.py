@@ -6,9 +6,7 @@ reported every credential as VALID because set_user() never raised.
 CODE_REVIEW.md HIGH ('every credential silently valid').
 """
 
-import asyncio
 import unittest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class TestCredentialActuallyVerified(unittest.TestCase):

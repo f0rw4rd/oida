@@ -81,7 +81,7 @@ class AdvancedOpsMixin(_ScannerBase):
 
                     # Decode SM type by position (SM0=mbx_out, SM1=mbx_in,
                     # SM2=pdo_out, SM3=pdo_in) — positional heuristic per ETG.1000
-                    sm_types = {0: "unused", 1: "mbx_out", 2: "mbx_in", 3: "pdo_out", 4: "pdo_in"}
+                    sm_types = {1: "mbx_out", 2: "mbx_in", 3: "pdo_out", 4: "pdo_in"}
                     sm_type = sm_types.get(sm + 1, f"type_{sm}")
 
                     # Decode status bits
@@ -115,7 +115,7 @@ class AdvancedOpsMixin(_ScannerBase):
                             f"0x{ctrl:02X}",
                             f"0x{status:02X} ({','.join(status_bits) if status_bits else '-'})",
                             "Yes" if activate else "No",
-                            sm_type if sm < 4 else "pdo",
+                            sm_type,
                         ]
                     )
 

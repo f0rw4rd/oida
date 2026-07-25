@@ -134,6 +134,8 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         ("TCP_Invalid_States", "Invalid state combinations", "attack", "ESTABLISHED"),
         ("TCP_Reserved_Bit_Test", "Reserved bit tests", "attack", "CLOSED"),
         ("TCP_Incorrect_Data_Offset", "Incorrect Data_Offset values", "boundary", "ESTABLISHED"),
+        ("TCP_Timestamp_ShiftUB", "Timestamp TSval high-byte shift-UB", "boundary", "ESTABLISHED"),
+        ("TCP_Option_Length_Underflow", "Option length underflow walk", "boundary", "SYN_SENT"),
         # TIER 5: CVE & vulnerability patterns
         ("TCP_CVE_2020_13987_Checksum_OOB", "CVE-2020-13987", "cve", "SYN_SENT"),
         ("TCP_CVE_2020_17437_Urgent_No_Bounds", "CVE-2020-17437", "cve", "ESTABLISHED"),
@@ -996,6 +998,79 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             ),
         )
 
+        # Timestamp TSval high-byte shift-UB (kind=8, length=10)
+        # A valid Timestamp option whose TSval high byte is >= 0x80. Stacks that
+        # reassemble the 32-bit TSval by shifting the leading byte left by 24
+        # (byte << 24) into a signed int hit implementation-defined / undefined
+        # signed-shift behaviour once bit 31 is set. The option is otherwise
+        # well-formed so the option-walk reaches and parses it.
+        tcp_timestamp_shift_ub = Request(
+            "TCP_Timestamp_ShiftUB",
+            children=(
+                self._create_tcp_header(
+                    name="TS_ShiftUB_Header",
+                    ack=1,
+                    options_block_name="TS_ShiftUB_Options",
+                ),
+                Block(
+                    "TS_ShiftUB_Options",
+                    children=(
+                        Static("TS_ShiftUB_Kind", bytes([TCPOptions.TIMESTAMP.value])),  # kind=8
+                        Static("TS_ShiftUB_Length", b"\x0a"),  # length=10 (valid)
+                        # TSval high byte >= 0x80 -> signed `<<24` shift-UB
+                        Group(
+                            "TS_ShiftUB_TSval",
+                            values=[
+                                b"\x80\x00\x00\x00",  # 0x80000000 (bit 31 set)
+                                b"\xff\x00\x00\x00",  # 0xFF000000
+                                b"\xff\xff\xff\xff",  # 0xFFFFFFFF
+                            ],
+                        ),
+                        DWord("TS_ShiftUB_TSecr", 0, endian=">", fuzzable=True),
+                    ),
+                ),
+            ),
+        )
+
+        # Option length underflow inside the option-walk loop
+        # A recognized multi-byte option kind whose length byte is malformed:
+        # 0 or 1 (below the 2-byte minimum, so a naive walk advances past itself
+        # or underflows the remaining-length counter) or 255 (larger than the
+        # remaining options region). Data_Offset is computed from the whole
+        # options block, so the malformed bytes stay inside the parsed area.
+        tcp_option_length_underflow = Request(
+            "TCP_Option_Length_Underflow",
+            children=(
+                self._create_tcp_header(
+                    name="OptLenUnderflow_Header",
+                    syn=1,
+                    options_block_name="OptLenUnderflow_Options",
+                ),
+                Block(
+                    "OptLenUnderflow_Options",
+                    children=(
+                        # kind=2 (MSS) - a length-bearing option the walk recognizes
+                        Static("OptLenUnderflow_Kind", bytes([TCPOptions.MSS.value])),
+                        # Malformed length: < 2 (underflow / advance-past-self)
+                        # or > remaining region (over-read)
+                        Group(
+                            "OptLenUnderflow_Length",
+                            values=[
+                                b"\x00",  # 0 -> infinite / underflowing walk
+                                b"\x01",  # 1 -> below 2-byte minimum
+                                b"\xff",  # 255 -> larger than remaining region
+                            ],
+                        ),
+                        # Body the walk would consume if it honoured the length,
+                        Word("OptLenUnderflow_Value", 1460, endian=">", fuzzable=True),
+                        # plus trailing options a broken walk keeps chewing on.
+                        Static("OptLenUnderflow_NOP", b"\x01"),
+                        Static("OptLenUnderflow_EOL", b"\x00"),
+                    ),
+                ),
+            ),
+        )
+
         # MD5 Signature Option (kind=19) - RFC 2385
         tcp_md5_signature = Request(
             "TCP_MD5_Signature",
@@ -1480,6 +1555,8 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         self.session.connect(invalid_states)  # Invalid state combinations (SYN+FIN, etc.)
         self.session.connect(reserved_bit_test)  # Reserved bit testing
         self.session.connect(tcp_incorrect_data_offset)  # Incorrect Data_Offset values
+        self.session.connect(tcp_timestamp_shift_ub)  # Timestamp TSval high-byte shift-UB
+        self.session.connect(tcp_option_length_underflow)  # Option length underflow walk
 
         # TIER 5: CVE & VULNERABILITY PATTERNS (Targeted, Specific)
         # Known vulnerability patterns and CVE reproductions
@@ -1543,6 +1620,17 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
 
     def fuzz_all(self):
         """Execute comprehensive protocol fuzzing including THC-IPv6 techniques"""
+        # Mirror the base fuzz_all preamble: this override previously jumped
+        # straight to the per-node loop, so --recv-timeout calibration never ran
+        # and --distribution-total/-id did no partitioning (every machine fuzzed
+        # the whole space). Run both before touching self.session. The
+        # distribution filter patches session._fuzz_current_case, which fuzz_node
+        # also invokes, so per-node fuzzing honours it too.
+        fuzz_log = self._get_fuzz_logger()
+        self._calibrate_timeouts(fuzz_log)
+        if self.config and self.config.distribution_total and self.config.distribution_id:
+            self._apply_distribution_filtering()
+
         # Register state tracking callbacks if enabled
         track_states = True
         if self.config:
@@ -1567,6 +1655,15 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             # Log state tracking summary
             if track_states and hasattr(self, "state_tracker"):
                 self.log.display(self.state_tracker.get_transition_summary())
+            # Distribution filtering populates distribution_stats above; the base
+            # fuzz_all logs it in its own finally, but this override replaces that
+            # flow, so emit the multi-machine summary here too.
+            if (
+                self.config
+                and self.config.distribution_total
+                and hasattr(self, "distribution_stats")
+            ):
+                self._log_distribution_stats()
 
     def _get_monitors(self) -> List[BaseMonitor]:
         """Return list of monitors for TCP service"""

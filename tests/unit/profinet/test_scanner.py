@@ -285,10 +285,18 @@ class TestProfinetArgHelper:
         assert ProfinetConnection._parse_slot_arg(None) == (None, None)
 
     def test_parse_slot_invalid(self):
-        """Test _parse_slot_arg with invalid input."""
+        """Invalid --slot must raise, not silently return (None, None).
+
+        A (None, None) fallback reads as "no slot filter", which would widen a
+        typo'd targeted probe into a full scan -- callers surface the ValueError
+        as a fail message instead.
+        """
+        import pytest
+
         from oida.protocols.profinet import profinet as ProfinetConnection
 
-        assert ProfinetConnection._parse_slot_arg("abc") == (None, None)
+        with pytest.raises(ValueError, match="invalid --slot value"):
+            ProfinetConnection._parse_slot_arg("abc")
 
 
 class TestProfinetNewProtoArgs:

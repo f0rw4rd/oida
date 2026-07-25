@@ -312,9 +312,12 @@ def send_probe(
     if not message:
         return None, None
 
-    sock = ConnectionHelper.create_tcp_socket(host, port, timeout=timeout)
-
+    sock = None
     try:
+        # create_tcp_socket re-raises on connect failure; keep it inside the try
+        # so an unreachable target returns (None, None) per the docstring instead
+        # of aborting the whole capability sweep.
+        sock = ConnectionHelper.create_tcp_socket(host, port, timeout=timeout)
         sock.send(wrap_mllp(message))
 
         # Receive response with a hard cap so a peer that never sends MLLP_END
@@ -340,8 +343,12 @@ def send_probe(
 
         return None, None
 
+    except OSError as e:
+        logger.debug(f"HL7 probe to {host}:{port} failed: {e}")
+        return None, None
     finally:
-        sock.close()
+        if sock:
+            sock.close()
 
 
 def probe_server_capabilities(

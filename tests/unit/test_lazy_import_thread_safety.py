@@ -6,9 +6,7 @@ even though the install was fine. CODE_REVIEW.md HIGH.
 """
 
 import threading
-import time
 import unittest
-from unittest.mock import patch
 
 
 class TestLazyModuleConcurrency(unittest.TestCase):

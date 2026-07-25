@@ -27,6 +27,7 @@ the reference for the facade pattern.
 """
 
 import asyncio
+import os
 from typing import Any, Dict
 
 from ...connection import NetworkConnection
@@ -243,12 +244,35 @@ class opcua(
             else:
                 self.logger.display(f"Authenticating: {usernames[0]}:{passwords[0]}")
         elif cert_path and key_path:
-            security_mode = getattr(self.args, "mode", "SignAndEncrypt")
-            security_policy = getattr(self.args, "policy", "Basic256Sha256")
+            # args.mode/args.policy always exist (argparse defaults both to
+            # "None" -- see proto_args.py), so the getattr(...) fallbacks
+            # here were dead code that could never fire; the *real* default
+            # was silently "None,None". A user passing --certificate/
+            # --privatekey without an explicit --mode/--policy got a
+            # set_security_string("None,None,cert,key") secure channel,
+            # which asyncua treats as unsecured and the certificate is
+            # never actually presented to the server -- "Authenticating:
+            # Certificate" printed even though no cert-based auth occurred.
+            # A cert only makes sense over a Sign/SignAndEncrypt channel, so
+            # upgrade unset values to a real secure default and say so.
+            security_mode = getattr(self.args, "mode", "None") or "None"
+            security_policy = getattr(self.args, "policy", "None") or "None"
+            if security_mode == "None" or security_policy == "None":
+                self.logger.warning(
+                    "Certificate auth requires a secure channel; --mode/--policy "
+                    "were 'None' -- upgrading to SignAndEncrypt/Basic256Sha256. "
+                    "Pass --mode/--policy explicitly to select different values."
+                )
+                if security_mode == "None":
+                    security_mode = "SignAndEncrypt"
+                if security_policy == "None":
+                    security_policy = "Basic256Sha256"
             await self._client.set_security_string(
                 f"{security_policy},{security_mode},{cert_path},{key_path}"
             )
-            self.logger.display(f"Authenticating: Certificate ({cert_path})")
+            self.logger.display(
+                f"Authenticating: Certificate ({cert_path}, {security_mode}/{security_policy})"
+            )
 
     def _store_security_info(
         self,
@@ -312,7 +336,15 @@ class opcua(
         if any([getattr(self.args, f, None) for f in ("fuzz", "fuzz_node", "fuzz_method")]):
             await self._handle_fuzz()
 
-        if getattr(self.args, "node_id", None):
+        # --write-value and --history-read both key off --node-id and do
+        # their own read of the target node's current value internally, so
+        # running the plain _read_node() display first was pure redundant
+        # noise (two "Value: X" / "Current: X" lines for the same node).
+        # Only run the standalone read when neither other node operation
+        # was requested.
+        if getattr(self.args, "node_id", None) and not (
+            getattr(self.args, "write_value", None) or getattr(self.args, "history_read", False)
+        ):
             await self._read_node()
 
         # Address space dump operations
@@ -377,6 +409,8 @@ class opcua(
     async def _async_proto_flow(self):
         """Async OPC UA scanning workflow"""
         _orig_levels = {}
+        auto_cert_path = None
+        auto_key_path = None
         try:
             from ...utils.default_credentials import parse_credential_input
 
@@ -553,13 +587,24 @@ class opcua(
                 try:
                     await self._client.disconnect()
                 except Exception as e:
-                    self.logger.debug(f"async proto flow failed: {e}")
+                    self.logger.debug(f"OPC UA disconnect failed: {e}")
 
             if _orig_levels:
                 try:
                     self._restore_asyncua_logging(_orig_levels)
                 except Exception as e:
-                    self.logger.debug(f"async proto flow failed: {e}")
+                    self.logger.debug(f"Failed to restore asyncua logging: {e}")
+
+            # Auto-generated client cert/key are only needed to establish
+            # the secure channel; remove them from shared temp regardless
+            # of how the flow exited so a private key never outlives the
+            # scan (see _generate_client_cert).
+            for _path in (auto_cert_path, auto_key_path):
+                if _path:
+                    try:
+                        os.unlink(_path)
+                    except OSError as e:
+                        self.logger.debug(f"Failed to remove temp cert/key {_path}: {e}")
 
     # All mixin methods (_show_endpoints_summary, _invoke_method, etc.)
     # are inherited from DiscoveryMixin, MethodsMixin, SubscriptionsMixin,

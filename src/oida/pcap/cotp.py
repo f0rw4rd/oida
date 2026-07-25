@@ -74,17 +74,20 @@ from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # COTP PDU type codes (upper 4 bits of the type byte)
+# Keyed on the UPPER NIBBLE, matching Wireshark's cotp.type value_string
+# (verified `tshark -G values`: 0xe=CR, 0xd=CC ...). The dissector exposes only
+# the nibble, so the old full-byte keys (0xE0 ...) matched nothing.
 COTP_PDU_TYPES = {
-    0xE0: "CR",  # Connection Request
-    0xD0: "CC",  # Connection Confirm
-    0x80: "DR",  # Disconnect Request
-    0xC0: "DC",  # Disconnect Confirm
-    0xF0: "DT",  # Data Transfer
-    0x10: "ED",  # Expedited Data
-    0x60: "AK",  # Acknowledge
-    0x20: "EA",  # Expedited Acknowledge
-    0x70: "ER",  # Error
-    0x50: "RJ",  # Reject
+    0xE: "CR",  # Connection Request
+    0xD: "CC",  # Connection Confirm
+    0x8: "DR",  # Disconnect Request
+    0xC: "DC",  # Disconnect Confirm
+    0xF: "DT",  # Data Transfer
+    0x1: "ED",  # Expedited Data
+    0x6: "AK",  # Acknowledge
+    0x2: "EA",  # Expedited Acknowledge
+    0x7: "ER",  # Error
+    0x5: "RJ",  # Reject
 }
 
 # Well-known TSAP patterns and their likely upper-layer protocols
@@ -229,11 +232,11 @@ class COTPPassiveListener(PySharkListenerBase):
         cause = self._parse_int(self.get_field(cotp_layer, "cause"), -1)
 
         # Extract TSAPs
-        calling_tsap = str(self.get_field(cotp_layer, "tsap_calling") or "")
-        called_tsap = str(self.get_field(cotp_layer, "tsap_called") or "")
+        calling_tsap = str(self.get_field(cotp_layer, "src_tsap") or "")
+        called_tsap = str(self.get_field(cotp_layer, "dst_tsap") or "")
         # Fallback: raw tsap field
         if not calling_tsap and not called_tsap:
-            raw_tsap = str(self.get_field(cotp_layer, "tsap") or "")
+            raw_tsap = str(self.get_field(cotp_layer, "dst_tsap_bytes") or "")
             if raw_tsap:
                 called_tsap = raw_tsap
 
@@ -266,29 +269,29 @@ class COTPPassiveListener(PySharkListenerBase):
 
         # Update connection tracking based on PDU type
         direction = "request"
-        if pdu_type_raw == 0xE0:  # CR
+        if pdu_type_raw == 0xE:  # CR
             self._handle_cr(src_ip, dst_ip, src_ref, dst_ref)
             src_ep.cr_sent += 1
             dst_ep.cr_received += 1
             direction = "request"
-        elif pdu_type_raw == 0xD0:  # CC
+        elif pdu_type_raw == 0xD:  # CC
             self._handle_cc(src_ip, dst_ip, src_ref, dst_ref)
             src_ep.cc_sent += 1
             dst_ep.cc_received += 1
             direction = "response"
-        elif pdu_type_raw == 0x80:  # DR
+        elif pdu_type_raw == 0x8:  # DR
             self._handle_dr(src_ip, dst_ip, src_ref, dst_ref)
             src_ep.dr_sent += 1
             direction = "request"
-        elif pdu_type_raw == 0xC0:  # DC
+        elif pdu_type_raw == 0xC:  # DC
             direction = "response"
-        elif pdu_type_raw == 0xF0:  # DT
+        elif pdu_type_raw == 0xF:  # DT
             src_ep.dt_count += 1
             direction = "request"
-        elif pdu_type_raw == 0x70:  # ER
+        elif pdu_type_raw == 0x7:  # ER
             src_ep.er_count += 1
             direction = "response"
-        elif pdu_type_raw == 0x50:  # RJ
+        elif pdu_type_raw == 0x5:  # RJ
             src_ep.rj_count += 1
             direction = "response"
 

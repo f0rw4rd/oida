@@ -270,6 +270,8 @@ class SecurityMixin:
         import socket
         from pathlib import Path
 
+        cert_path = None
+        key_path = None
         try:
             if not _asyncua_cert_gen.is_available or not _cryptography_x509.is_available:
                 self.logger.debug("asyncua cert_gen or cryptography not available")
@@ -278,10 +280,22 @@ class SecurityMixin:
             setup_self_signed_certificate = _asyncua_cert_gen.setup_self_signed_certificate
             ExtendedKeyUsageOID = _cryptography_x509.x509.oid.ExtendedKeyUsageOID
 
-            # Create temp files for cert and key
-            temp_dir = Path(tempfile.gettempdir())
-            cert_path = temp_dir / f"oida_client_{os.getpid()}.der"
-            key_path = temp_dir / f"oida_client_{os.getpid()}.pem"
+            # Create uniquely-named temp files for cert and key. A fixed
+            # oida_client_{pid}.der/.pem name is reused by every concurrent
+            # target scanned in this process (the CLI thread-pools multiple
+            # targets under one PID) — two targets racing the same path can
+            # clobber each other's cert mid-generation/read, and the file
+            # was never unlinked, leaving a private key world-readable in
+            # shared temp indefinitely. mkstemp() gives each call a unique
+            # path and creates the file mode 0600 (owner-only). The caller
+            # (nxc_connection._async_proto_flow) unlinks both paths once the
+            # secure channel is established.
+            cert_fd, cert_name = tempfile.mkstemp(prefix="oida_client_", suffix=".der")
+            os.close(cert_fd)
+            key_fd, key_name = tempfile.mkstemp(prefix="oida_client_", suffix=".pem")
+            os.close(key_fd)
+            cert_path = Path(cert_name)
+            key_path = Path(key_name)
 
             host_name = socket.gethostname()
             app_uri = f"urn:{host_name}:oida:client"
@@ -308,6 +322,12 @@ class SecurityMixin:
 
         except Exception as e:
             self.logger.debug(f"Error generating client cert: {e}")
+            for p in (cert_path, key_path):
+                try:
+                    if p and p.exists():
+                        os.unlink(p)
+                except OSError:
+                    pass
             return None, None
 
     async def _test_self_signed_cert_acceptance(self, url: str) -> dict:
@@ -346,10 +366,17 @@ class SecurityMixin:
 
             self.logger.display("Testing if server accepts untrusted client certs...")
 
-            # Generate proper OPC UA certificate
-            temp_dir = Path(tempfile.gettempdir())
-            cert_path = temp_dir / f"oida_test_{os.getpid()}.der"
-            key_path = temp_dir / f"oida_test_{os.getpid()}.pem"
+            # Generate proper OPC UA certificate. Use mkstemp (unique name,
+            # 0600) rather than a fixed oida_test_{pid} path: the CLI thread-
+            # pools multiple targets under one PID, so a shared path would let
+            # concurrent scans clobber each other's private key and leave it at
+            # a predictable world-readable location (CWE-377).
+            cert_fd, cert_name = tempfile.mkstemp(prefix="oida_test_", suffix=".der")
+            key_fd, key_name = tempfile.mkstemp(prefix="oida_test_", suffix=".pem")
+            os.close(cert_fd)
+            os.close(key_fd)
+            cert_path = Path(cert_name)
+            key_path = Path(key_name)
 
             host_name = socket.gethostname()
             app_uri = f"urn:{host_name}:oida:attacker-test"
@@ -549,9 +576,14 @@ class SecurityMixin:
 
             self.logger.display("Testing if server accepts untrusted self-signed user certs...")
 
-            temp_dir = Path(tempfile.gettempdir())
-            cert_path = temp_dir / f"oida_user_{os.getpid()}.der"
-            key_path = temp_dir / f"oida_user_{os.getpid()}.pem"
+            # Unique 0600 temp files per call (see _test_self_signed_cert_
+            # acceptance) — avoids the shared oida_user_{pid} race/CWE-377.
+            cert_fd, cert_name = tempfile.mkstemp(prefix="oida_user_", suffix=".der")
+            key_fd, key_name = tempfile.mkstemp(prefix="oida_user_", suffix=".pem")
+            os.close(cert_fd)
+            os.close(key_fd)
+            cert_path = Path(cert_name)
+            key_path = Path(key_name)
             host_name = socket.gethostname()
             app_uri = f"urn:{host_name}:oida:untrusted-user"
 
@@ -591,8 +623,16 @@ class SecurityMixin:
                 # Policy endpoint: stand up a secure channel with an auto app cert
                 # so we can reach activate_session at all.
                 if needs_secure_channel:
-                    app_cert_path = temp_dir / f"oida_user_app_{os.getpid()}.der"
-                    app_key_path = temp_dir / f"oida_user_app_{os.getpid()}.pem"
+                    app_cert_fd, app_cert_name = tempfile.mkstemp(
+                        prefix="oida_user_app_", suffix=".der"
+                    )
+                    app_key_fd, app_key_name = tempfile.mkstemp(
+                        prefix="oida_user_app_", suffix=".pem"
+                    )
+                    os.close(app_cert_fd)
+                    os.close(app_key_fd)
+                    app_cert_path = Path(app_cert_name)
+                    app_key_path = Path(app_key_name)
                     await setup_self_signed_certificate(
                         app_key_path,
                         app_cert_path,

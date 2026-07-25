@@ -109,6 +109,24 @@ class coap(NetworkConnection):
             self.results["error"] = "DTLS unavailable: DTLSSocket not installed"
             return
 
+        # Bare -D/--dtls (no PSK/cert/RPK) can never establish a session:
+        # DTLS has no anonymous/NoSec mode, so there is no key material for a
+        # handshake to authenticate with -- none of the _try_dtls_*/bruteforce
+        # branches below even run without one. Reject explicitly here instead
+        # of silently falling through to the generic "DTLS connection failed"
+        # hard-fail further down, which implies a handshake was attempted
+        # when none ever ran.
+        dtls_has_credentials = bool(dtls_cert or dtls_rpk or psk_arg or psk_id_arg)
+        if dtls_requested and not dtls_has_credentials:
+            self.logger.fail(
+                "--dtls requires credentials: pass --psk/--psk-identity (PSK), "
+                "--dtls-cert/--dtls-key (certificate), or --dtls-rpk (raw "
+                "public key). DTLS has no anonymous mode to probe with -D alone."
+            )
+            self.results["success"] = False
+            self.results["error"] = "DTLS requires --psk, --dtls-cert, or --dtls-rpk"
+            return
+
         if dtls_cert and dtls_key:
             self.logger.debug("DTLS certificate authentication requested")
             dtls_ok = self._try_dtls_cert(dtls_cert, dtls_key, dtls_ca)

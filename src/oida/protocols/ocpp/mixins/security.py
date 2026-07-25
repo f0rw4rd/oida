@@ -56,9 +56,17 @@ class SecurityMixin:
         Uses the central check_tls_certificate helper (same as IEC 104, Modbus, etc.).
         """
         try:
+            from urllib.parse import urlparse
+
             from ....utils.socket_helpers import check_tls_certificate
 
-            host = self.ip
+            # self.ip is the resolved connection host, but for wss:// targets
+            # it can end up holding the raw target URL when resolution fails
+            # (e.g. hostname lookups against the full "wss://host/path"
+            # string). Derive the bare hostname from the parsed target URL so
+            # the TLS probe always dials a real host, not the URL string.
+            parsed_host = urlparse(getattr(self, "_target_url", "") or "").hostname
+            host = parsed_host or self.ip
             port = getattr(self.args, "port", 443)
             self.logger.debug(f"Checking TLS certificate for {host}:{port}")
 
@@ -75,22 +83,24 @@ class SecurityMixin:
             self.logger.debug(f"TLS certificate check failed: {e}")
 
     def _handle_check_auth(self):
-        """Check if anonymous connections are accepted (no HTTP Basic Auth)."""
+        """Check if anonymous connections are accepted (no HTTP Basic Auth).
+
+        create_conn_obj() already reports "Anonymous access" unconditionally
+        for every connection made without credentials (it runs regardless of
+        --check-auth/--security), so this handler must not re-report the
+        same condition -- doing so previously produced two differently
+        shaped entries in results["data"]["security_findings"] (one via
+        logger.security_finding()/to_list(), one via self._add_finding())
+        for the identical underlying issue on every --security run.
+        """
         if not self.conn:
             return
 
         self.logger.debug("Checking authentication status")
         username = getattr(self.args, "username", None)
         if not username:
-            self.logger.security_finding(
-                "Anonymous access",
-                category=Category.AUTHENTICATION,
-                detail="Anonymous WebSocket connection allowed (no HTTP Basic Auth)",
-            )
-            self._add_finding(
-                "HIGH",
-                "Anonymous WebSocket connection allowed",
-                "Connected without HTTP Basic Auth credentials",
+            self.logger.debug(
+                "Anonymous WebSocket connection (already reported by create_conn_obj)"
             )
         else:
             self.logger.display(f"[Auth] Authenticated as {username}")
@@ -690,9 +700,12 @@ class SecurityMixin:
             key_value = None
 
         if key_value is None:
-            # Can't read it, try a probe write with a dummy value
-            # For AuthorizationKey, we don't attempt a write (too risky)
-            if sensitive_key == "AuthorizationKey":
+            # Can't read it, try a probe write with a dummy value.
+            # For AuthorizationKey we don't attempt a write (too risky), and
+            # for SecurityProfile a fabricated "0" would actually *perform*
+            # a security downgrade (TLS/auth off) with no known-good value
+            # to restore afterwards — never write a value we didn't read.
+            if sensitive_key in ("AuthorizationKey", "SecurityProfile"):
                 return "skipped"
             key_value = "0"
 
@@ -924,14 +937,21 @@ class SecurityMixin:
                 msg_type, _, payload = self._parse_message(response)
 
                 if msg_type == MessageType.CALLRESULT:
-                    # GetDiagnostics returns {"fileName": "..."} on accept
-                    # GetLog returns {"status": "Accepted"} on accept
+                    # GetLog returns {"status": "Accepted"} on accept.
+                    # GetDiagnostics.conf's fileName is OPTIONAL per the OCPP
+                    # 1.6 spec -- an empty {} CALLRESULT means the CP
+                    # acknowledged the request but is NOT going to upload
+                    # anything (e.g. no diagnostics available). Only a
+                    # non-empty fileName means it actually intends to upload
+                    # to our attacker-controlled URL; treating every
+                    # CALLRESULT as "Accepted" produced a false HIGH finding
+                    # for any CP that merely ack'd the request.
                     if version.startswith("2."):
                         status = payload.get("status", "Accepted")
-                    else:
-                        # OCPP 1.6 GetDiagnostics returns {"fileName": ...} on
-                        # accept; presence or absence, the probe succeeded.
+                    elif payload.get("fileName"):
                         status = "Accepted"
+                    else:
+                        status = "AcceptedNoUpload"
 
                     result_data["status"] = status
                     if status == "Accepted":
@@ -1770,14 +1790,20 @@ class SecurityMixin:
                     msg_type, _, payload = self._parse_message(response)
 
                     if msg_type == MessageType.CALLRESULT:
-                        diag_result["status"] = "Accepted"
-                        self.logger.warning(f"  SSRF [{label}] via {method}: ACCEPTED")
-                        self._add_finding(
-                            severity,
-                            f"SSRF via {method}: {label} URL accepted",
-                            f"{method} with URL '{url}' was accepted. "
-                            f"Charger will upload data to {label} endpoint.",
-                        )
+                        # Same GetDiagnostics.conf caveat as test_diagnostics():
+                        # fileName is optional in OCPP 1.6, so an empty {}
+                        # CALLRESULT means the CP is not going to upload
+                        # anything and must not be flagged as SSRF.
+                        accepted = version.startswith("2.") or bool(payload.get("fileName"))
+                        diag_result["status"] = "Accepted" if accepted else "AcceptedNoUpload"
+                        if accepted:
+                            self.logger.warning(f"  SSRF [{label}] via {method}: ACCEPTED")
+                            self._add_finding(
+                                severity,
+                                f"SSRF via {method}: {label} URL accepted",
+                                f"{method} with URL '{url}' was accepted. "
+                                f"Charger will upload data to {label} endpoint.",
+                            )
 
                     elif msg_type == MessageType.CALLERROR:
                         error_code = payload.get("error_code", "")

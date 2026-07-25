@@ -1,0 +1,19 @@
+# Groups the auto-generated release notes (generate_release_notes: true in
+# release.yml) by PR label. First matching category wins, so "*" stays last.
+changelog:
+  exclude:
+    labels:
+      - duplicate
+      - invalid
+      - wontfix
+      - question
+  categories:
+    - title: ✨ Features
+      labels:
+        - enhancement
+    - title: 🐛 Fixes
+      labels:
+        - bug
+    - title: 🧰 Other Changes
+      labels:
+        - "*"

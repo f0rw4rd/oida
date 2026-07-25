@@ -29,7 +29,10 @@ class TestDurationArgNameFix(unittest.TestCase):
         # Reads args.duration (the argparse dest) rather than the
         # never-existing subscribe_duration dest.
         # Whitespace-tolerant check — ruff format may flow this differently.
-        self.assertIn('getattr(self.args, "duration", None)', src.replace("\n", " ").replace("  ", " ").replace("  ", " ").replace("  ", " "))
+        self.assertIn(
+            'getattr(self.args, "duration", None)',
+            src.replace("\n", " ").replace("  ", " ").replace("  ", " ").replace("  ", " "),
+        )
         self.assertNotIn("subscribe_duration", src)
 
 
@@ -43,7 +46,8 @@ class TestPolicyNoneUpgradeWarning(unittest.TestCase):
             src,
         )
         self.assertIn(
-            "Upgrading to Basic256Sha256", src,
+            "Upgrading to Basic256Sha256",
+            src,
         )
         self.assertIn('requested_policy = "Basic256Sha256"', src)
 
@@ -53,7 +57,7 @@ class TestNormalizeUrlSourceNoDoubling(unittest.TestCase):
         src = _read("src/oida/protocols/opcua/helpers.py")
         # The fix detects bracketed IPv6, looks for ':' after closing ']'.
         self.assertIn('if target.startswith("[")', src)
-        self.assertIn('target[close + 1 :]', src)
+        self.assertIn("target[close + 1 :]", src)
 
 
 if __name__ == "__main__":

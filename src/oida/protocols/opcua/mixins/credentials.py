@@ -265,13 +265,20 @@ class CredentialsMixin:
                     access["perms"] = await self._collect_role_permissions(client)
                     self.logger.display(f"  Collected permissions for {len(access['perms'])} nodes")
 
-                await client.disconnect()
-
             except Exception as e:
                 self.logger.debug("test rbac failed: %s", e)
                 access["errors"].append(str(e))
                 err_short = str(e)[:50]
                 self.logger.fail(f"{auth_name}: {err_short}")
+            finally:
+                # Always disconnect: an uncaught error after connect() (e.g. in
+                # get_children/get_objects_node) would otherwise leave an
+                # activated session open on the target for each auth method.
+                if access.get("connected"):
+                    try:
+                        await client.disconnect()
+                    except Exception as e:
+                        self.logger.debug("rbac disconnect failed: %s", e)
 
             test_results[auth_name] = access
 

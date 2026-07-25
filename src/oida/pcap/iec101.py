@@ -325,6 +325,27 @@ class IEC101PassiveListener(PySharkListenerBase):
         try:
             type_id = int(type_id_raw)
         except (ValueError, TypeError):
+            # Unparseable or multi-value EK typeid (e.g. "1,3"): record a
+            # malformed interaction and log, rather than silently dropping the
+            # frame (mirrors the empty-typeid branch above and the iec104 path).
+            self.logger.debug(
+                "IEC101 unparseable ASDU typeid %r link_addr=%s", type_id_raw, link_addr
+            )
+            now = datetime.now().isoformat()
+            _sp, _dp = self.get_port_info(packet)
+            self._record_interaction(
+                now,
+                src_ip,
+                dst_ip,
+                "request" if is_primary else "response",
+                "ASDU (malformed)",
+                {"link_addr": link_addr, "malformed": True, "typeid_raw": str(type_id_raw)},
+                f"Malformed ASDU typeid={type_id_raw} link_addr={link_addr}",
+                flow_id=flow_id,
+                src_port=_sp,
+                dst_port=_dp,
+                stream_id=self.get_stream_id(packet),
+            )
             return
 
         # Parse common address

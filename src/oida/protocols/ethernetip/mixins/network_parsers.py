@@ -75,8 +75,14 @@ class NetworkParsersMixin(_ScannerBase):
                         if len(data) >= 4:
                             value = struct.unpack("<I", data[:4])[0]
                             tcp_ip_info["config_control"] = value
-                            dhcp = "DHCP" if (value & 0x01) else "Static"
-                            self.logger.display(f"  Config: {dhcp}")
+                            # Bits 0-3 = Configuration Method (CIP Vol 2, Sec 5-3.2.2.1),
+                            # not a single DHCP bit. Matches nxc_connection._fetch_network_config.
+                            config_method = value & 0x0F
+                            config_methods = {0: "Static", 1: "BOOTP", 2: "DHCP"}
+                            config_str = config_methods.get(
+                                config_method, f"Unknown ({config_method})"
+                            )
+                            self.logger.display(f"  Config: {config_str}")
                     elif attr_name == "interface_config":
                         # Complex structure: IP, subnet, gateway, DNS1, DNS2, domain
                         self._parse_interface_config(tcp_ip_info, data)

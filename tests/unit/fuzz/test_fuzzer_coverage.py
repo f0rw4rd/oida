@@ -101,9 +101,9 @@ TRANSPORT_LAYER_TIERS = {
 # Exact request counts from audit (used for regression checks)
 # Updated 2026-02-14 with current actual counts
 AUDIT_REQUEST_COUNTS = {
-    "dns": 64,
+    "dns": 68,
     "mdns": 20,
-    "dhcp": 16,
+    "dhcp": 19,
     "dhcpv6": 16,
     "http": 18,
     "http2": 21,

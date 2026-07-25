@@ -148,9 +148,7 @@ def _build_binary(project_root):
     )
     if proc.returncode != 0:
         tail = "\n".join((proc.stdout + proc.stderr).strip().splitlines()[-40:])
-        pytest.fail(
-            f"PyInstaller build failed (exit {proc.returncode}):\n{tail}"
-        )
+        pytest.fail(f"PyInstaller build failed (exit {proc.returncode}):\n{tail}")
 
 
 @pytest.fixture(scope="session")
@@ -264,9 +262,8 @@ class TestBinarySmoke:
         """
         bundle_dir = oida_bin.parent
         if bundle_dir.is_dir() and bundle_dir != oida_bin:
-            size_mb = (
-                sum(f.stat().st_size for f in bundle_dir.rglob("*") if f.is_file())
-                / (1024 * 1024)
+            size_mb = sum(f.stat().st_size for f in bundle_dir.rglob("*") if f.is_file()) / (
+                1024 * 1024
             )
         else:
             size_mb = oida_bin.stat().st_size / (1024 * 1024)

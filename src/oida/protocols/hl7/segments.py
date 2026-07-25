@@ -1463,6 +1463,8 @@ class HL7SegmentParser:
         msg = parse_message(normalized)
         current_patient = {}
         current_order: dict = {}
+        current_order_base: dict = {}
+        order_has_obr = False
 
         for child in HL7SegmentParser._iter_segments(msg):
             seg_name = child.name
@@ -1501,22 +1503,34 @@ class HL7SegmentParser:
                     orc = HL7SegmentParser.parse_orc(child)
                 except Exception:  # noqa: BLE001 — best-effort tolerant parse
                     orc = {}
-                current_order = dict(orc)
+                current_order_base = dict(orc)
                 if current_patient:
-                    current_order["PatientID"] = current_patient.get("PatientID", "")
+                    current_order_base["PatientID"] = current_patient.get("PatientID", "")
+                current_order = dict(current_order_base)
                 result["orders"].append(current_order)
+                order_has_obr = False
 
             elif seg_name == "OBR":
                 try:
                     obr = HL7SegmentParser.parse_obr(child)
                 except Exception:  # noqa: BLE001
                     obr = {}
-                if current_order:
-                    # OBR follows the ORC for the same order — fold its
-                    # fields into the in-flight order dict so the order
-                    # row carries OrderCode/OrderName/Priority/etc.
-                    for k, v in obr.items():
-                        current_order.setdefault(k, v)
+                if current_order_base:
+                    if not order_has_obr:
+                        # First OBR after the ORC — fold its fields into the
+                        # in-flight order dict so the order row carries
+                        # OrderCode/OrderName/Priority/etc.
+                        for k, v in obr.items():
+                            current_order.setdefault(k, v)
+                        order_has_obr = True
+                    else:
+                        # A second (or later) OBR under the same ORC is a
+                        # distinct order line — give it its own row instead
+                        # of silently dropping it via setdefault no-ops.
+                        new_order = dict(current_order_base)
+                        for k, v in obr.items():
+                            new_order.setdefault(k, v)
+                        result["orders"].append(new_order)
                 else:
                     standalone = dict(obr)
                     if current_patient:
@@ -1643,10 +1657,12 @@ class HL7SegmentParser:
             "AdmissionType": get(seg, "pv1_4"),
             "AttendingDoctor": get(seg, "pv1_7").replace("^", " "),
             "ReferringDoctor": get(seg, "pv1_8").replace("^", " "),
+            "ConsultingDoctor": get(seg, "pv1_9").replace("^", " "),
             "VisitNumber": get(seg, "pv1_19"),
             "FinancialClass": get(seg, "pv1_20"),
             "AdmitDate": get(seg, "pv1_44"),
             "DischargeDate": get(seg, "pv1_45"),
+            "AdmittingDoctor": get(seg, "pv1_17").replace("^", " "),
         }
 
     @staticmethod

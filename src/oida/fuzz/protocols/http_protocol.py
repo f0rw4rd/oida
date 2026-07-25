@@ -2776,14 +2776,6 @@ class HTTPFuzzer(BaseFuzzer):
             f"HTTP state machine initialized in {self.state_machine.get_current_state_name()} state"
         )
 
-    def send_request(self):
-        """Send HTTP request - transition from CONNECTED to REQUEST_SENT"""
-        if self.state_machine:
-            current = self.state_machine.get_current_state_name()
-            if current in ["CONNECTED", "PERSISTENT", "AUTHENTICATED"]:
-                self.state_machine.transition_to("REQUEST_SENT")
-                self.log.display("HTTP: Request sent")
-
     def handle_response(self, status_code: int = 200, has_keep_alive: bool = False):
         """
         Handle HTTP response
@@ -2817,40 +2809,3 @@ class HTTPFuzzer(BaseFuzzer):
             if current != "DISCONNECTED":
                 self.state_machine.transition_to("DISCONNECTED", force=True)
                 self.log.display("HTTP: Connection closed")
-
-    def test_invalid_state_transitions(self):
-        """
-        Test HTTP state confusion vulnerabilities
-
-        Tests:
-        - Sending requests without connection
-        - Using authenticated endpoints without auth
-        - Pipeline abuse (multiple requests without waiting for responses)
-        """
-        if not self.state_machine:
-            self.log.warning("No state machine defined, skipping invalid state tests")
-            return
-
-        self.log.display("Testing HTTP state confusion attacks...")
-
-        # Enable invalid transitions
-        self.state_machine.enable_invalid_state_testing()
-
-        invalid_tests = [
-            ("Send request without establishing connection", "REQUEST_SENT"),
-            ("Jump to authenticated without credentials", "AUTHENTICATED"),
-            ("Access persistent state without keep-alive", "PERSISTENT"),
-        ]
-
-        for test_name, target_state in invalid_tests:
-            self.log.display(f"Attack test: {test_name}")
-            try:
-                self.state_machine.transition_to("DISCONNECTED")  # Reset
-                self.state_machine.transition_to(target_state, force=True)
-                self.log.display(f"  Successfully forced invalid transition to {target_state}")
-            except Exception as e:
-                self.log.fail(f"  Failed: {e}")
-
-        # Re-enable validation
-        self.state_machine.disable_invalid_state_testing()
-        self.log.display("Invalid state testing complete, validation re-enabled")

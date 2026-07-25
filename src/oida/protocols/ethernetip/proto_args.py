@@ -209,7 +209,7 @@ def proto_args(parser, parents):
     attack_group.add_argument(
         "--reset-ethernet",
         action="store_true",
-        help="Reset Ethernet interface (may briefly disconnect device)",
+        help="Reset Ethernet interface (may briefly disconnect device - requires --confirm)",
     )
     attack_group.add_argument(
         "--crash-cpu",

@@ -48,9 +48,7 @@ class TestSecurityPolicyMapping:
             class_name = f"SecurityPolicy{policy}"
             if not hasattr(asyncua_sec, class_name):
                 missing.append((policy, class_name))
-        assert not missing, (
-            "Policies advertised by --policy must exist in asyncua: " + str(missing)
-        )
+        assert not missing, "Policies advertised by --policy must exist in asyncua: " + str(missing)
 
     def test_policy_map_in_nxc_covers_advertised_set(self):
         """policy_map in _configure_secure_channel must include every CLI choice
@@ -59,9 +57,11 @@ class TestSecurityPolicyMapping:
 
         from oida.protocols.opcua import nxc_connection as nxc
 
-        src = inspect.getsource(nxc._configure_secure_channel) if hasattr(
-            nxc, "_configure_secure_channel"
-        ) else inspect.getsource(nxc)
+        src = (
+            inspect.getsource(nxc._configure_secure_channel)
+            if hasattr(nxc, "_configure_secure_channel")
+            else inspect.getsource(nxc)
+        )
 
         for policy in _advertised_policies():
             assert f'"{policy}":' in src, (

@@ -146,6 +146,135 @@ class SocketHealthMonitor(ProtocolMonitor):
         return self._check_alive(fuzz_data_logger)
 
 
+def _ber_len(n: int) -> bytes:
+    """Encode a BER definite length (short or long form)."""
+    if n < 0x80:
+        return bytes([n])
+    out = bytearray()
+    while n:
+        out.insert(0, n & 0xFF)
+        n >>= 8
+    return bytes([0x80 | len(out)]) + bytes(out)
+
+
+def _ber_tlv(tag: int, value: bytes) -> bytes:
+    return bytes([tag]) + _ber_len(len(value)) + value
+
+
+class SNMPHealthMonitor(ProtocolMonitor):
+    """
+    UDP SNMP liveness monitor.
+
+    SNMP agents speak UDP/161, so a TCP connect (SocketHealthMonitor) always
+    fails against them — that would make preflight abort every real run, or, if
+    bypassed, flag every case as a false crash. This monitor instead sends a
+    valid SNMP GET for sysDescr.0 (1.3.6.1.2.1.1.1.0) over UDP.
+
+    Liveness decision (tuned to avoid false crashes):
+      * any datagram reply           -> alive
+      * ConnectionRefused / ICMP port unreachable (the agent socket is gone)
+                                     -> down (real crash signal)
+      * silent timeout (no reply, no ICMP error) -> treated as alive, since a
+        live agent may simply not answer our community/version, and reporting
+        it down would manufacture a crash on every case.
+
+    Args:
+        host: Target hostname or IP
+        port: Target UDP port (default: 161)
+        community: SNMP community for the v1/v2c probe (default: "public")
+        version: SNMP version byte for the probe (0=v1, 1=v2c; default: 1)
+        retry_count: Number of retry attempts (default: 3)
+        timeout: Socket timeout in seconds (default: 2)
+        failure_threshold: Consecutive failures before reporting down (default: 2)
+    """
+
+    def __init__(
+        self,
+        host,
+        port=161,
+        community="public",
+        version=1,
+        retry_count=3,
+        timeout=2,
+        failure_threshold=2,
+    ):
+        super().__init__(
+            host=host,
+            port=int(port),
+            timeout=float(timeout),
+            check_interval=1,
+            retry_count=retry_count,
+            failure_threshold=failure_threshold,
+        )
+        self.community = community
+        self.version = int(version)
+
+    def _build_get(self) -> bytes:
+        """Build a minimal, valid SNMP GetRequest for sysDescr.0."""
+        # OID 1.3.6.1.2.1.1.1.0 — first two arcs (1.3) collapse to 0x2b.
+        sysdescr = bytes([0x2B, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00])
+        varbind = _ber_tlv(0x30, _ber_tlv(0x06, sysdescr) + _ber_tlv(0x05, b""))
+        pdu = _ber_tlv(
+            0xA0,  # GetRequest
+            _ber_tlv(0x02, b"\x01")  # request-id
+            + _ber_tlv(0x02, b"\x00")  # error-status
+            + _ber_tlv(0x02, b"\x00")  # error-index
+            + _ber_tlv(0x30, varbind),  # varbind list
+        )
+        return _ber_tlv(
+            0x30,
+            _ber_tlv(0x02, bytes([self.version & 0xFF]))  # version
+            + _ber_tlv(0x04, self.community.encode())  # community
+            + pdu,
+        )
+
+    def _check_alive_once(self, fuzz_data_logger=None) -> bool:
+        """Probe the SNMP agent over UDP."""
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(self.timeout)
+            # connect() (not sendto) so the kernel delivers ICMP port-unreachable
+            # as ConnectionRefusedError on recv — an unconnected UDP socket
+            # silently drops that ICMP error, which would make a crashed agent
+            # look merely unresponsive (timeout) and defeat crash detection.
+            self.logger.debug(f"Sending SNMP GET(sysDescr.0) to {self.host}:{self.port}/udp")
+            sock.connect((self.host, self.port))
+            sock.send(self._build_get())
+            try:
+                response = sock.recv(2048)
+                self.logger.debug(f"SNMP agent replied ({len(response)} bytes)")
+                return True
+            except socket.timeout:
+                # No reply and no ICMP error: agent may just not answer this
+                # version/community. Treat as alive to avoid false crashes.
+                self.logger.debug("SNMP probe timed out (no ICMP error) - treating as alive")
+                return True
+        except ConnectionRefusedError as e:
+            # ICMP port unreachable: the agent socket is gone -> real crash.
+            self.logger.warning(f"SNMP UDP port unreachable: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"SNMP UDP port unreachable - {e}")
+            return False
+        except OSError as e:
+            self.logger.warning(f"SNMP probe socket error: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"SNMP probe socket error - {e}")
+            return False
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except (OSError, AttributeError) as e:
+                    self.logger.debug(f"Socket close error: {e}")
+
+    def pre_send(self, target=None, fuzz_data_logger=None, session=None):
+        return self._check_alive(fuzz_data_logger)
+
+    def post_send(self, target=None, fuzz_data_logger=None, session=None):
+        return self._check_alive(fuzz_data_logger)
+
+
 class CustomSSLSocketMonitor(ProtocolMonitor):
     """
     SSL/TLS socket health monitor with custom configuration.

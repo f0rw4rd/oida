@@ -290,6 +290,7 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
 
 try:
     PROTOCOL_DEPENDENCIES: Dict[str, Any] = _build_protocol_dependencies()
-except Exception:
+except Exception as e:
     # Fallback: package metadata not yet available (e.g. during build)
+    logger.debug("Failed to build PROTOCOL_DEPENDENCIES from package metadata: %s", e)
     PROTOCOL_DEPENDENCIES = {}

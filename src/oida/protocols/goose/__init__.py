@@ -28,9 +28,7 @@ from ...utils.lazy_import import lazy_import
 
 
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
-_pyiec61850_goose = lazy_import(
-    "pyiec61850.goose", "GOOSE", install_hint="pip install oida[goose]"
-)
+_pyiec61850_goose = lazy_import("pyiec61850.goose", "GOOSE", install_hint="pip install oida[goose]")
 _pyiec61850_mms = lazy_import("pyiec61850.mms", "GOOSE", install_hint="pip install oida[goose]")
 _pyiec61850_raw = lazy_import(
     "pyiec61850.pyiec61850", "GOOSE", install_hint="pip install oida[goose]"
@@ -144,6 +142,16 @@ class GOOSEScanner(SerialScanner):
         self.mms_enum_target = args.get("mms-enum", "")
         self.mms_port = safe_int_conversion(args.get("mms-port"), 102)
 
+        # TLS for the MMS GoCB-enumeration sub-connection (pyiec61850-ng >=
+        # 1.6.1.9). Certificate validation is DISABLED by default; see
+        # oida.protocols.mms.build_mms_tls_config.
+        self.tls = parse_bool(args.get("tls", False))
+        self.tls_port = safe_int_conversion(args.get("tls-port"), 3782)
+        self.tls_ca = args.get("tls-ca") or None
+        self.tls_pin = args.get("tls-pin") or None
+        self.tls_client_cert = args.get("tls-client-cert") or None
+        self.tls_client_key = args.get("tls-client-key") or None
+
         # Discovered GOOSE messages
         self.goose_sources = {}  # MAC -> list of messages
 
@@ -207,8 +215,26 @@ class GOOSEScanner(SerialScanner):
     def _connect_mms(self, host: str, port: int) -> Any:
         """Create an MMS connection using the high-level MMSClient."""
         try:
+            from ..mms import build_mms_tls_config
+
+            tls_config = build_mms_tls_config(
+                tls=self.tls,
+                tls_ca=self.tls_ca,
+                tls_pin=self.tls_pin,
+                client_cert=self.tls_client_cert,
+                client_key=self.tls_client_key,
+                logger=self.logger,
+            )
+            # MMS-over-TLS listens on 3782; switch to it when --tls is set and
+            # the caller passed the plaintext default.
+            if tls_config is not None and port == 102:
+                port = self.tls_port
+
             self.logger.debug(f"Connecting MMSClient to {host}:{port}")
-            client = _pyiec61850_mms.MMSClient()
+            if tls_config is not None:
+                client = _pyiec61850_mms.MMSClient(tls=tls_config)
+            else:
+                client = _pyiec61850_mms.MMSClient()
             connected = client.connect(host, port)
 
             if not connected:
@@ -322,7 +348,10 @@ class GOOSEScanner(SerialScanner):
                         msg.vlan_prio = _pyiec61850_raw.GooseSubscriber_getVlanPrio(raw_sub)
                         msg.is_test = bool(_pyiec61850_raw.GooseSubscriber_isTest(raw_sub))
                 except Exception as e:
-                    self.logger.debug(f"raw subscriber field extraction failed: {e}")
+                    # A library rename/API change here silently degrades all L2
+                    # extraction (src/dst MAC, VLAN) and suppresses the
+                    # TEST/SIMULATION security finding, so surface it above debug.
+                    self.logger.warning(f"raw subscriber field extraction failed: {e}")
 
                 msg_info = self._goose_message_to_dict(msg)
                 messages.append(msg_info)
@@ -369,6 +398,12 @@ class GOOSEScanner(SerialScanner):
                     f"GooseSubscriber failed to start on '{interface}'. "
                     "Check: (1) interface exists, (2) running as root or CAP_NET_RAW."
                 )
+                # start() was called, so stop() to release any bound socket
+                # before dropping the reference (other exit paths do this).
+                try:
+                    sub.stop()
+                except Exception as e:
+                    self.logger.debug(f"Failed to stop GOOSE subscriber after failed start: {e}")
                 self._goose_subscriber = None
                 return []
 
@@ -530,9 +565,10 @@ class GOOSEScanner(SerialScanner):
             go_id = msg.get("goose_id", "")
             if go_id:
                 self.logger.display(f"  GoID: {go_id}")
-            # VLAN/dst_mac are not carried on captured GooseMessages
-            # (only the MMS GoCB path populates them, see _gocb_info_to_dict);
-            # they are displayed by _display_gocb instead.
+            # VLAN/dst_mac ARE captured here too (see on_message()'s raw
+            # subscriber extraction / _goose_message_to_dict), but are not
+            # rendered in this summary line; the MMS GoCB path's counterparts
+            # are shown by _display_gocb instead.
             if msg.get("is_test"):
                 self.logger.warning("  TEST/SIMULATION flag is SET")
             if msg.get("dataset_size") is not None:
@@ -664,9 +700,14 @@ class GOOSEScanner(SerialScanner):
                     )
                     break
 
-            # Check for large sqNum gaps
+            # Check for large sqNum gaps. sqNum legitimately resets (drops back
+            # to 0/1) whenever stNum increments for a new event -- that is not
+            # message loss, so only flag a gap between messages that share the
+            # same stNum (i.e. retransmissions of the same state).
             sq_nums = [m.get("sq_num", 0) for m in msgs]
             for i in range(1, len(sq_nums)):
+                if st_nums[i] != st_nums[i - 1]:
+                    continue
                 gap = abs(sq_nums[i] - sq_nums[i - 1])
                 if gap > 100:
                     analysis["concerns"].append(

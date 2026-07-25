@@ -31,25 +31,6 @@ def bounded_int(min_val: int, max_val: int):
     return validator
 
 
-def valid_range(value: str) -> str:
-    """Argparse type that validates range format like '0-100' or '1-65535'."""
-    if "-" not in value:
-        raise argparse.ArgumentTypeError(f"invalid range format '{value}', expected 'start-end'")
-    parts = value.split("-", 1)
-    if len(parts) != 2:
-        raise argparse.ArgumentTypeError(f"invalid range format '{value}', expected 'start-end'")
-    try:
-        start = int(parts[0])
-        end = int(parts[1])
-    except ValueError:
-        raise argparse.ArgumentTypeError(f"invalid range values in '{value}', expected integers")
-    if start < 0 or end < 0:
-        raise argparse.ArgumentTypeError(f"range values cannot be negative: '{value}'")
-    if start > end:
-        raise argparse.ArgumentTypeError(f"start cannot be greater than end: '{value}'")
-    return value
-
-
 class CleanFormatter(logging.Formatter):
     """A formatter that outputs the raw message without any prefixes"""
 

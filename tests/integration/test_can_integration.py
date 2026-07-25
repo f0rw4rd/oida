@@ -681,9 +681,7 @@ class TestUDSScan:
                     "bus-type": "virtual",
                 }
             )
-            seeds = scanner.uds_security_seed_collect(
-                mock_bus, 0x7E0, security_level=0x01, count=2
-            )
+            seeds = scanner.uds_security_seed_collect(mock_bus, 0x7E0, security_level=0x01, count=2)
 
         assert isinstance(seeds, list)
         # Should have collected at least some seeds if responses matched
@@ -720,9 +718,7 @@ class TestUDSScan:
                     "bus-type": "virtual",
                 }
             )
-            routines = scanner.uds_routine_scan(
-                mock_bus, 0x7E0, routine_range=(0x0000, 0x0005)
-            )
+            routines = scanner.uds_routine_scan(mock_bus, 0x7E0, routine_range=(0x0000, 0x0005))
 
         assert isinstance(routines, list)
 
@@ -2005,23 +2001,3 @@ class TestISOTP:
 
 class TestHardwareRequired:
     """Tests that require real CAN hardware and are skipped."""
-
-    @pytest.mark.skip(reason="Requires real socketcan interface (can0)")
-    def test_socketcan_connection(self):
-        """Test connection to real socketcan interface [Skip]"""
-        pass
-
-    @pytest.mark.skip(reason="Requires real CAN hardware for FD negotiation")
-    def test_real_can_fd_negotiation(self):
-        """Test CAN FD bitrate negotiation on real hardware [Skip]"""
-        pass
-
-    @pytest.mark.skip(reason="Requires physical PCAN adapter")
-    def test_pcan_bus_type(self):
-        """Test PCAN adapter connection [Skip]"""
-        pass
-
-    @pytest.mark.skip(reason="Requires real CAN hardware for error frame detection")
-    def test_error_frame_detection_hardware(self):
-        """Test error frame detection on real bus [Skip]"""
-        pass

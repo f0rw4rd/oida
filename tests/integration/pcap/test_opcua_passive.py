@@ -346,9 +346,7 @@ class TestOPCUAFieldCoverage:
             "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
             expect_details=["service"],
         )
-        found = any(
-            ix.details.get("service_namespace_index") for ix in listener.interactions
-        )
+        found = any(ix.details.get("service_namespace_index") for ix in listener.interactions)
         assert found, "No interaction has service_namespace_index (opcua.servicenodeid.nsid)"
 
     def test_qualified_name_extracted(self):
@@ -384,13 +382,9 @@ class TestOPCUAFieldCoverage:
             "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
             expect_details=["service"],
         )
-        has_access = any(
-            ix.details.get("user_access_level") for ix in listener.interactions
-        )
+        has_access = any(ix.details.get("user_access_level") for ix in listener.interactions)
         has_mask = any(ix.details.get("user_write_mask") for ix in listener.interactions)
-        assert has_access or has_mask, (
-            "No interaction has user_access_level or user_write_mask"
-        )
+        assert has_access or has_mask, "No interaction has user_access_level or user_write_mask"
 
     def test_result_mask_extracted(self):
         """opcua.resultmask.all: browse result mask."""
@@ -425,9 +419,7 @@ class TestOPCUAFieldCoverage:
             "opcua/cisagov_opcua_with-gap_with-handshake.pcap",
             expect_details=["service"],
         )
-        has_seq = any(
-            ix.details.get("publish_sequence_number") for ix in listener.interactions
-        )
+        has_seq = any(ix.details.get("publish_sequence_number") for ix in listener.interactions)
         has_avail = any(
             ix.details.get("available_sequence_numbers") for ix in listener.interactions
         )
@@ -463,9 +455,7 @@ class TestOPCUAFieldCoverage:
             or ix.details.get("configuration_results")
             for ix in listener.interactions
         )
-        assert found, (
-            "No interaction has record_id / starting_record_id / configuration_results"
-        )
+        assert found, "No interaction has record_id / starting_record_id / configuration_results"
 
     def test_event_filter_results(self):
         """opcua.OperandStatusCodes / opcua.SelectClauseResults in monitored items."""
@@ -478,10 +468,7 @@ class TestOPCUAFieldCoverage:
             expect_details=["service"],
         )
         found = any(
-            ix.details.get("operand_status_codes")
-            or ix.details.get("select_clause_results")
+            ix.details.get("operand_status_codes") or ix.details.get("select_clause_results")
             for ix in listener.interactions
         )
-        assert found, (
-            "No interaction has operand_status_codes or select_clause_results"
-        )
+        assert found, "No interaction has operand_status_codes or select_clause_results"

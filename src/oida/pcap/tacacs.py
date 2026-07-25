@@ -598,8 +598,7 @@ class TACACSPassiveListener(PySharkListenerBase):
         )
         self.credentials.append(cred)
         self.logger.info(
-            f"TACACS+ encrypted AUTHEN hash (mode 16100) session={session_hex} "
-            f"{src_ip} -> {dst_ip}"
+            f"TACACS+ encrypted AUTHEN hash (mode 16100) session={session_hex} {src_ip} -> {dst_ip}"
         )
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:

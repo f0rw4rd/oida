@@ -148,6 +148,7 @@ class VNCPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "vnc"
     REQUIRED_LAYERS = ("vnc",)
     PROTOCOL_COLUMNS = ("phase", "detail", "info")
+    SERVER_PORTS = tuple(sorted(_VNC_PORTS))
 
     def __init__(
         self,
@@ -162,28 +163,31 @@ class VNCPassiveListener(PySharkListenerBase):
         self._known_servers: Set[Tuple[str, int]] = set()
 
     def _resolve_direction(
-        self, src_ip: str, dst_ip: str, src_port: int, dst_port: int
+        self, src_ip: str, dst_ip: str, src_port: int, dst_port: int, flow_id: str = ""
     ) -> Tuple[str, str, int]:
         """Determine (server_ip, client_ip, server_port) from packet endpoints.
 
-        Strategy:
-        1. If either port is in the well-known VNC range, that side is the server.
-        2. If we previously saw a handshake identifying a server, use that.
-        3. Fall back to lower port = server heuristic.
+        Delegates to the shared resolve_direction() cascade (VNC has no native
+        request/response field, so native=None) seeded with SERVER_PORTS
+        (5900-5909) plus any user --decode-as / OVERRIDE_PREFS ports, instead
+        of hardcoding the well-known range. Session-learned servers (from a
+        prior handshake on this flow) are checked first since they're a
+        stronger signal than the generic port/heuristic tiers.
         """
-        if dst_port in _VNC_PORTS:
-            return dst_ip, src_ip, dst_port
-        if src_port in _VNC_PORTS:
-            return src_ip, dst_ip, src_port
-        # Check session-learned servers
         if (dst_ip, dst_port) in self._known_servers:
             return dst_ip, src_ip, dst_port
         if (src_ip, src_port) in self._known_servers:
             return src_ip, dst_ip, src_port
-        # Heuristic: lower port is server
-        if src_port <= dst_port:
-            return src_ip, dst_ip, src_port
-        return dst_ip, src_ip, dst_port
+        d = self.resolve_direction(
+            None,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        return d.server_ip, d.client_ip, d.server_port
 
     def process_packet(self, packet) -> None:
         """Process VNC/RFB packet using PyShark dissection."""
@@ -204,7 +208,7 @@ class VNCPassiveListener(PySharkListenerBase):
 
         # Determine direction
         server_ip, client_ip, server_port = self._resolve_direction(
-            src_ip, dst_ip, src_port, dst_port
+            src_ip, dst_ip, src_port, dst_port, flow_id
         )
 
         session_key = (client_ip, server_ip, server_port)

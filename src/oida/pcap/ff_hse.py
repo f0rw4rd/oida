@@ -225,9 +225,14 @@ class FFHSEPassiveListener(PySharkListenerBase):
         if not svc_name:
             svc_name = "Unknown"
 
-        # Determine direction from confirm flag
-        confirm_raw = self.get_field(ff, "hdr_srv_confirm_flag")
-        is_response = self._parse_bool(confirm_raw)
+        # Determine direction from the message-type field, NOT the
+        # confirmed-service flag: ff.hdr_srv.confirm_flag (0x80) marks a
+        # *confirmed service*, set on requests AND responses alike, so it can't
+        # tell direction. ff.hdr.confirm_msg_type is 0=Request, 1=Response,
+        # 2=Error (per `tshark -G values`).
+        msg_type_raw = self.get_field(ff, "hdr_confirm_msg_type")
+        msg_type_int = self._parse_int(msg_type_raw, 0)
+        is_response = msg_type_int in (1, 2)  # 1=Response, 2=Error
         direction = "response" if is_response else "request"
 
         # Extract trailer info

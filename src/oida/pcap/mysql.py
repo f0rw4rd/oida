@@ -274,11 +274,22 @@ class MySQLCredential:
 
         mysql_native_password -> hashcat mode 11200:
             $mysqlna$<salt_hex>*<hash_hex>
+
+        Only emitted for the native-password plugin: its scramble is a 20-byte
+        (40-hex) SHA1 response, and $mysqlna$ (mode 11200) is defined for that
+        algorithm alone. Other plugins (caching_sha2_password,
+        sha256_password, ...) use a different response that mode 11200 cannot
+        crack, so returning a $mysqlna$ line for them would be wrong.
         """
-        if self.password_hash and self.salt:
-            full_salt = self.salt + self.salt2
-            return f"$mysqlna${full_salt}*{self.password_hash}"
-        return ""
+        if not (self.password_hash and self.salt):
+            return ""
+        # Empty plugin = pre-8.0 default, which is native-password.
+        if self.auth_plugin and self.auth_plugin != "mysql_native_password":
+            return ""
+        if len(self.password_hash) != 40:
+            return ""
+        full_salt = self.salt + self.salt2
+        return f"$mysqlna${full_salt}*{self.password_hash}"
 
     @property
     def auth_method(self) -> str:

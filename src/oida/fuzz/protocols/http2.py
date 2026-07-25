@@ -262,6 +262,24 @@ class HTTP2Fuzzer(BaseFuzzer):
                 return custom
         return default
 
+    def _connect_request(self, request):
+        """Wire a fuzzed request into the session so it is always preceded by
+        the HTTP/2 connection preface.
+
+        - reuse_target_connection=True: the connection persists for the whole
+          session, so the preface (connected as its own root) is transmitted
+          once at the start and every request rides the same open connection.
+          Chaining here would re-send the preface mid-connection, which servers
+          reject, so requests are connected directly to the session root.
+        - reuse_target_connection=False (recommended for crash detection): a new
+          connection is opened per test case, so each request must be chained
+          off the preface to replay it on every fresh connection.
+        """
+        if self.config and self.config.reuse_target_connection:
+            self.session.connect(request)
+        else:
+            self.session.connect(self._http2_preface, request)
+
     def _define_protocol(self):
         """Define HTTP/2 protocol messages for fuzzing
 
@@ -305,6 +323,11 @@ class HTTP2Fuzzer(BaseFuzzer):
             ),
         )
         self.session.connect(preface)
+        # Store the preface node so every fuzzed request can be chained off it.
+        # Per RFC 7540 §3.5 a server MUST close any connection that does not
+        # begin with the 24-byte preface, so a fuzzed frame sent on a fresh
+        # connection without the preface never reaches the frame/HPACK parser.
+        self._http2_preface = preface
 
         # ================================================================
         # PHASE 1: QUICK COVERAGE (~30 seconds)
@@ -366,7 +389,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(quick_coverage)
+            self._connect_request(quick_coverage)
             self.register_request(
                 "HTTP2_Quick_Coverage", "Quick sweep of all 10 frame types (~30s)", "baseline"
             )
@@ -470,7 +493,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(rapid_reset)
+            self._connect_request(rapid_reset)
             self.register_request(
                 "HTTP2_Rapid_Reset", "CVE-2023-44487 RST_STREAM flood attack", "cve"
             )
@@ -574,7 +597,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(continuation_flood)
+            self._connect_request(continuation_flood)
             self.register_request(
                 "HTTP2_Continuation_Flood", "CVE-2024-27316 CONTINUATION without END_HEADERS", "cve"
             )
@@ -640,7 +663,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(frame_overflow)
+            self._connect_request(frame_overflow)
             self.register_request(
                 "HTTP2_Frame_Overflow", "Frame length/payload overflow attacks", "overflow"
             )
@@ -709,7 +732,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(hpack_bomb)
+            self._connect_request(hpack_bomb)
             self.register_request("HTTP2_HPACK_Bomb", "HPACK compression bomb attacks", "overflow")
 
         # ================================================================
@@ -772,7 +795,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(protocol_violations)
+            self._connect_request(protocol_violations)
             self.register_request(
                 "HTTP2_Protocol_Violations",
                 "Protocol rule violations (invalid streams, frames)",
@@ -810,7 +833,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(settings_attack)
+            self._connect_request(settings_attack)
             self.register_request(
                 "HTTP2_Settings_Attack", "Invalid SETTINGS values and boundaries", "protocol"
             )
@@ -852,7 +875,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(window_attack)
+            self._connect_request(window_attack)
             self.register_request(
                 "HTTP2_Window_Attack", "WINDOW_UPDATE overflow and flow control abuse", "protocol"
             )
@@ -929,7 +952,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(stream_boundaries)
+            self._connect_request(stream_boundaries)
             self.register_request(
                 "HTTP2_Stream_Boundaries",
                 "Stream ID boundary testing (0, max, even/odd)",
@@ -991,7 +1014,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     )
                 ),
             )
-            self.session.connect(frame_boundaries)
+            self._connect_request(frame_boundaries)
             self.register_request(
                 "HTTP2_Frame_Boundaries", "Frame field boundaries (length, flags, type)", "boundary"
             )
@@ -1022,7 +1045,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     Block("headers_payload", children=(Static(default_value=headers_payload),)),
                 ),
             )
-            self.session.connect(headers_get)
+            self._connect_request(headers_get)
 
             # POST request with DATA
             post_headers = self._encode_hpack_headers(
@@ -1059,7 +1082,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(post_request)
+            self._connect_request(post_request)
             self.register_request(
                 "HTTP2_Headers", "HEADERS frame variations (GET, POST, etc.)", "standard"
             )
@@ -1085,7 +1108,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(data_frame)
+            self._connect_request(data_frame)
 
             # Padded DATA frame
             padded_data = Request(
@@ -1100,7 +1123,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     Static(default_value=b"\x00" * 10),  # Padding
                 ),
             )
-            self.session.connect(padded_data)
+            self._connect_request(padded_data)
             self.register_request("HTTP2_Data", "DATA frame variations with padding", "standard")
 
         if self.is_request_enabled("HTTP2_Goaway"):
@@ -1117,7 +1140,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     SmartString(name="debug_data", default_value="", max_len=1024),
                 ),
             )
-            self.session.connect(goaway)
+            self._connect_request(goaway)
             self.register_request("HTTP2_Goaway", "GOAWAY frame with debug data", "standard")
 
         if self.is_request_enabled("HTTP2_Priority") or enable_priority:
@@ -1135,7 +1158,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     Byte(name="weight", default_value=16),
                 ),
             )
-            self.session.connect(priority)
+            self._connect_request(priority)
 
             # Stream dependency chain attack
             dependency_chain = Request(
@@ -1157,7 +1180,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     Byte(name="weight2", default_value=128),
                 ),
             )
-            self.session.connect(dependency_chain)
+            self._connect_request(dependency_chain)
             self.register_request("HTTP2_Priority", "PRIORITY frame dependency chains", "standard")
 
         if self.is_request_enabled("HTTP2_Push_Promise") or enable_push:
@@ -1181,7 +1204,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(push_promise)
+            self._connect_request(push_promise)
             self.register_request(
                 "HTTP2_Push_Promise", "PUSH_PROMISE server push testing", "standard"
             )
@@ -1198,7 +1221,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     QWord(name="ping_data", default_value=0x1234567890ABCDEF, endian=">"),
                 ),
             )
-            self.session.connect(ping)
+            self._connect_request(ping)
             self.register_request("HTTP2_Ping", "PING frame keepalive testing", "standard")
 
         if self.is_request_enabled("HTTP2_Window_Attack"):
@@ -1212,7 +1235,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     DWord(name="window_increment", default_value=65536, endian=">"),
                 ),
             )
-            self.session.connect(window_update)
+            self._connect_request(window_update)
 
         if self.is_request_enabled("HTTP2_Rst_Stream"):
             rst_stream = Request(
@@ -1237,7 +1260,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(rst_stream)
+            self._connect_request(rst_stream)
             self.register_request(
                 "HTTP2_Rst_Stream", "RST_STREAM frame with error code variations", "standard"
             )
@@ -1285,7 +1308,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     DWord(name="setting6_val", default_value=8192, endian=">"),
                 ),
             )
-            self.session.connect(settings_variations)
+            self._connect_request(settings_variations)
 
             settings_ack = Request(
                 "http2_settings_ack",
@@ -1296,7 +1319,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     DWord(name="stream_id", default_value=0, endian=">"),
                 ),
             )
-            self.session.connect(settings_ack)
+            self._connect_request(settings_ack)
             self.register_request(
                 "HTTP2_Settings_Attack", "Invalid SETTINGS values and boundaries", "protocol"
             )
@@ -1386,7 +1409,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(json_post)
+            self._connect_request(json_post)
             self.register_request(
                 "HTTP2_Content_POST_JSON", "JSON body fuzzing over HTTP/2", "content"
             )
@@ -1440,7 +1463,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(multipart_post)
+            self._connect_request(multipart_post)
             self.register_request(
                 "HTTP2_Content_POST_Multipart",
                 "Multipart file upload fuzzing over HTTP/2",
@@ -1488,7 +1511,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(form_post)
+            self._connect_request(form_post)
             self.register_request(
                 "HTTP2_Content_POST_FormEncoded",
                 "URL-encoded form body fuzzing over HTTP/2",
@@ -1523,7 +1546,7 @@ class HTTP2Fuzzer(BaseFuzzer):
             ua_request = Request(
                 "HTTP2_UserAgent_Fuzzing", children=(Group("ua_patterns", values=ua_frames),)
             )
-            self.session.connect(ua_request)
+            self._connect_request(ua_request)
             self.register_request(
                 "HTTP2_UserAgent_Fuzzing",
                 "User-Agent header fuzzing with browser patterns",
@@ -1626,7 +1649,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(cookie_request)
+            self._connect_request(cookie_request)
             self.register_request(
                 "HTTP2_Cookie_Fuzzing", "Cookie header fuzzing over HTTP/2", "headers"
             )
@@ -1752,7 +1775,7 @@ class HTTP2Fuzzer(BaseFuzzer):
                     ),
                 ),
             )
-            self.session.connect(auth_request)
+            self._connect_request(auth_request)
             self.register_request(
                 "HTTP2_Auth_Fuzzing", "Bearer token and auth header fuzzing", "auth"
             )

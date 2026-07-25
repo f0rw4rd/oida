@@ -165,10 +165,19 @@ class ControlMixin(_ScannerBase):
             return False
 
         try:
-            tag_var = f"{device}_Tag"
-            tag_data = {"TagValue": tag_value, "Reason": reason}
+            # Use the library's dedicated tagging call, not a fabricated
+            # write_point to a "<device>_Tag" variable (which no TASE.2 server
+            # implements). set_tag(domain, device, tag_value:int, reason).
+            from pyiec61850 import tase2 as _tase2
 
-            result = connection.write_point(domain, tag_var, tag_data)
+            tag_map = {
+                "NO_TAG": _tase2.TAG_NONE,
+                "OPEN_AND_CLOSE_INHIBIT": _tase2.TAG_OPEN_AND_CLOSE_INHIBIT,
+                "CLOSE_ONLY": _tase2.TAG_CLOSE_ONLY_INHIBIT,
+            }
+            tag_int = tag_map.get(str(tag_value).upper(), _tase2.TAG_NONE)
+
+            result = connection.set_tag(domain, device, tag_int, reason)
 
             if result:
                 self.logger.display(f"Set tag for {domain}/{device} to {tag_value}")

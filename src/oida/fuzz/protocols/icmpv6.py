@@ -152,7 +152,9 @@ class ICMPv6Fuzzer(BaseFuzzer):
                 "overflow",
             ),
             RequestInfo(
-                "ICMPv6_Corrupted_Checksum", "Checksum validation bypass tests", "overflow"
+                "ICMPv6_Corrupted_Checksum",
+                "Header/length edge cases (checksum bytes are recomputed by the kernel)",
+                "overflow",
             ),
             # Phase 3: CVE-targeted (2m-5m)
             RequestInfo(
@@ -448,7 +450,17 @@ class ICMPv6Fuzzer(BaseFuzzer):
             ),
         )
 
-        # Corrupted Checksum Test
+        # Checksum edge-case test.
+        #
+        # NOTE: The bad checksum bytes below never actually leave the host. This
+        # fuzzer transmits over an IPPROTO_ICMPV6 socket (see __init__), and per
+        # RFC 3542 s3.1 the kernel unconditionally computes and overwrites the
+        # ICMPv6 checksum on send. There is no AF_PACKET/IPPROTO_RAW transport in
+        # this fuzzer to bypass that, so a genuinely bad checksum cannot be put on
+        # the wire here. The request is retained because it still exercises the
+        # target's handling of the surrounding Echo Request header/payload; the
+        # "Bad_Checksum" group values are effectively don't-care once the kernel
+        # rewrites them.
         corrupted_checksum = Request(
             "ICMPv6_Corrupted_Checksum",
             children=(

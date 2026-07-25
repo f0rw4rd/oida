@@ -624,16 +624,19 @@ class TestReadResource(unittest.TestCase):
         self.assertIn("read_condition", host.results["data"])
 
     @patch("oida.protocols.fhir.mixins.search.encounter")
-    def test_read_encounter_fallback_parsing(self, mock_enc):
-        """Test reading Encounter uses generic fallback parse"""
+    @patch("oida.protocols.fhir.mixins.search.FHIRResourceParser")
+    def test_read_encounter_by_id(self, mock_parser, mock_enc):
+        """Test reading an Encounter by ID uses the encounter parser"""
         host = MockSearchHost()
         mock_resource = Mock()
         mock_enc.Encounter.read.return_value = mock_resource
+        mock_parser.parse_encounter.return_value = {"id": "E001", "status": "finished"}
 
         host._read_resource("Encounter", "E001")
-        # Encounter hits the else branch (generic dict)
+
+        mock_parser.parse_encounter.assert_called_once_with(mock_resource)
         self.assertIn("read_encounter", host.results["data"])
-        self.assertEqual(host.results["data"]["read_encounter"]["type"], "Encounter")
+        self.assertEqual(host.results["data"]["read_encounter"]["status"], "finished")
 
 
 if __name__ == "__main__":

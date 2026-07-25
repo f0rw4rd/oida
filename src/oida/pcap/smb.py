@@ -155,10 +155,16 @@ class SMBPassiveListener(PySharkListenerBase):
 
     PROTOCOL_NAME = "smb"
     DISPLAY_FILTER = "smb or smb2"
-    REQUIRED_LAYERS = ("smb", "smb2", "ntlmssp")
+    # NOTE: intentionally does NOT include "ntlmssp" -- NTLMSSP is a shared
+    # auth blob dissector used by HTTP, LDAP, SMTP, and MSRPC too, not just
+    # SMB. Requiring an actual smb/smb2 layer keeps those unrelated packets
+    # from being recorded as SMB traffic with a bogus device + mis-attributed
+    # creds. _extract_ntlmssp_data() still reads packet.ntlmssp directly when
+    # present on a genuine SMB packet.
+    REQUIRED_LAYERS = ("smb", "smb2")
     PROTOCOL_COLUMNS = ("version", "domain", "user", "share", "operation")
 
-    SMB_PORTS = (445, 139)
+    SERVER_PORTS = (445, 139)
 
     def __init__(
         self,
@@ -199,7 +205,7 @@ class SMBPassiveListener(PySharkListenerBase):
 
         Uses PyShark's SMB/SMB2 dissector for cleaner field extraction.
         """
-        if not (hasattr(packet, "smb") or hasattr(packet, "smb2") or hasattr(packet, "ntlmssp")):
+        if not (hasattr(packet, "smb") or hasattr(packet, "smb2")):
             return
 
         src_ip, dst_ip = self.get_ip_info(packet)
@@ -211,17 +217,22 @@ class SMBPassiveListener(PySharkListenerBase):
         src_port, dst_port = self.get_port_info(packet)
         src_mac, dst_mac = self.get_mac_info(packet)
 
-        # Determine role based on port
-        if dst_port in self.SMB_PORTS:
-            # Traffic TO SMB port - sender is client
-            client_ip = src_ip
-            server_ip = dst_ip
-            is_client_packet = True
-        else:
-            # Traffic FROM SMB port - sender is server
-            client_ip = dst_ip
-            server_ip = src_ip
-            is_client_packet = False
+        # Determine role via the shared cascade (known server port -- canonical
+        # 445/139 plus any user --decode-as / OVERRIDE_PREFS override -- with a
+        # lower-port/first-seen fallback) instead of a hardcoded port check
+        # that ignored non-standard ports.
+        d = self.resolve_direction(
+            packet,
+            native=None,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        is_client_packet = d.is_request
+        client_ip = d.client_ip
+        server_ip = d.server_ip
 
         # Track session
         session_key = (client_ip, server_ip)

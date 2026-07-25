@@ -584,6 +584,13 @@ class RealConnectionFactory(ConnectionFactory):
                     0,  # ICMP doesn't use ports
                     protocol="icmp",
                 )
+            elif config.protocol_type == ProtocolType.IGMP:
+                # IGMP sockets - kernel builds the IP header; app supplies IGMP
+                return RawSocketConnection(
+                    config.target_ip,
+                    0,  # IGMP doesn't use ports
+                    protocol="igmp",
+                )
             elif config.protocol_type == ProtocolType.ICMPV6:
                 # ICMPv6 sockets - kernel handles IPv6 header and checksum
                 return RawSocketConnection(

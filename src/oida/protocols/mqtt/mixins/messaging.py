@@ -15,6 +15,11 @@ from ..scanner import ListenStats
 from ....utils.export_utils import print_table
 from ....utils.fuzzer import fuzz
 
+# fuzz_publish_payloads() only fuzzes the first N topics; callers that log a
+# pre-cap topic count (e.g. nxc_connection._handle_fuzz) should use this so
+# the reported count matches what actually gets fuzzed.
+MAX_FUZZ_TOPICS = 10
+
 
 class MessagingMixin:
     """Mixin providing MQTT messaging operations."""
@@ -329,8 +334,8 @@ class MessagingMixin:
 
         conn.loop_start()
 
-        # Limit to first 10 topics
-        max_topics = min(len(topics), 10)
+        # Limit to first N topics
+        max_topics = min(len(topics), MAX_FUZZ_TOPICS)
 
         for topic in topics[:max_topics]:
             topic_stats = {"topic": topic, "payloads_sent": 0, "errors": 0}

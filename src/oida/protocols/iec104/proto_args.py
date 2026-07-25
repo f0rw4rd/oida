@@ -171,7 +171,8 @@ Examples:
         "-K",
         "--clock-read",
         action="store_true",
-        help="Read device clock via clock sync command (Type 103)",
+        help="Report device clock via C_CS_NA_1 (Type 103) — this OVERWRITES the "
+        "outstation's clock as a side effect, requires --confirm",
     )
 
     # Write Operations

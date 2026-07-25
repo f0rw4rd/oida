@@ -25,9 +25,12 @@ def _is_local(host: str) -> bool:
 class TestBacnetHostClassification(unittest.TestCase):
     def test_rfc1918_private_ranges_are_local(self):
         for ip in (
-            "10.0.0.1", "10.255.255.254",
-            "172.16.0.1", "172.31.255.254",
-            "192.168.0.1", "192.168.255.254",
+            "10.0.0.1",
+            "10.255.255.254",
+            "172.16.0.1",
+            "172.31.255.254",
+            "192.168.0.1",
+            "192.168.255.254",
             "127.0.0.1",
         ):
             self.assertTrue(_is_local(ip), f"{ip} must be local")

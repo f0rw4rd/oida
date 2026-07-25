@@ -275,8 +275,11 @@ class CoAPPassiveListener(PySharkListenerBase):
         # -- Hop Limit --
         hop_limit = self.get_field(coap, "opt_hop_limit", None)
 
-        # Determine direction and operation
-        is_request = code_val >= 0 and code_val <= 7
+        # Determine direction and operation. Code 0 is the empty message
+        # (ACK/RST with no method/response code) and must NOT be treated as
+        # a request -- it's excluded from the request range so is_empty gets
+        # a chance to set direction from msg_type instead.
+        is_request = 1 <= code_val <= 7
         is_response = code_val >= 64
         is_empty = code_val == 0
 

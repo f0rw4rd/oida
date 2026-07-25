@@ -177,6 +177,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
     PROTOCOL_NAME = "enip"
     DISPLAY_FILTER = "enip or cip"
     REQUIRED_LAYERS = ("enip", "cip")
+    SERVER_PORTS = (44818,)
     PROTOCOL_COLUMNS = ("operation", "path", "status", "data")
 
     def __init__(
@@ -278,16 +279,31 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
             except (ValueError, TypeError) as e:
                 self.logger.debug(f"ENIP: failed to parse encap status {status_raw!r}: {e}")
 
-        # RegisterSession/UnregisterSession are requests
-        # ListIdentity responses contain device info
-        direction = "request"
-        if cmd_code in (0x0063,):  # ListIdentity can be request or response
-            # If we have product name, it's a response
+        # The EtherNet/IP encapsulation header has no reply bit -- the command
+        # code is echoed in the reply -- so direction cannot be read from the
+        # command alone.  Resolve it via the known server port (44818), with two
+        # authoritative response signals that also cover non-standard ports:
+        # a non-zero encapsulation status (errors only appear in replies) and a
+        # populated ListIdentity product name (only present in the reply).
+        native: Optional[bool] = None
+        if status:
+            native = False
+        elif cmd_code == 0x0063:  # ListIdentity reply carries device info
             prod_name = str(self.get_field(enip, "lir_name", "") or "").strip()
             if not prod_name:
                 prod_name = str(self.get_field(enip, "lir.name", "") or "").strip()
             if prod_name:
-                direction = "response"
+                native = False
+        d = self.resolve_direction(
+            None,
+            native=native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
+        direction = d.direction
 
         details: Dict[str, Any] = {
             "command_code": cmd_code,
@@ -781,21 +797,6 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
             )
 
         return result
-
-    def get_read_operations(self) -> List[Dict[str, Any]]:
-        """Get interactions that are CIP read operations."""
-        reads: Dict[Tuple[str, str], int] = {}
-        for ix in self.interactions:
-            if ix.direction == "request":
-                svc = ix.details.get("service_code")
-                if svc is not None and svc in CIP_READ_SERVICES:
-                    pair = (ix.src_ip, ix.dst_ip)
-                    reads[pair] = reads.get(pair, 0) + 1
-        return [
-            {"client": client, "server": server, "read_count": count}
-            for (client, server), count in reads.items()
-            if count > 0
-        ]
 
     def get_write_operations(self) -> List[Dict[str, Any]]:
         """Get interactions that are CIP write/control operations."""

@@ -263,6 +263,11 @@ class bacnet(
             self.args.check_trendlogs = True
             self.args.enum_life_safety = True
             self.args.check_bacnet_sc = True
+            # OOS / reinit checks run on the BAC0 transport; on the default
+            # bacpypes3 path _bacpypes3_run_actions warns that they need
+            # --use-bac0 rather than silently skipping them.
+            self.args.check_oos = True
+            self.args.check_reinit = True
 
         # Assessment shortcuts
         if getattr(self.args, "assess_network", False):
@@ -487,6 +492,15 @@ class bacnet(
         reuse the entire feature-dispatch body unchanged: the actions only need
         `app` + `target_addr` and are otherwise transport-agnostic.
         """
+        # --check-oos / --check-reinit are implemented only on the BAC0
+        # transport (they use the sync object cache + _read_property). On the
+        # bacpypes3/SC path they cannot run, so warn loudly instead of silently
+        # doing nothing (matching how --monitor/--diff report on this path).
+        if getattr(self.args, "check_oos", False) or getattr(self.args, "check_reinit", False):
+            self.logger.warning(
+                "--check-oos/--check-reinit require --use-bac0; skipping on the default transport"
+            )
+
         if device_id is None:
             self.logger.display("Probing for device ID...")
             try:
@@ -632,9 +646,13 @@ class bacnet(
             if getattr(self.args, "check_life_safety", False):
                 await self._bacpypes3_check_life_safety(app, target_addr, device_id, timeout)
 
-            # COV subscriptions
+            # COV subscriptions — SubscribeCOV creates subscription state on
+            # the device (matches --call cov's RISK_WRITE gating below).
             if getattr(self.args, "cov", False):
-                await self._bacpypes3_subscribe_cov(app, target_addr, device_id, timeout)
+                if not getattr(self.args, "confirm", False):
+                    self.logger.fail("--cov requires --confirm flag")
+                else:
+                    await self._bacpypes3_subscribe_cov(app, target_addr, device_id, timeout)
 
             # ReadRange for trend logs
             if getattr(self.args, "read_range", False):

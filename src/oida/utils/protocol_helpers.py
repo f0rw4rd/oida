@@ -195,9 +195,7 @@ class ConnectionHelper:
                 # real verification, so enforce hostname matching too.
                 if tls_ca and not tls_insecure:
                     ssl_context.check_hostname = True
-                sock = ssl_context.wrap_socket(
-                    sock, server_hostname=server_hostname or host
-                )
+                sock = ssl_context.wrap_socket(sock, server_hostname=server_hostname or host)
 
                 try:
                     cert_der = sock.getpeercert(binary_form=True)
@@ -277,27 +275,6 @@ class DataFormatter:
             lines.append(f"{addr:08x}  {hex_part:<{width * 3}}  {ascii_part}")
         return "\n".join(lines)
 
-    @staticmethod
-    def format_bytes(size: int) -> str:
-        """Format byte size in human readable format"""
-        for unit in ["B", "KB", "MB", "GB"]:
-            if size < 1024:
-                return f"{size:.1f} {unit}"
-            size /= 1024
-        return f"{size:.1f} TB"
-
-    @staticmethod
-    def format_duration(seconds: float) -> str:
-        """Format duration in human readable format"""
-        if seconds < 1:
-            return f"{seconds * 1000:.1f}ms"
-        elif seconds < 60:
-            return f"{seconds:.1f}s"
-        elif seconds < 3600:
-            return f"{seconds / 60:.1f}m"
-        else:
-            return f"{seconds / 3600:.1f}h"
-
 
 class SecurityAnalyzer:
     """Helper class for common security analysis functions"""
@@ -347,5 +324,5 @@ def safe_int_conversion(value: Any, default: int = 0) -> int:
     try:
         return int(value)
     except (ValueError, TypeError) as e:
-        _logger.debug(f"Return value computation failed: {e}")
+        _logger.debug(f"int conversion failed: {e}")
         return default

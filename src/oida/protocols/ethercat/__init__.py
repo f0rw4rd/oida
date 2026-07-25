@@ -145,7 +145,13 @@ class EtherCATScanner(
         self.fuzz_iterations = int(args.get("fuzz_iterations", args.get("fuzz-iterations", 10)))
         self.read_sdo = parse_bool(args.get("sdo", True))
         self.read_eeprom = parse_bool(args.get("eeprom", True))
-        self.scan_range = args.get("scan-range", "1-16")
+        # When -s/--scan-range is omitted (None), enumerate every discovered
+        # slave rather than a fixed 1-16 window (which silently dropped slaves
+        # beyond position 16 on larger buses). The real range is computed in
+        # connect() once the slave count is known.
+        raw_scan_range = args.get("scan-range")
+        self._scan_range_explicit = bool(raw_scan_range)
+        self.scan_range = raw_scan_range or "1-16"
         self.slave_positions = ProtocolParser.parse_address_range(self.scan_range)
 
         # Shared slave selection (-S / --slave)
@@ -226,6 +232,16 @@ class EtherCATScanner(
 
             self.logger.display(f"Found {slave_count} EtherCAT slaves")
 
+            # Reconcile the enumeration range with the real slave count so
+            # slaves beyond the default window are not silently skipped.
+            if not self._scan_range_explicit:
+                self.slave_positions = set(range(1, slave_count + 1))
+            elif self.slave_positions and slave_count > max(self.slave_positions):
+                self.logger.warning(
+                    f"{slave_count} slaves present but --scan-range covers up to "
+                    f"{max(self.slave_positions)}; slaves beyond that are not enumerated"
+                )
+
             # If boot state requested, transition to Bootstrap (for FoE firmware ops).
             # Bootstrap state lets the master flash slave firmware — strictly a
             # write/state-change operation, so gate it behind --confirm.
@@ -302,6 +318,14 @@ class EtherCATScanner(
 
         except Exception as e:
             self.logger.fail(f"Failed to initialize EtherCAT master: {e}")
+            # Close the master if it was opened before the failure, so the raw
+            # socket/interface isn't leaked (disconnect() won't run when connect
+            # returns None).
+            try:
+                if "master" in locals() and master is not None:
+                    master.close()
+            except Exception as close_err:
+                self.logger.debug(f"Master close after error failed: {close_err}")
             return None
 
     def _processdata_thread(self, master: Any):
@@ -624,20 +648,29 @@ class EtherCATScanner(
             "timestamp": datetime.now().isoformat(),
         }
 
-        try:
-            # Get working counter. A process-data cycle is send THEN receive;
-            # without a preceding send_processdata() there is no frame in flight
-            # and receive_processdata() returns a stale/empty buffer.
-            master.send_processdata()
-            info["actual_wkc"] = master.receive_processdata(2000)
+        pd_thread_active = self._pd_thread is not None and self._pd_thread.is_alive()
 
-            # Estimate cycle time
-            start_time = time.time()
-            for _ in range(10):
+        try:
+            if pd_thread_active:
+                # In OP state the background _processdata_thread owns the cyclic
+                # send/receive. pysoem's process-data calls are not thread-safe,
+                # so driving them from here too would corrupt the shared frame
+                # buffer / IOmap. Read the WKC that thread maintains instead.
+                info["actual_wkc"] = self._actual_wkc
+            else:
+                # Get working counter. A process-data cycle is send THEN receive;
+                # without a preceding send_processdata() there is no frame in
+                # flight and receive_processdata() returns a stale/empty buffer.
                 master.send_processdata()
-                master.receive_processdata(2000)
-            cycle_time = (time.time() - start_time) / 10 * 1000  # ms
-            info["cycle_time"] = round(cycle_time, 2)
+                info["actual_wkc"] = master.receive_processdata(2000)
+
+                # Estimate cycle time
+                start_time = time.time()
+                for _ in range(10):
+                    master.send_processdata()
+                    master.receive_processdata(2000)
+                cycle_time = (time.time() - start_time) / 10 * 1000  # ms
+                info["cycle_time"] = round(cycle_time, 2)
 
         except Exception as e:
             self.logger.debug(f"Error getting network info: {e}")

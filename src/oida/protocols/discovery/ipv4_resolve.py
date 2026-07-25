@@ -94,7 +94,12 @@ class IPv4ResolveScanner:
         # Limit sweep size
         try:
             network = ipaddress.IPv4Network(subnet, strict=False)
-            host_count = len(list(network.hosts()))
+            # Usable-host count without materializing the list (a wide subnet
+            # would allocate millions of objects before this guard could shrink
+            # the sweep). Matches len(list(network.hosts())).
+            host_count = (
+                network.num_addresses if network.prefixlen >= 31 else network.num_addresses - 2
+            )
             if host_count > 1024:
                 logger.warning(
                     f"IPv4 resolve: subnet {subnet} has {host_count} hosts, "

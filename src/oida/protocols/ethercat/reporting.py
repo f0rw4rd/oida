@@ -38,17 +38,18 @@ class ReportingMixin(_ScannerBase):
             ]
         )
 
-        # Check for writable SDO objects
+        # Count readable SDO objects (the SDO scan records a "readable" flag;
+        # there is no per-object writable flag here, so this reports readability).
         sdo_data = results.get("sdo_data", {})
-        writable_objects = 0
+        readable_objects = 0
         for slave_data in sdo_data.values():
             if isinstance(slave_data, dict):
                 for obj_data in slave_data.values():
                     if isinstance(obj_data, dict) and obj_data.get("readable"):
-                        writable_objects += 1
+                        readable_objects += 1
 
-        if writable_objects > 0:
-            analysis["issues"].append(f"{writable_objects} readable SDO objects found")
+        if readable_objects > 0:
+            analysis["issues"].append(f"{readable_objects} readable SDO objects found")
 
         # Overall security assessment (EtherCAT is inherently insecure).
         # assess_protocol_security() returns its own "issues" key; updating

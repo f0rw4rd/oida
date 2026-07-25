@@ -716,9 +716,7 @@ class BACnetPassiveListener(PySharkListenerBase):
                 timestamp=datetime.now().isoformat(),
             )
         )
-        self.logger.info(
-            f"BACnet {service} password from {src_ip} -> {dst_ip}: '{password}'"
-        )
+        self.logger.info(f"BACnet {service} password from {src_ip} -> {dst_ip}: '{password}'")
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
         """Cleartext BACnet device-management passwords (DCC / ReinitializeDevice)."""

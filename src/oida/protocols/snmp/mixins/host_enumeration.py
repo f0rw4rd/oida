@@ -152,11 +152,18 @@ class HostEnumerationMixin(_ScannerBase):
 
                         if suffix not in rows:
                             if len(rows) >= limit:
-                                # Table-wide row cap reached: stop creating new
-                                # rows, but keep filling columns of existing rows.
-                                continue
+                                # Table-wide row cap reached. Every OID from here
+                                # on in this column's walk is necessarily a new
+                                # suffix (already-known suffixes were captured
+                                # before the cap filled), so there's nothing left
+                                # to fill for this column -- break to stop network
+                                # work instead of walking the rest of the table.
+                                break
                             rows[suffix] = {}
                         rows[suffix][col_name] = val.prettyPrint()
+
+                    if len(rows) >= limit:
+                        break
 
             except Exception as e:
                 self.logger.debug(f"Walk {col_name} ({base_oid}) error: {e}")
@@ -888,8 +895,12 @@ class HostEnumerationMixin(_ScannerBase):
             used_bytes = used * units
             pct = (used / size * 100) if size > 0 else 0
 
+            # pysnmp prettyPrint yields the OID without a leading dot, but the
+            # HR_STORAGE_TYPES keys have one — normalize so the lookup hits
+            # (otherwise RAM/FixedDisk/etc. never decode and show the raw OID).
             type_oid = data.get("type", "")
-            type_name = HR_STORAGE_TYPES.get(type_oid, type_oid)
+            type_key = "." + type_oid.lstrip(".") if type_oid else type_oid
+            type_name = HR_STORAGE_TYPES.get(type_key, type_oid)
 
             storage.append(
                 {

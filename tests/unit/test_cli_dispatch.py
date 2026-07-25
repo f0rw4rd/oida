@@ -173,12 +173,59 @@ class TestExportResults:
                 },
             }
         ]
+        # --format json -> only the .json table file, no .csv sibling.
         cli.export_results(results, str(tmp_path), "json", protocol_name="pcap")
-        # Dedicated table files written from the title stem.
-        assert (tmp_path / "ntlm_hashes.csv").exists()
         assert (tmp_path / "ntlm_hashes.json").exists()
+        assert not (tmp_path / "ntlm_hashes.csv").exists()
+        json_data = json.loads((tmp_path / "ntlm_hashes.json").read_text())
+        assert json_data[0]["user"] == "admin" and json_data[0]["hash"] == "deadbeef"
+
+    def test_tables_respect_csv_format(self, tmp_path):
+        results = [
+            {
+                "host": "10.0.0.1",
+                "protocol": "pcap",
+                "port": 0,
+                "success": True,
+                "data": {
+                    "tables": [
+                        {
+                            "title": "NTLM Hashes",
+                            "headers": ["user", "hash"],
+                            "rows": [["admin", "deadbeef"]],
+                        }
+                    ]
+                },
+            }
+        ]
+        # --format csv -> only the .csv table file, no .json sibling.
+        cli.export_results(results, str(tmp_path), "csv", protocol_name="pcap")
+        assert (tmp_path / "ntlm_hashes.csv").exists()
+        assert not (tmp_path / "ntlm_hashes.json").exists()
         csv_text = (tmp_path / "ntlm_hashes.csv").read_text()
         assert "admin" in csv_text and "deadbeef" in csv_text
+
+    def test_tables_all_format_writes_both(self, tmp_path):
+        results = [
+            {
+                "host": "10.0.0.1",
+                "protocol": "pcap",
+                "port": 0,
+                "success": True,
+                "data": {
+                    "tables": [
+                        {
+                            "title": "NTLM Hashes",
+                            "headers": ["user", "hash"],
+                            "rows": [["admin", "deadbeef"]],
+                        }
+                    ]
+                },
+            }
+        ]
+        cli.export_results(results, str(tmp_path), "all", protocol_name="pcap")
+        assert (tmp_path / "ntlm_hashes.csv").exists()
+        assert (tmp_path / "ntlm_hashes.json").exists()
 
     def test_duplicate_table_titles_deduped(self, tmp_path):
         tbl = {
@@ -195,7 +242,7 @@ class TestExportResults:
                 "data": {"tables": [dict(tbl), dict(tbl)]},
             }
         ]
-        cli.export_results(results, str(tmp_path), "json", protocol_name="pcap")
+        cli.export_results(results, str(tmp_path), "csv", protocol_name="pcap")
         assert (tmp_path / "creds.csv").exists()
         assert (tmp_path / "creds_1.csv").exists()
 

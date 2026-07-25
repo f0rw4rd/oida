@@ -141,7 +141,11 @@ class RawFCMixin(_ScannerBase):
         for fc in fc_list:
             result = self.scanner.send_custom_fc(self.conn, fc, bytes(), self.scanner.unit_id)
 
-            if result:
+            # Only a response that was actually received counts. send_custom_fc
+            # sets success=True for both normal AND exception responses, and
+            # success=False on a failed/timed-out send — the previous `if result:`
+            # was always truthy, so errored sends were mis-counted as supported.
+            if result and result.get("success"):
                 if result.get("is_exception"):
                     exc_code = result.get("exception_code", 0)
                     # Exception 1 (Illegal Function) means not supported
@@ -161,13 +165,7 @@ class RawFCMixin(_ScannerBase):
             )
 
     def _parse_fc_range(self, range_str: str) -> list:
-        """Parse function code range string."""
-        result = []
-        for part in range_str.split(","):
-            part = part.strip()
-            if "-" in part:
-                start, end = part.split("-", 1)
-                result.extend(range(int(start), int(end) + 1))
-            else:
-                result.append(int(part))
-        return sorted(set(result))
+        """Parse function code range string (central parser)."""
+        from ....utils import ProtocolParser
+
+        return ProtocolParser.parse_address_range(range_str)

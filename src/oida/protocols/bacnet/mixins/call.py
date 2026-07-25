@@ -545,7 +545,7 @@ class CallMixin:
         req = cls(time=when)
         req.pduDestination = target_addr
         try:
-            app.request(req)
+            await app.request(req)
             self.logger.success(f"  {'UTC' if utc else ''}TimeSync sent: {spec}")
         except BaseException as e:
             self.logger.fail(f"  TimeSync failed: {e}")
@@ -568,7 +568,7 @@ class CallMixin:
         # WriteGroup is unconfirmed.
         req.pduDestination = target_addr
         try:
-            app.request(req)
+            await app.request(req)
             self.logger.success(f"  WriteGroup g{group} ch{channel}={value} sent")
         except BaseException as e:
             self.logger.fail(f"  WriteGroup failed: {e}")

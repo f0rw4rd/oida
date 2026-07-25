@@ -1059,14 +1059,21 @@ class PropertiesMixin:
                     return f"{struct.unpack('>d', data[:8])[0]:.6f}"
         except Exception as e:
             self.logger.debug(
-                f"if data_type  0x01:   CHAR: {e}"
+                f"property value decode failed: {e}"
             )  # Fall through to default hex format
 
         # Default: return hex representation
         return data.hex().upper()
 
     def _parse_property_arg(self, prop_arg: str) -> tuple:
-        """Parse property read argument (OBJ:PROP)"""
+        """Parse property read argument (OBJ:PROP)
+
+        Returns (obj_idx, prop_id) on success, or (None, None) on malformed
+        input so the caller never falls back to a default object/property.
+        Silently substituting a hardcoded default (object 0 / property 78)
+        would read from a real device the operator never asked to read —
+        matches the rejecting-sentinel pattern used by ``_parse_group_write``.
+        """
         try:
             parts = prop_arg.split(":")
             if len(parts) != 2:
@@ -1077,4 +1084,4 @@ class PropertiesMixin:
             return obj_idx, prop_id
         except Exception as e:
             self.logger.fail(f"Invalid property format '{prop_arg}': {e}")
-            return 0, 78  # Default: Device object, serial number
+            return None, None

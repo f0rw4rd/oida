@@ -100,6 +100,7 @@ class knx(NetworkConnection):
             "prog_mode",
             "enumerate_objects",
             "vendor_objects",
+            "gateway_scan",
             "bus_scan",
             "fast_scan",
             "slow_scan",
@@ -112,6 +113,8 @@ class knx(NetworkConnection):
             "restart",
             "prop_desc",
             "serial_scan",
+            "listen",
+            "listen_time",
         ]
         for flag in tunnel_flags:
             if getattr(self.args, flag, None):

@@ -49,9 +49,7 @@ class TestFuzzNodeRestoresEmptyOriginal(unittest.IsolatedAsyncioTestCase):
         def _fake_fuzz(original, count=10, **kwargs):
             yield (b"\xff\xff", "payload")
 
-        with patch("oida.utils.fuzzer.fuzz", _fake_fuzz), patch(
-            "asyncio.sleep", new=AsyncMock()
-        ):
+        with patch("oida.utils.fuzzer.fuzz", _fake_fuzz), patch("asyncio.sleep", new=AsyncMock()):
             result = await harness._fuzz_node("ns=2;i=1", iterations=1)
 
         self.assertIsNotNone(result)

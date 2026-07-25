@@ -293,6 +293,15 @@ class TestRunDiagnostics:
         _, kwargs = client.diag_query_data.call_args
         assert kwargs["msg"] == 0xBEEF
 
+    def test_invalid_diag_data_fails_cleanly(self):
+        """--diag-data with non-hex text must not raise ValueError uncaught."""
+        s = make_scanner()
+        client = MagicMock()
+        res = s._run_diagnostics(client, tests="echo", diag_data="0xZZ")
+        s.logger.fail.assert_called()
+        assert res["echo_test"] is None
+        client.diag_query_data.assert_not_called()
+
     def test_clear_requires_confirm(self):
         s = make_scanner(args={"confirm": False})
         client = MagicMock()

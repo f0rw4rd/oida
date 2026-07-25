@@ -49,7 +49,7 @@ class S7FirmwareVersion:
                 return cls(int(parts[0]), int(parts[1]), 0)
             return None
         except (ValueError, AttributeError) as e:
-            logger.debug(f"Failed to get clean: {e}")
+            logger.debug(f"firmware version parse failed: {e}")
             return None
 
     def __eq__(self, other: object) -> bool:

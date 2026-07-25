@@ -73,8 +73,8 @@ PDU_TYPES = {
 # Well-known interface UUIDs -> service names
 WELL_KNOWN_IFIDS = {
     "4b324fc8-1670-01d3-1278-5a47bf6ee188": "SRVSVC",
-    "12345778-1234-abcd-ef00-0123456789ab": "SAMR",
-    "12345778-1234-abcd-ef00-0123456789ac": "LSARPC",
+    "12345778-1234-abcd-ef00-0123456789ab": "LSARPC",
+    "12345778-1234-abcd-ef00-0123456789ac": "SAMR",
     "e3514235-4b06-11d1-ab04-00c04fc2dcd2": "DRSUAPI",
     "6bffd098-a112-3610-9833-46c3f87e345a": "WKSSVC",
     "12345678-1234-abcd-ef00-01234567cffb": "NETLOGON",
@@ -717,10 +717,11 @@ class MSRPCPassiveListener(PySharkListenerBase):
             if share_types_raw
             else []
         )
+        # Do NOT drop empty comments: they are positional slots aligned with
+        # `names` (ADMIN$/C$ etc. commonly have empty comments), so filtering
+        # them shifts every later comment onto the wrong share.
         comments = (
-            [c.strip() for c in str(share_comments_raw).split(",") if c.strip()]
-            if share_comments_raw
-            else []
+            [c.strip() for c in str(share_comments_raw).split(",")] if share_comments_raw else []
         )
 
         if server_ip not in self._srvsvc_shares:
@@ -999,7 +1000,7 @@ class MSRPCPassiveListener(PySharkListenerBase):
             # tshark may return comma-separated UUIDs if multiple ctx items.
             raw_uuid = str(self.get_field(dcerpc, "cn_bind_to_uuid", "") or "")
             if not raw_uuid:
-                raw_uuid = str(self.get_field(dcerpc, "if_id", "") or "")
+                raw_uuid = str(self.get_field(dcerpc, "dg_if_id", "") or "")
 
             # Handle multi-context binds (comma-separated UUIDs and ctx_ids)
             uuids = [u.strip() for u in raw_uuid.split(",") if u.strip()] if raw_uuid else []
@@ -1039,7 +1040,7 @@ class MSRPCPassiveListener(PySharkListenerBase):
 
         # If we still didn't find the interface, try the direct field
         if not if_id:
-            if_id = str(self.get_field(dcerpc, "if_id", "") or "")
+            if_id = str(self.get_field(dcerpc, "dg_if_id", "") or "")
             if if_id:
                 interface_name = WELL_KNOWN_IFIDS.get(if_id.lower(), "")
 

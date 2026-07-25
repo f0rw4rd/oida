@@ -188,6 +188,9 @@ class EIGRPPassiveListener(PySharkListenerBase):
         self.autonomous_systems: Dict[int, Dict] = {}  # AS -> info
         self.credentials: List[EIGRPCredential] = []
         self._seen_creds: Set[Tuple[str, int, str]] = set()  # (router_ip, auth_type, digest)
+        # Integrity/NSF alerts accumulate here and are surfaced via harvest();
+        # previously they were built into a per-packet local and discarded.
+        self._alerts: List[Dict[str, str]] = []
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format EIGRP protocol-specific columns."""
@@ -210,6 +213,19 @@ class EIGRPPassiveListener(PySharkListenerBase):
             d.get("software_version", "") or "-",
             route_str if route_str else str(len(routes)),
         ]
+
+    def harvest(self) -> Dict[str, Any]:
+        """Harvest EIGRP data, surfacing accumulated integrity/NSF alerts.
+
+        Does NOT early-return on an empty super().harvest(): the base returns {}
+        when there are no write/control ops (always, for EIGRP), which would
+        otherwise drop every bad-checksum / restart alert.
+        """
+        result = super().harvest()
+        result = result or {}
+        if self._alerts:
+            result.setdefault("alerts", []).extend(self._alerts)
+        return result
 
     def process_packet(self, packet) -> None:
         """Process EIGRP packet using PyShark's EIGRP dissector."""
@@ -324,36 +340,52 @@ class EIGRPPassiveListener(PySharkListenerBase):
             software_version = f"IOS {release_version}, EIGRP {tlv_version}"
 
         # --- Route extraction (IPv4 internal) ---
+        # A single Update can bundle many Route TLVs; get_field comma-joins the
+        # repeated ipv4_destination / ipv4_prefixlen values, so split and pair
+        # positionally (mirrors rip.py) instead of treating them as one scalar.
         ip_prefix = self.get_field(eigrp, "ipv4_destination", None)
         if ip_prefix is not None:
-            prefix_len_str = self.get_field(eigrp, "ipv4_prefixlen", "0")
-            routes.append(
-                {
-                    "network": str(ip_prefix),
-                    "prefix_len": self._parse_int(prefix_len_str, 0),
-                    "type": "internal",
-                    "af": "ipv4",
-                }
-            )
+            nets = str(ip_prefix).split(",")
+            prefix_lens = str(self.get_field(eigrp, "ipv4_prefixlen", "0")).split(",")
+            for i, net in enumerate(nets):
+                net = net.strip()
+                if not net:
+                    continue
+                plen = prefix_lens[i].strip() if i < len(prefix_lens) else "0"
+                routes.append(
+                    {
+                        "network": net,
+                        "prefix_len": self._parse_int(plen, 0),
+                        "type": "internal",
+                        "af": "ipv4",
+                    }
+                )
 
         # --- Route extraction (IPv6 internal/external) ---
+        # Split repeated TLVs positionally (see IPv4 note above).
         ipv6_dest = self.get_field(eigrp, "ipv6_destination", None)
         if ipv6_dest is not None:
-            ipv6_prefix_len = self._parse_int(self.get_field(eigrp, "ipv6_prefixlen", "0"), 0)
-            ipv6_nexthop = self.get_field(eigrp, "ipv6_nexthop", "")
-            # Determine route type from TLV type
-            tlv_type_raw = self.get_field(eigrp, "tlv_type", "")
-            tlv_type_int = self._parse_int(tlv_type_raw, 0) if "," not in str(tlv_type_raw) else 0
-            route_type = "external" if tlv_type_int == 0x0403 else "internal"
-            route_entry: Dict[str, Any] = {
-                "network": str(ipv6_dest),
-                "prefix_len": ipv6_prefix_len,
-                "type": route_type,
-                "af": "ipv6",
-            }
-            if ipv6_nexthop and ipv6_nexthop != "::":
-                route_entry["nexthop"] = str(ipv6_nexthop)
-            routes.append(route_entry)
+            v6_nets = str(ipv6_dest).split(",")
+            v6_plens = str(self.get_field(eigrp, "ipv6_prefixlen", "0")).split(",")
+            v6_nhs = str(self.get_field(eigrp, "ipv6_nexthop", "")).split(",")
+            v6_types = str(self.get_field(eigrp, "tlv_type", "")).split(",")
+            for i, net in enumerate(v6_nets):
+                net = net.strip()
+                if not net:
+                    continue
+                plen = self._parse_int(v6_plens[i].strip() if i < len(v6_plens) else "0", 0)
+                tlv_type_int = self._parse_int(v6_types[i].strip() if i < len(v6_types) else "0", 0)
+                route_type = "external" if tlv_type_int == 0x0403 else "internal"
+                route_entry: Dict[str, Any] = {
+                    "network": net,
+                    "prefix_len": plen,
+                    "type": route_type,
+                    "af": "ipv6",
+                }
+                nh = v6_nhs[i].strip() if i < len(v6_nhs) else ""
+                if nh and nh != "::":
+                    route_entry["nexthop"] = nh
+                routes.append(route_entry)
 
         # --- T1: eigrp.old_metric.rel + other route metrics ---
         old_metric: Dict[str, Any] = {}
@@ -390,9 +422,8 @@ class EIGRPPassiveListener(PySharkListenerBase):
                 route["external_data"] = extdata
 
         # Alert on bad checksum
-        alerts: List[Dict[str, str]] = []
         if checksum_status == 2:  # Bad checksum
-            alerts.append(
+            self._alerts.append(
                 {
                     "level": "fail",
                     "category": "integrity_alert",
@@ -408,7 +439,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
 
         # Alert on Restart flag (NSF event)
         if "Restart" in flag_names:
-            alerts.append(
+            self._alerts.append(
                 {
                     "level": "info",
                     "category": "restart_alert",

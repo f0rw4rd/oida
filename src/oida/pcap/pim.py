@@ -206,7 +206,9 @@ class PIMPassiveListener(PySharkListenerBase):
                 generation_id = self._parse_int(gid, 0)
 
             # Address list from Hello options
-            addr_field = self.get_field(pim, "address_list_ip4", None)
+            # IPv4 secondary-address list is dissected as pim.address_list
+            # (EK attr address_list); there is no address_list_ip4 field.
+            addr_field = self.get_field_any(pim, "address_list", "pim.address_list")
             if addr_field is not None:
                 for addr in str(addr_field).split(","):
                     addr = addr.strip()

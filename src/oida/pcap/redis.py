@@ -200,8 +200,30 @@ class RedisPassiveListener(PySharkListenerBase):
                 command = values[0].upper() if values else ""
                 args = values[1:] if len(values) > 1 else []
 
-                # Determine direction based on command-like first element
-                is_request = command.isalpha() and len(command) <= 20
+                # Determine direction. Payload shape alone (first element looks
+                # like a bare alphabetic command word) is ambiguous: server
+                # array replies from CONFIG GET / KEYS / LRANGE / HGETALL
+                # often start with a short alpha token too (e.g. "maxmemory",
+                # "dir", a hash field name) and would be misread as a client
+                # command -- which then makes _resolve_roles() *learn* the
+                # responding server's IP as a client, poisoning
+                # ``_known_servers`` for every later packet on the flow. Role
+                # (a known server IP or a known Redis port) is a stronger,
+                # protocol-independent signal than shape, so check it first
+                # and only fall back to the shape heuristic when role is
+                # unknown for both sides.
+                src_is_server = (
+                    src_ip in self._known_servers or src_port in self._known_server_ports
+                )
+                dst_is_server = (
+                    dst_ip in self._known_servers or dst_port in self._known_server_ports
+                )
+                if src_is_server and not dst_is_server:
+                    is_request = False
+                elif dst_is_server and not src_is_server:
+                    is_request = True
+                else:
+                    is_request = command.isalpha() and len(command) <= 20
                 if is_request:
                     # Client -> Server (native=True: a command array is an
                     # authoritative request signal, port-independent).

@@ -53,7 +53,13 @@ class ScannerDiagnosticsMixin(_ScannerBase):
         # Parse custom echo data if provided
         echo_data = 0x1234
         if diag_data:
-            echo_data = int(diag_data, 16)
+            try:
+                echo_data = int(diag_data, 16)
+            except ValueError:
+                self.logger.fail(
+                    f"Invalid --diag-data value: {diag_data!r} (expected hex, e.g. 0x1234)"
+                )
+                return results
 
         # Echo test (subfunction 0x00)
         if "echo" in test_list:

@@ -82,9 +82,12 @@ from ..protocols.discovery.core import is_valid_discovered_ip
 
 # openSAFETY message type categories
 OPENSAFETY_MSG_TYPES = {
-    0x00: "SPDO",  # Safety Process Data Object
-    0x01: "SSDO",  # Safety Service Data Object
-    0x02: "SNMT",  # Safety Network Management
+    # Values per the Wireshark opensafety.msg.type dissector (verified with
+    # `tshark -G values`). The listener previously used 0x00/0x01/0x02, which
+    # matched NO frame, so classification and every security alert were dead.
+    0x05: "SNMT",  # Safety Network Management
+    0x06: "SPDO",  # Safety Process Data Object
+    0x07: "SSDO",  # Safety Service Data Object
 }
 
 # SNMT service IDs
@@ -220,19 +223,24 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
         msg_type_raw = self.get_field(os_layer, "msg_type")
         msg_type = self._parse_int(msg_type_raw, None)
 
-        sadr = self._parse_int(self.get_field(os_layer, "msg_sadr"), 0)
-        sdn = self._parse_int(self.get_field(os_layer, "msg_sdn"), 0)
-        ct = self._parse_int(self.get_field(os_layer, "msg_ct"), 0)
+        # openSAFETY dissector abbreviations: the safety node address is
+        # opensafety.msg.node ("Safety Node"), the safety domain is
+        # opensafety.msg.network, the consecutive time lives on the SPDO
+        # sub-tree (opensafety.spdo.ct), and the frame length is
+        # opensafety.length -- none are under a "msg_*" alias.
+        sadr = self._parse_int(self.get_field_any(os_layer, "msg_node", "msg_sender"), 0)
+        sdn = self._parse_int(self.get_field(os_layer, "msg_network"), 0)
+        ct = self._parse_int(self.get_field(os_layer, "spdo_ct"), 0)
         msg_direction = self.get_field(os_layer, "msg_direction")
-        msg_len = self._parse_int(self.get_field(os_layer, "msg_len"), 0)
+        msg_len = self._parse_int(self.get_field(os_layer, "length"), 0)
 
         # CRC validation
-        crc_valid = self.get_field(os_layer, "msg_crc_valid")
-        crc_type = self.get_field(os_layer, "msg_crc_type")
+        crc_valid = self.get_field(os_layer, "crc_valid")
+        crc_type = self.get_field(os_layer, "crc_type")
 
         # Device IDs
-        scm_udid = str(self.get_field(os_layer, "msg_scm_udid") or "")
-        sn_udid = str(self.get_field(os_layer, "msg_sn_udid") or "")
+        scm_udid = str(self.get_field(os_layer, "scm_udid") or "")
+        sn_udid = str(self.get_field(os_layer, "snmt_udid") or "")
 
         # Determine message type name
         msg_type_name = (
@@ -270,11 +278,11 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
 
         # Process message-type-specific fields
         service_name = ""
-        if msg_type == 0x02:  # SNMT
+        if msg_type == 0x05:  # SNMT
             service_name = self._process_snmt(os_layer, node, details)
-        elif msg_type == 0x01:  # SSDO
+        elif msg_type == 0x07:  # SSDO
             service_name = self._process_ssdo(os_layer, node, details)
-        elif msg_type == 0x00:  # SPDO
+        elif msg_type == 0x06:  # SPDO
             self._process_spdo(os_layer, node, details)
 
         # Determine direction
@@ -325,7 +333,7 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
         """Process SNMT (Safety Network Management) fields."""
         node.snmt_count += 1
 
-        snmt_svc_raw = self.get_field(os_layer, "msg_snmt_service")
+        snmt_svc_raw = self.get_field(os_layer, "snmt_service_id")
         snmt_svc = self._parse_int(snmt_svc_raw, None)
 
         if snmt_svc is not None:
@@ -354,11 +362,11 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
         """Process SSDO (Safety Service Data Object) fields."""
         node.ssdo_count += 1
 
-        sacmd_raw = self.get_field(os_layer, "msg_ssdo_sacmd")
+        sacmd_raw = self.get_field(os_layer, "ssdo_sacmd")
         sacmd = self._parse_int(sacmd_raw, None)
 
-        sod_index = self._parse_int(self.get_field(os_layer, "msg_ssdo_sod_index"), None)
-        sod_subindex = self._parse_int(self.get_field(os_layer, "msg_ssdo_sod_subindex"), None)
+        sod_index = self._parse_int(self.get_field(os_layer, "ssdo_sodentry_index"), None)
+        sod_subindex = self._parse_int(self.get_field(os_layer, "ssdo_sodentry_subindex"), None)
 
         svc_name = ""
         if sacmd is not None:
@@ -467,7 +475,7 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
             )
 
         # SNMT security-relevant services
-        if msg_type == 0x02:  # SNMT
+        if msg_type == 0x05:  # SNMT
             snmt_svc_id = details.get("snmt_service_id")
             if snmt_svc_id is not None and snmt_svc_id in SNMT_SECURITY_SERVICES:
                 self._alerts.append(
@@ -496,7 +504,7 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
                 )
 
         # SSDO write access (safety parameter modification)
-        if msg_type == 0x01:  # SSDO
+        if msg_type == 0x07:  # SSDO
             sacmd_id = details.get("ssdo_command_id")
             if sacmd_id is not None and sacmd_id in SSDO_WRITE_COMMANDS:
                 sod_idx = details.get("sod_index", "?")
@@ -673,23 +681,3 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
         if self._alerts:
             result.setdefault("alerts", []).extend(self._alerts)
         return result
-
-    def get_nodes_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all observed openSAFETY nodes."""
-        return [
-            {
-                "sadr": n.sadr,
-                "sdn": n.sdn,
-                "udid": n.udid,
-                "message_types": sorted(n.message_types),
-                "spdo_count": n.spdo_count,
-                "ssdo_count": n.ssdo_count,
-                "snmt_count": n.snmt_count,
-                "ssdo_write_count": n.ssdo_write_count,
-                "crc_errors": n.crc_errors,
-                "ct_gaps": n.ct_gaps,
-                "fail_count": n.fail_count,
-                "total_frames": n.total_frames,
-            }
-            for n in self.nodes.values()
-        ]

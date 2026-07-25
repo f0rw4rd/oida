@@ -749,19 +749,6 @@ class OPCDAPassiveListener(PySharkListenerBase):
             if session.write_count > 0
         ]
 
-    def get_browse_operations(self) -> List[Dict[str, Any]]:
-        """Get sessions with OPC DA browse/enumeration operations."""
-        return [
-            {
-                "client": session.client_ip,
-                "server": session.server_ip,
-                "browse_count": session.browse_count,
-                "opcda_interfaces": sorted(session.opcda_interfaces),
-            }
-            for session in self.sessions.values()
-            if session.browse_count > 0
-        ]
-
     def get_sessions_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all observed DCOM/OPC DA sessions."""
         return [

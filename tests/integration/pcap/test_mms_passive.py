@@ -478,9 +478,7 @@ class TestACSEProtocolVersion:
         assert aarq_ixs, "No ACSE AARQ interactions found"
 
         with_ver = [ix for ix in aarq_ixs if ix.details.get("acse_protocol_version")]
-        assert with_ver, (
-            f"No AARQ has acse_protocol_version; sample details: {aarq_ixs[0].details}"
-        )
+        assert with_ver, f"No AARQ has acse_protocol_version; sample details: {aarq_ixs[0].details}"
 
     def test_aare_protocol_version_extracted(self):
         """AARE interactions should carry the responding-AE ACSE protocol version."""
@@ -499,6 +497,4 @@ class TestACSEProtocolVersion:
         assert aare_ixs, "No ACSE AARE interactions found"
 
         with_ver = [ix for ix in aare_ixs if ix.details.get("acse_protocol_version")]
-        assert with_ver, (
-            f"No AARE has acse_protocol_version; sample details: {aare_ixs[0].details}"
-        )
+        assert with_ver, f"No AARE has acse_protocol_version; sample details: {aare_ixs[0].details}"

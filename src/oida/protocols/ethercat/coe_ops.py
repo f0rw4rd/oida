@@ -450,8 +450,27 @@ class CoeOpsMixin(_ScannerBase):
                 f"Writing SDO 0x{index:04X}:{subindex} = 0x{value:X} to slave {slave_pos + 1}..."
             )
 
-            # Determine data size (1, 2, or 4 bytes based on value)
-            if value <= 0xFF:
+            # Size the write to the object's real width. Guessing from the
+            # value's magnitude packs e.g. 1 into a single byte, which a UINT32
+            # SDO rejects (abort) or writes partially. Probe the current value
+            # for its length; fall back to the magnitude heuristic only when the
+            # object can't be read (e.g. write-only entries).
+            width = 0
+            try:
+                current = slave.sdo_read(index, subindex)
+                width = len(current) if current else 0
+            except Exception as e:
+                self.logger.debug(f"SDO width probe failed for 0x{index:04X}:{subindex}: {e}")
+
+            if width == 1:
+                data = bytes([value & 0xFF])
+            elif width == 2:
+                data = struct.pack("<H", value & 0xFFFF)
+            elif width == 4:
+                data = struct.pack("<I", value & 0xFFFFFFFF)
+            elif width >= 8:
+                data = struct.pack("<Q", value & 0xFFFFFFFFFFFFFFFF)
+            elif value <= 0xFF:
                 data = bytes([value])
             elif value <= 0xFFFF:
                 data = struct.pack("<H", value)

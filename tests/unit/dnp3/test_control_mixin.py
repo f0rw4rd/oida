@@ -363,6 +363,9 @@ class TestFreeze:
                 pass
 
         class _FakeApp:
+            def arm(self):
+                pass
+
             def wait_for_task(self, timeout):
                 # Write step fails -> the freeze function is never sent.
                 return type("_T", (), {"result": opendnp3.TaskCompletion.FAILURE_NO_COMMS})()
@@ -388,6 +391,9 @@ class TestFreeze:
                 pass
 
         class _FakeApp:
+            def arm(self):
+                pass
+
             def wait_for_task(self, timeout):
                 return type("_T", (), {"result": opendnp3.TaskCompletion.SUCCESS})()
 

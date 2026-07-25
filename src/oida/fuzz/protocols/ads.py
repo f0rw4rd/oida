@@ -10,9 +10,19 @@ Protocol structure:
 
 All multi-byte fields are little-endian.
 
+In addition to the TCP/48898 AMS channel, Beckhoff exposes an ADS/AMS *router
+discovery* service on UDP/48899. Its datagram is a fixed header (magic cookie
+DWord 0x71146603 LE, request/response type DWord, sender AmsNetId[6] + port Word,
+TLV-block count DWord) followed by TLV tag blocks (tag Word, length Word, value)
+carrying route name / host name / OS version. This fuzzer covers that surface
+with the ADS_Discovery_* requests; run against port 48899 and _create_socket()
+auto-selects a UDP transport for them.
+
 Security Notes:
 - CVE-2019-16871 (CVSS 9.3): Remote Code Execution via ADS protocol route manipulation
 - CVE-2024-41176: Buffer overflow via crafted input in TwinCAT/BSD
+- CVE-2019-5636 (CWE-404): malformed UDP/48899 packet shuts down the ADS Discovery Service
+- CVE-2011-3486 (CWE-125): crafted UDP/48899 request triggers an out-of-bounds read DoS
 - ADS has no built-in encryption/authentication - relies on network isolation
 """
 
@@ -25,7 +35,7 @@ from ..primitives.dynamic import DynamicDWord, SmartString, StringContext
 
 from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
 from ..core.config import FuzzerConfig
-from ..core.connections import TCPSocketConnection
+from ..core.connections import TCPSocketConnection, UDPSocketConnection
 from ..core.session.state_context import StateContext
 from ..core.session.sequence import SequenceConfig, SequenceDirection
 from ..core.session.state_machine import ProtocolState, StateMachine, StateType
@@ -93,6 +103,25 @@ class ADSStates:
     RESUME = 14
     CONFIG = 15
     RECONFIG = 16
+
+
+class ADSDiscovery:
+    """Beckhoff ADS/AMS router discovery (UDP 48899) datagram constants.
+
+    Datagram layout (all little-endian):
+      magic DWord (0x71146603) | type DWord | sender AmsNetId[6] | sender port Word |
+      TLV-block count DWord | TLV blocks{ tag Word, length Word, value[length] }
+    """
+
+    PORT = 48899
+    MAGIC = 0x71146603  # router discovery cookie, on the wire as 03 66 14 71
+    REQUEST = 0x00000001  # discovery request type
+    RESPONSE = 0x80000001  # discovery response type
+    ROUTER_PORT = 10000  # AMS router logical port (typical sender port)
+    # TLV tag IDs (tag Word, length Word, value): route name / host name / OS version
+    TAG_ROUTENAME = 0x0005
+    TAG_HOSTNAME = 0x0004
+    TAG_OSVERSION = 0x0002
 
 
 def _netid_to_bytes(netid_str: str) -> bytes:
@@ -363,6 +392,29 @@ class ADSFuzzer(BaseFuzzer):
                 "protocol",
                 requires_state="CONNECTED",
             ),
+            # ADS-Discovery (UDP/48899) — stateless router-discovery datagrams.
+            # Run the ADS fuzzer against port 48899 to transport these over UDP.
+            RequestInfo(
+                "ADS_Discovery_Malformed",
+                "UDP/48899 ADS-Discovery datagram: bad magic cookie / truncated header "
+                "(CVE-2019-5636 service-shutdown class)",
+                "malformed",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "ADS_Discovery_TLV_Overflow",
+                "UDP/48899 ADS-Discovery TLV length > value bytes / oversized route-name "
+                "(CVE-2011-3486 OOB-read class)",
+                "overflow",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "ADS_Discovery_Count_Lie",
+                "UDP/48899 ADS-Discovery TLV-block count vs blocks present "
+                "(0 / 0xFFFFFFFF / > present)",
+                "boundary",
+                requires_state=CommonState.ANY,
+            ),
         ]
 
     def __init__(self, config: FuzzerConfig, connection_factory=None):
@@ -398,6 +450,17 @@ class ADSFuzzer(BaseFuzzer):
         return seq_mgr.get_and_increment("invoke_id")
 
     def _create_socket(self):
+        # ADS/AMS router discovery lives on UDP/48899, not the TCP/48898 AMS
+        # channel. When the fuzzer is aimed at the discovery port, transport the
+        # ADS_Discovery_* datagrams over UDP (bind to an ephemeral local port so
+        # responses can be received), mirroring the TFTP UDP pattern.
+        if self.config.target_port == ADSDiscovery.PORT:
+            return UDPSocketConnection(
+                self.config.target_ip,
+                self.config.target_port,
+                bind=("0.0.0.0", 0),
+                **self._timeout_overrides(recv_default=2.0),
+            )
         return TCPSocketConnection(
             self.config.target_ip,
             self.config.target_port,
@@ -1863,6 +1926,132 @@ class ADSFuzzer(BaseFuzzer):
         )
 
         # ============================================================
+        # ADS-DISCOVERY (UDP/48899) — router-discovery datagram fuzzing
+        # These encode the Beckhoff ADS/AMS discovery format (magic cookie,
+        # type, sender NetId+port, TLV-block count, TLV blocks). They are
+        # stateless; run the fuzzer against port 48899 so _create_socket()
+        # transports them over UDP (over the default TCP/48898 session they
+        # still render/build, but only reach the discovery service on UDP).
+        # ============================================================
+
+        _disc_magic = struct.pack("<I", ADSDiscovery.MAGIC)
+        _disc_sender_port = struct.pack("<H", ADSDiscovery.ROUTER_PORT)
+
+        # D1. Malformed discovery datagram — bad magic cookie / truncated header.
+        # A short or mis-cookied datagram is the CVE-2019-5636 service-shutdown
+        # class (malformed UDP packet kills the ADS Discovery Service).
+        ads_discovery_malformed = Request(
+            "ADS_Discovery_Malformed",
+            children=(
+                Block(
+                    "Discovery_Malformed",
+                    children=(
+                        Group(
+                            "Discovery_Datagram",
+                            values=[
+                                # Bad magic cookie (router mis-classifies the packet)
+                                struct.pack("<I", 0xDEADBEEF)
+                                + struct.pack("<I", ADSDiscovery.REQUEST)
+                                + source_netid
+                                + _disc_sender_port
+                                + struct.pack("<I", 0),
+                                # Magic only — request type + sender fields truncated
+                                _disc_magic,
+                                # Magic + type — sender NetId/port/count all cut
+                                _disc_magic + struct.pack("<I", ADSDiscovery.REQUEST),
+                                # Magic + type + partial NetId (3 of 6 bytes)
+                                _disc_magic
+                                + struct.pack("<I", ADSDiscovery.REQUEST)
+                                + b"\x7f\x00\x00",
+                                # Empty datagram
+                                b"",
+                                # 1-byte runt
+                                b"\x03",
+                                # Valid magic but response type + zero count
+                                _disc_magic
+                                + struct.pack("<I", ADSDiscovery.RESPONSE)
+                                + source_netid
+                                + struct.pack("<H", 0)
+                                + struct.pack("<I", 0),
+                            ],
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # D2. TLV length overflow — declared TLV length Word larger than the value
+        # bytes present, plus oversized route-name values. CVE-2011-3486 OOB-read
+        # class (crafted discovery request walks past the datagram end).
+        ads_discovery_tlv_overflow = Request(
+            "ADS_Discovery_TLV_Overflow",
+            children=(
+                Block(
+                    "Discovery_TLV_Overflow",
+                    children=(
+                        Static("Magic", _disc_magic),
+                        DWord("Request_Type", ADSDiscovery.REQUEST, endian="<", fuzzable=False),
+                        Static("Sender_NetId", source_netid),
+                        Word("Sender_Port", ADSDiscovery.ROUTER_PORT, endian="<", fuzzable=False),
+                        DWord("TLV_Count", 1, endian="<", fuzzable=False),
+                        # One TLV block: tag Word, length Word, value.
+                        Word("TLV_Tag", ADSDiscovery.TAG_ROUTENAME, endian="<", fuzzable=False),
+                        # Length claim decoupled from the actual value bytes below.
+                        Group(
+                            "TLV_Length",
+                            values=[
+                                struct.pack("<H", 0xFFFF),  # max claim vs 4-byte value
+                                struct.pack("<H", 0x1000),
+                                struct.pack("<H", 0x00FF),
+                                struct.pack("<H", 4),  # honest length (baseline shape)
+                            ],
+                        ),
+                        Group(
+                            "TLV_Value",
+                            values=[
+                                b"AAAA",  # 4 bytes vs the 0xFFFF length claim (OOB read)
+                                b"A" * 512 + b"\x00",  # oversized route-name value
+                                b"A" * 2048 + b"\x00",
+                                b"",  # length claim with no value bytes at all
+                            ],
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # D3. TLV-block count lie — the count DWord disagrees with the single TLV
+        # block actually present (0, 0xFFFFFFFF, and counts > blocks present).
+        ads_discovery_count_lie = Request(
+            "ADS_Discovery_Count_Lie",
+            children=(
+                Block(
+                    "Discovery_Count_Lie",
+                    children=(
+                        Static("Magic", _disc_magic),
+                        DWord("Request_Type", ADSDiscovery.REQUEST, endian="<", fuzzable=False),
+                        Static("Sender_NetId", source_netid),
+                        Word("Sender_Port", ADSDiscovery.ROUTER_PORT, endian="<", fuzzable=False),
+                        Group(
+                            "TLV_Count",
+                            values=[
+                                struct.pack("<I", 0),  # claims 0, one block present
+                                struct.pack("<I", 0xFFFFFFFF),  # claims ~4 billion blocks
+                                struct.pack("<I", 0x10000),  # 64K
+                                struct.pack("<I", 100),  # 100 vs 1 present
+                                struct.pack("<I", 1),  # honest baseline
+                            ],
+                        ),
+                        # Exactly one real TLV block regardless of the count claim.
+                        Word("TLV_Tag", ADSDiscovery.TAG_HOSTNAME, endian="<", fuzzable=False),
+                        Word("TLV_Length", 5, endian="<", fuzzable=False),
+                        Static("TLV_Value", b"oida\x00"),
+                    ),
+                ),
+            ),
+        )
+
+        # ============================================================
         # OPTIMIZED REQUEST ORDERING
         # ============================================================
         # Phase 1: Quick Coverage (~30 sec)
@@ -1941,3 +2130,11 @@ class ADSFuzzer(BaseFuzzer):
             self.session.connect(ads_port_enumeration)
         if self.is_request_enabled("ADS_SumReadWrite"):
             self.session.connect(ads_sum_readwrite)
+
+        # ==================== ADS-DISCOVERY (UDP/48899) ====================
+        if self.is_request_enabled("ADS_Discovery_Malformed"):
+            self.session.connect(ads_discovery_malformed)
+        if self.is_request_enabled("ADS_Discovery_TLV_Overflow"):
+            self.session.connect(ads_discovery_tlv_overflow)
+        if self.is_request_enabled("ADS_Discovery_Count_Lie"):
+            self.session.connect(ads_discovery_count_lie)

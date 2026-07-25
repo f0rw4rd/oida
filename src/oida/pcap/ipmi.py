@@ -179,6 +179,20 @@ class IPMIPassiveListener(PySharkListenerBase):
 
     def process_packet(self, packet) -> None:
         """Process IPMI/RMCP packet and extract session information."""
+        # REQUIRED_LAYERS accepts *any* RMCP frame (ipmi_session OR rmcp), but
+        # RMCP is a shared transport -- class 0x06 is ASF (e.g. presence
+        # ping/pong), not IPMI. Without an ipmi_session layer, only accept
+        # class 0x07 (IPMI) so ASF traffic doesn't get recorded as a phantom
+        # BMC.
+        if not hasattr(packet, "ipmi_session"):
+            rmcp = getattr(packet, "rmcp", None)
+            rmcp_class = self._parse_int(self.get_field(rmcp, "class"), -1) if rmcp else -1
+            if rmcp_class != 7:
+                self.logger.debug(
+                    "ipmi: dropping non-IPMI RMCP frame (class=%s, e.g. ASF)", rmcp_class
+                )
+                return
+
         src_ip, dst_ip = self.get_ip_info(packet)
         if not src_ip or not dst_ip:
             return

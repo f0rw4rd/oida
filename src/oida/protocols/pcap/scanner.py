@@ -105,8 +105,13 @@ class PcapScanner:
         # Honor -W/--full-width when rendering console tables (e.g. the
         # Discovered Assets table). pcap writes file exports directly in cli.py
         # and never relies on the export_utils global config for output_dir/fmt,
-        # so configuring it here only affects console truncation.
+        # so configuring it here only affects console truncation -- but pass
+        # through the resolved output_dir anyway so this call doesn't null out
+        # the process-global output_dir the top-level CLI already configured
+        # (configure() with output_dir=None resets it), which a few helpers
+        # below (get_export_path for hashcat/ipv4/ipv6) still consult.
         configure_export(
+            output_dir=self.args.get("output") or self.args.get("output_dir"),
             logger=self.logger,
             full_width=bool(self.args.get("full_width", False)),
         )
@@ -154,6 +159,26 @@ class PcapScanner:
             "run_scan: pyshark pipeline completed in %.2fs (%d packets)", elapsed, packet_count
         )
 
+        # Optional extractions (these do real extra work).
+        # -e/--extract-all and -E/--extract-files share the extract_files dest.
+        if self.args.get("extract_files"):
+            self._run_file_extraction()
+
+        # Print asset inventory (opt-in via -A/--assets)
+        # Call unconditionally when --assets is set; _report_assets merges
+        # endpoint-tracked IPs and handles the empty case internally.
+        # Must run BEFORE results["devices"]/statistics are built below --
+        # _report_assets() adds endpoint-only devices (IPs seen on the wire
+        # with no protocol-level listener match) to self.discovered_devices,
+        # and those need to make it into the JSON/statistics output too, not
+        # just the console/CSV asset table.
+        if self.args.get("assets"):
+            self._report_assets()
+
+        # Print traffic statistics (opt-in via -S/--stats)
+        if self.args.get("stats") and self.stats.total_packets > 0:
+            self.stats.print_summary(logger=self.logger)
+
         # Build device results (convert to dicts for JSON serialization).
         # Use vars() instead of dataclasses.asdict() because listeners add
         # dynamic attributes (e.g. mms_passive_data) not in the dataclass schema.
@@ -171,21 +196,6 @@ class PcapScanner:
 
         # Include traffic statistics
         self.results["traffic_statistics"] = self.stats.to_dict()
-
-        # Optional extractions (these do real extra work).
-        # -e/--extract-all and -E/--extract-files share the extract_files dest.
-        if self.args.get("extract_files"):
-            self._run_file_extraction()
-
-        # Print asset inventory (opt-in via -A/--assets)
-        # Call unconditionally when --assets is set; _report_assets merges
-        # endpoint-tracked IPs and handles the empty case internally.
-        if self.args.get("assets"):
-            self._report_assets()
-
-        # Print traffic statistics (opt-in via -S/--stats)
-        if self.args.get("stats") and self.stats.total_packets > 0:
-            self.stats.print_summary(logger=self.logger)
 
         self.logger.debug(
             "run_scan: finished — %d devices, %d protocols detected",
@@ -796,8 +806,10 @@ class PcapScanner:
         for listener in routing.values():
             for cred in getattr(listener, "credentials", []):
                 dg = (getattr(cred, "auth_data", "") or "").replace(":", "").lower()
-                if getattr(cred, "credential_type", "") == "hash" and dg and not getattr(
-                    cred, "net_salt", ""
+                if (
+                    getattr(cred, "credential_type", "") == "hash"
+                    and dg
+                    and not getattr(cred, "net_salt", "")
                 ):
                     need.setdefault(dg, []).append(cred)
         if not need:
@@ -1254,29 +1266,6 @@ class pcap(SerialConnection):
         self.enum_host_info()
         self.print_host_info()
         self._execute_scan()
-
-    def _convert_args_to_dict(self) -> Dict[str, Any]:
-        """Convert args namespace to dict for PcapScanner."""
-        result = super()._convert_args_to_dict()
-        for key in (
-            "extract_files",
-            "extract_dir",
-            "extract_protocols",
-            "protocols",
-            "category",
-            "exclude",
-            "quick",
-            "list_listeners",
-            "stats",
-            "assets",
-            "decode_as",
-            "hashcat",
-            "x509",
-        ):
-            val = getattr(self.args, key, None)
-            if val is not None:
-                result[key] = val
-        return result
 
     def create_conn_obj(self) -> bool:
         """No connection needed for offline analysis."""

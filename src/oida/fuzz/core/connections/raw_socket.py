@@ -52,6 +52,13 @@ class RawSocketConnection:
                 # We only provide ICMP header + payload
                 self._sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
                 self._sock_type = "icmp"
+            elif self.protocol == "igmp":
+                # IGMP socket - kernel builds the IP header (NO IP_HDRINCL), we
+                # supply only the IGMP message. Without this, an IGMP fuzzer on a
+                # plain IPPROTO_RAW/IP_HDRINCL socket would have its first bytes
+                # (Type/MaxResp) parsed as an IP header -> EINVAL / never sent.
+                self._sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IGMP)
+                self._sock_type = "igmp"
             elif self.protocol == "icmpv6":
                 # ICMPv6 socket
                 self._sock = socket.socket(socket.AF_INET6, socket.SOCK_RAW, socket.IPPROTO_ICMPV6)

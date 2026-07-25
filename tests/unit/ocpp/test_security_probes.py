@@ -309,9 +309,25 @@ class TestSSRFExtended(unittest.TestCase):
     def test_all_urls_accepted_generates_one_finding_each(self):
         """Every accepted UpdateFirmware SSRF URL yields a finding with the
         configured severity; the cloud-metadata URLs are also re-probed via the
-        diagnostics path."""
+        diagnostics path.
+
+        UpdateFirmware.conf has no fields at all in OCPP 1.6, so an empty {}
+        CALLRESULT genuinely means "accepted". GetDiagnostics.conf's
+        fileName is OPTIONAL though -- only a non-empty fileName means the
+        CP actually intends to upload to our URL, so the diagnostics
+        re-probe response must include one for this test to represent a
+        real accept (see test_get_diagnostics_reprobe_empty_filename_is_not_ssrf
+        for the empty-payload / no-finding case this guards against).
+        """
         obj = _make_instance(version="1.6")
-        obj.scanner._send_and_receive.return_value = _callresult({})
+
+        def fake_send(conn, msg, timeout=5):
+            data = json.loads(msg)
+            action = data[2]
+            payload = {"fileName": "diag.log"} if action == "GetDiagnostics" else {}
+            return _callresult(payload, data[1])
+
+        obj.scanner._send_and_receive.side_effect = fake_send
 
         obj.test_ssrf_extended()
 
@@ -330,6 +346,26 @@ class TestSSRFExtended(unittest.TestCase):
         aws = [f for f in findings if "AWS metadata" in f["issue"]]
         self.assertTrue(aws)
         self.assertEqual(aws[0]["severity"], "CRITICAL")
+
+    def test_get_diagnostics_reprobe_empty_filename_is_not_ssrf(self):
+        """An empty {} GetDiagnostics.conf (fileName is OPTIONAL per the OCPP
+        1.6 spec) means the CP acknowledged the request but is not going to
+        upload anything -- it must not be flagged as SSRF, even though the
+        UpdateFirmware probes for the same URLs are still genuinely accepted."""
+        obj = _make_instance(version="1.6")
+        obj.scanner._send_and_receive.return_value = _callresult({})
+
+        obj.test_ssrf_extended()
+
+        probes = obj.results["data"]["ssrf_extended"]["probes"]
+        diag_probes = [p for p in probes if p["label"].endswith("(diag)")]
+        self.assertEqual(len(diag_probes), 3)
+        self.assertTrue(all(p["status"] == "AcceptedNoUpload" for p in diag_probes))
+
+        # Only the 5 UpdateFirmware probes should have produced findings.
+        findings = _findings(obj)
+        self.assertEqual(len(findings), len(SSRF_PROBE_URLS))
+        self.assertTrue(all("UpdateFirmware" in f["issue"] for f in findings))
 
     def test_v201_uses_get_log_for_diag_reprobe(self):
         """On 2.0.1 the diagnostics re-probe path must send GetLog, not GetDiagnostics."""
@@ -804,10 +840,17 @@ class TestTlsAndConfigKeys(unittest.TestCase):
         obj._handle_check_config_keys()
         self.assertEqual(len(_findings(obj)), 0)
 
-    def test_check_auth_anonymous_uses_authentication_category(self):
+    def test_check_auth_anonymous_does_not_reemit_finding(self):
+        """create_conn_obj() (in ocpp/__init__.py) already reports the
+        "Anonymous access" AUTHENTICATION finding unconditionally for every
+        unauthenticated connection. _handle_check_auth() must not call
+        logger.security_finding() again for the same condition -- that
+        previously produced a duplicate, differently-shaped entry in
+        results["data"]["security_findings"] on every --security run.
+        """
         obj = _make_instance(username=None)
         obj._handle_check_auth()
-        self.assertIn(Category.AUTHENTICATION, _finding_categories(obj))
+        self.assertNotIn(Category.AUTHENTICATION, _finding_categories(obj))
 
     def test_check_boot_accepted_uses_authentication_category(self):
         obj = _make_instance()

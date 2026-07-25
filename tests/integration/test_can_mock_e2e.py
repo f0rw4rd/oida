@@ -406,9 +406,9 @@ class TestE2EJ1939:
                 if (rpgn & 0xFF00) == m.J1939_PGN_TP_DT:
                     frame = bytes(msg.data)
                     tp_dt_frames[frame[0]] = frame[1:]  # seq -> payload, dedup
-                    assembled = b"".join(
-                        tp_dt_frames[seq] for seq in sorted(tp_dt_frames)
-                    ).replace(b"\xff", b"")
+                    assembled = b"".join(tp_dt_frames[seq] for seq in sorted(tp_dt_frames)).replace(
+                        b"\xff", b""
+                    )
                     vin = assembled.decode("ascii", errors="ignore")
             assert m.MOCK_VIN in vin
         finally:

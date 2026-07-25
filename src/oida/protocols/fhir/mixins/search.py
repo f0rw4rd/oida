@@ -740,6 +740,8 @@ class SearchMixin:
                     parsed = FHIRResourceParser.parse_medication_request(resource)
                 elif resource_type == "Condition":
                     parsed = FHIRResourceParser.parse_condition(resource)
+                elif resource_type == "Encounter":
+                    parsed = FHIRResourceParser.parse_encounter(resource)
                 else:
                     parsed = {"id": resource_id, "type": resource_type}
 

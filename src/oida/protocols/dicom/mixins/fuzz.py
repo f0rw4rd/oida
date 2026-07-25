@@ -30,7 +30,7 @@ class FuzzMixin(_ScannerBase):
             self.logger.fail("Cannot fuzz without established association")
             return
 
-        iterations = getattr(self.args, "fuzz_iterations", 20)
+        iterations = getattr(self.args, "fuzz_iterations", 10)
         self.logger.display(f"Starting C-FIND fuzzing with {iterations} iterations per field...")
 
         self._fuzz_cfind_queries(iterations)

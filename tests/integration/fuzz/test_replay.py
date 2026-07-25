@@ -463,8 +463,7 @@ class TestReplayLightweightMode:
 
                 assert len(payload1) > 0, "Regenerated payload should be non-empty"
                 assert crc1 == crc2, (
-                    f"Regenerated CRC32 should be consistent across calls: "
-                    f"{crc1:08x} != {crc2:08x}"
+                    f"Regenerated CRC32 should be consistent across calls: {crc1:08x} != {crc2:08x}"
                 )
             except AttributeError:
                 pytest.skip("Fuzzer does not support payload regeneration")

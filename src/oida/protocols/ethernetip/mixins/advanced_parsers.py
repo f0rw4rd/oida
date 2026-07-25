@@ -300,9 +300,28 @@ class AdvancedParsersMixin(_ScannerBase):
             f"  Downloading file: {total_size} bytes in {transfer_size}-byte chunks"
         )
 
-        # Upload Transfer (Service 0x4F) - repeat until done
+        # Upload Transfer (Service 0x4F) - repeat until done.
+        #
+        # Guard against a device that keeps returning well-formed, non-terminal
+        # (packet_type 0/1) responses with an empty payload: without a cap this
+        # would spin forever since file_data never grows and packet_type never
+        # reaches the terminal 2/3 values. We bound both the total number of
+        # iterations (derived from the negotiated transfer_size) and the number
+        # of consecutive empty-payload chunks.
         transfer_number = 0
+        max_iterations = max(effective_max // max(transfer_size, 1), 1) + 16
+        consecutive_empty = 0
+        max_consecutive_empty = 5
+        iterations = 0
         while len(file_data) < effective_max:
+            iterations += 1
+            if iterations > max_iterations:
+                self.logger.warning(
+                    f"  Upload transfer exceeded {max_iterations} iterations "
+                    "without completing, aborting"
+                )
+                break
+
             # Request: Transfer Number (USINT)
             transfer_request = struct.pack("<B", transfer_number)
 
@@ -319,6 +338,16 @@ class AdvancedParsersMixin(_ScannerBase):
             # Skip resp_transfer_num at index 0
             packet_type = chunk_response[1]
             chunk_data = chunk_response[2:]
+
+            if chunk_data:
+                consecutive_empty = 0
+            else:
+                consecutive_empty += 1
+                if consecutive_empty >= max_consecutive_empty:
+                    self.logger.warning(
+                        f"  {consecutive_empty} consecutive empty upload transfer chunks, aborting"
+                    )
+                    break
 
             file_data.extend(chunk_data)
             transfer_number = (transfer_number + 1) % 256

@@ -562,8 +562,11 @@ class BlockOperationsMixin(_ScannerBase):
         dbs = self._enumerate_data_blocks(conn)
         if dbs:
             self.logger.success(f"Found {len(dbs)} Data Blocks:")
-            for db_num in dbs:
-                self.logger.display(f"    DB{db_num}")
+            # _enumerate_data_blocks() returns a list of per-block dicts
+            # ({"number": N, "size": ..., ...}), not bare ints -- iterating
+            # it directly rendered "DB{'number': 1, 'size': ...}" here.
+            for db in dbs:
+                self.logger.display(f"    DB{db['number']}")
             return {"success": True, "data_blocks": dbs}
         self.logger.display("No accessible data blocks found")
         return {"success": True, "data_blocks": []}

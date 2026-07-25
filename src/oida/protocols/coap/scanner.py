@@ -27,6 +27,7 @@ from .helpers import (
     coap_ping,
     coap_get,
     coap_get_blockwise,
+    coap_get_checked,
     coap_request,
     create_context,
     shutdown_context,
@@ -193,11 +194,16 @@ class CoAPScanner(NetworkScanner):
         block_size = self._block_size
 
         self.logger.debug("GET %s", uri)
-        code, payload = run_async(coap_get(ctx, uri, timeout=self.timeout))
+        code, payload, block2_more = run_async(coap_get_checked(ctx, uri, timeout=self.timeout))
 
         # If the server returns 4.13 (Request Entity Too Large) or the
-        # response has a block2 option, retry with explicit block-wise GET
-        if code == "4.13" or (code.startswith("2.") and len(payload) >= block_size):
+        # response is a still-incomplete block-wise transfer (Block2
+        # more=True), retry with explicit block-wise GET. aiocoap's
+        # ctx.request() already reassembles Block2 responses transparently,
+        # so block2_more is normally False here -- this is a defensive
+        # fallback, not a payload-size heuristic (a large but complete
+        # single response must not trigger a redundant duplicate GET).
+        if code == "4.13" or block2_more:
             self.logger.debug(
                 "Retrying /.well-known/core with block-wise GET (block_size=%d)", block_size
             )
@@ -315,7 +321,7 @@ class CoAPScanner(NetworkScanner):
     ) -> Dict[str, Dict[str, str]]:
         """Build an access matrix by probing CoAP methods per resource.
 
-        Always tests the read-only methods (GET / FETCH / OBSERVE).
+        Always tests the read-only methods (GET / FETCH).
         Tests the write methods (PUT / POST / DELETE / PATCH / IPATCH)
         only when ``confirm`` is True — DELETE on a live actuator can
         wipe physical state, so unattended scans must stop at reads.
@@ -388,8 +394,11 @@ class CoAPScanner(NetworkScanner):
             except (ValueError, UnicodeDecodeError) as e:
                 self.logger.debug(f"Failed to get mode_val: {e}")
 
-        # Probe for unauthenticated write — only with --confirm (sends actual PUT)
-        if confirm:
+        # Probe for unauthenticated write — sends a real PUT, so require BOTH
+        # --confirm AND explicit write-testing intent (--methods). Otherwise a
+        # bare `--confirm` discovery would silently flip an actuator (relay/
+        # valve) as a side effect, which the cross-protocol convention forbids.
+        if confirm and self.args.get("methods"):
             writable_candidates = [
                 r["path"] for r in resources if r.get("path", "").startswith("/actuator")
             ]
@@ -415,7 +424,7 @@ class CoAPScanner(NetworkScanner):
             if unauth_writes:
                 findings["unauthenticated_writes"] = unauth_writes
         else:
-            self.logger.debug("Skipping write probes (--confirm not set)")
+            self.logger.debug("Skipping write probes (need --confirm and --methods)")
 
         return findings
 
@@ -461,10 +470,11 @@ class CoAPScanner(NetworkScanner):
                     }
                 )
 
+                observation_iter = pr.observation.__aiter__()
                 for i in range(1, max_notifications):
                     try:
                         resp = await asyncio.wait_for(
-                            pr.observation.__aiter__().__anext__(), timeout=self.timeout
+                            observation_iter.__anext__(), timeout=self.timeout
                         )
                         collected.append(
                             {

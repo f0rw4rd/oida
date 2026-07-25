@@ -419,9 +419,7 @@ class TestS7commFieldCoverage:
         )
         has_seq = any(ix.details.get("seq_num") for ix in listener.interactions)
         has_ref = any(ix.details.get("data_unit_ref") is not None for ix in listener.interactions)
-        has_last = any(
-            ix.details.get("last_data_unit") is not None for ix in listener.interactions
-        )
+        has_last = any(ix.details.get("last_data_unit") is not None for ix in listener.interactions)
         assert has_seq, "Expected seq_num in at least one userdata interaction"
         assert has_ref, "Expected data_unit_ref in at least one userdata interaction"
         assert has_last, "Expected last_data_unit in at least one userdata interaction"

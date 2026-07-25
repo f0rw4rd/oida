@@ -1,7 +1,7 @@
 """
 Offline tests for DNS request advertise-vs-connect parity and gating.
 
-The DNS fuzzer's get_request_definitions() advertises 64 named requests for
+The DNS fuzzer's get_request_definitions() advertises 68 named requests for
 --list-requests / --enable. Every advertised name must be backed by a
 session.connect() gated under is_request_enabled("<name>"), otherwise
 --list-requests lies and --enable/--disable have no effect.
@@ -100,3 +100,31 @@ def test_disable_suppresses_single_request():
     disabled = _connected_names(_build(_make_config(disabled_requests=["DNS_CACHE_POISONING"])))
     assert "DNS_CACHE_POISONING" not in disabled
     assert disabled == full - {"DNS_CACHE_POISONING"}
+
+
+# NAME:WRECK-class techniques added on top of the original 64.
+NAMEWRECK_REQUESTS = [
+    "DNS_RDLength_Underflow",
+    "DNS_Pointer_Forward",
+    "DNS_Pointer_Past_Packet",
+    "DNS_Name_Over_255",
+]
+
+
+@pytest.mark.parametrize("name", NAMEWRECK_REQUESTS)
+def test_namewreck_request_advertised(name):
+    """Each NAME:WRECK technique is advertised via get_request_definitions()."""
+    assert name in _advertised_names()
+
+
+@pytest.mark.parametrize("name", NAMEWRECK_REQUESTS)
+def test_namewreck_request_gated(name):
+    """Each NAME:WRECK technique gates its connect() via is_request_enabled()."""
+    assert name in _gated_names()
+
+
+@pytest.mark.parametrize("name", NAMEWRECK_REQUESTS)
+def test_namewreck_request_individually_selectable(name):
+    """--enable <name> connects only that NAME:WRECK request."""
+    connected = _connected_names(_build(_make_config(enabled_requests=[name])))
+    assert connected == {name}

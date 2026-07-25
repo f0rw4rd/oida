@@ -1229,28 +1229,9 @@ class TestIEC104Integration:
                 f"(even on connection failure). Found findings: {findings}"
             )
 
-    # ========================================================================
-    # P17: Skipped Tests (require hardware/serial)
-    # ========================================================================
-
-    @pytest.mark.skip(reason="Requires serial hardware (--iec101)")
-    def test_iec101_serial_mode(self):
-        """Test --iec101 serial mode requires physical serial port"""
-        pass
-
-    @pytest.mark.skip(reason="Requires serial hardware (--list-ports)")
-    def test_list_serial_ports(self):
-        """Test --list-ports requires serial subsystem"""
-        pass
-
-    @pytest.mark.skip(
-        reason="--tls-ca IS consumed (scanner._build_tls_config -> set_ca_certificate); "
-        "consumption is unit-tested in test_scanner.py::test_tls_ca_consumed_by_build_tls_config. "
-        "Live exercise blocked by upstream c104 mbedtls TLS bug (iec104-python#64)."
-    )
-    def test_tls_ca_flag(self):
-        """--tls-ca wiring is proven by the unit test; live TLS is upstream-broken."""
-        pass
+    # NOT COVERED (no test exists — do not add skipped placeholders):
+    #   - IEC 101 serial mode, serial port listing, and --tls-ca: need a
+    #     physical serial device / a CA-backed TLS endpoint.
 
     # NOTE: --fuzz-max-targets was removed from the IEC 104 CLI — it is a
     # multi-target cap that never applied to IEC 104's single --fuzz-ioa fuzzer

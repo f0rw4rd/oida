@@ -451,18 +451,3 @@ class SERCOSPassiveListener(PySharkListenerBase):
                 "control_count": len(self.phase_history),
             }
         ]
-
-    def get_slaves_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all observed SERCOS slaves."""
-        return [
-            {
-                "address": slave.address,
-                "mac": slave.mac,
-                "comm_warning": slave.comm_warning,
-                "slave_valid": slave.slave_valid,
-                "svc_reads": slave.svc_read_count,
-                "svc_writes": slave.svc_write_count,
-                "idns": sorted(slave.idns_accessed),
-            }
-            for slave in sorted(self.slaves.values(), key=lambda s: s.address)
-        ]

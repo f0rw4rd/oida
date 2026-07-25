@@ -8,8 +8,8 @@ via ``get_field`` (e.g. ``hdr_srv_fda_service_id_confirm``,
 ``sm_id_rsp_dev_id``), then asserts on the parsed service identification,
 session tracking, device discovery and reporting accessors.
 
-The listener determines request/response direction from the ``confirm_flag``
-boolean (a confirmed/response message), and identifies the protocol+service by
+The listener determines request/response direction from ``hdr.confirm_msg_type``
+(0=Request, 1=Response, 2=Error), and identifies the protocol+service by
 probing FDA/SM/FMS/LAN confirmed and unconfirmed service-id fields in order.
 """
 
@@ -131,7 +131,7 @@ def test_sm_identify_response_extracts_device_identity():
     listener, ix = _feed(
         {
             "hdr_srv_sm_service_id_confirm": "1",  # SM_Identify
-            "hdr_srv_confirm_flag": "True",  # response
+            "hdr_confirm_msg_type": "1",  # 1 = Response Message (real direction field)
             "sm_id_rsp_dev_id": "Emerson-3051",
             "sm_id_rsp_pd_tag": "PT-200",
             "sm_id_rsp_dev_idx": "12",

@@ -61,6 +61,16 @@ class TFTPFuzzer(BaseFuzzer):
             ),
             RequestInfo("TFTP_Invalid_Mode", "Invalid transfer mode testing", "protocol"),
             RequestInfo("TFTP_Malformed", "Malformed packets and invalid opcodes", "malformed"),
+            RequestInfo(
+                "TFTP_Short_Datagram",
+                "Runt datagrams shorter than the fixed header (0-3 bytes)",
+                "malformed",
+            ),
+            RequestInfo(
+                "TFTP_Unterminated",
+                "RRQ/WRQ strings without null termination (decode-walk)",
+                "malformed",
+            ),
         ]
 
     def _create_socket(self):
@@ -641,6 +651,69 @@ class TFTPFuzzer(BaseFuzzer):
             ),
         )
 
+        # 5i. Short / runt datagrams (shorter than the fixed TFTP header)
+        # Cut the length-bearing field into the last 1-6 bytes: exercises
+        # servers that index opcode/block/error-code without a length check.
+        short_datagram = Request(
+            "TFTP_Short_Datagram",
+            children=(
+                Block(
+                    "Short_Datagram",
+                    children=(
+                        Group(
+                            "runt_bytes",
+                            values=[
+                                b"",  # 0-byte datagram
+                                b"\x00",  # 1-byte partial opcode
+                                b"\x00\x03",  # 2-byte opcode-only DATA (block absent)
+                                b"\x00\x04",  # 2-byte opcode-only ACK (block absent)
+                                b"\x00\x05",  # 2-byte opcode-only ERROR (code absent)
+                                b"\x00\x03\x00",  # 3-byte DATA: opcode + 1 of 2 block bytes
+                                b"\x00\x04\x00",  # 3-byte ACK: opcode + 1 of 2 block bytes
+                            ],
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # 5j. Unterminated strings (fixed-buffer decode-walk class)
+        # RRQ with a long filename and NO trailing null before the mode:
+        # a naive strlen/strcpy walks off the end of the field.
+        unterminated_filename_rrq = Request(
+            "TFTP_Malformed_Unterminated_Filename_RRQ",
+            children=(
+                Block(
+                    "Unterminated_Filename_RRQ",
+                    children=(
+                        Word("opcode", 1, endian=">"),
+                        Static("filename", "A" * 300),
+                        # NO null terminator here -> filename runs into mode
+                        Static("mode", "octet"),
+                        Byte("null2", 0x00),
+                    ),
+                ),
+            ),
+        )
+
+        # RRQ with filename+null but the mode NOT null-terminated: the packet
+        # ends mid-mode, so a mode-string decode walks past the datagram end.
+        unterminated_mode_rrq = Request(
+            "TFTP_Malformed_Unterminated_Mode_RRQ",
+            children=(
+                Block(
+                    "Unterminated_Mode_RRQ",
+                    children=(
+                        Word("opcode", 1, endian=">"),
+                        Static("filename", "test.txt"),
+                        Byte("null1", 0x00),
+                        Static("mode", "netascii"),
+                        # NO trailing null -> packet ends mid-mode
+                    ),
+                ),
+            ),
+        )
+
         # ==================== OPTIMIZED REQUEST ORDERING ====================
         # Reordered for fast coverage + early crash detection
 
@@ -684,5 +757,12 @@ class TFTPFuzzer(BaseFuzzer):
 
         if self.is_request_enabled("TFTP_Malformed"):
             self.session.connect(malformed_packets)
+
+        if self.is_request_enabled("TFTP_Short_Datagram"):
+            self.session.connect(short_datagram)
+
+        if self.is_request_enabled("TFTP_Unterminated"):
+            self.session.connect(unterminated_filename_rrq)
+            self.session.connect(unterminated_mode_rrq)
 
         return self.session

@@ -169,18 +169,22 @@ def test_unknown_response_code_synthesizes_class_detail():
 # ---------------------------------------------------------------------------
 
 
-def test_empty_code_classifies_as_request_named_empty():
+def test_empty_ack_classifies_as_response():
+    # Code 0 (Empty) is excluded from the request range, so an empty ACK
+    # (server -> client) is correctly classified as a response instead of
+    # being caught by the is_request check (which used to include code 0).
     _, ix = _get({"type": "2", "code": "0", "mid": "55"})
     assert ix.details["msg_type"] == "ACK"
     assert ix.details["code"] == 0
-    assert ix.direction == "request"
-    assert ix.details["method"] == "Empty"
+    assert ix.direction == "response"
+    assert ix.details["method"] == "ACK"
 
 
 def test_empty_con_message():
     _, ix = _get({"type": "0", "code": "0", "mid": "55"})
     assert ix.details["msg_type"] == "CON"
-    assert ix.details["method"] == "Empty"
+    assert ix.direction == "request"
+    assert ix.details["method"] == "CON"
 
 
 def test_rst_empty_message_type():

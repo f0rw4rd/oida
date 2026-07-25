@@ -706,23 +706,3 @@ class NTLMPassiveListener(PySharkListenerBase):
                     blob = h.nt_hash[32:]
                     result.append(f"{h.username}::{h.domain}:{h.challenge}:{nt_proof}:{blob}")
         return result
-
-    def get_john_hashes(self) -> List[str]:
-        """Get hashes in John the Ripper format.
-
-        NTLMv1:
-            user:$NETLM$challenge$lm_response
-            user:$NETNTLM$challenge$nt_response
-
-        NTLMv2:
-            user:$NETNTLMv2$domain$challenge$nt_response
-        """
-        result = []
-        for h in self.hashes:
-            if h.hash_type == "NTLMv1":
-                if h.lm_hash:
-                    result.append(f"{h.username}:$NETLM${h.challenge}${h.lm_hash}")
-                result.append(f"{h.username}:$NETNTLM${h.challenge}${h.nt_hash}")
-            elif h.hash_type == "NTLMv2":
-                result.append(f"{h.username}:$NETNTLMv2${h.domain}${h.challenge}${h.nt_hash}")
-        return result

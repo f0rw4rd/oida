@@ -3,7 +3,6 @@
 These complement ``test_rpc_mixin.py`` by exercising the larger uncovered
 methods:
 
-- ``_apply_rpc_port``      (RPC endpoint port override)
 - ``_rpc_operations``      (top-level RPC flow orchestration)
 - ``_read_im_data_implicit`` / ``_read_diagnosis_implicit``
 - ``_write_single_index``  (success + readback path)
@@ -155,32 +154,6 @@ def _profinet_mod():
 
 
 # ──────────────────────────────────────────────────────────────────────
-# _apply_rpc_port
-# ──────────────────────────────────────────────────────────────────────
-
-
-class TestApplyRpcPort:
-    def test_overrides_port(self):
-        stub = RPCStub(args={"rpc_port": 49152})
-        con = MockCon()
-        stub._apply_rpc_port(con)
-        assert con.peer == ("192.168.1.50", 49152)
-
-    def test_no_override_when_unset(self):
-        stub = RPCStub()
-        con = MockCon()
-        stub._apply_rpc_port(con)
-        assert con.peer == ("192.168.1.50", 34964)
-
-    def test_no_peer_attr_is_safe(self):
-        stub = RPCStub(args={"rpc_port": 5000})
-        con = MagicMock()
-        con.peer = None
-        stub._apply_rpc_port(con)  # must not raise
-        assert con.peer is None
-
-
-# ──────────────────────────────────────────────────────────────────────
 # _rpc_operations
 # ──────────────────────────────────────────────────────────────────────
 
@@ -221,13 +194,6 @@ class TestRpcOperations:
         assert dev.im0_data["order_id"].startswith("6ES7")
         assert con.connected_with == stub._my_mac
         assert con.closed is True
-
-    def test_apply_rpc_port_used_in_flow(self):
-        stub = RPCStub(args={"rpc_port": 50000, "read_im": False})
-        dev = _device()
-        mod, con = _profinet_mod()
-        stub._rpc_operations(dev, mod)
-        assert con.peer == ("192.168.1.50", 50000)
 
     def test_slots_flag_triggers_discovery_and_display(self):
         stub = RPCStub(args={"slots": True, "read_im": False})

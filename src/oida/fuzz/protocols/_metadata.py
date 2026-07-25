@@ -34,6 +34,14 @@ PROTOCOL_CATEGORIES = {
             "ads",
             "mms",
             "opcua",
+            "s7comm",
+            "profinet",
+            "ethercat",
+            "goose",
+            "hart",
+            "knx",
+            "tase2",
+            "can",
         ],
     },
     "iot": {
@@ -44,7 +52,17 @@ PROTOCOL_CATEGORIES = {
     "network": {
         "name": "Network Infrastructure",
         "description": "DNS, DHCP, NTP, and core network protocols",
-        "protocols": ["dns", "dhcp", "dhcpv6", "mdns", "ntp", "snmpv1", "snmpv2c", "snmpv3"],
+        "protocols": [
+            "dns",
+            "dhcp",
+            "dhcpv6",
+            "mdns",
+            "netbios",
+            "ntp",
+            "snmpv1",
+            "snmpv2c",
+            "snmpv3",
+        ],
     },
     "remote_access": {
         "name": "Remote Access",
@@ -53,13 +71,13 @@ PROTOCOL_CATEGORIES = {
     },
     "layer3": {
         "name": "Network Layer (Layer 3)",
-        "description": "IP and ICMP protocols",
-        "protocols": ["ipv4", "ipv6", "icmp", "icmpv6"],
+        "description": "IP, ICMP, and IP-multicast protocols",
+        "protocols": ["ipv4", "ipv6", "icmp", "icmpv6", "igmp"],
     },
     "layer2": {
         "name": "Data Link Layer (Layer 2)",
-        "description": "Ethernet and link-layer protocols",
-        "protocols": ["ethernet"],
+        "description": "Ethernet, PPPoE, and link/adaptation-layer protocols",
+        "protocols": ["ethernet", "pppoe", "6lowpan"],
     },
     "application": {
         "name": "Application Protocols",
@@ -78,8 +96,8 @@ PROTOCOL_CATEGORIES = {
     },
     "healthcare": {
         "name": "Healthcare Protocols",
-        "description": "HL7 medical protocol for healthcare systems",
-        "protocols": ["hl7"],
+        "description": "HL7, DICOM, and ASTM/LIS protocols for healthcare systems",
+        "protocols": ["hl7", "dicom", "astm"],
     },
 }
 

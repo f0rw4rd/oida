@@ -1097,6 +1097,7 @@ class ads(NetworkConnection):
             conn = pyads.Connection(self.scanner.ams_netid, ads_port)
             conn.open()
 
+            handles = None
             try:
                 # Get symbol info to determine PLCTYPE
                 info = conn.get_symbol(symbol_name)
@@ -1124,10 +1125,11 @@ class ads(NetworkConnection):
             except KeyboardInterrupt:
                 self.logger.display(f"\n  Stopped watching. Collected {len(values)} values.")
             finally:
-                try:
-                    conn.del_device_notification(*handles)
-                except Exception as e:
-                    logger.debug(f"conn.del_device_notification(handles): {e}")
+                if handles is not None:
+                    try:
+                        conn.del_device_notification(*handles)
+                    except Exception as e:
+                        logger.debug(f"conn.del_device_notification(handles): {e}")
                 conn.close()
 
         except AttributeError:

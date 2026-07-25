@@ -75,7 +75,7 @@ class ControlMixin(_ScannerBase):
                 )
 
             success = self._command_success(result)
-            result_str = self._op_result(success)
+            result_str = self._op_result(success, result)
             self.logger.display(f"Control {mode}: {result_str}")
             results["operations"][mode] = {
                 "success": success,
@@ -146,7 +146,7 @@ class ControlMixin(_ScannerBase):
                 )
 
             success = self._command_success(result)
-            result_str = self._op_result(success)
+            result_str = self._op_result(success, result)
             self.logger.display(f"Analog output {mode}: {result_str}")
             results["operations"][f"ao_{mode}"] = {
                 "success": success,
@@ -253,7 +253,7 @@ class ControlMixin(_ScannerBase):
             )
 
             success = self._command_success(result)
-            result_str = self._op_result(success)
+            result_str = self._op_result(success, result)
             self.logger.display(f"Dead band write: {result_str}")
             results["operations"]["write_deadband"] = {
                 "success": success,
@@ -376,8 +376,11 @@ class ControlMixin(_ScannerBase):
             tai.interval = interval_ms
             tai.units = dnp3.IntervalUnits.NoRepeat
 
-            # Write the time-and-interval to index 0
+            # Write the time-and-interval to index 0.
+            # Arm before launching (matching _sync_scan/_sync_task) so a
+            # completion firing before we start waiting isn't lost/stale.
             config = dnp3.TaskConfig.Default()
+            self._app.arm()
             self._master.Write(tai, 0, config)
             info = self._app.wait_for_task(float(self.op_timeout) + 2.0)
 

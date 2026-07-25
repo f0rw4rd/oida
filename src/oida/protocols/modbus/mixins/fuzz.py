@@ -97,6 +97,23 @@ class FuzzMixin(_ScannerBase):
             # Generate payloads
             payloads = list(self._generate_fuzz_payloads(decode_type, mode, iterations))
 
+            # 32-bit typed payloads (f32/i32/u32) are written as two
+            # consecutive registers via write_registers(addr, [hi, lo]).
+            # Capture addr+1's original value too so restoration below can
+            # rewrite the full window instead of leaving addr+1 stuck at
+            # its last fuzzed value.
+            register_width = 2 if any(isinstance(p, list) for p in payloads) else 1
+            original_value_hi = originals.get(addr + 1) if register_width == 2 else None
+            if register_width == 2 and original_value_hi is None:
+                try:
+                    rr = self.conn.read_holding_registers(
+                        addr + 1, count=1, device_id=self.scanner.unit_id
+                    )
+                    if not rr.isError():
+                        original_value_hi = rr.registers[0]
+                except Exception as e:
+                    self.logger.debug(f"Failed to read original value at {addr + 1}: {e}")
+
             for i, payload in enumerate(payloads):
                 stats["tests"] += 1
                 try:
@@ -127,12 +144,22 @@ class FuzzMixin(_ScannerBase):
                 if (i + 1) % 20 == 0:
                     self.logger.display(f"    Progress: {i + 1}/{len(payloads)}")
 
-            # Restore original value
+            # Restore original value(s) -- rewrite the full register window
+            # for 2-register typed payloads so addr+1 doesn't stay fuzzed.
             if original_value is not None:
                 try:
-                    self.conn.write_register(addr, original_value, device_id=self.scanner.unit_id)
+                    if register_width == 2 and original_value_hi is not None:
+                        self.conn.write_registers(
+                            addr,
+                            [original_value, original_value_hi],
+                            device_id=self.scanner.unit_id,
+                        )
+                    else:
+                        self.conn.write_register(
+                            addr, original_value, device_id=self.scanner.unit_id
+                        )
                 except Exception as e:
-                    self.logger.debug(f"self.conn.write_register(addr, origin...: {e}")
+                    self.logger.debug(f"Failed to restore register {addr}: {e}")
 
         return stats
 
@@ -151,7 +178,11 @@ class FuzzMixin(_ScannerBase):
             try:
                 response = self.scanner.send_custom_fc(self.conn, fc, payload, self.scanner.unit_id)
 
-                if response:
+                # success=True means a response (normal or exception) was received;
+                # a failed/timed-out send is success=False. The previous
+                # `if response:` was always truthy, so the errors branch was
+                # unreachable and errored sends were counted as "supported".
+                if response and response.get("success"):
                     if not response.get("is_exception"):
                         stats["responses"] += 1
                         stats["supported"].append(
@@ -188,10 +219,14 @@ class FuzzMixin(_ScannerBase):
         fuzz_all = getattr(self.args, "fuzz_all_access", False)
         writable = []
 
-        for entry in reg_map.get("registers", []):
+        # Register maps store "registers" as a dict keyed by name (see
+        # register_maps/generic.json), not a list -- iterate .items() and
+        # fold the name key into each entry so downstream code (which reads
+        # entry["name"]) keeps working.
+        for name, entry in reg_map.get("registers", {}).items():
             access = entry.get("access", "r").lower()
             if fuzz_all or "w" in access:
-                writable.append(entry)
+                writable.append({**entry, "name": entry.get("name", name)})
 
         if not writable:
             self.logger.warning("No writable registers found in map")
@@ -233,16 +268,10 @@ class FuzzMixin(_ScannerBase):
         return stats
 
     def _parse_fuzz_range(self, range_str: str) -> List[int]:
-        """Parse register range for fuzzing."""
-        addresses = []
-        for part in range_str.split(","):
-            part = part.strip()
-            if "-" in part:
-                start, end = part.split("-", 1)
-                addresses.extend(range(int(start), int(end) + 1))
-            else:
-                addresses.append(int(part))
-        return sorted(set(addresses))
+        """Parse register range for fuzzing (central range parser)."""
+        from ....utils import ProtocolParser
+
+        return ProtocolParser.parse_address_range(range_str)
 
     def _generate_fuzz_payloads(
         self, decode_type: Optional[str], mode: str, count: int

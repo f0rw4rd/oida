@@ -197,7 +197,7 @@ class TestDiscoverResources:
     def test_discover_resources_success(self, mock_run):
         """Successful .well-known/core discovery returns parsed resources."""
         link_format = b'</sensor/temp>;obs;rt="temperature",</actuator/led>'
-        mock_run.return_value = ("2.05", link_format)
+        mock_run.return_value = ("2.05", link_format, False)
 
         scanner = _make_scanner()
         ctx = MagicMock()
@@ -211,7 +211,7 @@ class TestDiscoverResources:
     @patch("oida.protocols.coap.scanner.run_async")
     def test_discover_resources_not_found(self, mock_run):
         """404 on .well-known/core returns empty list."""
-        mock_run.return_value = ("4.04", b"")
+        mock_run.return_value = ("4.04", b"", False)
 
         scanner = _make_scanner()
         resources = scanner._discover_resources(MagicMock())
@@ -221,7 +221,7 @@ class TestDiscoverResources:
     @patch("oida.protocols.coap.scanner.run_async")
     def test_discover_resources_timeout(self, mock_run):
         """Timeout on .well-known/core returns empty list."""
-        mock_run.return_value = ("timeout", b"")
+        mock_run.return_value = ("timeout", b"", False)
 
         scanner = _make_scanner()
         resources = scanner._discover_resources(MagicMock())
@@ -237,7 +237,7 @@ class TestDiscoverResources:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                return ("4.13", b"")  # first GET returns 4.13
+                return ("4.13", b"", False)  # first GET returns 4.13
             else:
                 return ("2.05", b"</sensor/temp>")  # blockwise retry succeeds
 
@@ -251,16 +251,15 @@ class TestDiscoverResources:
         assert call_count == 2
 
     @patch("oida.protocols.coap.scanner.run_async")
-    def test_discover_resources_blockwise_retry_on_large_payload(self, mock_run):
-        """Large payload >= block_size triggers blockwise retry."""
+    def test_discover_resources_blockwise_retry_on_block2_more(self, mock_run):
+        """A response with Block2 more=True triggers blockwise retry."""
         call_count = 0
-        large_payload = b"</a>" * 200  # 800 bytes > 512 block_size
 
         def side_effect(coro):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                return ("2.05", large_payload)
+                return ("2.05", b"</a>", True)  # truncated: block2.more=True
             else:
                 return ("2.05", b"</sensor/temp>")
 
@@ -271,6 +270,28 @@ class TestDiscoverResources:
 
         # Should have retried with blockwise
         assert call_count == 2
+
+    @patch("oida.protocols.coap.scanner.run_async")
+    def test_discover_resources_large_complete_payload_no_retry(self, mock_run):
+        """A large but fully-reassembled payload (block2_more=False) must NOT
+        trigger a redundant duplicate GET -- payload size alone is not a
+        truncation signal since aiocoap already reassembles Block2 transfers
+        transparently before coap_get_checked() returns."""
+        call_count = 0
+        large_payload = b"</a>" * 200  # 800 bytes > 512 block_size, but complete
+
+        def side_effect(coro):
+            nonlocal call_count
+            call_count += 1
+            return ("2.05", large_payload, False)
+
+        mock_run.side_effect = side_effect
+
+        scanner = _make_scanner()
+        scanner._discover_resources(MagicMock())
+
+        # Must NOT have retried -- only the single GET.
+        assert call_count == 1
 
 
 class TestProbeCommonPaths:
@@ -547,7 +568,7 @@ class TestCheckSecurity:
 
     @patch("oida.protocols.coap.scanner.run_async")
     def test_unauthenticated_write_with_confirm(self, mock_run):
-        """Write probes are sent when confirm=True."""
+        """Write probes are sent when confirm=True AND --methods is set."""
         call_count = 0
 
         def side_effect(coro):
@@ -560,7 +581,7 @@ class TestCheckSecurity:
 
         mock_run.side_effect = side_effect
 
-        scanner = _make_scanner()
+        scanner = _make_scanner({"methods": True})
         resources = [{"path": "/actuator/led"}]
         findings = scanner._check_security(MagicMock(), resources, confirm=True)
 
@@ -571,11 +592,25 @@ class TestCheckSecurity:
         """Write probes are NOT sent when confirm=False."""
         mock_run.return_value = ("4.04", b"")
 
-        scanner = _make_scanner()
+        scanner = _make_scanner({"methods": True})
         resources = [{"path": "/actuator/led"}]
         findings = scanner._check_security(MagicMock(), resources, confirm=False)
 
         assert "unauthenticated_writes" not in findings
+
+    @patch("oida.protocols.coap.scanner.run_async")
+    def test_no_write_probes_confirm_without_methods(self, mock_run):
+        """A bare --confirm (no --methods) must NOT fire actuator writes: the
+        write probe requires explicit write-testing intent, not just --confirm."""
+        mock_run.return_value = ("4.04", b"")
+
+        scanner = _make_scanner()  # --methods not set
+        resources = [{"path": "/actuator/led"}]
+        findings = scanner._check_security(MagicMock(), resources, confirm=True)
+
+        assert "unauthenticated_writes" not in findings
+        # Only the security-object read should have run — no PUT probe.
+        assert mock_run.call_count == 1
 
     @patch("oida.protocols.coap.scanner.run_async")
     def test_write_probe_denied(self, mock_run):
@@ -591,7 +626,7 @@ class TestCheckSecurity:
 
         mock_run.side_effect = side_effect
 
-        scanner = _make_scanner()
+        scanner = _make_scanner({"methods": True})
         resources = [{"path": "/actuator/led"}]
         findings = scanner._check_security(MagicMock(), resources, confirm=True)
 
@@ -611,7 +646,7 @@ class TestCheckSecurity:
 
         mock_run.side_effect = side_effect
 
-        scanner = _make_scanner()
+        scanner = _make_scanner({"methods": True})
         resources = [{"path": "/sensor/temp"}]
         findings = scanner._check_security(MagicMock(), resources, confirm=True)
 

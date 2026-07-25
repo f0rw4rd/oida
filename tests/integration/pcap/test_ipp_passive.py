@@ -55,9 +55,9 @@ class TestIPPPassiveEK:
         # readable name, not fall through to the "status=0" numeric fallback.
         statuses = {ix.details.get("status_name", "") for ix in response_ixs}
         assert "successful-ok" in statuses, f"Known status did not resolve; statuses: {statuses}"
-        assert not any(
-            s.startswith("status=") for s in statuses
-        ), f"Unresolved status fallback present: {statuses}"
+        assert not any(s.startswith("status=") for s in statuses), (
+            f"Unresolved status fallback present: {statuses}"
+        )
 
     def test_both_endpoints_tracked(self):
         """Both IPP server (printer) and client devices are created."""

@@ -142,6 +142,8 @@ class CANopenMixin(_ScannerBase):
         if result and not result.get("error"):
             self.logger.success("CANopen SDO write successful")
             self.results["data"]["canopen_write"] = {"success": True, "value": value}
+        elif result is None:
+            self.logger.fail("CANopen SDO write failed: no response (CANopen MEI not supported?)")
         else:
             self.logger.fail(f"CANopen SDO write failed: {result.get('error', 'Unknown error')}")
 

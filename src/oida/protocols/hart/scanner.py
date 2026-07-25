@@ -279,13 +279,9 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
                 # (e.g. AES-128 expects 16 bytes). Passing the ASCII hex through
                 # un-decoded silently breaks the handshake.
                 try:
-                    psk_key_bytes = bytes.fromhex(
-                        self.psk_key.replace(" ", "").replace("0x", "")
-                    )
+                    psk_key_bytes = bytes.fromhex(self.psk_key.replace(" ", "").replace("0x", ""))
                 except ValueError:
-                    self.logger.error(
-                        f"Invalid --psk-key: '{self.psk_key}' is not valid hex"
-                    )
+                    self.logger.error(f"Invalid --psk-key: '{self.psk_key}' is not valid hex")
                     return None
                 # TLS only works over TCP
                 if self.transport == "udp":

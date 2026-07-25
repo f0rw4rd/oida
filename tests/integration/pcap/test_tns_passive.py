@@ -79,10 +79,7 @@ class TestTNSPassiveEK:
         # and dedicated tns.refuse_reason_user / tns.refuse_reason_system fields.
         refuse = refuse_ixs[0]
         d = refuse.details
-        assert d.get("error_code"), (
-            "Refuse interaction has no error_code; "
-            f"details: {d}"
-        )
+        assert d.get("error_code"), f"Refuse interaction has no error_code; details: {d}"
         assert d.get("error_code") == "12514", (
             f"Expected error_code 12514 from refuse_data; got {d.get('error_code')!r}"
         )
@@ -91,9 +88,7 @@ class TestTNSPassiveEK:
             f"refuse_data not surfaced from tns.refuse_data; got {d.get('refuse_data')!r}"
         )
         # Dedicated reason codes are surfaced directly (not regexed from connect_data).
-        assert d.get("refuse_reason_system"), (
-            f"refuse_reason_system not surfaced; details: {d}"
-        )
+        assert d.get("refuse_reason_system"), f"refuse_reason_system not surfaced; details: {d}"
 
         # The Refuse column must render a non-blank ERR value.
         cols = listener._format_protocol_columns(refuse)

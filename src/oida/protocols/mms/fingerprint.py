@@ -101,9 +101,10 @@ class FingerprintMatcher:
         matcher.load_fingerprints("mms_fingerprints.json")
 
         # Try to match a domain
-        for rule in matcher.get_matching_rules("SIPApplication"):
-            if matcher.verify_rule(rule, read_attribute_func):
-                result = matcher.extract_attributes(rule, read_attribute_func)
+        domain = "SIPApplication"
+        for rule in matcher.get_matching_rules(domain):
+            if matcher.verify_rule(rule, read_attribute_func, domain):
+                result = matcher.extract_attributes(rule, read_attribute_func, domain)
                 break
     """
 

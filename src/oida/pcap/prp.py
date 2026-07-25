@@ -31,9 +31,9 @@ Security notes:
 - Single-LAN-only traffic per node means redundancy is compromised
 
 tshark fields used:
-- prp.sequence_nr: Sequence number from PRP trailer (FT_UINT16)
-- prp.lan_id: LAN identifier (FT_UINT16): 0x0A=LAN_A, 0x0B=LAN_B
-- prp.lsdu_size: LSDU size from PRP trailer (FT_UINT16)
+- prp.trailer.prp_sequence_nr: Sequence number from PRP trailer (FT_UINT16)
+- prp.trailer.prp_lan: LAN identifier (FT_UINT16): 0x0A=LAN_A, 0x0B=LAN_B
+- prp.trailer.prp_size: LSDU size from PRP trailer (FT_UINT16)
 - hsr_prp_supervision.source_mac_address_A: Source MAC on LAN A (FT_ETHER)
 - hsr_prp_supervision.source_mac_address_B: Source MAC on LAN B (FT_ETHER)
 - hsr_prp_supervision.red_box_mac_address: RedBox MAC (FT_ETHER)
@@ -168,9 +168,18 @@ class PRPPassiveListener(PySharkListenerBase):
         """Process a frame with PRP Redundancy Control Trailer."""
         prp_layer = packet.prp
 
-        seq_nr = self._parse_int(self.get_field(prp_layer, "sequence_nr"), 0)
-        lan_id_raw = self._parse_int(self.get_field(prp_layer, "lan_id"), -1)
-        lsdu_size = self._parse_int(self.get_field(prp_layer, "lsdu_size"), 0)
+        # PRP Redundancy Control Trailer fields are dissected as
+        # prp.trailer.prp_* (EK attrs trailer_prp_*), not the bare names.
+        seq_nr = self._parse_int(
+            self.get_field_any(prp_layer, "trailer_prp_sequence_nr", "prp.trailer.prp_sequence_nr"),
+            0,
+        )
+        lan_id_raw = self._parse_int(
+            self.get_field_any(prp_layer, "trailer_prp_lan", "prp.trailer.prp_lan"), -1
+        )
+        lsdu_size = self._parse_int(
+            self.get_field_any(prp_layer, "trailer_prp_size", "prp.trailer.prp_size"), 0
+        )
 
         # Resolve LAN label
         lan_label = PRP_LANS.get(lan_id_raw, "")

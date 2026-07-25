@@ -31,6 +31,7 @@ from .fingerprint import FingerprintMatcher, FingerprintMatch
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
 _pyiec61850 = lazy_import("pyiec61850", "MMS", install_hint="pip install oida[mms]")
 _pyiec61850_mms = lazy_import("pyiec61850.mms", "MMS", install_hint="pip install oida[mms]")
+_pyiec61850_tls = lazy_import("pyiec61850.mms.tls", "MMS", install_hint="pip install oida[mms]")
 
 
 class _Lib:
@@ -70,6 +71,43 @@ class _Lib:
         cls.ConnectionFailedError = mms.ConnectionFailedError
         cls.ReadError = mms.ReadError
         cls.WriteError = mms.WriteError
+
+
+def build_mms_tls_config(
+    *,
+    tls: bool,
+    logger: Any,
+    tls_ca: Optional[str] = None,
+    tls_pin: Optional[str] = None,
+    client_cert: Optional[str] = None,
+    client_key: Optional[str] = None,
+) -> Optional[Any]:
+    """Return a ``TLSConfig`` for an MMS connection, or ``None`` for plaintext.
+
+    Shared by the MMS scanner and the GOOSE GoCB-enumeration MMS sub-connection
+    so both apply the same policy:
+      * neither ``tls_ca`` nor ``tls_pin``  -> ``insecure=True`` (no validation)
+      * ``tls_pin``                         -> pin that exact server certificate
+      * ``tls_ca``                          -> validate the chain against the CA
+    ``client_cert``/``client_key`` add a client certificate (mutual TLS) in any
+    mode. Raises ``DependencyError`` if pyiec61850-ng is not installed.
+    """
+    if not tls:
+        return None
+    TLSConfig = _pyiec61850_tls().TLSConfig
+
+    own_cert = client_cert or ""
+    own_key = client_key or ""
+
+    if tls_pin:
+        logger.debug("TLS: pinning server certificate %s", tls_pin)
+        return TLSConfig.pinning(tls_pin, own_cert=own_cert, own_key=own_key)
+    if tls_ca:
+        logger.debug("TLS: validating chain against CA %s", tls_ca)
+        return TLSConfig(ca_certs=[tls_ca], own_cert=own_cert, own_key=own_key)
+
+    logger.debug("TLS: certificate validation disabled (no --tls-ca/--tls-pin)")
+    return TLSConfig(insecure=True, own_cert=own_cert, own_key=own_key)
 
 
 def _write_under_fc(client: Any, reference: str, value: Any, fc: Any) -> bool:
@@ -146,6 +184,18 @@ class MMSScanner(NetworkScanner):
         self.get_name_list = parse_bool(args.get("get-name-list", False))
         self.variable = args.get("variable") or None
 
+        # TLS (pyiec61850-ng >= 1.6.1.9). Validation is DISABLED by default:
+        # oida connects to arbitrary IEC 61850 endpoints whose certs are usually
+        # self-signed / hostname-mismatched, so --tls yields an encrypted-but-
+        # unvalidated session unless the operator supplies trust material
+        # (--tls-ca / --tls-pin). See _build_tls_config().
+        self.tls = parse_bool(args.get("tls", False))
+        self.tls_port = safe_int_conversion(args.get("tls-port"), 3782)
+        self.tls_ca = args.get("tls-ca") or None
+        self.tls_pin = args.get("tls-pin") or None
+        self.tls_client_cert = args.get("tls-client-cert") or None
+        self.tls_client_key = args.get("tls-client-key") or None
+
         # --test-write is a destructive op: requires --confirm and clears the
         # read-only guard so the write path actually runs.
         if self.test_write:
@@ -169,6 +219,30 @@ class MMSScanner(NetworkScanner):
         """Check if pyiec61850-ng is available."""
         return _pyiec61850.is_available
 
+    def _build_tls_config(self):
+        """Return a ``pyiec61850.mms.tls.TLSConfig`` for the connection, or None.
+
+        Returns None when ``--tls`` was not requested (plaintext MMS). When TLS
+        is requested, certificate validation is DISABLED by default (an
+        encrypted-but-unvalidated session): oida is an authorized testing tool
+        that connects to arbitrary endpoints whose certs are typically
+        self-signed or hostname-mismatched, and libiec61850 does not match
+        CN/SAN against the host anyway. Validation is only enabled when the
+        operator explicitly supplies trust material:
+          * ``--tls-pin <server.crt>``   -> strict pin to that certificate
+          * ``--tls-ca  <ca.crt>``       -> validate the chain against the CA
+        ``--tls-client-cert``/``--tls-client-key`` add a client certificate
+        (mutual TLS) in any mode.
+        """
+        return build_mms_tls_config(
+            tls=self.tls,
+            tls_ca=self.tls_ca,
+            tls_pin=self.tls_pin,
+            client_cert=self.tls_client_cert,
+            client_key=self.tls_client_key,
+            logger=self.logger,
+        )
+
     def connect(self) -> Any:
         """Establish IEC 61850 MMS connection.
 
@@ -180,17 +254,39 @@ class MMSScanner(NetworkScanner):
 
         _Lib.require()
 
+        tls_config = self._build_tls_config()
+        # MMS-over-TLS listens on 3782 by default; switch to it when --tls is on
+        # and the operator did not override the port off the plaintext default.
+        if tls_config is not None and port == self.get_default_port():
+            port = self.tls_port
+
         try:
-            client = _Lib.MMSClient(timeout=self.timeout * 1000)
+            if tls_config is not None:
+                client = _Lib.MMSClient(timeout=self.timeout * 1000, tls=tls_config)
+            else:
+                client = _Lib.MMSClient(timeout=self.timeout * 1000)
             client.connect(host, int(port))
 
             self.logger.debug(f"Connected to IEC 61850 server at {host}:{port}")
-            # Confirmed MMS / IEC 61850 association over TCP — cleartext by design.
-            self.logger.security_finding(
-                "No encryption",
-                category=Category.ENCRYPTION,
-                detail="MMS / IEC 61850 transmitted in cleartext (no TLS)",
-            )
+            if tls_config is None:
+                # Confirmed MMS / IEC 61850 association over TCP — cleartext.
+                self.logger.security_finding(
+                    "No encryption",
+                    category=Category.ENCRYPTION,
+                    detail="MMS / IEC 61850 transmitted in cleartext (no TLS)",
+                )
+            elif not (self.tls_ca or self.tls_pin):
+                # TLS with validation disabled: the session is encrypted but the
+                # server certificate was not authenticated.
+                self.logger.security_finding(
+                    "TLS certificate not validated",
+                    category=Category.ENCRYPTION,
+                    detail=(
+                        "MMS/TLS session established without certificate validation "
+                        "(--tls-ca/--tls-pin not supplied); transport is encrypted but "
+                        "the endpoint identity is unverified"
+                    ),
+                )
             return client
 
         except DependencyError:
@@ -609,6 +705,24 @@ class MMSScanner(NetworkScanner):
             self.logger.fail("--test-write requires --confirm flag (DANGEROUS: issues live writes)")
             return write_results
 
+        # Objects only carry a value if a prior read pass ran (--read-values /
+        # --variable). --test-write must work standalone, so read any missing
+        # values on demand here (same FC cascade as _read_data_objects) before
+        # selecting writable candidates — otherwise it silently tests nothing.
+        for do in data_objects:
+            if do.get("value") is not None:
+                continue
+            for fc in (_Lib.FC.MX, _Lib.FC.ST, _Lib.FC.DC):
+                try:
+                    value = self._normalize_read(connection.read_value(do["full_reference"], fc=fc))
+                except _Lib.ReadError:
+                    continue
+                if value is not None:
+                    do["readable"] = True
+                    do["value"] = value
+                    do["data_type"] = self._python_type_name(value)
+                    break
+
         writable_objects = [
             do for do in data_objects if do.get("readable") and do.get("value") is not None
         ]
@@ -660,36 +774,29 @@ class MMSScanner(NetworkScanner):
 
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze security configuration."""
+        write_count = len(results.get("write_test_results", {}).get("successful_writes", []))
+
         analysis = SecurityAnalyzer.assess_protocol_security(
             {
                 "authentication": False,
                 "authorization": False,
                 "encryption": False,
                 "integrity_check": False,
-                "access_control": len(
-                    results.get("write_test_results", {}).get("successful_writes", [])
-                )
-                == 0,
+                "access_control": write_count == 0,
             }
         )
 
-        analysis["concerns"] = []
+        # Only write/auth/encryption/integrity concerns are vulnerabilities.
+        # Benign discovery counts (logical devices, data objects, readable
+        # objects) are informational, not findings -- they were previously
+        # appended here and reported via report_vulnerability(), inflating
+        # the vuln count with non-issues.
+        analysis["concerns"] = list(analysis.get("issues", []))
 
-        device_count = len(results.get("logical_devices", []))
-        if device_count > 0:
-            analysis["concerns"].append(f"{device_count} logical devices accessible")
-
-        object_count = len(results.get("data_objects", []))
-        if object_count > 0:
-            analysis["concerns"].append(f"{object_count} data objects discovered")
-
-        read_count = len(results.get("read_test_results", {}).get("successful_reads", []))
-        if read_count > 0:
-            analysis["concerns"].append(f"{read_count} data objects readable")
-
-        write_count = len(results.get("write_test_results", {}).get("successful_writes", []))
         if write_count > 0:
-            analysis["concerns"].append(f"{write_count} data objects writable")
+            analysis["concerns"].append(
+                f"{write_count} data objects writable without authentication"
+            )
 
         return analysis
 

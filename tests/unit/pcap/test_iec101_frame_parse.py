@@ -1178,9 +1178,10 @@ class TestEdgeCases:
 
 
 class TestDeepBranches:
-    def test_non_integer_typeid_is_dropped(self):
-        """A present-but-unparseable typeid (e.g. 'XX') is silently dropped:
-        no interaction is recorded."""
+    def test_non_integer_typeid_records_malformed(self):
+        """A present-but-unparseable typeid (e.g. 'XX') is recorded as a
+        malformed ASDU interaction (not silently dropped) so operators and
+        coverage see it, mirroring the iec104 listener."""
         listener = _make_listener()
         before = len(listener.interactions)
         listener.process_packet(
@@ -1189,7 +1190,9 @@ class TestDeepBranches:
                 asdu_fields={"typeid": _scalar("XX"), "addr": "1", "ioa": "1"},
             )
         )
-        assert len(listener.interactions) == before
+        assert len(listener.interactions) == before + 1
+        rec = listener.interactions[-1]
+        assert "malformed" in rec.summary.lower()
 
     def test_multi_ioa_comma_split_fallback(self):
         """A scalar IOA field holding a comma-separated list is split into

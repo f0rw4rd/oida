@@ -1053,14 +1053,18 @@ class ObjectsMixin:
             for concern in security_concerns:
                 self.logger.display(f"      {concern}")
 
-            # Check if programChange is writable by attempting a read
-            # (writability is inferred from the property being present and accessible)
-            writable_count = sum(1 for p in programs if p.get("programChange") is not None)
-            if writable_count > 0:
+            # programChange is a control property. Its presence/readability is a
+            # recon signal but does NOT prove write access (that needs a
+            # --confirm write probe), so report it as an exposed control point
+            # rather than falsely claiming "Writable access" from a read.
+            exposed_count = sum(1 for p in programs if p.get("programChange") is not None)
+            if exposed_count > 0:
                 self.logger.security_finding(
-                    "Writable access",
+                    "Program control exposed",
                     category=Category.ACCESS_CONTROL,
-                    detail=f"{writable_count} program(s) have accessible programChange property - may allow unauthorized state transitions",
+                    detail=f"{exposed_count} program object(s) expose a readable programChange property; "
+                    "if write access is unauthenticated this would allow unauthorized "
+                    "RUN/HALT/RESTART state transitions",
                 )
         else:
             self.logger.display("\n  No security concerns identified")

@@ -68,9 +68,7 @@ class TestRBACWriteConfirmGate(unittest.IsolatedAsyncioTestCase):
             "oida.protocols.opcua.mixins.credentials._get_client_class",
             return_value=lambda *a, **k: client,
         ):
-            await harness._test_rbac(
-                "opc.tcp://127.0.0.1:4840", ["admin"], ["adminpass"]
-            )
+            await harness._test_rbac("opc.tcp://127.0.0.1:4840", ["admin"], ["adminpass"])
         return var_node
 
     async def test_write_back_skipped_without_confirm(self):

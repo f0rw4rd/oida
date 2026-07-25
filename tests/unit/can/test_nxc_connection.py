@@ -402,8 +402,15 @@ class TestUDSTargetId:
 
 
 class TestHandleUDSSessions:
+    def test_sessions_requires_confirm(self):
+        inst = _make_conn(confirm=False, uds_target_id="0x7E0")
+        inst._handle_uds_sessions()
+        inst.scanner.uds_session_scan.assert_not_called()
+        assert "uds_sessions" not in inst.results["data"]
+        assert "--confirm" in inst.logger.fail.call_args.args[0]
+
     def test_sessions_serializes(self):
-        inst = _make_conn(uds_target_id="0x7E0")
+        inst = _make_conn(confirm=True, uds_target_id="0x7E0")
         inst.scanner.uds_session_scan.return_value = [0x01, 0x03, 0x7F]
         inst._handle_uds_sessions()
         out = inst.results["data"]["uds_sessions"]
@@ -415,7 +422,7 @@ class TestHandleUDSSessions:
         assert "VendorSpecific" in vendor["name"]
 
     def test_sessions_aborts_on_bad_target(self):
-        inst = _make_conn(uds_target_id="bad")
+        inst = _make_conn(confirm=True, uds_target_id="bad")
         inst._handle_uds_sessions()
         inst.scanner.uds_session_scan.assert_not_called()
         assert "uds_sessions" not in inst.results["data"]
@@ -468,8 +475,15 @@ class TestHandleUDSSeeds:
 
 
 class TestHandleUDSRoutines:
+    def test_routines_requires_confirm(self):
+        inst = _make_conn(confirm=False, uds_target_id="0x7E0")
+        inst._handle_uds_routines()
+        inst.scanner.uds_routine_scan.assert_not_called()
+        assert "uds_routines" not in inst.results["data"]
+        assert "--confirm" in inst.logger.fail.call_args.args[0]
+
     def test_routines_serializes(self):
-        inst = _make_conn(uds_target_id="0x7E0")
+        inst = _make_conn(confirm=True, uds_target_id="0x7E0")
         inst.scanner.uds_routine_scan.return_value = [0x0203, 0xFF00]
         inst._handle_uds_routines()
         out = inst.results["data"]["uds_routines"]

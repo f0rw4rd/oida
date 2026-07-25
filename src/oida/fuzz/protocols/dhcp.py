@@ -73,6 +73,21 @@ class DHCPFuzzer(BaseFuzzer):
                 "DHCP_MALFORMED_EXTENDED", "Malformed extended options (CVE-2022-2928)", "overflow"
             ),
             RequestInfo("DHCP_Hostname_Overflow", "Hostname option buffer overflow", "overflow"),
+            RequestInfo(
+                "DHCP_Option_Overload",
+                "Option overload (52) sub-parse of malformed opts in file/sname BOOTP fields",
+                "overflow",
+            ),
+            RequestInfo(
+                "DHCP_Domain_List_Overflow",
+                "RFC1035 domain/DNS-list option overflow (udhcpc CVE-2016-2148 class)",
+                "overflow",
+            ),
+            RequestInfo(
+                "DHCP_DNS_Server_List_Len_Lie",
+                "Option 6 DNS-server list with length not a multiple of 4 / tail overrun",
+                "overflow",
+            ),
             # Phase 3: CVE-targeted operations (~3 min)
             RequestInfo("DHCP_OPTION_INJECTION", "Option value injection attacks", "cve"),
             RequestInfo(
@@ -801,6 +816,144 @@ class DHCPFuzzer(BaseFuzzer):
             ),
         )
 
+        # DHCP Option Overload (option 52) - DHO_OPTIONSOVERLOADED sub-parse class
+        # RFC 2132: when option 52 is present, a compliant client must ALSO parse
+        # options out of the 64-byte `sname` and/or 128-byte `file` BOOTP fields.
+        # Each field is a Group: the default (index-0) value is a well-formed
+        # embedded option so the baseline frame stays spec-valid, and the later
+        # values carry a malformed option whose declared length (0xff) overruns
+        # the fixed-size field, so a client that follows the overload flag
+        # sub-parses attacker-controlled bytes past the buffer end.
+        # sname (64B) and file (128B) variants are each padded to the exact size.
+        sname_benign = bytes([12, 4]) + b"host" + bytes([255]) + b"\x00" * 57
+        sname_overrun = bytes([12, 0xFF]) + b"A" * 62
+        file_benign = bytes([67, 4]) + b"boot" + bytes([255]) + b"\x00" * 121
+        file_overrun = bytes([67, 0xFF]) + b"B" * 126
+        dhcp_option_overload = Request(
+            "DHCP_Option_Overload",
+            children=(
+                Block(
+                    "DHCP_Header_Overload",
+                    children=(
+                        Byte("op", 0x01),
+                        Byte("htype", 0x01),
+                        Byte("hlen", 0x06),
+                        Byte("hops", 0x00),
+                        DWord("xid", 0x12345678, endian=">"),
+                        Word("secs", 0x0000, endian=">"),
+                        Word("flags", 0x8000, endian=">"),
+                        DWord("ciaddr", 0x00000000, endian=">"),
+                        DWord("yiaddr", 0x00000000, endian=">"),
+                        DWord("siaddr", 0x00000000, endian=">"),
+                        DWord("giaddr", 0x00000000, endian=">"),
+                        Static("chaddr", b"\x00\x11\x22\x33\x44\x55" + b"\x00" * 10),
+                        # Server name (64 bytes): benign default, overrun attack variant
+                        Group("sname", values=[sname_benign, sname_overrun]),
+                        # Boot filename (128 bytes): benign default, overrun attack variant
+                        Group("file", values=[file_benign, file_overrun]),
+                        DWord("magic_cookie", 0x63825363, endian=">"),
+                    ),
+                ),
+                Block(
+                    "DHCP_Overload_Options",
+                    children=(
+                        # Message Type
+                        Byte("option_53_code", 53),
+                        Byte("option_53_length", 1),
+                        Byte("message_type", 1),  # DISCOVER
+                        # Option Overload (52) - 1=file, 2=sname, 3=both
+                        Byte("option_52_code", 52),
+                        Byte("option_52_length", 1),
+                        Group(
+                            "overload_flag",
+                            values=[
+                                b"\x01",  # parse options out of `file`
+                                b"\x02",  # parse options out of `sname`
+                                b"\x03",  # parse options out of both
+                            ],
+                        ),
+                        Byte("end_option", 255),
+                    ),
+                ),
+            ),
+        )
+
+        # DHCP Domain / DNS-list Option Overflow (udhcpc CVE-2016-2148 class)
+        # RFC1035-encoded domain search list (119) and DNS-server list (6) whose
+        # encoded content / declared length overruns the client buffer: oversized
+        # labels, self-referential compression pointers, and length lies.
+        dhcp_domain_list_overflow = Request(
+            "DHCP_Domain_List_Overflow",
+            children=(
+                self._create_dhcp_header("_DomainList"),
+                Block(
+                    "DHCP_Domain_List_Options",
+                    children=(
+                        Byte("option_53_code", 53),
+                        Byte("option_53_length", 1),
+                        Byte("message_type", 1),  # DISCOVER
+                        # Domain Search List (119) - each Group value is len_byte + payload
+                        Byte("option_119_code", 119),
+                        Group(
+                            "domain_list_encodings",
+                            values=[
+                                # Declared len 255 but 256+ bytes of oversized labels follow
+                                bytes([255]) + (b"\x3f" + b"A" * 63) * 4,
+                                # Self-referential compression pointer -> decode loop
+                                bytes([2]) + b"\xc0\x00",
+                                # Compression pointer past end of packet
+                                bytes([6]) + b"\x03www\xc0\xff",
+                                # Label length 0x3f (63) but only 2 bytes of data (len lie)
+                                bytes([4]) + b"\x3fAB",
+                                # Max declared len with all-0x3f oversized labels
+                                bytes([255]) + b"\x3f" * 255,
+                            ],
+                        ),
+                        # DNS Server list (6) with an oversized RFC1035-style payload too
+                        Byte("option_6_code", 6),
+                        Byte("option_6_length", 4),
+                        DWord("dns_server", 0x08080808, endian=">"),
+                        Byte("end_option", 255),
+                    ),
+                ),
+            ),
+        )
+
+        # DHCP DNS-Server List Length Lie (option 6)
+        # Option 6 carries a list of 4-byte IPv4 addresses; a length that is not a
+        # multiple of 4 and/or larger than the addresses present makes a client read
+        # past the option (tail overrun) when it copies floor/ceil address counts.
+        dhcp_dns_len_lie = Request(
+            "DHCP_DNS_Server_List_Len_Lie",
+            children=(
+                self._create_dhcp_header("_DnsLenLie"),
+                Block(
+                    "DHCP_Dns_LenLie_Options",
+                    children=(
+                        Byte("option_53_code", 53),
+                        Byte("option_53_length", 1),
+                        Byte("message_type", 1),  # DISCOVER
+                        # DNS Server (6) - Group value is declared len_byte + address bytes
+                        Byte("option_6_code", 6),
+                        Group(
+                            "dns_len_lies",
+                            values=[
+                                # len 7: not a multiple of 4 (1.75 addresses)
+                                bytes([7]) + b"\x08\x08\x08\x08\x08\x08\x08",
+                                # len 16 declared but only one 4-byte address present
+                                bytes([16]) + b"\x08\x08\x08\x08",
+                                # len 3: partial (truncated) address
+                                bytes([3]) + b"\x08\x08\x08",
+                                # len 255: massive tail overrun past a single address
+                                bytes([255]) + b"\x08\x08\x08\x08",
+                            ],
+                        ),
+                        Byte("end_option", 255),
+                    ),
+                ),
+            ),
+        )
+
         # ==================== PHASE 3 ADDITIONS: CVE-TARGETED ====================
 
         # Option Refcount Overflow (CVE-2022-2928 pattern)
@@ -975,6 +1128,12 @@ class DHCPFuzzer(BaseFuzzer):
             self.session.connect(dhcp_malformed_extended)  # CVE-2022-2928 pattern
         if self.is_request_enabled("DHCP_Hostname_Overflow"):
             self.session.connect(dhcp_hostname_overflow)  # Hostname buffer overflow
+        if self.is_request_enabled("DHCP_Option_Overload"):
+            self.session.connect(dhcp_option_overload)  # DHO_OPTIONSOVERLOADED sub-parse
+        if self.is_request_enabled("DHCP_Domain_List_Overflow"):
+            self.session.connect(dhcp_domain_list_overflow)  # CVE-2016-2148 domain-list class
+        if self.is_request_enabled("DHCP_DNS_Server_List_Len_Lie"):
+            self.session.connect(dhcp_dns_len_lie)  # option 6 length-lie tail overrun
 
         # ==================== PHASE 3: CVE-TARGETED OPERATIONS (~3 min) ====================
         if self.is_request_enabled("DHCP_OPTION_INJECTION"):

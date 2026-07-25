@@ -85,6 +85,43 @@ Write / fuzz testing (DANGEROUS - require --confirm):
         help="Maximum number of data objects to discover (default: 1000)",
     )
 
+    tls_group = mms_parser.add_argument_group("TLS Options")
+    tls_group.add_argument(
+        "--tls",
+        action="store_true",
+        help="Connect over TLS (MMS-over-TLS, default port 3782). Certificate "
+        "validation is DISABLED by default (encrypted but unverified); supply "
+        "--tls-ca or --tls-pin to enable it.",
+    )
+    tls_group.add_argument(
+        "--tls-port",
+        type=int,
+        default=3782,
+        metavar="PORT",
+        help="TLS port used when --tls is set and no port is given (default: 3782)",
+    )
+    tls_group.add_argument(
+        "--tls-ca",
+        metavar="CA_CERT",
+        help="CA certificate (PEM) to validate the server chain against "
+        "(enables certificate validation)",
+    )
+    tls_group.add_argument(
+        "--tls-pin",
+        metavar="SERVER_CERT",
+        help="Pin this exact server certificate (PEM); strict binding without a CA",
+    )
+    tls_group.add_argument(
+        "--tls-client-cert",
+        metavar="CERT",
+        help="Client certificate (PEM) for mutual TLS",
+    )
+    tls_group.add_argument(
+        "--tls-client-key",
+        metavar="KEY",
+        help="Client private key (PEM) for mutual TLS",
+    )
+
     # Add dangerous options (fuzzing with --confirm)
     dangerous = add_dangerous_options(mms_parser, include_fuzz=True, include_write=False)
 

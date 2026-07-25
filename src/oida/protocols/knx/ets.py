@@ -177,7 +177,7 @@ def get_knxproj_info(file_path: str) -> Dict[str, Any]:
                         elif 'xmlns="http://knx.org/xml/project/13"' in header:
                             info["ets_version"] = "ETS4"
                 except Exception as e:
-                    logger.debug(f"with zf.open(knx_master.xml) as f:: {e}")  # Fall back to unknown
+                    logger.debug(f"ETS knx_master.xml parse failed: {e}")  # Fall back to unknown
 
     except Exception as e:
         module.fail(f"Error reading project file: {e}")

@@ -321,7 +321,12 @@ class ReportingMixin(_ScannerBase):
         file_fmt = fmt.replace("console", "").replace("all", "csv,json").strip(",") or "json"
 
         data = self.results.get("data", {})
-        port = getattr(self.args, "port", self.default_port)
+        # proto_args registers --port with default=None, so getattr's default
+        # is never used (the attribute exists, just equals None) -- resolve
+        # the effective port the same way create_conn_obj()/enumeration.py do,
+        # or every exported row's port column comes out blank/None.
+        use_tls = getattr(self.args, "tls", False)
+        port = getattr(self.args, "port", None) or (2762 if use_tls else self.default_port)
 
         # Export C-FIND results. The columns must match the query level: a
         # PATIENT-level query never carries StudyDate/Modality/StudyInstanceUID,

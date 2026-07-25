@@ -415,11 +415,15 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         # Handle empty pgsql layers (EK mode collapses multi-message TCP
         # segments into a single layer with no fields).  Record a generic
         # interaction so every packet that matched the display filter produces
-        # at least one interaction.
-        all_fn = getattr(pgsql_layer, "all_field_names", None)
-        if not all_fn:
-            now = self._get_timestamp()
-            stream_id = self.get_stream_id(packet)
+        # at least one interaction.  get_all_fields() is mode-agnostic (XML
+        # mode exposes ``_all_fields``, EK mode exposes ``all_field_names``)
+        # -- checking ``all_field_names`` directly misses every XML-mode
+        # packet and misroutes it here regardless of content.
+        fields = self.get_all_fields(pgsql_layer)
+        now = self._get_timestamp()
+        stream_id = self.get_stream_id(packet)
+
+        if not fields:
             self._record_empty_layer_interaction(
                 now,
                 src_ip,
@@ -430,10 +434,6 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
                 stream_id,
             )
             return
-
-        fields = self.get_all_fields(pgsql_layer)
-        now = self._get_timestamp()
-        stream_id = self.get_stream_id(packet)
 
         # Extract message type (T1 field: pgsql.type)
         msg_type = self.get_field(pgsql_layer, "type", "")
@@ -1457,12 +1457,15 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         protocol, hash_type, username, domain, server_ip, client_ip,
         hashcat_format.
         """
-        hashcat_lines = self.get_hashcat_hashes()
         result = []
-        hashcat_idx = 0
         for cred in self.credentials:
             if cred.auth_type != "md5" or not cred.password_or_hash:
                 continue
+            # Read hashcat_format per-credential rather than zipping against
+            # get_hashcat_hashes() by index: that list only contains creds whose
+            # hashcat_format is non-empty (MD5 *with* a salt), so a single
+            # salt-less MD5 credential drifts the index and misattributes every
+            # subsequent hash line (and drops the last real one).
             result.append(
                 {
                     "protocol": "PostgreSQL",
@@ -1471,12 +1474,9 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
                     "domain": cred.database,
                     "server_ip": cred.server_ip,
                     "client_ip": cred.client_ip,
-                    "hashcat_format": (
-                        hashcat_lines[hashcat_idx] if hashcat_idx < len(hashcat_lines) else ""
-                    ),
+                    "hashcat_format": cred.hashcat_format,
                 }
             )
-            hashcat_idx += 1
         return result
 
     def get_hashcat_hashes(self) -> List[str]:

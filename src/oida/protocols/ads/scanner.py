@@ -56,6 +56,13 @@ from .helpers import (
 # EtherCAT operations mixin
 from .ethercat_ops import EtherCATOpsMixin
 
+# Upper bound for the device-reported I/O device count. The value is read
+# straight from the target response and drives a ctypes buffer allocation of
+# (count + 1) * 2 bytes; a device reporting 0xFFFFFFFF would force a ~8 GB
+# allocation (self-DoS). Clamp to a plausible maximum, consistent with the
+# MAX_SLAVE_PORTS clamp in ethercat_ops.py.
+MAX_IO_DEVICES = 4096
+
 protocol_options = {
     "netid-ext": {
         "type": "string",
@@ -370,7 +377,10 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             info["readable"] = True
             info["value"] = self._format_value(value)
 
-            # Test write (if not read-only mode)
+            # Writability probe -- writes the just-read value straight back, so
+            # it is a same-value (non-mutating) round-trip. It only runs when a
+            # caller explicitly disables read-only mode, which is the Layer-1
+            # opt-in equivalent of the Layer-2 --confirm gate.
             if not self.read_only:
                 try:
                     connection.write_by_name(symbol.name, value)
@@ -768,6 +778,15 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
                     device_count = struct.unpack("<I", count_data)[0]
                     result["device_count"] = device_count
                     self.logger.display(f"  Found {device_count} I/O devices")
+
+                    # Clamp the attacker-controlled count before it drives the
+                    # (device_count + 1) * 2 ctypes allocation below.
+                    if device_count > MAX_IO_DEVICES:
+                        self.logger.warning(
+                            f"  Device reported {device_count} I/O devices — clamping "
+                            f"enumeration to {MAX_IO_DEVICES} (implausible count, possible spoofing)"
+                        )
+                        device_count = MAX_IO_DEVICES
 
                     if device_count > 0:
                         # Get device IDs

@@ -292,9 +292,7 @@ class TestCDPPassiveEK:
             "cdp/filtered_cdp.pcap",
         )
         has_field = any(
-            hasattr(d, "cdp_data")
-            and d.cdp_data
-            and "number_of_addresses" in d.cdp_data
+            hasattr(d, "cdp_data") and d.cdp_data and "number_of_addresses" in d.cdp_data
             for d in devices.values()
         )
         assert has_field, "No device has number_of_addresses in cdp_data"

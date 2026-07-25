@@ -534,12 +534,13 @@ class TestBatchedWriteAccess:
         resp = _make_register_response([100, 200, 300])
         client.read_holding_registers.return_value = resp
 
-        # Mock _test_write_access
-        scanner._test_write_access = MagicMock(return_value=True)
+        # Ordinary read scans use the safe (same-value) write test, not the
+        # destructive one -- see _scan_register_type.
+        scanner._test_write_access_safe = MagicMock(return_value={"writable": True})
 
         results = scanner._scan_register_type(client, "holding_registers", list(range(3)))
 
-        assert scanner._test_write_access.call_count == 3
+        assert scanner._test_write_access_safe.call_count == 3
         for addr in range(3):
             assert results[addr]["writable"] is True
 
@@ -551,11 +552,11 @@ class TestBatchedWriteAccess:
         resp = _make_register_response([100, 200, 300])
         client.read_holding_registers.return_value = resp
 
-        scanner._test_write_access = MagicMock()
+        scanner._test_write_access_safe = MagicMock()
 
         results = scanner._scan_register_type(client, "holding_registers", list(range(3)))
 
-        scanner._test_write_access.assert_not_called()
+        scanner._test_write_access_safe.assert_not_called()
         for addr in range(3):
             assert "writable" not in results[addr]
 

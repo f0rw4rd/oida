@@ -191,9 +191,7 @@ def pytest_configure(config):
 # Per-test opt-out: `@pytest.mark.allow_credential_in_log` for tests
 # that legitimately need to inspect the redaction itself.
 
-import io
 import logging
-import re
 
 # Pattern: SECRET-style sentinels we seed into the env. Real protocol code
 # that reads a credential MUST NOT leak any of these to logs.
@@ -285,7 +283,11 @@ def no_credential_leak(request, capsys, monkeypatch):
     for sentinel in _LEAK_SENTINELS:
         if sentinel in captured:
             # Pinpoint which channel + which line(s).
-            for source, text in (("LOG", "\n".join(buf.lines)), ("STDOUT", cap.out), ("STDERR", cap.err)):
+            for source, text in (
+                ("LOG", "\n".join(buf.lines)),
+                ("STDOUT", cap.out),
+                ("STDERR", cap.err),
+            ):
                 for line in text.splitlines():
                     if sentinel in line:
                         leaks.append(f"{source}: {line!r}")

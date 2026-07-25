@@ -2132,14 +2132,8 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
         _assert_log_event_structure(log)
 
-    # ========================================================================
-    # Skipped Tests
-    # ========================================================================
-
-    @pytest.mark.skip(reason="--watch is a blocking operation requiring Ctrl+C")
-    def test_watch_symbol(self, cli_runner, target, port, docker_services):
-        """Test --watch for symbol monitoring [Skip -- blocking]"""
-        pass
+    # NOT COVERED (no test exists — do not add a skipped placeholder):
+    #   - --watch symbol monitoring: a blocking operation that only ends on Ctrl-C.
 
     def test_coe_range_standalone(self, cli_runner, target, port, docker_services):
         """--coe-range without a CoE operation warns and is inert [Category C]"""

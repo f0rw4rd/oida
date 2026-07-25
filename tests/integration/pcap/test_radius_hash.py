@@ -24,9 +24,7 @@ from .conftest import _pcap_path, _skip_unless_pyshark
 pytestmark = [pytest.mark.integration]
 
 CHAP_EXPECT = "2ef32da31e6df5724e02c5a03954a19a:000102030405060708090a0b0c0d0e0f:01"
-MSCHAP_EXPECT = (
-    "msuser::::18e44b6847a3bcf4255d26789b4e817de9d3f3ec7e7b0433:b50a3facc88b1d0a"
-)
+MSCHAP_EXPECT = "msuser::::18e44b6847a3bcf4255d26789b4e817de9d3f3ec7e7b0433:b50a3facc88b1d0a"
 
 
 def _run(fixture: str):

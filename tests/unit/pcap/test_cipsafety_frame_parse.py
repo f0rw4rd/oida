@@ -203,7 +203,7 @@ class TestSafetyDataFrames:
 
 class TestSupervisorServices:
     def test_configure_request_is_security_event(self):
-        """Service 0x4D (Configure_Request) is security-relevant: it surfaces
+        """Service 0x4F (Configure_Request) is security-relevant: it surfaces
         the TUNID + has_password flag, increments security_events and pushes
         a cipsafety_security_event alert, and the summary is tagged."""
         listener = _make_listener()
@@ -211,7 +211,7 @@ class TestSupervisorServices:
             listener,
             _Packet(
                 cipssupervisor={
-                    "sc": "0x4d",
+                    "sc": "0x4f",
                     "configure_request_tunid": "01:02:03:04",
                     "configure_request_password": "73:65:63:72:65:74",
                 }
@@ -219,8 +219,8 @@ class TestSupervisorServices:
         )
         d = ix.details
         assert d["frame_type"] == "supervisor"
-        assert d["service_code"] == 0x4D
-        assert d["service_name"] == SUPERVISOR_SERVICES[0x4D]
+        assert d["service_code"] == 0x4F
+        assert d["service_name"] == SUPERVISOR_SERVICES[0x4F]
         assert d["security_event"] is True
         assert d["tunid"] == "01:02:03:04"
         assert d["has_password"] is True
@@ -234,24 +234,24 @@ class TestSupervisorServices:
 
     def test_set_password_counts_as_password_op(self):
         listener = _make_listener()
-        _feed(listener, _Packet(cipssupervisor={"sc": "0x4f"}))
+        _feed(listener, _Packet(cipssupervisor={"sc": "0x51"}))
         session = listener.sessions[(SRC_IP, DST_IP)]
         assert session.password_operations == 1
         assert session.security_events == 1
 
     def test_reset_password_counts_as_password_op(self):
         listener = _make_listener()
-        _feed(listener, _Packet(cipssupervisor={"sc": "0x53"}))
+        _feed(listener, _Packet(cipssupervisor={"sc": "0x55"}))
         session = listener.sessions[(SRC_IP, DST_IP)]
         assert session.password_operations == 1
 
     def test_mode_change_counted(self):
-        """Service 0x51 (Mode_Change) bumps mode_changes and surfaces the
+        """Service 0x53 (Mode_Change) bumps mode_changes and surfaces the
         mode value."""
         listener = _make_listener()
         ix = _feed(
             listener,
-            _Packet(cipssupervisor={"sc": "0x51", "mode_change_value": "4"}),
+            _Packet(cipssupervisor={"sc": "0x53", "mode_change_value": "4"}),
         )
         assert ix.details["mode_value"] == "4"
         session = listener.sessions[(SRC_IP, DST_IP)]
@@ -261,7 +261,7 @@ class TestSupervisorServices:
         listener = _make_listener()
         ix = _feed(
             listener,
-            _Packet(cipssupervisor={"sc": "0x52", "reset_type": "1"}),
+            _Packet(cipssupervisor={"sc": "0x54", "reset_type": "1"}),
         )
         assert ix.details["reset_type"] == "1"
         session = listener.sessions[(SRC_IP, DST_IP)]
@@ -271,7 +271,7 @@ class TestSupervisorServices:
         listener = _make_listener()
         ix = _feed(
             listener,
-            _Packet(cipssupervisor={"sc": "0x50", "configure_lock_lock": "1"}),
+            _Packet(cipssupervisor={"sc": "0x52", "configure_lock_lock": "1"}),
         )
         assert ix.details["lock_value"] == "1"
         assert ix.details["security_event"] is True
@@ -528,14 +528,14 @@ class TestMultiLayerAndFormatting:
             listener,
             _Packet(
                 cipssupervisor={
-                    "sc": "0x4d",
+                    "sc": "0x4f",
                     "manufacture_name": "ABB",
                     "device_status": "4",
                 }
             ),
         )
         cols = listener._format_protocol_columns(ix)
-        assert cols[0] == SUPERVISOR_SERVICES[0x4D]
+        assert cols[0] == SUPERVISOR_SERVICES[0x4F]
         assert "status=Running" in cols[3]
         assert "ABB" in cols[3]
         assert "[SECURITY]" in cols[3]
@@ -574,7 +574,7 @@ class TestHarvestAndSummary:
         listener = _make_listener()
         # One safety frame, one security supervisor op, one validator state.
         _feed(listener, _Packet(cipsafety={"mode_byte_run_idle": "True"}))
-        _feed(listener, _Packet(cipssupervisor={"sc": "0x4f"}))  # Set_Password
+        _feed(listener, _Packet(cipssupervisor={"sc": "0x51"}))  # Set_Password
         _feed(listener, _Packet(cipsvalidator={"state": "2"}))
 
         summary = listener.get_sessions_summary()

@@ -59,9 +59,7 @@ class TestEPLEKDecimalParsing:
         listener = EPLPassiveListener(interface="lo", timeout=1)
         # asnd_sdo_cmd_data_index 0x1018 renders as decimal "4120" in EK mode.
         layer = _FakeLayer(asnd_sdo_cmd_data_index="4120")
-        index_val = listener._parse_int(
-            listener.get_field(layer, "asnd_sdo_cmd_data_index"), None
-        )
+        index_val = listener._parse_int(listener.get_field(layer, "asnd_sdo_cmd_data_index"), None)
         assert index_val == 4120, "EK decimal 4120 must parse as 4120, not hex 0x4120=16672"
         assert index_val == 0x1018
 

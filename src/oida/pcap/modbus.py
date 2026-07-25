@@ -349,13 +349,28 @@ class ModbusPassiveListener(PySharkListenerBase):
             )
             return
 
+        # Detect exception responses up front: they are the one port-independent
+        # native response signal.  Wireshark reports modbus.func_code as the BASE
+        # code (it strips the 0x80 exception bit), so testing function_code & 0x80
+        # never fires -- the reliable marker is the presence of an
+        # modbus.exception_code field, which only appears on exception responses.
+        exc_str = (
+            self.get_field(modbus_layer, "exception_code") if modbus_layer is not None else None
+        )
+        is_exception = bool(exc_str)
+        exception_code = 0
+        if exc_str:
+            try:
+                exception_code = int(exc_str)
+            except (ValueError, TypeError) as e:
+                self.logger.debug(f"Failed to parse exception_code: {e}")
+
         # Determine direction via the shared cascade.  Modbus/TCP has no
-        # request/response bit in the MBAP header, but exception responses set
-        # the function-code high bit (>= 0x80) -- a port-independent native
-        # response signal.  Otherwise resolve_direction() falls through to the
-        # known-server-port tier (canonical 502 plus any user --decode-as /
+        # request/response bit in the MBAP header; an exception response is a
+        # native response signal.  Otherwise resolve_direction() falls through to
+        # the known-server-port tier (canonical 502 plus any user --decode-as /
         # OVERRIDE_PREFS override) and then the lower-port heuristic.
-        native = False if function_code & 0x80 else None
+        native = False if is_exception else None
         d = self.resolve_direction(
             packet,
             native=native,
@@ -382,18 +397,6 @@ class ModbusPassiveListener(PySharkListenerBase):
             q = self._req_addr_q.get(conn_key)
             if q:
                 address_info = q.popleft()
-
-        # Check for exception response
-        is_exception = False
-        exception_code = 0
-        if not is_request and modbus_layer is not None:
-            exc_str = self.get_field(modbus_layer, "exception_code")
-            if exc_str:
-                try:
-                    exception_code = int(exc_str)
-                    is_exception = True
-                except (ValueError, TypeError) as e:
-                    self.logger.debug(f"Failed to get exception_code: {e}")
 
         # Extract register/coil values when meaningful:
         #   - Responses to read FCs (1-4): carry read-back values

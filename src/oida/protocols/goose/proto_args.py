@@ -124,4 +124,40 @@ Security Testing:
         help="MMS port for GoCB enumeration (default: 102)",
     )
 
+    tls_group = goose_parser.add_argument_group("TLS Options (MMS GoCB enumeration)")
+    tls_group.add_argument(
+        "--tls",
+        action="store_true",
+        help="Connect the MMS GoCB-enumeration session over TLS (default port "
+        "3782). Certificate validation is DISABLED by default; supply --tls-ca "
+        "or --tls-pin to enable it.",
+    )
+    tls_group.add_argument(
+        "--tls-port",
+        type=int,
+        default=3782,
+        metavar="PORT",
+        help="TLS port used when --tls is set and --mms-port is the default (default: 3782)",
+    )
+    tls_group.add_argument(
+        "--tls-ca",
+        metavar="CA_CERT",
+        help="CA certificate (PEM) to validate the server chain (enables validation)",
+    )
+    tls_group.add_argument(
+        "--tls-pin",
+        metavar="SERVER_CERT",
+        help="Pin this exact server certificate (PEM); strict binding without a CA",
+    )
+    tls_group.add_argument(
+        "--tls-client-cert",
+        metavar="CERT",
+        help="Client certificate (PEM) for mutual TLS",
+    )
+    tls_group.add_argument(
+        "--tls-client-key",
+        metavar="KEY",
+        help="Client private key (PEM) for mutual TLS",
+    )
+
     return goose_parser

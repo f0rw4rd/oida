@@ -43,6 +43,31 @@ def _count_writable_attrs(write_test_results: Dict[str, Any]) -> int:
     return total
 
 
+def _count_fuzz_crashes(fuzz_results: Dict[str, Any]) -> int:
+    """Sum `crashes` across a fuzz_results dict.
+
+    Shape (built by _fuzz_attributes): {class_id: {"class_attributes":
+    {attr_id: {"crashes": int}}, "instances": {inst_id: {attr_id:
+    {"crashes": int}}}}}. The previous inline sum iterated only the top
+    "class_attributes"/"instances" sub-dicts (which carry no `crashes` key),
+    so the count was always 0. This walks to the per-attribute leaf dicts.
+    """
+    total = 0
+    for class_results in fuzz_results.values():
+        if not isinstance(class_results, dict):
+            continue
+        for attr_data in (class_results.get("class_attributes") or {}).values():
+            if isinstance(attr_data, dict):
+                total += attr_data.get("crashes", 0) or 0
+        for inst_attrs in (class_results.get("instances") or {}).values():
+            if not isinstance(inst_attrs, dict):
+                continue
+            for attr_data in inst_attrs.values():
+                if isinstance(attr_data, dict):
+                    total += attr_data.get("crashes", 0) or 0
+    return total
+
+
 class SecurityAnalysisMixin(_ScannerBase):
     """Mixin providing security analysis and reporting for EtherNet/IP."""
 
@@ -208,10 +233,7 @@ class SecurityAnalysisMixin(_ScannerBase):
 
         # Fuzz results
         if results.get("fuzz_results"):
-            crash_count = sum(
-                sum(attr.get("crashes", 0) for attr in class_results.values())
-                for class_results in results["fuzz_results"].values()
-            )
+            crash_count = _count_fuzz_crashes(results["fuzz_results"])
             if crash_count > 0:
                 analysis["concerns"].append(f"{crash_count} potential crashes during fuzzing")
 

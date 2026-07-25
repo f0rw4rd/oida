@@ -10,9 +10,7 @@ import unittest
 
 class TestCapNetRawErrorMessages(unittest.TestCase):
     def test_nxc_connection_says_cap_net_raw_in_error(self):
-        src = pathlib.Path(
-            "src/oida/protocols/goose/nxc_connection.py"
-        ).read_text()
+        src = pathlib.Path("src/oida/protocols/goose/nxc_connection.py").read_text()
         # The error message must name the capability the operator needs
         # to grant (not just 'permission denied').
         self.assertIn("CAP_NET_RAW", src)

@@ -168,6 +168,15 @@ class GOOSEPassiveListener(PySharkListenerBase):
 
         goose_layer = packet.goose
 
+        # The 'goose' layer is shared with R-GOOSE (routable GOOSE over
+        # IP/UDP, see rgoose.py). A combined-pcap run feeds R-GOOSE frames
+        # here too; reject those so they aren't double-counted as phantom
+        # L2 publishers (mirrors rgoose.py's reciprocal "no IP" guard).
+        src_ip, _dst_ip = self.get_ip_info(packet)
+        if src_ip:
+            self.logger.debug("goose: dropping GOOSE packet with IP layer (R-GOOSE, not L2 GOOSE)")
+            return
+
         # GOOSE is Layer 2 -- extract MAC addresses (no IP)
         src_mac, dst_mac = self.get_mac_info(packet)
 

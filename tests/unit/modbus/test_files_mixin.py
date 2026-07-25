@@ -73,12 +73,26 @@ class TestFileRead:
         inst = make_modbus()
         inst.scanner._read_file_record.return_value = {"data": [1, 2, 3]}
         inst._handle_file_read("4:1")
-        inst.scanner._read_file_record.assert_called_once_with(inst.conn, 4, 1)
+        # No LEN given -> default record_length=1.
+        inst.scanner._read_file_record.assert_called_once_with(inst.conn, 4, 1, 1)
+        assert inst.results["data"]["file_record"]["data"] == [1, 2, 3]
+
+    def test_valid_spec_with_length_delegates(self):
+        inst = make_modbus()
+        inst.scanner._read_file_record.return_value = {"data": [1, 2, 3]}
+        inst._handle_file_read("4:1:10")
+        inst.scanner._read_file_record.assert_called_once_with(inst.conn, 4, 1, 10)
         assert inst.results["data"]["file_record"]["data"] == [1, 2, 3]
 
     def test_invalid_spec(self):
         inst = make_modbus()
         inst._handle_file_read("notaspec")
+        assert any("Invalid file spec" in m for m in inst.logger.fail_msgs)
+        inst.scanner._read_file_record.assert_not_called()
+
+    def test_too_many_components(self):
+        inst = make_modbus()
+        inst._handle_file_read("1:2:10:99")
         assert any("Invalid file spec" in m for m in inst.logger.fail_msgs)
         inst.scanner._read_file_record.assert_not_called()
 

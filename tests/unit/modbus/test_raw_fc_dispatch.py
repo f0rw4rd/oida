@@ -187,13 +187,23 @@ class TestEnumerateFunctions:
     def test_supported_and_exceptions_bucketed(self):
         inst = make_modbus(SimpleNamespace(fc_range="1-3", fc_all=False))
 
+        # send_custom_fc sets success=True whenever a response (normal OR
+        # exception) is received; only a failed/timed-out send is success=False.
         def send(conn, fc, payload, unit):
             if fc == 1:
-                return {"is_exception": False}
+                return {"success": True, "is_exception": False}
             if fc == 2:
-                return {"is_exception": True, "exception_code": 1}  # illegal -> unsupported
+                return {
+                    "success": True,
+                    "is_exception": True,
+                    "exception_code": 1,
+                }  # illegal -> unsupported
             if fc == 3:
-                return {"is_exception": True, "exception_code": 4}  # non-illegal -> tracked
+                return {
+                    "success": True,
+                    "is_exception": True,
+                    "exception_code": 4,
+                }  # non-illegal -> tracked
 
         inst.scanner.send_custom_fc.side_effect = send
         inst._handle_enumerate_functions()

@@ -162,46 +162,27 @@ class ProtocolLoader:
         return protocols
 
     def _discover_frozen(self) -> Dict[str, Dict[str, str]]:
-        """Discover protocols by trying to import from the known list.
+        """Discover protocols by CONVENTION from the known list (no imports).
 
-        Used when running inside a PyInstaller frozen bundle where
-        filesystem scanning is not available.
+        Used inside a PyInstaller frozen bundle where filesystem scanning is not
+        available. This deliberately does NOT import each protocol package: doing
+        so pulled the entire heavyweight dependency tree (scapy, pydicom, c104,
+        snap7, ...) on every CLI invocation, making the frozen binary slow to
+        boot even for ``--help``. The actual module is imported lazily only when
+        its subcommand is selected (``load_proto_args``) or the scanner is run
+        (``get_protocol_class``); both handle a missing/unimportable module
+        gracefully, so listing by convention here is safe.
         """
         protocols: Dict[str, Dict[str, str]] = {}
-
         for name in _KNOWN_PROTOCOLS:
             module_name = f"oida.protocols.{name}"
-            try:
-                # Just verify the module is importable
-                importlib.import_module(module_name)
-            except Exception as _frozen_exc:
-                logger.debug("frozen import of %s failed: %s", name, _frozen_exc)
-                continue
-
-            protocol_info: Dict[str, Any] = {
+            protocols[name] = {
                 "path": module_name,
-                "argspath": None,
+                # argspath is used as a module name directly in frozen mode
+                # (see load_proto_args); the import is attempted lazily there.
+                "argspath": f"{module_name}.proto_args",
                 "dbpath": None,
             }
-
-            # Check for proto_args submodule
-            args_module = f"{module_name}.proto_args"
-            try:
-                importlib.import_module(args_module)
-                protocol_info["argspath"] = args_module
-            except Exception as _frozen_exc:
-                logger.debug(f"importlib.import_module(args_module): {_frozen_exc}")
-
-            # Check for database submodule
-            db_module = f"{module_name}.database"
-            try:
-                importlib.import_module(db_module)
-                protocol_info["dbpath"] = db_module
-            except Exception as _frozen_exc:
-                logger.debug(f"importlib.import_module(db_module): {_frozen_exc}")
-
-            protocols[name] = protocol_info
-
         return protocols
 
     def load_protocol(self, protocol_path: str) -> Any:

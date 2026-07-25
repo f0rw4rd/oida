@@ -77,8 +77,6 @@ class CFindMixin(_ScannerBase):
                     self.logger.fail("SERIES level query requires --study-uid")
                     return
                 ds.StudyInstanceUID = study_uid
-                if modality:
-                    ds.Modality = modality
                 # Return keys
                 ds.SeriesInstanceUID = ""
                 ds.SeriesNumber = ""
@@ -98,10 +96,19 @@ class CFindMixin(_ScannerBase):
                 ds.InstanceNumber = ""
                 ds.SOPClassUID = ""
 
-            responses = self.assoc.send_c_find(
-                ds,
-                _sop("PatientRootQueryRetrieveInformationModelFind"),
+            # PatientRootQueryRetrieveInformationModel is the only model that
+            # supports the PATIENT level; StudyRoot doesn't. But many
+            # StudyRoot-only PACS archives don't accept PatientRoot at all, so
+            # hard-coding PatientRoot for STUDY/SERIES/IMAGE queries against
+            # such a server means the presentation context was never accepted
+            # and send_c_find() returns 0 rows. Match the model enumeration.py
+            # already uses for its own STUDY-level queries.
+            model = _sop(
+                "PatientRootQueryRetrieveInformationModelFind"
+                if query_level == "PATIENT"
+                else "StudyRootQueryRetrieveInformationModelFind"
             )
+            responses = self.assoc.send_c_find(ds, model)
 
             for status, identifier in responses:
                 if status and status.Status in (0xFF00, 0xFF01):  # Pending

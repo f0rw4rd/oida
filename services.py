@@ -399,6 +399,51 @@ def _all_groups(config: dict) -> set[str]:
     return groups
 
 
+def _clear_conflicting_containers(config: dict, services: set[str] | None = None) -> None:
+    """Force-remove containers that would abort ``up`` with a name conflict.
+
+    Mock services pin a fixed ``container_name`` (e.g. ``s7comm-snap7-server``).
+    That name is global to the Docker daemon — it is *not* scoped to the compose
+    project. The pytest harness brings the same stack up under the ``oida-test``
+    project while ``services.py`` uses ``mocks``; a stale container left behind by
+    the other project (or a stray ``docker run``) owns the name and makes the
+    whole ``up`` fail with "container name is already in use", taking every other
+    mock down with it.
+
+    Compose can always reuse a name owned by *its own* project, so we only remove
+    containers whose name we need but whose compose project differs from ours
+    (label-less strays included). Best-effort: any docker error is ignored so a
+    transient daemon hiccup never blocks ``up``.
+    """
+    project = config.get("name")
+    declared = {
+        svc_def["container_name"]
+        for svc_name, svc_def in (config.get("services") or {}).items()
+        if svc_def.get("container_name") and (services is None or svc_name in services)
+    }
+    if not declared:
+        return
+    result = _run(
+        ["docker", "ps", "-a", "--format", '{{.Names}}\t{{.Label "com.docker.compose.project"}}'],
+        capture=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return
+    conflicting = []
+    for line in result.stdout.splitlines():
+        name, _, owner = line.partition("\t")
+        if name.strip() in declared and owner.strip() != project:
+            conflicting.append(name.strip())
+    conflicting.sort()
+    if conflicting:
+        print(
+            f"{YELLOW}[~]{RST} Removing {len(conflicting)} conflicting container(s) "
+            f"from another compose project: {', '.join(conflicting)}"
+        )
+        _run(["docker", "rm", "-f", *conflicting], check=False)
+
+
 def _pull(
     compose_args: list[str],
     *,
@@ -507,6 +552,7 @@ def cmd_up(args: argparse.Namespace) -> int:
         print(f"{BLUE}=== Starting Core Services ==={RST}")
         if not args.build and not args.no_pull:
             _pull(_core_args(), quiet=args.quiet_pull)
+        _clear_conflicting_containers(_get_compose_config(_core_args()))
         _run(_compose_cmd(*_core_args(), "up", "-d", *build_flag))
         ok = wait_healthy(_all_args())
         return 0 if ok else 1
@@ -516,6 +562,9 @@ def cmd_up(args: argparse.Namespace) -> int:
         print(f"{BLUE}=== Starting {label} Services ==={RST}")
         if not args.build and not args.no_pull:
             _pull(_all_args(), profiles=("vuln-services",), quiet=args.quiet_pull)
+        _clear_conflicting_containers(
+            _get_compose_config([*_all_args(), "--profile", "vuln-services"])
+        )
         _run(_compose_cmd(*_all_args(), "--profile", "vuln-services", "up", "-d", *build_flag))
         ok = wait_healthy(_all_args())
         return 0 if ok else 1
@@ -628,7 +677,9 @@ def cmd_status(args: argparse.Namespace) -> int:
         print()
         return 0
 
-    print(f"  {BOLD}{CYAN}{'GROUP':<16} {'HEALTHY':>8} {'STARTING':>9} {'ISSUES':>7} {'TOTAL':>6}{RST}")
+    print(
+        f"  {BOLD}{CYAN}{'GROUP':<16} {'HEALTHY':>8} {'STARTING':>9} {'ISSUES':>7} {'TOTAL':>6}{RST}"
+    )
     print(f"  {DIM}{'---':<16} {'---':>8} {'---':>9} {'---':>7} {'---':>6}{RST}")
     tot = [0, 0, 0, 0]
     for group in sorted(groups):
@@ -1107,6 +1158,7 @@ def _up_proto_impl(group: str, *, quiet_pull: bool = False) -> int:
 
     # Pull pre-built images first, then start (building anything still missing)
     _pull(compose_args, profiles=tuple(seen_profiles), services=tuple(services), quiet=quiet_pull)
+    _clear_conflicting_containers(config, services=set(services))
     cmd = _compose_cmd(*compose_args, *profile_args, "up", "-d", *services)
     _run(cmd)
 

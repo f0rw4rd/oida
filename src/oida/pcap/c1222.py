@@ -61,26 +61,56 @@ from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip
 
 # ANSI C12.22 service codes (ACSE service elements)
+# EPSEM command codes as dissected into c1222.cmd (matches Wireshark's
+# c1222.cmd value_string). Codes 0x00-0x12 are OK/error *response* codes; the
+# service *requests* start at 0x20. There is no "service+1 = response" scheme --
+# a response carries an OK/error code, not the request code echoed back.
 C1222_SERVICES = {
-    0x20: "IDENT",
-    0x21: "IDENT Response",
-    0x27: "REGISTRATION",
-    0x30: "READ",
-    0x31: "READ Response",
-    0x40: "WRITE",
-    0x41: "WRITE Response",
-    0x50: "LOGON",
-    0x51: "SECURITY",
-    0x52: "LOGOFF",
-    0x54: "NEGOTIATE",
-    0x55: "NEGOTIATE Response",
-    0x60: "WAIT",
-    0x61: "WAIT Response",
-    0x70: "REGISTRATION Response",
+    0x00: "OK",
+    0x01: "Error",
+    0x02: "Service Not Supported",
+    0x03: "Insufficient Security Clearance",
+    0x04: "Operation Not Possible",
+    0x05: "Inappropriate Action Requested",
+    0x06: "Device Busy",
+    0x07: "Data Not Ready",
+    0x08: "Data Locked",
+    0x09: "Renegotiate Request",
+    0x0A: "Invalid Service Sequence State",
+    0x0B: "Security Mechanism Error",
+    0x0C: "Unknown Application Title",
+    0x0D: "Network Time-out",
+    0x0E: "Network Not Reachable",
+    0x0F: "Request Too Large",
+    0x10: "Response Too Large",
+    0x11: "Segmentation Not Possible",
+    0x12: "Segmentation Error",
+    0x20: "Identify",
+    0x21: "Terminate",
+    0x22: "Disconnect",
+    0x30: "Full Read",
+    0x3E: "Default Read",
+    0x3F: "Partial Read Offset",
+    0x40: "Full Write",
+    0x4E: "Default Write",
+    0x4F: "Partial Write Offset",
+    0x50: "Logon",
+    0x51: "Security",
+    0x52: "Logoff",
+    0x53: "Authenticate",
+    0x60: "Negotiate",
+    0x70: "Wait",
+    0x71: "Timing Setup",
 }
 
-# Services that indicate write/configuration operations
-WRITE_SERVICES = {0x40}
+# Read services (Full/Default/Partial-Offset Read).
+READ_SERVICES = {0x30, 0x3E, 0x3F}
+
+# Write services (Full/Default/Partial-Offset Write) -- meter reconfiguration.
+WRITE_SERVICES = {0x40, 0x4E, 0x4F}
+
+# The largest OK/error response code; any c1222.cmd <= this is a response.
+MAX_RESPONSE_CODE = 0x12
 
 # Security-sensitive tables
 SENSITIVE_TABLES = {
@@ -224,10 +254,18 @@ class C1222PassiveListener(PySharkListenerBase):
         now = datetime.now().isoformat()
 
         # Extract ACSE fields
-        calling_ap = str(self.get_field(c1222_layer, "calling_ap_title") or "")
-        called_ap = str(self.get_field(c1222_layer, "called_ap_title") or "")
-        calling_inv_id = self.get_field(c1222_layer, "calling_ap_invocation_id")
-        called_inv_id = self.get_field(c1222_layer, "called_ap_invocation_id")
+        # ANSI C12.22 abbreviations keep "AP" upper-case (c1222.calling_AP_title);
+        # EK mode does no case-normalisation, so the lower-case names return None.
+        calling_ap = str(
+            self.get_field_any(c1222_layer, "calling_AP_title", "calling_ap_title") or ""
+        )
+        called_ap = str(self.get_field_any(c1222_layer, "called_AP_title", "called_ap_title") or "")
+        calling_inv_id = self.get_field_any(
+            c1222_layer, "calling_AP_invocation_id", "calling_ap_invocation_id"
+        )
+        called_inv_id = self.get_field_any(
+            c1222_layer, "called_AP_invocation_id", "called_ap_invocation_id"
+        )
 
         # Extract service code
         cmd_raw = self.get_field(c1222_layer, "cmd")
@@ -269,23 +307,22 @@ class C1222PassiveListener(PySharkListenerBase):
             else "Unknown"
         )
 
-        # Classify request vs response from the C12.22 command code. Known
-        # response codes (odd-numbered replies for READ/WRITE/IDENT/WAIT/
-        # NEGOTIATE plus REGISTRATION Response) are responses; known request
-        # services (IDENT/REGISTRATION/READ/WRITE/LOGON/SECURITY/LOGOFF/WAIT/
-        # NEGOTIATE requests) are requests. Anything else (unknown or
-        # absent command code) is ambiguous.
-        _RESPONSE_CODES = {0x21, 0x31, 0x41, 0x55, 0x61, 0x70}
-        _REQUEST_CODES = {0x20, 0x27, 0x30, 0x40, 0x50, 0x51, 0x52, 0x54, 0x60}
-        is_response = cmd_code is not None and cmd_code in _RESPONSE_CODES
+        # Classify request vs response from the C12.22 command code. Response
+        # PDUs carry an OK/error status code (0x00-0x12); service *requests*
+        # use codes >= 0x20. Anything else (absent command code) is ambiguous.
+        is_response = cmd_code is not None and cmd_code <= MAX_RESPONSE_CODE
 
         # Native request/response signal for resolve_direction(): True=request,
         # False=response, None=ambiguous (unknown/absent command code). Be
         # conservative -- only assert direction when the command code is one we
-        # recognise as a request or a response.
-        if cmd_code in _RESPONSE_CODES:
-            native: Optional[bool] = False
-        elif cmd_code in _REQUEST_CODES:
+        # recognise: OK/error status codes are responses, known service codes
+        # (>= 0x20) are requests.
+        native: Optional[bool]
+        if cmd_code is None:
+            native = None
+        elif cmd_code <= MAX_RESPONSE_CODE:
+            native = False
+        elif cmd_code in C1222_SERVICES:
             native = True
         else:
             native = None
@@ -461,9 +498,9 @@ class C1222PassiveListener(PySharkListenerBase):
             session.user_ids_seen.add(user_id)
 
         if cmd_code is not None:
-            if cmd_code == 0x30:  # READ
+            if cmd_code in READ_SERVICES:
                 session.read_count += 1
-            elif cmd_code == 0x40:  # WRITE
+            elif cmd_code in WRITE_SERVICES:
                 session.write_count += 1
             elif cmd_code == 0x50:  # LOGON
                 session.logon_count += 1
@@ -562,7 +599,7 @@ class C1222PassiveListener(PySharkListenerBase):
         # Sensitive table access
         if table_num is not None and table_num in SENSITIVE_TABLES:
             table_info = SENSITIVE_TABLES[table_num]
-            if cmd_code == 0x30:  # READ on sensitive table
+            if cmd_code in READ_SERVICES:  # READ on sensitive table
                 self._alerts.append(
                     {
                         "level": "highlight",
@@ -574,7 +611,7 @@ class C1222PassiveListener(PySharkListenerBase):
                 )
 
         # Unauthenticated request (no auth_value and no password)
-        if not auth_value and not password and cmd_code in (0x30, 0x40):
+        if not auth_value and not password and cmd_code in (READ_SERVICES | WRITE_SERVICES):
             self._alerts.append(
                 {
                     "level": "highlight",

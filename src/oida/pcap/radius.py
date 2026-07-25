@@ -137,8 +137,12 @@ class RADIUSCredential:
             if len(resp) >= 100 and len(authchal) >= 32:
                 peer_challenge = bytes.fromhex(resp[4:36])
                 nt_response = resp[52:100]
-                challenge8 = hashlib.sha1(  # noqa: S324 - protocol-defined, not for security
-                    peer_challenge + bytes.fromhex(authchal[:32]) + self.username.encode()
+                # SHA-1 here is the RFC 2759 ChallengeHash, mandated by MSCHAPv2.
+                # usedforsecurity=False states that we are reproducing a protocol
+                # construction, not choosing SHA-1 as a security primitive.
+                challenge8 = hashlib.sha1(
+                    peer_challenge + bytes.fromhex(authchal[:32]) + self.username.encode(),
+                    usedforsecurity=False,
                 ).digest()[:8]
                 return f"{self.username}::::{nt_response}:{challenge8.hex()}"
 

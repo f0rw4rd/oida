@@ -56,8 +56,7 @@ class TestMSSQLPassiveEK:
             "mssql/wireshark_mssql.cap",
         )
         has_field = any(
-            getattr(d, "mssql_passive_data", None)
-            and "collation_lcid" in d.mssql_passive_data
+            getattr(d, "mssql_passive_data", None) and "collation_lcid" in d.mssql_passive_data
             for d in devices.values()
         )
         assert has_field, "No device has collation_lcid in mssql_passive_data"

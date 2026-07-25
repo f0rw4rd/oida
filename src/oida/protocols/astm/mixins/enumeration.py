@@ -176,14 +176,26 @@ class EnumerationMixin:
             "timeout": [],
         }
 
+        # H/Q/C are read-only probes. P/O/R transmit full Patient/Order/Result
+        # records to a live LIS -- the same injection the --send-* flags gate --
+        # so they are only probed when --confirm is supplied.
         record_types = [
             ("H", "Header", self._test_header_record),
-            ("P", "Patient", self._test_patient_record),
-            ("O", "Order", self._test_order_record),
-            ("R", "Result", self._test_result_record),
             ("Q", "Query", self._test_query_record),
             ("C", "Comment", self._test_comment_record),
         ]
+        write_probes = [
+            ("P", "Patient", self._test_patient_record),
+            ("O", "Order", self._test_order_record),
+            ("R", "Result", self._test_result_record),
+        ]
+        if getattr(self.args, "confirm", False):
+            record_types.extend(write_probes)
+        else:
+            self.logger.display(
+                "Skipping write-capable probes (P/O/R) that inject records into "
+                "the LIS — pass --confirm to include them"
+            )
 
         for record_type, desc, test_func in record_types:
             status = test_func()

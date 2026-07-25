@@ -8,6 +8,7 @@ from binascii import hexlify
 
 from ...utils import ProgressTracker
 from ...utils.export_utils import print_table
+from .constants import ESI_CATEGORY_TYPES
 from .eeprom import (
     calculate_sii_crc,
     parse_sii_header,
@@ -174,8 +175,16 @@ class EepromOpsMixin(_ScannerBase):
         try:
             slave = master.slaves[slave_pos]
             general = sii.get("general", {})
+            # pysoem may return slave.name as bytes or str depending on version
+            # (see _discover_slaves); only decode when it is bytes, else an
+            # AttributeError discards the whole strings block.
+            name = slave.name
+            if isinstance(name, bytes):
+                device_name = name.decode("utf-8", errors="ignore")
+            else:
+                device_name = name or ""
             return {
-                "device_name": slave.name.decode("utf-8") if slave.name else "",
+                "device_name": device_name,
                 "group_type": general.get("group", ""),
                 "image_name": general.get("image", ""),
                 "order": general.get("order", ""),
@@ -236,17 +245,6 @@ class EepromOpsMixin(_ScannerBase):
         """Parse EEPROM ESI (EtherCAT Slave Information) per ETG.2010."""
         self.logger.display("Parsing EEPROM/ESI structure (ETG.2010)...")
         results = {}
-
-        CAT_TYPES = {
-            10: "STRINGS",
-            20: "DataTypes",
-            30: "GENERAL",
-            40: "FMMU",
-            41: "SyncManager",
-            50: "TxPDO",
-            51: "RxPDO",
-            60: "DC",
-        }
 
         targets = self._slave_filter()
 
@@ -313,7 +311,7 @@ class EepromOpsMixin(_ScannerBase):
                     is_vendor = bool(cat_type & 0x8000)
 
                     cat_data = raw[offset + 4 : offset + 4 + cat_size_bytes]
-                    cat_name = CAT_TYPES.get(
+                    cat_name = ESI_CATEGORY_TYPES.get(
                         cat_type, f"Vendor_{cat_type:04X}" if is_vendor else f"Unknown_{cat_type}"
                     )
                     slave_result["categories_found"].append(
