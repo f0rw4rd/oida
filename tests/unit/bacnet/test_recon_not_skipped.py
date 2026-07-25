@@ -1,5 +1,5 @@
 """
-Regression for CODE_REVIEW finding nxc_connection.py:304-476 —
+Regression for CODE_REVIEW finding cli_runner.py:304-476 —
 BBMD/FDT/router/network recon must NOT be silently skipped when the
 application-layer device-property read fails (returns empty or raises).
 
@@ -85,7 +85,7 @@ class _ReconHarness:
         types = _patch_app_and_types()
         with (
             patch(
-                "oida.protocols.bacnet.nxc_connection._load_bacpypes3",
+                "oida.protocols.bacnet.cli_runner._load_bacpypes3",
                 return_value=types,
             ),
             patch(

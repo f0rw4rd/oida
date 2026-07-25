@@ -17,7 +17,7 @@ CLI examples:
 """
 
 # Re-export the NXC-style connection class (mixin-based)
-from .nxc_connection import fhir
+from .cli_runner import fhir
 
 # Re-export constants and utilities used by tests and external code
 from .helpers import (

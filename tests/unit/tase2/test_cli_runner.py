@@ -6,7 +6,7 @@ Unit tests for the TASE.2/ICCP NXC-style connection class.
 TASE.2 is libiec61850-backed (pyiec61850-ng). These tests mock ONLY the
 transport/library boundary -- the ``TASE2Scanner`` wrapper and the
 ``TASE2Client`` connection object it returns -- and drive the REAL
-connection/scan flow logic in ``oida.protocols.tase2.nxc_connection``:
+connection/scan flow logic in ``oida.protocols.tase2.cli_runner``:
 action dispatch, spec parsing, --confirm gating, finding emission, result
 formatting and error paths.
 
@@ -19,7 +19,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 
-from oida.protocols.tase2.nxc_connection import tase2
+from oida.protocols.tase2.cli_runner import tase2
 
 
 def make_domain(name, is_vcc=False, variables=None, data_sets=None):
@@ -1031,7 +1031,7 @@ class TestBadFormatAndErrors(unittest.TestCase):
 # ---------------------------------------------------------------------------
 class TestProtoFlow(unittest.TestCase):
     def _patch_scanner(self, scanner):
-        import oida.protocols.tase2.nxc_connection as mod
+        import oida.protocols.tase2.cli_runner as mod
 
         self._mod = mod
         self._orig = mod.TASE2Scanner

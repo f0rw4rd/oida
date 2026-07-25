@@ -1,5 +1,5 @@
 """
-Unit tests for the NXC-style CAN connection class (oida.protocols.can.nxc_connection).
+Unit tests for the NXC-style CAN connection class (oida.protocols.can.cli_runner).
 
 These tests drive the feature-dispatch and feature-handler logic of the ``can``
 connection class for real. Only the external I/O boundary is mocked: the Layer-1
@@ -26,7 +26,7 @@ from oida.protocols.can.constants import (
     UDSScanResult,
     XCPScanResult,
 )
-from oida.protocols.can.nxc_connection import can as CANConnection
+from oida.protocols.can.cli_runner import can as CANConnection
 from oida.utils.common_types import Category
 
 pytestmark = pytest.mark.core
@@ -200,7 +200,7 @@ class TestHandleIDScan:
         inst = _make_conn(confirm=True, id_scan_range="not-a-range")
         # patch the python-can module reference in the module under test only
         monkeypatch.setattr(
-            "oida.protocols.can.nxc_connection._python_can",
+            "oida.protocols.can.cli_runner._python_can",
             MagicMock(),
         )
         inst._handle_id_scan()
@@ -210,7 +210,7 @@ class TestHandleIDScan:
     def test_id_scan_collects_responding_ids(self, monkeypatch):
         inst = _make_conn(confirm=True, id_scan_range="0x700-0x702")
         fake_can = MagicMock()
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", fake_can)
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", fake_can)
 
         # Only 0x701 responds
         def recv(conn, arb_id, timeout):
@@ -815,7 +815,7 @@ class TestHandleReplay:
 
     def test_replay_unreadable_fails(self, tmp_path, monkeypatch):
         inst = _make_conn(confirm=True, replay_speed=1.0)
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", MagicMock())
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", MagicMock())
         inst._handle_replay(str(tmp_path / "missing.log"))
         inst.logger.fail.assert_called_once()
         assert "Could not read replay file" in inst.logger.fail.call_args.args[0]
@@ -826,7 +826,7 @@ class TestHandleReplay:
         log.write_text("# header\n(1000.000000) vcan0 123#DEADBEEF\n(1000.000000) vcan0 7E0#0210\n")
         inst = _make_conn(confirm=True, replay_speed=0)  # speed 0 => no sleeps
         fake_can = MagicMock()
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", fake_can)
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", fake_can)
         inst._handle_replay(str(log))
         # Two frames parsed and sent on the bus
         assert inst.conn.send.call_count == 2
@@ -846,14 +846,14 @@ class TestHandleFuzz:
 
     def test_fuzz_requires_fuzz_id(self, monkeypatch):
         inst = _make_conn(confirm=True, fuzz_id=None)
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", MagicMock())
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", MagicMock())
         inst._handle_fuzz()
         inst.logger.fail.assert_called_once()
         assert "--fuzz-id is required" in inst.logger.fail.call_args.args[0]
 
     def test_fuzz_invalid_id(self, monkeypatch):
         inst = _make_conn(confirm=True, fuzz_id="zzz")
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", MagicMock())
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", MagicMock())
         inst._handle_fuzz()
         inst.logger.fail.assert_called_once()
         assert "Invalid fuzz ID" in inst.logger.fail.call_args.args[0]
@@ -865,7 +865,7 @@ class TestHandleFuzz:
             fuzz_iterations=3,
             fuzz_mode="boundary",
         )
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", MagicMock())
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", MagicMock())
         # First iteration gets a response, others don't
         responses = [SimpleNamespace(id_hex="0x7E8", data_hex="50 03"), None, None]
         inst.scanner.recv_message.side_effect = responses
@@ -877,7 +877,7 @@ class TestHandleFuzz:
 
     def test_fuzz_sequential_mode(self, monkeypatch):
         inst = _make_conn(confirm=True, fuzz_id="0x100", fuzz_iterations=2, fuzz_mode="sequential")
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", MagicMock())
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", MagicMock())
         inst.scanner.recv_message.return_value = None
         inst._handle_fuzz()
         assert len(inst.results["data"]["fuzz_results"]) == 2
@@ -1024,7 +1024,7 @@ class TestCreateConnObj:
     def test_missing_dependency_raises(self, monkeypatch):
         fake = MagicMock()
         fake.is_available = False
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", fake)
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", fake)
         from oida.utils.exceptions import DependencyError
 
         inst = _make_conn()
@@ -1034,11 +1034,11 @@ class TestCreateConnObj:
     def test_successful_connect_sets_conn(self, monkeypatch):
         fake = MagicMock()
         fake.is_available = True
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", fake)
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", fake)
         fake_bus = MagicMock(name="bus")
         scanner_cls = MagicMock(name="CANScanner")
         scanner_cls.return_value.connect.return_value = fake_bus
-        monkeypatch.setattr("oida.protocols.can.nxc_connection.CANScanner", scanner_cls)
+        monkeypatch.setattr("oida.protocols.can.cli_runner.CANScanner", scanner_cls)
 
         inst = _make_conn(filter_id="0x123", uds_scan=True)
         inst.conn = None
@@ -1055,10 +1055,10 @@ class TestCreateConnObj:
     def test_failed_connect_logs_fail(self, monkeypatch):
         fake = MagicMock()
         fake.is_available = True
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", fake)
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", fake)
         scanner_cls = MagicMock(name="CANScanner")
         scanner_cls.return_value.connect.return_value = None
-        monkeypatch.setattr("oida.protocols.can.nxc_connection.CANScanner", scanner_cls)
+        monkeypatch.setattr("oida.protocols.can.cli_runner.CANScanner", scanner_cls)
 
         inst = _make_conn()
         inst.conn = None
@@ -1081,10 +1081,10 @@ class TestProtoFlow:
     def _wire_scanner(self, monkeypatch, connect_result):
         fake = MagicMock()
         fake.is_available = True
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", fake)
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", fake)
         scanner_cls = MagicMock(name="CANScanner")
         scanner_cls.return_value.connect.return_value = connect_result
-        monkeypatch.setattr("oida.protocols.can.nxc_connection.CANScanner", scanner_cls)
+        monkeypatch.setattr("oida.protocols.can.cli_runner.CANScanner", scanner_cls)
         return scanner_cls
 
     def test_proto_flow_connect_failure_marks_unsuccessful(self, monkeypatch):
@@ -1118,7 +1118,7 @@ class TestProtoFlow:
 class TestHandleOBD2:
     def _msg_cls(self, monkeypatch):
         fake = MagicMock()
-        monkeypatch.setattr("oida.protocols.can.nxc_connection._python_can", fake)
+        monkeypatch.setattr("oida.protocols.can.cli_runner._python_can", fake)
         return fake
 
     def test_obd2_send_failure_aborts(self, monkeypatch):

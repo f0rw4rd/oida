@@ -63,7 +63,7 @@ class Args:
 
 
 def make_modbus(args=None, conn=True):
-    from oida.protocols.modbus.nxc_connection import modbus
+    from oida.protocols.modbus.cli_runner import modbus
 
     inst = modbus.__new__(modbus)
     inst.logger = FakeLogger()
@@ -254,7 +254,7 @@ class TestMisc:
         assert inst.conn is None
 
     def test_check_dependencies_returns_bool(self):
-        from oida.protocols.modbus.nxc_connection import modbus
+        from oida.protocols.modbus.cli_runner import modbus
 
         assert isinstance(modbus.check_dependencies(), bool)
 

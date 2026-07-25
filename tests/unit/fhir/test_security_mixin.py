@@ -22,7 +22,7 @@ class MockSecurityHost(SecurityMixin):
         self.results = {"data": {}}
         self.smart_client = Mock()
         self.host = "https://fhir.example.com/r4"
-        # Real host class (fhir in nxc_connection.py) provides this; stub it
+        # Real host class (fhir in cli_runner.py) provides this; stub it
         # here since _test_authentication() applies it to its probe clients.
         self._apply_session_config = Mock()
 

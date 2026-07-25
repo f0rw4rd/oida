@@ -29,7 +29,7 @@ CLI examples:
 """
 
 # Re-export the NXC-style connection class (mixin-based)
-from .nxc_connection import bacnet
+from .cli_runner import bacnet
 
 # Re-export constants used by tests and external code
 from .constants import (

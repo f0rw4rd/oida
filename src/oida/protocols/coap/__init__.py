@@ -39,7 +39,7 @@ from .constants import (
 )
 
 # NXC-style callable class
-from .nxc_connection import coap  # noqa: F401
+from .cli_runner import coap  # noqa: F401
 
 __all__ = [
     # Scanner

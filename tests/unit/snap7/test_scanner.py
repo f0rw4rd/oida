@@ -1140,7 +1140,7 @@ class TestSnap7MonitorAction(unittest.TestCase):
 
     def test_action_monitor_passes_area_string_not_bool(self):
         from types import SimpleNamespace
-        from oida.protocols.snap7.nxc_connection import s7
+        from oida.protocols.snap7.cli_runner import s7
 
         inst = object.__new__(s7)
         inst.args = SimpleNamespace(
@@ -1163,7 +1163,7 @@ class TestSnap7MonitorAction(unittest.TestCase):
 
     def test_action_monitor_defaults_areas_when_unset(self):
         from types import SimpleNamespace
-        from oida.protocols.snap7.nxc_connection import s7
+        from oida.protocols.snap7.cli_runner import s7
 
         inst = object.__new__(s7)
         inst.args = SimpleNamespace(monitor=True)  # only the bool, nothing else

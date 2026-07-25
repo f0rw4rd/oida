@@ -907,4 +907,4 @@ if __name__ == "__main__":
 
 
 # NXC-style callable class
-from .nxc_connection import ethercat  # noqa: E402, F401
+from .cli_runner import ethercat  # noqa: E402, F401

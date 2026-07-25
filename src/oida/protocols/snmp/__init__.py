@@ -13,7 +13,7 @@ CLI examples:
 """
 
 from .scanner import SNMPScanner, protocol_options, metadata, run, scan_targets
-from .nxc_connection import snmp
+from .cli_runner import snmp
 from .constants import (
     SNMP_OIDS,
     VENDOR_OIDS,

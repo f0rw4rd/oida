@@ -202,7 +202,7 @@ class TestSchemeResolutionConsistency(unittest.TestCase):
     """Scheme resolution must be coherent: the parser default for --tls and the
     code's getattr(...,'tls', default) must agree so a bare-hostname FHIR target
     is not silently scanned over cleartext HTTP (CODE_REVIEW finding
-    nxc_connection.py:51)."""
+    cli_runner.py:51)."""
 
     @staticmethod
     def _parse(*flags):
@@ -625,7 +625,7 @@ class TestProtoFlow(unittest.TestCase):
         from oida.protocols.fhir import fhir
 
         with patch(
-            "oida.protocols.fhir.nxc_connection.is_fhirclient_available", return_value=False
+            "oida.protocols.fhir.cli_runner.is_fhirclient_available", return_value=False
         ):
             scanner = fhir(_make_mock_args(), None, "https://fhir.example.com/r4")
 
@@ -634,7 +634,7 @@ class TestProtoFlow(unittest.TestCase):
 
     def test_enum_all_sets_search_flags(self):
         """Test --enum-all sets all search flags to True"""
-        from oida.protocols.fhir.nxc_connection import fhir
+        from oida.protocols.fhir.cli_runner import fhir
 
         args = _make_mock_args(enum_all=True)
 
@@ -644,7 +644,7 @@ class TestProtoFlow(unittest.TestCase):
         # doesn't mutate the caller's shared Namespace — the enum_all expansion
         # therefore lands on scanner.args, not the original `args` object.
         with (
-            patch("oida.protocols.fhir.nxc_connection.is_fhirclient_available", return_value=True),
+            patch("oida.protocols.fhir.cli_runner.is_fhirclient_available", return_value=True),
             patch.object(fhir, "create_conn_obj", return_value=False),
         ):
             scanner = fhir(args, None, "https://fhir.example.com/r4")
@@ -672,7 +672,7 @@ class TestProtoFlow(unittest.TestCase):
         args = _make_mock_args()
 
         with (
-            patch("oida.protocols.fhir.nxc_connection.is_fhirclient_available", return_value=True),
+            patch("oida.protocols.fhir.cli_runner.is_fhirclient_available", return_value=True),
             patch.object(fhir, "create_conn_obj", return_value=False),
         ):
             scanner = fhir(args, None, "https://fhir.example.com/r4")
@@ -691,7 +691,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client.server = MagicMock()
         mock_client.server.session = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+        with patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir:
             mock_fhir.FHIRClient.return_value = mock_client
             scanner.smart_client = None
             scanner.conn = None
@@ -709,7 +709,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client.server = MagicMock()
         mock_client.server.session = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+        with patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir:
             mock_fhir.FHIRClient.return_value = mock_client
             scanner.smart_client = None
             scanner.conn = None
@@ -728,7 +728,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client.server = MagicMock()
         mock_client.server.session = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+        with patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir:
             mock_fhir.FHIRClient.return_value = mock_client
             scanner.smart_client = None
             scanner.conn = None
@@ -751,7 +751,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client = MagicMock()
         mock_client.server = mock_server
 
-        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+        with patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir:
             mock_fhir.FHIRClient.return_value = mock_client
             scanner.smart_client = None
             scanner.conn = None
@@ -770,7 +770,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client = MagicMock()
         mock_client.server = mock_server
 
-        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+        with patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir:
             mock_fhir.FHIRClient.return_value = mock_client
             scanner.smart_client = None
             scanner.conn = None
@@ -783,7 +783,7 @@ class TestCreateConnObj(unittest.TestCase):
         """Test connection failure sets error state"""
         scanner = _create_scanner()
 
-        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+        with patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir:
             mock_fhir.FHIRClient.side_effect = ConnectionError("refused")
             scanner.smart_client = None
             scanner.conn = None
@@ -801,7 +801,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client.server = MagicMock()
         mock_client.server.session = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir:
+        with patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir:
             mock_fhir.FHIRClient.return_value = mock_client
             scanner.smart_client = None
             scanner.conn = None
@@ -819,7 +819,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client.server.session = MagicMock()
 
         with (
-            patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir,
+            patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir,
             patch.object(scanner, "_check_tls_certificate"),
         ):
             mock_fhir.FHIRClient.return_value = mock_client
@@ -838,7 +838,7 @@ class TestCreateConnObj(unittest.TestCase):
         mock_client.server = mock_server
 
         with (
-            patch("oida.protocols.fhir.nxc_connection.fhirclient") as mock_fhir,
+            patch("oida.protocols.fhir.cli_runner.fhirclient") as mock_fhir,
             patch.object(scanner, "_check_tls_certificate"),
         ):
             mock_fhir.FHIRClient.return_value = mock_client
@@ -932,7 +932,7 @@ class TestEnumHostInfo(unittest.TestCase):
 
         scanner.smart_client = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.capabilitystatement") as mock_cs:
+        with patch("oida.protocols.fhir.cli_runner.capabilitystatement") as mock_cs:
             mock_cs.CapabilityStatement.read_from.return_value = mock_cap
             result = scanner.enum_host_info()
 
@@ -950,7 +950,7 @@ class TestEnumHostInfo(unittest.TestCase):
         scanner = _create_scanner()
         scanner.smart_client = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.capabilitystatement") as mock_cs:
+        with patch("oida.protocols.fhir.cli_runner.capabilitystatement") as mock_cs:
             mock_cs.CapabilityStatement.read_from.side_effect = Exception("Response [404]")
             result = scanner.enum_host_info()
 
@@ -964,7 +964,7 @@ class TestEnumHostInfo(unittest.TestCase):
         scanner = _create_scanner()
         scanner.smart_client = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.capabilitystatement") as mock_cs:
+        with patch("oida.protocols.fhir.cli_runner.capabilitystatement") as mock_cs:
             mock_cs.CapabilityStatement.read_from.side_effect = Exception("Connection refused")
             result = scanner.enum_host_info()
 
@@ -975,7 +975,7 @@ class TestEnumHostInfo(unittest.TestCase):
         scanner = _create_scanner()
         scanner.smart_client = MagicMock()
 
-        with patch("oida.protocols.fhir.nxc_connection.capabilitystatement") as mock_cs:
+        with patch("oida.protocols.fhir.cli_runner.capabilitystatement") as mock_cs:
             mock_cs.CapabilityStatement.read_from.side_effect = Exception("Timeout")
             result = scanner.enum_host_info()
 

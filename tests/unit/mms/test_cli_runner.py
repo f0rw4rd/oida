@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from oida.protocols.mms.nxc_connection import mms
+from oida.protocols.mms.cli_runner import mms
 from oida.protocols.mms import _Lib
 
 
@@ -46,7 +46,7 @@ class TestProtoFlow:
         scanner = MagicMock()
         scanner.connect.return_value = None
         with (
-            patch("oida.protocols.mms.nxc_connection.MMSScanner", return_value=scanner),
+            patch("oida.protocols.mms.cli_runner.MMSScanner", return_value=scanner),
             patch.object(inst, "enum_host_info") as enum,
             patch.object(inst, "_execute_scan") as exec_scan,
         ):
@@ -61,7 +61,7 @@ class TestProtoFlow:
         scanner = MagicMock()
         scanner.connect.return_value = MagicMock()
         with (
-            patch("oida.protocols.mms.nxc_connection.MMSScanner", return_value=scanner),
+            patch("oida.protocols.mms.cli_runner.MMSScanner", return_value=scanner),
             patch.object(inst, "enum_host_info") as enum,
             patch.object(inst, "print_host_info") as printer,
             patch.object(inst, "_execute_scan") as exec_scan,
@@ -258,7 +258,7 @@ class TestFuzzDataObject:
             patch.object(_Lib, "require"),
             patch.object(_Lib, "FC", _FC),
             patch.object(_Lib, "ReadError", _ReadError),
-            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=True) as wuf,
+            patch("oida.protocols.mms.cli_runner._write_under_fc", return_value=True) as wuf,
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):
@@ -281,7 +281,7 @@ class TestFuzzDataObject:
             patch.object(_Lib, "require"),
             patch.object(_Lib, "FC", _FC),
             patch.object(_Lib, "ReadError", _ReadError),
-            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=True),
+            patch("oida.protocols.mms.cli_runner._write_under_fc", return_value=True),
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x05\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):
@@ -303,7 +303,7 @@ class TestFuzzDataObject:
             patch.object(_Lib, "require"),
             patch.object(_Lib, "FC", _FC),
             patch.object(_Lib, "ReadError", _ReadError),
-            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=True) as wuf,
+            patch("oida.protocols.mms.cli_runner._write_under_fc", return_value=True) as wuf,
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):
@@ -333,7 +333,7 @@ class TestFuzzDataObject:
             patch.object(_Lib, "FC", _FC),
             patch.object(_Lib, "ReadError", _ReadError),
             patch(
-                "oida.protocols.mms.nxc_connection._write_under_fc", side_effect=fake_write
+                "oida.protocols.mms.cli_runner._write_under_fc", side_effect=fake_write
             ) as wuf,
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
             patch("time.sleep"),
@@ -359,7 +359,7 @@ class TestFuzzDataObject:
             patch.object(_Lib, "require"),
             patch.object(_Lib, "FC", _FC),
             patch.object(_Lib, "ReadError", _ReadError),
-            patch("oida.protocols.mms.nxc_connection._write_under_fc", return_value=False),
+            patch("oida.protocols.mms.cli_runner._write_under_fc", return_value=False),
             patch("oida.utils.fuzzer.fuzz", return_value=[]),
             patch("time.sleep"),
         ):
@@ -399,7 +399,7 @@ class TestCleanupAndDeps:
         assert inst.conn is None
 
     def test_check_dependencies_reflects_availability(self):
-        with patch("oida.protocols.mms.nxc_connection._pyiec61850") as dep:
+        with patch("oida.protocols.mms.cli_runner._pyiec61850") as dep:
             dep.is_available = True
             assert mms.check_dependencies() is True
             dep.is_available = False

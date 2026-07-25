@@ -28,16 +28,16 @@ class MockArgs:
 class TestOpcuaClassInit(unittest.TestCase):
     """Test opcua class initialization"""
 
-    @patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url")
-    @patch("oida.protocols.opcua.nxc_connection._parse_opcua_url")
-    @patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__")
+    @patch("oida.protocols.opcua.cli_runner._normalize_opcua_url")
+    @patch("oida.protocols.opcua.cli_runner._parse_opcua_url")
+    @patch("oida.protocols.opcua.cli_runner.NetworkConnection.__init__")
     def test_init_normalizes_url(self, mock_super, mock_parse, mock_normalize):
         """Test that __init__ normalizes the OPC UA URL"""
         mock_normalize.return_value = "opc.tcp://192.168.1.100:4840"
         mock_parse.return_value = ("192.168.1.100", 4840, "")
         mock_super.return_value = None
 
-        from oida.protocols.opcua.nxc_connection import opcua
+        from oida.protocols.opcua.cli_runner import opcua
 
         args = MockArgs()
         db = Mock()
@@ -48,9 +48,9 @@ class TestOpcuaClassInit(unittest.TestCase):
         mock_normalize.assert_called_once_with(host, 4840)
         mock_parse.assert_called_once()
 
-    @patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url")
-    @patch("oida.protocols.opcua.nxc_connection._parse_opcua_url")
-    @patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__")
+    @patch("oida.protocols.opcua.cli_runner._normalize_opcua_url")
+    @patch("oida.protocols.opcua.cli_runner._parse_opcua_url")
+    @patch("oida.protocols.opcua.cli_runner.NetworkConnection.__init__")
     def test_init_sets_protocol_name(self, mock_super, mock_parse, mock_normalize):
         """Test that __init__ sets protocol_name to the 'OPC UA' display name.
 
@@ -62,7 +62,7 @@ class TestOpcuaClassInit(unittest.TestCase):
         mock_parse.return_value = ("192.168.1.100", 4840, "")
         mock_super.return_value = None
 
-        from oida.protocols.opcua.nxc_connection import opcua
+        from oida.protocols.opcua.cli_runner import opcua
 
         args = MockArgs()
         db = Mock()
@@ -70,16 +70,16 @@ class TestOpcuaClassInit(unittest.TestCase):
 
         self.assertEqual(instance.protocol_name, "OPC UA")
 
-    @patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url")
-    @patch("oida.protocols.opcua.nxc_connection._parse_opcua_url")
-    @patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__")
+    @patch("oida.protocols.opcua.cli_runner._normalize_opcua_url")
+    @patch("oida.protocols.opcua.cli_runner._parse_opcua_url")
+    @patch("oida.protocols.opcua.cli_runner.NetworkConnection.__init__")
     def test_init_sets_default_port(self, mock_super, mock_parse, mock_normalize):
         """Test that __init__ sets default_port to 4840"""
         mock_normalize.return_value = "opc.tcp://192.168.1.100:4840"
         mock_parse.return_value = ("192.168.1.100", 4840, "")
         mock_super.return_value = None
 
-        from oida.protocols.opcua.nxc_connection import opcua
+        from oida.protocols.opcua.cli_runner import opcua
 
         args = MockArgs()
         db = Mock()
@@ -94,15 +94,15 @@ class TestGenerateFuzzValue(unittest.TestCase):
     def setUp(self):
         """Set up test instance with mocked parent"""
         with (
-            patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url") as mock_norm,
-            patch("oida.protocols.opcua.nxc_connection._parse_opcua_url") as mock_parse,
-            patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__") as mock_super,
+            patch("oida.protocols.opcua.cli_runner._normalize_opcua_url") as mock_norm,
+            patch("oida.protocols.opcua.cli_runner._parse_opcua_url") as mock_parse,
+            patch("oida.protocols.opcua.cli_runner.NetworkConnection.__init__") as mock_super,
         ):
             mock_norm.return_value = "opc.tcp://192.168.1.100:4840"
             mock_parse.return_value = ("192.168.1.100", 4840, "")
             mock_super.return_value = None
 
-            from oida.protocols.opcua.nxc_connection import opcua
+            from oida.protocols.opcua.cli_runner import opcua
 
             self.instance = opcua(MockArgs(), Mock(), "192.168.1.100")
 
@@ -176,15 +176,15 @@ class TestGetTypeName(unittest.TestCase):
     def setUp(self):
         """Set up test instance"""
         with (
-            patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url") as mock_norm,
-            patch("oida.protocols.opcua.nxc_connection._parse_opcua_url") as mock_parse,
-            patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__") as mock_super,
+            patch("oida.protocols.opcua.cli_runner._normalize_opcua_url") as mock_norm,
+            patch("oida.protocols.opcua.cli_runner._parse_opcua_url") as mock_parse,
+            patch("oida.protocols.opcua.cli_runner.NetworkConnection.__init__") as mock_super,
         ):
             mock_norm.return_value = "opc.tcp://192.168.1.100:4840"
             mock_parse.return_value = ("192.168.1.100", 4840, "")
             mock_super.return_value = None
 
-            from oida.protocols.opcua.nxc_connection import opcua
+            from oida.protocols.opcua.cli_runner import opcua
 
             self.instance = opcua(MockArgs(), Mock(), "192.168.1.100")
 
@@ -215,15 +215,15 @@ class TestConvertValue(unittest.TestCase):
     def setUp(self):
         """Set up test instance"""
         with (
-            patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url") as mock_norm,
-            patch("oida.protocols.opcua.nxc_connection._parse_opcua_url") as mock_parse,
-            patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__") as mock_super,
+            patch("oida.protocols.opcua.cli_runner._normalize_opcua_url") as mock_norm,
+            patch("oida.protocols.opcua.cli_runner._parse_opcua_url") as mock_parse,
+            patch("oida.protocols.opcua.cli_runner.NetworkConnection.__init__") as mock_super,
         ):
             mock_norm.return_value = "opc.tcp://192.168.1.100:4840"
             mock_parse.return_value = ("192.168.1.100", 4840, "")
             mock_super.return_value = None
 
-            from oida.protocols.opcua.nxc_connection import opcua
+            from oida.protocols.opcua.cli_runner import opcua
 
             self.instance = opcua(MockArgs(), Mock(), "192.168.1.100")
 
@@ -269,15 +269,15 @@ class TestParseArgument(unittest.TestCase):
     def setUp(self):
         """Set up test instance"""
         with (
-            patch("oida.protocols.opcua.nxc_connection._normalize_opcua_url") as mock_norm,
-            patch("oida.protocols.opcua.nxc_connection._parse_opcua_url") as mock_parse,
-            patch("oida.protocols.opcua.nxc_connection.NetworkConnection.__init__") as mock_super,
+            patch("oida.protocols.opcua.cli_runner._normalize_opcua_url") as mock_norm,
+            patch("oida.protocols.opcua.cli_runner._parse_opcua_url") as mock_parse,
+            patch("oida.protocols.opcua.cli_runner.NetworkConnection.__init__") as mock_super,
         ):
             mock_norm.return_value = "opc.tcp://192.168.1.100:4840"
             mock_parse.return_value = ("192.168.1.100", 4840, "")
             mock_super.return_value = None
 
-            from oida.protocols.opcua.nxc_connection import opcua
+            from oida.protocols.opcua.cli_runner import opcua
 
             self.instance = opcua(MockArgs(), Mock(), "192.168.1.100")
 

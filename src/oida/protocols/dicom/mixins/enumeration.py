@@ -12,7 +12,7 @@ from collections import Counter
 from datetime import datetime as dt
 from typing import TYPE_CHECKING
 
-from ..nxc_connection import (
+from ..cli_runner import (
     DEFAULT_AET_WORDLIST,
     _get_ae,
     _get_sop_classes,

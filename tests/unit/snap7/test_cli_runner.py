@@ -4,7 +4,7 @@
 Unit tests for the Snap7 (S7) NXC-style connection class.
 
 These tests exercise the real dispatch / argument-parsing / confirm-gating /
-result-formatting logic in ``oida.protocols.snap7.nxc_connection`` while mocking
+result-formatting logic in ``oida.protocols.snap7.cli_runner`` while mocking
 ONLY the scanner boundary (the snap7-library-backed ``Snap7Scanner``) and the
 connection object it returns. No code under test is monkey-patched away.
 
@@ -19,7 +19,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 
-from oida.protocols.snap7.nxc_connection import s7, snap7
+from oida.protocols.snap7.cli_runner import s7, snap7
 
 
 def make_s7(scanner=None, conn="__sentinel__", **arg_overrides):
@@ -1108,7 +1108,7 @@ class TestProtoFlow(unittest.TestCase):
         scanner = Mock()
         scanner.connect.return_value = None
         # Patch the Snap7Scanner class reference used inside proto_flow.
-        import oida.protocols.snap7.nxc_connection as mod
+        import oida.protocols.snap7.cli_runner as mod
 
         orig = mod.Snap7Scanner
         mod.Snap7Scanner = lambda args_dict: scanner
@@ -1125,7 +1125,7 @@ class TestProtoFlow(unittest.TestCase):
         scanner = Mock()
         scanner.connect.return_value = Mock(name="conn")
         scanner.discover.return_value = {"cpu_info": {}}
-        import oida.protocols.snap7.nxc_connection as mod
+        import oida.protocols.snap7.cli_runner as mod
 
         orig = mod.Snap7Scanner
         mod.Snap7Scanner = lambda args_dict: scanner
@@ -1142,7 +1142,7 @@ class TestProtoFlow(unittest.TestCase):
         scanner = Mock()
         scanner.connect.return_value = Mock(name="conn")
         scanner.cpu_stop.return_value = {"success": True, "action": "cpu_stop"}
-        import oida.protocols.snap7.nxc_connection as mod
+        import oida.protocols.snap7.cli_runner as mod
 
         orig = mod.Snap7Scanner
         mod.Snap7Scanner = lambda args_dict: scanner

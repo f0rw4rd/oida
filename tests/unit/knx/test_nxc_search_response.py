@@ -1,4 +1,4 @@
-"""Unit tests for KNXnet/IP SearchResponse parsing in nxc_connection.knx.
+"""Unit tests for KNXnet/IP SearchResponse parsing in cli_runner.knx.
 
 ``_parse_search_response`` decodes a raw KNXnet/IP SEARCH_RESPONSE frame
 (HPAI control endpoint + DEVICE_INFO DIB + SUPP_SVC_FAMILIES DIB).  These
@@ -12,7 +12,7 @@ import struct
 
 import pytest
 
-from oida.protocols.knx.nxc_connection import knx as KnxConn
+from oida.protocols.knx.cli_runner import knx as KnxConn
 from tests.unit.knx._harness import SpyLogger
 
 
@@ -184,7 +184,7 @@ class TestHandleKnxproj:
         f = tmp_path / "p.knxproj"
         f.write_bytes(b"PK\x03\x04dummy")
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.get_knxproj_info",
+            "oida.protocols.knx.cli_runner.get_knxproj_info",
             lambda p: {"project_id": "P1", "ets_version": "5", "password_protected": False},
         )
         c = self._conn(_make_args(knxproj=str(f), knxproj_info=True))
@@ -196,7 +196,7 @@ class TestHandleKnxproj:
         f = tmp_path / "p.knxproj"
         f.write_bytes(b"PK\x03\x04dummy")
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.get_knxproj_info",
+            "oida.protocols.knx.cli_runner.get_knxproj_info",
             lambda p: {"project_id": "P1", "ets_version": "5", "password_protected": True},
         )
         c = self._conn(_make_args(knxproj=str(f)))
@@ -207,15 +207,15 @@ class TestHandleKnxproj:
         f = tmp_path / "p.knxproj"
         f.write_bytes(b"PK\x03\x04dummy")
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.get_knxproj_info",
+            "oida.protocols.knx.cli_runner.get_knxproj_info",
             lambda p: {"project_id": "P1", "ets_version": "5", "password_protected": False},
         )
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.parse_knxproj",
+            "oida.protocols.knx.cli_runner.parse_knxproj",
             lambda p, pw: {"devices": [{"address": "1.1.1"}]},
         )
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.display_knxproj_data",
+            "oida.protocols.knx.cli_runner.display_knxproj_data",
             lambda data, logger: None,
         )
         c = self._conn(_make_args(knxproj=str(f)))
@@ -229,19 +229,19 @@ class TestHandleKnxproj:
         wl = tmp_path / "wl.txt"
         wl.write_text("secret\n")
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.get_knxproj_info",
+            "oida.protocols.knx.cli_runner.get_knxproj_info",
             lambda p: {"project_id": "P1", "ets_version": "5", "password_protected": True},
         )
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.crack_knxproj",
+            "oida.protocols.knx.cli_runner.crack_knxproj",
             lambda *a, **k: "secret",
         )
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.parse_knxproj",
+            "oida.protocols.knx.cli_runner.parse_knxproj",
             lambda p, pw: {"devices": []},
         )
         monkeypatch.setattr(
-            "oida.protocols.knx.nxc_connection.display_knxproj_data",
+            "oida.protocols.knx.cli_runner.display_knxproj_data",
             lambda data, logger: None,
         )
         c = self._conn(_make_args(knxproj=str(f), knxproj_wordlist=str(wl)))

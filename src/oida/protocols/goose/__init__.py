@@ -744,4 +744,4 @@ metadata, run = create_protocol_module(
 
 
 # Re-export NXC-style callable class
-from .nxc_connection import goose as goose  # noqa: E402
+from .cli_runner import goose as goose  # noqa: E402

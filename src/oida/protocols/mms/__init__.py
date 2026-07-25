@@ -863,4 +863,4 @@ metadata, run = create_protocol_module(
 
 
 # Re-export NXC-style callable class
-from .nxc_connection import mms as mms  # noqa: E402
+from .cli_runner import mms as mms  # noqa: E402

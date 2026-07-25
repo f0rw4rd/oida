@@ -16,8 +16,8 @@ import pytest
 from hartip import DeviceInfo, Variable
 
 from oida.protocols.hart.scanner import HARTScanner, LockState
-from oida.protocols.hart import nxc_connection
-from oida.protocols.hart.nxc_connection import hart
+from oida.protocols.hart import cli_runner
+from oida.protocols.hart.cli_runner import hart
 from oida.utils.ics_logger import get_logger
 
 from tests.unit.hart.test_deep_coverage import FakeClient, FakeResponse, make_scanner
@@ -538,7 +538,7 @@ class TestProtoFlow:
         scanner.scan_poll_addresses.return_value = [
             {"address": 1, "manufacturer": "E", "device_type": 1, "device_type_name": "x"}
         ]
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         # address scan ran; normal connect path skipped
         scanner.scan_poll_addresses.assert_called_once()
@@ -550,7 +550,7 @@ class TestProtoFlow:
         h._convert_args_to_dict = MagicMock(return_value={"rhost": "10.0.0.5"})
         scanner = MagicMock()
         scanner.connect.return_value = None  # connection fails
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         assert h.results["success"] is False
         assert h.results["error"] == "Connection failed"
@@ -569,7 +569,7 @@ class TestProtoFlow:
         scanner.read_output_info.return_value = {}
         scanner.enumerate_commands.return_value = {"supported": [0], "unsupported": []}
         scanner.security_analysis.return_value = [{"severity": "high", "issue": "x"}]
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         # full mode auto-enables both enumeration and security analysis
         scanner.enumerate_commands.assert_called_once()
@@ -585,7 +585,7 @@ class TestProtoFlow:
         scanner.psk_key = None
         scanner.cipher_suite = None
         scanner.read_device_info.return_value = None
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         # discovery mode must not probe variables / enumerate / analyze
         scanner.enumerate_commands.assert_not_called()
@@ -607,7 +607,7 @@ class TestProtoFlow:
         scanner.psk_key = None
         scanner.cipher_suite = None
         scanner.read_device_info.return_value = None
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         scanner.enumerate_commands.assert_not_called()
         scanner.security_analysis.assert_not_called()
@@ -629,7 +629,7 @@ class TestProtoFlow:
         scanner.read_output_info.return_value = {}
         scanner.enumerate_commands.return_value = {"supported": [0], "unsupported": []}
         scanner.security_analysis.return_value = [{"severity": "high", "issue": "x"}]
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         scanner.enumerate_commands.assert_called_once()
         scanner.security_analysis.assert_called_once()
@@ -649,7 +649,7 @@ class TestProtoFlow:
         scanner.read_all_variables.return_value = []
         scanner.read_output_info.return_value = {}
         scanner.enumerate_device_specific_commands.return_value = [129]
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         scanner.enumerate_device_specific_commands.assert_called_once()
         assert h.results["data"]["device_specific_commands"] == [129]
@@ -672,6 +672,6 @@ class TestProtoFlow:
         scanner.security_analysis.return_value = [
             {"severity": "high", "issue": "Write command accessible"}
         ]
-        with patch.object(nxc_connection, "HARTScanner", return_value=scanner):
+        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
             h.proto_flow()
         assert "command_probes" in h.results["data"]

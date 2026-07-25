@@ -12,6 +12,6 @@ Provides MQTT broker security scanning with:
 """
 
 from .scanner import MQTTScanner, metadata, run, dependencies_missing
-from .nxc_connection import mqtt
+from .cli_runner import mqtt
 
 __all__ = ["mqtt", "MQTTScanner", "metadata", "run", "dependencies_missing"]

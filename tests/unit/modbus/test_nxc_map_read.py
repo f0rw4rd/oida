@@ -1,5 +1,5 @@
 """
-Unit tests for oida.protocols.modbus.nxc_connection register-map reading.
+Unit tests for oida.protocols.modbus.cli_runner register-map reading.
 
 Covers the high-value pure-logic paths on the `modbus` NXC connection class:
 - _read_and_display_map_registers: two-pass read, scale/offset, dynamic
@@ -98,7 +98,7 @@ def _err_resp(exc_code=None):
 
 def make_modbus(args=None, conn=None):
     """Build a `modbus` instance without invoking __init__/proto_flow."""
-    from oida.protocols.modbus.nxc_connection import modbus
+    from oida.protocols.modbus.cli_runner import modbus
 
     inst = modbus.__new__(modbus)
     inst.logger = FakeLogger()
@@ -483,5 +483,5 @@ class TestBroadcastMode:
 
 
 def test_module_imports_cleanly():
-    # guard: nxc_connection must import without pymodbus actually connecting
-    assert "oida.protocols.modbus.nxc_connection" in sys.modules or True
+    # guard: cli_runner must import without pymodbus actually connecting
+    assert "oida.protocols.modbus.cli_runner" in sys.modules or True

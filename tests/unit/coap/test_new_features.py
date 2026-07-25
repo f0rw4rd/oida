@@ -279,7 +279,7 @@ class TestDTLSCert(unittest.TestCase):
         instance = self._make_coap_instance()
 
         mock_ctx = Mock()
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = (True, mock_ctx, "2.05")
             result = instance._try_dtls_cert("/path/cert.pem", "/path/key.pem", "/path/ca.pem")
 
@@ -292,7 +292,7 @@ class TestDTLSCert(unittest.TestCase):
         """Certificate auth fails gracefully."""
         instance = self._make_coap_instance()
 
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = (False, None, "backend does not support certificates")
             result = instance._try_dtls_cert("/path/cert.pem", "/path/key.pem", None)
 
@@ -305,7 +305,7 @@ class TestDTLSCert(unittest.TestCase):
         instance = self._make_coap_instance()
 
         mock_ctx = Mock()
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = (True, mock_ctx, "2.05")
             result = instance._try_dtls_rpk("/path/rpk.der")
 
@@ -317,7 +317,7 @@ class TestDTLSCert(unittest.TestCase):
         """RPK auth fails gracefully."""
         instance = self._make_coap_instance()
 
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = (False, None, "RPK not supported")
             result = instance._try_dtls_rpk("/path/rpk.der")
 
@@ -416,7 +416,7 @@ class TestFetchPatchIPatch(unittest.TestCase):
         instance = self._make_coap_instance()
         instance.args.fetch = ["/sensor/data"]
 
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = {
                 "code": "2.05",
                 "success": True,
@@ -436,7 +436,7 @@ class TestFetchPatchIPatch(unittest.TestCase):
         instance = self._make_coap_instance()
         instance.args.fetch = ["/query", '{"filter": "temp"}']
 
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = {
                 "code": "2.05",
                 "success": True,
@@ -464,7 +464,7 @@ class TestFetchPatchIPatch(unittest.TestCase):
         instance = self._make_coap_instance()
         instance.args.patch = ["/config", '{"key": "value"}']
 
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = {
                 "code": "2.04",
                 "success": True,
@@ -492,7 +492,7 @@ class TestFetchPatchIPatch(unittest.TestCase):
         instance = self._make_coap_instance()
         instance.args.ipatch = ["/config", "value"]
 
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = {
                 "code": "2.04",
                 "success": True,

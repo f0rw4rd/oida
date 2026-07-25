@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Unit tests for IEC 104 NXC-style connection (nxc_connection.py).
+Unit tests for IEC 104 NXC-style connection (cli_runner.py).
 
 Tests class structure, dependency checks, connection creation, enumeration,
 scan execution, cleanup, and error handling paths.
@@ -23,12 +23,12 @@ def _make_iec104_instance(**overrides):
     automatically, we patch proto_flow and NetworkConnection.__init__
     to avoid any real initialization.
     """
-    with patch("oida.protocols.iec104.nxc_connection.iec104.proto_flow"):
+    with patch("oida.protocols.iec104.cli_runner.iec104.proto_flow"):
         with patch(
-            "oida.protocols.iec104.nxc_connection.NetworkConnection.__init__",
+            "oida.protocols.iec104.cli_runner.NetworkConnection.__init__",
             return_value=None,
         ):
-            from oida.protocols.iec104.nxc_connection import iec104 as IEC104Class
+            from oida.protocols.iec104.cli_runner import iec104 as IEC104Class
 
             obj = IEC104Class.__new__(IEC104Class)
             obj.protocol_name = "IEC 104"
@@ -55,7 +55,7 @@ class TestIEC104ClassStructure(unittest.TestCase):
     """Verify the iec104 NXC class has required methods and attributes."""
 
     def setUp(self):
-        from oida.protocols.iec104.nxc_connection import iec104 as IEC104Class
+        from oida.protocols.iec104.cli_runner import iec104 as IEC104Class
 
         self.cls = IEC104Class
 
@@ -107,17 +107,17 @@ class TestCheckDependencies(unittest.TestCase):
 
     def test_available(self):
         """When c104 is available, check_dependencies returns True."""
-        with patch("oida.protocols.iec104.nxc_connection._c104") as mock_lazy:
+        with patch("oida.protocols.iec104.cli_runner._c104") as mock_lazy:
             type(mock_lazy).is_available = PropertyMock(return_value=True)
-            from oida.protocols.iec104.nxc_connection import iec104 as IEC104Class
+            from oida.protocols.iec104.cli_runner import iec104 as IEC104Class
 
             self.assertTrue(IEC104Class.check_dependencies())
 
     def test_unavailable(self):
         """When c104 is not available, check_dependencies returns False."""
-        with patch("oida.protocols.iec104.nxc_connection._c104") as mock_lazy:
+        with patch("oida.protocols.iec104.cli_runner._c104") as mock_lazy:
             type(mock_lazy).is_available = PropertyMock(return_value=False)
-            from oida.protocols.iec104.nxc_connection import iec104 as IEC104Class
+            from oida.protocols.iec104.cli_runner import iec104 as IEC104Class
 
             self.assertFalse(IEC104Class.check_dependencies())
 
@@ -392,7 +392,7 @@ class TestProtoFlow(unittest.TestCase):
         mock_scanner_inst.discover.return_value = {"type_ids": {}}
         mock_scanner_cls.return_value = mock_scanner_inst
 
-        with patch("oida.protocols.iec104.nxc_connection.IEC104Scanner", mock_scanner_cls):
+        with patch("oida.protocols.iec104.cli_runner.IEC104Scanner", mock_scanner_cls):
             obj.proto_flow()
 
         # proto_logger is now called by connection.__init__, not proto_flow.
@@ -412,7 +412,7 @@ class TestProtoFlow(unittest.TestCase):
         mock_scanner_inst.connect.return_value = None
 
         with patch(
-            "oida.protocols.iec104.nxc_connection.IEC104Scanner",
+            "oida.protocols.iec104.cli_runner.IEC104Scanner",
             return_value=mock_scanner_inst,
         ):
             obj.proto_flow()
@@ -433,7 +433,7 @@ class TestProtoFlow(unittest.TestCase):
         mock_scanner_inst.connect.return_value = None
 
         with patch(
-            "oida.protocols.iec104.nxc_connection.IEC104Scanner",
+            "oida.protocols.iec104.cli_runner.IEC104Scanner",
             return_value=mock_scanner_inst,
         ) as mock_cls:
             obj.proto_flow()
@@ -444,13 +444,13 @@ class TestProtoFlow(unittest.TestCase):
 class TestProtoFlowViaInit(unittest.TestCase):
     """Test that proto_flow is triggered via __init__ (NXC pattern)."""
 
-    @patch("oida.protocols.iec104.nxc_connection.IEC104Scanner")
-    @patch("oida.protocols.iec104.nxc_connection.NetworkConnection.__init__")
+    @patch("oida.protocols.iec104.cli_runner.IEC104Scanner")
+    @patch("oida.protocols.iec104.cli_runner.NetworkConnection.__init__")
     def test_init_calls_super(self, mock_super_init, mock_scanner_cls):
         """__init__ should set attributes then call super().__init__."""
         mock_super_init.return_value = None
 
-        from oida.protocols.iec104.nxc_connection import iec104 as IEC104Class
+        from oida.protocols.iec104.cli_runner import iec104 as IEC104Class
 
         args = Mock()
         db = Mock()

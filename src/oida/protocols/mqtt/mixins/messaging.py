@@ -16,7 +16,7 @@ from ....utils.export_utils import print_table
 from ....utils.fuzzer import fuzz
 
 # fuzz_publish_payloads() only fuzzes the first N topics; callers that log a
-# pre-cap topic count (e.g. nxc_connection._handle_fuzz) should use this so
+# pre-cap topic count (e.g. cli_runner._handle_fuzz) should use this so
 # the reported count matches what actually gets fuzzed.
 MAX_FUZZ_TOPICS = 10
 

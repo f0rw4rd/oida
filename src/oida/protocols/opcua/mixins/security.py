@@ -288,7 +288,7 @@ class SecurityMixin:
             # was never unlinked, leaving a private key world-readable in
             # shared temp indefinitely. mkstemp() gives each call a unique
             # path and creates the file mode 0600 (owner-only). The caller
-            # (nxc_connection._async_proto_flow) unlinks both paths once the
+            # (cli_runner._async_proto_flow) unlinks both paths once the
             # secure channel is established.
             cert_fd, cert_name = tempfile.mkstemp(prefix="oida_client_", suffix=".der")
             os.close(cert_fd)

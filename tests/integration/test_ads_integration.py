@@ -2153,7 +2153,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         assert result.returncode != -11, "--coe-range standalone caused a crash"
 
         # The scanner warns that the modifier is inert without a CoE operation
-        # (src/oida/protocols/ads/nxc_connection.py:177-187).
+        # (src/oida/protocols/ads/cli_runner.py:177-187).
         text = _combined_text(result, result.scan_log if result.scan_log else None)
         assert "no effect without" in text and "coe-range" in text, (
             f"--coe-range without --scan-coe should emit the inert-modifier warning; "

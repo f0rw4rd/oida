@@ -71,7 +71,7 @@ def test_function_level_relative_import_resolves(
     sites: dicom/mixins/reporting.py:312 (3 dots, needs 4), knx/mixins/
     properties.py:130 (same), opcua/mixins/fuzz.py:94, opcua/mixins/
     credentials.py:310, dicom/mixins/fuzz.py:40, ocpp/mixins/security.py:54,
-    snap7/nxc_connection.py:634+727 (level=4 exceeds depth 3).
+    snap7/cli_runner.py:634+727 (level=4 exceeds depth 3).
     """
     assert level <= len(pkg_parts), (
         f"{path}:{lineno}: relative level {level} exceeds package depth "

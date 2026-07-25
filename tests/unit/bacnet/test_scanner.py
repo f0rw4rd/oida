@@ -767,7 +767,7 @@ class TestBACnetClassInitialization(unittest.TestCase):
         self.mock_db = Mock()
         self.host = "192.168.1.100"
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_bacnet_instance_creation(self, mock_asyncio_run):
         """Test creating a BACnet scanner instance"""
         from oida.protocols.bacnet import bacnet
@@ -780,7 +780,7 @@ class TestBACnetClassInitialization(unittest.TestCase):
         self.assertIsInstance(scanner.devices, dict)
         self.assertIsInstance(scanner.objects, dict)
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_bacnet_initialization_with_empty_devices(self, mock_asyncio_run):
         """Test BACnet initialization starts with empty devices"""
         from oida.protocols.bacnet import bacnet
@@ -790,7 +790,7 @@ class TestBACnetClassInitialization(unittest.TestCase):
         self.assertEqual(len(scanner.devices), 0)
         self.assertEqual(len(scanner.objects), 0)
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_bacnet_port_default(self, mock_asyncio_run):
         """Test BACnet uses correct default port"""
         from oida.protocols.bacnet import bacnet
@@ -813,7 +813,7 @@ class TestBACnetParseObjectList(unittest.TestCase):
         self.mock_args.quiet = True
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_parse_object_id_from_tuple(self, mock_asyncio_run):
         """Test parsing object ID from tuple format"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -824,7 +824,7 @@ class TestBACnetParseObjectList(unittest.TestCase):
         result = scanner._parse_object_id((8, 1001))
         self.assertEqual(result, (8, 1001))
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_parse_object_id_from_string_with_colon(self, mock_asyncio_run):
         """Test parsing object ID from string with colon separator"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -838,7 +838,7 @@ class TestBACnetParseObjectList(unittest.TestCase):
         result = scanner._parse_object_id("binaryOutput:5")
         self.assertEqual(result, (4, 5))
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_parse_object_id_from_string_with_comma(self, mock_asyncio_run):
         """Test parsing object ID from string with comma separator"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -846,7 +846,7 @@ class TestBACnetParseObjectList(unittest.TestCase):
         result = scanner._parse_object_id("analogInput,10")
         self.assertEqual(result, (0, 10))
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_parse_object_id_invalid_string(self, mock_asyncio_run):
         """Test parsing invalid object ID string returns default"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -854,7 +854,7 @@ class TestBACnetParseObjectList(unittest.TestCase):
         result = scanner._parse_object_id("invalid")
         self.assertEqual(result, (0, 0))
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_parse_object_id_with_unknown_type(self, mock_asyncio_run):
         """Test parsing object ID with unknown type name"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -880,7 +880,7 @@ class TestBACnetDeviceDiscovery(unittest.TestCase):
         self.mock_args.quiet = True
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_enum_host_info_with_devices(self, mock_asyncio_run):
         """Test enum_host_info with discovered devices"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -901,7 +901,7 @@ class TestBACnetDeviceDiscovery(unittest.TestCase):
         self.assertEqual(scanner.results["data"]["device_info"]["device_count"], 1)
         self.assertIn(1001, scanner.results["data"]["device_info"]["devices"])
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_enum_host_info_without_devices(self, mock_asyncio_run):
         """Test enum_host_info without discovered devices"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -911,7 +911,7 @@ class TestBACnetDeviceDiscovery(unittest.TestCase):
         self.assertIn("device_info", scanner.results["data"])
         self.assertTrue(scanner.results["data"]["device_info"]["connected"])
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_discover_via_read_with_device_id(self, mock_asyncio_run):
         """Test _discover_via_read with specified device ID"""
         self.mock_args.device_id = 1001
@@ -923,7 +923,7 @@ class TestBACnetDeviceDiscovery(unittest.TestCase):
         self.assertEqual(scanner.devices[1001]["device_id"], 1001)
         self.assertEqual(scanner.devices[1001]["address"], "192.168.1.100")
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_discover_via_read_without_device_id(self, mock_asyncio_run):
         """Test _discover_via_read without device ID"""
         self.mock_args.device_id = None
@@ -951,7 +951,7 @@ class TestBACnetObjectEnumerationParsing(unittest.TestCase):
         self.mock_args.quiet = True
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_enumerate_objects_no_devices(self, mock_asyncio_run):
         """Test enumerate objects with no devices"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -961,7 +961,7 @@ class TestBACnetObjectEnumerationParsing(unittest.TestCase):
 
         scanner.logger.warning.assert_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_enumerate_objects_with_mock_property_read(self, mock_asyncio_run):
         """Test enumerate objects with mocked property reading"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -984,7 +984,7 @@ class TestBACnetObjectEnumerationParsing(unittest.TestCase):
         self.assertIn("analogOutput", scanner.objects[1001])
         self.assertIn("analogValue", scanner.objects[1001])
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_enumerate_objects_with_max_limit(self, mock_asyncio_run):
         """Test enumerate objects respects max_objects limit"""
         self.mock_args.max_objects = 2
@@ -1002,7 +1002,7 @@ class TestBACnetObjectEnumerationParsing(unittest.TestCase):
         total_objects = sum(len(instances) for instances in scanner.objects[1001].values())
         self.assertEqual(total_objects, 2)
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_enumerate_objects_with_type_filter(self, mock_asyncio_run):
         """Test enumerate objects with object type filter"""
         self.mock_args.object_type = "analogInput"
@@ -1039,7 +1039,7 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
         self.mock_args.quiet = True
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_disconnect_with_active_connection(self, mock_asyncio_run):
         """Test disconnect with active BACnet connection"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1053,7 +1053,7 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
 
         scanner.bacnet.disconnect.assert_called_once()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_disconnect_with_no_connection(self, mock_asyncio_run):
         """Test disconnect with no active connection"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1063,7 +1063,7 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
         # Should not raise exception
         scanner._disconnect()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_disconnect_with_exception(self, mock_asyncio_run):
         """Test disconnect handles exceptions gracefully"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1078,7 +1078,7 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
         # Should log debug message
         scanner.logger.debug.assert_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_identify_no_devices(self, mock_asyncio_run):
         """Test identify with no discovered devices"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1088,7 +1088,7 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
 
         scanner.logger.warning.assert_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_identify_with_property_read_failure(self, mock_asyncio_run):
         """Test identify handles property read failures"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1101,7 +1101,7 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
         # Should not raise exception
         scanner._handle_identify()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_enumerate_objects_with_read_failure(self, mock_asyncio_run):
         """Test enumerate objects handles read failures"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1129,7 +1129,7 @@ class TestBACnetPropertyFormatting(unittest.TestCase):
         self.mock_args.quiet = True
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_vendor_id_resolution(self, mock_asyncio_run):
         """Test vendor ID is resolved to vendor name"""
         from oida.protocols.bacnet import VENDORS
@@ -1152,7 +1152,7 @@ class TestBACnetPropertyFormatting(unittest.TestCase):
         self.assertEqual(scanner.devices[1001]["vendor_id"], 7)
         self.assertEqual(scanner.devices[1001]["vendor_name"], VENDORS[7])
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_unknown_vendor_id_resolution(self, mock_asyncio_run):
         """Test unknown vendor ID formatting"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1188,7 +1188,7 @@ class TestBACnetPrintHostInfo(unittest.TestCase):
         self.mock_args.port = 47808
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_print_host_info_with_devices(self, mock_asyncio_run):
         """Test print_host_info displays device information"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1208,7 +1208,7 @@ class TestBACnetPrintHostInfo(unittest.TestCase):
         scanner.logger.success.assert_called()
         scanner.logger.display.assert_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_print_host_info_quiet_mode(self, mock_asyncio_run):
         """Test print_host_info in quiet mode"""
         self.mock_args.quiet = True
@@ -1222,7 +1222,7 @@ class TestBACnetPrintHostInfo(unittest.TestCase):
         # Should not print anything in quiet mode
         scanner.logger.success.assert_not_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_print_host_info_without_devices(self, mock_asyncio_run):
         """Test print_host_info with no devices"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1248,7 +1248,7 @@ class TestBACnetExportResults(unittest.TestCase):
         self.mock_args.quiet = True
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_export_results_no_output_path(self, mock_asyncio_run):
         """Test export with no output path specified"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1259,7 +1259,7 @@ class TestBACnetExportResults(unittest.TestCase):
         # Should return early without logging
         scanner.logger.success.assert_not_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     @patch("pathlib.Path.write_text")
     def test_export_results_json_format(self, mock_write_text, mock_asyncio_run):
         """Test export results in JSON format"""
@@ -1276,7 +1276,7 @@ class TestBACnetExportResults(unittest.TestCase):
         mock_write_text.assert_called_once()
         scanner.logger.success.assert_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     @patch("builtins.open", new_callable=unittest.mock.mock_open)
     def test_export_results_csv_format(self, mock_open, mock_asyncio_run):
         """Test export results in CSV format"""
@@ -1305,7 +1305,7 @@ class TestBACnetApplyShortcuts(unittest.TestCase):
         self.bacnet_class = bacnet
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_assess_network_shortcut(self, mock_asyncio_run):
         """Test --assess-network shortcut applies correct flags"""
         mock_args = Mock()
@@ -1323,7 +1323,7 @@ class TestBACnetApplyShortcuts(unittest.TestCase):
         self.assertTrue(scanner.args.enum_routers)
         self.assertTrue(scanner.args.networks)
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_assess_access_shortcut(self, mock_asyncio_run):
         """Test --assess-access shortcut applies correct flags"""
         mock_args = Mock()
@@ -1341,7 +1341,7 @@ class TestBACnetApplyShortcuts(unittest.TestCase):
         self.assertTrue(scanner.args.check_oos)
         self.assertTrue(scanner.args.enumerate_writable)
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_assess_config_shortcut(self, mock_asyncio_run):
         """Test --assess-config shortcut applies correct flags"""
         mock_args = Mock()
@@ -1359,7 +1359,7 @@ class TestBACnetApplyShortcuts(unittest.TestCase):
         self.assertTrue(scanner.args.check_alarms)
         self.assertTrue(scanner.args.check_trendlogs)
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_assess_info_shortcut(self, mock_asyncio_run):
         """Test --assess-info shortcut applies correct flags"""
         mock_args = Mock()
@@ -1388,7 +1388,7 @@ class TestBACnetHandleEnumerateProperties(unittest.TestCase):
         self.mock_args.quiet = True
         self.mock_db = Mock()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_enumerate_properties_no_objects(self, mock_asyncio_run):
         """Test enumerate properties with no objects"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")
@@ -1398,7 +1398,7 @@ class TestBACnetHandleEnumerateProperties(unittest.TestCase):
 
         scanner.logger.warning.assert_called()
 
-    @patch("oida.protocols.bacnet.nxc_connection.asyncio.run")
+    @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_enumerate_properties_with_objects(self, mock_asyncio_run):
         """Test enumerate properties with enumerated objects"""
         scanner = self.bacnet_class(self.mock_args, self.mock_db, "192.168.1.100")

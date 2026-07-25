@@ -66,7 +66,7 @@ class TestPSKBruteforce(unittest.TestCase):
             return True, Mock(), "2.05 Content"
 
         # Use synchronous mock
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_ctx = Mock()
             mock_run.return_value = (True, mock_ctx, "2.05 Content")
 
@@ -82,7 +82,7 @@ class TestPSKBruteforce(unittest.TestCase):
         """Single PSK value fails."""
         instance = self._make_coap_instance(psk="badkey", psk_identity="badid")
 
-        with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+        with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
             mock_run.return_value = (False, None, "handshake failed")
             result = instance._bruteforce_dtls_psk("badkey", "badid")
 
@@ -113,7 +113,7 @@ class TestPSKBruteforce(unittest.TestCase):
                     return (True, Mock(), "2.05 Content")
                 return (False, None, "handshake failed")
 
-            with patch("oida.protocols.coap.nxc_connection.run_async", side_effect=mock_run):
+            with patch("oida.protocols.coap.cli_runner.run_async", side_effect=mock_run):
                 result = instance._bruteforce_dtls_psk(key_file, id_file)
 
             assert result is True
@@ -137,7 +137,7 @@ class TestPSKBruteforce(unittest.TestCase):
             id_file = f.name
 
         try:
-            with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+            with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
                 mock_run.return_value = (False, None, "denied")
                 result = instance._bruteforce_dtls_psk(key_file, id_file)
 
@@ -180,7 +180,7 @@ class TestPSKBruteforce(unittest.TestCase):
                 call_count += 1
                 return (False, None, "failed")
 
-            with patch("oida.protocols.coap.nxc_connection.run_async", side_effect=mock_run):
+            with patch("oida.protocols.coap.cli_runner.run_async", side_effect=mock_run):
                 result = instance._bruteforce_dtls_psk(key_file, "id1")
 
             assert result is False
@@ -198,7 +198,7 @@ class TestPSKBruteforce(unittest.TestCase):
             key_file = f.name
 
         try:
-            with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+            with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
                 mock_run.return_value = (False, None, "failed")
                 instance._bruteforce_dtls_psk(key_file, "id1")
 
@@ -245,7 +245,7 @@ class TestProbePathsWordlist(unittest.TestCase):
             wordlist_path = f.name
 
         try:
-            with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+            with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
                 mock_run.return_value = {
                     "code": "2.05 Content",
                     "success": True,
@@ -271,7 +271,7 @@ class TestProbePathsWordlist(unittest.TestCase):
             wordlist_path = f.name
 
         try:
-            with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+            with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
                 mock_run.return_value = {
                     "code": "4.04 Not Found",
                     "success": False,
@@ -305,7 +305,7 @@ class TestProbePathsWordlist(unittest.TestCase):
                     return {"code": "2.05 Content", "success": True, "payload": b"data"}
                 return {"code": "4.04 Not Found", "success": False, "payload": b""}
 
-            with patch("oida.protocols.coap.nxc_connection.run_async", side_effect=mock_run):
+            with patch("oida.protocols.coap.cli_runner.run_async", side_effect=mock_run):
                 found = instance._probe_paths_wordlist(wordlist_path)
 
             assert len(found) == 2
@@ -333,7 +333,7 @@ class TestProbePathsWordlist(unittest.TestCase):
             wordlist_path = f.name
 
         try:
-            with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+            with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
                 mock_run.return_value = {
                     "code": "2.05 Content",
                     "success": True,
@@ -357,7 +357,7 @@ class TestProbePathsWordlist(unittest.TestCase):
             wordlist_path = f.name
 
         try:
-            with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+            with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
                 mock_run.return_value = {
                     "code": "2.05 Content",
                     "success": True,
@@ -383,7 +383,7 @@ class TestProbePathsWordlist(unittest.TestCase):
             wordlist_path = f.name
 
         try:
-            with patch("oida.protocols.coap.nxc_connection.run_async") as mock_run:
+            with patch("oida.protocols.coap.cli_runner.run_async") as mock_run:
                 mock_run.return_value = {
                     "code": "2.05 Content",
                     "success": True,
@@ -558,8 +558,8 @@ class TestDTLSUnavailable(unittest.TestCase):
         instance = self._make_instance()
 
         with (
-            patch("oida.protocols.coap.nxc_connection._dtls_available", return_value=False),
-            patch("oida.protocols.coap.nxc_connection.CoAPScanner") as mock_scanner_cls,
+            patch("oida.protocols.coap.cli_runner._dtls_available", return_value=False),
+            patch("oida.protocols.coap.cli_runner.CoAPScanner") as mock_scanner_cls,
             patch.object(type(instance), "create_conn_obj") as mock_create,
             patch.object(type(instance), "_convert_args_to_dict", return_value={}, create=True),
         ):

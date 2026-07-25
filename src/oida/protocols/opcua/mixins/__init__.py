@@ -1,7 +1,7 @@
 """
 OPC UA Mixin classes for modular functionality.
 
-These mixins are used by the main opcua class in nxc_connection.py to provide
+These mixins are used by the main opcua class in cli_runner.py to provide
 specific functionality while keeping the codebase modular.
 """
 

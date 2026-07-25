@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from ..nxc_connection import _new_dataset, _sop
+from ..cli_runner import _new_dataset, _sop
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

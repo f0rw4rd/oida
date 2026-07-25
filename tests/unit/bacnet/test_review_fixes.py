@@ -1,5 +1,5 @@
 """
-Regression tests for CODE_REVIEW MEDIUM findings in nxc_connection.py:
+Regression tests for CODE_REVIEW MEDIUM findings in cli_runner.py:
 
 [1] --monitor/--diff are dead in the default (bacpypes3) path -> must fail()
     loudly instead of silently doing nothing.
@@ -48,11 +48,11 @@ class TestMonitorDiffRequireBac0(unittest.TestCase):
         scanner._apply_shortcuts = Mock()
         with (
             patch(
-                "oida.protocols.bacnet.nxc_connection._load_bacpypes3",
+                "oida.protocols.bacnet.cli_runner._load_bacpypes3",
                 return_value=_patch_app_and_types(),
             ),
             patch(
-                "oida.protocols.bacnet.nxc_connection._is_bac0_available",
+                "oida.protocols.bacnet.cli_runner._is_bac0_available",
                 return_value=False,
             ),
         ):
@@ -110,7 +110,7 @@ class TestReconRunsWhenDiscoveryFails(unittest.TestCase):
 
         with (
             patch(
-                "oida.protocols.bacnet.nxc_connection._load_bacpypes3",
+                "oida.protocols.bacnet.cli_runner._load_bacpypes3",
                 return_value=_patch_app_and_types(),
             ),
             patch(

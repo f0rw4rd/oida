@@ -8,13 +8,13 @@ Module structure:
     helpers.py        -- Shared low-level ADS primitives (read/write, error helpers)
     ethercat_ops.py   -- EtherCAT-over-ADS bridge operations mixin
     scanner.py        -- ADSScanner class (Layer 1, traditional BaseScanner)
-    nxc_connection.py -- ads NXC class (Layer 2, auto-execute on instantiation)
+    cli_runner.py -- ads NXC class (Layer 2, auto-execute on instantiation)
     constants.py      -- ADS protocol constants
     proto_args.py     -- CLI argument definitions
 """
 
 # Re-export the NXC-style connection class
-from .nxc_connection import ads
+from .cli_runner import ads
 
 # Re-export the scanner class and metadata
 from .scanner import ADSScanner, metadata, run, protocol_options

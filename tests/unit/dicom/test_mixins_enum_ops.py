@@ -1150,7 +1150,7 @@ class TestAETBruteForce(unittest.TestCase):
             res["tested_count"],
             len(
                 __import__(
-                    "oida.protocols.dicom.nxc_connection", fromlist=["DEFAULT_AET_WORDLIST"]
+                    "oida.protocols.dicom.cli_runner", fromlist=["DEFAULT_AET_WORDLIST"]
                 ).DEFAULT_AET_WORDLIST
             ),
         )
@@ -1158,7 +1158,7 @@ class TestAETBruteForce(unittest.TestCase):
 
     def test_many_valid_triggers_weak_whitelist_finding(self):
         import oida.protocols.dicom as pkg
-        from oida.protocols.dicom.nxc_connection import DEFAULT_AET_WORDLIST
+        from oida.protocols.dicom.cli_runner import DEFAULT_AET_WORDLIST
 
         # Accept every AE title -> > 5 valid -> weak AET whitelist finding.
         verdicts = {a: "ok" for a in DEFAULT_AET_WORDLIST}

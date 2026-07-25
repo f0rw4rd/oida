@@ -2,7 +2,7 @@
 Shared batched register reading utilities for Modbus.
 
 Provides a single implementation of batched register reads used by
-scanner.py, monitor.py, fuzz.py, and nxc_connection.py.
+scanner.py, monitor.py, fuzz.py, and cli_runner.py.
 """
 
 from logging import Logger

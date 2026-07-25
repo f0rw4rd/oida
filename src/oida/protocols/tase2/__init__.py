@@ -17,7 +17,7 @@ from ...utils import create_protocol_module
 from ...utils.lazy_import import lazy_import
 
 from .scanner import TASE2Scanner
-from .nxc_connection import tase2
+from .cli_runner import tase2
 
 _pyiec61850_tase2 = lazy_import(
     "pyiec61850.tase2", "TASE.2", install_hint="pip install oida[tase2]"

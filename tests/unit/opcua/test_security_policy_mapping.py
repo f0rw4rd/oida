@@ -55,7 +55,7 @@ class TestSecurityPolicyMapping:
         (otherwise the user gets a silent downgrade to Basic256Sha256)."""
         import inspect
 
-        from oida.protocols.opcua import nxc_connection as nxc
+        from oida.protocols.opcua import cli_runner as nxc
 
         src = (
             inspect.getsource(nxc._configure_secure_channel)
@@ -73,7 +73,7 @@ class TestSecurityPolicyMapping:
         """An unmapped policy must surface a warning, not silently swap."""
         import inspect
 
-        from oida.protocols.opcua import nxc_connection as nxc
+        from oida.protocols.opcua import cli_runner as nxc
 
         # The body should contain the warning-on-unknown-policy guard.
         src = inspect.getsource(nxc)

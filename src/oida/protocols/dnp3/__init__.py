@@ -28,6 +28,6 @@ Supports:
 
 from .scanner import DNP3Scanner, protocol_options
 from .constants import KNOWN_ATTRIBUTES
-from .nxc_connection import dnp3
+from .cli_runner import dnp3
 
 __all__ = ["dnp3", "DNP3Scanner", "KNOWN_ATTRIBUTES", "protocol_options"]

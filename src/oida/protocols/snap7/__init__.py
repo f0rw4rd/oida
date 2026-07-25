@@ -9,7 +9,7 @@ using the Snap7 library. It supports S7-300, S7-400, S7-1200, and S7-1500 series
 
 Architecture:
 - scanner.py: Main Snap7Scanner class and protocol implementation
-- nxc_connection.py: NXC-style auto-executing s7 class
+- cli_runner.py: NXC-style auto-executing s7 class
 - constants.py: Protocol constants (S7MemoryArea)
 - models.py: Data models (S7CPUInfo, S7FirmwareVersion)
 - device_lookup.py: Device name lookup tables
@@ -18,7 +18,7 @@ Architecture:
 
 # Core scanner and NXC-style connection
 from .scanner import Snap7Scanner, protocol_options, metadata, run
-from .nxc_connection import s7, snap7
+from .cli_runner import s7, snap7
 
 # Data models and constants
 from .constants import S7MemoryArea

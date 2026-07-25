@@ -10,7 +10,7 @@ These tests target the previously-uncovered code paths:
                              WirelessHART detection, sub-device listing.
   * mixins/fuzz.py        -- write-command building (cmd 6/17/18/38/42),
                              raw-command result construction, basic fuzzing.
-  * nxc_connection.py     -- proto_flow dispatch helpers, targeted-read wiring,
+  * cli_runner.py     -- proto_flow dispatch helpers, targeted-read wiring,
                              and the --confirm gates on every mutating handler.
 
 The hartip-py transport is mocked: a `FakeClient` returns scripted
@@ -25,7 +25,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from oida.protocols.hart.scanner import HARTScanner, LockState
-from oida.protocols.hart.nxc_connection import hart
+from oida.protocols.hart.cli_runner import hart
 from oida.utils.ics_logger import get_logger
 
 pytestmark = [pytest.mark.hart]
@@ -673,7 +673,7 @@ class TestBasicFuzz:
 
 
 # ===========================================================================
-# nxc_connection: --confirm gating on every mutating handler
+# cli_runner: --confirm gating on every mutating handler
 # ===========================================================================
 
 
@@ -824,7 +824,7 @@ class TestNxcConfirmGating:
 
 
 # ===========================================================================
-# nxc_connection: dispatch helpers + targeted reads + finding emission
+# cli_runner: dispatch helpers + targeted reads + finding emission
 # ===========================================================================
 
 
@@ -968,7 +968,7 @@ class TestNxcTargetedReads:
 
 
 # ===========================================================================
-# nxc_connection: create_conn_obj encryption state + enum/print host info
+# cli_runner: create_conn_obj encryption state + enum/print host info
 # ===========================================================================
 
 

@@ -57,7 +57,7 @@ class FakeLogger:
 
 
 def make_modbus(args=None, unit_id=1):
-    from oida.protocols.modbus.nxc_connection import modbus
+    from oida.protocols.modbus.cli_runner import modbus
 
     inst = modbus.__new__(modbus)
     inst.logger = FakeLogger()

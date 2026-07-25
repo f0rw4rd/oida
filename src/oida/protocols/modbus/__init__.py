@@ -52,7 +52,7 @@ from .constants import (
 )
 
 # Import NXC-style class
-from .nxc_connection import modbus
+from .cli_runner import modbus
 
 __all__ = [
     # Decoder exports

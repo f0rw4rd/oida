@@ -56,7 +56,7 @@ class TestSnap7ModuleLoggerRefactor(unittest.TestCase):
         logs ``write_area({label}) failed`` (label = MK/PA at the call sites),
         so the per-area string literals no longer appear in source.
         """
-        src = _read("src/oida/protocols/snap7/nxc_connection.py")
+        src = _read("src/oida/protocols/snap7/cli_runner.py")
         self.assertIn('self.logger.debug(f"db_write failed:', src)
         self.assertIn('self.logger.debug(f"write_area({label}) failed:', src)
         # Guard against regression to the module-level logger in the fuzz path.

@@ -500,7 +500,7 @@ class EtherNetIPScanner(
             driver.open()
             self._driver_type = "logix"
             self._pycomm3_driver = driver
-            # nxc_connection emits the user-facing 'Connected to EtherNet/IP device'
+            # cli_runner emits the user-facing 'Connected to EtherNet/IP device'
             # banner; this is the driver-internal detail.
             self.logger.debug("Connected via pycomm3 LogixDriver")
             if hasattr(driver, "info") and driver.info:

@@ -101,8 +101,8 @@ Flag Coverage Matrix (proto_args.py):
   --monitor-bits            [B] test_monitor_with_bits
   --connection-type S7Basic [B] test_connection_type_s7basic
   --pdu-size 960            [B] test_pdu_size_960
-  --restart                 [Skip] not implemented in nxc_connection
-  --test-write              [Skip] flag defined but not dispatched in nxc_connection
+  --restart                 [Skip] not implemented in cli_runner
+  --test-write              [Skip] flag defined but not dispatched in cli_runner
   --confirm                 [A] test_write_db_requires_confirm
   --help                    [A] test_help_output
   -v                        [A] test_verbose_output

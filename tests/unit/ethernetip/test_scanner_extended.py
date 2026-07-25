@@ -806,7 +806,7 @@ class TestNxcConnection(unittest.TestCase):
     """Test EtherNet/IP NXC-style connection class attributes."""
 
     def test_class_exists(self):
-        from oida.protocols.ethernetip.nxc_connection import ethernetip
+        from oida.protocols.ethernetip.cli_runner import ethernetip
 
         self.assertTrue(hasattr(ethernetip, "proto_flow"))
         self.assertTrue(hasattr(ethernetip, "create_conn_obj"))
@@ -816,7 +816,7 @@ class TestNxcConnection(unittest.TestCase):
         self.assertTrue(hasattr(ethernetip, "check_dependencies"))
 
     def test_convert_args_to_dict_from_dict(self):
-        from oida.protocols.ethernetip.nxc_connection import ethernetip
+        from oida.protocols.ethernetip.cli_runner import ethernetip
 
         obj = ethernetip.__new__(ethernetip)
         obj.args = {"port": 44818, "timeout": 5}
@@ -828,7 +828,7 @@ class TestNxcConnection(unittest.TestCase):
     def test_convert_args_to_dict_from_namespace(self):
         import argparse
 
-        from oida.protocols.ethernetip.nxc_connection import ethernetip
+        from oida.protocols.ethernetip.cli_runner import ethernetip
 
         obj = ethernetip.__new__(ethernetip)
         obj.args = argparse.Namespace(port=44818, timeout=5)

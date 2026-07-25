@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..nxc_connection import _get_dcmread, _new_dataset, _sop
+from ..cli_runner import _get_dcmread, _new_dataset, _sop
 from oida.utils.common_types import Category
 
 if TYPE_CHECKING:

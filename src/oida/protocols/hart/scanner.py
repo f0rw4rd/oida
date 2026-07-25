@@ -314,7 +314,7 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
         """Perform device discovery (BaseScanner abstract contract).
 
         Returns device identification and basic information. The NXC path
-        (nxc_connection.hart) drives scanning directly via the mixin reads;
+        (cli_runner.hart) drives scanning directly via the mixin reads;
         this concrete implementation satisfies the BaseScanner.discover()
         abstractmethod and backs the traditional Layer-1 scanner usage.
         """

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Dict, List
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 
-    from ..nxc_connection import modbus
+    from ..cli_runner import modbus
 else:
     _ScannerBase = object
 

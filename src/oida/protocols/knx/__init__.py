@@ -56,7 +56,7 @@ from .data import (
 )
 
 # NXC-style callable class
-from .nxc_connection import knx  # noqa: E402, F401
+from .cli_runner import knx  # noqa: E402, F401
 
 __all__ = [
     # Scanner

@@ -3,7 +3,7 @@
 CODE_REVIEW.md HIGH:
 - mixins/fuzz.py:26 - --fuzz bool-vs-str disabled all fuzz modes
 - mixins/subscriptions.py:18 - --duration ignored (wrong dest name)
-- nxc_connection.py:196 - --policy None silent upgrade to Basic256Sha256
+- cli_runner.py:196 - --policy None silent upgrade to Basic256Sha256
 """
 
 import pathlib
@@ -38,7 +38,7 @@ class TestDurationArgNameFix(unittest.TestCase):
 
 class TestPolicyNoneUpgradeWarning(unittest.TestCase):
     def test_mode_sign_with_policy_none_warns_and_upgrades(self):
-        src = _read("src/oida/protocols/opcua/nxc_connection.py")
+        src = _read("src/oida/protocols/opcua/cli_runner.py")
         # The fix emits a warning when --mode Sign|SignAndEncrypt is
         # paired with --policy None, then sets requested_policy.
         self.assertIn(

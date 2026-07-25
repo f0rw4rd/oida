@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Unit tests for ADS NXC-style connection (nxc_connection.py) and ADS constants.
+Unit tests for ADS NXC-style connection (cli_runner.py) and ADS constants.
 
 Tests class structure, dependency checks, operation dispatch, individual
 operation methods, cleanup, and constant data integrity.
@@ -23,11 +23,11 @@ def _make_ads_instance(**overrides):
     automatically, we patch proto_flow and NetworkConnection.__init__
     to avoid any real initialization.
     """
-    with patch("oida.protocols.ads.nxc_connection.ads.proto_flow"):
+    with patch("oida.protocols.ads.cli_runner.ads.proto_flow"):
         with patch(
-            "oida.protocols.ads.nxc_connection.NetworkConnection.__init__", return_value=None
+            "oida.protocols.ads.cli_runner.NetworkConnection.__init__", return_value=None
         ):
-            from oida.protocols.ads.nxc_connection import ads as AdsClass
+            from oida.protocols.ads.cli_runner import ads as AdsClass
 
             obj = AdsClass.__new__(AdsClass)
             obj.protocol_name = "ADS"
@@ -50,7 +50,7 @@ class TestAdsClassStructure(unittest.TestCase):
     """Verify the ads NXC class has required methods and attributes."""
 
     def setUp(self):
-        from oida.protocols.ads.nxc_connection import ads as AdsClass
+        from oida.protocols.ads.cli_runner import ads as AdsClass
 
         self.cls = AdsClass
 
@@ -97,17 +97,17 @@ class TestCheckDependencies(unittest.TestCase):
 
     def test_available(self):
         """When pyads is available, check_dependencies returns True."""
-        with patch("oida.protocols.ads.nxc_connection._pyads") as mock_lazy:
+        with patch("oida.protocols.ads.cli_runner._pyads") as mock_lazy:
             type(mock_lazy).is_available = PropertyMock(return_value=True)
-            from oida.protocols.ads.nxc_connection import ads as AdsClass
+            from oida.protocols.ads.cli_runner import ads as AdsClass
 
             self.assertTrue(AdsClass.check_dependencies())
 
     def test_unavailable(self):
         """When pyads is not available, check_dependencies returns False."""
-        with patch("oida.protocols.ads.nxc_connection._pyads") as mock_lazy:
+        with patch("oida.protocols.ads.cli_runner._pyads") as mock_lazy:
             type(mock_lazy).is_available = PropertyMock(return_value=False)
-            from oida.protocols.ads.nxc_connection import ads as AdsClass
+            from oida.protocols.ads.cli_runner import ads as AdsClass
 
             self.assertFalse(AdsClass.check_dependencies())
 
@@ -389,8 +389,8 @@ class TestShowState(unittest.TestCase):
         state_shown = any("RUN" in c for c in display_calls)
         self.assertTrue(state_shown)
 
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._read_raw")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._read_raw")
     def test_ethercat_fallback(self, mock_read_raw, mock_get_pyads):
         """When read_state fails, fall back to EtherCAT master state."""
         import struct
@@ -451,9 +451,9 @@ class TestListSymbols(unittest.TestCase):
 class TestScanPorts(unittest.TestCase):
     """Tests for _scan_ports()"""
 
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._probe_netid")
-    @patch("oida.protocols.ads.nxc_connection.ProgressTracker")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._probe_netid")
+    @patch("oida.protocols.ads.cli_runner.ProgressTracker")
     def test_basic_scan_uses_port_map(self, mock_progress, mock_probe, mock_get_pyads):
         """Non-extended scan should use ADS_PORT_MAP (fewer ports)."""
 
@@ -471,9 +471,9 @@ class TestScanPorts(unittest.TestCase):
         header_call = str(obj.logger.display.call_args_list[0])
         self.assertIn("common", header_call)
 
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._probe_netid")
-    @patch("oida.protocols.ads.nxc_connection.ProgressTracker")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._probe_netid")
+    @patch("oida.protocols.ads.cli_runner.ProgressTracker")
     def test_extended_scan_uses_service_ports(self, mock_progress, mock_probe, mock_get_pyads):
         """Extended scan should use AMS_SERVICE_PORTS (all ports)."""
         obj = _make_ads_instance()
@@ -524,9 +524,9 @@ class TestCleanup(unittest.TestCase):
 class TestDefaultSummary(unittest.TestCase):
     """Tests for _default_summary()"""
 
-    @patch("oida.protocols.ads.nxc_connection._probe_netid")
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._read_raw")
+    @patch("oida.protocols.ads.cli_runner._probe_netid")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._read_raw")
     def test_active_probe_when_no_device_info(self, mock_read_raw, mock_get_pyads, mock_probe):
         """When device_info is empty, should run _probe_netid."""
         obj = _make_ads_instance()
@@ -549,9 +549,9 @@ class TestDefaultSummary(unittest.TestCase):
         mock_probe.assert_called_once()
         obj.logger.display.assert_called()
 
-    @patch("oida.protocols.ads.nxc_connection._probe_netid")
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._read_raw")
+    @patch("oida.protocols.ads.cli_runner._probe_netid")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._read_raw")
     def test_inactive_probe_shows_failure(self, mock_read_raw, mock_get_pyads, mock_probe):
         """When probe is inactive, show fail message."""
         obj = _make_ads_instance()

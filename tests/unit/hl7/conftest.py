@@ -7,7 +7,7 @@ makes a real network connection attempt.
 
 ``_make_hl7_instance`` builds an ``hl7`` instance WITHOUT connecting, by
 patching out ``proto_flow`` and the base ``NetworkConnection.__init__`` and
-constructing via ``__new__`` (mirrors ``tests/unit/ads/test_nxc_connection.py``).
+constructing via ``__new__`` (mirrors ``tests/unit/ads/test_cli_runner.py``).
 The attributes it sets reproduce the post-``__init__`` / post-``proto_flow``
 state the tests rely on (e.g. a real ``segment_builder`` and a ``results``
 dict with a ``data`` key), so callers can keep doing

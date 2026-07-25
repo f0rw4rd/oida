@@ -4,7 +4,7 @@
 Regression test for CODE_REVIEW.md finding #15 [HIGH]:
 "Password-file brute-force in create_conn_obj bypasses the --confirm safety gate"
 
-Source: src/oida/protocols/snap7/nxc_connection.py (create_conn_obj)
+Source: src/oida/protocols/snap7/cli_runner.py (create_conn_obj)
 
 A user who passes -P <wordlist-file> triggers the "smart -P" brute-force path.
 Brute-forcing a live PLC is an active, lockout-inducing operation and must be
@@ -16,7 +16,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from oida.protocols.snap7.nxc_connection import s7
+from oida.protocols.snap7.cli_runner import s7
 
 
 class _NoConfirmArgs(SimpleNamespace):

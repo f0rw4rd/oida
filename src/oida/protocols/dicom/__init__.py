@@ -23,8 +23,8 @@ CLI examples:
     oida dicom 192.168.1.100 --move --study-uid 1.2.3 --dest-aet OTHER  # Transfer
 """
 
-# Re-export NXC-style class and constants from nxc_connection
-from .nxc_connection import (
+# Re-export NXC-style class and constants from cli_runner
+from .cli_runner import (
     dicom,
     PYNETDICOM_AVAILABLE,
     PHI_TAGS,

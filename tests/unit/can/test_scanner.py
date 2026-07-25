@@ -4345,7 +4345,7 @@ class TestNXCConfirmGate(unittest.TestCase):
     """Live-bus injection handlers must be gated on --confirm."""
 
     def _make_conn(self, confirm):
-        from oida.protocols.can.nxc_connection import can as NXCConnection
+        from oida.protocols.can.cli_runner import can as NXCConnection
 
         # Build a bare instance: __init__ triggers proto_flow / real I/O, so
         # bypass it and stub only the attributes the send/replay handlers touch.
@@ -4388,7 +4388,7 @@ class TestNXCConfirmGate(unittest.TestCase):
             f.write("(1234567890.123456) vcan0 123#DEADBEEF\n")
             path = f.name
         with patch.object(
-            __import__("oida.protocols.can.nxc_connection", fromlist=["_python_can"]),
+            __import__("oida.protocols.can.cli_runner", fromlist=["_python_can"]),
             "_python_can",
         ):
             conn._handle_replay(path)

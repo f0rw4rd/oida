@@ -11,7 +11,7 @@ import unittest
 
 
 def _is_local(host: str) -> bool:
-    """Mirror of the patched logic in bacnet/nxc_connection.py."""
+    """Mirror of the patched logic in bacnet/cli_runner.py."""
     local_hosts = ("255.255.255.255", "127.0.0.1", "localhost")
     if host in local_hosts:
         return True

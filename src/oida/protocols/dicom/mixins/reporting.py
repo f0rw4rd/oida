@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..nxc_connection import DICOM_VENDOR_MAP
+from ..cli_runner import DICOM_VENDOR_MAP
 from oida.utils.common_types import Category
 
 if TYPE_CHECKING:

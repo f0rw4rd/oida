@@ -16,13 +16,13 @@ def run(coro):
 
 
 # ---------------------------------------------------------------------------
-# nxc_connection.snmp -- method-level tests (bypass NetworkConnection.__init__)
+# cli_runner.snmp -- method-level tests (bypass NetworkConnection.__init__)
 # ---------------------------------------------------------------------------
 
 
 def _bare_snmp():
     """Construct an snmp instance without running NetworkConnection.__init__."""
-    from oida.protocols.snmp.nxc_connection import snmp
+    from oida.protocols.snmp.cli_runner import snmp
 
     obj = object.__new__(snmp)
     obj.logger = MagicMock()

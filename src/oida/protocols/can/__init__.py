@@ -10,7 +10,7 @@ Dependency: python-can >= 4.0.0
 """
 
 # Re-export the NXC-style connection class
-from .nxc_connection import can
+from .cli_runner import can
 
 # Re-export constants and data structures used by tests and external code
 from .constants import (

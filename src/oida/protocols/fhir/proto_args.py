@@ -88,7 +88,7 @@ Examples:
     # target to cleartext HTTP and contradict the code's HTTPS assumption. Make
     # the default coherent: TLS on by default, with an explicit --no-tls opt-out.
     # An explicit http:///https:// scheme in the target still wins (see
-    # nxc_connection._get_base_url).
+    # cli_runner._get_base_url).
     tls_group.add_argument(
         "--no-tls",
         dest="tls",

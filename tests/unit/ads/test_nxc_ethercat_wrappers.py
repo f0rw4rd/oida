@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Unit tests for the EtherCAT/CoE NXC wrapper logic in nxc_connection.py.
+Unit tests for the EtherCAT/CoE NXC wrapper logic in cli_runner.py.
 
 These exercise the *display/formatting/parsing* logic of the ``ads`` NXC class
 wrappers — value formatting, spec parsing, slave-port resolution, scan-range
@@ -17,14 +17,14 @@ import struct
 import unittest
 from unittest.mock import Mock, patch
 
-from oida.protocols.ads.nxc_connection import ads as AdsClass
+from oida.protocols.ads.cli_runner import ads as AdsClass
 
 
 def _make_ads_instance(**overrides):
     """Build an ads NXC instance with proto_flow + base __init__ neutralised."""
-    with patch("oida.protocols.ads.nxc_connection.ads.proto_flow"):
+    with patch("oida.protocols.ads.cli_runner.ads.proto_flow"):
         with patch(
-            "oida.protocols.ads.nxc_connection.NetworkConnection.__init__", return_value=None
+            "oida.protocols.ads.cli_runner.NetworkConnection.__init__", return_value=None
         ):
             obj = AdsClass.__new__(AdsClass)
             obj.protocol_name = "ADS"
@@ -191,7 +191,7 @@ class TestScanEtherCATNxc(unittest.TestCase):
                 }
             ],
         }
-        with patch("oida.protocols.ads.nxc_connection.export_data") as mock_export:
+        with patch("oida.protocols.ads.cli_runner.export_data") as mock_export:
             obj._scan_ethercat_nxc()
 
         self.assertIn("ethercat", obj.results["data"])
@@ -211,8 +211,8 @@ class TestScanEtherCATNxc(unittest.TestCase):
 
 
 class TestReadCoeNxc(unittest.TestCase):
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._read_coe_sdo")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._read_coe_sdo")
     def test_read_coe_records_value(self, mock_read_sdo, mock_pyads):
         obj = _make_ads_instance()
         mock_pyads.return_value.Connection.return_value = Mock()
@@ -227,8 +227,8 @@ class TestReadCoeNxc(unittest.TestCase):
         self.assertEqual(rec["size"], 4)
         self.assertEqual(rec["data"], struct.pack("<I", 0x12345678).hex())
 
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._read_coe_sdo")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._read_coe_sdo")
     def test_read_coe_not_found(self, mock_read_sdo, mock_pyads):
         obj = _make_ads_instance()
         mock_pyads.return_value.Connection.return_value = Mock()
@@ -239,8 +239,8 @@ class TestReadCoeNxc(unittest.TestCase):
 
 
 class TestWriteCoeNxc(unittest.TestCase):
-    @patch("oida.protocols.ads.nxc_connection._get_pyads")
-    @patch("oida.protocols.ads.nxc_connection._write_raw")
+    @patch("oida.protocols.ads.cli_runner._get_pyads")
+    @patch("oida.protocols.ads.cli_runner._write_raw")
     def test_write_coe_writes_and_records(self, mock_write_raw, mock_pyads):
         obj = _make_ads_instance()
         mock_pyads.return_value.Connection.return_value = Mock()

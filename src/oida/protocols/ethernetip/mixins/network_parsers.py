@@ -76,7 +76,7 @@ class NetworkParsersMixin(_ScannerBase):
                             value = struct.unpack("<I", data[:4])[0]
                             tcp_ip_info["config_control"] = value
                             # Bits 0-3 = Configuration Method (CIP Vol 2, Sec 5-3.2.2.1),
-                            # not a single DHCP bit. Matches nxc_connection._fetch_network_config.
+                            # not a single DHCP bit. Matches cli_runner._fetch_network_config.
                             config_method = value & 0x0F
                             config_methods = {0: "Static", 1: "BOOTP", 2: "DHCP"}
                             config_str = config_methods.get(

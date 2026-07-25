@@ -84,7 +84,7 @@ def test_modbus_coverage(coverage_results_dir):
         ("modbus-conpot", 5503),
     )
 
-    from oida.protocols.modbus.nxc_connection import modbus
+    from oida.protocols.modbus.cli_runner import modbus
 
     args = make_args(
         port=port,
@@ -140,7 +140,7 @@ def test_iec104_coverage(coverage_results_dir):
         ("iec104-conpot", 2409),
     )
 
-    from oida.protocols.iec104.nxc_connection import iec104
+    from oida.protocols.iec104.cli_runner import iec104
 
     args = make_args(
         port=port,
@@ -178,7 +178,7 @@ def test_ethernetip_coverage(coverage_results_dir):
         ("ethernetip-conpot", 44823),
     )
 
-    from oida.protocols.ethernetip.nxc_connection import ethernetip
+    from oida.protocols.ethernetip.cli_runner import ethernetip
 
     args = make_args(port=port, rhost=host)
     scanner = ethernetip(args, None, host)
@@ -208,7 +208,7 @@ def test_dnp3_coverage(coverage_results_dir):
     ensure_protocol_dep("yadnp3")
     host, port, target_name = container_target(("dnp3-basic", 20000))
 
-    from oida.protocols.dnp3.nxc_connection import dnp3
+    from oida.protocols.dnp3.cli_runner import dnp3
 
     args = make_args(
         port=port,
@@ -246,7 +246,7 @@ def test_bacnet_coverage(coverage_results_dir):
         udp=True,
     )
 
-    from oida.protocols.bacnet.nxc_connection import bacnet
+    from oida.protocols.bacnet.cli_runner import bacnet
 
     args = make_args(
         port=port,
@@ -286,7 +286,7 @@ def test_ads_coverage(coverage_results_dir):
     ensure_protocol_dep("pyads")
     host, port, target_name = container_target(("ads-mock", 48898))
 
-    from oida.protocols.ads.nxc_connection import ads
+    from oida.protocols.ads.cli_runner import ads
 
     args = make_args(
         port=port,
@@ -377,7 +377,7 @@ def test_opcua_coverage(coverage_results_dir):
         ("opcua-insecure", 4842),
     )
 
-    from oida.protocols.opcua.nxc_connection import opcua
+    from oida.protocols.opcua.cli_runner import opcua
 
     # OPC UA accepts opc.tcp://host:port; the scanner normalises bare host:port too.
     url = f"opc.tcp://{host}:{port}"
@@ -411,7 +411,7 @@ def test_snmp_coverage(coverage_results_dir):
         udp=True,
     )
 
-    from oida.protocols.snmp.nxc_connection import snmp
+    from oida.protocols.snmp.cli_runner import snmp
 
     semantic_hit, _ = _run_and_record(
         "snmp",
@@ -436,7 +436,7 @@ def test_mqtt_coverage(coverage_results_dir):
         ("mqtt-auth", 1884),
     )
 
-    from oida.protocols.mqtt.nxc_connection import mqtt
+    from oida.protocols.mqtt.cli_runner import mqtt
 
     semantic_hit, _ = _run_and_record(
         "mqtt",
@@ -461,7 +461,7 @@ def test_coap_coverage(coverage_results_dir):
         udp=True,
     )
 
-    from oida.protocols.coap.nxc_connection import coap
+    from oida.protocols.coap.cli_runner import coap
 
     semantic_hit, _ = _run_and_record(
         "coap",
@@ -500,7 +500,7 @@ def test_fhir_coverage(coverage_results_dir):
     ensure_protocol_dep("fhirclient")
     host, port, target_name = container_target(("fhir-mock", 8081))
 
-    from oida.protocols.fhir.nxc_connection import fhir
+    from oida.protocols.fhir.cli_runner import fhir
 
     semantic_hit, _ = _run_and_record(
         "fhir",
@@ -525,7 +525,7 @@ def test_dicom_coverage(coverage_results_dir):
         ("dicom-strict", 11113),
     )
 
-    from oida.protocols.dicom.nxc_connection import dicom
+    from oida.protocols.dicom.cli_runner import dicom
 
     semantic_hit, _ = _run_and_record(
         "dicom",
@@ -549,7 +549,7 @@ def test_snap7_coverage(coverage_results_dir):
         ("s7comm-conpot", 10109),
     )
 
-    from oida.protocols.snap7.nxc_connection import s7
+    from oida.protocols.snap7.cli_runner import s7
 
     semantic_hit, _ = _run_and_record(
         "snap7",
@@ -573,7 +573,7 @@ def test_mms_coverage(coverage_results_dir):
         ("mms-control", 10107),
     )
 
-    from oida.protocols.mms.nxc_connection import mms
+    from oida.protocols.mms.cli_runner import mms
 
     semantic_hit, _ = _run_and_record(
         "mms",
@@ -605,7 +605,7 @@ def test_hart_coverage(coverage_results_dir):
         udp=True,
     )
 
-    from oida.protocols.hart.nxc_connection import hart
+    from oida.protocols.hart.cli_runner import hart
 
     semantic_hit, _ = _run_and_record(
         "hart",
@@ -637,7 +637,7 @@ def test_knx_coverage(coverage_results_dir):
         ("knx-devices", 3671),
     )
 
-    from oida.protocols.knx.nxc_connection import knx
+    from oida.protocols.knx.cli_runner import knx
 
     semantic_hit, _ = _run_and_record(
         "knx",
@@ -661,7 +661,7 @@ def test_profinet_coverage(coverage_results_dir):
         ("profinet-device", 0),
     )
 
-    from oida.protocols.profinet.nxc_connection import profinet
+    from oida.protocols.profinet.cli_runner import profinet
 
     semantic_hit, _ = _run_and_record(
         "profinet",
@@ -683,7 +683,7 @@ def test_ethercat_coverage(coverage_results_dir):
         ("ethercat-slave-veth", 0),
     )
 
-    from oida.protocols.ethercat.nxc_connection import ethercat
+    from oida.protocols.ethercat.cli_runner import ethercat
 
     semantic_hit, _ = _run_and_record(
         "ethercat",
@@ -715,7 +715,7 @@ def test_can_coverage(coverage_results_dir):
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pytest.skip("`ip` command not available")
 
-    from oida.protocols.can.nxc_connection import can
+    from oida.protocols.can.cli_runner import can
 
     semantic_hit, _ = _run_and_record(
         "can",
@@ -737,7 +737,7 @@ def test_tase2_coverage(coverage_results_dir):
         ("mms-libiec61850", 102),
     )
 
-    from oida.protocols.tase2.nxc_connection import tase2
+    from oida.protocols.tase2.cli_runner import tase2
 
     semantic_hit, _ = _run_and_record(
         "tase2",
@@ -765,7 +765,7 @@ def test_goose_coverage(coverage_results_dir):
         ("goose-l2-publisher", 0),
     )
 
-    from oida.protocols.goose.nxc_connection import goose
+    from oida.protocols.goose.cli_runner import goose
 
     semantic_hit, _ = _run_and_record(
         "goose",

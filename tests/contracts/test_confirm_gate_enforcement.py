@@ -37,7 +37,7 @@ def _has_confirm_fail(stub):
 
 class TestCanIdScanGate(unittest.TestCase):
     def test_id_scan_refuses_without_confirm(self):
-        from oida.protocols.can.nxc_connection import can as Can
+        from oida.protocols.can.cli_runner import can as Can
 
         stub = _StubScanner(confirm=False, id_scan_range="0x000-0x7FF")
         # The handler reads from self.args; call _handle_id_scan as bound method.
@@ -110,7 +110,7 @@ class TestHartRawCommandGate(unittest.TestCase):
     def test_raw_command_requires_confirm(self):
         import pathlib
 
-        src = pathlib.Path("src/oida/protocols/hart/nxc_connection.py").read_text()
+        src = pathlib.Path("src/oida/protocols/hart/cli_runner.py").read_text()
         self.assertIn("--raw-command can issue arbitrary HART writes", src)
 
 
@@ -138,7 +138,7 @@ class TestFhirBruteGate(unittest.TestCase):
 
 class TestSnap7BruteAuditGate(unittest.TestCase):
     def test_dangerous_actions_includes_brute_default_creds_audit(self):
-        from oida.protocols.snap7.nxc_connection import s7 as Snap7NXC
+        from oida.protocols.snap7.cli_runner import s7 as Snap7NXC
 
         # frozenset
         for action in ("brute", "default_creds", "audit", "audit_quick"):
@@ -168,7 +168,7 @@ class TestAstmSendPatientGate(unittest.TestCase):
     def test_send_patient_in_source(self):
         import pathlib
 
-        src = pathlib.Path("src/oida/protocols/astm/nxc_connection.py").read_text()
+        src = pathlib.Path("src/oida/protocols/astm/cli_runner.py").read_text()
         self.assertIn("--send-patient injects forged Patient demographics", src)
 
 

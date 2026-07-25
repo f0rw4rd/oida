@@ -496,13 +496,13 @@ class TestDICOMConnectionLogic(unittest.TestCase):
         default SCU role, so the SCP could never push C-STORE sub-operations
         back and bulk export silently retrieved 0 images.
         """
-        from oida.protocols.dicom import dicom, nxc_connection
+        from oida.protocols.dicom import dicom, cli_runner
 
         self.mock_args.get = True
         mock_ae = MockAE()
         mock_ae_class.return_value = mock_ae
 
-        StoragePresentationContexts = nxc_connection._pynetdicom.StoragePresentationContexts
+        StoragePresentationContexts = cli_runner._pynetdicom.StoragePresentationContexts
         expected_uids = {str(ctx.abstract_syntax) for ctx in StoragePresentationContexts}
 
         with patch.object(dicom, "proto_flow", return_value=None):

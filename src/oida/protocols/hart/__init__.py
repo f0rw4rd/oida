@@ -13,7 +13,7 @@ from .hartip import (
     HARTResponseCode,
     get_device_type_name,  # noqa: F401
 )
-from .nxc_connection import hart
+from .cli_runner import hart
 
 __all__ = [
     "hart",

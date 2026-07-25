@@ -65,7 +65,7 @@ from .constants import (
 from .parsers import parse_list_identity
 
 # Import NXC-style callable class (Layer 2 - NXC pattern)
-from .nxc_connection import ethernetip
+from .cli_runner import ethernetip
 
 
 def broadcast_discovery(

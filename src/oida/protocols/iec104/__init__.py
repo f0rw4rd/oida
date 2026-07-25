@@ -49,7 +49,7 @@ from ._deps import _c104, _serial, _get_c104, c104, PYSERIAL_AVAILABLE
 from .scanner import IEC104Scanner, metadata, run
 
 # NXC-style class
-from .nxc_connection import iec104
+from .cli_runner import iec104
 
 __all__ = [
     # Constants

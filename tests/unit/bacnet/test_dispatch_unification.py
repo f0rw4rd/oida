@@ -1,6 +1,6 @@
 """BAC0/bacpypes3 unification: bacpypes3 is the default path.
 
-CODE_REVIEW.md HIGH bacnet/nxc_connection.py:111-117. The old dispatch
+CODE_REVIEW.md HIGH bacnet/cli_runner.py:111-117. The old dispatch
 heuristic misrouted public 172.0.0.0/8 hosts to the BAC0 broadcast
 path. The fix unifies on bacpypes3 unless the operator explicitly
 opts back into BAC0 via --use-bac0.
@@ -16,7 +16,7 @@ def _read(rel):
 
 class TestDispatchUnification(unittest.TestCase):
     def test_default_path_is_bacpypes3(self):
-        src = _read("src/oida/protocols/bacnet/nxc_connection.py")
+        src = _read("src/oida/protocols/bacnet/cli_runner.py")
         # The patched proto_flow assigns `use_bac0 = ...` based on the
         # --use-bac0 flag. Whitespace-tolerant — ruff format may flow
         # the assignment as a single line or wrap to multiple.
@@ -33,7 +33,7 @@ class TestDispatchUnification(unittest.TestCase):
 
     def test_no_more_172_prefix_check(self):
         """The buggy 172.0.0.0/8 startswith heuristic must be gone."""
-        src = _read("src/oida/protocols/bacnet/nxc_connection.py")
+        src = _read("src/oida/protocols/bacnet/cli_runner.py")
         # Old buggy patterns
         self.assertNotIn('local_prefixes = ("192.168.", "10.", "172.")', src)
         self.assertNotIn("any(self.host.startswith(p) for p in local_prefixes)", src)
