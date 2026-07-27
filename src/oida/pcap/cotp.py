@@ -232,11 +232,11 @@ class COTPPassiveListener(PySharkListenerBase):
         cause = self._parse_int(self.get_field(cotp_layer, "cause"), -1)
 
         # Extract TSAPs
-        calling_tsap = str(self.get_field(cotp_layer, "src_tsap") or "")
-        called_tsap = str(self.get_field(cotp_layer, "dst_tsap") or "")
+        calling_tsap = str(self.get_field(cotp_layer, "src-tsap") or "")
+        called_tsap = str(self.get_field(cotp_layer, "dst-tsap") or "")
         # Fallback: raw tsap field
         if not calling_tsap and not called_tsap:
-            raw_tsap = str(self.get_field(cotp_layer, "dst_tsap_bytes") or "")
+            raw_tsap = str(self.get_field(cotp_layer, "dst-tsap-bytes") or "")
             if raw_tsap:
                 called_tsap = raw_tsap
 

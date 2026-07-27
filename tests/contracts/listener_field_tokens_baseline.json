@@ -2,11 +2,6 @@
   "amqp.py": {
     "method_method_class": "broken"
   },
-  "cotp.py": {
-    "tsap": "broken",
-    "tsap_called": "broken",
-    "tsap_calling": "broken"
-  },
   "dhcp.py": {
     "option_agent_information_option": "broken",
     "option_boot_file_name": "broken",
@@ -17,9 +12,6 @@
   },
   "dns.py": {
     "qr": "broken"
-  },
-  "http.py": {
-    "x_powered_by": "broken"
   },
   "ibmmq.py": {
     "md_putapplname": "broken"
@@ -42,9 +34,6 @@
     "login_session_type": "broken",
     "login_target_name": "broken"
   },
-  "mms.py": {
-    "objectName_domain_specific_itemId": "broken"
-  },
   "modbus.py": {
     "regval16": "synthetic"
   },
@@ -57,7 +46,6 @@
     "resp_hresult": "broken"
   },
   "opensafety.py": {
-    "msg_scm_udid": "broken",
     "msg_spdo_payload": "broken"
   },
   "profinet.py": {
