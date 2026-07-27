@@ -90,16 +90,10 @@ class VRRPPassiveListener:
     def _safe_process_packet(self, packet) -> None:
         """Wrapper with error handling."""
         try:
-            from scapy.layers.vrrp import VRRP
+            # VRRPv3 (RFC 5798) dissects as a distinct scapy layer.
+            from scapy.layers.vrrp import VRRP, VRRPv3
 
-            # VRRPv3 (RFC 5798) dissects as a distinct scapy layer; guard the
-            # import in case the installed scapy predates VRRPv3 support.
-            try:
-                from scapy.layers.vrrp import VRRPv3
-            except ImportError:
-                VRRPv3 = None
-
-            if VRRP in packet or (VRRPv3 is not None and VRRPv3 in packet):
+            if VRRP in packet or VRRPv3 in packet:
                 self._process_scapy_vrrp(packet)
         except Exception as e:
             logger.debug(f"VRRP packet error: {e}")
@@ -118,19 +112,14 @@ class VRRPPassiveListener:
         """Process VRRP packet using scapy's native VRRP / VRRPv3 layer."""
         try:
             from scapy.all import IP, IPv6, Ether
-            from scapy.layers.vrrp import VRRP
-
-            try:
-                from scapy.layers.vrrp import VRRPv3
-            except ImportError:
-                VRRPv3 = None
+            from scapy.layers.vrrp import VRRP, VRRPv3
 
             # VRRPv3 (RFC 5798) carries the same fields (version/type/vrid/
             # priority/adv/addrlist) on a distinct scapy layer; select whichever
             # is present so v3 advertisements are not silently dropped.
             if VRRP in packet:
                 vrrp = packet[VRRP]
-            elif VRRPv3 is not None and VRRPv3 in packet:
+            elif VRRPv3 in packet:
                 vrrp = packet[VRRPv3]
             else:
                 return

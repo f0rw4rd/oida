@@ -391,12 +391,6 @@ class ModbusScanner(
             sock = None
             if hasattr(client, "socket") and client.socket:
                 sock = client.socket
-            elif hasattr(client, "transport") and client.transport:
-                sock = getattr(client.transport, "_ssl_protocol", None)
-                if sock and hasattr(sock, "_sslpipe"):
-                    sock = getattr(sock._sslpipe, "_sslobj", None)
-            elif hasattr(client, "params"):
-                sock = getattr(client.params, "sock", None)
 
             if sock is not None:
                 cert_der = sock.getpeercert(binary_form=True)

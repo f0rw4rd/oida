@@ -239,10 +239,7 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
     """Build PROTOCOL_DEPENDENCIES from installed oida package metadata."""
     import re
 
-    try:
-        from importlib.metadata import requires, metadata
-    except ImportError:
-        from importlib_metadata import requires, metadata  # type: ignore[no-redef]
+    from importlib.metadata import requires, metadata
 
     result: Dict[str, Dict[str, Any]] = {}
 
