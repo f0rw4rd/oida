@@ -918,12 +918,17 @@ class TestUpCommand:
         with patch.object(dev, "wait_healthy", return_value=True):
             result = dev.cmd_up(self._up_args("core", build=True))
         assert result == 0
-        # Should call docker compose up with core file + --build (build path skips pull)
+        # Should call docker compose up with core file + --build (build path skips pull).
+        # A conflict-check preflight (docker compose config) now runs first, so locate
+        # the up call rather than assuming it is the first _run() call.
         mock_run.assert_called()
-        first_call_args = mock_run.call_args_list[0][0][0]
-        assert dev.COMPOSE_CORE in first_call_args
-        assert "up" in first_call_args
-        assert "--build" in first_call_args
+        up_calls = [
+            c[0][0]
+            for c in mock_run.call_args_list
+            if dev.COMPOSE_CORE in c[0][0] and "up" in c[0][0]
+        ]
+        assert up_calls, "expected a 'docker compose up' call with the core compose file"
+        assert "--build" in up_calls[0]
 
     def test_up_cve(self, mock_run):
         with patch.object(dev, "wait_healthy", return_value=True):
