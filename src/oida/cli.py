@@ -1393,7 +1393,7 @@ def main(argv: Optional[List[str]] = None):
     setup_logging(args)
     configure_from_args(args)
 
-    logger.debug("CLI args: %s", vars(args))
+    logger.debug("CLI args: %s", _redact_sensitive_args(vars(args)))
 
     # Enable structured JSON logging if requested
     json_log_path = getattr(args, "json_log", None)

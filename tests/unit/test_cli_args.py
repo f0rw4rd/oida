@@ -324,6 +324,20 @@ class TestRedactSensitiveArgs:
         out = _redact_sensitive_args({"port": 502, "timeout": 5.0, "verbose": True})
         assert out == {"port": 502, "timeout": 5.0, "verbose": True}
 
+    def test_cli_args_debug_log_is_wired_to_redactor(self):
+        # Regression: the debug dump of CLI args must pass through the redactor,
+        # otherwise running with --debug leaks passwords/community strings into
+        # logs. Guards against the wrapper being dropped again.
+        import pathlib
+
+        src = pathlib.Path("src/oida/cli.py").read_text()
+        assert 'logger.debug("CLI args: %s", _redact_sensitive_args(vars(args)))' in src, (
+            "CLI args debug log must redact credentials via _redact_sensitive_args"
+        )
+        assert 'logger.debug("CLI args: %s", vars(args))' not in src, (
+            "raw vars(args) must not be logged at debug level"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Config merge contract: typed defaults must not silently drop config values
