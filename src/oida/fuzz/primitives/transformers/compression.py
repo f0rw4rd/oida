@@ -210,7 +210,7 @@ class BrotliTransformer(BaseTransformer):
     Modern compression algorithm with better compression ratios than gzip.
     Used for HTTP Content-Encoding: br.
 
-    Requires: pip install oida[fuzz] (or brotlipy)
+    Requires: pip install oida[fuzz]
 
     Quality levels:
     - 0: Fastest, lowest compression
@@ -262,15 +262,10 @@ class BrotliTransformer(BaseTransformer):
 
             self.brotli = brotli
         except ImportError:
-            try:
-                import brotlipy as brotli
-
-                self.brotli = brotli
-            except ImportError:
-                raise ImportError(
-                    "Brotli compression requires the 'brotli' package. "
-                    "Install with: pip install oida[fuzz]"
-                )
+            raise ImportError(
+                "Brotli compression requires the 'brotli' package. "
+                "Install with: pip install oida[fuzz]"
+            )
 
         if not 0 <= quality <= 11:
             raise ValueError(f"Brotli quality must be 0-11, got {quality}")
