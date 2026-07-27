@@ -46,7 +46,7 @@ class NetworkMixin:
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"bacpypes3 who has failed: {e}")
                 self.logger.display("  No response (timeout)")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"Who-Has error: {e}")
 
     async def _bacpypes3_enum_bbmd(self, app, target_addr, timeout: float):
@@ -70,7 +70,7 @@ class NetworkMixin:
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"bacpypes3 enum bbmd failed: {e}")
                 self.logger.display("  No BBMD response (timeout)")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"BBMD enum error: {e}")
             self.logger.display("  BBMD enumeration not available")
 
@@ -96,7 +96,7 @@ class NetworkMixin:
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"bacpypes3 enum fdt failed: {e}")
                 self.logger.display("  No FDT response (timeout)")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"FDT enum error: {e}")
             self.logger.display("  FDT enumeration not available")
 
@@ -121,7 +121,7 @@ class NetworkMixin:
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"bacpypes3 enum routers failed: {e}")
                 self.logger.display("  No router response (timeout)")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"Router enum error: {e}")
             self.logger.display("  Router discovery not available")
 
@@ -262,7 +262,7 @@ class NetworkMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 discover networks failed: {e}")
                     continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 discover networks failed: {e}")
                 continue
 
@@ -316,7 +316,7 @@ class NetworkMixin:
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"bacpypes3 scan remote network failed: {e}")
                 pass
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"Who-Is error: {e}")
 
             self.logger.display("  Listening for I-Am responses...")
@@ -330,7 +330,7 @@ class NetworkMixin:
                 self.logger.display(f"  No devices responded on network {network_num}")
                 self.logger.display("  Note: MS/TP devices may be slow to respond")
 
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"Remote scan error: {e}")
             self.logger.display(f"  Error scanning network {network_num}")
 
@@ -389,7 +389,7 @@ class NetworkMixin:
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 test bbmd injection failed: {e}")
                 self.logger.display("  [-] BDT read timeout")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"BDT read error: {e}")
 
         # Test 2: Foreign device registration
@@ -425,7 +425,7 @@ class NetworkMixin:
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 test bbmd injection failed: {e}")
                 self.logger.display("  [-] Registration timeout (may not be BBMD)")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"FD registration error: {e}")
             self.logger.display("  [-] Foreign device registration not supported")
 
@@ -463,7 +463,7 @@ class NetworkMixin:
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 test bbmd injection failed: {e}")
                 self.logger.display("  [-] BDT write timeout")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"BDT write error: {e}")
             self.logger.display("  [-] BDT write test not available")
 
@@ -523,7 +523,7 @@ class NetworkMixin:
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"read prop failed: {e}")
                 return None
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"  Read {prop_name} from {obj_id} failed: {e}")
                 return None
 
@@ -754,9 +754,9 @@ class NetworkMixin:
                     self.logger.display(
                         "      Who-Is broadcast timed out (MS/TP devices may be slow)"
                     )
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"      Who-Is error on network {net_num}: {e}")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"      Who-Is request creation error: {e}")
 
             # Allow extra time for MS/TP token-passing responses
@@ -854,11 +854,11 @@ class NetworkMixin:
                         # No device at this address — expected for most addresses
                         self.logger.debug(f"read bytes failed: {e}")
                         continue
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"      Probe {net_num}:{mac_addr} error: {e}")
                         continue
 
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"      Address probe error {net_num}:{mac_addr}: {e}")
                     continue
 

@@ -62,7 +62,7 @@ class MonitoringMixin:
                     except asyncio.TimeoutError as e:
                         self.logger.debug(f"bacpypes3 check schedules failed: {e}")
                         continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 check schedules failed: {e}")
                     continue
 
@@ -115,7 +115,7 @@ class MonitoringMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 check calendars failed: {e}")
                     continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 check calendars failed: {e}")
                 continue
 
@@ -179,7 +179,7 @@ class MonitoringMixin:
                     except asyncio.TimeoutError as e:
                         self.logger.debug(f"bacpypes3 check alarms failed: {e}")
                         continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 check alarms failed: {e}")
                     continue
 
@@ -249,7 +249,7 @@ class MonitoringMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 check trendlogs failed: {e}")
                     continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 check trendlogs failed: {e}")
                 continue
 
@@ -310,7 +310,7 @@ class MonitoringMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 check priority failed: {e}")
                     continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 check priority failed: {e}")
                 continue
 
@@ -333,7 +333,7 @@ class MonitoringMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 check priority failed: {e}")
                     continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 check priority failed: {e}")
                 continue
 
@@ -415,7 +415,7 @@ class MonitoringMixin:
                     except asyncio.TimeoutError as e:
                         self.logger.debug(f"bacpypes3 enum life safety failed: {e}")
                         continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 enum life safety failed: {e}")
                     continue
 
@@ -481,7 +481,7 @@ class MonitoringMixin:
                     except asyncio.TimeoutError as e:
                         self.logger.debug(f"bacpypes3 check life safety failed: {e}")
                         continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 check life safety failed: {e}")
                     continue
 
@@ -566,11 +566,11 @@ class MonitoringMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 subscribe cov failed: {e}")
                     failed.append((obj_type, instance))
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 subscribe cov failed: {e}")
                     failed.append((obj_type, instance))
 
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"COV subscribe error for {obj_type}:{instance}: {e}")
                 failed.append((obj_type, instance))
 
@@ -611,7 +611,7 @@ class MonitoringMixin:
                     cancel.pduDestination = target_addr
                     await asyncio.wait_for(app.request(cancel), timeout=min(timeout, 3.0))
                     self.logger.debug(f"COV subscription cancelled for {obj_type}:{instance}")
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"COV cancel failed for {obj_type}:{instance}: {e}")
 
         self.logger.display("  COV listening complete")
@@ -693,7 +693,7 @@ class MonitoringMixin:
                                             tl_info[prop] = tag.tag_data.decode(
                                                 "utf-8", errors="replace"
                                             ).strip()
-                                        except BaseException as e:
+                                        except Exception as e:
                                             self.logger.debug(f"bacpypes3 read range failed: {e}")
                                             tl_info[prop] = tag.tag_data.hex()
                                     else:
@@ -703,7 +703,7 @@ class MonitoringMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     continue
 
@@ -748,7 +748,7 @@ class MonitoringMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     break
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     break
 
@@ -836,7 +836,7 @@ class MonitoringMixin:
                     except (asyncio.TimeoutError, TimeoutError) as e:
                         self.logger.debug(f"bacpypes3 enum loops failed: {e}")
                         continue
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"bacpypes3 enum loops failed: {e}")
                         continue
 
@@ -870,7 +870,7 @@ class MonitoringMixin:
                                         self.logger.debug(
                                             f"Loop:{instance} {prop_name} decode error: {e}"
                                         )
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 enum loops failed: {e}")
                     continue
 

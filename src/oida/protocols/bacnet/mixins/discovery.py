@@ -146,7 +146,7 @@ class DiscoveryMixin:
         except (asyncio.TimeoutError, TimeoutError) as e:
             self.logger.debug(f"bacpypes3 directed Who-Is timed out: {e}")
             return None
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 directed Who-Is failed: {e}")
             return None
 
@@ -157,7 +157,7 @@ class DiscoveryMixin:
                 # ObjectIdentifier behaves like a ('device', instance) 2-tuple.
                 instance = ident[1] if not isinstance(ident, int) else ident
                 instances.append(int(instance))
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 I-Am parse failed: {e}")
                 continue
 
@@ -219,14 +219,14 @@ class DiscoveryMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 discover device failed: {e}")
                     continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 discover device failed: {e}")
                     continue
 
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                     self.logger.success(f"Discovered device ID: {test_id}")
                     return test_id
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 discover device failed: {e}")
                 continue
 
@@ -283,7 +283,7 @@ class DiscoveryMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 read properties failed: {e}")
                     continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 read properties failed: {e}")
                     continue
 
@@ -304,14 +304,14 @@ class DiscoveryMixin:
                                         )
                                     except (ValueError, TypeError) as e:
                                         self.logger.debug(f"bacpypes3 read properties failed: {e}")
-                            except BaseException as e:
+                            except Exception as e:
                                 self.logger.debug(f"bacpypes3 read properties failed: {e}")
                                 try:
                                     value = pv.cast_out(CharacterString)
                                     results[result_key] = str(value) if value else ""
-                                except BaseException as e:
+                                except Exception as e:
                                     self.logger.debug(f"bacpypes3 read properties failed: {e}")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 read properties failed: {e}")
                 continue
 
@@ -358,13 +358,13 @@ class DiscoveryMixin:
                         try:
                             vendor_id = int(pv.cast_out(Unsigned))
                             vendor_name = VENDORS.get(vendor_id, f"Unknown ({vendor_id})")
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
 
         self.logger.display(f"  Vendor: {vendor_name} (ID: {vendor_id})")
@@ -432,7 +432,7 @@ class DiscoveryMixin:
                     except (asyncio.TimeoutError, TimeoutError) as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
 
@@ -446,7 +446,7 @@ class DiscoveryMixin:
                                 decoded = pv.cast_out(CharacterString)
                                 if decoded:
                                     obj_name = str(decoded).strip()
-                            except BaseException as e:
+                            except Exception as e:
                                 self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
 
                         proprietary_objects.append(
@@ -461,7 +461,7 @@ class DiscoveryMixin:
                             f"instance {instance}: '{obj_name}'"
                         )
 
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                     continue
 
@@ -550,7 +550,7 @@ class DiscoveryMixin:
                     except (asyncio.TimeoutError, TimeoutError) as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
 
@@ -568,7 +568,7 @@ class DiscoveryMixin:
                             for cast_type in (CharacterString, Real, Unsigned):
                                 try:
                                     decoded = pv.cast_out(cast_type)
-                                except BaseException as e:
+                                except Exception as e:
                                     self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                                     continue
                                 if decoded is None:
@@ -610,7 +610,7 @@ class DiscoveryMixin:
                                     )
                                     break
 
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                     continue
 

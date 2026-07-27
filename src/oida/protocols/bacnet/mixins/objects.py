@@ -153,7 +153,7 @@ class ObjectsMixin:
             except (asyncio.TimeoutError, TimeoutError):
                 self.logger.warning("Object enumeration timed out")
                 return
-            except BaseException as e:
+            except Exception as e:
                 self.logger.warning(f"Object enumeration failed: {e}")
                 return
 
@@ -204,7 +204,7 @@ class ObjectsMixin:
                             self.logger.display(f"  {type_name}: {count}")
                     else:
                         self.logger.warning("Could not parse object list")
-        except BaseException as e:
+        except Exception as e:
             self.logger.warning(f"Object enumeration error: {e}")
 
     async def _bacpypes3_enumerate_services(self, app, target_addr, device_id: int, timeout: float):
@@ -232,7 +232,7 @@ class ObjectsMixin:
 
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 enumerate services failed: {e}")
             else:
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
@@ -269,7 +269,7 @@ class ObjectsMixin:
                                             f"  {len(callable_here)} invokable via --call "
                                             "(see --list-services for syntax)"
                                         )
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"Could not read services: {e}")
 
         # Read protocolObjectTypesSupported
@@ -282,7 +282,7 @@ class ObjectsMixin:
 
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 enumerate services failed: {e}")
             else:
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
@@ -310,7 +310,7 @@ class ObjectsMixin:
                                     )
                                     for otype in obj_types:
                                         self.logger.display(f"    - {otype}")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"Could not read object types: {e}")
 
     async def _bacpypes3_deep_enum(self, app, target_addr, device_id: int, timeout: float):
@@ -352,7 +352,7 @@ class ObjectsMixin:
                     return response
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"read prop failed: {e}")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"Deep enum read {prop_name} failed: {e}")
             return None
 
@@ -367,7 +367,7 @@ class ObjectsMixin:
                     if hasattr(tag, "tag_data") and tag.tag_data:
                         try:
                             return tag.tag_data.decode("utf-8", errors="replace").strip()
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"extract string failed: {e}")
                             return tag.tag_data.hex()
             return str(pv)
@@ -698,7 +698,7 @@ class ObjectsMixin:
                     return response
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"read prop failed: {e}")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"Program enum read {prop_name} failed: {e}")
             return None
 
@@ -713,7 +713,7 @@ class ObjectsMixin:
                     if hasattr(tag, "tag_data") and tag.tag_data:
                         try:
                             return tag.tag_data.decode("utf-8", errors="replace").strip()
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"extract string failed: {e}")
                             return tag.tag_data.hex()
             return str(pv)
@@ -813,7 +813,7 @@ class ObjectsMixin:
                         except (asyncio.TimeoutError, TimeoutError) as e:
                             self.logger.debug(f"extract unsigned failed: {e}")
                             continue
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"extract unsigned failed: {e}")
                             continue
                 else:
@@ -841,12 +841,12 @@ class ObjectsMixin:
                                         obj_instance = val & 0x3FFFFF
                                         if obj_type == 16:
                                             program_instances.append(obj_instance)
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"Bulk objectList read failed: {e}")
 
             except (asyncio.TimeoutError, TimeoutError):
                 self.logger.warning("  Timeout reading objectList for program discovery")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"Program discovery objectList read failed: {e}")
 
         if not program_instances:

@@ -505,7 +505,7 @@ class bacnet(
             self.logger.display("Probing for device ID...")
             try:
                 device_id = await self._bacpypes3_discover_device(app, target_addr, timeout)
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"async raw scan failed: {e}")
                 device_id = None
             if device_id is None:
@@ -531,7 +531,7 @@ class bacnet(
                 properties = await self._bacpypes3_read_properties(
                     app, target_addr, device_id, timeout
                 )
-            except BaseException as e:
+            except Exception as e:
                 self.logger.warning(f"Device property read failed: {e}")
                 properties = None
 

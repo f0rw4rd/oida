@@ -73,7 +73,7 @@ class FilesMixin:
                         response = await asyncio.wait_for(
                             app.request(request), timeout=min(timeout, 3.0)
                         )
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
                         continue
 
@@ -86,7 +86,7 @@ class FilesMixin:
                             for cast_type in (CharacterString, Unsigned):
                                 try:
                                     decoded = pv.cast_out(cast_type)
-                                except BaseException as e:
+                                except Exception as e:
                                     self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
                                     continue
                                 if decoded is not None and decoded != "":
@@ -107,7 +107,7 @@ class FilesMixin:
                             else:
                                 self.logger.display(f"    {display_name}: {value}")
 
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
                     continue
 
@@ -138,10 +138,10 @@ class FilesMixin:
                 if pv is not None and hasattr(pv, "cast_out"):
                     try:
                         file_size = int(pv.cast_out(Unsigned))
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"bacpypes3 read file size decode failed: {e}")
                 self.logger.display(f"  File size: {file_size} bytes")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.warning(f"  Could not read file size: {e}")
                 file_size = 1024  # Try default
 
@@ -207,7 +207,7 @@ class FilesMixin:
                     except (asyncio.TimeoutError, TimeoutError):
                         self.logger.warning(f"  Timeout at offset {offset}")
                         break
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"AtomicReadFile error: {e}")
                         break
 
@@ -267,7 +267,7 @@ class FilesMixin:
                         self.logger.warning(f"  AtomicReadFile error: {error_str}")
                         break
 
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"AtomicReadFile chunk error: {e}")
                     break
 
@@ -289,13 +289,13 @@ class FilesMixin:
                         self.logger.display(f"  Content preview:\n{preview}")
                         if len(text) > 500:
                             self.logger.display(f"  ... ({len(text) - 500} more characters)")
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"bacpypes3 read file failed: {e}")
                         self.logger.display(f"  Binary content: {all_data[:64].hex()}...")
             else:
                 self.logger.warning("  No data retrieved via AtomicReadFile")
                 self.logger.display("  Device may not support AtomicReadFile for this object")
 
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 read file failed: {e}")
             self.logger.fail(f"File read error: {e}")

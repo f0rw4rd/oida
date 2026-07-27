@@ -219,7 +219,7 @@ class PropertiesMixin:
                 self.logger.debug(f"bacpypes3 read single property failed: {e}")
                 self.logger.fail(f"Timeout reading {obj_type}:{instance}:{prop}")
                 return
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 read single property failed: {e}")
                 self.logger.fail(f"Error reading {obj_type}:{instance}:{prop}: {e}")
                 return
@@ -231,7 +231,7 @@ class PropertiesMixin:
                     if hasattr(pv, "cast_out"):
                         try:
                             value = pv.cast_out(CharacterString)
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"bacpypes3 read single property failed: {e}")
                     if value is None:
                         value = str(pv)
@@ -239,7 +239,7 @@ class PropertiesMixin:
             else:
                 self.logger.warning(f"Could not read {obj_type}:{instance}:{prop}")
 
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 read single property failed: {e}")
             self.logger.fail(f"Read failed: {e}")
 
@@ -286,7 +286,7 @@ class PropertiesMixin:
                     except (asyncio.TimeoutError, TimeoutError) as e:
                         self.logger.debug(f"bacpypes3 read present values failed: {e}")
                         continue
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"bacpypes3 read present values failed: {e}")
                         continue
 
@@ -302,7 +302,7 @@ class PropertiesMixin:
                                     try:
                                         value = pv.cast_out(cast_type)
                                         break
-                                    except BaseException as e:
+                                    except Exception as e:
                                         self.logger.debug(
                                             f"bacpypes3 read presentValue failed: {e}"
                                         )
@@ -311,7 +311,7 @@ class PropertiesMixin:
                             if value is not None:
                                 self.logger.display(f"  {type_name}:{instance} = {value}")
 
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 read present values failed: {e}")
                     continue
 
@@ -352,7 +352,7 @@ class PropertiesMixin:
         except (asyncio.TimeoutError, TimeoutError) as e:
             self.logger.debug(f"bacpypes3 read {obj_type}:{instance}:{prop} timed out: {e}")
             return None
-        except BaseException as e:
+        except Exception as e:
             # Unknown / proprietary property or object type, segmentation, etc.
             self.logger.debug(f"bacpypes3 read_property {obj_type}:{instance}:{prop}: {e}")
 
@@ -383,7 +383,7 @@ class PropertiesMixin:
             try:
                 set_flags = [n for n, b in zip(names, list(value)) if int(b)]
                 return ",".join(set_flags) if set_flags else "normal"
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"statusFlags render failed: {e}")
 
         # CharacterString subclasses str; also catches bacpypes3's
@@ -405,7 +405,7 @@ class PropertiesMixin:
             from bacpypes3.json import sequence_to_json
 
             return sequence_to_json(value)
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"sequence_to_json failed: {e}")
 
         if isinstance(value, (list, tuple)):
@@ -449,7 +449,7 @@ class PropertiesMixin:
         except (asyncio.TimeoutError, TimeoutError) as e:
             self.logger.debug(f"bacpypes3 raw read {obj_type}:{instance}:{prop} timed out: {e}")
             return None
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 raw read {obj_type}:{instance}:{prop} failed: {e}")
             return None
 
@@ -465,7 +465,7 @@ class PropertiesMixin:
                 value = pv.cast_out(cast_type)
                 if value is not None:
                     return value
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 cast_out({cast_type.__name__}) failed: {e}")
                 continue
 
@@ -481,14 +481,14 @@ class PropertiesMixin:
             )
 
             broad_types = (Enumerated, Boolean, Integer, Double, Date, Time, OctetString)
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 broad-type import failed: {e}")
             broad_types = ()
 
         for cast_type in broad_types:
             try:
                 value = pv.cast_out(cast_type)
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 cast_out({cast_type.__name__}) failed: {e}")
                 continue
             if value is None:
@@ -496,7 +496,7 @@ class PropertiesMixin:
             if cast_type is OctetString:
                 try:
                     return bytes(value).hex()
-                except BaseException:
+                except Exception:
                     return str(value)
             return value
 
@@ -607,7 +607,7 @@ class PropertiesMixin:
 
             except (asyncio.TimeoutError, TimeoutError):
                 self.logger.warning(f"Write timeout for {obj_type}:{instance}:{prop}")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.fail(f"Write error: {e}")
 
         except Exception as e:
@@ -668,7 +668,7 @@ class PropertiesMixin:
                                     propertyIdentifier=PropertyIdentifier(prop),
                                 )
                             )
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"bacpypes3 read property multiple failed: {e}")
                             continue
 
@@ -694,7 +694,7 @@ class PropertiesMixin:
                         self.logger.debug(f"RPM timeout for {type_name}:{instance}")
                         total_failed += 1
                         continue
-                    except BaseException as e:
+                    except Exception as e:
                         self.logger.debug(f"RPM error for {type_name}:{instance}: {e}")
                         total_failed += 1
                         continue
@@ -723,7 +723,7 @@ class PropertiesMixin:
                                                         try:
                                                             value = pv.cast_out(cast_type)
                                                             break
-                                                        except BaseException as e:
+                                                        except Exception as e:
                                                             self.logger.debug(f"Failed: {e}")
                                                             continue
                                                 if value is None:
@@ -750,7 +750,7 @@ class PropertiesMixin:
                             break
                         total_failed += 1
 
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"RPM batch error: {e}")
                     total_failed += 1
 

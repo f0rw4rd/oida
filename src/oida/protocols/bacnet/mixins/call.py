@@ -177,13 +177,13 @@ class CallMixin:
             resp = await asyncio.wait_for(app.request(request), timeout=min(timeout, 5.0))
         except (asyncio.TimeoutError, TimeoutError):
             return False, "timeout (no response)"
-        except BaseException as e:
+        except Exception as e:
             # bacpypes3 raises Error/Reject/Abort as exceptions on the high path.
             # Some error PDUs (e.g. WritePropertyMultipleError) raise again when
             # str()'d, so format defensively.
             try:
                 detail = str(e)
-            except BaseException:
+            except Exception:
                 detail = repr(getattr(e, "args", e))
             return False, f"{type(e).__name__}: {detail}"
         if resp is None:
@@ -232,7 +232,7 @@ class CallMixin:
             await handler(app, target_addr, device_id, timeout, argv)
         except ValueError as e:
             self.logger.fail(f"Bad arguments for {spec.name}: {e}  (usage: {spec.usage})")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"call {spec.name} failed: {e}")
             self.logger.fail(f"{spec.name} failed: {e}")
 
@@ -547,7 +547,7 @@ class CallMixin:
         try:
             await app.request(req)
             self.logger.success(f"  {'UTC' if utc else ''}TimeSync sent: {spec}")
-        except BaseException as e:
+        except Exception as e:
             self.logger.fail(f"  TimeSync failed: {e}")
 
     async def _call_write_group(self, app, target_addr, device_id, timeout, argv):
@@ -570,7 +570,7 @@ class CallMixin:
         try:
             await app.request(req)
             self.logger.success(f"  WriteGroup g{group} ch{channel}={value} sent")
-        except BaseException as e:
+        except Exception as e:
             self.logger.fail(f"  WriteGroup failed: {e}")
 
     async def _call_text_message(self, app, target_addr, device_id, timeout, argv):

@@ -406,7 +406,7 @@ class SecurityMixin:
                 findings.append("Anonymous read access enabled - no authentication required")
             else:
                 self.logger.success("  [+] Anonymous READ access: DENIED")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 check auth failed: {e}")
             self.logger.success("  [+] Anonymous READ access: DENIED or filtered")
 
@@ -428,7 +428,7 @@ class SecurityMixin:
                         detail=f"Password property '{prop}' is readable",
                     )
                     findings.append(f"Password property '{prop}' is readable")
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 check auth failed: {e}")
                 pass
 
@@ -446,7 +446,7 @@ class SecurityMixin:
             else:
                 self.logger.display("  [-] No BACnet/SC support detected")
                 findings.append("No BACnet/SC (encrypted) support - traffic is cleartext")
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 check auth failed: {e}")
             self.logger.display("  [-] No BACnet/SC support detected")
             findings.append("No BACnet/SC (encrypted) support - traffic is cleartext")
@@ -489,7 +489,7 @@ class SecurityMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 dcc brute force failed: {e}")
                     continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 dcc brute force failed: {e}")
                     continue
                 if self._is_success_response(response, types):
@@ -501,7 +501,7 @@ class SecurityMixin:
                     )
                     self.logger.success(f"  [Result] DeviceCommunicationControl: '{display_pass}'")
                     return password
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 dcc brute force failed: {e}")
                 continue
 
@@ -547,7 +547,7 @@ class SecurityMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 reinit brute force failed: {e}")
                     continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 reinit brute force failed: {e}")
                     continue
                 if self._is_success_response(response, types):
@@ -559,7 +559,7 @@ class SecurityMixin:
                     )
                     self.logger.success(f"  [Result] ReinitializeDevice: '{display_pass}'")
                     return password
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 reinit brute force failed: {e}")
                 continue
 
@@ -612,11 +612,11 @@ class SecurityMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 test dcc failed: {e}")
                     continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 test dcc failed: {e}")
                     continue
 
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 test dcc failed: {e}")
                 continue
 
@@ -670,11 +670,11 @@ class SecurityMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 test reinit failed: {e}")
                     continue
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 test reinit failed: {e}")
                     continue
 
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 test reinit failed: {e}")
                 continue
 
@@ -736,14 +736,14 @@ class SecurityMixin:
                                     if decoded is not None:
                                         value = decoded
                                         break
-                                except BaseException as e:
+                                except Exception as e:
                                     self.logger.debug(f"BACnet/SC property decode failed: {e}")
                                     continue
                         findings.append(f"{display_name}: {value}")
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 check bacnet sc failed: {e}")
                     continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 check bacnet sc failed: {e}")
                 continue
 
@@ -829,10 +829,10 @@ class SecurityMixin:
                             current_value = pv.cast_out(cast_type)
                             if current_value is not None:
                                 break
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"bacpypes3 test priority writes failed: {e}")
                             continue
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"bacpypes3 test priority writes failed: {e}")
             current_value = None
 
@@ -847,7 +847,7 @@ class SecurityMixin:
         if is_binary:
             try:
                 write_value = BinaryPV(current_value)
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"could not encode BinaryPV for write-back: {e}")
                 self.logger.warning(
                     "  Could not encode current value as BinaryPV, skipping write test"
@@ -916,7 +916,7 @@ class SecurityMixin:
                                 f"    [!] Priority {priority:2d}: relinquish timed out — "
                                 "priority slot may be left occupied"
                             )
-                        except BaseException as e:
+                        except Exception as e:
                             unrelinquished.append(priority)
                             self.logger.debug(f"relinquish priority {priority} failed: {e}")
                             self.logger.warning(
@@ -932,10 +932,10 @@ class SecurityMixin:
                     self.logger.display(
                         f"    [?] Priority {priority:2d} ({priority_name}): timeout"
                     )
-                except BaseException as e:
+                except Exception as e:
                     self.logger.debug(f"bacpypes3 test priority writes failed: {e}")
 
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"Priority {priority} write error: {e}")
 
         # Summary
@@ -993,7 +993,7 @@ class SecurityMixin:
                 )
                 request.pduDestination = target_addr
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"read {prop} for time-sync verification failed: {e}")
                 return None
             if response is None or isinstance(response, err_types):
@@ -1047,7 +1047,7 @@ class SecurityMixin:
             except (asyncio.TimeoutError, TimeoutError):
                 # Expected for an unconfirmed service — NOT evidence of anything.
                 pass
-        except BaseException as e:
+        except Exception as e:
             self.logger.debug(f"Time sync test error: {e}")
             self.logger.display(f"  Time sync test failed: {e}")
             return
@@ -1132,7 +1132,7 @@ class SecurityMixin:
                     if pv is not None and hasattr(pv, "cast_out"):
                         try:
                             oos_value = bool(pv.cast_out(Boolean))
-                        except BaseException as e:
+                        except Exception as e:
                             self.logger.debug(f"bacpypes3 test oos failed: {e}")
                     readable.append((obj_type, instance, oos_value))
                     self.logger.display(
@@ -1141,7 +1141,7 @@ class SecurityMixin:
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 test oos failed: {e}")
                 continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 test oos failed: {e}")
                 continue
 
@@ -1177,7 +1177,7 @@ class SecurityMixin:
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"bacpypes3 test oos failed: {e}")
                 continue
-            except BaseException as e:
+            except Exception as e:
                 self.logger.debug(f"bacpypes3 test oos failed: {e}")
                 continue
 
