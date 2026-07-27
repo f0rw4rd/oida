@@ -1072,36 +1072,18 @@ class TestModbusConnectionMethods(unittest.TestCase):
 class TestExecutePDU(unittest.TestCase):
     """Test execute_pdu helper function"""
 
-    @patch("oida.protocols.modbus.scanner._get_pymodbus_version")
-    def test_execute_pdu_version_3(self, mock_version):
-        """Test execute_pdu with pymodbus 3.x"""
+    def test_execute_pdu_sets_dev_id(self):
+        """execute_pdu carries the unit id on the PDU as dev_id"""
         from oida.protocols.modbus.scanner import execute_pdu
 
-        mock_version.return_value = 3
         mock_client = Mock()
         mock_pdu = Mock()
         unit_id = 5
 
         execute_pdu(mock_client, mock_pdu, unit_id)
 
-        # In v3, dev_id is set on PDU
         self.assertEqual(mock_pdu.dev_id, unit_id)
         mock_client.execute.assert_called_once_with(False, mock_pdu)
-
-    @patch("oida.protocols.modbus.scanner._get_pymodbus_version")
-    def test_execute_pdu_version_2(self, mock_version):
-        """Test execute_pdu with pymodbus 2.x"""
-        from oida.protocols.modbus.scanner import execute_pdu
-
-        mock_version.return_value = 2
-        mock_client = Mock()
-        mock_pdu = Mock()
-        unit_id = 3
-
-        execute_pdu(mock_client, mock_pdu, unit_id)
-
-        # In v2, unit is passed as keyword argument
-        mock_client.execute.assert_called_once_with(mock_pdu, unit=unit_id)
 
 
 class TestModbusDisconnect(unittest.TestCase):
@@ -1222,23 +1204,6 @@ class TestModbusLazyImports(unittest.TestCase):
 
         self.assertIsNotNone(result)
         mock_lazy_pymodbus.assert_called_once()
-
-    @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_get_pymodbus_version(self, mock_get_pymodbus):
-        """Test _get_pymodbus_version function"""
-        import oida.protocols.modbus.scanner as scanner_mod
-
-        # Reset the module-level version cache
-        saved = scanner_mod._pymodbus_version
-        try:
-            scanner_mod._pymodbus_version = None
-            mock_get_pymodbus.return_value = Mock(__version__="3.5.2")
-
-            version = scanner_mod._get_pymodbus_version()
-
-            self.assertEqual(version, 3)
-        finally:
-            scanner_mod._pymodbus_version = saved
 
 
 class TestModbusScannerMEIErrorHandling(unittest.TestCase):

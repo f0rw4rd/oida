@@ -486,7 +486,12 @@ class knx(NetworkConnection):
             if wordlist:
                 threads = getattr(self.args, "knxproj_threads", 16)
                 password = crack_knxproj(
-                    file_path, wordlist, threads, info, use_fast_mode, self.logger
+                    file_path,
+                    wordlist,
+                    logger=self.logger,
+                    threads=threads,
+                    info=info,
+                    use_fast_mode=use_fast_mode,
                 )
                 if password:
                     self.logger.security_finding(

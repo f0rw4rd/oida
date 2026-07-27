@@ -295,7 +295,7 @@ class _LogHandler:
     """Factory for creating an ILogHandler subclass."""
 
     @staticmethod
-    def create(logger=None, debug=False):
+    def create(logger, debug=False):
         """Create and return an ILogHandler instance."""
         import opendnp3 as dnp3
 
@@ -306,7 +306,7 @@ class _LogHandler:
                 self._debug = _debug
 
             def log(self, _module, _id, _level, location, message):
-                if self._debug and self._logger:
+                if self._debug:
                     self._logger.debug(f"[dnp3-lib] {message}")
 
         return LogHandler(logger, debug)

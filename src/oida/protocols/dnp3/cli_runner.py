@@ -155,15 +155,12 @@ class dnp3(NetworkConnection):
 
     def cleanup(self):
         """Cleanup DNP3 connection"""
-        # Guard against self.logger being None during __del__
-        if self.logger is not None:
-            self.logger.debug("Cleaning up DNP3 connection")
+        self.logger.debug("Cleaning up DNP3 connection")
         if self.conn and self.scanner:
             try:
                 self.scanner.disconnect(self.conn)
             except Exception as e:
-                if self.logger is not None:
-                    self.logger.debug(f"Error closing connection: {e}")
+                self.logger.debug(f"Error closing connection: {e}")
 
     @staticmethod
     def check_dependencies() -> bool:

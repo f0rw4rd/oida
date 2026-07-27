@@ -20,20 +20,10 @@ from ...utils.lazy_import import lazy_import
 # lazy_import() already memoizes the imported module, so no extra caching needed.
 _pymodbus = lazy_import("pymodbus", "Modbus")
 
-_pymodbus_version: int | None = None
-
 
 def _get_pymodbus():
     """Get pymodbus module, raising DependencyError if not available."""
     return _pymodbus()
-
-
-def _get_pymodbus_version():
-    """Get pymodbus major version number (cached)."""
-    global _pymodbus_version
-    if _pymodbus_version is None:
-        _pymodbus_version = int(_get_pymodbus().__version__.split(".")[0])
-    return _pymodbus_version
 
 
 def _get_modbus_tcp_client():
@@ -53,41 +43,27 @@ def _get_modbus_serial_client():
 
 
 def _get_modbus_udp_client():
-    """Get ModbusUdpClient class lazily (may not exist in all versions)."""
+    """Get ModbusUdpClient class lazily."""
     _get_pymodbus()
-    try:
-        from pymodbus.client import ModbusUdpClient
+    from pymodbus.client import ModbusUdpClient
 
-        return ModbusUdpClient
-    except (ImportError, AttributeError) as e:
-        logger.debug("get modbus udp client failed: %s", e)
-        return None
+    return ModbusUdpClient
 
 
 def _get_modbus_tls_client():
-    """Get ModbusTlsClient class lazily (may not exist in all versions)."""
+    """Get ModbusTlsClient class lazily."""
     _get_pymodbus()
-    try:
-        from pymodbus.client import ModbusTlsClient
+    from pymodbus.client import ModbusTlsClient
 
-        return ModbusTlsClient
-    except (ImportError, AttributeError) as e:
-        logger.debug("get modbus tls client failed: %s", e)
-        return None
+    return ModbusTlsClient
 
 
 def _get_framer_type():
-    """Get FramerType enum lazily (pymodbus 3.x only)."""
+    """Get FramerType enum lazily."""
     _get_pymodbus()
-    if _get_pymodbus_version() < 3:
-        return None
-    try:
-        from pymodbus.framer import FramerType
+    from pymodbus.framer import FramerType
 
-        return FramerType
-    except (ImportError, AttributeError) as e:
-        logger.debug("get framer type failed: %s", e)
-        return None
+    return FramerType
 
 
 def _get_file_record_classes():
@@ -103,20 +79,13 @@ def _get_file_record_classes():
 
 
 def execute_pdu(client, pdu, unit_id=0):
-    """Execute a PDU with pymodbus version compatibility.
+    """Execute a PDU, carrying the unit id on the PDU as ``dev_id``.
 
-    pymodbus 3.x changed the execute() signature:
-      - 2.x: client.execute(pdu, unit=unit_id)
-      - 3.x: client.execute(no_response_expected, pdu) with dev_id in PDU
+    The unit id rides on the PDU rather than in the call: pymodbus 3.x takes
+    ``execute(no_response_expected, pdu)``.
     """
-    version = _get_pymodbus_version()
-    if version >= 3:
-        # pymodbus 3.x: set dev_id on PDU and use new signature
-        pdu.dev_id = unit_id
-        return client.execute(False, pdu)
-    else:
-        # pymodbus 2.x: pass unit as keyword argument
-        return client.execute(pdu, unit=unit_id)
+    pdu.dev_id = unit_id
+    return client.execute(False, pdu)
 
 
 from ...utils.ics_logger import get_module_logger
@@ -295,10 +264,6 @@ class ModbusScanner(
         elif use_tls:
             self.logger.debug(f"Connecting via TLS: {self.host}:{self.port}")
 
-            if ModbusTlsClient is None:
-                self.logger.fail("TLS support requires pymodbus >= 3.0")
-                return None
-
             # Build SSL context using central TLS function
             from ...utils.socket_helpers import build_tls_context
 
@@ -320,10 +285,6 @@ class ModbusScanner(
         # UDP connection
         elif use_udp:
             self.logger.debug(f"Connecting via UDP: {self.host}:{self.port}")
-
-            if ModbusUdpClient is None:
-                self.logger.fail("UDP support requires pymodbus >= 3.0")
-                return None
 
             try:
                 client = ModbusUdpClient(

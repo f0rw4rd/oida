@@ -265,37 +265,35 @@ def test_knxproj_password(file_path: str, password: str) -> bool:
 def crack_knxproj(
     file_path: str,
     wordlist: str,
+    *,
+    logger,
     threads: int = 16,
     info: Optional[Dict[str, Any]] = None,
     use_fast_mode: bool = False,
-    logger=None,
 ) -> Optional[str]:
     """Crack .knxproj password using wordlist with multiprocessing.
 
     Args:
         file_path: Path to .knxproj file
         wordlist: Path to wordlist file
+        logger: NXC-style logger for progress output
         threads: Number of parallel processes (default: 16)
         info: Project info dict (from get_knxproj_info)
         use_fast_mode: If True, use fast ZIP-only test (skips XML parsing)
-        logger: Optional logger for progress output
 
     Returns:
         Password if found, None otherwise
     """
-    if logger:
-        logger.debug(f"crack_knxproj: wordlist={wordlist}, threads={threads}, fast={use_fast_mode}")
+    logger.debug(f"crack_knxproj: wordlist={wordlist}, threads={threads}, fast={use_fast_mode}")
     try:
         with open(wordlist, "r", errors="ignore") as f:
             passwords = [line.strip() for line in f if line.strip()]
     except Exception as e:
-        if logger:
-            logger.fail(f"Error reading wordlist: {e}")
+        logger.fail(f"Error reading wordlist: {e}")
         return None
 
     if not passwords:
-        if logger:
-            logger.fail("Wordlist is empty")
+        logger.fail("Wordlist is empty")
         return None
 
     # Get project info if not provided
@@ -303,10 +301,7 @@ def crack_knxproj(
         info = get_knxproj_info(file_path)
 
     mode_str = "FAST (ZIP-only)" if use_fast_mode else "full parse"
-    if logger:
-        logger.display(
-            f"Testing {len(passwords)} passwords with {threads} processes ({mode_str})..."
-        )
+    logger.display(f"Testing {len(passwords)} passwords with {threads} processes ({mode_str})...")
 
     found_password = None
     tested = 0
@@ -329,7 +324,7 @@ def crack_knxproj(
         futures = {executor.submit(test_func, item): item[1] for item in work_items}
         for future in as_completed(futures):
             tested += 1
-            if tested % 100 == 0 and logger:
+            if tested % 100 == 0:
                 logger.display(f"Tested {tested}/{len(passwords)} passwords...")
             try:
                 result = future.result()
@@ -341,12 +336,10 @@ def crack_knxproj(
                         f.cancel()
                     break
             except Exception as e:
-                if logger:
-                    logger.debug(f"Failed to get result: {e}")
+                logger.debug(f"Failed to get result: {e}")
                 continue
 
-    if logger:
-        logger.display(f"Tested {tested}/{len(passwords)} passwords total")
+    logger.display(f"Tested {tested}/{len(passwords)} passwords total")
     return found_password
 
 
@@ -391,8 +384,9 @@ def derive_ets6_zip_password(user_password: str) -> str:
 
 def extract_knxproj_hash(
     file_path: str,
+    *,
+    logger,
     user_password: Optional[str] = None,
-    logger=None,
 ) -> Optional[str]:
     """Extract hash in hashcat-compatible format.
 
@@ -401,19 +395,17 @@ def extract_knxproj_hash(
 
     Args:
         file_path: Path to .knxproj file
+        logger: NXC-style logger for output
         user_password: Optional password to derive ZIP password for ETS6
-        logger: Optional logger for output
 
     Returns:
         Hash string if extracted, None otherwise
     """
-    if logger:
-        logger.debug(f"Extracting hash from {file_path}")
+    logger.debug(f"Extracting hash from {file_path}")
     info = get_knxproj_info(file_path)
 
     if not info["password_protected"]:
-        if logger:
-            logger.display("Project is not password protected - no hash to extract")
+        logger.display("Project is not password protected - no hash to extract")
         return None
 
     # Extract inner ZIP
@@ -422,8 +414,7 @@ def extract_knxproj_hash(
         try:
             inner_data = zf.read(inner_zip_name)
         except KeyError:
-            if logger:
-                logger.fail(f"Inner ZIP not found: {inner_zip_name}")
+            logger.fail(f"Inner ZIP not found: {inner_zip_name}")
             return None
 
     # Save inner ZIP to temp file
@@ -431,9 +422,8 @@ def extract_knxproj_hash(
         f.write(inner_data)
         temp_path = f.name
 
-    if logger:
-        logger.display(f"ETS Version: {info['ets_version']}")
-        logger.display(f"Inner ZIP: {len(inner_data)} bytes")
+    logger.display(f"ETS Version: {info['ets_version']}")
+    logger.display(f"Inner ZIP: {len(inner_data)} bytes")
 
     hash_part = None
 
@@ -450,17 +440,13 @@ def extract_knxproj_hash(
                 if "$" in hash_line:
                     # Extract just the hash part for hashcat
                     hash_part = hash_line.split(":", 1)[1] if ":" in hash_line else hash_line
-                    if logger:
-                        logger.success("Hash extracted with zip2john")
+                    logger.success("Hash extracted with zip2john")
         except subprocess.TimeoutExpired:
-            if logger:
-                logger.fail("zip2john timed out")
+            logger.fail("zip2john timed out")
         except Exception as e:
-            if logger:
-                logger.fail(f"zip2john error: {e}")
+            logger.fail(f"zip2john error: {e}")
     else:
-        if logger:
-            logger.display("zip2john not found - install John the Ripper")
+        logger.display("zip2john not found - install John the Ripper")
 
     # Clean up temp file
     try:
@@ -468,8 +454,7 @@ def extract_knxproj_hash(
     except Exception as e:
         logger.debug(f"os.unlink(temp_path): {e}")  # Ignore cleanup errors
 
-    if logger:
-        _display_hash_info(info, hash_part, user_password, inner_data, logger)
+    _display_hash_info(info, hash_part, user_password, inner_data, logger)
 
     return hash_part
 

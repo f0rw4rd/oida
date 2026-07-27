@@ -106,8 +106,7 @@ class connection(ABC):
             if self.results.get("success") is None:
                 self.results["success"] = True
         except KeyboardInterrupt:
-            if self.logger:
-                self.logger.display("Scan interrupted by user")
+            self.logger.display("Scan interrupted by user")
             self.results["data"]["interrupted"] = True
             # Interrupted scans are not failures
             if self.results.get("success") is None:
@@ -115,11 +114,10 @@ class connection(ABC):
         except Exception as e:
             self.results["success"] = False
             self.results["error"] = str(e)
-            if self.logger:
-                self.logger.fail(
-                    f"{getattr(self, 'protocol_name', 'unknown').upper()} "
-                    f"scan failed for {self.host}: {e}"
-                )
+            self.logger.fail(
+                f"{getattr(self, 'protocol_name', 'unknown').upper()} "
+                f"scan failed for {self.host}: {e}"
+            )
         finally:
             # Always cleanup connection resources
             try:
@@ -130,10 +128,9 @@ class connection(ABC):
             # console tally used to print here; suppressed for now — findings
             # still print inline as they're discovered, and ride along in the
             # exported results.)
-            if self.logger:
-                findings = self.logger.to_list()
-                if findings:
-                    self.results["data"].setdefault("security_findings", []).extend(findings)
+            findings = self.logger.to_list()
+            if findings:
+                self.results["data"].setdefault("security_findings", []).extend(findings)
 
     def _detect_verbose(self) -> bool:
         """Determine verbose mode from args (debug flag or verbose >= 1)."""
@@ -205,20 +202,6 @@ class connection(ABC):
         Can be overridden by a child class to add protocol-specific logger
         context (e.g. extra fields).
         """
-        if self.logger is None:
-            # Shouldn't happen, but handle gracefully
-            from oida.utils.ics_logger import get_logger
-
-            protocol_name = getattr(self, "protocol_name", "unknown")
-            port = self.results.get("port") or getattr(self, "default_port", 0) or 0
-            self.logger = get_logger(
-                protocol=protocol_name,
-                host=self.ip,
-                port=port,
-                verbose=self._detect_verbose(),
-            )
-            return
-
         # Update logger to use resolved IP for display
         self.logger.extra["host"] = self.ip
 
@@ -305,8 +288,7 @@ class connection(ABC):
                 elif hasattr(self.conn, "disconnect"):
                     self.conn.disconnect()
             except Exception as e:
-                if self.logger:
-                    self.logger.debug(f"Error during cleanup: {e}")
+                self.logger.debug(f"Error during cleanup: {e}")
 
     def get_results(self) -> Dict[str, Any]:
         """
