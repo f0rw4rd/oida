@@ -127,7 +127,8 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
 
     try:
         cert = x509.load_der_x509_certificate(cert_der)
-    except Exception:
+    except Exception as e:
+        logger.debug(f"BACnet/SC server certificate could not be parsed for audit: {e}")
         return
 
     # Self-signed — SC expects a real PKI chain. A DN equality test
@@ -156,8 +157,8 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
                 f"Subject == issuer ({cert.subject.rfc4514_string()}) and the "
                 f"cert is signed by its own key; it does not chain to a CA.",
             )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"BACnet/SC cert self-signed check could not run: {e}")
 
     # Validity window.
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -195,8 +196,8 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
                 Category.ENCRYPTION,
                 f"EC curve {pub.curve.name} ({pub.curve.key_size} bits) < 256.",
             )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"BACnet/SC cert public-key strength check could not run: {e}")
 
     # Signature algorithm.
     try:
@@ -207,8 +208,8 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
                 Category.ENCRYPTION,
                 f"Signed with {sig.name}; SHA-1/MD5 are broken.",
             )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"BACnet/SC cert signature-algorithm check could not run: {e}")
 
     # SAN / hostname presence. A mismatch is NOT a security finding here: we
     # connect permissively (check_hostname=False), pentest targets are routinely
@@ -231,8 +232,8 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
             Category.ENCRYPTION,
             "Certificate has no Subject Alternative Name extension.",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"BACnet/SC cert SAN check could not run: {e}")
 
 
 # --- rogue / no-cert probe material -----------------------------------------
