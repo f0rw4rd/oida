@@ -149,14 +149,16 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             if not result.isError():
                 # pymodbus exposes the echoed payload on `.message`. Use it directly
                 # (no `or` fallback): a valid 0x0000 echo is falsy and would otherwise
-                # be discarded as None, reporting a spurious match=False. pymodbus
-                # decodes a single 16-bit word as an int but multi-word echoes as a
-                # tuple, so normalize a 1-element tuple/list down to its scalar before
-                # comparing against the int we sent.
+                # be discarded as None, reporting a spurious match=False. pymodbus 3.x
+                # returns the echo as raw bytes (e.g. b"\x12\x34"); older notes claimed
+                # an int. Normalize a 1-element tuple/list to its scalar and bytes to a
+                # big-endian int before comparing against the int we sent.
                 received = getattr(result, "message", None)
                 normalized = received
                 if isinstance(received, (tuple, list)) and len(received) == 1:
                     normalized = received[0]
+                if isinstance(normalized, (bytes, bytearray)):
+                    normalized = int.from_bytes(normalized, "big")
                 return {
                     "sent": test_data,
                     "received": received,

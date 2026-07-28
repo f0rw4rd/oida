@@ -2147,7 +2147,7 @@ class EtherCATOpsMixin:
                 probe_offset = (0xF980 << 16) | 1
                 try:
                     probe_data = _read_raw(slave_conn, ADS_IDX_GRP["COE_SDO"], probe_offset, 2)
-                    if probe_data and len(probe_data) == 2:
+                    if probe_data and len(probe_data) == 2 and probe_data != b"\x00\x00":
                         conn_count = struct.unpack("<H", probe_data)[0]
                         port_result["fsoe_supported"] = True
                         port_result["connection_count"] = conn_count

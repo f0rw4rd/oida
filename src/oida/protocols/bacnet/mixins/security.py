@@ -1165,9 +1165,10 @@ class SecurityMixin:
 
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
 
-                if response is None or not isinstance(
-                    response, (ErrorPDU, Error, AbortPDU, RejectPDU)
-                ):
+                # A no-reply (None) is INDETERMINATE, not a successful write —
+                # route through the shared contract so a dropped/filtered packet
+                # does not become a false "outOfService is writable" finding.
+                if self._is_success_response(response, types):
                     writable.append((obj_type, instance))
                     self.logger.security_finding(
                         "Writable access",

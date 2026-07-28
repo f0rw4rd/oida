@@ -136,7 +136,7 @@ class mqtt(NetworkConnection):
                 # banner for a session we never actually opened.
                 self.logger.info(f"MQTT broker responded at {self.ip}:{self.args.port}")
                 if username:
-                    self.logger.fail(f"Authentication failed ({username}:{password})")
+                    self.logger.fail(f"Authentication failed ({username}:***)")
                 else:
                     self.logger.fail(f"Auth required ({auth_result})")
         else:

@@ -62,7 +62,10 @@ class SecurityMixin:
             if "401" in error_str or "403" in error_str or "unauthorized" in error_str:
                 self.logger.success("  Anonymous access properly denied (401/403)")
             else:
-                self.logger.debug(f"  Anonymous test error: {e}")
+                # Not a clean auth rejection — the probe itself failed, so the
+                # result is inconclusive, not "properly restricted".
+                auth_results["anonymous_access"] = "unknown"
+                self.logger.warning(f"  Anonymous access test inconclusive (probe error): {e}")
 
         # Test invalid token
         try:
@@ -99,7 +102,10 @@ class SecurityMixin:
             if "401" in error_str or "403" in error_str or "unauthorized" in error_str:
                 self.logger.success("  Invalid token properly rejected (401/403)")
             else:
-                self.logger.debug(f"  Invalid token test error: {e}")
+                # Probe failed on something other than a clean auth rejection —
+                # inconclusive, not "properly rejected".
+                auth_results["invalid_token_rejected"] = "unknown"
+                self.logger.warning(f"  Invalid token test inconclusive (probe error): {e}")
 
         self.results["data"]["auth_test"] = auth_results
 

@@ -195,7 +195,7 @@ class RTSPPassiveListener(PySharkListenerBase):
         # Extract RTSP fields from named layer attributes
         url = str(self.get_field(rtsp, "url", "") or "")
         session = str(self.get_field(rtsp, "session", "") or "")
-        content_type = str(self.get_field(rtsp, "content_type", "") or "")
+        content_type = str(self.get_field_any(rtsp, "content-type", "content_type", default="") or "")
         transport = str(self.get_field(rtsp, "transport", "") or "")
         server = str(self.get_field(rtsp, "server", "") or "")
         user_agent = str(self.get_field(rtsp, "user_agent", "") or "")

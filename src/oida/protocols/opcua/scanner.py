@@ -685,7 +685,8 @@ class OPCUAScanner(NetworkScanner):
                 ),
                 "authorization": len(results.get("endpoints", [])) > 1,
                 "encryption": any(
-                    ep.get("security_mode") != "None" for ep in results.get("endpoints", [])
+                    ep.get("security_mode") not in ("None", "None_", None)
+                    for ep in results.get("endpoints", [])
                 ),
                 "integrity_check": any(
                     "Sign" in ep.get("security_mode", "") for ep in results.get("endpoints", [])
@@ -722,7 +723,9 @@ class OPCUAScanner(NetworkScanner):
 
         # Check encryption support
         endpoints = results.get("endpoints", [])
-        has_encryption = any(ep.get("security_mode") not in ["None", None] for ep in endpoints)
+        has_encryption = any(
+            ep.get("security_mode") not in ("None", "None_", None) for ep in endpoints
+        )
         if not has_encryption:
             self.logger.security_finding(
                 "No encryption",
