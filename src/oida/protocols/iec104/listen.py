@@ -18,6 +18,7 @@ from .constants import (
     ASDU_CA_OFFSET,
     ASDU_COT_OFFSET,
     ASDU_DATA_OFFSET,
+    ASDU_HEADER_SIZE,
     ASDU_IOA_OFFSET,
     ASDU_TYPE_ID_OFFSET,
     COT_ACTIVATION,
@@ -183,7 +184,9 @@ class ListenMixin:
 
         def on_receive_raw_monitor(connection: c104.Connection, data: bytes) -> None:
             """Enhanced callback that captures full ASDU details"""
-            if len(data) < 10:  # Minimum APDU size
+            # Need the full ASDU header (APCI+TI+VSQ+COT+CA) before unpacking CA;
+            # a shorter frame would struct.error on data[ASDU_CA_OFFSET:+2].
+            if len(data) < ASDU_HEADER_SIZE:
                 return
 
             # Check if this is an I-frame (data transfer)

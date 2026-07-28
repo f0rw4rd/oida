@@ -43,9 +43,12 @@ FCV = 0x10  # Frame count valid
 
 ASDU_TYPE_ID_OFFSET = 6
 ASDU_COT_OFFSET = 8
-ASDU_CA_OFFSET = 9
-ASDU_IOA_OFFSET = 11
-ASDU_DATA_OFFSET = 14
+# COT is 2 octets (IEC 60870-5-104), so CA/IOA/DATA follow at +2 from the naive
+# 1-octet-COT layout. These must stay consistent with ASDU_HEADER_SIZE below and
+# with scanner.py's raw[15:22] CP56 read.
+ASDU_CA_OFFSET = 10
+ASDU_IOA_OFFSET = 12
+ASDU_DATA_OFFSET = 15
 ASDU_HEADER_SIZE = 12  # APCI(6) + TI(1) + VSQ(1) + COT(2) + CA(2)
 IOA_SIZE = 3
 IFRAME_MASK = 0x01  # (data[2] & IFRAME_MASK) == 0 → I-frame

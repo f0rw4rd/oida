@@ -213,10 +213,11 @@ class TestListenMonitorCallback(unittest.TestCase):
         scanner = make_scanner()
         scanner._listen_stats = ListenStats()
         cb = self._callback(scanner)
-        # Offsets used by listen.py: TI@6 VSQ@7 COT@8 CA@9-10 IOA@11-13 DATA@14
+        # IEC 104 ASDU: TI@6 VSQ@7 COT@8-9 (2 octets: cause+originator) CA@10-11
+        # IOA@12-14 DATA@15
         ca = struct.pack("<H", 5)
         ioa = struct.pack("<I", 100)[:3]
-        body = bytes([13, 0x01, 0x03]) + ca + ioa + struct.pack("<f", 12.5) + bytes([0])
+        body = bytes([13, 0x01, 0x03, 0x00]) + ca + ioa + struct.pack("<f", 12.5) + bytes([0])
         data = bytes([0x68, len(body) + 4, 0x00, 0x00, 0x00, 0x00]) + body
         cb(MagicMock(), data)
         self.assertEqual(len(scanner._captured_asdus), 1)
@@ -232,10 +233,10 @@ class TestListenMonitorCallback(unittest.TestCase):
         scanner = make_scanner(**{"listen-filter": "1"})  # only Type 1
         scanner._listen_stats = ListenStats()
         cb = self._callback(scanner)
-        # Send a Type-13 ASDU -> filtered out
+        # Send a Type-13 ASDU -> filtered out (2-octet COT, spec layout)
         ca = struct.pack("<H", 5)
         ioa = struct.pack("<I", 100)[:3]
-        body = bytes([13, 0x01, 0x03]) + ca + ioa + struct.pack("<f", 1.0) + bytes([0])
+        body = bytes([13, 0x01, 0x03, 0x00]) + ca + ioa + struct.pack("<f", 1.0) + bytes([0])
         data = bytes([0x68, len(body) + 4, 0x00, 0x00, 0x00, 0x00]) + body
         cb(MagicMock(), data)
         self.assertEqual(len(scanner._captured_asdus), 0)
