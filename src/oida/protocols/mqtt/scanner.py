@@ -729,6 +729,9 @@ class MQTTScanner(
                         )
                     else:
                         results["auth"]["brute_results"] = self._brute_force_credentials()
+                # An auth-required broker still gets a security analysis (No-TLS,
+                # etc.) — don't skip it just because we can't enumerate topics.
+                results["security_issues"] = self._analyze_security(results)
                 return results
 
             # Reconnect for enumeration. This client is created locally and is

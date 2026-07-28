@@ -296,7 +296,10 @@ class SecurityMixin:
                 "authorization": False,  # No built-in authorization
                 "encryption": False,  # Clear text protocol
                 "integrity_check": False,  # No integrity checking
-                "access_control": len(results.get("write_test_results", {})) == 0,
+                # KNX has no built-in access control. The old `write_test == 0`
+                # heuristic credited it with access control whenever the (default-off,
+                # --confirm-gated) write test simply hadn't run.
+                "access_control": False,
             }
         )
 

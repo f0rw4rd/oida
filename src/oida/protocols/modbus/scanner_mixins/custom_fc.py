@@ -168,6 +168,7 @@ class ScannerCustomFCMixin(_ScannerBase):
             4: "SERVER DEVICE FAILURE",
             5: "ACKNOWLEDGE",
             6: "SERVER DEVICE BUSY",
+            7: "NEGATIVE ACKNOWLEDGE",
             8: "MEMORY PARITY ERROR",
             10: "GATEWAY PATH UNAVAILABLE",
             11: "GATEWAY TARGET DEVICE FAILED TO RESPOND",
