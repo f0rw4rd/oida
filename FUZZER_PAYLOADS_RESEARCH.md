@@ -128,6 +128,32 @@ clearest "string field encoded as immutable bytes" cases (HOSTNAME/IP_ADDRESS fi
 **Strong examples to copy:** `modbus` (Size fields + `fuzz_values=ICS_ADDRESS_BOUNDARIES` +
 length-mismatch tests), `snmp*` BER length-underflow tests, `s7comm`/`goose` valid baselines.
 
+## Empirical validation (measured, not inferred)
+
+- **Per-field payload counts** (`SmartStringPrimitive.num_mutations`): a GENERIC field already
+  emits **582** payloads (the universal library is *not* skipped) — so GENERIC ≠ un-fuzzed.
+  Adding a context adds ~30–60 *targeted* cases: HOSTNAME → 615, CREDENTIAL → 613, PATH → 645.
+  The value is quality, not count: HOSTNAME contributes the 19 cases that actually break DNS
+  parsers (IDN homograph `еxample.com`, empty label `example..com`, 63/253-char label limits,
+  `example.com\x00.evil` NULL injection) — none of which a GENERIC field ever emits. Across
+  DNS's 133 name fields that is ~2,500 high-signal cases currently absent.
+- **MMS-codec BER corruption reproduced** with concrete bytes: `build_sequence` of a ≥128-byte
+  inner TLV yields `30 81 cb …`; the codec's `[2:]` strip removes only tag+1 length byte,
+  leaving the stray `cb` length octet *inside* the content (`cb0481…` instead of the correct
+  `0481c8…`). Every fuzz case whose inner content ≥128 bytes is emitted as a corrupt PDU,
+  silently — confirming the bug-hunt finding.
+
+## Scheduling — how payloads combine across fields
+
+The fuzzer uses boofuzz's standard `session.fuzz()` (`base_fuzzer.py:1296`): **one field at a
+time** (linear) — each fuzzable primitive is driven through all its values while every other
+field stays at default. So total cases ≈ **Σ(mutations per field)**, not the product. Two
+consequences: (a) coverage of *interactions* between two malformed fields is not attempted
+(a known boofuzz trade-off, not a defect); (b) adding a context to a field adds only its
+~20–60 targeted cases to the total — **no combinatorial blowup**, so the "pass the context"
+fixes below are bounded-cost. A `filtered_fuzz_case` wrapper (`base_fuzzer.py:1360`) tracks
+tested-vs-total and skips cases for disabled request groups.
+
 ## Highest-leverage improvements (ranked)
 
 1. Wire the existing `core/codecs` tag/overflow/truncation/nested-depth fuzzers into the
