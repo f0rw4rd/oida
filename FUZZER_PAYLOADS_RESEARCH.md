@@ -154,6 +154,44 @@ consequences: (a) coverage of *interactions* between two malformed fields is not
 fixes below are bounded-cost. A `filtered_fuzz_case` wrapper (`base_fuzzer.py:1360`) tracks
 tested-vs-total and skips cases for disabled request groups.
 
+## Stateful & crypto payload delivery
+
+A fuzz case is only useful if it reaches the target's deep parser — which for stateful
+protocols means completing a handshake first. OIDA has a real framework for this:
+
+- **State machine** (`core/session/state_machine.py`): `StateType` = CONNECTION /
+  AUTHENTICATION / TRANSACTION / SESSION / DATA_TRANSFER, with `TransitionRule`
+  conditions/actions. Protocols tag each fuzzable request with `requires_state`, so the
+  framework drives the handshake before injecting the payload. MMS is the model: its targets
+  declare `requires_state="CONNECTED"` → `"COTP_ESTABLISHED"` → `"MMS_ASSOCIATED"`
+  (`mms.py:209–287`), so MMS Read/Write fuzz cases actually reach the MMS parser instead of
+  bouncing off the COTP/association layer. ~10 protocols use it (mms, opcua, ads, iec104,
+  vnc, smtp, mqtt, http, tcp).
+- **Crypto state** (`core/session/crypto_state.py`): `CryptoStateManager` with
+  `NonceStrategy` (ZERO / REPLAY / RANDOM …), `TokenState` (security-token expiry), `KeyState`
+  — i.e. nonce-replay, zero-nonce, and token-manipulation payloads for authenticated
+  protocols. **Used by only 2 protocols** (iec104, opcua). SNMPv3 (USM auth/priv) does **not**
+  use it — its credential material is left GENERIC.
+
+## The unifying finding: a capability-adoption gap
+
+The payload *toolkit* is rich; *adoption* falls off sharply for the most advanced pieces, and
+in the wrong direction — the protocols that would yield the most parser/crypto bugs (MMS,
+OPC UA, SNMPv3) are the least served:
+
+| Capability | Protocols using it |
+|---|---|
+| Universal string library (ReducedString) | all string fields |
+| Stateful state machine (requires_state) | ~10 |
+| Context-aware `StringContext` | ~13 well, ~20 more default to GENERIC |
+| `core/codecs` MMSCodec/OPCUACodec | **1** (tase2) |
+| Crypto-state / nonce fuzzing | **2** (iec104, opcua) |
+| `core/codecs` tag/overflow/truncation/nested fuzzers | **0** (dead) |
+
+So the recurring shape isn't "the payloads are weak" — it's "the strongest payload machinery
+is built but not wired into the protocols that need it most." The fixes are mostly *wiring*,
+not new capability.
+
 ## Highest-leverage improvements (ranked)
 
 1. Wire the existing `core/codecs` tag/overflow/truncation/nested-depth fuzzers into the
