@@ -706,6 +706,36 @@ services:
       oida.ports: "10108"
 
   # ============================================================================
+  # TASE.2 / ICCP (IEC 60870-6)
+  # ============================================================================
+
+  tase2-libiec61850:
+    build:
+      context: ./services/tase2/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-tase2:latest
+    container_name: tase2-libiec61850-server
+    hostname: tase2-server
+    ports:
+      - "10103:102"     # TASE.2/ICCP over MMS/ISO-TSAP (offset to avoid conflict with mms-libiec61850 on 102)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/102"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "tase2"
+      oida.group: "tase2"
+      oida.description: "TASE.2/ICCP server (libiec61850/FreeTase2), Blocks 1/2/5 enabled, no auth"
+      oida.ports: "10103"
+
+  # ============================================================================
   # IEC 60870-5-104
   # ============================================================================
 

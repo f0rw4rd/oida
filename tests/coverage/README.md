@@ -5,10 +5,14 @@ only the docker mock stack. Three axes (see `docs/REAL_COVERAGE_PROPOSAL.md`):
 
 - **`scanner/`** — Axis 1, **implemented**. Per-protocol coverage of the
   semantic surface (`results["data"]` keys) against the live mock target.
-- **`fuzz/`** — Axis 2, *not yet implemented*. Will assert that each fuzzer
-  triggers at least one crash event against its matching `*-cve-*` mock.
-- **`fidelity/`** — Axis 3, *not yet implemented*. Will diff scanner output
-  Conpot-side vs. Python-mock-side.
+- **`fuzz/`** — Axis 2, **implemented**. Drives each fuzzer at its matching
+  CVE mock (pairs discovered from `compose.cve.yml` `oida.*` labels) for a
+  bounded run and records whether it triggered a crash. Writes a scorecard
+  to `cve_replication_<run-id>.json`; hard-asserts only the curated
+  `VERIFIED_REPRODUCTIONS` allowlist (see the module docstring).
+- **`fidelity/`** — Axis 3, *scaffold*. Case table, probe, and manifest
+  writer exist; the diff of scanner output Conpot-side vs. Python-mock-side
+  is pending (the test skips with "Fidelity-diff harness pending").
 
 ## How to run
 
@@ -17,11 +21,15 @@ only the docker mock stack. Three axes (see `docs/REAL_COVERAGE_PROPOSAL.md`):
 python services.py up modbus
 python services.py up               # everything
 
-# Run the coverage suite
+# Run the scanner coverage suite (axis 1)
 pytest tests/coverage/ -m coverage -v
 
-# Results land in tests/coverage/results/scanner_<run-id>.json
-cat tests/coverage/results/scanner_*.json
+# Run the fuzzer CVE-replication suite (axis 2) — needs the CVE mock stack
+python services.py up cve
+pytest tests/coverage/fuzz/ -m cve_replication -v   # OIDA_CVE_CASE_CAP tunes the budget
+
+# Results land in tests/coverage/results/{scanner,cve_replication}_<run-id>.json
+cat tests/coverage/results/*.json
 ```
 
 Tests skip cleanly when:

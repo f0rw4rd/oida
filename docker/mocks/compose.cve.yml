@@ -100,7 +100,7 @@ services:
     hostname: vsftpd-alpaca
     profiles: ["vuln-services", "vuln-ftp"]
     ports:
-      - "2121:21"
+      - "2127:21"
     networks:
       - ics-network
     healthcheck:
@@ -110,7 +110,7 @@ services:
       retries: 3
     labels:
       - "oida.group=ftp"
-      - "oida.ports=2121"
+      - "oida.ports=2127"
       - "oida.cve=CVE-2021-3618"
       - "oida.protocol=ftp"
       - "oida.severity=high"
