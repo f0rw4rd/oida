@@ -64,6 +64,10 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+nuitka-build/
+*.build/
+*.dist/
+*.onefile-build/
 develop-eggs/
 dist/
 downloads/

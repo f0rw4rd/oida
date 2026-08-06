@@ -23,6 +23,20 @@ from oida.utils.lazy_import import PROTOCOL_DEPENDENCIES
 
 logger = get_module_logger(__name__)
 
+
+def _is_frozen() -> bool:
+    """True when running inside a frozen/compiled bundle.
+
+    Covers PyInstaller (``sys.frozen`` + ``sys._MEIPASS``) AND Nuitka
+    ``--standalone``/``--onefile`` (which does NOT set ``sys.frozen`` in
+    standalone mode but injects ``__compiled__`` into every compiled module's
+    globals). In all of these the protocol ``.py`` files are compiled into the
+    bundle and cannot be discovered by scanning the filesystem, so discovery
+    must fall back to importing the known protocol list by name.
+    """
+    return bool(getattr(sys, "frozen", False)) or ("__compiled__" in globals())
+
+
 # All known protocol package names.  Used as the fallback discovery
 # mechanism when running inside a PyInstaller frozen bundle where
 # filesystem scanning is not possible.
@@ -51,7 +65,10 @@ class ProtocolLoader:
             protocols_dir: Path to protocols directory
         """
         self.protocols_dir = Path(protocols_dir)
-        if not self.protocols_dir.exists():
+        # In a frozen/compiled bundle (PyInstaller or Nuitka) the protocols
+        # directory does not exist on disk — discovery imports the known list
+        # by name instead — so the existence check only applies unfrozen.
+        if not _is_frozen() and not self.protocols_dir.exists():
             raise ValueError(f"Protocols directory not found: {protocols_dir}")
 
         self._protocols_cache = None
@@ -83,7 +100,7 @@ class ProtocolLoader:
         # When running inside a PyInstaller frozen bundle, .py files are
         # compiled into the PYZ archive and do not exist on the
         # filesystem.  Fall back to importing from the known list.
-        if getattr(sys, "frozen", False):
+        if _is_frozen():
             protocols = self._discover_frozen()
             self._protocols_cache = protocols
             logger.debug(
@@ -204,7 +221,7 @@ class ProtocolLoader:
             ImportError: If module cannot be loaded
         """
         # In frozen mode, protocol_path is already a module name
-        if getattr(sys, "frozen", False) and "." in protocol_path:
+        if _is_frozen() and "." in protocol_path:
             try:
                 module = importlib.import_module(protocol_path)
                 logger.debug(f"Loaded frozen protocol module {protocol_path}")
@@ -322,7 +339,7 @@ class ProtocolLoader:
 
         try:
             # In frozen mode, argspath is already a module name
-            if getattr(sys, "frozen", False) and "." in argspath:
+            if _is_frozen() and "." in argspath:
                 module_name = argspath
             else:
                 # Convert file path to module name for proper package context
