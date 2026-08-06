@@ -115,6 +115,7 @@ def create_monitor(
             "mms",
             "mqtt",
             "opcua",
+            "bacnet",
             "hl7",
             "http",
             "ftp",
@@ -145,9 +146,16 @@ def create_monitor(
 def _init_registry() -> None:
     """Initialize the monitor registry with all available monitors."""
     # Import monitors - use lazy imports to avoid circular dependencies
-    from .network import PingMonitor, SocketHealthMonitor
+    from .network import PingMonitor, SocketHealthMonitor, H2CSocketMonitor
     from .script import ScriptMonitor
-    from .industrial import ModbusMonitor, IEC104Monitor, MMSMonitor, MQTTMonitor, OPCUAMonitor
+    from .industrial import (
+        ModbusMonitor,
+        IEC104Monitor,
+        MMSMonitor,
+        MQTTMonitor,
+        OPCUAMonitor,
+        BACnetMonitor,
+    )
     from .application import HTTPGetMonitor, FTPCommandMonitor, SMTPCommandMonitor, DNSQueryMonitor
     from .infrastructure import DHCPDiscoverMonitor, TFTPReadMonitor
     from .medical import HL7Monitor
@@ -155,6 +163,8 @@ def _init_registry() -> None:
     # Network monitors
     register_monitor("ping", PingMonitor, 100)
     register_monitor("socket", SocketHealthMonitor, 100)
+    # Cleartext HTTP/2 (h2c) preface health probe
+    register_monitor("h2c", H2CSocketMonitor, 100)
     # NOTE: ValidCaseMonitor is intentionally NOT registered here. It requires
     # operator-supplied probe (and optional expect) bytes that the name-based
     # create_monitor() factory cannot provide, so registering it would only let
@@ -176,6 +186,7 @@ def _init_registry() -> None:
     register_monitor("mms", MMSMonitor, 10, default_port=102)
     register_monitor("mqtt", MQTTMonitor, 10, default_port=1883)
     register_monitor("opcua", OPCUAMonitor, 10, default_port=4840)
+    register_monitor("bacnet", BACnetMonitor, 10, default_port=47808)
 
     # Application protocol monitors
     register_monitor("http", HTTPGetMonitor, 50, default_port=80)

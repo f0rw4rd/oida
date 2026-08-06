@@ -232,9 +232,28 @@ class HTTP2Fuzzer(BaseFuzzer):
 
     def __init__(self, config=None, connection_factory=None):
         self.target = getattr(config, "target_ip", "localhost") if config else "localhost"
-        self.use_ssl = True
+        # Whether this is an HTTPS/h2-over-TLS target or a cleartext h2c one.
+        # Real h2c servers (e.g. nghttp2 prior-knowledge, port 18091) never do a
+        # TLS handshake, so a hardcoded use_ssl=True would (a) pick "https" for
+        # content-fuzzing :scheme and (b) drive a TLS-based preflight that fails
+        # with "Target unreachable" against a healthy cleartext target.
+        self.use_ssl = self._detect_tls(config)
         self.config = config
         super().__init__(config, connection_factory)
+
+    @staticmethod
+    def _detect_tls(config) -> bool:
+        """Decide whether the target speaks TLS/h2 or cleartext h2c.
+
+        TLS is used only when explicitly configured via tls_enabled or an SSL
+        protocol_type; otherwise the target is treated as cleartext h2c.
+        """
+        if not config:
+            return False
+        if getattr(config, "tls_enabled", False):
+            return True
+        proto_type = getattr(config, "protocol_type", None)
+        return proto_type is not None and getattr(proto_type, "value", None) == "ssl"
 
     def _create_frame(self, frame_type: int, flags: int, stream_id: int, payload: bytes) -> bytes:
         """Create an HTTP/2 frame"""
@@ -1781,14 +1800,27 @@ class HTTP2Fuzzer(BaseFuzzer):
             )
 
     def _get_monitors(self) -> List[BaseMonitor]:
-        """Return list of monitors for HTTP/2 service"""
-        monitors = []
+        """Return the health/preflight monitor list for the HTTP/2 target.
 
-        if self.config:
+        The transport dictates the monitor: a TLS/h2 target gets the TLS
+        handshake probe (CustomSSLSocketMonitor); a cleartext h2c target gets
+        the plaintext preface probe (H2CSocketMonitor). Using the SSL monitor
+        against an h2c server made preflight fail ("Target unreachable") even
+        though the server was healthy, because h2c never does a TLS handshake.
+        """
+        monitors: List[BaseMonitor] = []
+
+        if not self.config:
+            return monitors
+
+        if self.use_ssl:
             from ..monitors import CustomSSLSocketMonitor
 
-            ssl_monitor = CustomSSLSocketMonitor(self.config)
-            monitors.append(ssl_monitor)
+            monitors.append(CustomSSLSocketMonitor(self.config))
+        else:
+            from ..monitors import H2CSocketMonitor
+
+            monitors.append(H2CSocketMonitor(self.config.target_ip, self.config.target_port))
 
         return monitors
 

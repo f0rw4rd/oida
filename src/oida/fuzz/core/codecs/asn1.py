@@ -13,6 +13,25 @@ References:
 from typing import List, Union
 
 
+def ber_content(tlv: bytes) -> bytes:
+    """Return the content octets of a BER TLV (strip outer tag + length).
+
+    Length-aware: a fixed ``tlv[2:]`` slice is only correct when the length
+    is a single short-form octet (content < 128 bytes). For content >= 128
+    bytes BER uses long-form length (``0x81 LL``, ``0x82 LL LL``, ...), so a
+    fixed slice leaves stray length octets inside the content and silently
+    emits a corrupt PDU. This reads the length octet and skips the right
+    number of bytes.
+    """
+    if len(tlv) < 2:
+        return b""
+    length_octet = tlv[1]
+    if length_octet < 0x80:
+        return tlv[2:]  # short form: single length octet
+    num_len_octets = length_octet & 0x7F
+    return tlv[2 + num_len_octets :]  # long form: skip N length octets
+
+
 class ASN1Tag:
     """ASN.1 tag constants."""
 

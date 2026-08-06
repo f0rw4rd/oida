@@ -264,6 +264,7 @@ def __getattr__(name):
         "SocketHealthMonitor",
         "SNMPHealthMonitor",
         "CustomSSLSocketMonitor",
+        "H2CSocketMonitor",
         "ValidCaseMonitor",
     }
     _script_attrs = {"ScriptMonitor"}
@@ -276,6 +277,7 @@ def __getattr__(name):
         "MMSMonitor",
         "MQTTMonitor",
         "OPCUAMonitor",
+        "BACnetMonitor",
     }
     _application_attrs = {
         "HTTPGetMonitor",
@@ -315,6 +317,7 @@ def __getattr__(name):
             SocketHealthMonitor,
             SNMPHealthMonitor,
             CustomSSLSocketMonitor,
+            H2CSocketMonitor,
             ValidCaseMonitor,
         )
 
@@ -324,6 +327,7 @@ def __getattr__(name):
                 "SocketHealthMonitor": SocketHealthMonitor,
                 "SNMPHealthMonitor": SNMPHealthMonitor,
                 "CustomSSLSocketMonitor": CustomSSLSocketMonitor,
+                "H2CSocketMonitor": H2CSocketMonitor,
                 "ValidCaseMonitor": ValidCaseMonitor,
             }
         )
@@ -350,6 +354,7 @@ def __getattr__(name):
             MMSMonitor,
             MQTTMonitor,
             OPCUAMonitor,
+            BACnetMonitor,
         )
 
         _cache.update(
@@ -361,6 +366,7 @@ def __getattr__(name):
                 "MMSMonitor": MMSMonitor,
                 "MQTTMonitor": MQTTMonitor,
                 "OPCUAMonitor": OPCUAMonitor,
+                "BACnetMonitor": BACnetMonitor,
             }
         )
         return _cache[name]
@@ -458,6 +464,7 @@ __all__ = [
     "SocketHealthMonitor",
     "SNMPHealthMonitor",
     "CustomSSLSocketMonitor",
+    "H2CSocketMonitor",
     "ValidCaseMonitor",
     # External-script monitor
     "ScriptMonitor",
@@ -470,6 +477,7 @@ __all__ = [
     "MMSMonitor",
     "MQTTMonitor",
     "OPCUAMonitor",
+    "BACnetMonitor",
     # Application monitors
     "HTTPGetMonitor",
     "FTPCommandMonitor",

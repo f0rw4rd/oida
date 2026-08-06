@@ -44,7 +44,7 @@ from boofuzz import Bytes, Group, Request
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.connections import TCPSocketConnection
-from ..primitives.dynamic import SmartString
+from ..primitives.dynamic import SmartString, StringContext
 
 # ASTM E1381 low-level control bytes
 STX = b"\x02"
@@ -196,8 +196,17 @@ class ASTMFuzzer(BaseFuzzer):
                 Bytes("Frame_Number", b"2", fuzzable=False),
                 Group("Record_Type", values=[b"H", b"O", b"R"]),
                 Bytes("Sep1", b"|", fuzzable=False),
-                # Variable field fuzzed via SmartString (context-aware mutations).
-                SmartString("Sender", "OIDA_LIS", max_len=256, fuzzable=True),
+                # E1394 sender-name/ID record field: a VisibleString identifier.
+                # CREDENTIAL adds identifier-injection payloads (NULL truncation,
+                # homoglyph, control/whitespace) that confuse sender matching in
+                # the LIS record layer, on top of the SmartString length testing.
+                SmartString(
+                    "Sender",
+                    "OIDA_LIS",
+                    max_len=256,
+                    fuzzable=True,
+                    context=StringContext.CREDENTIAL,
+                ),
                 Bytes("Sep2", b"|", fuzzable=False),
                 # Oversized field overflowing fixed instrument parse buffers.
                 Group("Oversized", values=[b"A" * 256, b"A" * 1024, b"A" * 4096]),

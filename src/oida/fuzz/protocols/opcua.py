@@ -7,6 +7,7 @@ from asyncua.ua.ua_binary import nodeid_to_binary
 from boofuzz import Block, Byte, DWord, Group, QWord, RandomData, Request, Size, Static, Word
 
 from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from ..core.codecs.asn1 import ASN1Builder, ASN1Tag, ber_content
 from ..core.session.sequence import SequenceConfig, SequenceDirection
 from ..core.session.state_context import StateContext
 from ..core.session.state_machine import ProtocolState, StateMachine, StateType
@@ -310,6 +311,13 @@ class OPCUAFuzzer(BaseFuzzer):
                 requires_state=CommonState.ANY,
             ),
             RequestInfo(
+                "OPCUA_CertBERAttack",
+                "OpenSecureChannel SenderCertificate DER structurally BER-mutated "
+                "(malformed length/tag, truncation, overflow, deep nesting)",
+                "attack",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
                 "OPCUA_State_Confusion",
                 "Session-required services issued pre-session (state-machine attack)",
                 "attack",
@@ -353,6 +361,52 @@ class OPCUAFuzzer(BaseFuzzer):
         ):
             return self.auth_token
         return bytes([OPCUANodeIdTypes.TWO_BYTE, 0])  # null NodeId
+
+    def _cert_ber_mutation_values(self) -> List[bytes]:
+        """Build DER/BER-mutated SenderCertificate blobs for structured cert-parse fuzzing.
+
+        The OPC UA SenderCertificate (OpenSecureChannel) is an X.509 DER blob — the
+        one genuine ASN.1/BER surface in an otherwise binary protocol. Rather than
+        hand-roll malformed bytes (OPCUA_MalformedCert / OPCUA_CertChainLoop do that
+        for a garbage body), this drives the shared ``ASN1Builder`` mutators against a
+        *structurally valid* DER SEQUENCE template so the certificate decoder is reached
+        and pushed deeper before it faults. Wires every previously-dead BER mutator:
+        ``fuzz_length_variants``, ``fuzz_tag_variants``, ``build_truncated``,
+        ``build_with_overflow`` and ``build_nested_depth``.
+
+        Returns a list of complete DER TLV blobs (first entry is the valid baseline).
+        The enclosing ByteString length field is a boofuzz ``Size`` so OPC UA framing
+        stays valid for every mutated blob.
+        """
+        asn1 = ASN1Builder()
+        seq_tag = ASN1Tag.SEQUENCE  # 0x30 — X.509 Certificate outer tag
+        # Minimal but valid DER SEQUENCE { INTEGER, INTEGER } standing in for a cert.
+        inner = asn1.build_integer(2) + asn1.build_integer(0x2A)
+        cert_tlv = asn1.build_sequence(inner)  # tag + length + value
+        cert_content = ber_content(cert_tlv)  # length-aware strip -> value octets
+
+        values: List[bytes] = [cert_tlv]  # valid baseline (index 0)
+        # Malformed BER length encodings (7 forms) — prepend the SEQUENCE tag since
+        # fuzz_length_variants emits <length><content> without a tag.
+        values += [bytes([seq_tag]) + v for v in asn1.fuzz_length_variants(cert_content)]
+        # Malformed BER tags (invalid universal / long-form / multi-byte) over the
+        # original length+value octets.
+        values += asn1.fuzz_tag_variants(seq_tag, cert_tlv[1:])
+        # Length declares full size, content short — parser reads past end.
+        values.append(asn1.build_truncated(seq_tag, cert_content, truncate_by=1))
+        values.append(asn1.build_truncated(seq_tag, cert_content, truncate_by=len(cert_content)))
+        # Oversized content (buffer-overflow probe).
+        values.append(asn1.build_with_overflow(seq_tag, cert_content, overflow_size=512))
+        # Deeply nested SEQUENCEs (recursive-descent / stack exhaustion).
+        values.append(asn1.build_nested_depth(seq_tag, cert_content, depth=200))
+        # De-duplicate while preserving order (defensive: mutators can overlap).
+        seen: set = set()
+        unique: List[bytes] = []
+        for v in values:
+            if v not in seen:
+                seen.add(v)
+                unique.append(v)
+        return unique
 
     def _next_sequence_number(self) -> int:
         """Get current sequence number and increment for next use."""
@@ -797,7 +851,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "EndpointUrl_Data",
-                            children=(SmartString("EndpointUrl", endpoint_url, max_len=4096),),
+                            children=(
+                                SmartString(
+                                    "EndpointUrl",
+                                    endpoint_url,
+                                    max_len=4096,
+                                    context=StringContext.NETWORK_TARGET,
+                                ),
+                            ),
                         ),
                     ),
                 ),
@@ -878,7 +939,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "ServerUri_Data",
-                            children=(SmartString("ServerUri", "urn:test:server", max_len=4096),),
+                            children=(
+                                SmartString(
+                                    "ServerUri",
+                                    "urn:test:server",
+                                    max_len=4096,
+                                    context=StringContext.HOSTNAME,
+                                ),
+                            ),
                         ),
                         Size(
                             "EndpointUrl_Length",
@@ -889,7 +957,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "EndpointUrl_Data",
-                            children=(SmartString("EndpointUrl", endpoint_url, max_len=4096),),
+                            children=(
+                                SmartString(
+                                    "EndpointUrl",
+                                    endpoint_url,
+                                    max_len=4096,
+                                    context=StringContext.NETWORK_TARGET,
+                                ),
+                            ),
                         ),
                     ),
                 ),
@@ -1102,7 +1177,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "EndpointUrl_Data",
-                            children=(SmartString("EndpointUrl", endpoint_url, max_len=4096),),
+                            children=(
+                                SmartString(
+                                    "EndpointUrl",
+                                    endpoint_url,
+                                    max_len=4096,
+                                    context=StringContext.NETWORK_TARGET,
+                                ),
+                            ),
                         ),
                         # LocaleIds array - empty
                         DWord("LocaleIds_Length", 0xFFFFFFFF, endian="<"),
@@ -1147,7 +1229,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "EndpointUrl_Data",
-                            children=(SmartString("EndpointUrl", endpoint_url, max_len=4096),),
+                            children=(
+                                SmartString(
+                                    "EndpointUrl",
+                                    endpoint_url,
+                                    max_len=4096,
+                                    context=StringContext.NETWORK_TARGET,
+                                ),
+                            ),
                         ),
                         # LocaleIds array - empty
                         DWord("LocaleIds_Length", 0xFFFFFFFF, endian="<"),
@@ -2660,7 +2749,12 @@ class OPCUAFuzzer(BaseFuzzer):
                         Block(
                             "ServerUri_Data",
                             children=(
-                                SmartString("ServerUri", "urn:fuzz:server:poisoned", max_len=4096),
+                                SmartString(
+                                    "ServerUri",
+                                    "urn:fuzz:server:poisoned",
+                                    max_len=4096,
+                                    context=StringContext.HOSTNAME,
+                                ),
                             ),
                         ),
                         # ProductUri
@@ -2674,7 +2768,12 @@ class OPCUAFuzzer(BaseFuzzer):
                         Block(
                             "ProductUri_Data",
                             children=(
-                                SmartString("ProductUri", "urn:fuzz:product:evil", max_len=4096),
+                                SmartString(
+                                    "ProductUri",
+                                    "urn:fuzz:product:evil",
+                                    max_len=4096,
+                                    context=StringContext.HOSTNAME,
+                                ),
                             ),
                         ),
                         # ServerNames array (LocalizedText)
@@ -2718,7 +2817,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "DiscoveryUrl_0_Data",
-                            children=(SmartString("DiscoveryUrl_0", endpoint_url, max_len=4096),),
+                            children=(
+                                SmartString(
+                                    "DiscoveryUrl_0",
+                                    endpoint_url,
+                                    max_len=4096,
+                                    context=StringContext.HOSTNAME,
+                                ),
+                            ),
                         ),
                         # SemaphoreFilePath - null
                         DWord("SemaphoreFilePath_Length", 0xFFFFFFFF, endian="<"),
@@ -2764,7 +2870,12 @@ class OPCUAFuzzer(BaseFuzzer):
                         Block(
                             "ServerUri_Data",
                             children=(
-                                SmartString("ServerUri", "urn:fuzz:server2:poisoned", max_len=4096),
+                                SmartString(
+                                    "ServerUri",
+                                    "urn:fuzz:server2:poisoned",
+                                    max_len=4096,
+                                    context=StringContext.HOSTNAME,
+                                ),
                             ),
                         ),
                         Size(
@@ -2777,7 +2888,12 @@ class OPCUAFuzzer(BaseFuzzer):
                         Block(
                             "ProductUri_Data",
                             children=(
-                                SmartString("ProductUri", "urn:fuzz:product2:evil", max_len=4096),
+                                SmartString(
+                                    "ProductUri",
+                                    "urn:fuzz:product2:evil",
+                                    max_len=4096,
+                                    context=StringContext.HOSTNAME,
+                                ),
                             ),
                         ),
                         DWord("ServerNames_Length", 1, endian="<"),
@@ -2817,7 +2933,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "DiscoveryUrl_0_Data",
-                            children=(SmartString("DiscoveryUrl_0", endpoint_url, max_len=4096),),
+                            children=(
+                                SmartString(
+                                    "DiscoveryUrl_0",
+                                    endpoint_url,
+                                    max_len=4096,
+                                    context=StringContext.HOSTNAME,
+                                ),
+                            ),
                         ),
                         DWord("SemaphoreFilePath_Length", 0xFFFFFFFF, endian="<"),
                         Byte("IsOnline", 0x01),
@@ -2841,7 +2964,14 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         Block(
                             "MdnsServerName_Data",
-                            children=(SmartString("MdnsServerName", "fuzz", max_len=256),),
+                            children=(
+                                SmartString(
+                                    "MdnsServerName",
+                                    "fuzz",
+                                    max_len=256,
+                                    context=StringContext.HOSTNAME,
+                                ),
+                            ),
                         ),
                         # ServerCapabilities - empty array
                         DWord("ServerCapabilities_Length", 0xFFFFFFFF, endian="<"),
@@ -3790,6 +3920,119 @@ class OPCUAFuzzer(BaseFuzzer):
         )
 
         # ============================================================
+        # Structured DER/BER mutation of the SenderCertificate. OPC UA is a
+        # binary protocol, but the certificate carried in OpenSecureChannel is
+        # X.509 DER — a real ASN.1/BER parse surface. This drives the shared
+        # ASN1Builder BER mutators (malformed length + tag, truncation, content
+        # overflow, deep nesting) against a *valid* DER SEQUENCE template so the
+        # certificate decoder is reached and exercised deeper than the hand-rolled
+        # garbage bodies in OPCUA_MalformedCert / OPCUA_CertChainLoop. The
+        # ByteString length is a Size primitive, so OPC UA framing stays valid for
+        # every mutated blob and only the DER layer is corrupted.
+        # ============================================================
+        cert_ber_mutation = Request(
+            "OPCUA_CertBERAttack",
+            children=(
+                Block(
+                    "Header",
+                    children=(
+                        Static("MessageType", OPCUAMessageTypes.OPEN_SECURE_CHANNEL),
+                        Static("IsFinal", b"F"),
+                        Size(
+                            "MessageSize",
+                            block_name="OPNBody",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            offset=8,
+                            fuzzable=False,
+                        ),
+                    ),
+                ),
+                Block(
+                    "OPNBody",
+                    children=(
+                        DWord("SecureChannelId", 0, endian="<", fuzzable=False),
+                        # Basic256Sha256 forces the server down the certificate
+                        # processing path (Policy None skips cert parsing).
+                        Size(
+                            "SecurityPolicyUri_Length",
+                            block_name="SecurityPolicyUri_Data",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "SecurityPolicyUri_Data",
+                            children=(
+                                Static(
+                                    "SecurityPolicyUri",
+                                    OPCUASecurityPolicies.BASIC256SHA256.encode("utf-8"),
+                                ),
+                            ),
+                        ),
+                        # SenderCertificate ByteString — the DER blob is the attack.
+                        # Size auto-tracks the mutated blob length so the outer
+                        # ByteString framing is always well-formed.
+                        Size(
+                            "SenderCertificate_Length",
+                            block_name="SenderCertificate_Data",
+                            length=4,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "SenderCertificate_Data",
+                            children=(
+                                Group(
+                                    "Cert_BER_Mutation",
+                                    values=self._cert_ber_mutation_values(),
+                                ),
+                            ),
+                        ),
+                        # ReceiverCertificateThumbprint — null sentinel
+                        DWord("ReceiverThumbprint_Length", 0xFFFFFFFF, endian="<", fuzzable=False),
+                        # SequenceHeader
+                        DWord(
+                            "SequenceNumber",
+                            self._next_sequence_number(),
+                            endian="<",
+                            fuzzable=False,
+                        ),
+                        DWord("RequestId", self._next_request_id(), endian="<", fuzzable=False),
+                        # OpenSecureChannelRequest body
+                        Static("TypeId_Encoding", bytes([OPCUANodeIdTypes.FOUR_BYTE])),
+                        Byte("TypeId_Namespace", 0x00),
+                        Word(
+                            "TypeId_Identifier",
+                            OPCUAServiceIds.OPEN_SECURE_CHANNEL_REQUEST,
+                            endian="<",
+                        ),
+                        self._create_request_header(),
+                        DWord("ClientProtocolVersion", 0, endian="<", fuzzable=False),
+                        DWord(
+                            "RequestType",
+                            OPCUASecurityTokenRequestType.ISSUE,
+                            endian="<",
+                            fuzzable=False,
+                        ),
+                        DWord(
+                            "SecurityMode",
+                            OPCUAMessageSecurityMode.SIGN,
+                            endian="<",
+                            fuzzable=False,
+                        ),
+                        DWord("ClientNonce_Length", 32, endian="<", fuzzable=False),
+                        Static("ClientNonce", bytes(32)),
+                        DWord("RequestedLifetime", 3600000, endian="<", fuzzable=False),
+                    ),
+                ),
+            ),
+        )
+
+        # ============================================================
         # State confusion: send Read before OpenSecureChannel completes,
         # send CloseSession with an inactive token, send ActivateSession
         # before CreateSession. The boofuzz session graph below explicitly
@@ -4013,6 +4256,9 @@ class OPCUAFuzzer(BaseFuzzer):
         # CVE-targeted certificate attack - CVE-2022-37013
         if self.is_request_enabled("OPCUA_CertAttack"):
             self.session.connect(cert_chain_loop)
+
+        if self.is_request_enabled("OPCUA_CertBERAttack"):
+            self.session.connect(cert_ber_mutation)
 
         # Deep browse path - CVE-2023-32172 stack overflow
         if self.is_request_enabled("OPCUA_Malformed"):

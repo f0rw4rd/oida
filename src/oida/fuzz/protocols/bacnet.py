@@ -106,6 +106,11 @@ class BACnetFuzzer(BaseFuzzer):
     - Phase 5: Discovery, event, and VT services
     """
 
+    # BACnet/IP is connectionless UDP, so the inherited "socket" (TCP connect)
+    # monitor false-negatives against every live device and aborts preflight with
+    # "Target unreachable". Use the protocol-aware Who-Is/I-Am monitor instead.
+    DEFAULT_MONITORS = "bacnet"
+
     PROTOCOL_OPTIONS = {
         "device_instance": {
             "type": int,

@@ -34,6 +34,7 @@ from boofuzz import Block, Bytes, Group, Request, Static
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.connections import TCPSocketConnection
 from ..primitives.dynamic import SmartString
+from ..primitives.smart_string import StringContext
 from ...protocols.hl7 import MLLP_START, MLLP_END
 from ...protocols.hl7.segments import HL7SegmentBuilder
 from ...protocols.hl7.utils import (
@@ -432,7 +433,11 @@ class HL7Fuzzer(BaseFuzzer):
                                 SmartString("Encoding_Chars", "^~\\&", max_len=10, fuzzable=True),
                                 Static("Sep1", "|"),
                                 SmartString(
-                                    "Sending_App", self.sending_app, max_len=100, fuzzable=True
+                                    "Sending_App",
+                                    self.sending_app,
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep2", "|"),
                                 SmartString(
@@ -440,10 +445,15 @@ class HL7Fuzzer(BaseFuzzer):
                                     self.sending_facility,
                                     max_len=100,
                                     fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep3", "|"),
                                 SmartString(
-                                    "Receiving_App", self.receiving_app, max_len=100, fuzzable=True
+                                    "Receiving_App",
+                                    self.receiving_app,
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep4", "|"),
                                 SmartString(
@@ -451,6 +461,7 @@ class HL7Fuzzer(BaseFuzzer):
                                     self.receiving_facility,
                                     max_len=100,
                                     fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep5", "|"),
                                 SmartString("Timestamp", timestamp, max_len=26, fuzzable=True),
@@ -470,7 +481,11 @@ class HL7Fuzzer(BaseFuzzer):
                                 ),
                                 Static("Sep7", "|"),
                                 SmartString(
-                                    "Message_Control_ID", msg_ctrl_id, max_len=50, fuzzable=True
+                                    "Message_Control_ID",
+                                    msg_ctrl_id,
+                                    max_len=50,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep8", "|"),
                                 SmartString(
@@ -501,11 +516,19 @@ class HL7Fuzzer(BaseFuzzer):
                             children=(
                                 Static("PID_ID", "PID|1||"),
                                 SmartString(
-                                    "Patient_ID", "12345678^^^MRN", max_len=200, fuzzable=True
+                                    "Patient_ID",
+                                    "12345678^^^MRN",
+                                    max_len=200,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep1", "||"),
                                 SmartString(
-                                    "Patient_Name", "DOE^JOHN^A", max_len=200, fuzzable=True
+                                    "Patient_Name",
+                                    "DOE^JOHN^A",
+                                    max_len=200,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep2", "||"),
                                 SmartString("DOB", "19800101", max_len=26, fuzzable=True),
@@ -570,11 +593,19 @@ class HL7Fuzzer(BaseFuzzer):
                             children=(
                                 Static("PID_ID", "PID|1||"),
                                 SmartString(
-                                    "Patient_ID", "12345678^^^MRN", max_len=200, fuzzable=True
+                                    "Patient_ID",
+                                    "12345678^^^MRN",
+                                    max_len=200,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep1", "||"),
                                 SmartString(
-                                    "Patient_Name", "DOE^JOHN^A", max_len=200, fuzzable=True
+                                    "Patient_Name",
+                                    "DOE^JOHN^A",
+                                    max_len=200,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Rest", "||19800101|M\r"),
                             ),
@@ -587,11 +618,19 @@ class HL7Fuzzer(BaseFuzzer):
                                 SmartString("Order_Control", "RE", max_len=10, fuzzable=True),
                                 Static("Sep1", "|"),
                                 SmartString(
-                                    "Placer_Order", "ORD001^LAB", max_len=100, fuzzable=True
+                                    "Placer_Order",
+                                    "ORD001^LAB",
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep2", "|"),
                                 SmartString(
-                                    "Filler_Order", "FIL001^LAB", max_len=100, fuzzable=True
+                                    "Filler_Order",
+                                    "FIL001^LAB",
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Rest", "||||||||||||||||\r"),
                             ),
@@ -602,11 +641,19 @@ class HL7Fuzzer(BaseFuzzer):
                             children=(
                                 Static("OBR_ID", "OBR|1|"),
                                 SmartString(
-                                    "Placer_Order", "ORD001^LAB", max_len=100, fuzzable=True
+                                    "Placer_Order",
+                                    "ORD001^LAB",
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep1", "|"),
                                 SmartString(
-                                    "Filler_Order", "FIL001^LAB", max_len=100, fuzzable=True
+                                    "Filler_Order",
+                                    "FIL001^LAB",
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep2", "|"),
                                 SmartString(
@@ -692,11 +739,19 @@ class HL7Fuzzer(BaseFuzzer):
                             children=(
                                 Static("PID_ID", "PID|1||"),
                                 SmartString(
-                                    "Patient_ID", "12345678^^^MRN", max_len=200, fuzzable=True
+                                    "Patient_ID",
+                                    "12345678^^^MRN",
+                                    max_len=200,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep1", "||"),
                                 SmartString(
-                                    "Patient_Name", "DOE^JOHN^A", max_len=200, fuzzable=True
+                                    "Patient_Name",
+                                    "DOE^JOHN^A",
+                                    max_len=200,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Rest", "||19800101|M\r"),
                             ),
@@ -709,7 +764,11 @@ class HL7Fuzzer(BaseFuzzer):
                                 SmartString("Order_Control", "NW", max_len=10, fuzzable=True),
                                 Static("Sep1", "|"),
                                 SmartString(
-                                    "Placer_Order", "ORD001^CPOE", max_len=100, fuzzable=True
+                                    "Placer_Order",
+                                    "ORD001^CPOE",
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep2", "||"),
                                 SmartString("Order_Status", "IP", max_len=10, fuzzable=True),
@@ -722,7 +781,11 @@ class HL7Fuzzer(BaseFuzzer):
                             children=(
                                 Static("OBR_ID", "OBR|1|"),
                                 SmartString(
-                                    "Placer_Order", "ORD001^CPOE", max_len=100, fuzzable=True
+                                    "Placer_Order",
+                                    "ORD001^CPOE",
+                                    max_len=100,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep1", "||"),
                                 SmartString(
@@ -772,12 +835,22 @@ class HL7Fuzzer(BaseFuzzer):
                                 Static("Sep2", "|"),
                                 SmartString("Query_Priority", "I", max_len=10, fuzzable=True),
                                 Static("Sep3", "|"),
-                                SmartString("Query_ID", "QRY001", max_len=50, fuzzable=True),
+                                SmartString(
+                                    "Query_ID",
+                                    "QRY001",
+                                    max_len=50,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 Static("Sep4", "||"),
                                 SmartString("Quantity_Limited", "RD", max_len=10, fuzzable=True),
                                 Static("Sep5", "|"),
                                 SmartString(
-                                    "Who_Subject", "12345678^^^MRN", max_len=200, fuzzable=True
+                                    "Who_Subject",
+                                    "12345678^^^MRN",
+                                    max_len=200,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep6", "|"),
                                 SmartString("What_Subject", "DEM", max_len=100, fuzzable=True),
@@ -1068,11 +1141,19 @@ class HL7Fuzzer(BaseFuzzer):
                                 Static("MSH_ID", "MSH|^~\\&|"),
                                 # Oversized sending application
                                 SmartString(
-                                    "Sending_App", "A" * 1000, max_len=10000, fuzzable=True
+                                    "Sending_App",
+                                    "A" * 1000,
+                                    max_len=10000,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep1", "|"),
                                 SmartString(
-                                    "Sending_Facility", "B" * 1000, max_len=10000, fuzzable=True
+                                    "Sending_Facility",
+                                    "B" * 1000,
+                                    max_len=10000,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Sep2", "|"),
                                 Static("Receiving_App", self.receiving_app),
@@ -1090,11 +1171,21 @@ class HL7Fuzzer(BaseFuzzer):
                             children=(
                                 Static("PID_ID", "PID|1||"),
                                 # Oversized patient ID
-                                SmartString("Patient_ID", "X" * 5000, max_len=50000, fuzzable=True),
+                                SmartString(
+                                    "Patient_ID",
+                                    "X" * 5000,
+                                    max_len=50000,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 Static("Sep1", "||"),
                                 # Oversized patient name
                                 SmartString(
-                                    "Patient_Name", "Y" * 5000, max_len=50000, fuzzable=True
+                                    "Patient_Name",
+                                    "Y" * 5000,
+                                    max_len=50000,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
                                 ),
                                 Static("Rest", "||19800101|M\r"),
                             ),

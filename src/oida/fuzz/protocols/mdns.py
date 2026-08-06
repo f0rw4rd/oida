@@ -10,6 +10,7 @@ from typing import List
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.config import FuzzerConfig
 from ..primitives.dynamic import SmartString
+from ..primitives.smart_string import StringContext
 
 
 class DNSType(IntEnum):
@@ -186,7 +187,12 @@ class MDNSFuzzer(BaseFuzzer):
                                 b"\xc0",  # Compression pointer
                             ],
                         ),
-                        SmartString(f"{name}_Label_Text", "local", max_len=63),
+                        SmartString(
+                            f"{name}_Label_Text",
+                            "local",
+                            max_len=63,
+                            context=StringContext.HOSTNAME,
+                        ),
                         Group(
                             f"{name}_Domain_Suffix",
                             values=[
@@ -226,7 +232,12 @@ class MDNSFuzzer(BaseFuzzer):
                                 b"\xc0",  # Compression pointer
                             ],
                         ),
-                        SmartString(f"{name}_Label_Text", "local", max_len=63),
+                        SmartString(
+                            f"{name}_Label_Text",
+                            "local",
+                            max_len=63,
+                            context=StringContext.HOSTNAME,
+                        ),
                         Group(
                             f"{name}_Domain_Suffix",
                             values=[
@@ -265,7 +276,10 @@ class MDNSFuzzer(BaseFuzzer):
                                     f"{name}_PTR_Name",
                                     children=(
                                         SmartString(
-                                            f"{name}_Service_Name", "_http._tcp.local", max_len=128
+                                            f"{name}_Service_Name",
+                                            "_http._tcp.local",
+                                            max_len=128,
+                                            context=StringContext.HOSTNAME,
                                         ),
                                         Static(f"{name}_Terminator", b"\x00"),
                                     ),
@@ -287,7 +301,12 @@ class MDNSFuzzer(BaseFuzzer):
                                 Block(
                                     f"{name}_Target",
                                     children=(
-                                        SmartString(f"{name}_Hostname", "device", max_len=63),
+                                        SmartString(
+                                            f"{name}_Hostname",
+                                            "device",
+                                            max_len=63,
+                                            context=StringContext.HOSTNAME,
+                                        ),
                                         Static(f"{name}_Domain", b"\x05local\x00"),
                                     ),
                                 ),

@@ -24,7 +24,14 @@ from ..core.config import FuzzerConfig, ProtocolType
 from ..monitors import SNMPHealthMonitor
 from ..primitives.asn1_blocks import BERSize
 from ..primitives.dynamic import SmartBytes, SmartString
-from .snmp_common import ber_length_group_values, encode_oid, hex_to_bytes, oid_content
+from ..primitives.smart_string import StringContext
+from .snmp_common import (
+    ber_length_group_values,
+    encode_oid,
+    hex_to_bytes,
+    oid_content,
+    structured_ber_varbind_values,
+)
 
 
 class SNMPv3Fuzzer(BaseFuzzer):
@@ -146,6 +153,13 @@ class SNMPv3Fuzzer(BaseFuzzer):
                 "Inner BER lengths declared shorter than actual content "
                 "(context-name / OID / value)",
                 "boundary",
+            ),
+            RequestInfo(
+                "SNMPv3_BER_Structured",
+                "Structured BER codec attacks on a scoped-PDU varbind: tag confusion, "
+                "over-declared length, oversized content and deep SEQUENCE nesting "
+                "(CVE-2019-9162 class parser attacks)",
+                "high_crash",
             ),
         ]
 
@@ -476,7 +490,10 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                     fuzzable=False,
                                                 ),
                                                 SmartString(
-                                                    "UserName_Value", username, fuzzable=True
+                                                    "UserName_Value",
+                                                    username,
+                                                    fuzzable=True,
+                                                    context=StringContext.CREDENTIAL,
                                                 ),
                                                 # Authentication Parameters (HMAC-SHA1/MD5)
                                                 Static("AuthParams_Tag", b"\x04"),
@@ -719,7 +736,10 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                     fuzzable=False,
                                                 ),
                                                 SmartString(
-                                                    "UserName_Value", username, fuzzable=True
+                                                    "UserName_Value",
+                                                    username,
+                                                    fuzzable=True,
+                                                    context=StringContext.CREDENTIAL,
                                                 ),
                                                 Static("AuthParams_Tag", b"\x04"),
                                                 Size(
@@ -976,6 +996,7 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                         "UserName_Value",
                                                         username,
                                                         fuzzable=True,
+                                                        context=StringContext.CREDENTIAL,
                                                     ),
                                                     Static("AuthParams_Tag", b"\x04"),
                                                     Size(
@@ -1537,7 +1558,10 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                     fuzzable=False,
                                                 ),
                                                 SmartString(
-                                                    "UserName_Value", username, fuzzable=True
+                                                    "UserName_Value",
+                                                    username,
+                                                    fuzzable=True,
+                                                    context=StringContext.CREDENTIAL,
                                                 ),
                                                 Static("AuthParams_Tag", b"\x04"),
                                                 Size(
@@ -2167,7 +2191,10 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                     fuzzable=False,
                                                 ),
                                                 SmartString(
-                                                    "UserName_Value", username, fuzzable=True
+                                                    "UserName_Value",
+                                                    username,
+                                                    fuzzable=True,
+                                                    context=StringContext.CREDENTIAL,
                                                 ),
                                                 Static("AuthParams_Tag", b"\x04"),
                                                 Size(
@@ -2409,7 +2436,10 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                     fuzzable=False,
                                                 ),
                                                 SmartString(
-                                                    "UserName_Value", username, fuzzable=True
+                                                    "UserName_Value",
+                                                    username,
+                                                    fuzzable=True,
+                                                    context=StringContext.CREDENTIAL,
                                                 ),
                                                 Static("AuthParams_Tag", b"\x04"),
                                                 Size(
@@ -2684,7 +2714,10 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                                     fuzzable=False,
                                                 ),
                                                 SmartString(
-                                                    "UserName_Value", username, fuzzable=True
+                                                    "UserName_Value",
+                                                    username,
+                                                    fuzzable=True,
+                                                    context=StringContext.CREDENTIAL,
                                                 ),
                                                 Static("AuthParams_Tag", b"\x04"),
                                                 Size(
@@ -3215,6 +3248,129 @@ class SNMPv3Fuzzer(BaseFuzzer):
             ),
         )
 
+        # Structured BER codec attacks on a scoped-PDU varbind. Wrapped in
+        # noAuthNoPriv discovery framing (empty USM) so the engine reaches
+        # scoped-PDU BER parsing without an auth gate. The previously dead
+        # ASN1Builder mutators (tag confusion / over-declared length / overflow /
+        # deep nesting) are spliced in as a Group where the varbind TLV goes;
+        # the scoped-PDU / PDU / varbindings lengths are auto-computed BERSize
+        # so the outer framing stays valid up to the malformed varbind.
+        ber_structured = Request(
+            "SNMPv3_BER_Structured",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize("Message_Length", "SNMP_Content", fuzzable=False),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x03"),
+                                Static("GlobalData_Tag", b"\x30"),
+                                Size(
+                                    "GlobalData_Length",
+                                    "GlobalData_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "GlobalData_Content",
+                                    children=(
+                                        Static("MessageID_Tag", b"\x02\x04"),
+                                        DWord("MessageID", 0xBBBBBBBB, endian=">", fuzzable=False),
+                                        Static("MaxSize_Tag", b"\x02\x03"),
+                                        Byte("MaxSize_Prefix", 0x00, fuzzable=False),
+                                        Word("MaxSize", 65535, endian=">", fuzzable=False),
+                                        Static("MsgFlags_Tag", b"\x04\x01"),
+                                        Byte("MsgFlags", 0x04, fuzzable=False),
+                                        Static("SecurityModel_Tag", b"\x02\x01"),
+                                        Byte("SecurityModel", security_model, fuzzable=False),
+                                    ),
+                                ),
+                                # Empty USM (discovery / noAuthNoPriv)
+                                Static("SecurityParams_Tag", b"\x04"),
+                                Size(
+                                    "SecurityParams_Length",
+                                    "SecurityParams_Content",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                Block(
+                                    "SecurityParams_Content",
+                                    children=(
+                                        Static("USM_Sequence_Tag", b"\x30"),
+                                        Size(
+                                            "USM_Length",
+                                            "USM_Content",
+                                            endian=">",
+                                            output_format="binary",
+                                            length=1,
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "USM_Content",
+                                            children=(
+                                                Static("EngineID_Tag", b"\x04\x00"),
+                                                Static("EngineBoots_Tag", b"\x02\x01\x00"),
+                                                Static("EngineTime_Tag", b"\x02\x01\x00"),
+                                                Static("UserName_Tag", b"\x04\x00"),
+                                                Static("AuthParams_Tag", b"\x04\x00"),
+                                                Static("PrivParams_Tag", b"\x04\x00"),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                                Static("ScopedPDU_Tag", b"\x30"),
+                                BERSize("ScopedPDU_Length", "ScopedPDU_Content", fuzzable=False),
+                                Block(
+                                    "ScopedPDU_Content",
+                                    children=(
+                                        Static("ContextEngineID_Tag", b"\x04\x00"),
+                                        Static("ContextName_Tag", b"\x04\x00"),
+                                        Static("PDU_Tag", b"\xa0"),
+                                        BERSize("PDU_Length", "PDU_Content", fuzzable=False),
+                                        Block(
+                                            "PDU_Content",
+                                            children=(
+                                                Static("RequestID_Tag", b"\x02\x04"),
+                                                DWord(
+                                                    "RequestID", 1002, endian=">", fuzzable=False
+                                                ),
+                                                Static("ErrorStatus", b"\x02\x01\x00"),
+                                                Static("ErrorIndex", b"\x02\x01\x00"),
+                                                Static("VarBindings_Tag", b"\x30"),
+                                                BERSize(
+                                                    "VarBindings_Length",
+                                                    "VarBindings_Content",
+                                                    fuzzable=False,
+                                                ),
+                                                Block(
+                                                    "VarBindings_Content",
+                                                    children=(
+                                                        Group(
+                                                            "Structured_VarBind",
+                                                            values=structured_ber_varbind_values(
+                                                                "1.3.6.1.2.1.1.1.0"
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         # ==================== PHASE 1: BASELINE ====================
         # Engine discovery and authenticated operations for baseline coverage
         if self.is_request_enabled("SNMPv3_Discovery"):
@@ -3264,6 +3420,8 @@ class SNMPv3Fuzzer(BaseFuzzer):
             self.session.connect(ber_length_of_length)
         if self.is_request_enabled("SNMPv3_BER_Truncated_Length"):
             self.session.connect(ber_truncated_length)
+        if self.is_request_enabled("SNMPv3_BER_Structured"):
+            self.session.connect(ber_structured)
 
 
 __all__ = ["SNMPv3Fuzzer"]

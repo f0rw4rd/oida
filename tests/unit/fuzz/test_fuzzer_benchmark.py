@@ -56,7 +56,9 @@ WALK_XFAIL: set[str] = set()
 BENCHMARKS = {
     # P0 Critical ICS
     "modbus": (55, 19900, 179),
-    "opcua": (45, 250000, 1800),
+    # Bumped after wiring the ASN.1/BER codec mutators into the OpenSecureChannel
+    # X.509 cert (OPCUA_CertBERAttack). Actual: (57, 288386, 2195).
+    "opcua": (55, 280000, 2100),
     "iec104": (90, 100000, 650),
     "mms": (20, 1500, 25),
     "dnp3": (20, 22000, 170),
@@ -70,8 +72,11 @@ BENCHMARKS = {
     "ftp": (45, 16000, 80),
     "smtp": (15, 14000, 30),
     "mqtt": (20, 9000, 70),
-    "snmpv1": (10, 10000, 30),
-    "snmpv3": (5, 18000, 70),
+    # Bumped after wiring the structured-BER codec mutators (tag confusion,
+    # over-declaring truncation, overflow, nested-depth) into the SNMP varbind
+    # via SNMP_BER_Structured. Actuals: snmpv1 (15, 16269, 48), snmpv3 (14, 41973, 159).
+    "snmpv1": (14, 15000, 45),
+    "snmpv3": (13, 39000, 150),
     # P2 Standard
     "coap": (18, 7000, 55),
     "dhcp": (14, 35000, 300),
@@ -238,10 +243,14 @@ def _collect_metrics(session):
     total_mutations = 0
     total_fields = 0
     total_fuzzable = 0
+    smart_total = 0
+    smart_tagged = 0
     dead_non_baseline = []
     fuzzable_type_counts = Counter()
     per_request = {}
     walk_failed = []
+
+    from oida.fuzz.primitives.smart_string import SmartStringPrimitive, StringContext
 
     for _key, req in requests.items():
         primitives = _walk_safe(req)
@@ -256,6 +265,12 @@ def _collect_metrics(session):
             if prim.fuzzable:
                 fuzzable += 1
                 fuzzable_type_counts[type(prim).__name__] += 1
+            # Payload-quality signal: how many SmartString fields carry a
+            # real (non-GENERIC) context corpus vs. fall back to GENERIC.
+            if isinstance(prim, SmartStringPrimitive):
+                smart_total += 1
+                if getattr(prim, "context", StringContext.GENERIC) != StringContext.GENERIC:
+                    smart_tagged += 1
 
         try:
             muts = req.num_mutations(None)
@@ -280,6 +295,8 @@ def _collect_metrics(session):
         "total_mutations": total_mutations,
         "total_fields": total_fields,
         "total_fuzzable": total_fuzzable,
+        "smart_total": smart_total,
+        "smart_tagged": smart_tagged,
         "dead_non_baseline": dead_non_baseline,
         "fuzzable_types": dict(fuzzable_type_counts),
         "fuzzable_type_count": len(fuzzable_type_counts),
@@ -356,6 +373,67 @@ def test_no_dead_requests(protocol_name):
     assert len(dead) <= max_dead, (
         f"{protocol_name}: {len(dead)} dead (non-fuzzable, non-baseline) requests "
         f"(max allowed {max_dead}): {dead[:10]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 5: Context-tagged string ratio (Payload targeting)
+# ---------------------------------------------------------------------------
+# A SmartString without an explicit `context=` falls back to the empty
+# GENERIC corpus, so it never fuzzes hostname/credential/path vuln classes.
+# High mutation counts on all-GENERIC string fields overstate real coverage.
+# This gate is a RATCHET: floors are seeded at each protocol's current
+# tagged ratio, so a change that drops a context tag fails here. Protocols
+# whose string fields are legitimately raw bytes (payload, numeric framing)
+# are simply not listed — the gate only guards protocols where a curated
+# corpus is the right call. Raise a floor after tagging more fields; never
+# lower one without a documented reason.
+#
+# Measured 2026-08-01 from the built request tree; floors sit at or just
+# below the measured ratio to stay robust to a single field's churn.
+MIN_CONTEXT_RATIO = {
+    "ftp": 0.85,  # measured 0.91
+    "vnc": 0.90,  # measured 0.95
+    "smtp": 0.50,  # measured 0.51
+    "http": 0.33,  # measured 0.34
+    "mqtt": 0.35,  # measured 0.40
+    "tftp": 0.35,  # measured 0.40
+    "bacnet": 0.30,  # measured 0.33
+    # Big string-rich protocols tagged in WS2b: every string in a DNS
+    # message is a name label, so dns defaults the whole module to
+    # HOSTNAME (measured 1.00); dhcp tags its hostname/fqdn option fields.
+    "dns": 0.90,  # measured 1.00 — module-default HOSTNAME
+    "dhcp": 0.20,  # measured 0.23 — hostname/fqdn options -> HOSTNAME
+    "dhcpv6": 0.18,  # measured 0.20 — FQDN/domain-list -> HOSTNAME, interface/remote-id -> CREDENTIAL
+    "mdns": 0.55,  # measured 0.61 — QNAME label / service-name / SRV host -> HOSTNAME
+    "hl7": 0.35,  # measured 0.39 — MRN/routing/order identifier fields -> CREDENTIAL
+    "snmpv1": 0.60,  # measured 0.67 — community string -> CREDENTIAL
+    "snmpv3": 0.30,  # measured 0.35 — USM user name -> CREDENTIAL
+    "opcua": 0.55,  # measured 0.60 — EndpointUrl -> NETWORK_TARGET, server/product URIs -> HOSTNAME
+    "ethernetip": 0.18,  # measured 0.20 (default session) — CIP symbolic Tag_Name -> CREDENTIAL
+    # Not gated by design: coap and http2 have zero taggable SmartString
+    # fields — their URI-Path / :path / :authority values are raw option
+    # bytes / HPACK-compressed Static, not SmartString, so there is nothing
+    # to attach a context to without restructuring the packet. mdns A/AAAA
+    # address RDATA (raw packed bytes) is a possible future IP_ADDRESS tag.
+}
+
+
+@pytest.mark.parametrize("protocol_name", sorted(MIN_CONTEXT_RATIO))
+def test_context_tagged_string_ratio(protocol_name):
+    """Gated protocols keep a minimum fraction of SmartString fields context-tagged."""
+    session = _instantiate(protocol_name)
+    metrics = _collect_metrics(session)
+    smart_total = metrics["smart_total"]
+    if smart_total == 0:
+        pytest.skip(f"{protocol_name}: no SmartString fields in the built tree")
+
+    ratio = metrics["smart_tagged"] / smart_total
+    floor = MIN_CONTEXT_RATIO[protocol_name]
+    assert ratio >= floor, (
+        f"{protocol_name}: {metrics['smart_tagged']}/{smart_total} SmartString fields "
+        f"context-tagged ({ratio:.0%}) < floor {floor:.0%} — a context= was dropped, "
+        f"or new GENERIC string fields were added without a curated corpus"
     )
 
 

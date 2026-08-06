@@ -898,7 +898,14 @@ class EtherNetIPFuzzer(BaseFuzzer):
                                 Byte("Tag_Path_Size", 0x06),
                                 Byte("Tag_Path_Segment", 0x91),
                                 Byte("Tag_Name_Length", 0x0C),
-                                SmartString("Tag_Name", "SAFETY_ENABLE", max_len=32),
+                                # Symbolic tag name is a device-side lookup key
+                                # (ANSI extended symbol segment) - identifier injection
+                                SmartString(
+                                    "Tag_Name",
+                                    "SAFETY_ENABLE",
+                                    max_len=32,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 Word("Data_Type", 0x00C1, endian="<"),
                                 Word("Element_Count", 0x0001, endian="<"),
                                 Byte("Tag_Value", 0x00),
@@ -1503,7 +1510,14 @@ class EtherNetIPFuzzer(BaseFuzzer):
                                 Byte("Tag_Path_Size", 0x04),
                                 Byte("Tag_Path_Segment", 0x91),
                                 Byte("Tag_Name_Length", 0x08),
-                                SmartString("Tag_Name", "PASSWORD", max_len=32),
+                                # Symbolic tag name is a device-side lookup key
+                                # (ANSI extended symbol segment) - identifier injection
+                                SmartString(
+                                    "Tag_Name",
+                                    "PASSWORD",
+                                    max_len=32,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 Word("Element_Count", 0x0001, endian="<"),
                             ),
                         ),

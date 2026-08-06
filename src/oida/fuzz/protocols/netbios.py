@@ -20,7 +20,8 @@ from boofuzz import Block, Byte, Group, Request, Static, Word
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.connections import UDPSocketConnection
-from ..primitives.dynamic import SmartBytes
+from ..primitives.dynamic import SmartString
+from ..primitives.smart_string import StringContext
 
 # NBNS QTYPEs (RFC 1002)
 NB = 0x0020  # general Name query
@@ -290,9 +291,20 @@ class NetBIOSFuzzer(BaseFuzzer):
                             "scope_length",
                             values=[b"\x3f", b"\x7f", b"\xff"],
                         ),
-                        SmartBytes(
-                            "scope_label", b"LOCAL", max_len=64, fuzzable=True
-                        ),  # only 5 bytes present (variable scope label -> Radamsa)
+                        # Scope-id (second-level) label. It is a DNS-domain-class
+                        # identifier, so tag it HOSTNAME: the corpus adds
+                        # NULL-injection / IDN-homograph / label-length payloads on
+                        # top of length testing. Only 5 bytes are actually present
+                        # while scope_length above overstates them, so the
+                        # framing lie that defines this request is preserved (no
+                        # length field references this value -> nothing to recompute).
+                        SmartString(
+                            "scope_label",
+                            "LOCAL",
+                            context=StringContext.HOSTNAME,
+                            max_len=64,
+                            fuzzable=True,
+                        ),
                         # packet ends here: no 0x00 terminator, no QTYPE/QCLASS
                     ),
                 ),

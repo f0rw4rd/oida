@@ -33,24 +33,14 @@ from typing import List
 from boofuzz import Group, Request, Static
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
+from ..core.codecs.asn1 import ber_content as _ber_content
 from ..core.codecs.mms import MMSCodec, MMSObjectClass
 from ..core.config import FuzzerConfig, ProtocolType
 from ..primitives.asn1 import encode_ber_context_tag, encode_ber_integer, encode_ber_length
-from ..primitives.dynamic import SmartBytes
+from ..primitives.dynamic import SmartBytes, SmartString, StringContext
 from ..primitives.osi import MMSStackBuilder, wrap_in_tpkt_cotp
 
 logger = logging.getLogger(__name__)
-
-
-def _ber_content(tlv: bytes) -> bytes:
-    """Return the content octets of a BER TLV (strip outer tag + length)."""
-    if len(tlv) < 2:
-        return b""
-    length_octet = tlv[1]
-    if length_octet < 0x80:
-        return tlv[2:]
-    num_len_octets = length_octet & 0x7F
-    return tlv[2 + num_len_octets :]
 
 
 class TASE2Fuzzer(BaseFuzzer):
@@ -222,12 +212,19 @@ class TASE2Fuzzer(BaseFuzzer):
                         encode_ber_length(1024),  # 0x82 0x04 0x00
                     ],
                 ),
-                SmartBytes(
+                # ICCP domainSpecific ItemId [1] VisibleString identifier.
+                # CREDENTIAL adds identifier-injection payloads (NULL truncation,
+                # homoglyph, control chars) — the CVE-2014-2357 ICCP name-handling
+                # decode class. Frame-safe: the enclosing declared_name_len is a
+                # separate (intentionally decoupled) Group and the TPKT/COTP prologue
+                # is Static, so a variable name length recomputes no enclosing length.
+                SmartString(
                     name="iccp_object_name",
-                    default_value=b"Transfer_Set_Name",
+                    default_value="Transfer_Set_Name",
                     size=17,
                     max_len=1024,
                     fuzzable=True,
+                    context=StringContext.CREDENTIAL,
                 ),
             ),
         )

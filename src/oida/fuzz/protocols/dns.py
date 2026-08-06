@@ -6,7 +6,18 @@ from typing import List
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.connections import UDPSocketConnection
-from ..primitives.dynamic import SmartString
+from functools import partial
+
+from ..primitives.dynamic import SmartString as _SmartString
+from ..primitives.smart_string import StringContext
+
+# Every string in a DNS message is a name label (QNAME labels, NS/MX/PTR
+# targets, reverse-DNS octets). Default the curated corpus to HOSTNAME so
+# all ~130 label/name fields get IDN-homograph / punycode / 63-253 char
+# boundary payloads without tagging each call site. Individual calls can
+# still override with an explicit `context=` (call-time kwargs win over
+# the partial's default).
+SmartString = partial(_SmartString, context=StringContext.HOSTNAME)
 
 
 class DNSFuzzer(BaseFuzzer):

@@ -30,7 +30,13 @@ from ..core.config import FuzzerConfig, ProtocolType
 from ..monitors import SNMPHealthMonitor
 from ..primitives.asn1_blocks import BERSize
 from ..primitives.dynamic import SmartBytes, SmartString
-from .snmp_common import ber_length_group_values, encode_oid, oid_content
+from ..primitives.smart_string import StringContext
+from .snmp_common import (
+    ber_length_group_values,
+    encode_oid,
+    oid_content,
+    structured_ber_varbind_values,
+)
 
 
 class SNMPv2cFuzzer(BaseFuzzer):
@@ -113,6 +119,13 @@ class SNMPv2cFuzzer(BaseFuzzer):
                 "Inner BER lengths declared shorter than actual content (community / OID / value)",
                 "boundary",
             ),
+            RequestInfo(
+                "SNMPv2c_BER_Structured",
+                "Structured BER codec attacks on a varbind: tag confusion, "
+                "over-declared length, oversized content and deep SEQUENCE nesting "
+                "(CVE-2019-9162 class parser attacks)",
+                "high_crash",
+            ),
             # Phase 5: Trap
             RequestInfo("SNMPv2c_Trap", "v2c Trap PDU", "trap"),
         ]
@@ -178,7 +191,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     length=1,
                                     fuzzable=False,
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 # PDU (GetBulkRequest = 0xA5)
                                 Static("PDU_Tag", b"\xa5"),
                                 Size(
@@ -313,7 +331,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     length=1,
                                     fuzzable=False,
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 # PDU (GetRequest = 0xA0)
                                 Static("PDU_Tag", b"\xa0"),
                                 Size(
@@ -417,7 +440,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     length=1,
                                     fuzzable=False,
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 # PDU (GetNextRequest = 0xA1)
                                 Static("PDU_Tag", b"\xa1"),
                                 Size(
@@ -517,7 +545,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                         length=1,
                                         fuzzable=False,
                                     ),
-                                    SmartString("Community_String", community, fuzzable=True),
+                                    SmartString(
+                                        "Community_String",
+                                        community,
+                                        fuzzable=True,
+                                        context=StringContext.CREDENTIAL,
+                                    ),
                                     # PDU (SetRequest = 0xA3)
                                     Static("PDU_Tag", b"\xa3"),
                                     Size(
@@ -635,7 +668,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     length=1,
                                     fuzzable=False,
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 Static("PDU_Tag", b"\xa5"),  # GetBulkRequest
                                 Size(
                                     "PDU_Length",
@@ -738,7 +776,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     length=1,
                                     fuzzable=False,
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 Static("PDU_Tag", b"\xa5"),  # GetBulkRequest
                                 Size(
                                     "PDU_Length",
@@ -1011,7 +1054,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     length=1,
                                     fuzzable=False,
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 # PDU (InformRequest = 0xA6)
                                 Static("PDU_Tag", b"\xa6"),
                                 Size(
@@ -1172,7 +1220,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     length=1,
                                     fuzzable=False,
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 # PDU (SNMPv2-Trap = 0xA7)
                                 Static("PDU_Tag", b"\xa7"),
                                 Size(
@@ -1423,7 +1476,12 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                     "Community_LoL",
                                     values=ber_length_group_values(len(community)),
                                 ),
-                                SmartString("Community_String", community, fuzzable=True),
+                                SmartString(
+                                    "Community_String",
+                                    community,
+                                    fuzzable=True,
+                                    context=StringContext.CREDENTIAL,
+                                ),
                                 Static("PDU_Tag", b"\xa0"),
                                 Size(
                                     "PDU_Length",
@@ -1602,6 +1660,75 @@ class SNMPv2cFuzzer(BaseFuzzer):
             ),
         )
 
+        # Structured BER codec attacks on a single varbind. The previously
+        # dead ASN1Builder mutators (tag confusion / over-declared length /
+        # overflow / deep nesting) are spliced in as a Group where the varbind
+        # TLV goes; every enclosing length (message / PDU / varbindings) is an
+        # auto-computed BERSize so the outer framing stays valid and the agent
+        # reaches varbind BER decoding before choking on the malformed TLV.
+        ber_structured = Request(
+            "SNMPv2c_BER_Structured",
+            children=(
+                Block(
+                    "SNMP_Message",
+                    children=(
+                        Static("Sequence_Tag", b"\x30"),
+                        BERSize("Message_Length", "SNMP_Content", fuzzable=False),
+                        Block(
+                            "SNMP_Content",
+                            children=(
+                                Static("Version_Tag", b"\x02\x01\x01"),
+                                Static("Community_Tag", b"\x04"),
+                                Size(
+                                    "Community_Length",
+                                    "Community_String",
+                                    endian=">",
+                                    output_format="binary",
+                                    length=1,
+                                    fuzzable=False,
+                                ),
+                                SmartString("Community_String", community, fuzzable=False),
+                                Static("PDU_Tag", b"\xa0"),
+                                BERSize("PDU_Length", "PDU_Content", fuzzable=False),
+                                Block(
+                                    "PDU_Content",
+                                    children=(
+                                        Static("RequestID_Tag", b"\x02"),
+                                        Byte("RequestID_Length", 0x04, fuzzable=False),
+                                        DWord(
+                                            "RequestID",
+                                            request_id + 300,
+                                            endian=">",
+                                            fuzzable=False,
+                                        ),
+                                        Static("ErrorStatus", b"\x02\x01\x00"),
+                                        Static("ErrorIndex", b"\x02\x01\x00"),
+                                        Static("VarBindings_Tag", b"\x30"),
+                                        BERSize(
+                                            "VarBindings_Length",
+                                            "VarBindings_Content",
+                                            fuzzable=False,
+                                        ),
+                                        Block(
+                                            "VarBindings_Content",
+                                            children=(
+                                                Group(
+                                                    "Structured_VarBind",
+                                                    values=structured_ber_varbind_values(
+                                                        f"{oid_prefix}.1.1.0"
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         # ==================== PHASE 1: BASELINE ====================
         if self.is_request_enabled("SNMPv2c_GetBulkRequest"):
             self.session.connect(get_bulk_request)
@@ -1635,6 +1762,8 @@ class SNMPv2cFuzzer(BaseFuzzer):
             self.session.connect(ber_length_of_length)
         if self.is_request_enabled("SNMPv2c_BER_Truncated_Length"):
             self.session.connect(ber_truncated_length)
+        if self.is_request_enabled("SNMPv2c_BER_Structured"):
+            self.session.connect(ber_structured)
 
         # ==================== PHASE 5: TRAP ====================
         if self.is_request_enabled("SNMPv2c_Trap"):

@@ -22,7 +22,7 @@ MMS PDU Types:
 """
 
 from typing import List, Optional, Tuple
-from .asn1 import ASN1Builder
+from .asn1 import ASN1Builder, ber_content
 
 
 class MMSServiceType:
@@ -132,7 +132,7 @@ class MMSCodec(ASN1Builder):
         """
         content = self.build_sequence(self.build_unsigned32(invoke_id), service)
         # Remove SEQUENCE tag, use context-specific [0] IMPLICIT
-        return self.build_context_specific(0, content[2:], constructed=True)
+        return self.build_context_specific(0, ber_content(content), constructed=True)
 
     def build_initiate_request(
         self,
@@ -265,7 +265,7 @@ class MMSCodec(ASN1Builder):
 
         # [0] extendedObjectClass
         object_class_enc = self.build_context_specific(
-            0, self.build_integer(object_class)[2:], constructed=False
+            0, ber_content(self.build_integer(object_class)), constructed=False
         )
         items.append(self.build_context_specific(0, object_class_enc, constructed=True))
 
@@ -277,7 +277,7 @@ class MMSCodec(ASN1Builder):
             # domainSpecific [1] Identifier
             items.append(
                 self.build_context_specific(
-                    1, self.build_visible_string(object_scope)[2:], constructed=False
+                    1, ber_content(self.build_visible_string(object_scope)), constructed=False
                 )
             )
 
@@ -323,7 +323,7 @@ class MMSCodec(ASN1Builder):
 
         # listOfVariable [0]
         var_list_seq = self.build_sequence(*var_list)
-        items.append(self.build_context_specific(0, var_list_seq[2:], constructed=True))
+        items.append(self.build_context_specific(0, ber_content(var_list_seq), constructed=True))
 
         content = b"".join(items)
         service = self.build_context_specific(MMSServiceType.READ, content, constructed=True)
@@ -350,11 +350,11 @@ class MMSCodec(ASN1Builder):
             var_list.append(self._build_variable_specification(name, domain))
 
         var_list_seq = self.build_sequence(*var_list)
-        var_spec = self.build_context_specific(0, var_list_seq[2:], constructed=True)
+        var_spec = self.build_context_specific(0, ber_content(var_list_seq), constructed=True)
 
         # listOfData
         data_seq = self.build_sequence(*data)
-        data_list = self.build_context_specific(0, data_seq[2:], constructed=True)
+        data_list = self.build_context_specific(0, ber_content(data_seq), constructed=True)
 
         content = var_spec + data_list
         service = self.build_context_specific(MMSServiceType.WRITE, content, constructed=True)
@@ -417,7 +417,7 @@ class MMSCodec(ASN1Builder):
             domain_seq = self.build_sequence(
                 self.build_visible_string(domain), self.build_visible_string(name)
             )
-            name_enc = self.build_context_specific(1, domain_seq[2:], constructed=True)
+            name_enc = self.build_context_specific(1, ber_content(domain_seq), constructed=True)
 
         return self.build_context_specific(0, name_enc, constructed=True)
 

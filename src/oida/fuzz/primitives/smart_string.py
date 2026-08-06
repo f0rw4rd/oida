@@ -480,6 +480,43 @@ class SmartStringPrimitive(ReducedString):
                 return value.decode("latin-1", errors="replace")
         return value
 
+    def _encode_context_payload(self, payload: str):
+        """Return the wire form of a curated context payload.
+
+        Homoglyph / IDN-homograph / fullwidth payloads (e.g. Cyrillic
+        ``аdmin`` or fullwidth ``ＡＤＭＩＮ``) carry non-ASCII characters whose
+        exact bytes ARE the attack. If they render through the field's
+        default ``ascii`` + ``errors="replace"`` encoding they collapse to
+        ``b'?'`` and never test the target's non-ASCII parsing.
+
+        So a non-ASCII curated payload is yielded pre-encoded as its true
+        UTF-8 bytes; ``encode()`` then passes those bytes straight through.
+        Pure-ASCII payloads are returned as ``str`` unchanged, preserving
+        their existing rendering and dedup behavior.
+        """
+        try:
+            payload.encode("ascii")
+        except UnicodeEncodeError:
+            return payload.encode("utf-8")
+        return payload
+
+    def encode(self, value, mutation_context=None):
+        """Encode a mutation to bytes.
+
+        Non-ASCII curated context payloads are yielded pre-encoded as UTF-8
+        bytes (see ``_encode_context_payload``); pass them through unchanged
+        so their real multi-byte form reaches the wire, applying only the
+        field's size padding. Every ``str`` mutation — the baseline value,
+        length-boundary seeds, format strings, NULL/control payloads and the
+        base malformed-UTF-8 library — still renders via boofuzz's normal
+        field-encoding path, so baseline output is byte-for-byte unchanged.
+        """
+        if isinstance(value, bytes):
+            if self.size is not None and len(value) < self.size:
+                value = value + self.padding * (self.size - len(value))
+            return value
+        return super().encode(value, mutation_context)
+
     def _radamsa_mutations(self, default_value) -> List[str]:
         """Generate Radamsa mutations of the default value.
 
@@ -550,11 +587,15 @@ class SmartStringPrimitive(ReducedString):
                 seen.add(mutation_str)
                 yield mutation_str
 
-        # 2. Context-specific payloads (strings)
+        # 2. Context-specific payloads. Non-ASCII curated payloads (homoglyph
+        #    / IDN-homograph / fullwidth) are yielded as real UTF-8 bytes so
+        #    they survive the field's ascii+replace encoding; ASCII payloads
+        #    stay as strings. Dedup stays keyed on the payload string, so which
+        #    payloads are yielded (and the mutation count) is unchanged.
         for payload in self._context_payloads():
             if payload not in seen:
                 seen.add(payload)
-                yield payload
+                yield self._encode_context_payload(payload)
 
         # 3. Radamsa creative mutations (strings)
         for mutation in self._radamsa_mutations(default_value):

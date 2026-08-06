@@ -366,6 +366,93 @@ class TestSmartStringMutations:
 
 
 # =============================================================================
+# Homoglyph / non-ASCII payload encoding
+# =============================================================================
+
+
+class TestHomoglyphEncoding:
+    """Non-ASCII curated payloads must reach the wire as real UTF-8 bytes.
+
+    Regression guard: with the field's default ascii+replace encoding, a
+    homoglyph/IDN/fullwidth payload used to collapse to b'?' and never test
+    the target's non-ASCII parsing. These now render as their true bytes.
+    """
+
+    def test_credential_cyrillic_yields_real_utf8_bytes(self):
+        s = SmartStringPrimitive(
+            name="username",
+            default_value="admin",
+            context=StringContext.CREDENTIAL,
+            radamsa_count=0,
+            encoding="ascii",
+        )
+        muts = list(s.mutations(b"admin"))
+        # Cyrillic 'а' (U+0430) homoglyph payload -> yielded as UTF-8 bytes
+        cyrillic_bytes = "аdmin".encode("utf-8")
+        assert cyrillic_bytes == b"\xd0\xb0dmin"
+        assert cyrillic_bytes in muts, "Cyrillic homoglyph should be yielded as UTF-8 bytes"
+        # And it survives encode() to the wire as-is (not b'?dmin')
+        rendered = s.encode(cyrillic_bytes)
+        assert rendered == b"\xd0\xb0dmin"
+        assert b"?" not in rendered
+
+    def test_credential_fullwidth_yields_real_utf8_bytes(self):
+        s = SmartStringPrimitive(
+            name="username",
+            default_value="admin",
+            context=StringContext.CREDENTIAL,
+            radamsa_count=0,
+            encoding="ascii",
+        )
+        muts = list(s.mutations(b"admin"))
+        fullwidth_bytes = "ＡＤＭＩＮ".encode("utf-8")
+        assert fullwidth_bytes in muts, "Fullwidth payload should be yielded as UTF-8 bytes"
+        assert s.encode(fullwidth_bytes) == fullwidth_bytes
+
+    def test_hostname_idn_homograph_yields_real_utf8_bytes(self):
+        s = SmartStringPrimitive(
+            name="host",
+            default_value="example.com",
+            context=StringContext.HOSTNAME,
+            radamsa_count=0,
+            encoding="ascii",
+        )
+        muts = list(s.mutations(b"example.com"))
+        # Cyrillic 'е' (U+0435) IDN homograph
+        idn_bytes = "еxample.com".encode("utf-8")
+        assert idn_bytes in muts, "IDN homograph should be yielded as UTF-8 bytes"
+        assert b"?" not in s.encode(idn_bytes)
+
+    def test_ascii_context_payloads_stay_strings(self):
+        """ASCII curated payloads are unchanged (still str, ascii-encoded)."""
+        s = SmartStringPrimitive(
+            name="username",
+            default_value="admin",
+            context=StringContext.CREDENTIAL,
+            radamsa_count=0,
+            encoding="ascii",
+        )
+        muts = list(s.mutations(b"admin"))
+        assert "admin\x00" in muts, "ASCII NULL-truncation payload must remain a str"
+        assert s.encode("admin\x00") == b"admin\x00"
+
+    def test_baseline_and_base_library_render_unchanged(self):
+        """encode() must not alter baseline or base (malformed-UTF-8) rendering."""
+        # encoding="ascii" matches the SmartString() factory default used by fuzzers
+        s = SmartStringPrimitive(
+            name="f",
+            default_value="admin",
+            context=StringContext.CREDENTIAL,
+            radamsa_count=0,
+            encoding="ascii",
+        )
+        # Baseline value renders via the ascii path exactly as before
+        assert s.encode("admin") == b"admin"
+        # Base malformed-UTF-8 library entries still collapse under ascii+replace
+        assert s.encode("\xc0\x80") == b"??"
+
+
+# =============================================================================
 # Radamsa integration
 # =============================================================================
 

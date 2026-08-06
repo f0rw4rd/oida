@@ -48,7 +48,8 @@ from boofuzz import Byte, DWord, Group, Request, Static, Word
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.config import FuzzerConfig, ProtocolType
 from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartBytes
+from ..primitives.dynamic import SmartString
+from ..primitives.smart_string import StringContext
 
 
 class ProfinetDCPFuzzer(BaseFuzzer):
@@ -282,7 +283,10 @@ class ProfinetDCPFuzzer(BaseFuzzer):
         # ================================================================
         # DCP Set of the Name-of-Station suboption. The station name is normally
         # bounded (<=240 chars); an oversized value overruns a fixed name buffer.
-        # SmartBytes lets Radamsa vary the (variable-length) name payload.
+        # The station name is a hostname-class identifier, so it is tagged
+        # StringContext.HOSTNAME: the corpus adds NULL-injection / IDN-homograph /
+        # label-length payloads on top of the length testing that drives the
+        # overflow. The 512-byte default preserves the oversized baseline.
         set_nameofstation_overflow = Request(
             "ProfinetDCP_Set_NameOfStation_Overflow",
             children=(
@@ -297,8 +301,16 @@ class ProfinetDCPFuzzer(BaseFuzzer):
                 Byte("Block_Suboption", self.SUBOPTION_NAME_OF_STATION, fuzzable=False),
                 Word("Block_Length", 0xFFFF, endian=">", fuzzable=False),
                 Word("Block_Qualifier", 0x0001, endian=">", fuzzable=False),  # Set permanent
-                # Oversized station name (variable field, SmartBytes-driven).
-                SmartBytes("Station_Name", b"A" * 512, max_len=2048, fuzzable=True),
+                # Oversized station name (variable field, HOSTNAME-tagged).
+                # DCPDataLength / Block_Length above are fixed 0xFFFF lies that do
+                # not reference this value, so no length field needs recomputing.
+                SmartString(
+                    "Station_Name",
+                    "A" * 512,
+                    context=StringContext.HOSTNAME,
+                    max_len=2048,
+                    fuzzable=True,
+                ),
             ),
         )
 

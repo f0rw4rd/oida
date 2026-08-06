@@ -19,7 +19,7 @@ from oida.fuzz.protocols.goose import GOOSEFuzzer
 
 pytestmark = pytest.mark.core
 
-# All seven advertised requests build unconditionally, so advertised ==
+# All advertised requests build unconditionally, so advertised ==
 # connected under default flags.
 ALL_REQUESTS = {
     "GOOSE_Baseline",
@@ -29,6 +29,7 @@ ALL_REQUESTS = {
     "GOOSE_Header_Length_Lie",
     "GOOSE_StNum_SqNum_Boundary",
     "GOOSE_BER_TagLen_Underflow",
+    "GOOSE_Ref_Identifier_Injection",
 }
 
 
@@ -67,8 +68,8 @@ def _advertised():
     return {d.name for d in GOOSEFuzzer.get_request_definitions()}
 
 
-def test_all_seven_requests_advertised():
-    """--list-requests exposes all seven GOOSE requests."""
+def test_all_requests_advertised():
+    """--list-requests exposes every GOOSE request."""
     assert _advertised() == ALL_REQUESTS
 
 
@@ -82,6 +83,7 @@ def test_advertised_categories():
     assert cats["GOOSE_Header_Length_Lie"] == "boundary"
     assert cats["GOOSE_StNum_SqNum_Boundary"] == "boundary"
     assert cats["GOOSE_BER_TagLen_Underflow"] == "malformed"
+    assert cats["GOOSE_Ref_Identifier_Injection"] == "malformed"
 
 
 def test_default_run_advertised_equals_connected():
@@ -138,3 +140,52 @@ def test_length_overflow_renders_oversized_length_byte():
     payload_after = rendered[idx + 2 :]
     assert len(payload_after) < 0x7F
     assert b"IED1" in rendered
+
+
+def _parse_ber_len(buf, i):
+    """Return (length_value, index_after_length) for a BER length at buf[i]."""
+    lb = buf[i]
+    if lb < 0x80:
+        return lb, i + 1
+    n = lb & 0x7F
+    return int.from_bytes(buf[i + 1 : i + 1 + n], "big"), i + 1 + n
+
+
+def test_ref_identifier_injection_frame_is_valid():
+    """GOOSE_Ref_Identifier_Injection renders a length-consistent baseline frame.
+
+    All three enclosing lengths must agree with the actual bytes: the GOOSE
+    header Length Word (8 + goosePdu), the goosePdu BER length, and the
+    gocbRef octet-string length. A malformed baseline that a subscriber
+    rejects outright would be worse than an unfuzzed identifier.
+    """
+    fuzzer = _build(_make_config(enabled_requests=["GOOSE_Ref_Identifier_Injection"]))
+    raw = bytes(_render(fuzzer, "GOOSE_Ref_Identifier_Injection"))
+
+    assert b"\x88\xb8" in raw  # really a GOOSE frame
+    # GOOSE header Length Word (after 14B Ethernet + 2B APPID) = 8 + goosePdu.
+    goose_len = int.from_bytes(raw[16:18], "big")
+    pdu = raw[22:]  # 14 Ethernet + 8 GOOSE header
+    assert goose_len == 8 + len(pdu)
+    # goosePdu BER length covers exactly the remaining field bytes.
+    assert raw[22] == 0x61
+    pdu_len, i = _parse_ber_len(raw, 23)
+    assert pdu_len == len(raw) - i
+    # gocbRef[0] octet-string length matches the identifier bytes present.
+    assert raw[i] == 0x80
+    gocbref_len, j = _parse_ber_len(raw, i + 1)
+    assert raw[j : j + gocbref_len] == b"IEDGENGGIO1/LLN0$GO$gcb01"
+
+
+def test_ref_identifier_injection_fuzzes_the_identifier():
+    """The gocbRef/datSet/goID SmartStrings actually produce mutations."""
+    fuzzer = _build(_make_config(enabled_requests=["GOOSE_Ref_Identifier_Injection"]))
+    request = fuzzer.session.nodes[
+        next(
+            nid
+            for nid, node in fuzzer.session.nodes.items()
+            if node.name == "GOOSE_Ref_Identifier_Injection"
+        )
+    ]
+    # Far more than a fixed Group would give -- the identifiers are fuzzed.
+    assert request.num_mutations() > 500

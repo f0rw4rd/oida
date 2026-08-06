@@ -40,13 +40,15 @@ import socket
 import struct
 from typing import List, Optional
 
-from boofuzz import Group, Request, Static
+from boofuzz import Block, Group, Request, Size, Static
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.config import FuzzerConfig, ProtocolType
 from ..monitors import BaseMonitor
 from ..primitives.asn1 import encode_ber_context_tag, encode_ber_length
-from ..primitives.dynamic import SmartBytes
+from ..primitives.asn1_blocks import BERSize
+from ..primitives.dynamic import SmartBytes, SmartString
+from ..primitives.smart_string import StringContext
 
 
 class GOOSEFuzzer(BaseFuzzer):
@@ -130,6 +132,12 @@ class GOOSEFuzzer(BaseFuzzer):
             RequestInfo(
                 "GOOSE_BER_TagLen_Underflow",
                 "context tag with length 0 / long-form length-of-length lie inside goosePdu",
+                "malformed",
+            ),
+            RequestInfo(
+                "GOOSE_Ref_Identifier_Injection",
+                "gocbRef[0]/datSet[2]/goID[3] VisibleString identifiers fuzzed (NULL/homoglyph/"
+                "delimiter injection) with all BER lengths recomputed to keep the frame valid",
                 "malformed",
             ),
         ]
@@ -491,6 +499,93 @@ class GOOSEFuzzer(BaseFuzzer):
             ),
         )
 
+        # === 8. GOOSE_Ref_Identifier_Injection (malformed) ===========
+        # gocbRef[0], datSet[2] and goID[3] are the VisibleString identifiers a
+        # subscriber parses to match the control block / dataset. Here each is a
+        # fuzzable SmartString (CREDENTIAL context: NULL truncation, homoglyph,
+        # delimiter injection). Every enclosing length is recomputed so the
+        # frame stays valid for every mutation, including long ones:
+        #   - each identifier's octet-string length  -> BERSize over its bytes
+        #   - the goosePdu BER length (0x61)          -> BERSize over pdu_fields
+        #   - the GOOSE header Length Word            -> Size over goose_pdu + 8
+        # The first (unmutated) render is a spec-valid frame; mutations attack
+        # only the identifier bytes, never the framing.
+        ident_time_allowed = encode_ber_context_tag(
+            1, self._int_bytes(2000), False
+        )  # timeAllowedToLive[1]
+        ident_rest = (
+            encode_ber_context_tag(4, b"\x00" * 8, False)  # t[4] utctime (8 bytes)
+            + encode_ber_context_tag(5, self._int_bytes(1), False)  # stNum[5]
+            + encode_ber_context_tag(6, self._int_bytes(0), False)  # sqNum[6]
+            + encode_ber_context_tag(7, b"\x00", False)  # simulation[7]
+            + encode_ber_context_tag(8, self._int_bytes(1), False)  # confRev[8]
+            + encode_ber_context_tag(9, b"\x00", False)  # ndsCom[9]
+            + encode_ber_context_tag(10, self._int_bytes(2), False)  # numDatSetEntries[10]
+            + encode_ber_context_tag(
+                11, self._data_bool(False) + self._data_int(0), True
+            )  # allData[11]
+        )
+        goose_ref_identifier = Request(
+            "GOOSE_Ref_Identifier_Injection",
+            children=(
+                Static("eth", self._eth_header()),
+                Static("appid", struct.pack(">H", self.appid)),
+                # GOOSE header Length = 8 (header) + goosePdu, recomputed
+                Size(
+                    "goose_length",
+                    block_name="goose_pdu_block",
+                    length=2,
+                    endian=">",
+                    output_format="binary",
+                    math=lambda x: x + 8,
+                    fuzzable=False,
+                ),
+                Static("reserved", b"\x00\x00\x00\x00"),  # Reserved1 + Reserved2
+                Block(
+                    "goose_pdu_block",
+                    children=(
+                        Static("pdu_tag", b"\x61"),
+                        # goosePdu BER length recomputed over the field body
+                        BERSize("pdu_len", "pdu_fields", fuzzable=False),
+                        Block(
+                            "pdu_fields",
+                            children=(
+                                # gocbRef[0] -- fuzzable identifier, length recomputed
+                                Static("gocbref_tag", b"\x80"),
+                                BERSize("gocbref_len", "gocbref_data", fuzzable=False),
+                                SmartString(
+                                    "gocbref_data",
+                                    default_value=self.gocb_ref,
+                                    context=StringContext.CREDENTIAL,
+                                    fuzzable=True,
+                                ),
+                                Static("time_allowed", ident_time_allowed),
+                                # datSet[2] -- fuzzable identifier, length recomputed
+                                Static("datset_tag", b"\x82"),
+                                BERSize("datset_len", "datset_data", fuzzable=False),
+                                SmartString(
+                                    "datset_data",
+                                    default_value="IEDGENGGIO1/LLN0$GO$ds01",
+                                    context=StringContext.CREDENTIAL,
+                                    fuzzable=True,
+                                ),
+                                # goID[3] -- fuzzable identifier, length recomputed
+                                Static("goid_tag", b"\x83"),
+                                BERSize("goid_len", "goid_data", fuzzable=False),
+                                SmartString(
+                                    "goid_data",
+                                    default_value="IEDGENGGIO1",
+                                    context=StringContext.CREDENTIAL,
+                                    fuzzable=True,
+                                ),
+                                Static("ident_rest", ident_rest),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         # ------------------------------------------------------------------
         # STRICT 1:1 gating -- one is_request_enabled() per connect()
         # ------------------------------------------------------------------
@@ -514,6 +609,9 @@ class GOOSEFuzzer(BaseFuzzer):
 
         if self.is_request_enabled("GOOSE_BER_TagLen_Underflow"):
             self.session.connect(goose_taglen_underflow)
+
+        if self.is_request_enabled("GOOSE_Ref_Identifier_Injection"):
+            self.session.connect(goose_ref_identifier)
 
     def _get_monitors(self) -> List[BaseMonitor]:
         """Raw L2 GOOSE has no traditional request/response monitor."""

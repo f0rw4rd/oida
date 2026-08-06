@@ -26,6 +26,7 @@ from boofuzz import Block, Byte, DWord, Group, QWord, Request, Static, Word
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.connections import UDPSocketConnection
 from ..primitives.dynamic import SmartString
+from ..primitives.smart_string import StringContext
 
 
 class DHCPFuzzer(BaseFuzzer):
@@ -377,7 +378,12 @@ class DHCPFuzzer(BaseFuzzer):
                         # Oversized option length
                         Byte("hostname_option", 12),
                         Byte("oversized_length", 255),  # Invalid length
-                        SmartString("oversized_hostname", "dhcp-oversized-hostname", max_len=1000),
+                        SmartString(
+                            "oversized_hostname",
+                            "dhcp-oversized-hostname",
+                            max_len=1000,
+                            context=StringContext.HOSTNAME,
+                        ),
                         Byte("end_option", 255),
                     ),
                 ),
@@ -418,7 +424,13 @@ class DHCPFuzzer(BaseFuzzer):
                         # Hostname Option (12) - SmartString will fuzz this
                         Byte("hostname_option", 12),
                         Byte("hostname_length", 8),  # auto: len("testhost")
-                        SmartString("hostname", "testhost", max_len=100, fuzzable=True),
+                        SmartString(
+                            "hostname",
+                            "testhost",
+                            max_len=100,
+                            fuzzable=True,
+                            context=StringContext.HOSTNAME,
+                        ),
                         Byte("end_option", 255),
                     ),
                 ),
@@ -624,7 +636,13 @@ class DHCPFuzzer(BaseFuzzer):
                         Byte("fqdn_flags", 0x03),  # S and O flags
                         Byte("rcode1", 0),
                         Byte("rcode2", 0),
-                        SmartString("fqdn", "client.example.com", max_len=17, fuzzable=True),
+                        SmartString(
+                            "fqdn",
+                            "client.example.com",
+                            max_len=17,
+                            fuzzable=True,
+                            context=StringContext.HOSTNAME,
+                        ),
                         # Authentication (90) - RFC 3118
                         Byte("option_90_code", 90),
                         Byte("option_90_length", 16),
@@ -1687,6 +1705,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                             "\x07example\x03com\x00\x04test\x03org\x00",
                             max_len=20,
                             fuzzable=True,
+                            context=StringContext.HOSTNAME,
                         ),
                         # Information Refresh Time Option (32)
                         Word("option_32_code", 32, endian=">"),
@@ -1701,6 +1720,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                             "\x06client\x07example\x03com\x00",
                             max_len=19,
                             fuzzable=True,
+                            context=StringContext.HOSTNAME,
                         ),
                         # Authentication Option (11)
                         Word("option_11_code", 11, endian=">"),
@@ -1714,7 +1734,13 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         Word("option_37_code", 37, endian=">"),
                         Word("option_37_length", 10, endian=">"),
                         DWord("enterprise_number", 9, endian=">"),
-                        SmartString("remote_id", "port01", max_len=4, fuzzable=True),
+                        SmartString(
+                            "remote_id",
+                            "port01",
+                            max_len=4,
+                            fuzzable=True,
+                            context=StringContext.CREDENTIAL,
+                        ),
                     ),
                 ),
             ),
@@ -1789,7 +1815,13 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         Word("option_39_code", 39, endian=">"),
                         Word("option_39_length", 1000, endian=">", fuzzable=True),  # Oversized
                         Byte("fqdn_flags", 0x01),
-                        SmartString("oversized_fqdn", "example.com", max_len=2000, fuzzable=True),
+                        SmartString(
+                            "oversized_fqdn",
+                            "example.com",
+                            max_len=2000,
+                            fuzzable=True,
+                            context=StringContext.HOSTNAME,
+                        ),
                         # Invalid Option Code
                         Word("invalid_option_code", 65535, endian=">", fuzzable=True),
                         Word("invalid_option_length", 500, endian=">", fuzzable=True),
@@ -1831,6 +1863,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                             "\x3f" + "A" * 63 + "\x3f" + "B" * 63 + "\x00",
                             max_len=2048,
                             fuzzable=True,
+                            context=StringContext.HOSTNAME,
                         ),
                         # Nested FQDN with excessive label lengths
                         Word("option_39_code_ovf", 39, endian=">"),
@@ -1841,6 +1874,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
                             "\xff" + "C" * 255 + "\xff" + "D" * 255 + "\x00",
                             max_len=1024,
                             fuzzable=True,
+                            context=StringContext.HOSTNAME,
                         ),
                     ),
                 ),
@@ -1950,7 +1984,13 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         # Interface-Id Option (18) - identifies the relay interface
                         Word("option_18_code", 18, endian=">"),
                         Word("option_18_length", 4, endian=">"),
-                        SmartString("interface_id", "eth0", max_len=4, fuzzable=True),
+                        SmartString(
+                            "interface_id",
+                            "eth0",
+                            max_len=4,
+                            fuzzable=True,
+                            context=StringContext.CREDENTIAL,
+                        ),
                         # Relay Message Option (9) - encapsulated client SOLICIT
                         Word("option_9_code", 9, endian=">"),
                         Word("option_9_length", 50, endian=">", fuzzable=True),
@@ -1976,7 +2016,13 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         Word("option_37_code_relay", 37, endian=">"),
                         Word("option_37_length_relay", 10, endian=">"),
                         DWord("enterprise_num", 9, endian=">"),
-                        SmartString("remote_id_relay", "relay1", max_len=6, fuzzable=True),
+                        SmartString(
+                            "remote_id_relay",
+                            "relay1",
+                            max_len=6,
+                            fuzzable=True,
+                            context=StringContext.CREDENTIAL,
+                        ),
                     ),
                 ),
             ),
@@ -2010,7 +2056,13 @@ class DHCPv6Fuzzer(BaseFuzzer):
                         # Interface-Id Option (18)
                         Word("option_18_code", 18, endian=">"),
                         Word("option_18_length", 4, endian=">"),
-                        SmartString("interface_id", "eth0", max_len=4, fuzzable=True),
+                        SmartString(
+                            "interface_id",
+                            "eth0",
+                            max_len=4,
+                            fuzzable=True,
+                            context=StringContext.CREDENTIAL,
+                        ),
                         # Relay Message Option (9) - encapsulated server ADVERTISE
                         Word("option_9_code", 9, endian=">"),
                         Word("option_9_length", 60, endian=">", fuzzable=True),

@@ -346,6 +346,132 @@ class CustomSSLSocketMonitor(ProtocolMonitor):
         return self._check_alive(fuzz_data_logger)
 
 
+# HTTP/2 connection preface (RFC 7540 §3.5) and an empty SETTINGS frame.
+# Frame header = length(3) + type(1) + flags(1) + stream_id(4). An empty
+# SETTINGS is length 0, type 0x04, flags 0, stream 0.
+_H2_PREFACE = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
+_H2_SETTINGS_TYPE = 0x04
+_H2_EMPTY_SETTINGS = b"\x00\x00\x00\x04\x00\x00\x00\x00\x00"
+
+
+def _h2_reply_has_settings(data: bytes) -> bool:
+    """Scan an HTTP/2 byte stream for a SETTINGS frame (type 0x04).
+
+    Walks the concatenated 9-byte frame headers. A live h2c server's own
+    connection preface is a SETTINGS frame sent immediately on connect, so a
+    healthy target reliably yields one here.
+    """
+    offset = 0
+    while offset + 9 <= len(data):
+        length = int.from_bytes(data[offset : offset + 3], "big")
+        ftype = data[offset + 3]
+        if ftype == _H2_SETTINGS_TYPE:
+            return True
+        offset += 9 + length
+    return False
+
+
+class H2CSocketMonitor(ProtocolMonitor):
+    """Cleartext HTTP/2 (h2c) preface health monitor.
+
+    Plaintext analogue of :class:`CustomSSLSocketMonitor`. Real h2c targets
+    (e.g. nghttp2 in prior-knowledge mode) never perform a TLS handshake, so a
+    TLS-based preflight fails with "Target unreachable" against a perfectly
+    healthy server. This monitor instead opens a plain TCP socket, sends the
+    24-byte HTTP/2 connection preface plus an empty SETTINGS frame, and reads
+    the reply.
+
+    Liveness decision (tuned to avoid false crashes):
+      * reply contains a SETTINGS frame (type 0x04) -> alive (confirmed h2c;
+        a server sends its own SETTINGS as its connection preface)
+      * any other non-empty reply (the preface exchange completed without the
+        peer resetting or closing) -> alive
+      * empty reply / connection closed / RST / refused / timeout -> down
+        (real crash signal)
+
+    Args:
+        host: Target hostname or IP.
+        port: Target TCP port.
+        retry_count: Number of retry attempts (default: 3).
+        timeout: Connect/recv timeout in seconds (default: 2).
+        failure_threshold: Consecutive failures before reporting down (default: 2).
+        recv_size: Max bytes to read from the reply (default: 4096).
+    """
+
+    def __init__(
+        self,
+        host,
+        port,
+        retry_count=3,
+        timeout=2,
+        failure_threshold=2,
+        recv_size=4096,
+        **kwargs,
+    ):
+        super().__init__(
+            host=host,
+            port=int(port),
+            timeout=float(timeout),
+            check_interval=1,  # Check every test case
+            retry_count=retry_count,
+            failure_threshold=failure_threshold,
+            **kwargs,
+        )
+        self.recv_size = recv_size
+
+    def _check_alive_once(self, fuzz_data_logger=None) -> bool:
+        """Send the h2c preface + SETTINGS and confirm the target speaks back."""
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            self.logger.debug(f"h2c preface probe to {self.host}:{self.port}")
+            sock.connect((self.host, self.port))
+            sock.sendall(_H2_PREFACE + _H2_EMPTY_SETTINGS)
+            response = sock.recv(self.recv_size)
+        except (ConnectionResetError, ConnectionRefusedError) as e:
+            self.logger.warning(f"h2c preface probe reset/refused: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"H2CSocketMonitor: reset/refused - {e}")
+            return False
+        except (socket.timeout, socket.error, OSError) as e:
+            self.logger.warning(f"h2c preface probe failed: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"H2CSocketMonitor: probe failed - {e}")
+            return False
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except (OSError, AttributeError) as e:
+                    self.logger.debug(f"Socket close error: {e}")
+
+        if not response:
+            # Server accepted the TCP connection then closed without a reply:
+            # a healthy h2c server always answers with its SETTINGS preface.
+            self.logger.warning("h2c preface probe got empty reply (peer closed)")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info("H2CSocketMonitor: empty reply (peer closed)")
+            return False
+
+        if _h2_reply_has_settings(response):
+            self.logger.debug("h2c server SETTINGS frame received - target alive")
+            return True
+
+        # Non-empty, non-SETTINGS reply: the preface exchange still completed
+        # without a reset/close, so the target is up (may be plain HTTP/1.x).
+        self.logger.debug(f"h2c probe got {len(response)}B non-SETTINGS reply - treating as alive")
+        return True
+
+    def pre_send(self, target=None, fuzz_data_logger=None, session=None):
+        """Check h2c connectivity before sending."""
+        return self._check_alive(fuzz_data_logger)
+
+    def post_send(self, target=None, fuzz_data_logger=None, session=None):
+        """Check h2c connectivity after sending."""
+        return self._check_alive(fuzz_data_logger)
+
+
 class ValidCaseMonitor(ProtocolMonitor):
     """Protocol-agnostic "valid-case" health probe.
 
@@ -461,5 +587,6 @@ __all__ = [
     "PingMonitor",
     "SocketHealthMonitor",
     "CustomSSLSocketMonitor",
+    "H2CSocketMonitor",
     "ValidCaseMonitor",
 ]

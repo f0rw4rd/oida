@@ -997,6 +997,191 @@ class ModbusRTUMonitor(ProtocolMonitor):
         return self._check_alive_serial(fuzz_data_logger)
 
 
+class BACnetMonitor(ProtocolMonitor):
+    """
+    BACnet/IP liveness monitor (UDP 47808).
+
+    BACnet/IP is connectionless UDP, so a TCP connect (SocketHealthMonitor) can
+    never succeed against a real device — using it for preflight makes the fuzzer
+    abort every run with "Target unreachable", and a bare UDP ``connect`` proves
+    nothing because the kernel returns immediately without a packet exchange. This
+    monitor instead sends a real BACnet Who-Is and treats a BVLC reply (the I-Am)
+    as proof of life.
+
+    Probe:
+      * BVLC 0x81 + Original-Broadcast-NPDU (0x0b), NPDU with global-broadcast
+        destination, unconfirmed Who-Is (APDU 0x10, service 0x08) - the canonical
+        "all devices" Who-Is that essentially every BACnet stack answers with an
+        I-Am, even when addressed unicast to a single device.
+
+    Liveness decision (tuned to avoid false negatives on quiet UDP devices):
+      * any BVLC reply (first byte 0x81, e.g. an I-Am ``81 0a ...``) -> alive
+      * any other datagram reply (something is bound to the port)    -> alive
+      * ICMP port unreachable (ConnectionRefused - the BACnet socket is gone)
+                                                                      -> down
+      * silent timeout (no reply, no ICMP error) -> treated as alive, since a
+        live-but-quiet device (filtering our Who-Is, or answering only on the
+        broadcast socket) must not be falsely killed. A hard "unreachable" is
+        reserved for the real down signal (ICMP) or a socket error.
+
+    Args:
+        host: Target hostname or IP
+        port: Target UDP port (default: 47808)
+        timeout: Socket timeout in seconds (default: 2)
+        check_interval: Check every N test cases (default: 10)
+        retry_count: Number of retries before failure (default: 2)
+        failure_threshold: Consecutive failures before reporting down (default: 2)
+    """
+
+    # BVLC type byte for BACnet/IP.
+    BVLC_TYPE_BACNET_IP = 0x81
+
+    def __init__(
+        self,
+        host: str,
+        port: int = 47808,
+        timeout: int = 2,
+        check_interval: int = 10,
+        retry_count: int = 2,
+        failure_threshold: int = 2,
+    ):
+        super().__init__(
+            host=host,
+            port=int(port),
+            timeout=float(timeout),
+            check_interval=check_interval,
+            retry_count=retry_count,
+            failure_threshold=failure_threshold,
+        )
+
+    def _build_who_is(self) -> bytes:
+        """Build a global-broadcast, unbounded Who-Is (all devices).
+
+        Layout:
+          BVLC : 81 0b 00 0c   (BACnet/IP, Original-Broadcast-NPDU, len 12)
+          NPDU : 01 20 ff ff 00 ff
+                 (version 1, control=dest-specifier-present, DNET=0xFFFF global
+                  broadcast, DLEN=0, hop-count=255)
+          APDU : 10 08         (unconfirmed-request, Who-Is service choice)
+        """
+        return bytes(
+            [
+                0x81,
+                0x0B,
+                0x00,
+                0x0C,
+                0x01,
+                0x20,
+                0xFF,
+                0xFF,
+                0x00,
+                0xFF,
+                0x10,
+                0x08,
+            ]
+        )
+
+    def _check_alive_once(self, fuzz_data_logger=None) -> bool:
+        """Send a Who-Is over UDP; a BVLC reply (I-Am) means alive."""
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(self.timeout)
+            # connect() (not sendto) so the kernel surfaces an ICMP port-unreachable
+            # as ConnectionRefusedError on recv. An unconnected UDP socket silently
+            # drops that ICMP error, which would make a crashed device look merely
+            # quiet (timeout) and defeat crash detection.
+            self.logger.debug(f"Sending BACnet Who-Is to {self.host}:{self.port}/udp")
+            sock.connect((self.host, self.port))
+            sock.send(self._build_who_is())
+
+            try:
+                response = sock.recv(1500)
+            except socket.timeout:
+                # No reply and no ICMP error: the device may filter our directed
+                # Who-Is or only answer on its broadcast socket. Treat as alive to
+                # avoid a false "unreachable" on a quiet-but-up device.
+                self.logger.debug("BACnet Who-Is timed out (no ICMP error) - treating as alive")
+                if fuzz_data_logger:
+                    fuzz_data_logger.log_info(
+                        "BACnetMonitor: no I-Am within timeout (no ICMP error) - assuming alive"
+                    )
+                return True
+
+            if not response:
+                # Zero-length datagram: something answered. Alive.
+                self.logger.debug("BACnet empty datagram reply - treating as alive")
+                return True
+
+            is_bvlc = response[0] == self.BVLC_TYPE_BACNET_IP
+            if is_bvlc:
+                self.logger.debug(
+                    f"BACnet BVLC reply ({len(response)} bytes): {response[:8].hex()}"
+                )
+                if not self.baseline_established:
+                    self.baseline = ProtocolBaseline(
+                        raw_response=response,
+                        parsed_fields={
+                            "bvlc_type": response[0],
+                            "bvlc_function": response[1] if len(response) > 1 else None,
+                            "is_i_am": self._looks_like_i_am(response),
+                        },
+                    )
+                    self.baseline_response = response
+                    self.baseline_established = True
+                    self.logger.display(f"BACnet baseline established: {response[:8].hex()}")
+                if fuzz_data_logger:
+                    fuzz_data_logger.log_info(
+                        f"BACnetMonitor: BVLC reply received ({len(response)} bytes)"
+                    )
+            else:
+                # Non-BVLC datagram, but a packet came back -> port is serviced.
+                self.logger.debug(
+                    f"BACnet non-BVLC reply ({len(response)} bytes) - treating as alive"
+                )
+            return True
+
+        except ConnectionRefusedError as e:
+            # ICMP port unreachable: the BACnet socket is gone -> real down signal.
+            self.logger.warning(f"BACnet UDP port unreachable: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"BACnet UDP port unreachable - {e}")
+            return False
+        except OSError as e:
+            self.logger.warning(f"BACnet probe socket error: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"BACnet probe socket error - {e}")
+            return False
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except (OSError, AttributeError) as e:
+                    self.logger.debug(f"Socket close error: {e}")
+
+    @staticmethod
+    def _looks_like_i_am(response: bytes) -> bool:
+        """Best-effort check that a BVLC reply carries an unconfirmed I-Am.
+
+        Scans for the unconfirmed-request APDU (0x10) immediately followed by the
+        I-Am service choice (0x00) after the BVLC/NPDU headers. Used only for
+        richer logging/baseline metadata - liveness itself only needs a BVLC byte.
+        """
+        if len(response) < 6 or response[0] != BACnetMonitor.BVLC_TYPE_BACNET_IP:
+            return False
+        # Search a small window past the fixed BVLC header for the APDU marker.
+        for i in range(4, min(len(response) - 1, 12)):
+            if response[i] == 0x10 and response[i + 1] == 0x00:
+                return True
+        return False
+
+    def pre_send(self, target=None, fuzz_data_logger=None, session=None):
+        return self._check_alive(fuzz_data_logger)
+
+    def post_send(self, target=None, fuzz_data_logger=None, session=None):
+        return self._check_alive(fuzz_data_logger)
+
+
 __all__ = [
     "IEC104States",
     "ModbusMonitor",
@@ -1005,4 +1190,5 @@ __all__ = [
     "MMSMonitor",
     "MQTTMonitor",
     "OPCUAMonitor",
+    "BACnetMonitor",
 ]
