@@ -256,23 +256,27 @@ if HL7APY_AVAILABLE:
         ContinuationMixin,
     )
 else:
-    # Mixins require hl7apy - create stubs so the module can still be imported
-    class _MixinStub:
-        pass
-
-    MessageMixin = _MixinStub
-    QueryMixin = _MixinStub
-    PharmacyMixin = _MixinStub
-    ResponseMixin = _MixinStub
-    EnumMixin = _MixinStub
-    ProbeMixin = _MixinStub
-    MasterFileMixin = _MixinStub
-    SpecialQueryMixin = _MixinStub
-    FinancialMixin = _MixinStub
-    DeviceMixin = _MixinStub
-    FuzzMixin = _MixinStub
-    SecurityMixin = _MixinStub
-    ContinuationMixin = _MixinStub
+    # Mixins require hl7apy - create stubs so the module can still be imported.
+    # Each stub MUST be a distinct class: the `class hl7(MessageMixin, ...)`
+    # base list below names all 13, and Python raises
+    # "TypeError: duplicate base class" if two bases are the same object. A
+    # single shared stub therefore crashed import (masking the friendly
+    # "install the hl7 extra" hint, since ProtocolLoader re-raises it as
+    # ImportError). The stubs carry no behaviour; the install hint fires at
+    # scan time via the HL7APY_AVAILABLE guard in __init__.
+    MessageMixin = type("MessageMixin", (), {})
+    QueryMixin = type("QueryMixin", (), {})
+    PharmacyMixin = type("PharmacyMixin", (), {})
+    ResponseMixin = type("ResponseMixin", (), {})
+    EnumMixin = type("EnumMixin", (), {})
+    ProbeMixin = type("ProbeMixin", (), {})
+    MasterFileMixin = type("MasterFileMixin", (), {})
+    SpecialQueryMixin = type("SpecialQueryMixin", (), {})
+    FinancialMixin = type("FinancialMixin", (), {})
+    DeviceMixin = type("DeviceMixin", (), {})
+    FuzzMixin = type("FuzzMixin", (), {})
+    SecurityMixin = type("SecurityMixin", (), {})
+    ContinuationMixin = type("ContinuationMixin", (), {})
 
 
 class hl7(

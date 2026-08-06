@@ -124,6 +124,9 @@ class SNMPScanner(
 
         # Unified -C/--auth parsing: colon-separated = v3, plain = community
         auth_value = args.get("auth") or args.get("community", "public")
+        # True when -C pointed at a wordlist file (many communities) rather than
+        # an explicit small list; used to require --confirm before brute-forcing.
+        self.community_is_file = False
         if ":" in auth_value:
             # V3 format: user:authpass[:privpass]
             parts = auth_value.split(":", 2)
@@ -150,6 +153,7 @@ class SNMPScanner(
             values, is_file = parse_credential_input(auth_value)
             if is_file:
                 self.community = ",".join(values)
+                self.community_is_file = True
                 self.logger.debug(
                     f"Auth parsed as community file: {len(values)} entries from {auth_value}"
                 )
@@ -491,6 +495,16 @@ class SNMPScanner(
             # Phase 1b: Comma-separated -C (lightweight multi-community test)
             elif "," in self.community:
                 candidates = [c.strip() for c in self.community.split(",") if c.strip()]
+                # A -C wordlist FILE (many communities) is an active brute-force
+                # and must be gated on --confirm, exactly like --default-creds
+                # and every SNMPv3 brute phase. A small explicit inline list
+                # (e.g. `-C public,private`) is a targeted test and stays ungated.
+                if self.community_is_file and not self.confirm_brute:
+                    self.logger.fail(
+                        f"-C wordlist file ({len(candidates)} communities) requires "
+                        "--confirm (active brute-force)"
+                    )
+                    return {"error": "brute_requires_confirm"}
                 valid = self._test_communities(candidates)
                 if valid:
                     self.community = valid[0]

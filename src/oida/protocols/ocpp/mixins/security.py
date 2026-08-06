@@ -507,17 +507,35 @@ class SecurityMixin:
                 msg_type, _, payload = self._parse_message(response)
 
                 if msg_type == MessageType.CALLRESULT:
-                    # OCPP 1.6: UpdateFirmware response is empty {} for Accepted
-                    result_data["update_status"] = "Accepted"
-                    self.logger.warning(
-                        "  UpdateFirmware: ACCEPTED (unauthenticated firmware update possible)"
-                    )
-                    self._add_finding(
-                        "CRITICAL",
-                        "Unauthorized firmware update accepted",
-                        f"UpdateFirmware with dummy URL ({FAKE_FIRMWARE_URL}) was accepted "
-                        "without authentication. Supply chain attack vector.",
-                    )
+                    # OCPP 1.6: UpdateFirmware.conf is an empty {} on Accept, so
+                    # any CALLRESULT means accepted. OCPP 2.0.1:
+                    # UpdateFirmwareResponse carries a REQUIRED `status` field
+                    # (Accepted / Rejected / AcceptedCanceled /
+                    # InvalidCertificate / RevokedCertificate); a hardened
+                    # charger returns a Rejected CALLRESULT, which is NOT
+                    # acceptance. Only flag when 2.x status is explicitly
+                    # Accepted, else this fabricates a CRITICAL on every 2.0.1 CP.
+                    if version.startswith("2."):
+                        accepted = payload.get("status") == "Accepted"
+                    else:
+                        accepted = True
+
+                    if accepted:
+                        result_data["update_status"] = "Accepted"
+                        self.logger.warning(
+                            "  UpdateFirmware: ACCEPTED (unauthenticated firmware update possible)"
+                        )
+                        self._add_finding(
+                            "CRITICAL",
+                            "Unauthorized firmware update accepted",
+                            f"UpdateFirmware with dummy URL ({FAKE_FIRMWARE_URL}) was accepted "
+                            "without authentication. Supply chain attack vector.",
+                        )
+                    else:
+                        result_data["update_status"] = payload.get("status", "Rejected")
+                        self.logger.display(
+                            f"  UpdateFirmware: {result_data['update_status']} (not accepted)"
+                        )
 
                 elif msg_type == MessageType.CALLERROR:
                     error_code = payload.get("error_code", "")
@@ -1233,6 +1251,37 @@ class SecurityMixin:
             f"({len(usernames)} users x {len(passwords)} passwords)"
         )
 
+        # Enforcement pre-check: if the endpoint accepts a known-invalid
+        # credential, it does NOT gate the WebSocket upgrade on the
+        # Authorization header (OCPP Security Profile 0, or it ignores auth).
+        # In that case _connect_with_auth() returns a connection for EVERY pair,
+        # so every result would be a false positive. Confirm enforcement first
+        # (mirrors the snap7 brute false-positive fix); if unenforced, report
+        # that once and skip the brute entirely.
+        bogus_user = "oida-nonexistent-probe"
+        bogus_pass = "oida-invalid-a1b2c3d4e5f6"
+        try:
+            bogus_auth = base64.b64encode(f"{bogus_user}:{bogus_pass}".encode()).decode()
+            bogus_conn = self.scanner._connect_with_auth(target_url, bogus_auth)
+        except Exception as e:
+            self.logger.debug(f"[Brute] enforcement pre-check errored: {e}")
+            bogus_conn = None
+        if bogus_conn is not None:
+            try:
+                self.scanner.disconnect(bogus_conn)
+            except Exception as e:
+                self.logger.debug(f"self.scanner.disconnect(bogus_conn): {e}")
+            self.logger.display(
+                "[Brute] Endpoint accepted a known-invalid credential -- HTTP Basic "
+                "Auth is not enforced; skipping brute-force (results would be bogus)."
+            )
+            self.results["data"].setdefault("brute_force", {})["http_auth"] = {
+                "enforced": False,
+                "tested": 0,
+                "valid": [],
+            }
+            return
+
         valid_creds = []
         tested = 0
 
@@ -1274,6 +1323,7 @@ class SecurityMixin:
         self.logger.display(f"[Brute] Tested {tested} credentials, found {len(valid_creds)} valid")
 
         self.results["data"].setdefault("brute_force", {})["http_auth"] = {
+            "enforced": True,
             "tested": tested,
             "valid": valid_creds,
         }
@@ -1740,16 +1790,25 @@ class SecurityMixin:
                     msg_type, _, payload = self._parse_message(response)
 
                     if msg_type == MessageType.CALLRESULT:
-                        # UpdateFirmware returns {} on accept (1.6) or
-                        # {"status": "Accepted"} on 2.0.1
-                        probe_result["status"] = "Accepted"
-                        self.logger.warning(f"  SSRF [{label}]: ACCEPTED ({url})")
-                        self._add_finding(
-                            severity,
-                            f"SSRF via UpdateFirmware: {label} URL accepted",
-                            f"UpdateFirmware with URL '{url}' was accepted. "
-                            f"Charger will attempt to fetch from {label} endpoint.",
-                        )
+                        # 1.6: UpdateFirmware.conf is an empty {} on accept, so
+                        # any CALLRESULT means accepted. 2.0.1:
+                        # UpdateFirmwareResponse.status is required and must be
+                        # Accepted -- a Rejected CALLRESULT is NOT acceptance and
+                        # must not raise an SSRF finding.
+                        if version.startswith("2.") and payload.get("status") != "Accepted":
+                            probe_result["status"] = payload.get("status", "Rejected")
+                            self.logger.display(
+                                f"  SSRF [{label}]: {probe_result['status']} (not accepted)"
+                            )
+                        else:
+                            probe_result["status"] = "Accepted"
+                            self.logger.warning(f"  SSRF [{label}]: ACCEPTED ({url})")
+                            self._add_finding(
+                                severity,
+                                f"SSRF via UpdateFirmware: {label} URL accepted",
+                                f"UpdateFirmware with URL '{url}' was accepted. "
+                                f"Charger will attempt to fetch from {label} endpoint.",
+                            )
 
                     elif msg_type == MessageType.CALLERROR:
                         error_code = payload.get("error_code", "")
@@ -1790,11 +1849,17 @@ class SecurityMixin:
                     msg_type, _, payload = self._parse_message(response)
 
                     if msg_type == MessageType.CALLRESULT:
-                        # Same GetDiagnostics.conf caveat as test_diagnostics():
-                        # fileName is optional in OCPP 1.6, so an empty {}
-                        # CALLRESULT means the CP is not going to upload
-                        # anything and must not be flagged as SSRF.
-                        accepted = version.startswith("2.") or bool(payload.get("fileName"))
+                        # 1.6: GetDiagnostics.conf fileName is optional, so an
+                        # empty {} CALLRESULT means the CP is not going to upload
+                        # anything and must not be flagged as SSRF. 2.0.1:
+                        # GetLogResponse.status is required and must be Accepted
+                        # -- the old `version.startswith("2.") or ...` was
+                        # unconditionally True for ANY 2.x CALLRESULT (incl.
+                        # Rejected), fabricating SSRF findings.
+                        if version.startswith("2."):
+                            accepted = payload.get("status") == "Accepted"
+                        else:
+                            accepted = bool(payload.get("fileName"))
                         diag_result["status"] = "Accepted" if accepted else "AcceptedNoUpload"
                         if accepted:
                             self.logger.warning(f"  SSRF [{label}] via {method}: ACCEPTED")

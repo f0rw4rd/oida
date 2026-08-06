@@ -1751,5 +1751,24 @@ class TestHL7SecurityAnalysisExtended(unittest.TestCase):
         self.assertFalse(accepts_unknown)
 
 
+class TestHl7ImportSafety(unittest.TestCase):
+    """Guard the hl7apy-missing import path (regression for the shared-stub bug)."""
+
+    def test_hl7_class_has_no_duplicate_bases(self):
+        # When hl7apy is absent the 13 mixins are replaced by stubs. They MUST
+        # be distinct classes, else `class hl7(MessageMixin, QueryMixin, ...)`
+        # lists the same object twice and raises "TypeError: duplicate base
+        # class" at import -- masking the friendly install hint. This invariant
+        # holds whether hl7apy is present (real mixins) or absent (stubs).
+        from oida.protocols.hl7 import hl7
+
+        bases = hl7.__bases__
+        self.assertEqual(
+            len(bases),
+            len(set(bases)),
+            f"hl7 has duplicate base classes: {[b.__name__ for b in bases]}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

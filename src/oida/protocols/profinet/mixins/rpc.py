@@ -118,10 +118,21 @@ class RPCMixin(_ScannerBase):
 
         # Cyclic IO test (uses its own RPCCon / AR)
         if run_cyclic:
-            import time
+            # --cyclic streams output frames (set_output_data) to every output
+            # submodule -- a real physical state change that can de-energize
+            # actuators and disrupt the AR held by the legitimate controller.
+            # Gate it behind --confirm like every other mutating op in this
+            # module (DCP set/reset, --write-index, --write-im*, --test-write,
+            # --fuzz).
+            if not self._arg("confirm", False):
+                self.logger.fail(
+                    "--cyclic requires --confirm flag (drives PLC outputs -- physical state change)"
+                )
+            else:
+                import time
 
-            time.sleep(1)  # Let device release previous AR
-            self._cyclic_io_test(device, discovered_slots)
+                time.sleep(1)  # Let device release previous AR
+                self._cyclic_io_test(device, discovered_slots)
 
     def _read_im_data(self, device: ProfinetDevice, con, profinet_mod) -> None:
         """Read I&M data from device."""

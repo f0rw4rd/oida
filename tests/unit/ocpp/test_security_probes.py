@@ -512,26 +512,56 @@ class TestBruteForceHttpAuth(unittest.TestCase):
         # The security_finding logger must classify this as AUTHENTICATION.
         self.assertIn(Category.AUTHENTICATION, _finding_categories(obj))
 
+    @staticmethod
+    def _enforcing(valid_pairs):
+        """side_effect for an endpoint that ENFORCES auth: accepts only the
+        given (user, pass) pairs, rejecting the invalid enforcement-probe cred
+        the brute sends first."""
+        import base64
+
+        valid_b64 = {base64.b64encode(f"{u}:{p}".encode()).decode() for u, p in valid_pairs}
+        return lambda url, auth: Mock() if auth in valid_b64 else None
+
     def test_stops_after_first_success_by_default(self):
         obj = _make_instance()
         obj.args.continue_on_success = False
-        # Every credential is valid -> should still stop after first.
-        obj.scanner._connect_with_auth.return_value = Mock()
+        # Enforcing endpoint that accepts every real credential -> the brute
+        # should still stop after the first success.
+        obj.scanner._connect_with_auth.side_effect = self._enforcing(
+            [("a", "x"), ("b", "x"), ("c", "x")]
+        )
 
         obj._brute_force_http_auth(["a", "b", "c"], ["x"])
 
-        self.assertEqual(obj.scanner._connect_with_auth.call_count, 1)
+        # 1 enforcement pre-check + 1 tested pair (stops after first success).
+        self.assertEqual(obj.scanner._connect_with_auth.call_count, 2)
 
     def test_continue_on_success_tests_all(self):
         obj = _make_instance()
         obj.args.continue_on_success = True
-        obj.scanner._connect_with_auth.return_value = Mock()
+        obj.scanner._connect_with_auth.side_effect = self._enforcing(
+            [("a", "x"), ("a", "y"), ("b", "x"), ("b", "y")]
+        )
 
         obj._brute_force_http_auth(["a", "b"], ["x", "y"])
 
-        # 2 users x 2 passwords = 4 attempts, all tried.
-        self.assertEqual(obj.scanner._connect_with_auth.call_count, 4)
+        # 1 enforcement pre-check + 2 users x 2 passwords = 4 attempts.
+        self.assertEqual(obj.scanner._connect_with_auth.call_count, 5)
         self.assertEqual(len(obj.results["data"]["brute_force"]["http_auth"]["valid"]), 4)
+
+    def test_unenforced_endpoint_skips_brute(self):
+        """Endpoint that accepts a known-invalid credential is not enforcing;
+        the brute is skipped rather than reporting bogus 'valid' creds."""
+        obj = _make_instance()
+        obj.scanner._connect_with_auth.return_value = Mock()  # accepts anything
+
+        obj._brute_force_http_auth(["a", "b"], ["x", "y"])
+
+        self.assertEqual(obj.scanner._connect_with_auth.call_count, 1)
+        result = obj.results["data"]["brute_force"]["http_auth"]
+        self.assertFalse(result["enforced"])
+        self.assertEqual(result["valid"], [])
+        self.assertEqual(len(_findings(obj)), 0)
 
     def test_no_valid_creds_no_finding(self):
         obj = _make_instance()

@@ -299,12 +299,25 @@ class TestRpcOperations:
         import time as _time
 
         monkeypatch.setattr(_time, "sleep", lambda *_a, **_k: None)
-        stub = RPCStub(args={"cyclic": True, "read_im": False})
+        # --cyclic drives PLC outputs (physical state change) and is gated on
+        # --confirm like every other mutating op in the module.
+        stub = RPCStub(args={"cyclic": True, "confirm": True, "read_im": False})
         dev = _device()
         mod, con = _profinet_mod()
         con.discover_slots = MagicMock(return_value=[])
         stub._rpc_operations(dev, mod)
         assert any(c[0] == "cyclic" for c in stub.calls)
+
+    def test_cyclic_requires_confirm(self):
+        # Without --confirm the cyclic IO test must NOT dispatch (it would force
+        # PLC outputs). Slot discovery may still run; the mutating step must not.
+        stub = RPCStub(args={"cyclic": True, "read_im": False})
+        dev = _device()
+        mod, con = _profinet_mod()
+        con.discover_slots = MagicMock(return_value=[])
+        stub._rpc_operations(dev, mod)
+        assert not any(c[0] == "cyclic" for c in stub.calls)
+        assert any(level == "fail" for level, _ in stub.logger.messages)
 
 
 # ──────────────────────────────────────────────────────────────────────
